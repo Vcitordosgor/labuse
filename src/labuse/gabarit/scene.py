@@ -31,6 +31,71 @@ from .terrain_mesh import TerrainMesh
 _NODATA = -9999.0
 _PENTE_FENETRE_M = 5.0
 _MARGE_FACES_1M = 25.0          # rayon des faces 1 m autour de la parcelle (le reste en 2 m)
+# LOT 5 — le MAILLAGE 3D s'allège au-delà d'un seuil de taille pour borner l'ouverture à froid : on garde
+# ≤ ~12 000 sommets (le coût du rendu three.js est ~linéaire en sommets). La COUPE reste toujours en 0,5 m
+# (elle porte les cotes) ; seules les FACES servies à la visionneuse s'allègent (0,5 m → 1 m → 2 m).
+_FACES_BUDGET_SOMMETS = 6500
+
+
+def _step_faces(largeur_m: float, hauteur_m: float, pas: float) -> int:
+    """Pas d'allègement du maillage 3D (×pas natif) : le plus FIN qui tient sous le budget de sommets, borné
+    à 2 m (step 4 sur du 0,5 m). 1 = 0,5 m, 2 = 1 m, 4 = 2 m. Au-delà, on reste à 2 m (temps rapporté)."""
+    for step in (1, 2, 4):
+        vpas = pas * step
+        if (largeur_m / vpas) * (hauteur_m / vpas) <= _FACES_BUDGET_SOMMETS:
+            return step
+    return 4
+
+
+_COTE_3D_MAX_POINTS = 40000
+
+
+def _cote_3d_sol_degage(sampler, cadastre, batis, ox: float, oy: float):
+    """Cote HAUTE/BASSE de la vue 3D, lues dans le SOL 0,5 m sur les MÊMES positions que les sommets du
+    maillage (centres de pixels natifs) → identiques aux cotes d'avant le LOT 5, quel que soit l'allègement.
+    Sur SOL DÉGAGÉ (intérieur cadastre, hors emprise bâtie — un élément couvert ne porte pas de cote).
+    Rend {'haut':[xl,yl,z], 'bas':[xl,yl,z]} en repère local, ou None. Travail borné (sous-échantillonnage
+    PIXEL-ALIGNÉ pour les très grandes parcelles → la grille reste un sous-ensemble de celle des sommets)."""
+    from shapely.geometry import Point, Polygon
+    from shapely.ops import unary_union
+    from shapely.prepared import prep
+    m = sampler.m
+    try:
+        pc = prep(cadastre)
+    except Exception:  # noqa: BLE001
+        return None
+    pb = None
+    polys = [Polygon([(x + ox, y + oy) for x, y in sub["ext"]])
+             for b in (batis or []) for sub in (b.get("empreinte") or []) if len(sub.get("ext") or []) >= 3]
+    if polys:
+        u = unary_union([g for g in polys if g.is_valid or g.buffer(0).is_valid])
+        if not u.is_empty:
+            pb = prep(u)
+    minx, miny, maxx, maxy = cadastre.bounds
+    pas = m.pas
+    Ja = max(0, int(math.floor((minx - m.ox) / pas - 0.5)))
+    Jb = min(m.nx - 1, int(math.ceil((maxx - m.ox) / pas - 0.5)))
+    Ia = max(0, int(math.floor((m.oy - maxy) / pas - 0.5)))
+    Ib = min(m.ny - 1, int(math.ceil((m.oy - miny) / pas - 0.5)))
+    npix = max((Ib - Ia + 1) * (Jb - Ja + 1), 1)
+    stride = max(1, int(math.ceil((npix / _COTE_3D_MAX_POINTS) ** 0.5)))   # garde la grille des sommets
+    hi = lo = None
+    for I in range(Ia, Ib + 1, stride):
+        y = m.oy - (I + 0.5) * pas
+        for J in range(Ja, Jb + 1, stride):
+            z = m._z(I, J)                                   # valeur de pixel = z du sommet de face (ANCIEN)
+            if z is None:
+                continue
+            x = m.ox + (J + 0.5) * pas
+            if pc.covers(Point(x, y)) and (pb is None or not pb.covers(Point(x, y))):
+                if hi is None or z > hi[2]:
+                    hi = (x, y, z)
+                if lo is None or z < lo[2]:
+                    lo = (x, y, z)
+    if hi is None or lo is None:
+        return None
+    return {"haut": [round(hi[0] - ox, 2), round(hi[1] - oy, 2), round(hi[2], 2)],
+            "bas": [round(lo[0] - ox, 2), round(lo[1] - oy, 2), round(lo[2], 2)]}
 
 
 # ── Fond : lecture calée sur les pixels natifs ────────────────────────────────────────────────────
@@ -715,9 +780,17 @@ def _build_scene(db, idu: str) -> Scene:
             cminx, cminy = min(cminx, px - 4), min(cminy, py - 4)
             cmaxx, cmaxy = max(cmaxx, px + 4), max(cmaxy, py + 4)
         cadre = (cminx, cminy, cmaxx, cmaxy)
-        faces_1m = sampler.m.faces(ox, oy, bounds=cadre)        # faces servies = cadre (coupées net)
+        # LOT 5 — maillage 3D allégé selon la TAILLE du cadre (ouverture bornée). La coupe reste en 0,5 m
+        # (sampler step 1) ; seules les FACES s'allègent. Les cotes 3D viennent du sol 0,5 m, pas d'ici.
+        step_faces = _step_faces(cmaxx - cminx, cmaxy - cminy, surf.pas)
+        mesh_faces = sampler.m if step_faces == 1 else TerrainMesh(surf.a, surf.ox, surf.oy, surf.pas, step=step_faces)
+        faces_1m = mesh_faces.faces(ox, oy, bounds=cadre)       # faces servies = cadre (coupées net), allégées
+        maille_3d = round(surf.pas * step_faces, 2)
+        fond_meta = {**fond_meta, "maille_3d_m": maille_3d}
         cadre_local = [round(cminx - ox, 2), round(cminy - oy, 2), round(cmaxx - ox, 2), round(cmaxy - oy, 2)]
+        cote_3d = _cote_3d_sol_degage(sampler, cadastre or ref, batis, ox, oy)   # lues en 0,5 m, sol dégagé
         terrain = {"faces_parcelle": faces_1m, "couverture_parcelle": couverture, "cadre": cadre_local,
+                   "maille_3d_m": maille_3d, "cotes_3d": cote_3d,
                    "origin_2975": [ox, oy]}       # origine locale (EPSG:2975) → reconstruit la bbox absolue (photo IGN)
 
     for b in batis:

@@ -1,0 +1,11 @@
+════ LOT 5 — temps d'ouverture 3D (clic → 1ʳᵉ image), hors réseau ════
+             idu  sommets     tris maille3D ouverture
+  97411000BZ1065     2900     5586        2    1958ms  cotes=409,8 m 396,6 m
+  97416000CZ0589     2346     4500        2    1281ms  cotes=263,2 m 259,1 m
+  97408000AP1022     2112     4042        2    1275ms  cotes=94,0 m 92,4 m
+  97415000DX0049     1960     3744        2    1180ms  cotes=881,7 m 874,9 m
+  97415000AW2362     5520    10744        1    1939ms  cotes=219,1 m 215,4 m
+  97416000CW1762     5056     9828        1    1608ms  cotes=359,0 m 355,2 m
+  97411000HE0412     3922     7592        1    1378ms  cotes=271,3 m 265,2 m
+  97415000EX0029     3672     7102        1    1198ms  cotes=5,8 m 5,4 m
+  97413000CT0442     2806     5400        1    1022ms  cotes=331,5 m 325,4 m

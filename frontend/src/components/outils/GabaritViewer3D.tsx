@@ -271,13 +271,20 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     recentrer.current = () => { place(); controls.target.copy(ctr); controls.update() }
 
     // repères haut/bas SUR leurs points (3D→écran) + boussole
-    // cotes d'altitude sur SOL DÉGAGÉ : on exclut les sommets SOUS une emprise bâtie — un élément couvert
-    // pris pour du sol (varangue/auvent) ne porte donc jamais de cote (GABARIT-3D-3, correction LOT 2).
-    const empBati = (scene.batiments || []).flatMap((b) => (b.empreinte || []) as GabPoly[])
+    // cotes d'altitude sur SOL DÉGAGÉ : hors emprise bâtie (un élément couvert ne porte jamais de cote).
+    // LOT 5 — elles viennent du SOL 0,5 m calculé côté serveur (`terrain.cotes_3d`), PAS du maillage allégé :
+    // identiques que le relief 3D soit en 0,5 m, 1 m ou 2 m. Repli sur le balayage des faces (anciennes scènes).
+    const c3d = scene.terrain?.cotes_3d
     let hiP = new THREE.Vector3(), loP = new THREE.Vector3(), hi = -Infinity, lo = Infinity
-    for (const p of faces.vertices) if (inPolys(p[0], p[1], scene.contour_cadastral) && !inPolys(p[0], p[1], empBati)) {
-      if (p[2] > hi) { hi = p[2]; hiP.set(p[0], p[2], -p[1]) }
-      if (p[2] < lo) { lo = p[2]; loP.set(p[0], p[2], -p[1]) }
+    if (c3d?.haut && c3d?.bas) {
+      hi = c3d.haut[2]; hiP.set(c3d.haut[0], c3d.haut[2], -c3d.haut[1])
+      lo = c3d.bas[2]; loP.set(c3d.bas[0], c3d.bas[2], -c3d.bas[1])
+    } else {
+      const empBati = (scene.batiments || []).flatMap((b) => (b.empreinte || []) as GabPoly[])
+      for (const p of faces.vertices) if (inPolys(p[0], p[1], scene.contour_cadastral) && !inPolys(p[0], p[1], empBati)) {
+        if (p[2] > hi) { hi = p[2]; hiP.set(p[0], p[2], -p[1]) }
+        if (p[2] < lo) { lo = p[2]; loP.set(p[0], p[2], -p[1]) }
+      }
     }
     onCote({ hi: Math.round(hi * 10) / 10, lo: Math.round(lo * 10) / 10, cur: null, cap: Math.round(hi * 10) / 10 })
 
@@ -663,6 +670,10 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
   // 1 m en repli) + message clair si repli (relief fin indisponible).
   const mailleM = Number(scene?.meta?.maille_m ?? 1)
   const mailleFr = mailleM === 0.5 ? '0,5 m' : `${String(mailleM).replace('.', ',')} m`
+  // LOT 5 — le maillage 3D peut être allégé (1 m / 2 m) alors que la COUPE reste en 0,5 m. Le pied le DIT.
+  const maille3d = Number(scene?.terrain?.maille_3d_m ?? scene?.meta?.maille_3d_m ?? mailleM)
+  const maille3dFr = `${String(maille3d).replace('.', ',')} m`
+  const relief3dAllege = maille3d > mailleM + 1e-6
   const solRepli = Boolean(scene?.meta?.sol_repli)
   const solMsg = scene?.meta?.sol_message ? String(scene.meta.sol_message) : ''
   const axeSel = coupes.includes(axe) ? axe : (coupes[0] as 'A' | 'B' | undefined) ?? null
@@ -760,7 +771,7 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
             </div>
           </div>
           <p data-gab3d-pied className="border-t border-line px-3 py-1.5 text-[10px] text-txt-dim">
-            MNT LiDAR HD IGN · maille de {mailleFr} · acquisition {acqFr}{solRepli ? <span className="text-amber"> · {solMsg}</span> : ''} · cotes indicatives · courbes tous les mètres, trait fort tous les 5 m · H = V.
+            MNT LiDAR HD IGN · {relief3dAllege ? <>coupe à {mailleFr} · relief 3D allégé à {maille3dFr}</> : <>maille de {mailleFr}</>} · acquisition {acqFr}{solRepli ? <span className="text-amber"> · {solMsg}</span> : ''} · cotes indicatives · courbes tous les mètres, trait fort tous les 5 m · H = V.
           </p>
         </div>
       )}

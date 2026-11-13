@@ -1,0 +1,122 @@
+[
+  {
+    "idu": "97409000BL0111",
+    "sommets_avant": 67704,
+    "sommets_apres": 4368,
+    "maille_3d_m": 2.0,
+    "faces_ms_avant": 600,
+    "faces_ms_apres": 408,
+    "cote_haut": 103.66,
+    "cote_bas": 93.23,
+    "d_cote_haut_m": 0.0,
+    "d_cote_bas_m": 0.0
+  },
+  {
+    "idu": "97411000BZ1065",
+    "sommets_avant": 42180,
+    "sommets_apres": 2900,
+    "maille_3d_m": 2.0,
+    "faces_ms_avant": 386,
+    "faces_ms_apres": 930,
+    "cote_haut": 409.79,
+    "cote_bas": 396.56,
+    "d_cote_haut_m": 0.0,
+    "d_cote_bas_m": 0.0
+  },
+  {
+    "idu": "97416000CZ0589",
+    "sommets_avant": 34475,
+    "sommets_apres": 2346,
+    "maille_3d_m": 2.0,
+    "faces_ms_avant": 302,
+    "faces_ms_apres": 197,
+    "cote_haut": 263.23,
+    "cote_bas": 259.13,
+    "d_cote_haut_m": 0.0,
+    "d_cote_bas_m": 0.0
+  },
+  {
+    "idu": "97408000AP1022",
+    "sommets_avant": 31080,
+    "sommets_apres": 2112,
+    "maille_3d_m": 2.0,
+    "faces_ms_avant": 277,
+    "faces_ms_apres": 275,
+    "cote_haut": 93.95,
+    "cote_bas": 92.44,
+    "d_cote_haut_m": 0.0,
+    "d_cote_bas_m": 0.0
+  },
+  {
+    "idu": "97415000DX0049",
+    "sommets_avant": 28350,
+    "sommets_apres": 1960,
+    "maille_3d_m": 2.0,
+    "faces_ms_avant": 255,
+    "faces_ms_apres": 317,
+    "cote_haut": 881.7,
+    "cote_bas": 874.86,
+    "d_cote_haut_m": 0.0,
+    "d_cote_bas_m": 0.0
+  },
+  {
+    "idu": "97415000AW2362",
+    "sommets_avant": 21330,
+    "sommets_apres": 5520,
+    "maille_3d_m": 1.0,
+    "faces_ms_avant": 218,
+    "faces_ms_apres": 156,
+    "cote_haut": 219.08,
+    "cote_bas": 215.41,
+    "d_cote_haut_m": 0.0,
+    "d_cote_bas_m": 0.0
+  },
+  {
+    "idu": "97416000CW1762",
+    "sommets_avant": 19344,
+    "sommets_apres": 5056,
+    "maille_3d_m": 1.0,
+    "faces_ms_avant": 191,
+    "faces_ms_apres": 338,
+    "cote_haut": 358.99,
+    "cote_bas": 355.23,
+    "d_cote_haut_m": 0.0,
+    "d_cote_bas_m": 0.0
+  },
+  {
+    "idu": "97411000HE0412",
+    "sommets_avant": 15184,
+    "sommets_apres": 3922,
+    "maille_3d_m": 1.0,
+    "faces_ms_avant": 168,
+    "faces_ms_apres": 131,
+    "cote_haut": 271.26,
+    "cote_bas": 265.24,
+    "d_cote_haut_m": 0.0,
+    "d_cote_bas_m": 0.0
+  },
+  {
+    "idu": "97415000EX0029",
+    "sommets_avant": 13832,
+    "sommets_apres": 3672,
+    "maille_3d_m": 1.0,
+    "faces_ms_avant": 150,
+    "faces_ms_apres": 107,
+    "cote_haut": 5.82,
+    "cote_bas": 5.4,
+    "d_cote_haut_m": 0.0,
+    "d_cote_bas_m": 0.0
+  },
+  {
+    "idu": "97413000CT0442",
+    "sommets_avant": 10591,
+    "sommets_apres": 2806,
+    "maille_3d_m": 1.0,
+    "faces_ms_avant": 138,
+    "faces_ms_apres": 203,
+    "cote_haut": 331.53,
+    "cote_bas": 325.43,
+    "d_cote_haut_m": 0.0,
+    "d_cote_bas_m": 0.0
+  }
+]

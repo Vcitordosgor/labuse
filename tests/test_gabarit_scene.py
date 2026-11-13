@@ -270,6 +270,26 @@ def test_plan_cle_lettres_axe_sans_chevauchement():
             assert not _chevauchent(lettres[i], lettres[j]), f"{lettres[i][0]} chevauche {lettres[j][0]}"
 
 
+def test_step_faces_allege_selon_taille():
+    """LOT 5 — le maillage 3D s'allège selon la TAILLE du cadre : 0,5 m (petit) → 1 m → 2 m (plafond)."""
+    from labuse.gabarit.scene import _step_faces
+    assert _step_faces(40, 40, 0.5) == 1          # petit → 0,5 m
+    assert _step_faces(70, 70, 0.5) == 2          # moyen → 1 m
+    assert _step_faces(150, 150, 0.5) == 4         # grand → 2 m
+    assert _step_faces(2000, 2000, 0.5) == 4       # énorme → plafonné à 2 m (temps rapporté)
+
+
+def test_faces_allegees_moins_de_sommets_coupe_inchangee():
+    """LOT 5 — un maillage à 1 m a ~4× moins de sommets qu'à 0,5 m (ouverture bornée) ; la COUPE
+    (profil par franchissement des faces) suit le pas du maillage, mais l'échantillonneur de coupe reste
+    en 0,5 m dans la scène (step 1) — ici on vérifie seulement l'allègement des faces + le pas annoncé."""
+    a = np.fromfunction(lambda i, j: 100 + 0.01 * i + 0.02 * j, (80, 80), dtype="float64")
+    f1 = TerrainMesh(a, 1000.0, 2080.0, 0.5, step=1).faces(1000.0, 2080.0)
+    f2 = TerrainMesh(a, 1000.0, 2080.0, 0.5, step=2).faces(1000.0, 2080.0)
+    assert len(f2["vertices"]) < len(f1["vertices"]) / 3
+    assert f1["pas_m"] == 0.5 and f2["pas_m"] == 1.0
+
+
 def _boites_libelles_simple(svg):
     """Boîtes des <text> du plan-clé (sans fond) : largeur estimée au glyphe (fs×0,56)."""
     out = []

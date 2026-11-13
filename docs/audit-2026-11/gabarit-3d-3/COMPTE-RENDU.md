@@ -129,6 +129,53 @@ pas (pas de faux positif). Rien d'inventé ailleurs.
 
 ---
 
+## LOT 5 — Temps d'ouverture borné — **FAIT**
+
+**Constat** : ~29 s sur un dénivelé de 66 m. C'est le MAILLAGE 3D (three.js) qui coûte — ~linéaire en
+sommets — pas la coupe ni le réseau.
+
+**Règle appliquée** :
+- La **coupe reste toujours en 0,5 m** (sampler step 1) : c'est elle qui porte les cotes.
+- Le **maillage 3D s'allège selon la taille du cadre** : 0,5 m → **1 m** → **2 m** (plafond), le plus fin
+  qui tient sous ~6 500 sommets (`_step_faces`, `scene.py`). Seules les FACES servies à la visionneuse
+  s'allègent ; la coupe et son échantillonneur ne bougent pas.
+- Les **cotes d'altitude de la vue 3D viennent du sol 0,5 m**, calculées côté serveur sur les mêmes
+  positions que les sommets natifs (`_cote_3d_sol_degage`), **pas du maillage allégé** → identiques quel que
+  soit l'allègement. Sur sol dégagé (hors emprise bâtie).
+- Le **pied dit ce qui est affiché** : « MNT LiDAR HD IGN · **coupe à 0,5 m · relief 3D allégé à 1 m** (ou
+  2 m) · acquisition … » ; si non allégé : « maille de 0,5 m » comme avant.
+
+**Preuve — maillage & cotes** (`scripts/gabarit_3d3_lot5_preuve.py`, `lot5_maillage.json`, 10 parcelles
+constructibles) : sommets **médians 28 350 → 3 672** (BZ1065 42 180 → 2 900, BL0111 67 704 → 4 368) ;
+**écart de cote 3D avant/après = 0,00 m** sur les 10 (les cotes viennent du sol 0,5 m).
+
+**Preuve — ouverture navigateur** (`scripts/gabarit_3d3_ouverture.mjs`, `lot5_ouverture.txt`, WebKit, clic →
+1ʳᵉ image, hors réseau, process préchauffé) :
+
+| parcelle | sommets | maille 3D | ouverture |
+|---|---|---|---|
+| BZ1065 (la lente) | 2 900 | 2 m | **1,96 s** |
+| CZ0589 | 2 346 | 2 m | 1,28 s |
+| AP1022 | 2 112 | 2 m | 1,28 s |
+| DX0049 | 1 960 | 2 m | 1,18 s |
+| AW2362 | 5 520 | 1 m | 1,94 s |
+| CW1762 | 5 056 | 1 m | 1,61 s |
+| HE0412 | 3 922 | 1 m | 1,38 s |
+| EX0029 | 3 672 | 1 m | 1,20 s |
+| CT0442 | 2 806 | 1 m | 1,02 s |
+
+→ **les 9 parcelles constructibles ouvrent sous 2 s** (toutes < 3 s). BZ1065, qui tenait ~5 s en 0,5 m,
+ouvre en **1,96 s** à 2 m, **cotes identiques** (409,8 / 396,6 m avant comme après).
+
+**Limite honnête** : l'allègement est plafonné à 2 m. Une parcelle immense (cadre > ~250 m, ex. une emprise
+foncière publique non bâtie) peut dépasser 3 s même à 2 m — ce sont des cas non constructibles (sans bouton
+3D). Les parcelles **constructibles** mesurées restent toutes sous 3 s.
+
+**Contrôles** : `test_step_faces_allege_selon_taille` (0,5 → 1 → 2 m, plafonné),
+`test_faces_allegees_moins_de_sommets_coupe_inchangee`.
+
+---
+
 ## Captures (entières)
 - **BZ1065** : `BZ1065_1440x694.png`, `BZ1065_1920x1080.png` (sol 0,5 m, bosse partie, légende entière,
   pied « maille de 0,5 m · acquisition 14/09/2023 »).
@@ -140,10 +187,10 @@ pas (pas de faux positif). Rien d'inventé ailleurs.
 
 La vue reste **pilote ADMIN** (`_exiger_admin`). Avant de l'ouvrir aux clients :
 
-1. **Performance des grandes/fortes pentes.** À 0,5 m, une parcelle à fort dénivelé (fenêtre large = ×4
-   pixels) construit son maillage en **~5 à 30 s** (mesuré : 66 m de dénivelé → 29 s, `wms=0` donc c'est le
-   MAILLAGE, pas le réseau). À borner : maille adaptative / niveau de détail selon la taille de fenêtre, ou
-   pré-calcul serveur. En dessous de ~10 m de dénivelé, l'ouverture est sous la seconde à chaud.
+1. **Performance (traitée au LOT 5).** Le maillage 3D est désormais **allégé selon la taille** (0,5 → 1 → 2 m)
+   → les parcelles constructibles ouvrent **sous 2 s** (cf. LOT 5). Reste un plafond à 2 m : une emprise
+   immense (non constructible, sans bouton 3D) peut dépasser 3 s — un niveau de détail serveur ou un
+   pré-calcul lèverait ce dernier cas si on voulait l'ouvrir.
 2. **Cache mutualisé.** Le cache (`data/mnt_hr_cache/`, 1 Go) est **local au process** ; en prod multi-worker
    il faut un cache partagé (volume commun) ou **pré-ingérer l'île en 0,5 m** (~37,5 Go, estimé) pour un
    premier accès toujours chaud. Le plafond 1 Go est à relever pour un usage insulaire.
