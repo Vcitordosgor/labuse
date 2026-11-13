@@ -51,6 +51,8 @@ LECTURES: tuple[Lecture, ...] = (
       "lue uniquement dans le rebuild de la table dérivée parcel_adresse (jointure id_ban, matérialisation perf) — état interne, aucun robinet servi directement par ce fichier."),
     L("adresses", "gabarit/scene.py", None, None,
       "GABARIT-3D-1 (pilote admin) — _adresse() lit numero/voie de l'adresse BAN de l'idu pour l'ÉTIQUETTE d'en-tête de la visionneuse 3D et des coupes ; libellé affiché, aucun chiffre du registre servi (invariant du pilote : scene.regles == gabarit_detail)."),
+    L("lidar_dalle_grille", "gabarit/sol.py", None, None,
+      "GABARIT-3D-3 (LOT 2, pilote admin) — sol.acquisition() lit max(date_fin) des dalles LiDAR HD couvrant la fenêtre pour afficher la DATE D'ACQUISITION au pied de la visionneuse 3D ; métadonnée de provenance affichée, aucun chiffre du registre servi."),
     L("annonces", "api/events.py", None, None,
       "La table `annonces` d'events.py est la TRACE des annonces admin (chaîne 3, M85-B) : CREATE + INSERT seulement (l.130/1397), jamais lue — rien à voir avec BODACC, aucun robinet servi."),
     L("arcep_immeubles", "api/app.py", "fibre_parcelle", "fiche_parcelle_fibre",
