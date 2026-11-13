@@ -656,6 +656,12 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
   const coupes = useMemo(() => (scene?.coupes || []).map((c) => String((c as { label?: string }).label ?? '')), [scene])
   const acq = scene?.meta?.acquisition_date ? String(scene.meta.acquisition_date) : '—'
   const acqFr = acq.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3/$2/$1')   // 2023-08-12 → 12/08/2023 (pt 6)
+  // LOT 2 — le pied annonce CE QUI EST RÉELLEMENT SERVI : maille lue dans la donnée (0,5 m LiDAR HD, ou
+  // 1 m en repli) + message clair si repli (relief fin indisponible).
+  const mailleM = Number(scene?.meta?.maille_m ?? 1)
+  const mailleFr = mailleM === 0.5 ? '0,5 m' : `${String(mailleM).replace('.', ',')} m`
+  const solRepli = Boolean(scene?.meta?.sol_repli)
+  const solMsg = scene?.meta?.sol_message ? String(scene.meta.sol_message) : ''
   const axeSel = coupes.includes(axe) ? axe : (coupes[0] as 'A' | 'B' | undefined) ?? null
   const coupeTitre = useMemo(() => { const c = (scene?.coupes || []).find((c) => String((c as { label?: string }).label ?? '') === axeSel); return c ? String((c as { titre?: string }).titre ?? '') : '' }, [scene, axeSel])
 
@@ -750,8 +756,8 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
                 : <p className="text-[12px] text-txt-mut">Aucune coupe disponible.</p>}
             </div>
           </div>
-          <p className="border-t border-line px-3 py-1.5 text-[10px] text-txt-dim">
-            MNT LiDAR HD IGN · maille de 1 m · acquisition {acqFr} · cotes indicatives · courbes tous les mètres, trait fort tous les 5 m · H = V.
+          <p data-gab3d-pied className="border-t border-line px-3 py-1.5 text-[10px] text-txt-dim">
+            MNT LiDAR HD IGN · maille de {mailleFr} · acquisition {acqFr}{solRepli ? <span className="text-amber"> · {solMsg}</span> : ''} · cotes indicatives · courbes tous les mètres, trait fort tous les 5 m · H = V.
           </p>
         </div>
       )}

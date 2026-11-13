@@ -91,6 +91,29 @@ def charger_surface(minx: float, miny: float, maxx: float, maxy: float,
         return None
 
 
+def charger_surface_sol(db, minx: float, miny: float, maxx: float, maxy: float, marge: float = 170.0):
+    """GABARIT-3D-3 (LOT 2) — surface du SOL servie : LiDAR HD 0,5 m (copie locale OU appel WMS court),
+    REPLI sur le fond 1 m si le service ne répond pas et qu'aucune copie n'existe. Rend (_Surface|None,
+    meta) où `meta` DIT ce qui est réellement servi : maille, date d'acquisition lue dans la donnée,
+    source ('lidar_05m'/'copie'/'fond_1m'), repli. Jamais d'écran cassé, jamais un relief inventé."""
+    from . import sol
+    chemin, source = sol.obtenir_fenetre(minx, miny, maxx, maxy, marge)
+    if chemin is not None:
+        try:
+            a, ox, oy, pas = sol.lire_tif(chemin)
+            return _Surface(a, ox, oy, pas), {
+                "maille_m": sol.RES, "acquisition": sol.acquisition(db, minx, miny, maxx, maxy),
+                "source": source, "repli": False, "message": None}
+        except Exception:  # noqa: BLE001 — copie illisible → repli 1 m
+            pass
+    surf = charger_surface(minx, miny, maxx, maxy, marge=marge)
+    fm = _fond_meta()
+    return surf, {
+        "maille_m": 1.0, "acquisition": fm.get("acquisition_date"), "source": "fond_1m", "repli": True,
+        "message": ("Relief fin (0,5 m) indisponible — repli sur le relief 1 m." if surf
+                    else "Relief indisponible pour cette parcelle.")}
+
+
 def sample_points(pts_2975: list[tuple[float, float]]) -> list[Optional[float]]:
     """Altitude ponctuelle (plus proche pixel) — contrôles/cotes isolées."""
     ds = _cog()
@@ -634,9 +657,12 @@ def _build_scene(db, idu: str) -> Scene:
     reculs = _geom_2975(getattr(gr, "retraitsGeoJSON", None))
     excl = _geom_2975(getattr(gr, "exclusionsGeoJSON", None))
 
-    # UN SEUL maillage à 1 m, borné à la parcelle + abords (plus de fenêtre 150 m ni de maillage 2 m)
+    # LOT 2 — le maillage ET les coupes lisent le SOL mesuré (LiDAR HD 0,5 m par parcelle, copie locale
+    # ou WMS ; repli 1 m signalé). Borné à la parcelle + abords. `sol_meta` dit ce qui est servi.
     bounds_1m = (minx - _MARGE_FACES_1M, miny - _MARGE_FACES_1M, maxx + _MARGE_FACES_1M, maxy + _MARGE_FACES_1M)
-    surf = charger_surface(minx, miny, maxx, maxy, marge=_MARGE_FACES_1M + 10)
+    surf, sol_meta = charger_surface_sol(db, minx, miny, maxx, maxy, marge=_MARGE_FACES_1M + 10)
+    fond_meta = {**fond_meta, "maille_m": sol_meta["maille_m"], "acquisition_date": sol_meta["acquisition"],
+                 "sol_source": sol_meta["source"], "sol_repli": sol_meta["repli"], "sol_message": sol_meta["message"]}
     sampler = _Sampler(surf, bounds_1m) if surf else None
 
     terrain, coupes, axes_plan, coupes_etat = {}, [], [], []
