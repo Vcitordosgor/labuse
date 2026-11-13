@@ -614,15 +614,21 @@ def _sous_zone_constructible(ctx: ParcelContext):
     return None
 
 
-# EXPORTS-FIX-3 LOT 1 — SEUILS de « portion U/AU réelle ». Une parcelle dont la zone DOMINANTE
-# n'est pas constructible (A/N) ne devient constructible « à cheval » que si sa part U/AU est une
-# VRAIE surface : au-delà de ces deux seuils, qui sont exactement la frontière de la classe
-# « infime » du mandat (moins de 1 % OU moins de 50 m²). En deçà (nulle ou infime), l'intersection
-# U/AU est un éclat de numérisation / un contact de limite — aucune capacité n'est servie, la
-# parcelle reste sa zone dominante. La famille U/AU est lue par `labuse_zone_famille(subtype)` (la
+# EXPORTS-FIX-3 LOT 1 — SEUIL de « portion U/AU réelle ». Une parcelle dont la zone DOMINANTE n'est
+# pas constructible (A/N) ne devient constructible « à cheval » que si sa part U/AU est une VRAIE
+# surface, mesurée en VALEUR ABSOLUE (≥ 50 m² — l'ordre de grandeur d'une emprise bâtissable).
+#
+# RÉVISION (revue) — le seuil est PUREMENT ABSOLU, SANS plancher en pourcentage. Un plancher à 1 %
+# PÉNALISE les grandes parcelles : 130 parcelles A/N de 18 à 45 ha portent une vraie frange U/AU de
+# 150 à 3 500 m² qui fait < 1 % — les classer non constructibles leur retirait à tort une capacité
+# RÉELLE (ex. 97411000CH0052 : 44,7 ha, 3 489 m² d'U/AU = 0,78 %). Seul compte donc « y a-t-il ≥ 50 m²
+# de vraie U/AU ? » ; la capacité est ensuite calculée sur CETTE portion (bornée, cf. parcel_
+# faisabilite). Les éclats fantômes de l'audit (BI0351 0,09 m², BT0053 16 m², DN0096 14 m², HN0194
+# 2 m²) sont tous < 50 m² → écartés. La famille U/AU est lue par `labuse_zone_famille(subtype)` (la
 # source unique du code : tient sur 1AU/2AU et les libellés littéraux — Bras-Panon, Saint-Pierre),
 # jamais par le préfixe du nom.
 SEUIL_UAU_REELLE_M2 = 50.0
+#: conservé pour la MESURE/le rapport (frontière de la classe « infime » du mandat), PAS un gate.
 SEUIL_UAU_REELLE_PCT = 1.0
 
 # Surface U/AU RÉELLE (m²) d'une parcelle + part (%) de sa surface dessinée. Intersection
@@ -657,11 +663,12 @@ def _uau_reelle(session: Session, parcel_id: int) -> tuple[float, float]:
     return m2, pct
 
 
-def _uau_portion_reelle(uau_m2: float, uau_pct: float) -> bool:
-    """EXPORTS-FIX-3 LOT 1 — True si la portion U/AU est une VRAIE surface (classe « au-delà » du
-    mandat : ≥ 50 m² ET ≥ 1 %). False pour « nulle » (0) et « infime » (< 1 % OU < 50 m²) : la
-    parcelle ne porte alors aucune capacité à cheval (fonction pure, verrouillée par test)."""
-    return uau_m2 >= SEUIL_UAU_REELLE_M2 and uau_pct >= SEUIL_UAU_REELLE_PCT
+def _uau_portion_reelle(uau_m2: float, uau_pct: float = 0.0) -> bool:
+    """EXPORTS-FIX-3 LOT 1 — True si la portion U/AU est une VRAIE surface : ≥ 50 m² (valeur ABSOLUE,
+    sans plancher en %). False pour « nulle » (0) et les éclats < 50 m². `uau_pct` n'entre PAS dans la
+    décision (un plancher en % retirerait à tort la capacité d'une vraie frange U/AU sur une grande
+    parcelle) ; il reste lu par le rapport. Fonction pure, verrouillée par test."""
+    return uau_m2 >= SEUIL_UAU_REELLE_M2
 
 
 def _uau_gate_actif() -> bool:
@@ -723,30 +730,32 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # cette portion (fini le tout-ou-rien). RESIDUEL-1 — toujours actif (chemin unique).
     alt = None
     phantom_ecarte = False
+    sous_zone_uau_m2 = None          # aire U/AU RÉELLE quand la capacité vient d'une sous-zone (à cheval A/N)
     if (rules is None or not rules.constructible_neuf
             or rules.habitat == "interdit"):
         alt = _sous_zone_constructible(ctx)
         if alt is not None:
             # EXPORTS-FIX-3 LOT 1 — GARDE D'AIRE RÉELLE : la sous-zone U/AU n'ouvre la
-            # constructibilité QUE si la portion U/AU est une vraie surface (≥ 50 m² ET ≥ 1 %).
+            # constructibilité QUE si la portion U/AU est une vraie surface (≥ 50 m², valeur absolue).
             # Une parcelle 100 % A/N peut toucher un éclat U/AU de quelques m² (contact de limite,
             # bruit de numérisation) : `_sous_zone_constructible` le choisissait et rendait TOUTE la
             # parcelle constructible (ex. 97408000BI0351 : éclat « UB » de 0,09 m² → 24 437 m² de
-            # plancher fantôme). On mesure l'aire réelle ; en deçà des seuils, la parcelle reste sa
-            # zone dominante (non constructible) — aucune capacité sans surface réelle en U/AU.
+            # plancher fantôme). On mesure l'aire réelle ; sous 50 m², la parcelle reste sa zone
+            # dominante (non constructible) — aucune capacité sans surface réelle en U/AU.
             uau_m2, uau_pct = _uau_reelle(session, parcel_id)
             ctx.uau_reelle = {"m2": uau_m2, "pct": uau_pct, "sous_zone": alt.code}
             if not _uau_gate_actif() or _uau_portion_reelle(uau_m2, uau_pct):
                 rules = alt
+                sous_zone_uau_m2 = uau_m2
                 ctx.contraintes.libelles.append(
                     f"Zone dominante « {ctx.zone} » non constructible — capacité calculée sur la "
-                    f"portion U/AU réelle (~{uau_m2:.0f} m², {uau_pct:.1f} % de la parcelle ; "
+                    f"SEULE portion U/AU réelle (~{uau_m2:.0f} m², {uau_pct:.2f} % de la parcelle ; "
                     f"sous-zone « {alt.code} »), assiette clippée.")
             else:
                 phantom_ecarte = True
-            # sinon : portion U/AU infime/nulle → `rules` reste la zone dominante (A/N) non
-            # constructible ; estimate_capacity rendra « non constructible en zone <dominante> »
-            # (jamais un chiffre sur une portion qui n'existe pas réellement).
+            # sinon : éclat U/AU < 50 m² → `rules` reste la zone dominante (A/N) non constructible ;
+            # estimate_capacity rendra « non constructible en zone <dominante> » (jamais un chiffre sur
+            # une portion qui n'existe pas réellement).
     if rules is None:
         # EXPORTS-FIX-3 LOT 1 — une sous-zone U/AU a été ÉCARTÉE par la garde d'aire réelle, mais la
         # zone dominante (A/N) n'est pas calibrée au PLU de la commune (resolve_zone → None). La
@@ -984,6 +993,17 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             else:
                 vide_raison = "reculs"
 
+    # EXPORTS-FIX-3 LOT 1 — parcelle à cheval A/N servie sur une SOUS-ZONE U/AU : l'emprise est
+    # BORNÉE à la portion U/AU RÉELLE mesurée. C'est ce qui manquait quand « calculer sur la seule
+    # portion » ne suffisait pas seul : le moteur gabarit pouvait bâtir sur TOUTE la parcelle, et le
+    # clip legacy par la part arrondie (`_pct_constructible`) retombait sur le terrain entier dès que
+    # la part < 0,5 % s'arrondissait à 0 %. Borne STRICTE (ne fait que réduire, jamais augmenter) :
+    # sur 97408000BI0351 elle aurait plafonné l'emprise à 0,09 m² (mais la parcelle est déjà écartée
+    # par la garde d'aire réelle) ; sur les franges réelles (ex. 97411000CH0052, 3 489 m²) elle garde
+    # la capacité sur le vrai morceau.
+    if sous_zone_uau_m2 is not None:
+        emprise = min(emprise, sous_zone_uau_m2 * k_cont)
+
     # ── EXIGU-FIX-1 — ré-examen géométrique AVANT de conclure « terrain exigu » ──────────────────
     # Les deux chemins (gabarit, legacy) ont fixé `emprise` et `vide_raison`. Si l'emprise tombe sous
     # le seuil, le code d'origine classait la parcelle `terrain_exigu` (« trop étroit ») — à tort sur
@@ -1027,6 +1047,11 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     pct_c = _pct_constructible(ctx)
     if pct_c is not None and 0 < pct_c < 100:
         surface_assiette = ctx.surface_m2 * pct_c / 100.0
+    # EXPORTS-FIX-3 LOT 1 — sous-zone U/AU (à cheval A/N) : la surface d'assiette (plafonds CES/pleine
+    # terre) est la portion U/AU RÉELLE mesurée, jamais le terrain entier via une part arrondie à 0 %
+    # (`_pct_constructible` arrondit à 0,1 pt → une frange < 0,05 % retombait sur toute la parcelle).
+    if sous_zone_uau_m2 is not None:
+        surface_assiette = min(surface_assiette, sous_zone_uau_m2 * ctx.terrain_sur_dessin)
 
     # ZONE-1 : sur parcelle à cheval, le bilan LE DIT — parts servies (modulation + contexte éco).
     if ctx.a_cheval and ctx.zone_parts:

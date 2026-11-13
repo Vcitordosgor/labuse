@@ -22,22 +22,21 @@ from sqlalchemy import text
 
 # ── PURS (sans base) : seuils de portion U/AU réelle ─────────────────────────
 def test_uau_portion_reelle_seuils():
-    from labuse.faisabilite.db import (SEUIL_UAU_REELLE_M2, SEUIL_UAU_REELLE_PCT,
-                                       _uau_portion_reelle)
-    assert SEUIL_UAU_REELLE_M2 == 50.0 and SEUIL_UAU_REELLE_PCT == 1.0
-    # classe « nulle » (0) → jamais de capacité.
-    assert _uau_portion_reelle(0.0, 0.0) is False
-    # classe « infime » : les 4 cas de l'audit (BI0351 0,09 m², HN0194 1,16 m², DN0096 14 m²,
-    # BT0053 16 m²) sont tous < 50 m² ET < 1 % → jamais de capacité.
-    assert _uau_portion_reelle(0.09, 0.0003) is False
-    assert _uau_portion_reelle(16.16, 0.011) is False
-    # infime par UN seul critère : 200 m² mais 0,5 % → infime (mandat : < 1 % OU < 50 m²).
-    assert _uau_portion_reelle(200.0, 0.5) is False
-    # 60 m² mais 0,9 % → infime (sous le 1 %).
-    assert _uau_portion_reelle(60.0, 0.9) is False
-    # classe « au-delà » : ≥ 50 m² ET ≥ 1 % → capacité servie sur la portion réelle.
-    assert _uau_portion_reelle(50.0, 1.0) is True
-    assert _uau_portion_reelle(1969.0, 60.4) is True
+    from labuse.faisabilite.db import SEUIL_UAU_REELLE_M2, _uau_portion_reelle
+    assert SEUIL_UAU_REELLE_M2 == 50.0
+    # seuil PUREMENT ABSOLU (≥ 50 m²), sans plancher en %.
+    # « nulle » (0) et éclats < 50 m² → jamais de capacité : les 4 cas de l'audit (BI0351 0,09 m²,
+    # HN0194 1,16 m², DN0096 14 m², BT0053 16 m²) sont tous < 50 m².
+    assert _uau_portion_reelle(0.0) is False
+    assert _uau_portion_reelle(0.09) is False
+    assert _uau_portion_reelle(16.16) is False
+    # ≥ 50 m² → vraie surface, même sous 1 % (une frange U/AU sur une grande parcelle garde sa
+    # capacité, calculée sur CETTE portion). 200 m² / 0,5 % et 3 489 m² / 0,78 % passent.
+    assert _uau_portion_reelle(200.0, 0.5) is True
+    assert _uau_portion_reelle(3489.0, 0.78) is True
+    assert _uau_portion_reelle(50.0) is True
+    # juste sous le seuil → écarté.
+    assert _uau_portion_reelle(49.9) is False
 
 
 # ── PURS (sans base) : ordre des motifs (LOT 2, `potentiel_batir._assemble`) ──
@@ -130,7 +129,7 @@ def test_phantome_uau_non_constructible(idu):
         if pid is None:
             pytest.skip(f"parcelle {idu} absente")
         m2, pct = _uau_reelle(s, pid)
-        assert m2 < 50.0 or pct < 1.0, f"{idu} n'est pas infime (uau={m2:.1f} m², {pct:.2f} %)"
+        assert m2 < 50.0, f"{idu} n'est pas un éclat < 50 m² (uau={m2:.1f} m²)"
         ctx, f = parcel_faisabilite(s, pid)
         assert f.constructible is False, f"{idu} reste constructible (cause={f.cause})"
         assert (f.fourchette or {}).get("surface_plancher_m2") in (None, 0), \
@@ -225,11 +224,37 @@ def test_a_cheval_reelle_garde_sa_capacite():
         if pid is None:
             pytest.skip(f"parcelle {A_CHEVAL_REELLE} absente")
         m2, pct = _uau_reelle(s, pid)
-        assert m2 >= 50.0 and pct >= 1.0
+        assert m2 >= 50.0
         ctx, f = parcel_faisabilite(s, pid)
         assert f.constructible is True
         assert (f.fourchette or {}).get("surface_plancher_m2", 0) > 0
         # la capacité porte sur la portion U/AU, pas sur toute la parcelle.
         assert ctx.uau_reelle and ctx.uau_reelle["m2"] < ctx.surface_m2
+    finally:
+        s.close()
+
+
+# Grande parcelle A/N (18–45 ha) avec une VRAIE frange U/AU >= 150 m² mais < 1 % : le seuil absolu
+# (≥ 50 m², sans plancher en %) lui garde sa capacité, calculée sur la SEULE portion réelle (bornée).
+A_CHEVAL_GRANDE = "97411000CH0052"   # Saint-Denis, 44,7 ha, 3 489 m² U/AU = 0,78 %
+
+
+@pytest.mark.reel
+def test_grande_parcelle_frange_uau_sous_1pct_garde_capacite():
+    from labuse.faisabilite.db import parcel_faisabilite, _uau_reelle
+    s = _session()
+    try:
+        pid = s.execute(text("SELECT id FROM parcels WHERE idu=:i"),
+                        {"i": A_CHEVAL_GRANDE}).scalar()
+        if pid is None:
+            pytest.skip(f"parcelle {A_CHEVAL_GRANDE} absente")
+        m2, pct = _uau_reelle(s, pid)
+        assert m2 >= 150.0 and pct < 1.0, f"témoin inattendu (uau={m2:.0f} m², {pct:.2f} %)"
+        ctx, f = parcel_faisabilite(s, pid)
+        assert f.constructible is True, "une frange U/AU réelle < 1 % ne doit pas perdre sa capacité"
+        sdp = (f.fourchette or {}).get("surface_plancher_m2") or 0
+        assert sdp > 0
+        # capacité BORNÉE à la portion U/AU réelle (jamais toute la parcelle de 44 ha).
+        assert ctx.uau_reelle and ctx.uau_reelle["m2"] < 0.01 * ctx.surface_m2
     finally:
         s.close()
