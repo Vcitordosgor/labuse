@@ -196,12 +196,20 @@ régénéré) :
 **Piège levé (durable).** La fiche est servie depuis un cache (`fiche_cache` L1 par worker + L2 en base)
 dont la clé ne portait QUE la fraîcheur des données — un correctif de libellé STOCKÉ dans la fiche (ex.
 le PPR « hors zone rouge », produit par `servitudes._ppr_ligne` et rangé dans `aleas.liste[].libelle`)
-restait servi périmé. Ajout d'un jeton `_FICHE_CODE_REV` à la clé du cache : à incrémenter à chaque
-correctif qui change un libellé stocké dans la fiche.
+restait servi périmé. Ajout d'un jeton `_FICHE_CODE_REV` à la clé du cache. Ce jeton **se déduit seul de
+la révision git déployée** (`git:<sha>` ; prod = checkout git sur le VPS) : tout nouveau commit invalide
+le cache de fiche sans geste manuel. **Limite connue** : un déploiement sans `.git` (wheel) retombe sur
+une constante de repli (`_FICHE_CODE_REV_FALLBACK`), à bumper à la main.
 
-**Non corrigé (dit tel quel, règle B)** : Comparatif « pas d'exclusion automatique » (message cascade
-partagé, exact en soi — la constructibilité est déjà dite) ; Dossier « Logement sous conditions » non
-qualifié « extension d'habitation existante » (texte de règle PLU de la zone N non servi — non inventé).
+**3 derniers points (relecture 3) — faits ET cités :**
+- Comparatif, parcelle non constructible : « pas d'exclusion automatique » n'est PLUS montré (filtré à
+  l'affichage, `comparatif._contraintes_txt` ; le message partagé de la cascade n'est pas modifié).
+- Dossier zone N : « Logement » sous conditions → « Logement : extension d'un logement existant
+  seulement, sous conditions — voir le règlement de la zone » (`blocs/zonage._destinations`, famille A/N).
+- Jeton de cache auto-déduit de git (ci-dessus).
+
+**Non corrigé (hors mandat, à lister seulement)** : pages presque vides, carte du Comparatif, libellés
+« revenu médian » / « surface réelle », exports `md`/`html` legacy, estimation « maison » sur 4 bâtiments.
 
 ## Qualité (hook)
 
