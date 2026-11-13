@@ -1575,10 +1575,17 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
         if sec["id"] == "risques":
             absents += _lignes_verifie_rien(fiche)
         rows: list[str] = []
+        # EXPORTS-FIX-3 LOT 2 — sur une parcelle NON CONSTRUCTIBLE (le bloc potentiel porte une cause),
+        # RIEN n'est rangé sous l'en-tête « Ce qu'il reste à bâtir » : la surface au sol libre reste une
+        # mesure physique, mais son en-tête ne doit plus promettre du constructible (faute « d » de
+        # l'audit : « 19 186 m² sous Ce qu'il reste à bâtir » sur 97408000BI0351 non constructible).
+        _pv_nc = _v(valeurs, "potentiel_verdict")
+        _grp_masques = (_GROUPES_MASQUES | {"Ce qu'il reste à bâtir"}
+                        if (isinstance(_pv_nc, dict) and _pv_nc.get("cause")) else _GROUPES_MASQUES)
         for grp, lignes_grp in groupes.items():      # un en-tête de groupe UNE fois, jamais vide
             # EXPORTS-FIX-1 A8 — « Bilan indicatif » est un intitulé interne : ses lignes se rangent
             # dans la section sans cet en-tête (retiré, pas renommé — le libellé fiche fait foi).
-            if grp and grp not in _GROUPES_MASQUES:
+            if grp and grp not in _grp_masques:
                 rows.append(f'<tr class="grp"><td colspan="3"><strong>{esc(grp)}</strong></td></tr>')
             rows += lignes_grp
         if rows:
