@@ -1,6 +1,6 @@
-# MENAGE-PROD-1 — inventaire (étapes 0 et 1), lecture seule
+# MENAGE-PROD-1 — inventaire + exécution (étapes 0→F)
 
-Prod `ssh labuse-vps`. **Aucune suppression, aucune promotion, aucun déploiement.** `labuse purge-runs-morts --apply` INTERDIT (il ne protège pas la cascade servie). `dryrun_cascade_results` n'est dans AUCUN dump. Arrêt après l'étape 1 pour validation.
+Prod `ssh labuse-vps`. **Aucune promotion, aucun déploiement.** `labuse purge-runs-morts --apply` INTERDIT (il ne protège pas la cascade servie) — jamais lancé. `dryrun_cascade_results` n'est dans AUCUN dump. Suppressions **par égalité stricte uniquement**, sur la liste §A figée validée par Vic ; chaque geste autorisé explicitement. État : inventaire §0-1 + liste §A, puis exécution §B→§F **terminée** (df 7,6 → 25 Go, sauvegarde relancée verte).
 
 ## ÉTAPE 0 — Préalables ✓
 - **calcul-nuit gelé** : ligne commentée dans `/etc/cron.d/labuse` (« gelé le 13/11 sur ordre de Vic »). Sauvegarde du cron sortie de `/etc/cron.d` → `/root/labuse-cron.bak-20261113-freeze`.
@@ -108,3 +108,51 @@ Suppressions par **égalité stricte** uniquement. Tout run non listé est conse
 
 ### Place récupérée estimée
 TRUNCATE : ~1,6 Go (instantané). parcel_residuel_runs ~0,23 Go · dryrun_parcel_evaluations ~0,31 Go · score_labuse ~1,9 Go · parcel_p_score_v2 ~3,0 Go (via VACUUM FULL). dryrun_cascade_results (§D) ~9,3 Go. **Total ~16,3 Go.**
+
+---
+
+## §B — EXÉCUTION (14/11, fenêtre autorisée explicitement par Vic) — place provisoire
+
+**Un seul dump retiré : l'hebdo du 08/11**, et seulement après copie prouvée.
+- Copié serveur → Mac `~/labuse-backups/vps-hebdo/hebdo-labuse-labuse-20261108-133003.dump` (6,56 Go, 2043 s).
+- **sha256 identique** serveur = Mac : `8c90b5a9…672e8ca9` ✓.
+- Supprimé du serveur (copie prouvée). Aucun autre dump touché. df serveur **7,6 → 14 Go**.
+
+## §C — EXÉCUTION — tables de runs morts (chaque geste : transaction, contrôle des gardés avant COMMIT, VACUUM FULL, df, readyz 200)
+
+| Ordre | Table | Supprimé (égalité stricte) | Contrôle gardés | VACUUM | df après |
+|---|---|--:|---|---|--:|
+| 1 | p_model_candidates + p_model_dataset | TRUNCATE 4 316 630 + 2 166 145 | (tables mortes, 0 lecteur) | — | 14 → 16 Go |
+| 2 | parcel_residuel_runs seq 1,2,13 + en-têtes `residuel_runs` | 1 294 989 | seq 15/17/18 = 433 229 ✓ | FULL | 16 Go |
+| 3 | dryrun_parcel_evaluations (q_v11_m137, q_v13_sources1, q_v21, q_v22, q_v24) | 1 811 260 | q_v18_sources/q_v19_sources/q_v23 = 433 229 ✓ | FULL | 16 Go |
+| 4 | score_labuse q_v16 + en-tête `score_labuse_runs` | 431 663 | q_v18/q_v20/q_v23 = 433 229 ✓ | FULL (100 s) | 16 → 18 Go |
+| 5 | parcel_p_score_v2 (q_v11_m137, q_v16, q_v21, q_v22) + en-têtes `p_score_v2_runs` | 1 728 218 | q_v18/q_v20/q_v23 = 433 229 ✓ | FULL (34 s) | 18 → 21 Go |
+
+readyz 200 à chaque pas, aucun compte servi bougé. **Incident q_v21 fermé** : `ops_incidents` id 81 + 112, `resolu_at` posé 14/11, motif « q_v21 purgé, jamais promu ».
+
+## §D — EXÉCUTION — `dryrun_cascade_results` (dernier geste, autorisé explicitement par Vic ; table dans AUCUNE sauvegarde)
+- DELETE q_v21 + q_v22 + q_v24 = **46 170 379** lignes, en transaction. Contrôle avant COMMIT : q_v18_sources = 21 157 172, q_v19_sources = 21 097 100, q_v23 = 21 094 673 — **exacts** → COMMIT.
+- VACUUM FULL sous **surveillance df** (plancher 6 Go, annulation auto + rollback si franchi) : réécriture en ~4,5 min, **creux de place libre 7,3 Go** (jamais sous le plancher), `aborted=0`. Table **22 → 12 Go**.
+- Après : df **21 → 31 Go**, 3 comptes gardés intacts, readyz 200. (q_v19_sources servie et q_v23 candidate préservées.)
+
+## §E — Sauvegarde relancée VERTE + df final
+- `labuse jobs run backup-postgres` (invocation cron identique) : **rc=0 en 1166 s**. Nouveau dump `labuse-labuse-20261114-020727.dump` **6,56 Go** (plus petit que le 13/11 6,76 Go — les runs morts purgés n'y sont plus = cohérent). Rotation : **2 quotidiens gardés** (13/11 + 14/11), rien d'autre supprimé.
+- Un `pg_dump rc=0` relit **toutes** les tables servies sans erreur → **preuve d'intégrité bout-en-bout** après le ménage.
+- **df final : 25 Go libres** (75 % utilisé). Départ du ménage ≈ 7,6 Go → **+17,4 Go** récupérés sans agrandir le disque, conforme à l'estimation (~16,3 Go + l'hebdo 6,56 Go − le nouveau dump).
+
+## §F — Recompte §K bis par famille de zone canonique = §K ter (déjà fait, `DEPLOY-GROUPE-3.md`)
+La correction demandée (reconnaître U/AU par `subtype`/`typezone`, pas par le préfixe du `name`) **est le §K ter** de `reports/DEPLOY-GROUPE-3.md` (commit `0e1588a84`). Le ménage **n'a touché aucune de ses entrées** (score_labuse q_v20/q_v23 gardés à 433 229, géométries parcellaires et `spatial_layers` intactes) → ses chiffres tiennent à l'identique :
+
+| Classe U/AU réel (par `subtype`) | q_v20 (servi) | q_v23 (candidat) |
+|---|--:|--:|
+| au-delà (à-cheval légitime) | 4 959 | 7 712 |
+| infime | 196 | 2 217 |
+| **nulle (0 U/AU réel, phantom)** | **0** | **4 487** (HC 4 380 · bande 0 107 · aucune A/B/C/D) |
+
+- Run **servi (q_v20) propre** : 0 parcelle nulle. L'alarme « Excellente/Bonne servies à 0 m² » de §K bis était un **faux positif** (méthode par préfixe de nom) — **retirée**.
+- Phantom **uniquement dans q_v23** (4 487, introduites par le ré-examen exigu), **toutes HC** → le Score les met hors champ.
+- 10 parcelles vérifiées à la main (dont `97402000AB1039` = à-cheval légitime, et `97408000BI0351` = phantom HC).
+- **Correctif moteur côté `main`** (hors ménage) : `_sous_zone_constructible` doit refuser la sous-zone quand l'intersection U/AU réelle (`subtype`) est nulle, en gardant le clip quand elle est réelle.
+
+## Observation (sans action — hors liste validée)
+`/etc/cron.d/` contient **21 fichiers `labuse.bak-deploy-*`** (copies de sauvegarde du cron faites à chaque déploiement). Leur nom contient des points → **cron les ignore** (règle de nommage `run-parts`), donc **aucun double-lancement** ; seul `/etc/cron.d/labuse` est actif. C'est du **clutter inerte**, pas un risque. À proposer à Vic pour un ménage ultérieur (hors périmètre ici).
