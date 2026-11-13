@@ -127,28 +127,43 @@ contour entier, la voie et les repères B/B′ restent visibles — `cadre = tru
 → **Augmente aux 5 tailles**, pour les deux témoins, à l'ouverture comme après « Recentrer ». `cadre = true`
 partout (contour + voie + B/B′ visibles).
 
-### B2 — Les cotes d'altitude ne sont plus traversées par le contour blanc — **FAIT**
+### B2 — Les cotes d'altitude ne sont plus traversées par le contour blanc (ni par le bâti) — **FAIT (contrôle refait)**
 
-Les cotes (point haut / point bas) tombaient souvent SUR la limite → le contour blanc les traversait. On
-les décale vers l'INTÉRIEUR par un décalage **adaptatif** (8 directions × distances croissantes, on retient
-la position qui dégage la boîte au moindre déplacement, en préférant l'intérieur). Contrôle ajouté au
-harnais : `window.__gab3dCotesAudit()` projette le contour en pixels et teste l'intersection
-segment ↔ boîte du libellé.
+**Le premier contrôle était FAUX** (il annonçait 0 cote traversée alors que « 397,0 m » et « 595,6 m »
+l'étaient). Trois défauts : il testait (a) un contour en polygone GROSSIER (sommets du cadastre), pas le
+trait DRAPÉ qui suit le relief ; (b) la boîte de texte CONTENU (sans halo) ; (c) **pas le bâti du tout**.
 
-**Cotes traversées par le contour (hi ou bas), ouverture / Recentrer :**
+**Contrôle corrigé** (`window.__gab3dCotesAudit`), au PIXEL — « l'image fait foi » :
+- il **lit le rendu** (framebuffer) sous la boîte RÉELLE du texte (`getBoundingClientRect` + halo) et
+  compte les pixels du **contour blanc** (trait à son épaisseur réelle à l'écran, anti-alias compris) ;
+- il teste la **silhouette du bâti** (empreinte au pied ET au faîtage → toutes les faces du volume, quel
+  que soit l'ombrage) contre la boîte.
+- **Preuve qu'il est juste** : sur le placement ACTUEL (non corrigé), il répond « traversée » aux **10/10**
+  cas (2 témoins × 5 tailles) — conforme aux captures. L'ancien contrôle répondait « 0 traversée ».
+
+**Correctif du placement** : la cote est décalée vers l'intérieur (8 directions × distances croissantes),
+on retient la position qui dégage sa boîte (texte + halo) du contour drapé (± épaisseur) ET des
+silhouettes bâties, au moindre déplacement.
+
+**Cotes traversées (contour OU bâti), contrôle CORRIGÉ, ouverture / Recentrer :**
 
 | taille | BZ1065 avant → après | CM1658 avant → après |
 |---|---|---|
 | 1280×720  | oui → **non** | oui → **non** |
 | 1440×694  | oui → **non** | oui → **non** |
 | 1440×900  | oui → **non** | oui → **non** |
-| 1920×1080 | non → **non** | oui → **non** |
-| 2560×1300 | non → **non** | oui → **non** |
+| 1920×1080 | oui → **non** | oui → **non** |
+| 2560×1300 | oui → **non** | oui → **non** |
 
-→ **Aucune cote traversée après correctif** (10/10 : 2 témoins × 5 tailles, ouverture ET Recentrer).
+→ **Aucune des 4 cotes traversée après correctif** (10/10 : 2 témoins × 5 tailles, ouverture ET Recentrer),
+mesuré par le contrôle corrigé.
 
 ---
 
 ### Captures (1440×694)
-- `BZ1065_1440x694_before.png` / `BZ1065_1440x694_after.png`
-- `CM1658_1440x694_before.png` / `CM1658_1440x694_after.png`
+- Vue entière : `BZ1065_1440x694_before.png` / `_after.png`, `CM1658_1440x694_before.png` / `_after.png`.
+- **Preuve par l'image — recadrage agrandi 3× de chaque cote, avant / après** (`zoom/`) :
+  `BZ1065_cote3970_avant.png`→`_apres.png` (397,0 m : le trait blanc passe au milieu → dégagé),
+  `BZ1065_cote4098_*`, `CM1658_cote5956_avant.png`→`_apres.png` (595,6 m : sur le contour + angle du
+  volume gris → dégagé), `CM1658_cote5929_*`. (« avant » = placement brut `__gab3dRawCotes`, même
+  caméra/taille que « après ».)
