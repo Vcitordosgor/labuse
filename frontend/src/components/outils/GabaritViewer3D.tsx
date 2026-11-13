@@ -716,20 +716,24 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
                   </div>}
               {dispo && cote.cur != null && <div className="pointer-events-none absolute left-3 bottom-8 text-[10px] text-txt-dim">{cote.cur.toFixed(1).replace('.', ',')} m</div>}
             </div>
-            {/* à droite : plan-clé COMPACT (un seul titre) + légende */}
-            <div className="flex w-[320px] shrink-0 flex-col gap-2 overflow-y-auto bg-[#0f1216] p-3">
-              <div className="text-[11px] text-txt-mut">Plan-clé <span className="text-txt-ghost">— nord en haut</span></div>
-              <img data-gab3d-plan src={gabPlanSvgUrl(idu, 'sombre', sid, 210, 176)} alt="Plan-clé" className="w-full rounded border border-line" />
-              <div data-gab3d-legende className="mt-1 flex flex-col gap-1 text-[11px] text-txt-mut">
+            {/* à droite : plan-clé COMPACT (un seul titre) + légende. LOT 4 — le plan-clé RÉTRÉCIT (flex-1,
+                object-contain) pour laisser la légende ENTIÈREMENT visible à toute hauteur ; la légende et
+                les titres ne rétrécissent pas (shrink-0) → jamais coupés par le panneau de la coupe. */}
+            <div className="flex w-[320px] min-h-0 shrink-0 flex-col gap-2 bg-[#0f1216] p-3">
+              <div className="shrink-0 text-[11px] text-txt-mut">Plan-clé <span className="text-txt-ghost">— nord en haut</span></div>
+              <div className="flex min-h-0 flex-1 items-start justify-center">
+                <img data-gab3d-plan src={gabPlanSvgUrl(idu, 'sombre', sid, 210, 176)} alt="Plan-clé" className="h-full w-full rounded border border-line object-contain object-top" />
+              </div>
+              <div data-gab3d-legende className="mt-1 flex shrink-0 flex-col gap-1 text-[11px] text-txt-mut">
                 {LEG.map(([c, lab]) => (
                   <div key={lab} className="flex items-center gap-2"><span className="inline-block h-2 w-4 rounded-sm" style={{ background: c }} />{lab}</div>
                 ))}
               </div>
-              <p className="mt-1 text-[9px] leading-snug text-txt-ghost">Détails techniques — scène {scene.scene_id}</p>
+              <p className="mt-1 shrink-0 text-[9px] leading-snug text-txt-ghost">Détails techniques — scène {scene.scene_id}</p>
             </div>
           </div>
           {/* en bas : en-tête (titre + datum + Agrandir, pt 1) puis l'aperçu qui REMPLIT son cadre (H = V, ≥ 11 px) */}
-          <div className="flex min-h-[300px] flex-1 flex-col overflow-hidden border-t border-line bg-[#0f1216]">
+          <div data-gab3d-coupe-panneau className="flex min-h-[300px] flex-1 flex-col overflow-hidden border-t border-line bg-[#0f1216]">
             <div className="flex items-center justify-between gap-2 border-b border-line/60 px-3 py-1">
               <div data-gab3d-coupe-titre className="truncate text-[12px] font-semibold text-txt">{coupeTitre}</div>
               <div className="flex shrink-0 items-center gap-3">
