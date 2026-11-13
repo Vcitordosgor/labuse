@@ -139,6 +139,18 @@ def _pct(r, k, suffixe="%"):
     return f"{x} {suffixe}" if x is not None else None
 
 
+def _contraintes_txt(r):
+    """EXPORTS-FIX-3 LOT 2 (#1) — liste des contraintes de la colonne. Sur une parcelle NON
+    CONSTRUCTIBLE, on NE MONTRE PAS le « pas d'exclusion automatique » du PPR partiel : il rassurerait
+    à tort alors que le verdict est « non constructible ». On ne touche PAS au message partagé de la
+    cascade ; on le filtre seulement ici, dans ce cas. (Le message reste visible sur une parcelle
+    constructible, où il a du sens.)"""
+    cs = list(r.get("contraintes") or [])
+    if _est_non_constructible(r):
+        cs = [c for c in cs if "exclusion automatique" not in (c or "").lower()]
+    return " · ".join(esc(c) for c in cs) if cs else "aucune relevée"
+
+
 def _bati_existant(r):
     """EXPORTS-FIX-3 LOT 3 (#5) — UNE valeur de bâti, celle de la fiche (etat_bien). Non mesuré
     (trace aérienne seule) → « bâti détecté, à vérifier » (jamais « 1 % » là où la fiche ne mesure
@@ -189,8 +201,7 @@ _LIGNES = [
     # OUTILS-P1-1 (pt 3) — statistique de SECTEUR préfixée « Secteur : » (comme à l'écran).
     ("Assainissement", "s", lambda r: (f"Secteur : {esc(r.get('assainissement'))}"
                                        if r.get("assainissement") else None)),
-    ("Contraintes relevées", "s", lambda r: (" · ".join(esc(c) for c in (r.get("contraintes") or []))
-                                             if (r.get("contraintes") or []) else "aucune relevée")),
+    ("Contraintes relevées", "s", lambda r: _contraintes_txt(r)),
 ]
 
 _BADGE = {"s": ("s", "sourcé"), "e": ("e", "estimé")}

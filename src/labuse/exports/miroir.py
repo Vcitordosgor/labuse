@@ -1325,7 +1325,8 @@ def _bloc_reglement(valeurs: dict[str, Valeur]) -> str:
     from .blocs.zonage import _destinations, _regles
     v = valeurs.get("reglement_plu_bloc")
     z = (v.valeur if v else None) or {}
-    corps = _regles(z) + _destinations(z)
+    # EXPORTS-FIX-3 LOT 3 (#2) — passe la famille de zone pour qualifier « Logement » sous conditions en A/N.
+    corps = _regles(z) + _destinations(z, _v(valeurs, "zone_plu_famille"))
     if isinstance(z, dict) and z.get("_prescriptions_verifiables") is False:
         motif = z.get("_prescriptions_motif") or "aucun document de prescriptions publié pour cette commune"
         corps += aside(f"<strong>Prescriptions non vérifiables sur cette commune</strong> — {esc(motif)}. "

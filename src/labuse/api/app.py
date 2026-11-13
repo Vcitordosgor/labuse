@@ -7410,9 +7410,30 @@ _FICHE_VER_LOCK = threading.Lock()
 # L1/L2) ne portait QUE la fraîcheur des données (data_sources + tuyau_rev), jamais le code. Un
 # correctif de LIBELLÉ porté par la DONNÉE de fiche (ex. le libellé PPR « hors zone rouge » produit par
 # `servitudes._ppr_ligne` et STOCKÉ dans `aleas.liste[].libelle`) restait donc servi depuis le cache,
-# périmé. Ce jeton est AJOUTÉ à la version : le bumper invalide tout le cache de fiche (il se recalcule
-# à la demande). À incrémenter à chaque correctif qui change le CONTENU stocké d'une fiche.
-_FICHE_CODE_REV = "2026-11-14-exports-fix-3"
+# périmé. Ce jeton est AJOUTÉ à la version : tout changement de jeton invalide le cache (recalcul à la
+# demande).
+#
+# RÉVISION (relecture) — le jeton se DÉDUIT de la révision git déployée (la prod est un checkout git sur
+# le VPS, cf. deploy.sh) : tout nouveau commit change la clé → le cache se recalcule SANS geste manuel.
+# LIMITE CONNUE (dite en clair) : un déploiement SANS `.git` (wheel/pip) retombe sur la constante de
+# repli ci-dessous, qui elle est à bumper à la main. Calculé UNE fois à l'import (git borné à 2 s).
+_FICHE_CODE_REV_FALLBACK = "2026-11-14-exports-fix-3"
+
+
+def _derive_fiche_code_rev() -> str:
+    try:
+        import subprocess
+        sha = subprocess.run(
+            ["git", "-C", str(Path(__file__).resolve().parent), "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=2)
+        if sha.returncode == 0 and sha.stdout.strip():
+            return "git:" + sha.stdout.strip()
+    except Exception:  # noqa: BLE001 — pas de git (wheel) : repli constante (limite connue)
+        pass
+    return _FICHE_CODE_REV_FALLBACK
+
+
+_FICHE_CODE_REV = _derive_fiche_code_rev()
 
 # ───────────────────────── VITESSE-2 (Lot 7) — CACHE DE FICHE PARTAGÉ (base) ─────────────────────────
 # Le `_FICHE_CACHE` ci-dessus est PAR WORKER : avec 5 workers, une fiche ouverte sur l'un reste froide
