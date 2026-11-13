@@ -1635,6 +1635,14 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                 if _has_sdp and q == "capacite_logements":
                     ph = ("Capacité en logements : non chiffrée ici — le potentiel relève des droits "
                           "à bâtir résiduels (la SDP ci-dessus), pas un programme de logements.")
+                # EXPORTS-FIX-3 LOT 3 (#d/#j) — HT0538 : « 614 m² de plancher » et « capacité nulle »
+                # ne cohabitent plus sans explication. Quand une SDP résiduelle est servie, la surface
+                # VENDABLE n'est pas « capacité nulle » : c'est une autre mesure (logements vendables),
+                # non chiffrée ici — chaque chiffre dit ce qu'il mesure.
+                if _has_sdp and q == "surface_vendable_m2":
+                    ph = ("Surface vendable : non chiffrée ici — elle mesure la surface de logements "
+                          "revendables, distincte de la surface de plancher constructible (la SDP "
+                          "ci-dessus, un droit à bâtir). Le programme relève de l'Étude de faisabilité.")
                 phc = _absence_une_raison(_absence_clair(q, ph), _zone, gabarit_bloque=_gab_bloque)
                 li = f'<li data-quoi="{esc(q)}">{esc(phc)}</li>'
                 (nondispo if _est_non_dispo(phc) else verifie).append(li)

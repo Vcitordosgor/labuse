@@ -208,7 +208,11 @@ def _estimation(est: dict) -> str:
         src_bits.append(f"{_int(n)} vente" + ("s" if n != 1 else ""))
     if terrain:
         if est.get("perimetre"):
-            src_bits.append("secteur cadastral" if est["perimetre"] == "secteur" else "commune")
+            # EXPORTS-FIX-3 LOT 3 (#6) — le comparateur de terrain de l'Analyse agrège les ventes du
+            # VOISINAGE (secteur élargi), PAS la seule section cadastrale de la fiche : deux notions
+            # avaient la même étiquette « secteur cadastral » (Analyse 392 €/34 ventes vs fiche 354 €/
+            # 3 ventes sur HT0538). On nomme ici le vrai périmètre de l'Analyse, distinct de la fiche.
+            src_bits.append("secteur élargi (voisinage)" if est["perimetre"] == "secteur" else "commune")
     else:
         if isinstance(est.get("radius_m"), (int, float)):
             src_bits.append(f"rayon {_int(est['radius_m'])} m")

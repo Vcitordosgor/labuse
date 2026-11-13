@@ -9226,9 +9226,21 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # EXPORTS-FIX-3 LOT 2 — le VERDICT de la fiche (point unique `potentiel_batir`), avec le motif
     # dans l'ordre imposé (zone non constructible → zone rouge → reste).
     _pab = qv2.get("potentiel_a_batir") or {}
-    cf = (fa.get("bilan") or {}).get("charge_fonciere") or {}
+    _bilan = fa.get("bilan") or {}
+    cf = _bilan.get("charge_fonciere") or {}
     lignes = qv2.get("lines") or []
     contraintes = [l for l in lignes if l.get("result") in ("HARD_EXCLUDE", "SOFT_FLAG")]
+    # EXPORTS-FIX-3 LOT 2 (#4) — la colonne « Contraintes » du Comparatif doit faire remonter les
+    # contraintes MAJEURES (zone rouge du PPR, espace boisé classé) même quand elles ne sont pas dans
+    # les 4 premières lignes de la cascade (c'était la faute b/d : BI0351 listait bassin versant/bruit/
+    # propriété publique/sol naturel, sans la zone rouge ni l'EBC). On les met en tête, cap porté à 5.
+    def _major_contrainte(detail: str) -> bool:
+        d = (detail or "").lower()
+        return (("ppr" in d and "rouge" in d) or "espace boisé classé" in d
+                or "boisé classé" in d or "ebc" in d)
+    _maj = [c for c in contraintes if _major_contrainte(c.get("detail"))]
+    _aut = [c for c in contraintes if not _major_contrainte(c.get("detail"))]
+    contraintes_ordonnees = _maj + _aut
     # contrainte MAJEURE explicite : HARD_EXCLUDE d'abord, sinon le 1er SOFT_FLAG, sinon rien.
     majeure = next((c["detail"] for c in contraintes if c["result"] == "HARD_EXCLUDE"),
                    next((c["detail"] for c in contraintes if c["result"] == "SOFT_FLAG"), None))
@@ -9331,8 +9343,16 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
                               else (res.get("sdp_residuelle_m2") if res.get("disponible") else None)),
         "sous_densite": res.get("sous_densite") if res.get("disponible") else None,
         "charge_fonciere_m2": cf.get("par_m2_terrain"),
+        # EXPORTS-FIX-3 LOT 2 (#7) — un bilan n'est affiché QUE s'il peut dire ses hypothèses et la
+        # surface à laquelle il se rapporte : on sert les hypothèses du bilan (fa.bilan.hypotheses) +
+        # la base (par m² de terrain). Sans elles, le rendu n'affiche pas la charge foncière.
+        "bilan_hypotheses": list(_bilan.get("hypotheses") or []),
+        "charge_fonciere_base": "par m² de terrain",
         "n_contraintes": len(contraintes),
-        "contraintes": [c["detail"] for c in contraintes[:4]],
+        "contraintes": [c["detail"] for c in contraintes_ordonnees[:5]],
+        # EXPORTS-FIX-3 LOT 3 (#5) — l'état du bâti EXACTEMENT comme la fiche (etat_bien servi) : une
+        # seule valeur partout ; non mesuré (trace aérienne seule) → « bâti détecté, à vérifier ».
+        "bati_etat": qv2.get("etat_bien"),
         # OUTILS-FIX-5 L4 — `contrainte_majeure` REBRANCHÉE : elle était calculée (HARD_EXCLUDE
         # d'abord, sinon 1er SOFT_FLAG) mais absente du payload depuis e6b7b5bb → le front retombait
         # en permanence sur « N signalée(s) ». On sert la valeur, tirée des MÊMES lignes de cascade

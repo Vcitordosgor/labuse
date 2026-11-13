@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import logging
 import math
+import re
 
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
@@ -2372,6 +2373,31 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
             zone_part = f"{int(part)} %"
         rows.append({"alea": lab, "niveau": niveau, "zone_part": zone_part,
                      "implique": _implique(ppr_zone, ppr_doc)})
+    # EXPORTS-FIX-3 LOT 3 (#e) — un risque présent sur la FICHE figure dans l'Analyse : la zone
+    # inondable TRI (directive inondation, scénario fréquent/moyen/extrême) et le système
+    # d'endiguement passent par la CASCADE (fiche.lines), pas par aleas.liste — _risques_rows ne les
+    # voyait pas (faute k : inondation extrême / endiguement absents de l'Analyse HT0538). On les ajoute.
+    _TRI_NIV = {"frequent": "Fréquent", "moyen": "Moyen", "extreme": "Extrême", "exceptionnel": "Extrême"}
+    for l in (fiche or {}).get("lines") or []:
+        if l.get("result") not in ("HARD_EXCLUDE", "SOFT_FLAG"):
+            continue
+        d = l.get("detail") or ""
+        dl = d.lower()
+        if "zone inondable tri" in dl or ("tri" in dl and "inond" in dl):
+            if not any(r["alea"] == "Inondation (TRI)" for r in rows):
+                sc = re.search(r"sc[eé]nario\s+(\w+)", dl)
+                niv = _TRI_NIV.get(sc.group(1), "Signalé") if sc else "Signalé"
+                pm = re.search(r"\((\d+)\s*%", d)
+                zp = f"{pm.group(1)} %" if pm else None
+                rows.append({"alea": "Inondation (TRI)", "niveau": niv, "zone_part": zp,
+                             "implique": ("Cartographie de la directive inondation (submersion "
+                                          "modélisée) — complète le PPR ; à intégrer au projet.")})
+        elif "endigu" in dl:
+            if not any(r["alea"] == "Endiguement" for r in rows):
+                rows.append({"alea": "Endiguement", "niveau": "Signalé", "zone_part": None,
+                             "implique": ("Parcelle protégée par un système d'endiguement — inondation "
+                                          "RÉSIDUELLE en cas de défaillance ou de dépassement du "
+                                          "niveau de protection.")})
     return rows
 
 

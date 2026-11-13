@@ -895,6 +895,24 @@ def _pcmi4(db: Session, idu: str, parcelle: dict, adr: dict | None = None,
                            "par le bruit (art. R.571-43 du Code de l'environnement et arrêté du 30 mai "
                            "1996) ; le niveau requis dépend de la catégorie de classement de l'infrastructure.",
                            "Cerema — classement sonore des infrastructures"))
+    # EXPORTS-FIX-3 LOT 3 (#e) — la zone inondable TRI (directive inondation) et le système
+    # d'endiguement sont portés par la CASCADE (fiche.lines), absents de risques.couches : la notice
+    # PCMI4 les cite (un risque présent sur la fiche figure dans tout document qui parle des risques —
+    # faute k : inondation extrême / endiguement absents du pré-dossier HT0538).
+    for l in ((fiche or {}).get("lines") or []):
+        if l.get("result") not in ("HARD_EXCLUDE", "SOFT_FLAG"):
+            continue
+        dd = l.get("detail") or ""
+        ddl = dd.lower()
+        if "zone inondable tri" in ddl or ("tri" in ddl and "inond" in ddl):
+            lignes.append(("Zone inondable (TRI)",
+                           f"{dd} Cartographie de la directive inondation (submersion modélisée), "
+                           "complémentaire du PPR — à intégrer au projet.",
+                           "DEAL Réunion — TRI (directive inondation)"))
+        elif "endigu" in ddl:
+            lignes.append(("Système d'endiguement",
+                           f"{dd} Inondation RÉSIDUELLE en cas de défaillance ou de dépassement du "
+                           "niveau de protection.", "DEAL Réunion — systèmes d'endiguement"))
     if (data.get("patrimoine") or {}).get("abf"):
         noms = ", ".join(m.get("name") or "monument" for m in data["patrimoine"]["abf"])
         lignes.append(("Abords de monument historique",

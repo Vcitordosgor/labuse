@@ -139,6 +139,21 @@ def _pct(r, k, suffixe="%"):
     return f"{x} {suffixe}" if x is not None else None
 
 
+def _bati_existant(r):
+    """EXPORTS-FIX-3 LOT 3 (#5) — UNE valeur de bâti, celle de la fiche (etat_bien). Non mesuré
+    (trace aérienne seule) → « bâti détecté, à vérifier » (jamais « 1 % » là où la fiche ne mesure
+    aucun bâtiment, faute B1). Terrain nu → « aucun ». Mesuré → part du terrain."""
+    etat = r.get("bati_etat")
+    if etat == "non_mesure":
+        return "bâti détecté, à vérifier"
+    if etat == "nu":
+        return "aucun"
+    pct = r.get("bati_existant_pct")
+    if pct is None:
+        return None
+    return "aucun" if pct <= 0 else f"{_i(pct)} % du terrain"
+
+
 # Les lignes de Comparer, DANS L'ORDRE de l'écran : (label, prov, fn(row)->str|None). prov=None → ligne
 # « Classement LABUSE » (aucun badge, comme à l'écran).
 # RETOURS-29 (Comparatif v2, maquette 15) — le PDF suit le MÊME CONTENU que l'écran : mêmes lignes (dans
@@ -148,9 +163,7 @@ _PROPRIO = {"morale": "personne morale", "public": "public", "particulier": "par
 _LIGNES = [
     # TERRAIN
     ("Surface", "s", lambda r: _m2(r, "surface_m2")),
-    ("Bâti existant", "s", lambda r: (("aucun" if (r.get("bati_existant_pct") or 0) <= 0
-                                       else f"{_i(r.get('bati_existant_pct'))} % du terrain")
-                                      if r.get("bati_existant_pct") is not None else None)),
+    ("Bâti existant", "s", lambda r: _bati_existant(r)),
     ("Propriétaire", "s", lambda r: _PROPRIO.get(r.get("proprietaire"))),
     # URBANISME
     ("Hauteur autorisée", "s", lambda r: ((f"R+{max(0, int(r['gabarit_niveaux_max']) - 1)}"
@@ -166,10 +179,12 @@ _LIGNES = [
     ("Plancher possible · reconstruction", "e", lambda r: _m2(r, "sdp_max_m2")),
     ("Part du gabarit déjà occupée", "e", lambda r: esc(fmt_taux_emprise(r.get("taux_emprise_pct")))),
     # CHASSE-DOCS-FIX-1 (Lot 5) — charge foncière NÉGATIVE : chiffre + explication, jamais un « -59 €/m² » nu.
-    ("Charge foncière", "e", lambda r: ((f"{_i(r.get('charge_fonciere_m2'))} €/m²"
-        + (" — Bilan déficitaire : à ces hypothèses, le foncier ne se paie pas"
+    # EXPORTS-FIX-3 LOT 2 (#7) — la charge foncière DIT sa surface de référence (« par m² de terrain ») ;
+    # ses hypothèses sont données en note sous le tableau (sinon on ne l'affiche pas).
+    ("Charge foncière", "e", lambda r: ((f"{_i(r.get('charge_fonciere_m2'))} €/m² de terrain"
+        + (" — bilan déficitaire : à ces hypothèses, le foncier ne se paie pas"
            if (r.get("charge_fonciere_m2") or 0) < 0 else ""))
-        if r.get("charge_fonciere_m2") is not None else None)),
+        if (r.get("charge_fonciere_m2") is not None and r.get("bilan_hypotheses")) else None)),
     # RISQUES ET CONTRAINTES
     # OUTILS-P1-1 (pt 3) — statistique de SECTEUR préfixée « Secteur : » (comme à l'écran).
     ("Assainissement", "s", lambda r: (f"Secteur : {esc(r.get('assainissement'))}"
@@ -249,5 +264,15 @@ def rendu(rows) -> str:
     # DOCS-1 (décision Vic) — titre + tableau forment UN bloc qui ne se coupe pas : s'il ne tient pas
     # sous la carte en page 1, l'ensemble (jamais le titre seul) passe en page 2 (`.cmp-bloc`).
     corps = f'<table class="cmp"><thead>{thead}</thead><tbody>{body}</tbody></table>'
-    bloc = f'<section class="cmp-bloc"><h2>Comparatif</h2>{corps}</section>'
+    # EXPORTS-FIX-3 LOT 2 (#7) — si au moins une charge foncière est affichée, on DONNE ses hypothèses
+    # et sa surface de référence (sinon le chiffre ne serait pas interprétable) : note sous le tableau.
+    note_bilan = ""
+    _avec_charge = [r for r in rows if r.get("charge_fonciere_m2") is not None and r.get("bilan_hypotheses")]
+    if _avec_charge:
+        hyps = _avec_charge[0].get("bilan_hypotheses") or []
+        lis = "".join(f"<li>{esc(str(h))}</li>" for h in hyps)
+        note_bilan = ('<p class="anote"><strong>Charge foncière</strong> = résultat du bilan '
+                      'promoteur rapporté au m² de terrain (indicatif). Hypothèses du bilan :</p>'
+                      f'<ul class="anote">{lis}</ul>')
+    bloc = f'<section class="cmp-bloc"><h2>Comparatif</h2>{corps}{note_bilan}</section>'
     return _virgule_sortie(bloc)
