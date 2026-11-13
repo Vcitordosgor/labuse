@@ -2100,10 +2100,12 @@ def radar_annonce_estimation(
             fiche = parcel_fiche(idu, db=db)
         except ValueError:
             return {"idu": idu, "median": None, "type_comparateur": None, "note": "Parcelle inconnue."}
-        # CHASSE-4-FIX (C4-002) + NU-3-J#4 — nombre d'aléas = les familles d'aléas DISTINCTES
-        # (`distinct_hazards`), compteur UNIQUE partagé par la tuile « Aléas » de la fiche (`aleas.n_hazards`)
-        # et le PDF (`_risques_rows`, une ligne par hazard) : fiche == Estimer == PDF, fin de l'écart 6≠2.
-        n_aleas = len(distinct_hazards(((fiche or {}).get("aleas") or {}).get("liste")))
+        # CHASSE-4-FIX (C4-002) + NU-3-J#4 — compteur « Risques et pièges » = le POINT UNIQUE
+        # `_risques_rows` (une ligne par risque servi), partagé par l'outil Estimer et le PDF.
+        # EXPORTS-FIX-3 LOT 3 (#e) — `_risques_rows` inclut désormais la zone inondable TRI et le
+        # système d'endiguement (lus de la cascade) : on compte donc SUR CETTE source, pas sur
+        # `distinct_hazards(aleas.liste)` seul — sinon le compteur divergerait du tableau (cohérence).
+        n_aleas = len(_risques_rows(fiche, (fiche or {}).get("commune")))
         return {"idu": idu, "n_aleas": n_aleas,
                 **estimation_annonce(db, idu, fiche, surface_hab=surface_hab)}
 
