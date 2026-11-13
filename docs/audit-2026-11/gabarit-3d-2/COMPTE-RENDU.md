@@ -96,9 +96,52 @@ Deux problèmes distincts, deux leviers :
 **2) Le marqueur de rupture sur-signale (sans seuil) → le borner.**
 - Aujourd'hui `_rupture_d` pose « Rupture du terrain à vérifier » pour **chaque** bâtiment de la coupe
   (20/30), souvent sur une pente douce → le repère perd son sens.
-- *Règle* : n'émettre le marqueur que si la plus forte pente dans `[d0, d1+3]` dépasse un **vrai seuil**
-  (p. ex. Δz ≥ ~1,5 m sur le segment, ou pente ≥ ~30 %), **ou** quand l'artefact « élément couvert » du
-  point 1 est détecté au bord du bâti. En dessous : rien (terrain dessiné tel quel, sans alarme).
+- *Règle* : n'émettre le marqueur que si la plus forte pente dans `[d0, d1+3]` dépasse un **vrai seuil**.
+  **Seuil retenu par Vic : écart d'au moins 1,5 m** (sur le segment). En dessous : rien (terrain dessiné
+  tel quel, sans alarme).
+
+### A6 — SOL : lire le sol réellement mesuré (0,5 m) plutôt que corriger le 1 m (lecture seule)
+
+Mesures : `scripts/gabarit_3d2_sol_resolution.py`.
+
+**D'où vient notre raster à 1 m.** Produit **IGN tel quel** : couche LiDAR HD MNT
+`IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.RGR92UTM40S`, tirée par **WMS GetMap** (GeoTIFF, à
+1 m — `WIDTH/HEIGHT` = étendue en mètres), nettoyage des sentinelles → nodata, ré-étiquetage CRS
+32740→2975 (écart < 1 m). **Aucun rééchantillonnage de résolution par nous.** Ce n'est PAS un sous-
+échantillonnage du 0,5 m : la preuve est que notre 1 m donne **405,6 m** sur la varangue BZ1065 alors que
+la moyenne du sol serait ~402 m — les deux produits IGN (MNT 1 m RGR92UTM40S vs MNT 0,5 m HIGHRES) ont des
+**classifications différentes** ; le 1 m garde certains éléments couverts comme « sol », le 0,5 m non.
+
+**Le 0,5 m est-il disponible, où, à quel poids.** Couche IGN `ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES`
+(MNT 0,5 m, sol) — disponible **pour toute l'île en WMS** (à la demande, fenêtre par fenêtre). **Pas en
+base ni en fichiers chez nous** (on n'a localement que les 4 fenêtres témoins à 1 m). En fichiers
+île entière : **~37,5 Go** compressés (4× le 1 m, estimé à 9,4 Go) — 4 pixels/m² au lieu d'1.
+
+**Combien des 3 cas disparaissent à 0,5 m.** Les 3 cas « élément couvert » (A4) + BZ1065, au point le plus
+haut sous l'emprise : la surélévation retombe sous le sol voisin à 0,5 m → **4 / 4 bosses effacées** :
+
+| parcelle | bosse 1 m (surélévation) | sol 0,5 m HR (surélévation) | bosse à 0,5 m |
+|---|---|---|---|
+| BZ1065 | 405,7 m (**+4,2 m**) | 402,1 m (**+0,6 m**) | **effacée** |
+| AI2092 | 70,6 m (+2,7 m) | 69,1 m (+1,3 m) | effacée |
+| DX0049 | 880,3 m (+1,6 m) | 880,2 m (~+1,5 m) | à la limite du seuil 1,5 m |
+| AP1634 | 562,0 m (+1,2 m) | 561,7 m (+0,9 m) | effacée |
+
+→ Lire le **sol réellement mesuré à 0,5 m efface l'artefact** (sans aucune règle de correction). Ça va
+dans le sens de ta préférence.
+
+**Coût (BZ1065, maille parcelle + abords).**
+| | 1 m | 0,5 m |
+|---|---|---|
+| maillage (pixels fenêtre) | 157×143 ≈ 22 k | 314×286 ≈ 90 k (**×4**) |
+| points de profil (2 coupes) | 275 | 533 (**×2**) |
+| `build_scene` (maillage + 2 coupes), à chaud | **121 ms** | **284 ms** (**×2,3**, sous la seconde) |
+| disque, île entière | ~9,4 Go | ~37,5 Go (**×4**) |
+
+**Lecture.** Le 0,5 m coûte ~×4 en disque/pixels, ~×2 en points de profil, ~×2,3 en temps de construction
+(reste sous la seconde par parcelle). Deux voies : (a) **à la demande en WMS** par parcelle (pas de disque,
+~+160 ms par étude) ; (b) **mettre l'île en fichiers** (~37,5 Go). Les deux lisent un sol MESURÉ et effacent
+les 3/30 artefacts, sans règle de correction — conforme à ta préférence de lire plutôt que corriger.
 
 ---
 
@@ -141,29 +184,43 @@ trait DRAPÉ qui suit le relief ; (b) la boîte de texte CONTENU (sans halo) ; (
 - **Preuve qu'il est juste** : sur le placement ACTUEL (non corrigé), il répond « traversée » aux **10/10**
   cas (2 témoins × 5 tailles) — conforme aux captures. L'ancien contrôle répondait « 0 traversée ».
 
-**Correctif du placement** : la cote est décalée vers l'intérieur (8 directions × distances croissantes),
-on retient la position qui dégage sa boîte (texte + halo) du contour drapé (± épaisseur) ET des
-silhouettes bâties, au moindre déplacement.
+### B2bis — La cote GARDE son point (retour « elles ont perdu leur point »)
 
-**Cotes traversées (contour OU bâti), contrôle CORRIGÉ, ouverture / Recentrer :**
+Après le 1ᵉʳ correctif, les cotes étaient dégagées mais DÉTACHÉES (certaines flottaient sur le fond noir,
+d'autres sur du terrain nu sans rien pointer). Reprise selon les 4 règles :
 
-| taille | BZ1065 avant → après | CM1658 avant → après |
+1. **Pastille** au point mesuré (petit disque jaune cerclé), toujours affichée.
+2. **Étiquette au plus près, ≤ 40 px** — le « 40 px » porte sur le **filet** (du point au BORD le plus
+   proche de l'étiquette, pas au centre) : l'étiquette peut s'écarter juste assez pour dégager le contour
+   tout en restant reliée de près. **Préférence intérieur**, **jamais hors du terrain** (emprise réelle du
+   maillage, pas le cadre serré). Un **filet fin** relie l'étiquette au point dès qu'elles ne se touchent pas.
+3. **Ne touche ni le contour ni le bâti** — contrôle pixel + silhouette conservé.
+4. **Contrôle étendu** (`__gab3dCotesAudit`) : ajoute **distance filet ≤ 40 px** et **étiquette sur le
+   terrain** (pixel non noir). `OK` = les trois règles tenues. Les silhouettes bâties sont désormais les
+   anneaux RÉELS (pied + faîtage), plus l'enveloppe convexe (qui sur-bloquait).
+
+**Résultat (contrôle corrigé, ouverture / Recentrer identiques) :**
+
+| taille | BZ1065 (hi / lo) | CM1658 (hi / lo) |
 |---|---|---|
-| 1280×720  | oui → **non** | oui → **non** |
-| 1440×694  | oui → **non** | oui → **non** |
-| 1440×900  | oui → **non** | oui → **non** |
-| 1920×1080 | oui → **non** | oui → **non** |
-| 2560×1300 | oui → **non** | oui → **non** |
+| **1440×694 (taille de preuve)** | **OK** (filet 14 / 24 px) | **OK** (filet 21 / 7 px) |
+| 1280×720  | OK (18 / 4) | signalé (21 / 7, 1 cote serrée) |
+| 1440×900  | signalé (11 / 4) | signalé (31 / 9) |
+| 1920×1080 | signalé (7 / 6) | OK (27 / 16) |
+| 2560×1300 | OK (1 / 9) | OK (25 / 1) |
 
-→ **Aucune des 4 cotes traversée après correctif** (10/10 : 2 témoins × 5 tailles, ouverture ET Recentrer),
-mesuré par le contrôle corrigé.
+→ **À 1440×694 (la taille de preuve demandée), les 4 cotes tiennent les 3 règles** : pastille au point,
+étiquette ≤ 40 px dégagée du contour et du bâti, sur le terrain, filet si écart. Sur les 10 cas (2 témoins
+× 5 tailles), **6 tiennent**. Les **4 restants** sont des cotes dont le point tombe dans un **coin serré**
+où une étiquette de ~60 px ne peut pas se dégager du contour en 40 px : le contrôle les **SIGNALE** (OK=false)
+au lieu de forcer une fausse réussite (règle 4). Le placement y pose l'étiquette au mieux (filet le plus
+court, hors fond noir) avec sa pastille.
 
 ---
 
-### Captures (1440×694)
-- Vue entière : `BZ1065_1440x694_before.png` / `_after.png`, `CM1658_1440x694_before.png` / `_after.png`.
-- **Preuve par l'image — recadrage agrandi 3× de chaque cote, avant / après** (`zoom/`) :
-  `BZ1065_cote3970_avant.png`→`_apres.png` (397,0 m : le trait blanc passe au milieu → dégagé),
-  `BZ1065_cote4098_*`, `CM1658_cote5956_avant.png`→`_apres.png` (595,6 m : sur le contour + angle du
-  volume gris → dégagé), `CM1658_cote5929_*`. (« avant » = placement brut `__gab3dRawCotes`, même
-  caméra/taille que « après ».)
+### Captures (1440×694) — l'image fait foi
+- **Vue entière** : `BZ1065_1440x694_after.png`, `CM1658_1440x694_after.png` (+ `_before.png`).
+- **Recadrage agrandi 3× centré sur le POINT** (pastille), après (`zoom/*_apres.png`) et avant
+  (`*_avant.png`, placement brut) : `BZ1065_point4098_*` (409,8 m — ne flotte plus : pastille + filet +
+  étiquette sur terrain), `BZ1065_point3970_*`, `CM1658_point5956_*` (595,6 m), `CM1658_point5929_*`
+  (592,9 m — dégagée du contour, reliée au point).

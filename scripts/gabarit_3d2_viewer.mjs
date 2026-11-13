@@ -50,10 +50,14 @@ for (const [court, idu] of IDUS) {
   }
 }
 fs.writeFileSync(`${OUT}/mesures_${PHASE}.json`, JSON.stringify(res, null, 2))
-console.log(`\n== ${PHASE} — contourPct (ouverture / recentrer) + cotes traversées ==`)
+console.log(`\n== ${PHASE} — contourPct + 3 règles des cotes (OK = ni contour/bâti, ≤40 px, sur terrain) ==`)
+const fmt = (c) => {
+  if (!c?.cotes) return '?'
+  const k = c.cotes, hd = k.hi_detail || {}, ld = k.lo_detail || {}
+  return `OK=${k.ok} trav=${k.hi_traverse || k.lo_traverse} dist(hi/lo)=${hd.dist}/${ld.dist} terr=${hd.sur_terrain && ld.sur_terrain}`
+}
 for (const court of Object.keys(res)) for (const t of Object.keys(res[court])) {
   const o = res[court][t].ouverture, r = res[court][t].recentrer
-  const trav = (c) => c?.cotes ? (c.cotes.hi_traverse || c.cotes.lo_traverse) : '?'
-  console.log(`  ${court} ${t}: ouv contour=${o.contourPct}% cadre=${o.cadre} cotesTrav=${trav(o)} | rec contour=${r.contourPct}% cadre=${r.cadre} cotesTrav=${trav(r)}`)
+  console.log(`  ${court} ${t}: ouv ${fmt(o)} contour=${o.contourPct}% | rec ${fmt(r)}`)
 }
 await browser.close()

@@ -335,6 +335,18 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     const mkLab = (txt: string, col: string) => { const d = document.createElement('div'); d.textContent = txt; d.style.cssText = `position:absolute;color:${col};transform:translate(-50%,-50%);text-shadow:0 1px 2px #000` ; lay.appendChild(d); return d }
     const lHi = mkLab(`${hi.toFixed(1).replace('.', ',')} m`, '#e8edf2')      // une décimale (409,8 m)
     const lLo = mkLab(`${lo.toFixed(1).replace('.', ',')} m`, '#e8edf2')
+    // B2 (point conservé) — chaque cote garde son POINT : une PASTILLE au point mesuré + un FILET fin vers
+    // l'étiquette (SVG derrière les libellés). L'étiquette reste à ≤ 40 px du point, sur le terrain.
+    const _svgns = 'http://www.w3.org/2000/svg'
+    const guide = document.createElementNS(_svgns, 'svg')
+    guide.setAttribute('style', 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible')
+    lay.insertBefore(guide, lay.firstChild)
+    const mkGuide = () => {
+      const line = document.createElementNS(_svgns, 'line'); line.setAttribute('stroke', '#cdd4db'); line.setAttribute('stroke-width', '1'); line.setAttribute('opacity', '0.9'); line.style.display = 'none'
+      const ring = document.createElementNS(_svgns, 'circle'); ring.setAttribute('r', '3.4'); ring.setAttribute('fill', '#ffd36a'); ring.setAttribute('stroke', '#14171a'); ring.setAttribute('stroke-width', '1.2')
+      guide.appendChild(line); guide.appendChild(ring); return { line, ring }
+    }
+    const gHi = mkGuide(), gLo = mkGuide()
     const _segHitsBox = (a: [number, number], b: [number, number], x0: number, y0: number, x1: number, y1: number) => {
       const inside = (px: number, py: number) => px >= x0 && px <= x1 && py >= y0 && py <= y1
       if (inside(a[0], a[1]) || inside(b[0], b[1])) return true
@@ -349,15 +361,6 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     // B2 (corrigé) — contour DRAPÉ (suit le relief, ~1,5 m) + SILHOUETTES du bâti (empreinte au pied ET au
     // faîtage → couvre les murs), précalculés en MONDE une fois (makeElev = raycast, coûteux), reprojetés
     // par frame. Le placement les évite ; l'audit teste le contour AU PIXEL (trait réel) + le bâti en géométrie.
-    const _hull = (pts: [number, number][]): [number, number][] => {
-      if (pts.length < 3) return pts
-      const p = [...pts].sort((a, b) => a[0] - b[0] || a[1] - b[1])
-      const cr = (o: number[], a: number[], b: number[]) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
-      const lo: [number, number][] = [], up: [number, number][] = []
-      for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q) }
-      for (let i = p.length - 1; i >= 0; i--) { const q = p[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q) }
-      return lo.slice(0, -1).concat(up.slice(0, -1))
-    }
     const _contourDrapedW: THREE.Vector3[][] = []
     for (const poly of scene.contour_cadastral) {
       const pts: THREE.Vector3[] = [], rr = poly.ext
@@ -368,15 +371,26 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       if (rr.length) { const [x, y] = rr[rr.length - 1]; pts.push(new THREE.Vector3(x, elev(x, y) ?? zmid, -y)) }
       _contourDrapedW.push(pts)
     }
+    // silhouettes bâti = anneaux RÉELS de l'empreinte au pied ET au faîtage (pas l'enveloppe convexe, qui
+    // sur-couvrait les bâtis en L et bloquait trop d'espace) → test plus serré, plus de place pour les cotes.
     const _batiHullW: THREE.Vector3[][] = []
     for (const bt of scene.batiments || []) {
-      const bh = (bt as { volume?: boolean }).volume && bt.hauteur_m ? bt.hauteur_m : 0, pts: THREE.Vector3[] = []
-      for (const poly of bt.empreinte || []) for (const [x, y] of poly.ext) { const z = elev(x, y) ?? zmid; pts.push(new THREE.Vector3(x, z, -y)); if (bh) pts.push(new THREE.Vector3(x, z + bh, -y)) }
-      if (pts.length >= 3) _batiHullW.push(pts)
+      const bh = (bt as { volume?: boolean }).volume && bt.hauteur_m ? bt.hauteur_m : 0
+      for (const poly of bt.empreinte || []) {
+        const pied = poly.ext.map(([x, y]) => new THREE.Vector3(x, elev(x, y) ?? zmid, -y))
+        if (pied.length >= 3) _batiHullW.push(pied)
+        if (bh) { const toit = poly.ext.map(([x, y]) => new THREE.Vector3(x, (elev(x, y) ?? zmid) + bh, -y)); if (toit.length >= 3) _batiHullW.push(toit) }
+      }
     }
     const _px = (v: THREE.Vector3): [number, number] => { const p = v.clone().project(cam); return [(p.x * 0.5 + 0.5) * el.clientWidth, (-p.y * 0.5 + 0.5) * el.clientHeight] }
     const _contourSegsDraped = (): [[number, number], [number, number]][] => { const s: [[number, number], [number, number]][] = []; for (const pts of _contourDrapedW) { const pr = pts.map(_px); for (let i = 0; i < pr.length - 1; i++) s.push([pr[i], pr[i + 1]]) } return s }
-    const _batiPolysPx = (): [number, number][][] => _batiHullW.map((pts) => _hull(pts.map(_px))).filter((p) => p.length >= 3)
+    const _batiPolysPx = (): [number, number][][] => _batiHullW.map((pts) => pts.map(_px)).filter((p) => p.length >= 3)
+    // EMPRISE RÉELLE du maillage (pas le cadre serré) projetée → quad écran : « sur le terrain » = à
+    // l'intérieur. Le maillage déborde la parcelle (~25 m) → une étiquette peut se poser JUSTE à l'extérieur
+    // du contour, sur le terrain alentour, sans le toucher. (L'audit vérifie au pixel que le fond n'est pas noir.)
+    const _terrW = [[box.min.x, box.min.z], [box.max.x, box.min.z], [box.max.x, box.max.z], [box.min.x, box.max.z]]
+      .map(([x, z]) => new THREE.Vector3(x, zmid, z))
+    const _cadreQuadPx = (): [number, number][] => _terrW.map(_px)
     const _ptInPoly = (px: number, py: number, poly: [number, number][]) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) c = !c } return c }
     const _polyHitsBox = (poly: [number, number][], x0: number, y0: number, x1: number, y1: number) => {
       for (const [px, py] of poly) if (px >= x0 && px <= x1 && py >= y0 && py <= y1) return true
@@ -393,8 +407,9 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       const gl = renderer.getContext(), Wc = renderer.domElement.width, Hc = renderer.domElement.height
       const buf = new Uint8Array(Wc * Hc * 4); gl.readPixels(0, 0, Wc, Hc, gl.RGBA, gl.UNSIGNED_BYTE, buf)
       const dpr = renderer.getPixelRatio(), polys = _batiPolysPx(), elR = el.getBoundingClientRect()
-      const test = (d: HTMLDivElement) => {
-        if (d.style.display === 'none') return { contour: false, bati: false, white: 0 }
+      const nonNoir = (lx: number, ly: number) => { const fx = Math.round(lx * dpr), fy = Math.round(ly * dpr); if (fx < 0 || fx >= Wc || fy < 0 || fy >= Hc) return false; const o = ((Hc - 1 - fy) * Wc + fx) * 4; return Math.max(buf[o], buf[o + 1], buf[o + 2]) >= 16 }
+      const test = (d: HTMLDivElement, g: { ring: SVGCircleElement }) => {
+        if (d.style.display === 'none') return { contour: false, bati: false, dist: 0, sur_terrain: true, ok: true }
         const r = d.getBoundingClientRect()
         const x0 = r.left - elR.left - _HALO, y0 = r.top - elR.top - _HALO, x1 = r.right - elR.left + _HALO, y1 = r.bottom - elR.top + _HALO
         const bati = polys.some((p) => _polyHitsBox(p, x0, y0, x1, y1))
@@ -406,10 +421,17 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
           const mn = Math.min(R, G, B), mx = Math.max(R, G, B)
           if (mn >= 215 && mx - mn <= 30) white++
         }
-        return { contour: white >= 2, bati, white }
+        const lx = (x0 + x1) / 2, ly = (y0 + y1) / 2
+        const pxp = parseFloat(g.ring.getAttribute('cx') || 'NaN'), pyp = parseFloat(g.ring.getAttribute('cy') || 'NaN')
+        // distance = du point au BORD le plus proche de l'étiquette (le filet), pas au centre
+        const ex = Math.min(Math.max(pxp, x0), x1), ey = Math.min(Math.max(pyp, y0), y1)
+        const dist = Math.round(Math.hypot(ex - pxp, ey - pyp))
+        const contour = white >= 2, sur = nonNoir(lx, ly)
+        // les TROIS règles : ni contour/bâti traversés, ≤ 40 px du point, étiquette sur le terrain
+        return { contour, bati, dist, sur_terrain: sur, ok: !contour && !bati && dist <= 40 && sur }
       }
-      const H = test(lHi), L = test(lLo)
-      return { hi: lHi.textContent, lo: lLo.textContent, hi_traverse: H.contour || H.bati, lo_traverse: L.contour || L.bati, hi_detail: H, lo_detail: L }
+      const H = test(lHi, gHi), L = test(lLo, gLo)
+      return { hi: lHi.textContent, lo: lLo.textContent, hi_traverse: H.contour || H.bati, lo_traverse: L.contour || L.bati, hi_detail: H, lo_detail: L, ok: H.ok && L.ok }
     }
     // lettres de l'axe actif (B et B′, A et A′) posées aux EXTRÉMITÉS VISIBLES du trait orange
     const lAx0 = mkLab('', '#f0b24a'); const lAx1 = mkLab('', '#f0b24a')
@@ -444,38 +466,56 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     let _ccx = 0, _ccy = 0, _ccn = 0
     for (const poly of scene.contour_cadastral) for (const [x, y] of poly.ext) { _ccx += x; _ccy += y; _ccn++ }
     const coteCtrW = new THREE.Vector3(_ccn ? _ccx / _ccn : bc.x, zmid, _ccn ? -_ccy / _ccn : bc.z)
-    // boîte (texte réel + halo) BLOQUÉE par le contour drapé (±épaisseur) OU par une silhouette de bâti ?
-    // marge de placement = halo + épaisseur du trait + anti-alias + sécurité → la boîte testée au placement
-    // SUR-COUVRE la boîte de l'audit (qui, elle, compte les pixels blancs réels) : si le placement dégage,
-    // l'audit dégage aussi. `_PMARGE` ajoutée de chaque côté, contour testé à ±(_PMARGE).
-    const _PMARGE = _HALO + _LINE + 3
+    // boîte (texte réel + halo) BLOQUÉE par le contour drapé OU une silhouette de bâti ? La boîte de test
+    // est la boîte de l'AUDIT (texte + _HALO) + une petite marge `_PMARGE` = demi-épaisseur du trait à
+    // l'écran + anti-alias : juste assez pour épouser le trait RÉEL, sans sur-bloquer (sinon aucune position
+    // ne tiendrait dans les 40 px près d'un sommet de bord).
+    const _PMARGE = _LINE
     const _blocked = (sx: number, sy: number, w: number, h: number, segs: [[number, number], [number, number]][], polys: [number, number][][]) => {
       const x0 = sx - w / 2 - _PMARGE, y0 = sy - h / 2 - _PMARGE, x1 = sx + w / 2 + _PMARGE, y1 = sy + h / 2 + _PMARGE
       if (segs.some((s) => _segHitsBox(s[0], s[1], x0, y0, x1, y1))) return true
       return polys.some((p) => _polyHitsBox(p, x0, y0, x1, y1))
     }
-    // on DÉCALE le libellé vers l'intérieur par 8 directions × distances croissantes, on retient la position
-    // qui dégage au moindre déplacement (préférence pour l'intérieur). `segs`/`polys` calculés 1×/frame.
-    // Drapeau debug `__gab3dRawCotes` : pose le libellé AU POINT BRUT sans évitement — sert à PROUVER que
-    // l'audit détecte bien une cote traversée (état « avant »).
-    const proj = (p: THREE.Vector3, d: HTMLDivElement, segs: [[number, number], [number, number]][], polys: [number, number][][]) => {
-      const v = p.clone().project(cam); d.style.display = v.z < 1 ? 'block' : 'none'
-      const bx = (v.x * 0.5 + 0.5) * el.clientWidth, by = (-v.y * 0.5 + 0.5) * el.clientHeight
-      if ((window as unknown as Record<string, unknown>).__gab3dRawCotes) { d.style.left = `${bx}px`; d.style.top = `${by}px`; return }
+    // L'étiquette reste ATTACHÉE à son point : pastille au point, étiquette à ≤ 40 px (préférence intérieur
+    // + sur le terrain), filet fin si écart. On essaie 8 directions × distances CROISSANTES bornées à 40 px,
+    // on retient la plus PROCHE qui dégage le contour + le bâti ET reste sur le terrain. Si rien ne tient en
+    // 40 px, on place au mieux (le plus proche dégagé) — l'audit SIGNALERA la taille en échec (pas de forçage).
+    // Drapeau debug `__gab3dRawCotes` : pose l'étiquette AU POINT BRUT (sert à prouver que l'audit détecte).
+    const _MAXD = 40
+    const proj = (p: THREE.Vector3, d: HTMLDivElement, g: { line: SVGLineElement; ring: SVGCircleElement }, segs: [[number, number], [number, number]][], polys: [number, number][][], quad: [number, number][] | null) => {
+      const v = p.clone().project(cam); const vis = v.z < 1
+      d.style.display = vis ? 'block' : 'none'; g.ring.style.display = vis ? 'block' : 'none'
+      if (!vis) { g.line.style.display = 'none'; return }
+      const px = (v.x * 0.5 + 0.5) * el.clientWidth, py = (-v.y * 0.5 + 0.5) * el.clientHeight
+      g.ring.setAttribute('cx', `${px}`); g.ring.setAttribute('cy', `${py}`)
+      if ((window as unknown as Record<string, unknown>).__gab3dRawCotes) { d.style.left = `${px}px`; d.style.top = `${py}px`; g.line.style.display = 'none'; return }
       const c = coteCtrW.clone().project(cam); const cx = (c.x * 0.5 + 0.5) * el.clientWidth, cy = (-c.y * 0.5 + 0.5) * el.clientHeight
-      const dx = cx - bx, dy = cy - by, n = Math.hypot(dx, dy) || 1, ux = dx / n, uy = dy / n
+      const dx = cx - px, dy = cy - py, nn = Math.hypot(dx, dy) || 1, ux = dx / nn, uy = dy / nn
       const w = (d.offsetWidth || 44) + _HALO * 2, h = (d.offsetHeight || 14) + _HALO * 2
+      const onTerr = (sx: number, sy: number) => !quad || _ptInPoly(sx, sy, quad)
+      // « ≤ 40 px » porte sur le FILET = distance du point au BORD le plus proche de l'étiquette (pas au
+      // centre) : la boîte peut donc s'écarter assez pour dégager le contour tout en restant RELIÉE de près.
+      const nearEdge = (sx: number, sy: number) => { const ex = Math.min(Math.max(px, sx - w / 2), sx + w / 2), ey = Math.min(Math.max(py, sy - h / 2), sy + h / 2); return Math.hypot(ex - px, ey - py) }
       const dirs: [number, number][] = [[ux, uy]]
-      for (let k = 0; k < 8; k++) { const a = (k * Math.PI) / 4; dirs.push([Math.cos(a), Math.sin(a)]) }
-      let bx2 = bx + ux * 18, by2 = by + uy * 18, bestCost = Infinity, found = false
-      for (const dist of [16, 24, 34, 46, 60, 76, 94, 114, 136]) for (const [dux, duy] of dirs) {
-        const tx = bx + dux * dist, ty = by + duy * dist
-        if (_blocked(tx, ty, w, h, segs, polys)) continue
-        const cost = dist + (1 - (dux * ux + duy * uy)) * 22   // pénalise les directions qui s'éloignent du centre
-        if (cost < bestCost) { bestCost = cost; bx2 = tx; by2 = ty; found = true }
+      for (let k = 0; k < 24; k++) { const a = (k * Math.PI) / 12; dirs.push([Math.cos(a), Math.sin(a)]) }
+      // on SCORE chaque candidat : dégagé + sur-terrain + filet court + intérieur gagnent ; contour/bâti et
+      // hors-terrain sont de GROSSES pénalités → on prend le MOINS mauvais (si aucun n'est parfait, l'audit
+      // le signale, on ne force pas une fausse réussite). Le centre va jusqu'à 40 + demi-boîte ; le filet ≤ 40.
+      let sx = px + ux * (h / 2 + _PMARGE + 2), sy = py + uy * (h / 2 + _PMARGE + 2), bestCost = Infinity
+      for (let dist = 10; dist <= _MAXD + Math.max(w, h) / 2 + 4; dist += 2) for (const [dux, duy] of dirs) {
+        const tx = px + dux * dist, ty = py + duy * dist
+        const ne = nearEdge(tx, ty)
+        if (ne < 1 || ne > _MAXD) continue   // ni sur la pastille, ni au-delà de 40 px (filet)
+        const pen = (_blocked(tx, ty, w, h, segs, polys) ? 1000 : 0) + (onTerr(tx, ty) ? 0 : 500)
+        const cost = pen + ne + (1 - (dux * ux + duy * uy)) * 10
+        if (cost < bestCost) { bestCost = cost; sx = tx; sy = ty }
       }
-      if (!found) { bx2 = bx + ux * 136; by2 = by + uy * 136 }
-      d.style.left = `${bx2}px`; d.style.top = `${by2}px`
+      d.style.left = `${sx}px`; d.style.top = `${sy}px`
+      // filet : du point jusqu'au BORD de la boîte, seulement s'il y a un écart visible
+      const ax = Math.min(Math.max(px, sx - w / 2), sx + w / 2), ay = Math.min(Math.max(py, sy - h / 2), sy + h / 2)
+      if (Math.hypot(ax - px, ay - py) > 3) {
+        g.line.setAttribute('x1', `${px}`); g.line.setAttribute('y1', `${py}`); g.line.setAttribute('x2', `${ax}`); g.line.setAttribute('y2', `${ay}`); g.line.style.display = 'block'
+      } else g.line.style.display = 'none'
     }
 
     // B — PHOTO AÉRIENNE : fond facultatif, chargé AU CLIC (jamais à l'ouverture), demandé AU SERVEUR
@@ -523,7 +563,7 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       if (stop) return
       controls.update(); renderer.render(sc, cam)
       if (!first) first = performance.now()
-      const coteSegs = _contourSegsDraped(), cotePolys = _batiPolysPx(); proj(hiP, lHi, coteSegs, cotePolys); proj(loP, lLo, coteSegs, cotePolys)
+      const coteSegs = _contourSegsDraped(), cotePolys = _batiPolysPx(), coteQuad = _cadreQuadPx(); proj(hiP, lHi, gHi, coteSegs, cotePolys, coteQuad); proj(loP, lLo, gLo, coteSegs, cotePolys, coteQuad)
       // lettres de l'axe : 1ʳᵉ posée au 1ᵉʳ point visible côté p0, 2ᵉ au dernier point visible côté p1
       if (axEnd.on) { const n = axEnd.pts.length - 1; poseLettre(lAx0, 0, n); poseLettre(lAx1, n, 0) }
       const az = controls.getAzimuthalAngle(); nd.setAttribute('transform', `rotate(${(-az * 180 / Math.PI).toFixed(1)} 17 17)`)

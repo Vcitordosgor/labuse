@@ -12,13 +12,18 @@
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 18,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
-          }
+            "dist": 4,
+            "sur_terrain": true,
+            "ok": true
+          },
+          "ok": true
         }
       },
       "recentrer": {
@@ -32,13 +37,18 @@
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 18,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
-          }
+            "dist": 4,
+            "sur_terrain": true,
+            "ok": true
+          },
+          "ok": true
         }
       }
     },
@@ -54,13 +64,18 @@
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 14,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
-          }
+            "dist": 24,
+            "sur_terrain": true,
+            "ok": true
+          },
+          "ok": true
         }
       },
       "recentrer": {
@@ -74,13 +89,18 @@
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 14,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
-          }
+            "dist": 24,
+            "sur_terrain": true,
+            "ok": true
+          },
+          "ok": true
         }
       }
     },
@@ -92,17 +112,22 @@
           "hi": "409,8 m",
           "lo": "397,0 m",
           "hi_traverse": false,
-          "lo_traverse": false,
+          "lo_traverse": true,
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 11,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
-            "contour": false,
+            "contour": true,
             "bati": false,
-            "white": 0
-          }
+            "dist": 4,
+            "sur_terrain": true,
+            "ok": false
+          },
+          "ok": false
         }
       },
       "recentrer": {
@@ -112,17 +137,22 @@
           "hi": "409,8 m",
           "lo": "397,0 m",
           "hi_traverse": false,
-          "lo_traverse": false,
+          "lo_traverse": true,
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 11,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
-            "contour": false,
+            "contour": true,
             "bati": false,
-            "white": 0
-          }
+            "dist": 4,
+            "sur_terrain": true,
+            "ok": false
+          },
+          "ok": false
         }
       }
     },
@@ -133,18 +163,23 @@
         "cotes": {
           "hi": "409,8 m",
           "lo": "397,0 m",
-          "hi_traverse": false,
-          "lo_traverse": false,
+          "hi_traverse": true,
+          "lo_traverse": true,
           "hi_detail": {
             "contour": false,
-            "bati": false,
-            "white": 0
+            "bati": true,
+            "dist": 7,
+            "sur_terrain": true,
+            "ok": false
           },
           "lo_detail": {
-            "contour": false,
+            "contour": true,
             "bati": false,
-            "white": 0
-          }
+            "dist": 6,
+            "sur_terrain": true,
+            "ok": false
+          },
+          "ok": false
         }
       },
       "recentrer": {
@@ -153,18 +188,23 @@
         "cotes": {
           "hi": "409,8 m",
           "lo": "397,0 m",
-          "hi_traverse": false,
-          "lo_traverse": false,
+          "hi_traverse": true,
+          "lo_traverse": true,
           "hi_detail": {
             "contour": false,
-            "bati": false,
-            "white": 0
+            "bati": true,
+            "dist": 7,
+            "sur_terrain": true,
+            "ok": false
           },
           "lo_detail": {
-            "contour": false,
+            "contour": true,
             "bati": false,
-            "white": 0
-          }
+            "dist": 6,
+            "sur_terrain": true,
+            "ok": false
+          },
+          "ok": false
         }
       }
     },
@@ -180,13 +220,18 @@
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 1,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
-          }
+            "dist": 9,
+            "sur_terrain": true,
+            "ok": true
+          },
+          "ok": true
         }
       },
       "recentrer": {
@@ -200,13 +245,18 @@
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 1,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
-          }
+            "dist": 9,
+            "sur_terrain": true,
+            "ok": true
+          },
+          "ok": true
         }
       }
     }
@@ -219,18 +269,23 @@
         "cotes": {
           "hi": "595,6 m",
           "lo": "592,9 m",
-          "hi_traverse": false,
+          "hi_traverse": true,
           "lo_traverse": false,
           "hi_detail": {
             "contour": false,
-            "bati": false,
-            "white": 0
+            "bati": true,
+            "dist": 21,
+            "sur_terrain": true,
+            "ok": false
           },
           "lo_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
-          }
+            "dist": 7,
+            "sur_terrain": true,
+            "ok": true
+          },
+          "ok": false
         }
       },
       "recentrer": {
@@ -239,18 +294,23 @@
         "cotes": {
           "hi": "595,6 m",
           "lo": "592,9 m",
-          "hi_traverse": false,
+          "hi_traverse": true,
           "lo_traverse": false,
           "hi_detail": {
             "contour": false,
-            "bati": false,
-            "white": 0
+            "bati": true,
+            "dist": 21,
+            "sur_terrain": true,
+            "ok": false
           },
           "lo_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
-          }
+            "dist": 7,
+            "sur_terrain": true,
+            "ok": true
+          },
+          "ok": false
         }
       }
     },
@@ -266,13 +326,18 @@
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 21,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
-          }
+            "dist": 7,
+            "sur_terrain": true,
+            "ok": true
+          },
+          "ok": true
         }
       },
       "recentrer": {
@@ -286,13 +351,18 @@
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 21,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
-          }
+            "dist": 7,
+            "sur_terrain": true,
+            "ok": true
+          },
+          "ok": true
         }
       }
     },
@@ -304,17 +374,22 @@
           "hi": "595,6 m",
           "lo": "592,9 m",
           "hi_traverse": false,
-          "lo_traverse": false,
+          "lo_traverse": true,
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 31,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
-            "contour": false,
+            "contour": true,
             "bati": false,
-            "white": 1
-          }
+            "dist": 9,
+            "sur_terrain": true,
+            "ok": false
+          },
+          "ok": false
         }
       },
       "recentrer": {
@@ -324,17 +399,22 @@
           "hi": "595,6 m",
           "lo": "592,9 m",
           "hi_traverse": false,
-          "lo_traverse": false,
+          "lo_traverse": true,
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 31,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
-            "contour": false,
+            "contour": true,
             "bati": false,
-            "white": 1
-          }
+            "dist": 9,
+            "sur_terrain": true,
+            "ok": false
+          },
+          "ok": false
         }
       }
     },
@@ -350,13 +430,18 @@
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 27,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
-          }
+            "dist": 16,
+            "sur_terrain": true,
+            "ok": true
+          },
+          "ok": true
         }
       },
       "recentrer": {
@@ -370,13 +455,18 @@
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 27,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
-          }
+            "dist": 16,
+            "sur_terrain": true,
+            "ok": true
+          },
+          "ok": true
         }
       }
     },
@@ -392,13 +482,18 @@
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 25,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
-          }
+            "dist": 1,
+            "sur_terrain": true,
+            "ok": true
+          },
+          "ok": true
         }
       },
       "recentrer": {
@@ -412,13 +507,18 @@
           "hi_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
+            "dist": 25,
+            "sur_terrain": true,
+            "ok": true
           },
           "lo_detail": {
             "contour": false,
             "bati": false,
-            "white": 0
-          }
+            "dist": 1,
+            "sur_terrain": true,
+            "ok": true
+          },
+          "ok": true
         }
       }
     }
