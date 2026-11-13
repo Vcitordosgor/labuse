@@ -102,5 +102,53 @@ Deux problèmes distincts, deux leviers :
 
 ---
 
-## LOT B — voir commit suivant (finitions de la vue 3D).
+## LOT B — Deux finitions de la vue 3D
 
+Harnais : `scripts/gabarit_3d2_viewer.mjs` (BZ1065 + CM1658, 5 tailles, à l'OUVERTURE et après
+« Recentrer »). Captures 1440×694 : `*_before.png` / `*_after.png`. Mesures : `mesures_before.json` /
+`mesures_after.json`. Fichier modifié : `frontend/src/components/outils/GabaritViewer3D.tsx`.
+
+### B1 — Cadrage resserré autour de la parcelle — **FAIT**
+
+Le cadrage (`place()`) ajuste la caméra pour que le point le plus éloigné du cadrage (contour + B/B′)
+atteigne **±0,92 NDC** au lieu de ±0,85 → la parcelle occupe plus de la vue, en gardant 8 % de marge (le
+contour entier, la voie et les repères B/B′ restent visibles — `cadre = true` partout, testé à ±0,995).
+
+**Part de la vue occupée par le contour (%), identique à l'ouverture et après « Recentrer ) :**
+
+| taille | BZ1065 avant → après | CM1658 avant → après |
+|---|---|---|
+| 1280×720  | 13,1 → **15,4** | 15,2 → **17,8** |
+| 1440×694  | 10,4 → **12,1** | 12,0 → **14,0** |
+| 1440×900  | 17,5 → **20,5** | 20,2 → **23,6** |
+| 1920×1080 | 16,6 → **19,4** | 19,2 → **22,4** |
+| 2560×1300 | 15,6 → **18,3** | 18,0 → **21,1** |
+
+→ **Augmente aux 5 tailles**, pour les deux témoins, à l'ouverture comme après « Recentrer ». `cadre = true`
+partout (contour + voie + B/B′ visibles).
+
+### B2 — Les cotes d'altitude ne sont plus traversées par le contour blanc — **FAIT**
+
+Les cotes (point haut / point bas) tombaient souvent SUR la limite → le contour blanc les traversait. On
+les décale vers l'INTÉRIEUR par un décalage **adaptatif** (8 directions × distances croissantes, on retient
+la position qui dégage la boîte au moindre déplacement, en préférant l'intérieur). Contrôle ajouté au
+harnais : `window.__gab3dCotesAudit()` projette le contour en pixels et teste l'intersection
+segment ↔ boîte du libellé.
+
+**Cotes traversées par le contour (hi ou bas), ouverture / Recentrer :**
+
+| taille | BZ1065 avant → après | CM1658 avant → après |
+|---|---|---|
+| 1280×720  | oui → **non** | oui → **non** |
+| 1440×694  | oui → **non** | oui → **non** |
+| 1440×900  | oui → **non** | oui → **non** |
+| 1920×1080 | non → **non** | oui → **non** |
+| 2560×1300 | non → **non** | oui → **non** |
+
+→ **Aucune cote traversée après correctif** (10/10 : 2 témoins × 5 tailles, ouverture ET Recentrer).
+
+---
+
+### Captures (1440×694)
+- `BZ1065_1440x694_before.png` / `BZ1065_1440x694_after.png`
+- `CM1658_1440x694_before.png` / `CM1658_1440x694_after.png`

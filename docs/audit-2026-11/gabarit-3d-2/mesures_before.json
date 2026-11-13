@@ -1,0 +1,226 @@
+{
+  "BZ1065": {
+    "1280x720": {
+      "ouverture": {
+        "contourPct": 13.1,
+        "cadre": true,
+        "cotes": {
+          "hi": "409,8 m",
+          "lo": "397,0 m",
+          "hi_traverse": false,
+          "lo_traverse": true
+        }
+      },
+      "recentrer": {
+        "contourPct": 13.1,
+        "cadre": true,
+        "cotes": {
+          "hi": "409,8 m",
+          "lo": "397,0 m",
+          "hi_traverse": false,
+          "lo_traverse": true
+        }
+      }
+    },
+    "1440x694": {
+      "ouverture": {
+        "contourPct": 10.4,
+        "cadre": true,
+        "cotes": {
+          "hi": "409,8 m",
+          "lo": "397,0 m",
+          "hi_traverse": false,
+          "lo_traverse": true
+        }
+      },
+      "recentrer": {
+        "contourPct": 10.4,
+        "cadre": true,
+        "cotes": {
+          "hi": "409,8 m",
+          "lo": "397,0 m",
+          "hi_traverse": false,
+          "lo_traverse": true
+        }
+      }
+    },
+    "1440x900": {
+      "ouverture": {
+        "contourPct": 17.5,
+        "cadre": true,
+        "cotes": {
+          "hi": "409,8 m",
+          "lo": "397,0 m",
+          "hi_traverse": false,
+          "lo_traverse": true
+        }
+      },
+      "recentrer": {
+        "contourPct": 17.5,
+        "cadre": true,
+        "cotes": {
+          "hi": "409,8 m",
+          "lo": "397,0 m",
+          "hi_traverse": false,
+          "lo_traverse": true
+        }
+      }
+    },
+    "1920x1080": {
+      "ouverture": {
+        "contourPct": 16.6,
+        "cadre": true,
+        "cotes": {
+          "hi": "409,8 m",
+          "lo": "397,0 m",
+          "hi_traverse": false,
+          "lo_traverse": false
+        }
+      },
+      "recentrer": {
+        "contourPct": 16.6,
+        "cadre": true,
+        "cotes": {
+          "hi": "409,8 m",
+          "lo": "397,0 m",
+          "hi_traverse": false,
+          "lo_traverse": false
+        }
+      }
+    },
+    "2560x1300": {
+      "ouverture": {
+        "contourPct": 15.6,
+        "cadre": true,
+        "cotes": {
+          "hi": "409,8 m",
+          "lo": "397,0 m",
+          "hi_traverse": false,
+          "lo_traverse": false
+        }
+      },
+      "recentrer": {
+        "contourPct": 15.6,
+        "cadre": true,
+        "cotes": {
+          "hi": "409,8 m",
+          "lo": "397,0 m",
+          "hi_traverse": false,
+          "lo_traverse": false
+        }
+      }
+    }
+  },
+  "CM1658": {
+    "1280x720": {
+      "ouverture": {
+        "contourPct": 15.2,
+        "cadre": true,
+        "cotes": {
+          "hi": "595,6 m",
+          "lo": "592,9 m",
+          "hi_traverse": true,
+          "lo_traverse": false
+        }
+      },
+      "recentrer": {
+        "contourPct": 15.2,
+        "cadre": true,
+        "cotes": {
+          "hi": "595,6 m",
+          "lo": "592,9 m",
+          "hi_traverse": true,
+          "lo_traverse": false
+        }
+      }
+    },
+    "1440x694": {
+      "ouverture": {
+        "contourPct": 12,
+        "cadre": true,
+        "cotes": {
+          "hi": "595,6 m",
+          "lo": "592,9 m",
+          "hi_traverse": true,
+          "lo_traverse": true
+        }
+      },
+      "recentrer": {
+        "contourPct": 12,
+        "cadre": true,
+        "cotes": {
+          "hi": "595,6 m",
+          "lo": "592,9 m",
+          "hi_traverse": true,
+          "lo_traverse": true
+        }
+      }
+    },
+    "1440x900": {
+      "ouverture": {
+        "contourPct": 20.2,
+        "cadre": true,
+        "cotes": {
+          "hi": "595,6 m",
+          "lo": "592,9 m",
+          "hi_traverse": true,
+          "lo_traverse": false
+        }
+      },
+      "recentrer": {
+        "contourPct": 20.2,
+        "cadre": true,
+        "cotes": {
+          "hi": "595,6 m",
+          "lo": "592,9 m",
+          "hi_traverse": true,
+          "lo_traverse": false
+        }
+      }
+    },
+    "1920x1080": {
+      "ouverture": {
+        "contourPct": 19.2,
+        "cadre": true,
+        "cotes": {
+          "hi": "595,6 m",
+          "lo": "592,9 m",
+          "hi_traverse": true,
+          "lo_traverse": false
+        }
+      },
+      "recentrer": {
+        "contourPct": 19.2,
+        "cadre": true,
+        "cotes": {
+          "hi": "595,6 m",
+          "lo": "592,9 m",
+          "hi_traverse": true,
+          "lo_traverse": false
+        }
+      }
+    },
+    "2560x1300": {
+      "ouverture": {
+        "contourPct": 18,
+        "cadre": true,
+        "cotes": {
+          "hi": "595,6 m",
+          "lo": "592,9 m",
+          "hi_traverse": true,
+          "lo_traverse": false
+        }
+      },
+      "recentrer": {
+        "contourPct": 18,
+        "cadre": true,
+        "cotes": {
+          "hi": "595,6 m",
+          "lo": "592,9 m",
+          "hi_traverse": true,
+          "lo_traverse": false
+        }
+      }
+    }
+  }
+}
