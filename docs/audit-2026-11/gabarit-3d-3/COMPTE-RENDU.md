@@ -205,6 +205,25 @@ chevauchent pas. Les 3 parcelles × 2 tailles : **tous OK**. Tests Python : `tes
 (bosse non tracée, trait droit, un libellé, pas de losange, pas de cote), `test_cote_evite_la_pente_max_5m`,
 `test_plan_cle_lettres_axe_sans_chevauchement`.
 
+### Finitions — 2ᵉ passe (sur captures)
+
+1. **DX0049, vue 3D — régression corrigée.** L'aplanissement sous l'emprise bâtie se déclenchait sur un bâti
+   **en pente** (sol ramené au point bas → plateau + dents de scie + éclat vert). Désormais on ajuste un **plan**
+   (moindres carrés) au sol de l'anneau (il **épouse la pente**) et on n'aplanit QUE les pixels **≥ 2,0 m
+   au-dessus de ce plan**, ramenés **sur le plan** (raccord propre). Une pente n'est plus touchée (DX0049 :
+   **0 pixel** modifié), une vraie dalle de varangue l'est (BZ1065 : 202 pixels, 3,6 m). Seuil 3D (2,0 m) un
+   peu plus haut que la coupe (1,5 m) car le plan n'épouse pas parfaitement un terrain courbe.
+2. **Cotes en double.** Deux cotes à **< 3 m sur l'axe ET < 0,2 m d'altitude** → **une seule**, celle de la
+   **limite** (`_dedup_cotes`). BZ1065 « 401,8 / 401,8 » et « 406,3 / 406,4 », CT0442 « 326,4 / 326,5 »,
+   DX0049 « 880,2 / 880,3 » : réglés.
+3. **CT0442, plan-clé.** La **flèche du nord + « N »** sont désormais des obstacles pour les lettres d'axe
+   (comme la pastille voie) → la lettre « A » ne les touche plus.
+
+**Contrôles ajoutés** : « pas deux cotes quasi identiques voisines » (seuil **3 m** lu sur les graduations de
+distance) et « lettre d'axe hors de la flèche du nord ». Les deux **échouaient** sur les captures précédentes ;
+les 3 parcelles × 2 tailles sont maintenant **tous OK** (coupe 0 chevauchement, plan 74–83 %, lettres 0,
+lettre∩nord 0, cotes voisines 0). Test Python `test_dedup_cotes_quasi_identiques`.
+
 ---
 
 ## Captures (entières)

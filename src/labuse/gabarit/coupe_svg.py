@@ -344,6 +344,7 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
     if not detail:
         pts = [p for p in pts if p.get("role") in ("voie", "limite", "haut", "bas")]
     pts = [p for p in pts if not any(s0 - 0.5 <= p["d"] <= s1 + 0.5 for s0, s1 in couvert_spans)]
+    pts = _dedup_cotes(pts)                                 # 2 cotes à < 3 m ET < 0,2 m → une seule (la limite)
     out.append(_cotes(pts, X, Y, T, PAD_T, prot, sky_top, pente_obstacle))
 
     # VOIE nommée LÀ OÙ la coupe la traverse (C10, coupe B)
@@ -396,6 +397,22 @@ def _label_box(cx, y, text, color, bg, anchor="middle", fs=9):
     return (f'<rect x="{rx:.1f}" y="{y-fs:.1f}" width="{w+6:.1f}" height="{fs+4:.1f}" rx="2" '
             f'fill="{bg}" opacity="0.92"/>'
             f'<text x="{cx:.1f}" y="{y:.1f}" text-anchor="{anchor}" font-size="{fs}" fill="{color}">{_esc(text)}</text>')
+
+
+def _dedup_cotes(points):
+    """Deux cotes à moins de 3 m l'une de l'autre SUR L'AXE et différant de moins de 0,2 m en altitude font
+    double emploi → on n'en garde QU'UNE, celle de la limite (sinon la première). Évite « 401,8 m » / « 401,8 m »
+    et « 406,3 / 406,4 m » superposés."""
+    rang = {"limite": 0, "voie": 1, "facade": 2, "haut": 3, "bas": 3}
+    kept = []
+    for p in sorted(points, key=lambda q: q["d"]):
+        jumeau = next((i for i, q in enumerate(kept)
+                       if abs(p["d"] - q["d"]) < 3.0 and abs((p["z"] or 0) - (q["z"] or 0)) < 0.2), None)
+        if jumeau is None:
+            kept.append(p)
+        elif rang.get(p.get("role"), 9) < rang.get(kept[jumeau].get("role"), 9):
+            kept[jumeau] = p                               # on garde la mieux classée (limite d'abord)
+    return kept
 
 
 def _cotes(points, X, Y, T, ytop, prot, sky_top, obstacles=()):
@@ -583,6 +600,8 @@ def plan_cle_svg(scene, *, theme="sombre", width=380, height=320):
     for p in voie_pts:                                 # la pastille « voie » est un obstacle pour les lettres d'axe
         vx, vy = X(p[0]) + 5, Y(p[1]) + 3
         lettres_boxes.append((vx - 2, vx + len("voie") * 9 * 0.56, vy - 9, vy + 3))
+    _nx, _ny = width - 22, 30                          # la FLÈCHE DU NORD + « N » sont aussi des obstacles (finition)
+    lettres_boxes.append((_nx - 9, _nx + 9, _ny - 20, _ny + 18))
 
     def _pose_lettre(px, py, ux, uy, txt):
         fs, g = 10, 2.0; hw = max(len(txt) * fs * 0.56, 4) / 2 + 2

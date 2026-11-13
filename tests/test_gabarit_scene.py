@@ -247,6 +247,21 @@ def test_sol_non_mesure_sous_element_couvert():
     assert "sol non mesuré sous un élément couvert" not in naturel  # pas de faux positif
 
 
+def test_dedup_cotes_quasi_identiques():
+    """Finition — deux cotes à < 3 m sur l'axe ET < 0,2 m d'altitude font double emploi : on garde LA LIMITE."""
+    from labuse.gabarit.coupe_svg import _dedup_cotes
+    pts = [{"d": 60.0, "z": 401.8, "role": "bas"}, {"d": 61.5, "z": 401.8, "role": "limite"},
+           {"d": 30.0, "z": 406.3, "role": "limite"}, {"d": 31.0, "z": 406.4, "role": "haut"},
+           {"d": 10.0, "z": 410.0, "role": "voie"}]
+    out = _dedup_cotes(pts)
+    assert len(out) == 3                                           # (401,8)×2→1, (406,3/406,4)×2→1, voie
+    bas = [p for p in out if abs(p["z"] - 401.8) < 0.05][0]
+    assert bas["role"] == "limite"                                # on garde la limite, pas le « bas »
+    assert any(p["role"] == "limite" and abs(p["z"] - 406.3) < 0.05 for p in out)   # garde 406,3 (limite)
+    loin = [{"d": 10.0, "z": 400.0, "role": "limite"}, {"d": 20.0, "z": 400.0, "role": "limite"}]
+    assert len(_dedup_cotes(loin)) == 2                           # > 3 m → les deux gardées
+
+
 def test_cote_evite_la_pente_max_5m():
     """Finition 4a — « pente max N % sur 5 m » et les cotes d'altitude ne se chevauchent JAMAIS (boîtes 2D),
     même quand une cote tombe sous le libellé de pente (cas CT0442)."""

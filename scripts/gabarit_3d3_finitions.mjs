@@ -41,6 +41,23 @@ function lettresPlan(svg) {
   }
   return out
 }
+// la flèche du nord + « N » : région autour de (width-22, 30) dans le plan-clé
+function nordPlan(svg) {
+  const vb = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/); const w = vb ? +vb[1] : 210
+  const nx = w - 22, ny = 30
+  return [nx - 9, ny - 20, nx + 9, ny + 18]
+}
+// cotes d'altitude de la coupe (centre x, valeur) + échelle px/m lue sur les graduations de distance → le
+// seuil « voisines » vaut EXACTEMENT 3 m sur l'axe (comme la règle serveur), pas un pourcentage approximatif.
+function cotesCoupe(svg) {
+  const out = []
+  for (const b of boitesCoupe(svg)) { const mm = b[4].match(/^(\d+),(\d)\s?m$/); if (mm) out.push({ x: (b[0] + b[2]) / 2, v: +(`${mm[1]}.${mm[2]}`) }) }
+  const ticks = [...svg.matchAll(/<text x="([\d.]+)" y="[\d.]+" text-anchor="middle" font-size="9.5"[^>]*>(\d+)<\/text>/g)]
+    .map((m) => ({ x: +m[1], d: +m[2] }))
+  let pxPerM = 10
+  if (ticks.length >= 2) { const a = ticks[0], b = ticks[ticks.length - 1]; if (b.d !== a.d) pxPerM = Math.abs((b.x - a.x) / (b.d - a.d)) }
+  return { out, seuilX: 3 * pxPerM }
+}
 
 const res = {}
 for (const [court, idu] of CAS) {
@@ -61,13 +78,17 @@ for (const [court, idu] of CAS) {
       if (!img || !panel) return 0
       return Math.round((img.getBoundingClientRect().height / panel.getBoundingClientRect().height) * 100) / 100
     })
-    // 3) lettres d'axe du plan-clé — aucun chevauchement
+    // 3) lettres d'axe du plan-clé — aucun chevauchement ENTRE ELLES ni avec la flèche du nord
     const planSrc = await page.evaluate(() => document.querySelector('[data-gab3d-plan]')?.src || '')
     const psvg = planSrc ? await (await fetch(planSrc)).text() : ''
-    const lp = lettresPlan(psvg)
-    let chevLettres = 0
-    for (let i = 0; i < lp.length; i++) for (let j = i + 1; j < lp.length; j++) if (inter(lp[i], lp[j])) chevLettres++
-    res[`${court}_${w}x${h}`] = { chevCoupe, planRatio: ratio, planRatioOk: ratio >= 0.66, chevLettres, nLabels: bl.length, nLettres: lp.length }
+    const lp = lettresPlan(psvg); const nord = nordPlan(psvg)
+    let chevLettres = 0, lettreNord = 0
+    for (let i = 0; i < lp.length; i++) { if (inter(lp[i], nord)) lettreNord++; for (let j = i + 1; j < lp.length; j++) if (inter(lp[i], lp[j])) chevLettres++ }
+    // 4) pas deux cotes quasi identiques voisines (< ~3 m sur l'axe ET < 0,2 m d'altitude)
+    const cc = cotesCoupe(svg); let cotesVoisines = 0
+    for (let i = 0; i < cc.out.length; i++) for (let j = i + 1; j < cc.out.length; j++)
+      if (Math.abs(cc.out[i].v - cc.out[j].v) < 0.2 && Math.abs(cc.out[i].x - cc.out[j].x) < cc.seuilX) cotesVoisines++
+    res[`${court}_${w}x${h}`] = { chevCoupe, planRatio: ratio, planRatioOk: ratio >= 0.66, chevLettres, lettreNord, cotesVoisines }
     await ctx.close()
   }
 }
@@ -75,8 +96,8 @@ fs.writeFileSync(`${OUT}/finitions.json`, JSON.stringify(res, null, 2))
 console.log('\n== finitions (coupe sans chevauchement · plan-clé ≥ 2/3 · lettres sans chevauchement) ==')
 let okAll = true
 for (const k of Object.keys(res)) {
-  const r = res[k]; const ok = r.chevCoupe === 0 && r.planRatioOk && r.chevLettres === 0; okAll = okAll && ok
-  console.log(`  ${k}: ${ok ? 'OK' : 'KO'} — coupe chevauch=${r.chevCoupe} · plan ${Math.round(r.planRatio * 100)}% (≥66) · lettres chevauch=${r.chevLettres}`)
+  const r = res[k]; const ok = r.chevCoupe === 0 && r.planRatioOk && r.chevLettres === 0 && r.lettreNord === 0 && r.cotesVoisines === 0; okAll = okAll && ok
+  console.log(`  ${k}: ${ok ? 'OK' : 'KO'} — coupe chevauch=${r.chevCoupe} · plan ${Math.round(r.planRatio * 100)}% · lettres chevauch=${r.chevLettres} · lettre∩nord=${r.lettreNord} · cotes voisines=${r.cotesVoisines}`)
 }
 console.log(okAll ? '\nTOUS OK' : '\nAU MOINS UN KO')
 await browser.close()

@@ -99,17 +99,26 @@ def _cote_3d_sol_degage(sampler, cadastre, batis, ox: float, oy: float):
 
 
 _COUVERT_SEUIL_M = 1.5          # bosse ≥ 1,5 m au-dessus du sol voisin = élément couvert (varangue), comme la coupe
+# aplanissement 3D : seuil un peu PLUS HAUT que la coupe (le plan de l'anneau n'épouse pas parfaitement un
+# terrain courbe → sur une pente, les résidus montent à ~1,9 m ; 2,0 m garde les pentes INTACTES et n'aplanit
+# que les vraies dalles de varangue, nettement au-dessus du plan du sol voisin).
+_APLANIR_SEUIL_M = 2.0
 
 
 def _sol_sans_bosses_couvertes(surf, batis, ox: float, oy: float):
     """Tableau du sol avec les BOSSES d'éléments couverts (varangue/auvent pris pour du sol sous le bâti)
-    APLANIES au sol voisin — pour le MAILLAGE 3D seulement (la coupe et les cotes gardent le sol réel). Un
-    pixel INTÉRIEUR à une emprise bâtie qui dépasse de ≥ 1,5 m le sol le plus bas de l'anneau autour du bâti
-    est ramené à ce niveau. Copie du tableau seulement si quelque chose change ; travail borné par emprise."""
+    APLANIES au sol voisin — pour le MAILLAGE 3D seulement (la coupe et les cotes gardent le sol réel).
+
+    On ajuste un PLAN (moindres carrés) au sol de l'ANNEAU autour du bâti : il suit la pente du terrain. Un
+    pixel intérieur à l'emprise qui dépasse ce plan de ≥ 1,5 m est ramené SUR le plan → une varangue (dalle
+    au-dessus du sol voisin) est aplanie, un terrain EN PENTE sous le bâti NE L'EST PAS (le plan épouse la
+    pente), et le raccord reste propre (on ramène à la valeur du plan, pas à un niveau unique). Fit robuste :
+    une 2ᵉ passe écarte les points d'anneau nettement au-dessus du plan (bâti/structure voisine)."""
+    import numpy as np
     from shapely.geometry import Point, Polygon
     from shapely.prepared import prep
     polys = [Polygon([(x + ox, y + oy) for x, y in sub["ext"]])
-             for b in (batis or []) for sub in (b.get("empreinte") or []) if len(sub.get("ext") or []) >= 3]
+             for b in (batis or []) for sub in (b.get("empreinte") or []) if len(sub.get("ext") or [])>= 3]
     polys = [g for g in polys if g.is_valid and not g.is_empty]
     if not polys:
         return surf.a
@@ -123,28 +132,32 @@ def _sol_sans_bosses_couvertes(surf, batis, ox: float, oy: float):
         if (Ib - Ia + 1) * (Jb - Ja + 1) > 40000:        # emprise démesurée → on ne tente pas (rare)
             continue
         pin, pring = prep(g), prep(ring)
-        gmin = None
+        rx, ry, rz, ins = [], [], [], []
         for I in range(Ia, Ib + 1):
             yy = surf.oy - (I + 0.5) * pas
             for J in range(Ja, Jb + 1):
                 v = a[I, J]
                 if v != v:
                     continue
-                if pring.covers(Point(surf.ox + (J + 0.5) * pas, yy)):
-                    gmin = v if gmin is None or v < gmin else gmin
-        if gmin is None:
+                xx = surf.ox + (J + 0.5) * pas
+                if pring.covers(Point(xx, yy)):
+                    rx.append(xx); ry.append(yy); rz.append(v)
+                elif pin.covers(Point(xx, yy)):
+                    ins.append((I, J, xx, yy, v))
+        if len(rx) < 8 or not ins:
             continue
-        seuil = gmin + _COUVERT_SEUIL_M
-        for I in range(Ia, Ib + 1):
-            yy = surf.oy - (I + 0.5) * pas
-            for J in range(Ja, Jb + 1):
-                v = a[I, J]
-                if v != v or v <= seuil:
-                    continue
-                if pin.covers(Point(surf.ox + (J + 0.5) * pas, yy)):
-                    if out is None:
-                        out = a.copy()
-                    out[I, J] = gmin
+        rX = np.column_stack([rx, ry, np.ones(len(rx))]); rZ = np.asarray(rz)
+        coef, *_ = np.linalg.lstsq(rX, rZ, rcond=None)                 # plan z = c0·x + c1·y + c2
+        resid = rZ - rX @ coef                                         # 2ᵉ passe : écarte les points très hauts (structures)
+        keep = resid <= (np.median(resid) + 2.0)
+        if keep.sum() >= 8 and not keep.all():
+            coef, *_ = np.linalg.lstsq(rX[keep], rZ[keep], rcond=None)
+        for I, J, xx, yy, v in ins:
+            exp = coef[0] * xx + coef[1] * yy + coef[2]
+            if v - exp >= _APLANIR_SEUIL_M:                            # dalle NETTEMENT au-dessus du plan du sol voisin
+                if out is None:
+                    out = a.copy()
+                out[I, J] = exp
     return out if out is not None else a
 
 
