@@ -166,6 +166,43 @@ déjà écarté par le seuil d'aire et le reste par l'érosion ; DK0208/HT0538 i
 revue (rubans 97410000AX0059/AX0918 → non constructibles ; vrai bout 97411000CH0052 → capacité sur
 ~1 048 m²) sont vérifiés par le calcul en direct et les tests, hors des 3 parcelles.
 
+## RELECTURE (2ᵉ passe) — le Dossier était manqué partout
+
+Une relecture indépendante a montré que plusieurs faits corrigés dans les producteurs ne l'étaient pas
+dans le **Dossier** (rendu par `exports/miroir`, qui lit ses propres extracteurs). Corrigés ET cités
+dans `~/Desktop/exports-audit-4/AVANT-APRES.md` (§ RELECTURE, chaque ligne = phrase lue dans le PDF
+régénéré) :
+
+- **Dossier (3 parcelles)** : DPU « non ingéré pour cette commune — NON VÉRIFIÉ » (plus « rien à
+  signaler » ; `robinet_fiche._c_dpu` teste la présence par commune + `miroir._r_dpu`) ; PLU « version
+  servie par LABUSE … évolution publiée depuis au GPU non confrontée » (`miroir` statut PLU) ; taxe
+  « surface taxable » (`miroir._r_taxe` + `blocs/commune`) ; bâti « Bâti détecté, à vérifier — 323 m²
+  CoSIA » (plus « Parcelle non bâtie » ; `miroir`) ; PPR hors rouge « soumise aux règles de sa zone — en
+  A/N reste non constructible » (plus « constructible » ; `servitudes._ppr_ligne`) ; **zone inondable
+  TRI** ajoutée (registre `donnees.py` + `robinets.py` + `robinet_fiche._c_tri` + `risques.yaml` +
+  `oracle_dossier`) ; 614 m² « surface de plancher estimée, hors stationnement et pleine terre ».
+- **Taxe d'archéologie (ZIP)** : « assiette = surface TAXABLE » (`pre_dossier`). **PCMI4** : un aléa
+  Géorisques hors zonage PPR dit « HORS zonage PPR — aucune prescription PPR opposable » (plus
+  « prescriptions du règlement PPR »).
+- **Étude de faisabilité** : le payload de régénération était erroné (`idu` au lieu de `idus`) → les 3
+  disaient « au moins une parcelle requise ». Corrigé : BI0351 refus motivé (zone N), HT0538 étude
+  (10 logements R+4), DK0208 refus motivé (441 m² bâtie saturée).
+- **Comparatif** : hypothèses PAR bilan (une par colonne, étiquetée IDU) ; saturation nommée « surface
+  de plancher autorisée consommée » (plus « occupe toute l'emprise », qui contredisait le Gabarit).
+- **Analyse** : « Zone rouge · 31 % » une seule fois (plus répétée par aléa) ; prix terrain « secteur
+  élargi (voisinage) » ; fibre « raccordable à proximité (≤ 100 m, pas sur la parcelle) » ; table « 8
+  ventes » bornée aux 8 plus proches.
+
+**Piège levé (durable).** La fiche est servie depuis un cache (`fiche_cache` L1 par worker + L2 en base)
+dont la clé ne portait QUE la fraîcheur des données — un correctif de libellé STOCKÉ dans la fiche (ex.
+le PPR « hors zone rouge », produit par `servitudes._ppr_ligne` et rangé dans `aleas.liste[].libelle`)
+restait servi périmé. Ajout d'un jeton `_FICHE_CODE_REV` à la clé du cache : à incrémenter à chaque
+correctif qui change un libellé stocké dans la fiche.
+
+**Non corrigé (dit tel quel, règle B)** : Comparatif « pas d'exclusion automatique » (message cascade
+partagé, exact en soi — la constructibilité est déjà dite) ; Dossier « Logement sous conditions » non
+qualifié « extension d'habitation existante » (texte de règle PLU de la zone N non servi — non inventé).
+
 ## Qualité (hook)
 
 - **Python unitaire** (`not db and not local and not reel and not network`) : **3326 passed, 0 failed**.
