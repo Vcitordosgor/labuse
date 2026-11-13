@@ -412,6 +412,19 @@ def faisabilite_surface_incertaine(zone: str | None) -> "Faisabilite":
                        _BANDEAU, calibree=True, cause="surface_incertaine")
 
 
+def faisabilite_zone_non_constructible(zone: str | None, zone_fam: str | None) -> "Faisabilite":
+    """EXPORTS-FIX-3 LOT 1 — zone dominante de famille A/N dont le CODE n'est pas calibré au PLU de la
+    commune (`resolve_zone` → None) ET dont la seule portion U/AU est infime (écartée par la garde
+    d'aire réelle). La parcelle n'est PAS « hors PLU » (None, qui masquerait la zone) : elle est en
+    zone non constructible. On sert un verdict FERME « zone non constructible », jamais une capacité
+    fantôme. Cause CERTAINE `zone_non_constructible:<zone>` (même famille que la garde zone_servie)."""
+    z = zone or (zone_fam or "?")
+    return Faisabilite(z, None, False,
+                       f"Construction neuve non autorisée en zone {z}.",
+                       [], [], [], [], {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                       _BANDEAU, calibree=True, cause=f"zone_non_constructible:{z}")
+
+
 def estimate_capacity(rules: ZoneRules, surface_m2: float,
                       contraintes: Contraintes | None = None,
                       hyp: Hypotheses | None = None,

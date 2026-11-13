@@ -80,6 +80,10 @@ class ParcelContext:
     # {decision: regain|exigu|verifier, net_m2, net_larg, pre_m2, parc_larg, has_net, valide}. Lecture
     # seule (transparence + tests), n'altère aucun calcul.
     reexamen_exigu: dict | None = None
+    # EXPORTS-FIX-3 LOT 1 — quand la zone dominante est A/N mais qu'une sous-zone U/AU a été
+    # envisagée : {m2, pct, sous_zone} de la portion U/AU RÉELLE mesurée. Renseigné par
+    # parcel_faisabilite pour la garde d'aire réelle (transparence + tests). None sinon.
+    uau_reelle: dict | None = None
 
     @property
     def terrain_sur_dessin(self) -> float:
@@ -595,13 +599,78 @@ def _sous_zone_constructible(ctx: ParcelContext):
     """SCORING-6 lot A — assiette clippée : quand la zone DOMINANTE n'est pas constructible
     (A/N, habitat interdit) mais qu'une portion U/AU subsiste, résout les règles de la plus
     grande sous-zone U/AU. Renvoie les ZoneRules de cette portion (capacité calculée sur la
-    portion, au lieu du tout-ou-rien) ou None si aucune portion constructible ne se résout."""
+    portion, au lieu du tout-ou-rien) ou None si aucune portion constructible ne se résout.
+
+    EXPORTS-FIX-3 LOT 1 — ce choix de règle ne suffit PAS : il faut encore que la portion U/AU
+    existe VRAIMENT (aire réelle), ce que ce `pct` (arrondi à 0,1 pt dans `zone_parts`) ne
+    garantit pas — un éclat de 0,09 m² s'arrondit à 0,0 % et passait quand même. La GARDE d'aire
+    réelle est posée au point d'appel DB-aware (`parcel_faisabilite`), qui mesure la surface U/AU
+    sur la géométrie ; cette fonction reste pure (choix du secteur dominant U/AU)."""
     parts = [p for p in (ctx.zone_parts or []) if p.get("fam") in FAMILLES_CONSTRUCTIBLES]
     for p in sorted(parts, key=lambda x: -float(x.get("pct") or 0)):
         r = resolve_zone(p.get("zone"), ctx.commune)
         if r is not None and r.constructible_neuf and r.habitat != "interdit":
             return r
     return None
+
+
+# EXPORTS-FIX-3 LOT 1 — SEUILS de « portion U/AU réelle ». Une parcelle dont la zone DOMINANTE
+# n'est pas constructible (A/N) ne devient constructible « à cheval » que si sa part U/AU est une
+# VRAIE surface : au-delà de ces deux seuils, qui sont exactement la frontière de la classe
+# « infime » du mandat (moins de 1 % OU moins de 50 m²). En deçà (nulle ou infime), l'intersection
+# U/AU est un éclat de numérisation / un contact de limite — aucune capacité n'est servie, la
+# parcelle reste sa zone dominante. La famille U/AU est lue par `labuse_zone_famille(subtype)` (la
+# source unique du code : tient sur 1AU/2AU et les libellés littéraux — Bras-Panon, Saint-Pierre),
+# jamais par le préfixe du nom.
+SEUIL_UAU_REELLE_M2 = 50.0
+SEUIL_UAU_REELLE_PCT = 1.0
+
+# Surface U/AU RÉELLE (m²) d'une parcelle + part (%) de sa surface dessinée. Intersection
+# géométrique brute avec les zones de FAMILLE U/AU (même `positive_prefixes` que tout le moteur),
+# sans inset : on mesure la portion U/AU telle qu'elle existe au plan, la « surface réelle en
+# U/AU » du mandat. ST_ClipByBox2D avant l'intersection fine (grosses zones PLU) — résultat
+# identique, O(bbox).
+_UAU_REELLE = text("""
+WITH p AS (SELECT commune, geom_2975 AS g, ST_Area(geom_2975) AS a FROM parcels WHERE id = :pid)
+SELECT COALESCE(sum(ST_Area(ST_Intersection(
+           ST_MakeValid(ST_ClipByBox2D(z.geom_2975, p.g)), p.g))), 0.0) AS uau_m2,
+       (SELECT a FROM p) AS parc_m2
+FROM spatial_layers z, p
+WHERE z.kind = :zkind AND z.commune = p.commune
+  AND labuse_zone_famille(z.subtype) = ANY(:uau_fams)
+  AND ST_Intersects(z.geom_2975, p.g)
+""")
+
+
+def _uau_reelle(session: Session, parcel_id: int) -> tuple[float, float]:
+    """EXPORTS-FIX-3 LOT 1 — (surface U/AU réelle en m², part en % de la parcelle). (0, 0) si
+    aucune zone U/AU ne touche la parcelle. Lecture seule, bornée."""
+    zonage = _layer_params("zonage_plu_gpu")
+    row = session.execute(_UAU_REELLE, {
+        "pid": parcel_id,
+        "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
+        "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"])),
+    }).one()
+    m2 = float(row.uau_m2 or 0.0)
+    parc = float(row.parc_m2 or 0.0)
+    pct = (100.0 * m2 / parc) if parc > 0 else 0.0
+    return m2, pct
+
+
+def _uau_portion_reelle(uau_m2: float, uau_pct: float) -> bool:
+    """EXPORTS-FIX-3 LOT 1 — True si la portion U/AU est une VRAIE surface (classe « au-delà » du
+    mandat : ≥ 50 m² ET ≥ 1 %). False pour « nulle » (0) et « infime » (< 1 % OU < 50 m²) : la
+    parcelle ne porte alors aucune capacité à cheval (fonction pure, verrouillée par test)."""
+    return uau_m2 >= SEUIL_UAU_REELLE_M2 and uau_pct >= SEUIL_UAU_REELLE_PCT
+
+
+def _uau_gate_actif() -> bool:
+    """EXPORTS-FIX-3 LOT 1 — seam de MESURE : la garde d'aire réelle U/AU est ACTIVE par défaut ;
+    `LABUSE_UAU_PHANTOM_GATE=0` la désactive (comportement d'ORIGINE : une portion U/AU, même d'un
+    éclat, rendait la parcelle constructible) pour mesurer l'avant/après sur la MÊME population.
+    N'influence AUCUNE parcelle hors de la branche sous-zone (zone dominante déjà non constructible)."""
+    import os
+    return os.environ.get("LABUSE_UAU_PHANTOM_GATE", "1") != "0"
 
 
 def _pct_constructible(ctx: ParcelContext) -> float | None:
@@ -652,15 +721,40 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # SCORING-6 lot A — assiette clippée : si la zone DOMINANTE n'est pas constructible mais
     # qu'une portion U/AU subsiste, on résout la sous-zone U/AU et on calcule la capacité sur
     # cette portion (fini le tout-ou-rien). RESIDUEL-1 — toujours actif (chemin unique).
+    alt = None
+    phantom_ecarte = False
     if (rules is None or not rules.constructible_neuf
             or rules.habitat == "interdit"):
         alt = _sous_zone_constructible(ctx)
         if alt is not None:
-            rules = alt
-            ctx.contraintes.libelles.append(
-                f"Zone dominante « {ctx.zone} » non constructible — capacité calculée sur la "
-                f"portion U/AU (sous-zone « {alt.code} »), assiette clippée.")
+            # EXPORTS-FIX-3 LOT 1 — GARDE D'AIRE RÉELLE : la sous-zone U/AU n'ouvre la
+            # constructibilité QUE si la portion U/AU est une vraie surface (≥ 50 m² ET ≥ 1 %).
+            # Une parcelle 100 % A/N peut toucher un éclat U/AU de quelques m² (contact de limite,
+            # bruit de numérisation) : `_sous_zone_constructible` le choisissait et rendait TOUTE la
+            # parcelle constructible (ex. 97408000BI0351 : éclat « UB » de 0,09 m² → 24 437 m² de
+            # plancher fantôme). On mesure l'aire réelle ; en deçà des seuils, la parcelle reste sa
+            # zone dominante (non constructible) — aucune capacité sans surface réelle en U/AU.
+            uau_m2, uau_pct = _uau_reelle(session, parcel_id)
+            ctx.uau_reelle = {"m2": uau_m2, "pct": uau_pct, "sous_zone": alt.code}
+            if not _uau_gate_actif() or _uau_portion_reelle(uau_m2, uau_pct):
+                rules = alt
+                ctx.contraintes.libelles.append(
+                    f"Zone dominante « {ctx.zone} » non constructible — capacité calculée sur la "
+                    f"portion U/AU réelle (~{uau_m2:.0f} m², {uau_pct:.1f} % de la parcelle ; "
+                    f"sous-zone « {alt.code} »), assiette clippée.")
+            else:
+                phantom_ecarte = True
+            # sinon : portion U/AU infime/nulle → `rules` reste la zone dominante (A/N) non
+            # constructible ; estimate_capacity rendra « non constructible en zone <dominante> »
+            # (jamais un chiffre sur une portion qui n'existe pas réellement).
     if rules is None:
+        # EXPORTS-FIX-3 LOT 1 — une sous-zone U/AU a été ÉCARTÉE par la garde d'aire réelle, mais la
+        # zone dominante (A/N) n'est pas calibrée au PLU de la commune (resolve_zone → None). La
+        # parcelle N'EST PAS « hors PLU » : elle est en zone non constructible. On sert un verdict
+        # ferme (jamais None qui masquerait la zone, jamais la capacité fantôme qui l'ouvrait avant).
+        if phantom_ecarte and ctx.zone_fam in ("A", "N"):
+            from .engine import faisabilite_zone_non_constructible
+            return ctx, faisabilite_zone_non_constructible(ctx.zone, ctx.zone_fam)
         return None
     # PROSPECT (Ud/Uu) : hauteur PAR PARCELLE = L≥H, L = max(largeur voie desservante, 10 m).
     # Copie par-parcelle (dataclasses.replace) — la règle de zone partagée n'est JAMAIS mutée.
