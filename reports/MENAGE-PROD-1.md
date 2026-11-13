@@ -149,7 +149,7 @@ La correction demandée (reconnaître U/AU par `subtype`/`typezone`, pas par le 
 | infime | 196 | 2 217 |
 | **nulle (0 U/AU réel, phantom)** | **0** | **4 487** (HC 4 380 · bande 0 107 · aucune A/B/C/D) |
 
-- Run **servi (q_v20) propre** : 0 parcelle nulle. L'alarme « Excellente/Bonne servies à 0 m² » de §K bis était un **faux positif** (méthode par préfixe de nom) — **retirée**.
+- ~~Run servi (q_v20) propre : 0 parcelle nulle.~~ **CORRIGÉ (§K quater, mesure prod 14/11)** : la classe *nulle* seule est trop étroite. Avec la garde `fix/exports-3` (éclat <50 m² OU ruban vide à `ST_Buffer(-3)`), le servi porte **257** parcelles A/N à capacité non bâtissable (27 nulle + 230 éclats/rubans) — **dont 7 en « Bonne », client-visibles**. ≈ les 256 trouvés en local par la branche. Le servi **n'est pas propre** → correctif (garde `_uau_portion_reelle`) à porter côté `main` puis repasser sur le servi.
 - Phantom **uniquement dans q_v23** (4 487, introduites par le ré-examen exigu), **toutes HC** → le Score les met hors champ.
 - 10 parcelles vérifiées à la main (dont `97402000AB1039` = à-cheval légitime, et `97408000BI0351` = phantom HC).
 - **Correctif moteur côté `main`** (hors ménage) : `_sous_zone_constructible` doit refuser la sous-zone quand l'intersection U/AU réelle (`subtype`) est nulle, en gardant le clip quand elle est réelle.

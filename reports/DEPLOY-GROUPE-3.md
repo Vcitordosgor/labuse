@@ -528,7 +528,45 @@ Précision Vic : séparer les parcelles à cheval (portion U/AU RÉELLE, clip vo
 
 **Corrections :**
 - **`97402000AB1039` = au-delà** (2 792 m² = 14 % de zone U réelle, libellés « activités économiques » + « Bourg », `subtype=U`) — **à-cheval LÉGITIME, pas un phantom.** Mon exemple §K bis était faux.
-- **Le run SERVI (q_v20) a 0 parcelle nulle.** Ses 5 155 A/N avec capacité ont TOUTES du U/AU réel (clip à-cheval, feature SCORING-6 voulue). → **AUCUNE Excellente/Bonne à 0 m² réel dans le servi** (le « 386 » de §K bis était un faux positif).
+- **Le run SERVI (q_v20) a 0 parcelle nulle.** Ses 5 155 A/N avec capacité ont TOUTES du U/AU réel (clip à-cheval, feature SCORING-6 voulue). → **AUCUNE Excellente/Bonne à 0 m² réel dans le servi** (le « 386 » de §K bis était un faux positif). — **⚠ CORRIGÉ en §K quater : « 0 nulle » était trop grossier. Avec la garde `fix/exports-3` (éclat <50 m² OU ruban vide à −3 m), le servi porte 257 parcelles à capacité non bâtissable (27 nulle que je ratais ici + 230 éclats/rubans), dont 7 en « Bonne ». Le servi n'est PAS propre.**
 - **Le phantom existe UNIQUEMENT dans q_v23 (4 487)**, introduit par le ré-examen exigu. Par bande : **HC 4 380 · bande 0 107 — aucune en A/B/C/D.** Le Score les met « hors champ ». Vérif manuelle (10) : toutes famille A/N, 0 U/AU réel, bande HC, sdp 97–218 k m² fabriquée par `_sous_zone_constructible`. `97408000BI0351` : nulle, phantom 24 137 m², HC.
 
-**Conclusion révisée.** Le bug `_sous_zone_constructible` sur parcelle à 0 U/AU réel **existe** (capacité résiduelle fantôme ; la fiche LIVE l'affiche déjà, ex. BI0351), mais : (a) **le run servi est propre** (0 nulle) ; (b) **q_v23 en introduit 4 487, toutes classées HC** par le Score (pas Excellente/Bonne). Le motif de non-promotion de §K/§K bis **tient toujours** (q_v23 fabrique 4 487 capacités fantômes vs 0 au servi) mais **l'alarme « Excellente/Bonne servies à 0 m² » est RETIRÉE** : elle venait de ma méthode erronée. Correctif moteur à faire côté `main` : refuser la sous-zone quand `subtype`-U/AU réel est nul. Promotion bloquée.
+**Conclusion révisée (puis re-corrigée en §K quater).** Le bug `_sous_zone_constructible` sur parcelle à 0 U/AU réel **existe** (capacité résiduelle fantôme ; la fiche LIVE l'affiche déjà, ex. BI0351), mais : (a) ~~**le run servi est propre** (0 nulle)~~ — **FAUX, voir §K quater : le servi porte 257 défauts (dont 7 « Bonne » client-visibles)** ; (b) **q_v23 en introduit 4 487, toutes classées HC** par le Score (pas Excellente/Bonne). Le motif de non-promotion de §K/§K bis **tient toujours** (q_v23 amplifie le défaut) ; mais le défaut **préexiste au servi**. Correctif moteur à faire côté `main` : refuser la sous-zone quand la portion U/AU réelle (`subtype`) est non bâtissable — **la garde `fix/exports-3` (`_uau_portion_reelle`) est ce correctif**. Promotion bloquée.
+
+### §K quater — Le servi n'est PAS « propre » : éclats et rubans U/AU (mesure prod q_v20, 14/11, lecture seule)
+
+§K ter concluait « run servi propre » en ne regardant que la classe *nulle* (0 m² U/AU réel). **Trop étroit** (remarque de Vic) : le défaut vit dans les parcelles dont la portion U/AU **existe mais n'est pas bâtissable** — un **éclat** (<50 m²) ou un **ruban** de superposition (passe le seuil d'aire mais s'évanouit à `ST_Buffer(-3)`).
+
+Mesure reproduite sur **prod**, run **servi q_v20**, famille **canonique** (`labuse_zone_famille(subtype) IN ('U','AU')`), avec la garde exacte de `fix/exports-3` (`_uau_portion_reelle` : portion bâtissable = `uau_m2 ≥ 50` **ET** `ST_Area(ST_Buffer(portion,-3)) > 0`). Population = **5 155** A/N avec capacité (identique §K ter).
+
+| classe de la portion U/AU réelle | parcelles |
+|---|--:|
+| légitime (≥50 m² ET survit à −3 m) | 4 898 |
+| **éclat/ruban** (>0 mais <50 m² ou vide à −3 m) | **230** |
+| **nulle** (0 m² réel) | **27** |
+| **DÉFAUT total** (garde : <50 m² OU vide à −3 m) | **257** |
+
+**257 ≈ les 256 trouvés en local par `fix/exports-3`** (écart 1 = dérive prod/local → mesure validée). Les 27 *nulle* sont exactement celles que §K ter annonçait à **0** : la méthode §K ter était trop grossière et les ratait.
+
+**Par bande servie (défaut = 257) :**
+| bande servie | défaut | dont nulle | dont éclat/ruban |
+|---|--:|--:|--:|
+| **Excellente (A)** | **0** | 0 | 0 |
+| **Bonne (B)** | **7** | 0 | 7 |
+| reste (C) | 5 | 0 | 5 |
+| reste (D) | 126 | 0 | 126 |
+| reste (HC) | 119 | 27 | 92 |
+
+**7 parcelles sont servies « Bonne » aujourd'hui** sur un ruban U/AU non bâtissable (**client-visible**) ; **0 en « Excellente »** ; 250 dans le reste (surtout HC/D). Les 7 « Bonne » (toutes des rubans s'évanouissant à −3 m — il n'en existe que 7 en Excellente/Bonne, l'échantillon « dix » est épuisé à 7) :
+
+| idu | commune | bande | sdp résid. m² | U/AU réel m² | érodé −3 m |
+|---|---|---|--:|--:|--:|
+| 97410000BN0753 | Saint-Benoît | B | 205 | 190,4 | 0,0 |
+| 97410000BM1312 | Saint-Benoît | B | 238 | 219,7 | 0,0 |
+| 97410000AX0632 | Saint-Benoît | B | 257 | 253,7 | 0,0 |
+| 97410000AE1105 | Saint-Benoît | B | 268 | 264,3 | 0,0 |
+| 97418000AT2566 | Sainte-Marie | B | 321 | 548,4 | 0,0 |
+| 97410000BD0762 | Saint-Benoît | B | 639 | 636,1 | 0,0 |
+| 97410000BV0028 | Saint-Benoît | B | 1058 | 908,6 | 0,0 |
+
+**Conclusion (corrige « run servi propre »).** Le run **servi n'est PAS propre** : **257** parcelles A/N y portent une capacité fondée sur un U/AU non bâtissable (éclat ou ruban), dont **7 en « Bonne »** visibles par le client. La priorité change : ce n'est plus seulement « ne pas promouvoir q_v23 », c'est **corriger le servi**. Le correctif est la garde `fix/exports-3` (`LABUSE_UAU_PHANTOM_GATE` / `_uau_portion_reelle`, ≥50 m² ET survie à −3 m) — à porter côté `main` puis à repasser sur le run servi. Mesure read-only, aucune écriture prod. Promotion de q_v23 toujours bloquée.
