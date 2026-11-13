@@ -515,3 +515,20 @@ Précision Vic : séparer les parcelles à cheval (portion U/AU RÉELLE, clip vo
 **Conclusions affinées :**
 - Le clip U/AU à-cheval (classe au-delà) est **légitime** (~3 391 en q_v20) — ce n'est PAS le bug.
 - Le bug = classe **nulle** : q_v20 en a déjà **1 694** (dont 386 Excellente/Bonne — **servi aujourd'hui, visible client**) ; q_v23 le porte à **7 415** (le ré-examen exigu rallume la sous-zone sur des A/N à 0 U/AU). Correctif moteur : **refuser la sous-zone quand l'intersection U/AU réelle est nulle** (garder le clip quand elle est réelle). Défaut PRÉ-EXISTANT au servi, AMPLIFIÉ par q_v23. Promotion bloquée.
+
+### §K ter — CORRECTION de §K bis (famille canonique, pas le préfixe du nom)
+
+**§K bis était FAUX** : j'y identifiais U/AU par le préfixe du `name` (`U%`/`AU%`), ce qui RATE les zones AU numérotées (`1AU`/`2AU`) et les zones U/AU à **libellé littéral** (Bras-Panon, Saint-Pierre, Petite-Île…). La source canonique est **`subtype` (= `attrs->>'typezone'`)** : U, A, N, AUc, AUs, AU — celle du moteur. Refait avec `subtype` :
+
+| Classe U/AU réel | q_v20 (servi) | q_v23 (candidat) | (mon compte par nom, faux) |
+|---|--:|--:|--:|
+| au-delà (à-cheval légitime) | **4 959** | 7 712 | — |
+| infime | 196 | 2 217 | — |
+| **nulle (0 U/AU réel, phantom)** | **0** | **4 487** | q_v20 1 694 / q_v23 7 415 |
+
+**Corrections :**
+- **`97402000AB1039` = au-delà** (2 792 m² = 14 % de zone U réelle, libellés « activités économiques » + « Bourg », `subtype=U`) — **à-cheval LÉGITIME, pas un phantom.** Mon exemple §K bis était faux.
+- **Le run SERVI (q_v20) a 0 parcelle nulle.** Ses 5 155 A/N avec capacité ont TOUTES du U/AU réel (clip à-cheval, feature SCORING-6 voulue). → **AUCUNE Excellente/Bonne à 0 m² réel dans le servi** (le « 386 » de §K bis était un faux positif).
+- **Le phantom existe UNIQUEMENT dans q_v23 (4 487)**, introduit par le ré-examen exigu. Par bande : **HC 4 380 · bande 0 107 — aucune en A/B/C/D.** Le Score les met « hors champ ». Vérif manuelle (10) : toutes famille A/N, 0 U/AU réel, bande HC, sdp 97–218 k m² fabriquée par `_sous_zone_constructible`. `97408000BI0351` : nulle, phantom 24 137 m², HC.
+
+**Conclusion révisée.** Le bug `_sous_zone_constructible` sur parcelle à 0 U/AU réel **existe** (capacité résiduelle fantôme ; la fiche LIVE l'affiche déjà, ex. BI0351), mais : (a) **le run servi est propre** (0 nulle) ; (b) **q_v23 en introduit 4 487, toutes classées HC** par le Score (pas Excellente/Bonne). Le motif de non-promotion de §K/§K bis **tient toujours** (q_v23 fabrique 4 487 capacités fantômes vs 0 au servi) mais **l'alarme « Excellente/Bonne servies à 0 m² » est RETIRÉE** : elle venait de ma méthode erronée. Correctif moteur à faire côté `main` : refuser la sous-zone quand `subtype`-U/AU réel est nul. Promotion bloquée.
