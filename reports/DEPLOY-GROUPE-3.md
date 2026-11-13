@@ -499,3 +499,19 @@ Dix exemples q_v23 (zone / SDP max) : `97422000BT0053` A **235 864 m²** · `974
 **Q3 — parmi les 22 834 sorties de `terrain_exigu` dans q_v23 : 10 539 (46 %) sont classées A ou N**, dont **7 352 devenues constructibles** (cause NULL, SDP > 0), 3 031 `assiette_a_verifier`, 146 `capacite_nulle`, 10 `redhibitoire`. **Le « régain » d'EXIGU-FIX-1 est donc à moitié faux** : ~7 352 des 14 215 régains sont des parcelles A/N rendues constructibles à tort par la sous-zone fantôme.
 
 **Conclusion.** Le bug `_sous_zone_constructible` est **pré-existant** (q_v20 : 5 155 A/N constructibles via la fiche live) **et le déploiement 2 + q_v23 l'amplifient** : le ré-examen exigu rallume la sous-zone sur des parcelles A/N → 14 416 A/N avec capacité, dont 7 352 nouvellement via la correction exigu. **C'est un motif FORT de ne PAS promouvoir q_v23** (en plus de l'incident cache), et un défaut du moteur à corriger côté `main` (clip réel de la sous-zone, ou refus de sous-zone quand l'intersection U/AU réelle est nulle). **Promotion bloquée.**
+
+### §K bis — Sous-zone : clip légitime (à-cheval) vs fantôme (0 U/AU réel), par classe
+
+Précision Vic : séparer les parcelles à cheval (portion U/AU RÉELLE, clip voulu depuis sept.) de celles sans aucun U/AU réel (capacité fabriquée). Classement des A/N avec capacité par **aire géométrique réelle parcelle ∩ zones U/AU** (`spatial_layers` name `U%`/`AU%`) :
+
+| Classe U/AU réel | q_v20 (servi) | q_v23 (candidat) |
+|---|--:|--:|
+| **au-delà** (≥50 m² ET ≥1 % — à-cheval légitime) | 3 391 | 5 160 |
+| infime (<1 % ou <50 m²) | 70 | 1 841 |
+| **nulle (0 m² réel — fantôme)** | **1 694** | **7 415** |
+
+**Le classement SERVI (q_v20) contient 386 parcelles de classe NULLE (0 m² U/AU réel) classées Excellente (bande A = 93) ou Bonne (bande B = 293).** Exemples servis nulle : `97402000AB1039` 20 351 m² / 0 U/AU / **B** · `97402000AB0250` 19 582 / 0 / HC · `97424000AP0432` 11 774 / 0 / D · `97424000AP0215` 3 368 / 0 / C.
+
+**Conclusions affinées :**
+- Le clip U/AU à-cheval (classe au-delà) est **légitime** (~3 391 en q_v20) — ce n'est PAS le bug.
+- Le bug = classe **nulle** : q_v20 en a déjà **1 694** (dont 386 Excellente/Bonne — **servi aujourd'hui, visible client**) ; q_v23 le porte à **7 415** (le ré-examen exigu rallume la sous-zone sur des A/N à 0 U/AU). Correctif moteur : **refuser la sous-zone quand l'intersection U/AU réelle est nulle** (garder le clip quand elle est réelle). Défaut PRÉ-EXISTANT au servi, AMPLIFIÉ par q_v23. Promotion bloquée.
