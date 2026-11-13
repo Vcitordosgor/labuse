@@ -81,9 +81,19 @@ def verdict_potentiel(valeurs: dict[str, Valeur]) -> Verdict | None:
         # trahirait justement un faux constructible. Pour cette cause, on sert TOUJOURS le message de
         # zonage, jamais le libelle. Les autres causes (géométriques/réglementaires) gardent le leur.
         cause_base = cause.partition(":")[0]
+        fam = _val(valeurs, "zone_plu_famille")
+        famU = str(fam).upper() if fam else None
+        # EXPORTS-FIX-3 LOT 2 — ORDRE DES MOTIFS (« un seul verdict, partout ») : une zone non
+        # constructible (famille A/N) PRIME sur toute cause géométrique servie (terrain_exigu,
+        # reculs…). Sur 97408000BI0351 (2,8 ha de zone N), le run servi porte cause=terrain_exigu →
+        # l'ancien code imprimait « terrain trop étroit » ici (ECARTS A2/B2). Désormais le §3 dit la
+        # même raison que la fiche (potentiel_batir) et le §2 (verdict_zonage) : « zone naturelle ».
+        if famU in ("A", "N"):
+            nat = {"A": "agricole", "N": "naturelle"}[famU]
+            return (f"Terrain non constructible — zone {nat} (zone {fam}) : le potentiel de "
+                    f"construction est nul par la règle de zonage.", "warn", "")
         if libelle and cause_base != "zone_non_constructible":
             return (f"{libelle}", "warn", "")
-        fam = _val(valeurs, "zone_plu_famille")
         z = f" (zone {fam})" if fam else ""
         return (f"Terrain non constructible{z} : le potentiel de construction est nul par la règle "
                 f"de zonage.", "warn", "")

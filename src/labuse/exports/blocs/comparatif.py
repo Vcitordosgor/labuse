@@ -180,6 +180,38 @@ _LIGNES = [
 
 _BADGE = {"s": ("s", "sourcé"), "e": ("e", "estimé")}
 
+# EXPORTS-FIX-3 LOT 2 — lignes de CAPACITÉ / BILAN : sur une parcelle NON CONSTRUCTIBLE (verdict de
+# la fiche), elles ne s'affichent pas (« — »). Le mandat : « sans surface de plancher, hauteur, bilan
+# ni charge foncière ». La ligne « Emprise au sol maximale » reste (c'est une RÈGLE de zonage, pas une
+# capacité). Un verdict « Non constructible — <motif> » est affiché à part (voir `rendu`).
+_LIGNES_CAPACITE = {"Hauteur autorisée", "Plancher possible · bâti conservé",
+                    "Plancher possible · reconstruction", "Part du gabarit déjà occupée",
+                    "Charge foncière"}
+
+
+def _est_non_constructible(r) -> bool:
+    """EXPORTS-FIX-3 LOT 2 — la parcelle est-elle non constructible AU SENS DE LA FICHE ?
+    `constructible is False` = verdict ferme de `potentiel_batir` ; None (indéterminé) ne masque rien."""
+    return r.get("constructible") is False
+
+
+def _ligne_verdict(rows) -> str:
+    """Ligne « Constructibilité » : « Non constructible — <motif> » (la MÊME raison que la fiche) ou
+    « Constructible », sur chaque colonne. Rendue seulement si au moins une parcelle est non
+    constructible (sinon le tableau reste comme avant)."""
+    if not any(_est_non_constructible(r) for r in rows):
+        return ""
+    cells = ""
+    for r in rows:
+        if _est_non_constructible(r):
+            motif = esc(r.get("verdict_motif") or r.get("cause_libelle") or "zone non constructible")
+            cells += f'<td><strong>Non constructible</strong> — {motif}</td>'
+        elif r.get("constructible") is True:
+            cells += "<td>Constructible</td>"
+        else:
+            cells += "<td>—</td>"
+    return f'<tr><td class="lbl">Constructibilité</td>{cells}</tr>'
+
 
 def rendu(rows) -> str:
     rows = list(rows or [])[:3]
@@ -194,7 +226,9 @@ def rendu(rows) -> str:
         sub = (f'<div class="sub">{adr}</div>' if adr else "") + (f'<div class="sub">{zs}</div>' if zs else "")
         return f"<th>{idu}{sub}</th>"
     thead = "<tr><th></th>" + "".join(_col(r) for r in rows) + "</tr>"
-    body = ""
+    # EXPORTS-FIX-3 LOT 2 — verdict de constructibilité en tête du corps (avant l'urbanisme) : la même
+    # raison que la fiche, sans jamais un plancher/bilan flatteur sur une parcelle non constructible.
+    body = _ligne_verdict(rows)
     for label, prov, fn in _LIGNES:
         badge = ""
         if prov in _BADGE:
@@ -202,6 +236,10 @@ def rendu(rows) -> str:
             badge = chip_span(cls, lib)
         cells = ""
         for r in rows:
+            # EXPORTS-FIX-3 LOT 2 — parcelle non constructible : aucune capacité/bilan dans sa colonne.
+            if label in _LIGNES_CAPACITE and _est_non_constructible(r):
+                cells += "<td>—</td>"
+                continue
             v = fn(r)
             cells += f"<td>{v if v is not None else '—'}</td>"
         body += f'<tr><td class="lbl">{esc(label)}{badge}</td>{cells}</tr>'

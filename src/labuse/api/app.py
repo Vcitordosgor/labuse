@@ -6530,12 +6530,14 @@ def _plu_fraicheur(idu: str) -> dict | None:
     if statut == "a_jour":
         # EXPORTS-REBRANCHEMENT-1 lot 0 — « à jour du GPU » (fraîcheur de NOTRE synchronisation)
         # ne se dit plus au client (doctrine PAGE-SOURCES-1, 18/09) : on dit le FAIT juridique.
-        document_servi, fait_foi = doc, "Document opposable — il fait foi à ce jour."
-        # M57-P1 (d) : ce libellé est GÉNÉRIQUE (gated sur `note` config = assertion d'agent, PAS
-        # une source ni une procédure détectée). Reformulé en avertissement NEUTRE, sans « en cours »
-        # ni sablier (cf. rendu front qui n'applique plus le cadre « En cours (non servi) » à a_jour).
-        en_cours = ("Des modifications postérieures au document peuvent exister — à confirmer en mairie."
-                    if note else None)
+        # EXPORTS-FIX-3 LOT 3f — « opposable » n'est affirmé QU'À LA DATE DES DONNÉES LABUSE, jamais
+        # « à ce jour » (qui laisserait croire que le GPU a été confronté aujourd'hui : une révision
+        # publiée depuis la synchro ne serait pas vue — faute « e » de l'audit). Le caveat « évolution
+        # postérieure à confirmer en mairie » est TOUJOURS porté (plus seulement si une note config existe).
+        document_servi = doc
+        fait_foi = ("Document opposable à la date des données LABUSE (voir la couverture) — "
+                    "une évolution publiée depuis n'est pas confrontée ici.")
+        en_cours = "Des modifications postérieures au document peuvent exister — à confirmer en mairie."
         action = None  # l'avertissement neutre porte déjà « à confirmer en mairie »
     elif statut == "annule_partiel":
         document_servi = doc
@@ -9221,6 +9223,9 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # MÊME valeur que la fiche SERVIE (qv2.potentiel_transformation : run servi + réconciliation de
     # l'écartement hors_classement), jamais un recalcul live divergent. Une seule source par notion.
     _pt_serv = qv2.get("potentiel_transformation") or {}
+    # EXPORTS-FIX-3 LOT 2 — le VERDICT de la fiche (point unique `potentiel_batir`), avec le motif
+    # dans l'ordre imposé (zone non constructible → zone rouge → reste).
+    _pab = qv2.get("potentiel_a_batir") or {}
     cf = (fa.get("bilan") or {}).get("charge_fonciere") or {}
     lignes = qv2.get("lines") or []
     contraintes = [l for l in lignes if l.get("result") in ("HARD_EXCLUDE", "SOFT_FLAG")]
@@ -9301,7 +9306,14 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "fraction": s2.get("fraction"),    # M135 P2 — « 1/5 » ou None
         "raison": raison,                  # M135 P3 — chip court, ou None
         # faisabilité (fiche_payload — même bilan que la fiche)
-        "zone": fa.get("zone"), "constructible": fa.get("constructible"),
+        # EXPORTS-FIX-3 LOT 2 — VERDICT UNIQUE : la constructibilité ET le motif servis au Comparatif
+        # sont CEUX DE LA FICHE (`potentiel_a_batir`, règle unique `potentiel_batir`), jamais un
+        # recalcul divergent. Quand la fiche dit « non constructible », le Comparatif le dit aussi et
+        # n'affiche ni plancher, ni hauteur, ni bilan, ni charge foncière (rendu `comparatif.py`).
+        "zone": fa.get("zone"),
+        "constructible": (_pab.get("constructible") if _pab.get("constructible") is not None
+                          else fa.get("constructible")),
+        "verdict_motif": _pab.get("motif"),
         # RECETTE-PROD-1 (12) — « Constructible : oui/non » (verdict faisabilité) MENTAIT : une Um
         # bâtie sur-occupée est « oui » (zone constructible, emprise ≥ seuil) mais a 0 potentiel
         # résiduel ; une voisine trop étroite est « non » (terrain_exigu). On sert donc SÉPARÉMENT
