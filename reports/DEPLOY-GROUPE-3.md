@@ -477,3 +477,25 @@ Le banc `coherence-banc` (île, ~15 min, vérifie le run SERVI q_v20) a tourné 
 **Gel du calcul de nuit (13/11).** `calcul-nuit` (02:00, `flux-run` + contrôles + **promotion**) tournait encore (q_v24, incomplet ~18 %) et **faisait abstenir le banc** (anti-OOM). Ligne commentée dans `/etc/cron.d/labuse` (« gelé le 13/11 sur ordre de Vic »), calcul en cours **arrêté** (SIGTERM), `LABUSE_CALCUL_NUIT_PROMEUT=0` (auto-promotion désactivée → q_v24 n'aurait pas promu), lignes partielles q_v24 laissées (à purger au ménage). **Ce gel doit être reporté dans le registre sur `main`**, sinon le prochain déploiement réactivera calcul-nuit.
 
 **Promotion : toujours BLOQUÉE jusqu'au vert de TOUS les contrôles.** Rien promu (résiduel servi seq 17, PROMEUT=0).
+
+---
+
+## §K — Bug moteur : sous-zone U/AU fantôme sur parcelles A/N (diagnostic lecture seule, 13/11)
+
+Diagnostic signalé par Vic (bug vu sur `main`) : une parcelle 100 % en zone N se voit accrocher une sous-zone U/AU inexistante (`faisabilite/db.py` ~655, `_sous_zone_constructible`) et devient constructible. Vérifié en prod (lecture seule, rien modifié).
+
+**Q1 — `97408000BI0351`** (La Possession, zone N) : q_v20 (servi) → `terrain_exigu`, SDP **0** ; **q_v23 → cause NULL, SDP résiduelle 24 137 m², SDP max 24 444, constructible** ; live (code déployé) idem, `faisabilité.zone = UB` → le moteur a résolu une **sous-zone U fantôme**. La parcelle passe de « trop exigu » à **constructible 24 137 m²**.
+
+**Q4 — le code DÉPLOYÉ (205d8ddf8) contient la logique** : `db.py` ~653-662, `alt = _sous_zone_constructible(ctx)` quand la zone dominante n'est pas constructible — « capacité calculée sur la portion U/AU ». Présente en prod (chemin live de la fiche) ET dans le calcul q_v23.
+
+**Q2 — parcelles classées A ou N (`parcel_zone_plu.zone_fam`, 110 624 au total) avec capacité/SDP > 0 :**
+| | q_v20 (servi) | q_v23 (candidat) |
+|---|--:|--:|
+| **A/N avec SDP > 0** | **5 155** | **14 416** (×2,8, +9 261) |
+| par bande | D 1930 · C 1182 · HC 932 · B 878 · A 233 | HC 7134 · 0 2534 · D 2400 · C 1230 · B 885 · A 233 |
+
+Dix exemples q_v23 (zone / SDP max) : `97422000BT0053` A **235 864 m²** · `97416000HN0194` A 231 277 · `97420000AB2093` A 218 221 · `97422000DK0244` A 210 398 · `97422000DN0096` N 197 088 · `97422000DN0095` A 184 035 · `97415000CW0697` N 172 438 · `97422000AD0862` A 172 325 · `97415000CV1547` A 170 375 · `97408000AO1491` N 167 753. Capacités **énormes** sur des terrains agricoles/naturels → la sous-zone ne clippe pas, elle donne la pleine parcelle.
+
+**Q3 — parmi les 22 834 sorties de `terrain_exigu` dans q_v23 : 10 539 (46 %) sont classées A ou N**, dont **7 352 devenues constructibles** (cause NULL, SDP > 0), 3 031 `assiette_a_verifier`, 146 `capacite_nulle`, 10 `redhibitoire`. **Le « régain » d'EXIGU-FIX-1 est donc à moitié faux** : ~7 352 des 14 215 régains sont des parcelles A/N rendues constructibles à tort par la sous-zone fantôme.
+
+**Conclusion.** Le bug `_sous_zone_constructible` est **pré-existant** (q_v20 : 5 155 A/N constructibles via la fiche live) **et le déploiement 2 + q_v23 l'amplifient** : le ré-examen exigu rallume la sous-zone sur des parcelles A/N → 14 416 A/N avec capacité, dont 7 352 nouvellement via la correction exigu. **C'est un motif FORT de ne PAS promouvoir q_v23** (en plus de l'incident cache), et un défaut du moteur à corriger côté `main` (clip réel de la sous-zone, ou refus de sous-zone quand l'intersection U/AU réelle est nulle). **Promotion bloquée.**
