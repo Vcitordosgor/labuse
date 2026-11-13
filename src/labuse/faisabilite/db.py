@@ -631,44 +631,54 @@ SEUIL_UAU_REELLE_M2 = 50.0
 #: conservé pour la MESURE/le rapport (frontière de la classe « infime » du mandat), PAS un gate.
 SEUIL_UAU_REELLE_PCT = 1.0
 
-# Surface U/AU RÉELLE (m²) d'une parcelle + part (%) de sa surface dessinée. Intersection
-# géométrique brute avec les zones de FAMILLE U/AU (même `positive_prefixes` que tout le moteur),
-# sans inset : on mesure la portion U/AU telle qu'elle existe au plan, la « surface réelle en
-# U/AU » du mandat. ST_ClipByBox2D avant l'intersection fine (grosses zones PLU) — résultat
-# identique, O(bbox).
+#: EXPORTS-FIX-3 LOT 1 (revue 2) — recul d'ÉROSION servant à distinguer un vrai bout de terrain d'un
+#: RUBAN de superposition. Un ruban (p. ex. 1 m de large sur 100 m de limite = 100 m²) passe le seuil
+#: d'aire mais n'a RIEN de bâtissable ; érodé de ERODE_RUBAN_M il devient VIDE, un vrai bout survit.
+ERODE_RUBAN_M = 3.0
+
+# Surface U/AU RÉELLE (m²) d'une parcelle + part (%) + surface APRÈS ÉROSION de 3 m (pour écarter les
+# rubans). On UNIT les zones de FAMILLE U/AU (même `positive_prefixes` que tout le moteur), on clippe à
+# la parcelle, puis on mesure l'aire ET l'aire de l'érodé (ST_Buffer négatif). ST_ClipByBox2D avant
+# l'intersection fine (grosses zones PLU) — résultat identique, O(bbox).
 _UAU_REELLE = text("""
-WITH p AS (SELECT commune, geom_2975 AS g, ST_Area(geom_2975) AS a FROM parcels WHERE id = :pid)
-SELECT COALESCE(sum(ST_Area(ST_Intersection(
-           ST_MakeValid(ST_ClipByBox2D(z.geom_2975, p.g)), p.g))), 0.0) AS uau_m2,
-       (SELECT a FROM p) AS parc_m2
-FROM spatial_layers z, p
-WHERE z.kind = :zkind AND z.commune = p.commune
-  AND labuse_zone_famille(z.subtype) = ANY(:uau_fams)
-  AND ST_Intersects(z.geom_2975, p.g)
+WITH p AS (SELECT commune, geom_2975 AS g, ST_Area(geom_2975) AS a FROM parcels WHERE id = :pid),
+uau AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(z.geom_2975, p.g))) AS u
+        FROM spatial_layers z, p
+        WHERE z.kind = :zkind AND z.commune = p.commune
+          AND labuse_zone_famille(z.subtype) = ANY(:uau_fams)
+          AND ST_Intersects(z.geom_2975, p.g)),
+inter AS (SELECT ST_Intersection(uau.u, p.g) AS g FROM uau, p WHERE uau.u IS NOT NULL)
+SELECT COALESCE((SELECT ST_Area(g) FROM inter), 0.0)                       AS uau_m2,
+       (SELECT a FROM p)                                                   AS parc_m2,
+       COALESCE((SELECT ST_Area(ST_Buffer(g, -:erode)) FROM inter), 0.0)   AS uau_erode_m2
 """)
 
 
-def _uau_reelle(session: Session, parcel_id: int) -> tuple[float, float]:
-    """EXPORTS-FIX-3 LOT 1 — (surface U/AU réelle en m², part en % de la parcelle). (0, 0) si
-    aucune zone U/AU ne touche la parcelle. Lecture seule, bornée."""
+def _uau_reelle(session: Session, parcel_id: int) -> tuple[float, float, float]:
+    """EXPORTS-FIX-3 LOT 1 — (surface U/AU réelle en m², part en % de la parcelle, surface de la
+    portion U/AU ÉRODÉE de 3 m en m²). (0, 0, 0) si aucune zone U/AU ne touche la parcelle. La 3ᵉ
+    valeur vaut ~0 pour un RUBAN (il disparaît à l'érosion) et > 0 pour un vrai bout. Lecture seule."""
     zonage = _layer_params("zonage_plu_gpu")
     row = session.execute(_UAU_REELLE, {
         "pid": parcel_id,
         "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
         "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"])),
+        "erode": ERODE_RUBAN_M,
     }).one()
     m2 = float(row.uau_m2 or 0.0)
     parc = float(row.parc_m2 or 0.0)
     pct = (100.0 * m2 / parc) if parc > 0 else 0.0
-    return m2, pct
+    erode = float(row.uau_erode_m2 or 0.0)
+    return m2, pct, erode
 
 
-def _uau_portion_reelle(uau_m2: float, uau_pct: float = 0.0) -> bool:
-    """EXPORTS-FIX-3 LOT 1 — True si la portion U/AU est une VRAIE surface : ≥ 50 m² (valeur ABSOLUE,
-    sans plancher en %). False pour « nulle » (0) et les éclats < 50 m². `uau_pct` n'entre PAS dans la
-    décision (un plancher en % retirerait à tort la capacité d'une vraie frange U/AU sur une grande
-    parcelle) ; il reste lu par le rapport. Fonction pure, verrouillée par test."""
-    return uau_m2 >= SEUIL_UAU_REELLE_M2
+def _uau_portion_reelle(uau_m2: float, uau_erode_m2: float) -> bool:
+    """EXPORTS-FIX-3 LOT 1 — True si la portion U/AU est un VRAI bout de terrain : ≥ 50 m² (aire
+    absolue) ET NON VIDE après érosion de 3 m (`uau_erode_m2 > 0`). Le seuil d'aire écarte les éclats
+    de numérisation ; l'érosion écarte les RUBANS de superposition (1 m × 100 m = 100 m² mais rien de
+    bâtissable → vide à -3 m). Pas de plancher en % (il pénaliserait une vraie frange sur une grande
+    parcelle). Fonction pure, verrouillée par test."""
+    return uau_m2 >= SEUIL_UAU_REELLE_M2 and uau_erode_m2 > 0.0
 
 
 def _uau_gate_actif() -> bool:
@@ -742,20 +752,21 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             # parcelle constructible (ex. 97408000BI0351 : éclat « UB » de 0,09 m² → 24 437 m² de
             # plancher fantôme). On mesure l'aire réelle ; sous 50 m², la parcelle reste sa zone
             # dominante (non constructible) — aucune capacité sans surface réelle en U/AU.
-            uau_m2, uau_pct = _uau_reelle(session, parcel_id)
-            ctx.uau_reelle = {"m2": uau_m2, "pct": uau_pct, "sous_zone": alt.code}
-            if not _uau_gate_actif() or _uau_portion_reelle(uau_m2, uau_pct):
+            uau_m2, uau_pct, uau_erode = _uau_reelle(session, parcel_id)
+            ctx.uau_reelle = {"m2": uau_m2, "pct": uau_pct, "erode_m2": uau_erode,
+                              "sous_zone": alt.code}
+            if not _uau_gate_actif() or _uau_portion_reelle(uau_m2, uau_erode):
                 rules = alt
                 sous_zone_uau_m2 = uau_m2
                 ctx.contraintes.libelles.append(
                     f"Zone dominante « {ctx.zone} » non constructible — capacité calculée sur la "
-                    f"SEULE portion U/AU réelle (~{uau_m2:.0f} m², {uau_pct:.2f} % de la parcelle ; "
-                    f"sous-zone « {alt.code} »), assiette clippée.")
+                    f"SEULE portion U/AU réelle (~{uau_m2:.0f} m², {uau_pct:.2f} % de la parcelle, "
+                    f"non vide après érosion de 3 m ; sous-zone « {alt.code} »), assiette clippée.")
             else:
                 phantom_ecarte = True
-            # sinon : éclat U/AU < 50 m² → `rules` reste la zone dominante (A/N) non constructible ;
-            # estimate_capacity rendra « non constructible en zone <dominante> » (jamais un chiffre sur
-            # une portion qui n'existe pas réellement).
+            # sinon : éclat U/AU < 50 m² OU RUBAN (vide après érosion de 3 m) → `rules` reste la zone
+            # dominante (A/N) non constructible ; estimate_capacity rendra « non constructible en zone
+            # <dominante> » (jamais un chiffre sur une portion non bâtissable).
     if rules is None:
         # EXPORTS-FIX-3 LOT 1 — une sous-zone U/AU a été ÉCARTÉE par la garde d'aire réelle, mais la
         # zone dominante (A/N) n'est pas calibrée au PLU de la commune (resolve_zone → None). La

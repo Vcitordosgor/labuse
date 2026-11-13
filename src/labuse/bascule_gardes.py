@@ -150,6 +150,58 @@ def check_peremption(ack_motif: str | None = None) -> dict:
     return {"perimees": n, "acked": True, "acked_by": who, "motif": ack_motif}
 
 
+# ─────────────── EXPORTS-FIX-3 LOT 1 — garde U/AU érodée (éclats & rubans) ───────────────
+# Un run ne doit JAMAIS servir de capacité à une parcelle A ou N dont la portion U/AU, ÉRODÉE de 3 m,
+# est VIDE : soit un éclat de numérisation (quelques m²), soit un RUBAN de superposition (1 m de large
+# sur 100 m de limite = 100 m² mais rien de bâtissable). La porte du moteur (faisabilite.db :
+# `_uau_portion_reelle`, aire ≥ 50 m² ET non vide après érosion de 3 m) l'empêche au CALCUL ; cette
+# garde le VÉRIFIE sur le run matérialisé, avant de le promouvoir. Lecture seule.
+_UAU_RUBAN_CAPACITE = text("""
+WITH cand AS (
+  SELECT p.id, p.idu, p.geom_2975 AS g, p.commune
+  FROM parcel_residuel r
+  JOIN parcels p ON p.id = r.parcel_id
+  JOIN parcel_zone_plu zp ON zp.idu = p.idu
+  WHERE zp.zone_fam IN ('A','N') AND r.cause IS NULL AND COALESCE(r.sdp_residuelle_m2, 0) > 0
+)
+SELECT c.idu AS idu,
+  COALESCE((SELECT ST_Area(ST_Buffer(ST_Intersection(
+      ST_Union(ST_MakeValid(ST_ClipByBox2D(z.geom_2975, c.g))), c.g), -3.0))
+      FROM spatial_layers z
+      WHERE z.kind = 'plu_gpu_zone' AND z.commune = c.commune
+        AND labuse_zone_famille(z.subtype) = ANY(ARRAY['U','AU'])
+        AND ST_Intersects(z.geom_2975, c.g)), 0.0) AS erode_m2
+FROM cand c
+""")
+
+
+def _fautes_ruban(rows) -> list[str]:
+    """PUR (testable sans base) — rows = itérable de (idu, erode_m2). Faute = capacité servie sur une
+    portion U/AU VIDE après érosion de 3 m (éclat de numérisation OU ruban de superposition)."""
+    return [idu for idu, erode in rows if (erode or 0.0) <= 0.0]
+
+
+def check_uau_erode_ruban(session=None) -> dict:
+    """Garde de promotion EXPORTS-FIX-3 — « aucune parcelle A ou N avec capacité si sa portion U/AU
+    érodée de 3 m est vide ». Lit le run servi (`parcel_residuel`) ; ok=False (BLOQUANT) s'il reste des
+    fautes. Un run calculé avec le moteur corrigé (garde d'aire réelle + érosion) passe à 0. Lecture
+    seule ; `session` optionnelle (tests) sinon `session_scope`."""
+    def _run(conn):
+        return conn.execute(_UAU_RUBAN_CAPACITE).all()
+    if session is not None:
+        rows = _run(session)
+    else:
+        with _scope() as s:
+            rows = _run(s)
+    fautes = _fautes_ruban([(r.idu, float(r.erode_m2 or 0.0)) for r in rows])
+    ok = not fautes
+    print(f"{_ts()} {'✓' if ok else '✗'} U/AU-ruban : {len(fautes)} parcelle(s) A/N portant une "
+          f"capacité sur une portion U/AU érodée vide (éclat/ruban)."
+          + ("" if ok else f" Ex. : {', '.join(fautes[:5])}. Recalculer le run avec le moteur corrigé "
+             "(garde d'aire réelle + érosion de 3 m) avant de promouvoir."), flush=True)
+    return {"ok": ok, "n_fautes": len(fautes), "exemples": fautes[:20]}
+
+
 # M32 Phase B §2 : cadence normée → jours attendus entre deux millésimes amont. Seuil d'alerte = ×2.
 # M84 — le barème de cadence est désormais UNIQUE (`fraicheur.CADENCE_JOURS`) : la garde de rebuild
 # (ici) et le statut live de la page Sources en découlent tous deux — plus de table à faire diverger.

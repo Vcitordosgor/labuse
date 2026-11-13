@@ -22,21 +22,23 @@ from sqlalchemy import text
 
 # ── PURS (sans base) : seuils de portion U/AU réelle ─────────────────────────
 def test_uau_portion_reelle_seuils():
-    from labuse.faisabilite.db import SEUIL_UAU_REELLE_M2, _uau_portion_reelle
-    assert SEUIL_UAU_REELLE_M2 == 50.0
-    # seuil PUREMENT ABSOLU (≥ 50 m²), sans plancher en %.
-    # « nulle » (0) et éclats < 50 m² → jamais de capacité : les 4 cas de l'audit (BI0351 0,09 m²,
-    # HN0194 1,16 m², DN0096 14 m², BT0053 16 m²) sont tous < 50 m².
-    assert _uau_portion_reelle(0.0) is False
-    assert _uau_portion_reelle(0.09) is False
-    assert _uau_portion_reelle(16.16) is False
-    # ≥ 50 m² → vraie surface, même sous 1 % (une frange U/AU sur une grande parcelle garde sa
-    # capacité, calculée sur CETTE portion). 200 m² / 0,5 % et 3 489 m² / 0,78 % passent.
-    assert _uau_portion_reelle(200.0, 0.5) is True
-    assert _uau_portion_reelle(3489.0, 0.78) is True
-    assert _uau_portion_reelle(50.0) is True
-    # juste sous le seuil → écarté.
-    assert _uau_portion_reelle(49.9) is False
+    from labuse.faisabilite.db import SEUIL_UAU_REELLE_M2, ERODE_RUBAN_M, _uau_portion_reelle
+    assert SEUIL_UAU_REELLE_M2 == 50.0 and ERODE_RUBAN_M == 3.0
+    # DEUX conditions : aire ≥ 50 m² (écarte les éclats) ET non vide après érosion de 3 m (écarte les
+    # RUBANS). `_uau_portion_reelle(uau_m2, uau_erode_m2)`.
+    # éclats de l'audit (< 50 m²) → False quelle que soit l'érosion.
+    assert _uau_portion_reelle(0.0, 0.0) is False
+    assert _uau_portion_reelle(16.16, 0.0) is False
+    # RUBAN : ≥ 50 m² (même 693 m²) mais VIDE après -3 m → False (rien de bâtissable).
+    assert _uau_portion_reelle(693.0, 0.0) is False
+    assert _uau_portion_reelle(495.0, 0.0) is False
+    # VRAI bout : ≥ 50 m² ET non vide après -3 m → True (même sous 1 %).
+    assert _uau_portion_reelle(3489.0, 1461.8) is True
+    assert _uau_portion_reelle(50.0, 1.0) is True
+    # ≥ 50 m² mais érodé pile à 0 → False (borne stricte > 0).
+    assert _uau_portion_reelle(50.0, 0.0) is False
+    # < 50 m² même s'il survivait à l'érosion → False.
+    assert _uau_portion_reelle(49.9, 10.0) is False
 
 
 # ── PURS (sans base) : ordre des motifs (LOT 2, `potentiel_batir._assemble`) ──
@@ -128,7 +130,7 @@ def test_phantome_uau_non_constructible(idu):
         pid = s.execute(text("SELECT id FROM parcels WHERE idu=:i"), {"i": idu}).scalar()
         if pid is None:
             pytest.skip(f"parcelle {idu} absente")
-        m2, pct = _uau_reelle(s, pid)
+        m2, pct, erode = _uau_reelle(s, pid)
         assert m2 < 50.0, f"{idu} n'est pas un éclat < 50 m² (uau={m2:.1f} m²)"
         ctx, f = parcel_faisabilite(s, pid)
         assert f.constructible is False, f"{idu} reste constructible (cause={f.cause})"
@@ -223,8 +225,8 @@ def test_a_cheval_reelle_garde_sa_capacite():
                         {"i": A_CHEVAL_REELLE}).scalar()
         if pid is None:
             pytest.skip(f"parcelle {A_CHEVAL_REELLE} absente")
-        m2, pct = _uau_reelle(s, pid)
-        assert m2 >= 50.0
+        m2, pct, erode = _uau_reelle(s, pid)
+        assert m2 >= 50.0 and erode > 0
         ctx, f = parcel_faisabilite(s, pid)
         assert f.constructible is True
         assert (f.fourchette or {}).get("surface_plancher_m2", 0) > 0
@@ -248,13 +250,62 @@ def test_grande_parcelle_frange_uau_sous_1pct_garde_capacite():
                         {"i": A_CHEVAL_GRANDE}).scalar()
         if pid is None:
             pytest.skip(f"parcelle {A_CHEVAL_GRANDE} absente")
-        m2, pct = _uau_reelle(s, pid)
-        assert m2 >= 150.0 and pct < 1.0, f"témoin inattendu (uau={m2:.0f} m², {pct:.2f} %)"
+        m2, pct, erode = _uau_reelle(s, pid)
+        assert m2 >= 150.0 and pct < 1.0 and erode > 0, f"témoin inattendu (uau={m2:.0f} m², {pct:.2f} %, érodé {erode:.0f})"
         ctx, f = parcel_faisabilite(s, pid)
         assert f.constructible is True, "une frange U/AU réelle < 1 % ne doit pas perdre sa capacité"
         sdp = (f.fourchette or {}).get("surface_plancher_m2") or 0
         assert sdp > 0
         # capacité BORNÉE à la portion U/AU réelle (jamais toute la parcelle de 44 ha).
         assert ctx.uau_reelle and ctx.uau_reelle["m2"] < 0.01 * ctx.surface_m2
+    finally:
+        s.close()
+
+
+# Ruban de superposition : ≥ 50 m² d'U/AU mais ~1 m de large sur une limite → VIDE après érosion de
+# 3 m → non constructible (le seuil d'aire seul l'aurait admis à tort).
+RUBAN_UAU = "97410000AX0059"   # Saint-Benoît, 693 m² U/AU, érodé -3 m = 0
+
+
+@pytest.mark.reel
+def test_ruban_uau_superieur_50m2_tombe_a_zero():
+    from labuse.faisabilite.db import parcel_faisabilite, _uau_reelle
+    s = _session()
+    try:
+        pid = s.execute(text("SELECT id FROM parcels WHERE idu=:i"), {"i": RUBAN_UAU}).scalar()
+        if pid is None:
+            pytest.skip(f"parcelle {RUBAN_UAU} absente")
+        m2, pct, erode = _uau_reelle(s, pid)
+        assert m2 >= 50.0 and erode <= 0.0, f"témoin inattendu (uau={m2:.0f} m², érodé {erode:.0f})"
+        ctx, f = parcel_faisabilite(s, pid)
+        assert f.constructible is False, "un ruban (vide après érosion) ne doit pas recevoir de capacité"
+        assert (f.fourchette or {}).get("surface_plancher_m2") in (None, 0)
+    finally:
+        s.close()
+
+
+# ── Garde de promotion (#4) : aucune A/N avec capacité si sa portion U/AU érodée de 3 m est vide ──
+def test_garde_fautes_ruban_pure():
+    """PUR — la garde ÉCHOUE sur un jeu d'essai contenant un éclat/ruban (érodé vide) servi avec
+    capacité, et PASSE sur un vrai bout (érodé non vide)."""
+    from labuse.bascule_gardes import _fautes_ruban
+    jeu = [("ECLAT", 0.0), ("RUBAN", 0.0), ("VRAI_BOUT", 40.0)]
+    assert _fautes_ruban(jeu) == ["ECLAT", "RUBAN"]
+    assert _fautes_ruban([("VRAI_BOUT", 40.0)]) == []
+
+
+@pytest.mark.reel
+def test_garde_check_uau_erode_ruban_detecte():
+    """RÉEL — garde de promotion sur le run servi local : elle DÉTECTE les parcelles A/N portant une
+    capacité sur une portion U/AU érodée vide. Le run servi actuel (calculé avant correctif) en
+    contient → la garde bloquerait sa promotion ; un run recalculé par le moteur corrigé → n_fautes 0."""
+    from labuse.bascule_gardes import check_uau_erode_ruban
+    s = _session()
+    try:
+        rep = check_uau_erode_ruban(session=s)
+        assert "ok" in rep and "n_fautes" in rep
+        assert rep["n_fautes"] >= 0
+        if rep["n_fautes"] > 0:
+            assert rep["ok"] is False and rep["exemples"]
     finally:
         s.close()
