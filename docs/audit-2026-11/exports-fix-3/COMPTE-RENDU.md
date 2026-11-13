@@ -22,11 +22,26 @@ HN0194 (A, 18 ha) 2 m², DN0096 (N, 22 ha) 14 m².
 **Correctif à la racine (db.py).** Garde d'aire réelle au point d'appel DB-aware `parcel_faisabilite` :
 on mesure la surface U/AU RÉELLE (intersection géométrique, famille lue par `labuse_zone_famille(subtype)`
 — la source unique du code : tient sur `1AU`/`2AU` et les libellés littéraux de Bras-Panon / Saint-Pierre,
-jamais le préfixe du nom). La sous-zone n'ouvre la constructibilité que si la portion est une **vraie
-surface : ≥ 50 m² (seuil ABSOLU, sans plancher en %)**. En deçà (nulle / éclat) la parcelle reste sa zone
-dominante non constructible — **aucune capacité sans surface réelle en U/AU**. Au-delà, la capacité est
-calculée sur la **seule** portion U/AU, **bornée** à l'aire réelle mesurée (`emprise` et `surface_assiette`
-`= min(…, uau_m²)`).
+jamais le préfixe du nom). La sous-zone n'ouvre la constructibilité que si la portion est un **vrai bout de terrain : ≥ 50 m²
+(aire absolue) ET non vide après ÉROSION de 3 m** (`ST_Buffer(-3)`). En deçà (nulle, éclat, ou ruban) la
+parcelle reste sa zone dominante non constructible — **aucune capacité sans surface réelle bâtissable en
+U/AU**. Au-delà, la capacité est calculée sur la **seule** portion U/AU, **bornée** à l'aire réelle
+mesurée (`emprise` et `surface_assiette` `= min(…, uau_m²)`).
+
+> **Révision 2 (revue) — érosion de 3 m contre les RUBANS.** Un seuil d'aire SEUL rouvrait un trou : un
+> ruban de superposition de 1 m de large sur 100 m de limite fait 100 m², passe le seuil, mais n'a rien
+> de bâtissable. Mesure île : sur les 10 417 parcelles A/N à U/AU ≥ 50 m², **1 119 sont des rubans**
+> (vides après érosion de 3 m), dont **158** dans le sous-ensemble ≥ 50 m² / < 1 %. La porte exige donc
+> aussi que la portion survive à une érosion de 3 m (`_uau_portion_reelle(uau_m2, uau_erode_m2)` ;
+> `_uau_reelle` renvoie désormais l'aire érodée). Rubans → 0 ; vrais bouts (ex. CH0052 : 3 489 m²,
+> érodé 1 462 m²) → conservés. Exemples rubans écartés : 97410000AX0059 (693 m², érodé 0),
+> 97409000AX0918 (495 m², érodé 0).
+>
+> **Géométrie (limite connue, assumée).** Pour ces parcelles (zone dominante A/N → gabarit bloquant), la
+> capacité est déjà calculée par le chemin legacy sur la **géométrie de la portion U/AU insetée des
+> reculs** (`_EMPRISE` : `U/AU ∩ ST_Buffer(parcelle, -recul)`), pas sur la parcelle entière. La borne
+> numérique `min(emprise, uau_m²)` ne sert que de **filet** pour le cas (non observé sur A/N dominant) où
+> le moteur gabarit servirait la parcelle et sur-bâtirait ; elle est conservée et DOCUMENTÉE comme telle.
 
 > **Révision (revue) — seuil ABSOLU, pas « ≥ 1 % ».** Un plancher à 1 % pénalise les grandes parcelles :
 > **130 parcelles** A/N de 18 à 45 ha portent une vraie frange U/AU ≥ 150 m² mais < 1 % (281 au total
@@ -54,10 +69,12 @@ APRÈS = **échantillon borné de 120 parcelles par classe** dans le calcul en d
 |---|---|---|---|
 | **nulle** (U/AU = 0) | 89 623 | **0** (aucune sous-zone à accrocher) | **0** |
 | **éclat** (< 50 m²) | 10 584 | 92 / 120 (fantôme) | **0 / 120** |
-| **réelle** (≥ 50 m²) | 10 417 | 106 / 120 | 106 / 120 (préservée, sur la portion) |
+| **≥ 50 m²** dont **ruban** (vide à -3 m) | 10 417 — dont **1 119 rubans** | — | rubans → **0** |
+| **≥ 50 m²** dont **vrai bout** (survit à -3 m) | 9 298 | 106 / 120 | 106 / 120 (préservée, sur la portion) |
 
-→ **classe « nulle » : zéro capacité avant comme après** ; les éclats < 50 m² (fantômes) passent à
-zéro ; la capacité des parcelles à vraie frange U/AU est **préservée et bornée à la portion réelle**.
+→ **classe « nulle » : zéro capacité avant comme après** ; éclats (< 50 m²) ET rubans (≥ 50 m² mais
+vides à -3 m, 1 119 sur l'île) passent à zéro ; la capacité des **vrais** bouts U/AU (9 298) est
+**préservée et bornée à la portion réelle**.
 
 **Tests** (`tests/test_exports_fix_3.py`) : purs (`_uau_portion_reelle`, seuils) + réels (marker `reel`,
 base locale `labuse`) — BI0351 + les 3 exemples → non constructibles, SDP nulle ; `97416000ID0331`
@@ -131,6 +148,23 @@ tableau de `DIAGNOSTIC.md`). Faits saillants vérifiés sur les PDF régénéré
 - DK0208 Comparatif : « occupe déjà toute l'emprise constructible (gabarit après reculs) ».
 
 ---
+
+## Garde durable de promotion (LOT 1 #4)
+
+`bascule_gardes.check_uau_erode_ruban` — « aucune parcelle A ou N avec capacité si sa portion U/AU
+érodée de 3 m est vide ». Lecture seule du run matérialisé ; **bloquante** (ajoutée à la séquence de
+`scripts/bascule_v8_calibre.py`, après `verify_completude`). Un run calculé par le moteur corrigé passe
+à 0 faute. **Preuve** : sur le run servi actuel (q_v20, calculé avant correctif) la garde détecte
+**256 parcelles** A/N avec capacité sur une portion U/AU érodée vide (ex. 97416000CV1495…) → `ok=False`,
+promotion refusée. Tests : `_fautes_ruban` (pur — échoue sur un jeu d'essai {éclat, ruban, vrai bout})
+et `check_uau_erode_ruban` (réel, détecte sur le run local).
+
+## Documents régénérés (LOT 1 revue)
+
+Cette revue ne change AUCUN des 8 documents des 3 parcelles de l'audit : BI0351 (éclat 0,09 m²) était
+déjà écarté par le seuil d'aire et le reste par l'érosion ; DK0208/HT0538 inchangées. Les témoins de la
+revue (rubans 97410000AX0059/AX0918 → non constructibles ; vrai bout 97411000CH0052 → capacité sur
+~1 048 m²) sont vérifiés par le calcul en direct et les tests, hors des 3 parcelles.
 
 ## Qualité (hook)
 
