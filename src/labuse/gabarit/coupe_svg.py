@@ -28,6 +28,10 @@ _THEMES = {
 }
 _FONT = 'font-family="Inter, Helvetica, Arial, sans-serif"'
 _PONT_RECONSTITUE_M = 3.0
+# GABARIT-3D-3 (LOT 1) — le losange « rupture à vérifier » ne s'affiche QUE si le terrain varie d'au moins
+# ce seuil sur le segment du bâti (d0 → d1+3 m). En dessous : rien (ni losange, ni libellé, ni ligne de
+# légende). Une pente douce près d'un bâti n'est pas une rupture à signaler.
+_RUPTURE_SEUIL_M = 1.5
 
 
 def _esc(s: Any) -> str:
@@ -217,10 +221,14 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
         out.append(f'<line x1="{x0:.1f}" y1="{y_base-4:.1f}" x2="{x0:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
         out.append(f'<line x1="{x1:.1f}" y1="{y_base-4:.1f}" x2="{x1:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
         # « emprise bâtie » : plus d'étiquette SUR la courbe → la barre grise est expliquée dans la LÉGENDE.
-        # repère de rupture (losange) sur la PORTION CONCERNÉE = plus forte pente autour du bâti (pas le 1ᵉʳ pied)
-        drb = _rupture_d(profil, b["d0"], min(b["d1"] + 3.0, L))
+        # repère de rupture (losange) sur la PORTION CONCERNÉE = plus forte pente autour du bâti (pas le 1ᵉʳ pied).
+        # LOT 1 — on ne le pose QUE si le terrain varie d'au moins _RUPTURE_SEUIL_M sur le segment du bâti.
+        d1c = min(b["d1"] + 3.0, L)
+        seg_zs = [p["z"] for p in profil if b["d0"] - 1e-6 <= p["d"] <= d1c + 1e-6 and p["z"] is not None]
+        ecart_m = (max(seg_zs) - min(seg_zs)) if seg_zs else 0.0
+        drb = _rupture_d(profil, b["d0"], d1c)
         zr = z_terrain(drb) if drb is not None else None
-        if zr is not None:
+        if zr is not None and ecart_m >= _RUPTURE_SEUIL_M:
             out.append(f'<path d="M{X(drb):.1f},{Y(zr)-4:.1f} l4,4 l-4,4 l-4,-4 z" fill="none" stroke="{T["lacune"]}" stroke-width="1.4"/>')
             out.append(f'<circle cx="{X(drb):.1f}" cy="{Y(zr):.1f}" r="1.6" fill="{T["lacune"]}"/>')
             rupture = True

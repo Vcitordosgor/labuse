@@ -177,6 +177,29 @@ def _coupe_demo(attribution="bdtopo", plat=False, zone=True):
                                         {"d": 10.0, "z": profil[10]["z"], "role": "facade"}]}}
 
 
+def _coupe_pente(slope):
+    """Coupe : bâti en [10,18], terrain de pente `slope` → écart sur le segment [10, 21] = slope × 11."""
+    profil = [{"d": float(i), "z": round(100 + slope * i, 3)} for i in range(40)]
+    b = {"d0": 10.0, "d1": 18.0, "facade_amont_m": profil[10]["z"], "facade_aval_m": profil[18]["z"],
+         "pied_m": profil[14]["z"], "hauteur_m": 7.0, "attribution": "bdtopo"}
+    return {"label": "A", "titre": "Coupe A", "voie": None, "longueur_m": 39.0,
+            "profil": profil, "limites_parcelle_d": [[2.0, 37.0]],
+            "zone_implantation_d": [[8.0, 22.0]], "zone_presente": True, "batiments": [b],
+            "indicateurs": SC._indicateurs(profil, [[2.0, 37.0]], [[10.0, 18.0]], None),
+            "cotes": SC._stats_coupe(profil), "cotes_points": {"points": []}}
+
+
+def test_rupture_losange_seuil_1m5():
+    """LOT 1 — le losange « rupture à vérifier » n'apparaît QUE si le terrain varie ≥ 1,5 m sur le segment
+    du bâti ; sinon ni losange, ni libellé, ni ligne de légende."""
+    au_dessus = coupe_svg(_coupe_pente(0.3))     # écart 3,3 m ≥ 1,5
+    assert "Rupture du terrain à vérifier" in au_dessus            # losange + libellé
+    assert "rupture du terrain à vérifier" in au_dessus            # ligne de légende (minuscule)
+    en_dessous = coupe_svg(_coupe_pente(0.05))   # écart 0,55 m < 1,5
+    assert "Rupture du terrain à vérifier" not in en_dessous       # pas de losange/libellé
+    assert "rupture du terrain à vérifier" not in en_dessous       # pas de ligne de légende
+
+
 def _hors_cadre(svg, w, h, tol=1.0):
     faute = []
     for attr, lim in (("x", w), ("cx", w), ("x1", w), ("x2", w), ("y", h), ("cy", h), ("y1", h), ("y2", h)):
