@@ -1825,8 +1825,15 @@ def _surface_pour_total(db, idu: str, emprise, mut: dict | None, insee: str,
                          "× ratio %.3f (ajustement niveaux ×%.3f, assise %d ventes commune %s)",
                          idu, emp, niveaux, ratio, mult, assise, insee)
                 niv_lib = f"{niveaux} niveau" + ("x" if niveaux > 1 else "")
+                # EXPORTS-FIX-3 LOT 3c — la formule IMPRIMÉE porte TOUS ses facteurs et redonne le
+                # total : elle mène par la surface habitable RÉELLE (s), pas l'emprise brute (emp).
+                # Avant : « 224 m² au sol × 1 niveau × 2 101 €/m² » (= 470 624) alors que le total
+                # affiché valait 237 000 — le ratio 0,516 et le ×niveaux 0,974 manquaient (DK0208).
+                _rf = ('%.3f' % ratio).replace('.', ',')
+                _mf = ('%.3f' % mult).replace('.', ',')
                 return s, {"source": "emprise_niveaux_lidar",
-                           "ligne": f"Surface habitable estimée : {emp} m² au sol × {niv_lib} (hauteur LiDAR)",
+                           "ligne": (f"Surface habitable estimée {s} m² ({emp} m² au sol × {_rf} "
+                                     f"ratio habitable × {_mf} pour {niv_lib}, hauteur LiDAR)"),
                            "note": (f"Surface habitable estimée d'après l'emprise au sol ({emp} m²) et "
                                     f"les {niv_lib} mesurés par la hauteur LiDAR, ajustée au ratio "
                                     "habitable/emprise des maisons du secteur "
@@ -1837,8 +1844,11 @@ def _surface_pour_total(db, idu: str, emprise, mut: dict | None, insee: str,
             log.info("estimation %s : surface habitable estimée = emprise %d m² × ratio %.3f "
                      "(médiane surface vendue / emprise sur %d ventes de maisons de la commune %s ; "
                      "pas de hauteur LiDAR)", idu, emp, ratio, assise, insee)
+            # EXPORTS-FIX-3 LOT 3c — la formule porte son facteur (ratio) et redonne le total : surface
+            # habitable RÉELLE (s) = emprise × ratio, multipliée ensuite par le €/m² habitable.
+            _rf = ('%.3f' % ratio).replace('.', ',')
             return s, {"source": "emprise_ratio",
-                       "ligne": f"Surface habitable estimée d'après l'emprise au sol ({s} m²)",
+                       "ligne": f"Surface habitable estimée {s} m² ({emp} m² au sol × {_rf} ratio habitable)",
                        "note": ("Surface habitable estimée d'après l'emprise au sol : total indicatif "
                                 "(ratio médian surface vendue / emprise au sol des ventes de maisons de "
                                 f"la commune : {('%.2f' % ratio).replace('.', ',')} sur "
@@ -2352,7 +2362,12 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
         part = it.get("part_pct") if it.get("part_pct") is not None else ppr_part
         zone_part = None
         if ppr_zone:
-            zone_part = f"Zone {ppr_zone}" + (f" · {int(part)} %" if isinstance(part, (int, float)) else "")
+            # EXPORTS-FIX-3 LOT 3b — la part d'une « Zone rouge/bleue » est celle du PPR (fiche :
+            # 31 % sur BI0351), JAMAIS celle d'un aléa Géorisques de niveau faible (69 %) qui se
+            # superpose au même libellé : un aléa faible n'est pas « zone rouge · 69 % ». La part de
+            # l'aléa reste lisible par la colonne « niveau ».
+            zp = ppr_part
+            zone_part = f"Zone {ppr_zone}" + (f" · {int(zp)} %" if isinstance(zp, (int, float)) else "")
         elif isinstance(part, (int, float)):
             zone_part = f"{int(part)} %"
         rows.append({"alea": lab, "niveau": niveau, "zone_part": zone_part,
@@ -2533,12 +2548,17 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
     # DVF, E-022) : copropriété, terrain nu, bâti non mesuré (D-012 — jamais « bâtie, maison » sans
     # mesure), sinon « Parcelle bâtie » + type (maison/appartement).
     est_nat = est.get("nature")
-    if est_nat == "copropriete":   # CHASSE-4-FIX (C4-003)
+    # EXPORTS-FIX-3 LOT 3a — JAMAIS « bâtie » ni type de bien sans mesure : une parcelle au bâti non
+    # mesuré (taux d'emprise NULL) dont la seule trace est une détection aérienne (CoSIA/BD TOPO) est
+    # dite « Bâti détecté, à vérifier » (jamais « Parcelle bâtie, appartement » — faute A1 de l'audit).
+    if nature == "non_mesure":
+        nature_label = "Bâti détecté, à vérifier"
+    elif est_nat == "copropriete":   # CHASSE-4-FIX (C4-003)
         nature_label = "Copropriété"
     elif est_nat == "nue":
         nature_label = "Parcelle nue"
     elif est_nat == "bati_non_mesure":   # D-012
-        nature_label = "Bâti non mesuré"
+        nature_label = "Bâti détecté, à vérifier"
     else:
         suff = {"maison": ", maison", "appartement": ", appartement"}.get(type_bien or "", "")
         nature_label = f"Parcelle bâtie{suff}"

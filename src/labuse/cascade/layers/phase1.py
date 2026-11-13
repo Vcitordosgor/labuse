@@ -573,8 +573,13 @@ class DpuLayer(Layer):
 
     def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
         kind = params["spatial_kind"]
-        if not ctx.kind_present(kind):
-            return unknown(self.name, "Périmètres DPU non ingérés (GPU info-surf).", source=SRC_DPU)
+        # EXPORTS-FIX-3 LOT 3f — présence testée PAR COMMUNE (pas sur l'île entière) : une commune dont
+        # le périmètre DPU n'a pas été ingéré ne doit JAMAIS être dite « hors périmètre / rien à
+        # signaler » au seul motif qu'une AUTRE commune a du DPU au GPU (faute « o » de l'audit : la
+        # fiche disait « DPU vérifié, rien à signaler » là où le périmètre n'était pas vérifiable).
+        if not couvre_commune(ctx, kind, getattr(parcel, 'commune', None)):
+            return unknown(self.name, "Périmètres DPU non ingérés pour cette commune (GPU info-surf) "
+                           "— droit de préemption non vérifié.", source=SRC_DPU)
         inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
         if not inter:
             return passed(self.name,
