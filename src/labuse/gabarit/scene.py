@@ -98,6 +98,56 @@ def _cote_3d_sol_degage(sampler, cadastre, batis, ox: float, oy: float):
             "bas": [round(lo[0] - ox, 2), round(lo[1] - oy, 2), round(lo[2], 2)]}
 
 
+_COUVERT_SEUIL_M = 1.5          # bosse ≥ 1,5 m au-dessus du sol voisin = élément couvert (varangue), comme la coupe
+
+
+def _sol_sans_bosses_couvertes(surf, batis, ox: float, oy: float):
+    """Tableau du sol avec les BOSSES d'éléments couverts (varangue/auvent pris pour du sol sous le bâti)
+    APLANIES au sol voisin — pour le MAILLAGE 3D seulement (la coupe et les cotes gardent le sol réel). Un
+    pixel INTÉRIEUR à une emprise bâtie qui dépasse de ≥ 1,5 m le sol le plus bas de l'anneau autour du bâti
+    est ramené à ce niveau. Copie du tableau seulement si quelque chose change ; travail borné par emprise."""
+    from shapely.geometry import Point, Polygon
+    from shapely.prepared import prep
+    polys = [Polygon([(x + ox, y + oy) for x, y in sub["ext"]])
+             for b in (batis or []) for sub in (b.get("empreinte") or []) if len(sub.get("ext") or []) >= 3]
+    polys = [g for g in polys if g.is_valid and not g.is_empty]
+    if not polys:
+        return surf.a
+    a, pas = surf.a, surf.pas
+    out = None
+    for g in polys:
+        ring = g.buffer(8.0).difference(g)
+        rb = ring.bounds
+        Ja = max(0, int((rb[0] - surf.ox) / pas - 0.5)); Jb = min(surf.nx - 1, int((rb[2] - surf.ox) / pas + 1.5))
+        Ia = max(0, int((surf.oy - rb[3]) / pas - 0.5)); Ib = min(surf.ny - 1, int((surf.oy - rb[1]) / pas + 1.5))
+        if (Ib - Ia + 1) * (Jb - Ja + 1) > 40000:        # emprise démesurée → on ne tente pas (rare)
+            continue
+        pin, pring = prep(g), prep(ring)
+        gmin = None
+        for I in range(Ia, Ib + 1):
+            yy = surf.oy - (I + 0.5) * pas
+            for J in range(Ja, Jb + 1):
+                v = a[I, J]
+                if v != v:
+                    continue
+                if pring.covers(Point(surf.ox + (J + 0.5) * pas, yy)):
+                    gmin = v if gmin is None or v < gmin else gmin
+        if gmin is None:
+            continue
+        seuil = gmin + _COUVERT_SEUIL_M
+        for I in range(Ia, Ib + 1):
+            yy = surf.oy - (I + 0.5) * pas
+            for J in range(Ja, Jb + 1):
+                v = a[I, J]
+                if v != v or v <= seuil:
+                    continue
+                if pin.covers(Point(surf.ox + (J + 0.5) * pas, yy)):
+                    if out is None:
+                        out = a.copy()
+                    out[I, J] = gmin
+    return out if out is not None else a
+
+
 # ── Fond : lecture calée sur les pixels natifs ────────────────────────────────────────────────────
 
 @lru_cache(maxsize=4)
@@ -168,13 +218,17 @@ def charger_surface_sol(db, minx: float, miny: float, maxx: float, maxy: float, 
             a, ox, oy, pas = sol.lire_tif(chemin)
             return _Surface(a, ox, oy, pas), {
                 "maille_m": sol.RES, "acquisition": sol.acquisition(db, minx, miny, maxx, maxy),
+                "acquisition_produit": "dalle LiDAR HD",
                 "source": source, "repli": False, "message": None}
         except Exception:  # noqa: BLE001 — copie illisible → repli 1 m
             pass
     surf = charger_surface(minx, miny, maxx, maxy, marge=marge)
     fm = _fond_meta()
+    d = fm.get("acquisition_date")
     return surf, {
-        "maille_m": 1.0, "acquisition": fm.get("acquisition_date"), "source": "fond_1m", "repli": True,
+        "maille_m": 1.0, "acquisition": ({"min": str(d), "max": str(d), "n": 1} if d else None),
+        "acquisition_produit": "fond 1 m (RGE ALTI)",
+        "source": "fond_1m", "repli": True,
         "message": ("Relief fin (0,5 m) indisponible — repli sur le relief 1 m." if surf
                     else "Relief indisponible pour cette parcelle.")}
 
@@ -726,7 +780,12 @@ def _build_scene(db, idu: str) -> Scene:
     # ou WMS ; repli 1 m signalé). Borné à la parcelle + abords. `sol_meta` dit ce qui est servi.
     bounds_1m = (minx - _MARGE_FACES_1M, miny - _MARGE_FACES_1M, maxx + _MARGE_FACES_1M, maxy + _MARGE_FACES_1M)
     surf, sol_meta = charger_surface_sol(db, minx, miny, maxx, maxy, marge=_MARGE_FACES_1M + 10)
-    fond_meta = {**fond_meta, "maille_m": sol_meta["maille_m"], "acquisition_date": sol_meta["acquisition"],
+    acq = sol_meta["acquisition"]        # {min,max,n} ou None — date(s) d'acquisition du produit servi
+    fond_meta = {**fond_meta, "maille_m": sol_meta["maille_m"],
+                 "acquisition_date": (acq["max"] if acq else None),           # date principale (compat) = la plus récente
+                 "acquisition_min": (acq["min"] if acq else None),
+                 "acquisition_n": (acq["n"] if acq else None),                 # >1 → plage (plusieurs acquisitions)
+                 "acquisition_produit": sol_meta.get("acquisition_produit"),   # d'où vient la date
                  "sol_source": sol_meta["source"], "sol_repli": sol_meta["repli"], "sol_message": sol_meta["message"]}
     sampler = _Sampler(surf, bounds_1m) if surf else None
 
@@ -783,7 +842,10 @@ def _build_scene(db, idu: str) -> Scene:
         # LOT 5 — maillage 3D allégé selon la TAILLE du cadre (ouverture bornée). La coupe reste en 0,5 m
         # (sampler step 1) ; seules les FACES s'allègent. Les cotes 3D viennent du sol 0,5 m, pas d'ici.
         step_faces = _step_faces(cmaxx - cminx, cmaxy - cminy, surf.pas)
-        mesh_faces = sampler.m if step_faces == 1 else TerrainMesh(surf.a, surf.ox, surf.oy, surf.pas, step=step_faces)
+        # le maillage 3D n'affiche PAS les bosses d'éléments couverts (varangue) : aplaties au sol voisin.
+        # La coupe et les cotes gardent le sol RÉEL (elles lisent `surf`/`sampler`, pas `a_faces`).
+        a_faces = _sol_sans_bosses_couvertes(surf, batis, ox, oy)
+        mesh_faces = TerrainMesh(a_faces, surf.ox, surf.oy, surf.pas, step=step_faces)
         faces_1m = mesh_faces.faces(ox, oy, bounds=cadre)       # faces servies = cadre (coupées net), allégées
         maille_3d = round(surf.pas * step_faces, 2)
         fond_meta = {**fond_meta, "maille_3d_m": maille_3d}

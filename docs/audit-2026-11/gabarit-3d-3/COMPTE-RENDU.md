@@ -176,6 +176,37 @@ foncière publique non bâtie) peut dépasser 3 s même à 2 m — ce sont des c
 
 ---
 
+## Finitions avant merge — **FAIT**
+
+1. **Élément couvert (BZ1065).** Sous l'emprise bâtie, la varangue n'est **plus tracée** : un trait pointillé
+   **droit** relie les deux sols voisins (de la dernière cote au sol avant à la première après), **un seul**
+   libellé « sol non mesuré sous un élément couvert », **pas de losange** de rupture sur cette portion (elle
+   est déjà expliquée), **aucune cote** dessus (le « haut » qui tombait sur la dalle est écarté). Le **maillage
+   3D** non plus ne montre la bosse : elle est aplanie au sol voisin (`_sol_sans_bosses_couvertes`, sommets
+   sous l'emprise BZ1065 ramenés de 405,7 m à ≤ 402,3 m). La coupe et les cotes gardent le sol réel.
+2. **Plan-clé.** Il **remplit** la place disponible (créneau `flex-1` + SVG demandé à son format → plus de vide,
+   texte ≥ 11 px) : **74 %** de la hauteur du panneau à 1440×694, **83 %** à 1920×1080. La légende reste sur
+   **une colonne** quand la hauteur le permet, **deux** seulement si le panneau est court (libellés courts →
+   jamais coupés en deux lignes). Chaque lettre **A/A′/B/B′** est posée **au bout de son axe** (décalée le long
+   de l'axe, pas rejetée au loin).
+3. **Date d'acquisition.** Elle vient de la **grille des dalles LiDAR HD** (champ `date_fin`), affichée avec sa
+   source dans le pied (« … · acquisition JJ/MM/AAAA · dalle LiDAR HD »). Si la fenêtre couvre **plusieurs**
+   acquisitions, le pied montre la **plage** (« acquisitions du … au … »). L'ancien « 12/08/2023 » venait du
+   fond 1 m (RGE ALTI), produit différent.
+4. **Titre sans adresse (CT0442).** Titre « **Parcelle CT 0442** » (section + numéro), sous-titre = identifiant —
+   plus de doublon identifiant/identifiant.
+5. **Cote à chaque entrée de limite.** L'aperçu de la coupe réaffiche **une cote à chaque limite** traversée
+   (rôle `limite` réintégré), en plus de la voie et du haut/bas — comme avant.
+
+**Contrôles ajoutés** (`scripts/gabarit_3d3_finitions.mjs`, `finitions.json`) : (1) **aucun libellé de la coupe
+ne chevauche un autre** (échouait sur l'ancienne BZ1065 : « Rupture » + « sol non mesuré » superposés, et cotes
+jointives) ; (2) **le plan-clé occupe ≥ 2/3 de la hauteur** disponible ; (3) les **lettres d'axe** ne se
+chevauchent pas. Les 3 parcelles × 2 tailles : **tous OK**. Tests Python : `test_sol_non_mesure_sous_element_couvert`
+(bosse non tracée, trait droit, un libellé, pas de losange, pas de cote), `test_cote_evite_la_pente_max_5m`,
+`test_plan_cle_lettres_axe_sans_chevauchement`.
+
+---
+
 ## Captures (entières)
 - **BZ1065** : `BZ1065_1440x694.png`, `BZ1065_1920x1080.png` (sol 0,5 m, bosse partie, légende entière,
   pied « maille de 0,5 m · acquisition 14/09/2023 »).

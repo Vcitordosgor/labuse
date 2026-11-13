@@ -227,15 +227,22 @@ def _chevauchent(a, b):
 
 
 def test_sol_non_mesure_sous_element_couvert():
-    """Correction LOT 2 — sous l'emprise bâtie, une BOSSE locale (varangue : LiDAR voit le toit, pas le sol)
-    qui dépasse les deux sols voisins de ≥ 1,5 m est tracée DISTINCTE et libellée « sol non mesuré sous un
-    élément couvert » (aucune cote dessus) ; une vraie pente ne la déclenche PAS (pas de faux positif)."""
+    """Finition — sous l'emprise bâtie, une BOSSE locale (varangue) qui dépasse les deux sols voisins de
+    ≥ 1,5 m : la bosse N'EST PLUS TRACÉE (trou dans le relevé principal), un trait DROIT pointillé relie les
+    deux sols voisins, UN SEUL libellé « sol non mesuré sous un élément couvert », PAS de losange de rupture,
+    et AUCUNE cote sur la bosse. Une vraie pente ne déclenche rien (pas de faux positif)."""
     c = _coupe_pente(0.0)                                  # terrain plat à 100 m
     for p in c["profil"]:
         if 11.0 <= p["d"] <= 17.0:
             p["z"] = 102.0                                  # bosse de 2 m sous le bâti [10,18]
-    svg = coupe_svg(c)
-    assert "sol non mesuré sous un élément couvert" in svg          # libellé + ligne de légende
+    c["cotes_points"] = {"points": [{"d": 14.0, "z": 102.0, "role": "haut"},   # « haut » tombe SUR la bosse
+                                    {"d": 2.0, "z": 100.0, "role": "limite"}]}
+    svg = coupe_svg(c, detail=True)
+    assert svg.count("sol non mesuré sous un élément couvert") == 2   # 1 libellé + 1 ligne de légende (pas 2 libellés)
+    assert "Rupture du terrain à vérifier" not in svg                # losange supprimé (rupture = l'élément couvert)
+    assert svg.count("102,0 m") == 0                                 # aucune cote sur la bosse (102 m écartée)
+    # un trait DROIT pointillé « 1 3 » (couvert) remplace la bosse dans le relevé principal
+    assert 'stroke-dasharray="1 3"' in svg
     naturel = coupe_svg(_coupe_pente(0.3))                 # pente franche : un côté haut relève le voisin
     assert "sol non mesuré sous un élément couvert" not in naturel  # pas de faux positif
 

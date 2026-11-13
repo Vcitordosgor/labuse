@@ -127,15 +127,19 @@ def obtenir_fenetre(minx, miny, maxx, maxy, marge):
     return f, "lidar_05m"
 
 
-def acquisition(db, minx, miny, maxx, maxy) -> str | None:
-    """Date d'acquisition LiDAR HD lue DANS LA DONNÉE (grille des dalles/missions) pour la fenêtre."""
+def acquisition(db, minx, miny, maxx, maxy):
+    """Date(s) d'acquisition LiDAR HD lue(s) DANS LA DONNÉE (grille des dalles/missions) pour la fenêtre.
+    Rend {'min','max','n'} (n = nombre de dates distinctes couvrant la fenêtre) ou None. Si n > 1, la fenêtre
+    chevauche plusieurs acquisitions → l'affichage montre la PLAGE (du … au …)."""
     try:
         from sqlalchemy import text
         row = db.execute(text(
-            "SELECT max(date_fin) FROM lidar_dalle_grille "
+            "SELECT min(date_fin), max(date_fin), count(DISTINCT date_fin) FROM lidar_dalle_grille "
             "WHERE x0 < :x1 AND x1 > :x0 AND y0 < :y1 AND y1 > :y0"),
-            {"x0": minx, "y0": miny, "x1": maxx, "y1": maxy}).scalar()
-        return str(row) if row else None
+            {"x0": minx, "y0": miny, "x1": maxx, "y1": maxy}).one_or_none()
+        if not row or row[0] is None:
+            return None
+        return {"min": str(row[0]), "max": str(row[1]), "n": int(row[2])}
     except Exception:  # noqa: BLE001 — table absente/base lente : date inconnue, pas d'erreur
         return None
 

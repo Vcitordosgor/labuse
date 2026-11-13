@@ -1,0 +1,50 @@
+{
+  "BZ1065_1440x694": {
+    "chevCoupe": 0,
+    "planRatio": 0.74,
+    "planRatioOk": true,
+    "chevLettres": 0,
+    "nLabels": 10,
+    "nLettres": 4
+  },
+  "BZ1065_1920x1080": {
+    "chevCoupe": 0,
+    "planRatio": 0.83,
+    "planRatioOk": true,
+    "chevLettres": 0,
+    "nLabels": 10,
+    "nLettres": 4
+  },
+  "CT0442_1440x694": {
+    "chevCoupe": 0,
+    "planRatio": 0.74,
+    "planRatioOk": true,
+    "chevLettres": 0,
+    "nLabels": 5,
+    "nLettres": 4
+  },
+  "CT0442_1920x1080": {
+    "chevCoupe": 0,
+    "planRatio": 0.83,
+    "planRatioOk": true,
+    "chevLettres": 0,
+    "nLabels": 5,
+    "nLettres": 4
+  },
+  "DX0049_1440x694": {
+    "chevCoupe": 0,
+    "planRatio": 0.74,
+    "planRatioOk": true,
+    "chevLettres": 0,
+    "nLabels": 5,
+    "nLettres": 4
+  },
+  "DX0049_1920x1080": {
+    "chevCoupe": 0,
+    "planRatio": 0.83,
+    "planRatioOk": true,
+    "chevLettres": 0,
+    "nLabels": 5,
+    "nLettres": 4
+  }
+}

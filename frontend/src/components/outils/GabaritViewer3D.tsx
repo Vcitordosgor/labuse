@@ -636,7 +636,7 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
   )
 }
 
-const LEG = [['#ffffff', 'Limite cadastrale'], ['#2f9e6a', 'Zone d\'implantation au sol'], ['#cdd3d8', 'Bâti schématique · BD TOPO'], ['#e0a44a', 'Axe de la coupe active']] as const
+const LEG = [['#ffffff', 'Limite cadastrale'], ['#2f9e6a', 'Zone d\'implantation'], ['#cdd3d8', 'Bâti · BD TOPO'], ['#e0a44a', 'Axe de la coupe']] as const
 
 export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => void }) {
   const q = useQuery({ queryKey: ['gabarit-scene', idu], queryFn: () => getGabaritScene(idu), retry: false })
@@ -662,10 +662,45 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
     mesure(); const ro = new ResizeObserver(mesure); ro.observe(el)
     return () => { cancelAnimationFrame(raf); ro.disconnect() }
   }, [axe, dispo])
+  // LOT finition — le plan-clé REMPLIT la place disponible (plus de vide dessous) : on mesure son créneau et on
+  // demande un SVG à SON format (viewBox large 210 → texte ≥ 11 px ; hauteur = créneau × 210 / largeur).
+  const planSlot = useRef<HTMLDivElement>(null)
+  const [planDim, setPlanDim] = useState<{ w: number; h: number }>({ w: 0, h: 0 })
+  useEffect(() => {
+    const el = planSlot.current; if (!el) return
+    let raf = 0
+    const mesure = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => {
+      const aw = el.clientWidth, ah = el.clientHeight
+      if (aw > 4 && ah > 4) setPlanDim({ w: aw, h: ah })
+    }) }
+    mesure(); const ro = new ResizeObserver(mesure); ro.observe(el)
+    return () => { cancelAnimationFrame(raf); ro.disconnect() }
+  }, [dispo])
+  const planH = planDim.w > 0 ? Math.max(100, Math.min(600, Math.round((planDim.h * 210) / planDim.w))) : 150
+  // légende sur UNE colonne quand la hauteur le permet ; DEUX colonnes seulement si le panneau est court
+  // (sinon le plan-clé n'atteindrait pas les 2/3 de la hauteur). Libellés courts → jamais coupés en 2 lignes.
+  const panelRef = useRef<HTMLDivElement>(null)
+  const [panelH, setPanelH] = useState(0)
+  useEffect(() => {
+    const el = panelRef.current; if (!el) return
+    let raf = 0
+    const mesure = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { if (el.clientHeight > 4) setPanelH(el.clientHeight) }) }
+    mesure(); const ro = new ResizeObserver(mesure); ro.observe(el)
+    return () => { cancelAnimationFrame(raf); ro.disconnect() }
+  }, [dispo])
+  const legCols = panelH > 0 && panelH < 540 ? 2 : 1
   const sid = scene?.scene_id   // transmis au plan/coupes (parité : même version que le terrain et le PDF)
   const coupes = useMemo(() => (scene?.coupes || []).map((c) => String((c as { label?: string }).label ?? '')), [scene])
+  const fmtD = (d: string) => d.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3/$2/$1')   // 2023-08-12 → 12/08/2023
   const acq = scene?.meta?.acquisition_date ? String(scene.meta.acquisition_date) : '—'
-  const acqFr = acq.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3/$2/$1')   // 2023-08-12 → 12/08/2023 (pt 6)
+  const acqFr = fmtD(acq)
+  // finition — date(s) d'acquisition : plage si la fenêtre couvre plusieurs acquisitions + d'où vient la date.
+  const acqMin = scene?.meta?.acquisition_min ? String(scene.meta.acquisition_min) : null
+  const acqN = Number(scene?.meta?.acquisition_n ?? 1)
+  const acqProd = scene?.meta?.acquisition_produit ? String(scene.meta.acquisition_produit) : ''
+  const acqTxt = acqN > 1 && acqMin && acqMin !== acq ? `acquisitions du ${fmtD(acqMin)} au ${acqFr}` : `acquisition ${acqFr}`
+  // titre : adresse si connue, sinon « Parcelle <section> <numéro> » (plus de doublon identifiant/identifiant).
+  const refCadastrale = (() => { const t = idu.slice(8); const num = t.slice(-4); const sec = t.slice(0, -4); return sec ? `Parcelle ${sec} ${num}` : `Parcelle ${idu}` })()
   // LOT 2 — le pied annonce CE QUI EST RÉELLEMENT SERVI : maille lue dans la donnée (0,5 m LiDAR HD, ou
   // 1 m en repli) + message clair si repli (relief fin indisponible).
   const mailleM = Number(scene?.meta?.maille_m ?? 1)
@@ -710,7 +745,7 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
       <div className="flex items-center justify-between border-b border-line px-4 py-2">
         <div>
           <div className="text-[9px] uppercase tracking-wide text-txt-ghost">LABUSE · Gabarit réglementaire — Vue 3D pilote (admin)</div>
-          <div className="text-[15px] font-semibold text-txt">{scene?.adresse ?? idu}</div>
+          <div className="text-[15px] font-semibold text-txt">{scene?.adresse ?? refCadastrale}</div>
           <div className="text-[10px] text-txt-dim">{scene?.meta?.commune ? `${String(scene.meta.commune)} · ` : ''}{idu}</div>
         </div>
         <div className="flex items-center gap-1 text-[11px]">
@@ -739,15 +774,16 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
             {/* à droite : plan-clé COMPACT (un seul titre) + légende. LOT 4 — le plan-clé RÉTRÉCIT (flex-1,
                 object-contain) pour laisser la légende ENTIÈREMENT visible à toute hauteur ; la légende et
                 les titres ne rétrécissent pas (shrink-0) → jamais coupés par le panneau de la coupe. */}
-            {/* LOT 4 + correction : le plan-clé garde une taille LISIBLE (w-full → texte ≥ 11 px) ET la
-                légende tient en entier grâce à DEUX colonnes (gain de hauteur) ; les deux restent visibles
-                au-dessus du panneau de la coupe aux 5 tailles. */}
-            <div className="flex w-[320px] min-h-0 shrink-0 flex-col gap-2 bg-[#0f1216] p-3">
+            {/* finition : le plan-clé REMPLIT la hauteur disponible (créneau `flex-1`, SVG à son format → texte
+                ≥ 11 px, plus de vide dessous) ; la légende reste sur UNE colonne (4 entrées courtes tiennent). */}
+            <div ref={panelRef} className="flex w-[320px] min-h-0 shrink-0 flex-col gap-1.5 bg-[#0f1216] p-2">
               <div className="shrink-0 text-[11px] text-txt-mut">Plan-clé <span className="text-txt-ghost">— nord en haut</span></div>
-              <img data-gab3d-plan src={gabPlanSvgUrl(idu, 'sombre', sid, 210, 108)} alt="Plan-clé" className="w-full shrink-0 rounded border border-line" />
-              <div data-gab3d-legende className="mt-1 grid shrink-0 grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-txt-mut">
+              <div ref={planSlot} className="min-h-0 flex-1">
+                <img data-gab3d-plan src={gabPlanSvgUrl(idu, 'sombre', sid, 210, planH)} alt="Plan-clé" className="h-full w-full rounded border border-line object-contain" />
+              </div>
+              <div data-gab3d-legende className={`grid shrink-0 gap-y-0.5 text-[11px] text-txt-mut ${legCols === 2 ? 'grid-cols-2 gap-x-2' : 'grid-cols-1'}`}>
                 {LEG.map(([c, lab]) => (
-                  <div key={lab} className="flex items-center gap-2"><span className="inline-block h-2 w-4 shrink-0 rounded-sm" style={{ background: c }} />{lab}</div>
+                  <div key={lab} className="flex items-center gap-1.5 whitespace-nowrap"><span className="inline-block h-2 w-3.5 shrink-0 rounded-sm" style={{ background: c }} />{lab}</div>
                 ))}
               </div>
             </div>
@@ -770,8 +806,9 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
                 : <p className="text-[12px] text-txt-mut">Aucune coupe disponible.</p>}
             </div>
           </div>
-          <p data-gab3d-pied className="border-t border-line px-3 py-1.5 text-[10px] text-txt-dim">
-            MNT LiDAR HD IGN · {relief3dAllege ? <>coupe à {mailleFr} · relief 3D allégé à {maille3dFr}</> : <>maille de {mailleFr}</>} · acquisition {acqFr}{solRepli ? <span className="text-amber"> · {solMsg}</span> : ''} · cotes indicatives · courbes tous les mètres, trait fort tous les 5 m · H = V.
+          <p data-gab3d-pied title={acqProd ? `Date d'acquisition lue dans : ${acqProd}` : undefined}
+             className="border-t border-line px-3 py-1.5 text-[10px] text-txt-dim">
+            MNT LiDAR HD IGN · {relief3dAllege ? <>coupe à {mailleFr} · relief 3D allégé à {maille3dFr}</> : <>maille de {mailleFr}</>} · {acqTxt}{acqProd ? ` · ${acqProd}` : ''}{solRepli ? <span className="text-amber"> · {solMsg}</span> : ''} · cotes indicatives · courbes tous les mètres, trait fort tous les 5 m · H = V.
           </p>
         </div>
       )}
