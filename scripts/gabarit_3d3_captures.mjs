@@ -15,10 +15,10 @@ async function ouvrir(page, idu) {
   await page.evaluate(() => document.querySelector('[data-cookie-consent]')?.remove())
   await page.evaluate(() => window.__labuse.setModule('gabarit')); await page.waitForTimeout(250)
   await page.evaluate((i) => window.__labuse.select(i), idu)
-  await page.waitForSelector('[data-gabarit-viewer-3d]', { timeout: 15000 })
+  await page.waitForSelector('[data-gabarit-viewer-3d]', { timeout: 30000 })
   await page.click('[data-gabarit-viewer-3d]')
-  await page.waitForSelector('[data-gab3d-legende]', { timeout: 30000 })
-  await page.waitForSelector('[data-gab3d-pied]', { timeout: 30000 }).catch(() => {})
+  await page.waitForSelector('[data-gab3d-legende]', { timeout: 60000 })
+  await page.waitForSelector('[data-gab3d-pied]', { timeout: 60000 }).catch(() => {})
   await page.waitForTimeout(1300)
 }
 
@@ -31,6 +31,10 @@ for (const [court, idu] of CAS) {
     const pied = await page.locator('[data-gab3d-pied]').innerText().catch(() => '')
     await page.screenshot({ path: `${OUT}/${court}_${w}x${h}.png` })
     console.log(`[cap] ${court}_${w}x${h}.png — pied: ${pied.replace(/\s+/g, ' ').slice(0, 70)}`)
+    if (w === 1440 && h === 694) {       // recadrage de la coupe
+      const band = await page.$('[data-gab3d-coupe-panneau]')
+      if (band) { await band.screenshot({ path: `${OUT}/${court}_coupe.png` }); console.log(`[crop] ${court}_coupe.png`) }
+    }
     await ctx.close()
   }
 }

@@ -271,8 +271,11 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     recentrer.current = () => { place(); controls.target.copy(ctr); controls.update() }
 
     // repères haut/bas SUR leurs points (3D→écran) + boussole
+    // cotes d'altitude sur SOL DÉGAGÉ : on exclut les sommets SOUS une emprise bâtie — un élément couvert
+    // pris pour du sol (varangue/auvent) ne porte donc jamais de cote (GABARIT-3D-3, correction LOT 2).
+    const empBati = (scene.batiments || []).flatMap((b) => (b.empreinte || []) as GabPoly[])
     let hiP = new THREE.Vector3(), loP = new THREE.Vector3(), hi = -Infinity, lo = Infinity
-    for (const p of faces.vertices) if (inPolys(p[0], p[1], scene.contour_cadastral)) {
+    for (const p of faces.vertices) if (inPolys(p[0], p[1], scene.contour_cadastral) && !inPolys(p[0], p[1], empBati)) {
       if (p[2] > hi) { hi = p[2]; hiP.set(p[0], p[2], -p[1]) }
       if (p[2] < lo) { lo = p[2]; loP.set(p[0], p[2], -p[1]) }
     }
@@ -725,17 +728,17 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
             {/* à droite : plan-clé COMPACT (un seul titre) + légende. LOT 4 — le plan-clé RÉTRÉCIT (flex-1,
                 object-contain) pour laisser la légende ENTIÈREMENT visible à toute hauteur ; la légende et
                 les titres ne rétrécissent pas (shrink-0) → jamais coupés par le panneau de la coupe. */}
+            {/* LOT 4 + correction : le plan-clé garde une taille LISIBLE (w-full → texte ≥ 11 px) ET la
+                légende tient en entier grâce à DEUX colonnes (gain de hauteur) ; les deux restent visibles
+                au-dessus du panneau de la coupe aux 5 tailles. */}
             <div className="flex w-[320px] min-h-0 shrink-0 flex-col gap-2 bg-[#0f1216] p-3">
               <div className="shrink-0 text-[11px] text-txt-mut">Plan-clé <span className="text-txt-ghost">— nord en haut</span></div>
-              <div className="flex min-h-0 flex-1 items-start justify-center">
-                <img data-gab3d-plan src={gabPlanSvgUrl(idu, 'sombre', sid, 210, 176)} alt="Plan-clé" className="h-full w-full rounded border border-line object-contain object-top" />
-              </div>
-              <div data-gab3d-legende className="mt-1 flex shrink-0 flex-col gap-1 text-[11px] text-txt-mut">
+              <img data-gab3d-plan src={gabPlanSvgUrl(idu, 'sombre', sid, 210, 108)} alt="Plan-clé" className="w-full shrink-0 rounded border border-line" />
+              <div data-gab3d-legende className="mt-1 grid shrink-0 grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-txt-mut">
                 {LEG.map(([c, lab]) => (
-                  <div key={lab} className="flex items-center gap-2"><span className="inline-block h-2 w-4 rounded-sm" style={{ background: c }} />{lab}</div>
+                  <div key={lab} className="flex items-center gap-2"><span className="inline-block h-2 w-4 shrink-0 rounded-sm" style={{ background: c }} />{lab}</div>
                 ))}
               </div>
-              <p className="mt-1 shrink-0 text-[9px] leading-snug text-txt-ghost">Détails techniques — scène {scene.scene_id}</p>
             </div>
           </div>
           {/* en bas : en-tête (titre + datum + Agrandir, pt 1) puis l'aperçu qui REMPLIT son cadre (H = V, ≥ 11 px) */}

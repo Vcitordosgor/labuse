@@ -7,7 +7,7 @@ import fs from 'node:fs'
 const OUT = '/Users/openclaw/Desktop/labuse-3d/docs/audit-2026-11/gabarit-3d-3'
 fs.mkdirSync(OUT, { recursive: true })
 const URL = 'http://localhost:10090/socle/'
-const IDU = '97411000BZ1065'
+const IDU = process.argv[3] || '97411000BZ1065'
 const TAILLES = [[1280, 720], [1440, 694], [1440, 900], [1920, 1080], [2560, 1300]]
 const PHASE = process.argv[2] || 'after'
 const browser = await webkit.launch()
@@ -17,10 +17,19 @@ async function ouvrir(page) {
   await page.evaluate(() => document.querySelector('[data-cookie-consent]')?.remove())
   await page.evaluate(() => window.__labuse.setModule('gabarit')); await page.waitForTimeout(250)
   await page.evaluate((i) => window.__labuse.select(i), IDU)
-  await page.waitForSelector('[data-gabarit-viewer-3d]', { timeout: 15000 })
+  await page.waitForSelector('[data-gabarit-viewer-3d]', { timeout: 30000 })
   await page.click('[data-gabarit-viewer-3d]')
-  await page.waitForSelector('[data-gab3d-legende]', { timeout: 20000 })
+  await page.waitForSelector('[data-gab3d-legende]', { timeout: 60000 })
   await page.waitForTimeout(600)
+}
+async function planTextePx(page) {
+  // plus petit texte du plan-clé À L'ÉCRAN (échelle object-contain / w-full réelle)
+  const img = await page.$('[data-gab3d-plan]'); if (!img) return null
+  const b = await img.boundingBox(); if (!b) return null
+  const svg = await (await fetch(await img.evaluate((e) => e.src))).text()
+  const fonts = [...svg.matchAll(/font-size="([\d.]+)"/g)].map((m) => +m[1]); if (!fonts.length) return null
+  const vb = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/); const vbW = +(vb?.[1] || 210), vbH = +(vb?.[2] || 176)
+  return Math.round(Math.min(...fonts) * Math.min(b.width / vbW, b.height / vbH) * 10) / 10
 }
 const mesure = (page, w, h) => page.evaluate(({ w, h }) => {
   const leg = document.querySelector('[data-gab3d-legende]')
@@ -30,7 +39,7 @@ const mesure = (page, w, h) => page.evaluate(({ w, h }) => {
   const entrees = leg.children.length
   const dansVue = r.top >= -0.5 && r.bottom <= h + 0.5 && r.left >= -0.5 && r.right <= w + 0.5
   const auDessusCoupe = p ? r.bottom <= p.top + 0.5 : true
-  return { ok: dansVue && auDessusCoupe && entrees === 4, entrees,
+  return { legOk: dansVue && auDessusCoupe && entrees === 4, entrees,
            dansVue, auDessusCoupe, legBottom: Math.round(r.bottom), coupeTop: p ? Math.round(p.top) : null }
 }, { w, h })
 
@@ -40,14 +49,13 @@ for (const [w, h] of TAILLES) {
   const page = await ctx.newPage()
   await page.goto(URL, { waitUntil: 'domcontentloaded' })
   await ouvrir(page)
-  res[`${w}x${h}`] = await mesure(page, w, h)
-  if ((w === 1440 && h === 694) || (w === 1920 && h === 1080)) {
-    await page.screenshot({ path: `${OUT}/BZ1065_${w}x${h}_${PHASE}.png` })
-    console.log(`[cap] BZ1065_${w}x${h}_${PHASE}.png`)
-  }
+  const m = await mesure(page, w, h)
+  m.planPx = await planTextePx(page)
+  m.ok = m.legOk && (m.planPx || 0) >= 11
+  res[`${w}x${h}`] = m
   await ctx.close()
 }
-fs.writeFileSync(`${OUT}/legende_${PHASE}.json`, JSON.stringify(res, null, 2))
-console.log(`\n== LOT 4 — légende visible (${PHASE}) ==`)
-for (const t of Object.keys(res)) console.log(`  ${t}: OK=${res[t].ok} entrées=${res[t].entrees} dansVue=${res[t].dansVue} auDessusCoupe=${res[t].auDessusCoupe} (legBottom=${res[t].legBottom}, coupeTop=${res[t].coupeTop})`)
+fs.writeFileSync(`${OUT}/legende_${PHASE}_${IDU.slice(-6)}.json`, JSON.stringify(res, null, 2))
+console.log(`\n== légende + plan-clé (${IDU.slice(-6)}, ${PHASE}) ==`)
+for (const t of Object.keys(res)) console.log(`  ${t}: OK=${res[t].ok} (légende visible=${res[t].legOk}, plan-clé texte ${res[t].planPx} px ≥ 11) entrées=${res[t].entrees}`)
 await browser.close()

@@ -200,6 +200,86 @@ def test_rupture_losange_seuil_1m5():
     assert "rupture du terrain à vérifier" not in en_dessous       # pas de ligne de légende
 
 
+def test_anti_escalier_detecte_les_paliers():
+    """Correction LOT 2 — une coupe ne doit pas être faite de paliers plats + marches (donnée grossière
+    rééchantillonnée). `palier_max_m` ≥ 2 m = escalier : le contrôle « < 2 m » ÉCHOUE sur un escalier
+    (type RGE ALTI 5 m servi en 0,5 m) et PASSE sur un relief naturel fin (LiDAR HD 0,5 m)."""
+    from labuse.gabarit.coupe_svg import palier_max_m
+    SEUIL = 2.0
+    escalier = [{"d": i * 0.5, "z": 100.0 + int((i * 0.5) // 5)} for i in range(60)]   # paliers de 5 m
+    naturel = [{"d": i * 0.5, "z": round(100.0 + 0.005 * i, 3)} for i in range(60)]      # pente douce ~1 %
+    assert palier_max_m(escalier) >= SEUIL, "l'escalier DOIT être détecté (le contrôle < 2 m échouerait)"
+    assert palier_max_m(naturel) < SEUIL, "un relief naturel fin ne doit pas être vu comme un escalier"
+
+
+def _boites_libelles(svg):
+    """Boîtes (x0,x1,y0,y1) des libellés à fond opaque (couples <rect .../><text>…</text> de `_label_box`)."""
+    out = []
+    for m in re.finditer(r'<rect x="([\-\d.]+)" y="([\-\d.]+)" width="([\d.]+)" height="([\d.]+)"[^>]*/>'
+                         r'<text[^>]*>([^<]*)</text>', svg):
+        x, y, w, h = (float(m.group(i)) for i in range(1, 5))
+        out.append((m.group(5), x, x + w, y, y + h))
+    return out
+
+
+def _chevauchent(a, b):
+    return not (a[2] < b[1] or a[1] > b[2] or a[4] < b[3] or a[3] > b[4])
+
+
+def test_sol_non_mesure_sous_element_couvert():
+    """Correction LOT 2 — sous l'emprise bâtie, une BOSSE locale (varangue : LiDAR voit le toit, pas le sol)
+    qui dépasse les deux sols voisins de ≥ 1,5 m est tracée DISTINCTE et libellée « sol non mesuré sous un
+    élément couvert » (aucune cote dessus) ; une vraie pente ne la déclenche PAS (pas de faux positif)."""
+    c = _coupe_pente(0.0)                                  # terrain plat à 100 m
+    for p in c["profil"]:
+        if 11.0 <= p["d"] <= 17.0:
+            p["z"] = 102.0                                  # bosse de 2 m sous le bâti [10,18]
+    svg = coupe_svg(c)
+    assert "sol non mesuré sous un élément couvert" in svg          # libellé + ligne de légende
+    naturel = coupe_svg(_coupe_pente(0.3))                 # pente franche : un côté haut relève le voisin
+    assert "sol non mesuré sous un élément couvert" not in naturel  # pas de faux positif
+
+
+def test_cote_evite_la_pente_max_5m():
+    """Finition 4a — « pente max N % sur 5 m » et les cotes d'altitude ne se chevauchent JAMAIS (boîtes 2D),
+    même quand une cote tombe sous le libellé de pente (cas CT0442)."""
+    c = _coupe_pente(0.25)                                 # pente forte → pente max 5 m disponible
+    c["cotes_points"] = {"points": [{"d": float(d), "z": round(100 + 0.25 * d, 1), "role": "haut"}
+                                    for d in range(4, 36, 3)]}      # cotes denses tout le long
+    svg = coupe_svg(c, detail=True)
+    boites = _boites_libelles(svg)
+    pentes = [b for b in boites if b[0].startswith("pente max")]
+    cotes = [b for b in boites if b[0].endswith(" m") and not b[0].startswith("pente")]
+    assert pentes and cotes
+    for p in pentes:
+        assert not any(_chevauchent(p, k) for k in cotes), "une cote chevauche « pente max … »"
+
+
+def test_plan_cle_lettres_axe_sans_chevauchement():
+    """Finition 4b — deux extrémités d'axes proches d'un même coin (cas DX0049) : les lettres A/A′/B/B′ (et
+    « voie ») sont décalées → aucune ne se superpose."""
+    scene = {"contour_cadastral": [{"ext": [[0, 0], [20, 0], [20, 20], [0, 20], [0, 0]], "trous": []}],
+             "zone_implantation": [], "batiments": [],
+             "axes_plan": {"A": {"label": "A", "p0": [1, 1], "p1": [19, 12]},
+                           "B": {"label": "B", "p0": [19, 14], "p1": [2, 2]}},   # B′ tombe près de A
+             "coupes": [{"voie": {"etablie": True, "point_local": [18, 13]}}]}
+    svg = plan_cle_svg(scene, theme="sombre", width=210, height=108)
+    lettres = [b for b in _boites_libelles_simple(svg) if b[0] in ("A", "A′", "B", "B′", "voie")]
+    for i in range(len(lettres)):
+        for j in range(i + 1, len(lettres)):
+            assert not _chevauchent(lettres[i], lettres[j]), f"{lettres[i][0]} chevauche {lettres[j][0]}"
+
+
+def _boites_libelles_simple(svg):
+    """Boîtes des <text> du plan-clé (sans fond) : largeur estimée au glyphe (fs×0,56)."""
+    out = []
+    for m in re.finditer(r'<text x="([\-\d.]+)" y="([\-\d.]+)"[^>]*font-size="(\d+)"[^>]*>([^<]*)</text>', svg):
+        x, y, fs, t = float(m.group(1)), float(m.group(2)), int(m.group(3)), m.group(4)
+        w = max(len(t) * fs * 0.56, 4.0)
+        out.append((t, x - 2, x + w, y - fs, y + 3))
+    return out
+
+
 def _hors_cadre(svg, w, h, tol=1.0):
     faute = []
     for attr, lim in (("x", w), ("cx", w), ("x1", w), ("x2", w), ("y", h), ("cy", h), ("y1", h), ("y2", h)):

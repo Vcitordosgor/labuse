@@ -1,0 +1,52 @@
+{
+  "1280x720": {
+    "legOk": true,
+    "entrees": 4,
+    "dansVue": true,
+    "auDessusCoupe": true,
+    "legBottom": 336,
+    "coupeTop": 392,
+    "planPx": 12.7,
+    "ok": true
+  },
+  "1440x694": {
+    "legOk": true,
+    "entrees": 4,
+    "dansVue": true,
+    "auDessusCoupe": true,
+    "legBottom": 336,
+    "coupeTop": 366,
+    "planPx": 12.7,
+    "ok": true
+  },
+  "1440x900": {
+    "legOk": true,
+    "entrees": 4,
+    "dansVue": true,
+    "auDessusCoupe": true,
+    "legBottom": 336,
+    "coupeTop": 572,
+    "planPx": 12.7,
+    "ok": true
+  },
+  "1920x1080": {
+    "legOk": true,
+    "entrees": 4,
+    "dansVue": true,
+    "auDessusCoupe": true,
+    "legBottom": 336,
+    "coupeTop": 752,
+    "planPx": 12.7,
+    "ok": true
+  },
+  "2560x1300": {
+    "legOk": true,
+    "entrees": 4,
+    "dansVue": true,
+    "auDessusCoupe": true,
+    "legBottom": 336,
+    "coupeTop": 970,
+    "planPx": 12.7,
+    "ok": true
+  }
+}

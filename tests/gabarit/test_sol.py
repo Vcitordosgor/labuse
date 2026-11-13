@@ -9,14 +9,15 @@ from labuse.gabarit import sol
 def test_cache_lru_ecarte_les_plus_anciens(tmp_path, monkeypatch):
     """Le dossier de copies plafonné écarte les copies au DERNIER ACCÈS le plus ancien (LRU)."""
     monkeypatch.setenv("LABUSE_GAB_SOL_CACHE", str(tmp_path))
-    for i, name in enumerate(["hr_a.tif", "hr_b.tif", "hr_c.tif"]):
+    noms = [f"{sol._PREFIXE}_a.tif", f"{sol._PREFIXE}_b.tif", f"{sol._PREFIXE}_c.tif"]
+    for i, name in enumerate(noms):
         f = tmp_path / name
         f.write_bytes(b"x" * 1000)
-        os.utime(f, (1000 + i, 1000 + i))            # atime croissant : hr_a le plus ancien
-    sol._evict_lru(2500)                             # garde ~2 fichiers (2000 o) → supprime hr_a
-    restants = {p.name for p in tmp_path.glob("hr_*.tif")}
-    assert "hr_a.tif" not in restants
-    assert restants == {"hr_b.tif", "hr_c.tif"}
+        os.utime(f, (1000 + i, 1000 + i))            # atime croissant : _a le plus ancien
+    sol._evict_lru(2500)                             # garde ~2 fichiers (2000 o) → supprime _a
+    restants = {p.name for p in tmp_path.glob(f"{sol._PREFIXE}_*.tif")}
+    assert noms[0] not in restants
+    assert restants == {noms[1], noms[2]}
 
 
 def test_copie_resservie_sans_appel_exterieur(tmp_path, monkeypatch):

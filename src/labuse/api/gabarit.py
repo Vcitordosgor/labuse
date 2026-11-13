@@ -275,7 +275,7 @@ def gabarit_plan_cle_svg(idu: str, request: Request, theme: str = "sombre", sid:
     from ..gabarit.scene import build_scene
     scene = build_scene(db, idu)
     _verif_sid(scene, sid)
-    svg = plan_cle_svg(scene.to_dict(), theme=theme, width=max(160, min(int(w), 600)), height=max(140, min(int(h), 600)))
+    svg = plan_cle_svg(scene.to_dict(), theme=theme, width=max(160, min(int(w), 600)), height=max(100, min(int(h), 600)))
     if not svg:
         raise HTTPException(404, f"Plan-clé indisponible pour {idu}.")
     return Response(svg, media_type="image/svg+xml")

@@ -21,7 +21,10 @@ from pathlib import Path
 import numpy as np
 
 WMS_DEFAUT = "https://data.geopf.fr/wms-r/wms"
-HR_LAYER = "ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES"   # MNT 0,5 m (sol LiDAR HD)
+# GABARIT-3D-3 (correction) — la couche HIGHRES est, à La Réunion, du RGE ALTI ~5 m RÉÉCHANTILLONNÉ à la
+# demande (paliers de 4,5 m mesurés → « escalier »). On revient au vrai LiDAR HD MNT, dont la maille NATIVE
+# est 0,5 m (palier 0,5 m mesuré) : relief fin réel, même produit que l'ancien fond 1 m (justesse < 0,3 m).
+HR_LAYER = "IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.RGR92UTM40S"   # MNT LiDAR HD, natif 0,5 m
 RES = 0.5
 NODATA = -9999.0
 _CACHE_MAX_DEFAUT = 1024 ** 3                          # 1 Go
@@ -60,19 +63,23 @@ def _fenetre(minx, miny, maxx, maxy, marge):
     return x0, y0, x1, y1
 
 
+# prefixe VERSIONNÉ par le produit/maille : un changement de couche n'hérite jamais des vieilles copies.
+_PREFIXE = "lidarhd05"
+
+
 def _cle(x0, y0, x1, y1) -> str:
-    return f"hr_{x0}_{y0}_{x1}_{y1}.tif"
+    return f"{_PREFIXE}_{x0}_{y0}_{x1}_{y1}.tif"
 
 
 def taille_cache() -> tuple[int, int]:
     """(octets, nb fichiers) du dossier de copies."""
-    fichiers = list(cache_dir().glob("hr_*.tif"))
+    fichiers = list(cache_dir().glob(f"{_PREFIXE}_*.tif"))
     return sum(f.stat().st_size for f in fichiers), len(fichiers)
 
 
 def _evict_lru(cap: int) -> None:
     """Écarte les copies les PLUS ANCIENNES (dernier accès) tant que le dossier dépasse `cap`."""
-    fichiers = list(cache_dir().glob("hr_*.tif"))
+    fichiers = list(cache_dir().glob(f"{_PREFIXE}_*.tif"))
     total = sum(f.stat().st_size for f in fichiers)
     if total <= cap:
         return
