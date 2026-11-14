@@ -743,7 +743,20 @@ def rapport3(db, idu: str, fiche: dict, *, surface_hab: float | None = None,
     except Exception:  # noqa: BLE001
         zone_lib = None
 
-    est_terrain = (nature_mut == "terrain") or (nature_mut is None and nature_parc == "nu")
+    # EXPORTS-FIX-3 LOT 3a — une parcelle au bâti NON MESURÉ (taux d'emprise NULL, aucune vente bâtie)
+    # n'est jamais estimée « bâtie, <type> » sur une zone qui ne peut rien recevoir : si elle est non
+    # constructible (verdict unique `potentiel_batir`), on bascule sur la sortie terrain « pas
+    # d'estimation : zone non constructible » — jamais un prix d'appartement sur une zone N (faute A1
+    # de l'audit, 97408000BI0351). Les parcelles non mesurées MAIS constructibles gardent leur lecture.
+    _non_constr = False
+    if nature_mut is None and nature_parc == "non_mesure":
+        try:
+            from ..faisabilite.potentiel_batir import potentiel_batir
+            _non_constr = (fiche or {}).get("potentiel_a_batir", {}).get("constructible") is False \
+                or potentiel_batir(db, idu).get("constructible") is False
+        except Exception:  # noqa: BLE001 — verdict en échec : on garde la lecture d'origine
+            _non_constr = False
+    est_terrain = (nature_mut == "terrain") or (nature_mut is None and nature_parc == "nu") or _non_constr
     if est_terrain:
         base = estimation_annonce(db, idu, fiche)      # ESTIMER-2 (repère terrain nu + mesurée)
         mesures = mesures_labuse(db, idu, fiche, nature="terrain", zone_lib=zone_lib, mut=mut, insee=insee)
@@ -758,7 +771,10 @@ def rapport3(db, idu: str, fiche: dict, *, surface_hab: float | None = None,
         # dernière vente de la parcelle (servie à part). La raison est dite.
         if non_constructible:
             motif = constr.get("motif") or ""
-            zcode = _zone_code(motif) or _zone_code(constr.get("zone_lib")) or _zone_code(zone_lib)
+            # EXPORTS-FIX-3 LOT 3a — le code de zone vient d'ABORD du libellé de zone (« N »), pas du
+            # motif : le nouveau motif « Zone non constructible — naturelle » ferait extraire « Zone »
+            # (on afficherait « zone non constructible (Zone) »). On lit le vrai code en priorité.
+            zcode = _zone_code(constr.get("zone_lib")) or _zone_code(zone_lib) or _zone_code(motif)
             if zcode:
                 raison = f"Pas d’estimation : zone non constructible ({zcode})"
             elif motif:

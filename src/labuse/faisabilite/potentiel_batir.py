@@ -133,19 +133,34 @@ def _assemble(sdp_raw, cause, constr_label, au_classe, zone_fam, zone_lib) -> di
     constructible = not (constr_ferme or (cause is not None) or au_differe)
     rien_a_batir = gate_ferme or (sdp_restante is not None and sdp_restante <= 0)
 
-    # motif : POURQUOI il n'y a rien (le plus spécifique prime), None si constructible.
+    # motif : POURQUOI il n'y a rien, None si constructible.
+    # EXPORTS-FIX-3 LOT 2 — ORDRE DES MOTIFS imposé par le mandat (« un seul verdict, partout ») :
+    #   1. zone non constructible (famille A/N)  2. zone rouge du PPR  3. le reste.
+    # « Terrain trop étroit » ne passe JAMAIS devant une raison de zone — c'était la faute A2/B2 de
+    # l'audit (97408000BI0351, 2,8 ha de zone N, affichée « terrain trop exigu »). La famille de zone
+    # (A/N) est lue par `zone_fam` (source unique du run servi, `parcel_zone_plu.zone_fam`, dérivée du
+    # subtype par `labuse_zone_famille`), jamais du préfixe du libellé. La cause résiduelle (exigu,
+    # reculs…) ne sert QUE lorsqu'aucune raison de zone ne s'applique.
     motif = None
-    if constr_label == DECLASSE_ZONE_FERMEE:
+    _zfam = str(zone_fam or "").upper()
+    _ppr_rouge = cause is not None and str(cause).partition(":")[0] in ("redhibitoire", "ppr_rouge")
+    if gate_ferme and _zfam in ("A", "N"):
+        _nat = {"A": "agricole", "N": "naturelle"}[_zfam]
+        _suf = f" ({zone_lib})" if zone_lib and str(zone_lib).upper() != _zfam else ""
+        motif = f"Zone non constructible — {_nat}{_suf}"
+    elif str(cause or "").startswith("zone_non_constructible"):
+        motif = f"Zone non constructible{(' (' + zone_lib + ')') if zone_lib else ''}"
+    elif _ppr_rouge:
+        motif = "Zone rouge du PPR — inconstructible (L562-1)"
+    elif constr_label == DECLASSE_ZONE_FERMEE:
         motif = f"Zone fermée à l'urbanisation{(' (' + zone_lib + ')') if zone_lib else ''}"
-    elif constr_label == DECLASSE_NON_CONSTRUCTIBLE:
-        motif = "Parcelle non constructible (surface ou reculs insuffisants)"
     elif au_differe:
         motif = f"Zone AU non ouverte à l'urbanisation{(' (' + zone_lib + ')') if zone_lib else ''}"
+    elif constr_label == DECLASSE_NON_CONSTRUCTIBLE:
+        motif = "Parcelle non constructible (surface ou reculs insuffisants)"
     elif cause is not None:
         # cause résiduelle brute → formulation client (jamais le slug nu).
-        if str(cause).startswith("zone_non_constructible"):
-            motif = f"Zone non constructible{(' (' + zone_lib + ')') if zone_lib else ''}"
-        elif str(cause).startswith("terrain_exigu"):
+        if str(cause).startswith("terrain_exigu"):
             motif = "Terrain trop exigu pour un projet"
         elif str(cause).startswith("habitat_interdit"):
             motif = "Habitat interdit dans cette zone"

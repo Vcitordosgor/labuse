@@ -241,8 +241,12 @@ def _g_zone_limites(terrain, vue) -> str:
         b.append(_poly(p.geom_2975, vue, fill="none", stroke="#DC2626", stroke_width="1",
                        stroke_dasharray="3 3"))
         c = p.geom_2975.representative_point(); X, Y = vue.px(wminx, c.y)
-        b.append(_txt(X - 6, Y + 3, f"AW {p.numero}" if p.numero and p.numero.isdigit() else (p.numero or ""),
-                      size=10, anchor="end", fill="#B91C1C", weight="600"))
+        # EXPORTS-FIX-3 LOT 3 (#5d, relecture) — la SECTION vient de l'IDU (chars 8:10), comme le cartouche
+        # (_refs_courts) : « AW » était codé en dur → le plan étiquetait « AW 538 » pour HT0538 pendant que
+        # le cartouche disait « HT 538 ». Une seule source : la vraie section de la parcelle.
+        _sec = p.idu[8:10] if p.idu and len(p.idu) >= 12 else ""
+        _lab = (f"{_sec} {p.numero}".strip() if p.numero and p.numero.isdigit() else (p.numero or ""))
+        b.append(_txt(X - 6, Y + 3, _lab, size=10, anchor="end", fill="#B91C1C", weight="600"))
     # contour EXTÉRIEUR de l'assiette, plus épais
     b.append(_poly(terrain.assiette, vue, fill="none", stroke="#DC2626", stroke_width="2",
                    stroke_dasharray="8 4"))

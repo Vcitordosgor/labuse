@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import logging
 import math
+import re
 
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
@@ -1825,8 +1826,15 @@ def _surface_pour_total(db, idu: str, emprise, mut: dict | None, insee: str,
                          "× ratio %.3f (ajustement niveaux ×%.3f, assise %d ventes commune %s)",
                          idu, emp, niveaux, ratio, mult, assise, insee)
                 niv_lib = f"{niveaux} niveau" + ("x" if niveaux > 1 else "")
+                # EXPORTS-FIX-3 LOT 3c — la formule IMPRIMÉE porte TOUS ses facteurs et redonne le
+                # total : elle mène par la surface habitable RÉELLE (s), pas l'emprise brute (emp).
+                # Avant : « 224 m² au sol × 1 niveau × 2 101 €/m² » (= 470 624) alors que le total
+                # affiché valait 237 000 — le ratio 0,516 et le ×niveaux 0,974 manquaient (DK0208).
+                _rf = ('%.3f' % ratio).replace('.', ',')
+                _mf = ('%.3f' % mult).replace('.', ',')
                 return s, {"source": "emprise_niveaux_lidar",
-                           "ligne": f"Surface habitable estimée : {emp} m² au sol × {niv_lib} (hauteur LiDAR)",
+                           "ligne": (f"Surface habitable estimée {s} m² ({emp} m² au sol × {_rf} "
+                                     f"ratio habitable × {_mf} pour {niv_lib}, hauteur LiDAR)"),
                            "note": (f"Surface habitable estimée d'après l'emprise au sol ({emp} m²) et "
                                     f"les {niv_lib} mesurés par la hauteur LiDAR, ajustée au ratio "
                                     "habitable/emprise des maisons du secteur "
@@ -1837,8 +1845,11 @@ def _surface_pour_total(db, idu: str, emprise, mut: dict | None, insee: str,
             log.info("estimation %s : surface habitable estimée = emprise %d m² × ratio %.3f "
                      "(médiane surface vendue / emprise sur %d ventes de maisons de la commune %s ; "
                      "pas de hauteur LiDAR)", idu, emp, ratio, assise, insee)
+            # EXPORTS-FIX-3 LOT 3c — la formule porte son facteur (ratio) et redonne le total : surface
+            # habitable RÉELLE (s) = emprise × ratio, multipliée ensuite par le €/m² habitable.
+            _rf = ('%.3f' % ratio).replace('.', ',')
             return s, {"source": "emprise_ratio",
-                       "ligne": f"Surface habitable estimée d'après l'emprise au sol ({s} m²)",
+                       "ligne": f"Surface habitable estimée {s} m² ({emp} m² au sol × {_rf} ratio habitable)",
                        "note": ("Surface habitable estimée d'après l'emprise au sol : total indicatif "
                                 "(ratio médian surface vendue / emprise au sol des ventes de maisons de "
                                 f"la commune : {('%.2f' % ratio).replace('.', ',')} sur "
@@ -2089,10 +2100,12 @@ def radar_annonce_estimation(
             fiche = parcel_fiche(idu, db=db)
         except ValueError:
             return {"idu": idu, "median": None, "type_comparateur": None, "note": "Parcelle inconnue."}
-        # CHASSE-4-FIX (C4-002) + NU-3-J#4 — nombre d'aléas = les familles d'aléas DISTINCTES
-        # (`distinct_hazards`), compteur UNIQUE partagé par la tuile « Aléas » de la fiche (`aleas.n_hazards`)
-        # et le PDF (`_risques_rows`, une ligne par hazard) : fiche == Estimer == PDF, fin de l'écart 6≠2.
-        n_aleas = len(distinct_hazards(((fiche or {}).get("aleas") or {}).get("liste")))
+        # CHASSE-4-FIX (C4-002) + NU-3-J#4 — compteur « Risques et pièges » = le POINT UNIQUE
+        # `_risques_rows` (une ligne par risque servi), partagé par l'outil Estimer et le PDF.
+        # EXPORTS-FIX-3 LOT 3 (#e) — `_risques_rows` inclut désormais la zone inondable TRI et le
+        # système d'endiguement (lus de la cascade) : on compte donc SUR CETTE source, pas sur
+        # `distinct_hazards(aleas.liste)` seul — sinon le compteur divergerait du tableau (cohérence).
+        n_aleas = len(_risques_rows(fiche, (fiche or {}).get("commune")))
         return {"idu": idu, "n_aleas": n_aleas,
                 **estimation_annonce(db, idu, fiche, surface_hab=surface_hab)}
 
@@ -2344,6 +2357,7 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
     # tuile « Aléas » de la fiche `aleas.n_hazards`) : `len(_risques_rows) == aleas.n_hazards`, garanti.
     hazards = distinct_hazards(liste)
     rows = []
+    _zone_part_affichee = False   # EXPORTS-FIX-3 LOT 3 (#3) — la zone PPR (rouge/bleue) est UNE, dite UNE fois
     for lab in hazards:
         it = intensite.get(lab) or {}
         niveau = it.get("niveau")
@@ -2351,12 +2365,52 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
             niveau = {"rouge": "Fort", "bleue": "Modéré"}.get(ppr_zone or "", "Signalé")
         part = it.get("part_pct") if it.get("part_pct") is not None else ppr_part
         zone_part = None
-        if ppr_zone:
-            zone_part = f"Zone {ppr_zone}" + (f" · {int(part)} %" if isinstance(part, (int, float)) else "")
-        elif isinstance(part, (int, float)):
+        _premier_ppr = bool(ppr_zone) and not _zone_part_affichee
+        if _premier_ppr:
+            # EXPORTS-FIX-3 LOT 3b — la part d'une « Zone rouge/bleue » est celle du PPR (fiche :
+            # 31 % sur BI0351), JAMAIS celle d'un aléa Géorisques de niveau faible (69 %) qui se
+            # superpose. LOT 3 (#3) : la zone PPR couvre 31 % de la PARCELLE (une seule fois), pas
+            # « 31 % par aléa » — on ne la répète donc pas sur chaque ligne d'aléa.
+            zp = ppr_part
+            zone_part = f"Zone {ppr_zone}" + (f" · {int(zp)} %" if isinstance(zp, (int, float)) else "")
+            _zone_part_affichee = True
+        elif ppr_zone is None and isinstance(part, (int, float)):
             zone_part = f"{int(part)} %"
-        rows.append({"alea": lab, "niveau": niveau, "zone_part": zone_part,
-                     "implique": _implique(ppr_zone, ppr_doc)})
+        # EXPORTS-FIX-3 LOT 3 (relecture 6, #1) — un aléa qui N'EST PAS porté par la zone PPR ne la
+        # mentionne PAS. Mesure géométrique sur BI0351 (parcelle 28 445 m²) : l'aléa « mouvement de
+        # terrain faible » couvre 19 508 m² (69 %) et son intersection avec la zone rouge (8 936 m²,
+        # 31 %) vaut 0 m² — il est ENTIÈREMENT HORS zone rouge (31 % + 69 % = 100 %, les deux emprises
+        # se complètent). SEULE la ligne qui PORTE la zone (celle qui affiche `zone_part`) reçoit
+        # l'implication de zone rouge/bleue ; les autres aléas gardent l'implication neutre, sans la
+        # zone. (Le tour précédent écrivait « Même zone rouge (voir ci-dessus) » : c'était faux, il
+        # affirmait un recouvrement inexistant.)
+        implique = _implique(ppr_zone, ppr_doc) if _premier_ppr else _implique(None, None)
+        rows.append({"alea": lab, "niveau": niveau, "zone_part": zone_part, "implique": implique})
+    # EXPORTS-FIX-3 LOT 3 (#e) — un risque présent sur la FICHE figure dans l'Analyse : la zone
+    # inondable TRI (directive inondation, scénario fréquent/moyen/extrême) et le système
+    # d'endiguement passent par la CASCADE (fiche.lines), pas par aleas.liste — _risques_rows ne les
+    # voyait pas (faute k : inondation extrême / endiguement absents de l'Analyse HT0538). On les ajoute.
+    _TRI_NIV = {"frequent": "Fréquent", "moyen": "Moyen", "extreme": "Extrême", "exceptionnel": "Extrême"}
+    for l in (fiche or {}).get("lines") or []:
+        if l.get("result") not in ("HARD_EXCLUDE", "SOFT_FLAG"):
+            continue
+        d = l.get("detail") or ""
+        dl = d.lower()
+        if "zone inondable tri" in dl or ("tri" in dl and "inond" in dl):
+            if not any(r["alea"] == "Inondation (TRI)" for r in rows):
+                sc = re.search(r"sc[eé]nario\s+(\w+)", dl)
+                niv = _TRI_NIV.get(sc.group(1), "Signalé") if sc else "Signalé"
+                pm = re.search(r"\((\d+)\s*%", d)
+                zp = f"{pm.group(1)} %" if pm else None
+                rows.append({"alea": "Inondation (TRI)", "niveau": niv, "zone_part": zp,
+                             "implique": ("Cartographie de la directive inondation (submersion "
+                                          "modélisée) — complète le PPR ; à intégrer au projet.")})
+        elif "endigu" in dl:
+            if not any(r["alea"] == "Endiguement" for r in rows):
+                rows.append({"alea": "Endiguement", "niveau": "Signalé", "zone_part": None,
+                             "implique": ("Parcelle protégée par un système d'endiguement — inondation "
+                                          "RÉSIDUELLE en cas de défaillance ou de dépassement du "
+                                          "niveau de protection.")})
     return rows
 
 
@@ -2533,12 +2587,17 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
     # DVF, E-022) : copropriété, terrain nu, bâti non mesuré (D-012 — jamais « bâtie, maison » sans
     # mesure), sinon « Parcelle bâtie » + type (maison/appartement).
     est_nat = est.get("nature")
-    if est_nat == "copropriete":   # CHASSE-4-FIX (C4-003)
+    # EXPORTS-FIX-3 LOT 3a — JAMAIS « bâtie » ni type de bien sans mesure : une parcelle au bâti non
+    # mesuré (taux d'emprise NULL) dont la seule trace est une détection aérienne (CoSIA/BD TOPO) est
+    # dite « Bâti détecté, à vérifier » (jamais « Parcelle bâtie, appartement » — faute A1 de l'audit).
+    if nature == "non_mesure":
+        nature_label = "Bâti détecté, à vérifier"
+    elif est_nat == "copropriete":   # CHASSE-4-FIX (C4-003)
         nature_label = "Copropriété"
     elif est_nat == "nue":
         nature_label = "Parcelle nue"
     elif est_nat == "bati_non_mesure":   # D-012
-        nature_label = "Bâti non mesuré"
+        nature_label = "Bâti détecté, à vérifier"
     else:
         suff = {"maison": ", maison", "appartement": ", appartement"}.get(type_bien or "", "")
         nature_label = f"Parcelle bâtie{suff}"

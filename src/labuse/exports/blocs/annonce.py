@@ -208,7 +208,11 @@ def _estimation(est: dict) -> str:
         src_bits.append(f"{_int(n)} vente" + ("s" if n != 1 else ""))
     if terrain:
         if est.get("perimetre"):
-            src_bits.append("secteur cadastral" if est["perimetre"] == "secteur" else "commune")
+            # EXPORTS-FIX-3 LOT 3 (#6) — le comparateur de terrain de l'Analyse agrège les ventes du
+            # VOISINAGE (secteur élargi), PAS la seule section cadastrale de la fiche : deux notions
+            # avaient la même étiquette « secteur cadastral » (Analyse 392 €/34 ventes vs fiche 354 €/
+            # 3 ventes sur HT0538). On nomme ici le vrai périmètre de l'Analyse, distinct de la fiche.
+            src_bits.append("secteur élargi (voisinage)" if est["perimetre"] == "secteur" else "commune")
     else:
         if isinstance(est.get("radius_m"), (int, float)):
             src_bits.append(f"rayon {_int(est['radius_m'])} m")
@@ -305,10 +309,19 @@ def _lecture_fonciere_box(est: dict) -> str:
             f'<div class="lcsub">{esc(sub)}</div>{concl}</div>')
 
 
+#: EXPORTS-FIX-3 LOT 3 (#7) — le titre dit « les 8 ventes les plus proches » : on borne donc la table
+#: aux 8 PLUS PROCHES (tri par distance croissante, inconnus en dernier) — avant, le titre annonçait 8
+#: mais la table en affichait jusqu'à 12.
+_MAX_COMPARABLES = 8
+
+
 def _comparables(est: dict) -> str:
     comps = est.get("comparables") or []
     if not comps:
         return ""
+    comps = sorted(comps, key=lambda c: (c.get("distance_m") is None,
+                                         c.get("distance_m") if isinstance(c.get("distance_m"),
+                                                                           (int, float)) else 0))[:_MAX_COMPARABLES]
     head = ('<tr><th>Date</th><th>Type</th><th class="r">Surface</th><th class="r">Prix</th>'
             '<th class="r">€/m²</th><th class="r">Distance</th></tr>')
     rows = ""

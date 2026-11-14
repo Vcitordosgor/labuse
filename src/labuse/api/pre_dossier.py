@@ -363,12 +363,18 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
                 ta_txt = "taux communal non renseigné pour cette commune"
             else:
                 ta_txt = f"taux communal {ta['taux_communal_pct']:g} %"
+            # EXPORTS-FIX-3 LOT 3f — l'assiette de la taxe d'aménagement est la SURFACE TAXABLE (somme
+            # des surfaces closes et couvertes > 1,80 m de hauteur, CU art. L331-10 / L331-12),
+            # DISTINCTE de la surface de plancher (le moteur taxe_amenagement le dit déjà). On ne la
+            # décrit donc plus « sur la surface de plancher créée ».
             extra += (f"<h2>Fiscalité de l'opération</h2><table>"
-                      f"<tr><td>Taxe d'aménagement</td><td>{ta_txt} — se calcule sur la surface de "
-                      f"plancher créée par le projet (chiffrée au Bilan)</td></tr>"
+                      f"<tr><td>Taxe d'aménagement</td><td>{ta_txt} — se calcule sur la surface "
+                      f"taxable du projet (surfaces closes et couvertes de plus de 1,80 m de hauteur, "
+                      f"distincte de la surface de plancher ; chiffrée au Bilan)</td></tr>"
                       f"<tr><td>Redevance d'archéologie préventive</td><td>0,40 % de l'assiette de "
-                      f"la taxe d'aménagement pour les travaux soumis à permis (CGI, gestion DGFiP "
-                      f"depuis l'ordonnance 2022-883) — chiffrée sur la SDP du projet, au Bilan</td></tr></table>")
+                      f"la taxe d'aménagement (la surface TAXABLE, distincte de la surface de plancher) "
+                      f"pour les travaux soumis à permis (CGI, gestion DGFiP depuis l'ordonnance "
+                      f"2022-883) — chiffrée au Bilan</td></tr></table>")
     except Exception:  # noqa: BLE001 — enrichissement optionnel, ne casse pas la fiche
         pass
     # FAISABILITE-3 (Lot C) — le pré-dossier PC lit LE MÊME appel de faisabilité (faisabilite_scenario)
@@ -878,11 +884,23 @@ def _pcmi4(db: Session, idu: str, parcelle: dict, adr: dict | None = None,
                           "par le pétitionnaire).", "Base Adresse Nationale"))
     for it in (data.get("risques") or {}).get("couches", []):
         lab = (it.get("label") or "").lower()
-        if any(k in lab for k in ("ppr", "inond", "bleue", "mouvement")):
+        det = (it.get("detail") or "").lower()
+        # EXPORTS-FIX-3 LOT 3 (#6) — ne parler de PRESCRIPTIONS PPR que si la parcelle est en ZONE PPR
+        # (rouge/bleue). Un aléa Géorisques nu (ex. HT0538 : mvt de terrain faible, HORS zonage PPR) ne
+        # déclenche aucune prescription PPR opposable — c'est ce que dit l'Analyse ; la notice doit
+        # l'écrire pareil (faute : « prescriptions PPR » sur un aléa hors zonage).
+        est_ppr_zone = any(k in det or k in lab for k in ("zone rouge", "zone bleue", "zone rouge ppr"))
+        if est_ppr_zone:
             lignes.append(("Risque naturel (PPR)",
                            f"{it['label']} : {it.get('detail') or 'parcelle concernée'}. Les "
                            "prescriptions du règlement PPR (niveau de plancher, fondations) sont à "
                            "intégrer au projet.", "DEAL Réunion — PPR (Géorisques)"))
+        elif any(k in lab or k in det for k in ("inond", "mouvement", "aléa", "alea")):
+            lignes.append(("Aléa naturel (Géorisques)",
+                           f"{it['label']} : {it.get('detail') or 'parcelle concernée'}. Aléa "
+                           "cartographié HORS zonage PPR réglementaire sur la parcelle — aucune "
+                           "prescription PPR opposable ; une étude géotechnique reste recommandée.",
+                           "Géorisques — cartographie des aléas (DEAL)"))
         elif any(k in lab for k in ("bruit", "sonore")):
             lignes.append(("Bruit",
                            f"{it['label']} : {it.get('detail') or ''} Isolement acoustique minimal "
@@ -890,6 +908,24 @@ def _pcmi4(db: Session, idu: str, parcelle: dict, adr: dict | None = None,
                            "par le bruit (art. R.571-43 du Code de l'environnement et arrêté du 30 mai "
                            "1996) ; le niveau requis dépend de la catégorie de classement de l'infrastructure.",
                            "Cerema — classement sonore des infrastructures"))
+    # EXPORTS-FIX-3 LOT 3 (#e) — la zone inondable TRI (directive inondation) et le système
+    # d'endiguement sont portés par la CASCADE (fiche.lines), absents de risques.couches : la notice
+    # PCMI4 les cite (un risque présent sur la fiche figure dans tout document qui parle des risques —
+    # faute k : inondation extrême / endiguement absents du pré-dossier HT0538).
+    for l in ((fiche or {}).get("lines") or []):
+        if l.get("result") not in ("HARD_EXCLUDE", "SOFT_FLAG"):
+            continue
+        dd = l.get("detail") or ""
+        ddl = dd.lower()
+        if "zone inondable tri" in ddl or ("tri" in ddl and "inond" in ddl):
+            lignes.append(("Zone inondable (TRI)",
+                           f"{dd} Cartographie de la directive inondation (submersion modélisée), "
+                           "complémentaire du PPR — à intégrer au projet.",
+                           "DEAL Réunion — TRI (directive inondation)"))
+        elif "endigu" in ddl:
+            lignes.append(("Système d'endiguement",
+                           f"{dd} Inondation RÉSIDUELLE en cas de défaillance ou de dépassement du "
+                           "niveau de protection.", "DEAL Réunion — systèmes d'endiguement"))
     if (data.get("patrimoine") or {}).get("abf"):
         noms = ", ".join(m.get("name") or "monument" for m in data["patrimoine"]["abf"])
         lignes.append(("Abords de monument historique",
@@ -1076,6 +1112,22 @@ def pre_dossier_zip(idu: str, request: Request, db: Session = Depends(get_db)) -
            FROM parcels WHERE idu = :idu"""), {"idu": idu}).mappings().first()
     if not p:
         raise HTTPException(404, f"Parcelle {idu} inconnue.")
+    # EXPORTS-FIX-3 LOT 2 — VERDICT UNIQUE : une parcelle non constructible (verdict de la fiche,
+    # règle unique `potentiel_batir`) ne donne AUCUN pré-dossier de permis — ni ZIP, ni CERFA. On
+    # REFUSE avec le motif de la fiche (jamais un CERFA « maison individuelle » sur une zone N, faute
+    # a/f de l'audit). Le refus précède la porte de quota (aucun quota consommé sur un refus).
+    try:
+        from ..faisabilite.potentiel_batir import potentiel_batir
+        _pot = potentiel_batir(db, idu)
+    except Exception:  # noqa: BLE001 — un verdict en échec ne bloque pas (on sert le pack, comme avant)
+        _pot = {}
+    if _pot.get("constructible") is False:
+        _motif = _pot.get("motif") or "parcelle non constructible"
+        raise HTTPException(status_code=422, detail={
+            "erreur": "non_constructible",
+            "message": (f"Parcelle non constructible — {_motif}. Aucun pré-dossier de permis "
+                        "(ni formulaire CERFA) n'est généré : il n'y a pas de projet constructible "
+                        "à instruire sur cette parcelle.")})
     adresse = db.execute(text(
         """SELECT a.numero, a.rep, a.voie, a.code_postal FROM adresse_parcelles ap
            JOIN adresses a ON a.id_ban = ap.id_ban WHERE ap.idu = :idu

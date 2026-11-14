@@ -369,8 +369,13 @@ def _ppr_ligne(couleur: str, risques: str, pct: int) -> dict:
     # OUTILS-LOT-4 (pt 4) — quand TOUTE la parcelle est en zone rouge (pct = 100 → hors = 0), on ne
     # colle pas « Partie hors zone rouge (0 %) : constructible » : il n'y a pas de partie hors rouge.
     if hors > 0:
-        lib += (f" Partie hors zone rouge ({hors} %) : constructible selon les règles de sa zone, "
-                f"à confirmer au règlement du PPR.")
+        # EXPORTS-FIX-3 LOT 3 (#3) — ne pas DIRE « constructible » : la partie hors zone rouge reste
+        # SOUMISE AUX RÈGLES DE SA ZONE — en zone A/N, elle n'est pas constructible pour autant (le PPR
+        # retire une interdiction, il n'ajoute pas un droit à bâtir). Faute : BI0351 (zone N) laissait
+        # entendre que les 69 % hors rouge étaient constructibles.
+        lib += (f" Partie hors zone rouge ({hors} %) : soumise aux règles d'urbanisme de sa zone "
+                f"(le PPR n'y ajoute pas de droit à bâtir ; en zone A/N elle reste non constructible), "
+                f"à confirmer au règlement du PPR et au PLU.")
     return {"nature": "PPR — zone rouge", "niveau": "rouge", "libelle": lib, "redhibitoire": True}
 
 

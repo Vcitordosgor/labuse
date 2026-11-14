@@ -1813,6 +1813,16 @@ DONNEES: dict[str, Donnee] = {
     table="spatial_layers (kind=endiguement)",
     domaine=("dans", "hors"),
     domaine_source="systèmes d'endiguement DEAL Réunion (Lizmap)"),
+ # EXPORTS-FIX-3 LOT 3 (#e/#6) — zone inondable TRI (directive inondation) : un risque présent sur la
+ # fiche doit figurer dans le Dossier ; il passe par la cascade (layer='tri_zone'), pas par aleas.liste.
+ "tri_zone_inondable": C("Zone inondable (TRI)", "texte", "parcelle",
+    "la parcelle est-elle dans un Territoire à Risque important d'Inondation (directive inondation, "
+    "submersion modélisée par scénario) — complète le PPR, à intégrer au projet",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/cascade/layers/fiche_couches2.py (tri_zone)",
+    reservoirs=("georisques_azi_tri",), portee="live", type="texte",
+    table="spatial_layers (kind=tri_zone)",
+    domaine_source="TRI — directive inondation (DEAL Réunion / Géorisques)"),
  # SOURCES-FIX-1 (A1/A2/A3) — trois contraintes qui touchent la parcelle et manquaient à la fiche/PDF.
  # Mêmes couches que la carte (spatial_layers), intersection LIVE, même libellé — producteur fiche_blocs3.
  "enr_exclue_parcelle": C("EnR au sol interdites (APER, sauf toiture)", "texte", "parcelle",

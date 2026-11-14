@@ -151,6 +151,17 @@ def main():
     score()
     counts = verify_completude(TARGET, n_expected_cascade=n_parcels, n_expected_scores=n_parcels)
 
+    # EXPORTS-FIX-3 LOT 1 — garde U/AU érodée : aucune parcelle A ou N ne doit porter de capacité si sa
+    # portion U/AU, érodée de 3 m, est vide (éclat de numérisation ou ruban de superposition). BLOQUANT
+    # (refus de promouvoir) ; un run calculé par le moteur corrigé passe à 0 faute.
+    from labuse.bascule_gardes import check_uau_erode_ruban
+    _ruban = check_uau_erode_ruban()
+    if not _ruban["ok"]:
+        raise SystemExit(
+            f"BLOCAGE U/AU-RUBAN — {_ruban['n_fautes']} parcelle(s) A/N avec capacité sur une portion "
+            f"U/AU érodée vide (éclat/ruban) : {', '.join(_ruban['exemples'][:5])}… Le run n'est pas "
+            "promouvable en l'état ; recalculer avec le moteur corrigé (garde d'aire réelle + érosion).")
+
     # M48 : TUILES DANS LE GESTE — « un geste = tout ou rien ». Le build-mvt manuel post-bascule
     # (« SUITE » dans les scripts) laissait la carte périmée (constat M48 : M39 servi sans build-mvt).
     from labuse.api.tiles import rebuild_mvt_servies

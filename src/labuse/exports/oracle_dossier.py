@@ -126,6 +126,7 @@ HORS_PAYLOAD: dict[str, str] = {
     "n_permis_proximite": "React modParcellePermis(idu) + extracteur = requête DB live, hors payload",
     "sar_divergence": "rendu via f.lines (couche générique), pas de feuille dédiée",
     "endiguement_zone_protegee": "rendu via f.lines (couche générique), pas de feuille dédiée",
+    "tri_zone_inondable": "rendu via f.lines (couche tri_zone), pas de feuille dédiée",
     "n_vigilances": "compté de f.lines (onglet risques) côté React ; extracteur = f.flags",
     "run_label_servi": "non rendu en fiche (annexe sources / admin)",
     "rtaa_exigences": "React getFaisabilite(idu).rtaa — hors payload /parcels",

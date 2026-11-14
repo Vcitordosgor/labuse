@@ -407,7 +407,13 @@ def fmt_pct_consomme(pct: float | int | None) -> str | None:
 # le plafond d'emprise actuel (c'est une vérité, pas un bug de division). Mais AUCUN lecteur n'affiche
 # jamais un pourcentage brut au-delà de 100 % — une SEULE fonction de rendu (miroir TS `fmtTauxEmprise`
 # dans format.ts) que lisent fiche, Comparatif, Dossier, carte, filtres et Copilote.
-TAUX_EMPRISE_SATURE = "Saturé : le bâti existant dépasse déjà le plafond d'emprise du PLU actuel"
+# EXPORTS-FIX-3 LOT 3g — ce taux est l'OCCUPATION DU GABARIT (emprise bâtie ÷ emprise CONSTRUCTIBLE
+# après reculs), PAS le taux d'emprise au sol ÷ terrain. RÉVISION (revue) : au-delà de 100 %, ne pas
+# dire « occupe TOUTE l'emprise » — c'est trop absolu (le Gabarit peut laisser quelques m² ; ex. DK0208
+# ~13 m²) et ce n'est pas l'emprise qui est le verrou mais les DROITS À BÂTIR : la surface de plancher
+# autorisée est déjà consommée par le bâti existant. On nomme donc la vraie saturation (SDP/densité).
+TAUX_EMPRISE_SATURE = ("Saturé : la surface de plancher autorisée est déjà consommée par le bâti "
+                       "existant")
 
 
 def fmt_taux_emprise(taux: float | int | None) -> str | None:

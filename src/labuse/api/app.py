@@ -6530,12 +6530,14 @@ def _plu_fraicheur(idu: str) -> dict | None:
     if statut == "a_jour":
         # EXPORTS-REBRANCHEMENT-1 lot 0 — « à jour du GPU » (fraîcheur de NOTRE synchronisation)
         # ne se dit plus au client (doctrine PAGE-SOURCES-1, 18/09) : on dit le FAIT juridique.
-        document_servi, fait_foi = doc, "Document opposable — il fait foi à ce jour."
-        # M57-P1 (d) : ce libellé est GÉNÉRIQUE (gated sur `note` config = assertion d'agent, PAS
-        # une source ni une procédure détectée). Reformulé en avertissement NEUTRE, sans « en cours »
-        # ni sablier (cf. rendu front qui n'applique plus le cadre « En cours (non servi) » à a_jour).
-        en_cours = ("Des modifications postérieures au document peuvent exister — à confirmer en mairie."
-                    if note else None)
+        # EXPORTS-FIX-3 LOT 3f — « opposable » n'est affirmé QU'À LA DATE DES DONNÉES LABUSE, jamais
+        # « à ce jour » (qui laisserait croire que le GPU a été confronté aujourd'hui : une révision
+        # publiée depuis la synchro ne serait pas vue — faute « e » de l'audit). Le caveat « évolution
+        # postérieure à confirmer en mairie » est TOUJOURS porté (plus seulement si une note config existe).
+        document_servi = doc
+        fait_foi = ("Document opposable à la date des données LABUSE (voir la couverture) — "
+                    "une évolution publiée depuis n'est pas confrontée ici.")
+        en_cours = "Des modifications postérieures au document peuvent exister — à confirmer en mairie."
         action = None  # l'avertissement neutre porte déjà « à confirmer en mairie »
     elif statut == "annule_partiel":
         document_servi = doc
@@ -7404,6 +7406,34 @@ _FICHE_LOCK = threading.Lock()
 _FICHE_VER = {"v": "", "at": -1.0}
 _FICHE_VER_TTL_S = 60.0
 _FICHE_VER_LOCK = threading.Lock()
+# EXPORTS-FIX-3 LOT 3 — RÉVISION DE CODE du CONTENU de fiche : la clé du cache de fiche (`fiche_cache`
+# L1/L2) ne portait QUE la fraîcheur des données (data_sources + tuyau_rev), jamais le code. Un
+# correctif de LIBELLÉ porté par la DONNÉE de fiche (ex. le libellé PPR « hors zone rouge » produit par
+# `servitudes._ppr_ligne` et STOCKÉ dans `aleas.liste[].libelle`) restait donc servi depuis le cache,
+# périmé. Ce jeton est AJOUTÉ à la version : tout changement de jeton invalide le cache (recalcul à la
+# demande).
+#
+# RÉVISION (relecture) — le jeton se DÉDUIT de la révision git déployée (la prod est un checkout git sur
+# le VPS, cf. deploy.sh) : tout nouveau commit change la clé → le cache se recalcule SANS geste manuel.
+# LIMITE CONNUE (dite en clair) : un déploiement SANS `.git` (wheel/pip) retombe sur la constante de
+# repli ci-dessous, qui elle est à bumper à la main. Calculé UNE fois à l'import (git borné à 2 s).
+_FICHE_CODE_REV_FALLBACK = "2026-11-14-exports-fix-3"
+
+
+def _derive_fiche_code_rev() -> str:
+    try:
+        import subprocess
+        sha = subprocess.run(
+            ["git", "-C", str(Path(__file__).resolve().parent), "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=2)
+        if sha.returncode == 0 and sha.stdout.strip():
+            return "git:" + sha.stdout.strip()
+    except Exception:  # noqa: BLE001 — pas de git (wheel) : repli constante (limite connue)
+        pass
+    return _FICHE_CODE_REV_FALLBACK
+
+
+_FICHE_CODE_REV = _derive_fiche_code_rev()
 
 # ───────────────────────── VITESSE-2 (Lot 7) — CACHE DE FICHE PARTAGÉ (base) ─────────────────────────
 # Le `_FICHE_CACHE` ci-dessus est PAR WORKER : avec 5 workers, une fiche ouverte sur l'un reste froide
@@ -7528,7 +7558,7 @@ def _fiche_version(db: Session) -> str:
                 except Exception:  # noqa: BLE001 — mvt_meta pas encore créée (base neuve)
                     db.rollback()
                     rev = ""
-                _FICHE_VER["v"] = f"{ds}.{rev}"
+                _FICHE_VER["v"] = f"{ds}.{rev}.{_FICHE_CODE_REV}"
             except Exception:  # noqa: BLE001 — data_sources absente : pas de version, pas de cache
                 db.rollback()
                 _FICHE_VER["v"] = ""
@@ -9221,9 +9251,24 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # MÊME valeur que la fiche SERVIE (qv2.potentiel_transformation : run servi + réconciliation de
     # l'écartement hors_classement), jamais un recalcul live divergent. Une seule source par notion.
     _pt_serv = qv2.get("potentiel_transformation") or {}
-    cf = (fa.get("bilan") or {}).get("charge_fonciere") or {}
+    # EXPORTS-FIX-3 LOT 2 — le VERDICT de la fiche (point unique `potentiel_batir`), avec le motif
+    # dans l'ordre imposé (zone non constructible → zone rouge → reste).
+    _pab = qv2.get("potentiel_a_batir") or {}
+    _bilan = fa.get("bilan") or {}
+    cf = _bilan.get("charge_fonciere") or {}
     lignes = qv2.get("lines") or []
     contraintes = [l for l in lignes if l.get("result") in ("HARD_EXCLUDE", "SOFT_FLAG")]
+    # EXPORTS-FIX-3 LOT 2 (#4) — la colonne « Contraintes » du Comparatif doit faire remonter les
+    # contraintes MAJEURES (zone rouge du PPR, espace boisé classé) même quand elles ne sont pas dans
+    # les 4 premières lignes de la cascade (c'était la faute b/d : BI0351 listait bassin versant/bruit/
+    # propriété publique/sol naturel, sans la zone rouge ni l'EBC). On les met en tête, cap porté à 5.
+    def _major_contrainte(detail: str) -> bool:
+        d = (detail or "").lower()
+        return (("ppr" in d and "rouge" in d) or "espace boisé classé" in d
+                or "boisé classé" in d or "ebc" in d)
+    _maj = [c for c in contraintes if _major_contrainte(c.get("detail"))]
+    _aut = [c for c in contraintes if not _major_contrainte(c.get("detail"))]
+    contraintes_ordonnees = _maj + _aut
     # contrainte MAJEURE explicite : HARD_EXCLUDE d'abord, sinon le 1er SOFT_FLAG, sinon rien.
     majeure = next((c["detail"] for c in contraintes if c["result"] == "HARD_EXCLUDE"),
                    next((c["detail"] for c in contraintes if c["result"] == "SOFT_FLAG"), None))
@@ -9301,7 +9346,14 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "fraction": s2.get("fraction"),    # M135 P2 — « 1/5 » ou None
         "raison": raison,                  # M135 P3 — chip court, ou None
         # faisabilité (fiche_payload — même bilan que la fiche)
-        "zone": fa.get("zone"), "constructible": fa.get("constructible"),
+        # EXPORTS-FIX-3 LOT 2 — VERDICT UNIQUE : la constructibilité ET le motif servis au Comparatif
+        # sont CEUX DE LA FICHE (`potentiel_a_batir`, règle unique `potentiel_batir`), jamais un
+        # recalcul divergent. Quand la fiche dit « non constructible », le Comparatif le dit aussi et
+        # n'affiche ni plancher, ni hauteur, ni bilan, ni charge foncière (rendu `comparatif.py`).
+        "zone": fa.get("zone"),
+        "constructible": (_pab.get("constructible") if _pab.get("constructible") is not None
+                          else fa.get("constructible")),
+        "verdict_motif": _pab.get("motif"),
         # RECETTE-PROD-1 (12) — « Constructible : oui/non » (verdict faisabilité) MENTAIT : une Um
         # bâtie sur-occupée est « oui » (zone constructible, emprise ≥ seuil) mais a 0 potentiel
         # résiduel ; une voisine trop étroite est « non » (terrain_exigu). On sert donc SÉPARÉMENT
@@ -9319,8 +9371,16 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
                               else (res.get("sdp_residuelle_m2") if res.get("disponible") else None)),
         "sous_densite": res.get("sous_densite") if res.get("disponible") else None,
         "charge_fonciere_m2": cf.get("par_m2_terrain"),
+        # EXPORTS-FIX-3 LOT 2 (#7) — un bilan n'est affiché QUE s'il peut dire ses hypothèses et la
+        # surface à laquelle il se rapporte : on sert les hypothèses du bilan (fa.bilan.hypotheses) +
+        # la base (par m² de terrain). Sans elles, le rendu n'affiche pas la charge foncière.
+        "bilan_hypotheses": list(_bilan.get("hypotheses") or []),
+        "charge_fonciere_base": "par m² de terrain",
         "n_contraintes": len(contraintes),
-        "contraintes": [c["detail"] for c in contraintes[:4]],
+        "contraintes": [c["detail"] for c in contraintes_ordonnees[:5]],
+        # EXPORTS-FIX-3 LOT 3 (#5) — l'état du bâti EXACTEMENT comme la fiche (etat_bien servi) : une
+        # seule valeur partout ; non mesuré (trace aérienne seule) → « bâti détecté, à vérifier ».
+        "bati_etat": qv2.get("etat_bien"),
         # OUTILS-FIX-5 L4 — `contrainte_majeure` REBRANCHÉE : elle était calculée (HARD_EXCLUDE
         # d'abord, sinon 1er SOFT_FLAG) mais absente du payload depuis e6b7b5bb → le front retombait
         # en permanence sur « N signalée(s) ». On sert la valeur, tirée des MÊMES lignes de cascade

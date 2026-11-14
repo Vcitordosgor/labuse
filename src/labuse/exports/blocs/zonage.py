@@ -50,13 +50,24 @@ def _regles(z: dict) -> str:
     return "<h3>Ce que le règlement fixe ici</h3>" + table_kv(lignes, entete)
 
 
-def _destinations(z: dict) -> str:
+#: EXPORTS-FIX-3 LOT 3 (#2) — en zone A/N, « Logement » sous conditions ne doit JAMAIS s'afficher seul :
+#: il laisserait croire qu'on peut y construire un logement. Le texte exact de la règle n'étant pas servi,
+#: on le qualifie prudemment (extension d'un logement EXISTANT seulement).
+_LOGEMENT_AN = ("Logement : extension d'un logement existant seulement, sous conditions — "
+                "voir le règlement de la zone")
+
+
+def _destinations(z: dict, zone_fam: str | None = None) -> str:
     d = z.get("destinations") or {}
+    fam = str(zone_fam or "").upper()
     lignes = []
     if d.get("autorisees"):
         lignes.append(ligne_kv("Autorisées", esc(" · ".join(d["autorisees"])), chip_span("s", "sourcé")))
     if d.get("sous_conditions"):
-        lignes.append(ligne_kv("Sous conditions", esc(" · ".join(d["sous_conditions"])), chip_span("s", "sourcé")))
+        _sc = list(d["sous_conditions"])
+        if fam in ("A", "N"):
+            _sc = [_LOGEMENT_AN if str(i).strip().lower() == "logement" else i for i in _sc]
+        lignes.append(ligne_kv("Sous conditions", esc(" · ".join(_sc)), chip_span("s", "sourcé")))
     if d.get("interdites"):
         lignes.append(ligne_kv("Interdites", esc(" · ".join(d["interdites"])), chip_span("s", "sourcé")))
     cdac = d.get("commerce_cdac") or {}
@@ -87,7 +98,8 @@ def _dispositifs(valeurs) -> str:
 
 def rendu(valeurs) -> str:
     z = val(valeurs, "reglement_plu_bloc") or {}
-    corps = rendu_verdict(verdict_zonage(valeurs)) + _regles(z) + _destinations(z) + _dispositifs(valeurs)
+    corps = (rendu_verdict(verdict_zonage(valeurs)) + _regles(z)
+             + _destinations(z, val(valeurs, "zone_plu_famille")) + _dispositifs(valeurs))
     if not corps.strip():
         return ""      # ni zone ni règle servie → section omise (aucun ◌)
     # drapeau Q12 — prescriptions non vérifiables sur la commune

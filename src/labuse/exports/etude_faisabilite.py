@@ -122,6 +122,29 @@ def _statut_classe(s: str) -> str:
     return "ok" if s.startswith("exploitable") else "cp" if s == "à compléter" else "no"
 
 
+def _gardes_honnete(payload: dict, retenu: dict) -> list:
+    """EXPORTS-FIX-3 LOT 3 (#5a/#5b, relecture) — GARDE-FOU D'HONNÊTETÉ, sans toucher au moteur : raisons
+    de rétrograder le verdict affiché de « Exploitable » à « À vérifier ».
+      (a) le plancher du scénario dépasse la capacité SERVIE par la fiche (Dossier/Comparatif/pré-dossier) ;
+      (b) le barème de stationnement de la zone n'est pas servi (places non vérifiées).
+    Renvoie une liste de phrases (vide = rien à signaler)."""
+    raisons = []
+    sdp_f = (payload.get("_garde_fiche") or {}).get("sdp_fiche_m2")
+    sdp_e = (retenu.get("resume") or {}).get("sdp_m2")
+    if isinstance(sdp_f, (int, float)) and isinstance(sdp_e, (int, float)) and sdp_e > sdp_f + 1:
+        raisons.append(f"Le plancher de cette étude ({_grp(sdp_e)} m²) dépasse la capacité servie par la "
+                       f"fiche ({_grp(sdp_f)} m², surface de plancher résiduelle) : à confronter avant de "
+                       "retenir ce programme — ce document n'est donc pas « exploitable » en l'état.")
+    reg = (payload.get("stationnement_regimes") or {}).get("general") or {}
+    _art = _art_label(reg.get("article"))
+    bareme_absent = (reg.get("ratio_par_logement") is None and not reg.get("regle_courte")
+                     and not str(_art or "").upper().startswith("L151"))
+    if bareme_absent:
+        raisons.append("Le barème de stationnement de cette zone n'est pas servi : le nombre de places "
+                       "n'est pas vérifié (stationnement non vérifié).")
+    return raisons
+
+
 # ── choix du scénario retenu ────────────────────────────────────────────────────────────────
 def scenario_retenu(payload: dict, ref: Optional[str] = None) -> Optional[dict]:
     """Le scénario que le document met en avant. ETUDE-V6-6 (item 9) — le PDF décrit L'ÉTUDE DU CLIENT :
@@ -228,6 +251,14 @@ def _stationnement_3lignes(payload: dict, retenu: dict) -> str:
     # elle plafonne sous le PLU : le texte le dit (jamais « le PLU exige » un article du Code national).
     _art = _art_label(g.get("article")) or "—"
     _is_loi = str(_art).upper().startswith("L151")
+    # EXPORTS-FIX-3 LOT 3 (#5b, relecture) — barème indisponible : JAMAIS « 0 place selon la règle du PLU »
+    # ni « exige un barème par typologie ». On le dit en clair : stationnement non vérifié.
+    _bareme_absent = _rp is None and not g.get("regle_courte") and not _is_loi
+    if _bareme_absent:
+        return ('<section><h2>Stationnement &amp; mixité</h2>'
+                '<p><b>Stationnement non vérifié</b> — le barème de stationnement de cette zone n\'est pas '
+                'servi par LABUSE. Le nombre de places n\'est pas calculé ici ; il reste à vérifier au '
+                'règlement du PLU avant de retenir ce programme.</p></section>')
     if _is_loi:
         lignes = [f"Le Code de l'urbanisme (art. {esc(_art)}) plafonne le stationnement à {esc(regleg)} "
                   "— le PLU ne s'applique que s'il est plus favorable ; éligibilité de la catégorie à confirmer."]
@@ -430,6 +461,9 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     kmax = (payload.get("capacite_maximale") or {}).get("logements")
     niv_lbl = retenu.get("niveaux_label") or ""
     places = retenu.get("stationnement", {}).get("places")
+    # EXPORTS-FIX-3 LOT 3 (#5a/#5b, relecture) — garde-fou d'honnêteté : si le plancher dépasse la fiche
+    # ou si le barème de stationnement n'est pas servi, le verdict affiché n'est JAMAIS « exploitable ».
+    _gardes = _gardes_honnete(payload, retenu)
     statio_lbl = _stationnement_label(retenu, e)
     if n_dem is not None:
         txt = (f"Votre projet — {type_lbl} : {n_dem} logements demandés"
@@ -477,14 +511,16 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     # ETUDE-V6-6 (item 9) — tableau sans « scénario A/B/C » ni « retenu » : VOTRE PROJET (le programme étudié)
     # en premier, le MAXIMUM DU TERRAIN ensuite. Deux lignes lisibles par le client.
     cmax = payload.get("capacite_maximale") or {}
-    stc = _statut_classe(retenu["statut_etude"])
+    # EXPORTS-FIX-3 LOT 3 (#5a/#5b) — statut AFFICHÉ rétrogradé à « À vérifier » dès qu'un garde-fou tombe.
+    _statut_aff = "À vérifier" if _gardes else _statut_court(retenu["statut_etude"])
+    stc = "cp" if _gardes else _statut_classe(retenu["statut_etude"])
     rows = [
         f'<tr class="retenu"><td><b>Votre projet</b></td>'
         f'<td>{esc(str(retenu.get("forme", "")).replace("_", " "))}</td>'
         f'<td class="num">{retenu["resume"]["logements"]}</td>'
         f'<td class="num">{esc(retenu.get("niveaux_label", ""))}</td>'
         f'<td class="num">{retenu["resume"]["places"]}</td>'
-        f'<td><span class="st {stc}">{esc(_statut_court(retenu["statut_etude"]))}</span></td></tr>']
+        f'<td><span class="st {stc}">{esc(_statut_aff)}</span></td></tr>']
     if cmax.get("logements") is not None:
         rows.append(
             f'<tr><td>Meilleure capacité trouvée</td>'
@@ -532,8 +568,12 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         + '<div class="ef-status">'
         f'<div><b>Contrôles automatisés de votre projet</b>'
         f'{cc["reussi"]} réussis · {cc["echoue"]} échoués · {cc["non_effectue"]} non effectués</div>'
-        f'<div><b>Statut de l\'étude</b>{esc(_statut_court(retenu["statut_etude"]))} — '
+        f'<div><b>Statut de l\'étude</b>{esc(_statut_aff)} — '
         'à faire confirmer par un architecte</div></div>'
+        # EXPORTS-FIX-3 LOT 3 (#5a/#5b) — garde-fou d'honnêteté : raisons AFFICHÉES pour lesquelles ce
+        # document n'est pas « exploitable » en l'état (plancher au-delà de la fiche, barème manquant).
+        + (('<div class="aside warn"><b>À vérifier avant de retenir ce programme</b><ul>'
+            + "".join(f'<li>{esc(r)}</li>' for r in _gardes) + '</ul></div>') if _gardes else '')
         + scn_table
         + '<p class="note">« Votre projet » = le programme que vous avez étudié ; « meilleure capacité trouvée » = '
           'le meilleur programme que la recherche a trouvé avec ces hypothèses, indépendant de votre demande. Ce document n\'affirme aucune '
@@ -638,7 +678,10 @@ def _p3_regles(payload: dict, retenu: dict) -> str:
     for lib in (t.get("contraintes_signalees") or []):
         # DOCS-1 (décision Vic) — PPR listé UNE SEULE FOIS : la zone rouge/bleue a déjà sa ligne dédiée
         # ci-dessus (ppr_rouge/ppr_bleue) ; on ne la re-liste pas parmi les contraintes signalées.
-        if "PPR" in str(lib):
+        # EXPORTS-FIX-3 LOT 3 (#5c) — garde ciblé : seules les lignes QUI DÉSIGNENT le PPR (préfixe) sont
+        # écartées. Une contrainte qui ne fait que MENTIONNER le PPR en complément (zone inondable TRI,
+        # « …complète le PPR ») n'est pas une ligne PPR et doit rester affichée.
+        if str(lib).strip().upper().startswith("PPR"):
             continue
         crows.append(f'<tr><td class="k">{esc(lib)}</td><td>signalée</td>'
                      f'<td>signalée, non interprétée (voir le Dossier §5)</td></tr>')
