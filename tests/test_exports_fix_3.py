@@ -309,3 +309,18 @@ def test_garde_check_uau_erode_ruban_detecte():
             assert rep["ok"] is False and rep["exemples"]
     finally:
         s.close()
+
+
+# ── Comparatif : la zone rouge RESTE, seule la clause « pas d'exclusion automatique » est retirée ──
+def test_comparatif_contraintes_non_constructible_garde_zone_rouge():
+    """Relecture 3 (#1) — sur une parcelle non constructible, la colonne « Contraintes » retire la clause
+    rassurante « (pas d'exclusion automatique) » MAIS garde « zone rouge X % — vigilance forte » (sinon
+    la zone rouge disparaîtrait). Sur une parcelle constructible, le message reste entier."""
+    from labuse.exports.blocs.comparatif import _contraintes_txt
+    ppr = ("PPR zone rouge sur 31 % de la surface — vigilance forte ; constructibilité à vérifier au "
+           "règlement (pas d'exclusion automatique).")
+    nc = _contraintes_txt({"constructible": False, "contraintes": [ppr]})
+    assert "zone rouge sur 31 %" in nc and "vigilance forte" in nc
+    assert "exclusion automatique" not in nc
+    co = _contraintes_txt({"constructible": True, "contraintes": [ppr]})
+    assert "exclusion automatique" in co    # message partagé inchangé sur une parcelle constructible

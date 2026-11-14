@@ -141,13 +141,25 @@ def _pct(r, k, suffixe="%"):
 
 def _contraintes_txt(r):
     """EXPORTS-FIX-3 LOT 2 (#1) — liste des contraintes de la colonne. Sur une parcelle NON
-    CONSTRUCTIBLE, on NE MONTRE PAS le « pas d'exclusion automatique » du PPR partiel : il rassurerait
-    à tort alors que le verdict est « non constructible ». On ne touche PAS au message partagé de la
-    cascade ; on le filtre seulement ici, dans ce cas. (Le message reste visible sur une parcelle
-    constructible, où il a du sens.)"""
+    CONSTRUCTIBLE, on NE MONTRE PAS la clause rassurante « (pas d'exclusion automatique) » du PPR
+    partiel : elle rassurerait à tort alors que le verdict est « non constructible ».
+    CORRECTION (relecture 3) — on RETIRE SEULEMENT cette clause, pas toute la contrainte : la « zone
+    rouge sur X % » et sa « vigilance forte » DOIVENT rester affichées (sinon la zone rouge disparaît
+    de la colonne — c'était le bug). On ne touche PAS au message partagé de la cascade ; on l'ajuste
+    seulement à l'affichage, et seulement dans ce cas (il reste entier sur une parcelle constructible)."""
     cs = list(r.get("contraintes") or [])
     if _est_non_constructible(r):
-        cs = [c for c in cs if "exclusion automatique" not in (c or "").lower()]
+        out = []
+        for c in cs:
+            if c and "exclusion automatique" in c.lower():
+                # garder l'info (zone rouge X %, vigilance), retirer la seule clause rassurante (après « ; »).
+                segs = [s.strip() for s in c.split(";") if "exclusion automatique" not in s.lower()]
+                c = "; ".join(s for s in segs if s).rstrip(" ;·—-")
+                if c and c[-1] not in ".!?":
+                    c += "."
+            if c:
+                out.append(c)
+        cs = out
     return " · ".join(esc(c) for c in cs) if cs else "aucune relevée"
 
 

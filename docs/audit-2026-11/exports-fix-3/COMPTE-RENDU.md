@@ -202,8 +202,12 @@ le cache de fiche sans geste manuel. **Limite connue** : un déploiement sans `.
 une constante de repli (`_FICHE_CODE_REV_FALLBACK`), à bumper à la main.
 
 **3 derniers points (relecture 3) — faits ET cités :**
-- Comparatif, parcelle non constructible : « pas d'exclusion automatique » n'est PLUS montré (filtré à
-  l'affichage, `comparatif._contraintes_txt` ; le message partagé de la cascade n'est pas modifié).
+- Comparatif, parcelle non constructible : « (pas d'exclusion automatique) » n'est PLUS montré, MAIS la
+  « zone rouge sur 31 % — vigilance forte » RESTE. Correction d'un bug de la passe précédente, signalé
+  par le relecteur : le filtre retirait la contrainte ENTIÈRE (la zone rouge 31 % disparaissait de la
+  colonne) ; il ne retire désormais que la clause rassurante (`comparatif._contraintes_txt` découpe sur
+  « ; » et garde « zone rouge 31 % — vigilance forte »). Vérifié p.3 du PDF livré (0 « exclusion
+  automatique », « zone rouge sur 31 % » présent). Le message partagé de la cascade n'est pas modifié.
 - Dossier zone N : « Logement » sous conditions → « Logement : extension d'un logement existant
   seulement, sous conditions — voir le règlement de la zone » (`blocs/zonage._destinations`, famille A/N).
 - Jeton de cache auto-déduit de git (ci-dessus).
