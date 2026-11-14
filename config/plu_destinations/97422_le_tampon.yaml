@@ -68,12 +68,46 @@ zones:
             point le plus proche de la limite séparative, doit être au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: Ua12.2
           page_pdf: 22
-          citation: Habitat individuel 1 place par logement
-          statut: valide
+          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: collectif
+            pieces_max: 1
+            places: 0.5
+            tranche: collectif chambre/studio
+            role: base
+          - destination: collectif
+            pieces_min: 2
+            pieces_max: 2
+            places: 1
+            tranche: collectif 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            places: 1.5
+            tranche: collectif 3 pièces et plus
+            role: base
+          - destination: individuel
+            places: 1
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.5
+            arrondi: inferieur
+            logements_min: 6
+            tranche: opération ou lotissement de plus de 5 logements/lots
+            role: operation
+          social:
+            places: 1
+            tranche: logement locatif prêt aidé (1 place max)
+          conditions:
+          - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
         pct:
           pct: 15.0
@@ -353,12 +387,46 @@ zones:
             point le plus proche de la limite séparative, doit être au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: Ua12.2
           page_pdf: 22
-          citation: Habitat individuel 1 place par logement
-          statut: valide
+          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: collectif
+            pieces_max: 1
+            places: 0.5
+            tranche: collectif chambre/studio
+            role: base
+          - destination: collectif
+            pieces_min: 2
+            pieces_max: 2
+            places: 1
+            tranche: collectif 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            places: 1.5
+            tranche: collectif 3 pièces et plus
+            role: base
+          - destination: individuel
+            places: 1
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.5
+            arrondi: inferieur
+            logements_min: 6
+            tranche: opération ou lotissement de plus de 5 logements/lots
+            role: operation
+          social:
+            places: 1
+            tranche: logement locatif prêt aidé (1 place max)
+          conditions:
+          - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
         pct:
           pct: 20.0
@@ -405,12 +473,46 @@ zones:
             point le plus proche de la limite séparative, doit être au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: Ub12.2
           page_pdf: 37
-          citation: Habitat individuel 1 place par logement
-          statut: valide
+          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: collectif
+            pieces_max: 1
+            places: 0.5
+            tranche: collectif chambre/studio
+            role: base
+          - destination: collectif
+            pieces_min: 2
+            pieces_max: 2
+            places: 1
+            tranche: collectif 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            places: 1.5
+            tranche: collectif 3 pièces et plus
+            role: base
+          - destination: individuel
+            places: 1
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.5
+            arrondi: inferieur
+            logements_min: 6
+            tranche: opération ou lotissement de plus de 5 logements/lots
+            role: operation
+          social:
+            places: 1
+            tranche: logement locatif prêt aidé (1 place max)
+          conditions:
+          - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
         pct:
           pct: 25.0
@@ -681,12 +783,46 @@ zones:
             point le plus proche de la limite séparative, doit être au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: Uc12.2
           page_pdf: 52
-          citation: Habitat individuel 1 place par logement
-          statut: valide
+          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: collectif
+            pieces_max: 1
+            places: 0.5
+            tranche: collectif chambre/studio
+            role: base
+          - destination: collectif
+            pieces_min: 2
+            pieces_max: 2
+            places: 1
+            tranche: collectif 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            places: 1.5
+            tranche: collectif 3 pièces et plus
+            role: base
+          - destination: individuel
+            places: 1
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.5
+            arrondi: inferieur
+            logements_min: 6
+            tranche: opération ou lotissement de plus de 5 logements/lots
+            role: operation
+          social:
+            places: 1
+            tranche: logement locatif prêt aidé (1 place max)
+          conditions:
+          - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
         pct:
           pct: 30.0
@@ -917,12 +1053,46 @@ zones:
             point le plus proche de la limite séparative, doit être au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: Uc12.2
           page_pdf: 52
-          citation: Habitat individuel 1 place par logement
-          statut: valide
+          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: collectif
+            pieces_max: 1
+            places: 0.5
+            tranche: collectif chambre/studio
+            role: base
+          - destination: collectif
+            pieces_min: 2
+            pieces_max: 2
+            places: 1
+            tranche: collectif 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            places: 1.5
+            tranche: collectif 3 pièces et plus
+            role: base
+          - destination: individuel
+            places: 1
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.5
+            arrondi: inferieur
+            logements_min: 6
+            tranche: opération ou lotissement de plus de 5 logements/lots
+            role: operation
+          social:
+            places: 1
+            tranche: logement locatif prêt aidé (1 place max)
+          conditions:
+          - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
         pct:
           pct: 30.0
@@ -1189,12 +1359,46 @@ zones:
             point le plus proche de la limite séparative, doit être au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: Ud12.2
           page_pdf: 67
-          citation: Habitat individuel 1 place par logement
-          statut: valide
+          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: collectif
+            pieces_max: 1
+            places: 0.5
+            tranche: collectif chambre/studio
+            role: base
+          - destination: collectif
+            pieces_min: 2
+            pieces_max: 2
+            places: 1
+            tranche: collectif 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            places: 1.5
+            tranche: collectif 3 pièces et plus
+            role: base
+          - destination: individuel
+            places: 1
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.5
+            arrondi: inferieur
+            logements_min: 6
+            tranche: opération ou lotissement de plus de 5 logements/lots
+            role: operation
+          social:
+            places: 1
+            tranche: logement locatif prêt aidé (1 place max)
+          conditions:
+          - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
         pct:
           pct: 30.0
@@ -1509,12 +1713,46 @@ zones:
             point le plus proche de la limite séparative, doit être au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: Ua12.2
           page_pdf: 22
-          citation: Habitat individuel 1 place par logement
-          statut: valide
+          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: collectif
+            pieces_max: 1
+            places: 0.5
+            tranche: collectif chambre/studio
+            role: base
+          - destination: collectif
+            pieces_min: 2
+            pieces_max: 2
+            places: 1
+            tranche: collectif 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            places: 1.5
+            tranche: collectif 3 pièces et plus
+            role: base
+          - destination: individuel
+            places: 1
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.5
+            arrondi: inferieur
+            logements_min: 6
+            tranche: opération ou lotissement de plus de 5 logements/lots
+            role: operation
+          social:
+            places: 1
+            tranche: logement locatif prêt aidé (1 place max)
+          conditions:
+          - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
         pct:
           pct: 15.0
@@ -1563,12 +1801,46 @@ zones:
             point le plus proche de la limite séparative, doit être au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: Ub12.2
           page_pdf: 37
-          citation: Habitat individuel 1 place par logement
-          statut: valide
+          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: collectif
+            pieces_max: 1
+            places: 0.5
+            tranche: collectif chambre/studio
+            role: base
+          - destination: collectif
+            pieces_min: 2
+            pieces_max: 2
+            places: 1
+            tranche: collectif 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            places: 1.5
+            tranche: collectif 3 pièces et plus
+            role: base
+          - destination: individuel
+            places: 1
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.5
+            arrondi: inferieur
+            logements_min: 6
+            tranche: opération ou lotissement de plus de 5 logements/lots
+            role: operation
+          social:
+            places: 1
+            tranche: logement locatif prêt aidé (1 place max)
+          conditions:
+          - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
         pct:
           pct: 25.0
@@ -1615,12 +1887,46 @@ zones:
             point le plus proche de la limite séparative, doit être au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: Uc12.2
           page_pdf: 52
-          citation: Habitat individuel 1 place par logement
-          statut: valide
+          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: collectif
+            pieces_max: 1
+            places: 0.5
+            tranche: collectif chambre/studio
+            role: base
+          - destination: collectif
+            pieces_min: 2
+            pieces_max: 2
+            places: 1
+            tranche: collectif 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            places: 1.5
+            tranche: collectif 3 pièces et plus
+            role: base
+          - destination: individuel
+            places: 1
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.5
+            arrondi: inferieur
+            logements_min: 6
+            tranche: opération ou lotissement de plus de 5 logements/lots
+            role: operation
+          social:
+            places: 1
+            tranche: logement locatif prêt aidé (1 place max)
+          conditions:
+          - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
         pct:
           pct: 30.0

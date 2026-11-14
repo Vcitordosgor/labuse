@@ -60,13 +60,18 @@ zones:
             soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: null
+        par_m2_sdp:
+          statut: valide
           article: Ucv6
           page_pdf: 72
-          citation: 1 place de stationnement par tranche de 75 m² de surface de plancher.
-          statut: propose
-          raison: stationnement non chiffrable par logement ('1 place par tranche de 75 m² de surface de plancher')
+          citation: 'Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. (Toute norme exprimée par tranche est comptabilisée par tranche complète.)'
+          m2_par_place: 75
+          arrondi: superieur
+          social:
+            places: 0.85
+            tranche: logement locatif social
+          conditions:
+          - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
       pleine_terre:
         pct:
           pct: 20.0
@@ -248,13 +253,18 @@ zones:
             soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: null
+        par_m2_sdp:
+          statut: valide
           article: Ud6
           page_pdf: 93
-          citation: 1 place de stationnement par tranche de 75 m² de surface de plancher.
-          statut: propose
-          raison: stationnement non chiffrable par logement ('1 place par tranche de 75 m² de surface de plancher')
+          citation: 'Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. (Toute norme exprimée par tranche est comptabilisée par tranche complète.)'
+          m2_par_place: 75
+          arrondi: superieur
+          social:
+            places: 1.0
+            tranche: logement locatif social
+          conditions:
+          - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
       pleine_terre:
         pct:
           pct: 20.0
@@ -440,13 +450,18 @@ zones:
             soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: null
+        par_m2_sdp:
+          statut: valide
           article: Ud6
           page_pdf: 93
-          citation: 1 place de stationnement par tranche de 75 m² de surface de plancher.
-          statut: propose
-          raison: stationnement non chiffrable par logement ('1 place par tranche de 75 m² de surface de plancher')
+          citation: 'Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. (Toute norme exprimée par tranche est comptabilisée par tranche complète.)'
+          m2_par_place: 75
+          arrondi: superieur
+          social:
+            places: 1.0
+            tranche: logement locatif social
+          conditions:
+          - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
       pleine_terre:
         pct:
           pct: 20.0
@@ -628,13 +643,18 @@ zones:
             soient latérales ou de fond de parcelle, Soit en retrait de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: null
+        par_m2_sdp:
+          statut: valide
           article: Ud6
           page_pdf: 93
-          citation: 1 place de stationnement par tranche de 75 m² de surface de plancher.
-          statut: propose
-          raison: stationnement non chiffrable par logement ('1 place par tranche de 75 m² de surface de plancher')
+          citation: 'Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. (Toute norme exprimée par tranche est comptabilisée par tranche complète.)'
+          m2_par_place: 75
+          arrondi: superieur
+          social:
+            places: 1.0
+            tranche: logement locatif social
+          conditions:
+          - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
       pleine_terre:
         pct:
           pct: 40.0
@@ -889,11 +909,16 @@ zones:
             modifie_calcul: false
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: Ug6
           page_pdf: 110
-          citation: 1,5 place de stationnement par logement
-          statut: valide
+          places: 1.5
+          citation: 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d'habitat individuel.
+          social:
+            places: 1
+            tranche: logement locatif social
+          conditions:
+          - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
       pleine_terre:
         pct:
           pct: 30.0
@@ -1088,11 +1113,16 @@ zones:
             modifie_calcul: false
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: Ug6
           page_pdf: 110
-          citation: 1,5 place de stationnement par logement
-          statut: valide
+          places: 1.5
+          citation: 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d'habitat individuel.
+          social:
+            places: 1
+            tranche: logement locatif social
+          conditions:
+          - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
       pleine_terre:
         pct:
           pct: 30.0
@@ -1160,11 +1190,16 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: Uf6
           page_pdf: 127
-          citation: 1,5 place de stationnement par logement
-          statut: valide
+          places: 1.5
+          citation: 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d'habitat individuel.
+          social:
+            places: 1
+            tranche: logement locatif social
+          conditions:
+          - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
       pleine_terre:
         pct:
           pct: 40.0
@@ -1357,11 +1392,16 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: Uf6
           page_pdf: 127
-          citation: 1,5 place de stationnement par logement
-          statut: valide
+          places: 1.5
+          citation: 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d'habitat individuel.
+          social:
+            places: 1
+            tranche: logement locatif social
+          conditions:
+          - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
       pleine_terre:
         pct:
           pct: 40.0
@@ -1431,11 +1471,16 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: Uf6
           page_pdf: 127
-          citation: 1,5 place de stationnement par logement
-          statut: valide
+          places: 1.5
+          citation: 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d'habitat individuel.
+          social:
+            places: 1
+            tranche: logement locatif social
+          conditions:
+          - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
       pleine_terre:
         pct:
           pct: 40.0
@@ -1483,11 +1528,16 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: Uf6
           page_pdf: 127
-          citation: 1,5 place de stationnement par logement
-          statut: valide
+          places: 1.5
+          citation: 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d'habitat individuel.
+          social:
+            places: 1
+            tranche: logement locatif social
+          conditions:
+          - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
       pleine_terre:
         pct:
           pct: 40.0
@@ -1716,11 +1766,14 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: Up6
           page_pdf: 153
-          citation: 1 place de stationnement par logement minimum
-          statut: valide
+          places: 1.0
+          citation: 1 place de stationnement par logement minimum. 1 place pour les logements locatifs sociaux.
+          social:
+            places: 1
+            tranche: logement locatif social
     silence: autorise
     silence_src: 'Art. Up1, p. 143 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'

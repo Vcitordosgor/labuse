@@ -83,14 +83,20 @@ zones:
           raison: attribution douteuse (secteur None)
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: U 12
           page_pdf: 17
-          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par
-            logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place
-            visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences
-            universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
-          statut: valide
+          places: 1.0
+          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche de 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          arrondi: superieur
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5)
+          social:
+            places: 0.5
+            tranche: logement aidé (1 place pour 2 logements)
     silence: autorise
     silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative d''interdictions,
       pp. 5-7) puis Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause
@@ -212,14 +218,20 @@ zones:
           raison: attribution douteuse (secteur None)
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: U 12
           page_pdf: 17
-          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par
-            logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place
-            visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences
-            universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
-          statut: valide
+          places: 1.0
+          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche de 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          arrondi: superieur
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5)
+          social:
+            places: 0.5
+            tranche: logement aidé (1 place pour 2 logements)
     silence: autorise
     silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative, pp. 5-7) puis
       Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause « seules sont
@@ -329,14 +341,20 @@ zones:
           raison: attribution douteuse (secteur None)
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: U 12
           page_pdf: 17
-          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par
-            logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place
-            visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences
-            universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
-          statut: valide
+          places: 1.0
+          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche de 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          arrondi: superieur
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5)
+          social:
+            places: 0.5
+            tranche: logement aidé (1 place pour 2 logements)
     silence: autorise
     silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative, pp. 5-7) puis
       Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause « seules sont
@@ -442,14 +460,20 @@ zones:
           raison: attribution douteuse (secteur None)
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: U 12
           page_pdf: 17
-          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par
-            logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place
-            visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences
-            universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
-          statut: valide
+          places: 1.0
+          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche de 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          arrondi: superieur
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5)
+          social:
+            places: 0.5
+            tranche: logement aidé (1 place pour 2 logements)
     silence: autorise
     silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative, pp. 5-7) puis
       Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause « seules sont
@@ -565,14 +589,20 @@ zones:
           raison: attribution douteuse (secteur None)
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: U 12
           page_pdf: 17
-          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par
-            logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place
-            visiteur par tranche 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences
-            universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
-          statut: valide
+          places: 1.0
+          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche de 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          arrondi: superieur
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5)
+          social:
+            places: 0.5
+            tranche: logement aidé (1 place pour 2 logements)
     silence: interdit
     silence_src: 'Art. U-2 6° (p. 7) : « 6° En zone Ut : - Toutes les constructions à l''exception des équipements
       et hébergements touristiques et des constructions affectées au logement du personnel travaillant sur le site.

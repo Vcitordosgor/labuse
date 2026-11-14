@@ -77,6 +77,7 @@ class Visiteurs:
     places: float
     par_logements: Optional[int] = None
     par_m2_sdp: Optional[float] = None
+    logements_min: Optional[int] = None    # part visiteur due seulement AU-DELÀ de N logements (ex. Saint-Benoît)
     arrondi: str = "superieur"
     article: Optional[str] = None
     page_pdf: Optional[int] = None
@@ -163,15 +164,20 @@ class BaremeStationnement:
             return l
         return None
 
-    def exiger(self, modules, *, destination: str = "collectif") -> Optional[ExigenceStationnement]:
+    def exiger(self, modules, *, destination: str = "collectif",
+               sdp_total: Optional[float] = None) -> Optional[ExigenceStationnement]:
         """Places exigées par le barème pour le PROGRAMME `modules` (chacun porte `.pieces` et
         `.surface_m2`). Applique la règle du type de projet (`destination`), retient la formule la PLUS
         EXIGEANTE entre lectures concurrentes, ajoute les visiteurs, et remonte les conditions non
-        modélisables. None si le barème n'est pas validé."""
+        modélisables. None si le barème n'est pas validé.
+
+        `sdp_total` (facultatif) = SURFACE DE PLANCHER réelle du programme (modules + noyaux) pour les
+        formules « par tranche de m² » ; sans lui, on somme les surfaces des logements (approximation)."""
         if not self.validee:
             return None
         n = len(modules)
-        sdp_tot = sum(float(getattr(m, "surface_m2", 0.0)) for m in modules)
+        sdp_tot = (float(sdp_total) if sdp_total is not None
+                   else sum(float(getattr(m, "surface_m2", 0.0)) for m in modules))
         conditions = tuple(self.conditions)
         if n == 0:
             return ExigenceStationnement(0, 0, 0, self.mode, "aucun logement", (), conditions, True, {})
@@ -187,20 +193,28 @@ class BaremeStationnement:
             tot = math.ceil(sdp_tot / self.m2_par_place - 1e-9)   # tranche COMPLÈTE
             candidats.append((tot, f"1 place / {self.m2_par_place:g} m² (tranche complète) · SDP {sdp_tot:.0f} m²"))
         elif self.mode == "par_typologie":
-            # (a) règle de BASE, logement par logement (par pièces ou surface)
+            # (a) règle de BASE, logement par logement (par pièces ou surface). N'est une LECTURE valable que
+            # si TOUS les logements trouvent une ligne de base pour la destination (sinon elle ne couvre pas
+            # le programme). Une zone qui n'exprime le collectif QUE par des formules d'opération (ex. Les
+            # Avirons : max(1,25/logt, 1/35 m²)) n'a pas de ligne de base : la couverture vient alors des alt.
+            lignes_base_dest = [l for l in self.lignes if l.role == "base" and l.destination == destination]
             base_tot = 0.0
+            base_matched = 0
             par_ligne: dict[str, int] = {}
             for m in modules:
                 l = self._ligne_base(int(getattr(m, "pieces", 0)), float(getattr(m, "surface_m2", 0.0)), destination)
                 if l is None:
-                    couvert = False
                     continue
                 base_tot += l.places
+                base_matched += 1
                 par_ligne[l.libelle or f"{l.places:g}/logt"] = par_ligne.get(l.libelle or f"{l.places:g}/logt", 0) + 1
-            if couvert and base_tot > 0:
+            if lignes_base_dest and base_matched == n and base_tot > 0:
                 candidats.append((self.arrondir(base_tot), "barème par typologie : "
                                   + " + ".join(f"{v}×{k}" for k, v in par_ligne.items())))
                 details["par_typologie"] = par_ligne
+            elif lignes_base_dest and 0 < base_matched < n:
+                # certains logements n'ont pas de ligne de base → la règle ne couvre pas TOUT le programme.
+                couvert = False
             # (b) formules d'OPÉRATION et ALTERNATIVES (déclenchées selon logements_min), retenue = la plus exigeante
             for l in self.lignes:
                 if l.role not in ("operation", "alt"):
@@ -231,7 +245,7 @@ class BaremeStationnement:
 
         # visiteurs (part additionnelle)
         vis = 0
-        if self.visiteurs is not None:
+        if self.visiteurs is not None and (self.visiteurs.logements_min is None or n >= self.visiteurs.logements_min):
             vz = self.visiteurs
             if vz.par_logements:
                 vis = math.ceil(n / vz.par_logements - 1e-9) * vz.places
@@ -431,7 +445,7 @@ def _parse_visiteurs(form: dict) -> Optional[Visiteurs]:
     return Visiteurs(
         places=float(v["places"]),
         par_logements=v.get("par_logements"), par_m2_sdp=v.get("par_m2_sdp"),
-        arrondi=_norm_arrondi(v.get("arrondi")),
+        logements_min=v.get("logements_min"), arrondi=_norm_arrondi(v.get("arrondi")),
         article=v.get("article"), page_pdf=v.get("page_pdf"), citation=v.get("citation"))
 
 

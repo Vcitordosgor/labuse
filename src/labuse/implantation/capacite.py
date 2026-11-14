@@ -102,7 +102,10 @@ def _places_imposees(scene: Scene, conv: Conventions, regles: ReglesZone,
         mods.extend(SimpleNamespace(pieces=m.pieces, surface_m2=m.surface_m2) for _ in range(n))
     if not mods:
         return 0, {}, None
-    ex = bareme.exiger(mods, destination=destination)
+    # Surface de plancher RÉELLE (modules + noyaux, parties closes et couvertes) pour les formules
+    # « par tranche de m² de surface de plancher » — pas la seule somme nominale des logements.
+    sdp_total = sum(o.geom_local.area for o in scene.objets if o.kind in ("module", "noyau"))
+    ex = bareme.exiger(mods, destination=destination, sdp_total=sdp_total)
     if ex is None or not ex.couvert:
         # règle validée mais ne couvrant pas le programme dessiné → on ne force pas « Réussi ».
         return None, detail, ex

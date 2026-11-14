@@ -69,12 +69,19 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 0.3
+          statut: valide
           article: Ua 12.1
           page_pdf: 30
-          citation: 0,3 place de stationnement par logement, - En outre, il est demandé 1 place de stationnement
-            pour visiteur par tranche de 100 m² de surface de plancher.
-          statut: valide
+          places: 0.3
+          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          arrondi: superieur
+          visiteurs:
+            par_m2_sdp: 100
+            places: 1
+            citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
+          social:
+            places: 0.2
+            tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
       pleine_terre:
         pct:
           article: Ua 11.1
@@ -222,11 +229,19 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 0.3
+          statut: valide
           article: Ub 12.1
           page_pdf: 44
-          citation: 0,3 place de stationnement par logement,
-          statut: valide
+          places: 0.3
+          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          arrondi: superieur
+          visiteurs:
+            par_m2_sdp: 100
+            places: 1
+            citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
+          social:
+            places: 0.2
+            tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
       pleine_terre:
         pct:
           pct: 10.0
@@ -339,11 +354,19 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 0.3
+          statut: valide
           article: Uc 12.1
           page_pdf: 59
-          citation: 0,3 place de stationnement par logement,
-          statut: valide
+          places: 0.3
+          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          arrondi: superieur
+          visiteurs:
+            par_m2_sdp: 100
+            places: 1
+            citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
+          social:
+            places: 0.2
+            tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
       pleine_terre:
         pct:
           article: Uc 11.1
@@ -443,11 +466,19 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 0.3
+          statut: valide
           article: Uc 12.1
           page_pdf: 59
-          citation: 0,3 place de stationnement par logement,
-          statut: valide
+          places: 0.3
+          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          arrondi: superieur
+          visiteurs:
+            par_m2_sdp: 100
+            places: 1
+            citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
+          social:
+            places: 0.2
+            tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
       pleine_terre:
         pct:
           article: Uc 11.1
@@ -516,11 +547,19 @@ zones:
           forme: alignement
       stationnement:
         par_logement:
-          places: 0.3
+          statut: valide
           article: Ud 12.1
           page_pdf: 73
-          citation: 0,3 place de stationnement par logement,
-          statut: valide
+          places: 0.3
+          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          arrondi: superieur
+          visiteurs:
+            par_m2_sdp: 100
+            places: 1
+            citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
+          social:
+            places: 0.2
+            tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
       pleine_terre:
         pct:
           pct: 20.0
@@ -1358,11 +1397,19 @@ zones:
           formule: sur limite (max 2), sinon retrait minimum 3 m
       stationnement:
         par_logement:
-          places: 0.3
+          statut: valide
           article: Ua 12.1
           page_pdf: 151
-          citation: 0,3 place de stationnement par logement,
-          statut: valide
+          places: 0.3
+          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          arrondi: superieur
+          visiteurs:
+            par_m2_sdp: 100
+            places: 1
+            citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
+          social:
+            places: 0.2
+            tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
       pleine_terre:
         pct:
           article: Ua 11.1 (via renvoi 1AU 11.1)
@@ -1435,11 +1482,19 @@ zones:
           note: "PLU-VERIF-1 : page corrigée 145→54 (art. Uc 5)."
       stationnement:
         par_logement:
-          places: 0.3
+          statut: valide
           article: Uc 12.1
           page_pdf: 151
-          citation: 0,3 place de stationnement par logement,
-          statut: valide
+          places: 0.3
+          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          arrondi: superieur
+          visiteurs:
+            par_m2_sdp: 100
+            places: 1
+            citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
+          social:
+            places: 0.2
+            tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
       pleine_terre:
         pct:
           article: Uc 11.1 (via renvoi 1AU 11.1)
@@ -1554,11 +1609,19 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 0.3
+          statut: valide
           article: 1AU 12.1
           page_pdf: 151
-          citation: 0,3 place de stationnement par logement,
-          statut: valide
+          places: 0.3
+          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          arrondi: superieur
+          visiteurs:
+            par_m2_sdp: 100
+            places: 1
+            citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
+          social:
+            places: 0.2
+            tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
       pleine_terre:
         pct:
           article: 1AUm 11.1

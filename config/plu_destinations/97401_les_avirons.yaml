@@ -62,13 +62,29 @@ zones:
             au minimum de 1,90 mètre.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
-            sur voie par terrain, pour les lotissements de plus de 5 lots.
-          statut: valide
+          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25 place/logement
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            tranche: collectif 1 place / 35 m² de SDP
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
         pct:
           pct: 15.0
@@ -276,13 +292,29 @@ zones:
             au minimum de 1,90 mètre.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
-            sur voie par terrain, pour les lotissements de plus de 5 lots.
-          statut: valide
+          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25 place/logement
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            tranche: collectif 1 place / 35 m² de SDP
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
         pct:
           pct: 30.0
@@ -465,13 +497,29 @@ zones:
             au minimum de 1,90 mètre.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
-            sur voie par terrain, pour les lotissements de plus de 5 lots.
-          statut: valide
+          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25 place/logement
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            tranche: collectif 1 place / 35 m² de SDP
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
         pct:
           pct: 30.0
@@ -528,13 +576,29 @@ zones:
             au minimum de 1,90 mètre.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
-            sur voie par terrain, pour les lotissements de plus de 5 lots.
-          statut: valide
+          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25 place/logement
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            tranche: collectif 1 place / 35 m² de SDP
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
         pct:
           pct: 30.0
@@ -590,13 +654,29 @@ zones:
             au minimum de 1,90 mètre.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
-            sur voie par terrain, pour les lotissements de plus de 5 lots.
-          statut: valide
+          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25 place/logement
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            tranche: collectif 1 place / 35 m² de SDP
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
         pct:
           pct: 30.0
@@ -767,13 +847,29 @@ zones:
             au minimum de 1,90 mètre.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
-            sur voie par terrain, pour les lotissements de plus de 5 lots.
-          statut: valide
+          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25 place/logement
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            tranche: collectif 1 place / 35 m² de SDP
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
         pct:
           pct: 30.0
@@ -961,13 +1057,29 @@ zones:
             au minimum de 1,90 mètre.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
-            sur voie par terrain, pour les lotissements de plus de 5 lots.
-          statut: valide
+          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25 place/logement
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            tranche: collectif 1 place / 35 m² de SDP
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
         pct:
           pct: 30.0
@@ -1027,13 +1139,29 @@ zones:
             au minimum de 1,90 mètre.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
-            sur voie par terrain, pour les lotissements de plus de 5 lots.
-          statut: valide
+          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25 place/logement
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            tranche: collectif 1 place / 35 m² de SDP
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
         pct:
           pct: 40.0
@@ -1096,13 +1224,29 @@ zones:
             au minimum de 1,90 mètre.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
-            sur voie par terrain, pour les lotissements de plus de 5 lots.
-          statut: valide
+          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25 place/logement
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            tranche: collectif 1 place / 35 m² de SDP
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
         pct:
           pct: 40.0
@@ -1292,13 +1436,29 @@ zones:
             au minimum de 1,90 mètre.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
-            sur voie par terrain, pour les lotissements de plus de 5 lots.
-          statut: valide
+          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25 place/logement
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            tranche: collectif 1 place / 35 m² de SDP
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
         pct:
           pct: 40.0
@@ -1482,13 +1642,29 @@ zones:
             être au minimum de 1,90 mètre.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
-            sur voie par terrain, pour les lotissements de plus de 5 lots.
-          statut: valide
+          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25 place/logement
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            tranche: collectif 1 place / 35 m² de SDP
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
         pct:
           pct: 40.0
@@ -1770,13 +1946,29 @@ zones:
             au minimum de 1,90 mètre.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
-            sur voie par terrain, pour les lotissements de plus de 5 lots.
-          statut: valide
+          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25 place/logement
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            tranche: collectif 1 place / 35 m² de SDP
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
         pct:
           pct: 15.0
@@ -1844,13 +2036,29 @@ zones:
             au minimum de 1,90 mètre.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
-            sur voie par terrain, pour les lotissements de plus de 5 lots.
-          statut: valide
+          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25 place/logement
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            tranche: collectif 1 place / 35 m² de SDP
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
         pct:
           pct: 30.0
@@ -1916,13 +2124,29 @@ zones:
             au minimum de 1,90 mètre.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire
-            sur voie par terrain, pour les lotissements de plus de 5 lots.
-          statut: valide
+          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25 place/logement
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            tranche: collectif 1 place / 35 m² de SDP
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
         pct:
           pct: 40.0
