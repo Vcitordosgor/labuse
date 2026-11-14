@@ -83,6 +83,9 @@ zones:
             par_m2: 35
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
+          social:
+            places: 1
+            tranche: 'logement locatif prêt aidé (R.111-25 : 1 place au maximum)'
           conditions:
           - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
@@ -313,6 +316,9 @@ zones:
             par_m2: 35
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
+          social:
+            places: 1
+            tranche: 'logement locatif prêt aidé (R.111-25 : 1 place au maximum)'
           conditions:
           - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
@@ -518,6 +524,9 @@ zones:
             par_m2: 35
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
+          social:
+            places: 1
+            tranche: 'logement locatif prêt aidé (R.111-25 : 1 place au maximum)'
           conditions:
           - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
@@ -597,6 +606,9 @@ zones:
             par_m2: 35
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
+          social:
+            places: 1
+            tranche: 'logement locatif prêt aidé (R.111-25 : 1 place au maximum)'
           conditions:
           - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
@@ -675,6 +687,9 @@ zones:
             par_m2: 35
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
+          social:
+            places: 1
+            tranche: 'logement locatif prêt aidé (R.111-25 : 1 place au maximum)'
           conditions:
           - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
@@ -868,6 +883,9 @@ zones:
             par_m2: 35
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
+          social:
+            places: 1
+            tranche: 'logement locatif prêt aidé (R.111-25 : 1 place au maximum)'
           conditions:
           - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
@@ -1078,6 +1096,9 @@ zones:
             par_m2: 35
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
+          social:
+            places: 1
+            tranche: 'logement locatif prêt aidé (R.111-25 : 1 place au maximum)'
           conditions:
           - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
@@ -1160,6 +1181,9 @@ zones:
             par_m2: 35
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
+          social:
+            places: 1
+            tranche: 'logement locatif prêt aidé (R.111-25 : 1 place au maximum)'
           conditions:
           - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
@@ -1245,6 +1269,9 @@ zones:
             par_m2: 35
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
+          social:
+            places: 1
+            tranche: 'logement locatif prêt aidé (R.111-25 : 1 place au maximum)'
           conditions:
           - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
@@ -1457,6 +1484,9 @@ zones:
             par_m2: 35
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
+          social:
+            places: 1
+            tranche: 'logement locatif prêt aidé (R.111-25 : 1 place au maximum)'
           conditions:
           - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
@@ -1663,6 +1693,9 @@ zones:
             par_m2: 35
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
+          social:
+            places: 1
+            tranche: 'logement locatif prêt aidé (R.111-25 : 1 place au maximum)'
           conditions:
           - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
@@ -1967,6 +2000,9 @@ zones:
             par_m2: 35
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
+          social:
+            places: 1
+            tranche: 'logement locatif prêt aidé (R.111-25 : 1 place au maximum)'
           conditions:
           - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
@@ -2057,6 +2093,9 @@ zones:
             par_m2: 35
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
+          social:
+            places: 1
+            tranche: 'logement locatif prêt aidé (R.111-25 : 1 place au maximum)'
           conditions:
           - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:
@@ -2145,6 +2184,9 @@ zones:
             par_m2: 35
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
+          social:
+            places: 1
+            tranche: 'logement locatif prêt aidé (R.111-25 : 1 place au maximum)'
           conditions:
           - 0,5 place supplémentaire sur voie par terrain pour les lotissements de plus de 5 lots
       pleine_terre:

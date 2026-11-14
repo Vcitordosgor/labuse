@@ -190,8 +190,11 @@ class BaremeStationnement:
             tot = n * self.flat_places
             candidats.append((self.arrondir(tot), f"{self.flat_places:g} place/logt × {n} logts"))
         elif self.mode == "par_m2_sdp" and self.m2_par_place:
-            tot = math.ceil(sdp_tot / self.m2_par_place - 1e-9)   # tranche COMPLÈTE
-            candidats.append((tot, f"1 place / {self.m2_par_place:g} m² (tranche complète) · SDP {sdp_tot:.0f} m²"))
+            # Sens d'arrondi LU dans la règle. « tranche complète » (Saint-Pierre) = seules les tranches
+            # ENTIÈRES comptent → arrondi INFÉRIEUR. Texte muet → supérieur (plus exigeant), fixé à l'ingestion.
+            tot = self.arrondir(sdp_tot / self.m2_par_place)
+            arr = "inférieur" if self.arrondi == "inferieur" else "supérieur"
+            candidats.append((tot, f"1 place / {self.m2_par_place:g} m² · SDP {sdp_tot:.0f} m² (arrondi {arr})"))
         elif self.mode == "par_typologie":
             # (a) règle de BASE, logement par logement (par pièces ou surface). N'est une LECTURE valable que
             # si TOUS les logements trouvent une ligne de base pour la destination (sinon elle ne couvre pas
@@ -224,8 +227,10 @@ class BaremeStationnement:
                 if l.logements_min is not None and n < l.logements_min:
                     continue
                 if l.par_m2 is not None:
-                    v = math.ceil(sdp_tot / l.par_m2 - 1e-9)
-                    candidats.append((v, f"1 place / {l.par_m2:g} m² SDP (tranche complète) · {sdp_tot:.0f} m²"))
+                    # formule alternative « 1 place / N m² » : arrondi de la ligne sinon SUPÉRIEUR (plus exigeant).
+                    v = self.arrondir(sdp_tot / l.par_m2, l.arrondi or "superieur")
+                    arr = "inférieur" if (l.arrondi or "superieur") == "inferieur" else "supérieur"
+                    candidats.append((v, f"1 place / {l.par_m2:g} m² SDP · {sdp_tot:.0f} m² (arrondi {arr})"))
                 elif l.places is not None:
                     v = self.arrondir(n * l.places, l.arrondi)
                     seuil = f" (opération > {l.logements_min - 1} logts)" if l.logements_min else ""

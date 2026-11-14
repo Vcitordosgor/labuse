@@ -43,14 +43,26 @@ def test_tampon_collectif_retient_la_regle_operation_la_plus_exigeante():
     assert ex.conditions == ("dont au moins 0,5 place à l'extérieur des espaces privatisés",)
 
 
-def test_saint_pierre_par_m2_sdp_tranche_complete():
-    """Saint-Pierre Ud6 : « 1 place par tranche de 75 m² de SP », tranche complète. HT0538 = 887,5 m²
-    → 12 places. La forme par_m2_sdp est désormais SUPPORTÉE (avant : non servie)."""
+def test_saint_pierre_par_m2_sdp_tranche_complete_arrondi_inferieur():
+    """Saint-Pierre Ud6 : « 1 place par tranche de 75 m² de SP » + « la place est comptabilisée par tranche
+    complète » → seules les tranches ENTIÈRES comptent → arrondi INFÉRIEUR. 887,5 m² → 11 places (pas 12)."""
     b = _bareme({"par_m2_sdp": {"statut": "valide", "article": "Ud6", "page_pdf": 93,
-                                "citation": "…", "m2_par_place": 75, "arrondi": "superieur"}})
+                                "citation": "…", "m2_par_place": 75, "arrondi": "inferieur"}})
     ex = b.exiger(_prog([(3, 88.75, 10)]), destination="collectif")   # SDP 887,5
-    assert ex.places == 12
-    assert "75" in ex.formule
+    assert ex.places == 11
+    assert "inférieur" in ex.formule
+    # 450 m² = 6 tranches entières exactes → 6 quel que soit l'arrondi
+    assert b.exiger(_prog([(3, 90, 5)]), destination="collectif").places == 6
+
+
+def test_tranche_muette_prend_le_plus_exigeant_superieur():
+    """Formule « 1 place / 35 m² » sans mention d'arrondi (Les Avirons, ligne alternative) → plus exigeant
+    = arrondi SUPÉRIEUR."""
+    b = _bareme({"par_typologie": {"statut": "valide", "article": "x", "page_pdf": 1, "retenue": "max",
+                 "detail": [{"destination": "collectif", "par_m2": 35, "role": "alt"}]}})
+    ex = b.exiger(_prog([(2, 56, 4), (3, 70, 3), (4, 80, 1)]), destination="collectif")   # SDP 514
+    assert ex.places == 15          # 514 / 35 = 14,7 → 15 (supérieur)
+    assert "supérieur" in ex.formule
 
 
 def test_la_plus_exigeante_de_deux_formules():
@@ -99,6 +111,43 @@ def test_regle_ne_couvrant_pas_le_programme_reste_non_verifie():
                  "detail": [{"destination": "individuel", "places": 2, "role": "base"}]}})
     ex = b.exiger(PROG8, destination="collectif")   # programme collectif, aucune ligne collectif
     assert ex.couvert is False
+
+
+def _signature(b):
+    """Signature de la RÈGLE appliquée (valeurs, pas le texte) — pour comparer deux zones."""
+    lignes = tuple(sorted(
+        f"{l.destination}|{l.role}|{l.places}|{l.par_m2}|{l.pieces_min}|{l.pieces_max}|"
+        f"{l.sdp_min}|{l.sdp_max}|{l.logements_min}|{l.arrondi}" for l in b.lignes))
+    vis = None if b.visiteurs is None else (b.visiteurs.places, b.visiteurs.par_logements,
+                                            b.visiteurs.par_m2_sdp, b.visiteurs.logements_min, b.visiteurs.arrondi)
+    return (b.mode, b.flat_places, b.m2_par_place, b.arrondi, b.retenue, lignes, vis, tuple(b.conditions))
+
+
+def test_controle_citation_identique_implique_regle_identique():
+    """CONTRÔLE (correctif #3) — aucune citation IDENTIQUE entre deux zones sans que la RÈGLE appliquée soit
+    identique. C'est exactement ce qui aurait attrapé le bug « Ucv recopie la citation de Ud » (même phrase,
+    mais Ucv applique 0,85 et Ud applique 1 — signatures ≠). Sur les cinq communes pilotes."""
+    from labuse.plu import destinations as D
+    from labuse.implantation import regles as R
+    import re
+    PILOTES = {"97401": "les_avirons", "97407": "le_port", "97410": "saint_benoit",
+               "97416": "saint_pierre", "97422": "le_tampon"}
+    for insee, slug in PILOTES.items():
+        par_citation = {}
+        for r in D.regles_commune(insee):
+            z = r["zone"]
+            if not re.match(r'^\d*(U|AU)', z, re.I):
+                continue
+            b = R.charger(insee, z).stationnement
+            if not b.validee or not b.citation:
+                continue
+            par_citation.setdefault(b.citation, []).append((z, _signature(b)))
+        for cit, items in par_citation.items():
+            sigs = {sig for _z, sig in items}
+            zones = [z for z, _s in items]
+            assert len(sigs) == 1, (
+                f"{insee} : la même citation est servie à des zones de règle DIFFÉRENTE {zones} "
+                f"(citation « {cit[:60]}… ») — recopie probable, chaque zone doit citer son propre texte.")
 
 
 def test_destination_suit_le_type_de_projet():

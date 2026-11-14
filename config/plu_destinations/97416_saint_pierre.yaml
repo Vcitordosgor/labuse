@@ -64,14 +64,12 @@ zones:
           statut: valide
           article: Ucv6
           page_pdf: 72
-          citation: 'Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. (Toute norme exprimée par tranche est comptabilisée par tranche complète.)'
+          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 0,85 place de stationnement par logement social. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
           m2_par_place: 75
-          arrondi: superieur
+          arrondi: inferieur
           social:
             places: 0.85
-            tranche: logement locatif social
-          conditions:
-          - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
+            tranche: logement social
       pleine_terre:
         pct:
           pct: 20.0
@@ -257,11 +255,11 @@ zones:
           statut: valide
           article: Ud6
           page_pdf: 93
-          citation: 'Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. (Toute norme exprimée par tranche est comptabilisée par tranche complète.)'
+          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
           m2_par_place: 75
-          arrondi: superieur
+          arrondi: inferieur
           social:
-            places: 1.0
+            places: 1
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
@@ -454,11 +452,11 @@ zones:
           statut: valide
           article: Ud6
           page_pdf: 93
-          citation: 'Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. (Toute norme exprimée par tranche est comptabilisée par tranche complète.)'
+          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
           m2_par_place: 75
-          arrondi: superieur
+          arrondi: inferieur
           social:
-            places: 1.0
+            places: 1
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
@@ -647,11 +645,11 @@ zones:
           statut: valide
           article: Ud6
           page_pdf: 93
-          citation: 'Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. (Toute norme exprimée par tranche est comptabilisée par tranche complète.)'
+          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
           m2_par_place: 75
-          arrondi: superieur
+          arrondi: inferieur
           social:
-            places: 1.0
+            places: 1
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
@@ -913,7 +911,7 @@ zones:
           article: Ug6
           page_pdf: 110
           places: 1.5
-          citation: 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d'habitat individuel.
+          citation: 'Habitation / Logement : 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel.'
           social:
             places: 1
             tranche: logement locatif social
@@ -1117,7 +1115,7 @@ zones:
           article: Ug6
           page_pdf: 110
           places: 1.5
-          citation: 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d'habitat individuel.
+          citation: 'Habitation / Logement : 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel.'
           social:
             places: 1
             tranche: logement locatif social
@@ -1194,7 +1192,7 @@ zones:
           article: Uf6
           page_pdf: 127
           places: 1.5
-          citation: 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d'habitat individuel.
+          citation: 'Habitation / Logement : 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel.'
           social:
             places: 1
             tranche: logement locatif social
@@ -1396,7 +1394,7 @@ zones:
           article: Uf6
           page_pdf: 127
           places: 1.5
-          citation: 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d'habitat individuel.
+          citation: 'Habitation / Logement : 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel.'
           social:
             places: 1
             tranche: logement locatif social
@@ -1475,7 +1473,7 @@ zones:
           article: Uf6
           page_pdf: 127
           places: 1.5
-          citation: 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d'habitat individuel.
+          citation: 'Habitation / Logement : 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel.'
           social:
             places: 1
             tranche: logement locatif social
@@ -1532,7 +1530,7 @@ zones:
           article: Uf6
           page_pdf: 127
           places: 1.5
-          citation: 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d'habitat individuel.
+          citation: 'Habitation / Logement : 1,5 place de stationnement par logement. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel.'
           social:
             places: 1
             tranche: logement locatif social
@@ -1770,7 +1768,7 @@ zones:
           article: Up6
           page_pdf: 153
           places: 1.0
-          citation: 1 place de stationnement par logement minimum. 1 place pour les logements locatifs sociaux.
+          citation: 'Habitation / Logement : 1 place de stationnement par logement minimum. 1 place pour les logements locatifs sociaux.'
           social:
             places: 1
             tranche: logement locatif social
