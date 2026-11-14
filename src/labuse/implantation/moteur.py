@@ -95,7 +95,7 @@ def _construire(forme: str, scene: Scene, conv: Conventions, *, niveaux: int, fr
 
 
 def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition=None,
-             stationnement_mode="aerien", niveaux_sous_sol=1):
+             stationnement_mode="aerien", niveaux_sous_sol=1, type_projet="collectif"):
     # hauteur : nb de niveaux borné par la hauteur réglementaire. FAISA-REGLES-1 (E-059) — on compare la
     # hauteur RÉELLE du projet (rez + étages, toiture comptée si la règle se mesure au faîtage), pas le seul
     # niveaux × étage.
@@ -109,7 +109,7 @@ def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition
     if n_mod <= 0:
         motif = "forme L écartée (largeur zone insuffisante)" if forme == "L" else "aucun module implantable"
         return None, Candidat(forme, niveaux, fraction, False, "—", 0, 0.0, 0, None, motif)
-    cap0 = cap_mod.calculer(scene, conv, regles, terrain)
+    cap0 = cap_mod.calculer(scene, conv, regles, terrain, type_projet)
     cible = cap0.places_imposees or 0
     # ETUDE-V6-2 (Lot 3) — sous-sol : places au niveau −1 (le sol reste libre → plus de logements) ;
     # aérien par défaut (places + allée + accès au sol).
@@ -119,7 +119,7 @@ def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition
         poser_stationnement(scene, conv, cible=cible)
     poser_espaces_libres(scene)
     scene.finaliser_monde()
-    cap = cap_mod.calculer(scene, conv, regles, terrain)
+    cap = cap_mod.calculer(scene, conv, regles, terrain, type_projet)
     checks = ctrl_mod.verifier_geometrie(scene, terrain, conv, cap, regles)
     controles = ctrl_mod.controles_reglementaires(scene, terrain, conv, cap, regles)
     geo_ok = ctrl_mod.geometrie_valide(checks)
@@ -241,7 +241,7 @@ def _charger(session, idus, zone, conv, avec_pente):
 
 
 def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnement_mode="aerien",
-                niveaux_sous_sol=1, ordre="objectif", budget_override=None):
+                niveaux_sous_sol=1, ordre="objectif", budget_override=None, type_projet="collectif"):
     """Parcourt la grille ORDONNÉE forme×niveaux×fraction et renvoie (ranked, candidats) :
     `ranked` = liste des candidats FAISABLES, triée par la clef d'objectif décroissante, chaque
     item = (clef, paquet, forme, niveaux, fraction). `candidats` = la trace complète.
@@ -316,7 +316,7 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
                     break
                 paquet, cand = _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction,
                                         repartition=repartition, stationnement_mode=stationnement_mode,
-                                        niveaux_sous_sol=niveaux_sous_sol)
+                                        niveaux_sous_sol=niveaux_sous_sol, type_projet=type_projet)
                 candidats.append(cand)
                 if paquet is not None:
                     _scene, cap, _ctrl, _chk, _geo, statut = paquet
@@ -647,7 +647,8 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
                 terrain, regles, conv, None)
     faisables, candidats = _rechercher_avec_repli(terrain, regles, conv, objectif, repartition=repartition,
                                                   stationnement_mode=stationnement_mode,
-                                                  niveaux_sous_sol=niveaux_sous_sol)
+                                                  niveaux_sous_sol=niveaux_sous_sol,
+                                                  type_projet=(type_projet or "collectif"))
     if not faisables:
         return ([], [], None,
                 _message_impossible(terrain, regles, candidats, conv, stationnement_mode),

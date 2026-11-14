@@ -61,6 +61,16 @@ class Capacite:
     niveaux_sous_sol: int = 0
     places_niveau_moins1: int = 0
     places_niveau_moins2: int = 0
+    # ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — traçabilité de l'exigence appliquée AU PROGRAMME dessiné :
+    # la formule retenue (la plus exigeante), la part visiteur, les conditions non modélisables à
+    # vérifier, et si la règle COUVRE bien le programme (sinon « Non vérifié », jamais « Réussi »).
+    places_imposees_residents: Optional[int] = None
+    places_imposees_visiteurs: int = 0
+    stationnement_formule: Optional[str] = None
+    stationnement_formules_ecartees: tuple = ()
+    stationnement_conditions: tuple = ()
+    stationnement_couvert: bool = True
+    type_projet: str = "collectif"
 
 
 def _sdp_logement(conv: Conventions, type_logement: str) -> float:
@@ -68,26 +78,39 @@ def _sdp_logement(conv: Conventions, type_logement: str) -> float:
     return m.surface_m2 if m else 0.0
 
 
-def _places_imposees(scene: Scene, conv: Conventions, regles: ReglesZone) -> tuple[Optional[int], dict]:
+def _places_imposees(scene: Scene, conv: Conventions, regles: ReglesZone,
+                     type_projet: str = "collectif"):
+    """ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — exigence du barème pour le PROGRAMME dessiné, destination lue
+    dans le TYPE DE PROJET (plus de « collectif » codé en dur). Renvoie (places, detail, exigence).
+    `places` = None si le barème n'est pas validé OU ne couvre pas le programme (→ « Non vérifié »,
+    jamais « Réussi »)."""
+    from types import SimpleNamespace
+
+    from .regles import DESTINATION_PAR_PROJET
     bareme = regles.stationnement
     if not bareme.validee:
-        return None, {}
-    total = 0.0
+        return None, {}, None
+    destination = DESTINATION_PAR_PROJET.get(type_projet, "collectif")
+    mods = []
     detail: dict[str, tuple[int, Optional[float]]] = {}
     for t, m in conv.modules.items():
         n = len([o for o in scene.of("module") if o.type_logement == t])
         if n == 0:
             continue
-        unit = bareme.places_pour(pieces=m.pieces, sdp_m2=m.surface_m2, destination="collectif")
+        unit = bareme.places_pour(pieces=m.pieces, sdp_m2=m.surface_m2, destination=destination)
         detail[t] = (n, unit)
-        if unit is not None:
-            total += n * unit
-    if not detail:
-        return 0, {}
-    return bareme.arrondir(total), detail
+        mods.extend(SimpleNamespace(pieces=m.pieces, surface_m2=m.surface_m2) for _ in range(n))
+    if not mods:
+        return 0, {}, None
+    ex = bareme.exiger(mods, destination=destination)
+    if ex is None or not ex.couvert:
+        # règle validée mais ne couvrant pas le programme dessiné → on ne force pas « Réussi ».
+        return None, detail, ex
+    return ex.places, detail, ex
 
 
-def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) -> Capacite:
+def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None,
+             type_projet: str = "collectif") -> Capacite:
     modules = scene.of("module")
     niveaux = (max((o.niveau for o in modules), default=-1) + 1)
     par_type: dict[str, int] = {}
@@ -130,7 +153,7 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) 
         sur_dalle = min(pleine_terre, max(0.0, ss["emprise_m2"] - bati))
         pleine_terre = pleine_terre - sur_dalle
 
-    places_imp, details = _places_imposees(scene, conv, regles)
+    places_imp, details, exig = _places_imposees(scene, conv, regles, type_projet)
 
     # ratio SHAB / SDP par bâtiment (et global) : part habitable du plancher construit (SDP = modules
     # + noyaux, coursive ouverte exclue). Surface des NOYAUX exposée par niveau et par bâtiment.
@@ -207,4 +230,11 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) 
         niveaux_sous_sol=(ss.get("niveaux_sous_sol", 0) if mode_ss else 0),
         places_niveau_moins1=(ss.get("places_niveau_moins1", 0) if mode_ss else 0),
         places_niveau_moins2=(ss.get("places_niveau_moins2", 0) if mode_ss else 0),
+        places_imposees_residents=(exig.places_residents if exig is not None else None),
+        places_imposees_visiteurs=(exig.places_visiteurs if exig is not None else 0),
+        stationnement_formule=(exig.formule if exig is not None else None),
+        stationnement_formules_ecartees=(exig.formules_ecartees if exig is not None else ()),
+        stationnement_conditions=(exig.conditions if exig is not None else ()),
+        stationnement_couvert=(exig.couvert if exig is not None else True),
+        type_projet=type_projet,
     )

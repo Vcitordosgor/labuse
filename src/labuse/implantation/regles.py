@@ -39,21 +39,72 @@ class Regle:
         return f"{tete} — « {self.citation} »" if self.citation else (tete or None)
 
 
+# ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — projet dessiné → destination lue dans le barème. Le moteur
+# dessine du collectif ; le TYPE DE PROJET choisi (collectif/social/senior/étudiant) sélectionne la
+# ligne du règlement. Le lotissement reste traité à part (division).
+DESTINATION_PAR_PROJET: dict[str, str] = {
+    "collectif": "collectif",
+    "social": "social",
+    "senior": "senior",
+    "etudiante": "etudiant",
+    "lotissement": "individuel",
+}
+
+
 @dataclass(frozen=True)
 class LigneBareme:
-    places: float
+    # ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — une ligne porte SOIT un ratio par logement (`places`), SOIT une
+    # formule « une place par tranche de N m² de surface de plancher » (`par_m2`). `role` distingue la règle
+    # de base (par logement/typologie), une règle d'OPÉRATION (déclenchée au-delà de `logements_min`), et une
+    # formule ALTERNATIVE dont on retient la PLUS EXIGEANTE (`retenue=max`). `arrondi` facultatif par ligne.
+    places: Optional[float] = None
+    par_m2: Optional[float] = None
     pieces_min: Optional[int] = None
     pieces_max: Optional[int] = None
     sdp_min: Optional[float] = None
     sdp_max: Optional[float] = None
+    logements_min: Optional[int] = None
     destination: str = "collectif"
+    role: str = "base"                  # 'base' | 'operation' | 'alt'
+    arrondi: Optional[str] = None
     libelle: str = ""
+
+
+@dataclass(frozen=True)
+class Visiteurs:
+    """Places visiteurs : `places` par tranche de `par_logements` logements OU de `par_m2_sdp` m² de SDP
+    (tranche complète)."""
+    places: float
+    par_logements: Optional[int] = None
+    par_m2_sdp: Optional[float] = None
+    arrondi: str = "superieur"
+    article: Optional[str] = None
+    page_pdf: Optional[int] = None
+    citation: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class ExigenceStationnement:
+    """ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — résultat du barème pour le PROGRAMME dessiné : nb de places
+    exigé (résident + visiteur), la formule RETENUE, les candidats écartés, et les conditions NON
+    MODÉLISABLES (ex. « ≥ 0,5 place à l'extérieur ») à afficher « à vérifier » — jamais comptées comme
+    satisfaites. `couvert` = tous les logements ont trouvé une ligne (sinon la règle ne couvre pas le
+    programme → le contrôle reste « Non vérifié »)."""
+    places: int
+    places_residents: int
+    places_visiteurs: int
+    base: str
+    formule: str
+    formules_ecartees: tuple[str, ...]
+    conditions: tuple[str, ...]
+    couvert: bool
+    details: dict
 
 
 @dataclass(frozen=True)
 class BaremeStationnement:
     validee: bool
-    mode: str                 # 'par_logement' | 'par_typologie' | 'absent'
+    mode: str                 # 'par_logement' | 'par_typologie' | 'par_m2_sdp' | 'absent'
     base: Optional[str]       # 'pieces' | 'surface_plancher' | None
     arrondi: str              # 'inferieur' | 'superieur'
     flat_places: Optional[float]
@@ -61,13 +112,24 @@ class BaremeStationnement:
     article: Optional[str]
     page_pdf: Optional[int]
     citation: Optional[str]
+    # ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — formes enrichies (toutes facultatives, rétro-compatibles).
+    m2_par_place: Optional[float] = None          # mode 'par_m2_sdp' : 1 place / N m² de SDP (tranche complète)
+    retenue: str = "max"                          # entre formules concurrentes : 'max' (la plus exigeante)
+    visiteurs: Optional[Visiteurs] = None
+    conditions: tuple[str, ...] = ()              # exigences non modélisables, à afficher « à vérifier »
 
     def places_pour(self, *, pieces: int, sdp_m2: float, destination: str = "collectif") -> Optional[float]:
+        """Ratio par logement pour un logement (aperçu/jauge). Ne renvoie que la part RÉSIDENT par logement
+        (les parts d'opération/visiteur se lisent au niveau du programme via `exiger`)."""
         if not self.validee:
             return None
         if self.mode == "par_logement":
             return self.flat_places
+        if self.mode == "par_m2_sdp" and self.m2_par_place:
+            return sdp_m2 / self.m2_par_place
         for l in self.lignes:
+            if l.role != "base" or l.places is None:
+                continue
             if l.destination != destination:
                 continue
             if l.pieces_min is not None and pieces < l.pieces_min:
@@ -81,8 +143,109 @@ class BaremeStationnement:
             return l.places
         return None
 
-    def arrondir(self, total: float) -> int:
-        return int(math.floor(total + 1e-9)) if self.arrondi == "inferieur" else int(math.ceil(total - 1e-9))
+    def arrondir(self, total: float, sens: Optional[str] = None) -> int:
+        s = sens or self.arrondi
+        return int(math.floor(total + 1e-9)) if s == "inferieur" else int(math.ceil(total - 1e-9))
+
+    # ------------------------------------------------------------------ exigence au niveau du PROGRAMME
+    def _ligne_base(self, pieces: int, sdp_m2: float, destination: str) -> Optional[LigneBareme]:
+        for l in self.lignes:
+            if l.role != "base" or l.places is None or l.destination != destination:
+                continue
+            if l.pieces_min is not None and pieces < l.pieces_min:
+                continue
+            if l.pieces_max is not None and pieces > l.pieces_max:
+                continue
+            if l.sdp_min is not None and sdp_m2 < l.sdp_min:
+                continue
+            if l.sdp_max is not None and sdp_m2 >= l.sdp_max:
+                continue
+            return l
+        return None
+
+    def exiger(self, modules, *, destination: str = "collectif") -> Optional[ExigenceStationnement]:
+        """Places exigées par le barème pour le PROGRAMME `modules` (chacun porte `.pieces` et
+        `.surface_m2`). Applique la règle du type de projet (`destination`), retient la formule la PLUS
+        EXIGEANTE entre lectures concurrentes, ajoute les visiteurs, et remonte les conditions non
+        modélisables. None si le barème n'est pas validé."""
+        if not self.validee:
+            return None
+        n = len(modules)
+        sdp_tot = sum(float(getattr(m, "surface_m2", 0.0)) for m in modules)
+        conditions = tuple(self.conditions)
+        if n == 0:
+            return ExigenceStationnement(0, 0, 0, self.mode, "aucun logement", (), conditions, True, {})
+
+        candidats: list[tuple[float, str]] = []      # (places résident, libellé de formule)
+        couvert = True
+        details: dict = {}
+
+        if self.mode == "par_logement" and self.flat_places is not None:
+            tot = n * self.flat_places
+            candidats.append((self.arrondir(tot), f"{self.flat_places:g} place/logt × {n} logts"))
+        elif self.mode == "par_m2_sdp" and self.m2_par_place:
+            tot = math.ceil(sdp_tot / self.m2_par_place - 1e-9)   # tranche COMPLÈTE
+            candidats.append((tot, f"1 place / {self.m2_par_place:g} m² (tranche complète) · SDP {sdp_tot:.0f} m²"))
+        elif self.mode == "par_typologie":
+            # (a) règle de BASE, logement par logement (par pièces ou surface)
+            base_tot = 0.0
+            par_ligne: dict[str, int] = {}
+            for m in modules:
+                l = self._ligne_base(int(getattr(m, "pieces", 0)), float(getattr(m, "surface_m2", 0.0)), destination)
+                if l is None:
+                    couvert = False
+                    continue
+                base_tot += l.places
+                par_ligne[l.libelle or f"{l.places:g}/logt"] = par_ligne.get(l.libelle or f"{l.places:g}/logt", 0) + 1
+            if couvert and base_tot > 0:
+                candidats.append((self.arrondir(base_tot), "barème par typologie : "
+                                  + " + ".join(f"{v}×{k}" for k, v in par_ligne.items())))
+                details["par_typologie"] = par_ligne
+            # (b) formules d'OPÉRATION et ALTERNATIVES (déclenchées selon logements_min), retenue = la plus exigeante
+            for l in self.lignes:
+                if l.role not in ("operation", "alt"):
+                    continue
+                if l.destination != destination:
+                    continue
+                if l.logements_min is not None and n < l.logements_min:
+                    continue
+                if l.par_m2 is not None:
+                    v = math.ceil(sdp_tot / l.par_m2 - 1e-9)
+                    candidats.append((v, f"1 place / {l.par_m2:g} m² SDP (tranche complète) · {sdp_tot:.0f} m²"))
+                elif l.places is not None:
+                    v = self.arrondir(n * l.places, l.arrondi)
+                    seuil = f" (opération > {l.logements_min - 1} logts)" if l.logements_min else ""
+                    candidats.append((v, f"{l.places:g} place/logt × {n} logts{seuil}, arrondi {l.arrondi or self.arrondi}"))
+
+        if not candidats:
+            # barème validé mais aucune ligne ne couvre le programme dessiné → on ne force pas « Réussi ».
+            return ExigenceStationnement(0, 0, 0, self.mode, "règle ne couvrant pas le programme",
+                                         (), conditions, False, details)
+
+        # la PLUS EXIGEANTE des lectures concurrentes (mandat : « on applique la plus exigeante et on l'écrit »)
+        if self.retenue == "max":
+            residents, formule = max(candidats, key=lambda c: c[0])
+        else:
+            residents, formule = candidats[0]
+        ecartees = tuple(f"{lib} = {int(v)}" for v, lib in candidats if (v, lib) != (residents, formule))
+
+        # visiteurs (part additionnelle)
+        vis = 0
+        if self.visiteurs is not None:
+            vz = self.visiteurs
+            if vz.par_logements:
+                vis = math.ceil(n / vz.par_logements - 1e-9) * vz.places
+            elif vz.par_m2_sdp:
+                vis = math.ceil(sdp_tot / vz.par_m2_sdp - 1e-9) * vz.places
+            vis = int(math.floor(vis + 1e-9) if vz.arrondi == "inferieur" else math.ceil(vis - 1e-9))
+            if vis:
+                details["visiteurs"] = vis
+
+        residents = int(residents)
+        return ExigenceStationnement(
+            places=residents + vis, places_residents=residents, places_visiteurs=vis,
+            base=self.mode, formule=formule, formules_ecartees=ecartees,
+            conditions=conditions, couvert=couvert, details=details)
 
     @property
     def citation_complete(self) -> Optional[str]:
@@ -255,31 +418,88 @@ def _leaf_val(leaf: Optional[dict], key: str, nom: str, unite: str) -> Regle:
     )
 
 
+def _norm_arrondi(v, defaut: str = "superieur") -> str:
+    s = str(v or "").strip().lower()
+    return s if s in ("inferieur", "superieur") else defaut
+
+
+def _parse_visiteurs(form: dict) -> Optional[Visiteurs]:
+    """ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — feuille `visiteurs` : places par tranche de logements OU de m²."""
+    v = form.get("visiteurs")
+    if not isinstance(v, dict) or not isinstance(v.get("places"), (int, float)):
+        return None
+    return Visiteurs(
+        places=float(v["places"]),
+        par_logements=v.get("par_logements"), par_m2_sdp=v.get("par_m2_sdp"),
+        arrondi=_norm_arrondi(v.get("arrondi")),
+        article=v.get("article"), page_pdf=v.get("page_pdf"), citation=v.get("citation"))
+
+
+def _parse_conditions(form: dict) -> tuple[str, ...]:
+    c = form.get("conditions")
+    if isinstance(c, str):
+        return (c,)
+    if isinstance(c, (list, tuple)):
+        return tuple(str(x) for x in c if str(x).strip())
+    return ()
+
+
+def _ligne_social(form: dict) -> Optional[LigneBareme]:
+    """Ligne du logement social (`social: {places: X}`), lue quand le projet est social."""
+    s = form.get("social")
+    if not isinstance(s, dict) or not isinstance(s.get("places"), (int, float)):
+        return None
+    return LigneBareme(places=float(s["places"]), destination="social", role="base",
+                       libelle=s.get("tranche") or "logement social")
+
+
 def _bareme(stat: dict) -> BaremeStationnement:
     pl = stat.get("par_logement") or {}
     pt = stat.get("par_typologie") or {}
-    # 1) par_logement scalaire validé
+    pm = stat.get("par_m2_sdp") or {}
+    # 1) par_logement scalaire validé — arrondi désormais LU dans la règle (défaut supérieur)
     if pl.get("statut") == "valide" and isinstance(pl.get("places"), (int, float)):
+        lignes = tuple(x for x in (_ligne_social(pl),) if x is not None)
         return BaremeStationnement(
-            validee=True, mode="par_logement", base=None, arrondi="superieur",
-            flat_places=float(pl["places"]), lignes=(),
-            article=pl.get("article"), page_pdf=pl.get("page_pdf"), citation=pl.get("citation"))
-    # 2) par_typologie validé (pièces OU surface de plancher)
+            validee=True, mode="par_logement", base=None, arrondi=_norm_arrondi(pl.get("arrondi")),
+            flat_places=float(pl["places"]), lignes=lignes,
+            article=pl.get("article"), page_pdf=pl.get("page_pdf"), citation=pl.get("citation"),
+            visiteurs=_parse_visiteurs(pl), conditions=_parse_conditions(pl))
+    # 2) par_m2_sdp validé — « une place par tranche de N m² de SDP » (ENFIN supporté : tranche complète)
+    if pm.get("statut") == "valide" and isinstance(pm.get("m2_par_place"), (int, float)):
+        lignes = tuple(x for x in (_ligne_social(pm),) if x is not None)
+        return BaremeStationnement(
+            validee=True, mode="par_m2_sdp", base="surface_plancher", arrondi=_norm_arrondi(pm.get("arrondi")),
+            flat_places=None, lignes=lignes, m2_par_place=float(pm["m2_par_place"]),
+            article=pm.get("article"), page_pdf=pm.get("page_pdf"), citation=pm.get("citation"),
+            visiteurs=_parse_visiteurs(pm), conditions=_parse_conditions(pm))
+    # 3) par_typologie validé (pièces OU surface OU formules d'opération/alternatives)
     if pt.get("statut") == "valide" and pt.get("detail"):
         lignes = []
         for d in pt["detail"]:
-            if not isinstance(d, dict) or d.get("places") is None:
+            if not isinstance(d, dict):
+                continue
+            if d.get("places") is None and d.get("par_m2") is None:
                 continue
             lignes.append(LigneBareme(
-                places=float(d["places"]),
+                places=float(d["places"]) if d.get("places") is not None else None,
+                par_m2=float(d["par_m2"]) if d.get("par_m2") is not None else None,
                 pieces_min=d.get("pieces_min"), pieces_max=d.get("pieces_max"),
                 sdp_min=d.get("sdp_min"), sdp_max=d.get("sdp_max"),
-                destination=d.get("destination") or "collectif", libelle=d.get("tranche") or d.get("typologie") or ""))
+                logements_min=d.get("logements_min"),
+                destination=d.get("destination") or "collectif",
+                role=d.get("role") or "base", arrondi=_norm_arrondi(d.get("arrondi"), None) if d.get("arrondi") else None,
+                libelle=d.get("tranche") or d.get("typologie") or ""))
+        sl = _ligne_social(pt)
+        if sl is not None:
+            lignes.append(sl)
         if lignes:
             return BaremeStationnement(
                 validee=True, mode="par_typologie", base=pt.get("base") or "pieces",
-                arrondi=pt.get("arrondi") or "superieur", flat_places=None, lignes=tuple(lignes),
-                article=pt.get("article"), page_pdf=pt.get("page_pdf"), citation=pt.get("citation"))
+                arrondi=_norm_arrondi(pt.get("arrondi")), flat_places=None, lignes=tuple(lignes),
+                article=pt.get("article"), page_pdf=pt.get("page_pdf"), citation=pt.get("citation"),
+                retenue=(pt.get("retenue") or "max"),
+                visiteurs=_parse_visiteurs(pt), conditions=_parse_conditions(pt))
     return BaremeStationnement(False, "absent", None, "superieur", None, (), None, None, None)
 
 

@@ -390,7 +390,8 @@ def _appliquer_programme_au_scenario(scenario, demande: dict, conv, regles) -> b
     scene.objets = [o for o in scene.objets if o.kind != "espace_libre"]
     poser_espaces_libres(scene)
     scene.finaliser_monde()
-    newcap = cap_mod.calculer(scene, conv, regles, scenario.terrain)
+    newcap = cap_mod.calculer(scene, conv, regles, scenario.terrain,
+                              getattr(scenario.capacite, "type_projet", "collectif"))
     scenario.capacite = newcap
     scenario.checks_geo = ctrl_mod.verifier_geometrie(scene, scenario.terrain, conv, newcap, regles)
     scenario.controles = ctrl_mod.controles_reglementaires(scene, scenario.terrain, conv, newcap, regles)

@@ -422,14 +422,40 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     # la capacité en retirant la contrainte — l'inverse de la prudence voulue).
     if b.validee and cap.places_imposees is not None:
         ok = cap.places >= cap.places_imposees
-        out.append(ControleReg("Stationnement", f"≥ {cap.places_imposees} places (barème validé)",
+        # ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — l'exigence expose la formule RETENUE (la plus exigeante) et la
+        # part visiteur ; le détail porte la lecture écartée, pour que le document dise POURQUOI ce nombre.
+        vis = getattr(cap, "places_imposees_visiteurs", 0) or 0
+        res = getattr(cap, "places_imposees_residents", None)
+        attendu = f"≥ {cap.places_imposees} places (barème validé)"
+        if vis:
+            attendu += f" — dont {res} résident + {vis} visiteur"
+        det = [f"écart {cap.places - cap.places_imposees:+d}"]
+        if getattr(cap, "stationnement_formule", None):
+            det.append("formule retenue : " + cap.stationnement_formule)
+        for f in getattr(cap, "stationnement_formules_ecartees", ()) or ():
+            det.append("lecture écartée : " + f)
+        out.append(ControleReg("Stationnement", attendu,
                                f"{cap.places} {place_mot}", REUSSI if ok else ECHOUE,
-                               b.citation_complete, f"écart {cap.places - cap.places_imposees:+d}"))
+                               b.citation_complete, " · ".join(det)))
+    elif b.validee and cap.places_imposees is None:
+        # ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — barème VALIDÉ mais ne couvrant pas le programme dessiné (forme
+        # non modélisable ou typologie non prévue) : « Non vérifié », jamais « Réussi ». On n'invente rien.
+        out.append(ControleReg("Stationnement", "règle ne couvrant pas le programme dessiné",
+                               f"{cap.places} {place_mot}", A_CONFIRMER, b.citation_complete,
+                               detail="le barème validé ne s'applique pas au programme tel que dessiné — "
+                                      "nombre de places non vérifié ici (à confirmer au règlement)"))
     else:
         # ETUDE-V6 — barème manquant = ambiguïté (exigence non chiffrée) → À confirmer, pas « Non effectué ».
         # CAPACITE-1 (C4) — la règle EXISTE au PLU, elle n'est pas ingérée par LABUSE (jamais « non réglementé »).
         out.append(ControleReg("Stationnement", "règle existante, non ingérée par LABUSE", f"{cap.places} {place_mot}",
                                A_CONFIRMER, detail="règle de stationnement existante au PLU mais non ingérée par LABUSE — à vérifier au règlement"))
+
+    # ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — conditions NON MODÉLISABLES du barème (ex. « dont au moins 0,5 place
+    # à l'extérieur des espaces privatisés ») : affichées « à vérifier », JAMAIS comptées comme satisfaites.
+    for cond in (getattr(cap, "stationnement_conditions", ()) or ()):
+        out.append(ControleReg("Stationnement — condition à vérifier", cond, "non modélisé",
+                               A_CONFIRMER, b.citation_complete if b.validee else None,
+                               detail="condition du barème non vérifiable par ce moteur — à confirmer au projet"))
 
     # ETUDE-V6-2 (Lot 3) — en SOUS-SOL, l'emprise du parking enterré doit tenir sous l'EMPRISE
     # RÉGLEMENTAIRE (CES × contenance) ; c'est ce contrôle (pas le comptage) qui plafonne la capacité.
@@ -558,7 +584,8 @@ _A_CONFIRMER_BLOQUANTS = frozenset({
     # ETUDE-FIABLE-1 (LOT C5) — PPR bleu touchant bâtiment/accès/sous-sol : bloque « Exploitable » (comme
     # l'ancien contrôle « PPR zone bleue » qui, lorsqu'il touchait le bâti, rendait l'étude non exploitable).
     "Prescriptions PPR à vérifier",
-    "Stationnement", "Prospect (hauteur relative)", "ER / EBC / SUP / servitudes",
+    "Stationnement", "Stationnement — condition à vérifier",
+    "Prospect (hauteur relative)", "ER / EBC / SUP / servitudes",
     "Accès (voie)",   # RECETTE-4 — accès hypothétique (aucune voie classée) → verdict non « Exploitable »
 })
 
