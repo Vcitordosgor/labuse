@@ -136,8 +136,8 @@ def _gardes_honnete(payload: dict, retenu: dict) -> list:
                        f"fiche ({_grp(sdp_f)} m², surface de plancher résiduelle) : à confronter avant de "
                        "retenir ce programme — ce document n'est donc pas « exploitable » en l'état.")
     if _bareme_stationnement_absent(payload):
-        raisons.append("Le barème de stationnement de cette zone n'est pas servi : le nombre de places "
-                       "n'est pas vérifié (stationnement non vérifié).")
+        raisons.append("La règle de stationnement de cette zone existe au PLU mais n'est pas ingérée "
+                       "par LABUSE : le nombre de places n'est pas vérifié (stationnement non vérifié).")
     return raisons
 
 
@@ -149,6 +149,30 @@ def _bareme_stationnement_absent(payload: dict) -> bool:
     _art = _art_label(reg.get("article"))
     return (reg.get("ratio_par_logement") is None and not reg.get("regle_courte")
             and not str(_art or "").upper().startswith("L151"))
+
+
+def scenario_etude_persiste(db, idu: str) -> dict | None:
+    """CAPACITE-1 (LOT C) — le scénario d'implantation PERSISTÉ pour la config PAR DÉFAUT de l'Étude
+    (collectif/équilibre/aérien), lu depuis les révisions (ETUDE-FIABLE-1) — SANS rejouer le moteur
+    (le Dossier/Comparatif seraient trop lents). Renvoie {"sdp_m2", "stationnement_applique"} ou None
+    si aucune Étude n'a été calculée pour cette parcelle. Sert à « surface à retenir » : Dossier et
+    Étude lisent alors LE MÊME scénario → même surface à retenir (garde-fou)."""
+    try:
+        from ..implantation import revisions as _rev
+        from ..implantation.service import _study_id
+        cfg = {"idus": [idu], "type_projet": "collectif", "objectif": "equilibre", "stationnement": "aerien"}
+        payload = _rev.charger(db, _study_id(cfg))
+    except Exception:  # noqa: BLE001 — lecture annexe, jamais bloquante pour le Dossier
+        return None
+    if not payload:
+        return None
+    retenu = scenario_retenu(payload)
+    sdp = ((retenu or {}).get("resume", {}) or {}).get("sdp_m2")
+    if sdp is None:
+        sdp = (payload.get("capacite_maximale") or {}).get("sdp_m2")
+    if sdp in (None, ""):
+        return None
+    return {"sdp_m2": sdp, "stationnement_applique": not _bareme_stationnement_absent(payload)}
 
 
 # ── choix du scénario retenu ────────────────────────────────────────────────────────────────
@@ -261,10 +285,12 @@ def _stationnement_3lignes(payload: dict, retenu: dict) -> str:
     # ni « exige un barème par typologie ». On le dit en clair : stationnement non vérifié.
     _bareme_absent = _rp is None and not g.get("regle_courte") and not _is_loi
     if _bareme_absent:
+        # CAPACITE-1 (C4) — ne pas laisser croire que le stationnement n'est pas réglementé : la RÈGLE
+        # EXISTE au PLU, elle n'est simplement pas ingérée par LABUSE (donc non déduite ici).
         return ('<section><h2>Stationnement &amp; mixité</h2>'
-                '<p><b>Stationnement non vérifié</b> — le barème de stationnement de cette zone n\'est pas '
-                'servi par LABUSE. Le nombre de places n\'est pas calculé ici ; il reste à vérifier au '
-                'règlement du PLU avant de retenir ce programme.</p></section>')
+                '<p><b>Stationnement non vérifié</b> — la règle de stationnement de cette zone existe au '
+                'règlement du PLU mais n\'est pas ingérée par LABUSE : le nombre de places n\'est pas '
+                'calculé ni déduit ici ; à vérifier au règlement avant de retenir ce programme.</p></section>')
     if _is_loi:
         lignes = [f"Le Code de l'urbanisme (art. {esc(_art)}) plafonne le stationnement à {esc(regleg)} "
                   "— le PLU ne s'applique que s'il est plus favorable ; éligibilité de la catégorie à confirmer."]
@@ -504,6 +530,28 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     # c'est le meilleur candidat de la recherche déterministe sous ces hypothèses, pas un plafond du PLU).
     if kmax is not None and n_dem is not None:
         txt += f" Meilleure capacité trouvée avec ces hypothèses : {kmax} logements."
+    # CAPACITE-1 (LOT C) — LA règle unique « surface à retenir » (même fonction que le Dossier) : le
+    # scénario d'implantation n'est retenu que si TOUS ses contrôles durs sont appliqués, stationnement
+    # compris (barème servi) ; sinon l'estimation rapide (jamais le plus grand chiffre par défaut).
+    from ..faisabilite.surface_retenue import surface_a_retenir
+    _gf = payload.get("_garde_fiche") or {}
+    _est_rapide = _gf.get("sdp_max_m2") or _gf.get("sdp_fiche_m2")
+    _scn_sdp = (retenu.get("resume") or {}).get("sdp_m2") if kmax else None
+    _scenario = ({"sdp_m2": _scn_sdp, "stationnement_applique": (not _stat_nv)}
+                 if _scn_sdp not in (None, "") else None)
+    _sar = surface_a_retenir(_est_rapide, _scenario)
+    # C3 — l'écart EXPLIQUÉ en une phrase chiffrée : occupation supposée (estimation rapide) vs
+    # occupation dessinée (scénario), sur la MÊME base zone × niveaux, + ce qui n'a pas été déduit.
+    _zone_impl = (t.get("zone_implantation_m2"))
+    _niv_scn = (payload.get("capacite_maximale") or {}).get("niveaux")
+    _occ_sup = (100.0 * _est_rapide / (_zone_impl * _niv_scn)) if (_est_rapide and _zone_impl and _niv_scn) else None
+    _occ_des = (100.0 * _scn_sdp / (_zone_impl * _niv_scn)) if (_scn_sdp and _zone_impl and _niv_scn) else None
+    _gap_phrase = ""
+    if _occ_sup and _occ_des:
+        _gap_phrase = (f"Écart avec l'estimation rapide : occupation supposée {round(_occ_sup)} % du gabarit "
+                       f"contre {round(_occ_des)} % dessinée")
+        _gap_phrase += (" ; le scénario ne déduit PAS le stationnement (règle existante, non ingérée par "
+                        "LABUSE)." if _stat_nv else " ; stationnement déduit.")
     cc = retenu["controles_compte"]
     # tuiles de synthèse (chaque nombre vient du payload : contrôles, règles, programme, terrain)
     emp = next((c for c in retenu["controles"] if c["nom"] == "Emprise au sol"), None)
@@ -575,6 +623,9 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
            if payload.get("terrain_suppose_libere") else '')
         + _au_html
         + f'<div class="{vclass}">{esc(txt)}</div>'
+        # CAPACITE-1 (LOT C) — la « surface à retenir » (règle unique) + l'écart chiffré expliqué (C3).
+        + f'<div class="verdict"><b>{esc(_sar["phrase"])}</b></div>'
+        + (f'<p class="note">{esc(_gap_phrase)}</p>' if _gap_phrase else '')
         # ETUDE-V6-4 (items 10/11/13) — LA phrase « ce qui limite », identique au bandeau de l'écran
         # (champ serveur unique). Absente si rien ne limite (terrain sans contrainte dominante).
         + (f'<p class="note"><b>Ce qui limite :</b> {esc(payload.get("facteur_limitant") or "")}.</p>'

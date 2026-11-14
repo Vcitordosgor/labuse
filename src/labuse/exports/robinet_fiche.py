@@ -481,7 +481,18 @@ def _c_piscine(db, idu, f):
 
 @extracteur("potentiel_verdict")
 def _c_potentiel(db, idu, f):
-    return _nz(f.get("potentiel_transformation"))
+    pt = f.get("potentiel_transformation")
+    # CAPACITE-1 (LOT C) — « surface à retenir » (RÈGLE UNIQUE) injectée DANS le verdict du potentiel,
+    # sans nouvelle donnée de registre : estimation rapide (table rase LIVE) vs scénario d'implantation
+    # PERSISTÉ (Étude). Le §3 du Dossier et l'Étude lisent la même règle → un seul chiffre par parcelle.
+    if isinstance(pt, dict) and not pt.get("cause"):
+        from ..faisabilite.surface_retenue import estimation_rapide_m2, surface_a_retenir
+        from .etude_faisabilite import scenario_etude_persiste
+        est = estimation_rapide_m2(db, idu)
+        scn = scenario_etude_persiste(db, idu)
+        if est not in (None, "") or scn is not None:
+            pt = {**pt, "surface_a_retenir": surface_a_retenir(est, scn)}
+    return _nz(pt)
 
 
 @extracteur("sdp_residuelle_m2")

@@ -122,7 +122,13 @@ def verdict_potentiel(valeurs: dict[str, Valeur]) -> Verdict | None:
             # EXPORTS-FIX-3 LOT 3 (#6) — la SDP est une surface de plancher ESTIMÉE : elle ne compte
             # ni le stationnement ni la pleine terre (qui réduisent le bâtissable net). On le DIT.
             extra += " (surface de plancher estimée, hors stationnement et pleine terre)"
-        return (f"Potentiel de construction : {libelle}{extra}.", "", "")
+        # CAPACITE-1 (LOT C) — la RÈGLE UNIQUE « surface à retenir » (même fonction que l'Étude) clôt
+        # le §3 : elle dit laquelle des deux grandeurs retenir et pourquoi. Jamais deux documents avec
+        # deux surfaces à retenir différentes (garde-fou). Portée par le verdict `p` (producteur
+        # db-aware `robinet_fiche._c_potentiel`), sans nouvelle donnée de registre. Absente si non calculée.
+        sar = p.get("surface_a_retenir") if isinstance(p, dict) else None
+        sar_txt = f" {sar['phrase']}" if isinstance(sar, dict) and sar.get("phrase") else ""
+        return (f"Potentiel de construction : {libelle}{extra}.{sar_txt}", "", "")
     return None
 
 

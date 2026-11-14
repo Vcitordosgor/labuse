@@ -48,12 +48,17 @@ Le seul maillon non réglementaire est le **45 %**.
 | **Emprise bâtie dessinée** | **199 m² = 75 %** de la zone | **mesuré par le solveur** (contrôle CES ≤ 306 m² → Réussi) |
 | Niveaux | R+4 (5 niv.) | sourcé — identique au 614 |
 | Pleine terre | 310 m² (≥ 102 m² requis) | mesuré, Réussi |
-| Stationnement | 0 place, « À confirmer » | barème Ud **non servi** → non contraignant (comme le 614) |
+| Stationnement | 0 place, « À confirmer » | règle Ud **existante au PLU, non ingérée par LABUSE** → non déduite (comme le 614) |
 | **SDP du scénario** | **888 m²** | somme des planchers dessinés |
 
 **L'écart +274 m² tient à un seul facteur : l'occupation.** Le moteur analytique
 pose **45 %** par hypothèse ; le solveur en **tasse 75 %** (199 m² au lieu de 123 m²).
-Même terrain, mêmes reculs, mêmes 5 niveaux, même stationnement non servi.
+Même terrain, mêmes reculs, mêmes 5 niveaux ; le stationnement (règle existante au PLU, non ingérée par LABUSE) n'est déduit dans aucun des deux.
+
+> **Correctif de vocabulaire (LOT C, décision Vic) :** à Saint-Pierre la règle de stationnement existe
+> (≈ 1 place / 75 m² de logement, art. Ud6) ; LABUSE ne l'a simplement pas ingérée. Les 888 m² sont donc
+> un **majorant** (stationnement non déduit), pas une capacité. On n'écrit plus « non opposable » ni
+> « aucun ratio » : « **règle existante, non ingérée par LABUSE** ».
 
 ---
 
@@ -81,7 +86,7 @@ Lu dans les `source` des étapes (calibrage PLU validé) :
 | **Emprise au sol (CES)** | **60 %** de l'unité foncière | Art. Ud3.4 · p. 83 |
 | **Hauteur** | 15 m à l'égout / 20 m au faîtage → **R+4** | Art. Ud3.5 · p. 84 |
 | **Reculs** | alignement ou **3 m** (voie) ; **3 m** séparatives | Art. Ud3.1/3.2 · p. 81-82 |
-| **Stationnement** | **barème non servi** par LABUSE pour Ud — aucun ratio opposable ici | (Art. 12, non calibré) |
+| **Stationnement** | **règle existante au PLU (≈ 1 place / 75 m², art. Ud6), non ingérée par LABUSE** → non déduite | Art. Ud6 |
 | **Pleine terre** | **20 %** min. en pleine terre (biotope 30 %) pour UF > 250 m² | Art. Ud5.1 · p. 91 |
 
 Donc : l'emprise (60 %), la hauteur et la pleine terre **sont** réglementées et sourcées.
@@ -123,7 +128,7 @@ stationnement n'est pas opposable. **Le seul facteur libre reste l'occupation (4
 - **Occupation 45 % → HYPOTHÈSE** (614) ; **emprise mesurée/tassée** (888). *← seule vraie divergence.*
 - Rendement SDP→habitable 80 % → hypothèse.
 - Densité 30 logts/ha/niveau → hypothèse (« filet ex-COS, le PLU ne fixe aucune densité »).
-- Stationnement → **PLU sourcé là où un barème est validé** (Le Tampon) ; **non appliqué** en Ud Saint-Pierre.
+- Stationnement → **ingéré et appliqué là où le barème est chargé** (Le Tampon) ; **règle existante au PLU mais non ingérée par LABUSE** en Ud Saint-Pierre (donc non déduite).
 - Pleine terre → **PLU sourcé**.
 
 ---

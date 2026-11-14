@@ -2305,6 +2305,9 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
     liste = aleas.get("liste") or []
     # 1) intensité Géorisques par aléa (entrées « Aléa X »).
     intensite: dict[str, dict] = {}
+    # CAPACITE-1 (C5) — TOUS les niveaux d'un aléa avec leur part (mouvement de terrain : fort 4 % ·
+    # moyen 27 % · faible 69 %), pas seulement le plus fort — comme le Dossier §4. Ordre fort→faible.
+    niveaux_parts: dict[str, list[tuple]] = {}
     # 2) zone PPR la plus contraignante touchant la parcelle (rouge > bleue) + part + document.
     ppr_zone = None   # "rouge" | "bleue"
     ppr_part = None
@@ -2330,13 +2333,15 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
                 if lab not in hazards:
                     hazards.append(lab)
                 niv = e.get("niveau")
-                # CAPACITE-1 (B2) — on garde le niveau le PLUS FORT du type (aleas_parcelle trie
-                # fort→faible : le premier vu est le plus fort), jamais le dernier (« faible ») qui
-                # masquait l'exposition réelle (BI0351 : mouvement de terrain affiché « Faible »
-                # alors que le fort/moyen portent la zone rouge).
+                # CAPACITE-1 (B2/C5) — on garde le niveau le PLUS FORT (aleas_parcelle trie fort→faible :
+                # le premier vu) pour les décisions de zone, ET on COLLECTE tous les niveaux avec leur
+                # part pour les AFFICHER (C5 : mouvement de terrain fort 4 % · moyen 27 % · faible 69 %,
+                # plus seulement « Faible »/le plus fort).
                 if lab not in intensite:
                     intensite[lab] = {"niveau": str(niv).capitalize() if niv else None,
                                       "part_pct": e.get("part_pct")}
+                niveaux_parts.setdefault(lab, []).append(
+                    (str(niv).capitalize() if niv else None, e.get("part_pct")))
         elif "ppr" in natl:
             z = "rouge" if "rouge" in natl else ("bleue" if "bleu" in natl else None)
             if z == "rouge" or (z == "bleue" and ppr_zone != "rouge"):
@@ -2379,11 +2384,14 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
         # comportement (1ᵉʳ hazard) plutôt que d'orpheliner la zone.
         _porte_zone = bool(ppr_zone) and (
             (lab in ppr_hazards) if ppr_hazards else (bool(hazards) and lab == hazards[0]))
-        niveau = it.get("niveau")
-        if not niveau:
+        # CAPACITE-1 (C5) — TOUS les niveaux de l'aléa avec leur part dans la colonne NIVEAU (fort 4 % ·
+        # moyen 27 % · faible 69 %), comme le Dossier §4 ; plus « seulement le plus fort ».
+        nps = [np for np in (niveaux_parts.get(lab) or []) if np[0]]
+        if nps:
+            niveau = " · ".join(f"{n}{f' {int(p)} %' if isinstance(p, (int, float)) else ''}" for n, p in nps)
+        else:
             niveau = ({"rouge": "Fort", "bleue": "Modéré"}.get(ppr_zone or "", "Signalé")
                       if _porte_zone else "Signalé")
-        part = it.get("part_pct") if it.get("part_pct") is not None else (ppr_part if _porte_zone else None)
         zone_part = None
         if _porte_zone and not _zone_part_affichee:
             # La PART de la zone (31 % sur BI0351) est celle du PPR, dite une SEULE fois (pas « 31 %
@@ -2395,8 +2403,8 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
             # Aléa AUSSI porté par la MÊME zone rouge/bleue (PPR multi-risque) — on nomme la zone sans
             # répéter la part, pour ne pas laisser croire à un cumul de surfaces.
             zone_part = f"Zone {ppr_zone} (même zone)"
-        elif ppr_zone is None and isinstance(part, (int, float)):
-            zone_part = f"{int(part)} %"
+        # CAPACITE-1 (C5) — hors PPR, la part de chaque niveau est déjà dans la colonne NIVEAU : on ne
+        # duplique plus un « N % » cumulé dans la colonne ZONE·PART.
         # L'implication de zone rouge/bleue va à CHAQUE aléa réellement porté par la zone ; les autres
         # (ex. submersion hors PPR ici) gardent l'implication neutre « Aléa signalé, hors zonage PPR ».
         implique = _implique(ppr_zone, ppr_doc) if _porte_zone else _implique(None, None)

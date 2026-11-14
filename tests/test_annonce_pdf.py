@@ -292,7 +292,7 @@ def test_risques_rows_une_ligne_par_alea_sans_doublon():
     assert len(rows) == 2                                        # 4 entrées → 2 aléas (plus de doublon)
     noms = {r["alea"] for r in rows}
     assert noms == {"Inondation", "Mouvement de terrain"}
-    assert all(r["niveau"] == "Fort" for r in rows)             # intensité Géorisques
+    assert all(r["niveau"].startswith("Fort") for r in rows)    # intensité Géorisques (+ part, C5)
     # EXPORTS-FIX-3 LOT 3 (#3) — la zone PPR (rouge, 23 % de la PARCELLE) est UNE : dite UNE SEULE fois
     # (sur le 1ᵉʳ aléa), pas répétée « 23 % par aléa ».
     assert rows[0]["zone_part"] == "Zone rouge · 23 %"
@@ -332,8 +332,9 @@ def test_risques_rows_ppr_multirisque_rattache_tous_les_aleas_nommes():
     # la part 31 % est dite UNE fois (pas de cumul 31 % + 31 %)
     parts = [r["zone_part"] for r in rows if r["zone_part"] and "%" in r["zone_part"]]
     assert len(parts) == 1 and "31" in parts[0]
-    # niveau affiché = le plus fort du type, pas le dernier (« faible »)
-    assert by["Mouvement de terrain"]["niveau"] == "Fort"
+    # CAPACITE-1 (C5) — le mouvement de terrain affiche TOUS ses niveaux avec leur part, fort d'abord
+    _mvt = by["Mouvement de terrain"]["niveau"]
+    assert _mvt.startswith("Fort 4 %") and "Faible 69 %" in _mvt
 
 
 def test_a_verifier_derive_des_donnees_max_3():

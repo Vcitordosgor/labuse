@@ -422,8 +422,9 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                                b.citation_complete, f"écart {cap.places - cap.places_imposees:+d}"))
     else:
         # ETUDE-V6 — barème manquant = ambiguïté (exigence non chiffrée) → À confirmer, pas « Non effectué ».
-        out.append(ControleReg("Stationnement", "barème non servi pour cette zone", f"{cap.places} {place_mot}",
-                               A_CONFIRMER, detail="exigence de stationnement non chiffrée ici — à confirmer au règlement"))
+        # CAPACITE-1 (C4) — la règle EXISTE au PLU, elle n'est pas ingérée par LABUSE (jamais « non réglementé »).
+        out.append(ControleReg("Stationnement", "règle existante, non ingérée par LABUSE", f"{cap.places} {place_mot}",
+                               A_CONFIRMER, detail="règle de stationnement existante au PLU mais non ingérée par LABUSE — à vérifier au règlement"))
 
     # ETUDE-V6-2 (Lot 3) — en SOUS-SOL, l'emprise du parking enterré doit tenir sous l'EMPRISE
     # RÉGLEMENTAIRE (CES × contenance) ; c'est ce contrôle (pas le comptage) qui plafonne la capacité.

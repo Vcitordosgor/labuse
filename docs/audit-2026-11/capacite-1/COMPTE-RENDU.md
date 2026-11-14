@@ -123,3 +123,74 @@ clause rassurante « (pas d'exclusion automatique) » servie sur une parcelle **
 - `tests/test_annonce_pdf.py` (B2, + nouveau test multi-risque), `tests/test_capacite_max.py` (B1 frontend),
   `tests/test_faisabilite.py` (verdict), `tests/test_risques_arbitrage.py` : **verts**.
 - Hook pré-push (secrets · front tsc+vitest · pytest unitaires · cohérence 12 témoins) : voir § ci-dessous.
+
+---
+
+# CAPACITÉ-1 — LOT C : une seule « surface à retenir », deux grandeurs nommées (décision Vic, rejet de ma proposition)
+
+La proposition du LOT A (faire du scénario « la » capacité) est écartée : le solveur est optimiste là où une
+règle manque (à Saint-Pierre le stationnement **existe**, art. Ud6 ≈ 1 place / 75 m², il n'est pas ingéré →
+888 m² est un **majorant**), il ne rend rien sur 8 parcelles / 11, et le plus grand chiffre irait contre la
+règle « jamais de faux positif ». Documents régénérés : **HT0538** et **AD0887** (Le Tampon, Étude complète) +
+**BI0351** (analyse). Chaque point cité depuis le fichier livré.
+
+## C1/C2 — deux grandeurs nommées + LA règle unique « surface à retenir »
+
+- **Deux noms, jamais confondus** : « **estimation rapide** » (moteur analytique, toute parcelle, base de la
+  fiche/Dossier/Comparatif/classement) et « **scénario d'implantation** » (Étude).
+- **Une seule fonction** `src/labuse/faisabilite/surface_retenue.py:surface_a_retenir`, lue par le Dossier (§3,
+  via l'extracteur `robinet_fiche._c_surface_a_retenir` + `verdicts.verdict_potentiel`) ET par l'Étude
+  (`etude_faisabilite`). Elle vaut le scénario **seulement si** une Étude existe et que son barème de
+  stationnement est appliqué ; sinon l'estimation rapide. L'estimation rapide est lue **en direct**
+  (`estimation_rapide_m2` → `parcel_faisabilite`, table rase) pour concorder entre documents même sur une
+  parcelle bâtie (colonne `sdp_max` du run partielle). Le Dossier relit le scénario **persisté** (révision),
+  sans rejouer le moteur (trop lent).
+
+**Cité — HT0538 Dossier §3 ET Étude** (même phrase) :
+> `Surface à retenir : 614 m² (estimation rapide). Le scénario dessiné atteint 888 m², non retenu tant que le
+> stationnement n'est pas vérifié.`
+
+**Cité — AD0887 Dossier §3 ET Étude** (même phrase) :
+> `Surface à retenir : 795 m² (scénario d'implantation, stationnement déduit). L'estimation rapide donnait
+> 1 047 m², hors stationnement.`
+
+## C3 — l'Étude explique l'écart en une phrase chiffrée
+
+**Cité — HT0538 Étude** : `Écart avec l'estimation rapide : occupation supposée 46 % du gabarit contre 67 %
+dessinée ; le scénario ne déduit PAS le stationnement (règle existante, non ingérée par LABUSE).`
+(Les % d'occupation sont **dérivés par parcelle** `sdp ÷ (zone × niveaux)`, d'où ~45–49 % selon l'assiette.)
+**Cité — AD0887 Étude** : `… occupation supposée 49 % du gabarit contre 37 % dessinée ; stationnement déduit.`
+
+## C4 — « règle existante, non ingérée par LABUSE » (plus « non opposable » / « aucun ratio »)
+
+Corrigé dans `etude_faisabilite.py` (section Stationnement + garde-fou), `implantation/controles.py` (libellé
+du contrôle), `faisabilite/engine.py` (avertissement) **et `DIAGNOSTIC.md`**.
+**Cité — HT0538 Étude** : `Stationnement non vérifié — la règle de stationnement de cette zone existe au
+règlement du PLU mais n'est pas ingérée par LABUSE …` ; contrôle : `Stationnement | règle existante, non
+ingérée par LABUSE | … | À confirmer`.
+
+## C5 — BI0351 : le mouvement de terrain affiche ses trois niveaux avec leurs parts
+
+**Cité — BI0351 Analyse d'annonce** :
+> `Mouvement de terrain   Fort 4 % · Moyen 27 % · Faible 69 %   Zone rouge (même zone)   Zone rouge du PPR La
+> Possession (2018) …`
+(plus « seulement le plus fort » ; la part de chaque niveau est dans la colonne NIVEAU). Le rattachement B2
+reste : la zone rouge porte inondation ET mouvement de terrain.
+
+## C6 — garde-fou : un seul « surface à retenir » par parcelle
+
+`tests/test_surface_retenue.py` : règle pure (sans/avec Étude, stationnement appliqué ou non, jamais le plus
+grand par défaut) + test `reel` `test_un_seul_surface_a_retenir_par_parcelle` qui **échoue si le chemin Dossier
+et le chemin Étude divergent** pour HT0538 (tous deux retiennent 614, estimation rapide). **Vert.**
+
+## Hors lot (à faire, listé seulement)
+
+1. **Ingérer les barèmes de stationnement** des communes où ils manquent (Saint-Pierre art. Ud6, etc.) — alors
+   l'Étude déduira le stationnement et « surface à retenir » pourra retenir le scénario.
+2. **Recaler le 45 %** (coef d'occupation) sur les résultats du solveur là où le stationnement est connu
+   (ex. occupation dessinée mesurée), pour rapprocher estimation rapide et scénario.
+
+## Tests LOT C
+
+- `tests/test_surface_retenue.py` (règle + garde-fou reel), `tests/test_annonce_pdf.py` (C5 niveaux), registre
+  intègre (`surface_a_retenir` déclarée + servie par le robinet constructibilité) : **verts**.

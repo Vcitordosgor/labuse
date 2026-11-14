@@ -153,6 +153,8 @@ LECTURES: tuple[Lecture, ...] = (
       "ESTIMER-2 (fix/estimer-2, D-6) — banc de précision de nuit : centroïde 2975, commune et contenance des parcelles jugées pour reproduire le rayon adaptatif et la surface de terrain servis ; harnais de mesure, aucun robinet servi."),
     L("parcels", "gabarit/scene.py", None, None,
       "GABARIT-3D-1 (pilote admin) — build_scene lit geom_2975 (contour cadastral du cadre + plan-clé) et commune (étiquette) pour la visionneuse 3D ; géométrie/libellé de la maquette, aucun chiffre du registre servi (invariant : scene.regles == gabarit_detail)."),
+    L("parcels", "faisabilite/surface_retenue.py", None, None,
+      "CAPACITE-1 (LOT C) — `estimation_rapide_m2` résout idu → id de parcelle (SELECT id) pour rejouer `parcel_faisabilite` (estimation rapide, table rase) ; résolution d'identifiant, aucun chiffre du cadastre servi ici."),
     L("dvf_mutation_detail", "pige/banc_estimer.py", None, None,
       "ESTIMER-3 (fix/estimer-3) — banc étendu aux niveaux d'information : nombre de pièces des ventes jugées et comparables, rejoué SANS FUITE pour mesurer le gain « pièces » de l'estimation semblable ; harnais de mesure, aucun robinet servi."),
     L("dvf_mutation_detail", "pige/estimer3.py", None, None,

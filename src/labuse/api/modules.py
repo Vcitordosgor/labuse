@@ -2421,8 +2421,16 @@ def _attach_garde_fiche(db: Session, payload: dict, idus) -> None:
     try:
         from ..faisabilite.potentiel_batir import potentiel_batir
         pot = potentiel_batir(db, idus[0])
-        payload["_garde_fiche"] = {"sdp_fiche_m2": pot.get("sdp_restante_m2"),
-                                   "motif_fiche": pot.get("motif")}
+        gf = {"sdp_fiche_m2": pot.get("sdp_restante_m2"), "motif_fiche": pot.get("motif")}
+        # CAPACITE-1 (LOT C) — l'ESTIMATION RAPIDE (table rase, moteur analytique) sert de base à
+        # « surface à retenir ». On la lit via la MÊME fonction que le Dossier (table rase LIVE), pour
+        # que les deux documents concordent même sur une parcelle bâtie (colonne de run partielle).
+        try:
+            from ..faisabilite.surface_retenue import estimation_rapide_m2
+            gf["sdp_max_m2"] = estimation_rapide_m2(db, idus[0])
+        except Exception:  # noqa: BLE001
+            gf["sdp_max_m2"] = None
+        payload["_garde_fiche"] = gf
     except Exception:  # noqa: BLE001 — le garde-fou ne casse jamais l'export
         pass
 

@@ -795,7 +795,10 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     else:
         regime = "non_applique"
         if ppl == A_VERIFIER:
-            avert.append(f"Stationnement non calibré pour la zone {rules.code} → garde-fou non appliqué (Art. 12).")
+            # CAPACITE-1 (C4) — la règle de stationnement EXISTE au PLU ; elle n'est pas ingérée par
+            # LABUSE (jamais « non réglementé »). Le garde-fou n'est donc pas appliqué, à vérifier.
+            avert.append(f"Stationnement : règle existante au PLU, non ingérée par LABUSE pour la zone "
+                         f"{rules.code} → garde-fou non appliqué, à vérifier au règlement (Art. 12).")
         elif ppl == NON_MODELISABLE:
             # M94 — norme PRÉSENTE mais pas par logement (par m² SDP / chambre / %SHON) : on le DIT,
             # jamais un défaut déguisé en local. Distinct de « absente » ci-dessous.
