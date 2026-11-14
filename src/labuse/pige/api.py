@@ -2376,14 +2376,15 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
             _zone_part_affichee = True
         elif ppr_zone is None and isinstance(part, (int, float)):
             zone_part = f"{int(part)} %"
-        # EXPORTS-FIX-3 LOT 3 (relecture, #1) — le COMMENTAIRE de zone (« Zone rouge du PPR — secteur
-        # très contraint… ») est une implication de ZONE : il ne se dit QU'UNE fois (sur le 1ᵉʳ aléa
-        # qui porte la zone), pas répété sur l'aléa suivant (faute : répété sur « mouvement de terrain
-        # faible » de BI0351). Les aléas suivants de la même zone renvoient à la ligne précédente.
-        if ppr_zone and not _premier_ppr:
-            implique = (f"Même zone {ppr_zone} du PPR (voir ci-dessus) ; cet aléa y est pris en compte.")
-        else:
-            implique = _implique(ppr_zone, ppr_doc)
+        # EXPORTS-FIX-3 LOT 3 (relecture 6, #1) — un aléa qui N'EST PAS porté par la zone PPR ne la
+        # mentionne PAS. Mesure géométrique sur BI0351 (parcelle 28 445 m²) : l'aléa « mouvement de
+        # terrain faible » couvre 19 508 m² (69 %) et son intersection avec la zone rouge (8 936 m²,
+        # 31 %) vaut 0 m² — il est ENTIÈREMENT HORS zone rouge (31 % + 69 % = 100 %, les deux emprises
+        # se complètent). SEULE la ligne qui PORTE la zone (celle qui affiche `zone_part`) reçoit
+        # l'implication de zone rouge/bleue ; les autres aléas gardent l'implication neutre, sans la
+        # zone. (Le tour précédent écrivait « Même zone rouge (voir ci-dessus) » : c'était faux, il
+        # affirmait un recouvrement inexistant.)
+        implique = _implique(ppr_zone, ppr_doc) if _premier_ppr else _implique(None, None)
         rows.append({"alea": lab, "niveau": niveau, "zone_part": zone_part, "implique": implique})
     # EXPORTS-FIX-3 LOT 3 (#e) — un risque présent sur la FICHE figure dans l'Analyse : la zone
     # inondable TRI (directive inondation, scénario fréquent/moyen/extrême) et le système

@@ -253,10 +253,12 @@ EXIGU-FIX-1 corrige déjà le libellé ; la bascule, elle, relève de la session
 
 Même règle que les tours précédents : une seule formule par fait, lue par tous les documents.
 
-1. **Analyse BI0351** — le commentaire de zone rouge n'est écrit qu'UNE fois. `pige/api._risques_rows`
-   porte un drapeau `_premier_ppr` : la première ligne du PPR porte le commentaire d'implication, les
-   lignes d'aléas suivantes (dont l'aléa faible) renvoient « Même zone … du PPR (voir ci-dessus) ; cet
-   aléa y est pris en compte. » — plus de répétition sur la ligne de l'aléa faible.
+1. **Analyse BI0351** — l'aléa faible ne mentionne PLUS la zone rouge (tranché par la géométrie, voir
+   § « Point 1 bis » ci-dessous). `pige/api._risques_rows` : SEULE la ligne qui porte la zone PPR (celle
+   qui affiche `zone_part`) reçoit l'implication de zone ; les autres aléas gardent l'implication neutre
+   « Aléa signalé (Géorisques), hors zonage PPR réglementaire sur la parcelle ». (Les deux formulations
+   précédentes — « 69 % » collés à l'étiquette rouge, puis « Même zone rouge (voir ci-dessus) » — étaient
+   fausses : l'aléa faible ne recouvre aucune part de la zone rouge.)
 2. **PLU de La Possession** — le 17/12/2025 est la date d'**approbation**, pas de publication.
    `exports/miroir._r_statut_plu` : « version servie par LABUSE, dernière approbation le 17/12/2025
    (une évolution publiée depuis au GPU n'est pas confrontée ici) ».
@@ -321,3 +323,30 @@ La correction juste de cette branche n'est donc pas de trancher un chiffre (ce s
 mais d'**empêcher l'Étude de se dire « exploitable »** quand elle dépasse le verdict servi et repose sur
 un barème manquant (garde-fou du point 5). La réconciliation des deux moteurs (modéliser la hauteur du
 run de nuit, ou défalquer stationnement/pleine terre dans l'étude) relève d'un futur mandat moteur.
+
+---
+
+## Point 1 bis — tranché par la géométrie : l'aléa faible recouvre-t-il la zone rouge ? (BI0351)
+
+Deux sessions ont conclu l'inverse ; la mesure PostGIS départage (14/11/2026, `97408000BI0351`).
+
+| Emprise sur la parcelle | Surface | Part |
+|---|---:|---:|
+| Parcelle | 28 445,0 m² | 100 % |
+| **Aléa mouvement de terrain — faible** (union Géorisques) | **19 508,5 m²** | **68,6 % ≈ 69 %** |
+| **PPR zone rouge** (couche `ppr`, subtype INTERDICTION) | **8 936,5 m²** | **31,4 % ≈ 31 %** |
+| **Aléa faible ∩ zone rouge** | **0,0 m²** | **0 %** |
+| Aléa faible hors zone rouge | 19 508,5 m² | tout l'aléa faible |
+
+**Verdict : l'aléa faible est ENTIÈREMENT hors de la zone rouge.** 19 508 + 8 936 ≈ 28 445 : les deux
+emprises se complètent (69 % + 31 % = 100 %), elles ne se chevauchent pas. La zone rouge couvre les
+secteurs d'aléa **moyen** (27,1 %) et **élevé** (4,4 %) du mouvement de terrain (27,1 + 4,4 ≈ 31 %) ; le
+faible occupe le reste. C'est donc l'autre session qui avait raison : le « 69 % » est la portion **hors**
+zone rouge, pas une part de la zone rouge.
+
+**Conséquence appliquée.** La ligne de l'aléa faible ne mentionne plus la zone rouge. Phrase citée du
+fichier livré `97408000BI0351/05-analyse-annonce-adresse.pdf` : « **Mouvement de terrain · Faible · Aléa
+signalé (Géorisques), hors zonage PPR réglementaire sur la parcelle.** » La zone rouge n'est écrite que
+sur la ligne qui la porte : « Inondation · Fort · Zone rouge · 31 % · Zone rouge du PPR La Possession
+(2018) — secteur très contraint : construction neuve exclue, extension sous prescriptions strictes (étude
+géotechnique). »
