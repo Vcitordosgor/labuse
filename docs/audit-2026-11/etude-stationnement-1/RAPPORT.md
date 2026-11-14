@@ -1,221 +1,214 @@
 # Audit du stationnement dans l'Étude de faisabilité — ETUDE-STATIONNEMENT-AUDIT-1
 
-**Branche** `audit/etude-stationnement-1` · worktree `~/Desktop/labuse-stationnement` · **lecture seule, aucun run, aucune prod.**
-Le livrable est ce rapport. Aucun code n'a été modifié.
+**Branche** `audit/etude-stationnement-1` · worktree `~/Desktop/labuse-stationnement` · **lecture seule, aucune modification de code.**
+Le livrable est ce rapport.
 
-## Cadre et limites de lecture
+## Cadre et sources (révisé — avec la base locale)
 
-Ce que LABUSE **sert hors-ligne** (ce que j'ai pu lire sans lancer l'application) :
-- les **barèmes ingérés** par commune/zone dans `config/plu_destinations/<insee>_*.yaml` (feuille `regles.stationnement`), avec leur `article`, `page_pdf`, `citation`, `statut` ;
-- le **code** du moteur d'implantation qui lit et applique ces barèmes.
+Cette version lit le **texte réel des règlements servis par LABUSE**, dans la base PostgreSQL locale (table `plu_reglement_extrait`, texte verbatim extrait des PDF opposables). **Toutes les citations réglementaires ci-dessous sont VERBATIM de la base.** Plus aucune valeur n'est reprise d'une relecture extérieure dès lors que le texte est lisible en base.
 
-Ce que LABUSE **ne sert pas hors-ligne** : le **texte verbatim intégral** du règlement PLU. Il vit dans une table PostgreSQL (`plu_reglement_extrait`, cf. `src/labuse/ingestion/plu_ingest.py`) peuplée à l'ingestion depuis les PDF — **inaccessible en lecture seule sans base**. Le seul texte réglementaire lisible hors-ligne est le champ `citation` de chaque feuille, qui est un **extrait** (souvent partiel) du règlement.
+Deux sources distinctes, ne pas les confondre :
+- **Barème ingéré** = ce que LABUSE *applique* : feuille `regles.stationnement` des YAML `config/plu_destinations/<insee>_*.yaml` (valeur, statut `propose`/`valide`, citation).
+- **Texte opposable** = ce que dit le PLU : `plu_reglement_extrait` (verbatim, article, page).
 
-**Conséquence appliquée dans tout le rapport (consigne du mandat « n'invente rien ») :** quand le barème d'une destination (p. ex. le collectif) **n'est pas ingéré**, je le dis — je ne reconstitue pas le texte réglementaire manquant. Les valeurs attribuées au texte du collectif pour Le Tampon et au texte Ud6 de Saint-Pierre proviennent de la **relecture indépendante citée par le mandat** ; je les signale comme **à valider par un humain sur le PLU**, pas comme un fait vérifié par LABUSE.
+**Limites honnêtes de la base** (dit, jamais comblé par invention) — le texte de la norme de stationnement **n'est pas servi** pour :
+- **L'Étang-Salé (97404)** : extraction partielle (12 pages sur ~97) ; les articles 2.7/2.7.3 ne sont pas dans la table.
+- **Saint-André (97409)** et **Saint-Leu (97413)** : **aucune ligne** dans la table (règlement non ingéré).
+- **La Plaine-des-Palmistes (97406)** : seule la « Définition » §12.1 est en base ; le barème chiffré renvoie à une **annexe non ingérée**.
+- **Saint-Denis (97411)** : le barème général est dans « Dispositions générales — XVII. Stationnement », **non ingéré** comme ligne ; seuls des fragments de zone existent.
+- **Saint-Philippe (97417)** : commune au **RNU**, aucun PLU.
+
+Setup effectué pour cette session : `.env` copié depuis `~/Desktop/labuse-main` (base via le rôle `openclaw`), dépendances front installées (`frontend/node_modules`). Lecture de la base vérifiée (relecture d'une phrase connue).
 
 ---
 
 ## 1. Comment le moteur choisit et applique la règle de stationnement
 
-### 1.1 Où la règle est stockée
+(Inchangé par la lecture en base — confirmé.)
 
-Un YAML par commune, `config/plu_destinations/<insee>_<slug>.yaml`, zone par zone, feuille `regles.stationnement`. Trois formes sont **déclarées** (`REGLES_RUBRIQUES["stationnement"] = ("par_logement", "par_m2_sdp", "par_typologie")`, `destinations.py:546`) :
+### 1.1 Stockage
+Un YAML par commune, feuille `regles.stationnement`, trois formes **déclarées** (`destinations.py:546`) : `par_logement` (scalaire plat), `par_typologie` (lignes bornées par pièces **ou** surface, avec `destination` et `arrondi`), `par_m2_sdp` (place par tranche de m²). Verrou : seule une feuille `valide` **avec citation** sert un verdict « Réussi ».
 
-| forme | sens |
-|---|---|
-| `par_logement` | un **scalaire** : N places par logement (plat) |
-| `par_typologie` | une **liste de lignes**, chacune bornée par `pieces_min/max` **ou** `sdp_min/max`, avec un champ `destination` (`individuel`/`collectif`) et un `arrondi` |
-| `par_m2_sdp` | une place par tranche de m² de surface de plancher |
+### 1.2 Lecture — le point dur
+`_bareme()` (`regles.py:258-283`) ne construit un barème **que** depuis `par_logement` et `par_typologie`. **`par_m2_sdp` est déclaré mais consommé par aucun code** (`grep` : commentaires seulement). Une règle « 1 place par tranche de N m² » **ne peut structurellement pas être servie** → elle reste `propose/None`, le contrôle tombe en « À confirmer ». C'est exactement le cas de **Saint-Pierre Ud** (§3.2).
 
-Chaque feuille porte `statut: propose|valide`. Verrou (`regles.py:3-5`) : **seule une feuille `valide` avec citation est utilisable pour un verdict « Réussi »** ; `propose` ou absente ⇒ non servie.
+### 1.3 Distinctions perdues — trois causes structurelles
+1. **Le moteur ne dessine que du collectif** : `poser_barre` (`geometrie.py:278`) empile des modules T1–T4 (`conventions.yaml` : 30/56/70/80 m², 1–4 pièces) ; aucun chemin individuel.
+2. **`destination="collectif"` codé en dur** à tous les appels du moteur (`capacite.py:81`, `service.py:336/451/823`). Même quand un `par_typologie` porte une ligne individuelle et une collective, le moteur prend toujours la collective.
+3. **Aucune notion de taille d'opération, visiteurs, logement social** dans le barème (seuils réservés à la mixité). Les suppléments « > 5 logements », « 1 visiteur / N m² », « 1 place / 2 logements aidés » des règlements **ne sont jamais appliqués**.
 
-### 1.2 Comment elle est lue
+De plus, `par_logement` **force `arrondi="superieur"`** (`regles.py:264`), ignorant le YAML ; seul `par_typologie` lit l'arrondi. Plusieurs textes disent « arrondi à l'entier **inférieur** » (Sainte-Rose, Trois-Bassins), d'autres « **supérieur** » (Sainte-Suzanne, Salazie) : le plat applique toujours supérieur.
 
-`regles.charger(insee, zone)` → `_bareme(reg["stationnement"])` (`regles.py:258-283`) construit un `BaremeStationnement`. **Point capital : `_bareme` ne lit que `par_logement` et `par_typologie`.** La forme `par_m2_sdp`, pourtant déclarée, **n'est consommée par aucun code** (`grep par_m2_sdp src/**/*.py` ne trouve que des commentaires et le gabarit de revue). Une règle « 1 place par tranche de 75 m² » **ne peut donc pas être servie** — elle reste `propose/None` et le contrôle tombe en « À confirmer ».
-
-`BaremeStationnement.places_pour(pieces, sdp_m2, destination)` (`regles.py:65-82`) :
-- mode `par_logement` → renvoie `flat_places` **sans regarder `destination` ni `pieces` ni `sdp`** (ligne 68-69) ;
-- mode `par_typologie` → parcourt les lignes, filtre par `destination`, puis par tranche `pieces` ou `sdp`.
-
-### 1.3 Ce qu'elle distingue — et ce qu'elle ignore
-
-Le modèle de données **peut** distinguer individuel/collectif (champ `destination`), les tranches de pièces ou de surface, et le sens d'arrondi. **Mais le moteur, tel qu'appliqué, perd ces distinctions pour trois raisons structurelles :**
-
-1. **Le moteur ne dessine que du collectif.** `poser_barre` (`geometrie.py:278`) empile des « modules » sur des niveaux ; il n'existe **aucun chemin** qui dessine de l'habitat individuel. Les typologies sont figées dans `config/implantation_conventions.yaml` : `T1 30 m²/1p · T2 56/2 · T3 70/3 · T4 80/4`, toutes collectives. Motif par défaut `repartition_equilibre: [T2,T3,T2,T4,T2,T3]`.
-2. **La destination est codée en dur `"collectif"`** à **tous** les points d'appel du barème dans le moteur (`capacite.py:81`, `service.py:336/451/823`). Aucun appel `destination="individuel"` dans le moteur (seul `lotissement.py:274`, module séparé, l'utilise). Donc même quand un barème `par_typologie` contient une ligne individuelle **et** une collective (cas Étang-Salé UA, Saint-André UC), le moteur prend toujours la ligne collective — ce qui est cohérent avec ce qu'il dessine.
-3. **Aucune notion de taille d'opération, de visiteurs, de logement social dans le barème.** `grep visiteur|lotissement|seuil` dans `implantation/` : les seuils n'existent que pour la **mixité** (`capacite.py:167-177`), jamais pour le stationnement. Les suppléments « au-delà de 5 logements », « 1 place visiteur / 100 m² » ou « 1 place / 2 logements aidés » présents dans les citations **ne sont jamais appliqués**.
-
-De plus, le mode `par_logement` **force `arrondi="superieur"`** (`regles.py:264`) et ignore tout champ `arrondi` du YAML ; seul `par_typologie` lit l'arrondi (`regles.py:281`). Plusieurs règlements disent « arrondi à l'entier **inférieur** » (Saint-André, Sainte-Rose, Saint-Louis UZ, Trois-Bassins) : le moteur arrondit à l'envers (sans danger ici — il exige *plus* de places — mais non fidèle).
-
-### 1.4 Comment le nombre de places devient une surface
-
-Le comptage et le dimensionnement sont **séparés** :
-- **Exigence** : `_places_imposees` (`capacite.py:71-87`) somme, par typologie dessinée, `n × places_pour(...)`, puis arrondit → `cap.places_imposees`.
-- **Offre** : les places réellement **dessinées** au sol (objets `place`, 2,5 × 5 m) sont comptées (`cap.places`) ; leur surface = places + allées (5 m) + accès (4 m), mesurée sur la géométrie ; `m²/place = (places+allées+accès)/nb`. En sous-sol : `25 m²/place` (`conventions.yaml`).
-- **Contrôle** (`controles.py:415-426`) : si barème `validee` et `places_imposees` non nul → **Réussi** si `cap.places ≥ cap.places_imposees`, sinon **Échoué**, avec la citation du barème. **Si barème non servi → « À confirmer »** (réputé bloquant pour un verdict « Exploitable », `controles.py:550-557`).
-
-**Le stationnement ne rétroagit pas sur l'esquisse** : le moteur dessine d'abord l'enveloppe (logements × niveaux), puis compte les places. Quand le barème est absent, il dessine **0 place** et n'enlève aucune capacité (cas HT0538, §3).
+### 1.4 Places → surface
+`_places_imposees` (`capacite.py:71-87`) somme `n × places_pour(...)` par typologie dessinée puis arrondit → `places_imposees`. Les places **dessinées** (2,5 × 5 m) sont comptées séparément ; surface = places + allées (5 m) + accès (4 m) ; sous-sol 25 m²/place. Contrôle (`controles.py:415-426`) : barème servi ⇒ **Réussi** si `places ≥ places_imposees`, sinon **Échoué** ; **barème non servi ⇒ « À confirmer »** (bloquant pour « Exploitable »). **Le stationnement ne rétroagit pas sur l'esquisse** : le moteur dessine l'enveloppe, puis compte ; barème absent ⇒ 0 place, aucune capacité retranchée.
 
 ---
 
-## 2. Les 24 communes — barème ingéré vs règlement
+## 2. Les 24 communes — barème ingéré vs texte réel du PLU
 
-**Lecture du tableau.** « Barème servi » = ce que LABUSE applique réellement (feuille `valide`). « Texte (citation servie) » = l'extrait `citation` du YAML. **Écart** :
-- **absent** — aucun barème `valide` servi (feuille `propose`/`places:null`) ; le contrôle tombe en « À confirmer ».
-- **incomplet** — un taux plat `valide` est servi, mais il **laisse tomber** des distinctions présentes dans le texte cité (tranches de surface/pièces, visiteurs, > 5 logements, logement social).
-- **faux** — le taux servi applique la **mauvaise branche** (règle de l'individuel sur du collectif, ou tableau collectif écrasé en un seul nombre erroné).
-- **juste** — le taux servi correspond au texte pour un programme collectif (taux uniforme, pas de distinction plus fine dans le texte cité).
+**Écart** : **absent** (aucun barème `valide` servi) · **incomplet** (plat servi, distinctions du texte perdues) · **faux** (mauvaise destination/branche appliquée) · **juste** (plat servi = texte, taux uniforme). Jugé pour un **programme collectif** (ce que le moteur dessine). Citations **verbatim de la base** ; quand le texte n'est pas en base, c'est dit et la source du barème reste le YAML.
 
-> Le moteur ne dessinant que du **collectif**, l'« Écart » est jugé **du point de vue d'un programme collectif** (ce que l'Étude produit). La colonne « individuel » renseigne ce que le texte servi dit de l'individuel quand il le distingue ; « — » = le texte servi ne distingue pas, ou n'est pas ingéré.
+| Commune | Barème servi | Art. · p. (base) | Texte RÉEL du PLU (verbatim, habitation) | **Écart** |
+|---|---|---|---|---|
+| **Les Avirons** (97401) | `par_logement` **1,5** | U 12 · p.16 | « 1,5 place par logement. En outre, 0,5 place supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. **Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places devra être retenue.** » | **incomplet** — la **règle collective** (1,25/logt **ou** 1/35 m², max) et le supplément > 5 lots **non appliqués** (1/35 m² peut dépasser 1,5 pour les grands logements → sous-compte possible) |
+| **Bras-Panon** (97402) | `par_logement` **1,0** | UA/UB/UC/UD 12 · p.21-61 | « Logements aidés : 1 place maximum / logement aidé. Autres logements : **1 place/logt ≤ 100 m² ; 1,5 place/logt ≥ 100 m²**. » (foyers 1/3) | **incomplet** — tranche ≥ 100 m² écrasée à 1,0 ; plafond aidé ignoré |
+| **Entre-Deux** (97403) | `par_logement` **2,0** | U12 · p.27 | « Prêt aidé : 1 place max/logt **+ 1 visiteur par tranche de 10 logements**. Autres logements : **2 places/logt + 1 visiteur par tranche de 5 logements ou 5 lots**. » | **incomplet** — part **visiteur** non appliquée |
+| **L'Étang-Salé** (97404) | UA `par_typologie` (coll 1-2p=1/3-4p=1,5/5p+=2 ; indiv=2) ; autres zones `propose` | UA 2.7.3 · p.22 *(barème = YAML)* | **Texte NON servi en base** (extraction 12 p./97) — impossible de relire le verbatim | **UA : juste** (typologie, source YAML) · **autres : absent** · *texte non vérifiable en base* |
+| **Petite-Île** (97405) | `par_logement` **1,0** | UB/UC/UD/1AU .12 · p.31-96 | « 1 place de stationnement par logement ; LLTS : 0 place ; **toute opération de logements collectifs : 20 % de l'espace de stationnement aérien perméable**. » | **juste** — carve-out LLTS=0 et clause 20 % perméable (pleine terre) non servis (mineur) |
+| **La Plaine-des-Palmistes** (97406) | `par_logement` **1,5** | Ua/Ub/Uc/Ur 12 · p.103 *(barème = annexe)* | Base = §12.1 **définition** seule ; le barème renvoie « **cf. annexe du règlement** » **non ingérée** | **juste/incomplet** — valeur « 1,5 (logt > 30 m²) » issue de l'annexe citée (YAML), **non relisible en base** |
+| **Le Port** (97407) | `par_logement` **0,3** | Ua…Ud 12.1 · p.29-73 | « 0,3 place par logement. **En outre, 1 place pour visiteur par tranche de 100 m² de surface de plancher.** » (LLTS : 0,2/logt + 8/1000 m²) | **incomplet** — part **visiteur / 100 m²** non appliquée |
+| **La Possession** (97408) | `par_logement` **2,0** | UA/UB/AUBM 12 · p.20-78 | « Prêt aidé (LLTS/LLS/PLS) : 1/logt (0,5 si < 500 m TCSP). **Autres ≤ 50 m² : 1/logt + 1 visiteur / 5 logts** ; **autres > 50 m² : 2/logt** ; structures spécifiques 1/3. » | **incomplet** — tranche ≤ 50 m², **visiteur**, social non servis |
+| **Saint-André** (97409) | UC `par_typologie` (<50 m²=1/≥50 m²=1,5) ; autres `propose` | UC 12.2 · p.42 *(barème = YAML)* | **Aucune ligne en base** (règlement non ingéré) | **UC : incomplet** (réductions aidé/TCSP non servies) · **autres : absent** · *texte non vérifiable en base* |
+| **Saint-Benoît** (97410) | `par_logement` **1,0** | U 12 · p.17 | « Individuel, ≤ 5 logts : 1/logt. **Opération > 5 logts : 1/logt + 1 visiteur par tranche de 5.** Aidés : 1 pour 2. Résidences univ./âgées : 1 pour 3. » | **incomplet** — supplément **> 5 logts** (visiteur), social, résidences non appliqués |
+| **Saint-Denis** (97411) | `par_logement` **1,0** | XVII Stationnement · p.19 *(gén. non ingéré)* | Base = renvois de zone + fragments (aidés réhab. 0,8/0,2 ; 1/3 en sous-sol secteurs Uac/d/t). Barème général XVII (« 1/logt < 100 m² ») **non ingéré** comme ligne | **incomplet** — tranche ≥ 100 m² et dispositions de secteur non servies ; *barème général non relisible en base* |
+| **Saint-Joseph** (97412) | `par_logement` **1,0 / 2,0** | U1-U5 12.2 · p.24-84 | « 1 (U1,U2,U4) ou 2 (U3,U5) place min/logt. **+ 1 place par tranche de 10 logements** ; prêt aidé 1/logt (0,5 si < 500 m TCSP) ; RPA 0,5/logt aidé + 2 visiteurs/10 logts. » | **incomplet** — supplément 1/10 logts, RPA, TCSP non servis (taux de base juste) |
+| **Saint-Leu** (97413) | `par_logement` **2,0** (= indiv) | Art. 11 disp. gén. · p.13 *(barème = YAML)* | **Aucune ligne en base**. Citation YAML du texte : « **Habitat collectif** : chambre 0,5 ; studio-2p 1 ; 3-5p 1,5 ; 6p+ 2. **Habitat individuel 2** » | **faux** — le 2 (individuel) appliqué au collectif ; tableau collectif ignoré · *texte non en base, citation YAML* |
+| **Saint-Louis** (97414) | `par_logement` **2,0** (UZ **1,5**) | UA-UD 12.2 · p.22-65 | « Logements sociaux : 1/logt. Autres : 2/logt. **Opérations > 10 logts : + 0,5 place publique/logt.** RPA : 1/3 logts + 1 visiteur/5. » (UZ : 1,5 ; social 1, arrondi supérieur) | **incomplet** — social, **> 10 logts**, RPA non servis |
+| **Saint-Paul** (97415) | `par_logement` **1,0-2,0** (par secteur) | 12.2 · p.30-288 | « **Logements aidés : 1/logt aidé.** Autres logements : N/logt (1 en U1a-d ; 1,5/2 selon secteur). » | **incomplet** — ligne **aidé** non servie ; plusieurs zones `propose` → **absent** |
+| **Saint-Pierre** (97416) | **Ud/Ucv `propose` (null)** ; Uf/Ug 1,5 ; Up 1,0 | **Ud6 · p.93** | **Ud (cas signalé) : « Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place/parcelle pour les lotissements d'habitat individuel. »** (tranche comptée entière) | **Ud : absent** — règle **par m² non supportée** (`par_m2_sdp`) → non servie |
+| **Sainte-Marie** (97418) | `par_logement` **1,5** | U13 - 13.2 · p.26 | « Prêt aidé : ≤ 1/logt (0,5 si < 500 m TCSP). **Privé < 100 m² : 1/logt.** Privé ≥ 100 m² : 1 logt → 2 ; **plusieurs logts → 1,5/logt**. Hébergement 1/3 chambres. » | **incomplet** — le 1,5 (≥ 100 m² multi) appliqué à tout ; les modules < 100 m² devraient être à **1/logt** (sur-compte), social/TCSP non servis |
+| **Sainte-Rose** (97419) | `par_logement` **1,5** | UA-UD 12 · p.15-42 | « Prêt aidé : 1/logt. **Logt < 50 m² : 1/logt.** Logt ≥ 50 m² : **1,5/logt, arrondi à l'entier inférieur**. » | **incomplet** — tranche < 50 m² et social non servis ; **arrondi forcé supérieur** (texte = inférieur) |
+| **Sainte-Suzanne** (97420) | `par_logement` **2,0** — **cite « U13 »** | **réel = U15 - 15.2 · p.17** | « Privé < 50 m² : 1/logt (**+ 0,5 publique/logt si opération > 10 logts**). Privé ≥ 50 m² : 2/logt. Aidé ≤ 1/logt. < 500 m TCSP : 1/logt. » (arrondi supérieur) | **incomplet + référence d'article FAUSSE** : le YAML cite **U13** (= continuités écologiques) au lieu de **U15.2** ; tranche < 50 m², > 10 logts, social non servis |
+| **Salazie** (97421) | `par_logement` **2,0** | U 12.2 · p.16 | « Aidé/intermédiaire/âgés/univ. : 1/logt. Privé ≤ 50 m² : 1/logt. **Privé > 50 m² : 2/logt.** » (arrondi supérieur) | **incomplet** — tranche ≤ 50 m² et social non servis |
+| **Le Tampon** (97422) | `par_logement` **1,0** — **cite « Habitat individuel »** | **Ud12.2 · p.66** | **« Habitat individuel : 1 place/logt. Habitat collectif (hors social) : 0,5/chambre-studio ; 1/logt 2 pièces ; 1,5/logt 3 pièces et plus. Lotissement ou opération > 5 lots ou logements : 1,5 place/logt, arrondi à l'entier inférieur, dont au moins 0,5 à l'extérieur des espaces privatisés. »** (aidé 1 max ; foyer 1/3) | **faux** — règle **individuelle appliquée au collectif** ; barème collectif + règle > 5 ignorés (§3.1) |
+| **Les Trois-Bassins** (97423) | `par_logement` **1,5** | Ua/Ub/Uc 12.2 · p.22-50 | « 1,5 place/logt, arrondi inférieur. **+ 0,5 sur voie/parcelle, lotissements > 5 lots. Opération d'habitat collectif : 1,25/logt ou 1/35 m² SP, la norme produisant le plus de places retenue, max 2/logt.** » | **incomplet** — règle collective (1,25 ou 1/35 m²) et supplément > 5 non servis |
+| **Cilaos** (97424) | `par_logement` **1,5** | Ua/Ub/Uc 12.2 · p.27-51 | « Pour les constructions à destination d'habitation : 1,5 place de stationnement par logement. » (pas de distinction) | **juste** |
+| **Saint-Philippe** (97417) | — | — | **RNU — aucun PLU, aucun zonage** | **absent** (hors périmètre PLU) |
 
-| # | Commune (INSEE) | Barème servi (zones U/AU) | Art. · p. | Collectif : texte servi | Individuel : texte servi | **Écart** |
-|---|---|---|---|---|---|---|
-| 1 | Les Avirons (97401) | `par_logement` **1,5** plat | U 12.2 · p.17 | « 1,5 place/logt » (pas de split indiv/coll) | — | **incomplet** — supplément « +0,5 place sur voie, lotissements > 5 lots » **jamais appliqué** |
-| 2 | Bras-Panon (97402) | `par_logement` **1,0** plat | U* 12.2 · p.22-62 | « autres logts : 1 si ≤100 m², 1,5 si ≥100 m² ; aidés 1 max » | — | **incomplet/faux** — tranche de surface **écrasée à 1,0** (logts ≥100 m² sous-comptés) ; plafond aidé ignoré |
-| 3 | Entre-Deux (97403) | `par_logement` **2,0** plat | U12 · p.27 | « autres logts — 2 places » (uniforme) | non ingéré | **juste** (collectif) — individuel non servi |
-| 4 | L'Étang-Salé (97404) | **UA : `par_typologie` valide** (coll 1-2p=1 / 3-4p=1,5 / 5p+=2 ; **indiv=2**) ; autres zones `propose` | UA 2.7.3 · p.22 | tranches de pièces servies ✔ | indiv 2 ✔ (UA) | **UA : juste** · **AUa/b/c, UB, UBv, UC, UD : absent** |
-| 5 | Petite-Île (97405) | `par_logement` **1,0** plat | U*.12 · p.31-106 | « 1 place/logt » (uniforme) | — | **juste** |
-| 6 | Plaine-des-Palmistes (97406) | `par_logement` **1,5** plat | U* 12.2 · p.103 | « logt > 30 m² : 1,5 » | — | **juste** (bord <30 m² non traité) |
-| 7 | Le Port (97407) | `par_logement` **0,3** plat | U* 12.1 · p.30-73 | « 0,3 place/logt **+ 1 visiteur / 100 m² SDP** » | — | **incomplet** — part **visiteur jamais appliquée** (significative en collectif) |
-| 8 | La Possession (97408) | `par_logement` **2,0** plat | U* 12.2 · p.21-78 | « autres logts > 50 m² SDP : 2 min » | — | **incomplet** — tranche ≤50 m² et logt social non servis ; quelques zones (UAv, UEm, AUEm) **absent** |
-| 9 | Saint-André (97409) | **UC : `par_typologie` valide** (<50 m²=1 / ≥50 m²=1,5) ; autres zones `propose` | UC 12.2 · p.42 | tranches de surface servies ✔ | — | **UC : incomplet** (réductions prêt-aidé / <500 m gare non servies) · **UA/UB/UD/UE/US/UT : absent** |
-| 10 | Saint-Benoît (97410) | `par_logement` **1,0** plat | U 12 · p.17 | « ≤5 logts : 1/logt ; **>5 logts : 1/logt + 1 visiteur/5** ; aidés 1/2 ; résidences 1/3 » | idem (indiv ≤5) | **incomplet** — supplément > 5 logts, aidés, résidences **non appliqués** |
-| 11 | Saint-Denis (97411) | `par_logement` **1,0** plat | XVII Stationnement · p.19 | « 1 place/logt **< 100 m² SDP** » | — | **incomplet** — tranche ≥100 m² non servie |
-| 12 | Saint-Joseph (97412) | `par_logement` **1,0 / 2,0** (selon zone) | U* 12.2 · p.25-84 | « N place(s) min/logt » (uniforme par zone) | — | **juste** |
-| 13 | Saint-Leu (97413) | `par_logement` **2,0** plat (= taux **individuel**) | Art. 11 disp. gén. · p.13 | **Tableau collectif servi dans la citation** : chambre 0,5 / studio-2p 1 / 3-5p 1,5 / 6p+ 2 | indiv 2 | **faux** — le **2 (individuel) est appliqué à tout le collectif** ; le tableau collectif (plus bas) est ignoré (ici sur-compte) |
-| 14 | Saint-Louis (97414) | `par_logement` **2,0** (UZ **1,5**) | U* 12.2 · p.23-66 | « autres constructions : 2/logt » ; UZ « 1,5 ; social 1 » | — | **incomplet** — réduction logement social (UZ) non servie |
-| 15 | Saint-Paul (97415) | `par_logement` **1,0 / 1,5 / 2,0** (selon secteur) | 12.2 · p.30-288 | « autres logts : N/logt » par secteur | — | **incomplet** (branches social/autres non servies) ; plusieurs zones `propose`/« INTROUVABLE » → **absent** (U1e, U1l, U1pru, U1pso, U2e, U2h, U3e, AU5e) |
-| 16 | **Saint-Pierre (97416)** | **Ud/UdBO/Udl/Ucv : `propose`, `places:null`** ; Uf/Ug/AUf/AUg **1,5** ; Up **1,0** | Ud6 · p.93 | **Ud (texte cité) : « 1 place par tranche de 75 m² SDP »** → forme `par_m2_sdp` **non supportée** | — | **Ud (cas signalé) : absent** — la règle existe, LABUSE ne la sert pas (contrôle « À confirmer ») |
-| 17 | Sainte-Marie (97418) | `par_logement` **1,5** plat | U13.2 · p.26 | « opération de plusieurs logts : 1,5 min » (= collectif) | non ingéré | **juste** (collectif) |
-| 18 | Sainte-Rose (97419) | `par_logement` **1,5** plat | U* 12 · p.17-43 | « 1,5/logt ≥50 m² SDP, **arrondi inférieur** » | — | **incomplet** — tranche <50 m² non servie ; **arrondi forcé supérieur** (texte = inférieur) |
-| 19 | Sainte-Suzanne (97420) | `par_logement` **2,0** plat | U13 · p.17 | « logts privés ≥50 m² : 2 min » | — | **incomplet** — tranche <50 m² et logt social non servis |
-| 20 | Salazie (97421) | `par_logement` **2,0** plat | U 12.2 · p.18 | « logts privés (PSLA/PTZ/libres) > 50 m² : 2 min » | — | **incomplet** — logt social et tranche ≤50 m² non servis |
-| 21 | **Le Tampon (97422)** | `par_logement` **1,0** plat, **citation = « Habitat individuel 1 place/logt »** | **Ud12.2 · p.67** | **Collectif Ud12.2 : NON ingéré** (seule la ligne individuel est servie) | indiv 1 | **faux** — règle **individuelle appliquée au collectif** ; barème collectif absent (cas signalé §3) |
-| 22 | Les Trois-Bassins (97423) | `par_logement` **1,5** plat | U* 12.2 · p.22-50 | « habitation : 1,5/logt, **arrondi inférieur** » (uniforme) | — | **juste** (arrondi forcé supérieur — note) |
-| 23 | Cilaos (97424) | `par_logement` **1,5** plat | U* 12.2 · p.28-51 | « habitation : 1,5/logt » (uniforme) | — | **juste** |
-| 24 | **Saint-Philippe (97417)** | **RNU — aucun PLU, aucun zonage** (`rnu.yaml`) | — | pas de barème quantifié au RNU | — | **absent** (hors périmètre PLU) |
+### Synthèse de l'écart (texte réel)
 
-### Synthèse de l'écart
+- **« faux » (mauvaise destination appliquée) : Le Tampon** (individuel → collectif, **sous-compte**, confirmé verbatim) et **Saint-Leu** (individuel → collectif, sur-compte ; texte hors base, d'après citation YAML).
+- **« absent » : Saint-Pierre Ud/Ucv** (règle par-m² non supportée, confirmé verbatim), Étang-Salé (sauf UA), Saint-André (sauf UC), zones `propose` de Saint-Paul/La Possession, Saint-Philippe (RNU).
+- **« incomplet » : la grande majorité** — avec, désormais chiffré au texte : **règle collective propre dropped** (Les Avirons, Trois-Bassins), **visiteurs** (Entre-Deux, Le Port, La Possession, Saint-Benoît, Saint-Joseph), **> 5/10 logements** (Saint-Benoît, Saint-Louis, Sainte-Suzanne), **tranches de surface** (Bras-Panon, Sainte-Marie, Sainte-Rose, Salazie, Saint-Denis), **logement social** (partout où il réduit).
+- **« juste » : Cilaos** (uniforme), **Petite-Île** (1/logt, carve-outs mineurs), **Étang-Salé UA** et **Saint-André UC** (typologisés, mais texte non relisible en base).
+- **Deux défauts de traçabilité repérés par le texte** : **Sainte-Suzanne cite le mauvais article** (U13 au lieu de U15.2) ; **Le Tampon cite littéralement « Habitat individuel »** sous un barème appliqué au collectif.
 
-- **« faux » (règle d'une mauvaise destination appliquée) : 2 communes** — **Le Tampon** (individuel → collectif, sous-compte) et **Saint-Leu** (individuel → collectif, sur-compte). Bras-Panon est à la frontière faux/incomplet (tranche de surface écrasée).
-- **« absent » (règle existante non servie) : Saint-Pierre Ud** (+ Ucv), **Étang-Salé** (sauf UA), **Saint-André** (sauf UC), zones `propose` de Saint-Paul / La Possession, **Saint-Philippe** (RNU).
-- **« incomplet » (taux plat, distinctions perdues) : la majorité** — visiteurs (Le Port, Saint-Benoît), > 5 logements (Avirons, Saint-Benoît), logement social (Saint-Louis, Sainte-Suzanne, Salazie, Bras-Panon), tranches de surface (Saint-Denis, Sainte-Rose).
-- **« juste » pour un programme collectif : ≈ 7 communes** à taux réellement uniforme (Petite-Île, Saint-Joseph, Sainte-Marie, Cilaos, Trois-Bassins, Entre-Deux, Plaine-des-Palmistes), **+ 2 zones** correctement typologisées (Étang-Salé UA, partiellement Saint-André UC).
-
-**Le motif dominant : presque toute l'île est ingérée en un seul `par_logement` plat.** Sur 23 PLU, **2 zones seulement** (Étang-Salé UA, Saint-André UC) exploitent le `par_typologie` avec distinction individuel/collectif que le modèle sait pourtant porter. Partout ailleurs, la richesse du règlement (destination, tranches, visiteurs, seuils d'opération, social) est aplatie en une constante — au mieux inoffensive, au pire fausse.
+**Motif dominant confirmé par le texte réel : presque toute l'île ingère un seul `par_logement` plat** qui ampute des règles explicitement écrites dans les PLU (parfois une colonne « habitat collectif » dédiée, des lignes visiteurs, des seuils d'opération, des taux sociaux). Le modèle `par_typologie` sait les porter ; seules 2 zones l'utilisent.
 
 ---
 
-## 3. Recalcul à la main — AD0887 et HT0538
+## 3. Recalcul à la main — AD0887 et HT0538 (au texte réel)
 
-### 3.1 AD0887 — Le Tampon, zone Ud (programme : 8 logements collectifs)
+### 3.1 AD0887 — Le Tampon, zone Ud (8 logements collectifs)
 
-L'Étude de ce terrain n'est **pas stockée** dans le dépôt (produite au run) ; je reprends le programme décrit par le mandat : **8 logements collectifs, 8 places dessinées, stationnement « Réussi »**.
+Programme (mandat) : **8 logements collectifs, 8 places dessinées, « Réussi »**. Étude non stockée (produite au run).
 
-**Ce que fait LABUSE :**
-- barème servi = `par_logement` plat **1,0**, mode `par_logement` ⇒ `places_pour` renvoie 1,0 **quelle que soit la destination** ;
-- `places_imposees = arrondi_sup(8 × 1,0) = 8` ; places dessinées = 8 ⇒ **8 ≥ 8 → Réussi**, citation affichée **« PLU art. Ud12.2 — "Habitat individuel 1 place par logement" »**.
-- **Le verdict se contredit lui-même** : il déclare conforme un immeuble **collectif** en citant la règle de l'**habitat individuel**.
+**LABUSE :** barème `par_logement` plat **1,0** ; `places_imposees = arrondi_sup(8 × 1,0) = 8` ; 8 dessinées ⇒ **Réussi**, citation imprimée **« Ud12.2 — "Habitat individuel 1 place par logement" »**. Le verdict certifie un **collectif** en citant la règle de l'**individuel**.
 
-**Ce que dit le texte (à valider sur le PLU) :** le barème **collectif** de Ud12.2 **n'est pas ingéré** — LABUSE ne le sert nulle part, je ne le reconstitue pas. La relecture indépendante citée par le mandat lit « **11 places** pour ce programme, plus une disposition au-delà de cinq logements ».
-*Corroboration prudente, non substituable à la lecture humaine :* avec le mélange par défaut pour 8 logts (T2×4 à 2p, T3×3 à 3p, T4×1 à 4p) et un barème collectif typé par pièces du type servi ailleurs (1-2p=1 ; 3p+=1,5), on obtient 4×1 + 3×1,5 + 1×1,5 = **10**, +1 au titre du dépassement de 5 logements ⇒ **11** — cohérent avec la relecture. **À confirmer article Ud12.2 p.67 (section collectif) sur le PLU du Tampon.**
+**Texte réel Ud12.2 (verbatim base, p.66) :** l'article porte, dans le même tableau, une ligne **Habitat individuel : 1/logt** (celle que LABUSE a ingérée) ET :
+- **Habitat collectif (hors social)** : 0,5/chambre-studio ; **1/logt 2 pièces** ; **1,5/logt 3 pièces et plus** ;
+- **Lotissement ou opération > 5 lots ou logements** : **1,5 place/logt, arrondi à l'entier inférieur, dont ≥ 0,5 à l'extérieur**.
 
-**Ce que devient l'esquisse :** les **8 places sont insuffisantes** (manque ≈ **3 places**). Il faut ≈ 3 × 25 m² ≈ **75 m² de stationnement supplémentaire** (aérien ou un niveau de sous-sol). Le verdict « Réussi » n'est pas justifié ; au mieux **« À confirmer »**, voire **« À compléter »** si les places ne tiennent pas au sol sans réduire l'emprise bâtie ou le nombre de logements.
+**Recalcul (sans valeur extérieure, au texte) :**
+- Opération de 8 logements ⇒ **> 5 logements** : ligne dédiée **1,5 × 8 = 12 places** (arrondi inférieur ; dont ≥ 0,5 × 8 = **4 places extérieures**).
+- Lecture alternative par la ligne « habitat collectif » avec le mélange par défaut du moteur (T2×4 à 2 pièces → 1 ; T3×3 à 3 pièces → 1,5 ; T4×1 à 4 pièces → 1,5) : 4×1 + 3×1,5 + 1×1,5 = **10 places**.
+- **Les deux lectures du texte dépassent les 8 places imposées par LABUSE** (déficit de **2 à 4 places**).
 
-### 3.2 HT0538 — Saint-Pierre, zone Ud (programme : 10 logements collectifs, R+4)
+**Esquisse :** « Réussi » injustifié. Il faut **2 à 4 places de plus** (≈ 50–100 m² au sol, ou un sous-sol), **plus** la contrainte « ≥ 0,5 place/logt à l'extérieur des espaces privatisés » non modélisée. Verdict correct : **« À confirmer »**, voire **« À compléter »** si les places ne tiennent pas sans réduire l'emprise ou le nombre de logements.
 
-Étude **stockée** dans le dépôt (diagnostic du 14/11/2026, `docs/audit-2026-11/exports-fix-3/COMPTE-RENDU.md:288-313`) : parcelle 510 m², **SDP 887,5 m², 10 logements, R+4**, **barème indisponible → 0 place dessinée, aucune contrainte appliquée**.
+### 3.2 HT0538 — Saint-Pierre, zone Ud (10 logements collectifs, R+4)
 
-**Ce que fait LABUSE :** barème Ud = `propose`, `places:null` (règle « 1 place / 75 m² SDP », forme `par_m2_sdp` **non supportée par `_bareme`**) ⇒ **non validée** ⇒ contrôle **« À confirmer »**, `places_imposees = None`, **0 place dessinée**. **Honnête mais permissif** : l'Étude n'affiche pas « Réussi », mais elle dessine une **enveloppe maximale non bridée par le stationnement** (le garde-fou EXPORTS-FIX-3 l'empêche déjà de se dire « exploitable »).
+Étude **stockée** (`docs/audit-2026-11/exports-fix-3/COMPTE-RENDU.md:288-313`) : 510 m², **SDP 887,5 m², 10 logements, R+4**, barème indisponible → **0 place dessinée**, verdict **« À confirmer »** (non « Réussi »).
 
-**Ce que dit le texte servi (citation Ud6, p.93) :** « 1 place de stationnement par tranche de 75 m² de surface de plancher ».
-Recalcul à la main sur la SDP dessinée : **887,5 / 75 = 11,8 → 12 places** exigées (une place par tranche de 75 m² entamée). *À valider sur le PLU : le seuil logement social « 1 place/logt locatif social » peut modifier le total ; le texte intégral n'est pas servi hors-ligne.*
+**LABUSE :** barème Ud = `propose`, `places:null` (forme `par_m2_sdp` **non supportée**) ⇒ non servie ⇒ **0 place imposée**, 0 dessinée, enveloppe non bridée.
 
-**Ce que devient l'esquisse :** 12 places requises, **0 prévue**. Il faut loger ≈ 12 × 25 m² ≈ **300 m² de stationnement** → quasi un niveau de sous-sol complet, ou une amputation sensible de la SDP. **L'enveloppe de 888 m² surévalue** la capacité réelle ; la règle existe, LABUSE devrait la servir et la retrancher (ou au minimum chiffrer l'exigence à côté du 0 dessiné).
+**Texte réel Ud6 (verbatim base, p.93) :** « Logement : **1 place de stationnement par tranche de 75 m² de surface de plancher** » ; « la place est comptabilisée par **tranche complète** » ; ligne sociale **« 1 place pour les logements locatifs sociaux »** ; « 0,5 place/parcelle pour les lotissements d'habitat individuel ». (Réductions générales : −30 % si > 200 m du TCSP non, à moins de 200 m du TCSP oui ; pas d'obligation < 150 m².)
 
-**Contraste des deux cas :** Le Tampon = **faux positif** (« Réussi » imprimé à tort). Saint-Pierre = **faux négatif de service** (règle existante jamais servie ⇒ l'Étude ne peut jamais conclure, et son enveloppe n'est pas bridée). Les deux viennent de la même cause : **un seul `par_logement` plat ne capte pas la règle réelle**.
+**Recalcul :** 887,5 m² / 75 = 11,83 → **12 places** (tranche complète). LABUSE en impose **0**.
+
+**Esquisse :** 12 places requises ≈ 12 × 25 m² ≈ **300 m²** (quasi un niveau de sous-sol) ou une amputation nette de la SDP. L'enveloppe de 888 m² **surévalue** ; la règle **existe au texte** et devrait être servie (`par_m2_sdp`). Le garde-fou EXPORTS-FIX-3 empêche déjà le « exploitable », mais le chiffre lui-même reste non bridé.
+
+**Contraste :** Le Tampon = **faux positif** imprimé ; Saint-Pierre = **règle existante jamais servie** (forme non implémentée). Même cause de fond : le modèle plat ne capte pas la règle réelle.
 
 ---
 
-## 4. Les autres contrôles durs — une ligne par commune
+## 4. Les autres contrôles durs — au texte réel (une ligne par commune)
 
-**Rappel méthodologique.** Emprise (CES), hauteur, reculs et pleine terre sont des règles **d'enveloppe de zone**, en principe **indépendantes de la destination ou du type de logement** — contrairement au stationnement. Pour ces contrôles, « appliquer la valeur de la zone » est méthodologiquement correct *pour le programme dessiné* **dès lors que la valeur ingérée est la bonne** ; le risque n'est pas le mauvais-programme, mais l'**absence** d'ingestion (contrôle « Non effectué », aucune borne) ou une valeur fausse. Le texte verbatim n'étant pas lisible hors-ligne, je rapporte la **couverture** (combien de zones U/AU portent chaque règle `valide`), pas la justesse chiffre par chiffre.
+**Méthode.** Emprise (CES), hauteur, pleine terre sont des règles d'enveloppe **indépendantes du type de logement** : « appliquer la valeur de la zone » est correct pour le programme dessiné *si la valeur ingérée est la bonne*. Le risque est l'**absence**. La lecture du texte réel permet désormais de trancher : une couverture manquante est soit **fidèle** (le PLU ne réglemente pas), soit un **vrai manque** (le PLU réglemente, LABUSE n'a pas ingéré).
 
-Comptage sur les zones U/AU qui portent leurs propres `regles` (H = hauteur, CES = emprise, RV/RS = reculs voie/séparatives, PT = pleine terre) :
+**Résultat clé : la plupart des « trous » CES signalés dans la V1 sont FIDÈLES au texte** — vérifié verbatim :
+- **Le Tampon** : Ua9…Ud9 = **« Non réglementée »** → CES=0 correct (ce n'est pas un défaut).
+- **Salazie** : U9/UT9/AUE9 = **« Sans objet »** → CES=0 correct.
+- **Sainte-Suzanne** : U7 = **« Sans objet »** (UE7 = 70 %, hors habitat) → CES=0 correct en zone U.
+- **Saint-Paul** : U2E/U3E = **« Il n'est pas fixé de règle »** (sauf secteur Usdu, plafond en m² absolus) → CES=0 correct.
+- **La Possession** : UA9/UB9 = **« Sans objet »** (UEM9 70 %, AUBM9 60 %) → CES=0 correct pour UA/UB.
+- **Entre-Deux** : Ua = **60 %** (ingéré), **Ub/Ue = « Sans objet »** → couverture 1/5 **fidèle**.
 
-| Commune | zones réglées | H | CES | RV | RS | PT | Lecture (une ligne) |
-|---|---|---|---|---|---|---|---|
-| Les Avirons | 20 | 19 | 11 | 19 | 19 | 19 | enveloppe bien couverte ; **CES partiel** (9 zones sans emprise → contrôle non effectué) |
-| Bras-Panon | 15 | 14 | 14 | 14 | 14 | 14 | couverture quasi complète |
-| Entre-Deux | 5 | 5 | 1 | 5 | 5 | 5 | **CES quasi absent** (1/5) |
-| L'Étang-Salé | 12 | 12 | 12 | 12 | 12 | 12 | enveloppe complète (le trou est le stationnement, §2) |
-| Petite-Île | 15 | 15 | 13 | 15 | 15 | 15 | complète ; CES 13/15 |
-| Plaine-des-Palmistes | 10 | 9 | 9 | 9 | 9 | 9 | complète |
-| Le Port | 15 | 13 | 13 | 12 | 13 | 12 | bonne couverture, quelques zones partielles |
-| La Possession | 23 | 19 | **3** | 22 | 22 | 19 | **CES très lacunaire** (3/23) → emprise non bornée sur l'essentiel |
-| Saint-André | 9 | 8 | **0** | 7 | 7 | 7 | **CES absent** (0/9) → aucune limite d'emprise servie |
-| Saint-Benoît | 5 | **0** | 5 | **0** | 5 | 5 | **hauteur et recul voie absents** (0/5) → contrôles non effectués |
-| Saint-Denis | 21 | 17 | 16 | 20 | 20 | **0** | **pleine terre absente** (0/21) |
-| Saint-Joseph | 24 | 24 | 24 | 24 | 24 | 22 | **la mieux couverte** |
-| Saint-Leu | 19 | 18 | 17 | 18 | 18 | **5** | **pleine terre lacunaire** (5/19) |
-| Saint-Louis | 18 | 18 | 17 | 17 | 18 | 17 | couverture complète |
-| Saint-Paul | 32 | 31 | **0** | 30 | 31 | 29 | **CES absent** (0/32) → emprise non bornée |
-| Saint-Pierre | 27 | 26 | 25 | 25 | 25 | 21 | enveloppe bien couverte (le trou est le stationnement Ud, §3) |
-| Sainte-Marie | 19 | 19 | 16 | 19 | 19 | 17 | complète |
-| Sainte-Rose | 9 | 9 | 9 | 9 | 9 | 9 | complète |
-| Sainte-Suzanne | 12 | 12 | **2** | 12 | 12 | 12 | **CES quasi absent** (2/12) |
-| Salazie | 10 | 10 | **0** | 10 | 10 | 10 | **CES absent** (0/10) |
-| Le Tampon | 20 | 20 | **0** | 15 | 15 | 13 | **CES absent** (0/20) → AD0887 n'a aucun contrôle d'emprise ; reculs/PT partiels |
-| Les Trois-Bassins | 10 | 9 | 9 | 9 | 9 | 9 | complète |
-| Cilaos | 8 | 8 | 7 | 8 | 8 | 7 | complète |
-| Saint-Philippe | — | — | — | — | — | — | RNU : pas de règle d'enveloppe zonale |
+**Deux vrais manques confirmés par le texte :**
+- **Saint-Denis — PLEINE TERRE : règle existante NON ingérée.** Le texte fixe un % « laissé libre de toute construction ou infrastructure » par zone : **UH 50 %, UJ/UM 35 %, UI 25 %, UD/UU 10 %, Uat 15 %** (art. `.13`). LABUSE sert **PT=0/21** → l'enveloppe n'est pas bridée alors que la règle existe. **Défaut réel.**
+- **Saint-Benoît — HAUTEUR : règle existante non servie (mais graphiquement indexée).** Le texte fixe 15/13/10/7/4 m à l'égout **« selon les secteurs repérés sur le document graphique »** (art. U-4). LABUSE sert **H=0/5** : la règle dépend d'un **secteur de hauteur graphique**, non d'une valeur unique de zone — d'où la non-ingestion (défendable), mais **coverage manquante réelle**. Recul voie Saint-Benoît : « non réglementé par défaut » sauf voies nommées (7/5 m) et hors-agglo (75 m) → **recul=0 fidèle**.
 
-**Pour le programme dessiné, la règle appliquée est-elle celle du texte ?** Oui *par construction* là où la règle est servie : hauteur/emprise/reculs/PT ne dépendent pas du type de logement, et le moteur mesure le projet contre la borne de la zone (`controles.py:273-413`). Deux réserves :
-1. **Lacunes de couverture** (CES absent au Tampon, Saint-Paul, Saint-André, Salazie ; PT absente à Saint-Denis ; H/RV absents à Saint-Benoît) : le contrôle est **« Non effectué »**, aucune borne — l'enveloppe peut être surévaluée sans alerte.
-2. **Hauteur sur terrain en pente et distance entre bâtiments** sont déjà traitées finement (gradins « À confirmer », silence prouvé) — pas d'anomalie de type-de-programme repérée ; ce sont des contrôles géométriques, pas destinataires.
+| Commune | H | CES | PT | Lecture au texte (une ligne) |
+|---|---|---|---|---|
+| Les Avirons | 19/20 | 11/20 | 19/20 | couverture large ; CES partiel (à vérifier zone par zone s'il est « sans objet ») |
+| Bras-Panon | 14/15 | 14/15 | 14/15 | quasi complète |
+| Entre-Deux | 5/5 | 1/5 | 5/5 | CES : Ua 60 % servi, Ub/Ue « sans objet » → **fidèle** |
+| L'Étang-Salé | 12/12 | 12/12 | 12/12 | enveloppe complète (trou = stationnement, texte hors base) |
+| Petite-Île | 15/15 | 13/15 | 15/15 | complète |
+| Plaine-des-Palmistes | 9/10 | 9/10 | 9/10 | complète |
+| Le Port | 13/15 | 13/15 | 12/15 | bonne couverture |
+| La Possession | 19/23 | 3/23 | 19/23 | CES UA/UB « sans objet » → **fidèle** (les 3 = UEM/AUBM qui le fixent) |
+| Saint-André | — | — | — | *texte hors base — non vérifiable* (CES=0 ingéré, à confirmer) |
+| Saint-Benoît | **0/5** | 5/5 | 5/5 | **hauteur non servie (secteur graphique 15/13/10/7/4 m) — vrai manque** ; recul voie fidèle |
+| Saint-Denis | 17/21 | 16/21 | **0/21** | **pleine terre non servie alors que le texte la fixe (10–50 %/zone) — vrai manque** |
+| Saint-Joseph | 24/24 | 24/24 | 22/24 | la mieux couverte |
+| Saint-Leu | 18/19 | 17/19 | 5/19 | *texte hors base* ; PT lacunaire à confirmer |
+| Saint-Louis | 18/18 | 17/18 | 17/18 | complète |
+| Saint-Paul | 31/32 | **0/32** | 29/32 | CES « pas de règle » en U2E/U3E → **fidèle** (sauf Usdu, m² absolus) |
+| Saint-Pierre | 26/27 | 25/27 | 21/27 | bien couverte (trou = stationnement Ud, §3.2) |
+| Sainte-Marie | 19/19 | 16/19 | 17/19 | complète |
+| Sainte-Rose | 9/9 | 9/9 | 9/9 | complète |
+| Sainte-Suzanne | 12/12 | **2/12** | 12/12 | CES U7 « sans objet » → **fidèle** en zone U (UE7 70 % hors habitat) |
+| Salazie | 10/10 | **0/10** | 10/10 | CES « sans objet » partout → **fidèle** |
+| Le Tampon | 20/20 | **0/20** | 13/20 | CES « Non réglementée » partout → **fidèle** (AD0887 : pas d'anomalie d'emprise) |
+| Les Trois-Bassins | 9/10 | 9/10 | 9/10 | complète |
+| Cilaos | 8/8 | 7/8 | 7/8 | complète |
+| Saint-Philippe | — | — | — | RNU — pas d'enveloppe zonale |
 
-Le seul contrôle dur **intrinsèquement lié au type de programme** est donc bien le **stationnement** — et c'est le seul où « la règle appliquée n'est pas celle du texte pour le programme dessiné » (§2, §3).
+**Conclusion §4 :** pour emprise/hauteur/pleine terre, la règle appliquée est celle du texte **là où elle est servie**, et les absences CES signalées en V1 sont pour l'essentiel **fidèles** (les PLU concernés ne réglementent pas l'emprise). **Deux vrais manques** : **Saint-Denis pleine terre** (le PLU fixe 10–50 %/zone, non ingéré) et **Saint-Benoît hauteur** (fixée par secteur graphique, non servie). Le seul contrôle dur **intrinsèquement lié au type de programme** reste le **stationnement** (§2, §3).
 
 ---
 
 ## 5. Proposition de correction, en lots — du plus grave au moins grave
 
-> Chaque lot distingue **ce que LABUSE peut corriger seul** (code / ré-ingestion d'un texte déjà cité) de **ce qu'un humain doit valider sur le PLU** avant ingestion. Rien dans ce rapport ne doit être ingéré sans relecture humaine du texte opposable : le verbatim intégral n'est pas servi hors-ligne.
+> Pour chaque lot : ce que LABUSE peut corriger seul vs ce qu'un humain doit valider sur le PLU. La base rend désormais la plupart des textes **directement relisibles** — la validation humaine porte sur l'interprétation (bornes, arrondi, articulation sociale), pas sur la découverte.
 
 ### LOT 1 — Faux positif « Réussi » sur la mauvaise destination *(le plus grave)*
-**Cibles : Le Tampon (toutes zones U/AU), Saint-Leu.** Un barème **individuel** est servi en `par_logement` plat et appliqué au **collectif**, produisant un « Réussi » (Le Tampon : sous-compte **dangereux** ; Saint-Leu : sur-compte, moins risqué mais faux).
-- **Code :** quand le programme dessiné est collectif (toujours le cas du moteur) **et** que le barème servi est étiqueté/cité comme « habitat individuel », **refuser le verdict « Réussi »** et retomber en « À confirmer » (ne jamais imprimer la citation individuelle sous un immeuble collectif). Garde-fou symétrique du §5 d'EXPORTS-FIX-3.
-- **À valider par un humain sur le PLU :** le **barème collectif réel** — Le Tampon **art. Ud12.2 p.67 (section collectif)** ; Saint-Leu **art. 11 dispositions générales p.13 (tableau HABITAT COLLECTIF)** — puis l'ingérer en `par_typologie` avec `destination: collectif` et les tranches de pièces. **Confirmer le « +1 au-delà de 5 logements » du Tampon** (forme exacte : par opération ? par tranche ?).
+**Cibles : Le Tampon (U/AU), Saint-Leu.** Barème individuel servi en plat, appliqué au collectif ⇒ « Réussi » (Le Tampon : sous-compte **dangereux**, confirmé au texte 12 vs 8 ; Saint-Leu : sur-compte).
+- **Code (sans ingestion) :** si le programme dessiné est collectif et que la citation servie relève de « habitat individuel », **refuser « Réussi »** → « À confirmer » (ne jamais imprimer la citation individuelle sous un collectif).
+- **Ingestion (texte DÉJÀ en base pour Le Tampon) :** ingérer Ud12.2 en `par_typologie` collectif (0,5/chambre-studio ; 1/2p ; 1,5/3p+) **plus** la règle d'opération « > 5 logements : 1,5/logt arrondi inférieur, dont ≥ 0,5 extérieur ».
+- **À valider par un humain :** articulation entre la ligne « habitat collectif » et la ligne « opération > 5 logements » (laquelle prime, ou cumul ?) ; pour Saint-Leu, **réingérer le règlement** (actuellement hors base).
 
 ### LOT 2 — Règle existante jamais servie, faute de forme supportée
-**Cibles : Saint-Pierre (Ud, Ucv : « 1 place / 75 m² SDP ») et toute zone en `par_m2_sdp`.** La forme est **déclarée mais non consommée** par `_bareme` ; la règle reste `propose` et le contrôle ne conclut jamais, tout en laissant l'enveloppe non bridée (HT0538).
-- **Code :** **implémenter la branche `par_m2_sdp`** dans `_bareme`/`places_pour` (`places_imposees = arrondi_sup(SDP / m²_par_place)`). C'est du code pur, le texte est déjà cité.
-- **À valider par un humain :** le **sens d'arrondi** (« par tranche entamée » ⇒ supérieur ?) et l'articulation avec « 1 place / logement locatif social » (Ud6) avant de passer la feuille en `valide`.
+**Cibles : Saint-Pierre (Ud, Ucv : « 1 place / 75 m² SDP »), + toute zone en `par_m2_sdp`.**
+- **Code :** implémenter la branche **`par_m2_sdp`** (`places_imposees = arrondi(SDP / m²_par_place)`). Le texte est en base, verbatim.
+- **À valider par un humain :** sens d'arrondi — le texte Ud6 dit **« comptabilisée par tranche complète »** (⇒ supérieur) ; articulation avec « 1 place pour les logements locatifs sociaux » (forfait) avant de passer `valide`.
 
 ### LOT 3 — Suppléments et réductions jamais appliqués *(incomplet, impact chiffré réel)*
-**Cibles : visiteurs (Le Port, Saint-Benoît), > 5 logements/lots (Les Avirons, Saint-Benoît), logement social (Saint-Louis UZ, Sainte-Suzanne, Salazie, Bras-Panon), tranches de surface (Saint-Denis ≥100 m², Sainte-Rose/Sainte-Suzanne/Salazie ≤50 m², Bras-Panon ≥100 m²).** Les citations portent ces clauses ; le `par_logement` plat les ignore.
-- **Code :** étendre le modèle de barème pour porter (a) un **supplément visiteur** (places/tranche de SDP), (b) un **seuil d'opération** (places additionnelles au-delà de N logements/lots), (c) une **ligne logement social** (`destination`/produit). Puis les appliquer dans `_places_imposees`.
-- **À valider par un humain :** pour chaque commune, **transcrire la clause exacte** (base, seuil, taux) depuis le texte opposable avant ingestion — c'est le gros du travail humain, commune par commune.
+**Cibles (texte en base, lignes précises) :** visiteurs (**Entre-Deux** 1/5 et 1/10 ; **Le Port** 1/100 m² ; **La Possession** 1/5 ; **Saint-Benoît** 1/5 ; **Saint-Joseph** 1/10 + RPA) ; seuils d'opération (**Saint-Benoît** > 5 ; **Saint-Louis**/**Sainte-Suzanne** > 10) ; **règle collective propre** (**Les Avirons**/**Trois-Bassins** : 1,25/logt ou 1/35 m², max) ; logement social (**Saint-Louis**, **Salazie**, **Sainte-Suzanne**, **Bras-Panon**…).
+- **Code :** étendre le barème pour porter (a) supplément visiteur (places/tranche de SDP), (b) seuil d'opération (N logements/lots), (c) ligne sociale, (d) « max de deux formules ».
+- **À valider par un humain :** transcription exacte de chaque clause (déjà verbatim en base) et sa base de calcul, commune par commune.
 
-### LOT 4 — Tranches de surface/pièces écrasées en un plat *(incomplet, sans danger immédiat mais non fidèle)*
-**Cibles : toutes les communes à taux plat dont le texte cité porte des tranches** (Bras-Panon, Saint-Denis, Sainte-Rose, Sainte-Suzanne, Salazie, La Possession…).
-- **Code :** aucun nouveau mécanisme — `par_typologie` existe déjà ; il suffit de **ré-ingérer** ces barèmes en lignes typées au lieu d'un scalaire.
-- **À valider par un humain :** la lecture des bornes (50 m², 100 m²…) et l'inclusion/exclusion des bornes sur le texte.
+### LOT 4 — Tranches de surface/pièces écrasées en un plat
+**Cibles : Bras-Panon (≥ 100 m²), Sainte-Marie (< 100 m² = 1 vs plat 1,5), Sainte-Rose/Salazie/Sainte-Suzanne (< 50 m²), Saint-Denis (≥ 100 m²).** Le `par_typologie` existe déjà — **réingérer** en lignes typées (texte en base).
+- **À valider par un humain :** inclusion/exclusion des bornes (50/100 m²).
 
-### LOT 5 — Arrondi forcé et couverture d'enveloppe *(le moins grave)*
-- **Arrondi :** `par_logement` force `superieur` (`regles.py:264`) alors que plusieurs textes disent « inférieur » (Saint-André, Sainte-Rose, Saint-Louis UZ, Trois-Bassins). **Code :** lire un champ `arrondi` en mode `par_logement` comme le fait déjà `par_typologie`. Sans danger (exige plus de places) mais à aligner. **À valider :** le sens d'arrondi par commune.
-- **Couverture CES/PT/H (§4) :** combler les **lacunes d'emprise** (Le Tampon, Saint-Paul, Saint-André, Salazie, Sainte-Suzanne, La Possession) et de **pleine terre** (Saint-Denis) qui laissent l'enveloppe non bornée. **À valider par un humain :** le chiffre CES / % pleine terre de chaque zone sur le règlement, avant de passer la feuille `valide`. *(Hors stationnement stricto sensu, mais c'est ce qui permet au faux positif d'enveloppe de HT0538 d'exister.)*
+### LOT 5 — Traçabilité, arrondi, couverture d'enveloppe *(le moins grave)*
+- **Référence d'article fausse : Sainte-Suzanne cite « U13 » au lieu de « U15.2 »** → corriger la feuille (le texte U15.2 est en base). Vérifier au passage que la *valeur* 2,0 correspond bien à la branche « ≥ 50 m² » et non à un plat.
+- **Arrondi :** `par_logement` force `superieur` ; lire un champ `arrondi` (Sainte-Rose/Trois-Bassins = inférieur ; Sainte-Suzanne/Salazie = supérieur).
+- **Pleine terre Saint-Denis :** ingérer la règle réelle (UH 50 %, UJ/UM 35 %, UI 25 %, UD/UU 10 %, Uat 15 %) — **vrai manque** confirmé au texte. **À valider :** lecture du % par zone/secteur.
+- **Hauteur Saint-Benoît :** la règle est indexée au **secteur de hauteur graphique** (15/13/10/7/4 m) ; servir nécessiterait d'ingérer cette couche graphique. **À valider :** modalité (couche graphique vs valeur de zone).
+- **Ne PAS « corriger » les CES absents fidèles** (Le Tampon, Salazie, Sainte-Suzanne, Saint-Paul, La Possession UA/UB, Entre-Deux Ub/Ue) : le texte dit « Non réglementée / Sans objet ». Le bon libellé de contrôle y est **« Non réglementé »** (non applicable), pas « Non effectué ».
 
-### Garde-fou transversal (applicable immédiatement, sans ingestion)
-Tant que les lots ci-dessus ne sont pas validés : **ne jamais afficher « Réussi » sur le stationnement quand la citation servie relève d'une destination différente de celle du programme dessiné** (individuel sous un collectif). C'est la correction minimale qui supprime le faux positif du Tampon sans toucher aux chiffres — à la main de LABUSE seul.
+### Garde-fou transversal (immédiat, sans ingestion)
+Tant que les lots ne sont pas validés : **ne jamais afficher « Réussi » au stationnement quand la citation servie relève d'une destination différente du programme dessiné** (individuel sous un collectif). Supprime le faux positif du Tampon sans toucher aux chiffres.
 
 ---
 
-## Annexe — fichiers et points de lecture
+## Annexe — points de lecture et données
 
-- Modèle de barème : `src/labuse/implantation/regles.py:42-97` (`BaremeStationnement`, `places_pour`), `:258-283` (`_bareme` — **pas de `par_m2_sdp`, arrondi plat forcé**).
-- Application : `src/labuse/implantation/capacite.py:71-87` (`_places_imposees`, `destination="collectif"` codé en dur), contrôle `src/labuse/implantation/controles.py:415-426`.
-- Programme dessiné (collectif seul) : `src/labuse/implantation/geometrie.py:278` (`poser_barre`), typologies `config/implantation_conventions.yaml:38-44`.
-- Données ingérées : `config/plu_destinations/<insee>_*.yaml`, feuille `regles.stationnement` ; lecture `src/labuse/plu/destinations.py:673` (`regles_zone`).
-- Texte verbatim du PLU : table `plu_reglement_extrait` (`src/labuse/ingestion/plu_ingest.py:17-37`) — **non lisible hors-ligne** ; seul le champ `citation` des YAML l'est.
+- Modèle/application : `regles.py:42-97`/`:258-283` (**pas de `par_m2_sdp`**, arrondi plat forcé), `capacite.py:71-87` (`destination="collectif"` codé en dur), `controles.py:415-426`.
+- Programme collectif seul : `geometrie.py:278`, `config/implantation_conventions.yaml:38-44`.
+- Barème ingéré : `config/plu_destinations/<insee>_*.yaml`, lecture `destinations.py:673`.
+- **Texte opposable (lu ici)** : table `plu_reglement_extrait` (base locale) — verbatim, article, page. Absent pour 97404 (partiel), 97409, 97413, et pour les barèmes en annexe (97406) / dispositions générales (97411).
 - HT0538 (étude stockée) : `docs/audit-2026-11/exports-fix-3/COMPTE-RENDU.md:288-325`.
