@@ -339,6 +339,25 @@ def test_risques_rows_ppr_multirisque_rattache_tous_les_aleas_nommes():
     assert "Fort 4 % (zone rouge)" in _mvt and "Faible 69 % (hors zone rouge)" in _mvt
 
 
+def test_risques_rows_zone_rouge_par_recouvrement_mesure():
+    """CAPACITE-1 (E3) — « en zone »/« hors zone » vient du RECOUVREMENT MESURÉ (part_rouge_pct), pas du
+    cumul de pourcentages. Cas où les deux divergent : un niveau TRÈS étendu mais HORS du rouge
+    (fort 50 %, recouvrement 0) reste « hors zone » ; un niveau PETIT entièrement dans le rouge
+    (moyen 10 %, recouvrement 10) est « en zone » — le cumul fort→faible aurait mis les deux hors."""
+    fiche = {"aleas": {"n": 3, "liste": [
+        {"nature": "PPR — zone rouge", "part_pct": 40,
+         "libelle": "PPR mouvement de terrain — zone rouge sur 40 % de la parcelle : partie INCONSTRUCTIBLE.",
+         "ppr": [{"document": "PPR", "approbation": "2018-07-13"}]},
+        {"nature": "Aléa mouvement de terrain", "niveau": "fort", "part_pct": 50,
+         "part_rouge_pct": 0, "source": "DEAL"},
+        {"nature": "Aléa mouvement de terrain", "niveau": "moyen", "part_pct": 10,
+         "part_rouge_pct": 10, "source": "DEAL"},
+    ]}}
+    _mvt = {r["alea"]: r for r in _risques_rows(fiche, "X")}["Mouvement de terrain"]["niveau"]
+    assert "Fort 50 % (hors zone rouge)" in _mvt   # grand mais hors du rouge (mesuré 0)
+    assert "Moyen 10 % (zone rouge)" in _mvt        # petit mais dans le rouge (mesuré 10)
+
+
 def test_a_verifier_derive_des_donnees_max_3():
     batie = _a_verifier({"aleas": {"n": 1}}, "bati_max", "Uh")
     assert len(batie) <= 3 and any("bâti" in p for p in batie) and any("PPR" in p for p in batie)

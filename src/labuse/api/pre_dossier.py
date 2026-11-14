@@ -334,6 +334,23 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
                      else "zone d'information sur le bruit")
             servitudes.append(f"Plan d'exposition au bruit — zone {peb['zone']} : {effet} "
                               "(art. L112-10 CU)")
+    # CAPACITE-1 (E1) — complétude : toute alerte DORMANTE de la fiche (`alertes_fiche`, lue en direct)
+    # absente des servitudes est ajoutée (zone humide, etc.) — la fiche « Règles du zonage » porte la
+    # MÊME liste que la fiche parcelle (faute AD0887 : zone humide absente de cette pièce).
+    try:
+        from .servitudes import alertes_fiche as _alertes_fiche
+        _nt = lambda s: "".join((s or "").lower().split())[:40]
+        _vus = {_nt(s) for s in servitudes}
+        for _a in _alertes_fiche(db, idu):
+            _cat = str(_a.get("categorie") or "")
+            if _cat.startswith("Risque naturel") or _cat.startswith("PPR"):
+                continue
+            _eff = str(_a.get("effet") or "")
+            if _eff and not any(_nt(_eff)[:30] in v for v in _vus):
+                servitudes.append(f"{_eff} (contrainte dormante relevée, comme la fiche)")
+                _vus.add(_nt(_eff))
+    except Exception:  # noqa: BLE001
+        pass
     serv_html = "".join(f"<li>{s}</li>" for s in servitudes) or \
                 "<li>Aucune servitude connue dans les couches analysées.</li>"
     # destinations autorisées + fiscalité (TA, redevance d'archéologie) — depuis la fiche parcelle.

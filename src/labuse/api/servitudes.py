@@ -445,10 +445,26 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
     #    plus de « meilleur niveau seul » — « fort ~3 % » masquait une exposition totale). Triés par
     #    type puis par niveau décroissant.
     aleas_par_type: dict[str, list[dict]] = {}
+    # CAPACITE-1 (E3) — pour CHAQUE niveau d'aléa, on MESURE son recouvrement géométrique avec la zone
+    # rouge/bleue du PPR (intersection sur la parcelle), pas un simple cumul de pourcentages : « en
+    # zone »/« hors zone » se déduit de `pct_rouge`/`pct_bleue` (BI0351 : fort+moyen dans le rouge,
+    # faible 0 %). Les CTE `rouge`/`bleue` unionnent la zone PPR de la couleur ∩ parcelle.
     for a in db.execute(text(
-        f"""WITH p AS (SELECT geom_2975 g, ST_Area(geom_2975) a FROM parcels WHERE idu = :idu)
+        f"""WITH p AS (SELECT geom_2975 g, ST_Area(geom_2975) a FROM parcels WHERE idu = :idu),
+                rouge AS (SELECT ST_Union(ST_Intersection(z.geom_2975, p.g)) gr
+                          FROM {srctable} z CROSS JOIN p
+                          WHERE z.kind='ppr' AND z.geom_2975 IS NOT NULL
+                            AND labuse_ppr_couleur(z.subtype, z.attrs)='rouge'
+                            AND ST_Intersects(z.geom_2975, p.g)),
+                bleue AS (SELECT ST_Union(ST_Intersection(z.geom_2975, p.g)) gb
+                          FROM {srctable} z CROSS JOIN p
+                          WHERE z.kind='ppr' AND z.geom_2975 IS NOT NULL
+                            AND labuse_ppr_couleur(z.subtype, z.attrs)='bleu'
+                            AND ST_Intersects(z.geom_2975, p.g))
            SELECT COALESCE(sl.attrs->>'type', sl.subtype) AS type, lower(sl.attrs->>'niveau') AS niveau,
                   round((100 * ST_Area(ST_Union(ST_Intersection(sl.geom_2975, p.g))) / NULLIF(min(p.a), 0))::numeric)::int AS pct,
+                  round((100 * ST_Area(ST_Union(ST_Intersection(ST_Intersection(sl.geom_2975, p.g), (SELECT gr FROM rouge)))) / NULLIF(min(p.a), 0))::numeric)::int AS pct_rouge,
+                  round((100 * ST_Area(ST_Union(ST_Intersection(ST_Intersection(sl.geom_2975, p.g), (SELECT gb FROM bleue)))) / NULLIF(min(p.a), 0))::numeric)::int AS pct_bleue,
                   max(ds.name) AS source,
                   max(ds.source_millesime) AS source_millesime, max(ds.source_horizon_at) AS source_horizon_at,
                   max(COALESCE(ds.last_sync_at, ds.updated_at)::date)::text AS ingere_le
@@ -471,6 +487,8 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
             cumul = f" — exposition totale au risque {typ} : ~{min(total, 100)} % de la parcelle" \
                 if (a is niveaux[0] and len(niveaux) > 1) else ""
             out.append({"nature": f"Aléa {typ}", "niveau": niveau, "part_pct": pct,
+                        # CAPACITE-1 (E3) — recouvrement MESURÉ de ce niveau avec la zone rouge/bleue du PPR.
+                        "part_rouge_pct": a.get("pct_rouge"), "part_bleue_pct": a.get("pct_bleue"),
                         "libelle": _clean_risque(f"Aléa {typ} — niveau {niveau} sur ~{pct} % de la parcelle{cumul}."),
                         "redhibitoire": False,
                         "source": a["source"] or "DEAL Réunion / Géorisques", "millesime": mill})

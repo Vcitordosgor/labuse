@@ -285,3 +285,49 @@ Fichiers périmés retirés de la racine de `~/Desktop/exports-audit-4/` : `etud
 
 `tests/test_surface_retenue.py` (règle min + grandeurs + garde `surface à retenir` + garde `alertes`),
 `tests/test_annonce_pdf.py` (D5 zone rouge / niveaux), suite unitaire complète : **verts**.
+
+---
+
+# CAPACITÉ-1 — LOT E : relecture de contrôle (deux écarts hors Étude)
+
+> L'Étude et la règle « surface à retenir » ne sont PAS touchées (audit séparé). Documents régénérés :
+> Analyses d'annonce (HT0538, AD0887, BI0351) + pré-dossiers (HT0538, AD0887).
+
+## E1 — la zone humide manquait encore dans l'Analyse et la fiche « Règles du zonage » du pré-dossier
+
+Source unique `servitudes.alertes_fiche` branchée sur **toutes** les rubriques contraintes/risques :
+- **Analyse d'annonce** : `pige/api._risques_complet` ajoute les contraintes dormantes aux aléas.
+- **Pré-dossier « Règles du zonage »** (`api/pre_dossier._regles_et_pieces`) : complétude des servitudes.
+
+**Cité — AD0887 Analyse** `05-analyse-annonce-adresse.pdf` : `Zone humide — La Grande Ferme : remblai,
+drainage…`. **Cité — pré-dossier** `06-…zip → …-regles-zonage.pdf` : `Zone humide — La Grande Ferme …`.
+
+**Garde étendue à TOUTES les pièces, ZIP compris** : `tests/test_surface_retenue.py` —
+`test_alertes_fiche_dans_les_builders_de_contraintes` (20 parcelles : builders Étude **et** Analyse ⊇
+alertes_fiche) + `test_alertes_fiche_dans_les_pieces_zip` (rend le ZIP, lit regles-zonage + PCMI4).
+
+## E2 — Analyse : « ce qui est vérifié / ce qui ne l'est pas » + le TRI n'est pas un PPR
+
+- `pige/api._classement_phrase` : quand le stationnement n'est pas vérifié, on n'affirme plus « aucune
+  règle ne mord » ; on écrit ce qui EST vérifié et ce qui ne l'est pas. Le sentinelle « a_verifier » ne
+  fuite plus dans le tableau des règles (`_regles_zone`).
+  **Cité — HT0538 Analyse** : `les règles vérifiées (reculs, emprise, hauteur) ne mordent pas nettement ;
+  le stationnement de la zone n'est pas vérifié par LABUSE (à confirmer au règlement).`
+- `pige/api._risques_rows` : le TRI (directive inondation) n'est pas un PPR → sa part va dans la colonne
+  NIVEAU, la colonne « Zone PPR » reste vide.
+  **Cité — HT0538 Analyse** : `Inondation (TRI)   Extrême 100 %   [—]   Cartographie de la directive…`.
+
+## E3 — « en zone » / « hors zone » par RECOUVREMENT MESURÉ
+
+`servitudes.aleas_parcelle` mesure, pour chaque niveau d'aléa, son intersection géométrique avec la zone
+rouge/bleue du PPR (`part_rouge_pct`/`part_bleue_pct`) ; `_risques_rows` s'en sert au lieu d'un cumul de
+pourcentages.
+**Cité — BI0351 Analyse** : `Mouvement de terrain   Fort 4 % (zone rouge) · Moyen 27 % (zone rouge) ·
+Faible 69 % (hors zone rouge)` (mesuré : fort 4 %+moyen 27 % dans le rouge, faible 0 %).
+Test `test_risques_rows_zone_rouge_par_recouvrement_mesure` : un niveau étendu mais hors du rouge reste
+« hors zone », un petit niveau entièrement dans le rouge est « en zone » (là où le cumul se tromperait).
+
+## Tests LOT E
+
+`tests/test_annonce_pdf.py` (E2/E3), `tests/test_surface_retenue.py` (gardes E1 builders + ZIP),
+suite unitaire complète : **verts**.

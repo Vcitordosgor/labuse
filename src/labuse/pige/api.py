@@ -2218,7 +2218,10 @@ def _regles_zone(zone: str | None, commune: str | None) -> list[dict]:
     if rl:
         out.append({"cle": "Recul par rapport aux limites", "valeur": rl})
     stat = getattr(zr, "stat_logement", None)
-    if isinstance(stat, str) and stat and "vérif" not in stat.lower():
+    # CAPACITE-1 (E2) — on n'affiche la ligne Stationnement que pour une règle CHIFFRÉE servie ; le
+    # sentinelle interne « a_verifier » (non calibré) ne doit jamais fuiter dans le tableau (il est dit
+    # dans la phrase de classement « stationnement non vérifié »).
+    if isinstance(stat, str) and stat and not any(k in stat.lower() for k in ("verif", "vérif", "a_verif")):
         out.append({"cle": "Stationnement", "valeur": stat})
     return out
 
@@ -2340,8 +2343,12 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
                 if lab not in intensite:
                     intensite[lab] = {"niveau": str(niv).capitalize() if niv else None,
                                       "part_pct": e.get("part_pct")}
+                # CAPACITE-1 (E3) — on garde aussi le recouvrement MESURÉ de ce niveau avec la zone
+                # rouge/bleue du PPR (part_rouge_pct/part_bleue_pct d'aleas_parcelle) pour décider
+                # « en zone »/« hors zone » par un recouvrement, pas par un cumul de pourcentages.
                 niveaux_parts.setdefault(lab, []).append(
-                    (str(niv).capitalize() if niv else None, e.get("part_pct")))
+                    (str(niv).capitalize() if niv else None, e.get("part_pct"),
+                     e.get("part_rouge_pct"), e.get("part_bleue_pct")))
         elif "ppr" in natl:
             z = "rouge" if "rouge" in natl else ("bleue" if "bleu" in natl else None)
             if z == "rouge" or (z == "bleue" and ppr_zone != "rouge"):
@@ -2389,19 +2396,27 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
         nps = [np for np in (niveaux_parts.get(lab) or []) if np[0]]
         def _niv1(n, p):
             return f"{n}{f' {int(p)} %' if isinstance(p, (int, float)) else ''}"
-        if nps and _porte_zone and isinstance(ppr_part, (int, float)):
-            # CAPACITE-1 (D5) — la zone rouge/bleue ne RECOUVRE que les niveaux LES PLUS FORTS cumulés
-            # jusqu'à sa part (BI0351 : rouge 31 % = fort 4 % + moyen 27 % ; le faible 69 % est HORS zone
-            # rouge). On annote chaque niveau au lieu de laisser la zone faire face à la LIGNE ENTIÈRE.
+        def _cov_of(np):   # recouvrement mesuré de ce niveau avec la zone de la couleur retenue
+            return (np[2] if ppr_zone == "rouge" else np[3]) if len(np) >= 4 else None
+        if nps and _porte_zone:
+            # CAPACITE-1 (D5/E3) — « en zone »/« hors zone » par RECOUVREMENT MESURÉ de chaque niveau avec
+            # la zone rouge/bleue (BI0351 : fort/moyen recouvrent le rouge, faible 0 %). Repli (fixtures
+            # sans mesure) : cumul fort→faible ≤ part de la zone. Seuil 1 pt (bruit d'arrondi au bord).
+            _mesure = any(_cov_of(np) is not None for np in nps)
             _cum, _bouts = 0.0, []
-            for n, p in nps:
+            for np in nps:
+                n, p = np[0], np[1]
                 _pf = float(p) if isinstance(p, (int, float)) else 0.0
-                _dans = (_cum + _pf) <= (float(ppr_part) + 2)   # tolérance d'arrondi (2 pts)
+                if _mesure:
+                    _cov = _cov_of(np)
+                    _dans = isinstance(_cov, (int, float)) and _cov >= 1
+                else:
+                    _dans = isinstance(ppr_part, (int, float)) and (_cum + _pf) <= (float(ppr_part) + 2)
                 _cum += _pf
                 _bouts.append(_niv1(n, p) + (f" (zone {ppr_zone})" if _dans else f" (hors zone {ppr_zone})"))
             niveau = " · ".join(_bouts)
         elif nps:
-            niveau = " · ".join(_niv1(n, p) for n, p in nps)
+            niveau = " · ".join(_niv1(np[0], np[1]) for np in nps)
         else:
             niveau = ({"rouge": "Fort", "bleue": "Modéré"}.get(ppr_zone or "", "Signalé")
                       if _porte_zone else "Signalé")
@@ -2437,8 +2452,10 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
                 sc = re.search(r"sc[eé]nario\s+(\w+)", dl)
                 niv = _TRI_NIV.get(sc.group(1), "Signalé") if sc else "Signalé"
                 pm = re.search(r"\((\d+)\s*%", d)
-                zp = f"{pm.group(1)} %" if pm else None
-                rows.append({"alea": "Inondation (TRI)", "niveau": niv, "zone_part": zp,
+                # CAPACITE-1 (E2) — le TRI (directive inondation) N'EST PAS un PPR : sa part de parcelle
+                # va dans la colonne NIVEAU, jamais sous l'en-tête « Zone PPR » (zone_part laissé vide).
+                _part = f" {pm.group(1)} %" if pm else ""
+                rows.append({"alea": "Inondation (TRI)", "niveau": f"{niv}{_part}", "zone_part": None,
                              "implique": ("Cartographie de la directive inondation (submersion "
                                           "modélisée) — complète le PPR ; à intégrer au projet.")})
         elif "endigu" in dl:
@@ -2488,10 +2505,13 @@ def _contrainte_limitante(db, idu: str, fiche: dict, zone: str | None, commune: 
     return {}
 
 
-def _classement_phrase(bande: str | None, libelle: str | None, contrainte: dict | None) -> str | None:
+def _classement_phrase(bande: str | None, libelle: str | None, contrainte: dict | None,
+                       stationnement_verifie: bool = True) -> str | None:
     """ANNONCE-5-FIX — phrase du classement DÉRIVÉE DES RÈGLES : elle nomme la règle qui limite avec ses
-    chiffres (via `_contrainte_limitante`), ou dit qu'aucune ne mord. Jamais une phrase qui contredit le
-    tableau des règles au-dessus. None si pas de bande."""
+    chiffres (via `_contrainte_limitante`), ou dit ce qui est vérifié et ce qui ne l'est pas. Jamais une
+    phrase qui contredit le tableau des règles au-dessus. None si pas de bande.
+    CAPACITE-1 (E2) — « aucune règle ne mord » est trop affirmatif quand le stationnement n'est pas
+    vérifié : on écrit alors ce qui EST vérifié (reculs, emprise, hauteur) ET ce qui ne l'est pas."""
     if not bande:
         return None
     tete = f"Classement {bande} · {libelle}" if libelle and libelle != bande else f"Classement {bande}"
@@ -2500,10 +2520,15 @@ def _classement_phrase(bande: str | None, libelle: str | None, contrainte: dict 
     detail = (contrainte or {}).get("detail")
     if detail:
         return f"{tete} : {detail}"
+    # E2 — réserve de stationnement : on ne dit pas « marge ouverte » si le stationnement reste à vérifier.
+    _reserve = ("" if stationnement_verifie else
+                " ; le stationnement de la zone n'est pas vérifié par LABUSE (à confirmer au règlement)")
     if str(bande) in ("A", "B"):
-        return f"{tete} : aucune règle de la zone ne mord nettement — la marge constructible reste ouverte."
+        _ouvert = ("la marge constructible reste ouverte" if stationnement_verifie
+                   else "les règles vérifiées (reculs, emprise, hauteur) ne mordent pas nettement")
+        return f"{tete} : {_ouvert}{_reserve}."
     return (f"{tete} : aucune règle réglementaire ne mord nettement ; la marge restante tient à la "
-            "configuration de la parcelle (forme, accès, bâti en place).")
+            f"configuration de la parcelle (forme, accès, bâti en place){_reserve}.")
 
 
 def _a_verifier(fiche: dict, nature: str, zone: str | None) -> list[str]:
@@ -2644,6 +2669,16 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
         log.warning("rapport parcelle %s : marché commune indisponible (%s)", idu, exc)
         marche = None
     contrainte = _contrainte_limitante(db, idu, fiche, zone, commune)
+    # CAPACITE-1 (E2) — le stationnement de la zone est-il VÉRIFIÉ (règle chiffrée servie) ? Sinon la
+    # phrase de classement ne dit pas « marge ouverte » sans réserve.
+    try:
+        from ..faisabilite.zonage import resolve_zone as _rz
+        _zrs = _rz(zone, commune) if zone else None
+        _stat = getattr(_zrs, "stat_logement", None) if _zrs else None
+        _stat_verif = (isinstance(_stat, str) and bool(_stat)
+                       and not any(k in _stat.lower() for k in ("verif", "vérif", "a_verif")))
+    except Exception:  # noqa: BLE001
+        _stat_verif = True
     # RECETTE-4 — « Dernière vente » (date + prix DVF de la parcelle), lue de la fiche (dvf_parcelle.
     # derniere_mutation) → MÊME source que l'écran. None = aucune mutation (le PDF affiche « aucune depuis 2014 »).
     _dm = ((fiche or {}).get("dvf_parcelle") or {}).get("derniere_mutation") or {}
@@ -2660,14 +2695,38 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
         "estimation": est,
         "derniere_vente": derniere_vente,
         "classement": {"bande": cls.get("bande"), "libelle": cls.get("libelle"),
-                       "phrase": _classement_phrase(cls.get("bande"), cls.get("libelle"), contrainte)},
+                       "phrase": _classement_phrase(cls.get("bande"), cls.get("libelle"), contrainte,
+                                                     stationnement_verifie=_stat_verif)},
         "foncier": {"zone": zone, "commune": commune,
                     "regles": _regles_zone(zone, commune),
                     "parcelle": _parcelle_mesures(db, idu, fiche)},
-        "risques": _risques_rows(fiche, commune),
+        "risques": _risques_complet(db, idu, fiche, commune),
         "marche": marche,
         "a_verifier": _a_verifier(fiche, nature, zone),
     }
+
+
+def _risques_complet(db, idu: str, fiche: dict, commune: str | None) -> list[dict]:
+    """CAPACITE-1 (E1) — la rubrique « Risques et contraintes » de l'Analyse d'annonce porte les aléas
+    (`_risques_rows`) ET les contraintes DORMANTES de la fiche (`alertes_fiche` : zone humide, bruit,
+    SUP, foncier public…) — faute AD0887 : zone humide au Comparatif/Dossier, absente de l'Analyse.
+    Même liste que la fiche ; aléas/PPR déjà couverts par `_risques_rows`."""
+    rows = _risques_rows(fiche, commune)
+    try:
+        from ..api.servitudes import alertes_fiche
+        _nt = lambda s: "".join((s or "").lower().split())[:40]
+        _vus = {_nt((r.get("implique") or "") + (r.get("alea") or "")) for r in rows}
+        for a in alertes_fiche(db, idu):
+            cat = str(a.get("categorie") or "")
+            if cat.startswith("Risque naturel") or cat.startswith("PPR"):
+                continue
+            eff = str(a.get("effet") or "")
+            if eff and not any(_nt(eff)[:30] in v for v in _vus):
+                rows.append({"alea": cat or "Contrainte", "niveau": "", "zone_part": "", "implique": eff})
+                _vus.add(_nt(eff))
+    except Exception:  # noqa: BLE001 — une contrainte absente ne casse jamais l'Analyse
+        pass
+    return rows
 
 
 @router.get("/radar/annonce/rapport/{idu}")

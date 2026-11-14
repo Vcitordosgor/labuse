@@ -95,22 +95,37 @@ def test_un_seul_surface_a_retenir_tous_documents(session_reelle, idu, valeur_at
     assert sar_persiste["valeur_m2"] != 1047
 
 
-# ── D2 : MÊME liste d'alertes que la fiche dans tous les documents (garde 20 parcelles) ──────────
+# ── D2/E1 : MÊME liste d'alertes que la fiche dans TOUS les documents (garde 20 parcelles) ───────
+import re as _re_t
+
+
+def _nt(s):
+    # alphanumérique seul (sans accents/ponctuation/espaces) : robuste à l'extraction PDF (tiret cadratin,
+    # césures de ligne, accents rendus différemment par pypdf vs la source).
+    return _re_t.sub(r"[^a-z0-9]", "", (s or "").lower())
+
+
+def _present(eff, textes):
+    """`eff` figure-t-il dans l'un des textes rendus (match par préfixe normalisé) ?"""
+    k = _nt(eff)[:28]
+    return bool(k) and any(k in t for t in textes)
+
+
 @pytest.mark.reel
-def test_alertes_fiche_dans_tous_les_documents(session_reelle):
+def test_alertes_fiche_dans_les_builders_de_contraintes(session_reelle):
     """20 parcelles tirées (déterministes) : chaque ALERTE DORMANTE de la fiche (`alertes_fiche`, lue en
-    direct dans spatial_layers) DOIT figurer dans la liste de contraintes de l'Étude
-    (`_attach_contraintes_signalees`, son propre builder). Le Comparatif, le Dossier et le pré-dossier
-    sont COMPLÉTÉS par construction (append / bloc vs `alertes_fiche`) ; l'Étude a un builder distinct,
-    c'est lui qui pouvait manquer une alerte (faute AD0887 : zone humide absente de l'Étude)."""
+    direct dans spatial_layers) DOIT figurer dans les builders de contraintes DISTINCTS — l'Étude
+    (`_attach_contraintes_signalees`) ET l'Analyse d'annonce (`_risques_complet`). Comparatif, Dossier et
+    pré-dossier sont complétés par construction (append / bloc vs `alertes_fiche`) et vérifiés pièce par
+    pièce (ZIP compris) par `test_alertes_fiche_dans_les_pieces_zip`."""
     from sqlalchemy import text
     from labuse.api.servitudes import alertes_fiche
     from labuse.api.modules import _attach_contraintes_signalees
+    from labuse.pige.api import _risques_complet
+    from labuse.api.app import parcel_fiche
 
-    _nt = lambda s: "".join((s or "").lower().split())[:40]
     idus = [r[0] for r in session_reelle.execute(text(
-        "SELECT idu FROM parcels WHERE cadastre_disparue_le IS NULL "
-        "ORDER BY md5(idu) LIMIT 20")).all()]
+        "SELECT idu FROM parcels WHERE cadastre_disparue_le IS NULL ORDER BY md5(idu) LIMIT 20")).all()]
     assert idus, "aucune parcelle témoin"
     manques = []
     for idu in idus:
@@ -118,10 +133,57 @@ def test_alertes_fiche_dans_tous_les_documents(session_reelle):
                      if not str(a.get("categorie") or "").startswith(("Risque naturel", "PPR"))]
         if not attendues:
             continue
+        # Étude
         payload = {"terrain": {}}
         _attach_contraintes_signalees(session_reelle, payload, [idu])
-        rendus = {_nt(x) for x in (payload["terrain"].get("contraintes_signalees") or [])}
+        txt_etude = {_nt(x) for x in (payload["terrain"].get("contraintes_signalees") or [])}
+        # Analyse d'annonce
+        commune = session_reelle.execute(text("SELECT commune FROM parcels WHERE idu=:i"),
+                                         {"i": idu}).scalar()
+        fiche = parcel_fiche(idu, db=session_reelle)
+        txt_analyse = {_nt((r.get("implique") or "") + (r.get("alea") or ""))
+                       for r in _risques_complet(session_reelle, idu, fiche, commune)}
         for eff in attendues:
-            if not any(_nt(eff)[:30] in r for r in rendus):
+            if not _present(eff, txt_etude):
+                manques.append((idu, "Étude", eff[:40]))
+            if not _present(eff, txt_analyse):
+                manques.append((idu, "Analyse", eff[:40]))
+    assert not manques, f"alertes de la fiche absentes d'un document : {manques[:12]}"
+
+
+@pytest.mark.reel
+def test_alertes_fiche_dans_les_pieces_zip(session_reelle):
+    """Pièces INTERNES du pré-dossier (ZIP) + Dossier : chaque alerte dormante de la fiche doit figurer
+    dans toute pièce qui a une rubrique contraintes/risques (regles-zonage, PCMI4 notice, Dossier §5).
+    Rendu réel (lourd) → échantillon des témoins qui PORTENT une contrainte dormante (dont AD0887 zone
+    humide)."""
+    from starlette.requests import Request
+    import io, zipfile
+    from pypdf import PdfReader
+    from labuse.api.servitudes import alertes_fiche
+    from labuse.api.pre_dossier import pre_dossier_zip
+
+    scope = {"type": "http", "method": "GET", "headers": [], "query_string": b"", "path": "/",
+             "client": ("127.0.0.1", 0), "server": ("localhost", 80), "scheme": "http"}
+    manques = []
+    for idu in ("97422000AD0887", "97416000HT0538"):
+        attendues = [a["effet"] for a in alertes_fiche(session_reelle, idu)
+                     if not str(a.get("categorie") or "").startswith(("Risque naturel", "PPR"))]
+        if not attendues:
+            continue
+        try:
+            resp = pre_dossier_zip(idu, Request(scope), session_reelle)
+        except Exception as e:   # noqa: BLE001 — parcelle non constructible : pas de ZIP, hors de ce test
+            continue
+        textes = []
+        with zipfile.ZipFile(io.BytesIO(resp.body)) as z:
+            for nom in z.namelist():
+                if nom.endswith(".pdf") and any(k in nom for k in ("regles-zonage", "PCMI4")):
+                    try:
+                        textes.append(_nt(" ".join(p.extract_text() or "" for p in PdfReader(io.BytesIO(z.read(nom))).pages)))
+                    except Exception:  # noqa: BLE001
+                        pass
+        for eff in attendues:
+            if not _present(eff, textes):
                 manques.append((idu, eff[:48]))
-    assert not manques, f"alertes de la fiche absentes de l'Étude : {manques[:12]}"
+    assert not manques, f"alertes de la fiche absentes d'une pièce du ZIP : {manques[:12]}"
