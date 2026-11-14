@@ -335,6 +335,8 @@ def test_risques_rows_ppr_multirisque_rattache_tous_les_aleas_nommes():
     # CAPACITE-1 (C5) — le mouvement de terrain affiche TOUS ses niveaux avec leur part, fort d'abord
     _mvt = by["Mouvement de terrain"]["niveau"]
     assert _mvt.startswith("Fort 4 %") and "Faible 69 %" in _mvt
+    # CAPACITE-1 (D5) — la zone rouge (31 %) recouvre le FORT (4 %), pas le FAIBLE (69 %, hors zone rouge)
+    assert "Fort 4 % (zone rouge)" in _mvt and "Faible 69 % (hors zone rouge)" in _mvt
 
 
 def test_a_verifier_derive_des_donnees_max_3():

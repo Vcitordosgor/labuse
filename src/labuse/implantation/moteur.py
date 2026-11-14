@@ -411,6 +411,10 @@ def _scenario_vide(terrain, conv, regles, objectif, candidats) -> Scenario:
 def _paquet_en_scenario(terrain, conv, regles, objectif, candidats, item) -> Scenario:
     _clef_, paquet, forme, niveaux, _frac = item
     scene, cap, controles, checks, _geo, statut = paquet
+    # CAPACITE-1 (D1) — AFFICHAGE : la faisabilité/le statut ci-dessus sont DÉJÀ décidés (verdict
+    # géométrique du moteur) ; on n'ajuste QUE la ligne affichée du contrôle de stationnement (barème
+    # par logement → « À confirmer », jamais « Réussi » avec une règle qui ne s'applique pas).
+    ctrl_mod.afficher_stationnement_a_confirmer(controles, regles)
     return Scenario(terrain, conv, regles, scene, cap, controles, checks, statut, forme, niveaux,
                     objectif, candidats, terrain.note_limites)
 

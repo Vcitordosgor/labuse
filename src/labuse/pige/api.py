@@ -2387,8 +2387,21 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
         # CAPACITE-1 (C5) — TOUS les niveaux de l'aléa avec leur part dans la colonne NIVEAU (fort 4 % ·
         # moyen 27 % · faible 69 %), comme le Dossier §4 ; plus « seulement le plus fort ».
         nps = [np for np in (niveaux_parts.get(lab) or []) if np[0]]
-        if nps:
-            niveau = " · ".join(f"{n}{f' {int(p)} %' if isinstance(p, (int, float)) else ''}" for n, p in nps)
+        def _niv1(n, p):
+            return f"{n}{f' {int(p)} %' if isinstance(p, (int, float)) else ''}"
+        if nps and _porte_zone and isinstance(ppr_part, (int, float)):
+            # CAPACITE-1 (D5) — la zone rouge/bleue ne RECOUVRE que les niveaux LES PLUS FORTS cumulés
+            # jusqu'à sa part (BI0351 : rouge 31 % = fort 4 % + moyen 27 % ; le faible 69 % est HORS zone
+            # rouge). On annote chaque niveau au lieu de laisser la zone faire face à la LIGNE ENTIÈRE.
+            _cum, _bouts = 0.0, []
+            for n, p in nps:
+                _pf = float(p) if isinstance(p, (int, float)) else 0.0
+                _dans = (_cum + _pf) <= (float(ppr_part) + 2)   # tolérance d'arrondi (2 pts)
+                _cum += _pf
+                _bouts.append(_niv1(n, p) + (f" (zone {ppr_zone})" if _dans else f" (hors zone {ppr_zone})"))
+            niveau = " · ".join(_bouts)
+        elif nps:
+            niveau = " · ".join(_niv1(n, p) for n, p in nps)
         else:
             niveau = ({"rouge": "Fort", "bleue": "Modéré"}.get(ppr_zone or "", "Signalé")
                       if _porte_zone else "Signalé")

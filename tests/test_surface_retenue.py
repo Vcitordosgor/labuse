@@ -3,8 +3,8 @@ import os
 
 import pytest
 
-from labuse.faisabilite.surface_retenue import (GRANDEUR_ESTIMATION, GRANDEUR_SCENARIO,
-                                                surface_a_retenir)
+from labuse.faisabilite.surface_retenue import (GRANDEUR_ESQUISSE, GRANDEUR_ESTIMATION,
+                                                GRANDEUR_SCENARIO, surface_a_retenir)
 
 
 @pytest.fixture(scope="module")
@@ -25,30 +25,31 @@ def session_reelle():
     s.close()
 
 
-def test_sans_etude_estimation_rapide():
+def test_sans_esquisse_estimation_rapide():
     r = surface_a_retenir(614, None)
     assert r["valeur_m2"] == 614 and r["source"] == GRANDEUR_ESTIMATION
-    assert "estimation rapide" in r["phrase"] and "scénario" not in r["phrase"].lower()
+    assert "estimation rapide" in r["phrase"] and "esquisse" not in r["phrase"].lower()
 
 
-def test_scenario_sans_stationnement_majorant_non_retenu():
-    # HT0538 — le barème n'est pas ingéré : le scénario (888) est un MAJORANT, on retient 614.
-    r = surface_a_retenir(614, {"sdp_m2": 887.5, "stationnement_applique": False})
+def test_esquisse_plus_grande_estimation_retenue():
+    # HT0538 — l'esquisse (888) est un MAJORANT : on retient 614 (la plus petite), esquisse à vérifier.
+    r = surface_a_retenir(614, {"sdp_m2": 887.5})
     assert r["valeur_m2"] == 614 and r["source"] == GRANDEUR_ESTIMATION
-    assert "888" in r["phrase"] and "non retenu tant que le stationnement" in r["phrase"]
+    assert "888 m²" in r["phrase"] and "à vérifier : stationnement non déduit" in r["phrase"]
 
 
-def test_scenario_avec_stationnement_retenu():
-    # Le Tampon AD0887 — barème appliqué (stationnement déduit) : on retient le scénario (795).
-    r = surface_a_retenir(1047, {"sdp_m2": 795, "stationnement_applique": True})
-    assert r["valeur_m2"] == 795 and r["source"] == GRANDEUR_SCENARIO
-    assert "795 m²" in r["phrase"] and "1 047 m²" in r["phrase"] and "stationnement déduit" in r["phrase"]
+def test_esquisse_plus_petite_esquisse_retenue():
+    # Le Tampon AD0887 — l'esquisse (795) est plus petite : on la retient, à vérifier (surface ≤).
+    r = surface_a_retenir(1047, {"sdp_m2": 795})
+    assert r["valeur_m2"] == 795 and r["source"] == GRANDEUR_ESQUISSE
+    assert "795 m²" in r["phrase"] and "1 047 m²" in r["phrase"]
+    assert "stationnement à vérifier" in r["phrase"] and "la surface réelle peut être inférieure" in r["phrase"]
 
 
 def test_jamais_le_plus_grand_par_defaut():
-    # Garde LABUSE : un scénario plus GRAND que l'estimation n'est pas retenu sans stationnement appliqué.
-    r = surface_a_retenir(614, {"sdp_m2": 2000, "stationnement_applique": False})
-    assert r["valeur_m2"] == 614
+    # Garde LABUSE : la plus petite des deux, toujours — une esquisse plus grande n'est jamais retenue.
+    assert surface_a_retenir(614, 2000)["valeur_m2"] == 614
+    assert surface_a_retenir(2000, 614)["valeur_m2"] == 614
 
 
 # ── Garde-fou : un seul « surface à retenir » par parcelle, TOUS les documents (C6/C9) ───────────
@@ -92,3 +93,35 @@ def test_un_seul_surface_a_retenir_tous_documents(session_reelle, idu, valeur_at
     assert sar_persiste["valeur_m2"] == valeur_attendue and sar_persiste["source"] == source_attendue
     # Sur AD0887, le scénario (795) est retenu — jamais 1 047 (estimation rapide) nu comme capacité.
     assert sar_persiste["valeur_m2"] != 1047
+
+
+# ── D2 : MÊME liste d'alertes que la fiche dans tous les documents (garde 20 parcelles) ──────────
+@pytest.mark.reel
+def test_alertes_fiche_dans_tous_les_documents(session_reelle):
+    """20 parcelles tirées (déterministes) : chaque ALERTE DORMANTE de la fiche (`alertes_fiche`, lue en
+    direct dans spatial_layers) DOIT figurer dans la liste de contraintes de l'Étude
+    (`_attach_contraintes_signalees`, son propre builder). Le Comparatif, le Dossier et le pré-dossier
+    sont COMPLÉTÉS par construction (append / bloc vs `alertes_fiche`) ; l'Étude a un builder distinct,
+    c'est lui qui pouvait manquer une alerte (faute AD0887 : zone humide absente de l'Étude)."""
+    from sqlalchemy import text
+    from labuse.api.servitudes import alertes_fiche
+    from labuse.api.modules import _attach_contraintes_signalees
+
+    _nt = lambda s: "".join((s or "").lower().split())[:40]
+    idus = [r[0] for r in session_reelle.execute(text(
+        "SELECT idu FROM parcels WHERE cadastre_disparue_le IS NULL "
+        "ORDER BY md5(idu) LIMIT 20")).all()]
+    assert idus, "aucune parcelle témoin"
+    manques = []
+    for idu in idus:
+        attendues = [a["effet"] for a in alertes_fiche(session_reelle, idu)
+                     if not str(a.get("categorie") or "").startswith(("Risque naturel", "PPR"))]
+        if not attendues:
+            continue
+        payload = {"terrain": {}}
+        _attach_contraintes_signalees(session_reelle, payload, [idu])
+        rendus = {_nt(x) for x in (payload["terrain"].get("contraintes_signalees") or [])}
+        for eff in attendues:
+            if not any(_nt(eff)[:30] in r for r in rendus):
+                manques.append((idu, eff[:48]))
+    assert not manques, f"alertes de la fiche absentes de l'Étude : {manques[:12]}"

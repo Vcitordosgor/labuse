@@ -2333,7 +2333,7 @@ def _attach_contraintes_signalees(db: Session, payload: dict, idus) -> None:
     quand le Dossier en relève une. Agrégé sur toutes les parcelles de l'assiette (dédoublonné)."""
     if not isinstance(payload, dict):
         return
-    from .app import _aleas_block, _dispositifs_block
+    from .app import _aleas_block
     vus, items = set(), []
 
     def _ajoute(libelle: str):
@@ -2353,10 +2353,12 @@ def _attach_contraintes_signalees(db: Session, payload: dict, idus) -> None:
                 _ajoute(nat + (f" — niveau {niv}" if niv else ""))
         except Exception:  # noqa: BLE001 — une contrainte absente n'est jamais un 500
             pass
-        # EXPORTS-FIX-3 LOT 3 (#4, relecture) — DPU : MÊME formule que le Dossier (présence PAR COMMUNE).
-        # Une commune sans périmètre DPU ingéré (ex. Saint-Pierre) est « non vérifié », jamais
-        # « signalé » (faute : l'Étude le signalait sur le terrain pendant que le Dossier le disait non
-        # vérifié). On n'affirme donc « DPU » que si la couche est ingérée POUR cette commune.
+        # EXPORTS-FIX-3 LOT 3 (#4) / CAPACITE-1 (D2) — DPU : MÊME source que la fiche/Dossier/Comparatif.
+        # Commune SANS périmètre DPU ingéré (ex. Saint-Pierre) → « non vérifié » (jamais « signalé »).
+        # Commune ingérée : la PRÉSENCE sur la parcelle est servie par `contraintes_parcelle` ci-dessous
+        # (intersection géométrique, kind='dpu') — comme la fiche ; une parcelle HORS périmètre (AD0887)
+        # n'affiche donc PLUS « DPU signalée » (le Dossier disait « hors périmètre publié »). On retire la
+        # lecture `_dispositifs_block` (présence par COMMUNE, pas par parcelle) qui contredisait le Dossier.
         try:
             commune = db.execute(text("SELECT commune FROM parcels WHERE idu=:i"), {"i": idu}).scalar()
             dpu_ing = bool(commune and db.execute(text(
@@ -2364,10 +2366,6 @@ def _attach_contraintes_signalees(db: Session, payload: dict, idus) -> None:
                 {"c": commune}).scalar())
             if not dpu_ing:
                 _ajoute("Droit de préemption urbain (DPU) — non ingéré pour cette commune (non vérifié)")
-            else:
-                d = _dispositifs_block(db, idu) or {}
-                if d.get("dpu"):
-                    _ajoute("Droit de préemption urbain (DPU)")
         except Exception:  # noqa: BLE001
             pass
         # EXPORTS-FIX-3 LOT 3 (#5c, relecture) — un risque présent sur la FICHE figure dans l'Étude :
@@ -2398,6 +2396,20 @@ def _attach_contraintes_signalees(db: Session, payload: dict, idus) -> None:
                 _ajoute("Parcelle protégée par un système d'endiguement — inondation RÉSIDUELLE en cas "
                         "de défaillance ou de dépassement du niveau de protection.")
         except Exception:  # noqa: BLE001
+            pass
+        # CAPACITE-1 (D2) — MÊME liste d'alertes que la fiche : on ajoute les contraintes DORMANTES de
+        # `contraintes_parcelle` (zone humide, bruit, SUP, foncier public…) que l'Étude omettait (elle ne
+        # listait que les aléas + DPU/TRI/endiguement) — faute AD0887 : zone humide au Comparatif, absente
+        # de l'Étude. Les aléas (catégorie « Risque naturel ») sont déjà ajoutés ci-dessus (dédup `_ajoute`).
+        try:
+            from .servitudes import contraintes_parcelle
+            for c in contraintes_parcelle(db, idu):
+                cat = str(c.get("categorie") or "")
+                if cat.startswith("Risque naturel") or cat.startswith("PPR"):
+                    continue
+                if c.get("effet"):
+                    _ajoute(str(c["effet"]))
+        except Exception:  # noqa: BLE001 — une contrainte absente ne casse jamais l'Étude
             pass
     if items:
         # FIX-FINAL-1 (régression NU-E-055 / NU-D-001) — `payload["terrain"]` peut être None sur un
@@ -2430,6 +2442,19 @@ def _attach_garde_fiche(db: Session, payload: dict, idus) -> None:
             gf["sdp_max_m2"] = estimation_rapide_m2(db, idus[0])
         except Exception:  # noqa: BLE001
             gf["sdp_max_m2"] = None
+        # CAPACITE-1 (D4) — l'occupation SUPPOSÉE du Dossier (le « 45 % » : emprise constructible ×
+        # occupation × niveaux = SDP), calculée au MÊME point que le facteur B1 du Dossier, pour que
+        # l'Étude explique l'écart avec les MÊMES chiffres (jamais un second % recalculé depuis la SDP).
+        try:
+            from .app import _potentiel_transformation_block
+            _cal = (_potentiel_transformation_block(db, idus[0]) or {}).get("calcul") or {}
+            _emp, _niv, _sdp = (_cal.get("emprise_constructible_m2"), _cal.get("niveaux_max"),
+                                _cal.get("sdp_max_m2"))
+            gf["occupation_supposee_pct"] = (round(100 * _sdp / (_emp * _niv))
+                                             if (_emp and _niv and _sdp) else None)
+            gf["emprise_constructible_m2"] = _emp
+        except Exception:  # noqa: BLE001
+            gf["occupation_supposee_pct"] = None
         payload["_garde_fiche"] = gf
     except Exception:  # noqa: BLE001 — le garde-fou ne casse jamais l'export
         pass

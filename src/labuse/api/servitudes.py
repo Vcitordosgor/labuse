@@ -557,6 +557,19 @@ def contraintes_parcelle(db: Session, idu: str) -> list[dict]:
     return items
 
 
+def alertes_fiche(db: Session, idu: str) -> list[dict]:
+    """CAPACITE-1 (D2) — LA liste d'alertes de la fiche, lue par TOUS les documents (Dossier, Étude,
+    Comparatif, pré-dossier) : chaque alerte DOIT y figurer, avec un seul statut. C'est exactement
+    `contraintes_parcelle` (aléas gradués + contraintes dormantes : zone humide, bruit, SUP, DPU
+    présent, AU fermée…), lue EN DIRECT dans `spatial_layers` — jamais le run de cascade (qui peut être
+    partiel et faisait manquer la zone humide d'une parcelle au Dossier/Étude/pré-dossier). Renvoie
+    `[{categorie, effet, redhibitoire}]`. Le garde-fou `test_alertes_fiche_dans_tous_les_documents`
+    échoue si une de ces alertes manque dans un document qui a une rubrique contraintes/risques."""
+    return [{"categorie": c.get("categorie"), "effet": c.get("effet"),
+             "redhibitoire": bool(c.get("redhibitoire"))}
+            for c in contraintes_parcelle(db, idu) if c.get("effet")]
+
+
 @router.get("/{idu}")
 def servitudes_invisibles(idu: str, db: Session = Depends(get_db)) -> dict:
     """IDU → synthèse des servitudes/contraintes dormantes intersectant la parcelle, chacune sourcée + datée."""

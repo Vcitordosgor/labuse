@@ -127,9 +127,10 @@ def test_api_pipeline_prospection(client_parcel):
     # la prospection reste lisible LÀ où elle est scopée : la fiche pipeline du compte (sanity)
     assert client.get(f"/pipeline/parcel/{idu}").json()["entry"]["prospection"]["contact_nom"] == "Commune de X"
 
-    # FIX-CRM-CLOISON C1 — l'export (fiche legacy, servie sans scope de compte) NE PORTE PLUS le
-    # contact saisi : la prospection (PII) ne vit que dans le CRM scopé, jamais dans /export ou
-    # /explain, sinon elle fuiterait à un autre compte (cf. test_idor_fiche_explain_export_*).
-    ex = client.get(f"/parcels/{idu}/export", params={"format": "md"})
+    # FIX-CRM-CLOISON C1 — la fiche legacy (servie sans scope de compte) NE PORTE PLUS le contact
+    # saisi : la prospection (PII) ne vit que dans le CRM scopé, jamais dans /explain, sinon elle
+    # fuiterait à un autre compte. CAPACITE-1 (D3) : la route /export (md/html) a été retirée ; on
+    # vérifie l'autre surface legacy restante, /explain.
+    ex = client.get(f"/parcels/{idu}/explain")
     assert ex.status_code == 200
     assert "Commune de X" not in ex.text

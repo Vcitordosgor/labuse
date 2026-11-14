@@ -9187,35 +9187,10 @@ def parcel_explain(idu: str, db: Session = Depends(get_db)) -> dict:
     return explain_parcel(fiche)
 
 
-@app.get("/parcels/{idu}/export")
-def export_fiche(idu: str, format: str = Query("md", pattern="^(md|html)$"),
-                 db: Session = Depends(get_db)):
-    """Export fiche : Markdown (md) ou HTML détaillé (html). Surface DONNÉES (cloisonnée par
-    compte via `_build_fiche`) — distincte des documents PDF (builder exports). EXPORTS-2 lot 8
-    ne touche PAS cet export : seul l'export PDF (`/export.pdf`) est redirigé (RECETTE-3 T2 : vers
-    le Dossier depuis la suppression du Résumé)."""
-    import html as html_mod
-
-    from fastapi.responses import HTMLResponse, PlainTextResponse
-
-    from .export import fiche_html, fiche_markdown
-
-    _check_idu(idu)
-    # CHASSE-DONNEES-FIX-1 (Lot 2) — une parcelle disparue du cadastre : l'export REFUSE de composer
-    # une fiche vivante (l'écran route déjà vers le stub, pas _build_fiche) et sert le message.
-    _disp = _cadastre_disparue.info_disparue(db, idu)
-    if _disp:
-        _ph = _cadastre_disparue.phrase_disparue(_disp)
-        if format == "html":
-            return HTMLResponse(f"<!doctype html><html lang=fr><meta charset=utf-8>"
-                                f"<title>{html_mod.escape(idu)}</title><body>"
-                                f"<h1>{html_mod.escape(idu)}</h1><p>{html_mod.escape(_ph)}</p></body></html>")
-        return PlainTextResponse(f"# {idu}\n\n{_ph}\n", media_type="text/markdown")
-
-    fiche = _build_fiche(db, idu)
-    if format == "html":
-        return HTMLResponse(fiche_html(fiche))
-    return PlainTextResponse(fiche_markdown(fiche), media_type="text/markdown")
+# CAPACITE-1 (D3) — l'export fiche TEXTE (`GET /parcels/{idu}/export?format=md|html`) a été RETIRÉ :
+# l'interface ne le propose nulle part (grep front : 0 appelant) et il faisait doublon avec le Dossier
+# PDF. Les fonctions `api/export.fiche_markdown`/`fiche_html` restent (santé démo `_warm_demo_core`,
+# demo.py, test_micro_opportunite). Si un besoin d'export texte réapparaît, le recâbler ICI.
 
 
 @app.get("/parcels/{idu}/spf-letter")
@@ -9377,7 +9352,9 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "bilan_hypotheses": list(_bilan.get("hypotheses") or []),
         "charge_fonciere_base": "par m² de terrain",
         "n_contraintes": len(contraintes),
-        "contraintes": [c["detail"] for c in contraintes_ordonnees[:5]],
+        # CAPACITE-1 (D2) — plus de cap à 5 : toute alerte de la fiche doit pouvoir figurer (le cap
+        # masquait des contraintes réelles). La complétude vs `alertes_fiche` est posée dans compare().
+        "contraintes": [c["detail"] for c in contraintes_ordonnees],
         # EXPORTS-FIX-3 LOT 3 (#5) — l'état du bâti EXACTEMENT comme la fiche (etat_bien servi) : une
         # seule valeur partout ; non mesuré (trace aérienne seule) → « bâti détecté, à vérifier ».
         "bati_etat": qv2.get("etat_bien"),
@@ -9726,6 +9703,19 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
             if _est not in (None, "") or _scn is not None:
                 row["surface_a_retenir"] = surface_a_retenir(_est, _scn)
         except Exception:  # noqa: BLE001 — n'empêche jamais la comparaison
+            pass
+        # CAPACITE-1 (D2) — MÊME liste d'alertes que la fiche : toute alerte de `alertes_fiche` absente
+        # de la colonne « Contraintes » (le run de cascade pouvait en manquer, ex. zone humide AD0887)
+        # est ajoutée. Un seul statut par fait (dédup par clé normalisée).
+        try:
+            from .servitudes import alertes_fiche as _alertes_fiche
+            _norm = lambda s: "".join((s or "").lower().split())[:48]
+            _vus = {_norm(c) for c in (row.get("contraintes") or [])}
+            for _a in _alertes_fiche(db, idu):
+                if _norm(_a["effet"]) not in _vus:
+                    row.setdefault("contraintes", []).append(_a["effet"])
+                    _vus.add(_norm(_a["effet"]))
+        except Exception:  # noqa: BLE001
             pass
         out.append(row)
     # NU5-FIX-1 (A-O5) — IDU demandés mais non rendus : introuvables (ignores), surnuméraires

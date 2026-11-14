@@ -1640,6 +1640,24 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
         # composant que l'Apporteur, injecté par le builder (qui a la base).
         if sec["id"] == "identite" and plan_html:
             frags.append(plan_html)
+        # CAPACITE-1 (D2) — §5 : complétude vs la fiche. Toute alerte d'`alertes_fiche` (lue EN DIRECT,
+        # attachée par le builder sous `_alertes_dormantes`) ABSENTE du §5 est listée ici — le Dossier
+        # porte alors la MÊME liste que la fiche (le run de cascade pouvait en manquer, ex. zone humide
+        # AD0887). Les aléas gradués/PPR ont déjà leurs lignes ci-dessus ; bloc NEUTRE (aucun second statut).
+        if sec["id"] == "risques":
+            _nt = lambda s: _re.sub(r"[^a-z0-9]", "", (s or "").lower())
+            _rendu = _nt("".join(rows) + "".join(blocs_pleins))
+            _manq = []
+            for _a in (fiche.get("_alertes_dormantes") or []):
+                _cat = str(_a.get("categorie") or "")
+                if _cat.startswith("Risque naturel") or _cat.startswith("PPR"):
+                    continue
+                _eff = str(_a.get("effet") or "")
+                if _eff and _nt(_eff)[:40] not in _rendu:
+                    _manq.append(f"<li>{esc(_eff)}</li>")
+            if _manq:
+                frags.append('<div class="sansobjet"><div class="t">Contraintes dormantes relevées '
+                             '(mêmes alertes que la fiche)</div><ul>' + "".join(_manq) + "</ul></div>")
         if absents:
             # EXPORTS-FIX-1 C6 — deux encadrés distincts : « Vérifié : rien » (contrôle tenu, rien
             # trouvé) et « Non disponible ici » (donnée non calculée/déterminée), avec LA raison —

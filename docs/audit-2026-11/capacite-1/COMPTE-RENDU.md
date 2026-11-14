@@ -219,3 +219,69 @@ LIVE de l'Étude, HT0538 → 614 (estimation), AD0887 → **795 (scénario), jam
 
 - `tests/test_surface_retenue.py` (règle + garde-fou reel), `tests/test_annonce_pdf.py` (C5 niveaux), registre
   intègre (`surface_a_retenir` déclarée + servie par le robinet constructibilité) : **verts**.
+
+---
+
+# CAPACITÉ-1 — LOT D : relecture de contrôle (la règle change)
+
+## D1 — « surface à retenir » = la PLUS PETITE des deux ; esquisse « à vérifier », jamais « exploitable »
+
+Un contrôle qui applique la mauvaise règle ne « retient » pas un scénario. À AD0887, l'Étude marquait le
+stationnement « Réussi » avec la règle de l'habitat individuel (8 places) alors que ses 8 logements
+collectifs relèvent du barème collectif (art. Ud12.2, > 5 logements). Nouvelle règle dans la fonction unique
+`faisabilite/surface_retenue.surface_a_retenir` : **la plus petite** entre l'estimation rapide et l'esquisse
+(quand une esquisse existe), sinon l'estimation rapide. La seconde grandeur s'appelle désormais
+« **esquisse d'implantation** », toujours à vérifier.
+
+**Cité — HT0538 Dossier/Étude/Comparatif/pré-dossier** :
+> `Surface à retenir : 614 m² (estimation rapide). L'esquisse d'implantation atteint 888 m², à vérifier : stationnement non déduit.`
+
+**Cité — AD0887 Dossier/Étude/Comparatif/pré-dossier** :
+> `Surface à retenir : 795 m² (esquisse d'implantation, stationnement à vérifier : la surface réelle peut être inférieure). L'estimation rapide donnait 1 047 m², hors stationnement.`
+
+**Contrôle de stationnement** (`implantation/controles.py`) : « Réussi » seulement pour un barème spécifique
+au collectif (`par_typologie`) ; un barème « par logement » (taux unique, destination non distinguée) → **« À
+confirmer »**, jamais « Réussi » avec une règle qui ne s'applique pas.
+**Cité — AD0887 Étude** : `Stationnement | barème « par logement » | 8 places dessinées | À confirmer`.
+*Hors lot (à faire)* : vérifier commune par commune quelle règle de stationnement le solveur applique selon
+le programme.
+
+## D2 — mêmes alertes partout (la liste de la fiche)
+
+Source unique `api/servitudes.alertes_fiche` (= `contraintes_parcelle`, lue EN DIRECT dans `spatial_layers`).
+Chaque document complète sa rubrique contraintes/risques avec cette liste : Étude (`_attach_contraintes_signalees`),
+Comparatif (`compare()`, cap de 5 retiré), Dossier (§5, bloc « Contraintes dormantes relevées »), pré-dossier
+(PCMI4). Le DPU lit la même présence par parcelle que la fiche (plus `_dispositifs_block` par commune) : AD0887
+hors périmètre n'affiche plus « DPU signalée ».
+**Cité — AD0887** : zone humide « La Grande Ferme » désormais au Dossier (§5), à l'Étude, au Comparatif ET au
+pré-dossier. **Garde** : `test_alertes_fiche_dans_tous_les_documents` (20 parcelles tirées déterministes) échoue
+si une alerte de la fiche manque dans le builder de l'Étude.
+
+## D3 — route d'export texte Markdown/HTML retirée
+
+`GET /parcels/{idu}/export` (md/html) n'était appelée par **aucun écran** (grep front : 0). Route supprimée
+(`api/app.py`) ; tests du route retirés/réaffectés à `/explain` (`test_api`, `test_prospection`, `test_audit_secu`) ;
+fichiers `10/11-export-fiche.*` retirés du lot. Les fonctions `fiche_markdown/fiche_html` restent (santé démo).
+
+## D4 — Étude : l'écart expliqué avec les chiffres du Dossier + une emprise mesurée
+
+**Cité — HT0538 Étude** :
+> `Écart avec l'estimation rapide : elle suppose 45 % d'occupation du gabarit (comme le Dossier) ; l'esquisse
+> dessine 199 m² d'emprise sur 266 m² de zone d'implantation, soit 75 % mesurés …`
+(45 % = le facteur B1 du Dossier ; 75 % = emprise dessinée ÷ zone d'implantation — plus deux % recalculés depuis la SDP.)
+
+## D5 — Analyse BI0351 : la zone rouge ne couvre que les niveaux qu'elle recouvre
+
+**Cité — BI0351 Analyse** :
+> `Mouvement de terrain   Fort 4 % (zone rouge) · Moyen 27 % (zone rouge) · Faible 69 % (hors zone rouge)`
+(rouge 31 % = fort 4 % + moyen 27 % ; le faible 69 % est hors zone rouge, plus la ligne entière.)
+
+## D6 — un seul exemplaire de chaque document
+
+Fichiers périmés retirés de la racine de `~/Desktop/exports-audit-4/` : `etude-HT0538.pdf`, `AVANT-APRES.md`
+(et les `10/11-export-fiche.*` de D3). Chaque document : le dernier tirage, une seule fois.
+
+## Tests LOT D
+
+`tests/test_surface_retenue.py` (règle min + grandeurs + garde `surface à retenir` + garde `alertes`),
+`tests/test_annonce_pdf.py` (D5 zone rouge / niveaux), suite unitaire complète : **verts**.

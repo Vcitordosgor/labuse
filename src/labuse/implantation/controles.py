@@ -415,6 +415,11 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     b = regles.stationnement
     sous_sol = getattr(cap, "stationnement_mode", "aerien") == "sous_sol"
     place_mot = "places au sous-sol" if sous_sol else "places dessinées"
+    # NB — le MOTEUR utilise ce contrôle pour la faisabilité (une place manquante plafonne la capacité) :
+    # il GARDE donc son verdict géométrique REUSSI/ECHOUE (les places dessinées tiennent-elles ?). La
+    # réserve CAPACITE-1 (D1) « barème par logement → règle collective non vérifiée » est portée à
+    # l'AFFICHAGE par l'Étude (etude_faisabilite), SANS toucher la capacité du moteur (sinon on gonflerait
+    # la capacité en retirant la contrainte — l'inverse de la prudence voulue).
     if b.validee and cap.places_imposees is not None:
         ok = cap.places >= cap.places_imposees
         out.append(ControleReg("Stationnement", f"≥ {cap.places_imposees} places (barème validé)",
@@ -575,3 +580,22 @@ def verdict_global(controles: list[ControleReg], *, statut_base: str, terrain,
     if statut_base != "exploitable en pré-faisabilité":
         return VERDICT_A_COMPLETER
     return VERDICT_EXPLOITABLE
+
+
+def afficher_stationnement_a_confirmer(controles, regles) -> None:
+    """CAPACITE-1 (D1) — AFFICHAGE : un barème « par logement » (taux unique, sans distinction de
+    destination) ne garantit PAS la règle COLLECTIVE (au-delà de 5 logements, elle diffère — ex. art.
+    Ud12.2). Le contrôle de stationnement s'affiche « À confirmer », jamais « Réussi » avec une règle
+    qui ne s'applique pas (faute AD0887 : 8 places « Réussi » au taux individuel pour un collectif).
+    N'altère PAS la capacité : le moteur a déjà décidé la faisabilité (verdict géométrique REUSSI/ÉCHOUÉ)
+    AVANT ce point ; on ne mute que la LIGNE affichée du scénario packagé (compte + table la lisent)."""
+    b = getattr(regles, "stationnement", None)
+    if b is None or not getattr(b, "validee", False) or getattr(b, "mode", None) != "par_logement":
+        return
+    for c in (controles or []):
+        if c.nom == "Stationnement" and c.resultat in (REUSSI, ECHOUE):
+            c.resultat = A_CONFIRMER
+            c.regle = "barème « par logement » — règle collective non vérifiée"
+            c.detail = ("barème exprimé par logement, sans distinguer la destination ; la règle de "
+                        "stationnement collectif (seuil au-delà de 5 logements) peut imposer davantage "
+                        "— à vérifier au règlement")

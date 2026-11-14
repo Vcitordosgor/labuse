@@ -530,28 +530,29 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     # c'est le meilleur candidat de la recherche déterministe sous ces hypothèses, pas un plafond du PLU).
     if kmax is not None and n_dem is not None:
         txt += f" Meilleure capacité trouvée avec ces hypothèses : {kmax} logements."
-    # CAPACITE-1 (LOT C) — LA règle unique « surface à retenir » (même fonction que le Dossier) : le
-    # scénario d'implantation n'est retenu que si TOUS ses contrôles durs sont appliqués, stationnement
-    # compris (barème servi) ; sinon l'estimation rapide (jamais le plus grand chiffre par défaut).
+    # CAPACITE-1 (LOT C/D) — LA règle unique « surface à retenir » (même fonction que le Dossier,
+    # Comparatif, pré-dossier) : la PLUS PETITE des deux (estimation rapide vs esquisse d'implantation).
+    # L'esquisse est toujours « à vérifier », jamais « exploitable ».
     from ..faisabilite.surface_retenue import surface_a_retenir
     _gf = payload.get("_garde_fiche") or {}
     _est_rapide = _gf.get("sdp_max_m2") or _gf.get("sdp_fiche_m2")
     _scn_sdp = (retenu.get("resume") or {}).get("sdp_m2") if kmax else None
-    _scenario = ({"sdp_m2": _scn_sdp, "stationnement_applique": (not _stat_nv)}
-                 if _scn_sdp not in (None, "") else None)
-    _sar = surface_a_retenir(_est_rapide, _scenario)
-    # C3 — l'écart EXPLIQUÉ en une phrase chiffrée : occupation supposée (estimation rapide) vs
-    # occupation dessinée (scénario), sur la MÊME base zone × niveaux, + ce qui n'a pas été déduit.
-    _zone_impl = (t.get("zone_implantation_m2"))
-    _niv_scn = (payload.get("capacite_maximale") or {}).get("niveaux")
-    _occ_sup = (100.0 * _est_rapide / (_zone_impl * _niv_scn)) if (_est_rapide and _zone_impl and _niv_scn) else None
-    _occ_des = (100.0 * _scn_sdp / (_zone_impl * _niv_scn)) if (_scn_sdp and _zone_impl and _niv_scn) else None
+    _sar = surface_a_retenir(_est_rapide, _scn_sdp)
+    # D4 — l'écart EXPLIQUÉ avec les MÊMES chiffres que le Dossier (occupation supposée = le « 45 % »
+    # du facteur B1) et une emprise RÉELLEMENT MESURÉE (emprise dessinée ÷ zone d'implantation), jamais
+    # deux pourcentages recalculés depuis la surface de plancher.
+    _zone_impl = t.get("zone_implantation_m2")
+    _emp_dessinee = retenu.get("emprise_sol_m2")
+    _occ_sup = _gf.get("occupation_supposee_pct")
+    _occ_des = (round(100.0 * _emp_dessinee / _zone_impl)
+                if (_emp_dessinee and _zone_impl) else None)
     _gap_phrase = ""
-    if _occ_sup and _occ_des:
-        _gap_phrase = (f"Écart avec l'estimation rapide : occupation supposée {round(_occ_sup)} % du gabarit "
-                       f"contre {round(_occ_des)} % dessinée")
-        _gap_phrase += (" ; le scénario ne déduit PAS le stationnement (règle existante, non ingérée par "
-                        "LABUSE)." if _stat_nv else " ; stationnement déduit.")
+    if _occ_sup is not None and _occ_des is not None:
+        _gap_phrase = (f"Écart avec l'estimation rapide : elle suppose {_occ_sup} % d'occupation du gabarit "
+                       f"(comme le Dossier) ; l'esquisse dessine {round(_emp_dessinee)} m² d'emprise sur "
+                       f"{round(_zone_impl)} m² de zone d'implantation, soit {_occ_des} % mesurés")
+        _gap_phrase += (" ; le stationnement n'est pas déduit (règle existante, non ingérée par LABUSE)."
+                        if _stat_nv else " ; stationnement non garanti (barème par logement).")
     cc = retenu["controles_compte"]
     # tuiles de synthèse (chaque nombre vient du payload : contrôles, règles, programme, terrain)
     emp = next((c for c in retenu["controles"] if c["nom"] == "Emprise au sol"), None)

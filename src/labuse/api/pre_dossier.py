@@ -951,6 +951,25 @@ def _pcmi4(db: Session, idu: str, parcelle: dict, adr: dict | None = None,
                            f"({e.get('part_pct')} % de la parcelle).", "Servitudes d'utilité publique (GPU)"))
     except Exception:  # noqa: BLE001
         pass
+    # CAPACITE-1 (D2) — complétude : toute alerte de la fiche (`alertes_fiche`, lue EN DIRECT) absente de
+    # la notice est ajoutée (zone humide, etc.) — la notice PCMI4 porte la MÊME liste que la fiche (faute
+    # AD0887 : zone humide absente du pré-dossier). Aléas gradués/PPR déjà traités ci-dessus.
+    try:
+        from .servitudes import alertes_fiche as _alertes_fiche
+        _nt = lambda s: "".join((s or "").lower().split())[:40]
+        _vus = {_nt(t[1]) for t in lignes}
+        for _a in _alertes_fiche(db, idu):
+            _cat = str(_a.get("categorie") or "")
+            if _cat.startswith("Risque naturel") or _cat.startswith("PPR"):
+                continue
+            _eff = str(_a.get("effet") or "")
+            if _eff and not any(_nt(_eff)[:30] in v for v in _vus):
+                lignes.append((_cat or "Contrainte signalée",
+                               f"{_eff} Contrainte dormante relevée — à intégrer au projet.",
+                               "LABUSE — contraintes dormantes (comme la fiche)"))
+                _vus.add(_nt(_eff))
+    except Exception:  # noqa: BLE001
+        pass
     rows = "".join(
         f"<tr><td style='width:26%'><b>{titre}</b></td><td>{txt}<div class='src'>Source : {src}</div></td></tr>"
         for titre, txt, src in lignes) or "<tr><td colspan='2'>Données terrain non disponibles.</td></tr>"

@@ -424,6 +424,15 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
         # l'Apporteur (ortho IGN + contour + voisines du même propriétaire). Best-effort : réseau
         # indisponible / parcelle sans géométrie → cadre neutre, jamais une erreur.
         plan_html = _plan_situation_html(db, idu)
+        # CAPACITE-1 (D2) — MÊME liste d'alertes que la fiche : on attache `alertes_fiche` au Dossier
+        # (zone humide, bruit, SUP, DPU présent, AU fermée… lus EN DIRECT dans spatial_layers) pour que
+        # le §5 les affiche TOUTES, même celles que le run de cascade manque (faute AD0887 : zone humide
+        # absente du Dossier). Rendu par `miroir.rendu_sections` (section risques).
+        try:
+            from ..api.servitudes import alertes_fiche
+            f["_alertes_dormantes"] = alertes_fiche(db, idu)
+        except Exception:  # noqa: BLE001 — jamais bloquant pour le Dossier
+            f["_alertes_dormantes"] = []
         # DOCS-1 (décision Vic) — la carte de situation remonte sur la PAGE DE GARDE (couverture avec
         # carte + résumé) ; elle n'est plus répétée en §1 (une seule carte de situation par Dossier).
         corps = (miroir.cover_dossier(idu, f, numero, j, valeurs, MODELE_VERSION,

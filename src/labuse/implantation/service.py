@@ -404,6 +404,9 @@ def _appliquer_programme_au_scenario(scenario, demande: dict, conv, regles) -> b
     scenario.statut = (ctrl_mod.statut_etude(scenario.controles, geo_ok, scene=scene,
                                              terrain=scenario.terrain, regles=regles)
                        if geo_ok else "simulation impossible")
+    # CAPACITE-1 (D1) — AFFICHAGE : programme SAISI rogné → on réaligne la ligne de stationnement
+    # (barème par logement → « À confirmer »), comme le scénario proposé. La capacité ne bouge pas.
+    ctrl_mod.afficher_stationnement_a_confirmer(scenario.controles, regles)
     return True
 
 

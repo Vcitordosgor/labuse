@@ -1,20 +1,23 @@
-"""CAPACITE-1 LOT C — LA règle unique « surface à retenir », lue par TOUS les documents.
+"""CAPACITE-1 LOT C/D — LA règle unique « surface à retenir », lue par TOUS les documents.
 
-Deux grandeurs, deux noms, jamais confondus (décision Vic 14/11) :
+Deux grandeurs, deux noms, jamais confondus :
   · **estimation rapide** — moteur analytique (`faisabilite/engine`), disponible pour TOUTE parcelle,
     base de la fiche, du Dossier, du Comparatif et du classement ;
-  · **scénario d'implantation** — l'Étude de faisabilité (`implantation/moteur`), qui DESSINE des
-    bâtiments et déduit le stationnement quand son barème est connu.
+  · **esquisse d'implantation** — l'Étude de faisabilité (`implantation/moteur`), qui DESSINE des
+    bâtiments ; toujours « à vérifier », jamais « exploitable » (ses contrôles — stationnement compris —
+    peuvent appliquer une règle inexacte, cf. LOT D : un contrôle faux ne « retient » pas un scénario).
 
-La « surface à retenir » vaut le scénario SEULEMENT si une Étude existe ET que tous ses contrôles durs
-ont été appliqués, **stationnement compris** ; sinon l'estimation rapide. Le plus grand chiffre n'est
-jamais « la » capacité par défaut (règle LABUSE : jamais de faux positif). Fonction PURE, testable,
-appelée à l'identique par chaque document → un seul « surface à retenir » par parcelle (garde-fou).
+LOT D (décision Vic 15/11) — la « surface à retenir » est la PLUS PRUDENTE des deux : la PLUS PETITE
+entre l'estimation rapide et l'esquisse quand une esquisse existe ; sinon l'estimation rapide. Jamais le
+plus grand chiffre par défaut. Fonction PURE, testable, appelée à l'identique par chaque document → un
+seul « surface à retenir » par parcelle (garde-fou).
 """
 from __future__ import annotations
 
 GRANDEUR_ESTIMATION = "estimation rapide"
-GRANDEUR_SCENARIO = "scénario d'implantation"
+GRANDEUR_ESQUISSE = "esquisse d'implantation"
+#: compat : d'anciens appels importent GRANDEUR_SCENARIO — c'est l'esquisse d'implantation.
+GRANDEUR_SCENARIO = GRANDEUR_ESQUISSE
 
 
 def _m2(v) -> str:
@@ -43,33 +46,41 @@ def estimation_rapide_m2(db, idu: str):
         return None
 
 
-def surface_a_retenir(estimation_rapide_m2, scenario: dict | None = None) -> dict:
-    """`scenario` = None (aucune Étude) ou {"sdp_m2": float, "stationnement_applique": bool}.
+def surface_a_retenir(estimation_rapide_m2, esquisse=None) -> dict:
+    """`esquisse` = la SDP de l'esquisse d'implantation (float), ou un dict {"sdp_m2": …} (compat), ou
+    None quand aucune Étude n'a été dessinée.
 
-    Retourne {"valeur_m2", "source" (GRANDEUR_*), "phrase", "estimation_rapide_m2", "scenario_m2"}.
-    `stationnement_applique=False` ⇒ le scénario est un MAJORANT (règle de stationnement non appliquée) :
-    on retient l'estimation rapide et on le dit."""
+    Retourne {"valeur_m2", "source" (GRANDEUR_*), "phrase", "estimation_rapide_m2", "esquisse_m2"}.
+
+    LOT D — la surface à retenir est la PLUS PETITE des deux (prudente), jamais la plus grande :
+      · pas d'esquisse → estimation rapide ;
+      · esquisse < estimation → on retient l'esquisse (« à vérifier : la surface réelle peut être
+        inférieure » — ses contrôles, dont le stationnement, ne sont pas garantis) ;
+      · estimation ≤ esquisse → on retient l'estimation (l'esquisse est un majorant, stationnement non
+        déduit). L'esquisse est TOUJOURS « à vérifier », jamais « exploitable »."""
     est = round(float(estimation_rapide_m2)) if estimation_rapide_m2 not in (None, "") else None
-    scn = None
-    if scenario and scenario.get("sdp_m2") not in (None, ""):
-        scn = round(float(scenario["sdp_m2"]))
-    stat_ok = bool(scenario and scenario.get("stationnement_applique"))
+    esq = None
+    if isinstance(esquisse, dict):
+        esquisse = esquisse.get("sdp_m2")
+    if esquisse not in (None, ""):
+        esq = round(float(esquisse))
 
-    if scn is not None and stat_ok:
-        phrase = f"Surface à retenir : {_m2(scn)} ({GRANDEUR_SCENARIO}, stationnement déduit)."
+    def _out(valeur, source, phrase):
+        return {"valeur_m2": valeur, "source": source, "phrase": phrase,
+                "estimation_rapide_m2": est, "esquisse_m2": esq}
+
+    if est is None and esq is None:
+        return _out(None, GRANDEUR_ESTIMATION,
+                    "Surface à retenir : non calculée (capacité nulle ou non constructible).")
+    if esq is None:                                   # aucune esquisse → estimation rapide
+        return _out(est, GRANDEUR_ESTIMATION, f"Surface à retenir : {_m2(est)} ({GRANDEUR_ESTIMATION}).")
+    if est is None or esq < est:                      # esquisse retenue (la plus petite / prudente)
+        phrase = (f"Surface à retenir : {_m2(esq)} ({GRANDEUR_ESQUISSE}, stationnement à vérifier : "
+                  "la surface réelle peut être inférieure).")
         if est is not None:
             phrase += f" L'estimation rapide donnait {_m2(est)}, hors stationnement."
-        return {"valeur_m2": scn, "source": GRANDEUR_SCENARIO, "phrase": phrase,
-                "estimation_rapide_m2": est, "scenario_m2": scn}
-
-    # estimation rapide retenue (pas d'Étude, ou contrôles durs incomplets — stationnement non vérifié)
-    if est is None:
-        return {"valeur_m2": None, "source": GRANDEUR_ESTIMATION,
-                "phrase": "Surface à retenir : non calculée (capacité nulle ou non constructible).",
-                "estimation_rapide_m2": None, "scenario_m2": scn}
-    phrase = f"Surface à retenir : {_m2(est)} ({GRANDEUR_ESTIMATION})."
-    if scn is not None:
-        phrase += (f" Le scénario dessiné atteint {_m2(scn)}, non retenu tant que le stationnement "
-                   "n'est pas vérifié.")
-    return {"valeur_m2": est, "source": GRANDEUR_ESTIMATION, "phrase": phrase,
-            "estimation_rapide_m2": est, "scenario_m2": scn}
+        return _out(esq, GRANDEUR_ESQUISSE, phrase)
+    # estimation ≤ esquisse → estimation retenue (l'esquisse est un majorant)
+    return _out(est, GRANDEUR_ESTIMATION,
+                f"Surface à retenir : {_m2(est)} ({GRANDEUR_ESTIMATION}). L'esquisse d'implantation "
+                f"atteint {_m2(esq)}, à vérifier : stationnement non déduit.")
