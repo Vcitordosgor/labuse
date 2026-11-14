@@ -148,23 +148,13 @@ def _contraintes_txt(r):
     de la colonne — c'était le bug). On ne touche PAS au message partagé de la cascade ; on l'ajuste
     seulement à l'affichage, et seulement dans ce cas (il reste entier sur une parcelle constructible)."""
     cs = list(r.get("contraintes") or [])
-    # EXPORTS-FIX-3 LOT 3 (#3, relecture) — UNE SEULE période pour le marché du neuf (VEFA), celle du
-    # Dossier (« 5 ans »). Le message de la cascade SERVIE est figé à « 36 mois » (texte du dernier run) ;
-    # on l'ajuste À L'AFFICHAGE sur la seule ligne VEFA (le run n'est pas recalculé), pour ne pas servir
-    # deux fenêtres pour les mêmes 158 ventes. Ciblé : on ne touche aucune autre contrainte.
-    cs = [(c.replace("36 mois", "5 ans") if c and "logement neuf (vefa)" in c.lower() else c) for c in cs]
-    if _est_non_constructible(r):
-        out = []
-        for c in cs:
-            if c and "exclusion automatique" in c.lower():
-                # garder l'info (zone rouge X %, vigilance), retirer la seule clause rassurante (après « ; »).
-                segs = [s.strip() for s in c.split(";") if "exclusion automatique" not in s.lower()]
-                c = "; ".join(s for s in segs if s).rstrip(" ;·—-")
-                if c and c[-1] not in ".!?":
-                    c += "."
-            if c:
-                out.append(c)
-        cs = out
+    # CAPACITE-1 (B5) — UNE SEULE formule d'affichage, partagée avec les exports texte (Markdown/HTML)
+    # via `risques_arbitrage.ajuster_clause_affichage` : marché du neuf (VEFA) servi « 5 ans » (jamais
+    # « 36 mois » pour les mêmes ventes), et sur une parcelle NON CONSTRUCTIBLE la clause rassurante
+    # « (pas d'exclusion automatique) » du PPR partiel retirée (zone rouge X % + vigilance conservées).
+    from ...api.risques_arbitrage import ajuster_clause_affichage
+    _nc = _est_non_constructible(r)
+    cs = [x for x in (ajuster_clause_affichage(c, _nc) for c in cs) if x]
     return " · ".join(esc(c) for c in cs) if cs else "aucune relevée"
 
 

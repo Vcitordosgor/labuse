@@ -135,14 +135,20 @@ def _gardes_honnete(payload: dict, retenu: dict) -> list:
         raisons.append(f"Le plancher de cette étude ({_grp(sdp_e)} m²) dépasse la capacité servie par la "
                        f"fiche ({_grp(sdp_f)} m², surface de plancher résiduelle) : à confronter avant de "
                        "retenir ce programme — ce document n'est donc pas « exploitable » en l'état.")
-    reg = (payload.get("stationnement_regimes") or {}).get("general") or {}
-    _art = _art_label(reg.get("article"))
-    bareme_absent = (reg.get("ratio_par_logement") is None and not reg.get("regle_courte")
-                     and not str(_art or "").upper().startswith("L151"))
-    if bareme_absent:
+    if _bareme_stationnement_absent(payload):
         raisons.append("Le barème de stationnement de cette zone n'est pas servi : le nombre de places "
                        "n'est pas vérifié (stationnement non vérifié).")
     return raisons
+
+
+def _bareme_stationnement_absent(payload: dict) -> bool:
+    """CAPACITE-1 (B4) — le barème de stationnement de la zone n'est pas servi par LABUSE : le nombre
+    de places n'est PAS calculé (un « 0 » afficherait « 0 place exigée », faux : c'est NON vérifié).
+    Détection extraite de `_gardes_honnete` (b) pour l'afficher « stationnement non vérifié » partout."""
+    reg = (payload.get("stationnement_regimes") or {}).get("general") or {}
+    _art = _art_label(reg.get("article"))
+    return (reg.get("ratio_par_logement") is None and not reg.get("regle_courte")
+            and not str(_art or "").upper().startswith("L151"))
 
 
 # ── choix du scénario retenu ────────────────────────────────────────────────────────────────
@@ -464,18 +470,30 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     # EXPORTS-FIX-3 LOT 3 (#5a/#5b, relecture) — garde-fou d'honnêteté : si le plancher dépasse la fiche
     # ou si le barème de stationnement n'est pas servi, le verdict affiché n'est JAMAIS « exploitable ».
     _gardes = _gardes_honnete(payload, retenu)
+    _stat_nv = _bareme_stationnement_absent(payload)   # CAPACITE-1 (B4) — barème non servi
     statio_lbl = _stationnement_label(retenu, e)
     if n_dem is not None:
         txt = (f"Votre projet — {type_lbl} : {n_dem} logements demandés"
                + (f" ({_mix_str(demande)})" if _mix_str(demande) else "")
                + f", stationnement {statio_lbl}.")
         if confr.get("tient"):
-            txt += (f" Ils tiennent sur ce terrain" + (f" en {niv_lbl}" if niv_lbl else "")
-                    + (f" ({places} places)." if places is not None else "."))
+            # CAPACITE-1 (B4) — pas de « (0 places) » quand le barème n'est pas servi : on le dit non vérifié.
+            _pl = (" (stationnement non vérifié)" if _stat_nv
+                   else f" ({places} places)" if places is not None else "")
+            txt += (f" Ils tiennent sur ce terrain" + (f" en {niv_lbl}" if niv_lbl else "") + _pl + ".")
         elif dep:
             txt += (f" Dépassement : au mieux {dep['total_tiennent']} des {dep['total_demande']} "
                     "logements demandés tiennent sur ce terrain.")
         vclass = "verdict" if confr.get("tient") else "verdict warn"
+    elif kmax and _gardes:
+        # CAPACITE-1 (B4) — statut « À vérifier » (un garde-fou est tombé : plancher > fiche, ou barème
+        # de stationnement non servi). Le bandeau NE MET PAS en avant « meilleure capacité trouvée : N
+        # logements » comme un acquis : il la donne « au mieux, à vérifier » et reste en ton d'alerte —
+        # le lecteur ne doit pas retenir ce nombre comme sûr (faute HT0538 : « 10 logements » asséné).
+        txt = (f"{type_lbl.capitalize()} — capacité à vérifier : au mieux ~{kmax} logements"
+               + (f" en {niv_lbl}" if niv_lbl else "") + f", stationnement {statio_lbl}."
+               + " À confirmer avant de retenir ce programme (voir « À vérifier » ci-dessous).")
+        vclass = "verdict warn"
     else:
         # ETUDE-FIABLE-1 (LOT C1) — programme proposé par LABUSE : la MEILLEURE CAPACITÉ TROUVÉE fait foi.
         txt = (f"{type_lbl.capitalize()} — meilleure capacité trouvée : {kmax} logements"
@@ -514,12 +532,16 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     # EXPORTS-FIX-3 LOT 3 (#5a/#5b) — statut AFFICHÉ rétrogradé à « À vérifier » dès qu'un garde-fou tombe.
     _statut_aff = "À vérifier" if _gardes else _statut_court(retenu["statut_etude"])
     stc = "cp" if _gardes else _statut_classe(retenu["statut_etude"])
+    # CAPACITE-1 (B4) — colonne « Places » : quand le barème n'est pas servi, « 0 » ment (ce n'est pas
+    # « 0 place exigée » mais NON calculé) → « stationnement non vérifié », partout dans le tableau (`_stat_nv`).
+    def _places_cell(v) -> str:
+        return "stationnement non vérifié" if _stat_nv else (esc(str(v)) if v is not None else "—")
     rows = [
         f'<tr class="retenu"><td><b>Votre projet</b></td>'
         f'<td>{esc(str(retenu.get("forme", "")).replace("_", " "))}</td>'
         f'<td class="num">{retenu["resume"]["logements"]}</td>'
         f'<td class="num">{esc(retenu.get("niveaux_label", ""))}</td>'
-        f'<td class="num">{retenu["resume"]["places"]}</td>'
+        f'<td class="num">{_places_cell(retenu["resume"].get("places"))}</td>'
         f'<td><span class="st {stc}">{esc(_statut_aff)}</span></td></tr>']
     if cmax.get("logements") is not None:
         rows.append(
@@ -527,7 +549,7 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
             f'<td>{esc(str(cmax.get("forme", "")).replace("_", " "))}</td>'
             f'<td class="num">{cmax["logements"]}</td>'
             f'<td class="num">{esc(cmax.get("niveaux_label", ""))}</td>'
-            f'<td class="num">{cmax.get("places", "—")}</td>'
+            f'<td class="num">{_places_cell(cmax.get("places"))}</td>'
             f'<td><span class="st">indépendant de la demande</span></td></tr>')
     scn_table = (
         '<table class="ef-scn"><tr><th>&nbsp;</th><th>Forme</th><th class="num">Logements</th>'
@@ -683,8 +705,21 @@ def _p3_regles(payload: dict, retenu: dict) -> str:
         # « …complète le PPR ») n'est pas une ligne PPR et doit rester affichée.
         if str(lib).strip().upper().startswith("PPR"):
             continue
-        crows.append(f'<tr><td class="k">{esc(lib)}</td><td>signalée</td>'
-                     f'<td>signalée, non interprétée (voir le Dossier §5)</td></tr>')
+        # CAPACITE-1 (B3) — UNE SEULE FORMULE : si la contrainte est « non vérifié » (DPU non ingéré
+        # pour la commune, comme le Dossier §5 le dit — cf. miroir `_dpu_ligne`), la colonne « Sur le
+        # terrain » dit AUSSI « non vérifié ». Elle ne peut pas afficher « signalée » (détectée) pendant
+        # que le libellé dit l'inverse (faute DPU HT0538 : colonne « signalée » vs libellé « non vérifié »).
+        _l = str(lib)
+        if "non vérifié" in _l.lower() or "non ingéré" in _l.lower():
+            tete, _, reste = _l.partition(" — ")
+            raison = reste.replace("(non vérifié)", "").strip(" —").strip()
+            trait = ("non vérifié" + (f" — {esc(raison)}" if raison else "")
+                     + " ; à vérifier (voir le Dossier §5)")
+            crows.append(f'<tr><td class="k">{esc(tete.strip())}</td><td>non vérifié</td>'
+                         f'<td>{trait}</td></tr>')
+        else:
+            crows.append(f'<tr><td class="k">{esc(_l)}</td><td>signalée</td>'
+                         f'<td>signalée, non interprétée (voir le Dossier §5)</td></tr>')
     contraintes = ("<h3>Contraintes cartographiées et signalées</h3>"
                    '<table class="kv"><tr><th>Contrainte</th><th>Sur le terrain</th>'
                    '<th>Traitement</th></tr>' + "".join(crows) + "</table>"

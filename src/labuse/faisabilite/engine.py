@@ -962,9 +962,12 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     # LOGEMENTS-SOURCE-UNIQUE — le verdict du moteur ne cite PLUS de fourchette de logements
     # (SDP ÷ logement moyen) : cette phrase est servie telle quelle (capacité /modules/faisabilite,
     # faits Copilote) et seul le moteur d'implantation de l'Étude de faisabilité compte des
-    # logements. Le verdict dit le gabarit + la SDP maximale réglementaire ; les champs
+    # logements. Le verdict dit le gabarit + la SDP ESTIMÉE ; les champs
     # `logements_au_sol`/`logements_sous_sol` restent dans la fourchette pour les CALCULS internes
     # (bilan, mixité, scénarios) — plus aucun affichage ne les imprime.
+    # CAPACITE-1 (B1) — la SDP n'est NI « maximale réglementaire » NI « jusqu'à » : l'occupation du
+    # gabarit est une HYPOTHÈSE de modélisation (prov=estimée), pas une règle du PLU. On la nomme
+    # « estimation » partout (ici le verdict servi aux faits Copilote et au bandeau).
     suffix = " — stationnement non réglementé, capacité non bornée" if regime == "exempt" else ""
-    verdict = f"{rp} · jusqu'à ~{round(sdp)} m² de plancher{suffix}"
+    verdict = f"{rp} · estimation ~{round(sdp)} m² de plancher{suffix}"
     return fini(True, verdict, fourch)

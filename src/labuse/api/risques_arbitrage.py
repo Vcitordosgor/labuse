@@ -69,6 +69,30 @@ def libelle_client_detail(detail: str | None) -> str | None:
     return d
 
 
+def ajuster_clause_affichage(detail: str | None, non_constructible: bool) -> str | None:
+    """CAPACITE-1 (B5) — ajustements d'AFFICHAGE communs aux documents texte (Markdown/HTML) ET au
+    Comparatif, pour que TOUS servent les MÊMES libellés que les PDF (point unique, jamais deux
+    fenêtres ni deux formules pour un même fait). Le run servi n'est PAS recalculé ; on n'ajuste que
+    le texte, de façon ciblée :
+      1. marché du logement neuf (VEFA) : la fenêtre est « 5 ans » (comme le Dossier §marché), jamais
+         « 36 mois » — le texte figé d'anciens runs servait 36 mois pour les MÊMES ventes ;
+      2. parcelle NON CONSTRUCTIBLE : on retire la seule clause rassurante « (pas d'exclusion
+         automatique) » du PPR partiel (elle rassurerait à tort quand le verdict est non constructible),
+         en GARDANT la zone rouge X % et la « vigilance forte ».
+    Renvoie le détail ajusté (jamais None pour une entrée non vide)."""
+    if not detail:
+        return detail
+    d = detail
+    if "logement neuf (vefa)" in d.lower():
+        d = d.replace("36 mois", "5 ans")
+    if non_constructible and "exclusion automatique" in d.lower():
+        segs = [s.strip() for s in d.split(";") if "exclusion automatique" not in s.lower()]
+        d = "; ".join(s for s in segs if s).rstrip(" ;·—-")
+        if d and d[-1] not in ".!?":
+            d += "."
+    return d
+
+
 def arbitrer_risques(lines: list[dict]) -> list[dict]:
     """Arbitre et nettoie les lignes servies (nouvelle liste, entrée non mutée).
 

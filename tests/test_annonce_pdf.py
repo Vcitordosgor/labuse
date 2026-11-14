@@ -306,6 +306,36 @@ def test_risques_rows_une_ligne_par_alea_sans_doublon():
     assert _risques_rows({"aleas": {"n": 0, "liste": []}}, "X") == []
 
 
+def test_risques_rows_ppr_multirisque_rattache_tous_les_aleas_nommes():
+    """CAPACITE-1 (B2) — un PPR MULTI-RISQUE (INONDATION_MOUVEMENT_DE_TERRAIN, cas BI0351) rattache sa
+    zone rouge à inondation ET à mouvement de terrain (les aléas que son libellé NOMME), jamais à la
+    seule « Inondation » par défaut. La part (31 %) est dite une seule fois ; le niveau affiché par aléa
+    est le plus FORT, pas « faible »."""
+    fiche = {"aleas": {"n": 4, "liste": [
+        {"nature": "PPR — zone rouge", "part_pct": 31,
+         "libelle": ("PPR inondation et mouvement de terrain — zone rouge sur 31 % de la parcelle : "
+                     "partie INCONSTRUCTIBLE (interdiction, C. env. L562-1)."),
+         "ppr": [{"document": "PPR", "approbation": "2018-07-13"}]},
+        {"nature": "Aléa mouvement de terrain", "niveau": "fort", "part_pct": 4, "source": "DEAL"},
+        {"nature": "Aléa mouvement de terrain", "niveau": "faible", "part_pct": 69, "source": "DEAL"},
+        {"nature": "Aléa inondation", "niveau": "fort", "part_pct": 7, "source": "DEAL"},
+    ]}}
+    rows = _risques_rows(fiche, "La Possession")
+    by = {r["alea"]: r for r in rows}
+    assert {"Inondation", "Mouvement de terrain"} <= set(by)
+    # les DEUX aléas que la zone rouge nomme la portent (jamais « mouvement de terrain hors zonage PPR »)
+    assert "rouge" in (by["Inondation"]["zone_part"] or "").lower()
+    assert "rouge" in (by["Mouvement de terrain"]["zone_part"] or "").lower()
+    assert "Zone rouge du PPR" in by["Inondation"]["implique"]
+    assert "Zone rouge du PPR" in by["Mouvement de terrain"]["implique"]
+    assert "hors zonage PPR" not in by["Mouvement de terrain"]["implique"]
+    # la part 31 % est dite UNE fois (pas de cumul 31 % + 31 %)
+    parts = [r["zone_part"] for r in rows if r["zone_part"] and "%" in r["zone_part"]]
+    assert len(parts) == 1 and "31" in parts[0]
+    # niveau affiché = le plus fort du type, pas le dernier (« faible »)
+    assert by["Mouvement de terrain"]["niveau"] == "Fort"
+
+
 def test_a_verifier_derive_des_donnees_max_3():
     batie = _a_verifier({"aleas": {"n": 1}}, "bati_max", "Uh")
     assert len(batie) <= 3 and any("bâti" in p for p in batie) and any("PPR" in p for p in batie)

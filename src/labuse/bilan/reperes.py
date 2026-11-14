@@ -216,9 +216,11 @@ def reperes_publics(db: Session, idu: str, sourcee: dict) -> dict[str, dict]:
                 return None
             return {
                 "valeur": float(sdp),
-                # IMPLANTATION-4 (LOT C) — SDP de l'ancien moteur = « SDP maximale réglementaire »
+                # IMPLANTATION-4 (LOT C) — SDP de l'ancien moteur = « surface de plancher estimée »
                 # (jamais « SDP du scénario », réservé à l'Étude) : les deux libellés ne se croisent jamais.
-                "label": f"SDP maximale réglementaire {round(float(sdp)):g} m² (estimation)",
+                # CAPACITE-1 (B1) — ce n'est PAS un maximum réglementaire (occupation = hypothèse) :
+                # on la nomme « estimée », jamais « maximale réglementaire ».
+                "label": f"Surface de plancher estimée {round(float(sdp)):g} m²",
                 "source": "faisabilité LABUSE (estimation, à confirmer)",
                 "parkings": d.get("stationnement_places"),
             }

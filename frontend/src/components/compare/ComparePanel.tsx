@@ -87,7 +87,7 @@ const ROWS: Row[] = [
     title: 'Surface de plancher qui reste à bâtir en gardant le bâti existant.' },
   { label: 'Plancher possible · reconstruction', prov: 'estime', bar: true, best: 'hi', num: (r) => r.sdp_max_m2 ?? null,
     val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—',
-    title: 'Surface de plancher maximale réglementaire, terrain libéré (après démolition du bâti existant).' },
+    title: 'Surface de plancher estimée, terrain libéré (après démolition du bâti existant) — estimation : emprise × occupation (hypothèse) × niveaux, pas un maximum réglementaire.' },
   { label: 'Part du gabarit déjà occupée', prov: 'estime', best: 'lo', num: (r) => r.taux_emprise_pct ?? null,
     val: (r) => fmtTauxEmprise(r.taux_emprise_pct),
     title: 'Bâti existant ÷ emprise constructible (plus bas = plus de marge à bâtir). Au-delà de 100 % : « Saturé ».' },

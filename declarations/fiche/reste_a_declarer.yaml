@@ -176,11 +176,11 @@ donnees:
   - quoi:  surface_plancher_m2
     ou:    { rang: 10, etat: replie, section: "Ce qui est constructible" }
     comment:
-      libelle: "SDP maximale réglementaire, terrain libéré"
+      libelle: "Surface de plancher estimée, terrain libéré"
       unite:   "m²"
       format:  entier_m2
-      i:       "Surface de plancher MAXIMALE réglementaire, terrain libéré (table rase, moteur commun : emprise × occupation × niveaux) — même valeur que le Comparatif et le pré-dossier."
-    absence: "SDP maximale réglementaire non calculable (zone non constructible ou capacité nulle)."
+      i:       "CAPACITE-1 (B1) — ESTIMATION de surface de plancher, terrain libéré (table rase, moteur commun : emprise × occupation × niveaux). Ce n'est PAS un maximum réglementaire : l'occupation du gabarit est une hypothèse (prov=estimée), pas une règle du PLU — ses facteurs sont écrits sous la valeur. Même valeur que le Comparatif et le pré-dossier."
+    absence: "Surface de plancher estimée non calculable (zone non constructible ou capacité nulle)."
     absence_type: absente_ici
     pourquoi: "Le volume constructible du scénario neuf ; base du bilan."
   - quoi:  surface_vendable_m2

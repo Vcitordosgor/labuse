@@ -1591,6 +1591,26 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                 html = _valeur_html(l.quoi, l, v.valeur, v)
             if not html:
                 continue
+            if l.quoi == "surface_plancher_m2":
+                # CAPACITE-1 (B1) — la SDP « terrain libéré » est une ESTIMATION, pas un maximum
+                # réglementaire : on ÉCRIT ses facteurs sous la valeur (emprise × occupation × niveaux).
+                # L'occupation est l'inverse exact de la formule du moteur (sdp = emprise × occupation ×
+                # niveaux) : lue des valeurs DÉJÀ servies, aucune donnée nouvelle, aucun run. L'occupation
+                # est l'unique maillon non réglementaire (hypothèse de modélisation), c'est dit.
+                _pt = (fiche.get("potentiel_transformation") or {})
+                _cal = (_pt.get("calcul") or {})
+                _emp = _pt.get("emprise_constructible_m2") or _cal.get("emprise_constructible_m2")
+                _niv = _pt.get("niveaux_max") or _cal.get("niveaux_max")
+                try:
+                    _occ = (round(100 * float(v.valeur) / (float(_emp) * float(_niv)))
+                            if (_emp and _niv) else None)
+                except (TypeError, ValueError, ZeroDivisionError):
+                    _occ = None
+                if _emp and _niv and _occ:
+                    html += ('<span class="note" style="display:block">estimation : '
+                             f'~{round(float(_emp))} m² d\'emprise × {_occ} % d\'occupation '
+                             f'(hypothèse, pas une règle du PLU) × {int(_niv)} niveaux — '
+                             'hors stationnement et pleine terre</span>')
             lib = (l.comment or {}).get("libelle") or l.quoi
             grp = l.section if (l.section and l.section != sec["titre"]) else ""
             groupes.setdefault(grp, []).append(_ligne_tr(l.quoi, lib, html, _chip_de(l.quoi, v)))  # B9

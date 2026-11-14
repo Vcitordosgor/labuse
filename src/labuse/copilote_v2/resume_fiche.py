@@ -590,7 +590,8 @@ def _rendre_champ(cid: str, libelle: str, valeur: Any, valeurs: dict) -> str:
     if cid == "potentiel_verdict" and isinstance(valeur, dict):
         calc = valeur.get("calcul") or {}
         sdp = calc.get("sdp_max_m2")
-        return (f"Potentiel constructible : jusqu'à {fmt_m2(sdp)} de surface de plancher (indicatif) — "
+        # CAPACITE-1 (B1) — SDP = estimation (occupation du gabarit supposée), jamais « jusqu'à ».
+        return (f"Potentiel constructible : surface de plancher estimée {fmt_m2(sdp)} (indicatif) — "
                 "voir l'Étude de faisabilité pour le détail." if sdp is not None
                 else "Potentiel constructible : voir l'Étude de faisabilité.")
     if cid == "capacite_logements" and isinstance(valeur, dict):
@@ -610,7 +611,8 @@ def _rendre_champ(cid: str, libelle: str, valeur: Any, valeurs: dict) -> str:
         sdp = calc.get("sdp_max_m2")
         lib = valeur.get("libelle")
         if sdp is not None:
-            return (f"Potentiel constructible : jusqu'à {fmt_m2(sdp)} de surface de plancher "
+            # CAPACITE-1 (B1) — SDP estimée, jamais « jusqu'à » (occupation = hypothèse, pas une règle).
+            return (f"Potentiel constructible : surface de plancher estimée {fmt_m2(sdp)} "
                     f"(dont {fmt_m2(calc.get('sdp_residuelle_m2'))} résiduels après le bâti conservé) — "
                     "voir l'Étude de faisabilité pour le détail.")
         return ((lib or "Potentiel constructible : voir l'Étude de faisabilité").rstrip(".")

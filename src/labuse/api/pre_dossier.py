@@ -389,11 +389,13 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
             lg = pan.get("logements") or [0, 0]
             lg_txt = (f" · {lg[0]}" + ("" if lg[0] == lg[1] else f"–{lg[1]}") + " logement(s)") if max(lg) > 0 else ""
             demo = pan.get("surface_a_demolir_m2")
+            # CAPACITE-1 (B1) — la SDP n'est NI « maximale réglementaire » NI « jusqu'à » : c'est une
+            # ESTIMATION (l'occupation du gabarit est une hypothèse, pas une règle). On la nomme ainsi.
             capa = (f"<h2>Capacité constructible — scénario « terrain libéré »</h2>"
                     f"<p>Scénario retenu : <b>terrain libéré</b> (l'enveloppe du terrain, bâti existant "
-                    f"compté à 0). Surface de plancher jusqu'à <b>~{pan['sdp_possible_m2']:g} m²</b>{lg_txt}."
+                    f"compté à 0). Surface de plancher estimée <b>~{pan['sdp_possible_m2']:g} m²</b>{lg_txt}."
                     + (f" Surface à démolir estimée : ~{demo:g} m² (à chiffrer)." if demo else "")
-                    + " Pré-faisabilité sur règlement public, pas un certificat d'urbanisme.</p>")
+                    + " Pré-faisabilité sur règlement public (estimation, pas un certificat d'urbanisme).</p>")
         elif pan and not pan.get("logement_autorise"):
             capa = ("<h2>Capacité constructible</h2><p>Logement non autorisé dans cette zone "
                     "(habitat interdit au règlement).</p>")
