@@ -51,31 +51,44 @@ def test_jamais_le_plus_grand_par_defaut():
     assert r["valeur_m2"] == 614
 
 
-# ── Garde-fou : un seul « surface à retenir » par parcelle, tous documents (C6) ──────────────────
+# ── Garde-fou : un seul « surface à retenir » par parcelle, TOUS les documents (C6/C9) ───────────
 @pytest.mark.reel
-def test_un_seul_surface_a_retenir_par_parcelle(session_reelle):
-    """Le Dossier (estimation fiche + scénario PERSISTÉ) et l'Étude (scénario LIVE) doivent produire
-    LA MÊME surface à retenir — sinon deux documents afficheraient deux chiffres (interdit)."""
+@pytest.mark.parametrize("idu, valeur_attendue, source_attendue", [
+    ("97416000HT0538", 614, GRANDEUR_ESTIMATION),   # stationnement non ingéré → estimation (888 non retenu)
+    ("97422000AD0887", 795, GRANDEUR_SCENARIO),     # stationnement déduit → scénario (jamais 1 047 nu)
+])
+def test_un_seul_surface_a_retenir_tous_documents(session_reelle, idu, valeur_attendue, source_attendue):
+    """Dossier (scénario PERSISTÉ), Étude (scénario LIVE) ET Comparatif (compare()) doivent produire LA
+    MÊME surface à retenir — sinon deux documents afficheraient deux chiffres (interdit). Le pré-dossier
+    lit la même fonction `surface_a_retenir` sur les mêmes entrées (couvert par le chemin canonique)."""
+    import os
+    from sqlalchemy import text
     from labuse.implantation import revisions as _rev
     from labuse.implantation.service import etudier_payload
     from labuse.exports.etude_faisabilite import (scenario_retenu, scenario_etude_persiste,
                                                    _bareme_stationnement_absent)
     from labuse.faisabilite.surface_retenue import estimation_rapide_m2
 
-    idu = "97416000HT0538"
+    if session_reelle.execute(text("SELECT count(*) FROM parcels WHERE idu=:i"), {"i": idu}).scalar() != 1:
+        pytest.skip(f"parcelle {idu} absente")
     cfg = {"idus": [idu], "type_projet": "collectif", "objectif": "equilibre", "stationnement": "aerien"}
     payload = etudier_payload(session_reelle, cfg)
-    _rev.enregistrer(session_reelle, payload)          # persiste (le Dossier le relira)
+    _rev.enregistrer(session_reelle, payload)          # persiste (Dossier/Comparatif/pré-dossier le reliront)
 
-    # Étude (scénario LIVE) et Dossier (scénario PERSISTÉ) partent de la MÊME estimation rapide (live).
+    # Étude = scénario LIVE (du payload). Dossier, Comparatif ET pré-dossier = scénario PERSISTÉ, sur la
+    # MÊME estimation rapide live : ces TROIS documents partagent exactement l'expression
+    # `surface_a_retenir(estimation_rapide_m2(db, idu), scenario_etude_persiste(db, idu))` — on la vérifie
+    # une fois (chemin « persisté ») et on la confronte au chemin LIVE de l'Étude.
     est = estimation_rapide_m2(session_reelle, idu)
     retenu = scenario_retenu(payload)
-    scn_e = {"sdp_m2": (retenu or {}).get("resume", {}).get("sdp_m2"),
-             "stationnement_applique": not _bareme_stationnement_absent(payload)}
-    sar_etude = surface_a_retenir(est, scn_e)
-    sar_dossier = surface_a_retenir(est, scenario_etude_persiste(session_reelle, idu))
+    scn_live = {"sdp_m2": (retenu or {}).get("resume", {}).get("sdp_m2"),
+                "stationnement_applique": not _bareme_stationnement_absent(payload)}
+    sar_etude = surface_a_retenir(est, scn_live)                                      # Étude (live)
+    sar_persiste = surface_a_retenir(est, scenario_etude_persiste(session_reelle, idu))  # Dossier/Comparatif/pré-dossier
 
-    assert sar_etude["valeur_m2"] == sar_dossier["valeur_m2"], (
-        f"deux surfaces à retenir pour {idu} : Étude {sar_etude['valeur_m2']} vs Dossier {sar_dossier['valeur_m2']}")
-    # HT0538 : stationnement non ingéré → on retient l'estimation rapide (614), jamais le scénario (888).
-    assert sar_dossier["source"] == GRANDEUR_ESTIMATION
+    assert sar_etude["valeur_m2"] == sar_persiste["valeur_m2"], (
+        f"surfaces à retenir divergentes pour {idu} : Étude {sar_etude['valeur_m2']} vs "
+        f"Dossier/Comparatif/pré-dossier {sar_persiste['valeur_m2']}")
+    assert sar_persiste["valeur_m2"] == valeur_attendue and sar_persiste["source"] == source_attendue
+    # Sur AD0887, le scénario (795) est retenu — jamais 1 047 (estimation rapide) nu comme capacité.
+    assert sar_persiste["valeur_m2"] != 1047

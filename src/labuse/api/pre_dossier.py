@@ -389,13 +389,23 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
             lg = pan.get("logements") or [0, 0]
             lg_txt = (f" · {lg[0]}" + ("" if lg[0] == lg[1] else f"–{lg[1]}") + " logement(s)") if max(lg) > 0 else ""
             demo = pan.get("surface_a_demolir_m2")
-            # CAPACITE-1 (B1) — la SDP n'est NI « maximale réglementaire » NI « jusqu'à » : c'est une
-            # ESTIMATION (l'occupation du gabarit est une hypothèse, pas une règle). On la nomme ainsi.
+            # CAPACITE-1 (LOT C) — la capacité du pré-dossier est LA « surface à retenir » (RÈGLE UNIQUE,
+            # même fonction que le Dossier/Comparatif/Étude) : estimation rapide, ou scénario d'implantation
+            # quand le stationnement est déduit — jamais le plus grand chiffre nu. B1 : « estimation », pas
+            # « maximale réglementaire » ni « jusqu'à » (l'occupation du gabarit est une hypothèse).
+            from ..faisabilite.surface_retenue import estimation_rapide_m2, surface_a_retenir
+            from ..exports.etude_faisabilite import scenario_etude_persiste
+            _est = estimation_rapide_m2(db, idu)
+            _scn = scenario_etude_persiste(db, idu)
+            _sar = surface_a_retenir(_est, _scn) if (_est not in (None, "") or _scn is not None) else None
+            _demo_txt = f" Surface à démolir estimée : ~{demo:g} m² (à chiffrer)." if demo else ""
+            _sar_html = (f" <b>{_sar['phrase']}</b>"
+                         if isinstance(_sar, dict) and _sar.get("phrase") else "")
             capa = (f"<h2>Capacité constructible — scénario « terrain libéré »</h2>"
                     f"<p>Scénario retenu : <b>terrain libéré</b> (l'enveloppe du terrain, bâti existant "
                     f"compté à 0). Surface de plancher estimée <b>~{pan['sdp_possible_m2']:g} m²</b>{lg_txt}."
-                    + (f" Surface à démolir estimée : ~{demo:g} m² (à chiffrer)." if demo else "")
-                    + " Pré-faisabilité sur règlement public (estimation, pas un certificat d'urbanisme).</p>")
+                    f"{_demo_txt}{_sar_html} "
+                    "Pré-faisabilité sur règlement public (estimation, pas un certificat d'urbanisme).</p>")
         elif pan and not pan.get("logement_autorise"):
             capa = ("<h2>Capacité constructible</h2><p>Logement non autorisé dans cette zone "
                     "(habitat interdit au règlement).</p>")

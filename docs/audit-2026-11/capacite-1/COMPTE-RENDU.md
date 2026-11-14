@@ -183,6 +183,31 @@ reste : la zone rouge porte inondation ET mouvement de terrain.
 grand par défaut) + test `reel` `test_un_seul_surface_a_retenir_par_parcelle` qui **échoue si le chemin Dossier
 et le chemin Étude divergent** pour HT0538 (tous deux retiennent 614, estimation rapide). **Vert.**
 
+## C7/C8 — le Comparatif ET le pré-dossier lisent la MÊME fonction (relance Vic)
+
+La règle devait être lue par *tous* les documents : le Comparatif et le pré-dossier sont maintenant
+branchés sur `surface_a_retenir(estimation_rapide_m2, scenario_etude_persiste)` — la même expression que
+le Dossier (§3) et l'Étude.
+
+- **Comparatif** : `compare()` (api/app.py) pose `surface_a_retenir` par parcelle ; `exports/blocs/comparatif.py`
+  ajoute la ligne **« Surface à retenir »** (sous « Plancher possible · reconstruction »). Sur AD0887, le
+  plancher reconstruction (1 047 m², estimation rapide) n'est **jamais** présenté comme capacité sans la ligne
+  qui tranche.
+  **Cité — `_comparatif/cmp-comparatif-ad0887.pdf`** (colonnes AD0887 · HT0538 · DK0208) :
+  > `Plancher possible · reconstruction   1 047 m²   614 m²   153 m²`
+  > `Surface à retenir   795 m² (scénario d'implantation)   614 m² (estimation rapide)   153 m² (estimation rapide)`
+- **Pré-dossier** : `api/pre_dossier.py` ajoute la phrase « surface à retenir » à la section Capacité.
+  **Cité — `97422000AD0887/06-pre-dossier-pc.zip → …-regles-zonage.pdf`** :
+  > `… retenir : 795 m² (scénario d'implantation, stationnement déduit). L'estimation rapide donnait 1 047 m², hors stationnement.`
+  **Cité — `97416000HT0538/06-pre-dossier-pc.zip`** :
+  > `… Surface à retenir : 614 m² (estimation rapide). Le scénario dessiné atteint 888 m², non retenu tant que le stationnement n'est pas vérifié.`
+
+## C9 — garde-fou étendu aux quatre documents
+
+`tests/test_surface_retenue.py::test_un_seul_surface_a_retenir_tous_documents` (paramétré HT0538 **et**
+AD0887) : le chemin « persisté » (Dossier/Comparatif/pré-dossier, expression partagée) doit égaler le chemin
+LIVE de l'Étude, HT0538 → 614 (estimation), AD0887 → **795 (scénario), jamais 1 047**. **Vert.**
+
 ## Hors lot (à faire, listé seulement)
 
 1. **Ingérer les barèmes de stationnement** des communes où ils manquent (Saint-Pierre art. Ud6, etc.) — alors

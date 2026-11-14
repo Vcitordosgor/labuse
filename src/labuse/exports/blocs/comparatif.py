@@ -196,6 +196,10 @@ _LIGNES = [
     # POTENTIEL CONSTRUCTIBLE
     ("Plancher possible · bâti conservé", "e", lambda r: _sdp_residuelle_cause(r)),
     ("Plancher possible · reconstruction", "e", lambda r: _m2(r, "sdp_max_m2")),
+    # CAPACITE-1 (LOT C) — « surface à retenir » (RÈGLE UNIQUE) : le Comparatif ne présente jamais le
+    # plancher reconstruction (estimation rapide) comme capacité sans dire laquelle des deux grandeurs
+    # retenir. Même fonction `surface_a_retenir` que le Dossier et l'Étude.
+    ("Surface à retenir", "e", lambda r: _surface_a_retenir_txt(r)),
     ("Part du gabarit déjà occupée", "e", lambda r: esc(fmt_taux_emprise(r.get("taux_emprise_pct")))),
     # CHASSE-DOCS-FIX-1 (Lot 5) — charge foncière NÉGATIVE : chiffre + explication, jamais un « -59 €/m² » nu.
     # EXPORTS-FIX-3 LOT 2 (#7) — la charge foncière DIT sa surface de référence (« par m² de terrain ») ;
@@ -218,8 +222,18 @@ _BADGE = {"s": ("s", "sourcé"), "e": ("e", "estimé")}
 # ni charge foncière ». La ligne « Emprise au sol maximale » reste (c'est une RÈGLE de zonage, pas une
 # capacité). Un verdict « Non constructible — <motif> » est affiché à part (voir `rendu`).
 _LIGNES_CAPACITE = {"Hauteur autorisée", "Plancher possible · bâti conservé",
-                    "Plancher possible · reconstruction", "Part du gabarit déjà occupée",
-                    "Charge foncière"}
+                    "Plancher possible · reconstruction", "Surface à retenir",
+                    "Part du gabarit déjà occupée", "Charge foncière"}
+
+
+def _surface_a_retenir_txt(r):
+    """CAPACITE-1 (LOT C) — cellule « surface à retenir » du Comparatif : valeur retenue + grandeur
+    (estimation rapide / scénario d'implantation), via la fonction unique `surface_a_retenir`
+    (dict posé par `compare()`). Jamais le plancher reconstruction nu comme capacité."""
+    sar = r.get("surface_a_retenir")
+    if not isinstance(sar, dict) or sar.get("valeur_m2") is None:
+        return "—"
+    return esc(f"{sar['valeur_m2']:g} m² ({sar['source']})")
 
 
 def _est_non_constructible(r) -> bool:

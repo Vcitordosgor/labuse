@@ -9715,6 +9715,18 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
                 row["adresse"] = None
         except Exception:  # noqa: BLE001 — adresse indisponible ne doit jamais casser la comparaison
             row["adresse"] = None
+        # CAPACITE-1 (LOT C) — « surface à retenir » (RÈGLE UNIQUE, même fonction que le Dossier et
+        # l'Étude) : le Comparatif ne présente jamais le plancher reconstruction (estimation rapide)
+        # comme capacité sans cette ligne. Estimation rapide LIVE vs scénario d'implantation PERSISTÉ.
+        try:
+            from ..faisabilite.surface_retenue import estimation_rapide_m2, surface_a_retenir
+            from ..exports.etude_faisabilite import scenario_etude_persiste
+            _est = estimation_rapide_m2(db, idu)
+            _scn = scenario_etude_persiste(db, idu)
+            if _est not in (None, "") or _scn is not None:
+                row["surface_a_retenir"] = surface_a_retenir(_est, _scn)
+        except Exception:  # noqa: BLE001 — n'empêche jamais la comparaison
+            pass
         out.append(row)
     # NU5-FIX-1 (A-O5) — IDU demandés mais non rendus : introuvables (ignores), surnuméraires
     # (tronques, au-delà de 3), doublons retirés. L'écran les affiche (« X non trouvée(s), Y au-delà
