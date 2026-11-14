@@ -9227,6 +9227,11 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # contrainte MAJEURE explicite : HARD_EXCLUDE d'abord, sinon le 1er SOFT_FLAG, sinon rien.
     majeure = next((c["detail"] for c in contraintes if c["result"] == "HARD_EXCLUDE"),
                    next((c["detail"] for c in contraintes if c["result"] == "SOFT_FLAG"), None))
+    # RELECTURE-FINALE (1) — la PPR zone rouge (part %) reste TOUJOURS dans la colonne « Contraintes
+    # relevées » du Comparatif : prioritaire (jamais évincée par la troncature à 4) et SANS la mention
+    # « pas d'exclusion automatique » (la part inconstructible est le fait ; le reste se lit au règlement).
+    _c_rouge = [c for c in contraintes if "zone rouge" in (c.get("detail") or "").lower()]
+    _contraintes_vue = _c_rouge + [c for c in contraintes if c not in _c_rouge]
     # M135 — la RAISON dominante = même point de calcul que la carte/la liste (raison_dominante,
     # chip court de la 1re contribution positive). `pourquoi` porte signe/feature/bin requis.
     raison = _raison_dom(s2.get("pourquoi"))
@@ -9320,7 +9325,8 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "sous_densite": res.get("sous_densite") if res.get("disponible") else None,
         "charge_fonciere_m2": cf.get("par_m2_terrain"),
         "n_contraintes": len(contraintes),
-        "contraintes": [c["detail"] for c in contraintes[:4]],
+        "contraintes": [(c["detail"] or "").replace(" (pas d'exclusion automatique)", "")
+                         for c in _contraintes_vue[:4]],
         # OUTILS-FIX-5 L4 — `contrainte_majeure` REBRANCHÉE : elle était calculée (HARD_EXCLUDE
         # d'abord, sinon 1er SOFT_FLAG) mais absente du payload depuis e6b7b5bb → le front retombait
         # en permanence sur « N signalée(s) ». On sert la valeur, tirée des MÊMES lignes de cascade

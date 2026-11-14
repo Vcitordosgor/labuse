@@ -429,9 +429,10 @@ def _r_sup(v):
 
 
 def _r_statut_plu(v):
-    # EXPORTS-FIX-1 C1 — date d'APPROBATION du PLU (Sudocuh) + dernière évolution ; la date GPU
-    # (« horizon », 2025-12-17) est dite comme une PUBLICATION, jamais comme une approbation.
-    #  · La Possession : approuvé le 12/06/2019 ; Saint-Paul : le 27/09/2012 (recette).
+    # EXPORTS-FIX-1 C1 / RELECTURE-FINALE (3) — date d'APPROBATION du PLU (Sudocuh) ; la date du document
+    # GPU (« horizon », ex. 2025-12-17 pour La Possession) est la date d'APPROBATION de la version en vigueur
+    # (millésime du document opposable), PAS une date de publication au portail.
+    #  · La Possession : approuvé le 12/06/2019, version en vigueur approuvée le 17/12/2025.
     appro = v.get("approbation_sudocuh")
     evol = v.get("evolution_sudocuh")
     gpu = v.get("horizon")
@@ -440,11 +441,11 @@ def _r_statut_plu(v):
         if evol and evol != appro:
             s += f" — dernière évolution engagée le {_fr_dates(evol)}"
         if gpu:
-            s += f" — version publiée au Géoportail de l'urbanisme le {_fr_dates(gpu)} (document opposable)"
+            s += f" — version en vigueur approuvée le {_fr_dates(gpu)} (document opposable au Géoportail de l'urbanisme)"
         return esc(s + ".")
-    if gpu:   # à défaut : dire que la date GPU est une publication, pas une approbation
-        return esc(f"PLU — version publiée au Géoportail de l'urbanisme le {_fr_dates(gpu)} "
-                   "(document opposable).")
+    if gpu:   # à défaut : la date du document GPU est une approbation (millésime opposable), pas une publication
+        return esc(f"PLU — version en vigueur approuvée le {_fr_dates(gpu)} "
+                   "(document opposable au Géoportail de l'urbanisme).")
     # EXPORTS-FIX-1 A7 — repli : dates ISO servies → JJ/MM/AAAA.
     return esc(_fr_dates(v.get("libelle") or ""))
 

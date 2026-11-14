@@ -2350,13 +2350,18 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
         if not niveau:
             niveau = {"rouge": "Fort", "bleue": "Modéré"}.get(ppr_zone or "", "Signalé")
         part = it.get("part_pct") if it.get("part_pct") is not None else ppr_part
+        # RELECTURE-FINALE (2) — le classement « zone rouge » du PPR ne s'applique PAS à un aléa de niveau
+        # FAIBLE : sa part (ex. 69 %) est justement la portion HORS zone rouge (la zone rouge est la part
+        # contrainte, ~31 %). On ne répète donc plus « Zone rouge » ni son commentaire sur la ligne faible.
+        _bas = str(niveau).strip().lower() in ("faible", "signalé", "signale", "signalee")
+        _zone_ici = ppr_zone if (ppr_zone and not _bas) else None
         zone_part = None
-        if ppr_zone:
-            zone_part = f"Zone {ppr_zone}" + (f" · {int(part)} %" if isinstance(part, (int, float)) else "")
+        if _zone_ici:
+            zone_part = f"Zone {_zone_ici}" + (f" · {int(part)} %" if isinstance(part, (int, float)) else "")
         elif isinstance(part, (int, float)):
-            zone_part = f"{int(part)} %"
+            zone_part = f"{int(part)} % de la parcelle"
         rows.append({"alea": lab, "niveau": niveau, "zone_part": zone_part,
-                     "implique": _implique(ppr_zone, ppr_doc)})
+                     "implique": _implique(_zone_ici, ppr_doc)})
     return rows
 
 

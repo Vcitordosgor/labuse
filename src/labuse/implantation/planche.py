@@ -241,8 +241,11 @@ def _g_zone_limites(terrain, vue) -> str:
         b.append(_poly(p.geom_2975, vue, fill="none", stroke="#DC2626", stroke_width="1",
                        stroke_dasharray="3 3"))
         c = p.geom_2975.representative_point(); X, Y = vue.px(wminx, c.y)
-        b.append(_txt(X - 6, Y + 3, f"AW {p.numero}" if p.numero and p.numero.isdigit() else (p.numero or ""),
-                      size=10, anchor="end", fill="#B91C1C", weight="600"))
+        # RELECTURE-FINALE (6d) — la SECTION vient de l'identifiant de LA parcelle (idu[8:10]), plus de « AW »
+        # codé en dur : près du contour comme dans le cartouche (ex. « HT 538 » pour 97416000HT0538).
+        _sec = (p.idu or "")[8:10].strip()
+        _ref = f"{_sec} {p.numero}".strip() if (p.numero and p.numero.isdigit() and _sec) else (p.numero or "")
+        b.append(_txt(X - 6, Y + 3, _ref, size=10, anchor="end", fill="#B91C1C", weight="600"))
     # contour EXTÉRIEUR de l'assiette, plus épais
     b.append(_poly(terrain.assiette, vue, fill="none", stroke="#DC2626", stroke_width="2",
                    stroke_dasharray="8 4"))

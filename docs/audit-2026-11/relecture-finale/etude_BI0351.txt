@@ -1,0 +1,16 @@
+    Étude de faisabilité
+
+   Aucun scénario d'implantation n'a pu être établi sur cette parcelle : Terrain trop exigu pour un
+   projet.
+
+
+L'Étude de faisabilité dessine un projet (plan masse, logements, stationnement) sur une parcelle constructible. Quand la parcelle est
+inconstructible (zone naturelle N, zone rouge d'un plan de prévention des risques…) ou que sa géométrie ne permet aucune
+implantation réglementaire, il n'y a pas de projet à dessiner : le document le dit. Les contraintes et le zonage détaillés figurent au
+Dossier de la parcelle.
+
+
+
+
+Étude de faisabilité · pré-faisabilité, non contractuel.                                                                                 1/1
+

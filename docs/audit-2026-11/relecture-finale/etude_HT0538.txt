@@ -1,0 +1,529 @@
+L A B U S E · D O C U M E N T N ° E F - d 2 d c ff b c
+
+
+Étude de faisabilité — Saint-Pierre ·
+parcelles HT 538
+510 m² · zone Ud · logement collectif · stationnement aérien
+
+À vérifier, pas « exploitable » : le plancher de cette étude (≈ 888 m²) dépasse la surface de plancher maximale réglementaire de la
+fiche (≈ 614 m², reprise du Dossier, du Comparatif et du pré-dossier) ; le stationnement n'est pas vérifiable (barème du PLU
+indisponible).
+
+
+   Logement collectif — meilleure capacité trouvée : 10 logements en R+4, stationnement aérien.
+
+
+Ce qui limite : hauteur réglementaire.
+
+
+   CONTRÔLES AUTOMATISÉS DE VOTRE PROJET                                  STATUT DE L'ÉTUDE
+   4 réussis · 0 échoués · 1 non effectués                                À vérifier — à faire confirmer par un architecte
+
+
+                                             Forme         Logements      Niveaux      Places       Étude
+
+
+ Votre projet                                barre                 10         R+4           0        À vérifier
+
+
+ Meilleure capacité trouvée                  barre                 10         R+4           0        indépendant de la demande
+
+« Votre projet » = le programme que vous avez étudié ; « meilleure capacité trouvée » = le meilleur programme que la recherche a
+trouvé avec ces hypothèses, indépendant de votre demande. Ce document n'affirme aucune conformité réglementaire.
+
+
+
+   510 m²                                            306 m²                                     15 m
+   Contenance cadastrale                             Emprise au sol max                         Hauteur à l'égout
+
+
+
+
+   sans objet                                        —                                          1
+   Logements aidés imposés                           Places imposées                            Contrôles non effectués
+
+
+
+   Pré-faisabilité automatisée : scénarios indicatifs d'implantation établis à partir des règles publiées du PLU et
+   des données publiques. Ce document n'est ni une étude d'architecte, ni une preuve de conformité, ni un
+   dossier de permis.
+
+
+
+
+Document d'information · ne remplace ni un certificat d'urbanisme, ni une étude réglementaire, ni un conseil juridique             1 / 10
+    1. Le terrain
+
+   1 parcelle, 510 m² au cadastre.
+
+
+
+
+                                                                                                                                  N
+
+
+
+
+    Parcelles        Assiette    Limite classée voie
+
+Parcelle                                      Contenance                                                                 Nature
+
+538                                           510 m²                                                                              Sourcé
+
+
+Assiette fusionnée                            510 m²
+
+
+Terrain                                       Valeur                                                                     Nature
+
+Pente                                         4,4° (8 %)                                                                      RGE ALTI
+
+
+
+
+    2. Règles et contraintes
+
+   Zone Ud du PLU. Chaque valeur est citée ; une règle non validée reste « non effectuée », jamais
+   tenue pour acquise.
+
+
+Règle                                         Valeur                                                                     Nature
+
+recul sur voie                                3m                                                                                  Sourcé
+PLU · art. Ud3.1 · p. 81
+
+
+
+
+Document d'information · ne remplace ni un certificat d'urbanisme, ni une étude réglementaire, ni un conseil juridique                2 / 10
+recul sur limites séparatives                 3m                                                                         Sourcé
+PLU · art. Ud3.2 · p. 82
+
+
+emprise au sol (CES)                          60 %                                                                       Sourcé
+PLU · art. Ud3.4 · p. 83
+
+
+hauteur à l'égout                             15 m                                                                       Sourcé
+PLU · art. Ud3.5 · p. 84
+
+
+hauteur au faîtage                            20 m                                                                       Sourcé
+PLU · art. Ud3.5 · p. 84
+
+
+pleine terre (perméabilité)                   20 %                                                                       Sourcé
+PLU · art. Ud5.1 · p. 91
+
+
+
+CONTRAINTES CARTOGRAPHIÉES ET SIGNALÉES
+
+Contrainte                                    Sur le terrain      Traitement
+
+Aléa mouvement de terrain — niveau signalée                       signalée, non interprétée (voir le Dossier §5)
+faible
+
+Système d'endiguement —                       signalée            signalée, non interprétée (voir le Dossier §5)
+inondation résiduelle en cas de
+défaillance
+
+Zone inondable (TRI, scénario                 signalée            signalée, non interprétée (voir le Dossier §5)
+extrême)
+
+Ligne absente quand la contrainte ne touche pas le terrain.
+
+
+
+
+    Stationnement & mixité
+Le PLU de Saint-Pierre (art. —) exige un barème par typologie.
+
+Stationnement non vérifié — le barème du PLU de cette commune n'est pas disponible : LABUSE n'a pas dessiné
+de places réglementaires (à confirmer au règlement).
+
+
+
+    3. Enveloppe constructible
+
+   Zone d'implantation, terrain libéré de 273 m² après reculs et contraintes. Ce plafond n'est pas ce
+   qu'on peut construire : c'est le scénario (plan masse) qui le dit.
+
+
+
+
+Document d'information · ne remplace ni un certificat d'urbanisme, ni une étude réglementaire, ni un conseil juridique     3 / 10
+                                                                                                                                   N
+
+
+
+
+   Parcelles       Assiette      Zone d'implantation       PPR rouge (retirée)       PPR bleue (signalée)       Limite classée voie
+
+Surface                                       Valeur                                                                     Nature
+
+Terrain (contenance)                          510 m²                                                                              Sourcé
+
+
+Zone d'implantation, terrain libéré           273 m²                                                                              Gabarit
+
+
+Zone d'implantation, bâti existant            273 m²                                                                              Gabarit
+déduit
+
+Plafond d'emprise                             ≤ 306 m² (60 % de la surface du terrain)                                            ƒ Dérivé
+
+
+
+
+   4. Plan masse de votre projet
+
+   Barre en R+4 : 10 logements, 0 places aériennes.
+
+
+
+
+Document d'information · ne remplace ni un certificat d'urbanisme, ni une étude réglementaire, ni un conseil juridique                 4 / 10
+                                                                                                                                   N
+
+
+
+
+   Bâtiment proposé        Places       Allée       Espaces libres       Accès       Zone d'implantation
+
+Élément                                         Valeur                                                                   Nature
+
+Emprise des bâtiments                           199 m²                                                                             Estimé
+
+
+Places dessinées                                0                                                                                  Estimé
+
+
+Pleine terre (espace libre perméable) 310 m²                                                                                      ƒ Dérivé
+
+
+Chaque nombre de ce tableau compte les objets dessinés sur le plan. Plan établi à partir de la géométrie de la parcelle.
+
+
+
+
+Document d'information · ne remplace ni un certificat d'urbanisme, ni une étude réglementaire, ni un conseil juridique                 5 / 10
+                                                                                                                                                                                             241
+
+
+
+
+                                                                                                                                              N       LÉGENDE
+
+                                                                                                                                                           Limite des parcelles étudiées
+                                                                                                                                                           Zone d’implantation réglementaire
+                                                                                                                                                           Bâtiment proposé
+                                                                                                                                                           Place de stationnement 2,50 × 5,00
+                                                                                                                                                           Allée, accès
+                           249
+                                                TN 245,9                                                      TN 247,0                                     Espaces libres, pleine terre
+                                                                                                                                                           Bâti voisin (BD TOPO)
+                                                                                                                                                           Bâti existant (supposé démoli)
+                                                                                                                                                           PPR zone rouge (retirée)
+                                                                                                                                               240
+                                                                                                                                                           PPR zone bleue (signalée)
+                                                      Chemin Chion Hock
+
+
+
+
+                                                                                                                                                      SURFACES (mesurées sur le plan)
+                                                                                         T2                                                           Terrain (contenance)                                        510 m²
+                                       HT 538                                                                                                         Emprise bâtie                                         199 m² · 39 %
+                                                                                                                                                      SDP du scénario (R+4)                                       888 m²
+                                                                                                                                                      Stationnement + allée                                         0 m²
+                                                                                                                                                      Pleine terre                                                310 m²
+                                                                                T3
+                                                                                                                                                      Places dessinées / imposées                                   0/—
+                                                                                                       76                                             Logements                                      10 · T3 ×5 · T2 ×5
+                                                                                                      24 ,
+
+
+
+                                                                   22
+                                                                     ,6 9
+
+
+
+
+                                                                                                                                 537
+                                                TN 244,4                                                      TN 245,2
+                                                                                                                                                        LABUSE
+                                                                                                                                                        Étude de faisabilité — plan masse
+                                                                                                                                                        Saint-Pierre · zone Ud
+                                                                                                                                                        Parcelles HT 538
+                                                           517                                                                                          Barre R+4 · stationnement aérien
+                                                                                                                                                        PLU millésime en vigueur · LiDAR HD IGN · BD TOPO
+                                                                                                                                                        Généré le 14/11/2026 · EF-d2dcffbc
+
+                                                                                                                                                        Esquisse indicative — pas une étude d’architecte
+
+            Échelle ≈ 1 : 250
+
+            0                     10                        20 m
+
+
+
+
+Planche — plan masse « façon architecte », dessinée depuis la géométrie du scénario (contexte : cadastre et bâti voisins BD TOPO, voies nommées, TN LiDAR aux angles). Esquisse indicative — pas une étude
+d'architecte.
+                                                                                                               518
+
+
+
+Document d'information · ne remplace ni un certificat d'urbanisme, ni une étude réglementaire, ni un conseil juridique                                                                                                       6 / 10
+                                                                                                                                                                                                                            590
+     5. Distribution et coupe
+
+     R+4 : la répartition des logements par niveau, chaque module dessiné = un logement compté.
+
+
+Niveau                                                    T2                            T3              SDP du scénario
+
+R+4                                                                                 1               1                                                                                            178
+
+R+3                                                                                 1               1                                                                                            178
+
+R+2                                                                                 1               1                                                                                            178
+
+R+1                                                                                 1               1                                                                                            178
+
+RDC                                                                                 1               1                                                                                            178
+
+Total                                                                               5              5                                                                                            888
+
+
+
+
+              limite sur voie                              limite de fond
+                                                                                                                                           LÉGENDE
+
+                                                                                                                                              Terrain naturel (LiDAR)
+                                                                                                                                              Hauteur égout / faîtage (règle)
+                                                                                                                 hauteur au faîtage 20 m
+                                                                                                                                              Bâtiment en coupe
+                                                                                                                                              Stationnement aérien
+
+
+
+
+                                                                                                                  hauteur à l’égout 15 m
+
+                                                                                                                                            LABUSE
+                                                                                                                                            Étude de faisabilité — coupe de principe
+                                R+4
+                                                                                                                                            Saint-Pierre · zone Ud
+                                                                                                                                            Parcelles HT 538
+                                                                                                                                            Scénario retenu · R+4 · 5 niveaux × 3 m
+                                R+3                                                                                                         TN LiDAR HD IGN · règles PLU servies
+                                                                                                                                            Généré le 14/11/2026 · EF-d2dcffbc
+                   15 m                                                                                                                     Esquisse indicative — pas une étude d’architecte
+
+                                R+2
+
+
+
+
+                                R+1
+
+
+
+      245,9
+                                RDC
+                                                                            244,9
+                                      Terrain naturel (LiDAR)
+
+
+
+
+Coupe de principe : le volume bâti sous la règle de hauteur, le terrain naturel (LiDAR), le stationnement aérien au sol. Esquisse
+indicative, pas une étude d'architecte.
+
+
+
+
+     6. Capacité et contrôles
+
+     Votre projet : 4 contrôles réussis, 0 échoués, 1 non effectués. Ce n'est pas une validation
+     réglementaire.
+
+
+Programme                                                 Nombre                             Surface moy.               SHAB estimée                                             Nature
+
+T2                                                                                      5                    56 m²                                      280 m²                                 Estimé
+
+
+T3                                                                                      5                    70 m²                                       350 m²                                Estimé
+
+
+Surface tenue (programme dessiné)                                                       10                                                              630 m²                                 Estimé
+
+
+
+
+Document d'information · ne remplace ni un certificat d'urbanisme, ni une étude réglementaire, ni un conseil juridique                                                                           7 / 10
+Répartition proposée par le moteur pour l'objectif choisi.
+
+
+Contrôle                                        Règle                            Scénario                                Résultat
+
+Emprise au sol                                  ≤ 306 m² (60 % de la             199 m²                                             Réussi
+PLU art. Ud3.4 · p. 83 — « L’emprise au sol     surface du terrain)
+des constructions est limitée à 60% de la
+superficie de l’unité foncière. »
+
+
+Hauteur                                         ≤ 15 m à l'égout                 R+4 ≈ 15 m égout                                   Réussi
+PLU art. Ud3.5 · p. 84 — « Les hauteurs des
+constructions nouvelles, sauf celles des
+équipements publics et des bâtiments
+d’intérêts collectifs, doivent être comprises
+entre 6 et 15 m à l’égout du toit ou au
+sommet de l’acrotère et de 20 m maximum
+au faîtage. »
+
+
+Implantation étagée à vérifier                  ≤ 15 m à l'égout —         R+4 en 2 gradins — relief 1,2                    À confirmer
+                                                supposerait un bâtiment EN m mesuré, RGE ALTI 5 m
+                                                GRADINS                    (IGN)
+
+Prospect (hauteur relative)                     pas de règle de prospect         —                                       Non applicable
+
+Reculs                                          voie 3 m · séparatives 3 m       bâti dans la zone                                  Réussi
+PLU art. Ud3.1 · p. 81 — « Les constructions                                     d'implantation
+nouvelles en premier rideau doivent être
+implantées à l’alignement ou avec un recul
+minimal de 3 m. » ; PLU art. Ud3.2 · p. 82 —
+« Soit en limites séparatives et au maximum
+sur 2 limites séparatives que ces limites
+séparatives soient latérales ou de fond de
+parcelle, Soit en retrait de 3 mètres. »
+
+
+Perméabilité (pleine terre)                     ≥ 102 m² (20 % de la             310 m²                                             Réussi
+PLU art. Ud5.1 · p. 91 — « Pour les unités      surface du terrain)
+foncières de plus de 250 m², le coefficient
+de Biotope est de 30 % minimum avec au
+moins 20 % de la superficie de l’unité
+foncière en espace planté de pleine terre, »
+
+
+Stationnement                                   barème non servi pour            0 places dessinées                         À confirmer
+                                                cette zone
+
+Distance entre constructions                    sans objet (un seul              un seul bâtiment                        Non applicable
+                                                bâtiment)
+
+Locaux vélos · déchets                          non modélisés                    —                                         Non effectué
+
+PPR zone rouge (interdiction)                   absente du terrain               —                                       Non applicable
+
+PPR zone bleue (prescription)                   absente du terrain               —                                       Non applicable
+
+ER / EBC / SUP / servitudes                     absentes du terrain              —                                       Non applicable
+
+
+Un contrôle « Échoué » retire le scénario des « Exploitable ». « Non effectué » ne vaut jamais « Réussi ».
+
+
+
+
+Document d'information · ne remplace ni un certificat d'urbanisme, ni une étude réglementaire, ni un conseil juridique               8 / 10
+   7. Hypothèses, limites, sources
+
+   Ce que l'étude suppose, ce qu'elle ne sait pas, d'où viennent les chiffres.
+
+
+HYPOTHÈSES (TOUTES « ESTIMÉ », MODIFIABLES DANS L'OUTIL)
+
+Hypothèse                                     Valeur                       Convention
+
+Profondeur de bâtiment                        13 m                         logements traversants, coursive extérieure
+
+Surface moyenne par type                      30 / 56 / 70 / 80 m²         modifiable
+
+Plancher → habitable                          0,8                          circulations et noyaux hors habitable
+
+Place · allée                                 2,5 × 5 m · allée 5 m        dimensions usuelles
+
+Hauteur de niveau                             3m                           convention
+
+Stationnement                                 aérien                       places au sol
+
+
+À FAIRE CONFIRMER PAR L'ARCHITECTE
+
+Point                                         Pourquoi
+
+Distance entre constructions · locaux règles non modélisées
+vélos et déchets
+
+Prescriptions PPR bleue · servitudes          signalées, non interprétées
+signalées
+
+Accès véhicule                                limite classée voie ; visibilité et autorisation non vérifiées
+
+Sol, réseaux, arbres, vues, voisinage aucune donnée publique fiable à la parcelle
+
+Conception (plans, façades)                   métier de l'architecte
+
+
+SOURCES
+
+Source                                        Nature
+
+PLU — zone Ud                                 règlement, zonage, prescriptions publiés
+
+Cadastre DGFiP · PPR, servitudes              données publiques
+(GPU, Géorisques)
+
+LiDAR HD IGN · BD TOPO                        terrain naturel, limites
+
+Moteur d'implantation LABUSE                  hypothèses « Estimé », modifiables dans l'outil
+
+Entrées, configuration, version du moteur et des règles archivées avec le document n° EF-d2dcffbc : le scénario se rejoue à l'identique.
+
+
+
+
+Document d'information · ne remplace ni un certificat d'urbanisme, ni une étude réglementaire, ni un conseil juridique            9 / 10
+   Annexe — extraits du règlement
+
+   PLU de Saint-Pierre · zone Ud · millésime 25/06/2024. Chaque règle appliquée est citée mot pour
+   mot.
+
+
+  recul sur voie — art. Ud3.1 · p. 81 · millésime 25/06/2024
+  « Les constructions nouvelles en premier rideau doivent être implantées à l’alignement ou avec un recul minimal de 3 m. »
+
+  recul sur limites séparatives — art. Ud3.2 · p. 82 · millésime 25/06/2024
+  « Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond
+  de parcelle, Soit en retrait de 3 mètres. »
+
+  emprise au sol (CES) — art. Ud3.4 · p. 83 · millésime 25/06/2024
+  « L’emprise au sol des constructions est limitée à 60% de la superficie de l’unité foncière. »
+
+  hauteur à l'égout — art. Ud3.5 · p. 84 · millésime 25/06/2024
+  « Les hauteurs des constructions nouvelles, sauf celles des équipements publics et des bâtiments d’intérêts collectifs,
+  doivent être comprises entre 6 et 15 m à l’égout du toit ou au sommet de l’acrotère et de 20 m maximum au faîtage. »
+
+  hauteur au faîtage — art. Ud3.5 · p. 84 · millésime 25/06/2024
+  « Les hauteurs des constructions nouvelles, sauf celles des équipements publics et des bâtiments d’intérêts collectifs,
+  doivent être comprises entre 6 et 15 m à l’égout du toit ou au sommet de l’acrotère et de 20 m maximum au faîtage. »
+
+  pleine terre (perméabilité) — art. Ud5.1 · p. 91 · millésime 25/06/2024
+  « Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 30 % minimum avec au moins 20 % de la
+  superficie de l’unité foncière en espace planté de pleine terre, »
+
+Document PLU officiel : https://www.geoportail-urbanisme.gouv.fr/document/97416_PLU_20240625
+
+
+
+
+Document d'information · ne remplace ni un certificat d'urbanisme, ni une étude réglementaire, ni un conseil juridique   10 / 10
+

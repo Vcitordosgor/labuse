@@ -59,6 +59,20 @@ def test_contraintes_signalees_ne_plante_pas_sur_terrain_none(monkeypatch):
     assert payload["hors_perimetre"] is True and payload["verdict"] == "Étude hors périmètre"
 
 
+def test_dpu_non_determine_nest_pas_signale(monkeypatch):
+    """RELECTURE-FINALE (5) — une seule formule, celle du Dossier : un DPU dont le périmètre n'est PAS publié
+    (état « non_determinee ») n'est plus signalé « sur le terrain » dans l'Étude (le Dossier le range dans
+    « hors périmètre publié »)."""
+    monkeypatch.setattr(app_mod, "_aleas_block", lambda db, idu: {"liste": [{"nature": "inondation", "niveau": "fort"}]})
+    monkeypatch.setattr(app_mod, "_dispositifs_block",
+                        lambda db, idu: {"dpu": {"etat": "non_determinee", "detail": "périmètre non publié au GPU"}})
+    payload = _payload_refus()
+    modules._attach_contraintes_signalees(db=None, payload=payload, idus=payload["entrees"]["idus"])
+    contr = (payload["terrain"] or {}).get("contraintes_signalees") or []
+    assert any("inondation" in c for c in contr)              # l'aléa reste
+    assert not any("préemption" in c for c in contr)          # mais pas le DPU non déterminé
+
+
 def test_zone_gabarit_ne_plante_pas_sur_terrain_none(monkeypatch):
     # _attach_zone_gabarit s'appuie sur le Gabarit (collecte) ; indisponible → ne doit jamais planter,
     # et surtout ne jamais faire `None[...] = …`. On passe un payload terrain=None mono-parcelle.

@@ -72,7 +72,10 @@ class VefaNeufLayer(Layer):
         # « ~4878 ») et « aplat commune » (terme de carto) remplacé par « à l'échelle de la commune ».
         prix_fr = f"{round(prix):,}".replace(",", " ") if prix else None
         prix_txt = f" — prix médian ~{prix_fr} €/m²" if prix_fr else ""
-        n_txt = f" ({n} ventes VEFA / 36 mois)" if n is not None else ""
+        # RELECTURE-FINALE (4) — la couche VEFA est ingérée sur la fenêtre `NEUF_VEFA_FENETRE_ANS` (= 5 ans,
+        # cf. ingestion/dvf_marche.py), la MÊME que le Dossier (« 158 ventes (commune, 5 ans) »). On annonce
+        # donc « 5 ans », pas « 36 mois » : une seule période pour les mêmes ventes.
+        n_txt = f" ({n} ventes VEFA, 5 ans)" if n is not None else ""
         return _trace(soft_flag(
             self.name,
             f"Marché du logement neuf (VEFA) sur la commune : {tr}{n_txt}{prix_txt}. "

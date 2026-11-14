@@ -108,6 +108,8 @@ _m2 = m2_fr
 
 def _statut_court(s: str) -> str:
     s = s or ""
+    if s == "à vérifier":                 # RELECTURE-FINALE — garde-fou d'honnêteté (jamais « exploitable »)
+        return "À vérifier"
     if s.startswith("exploitable"):
         return "Exploitable"
     if s == "à compléter":
@@ -119,6 +121,8 @@ def _statut_court(s: str) -> str:
 
 def _statut_classe(s: str) -> str:
     s = s or ""
+    if s == "à vérifier":
+        return "cp"
     return "ok" if s.startswith("exploitable") else "cp" if s == "à compléter" else "no"
 
 
@@ -237,8 +241,15 @@ def _stationnement_3lignes(payload: dict, retenu: dict) -> str:
     if pf and not _is_loi:
         lignes.append(f"La loi nationale (Code de l'urbanisme, art. {esc(pf.get('reference') or 'L151-35')}) "
                       f"plafonne à {_dec(pf.get('ratio_plafond'))} place / logement si le projet est éligible — à confirmer.")
-    lignes.append(f"LABUSE a dessiné {int(places) if places is not None else '—'} places {lieu} "
-                  f"selon la règle {'retenue' if _is_loi else 'du PLU'}.")
+    # RELECTURE-FINALE (6b) — barème INDISPONIBLE (pas de ratio ni d'article dans le PLU) : ne JAMAIS écrire
+    # « 0 place selon la règle du PLU » (il n'y a pas de règle à appliquer). On le dit honnêtement.
+    _bareme_indispo = (_rp is None) and (not _is_loi) and (not g.get("regle_courte"))
+    if _bareme_indispo:
+        lignes.append("Stationnement non vérifié — le barème du PLU de cette commune n'est pas disponible : "
+                      "LABUSE n'a pas dessiné de places réglementaires (à confirmer au règlement).")
+    else:
+        lignes.append(f"LABUSE a dessiné {int(places) if places is not None else '—'} places {lieu} "
+                      f"selon la règle {'retenue' if _is_loi else 'du PLU'}.")
     mix_html = ""
     mx = next((l for l in payload["regles"].get("lignes", []) if "mixit" in (l.get("nom") or "").lower()), None)
     if mx and mx.get("valeur") is not None:
@@ -516,6 +527,9 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         + ('<p class="note"><b>Terrain supposé libéré</b> — la parcelle porte du bâti existant, supposé démoli pour cette étude.</p>'
            if payload.get("terrain_suppose_libere") else '')
         + _au_html
+        # RELECTURE-FINALE (6a/6b) — le garde-fou d'honnêteté, écrit en clair, juste à côté du verdict.
+        + (f'<p class="note warn-note"><b>{esc(payload.get("garde_fou_raison"))}</b></p>'
+           if payload.get("garde_fou_raison") else '')
         + f'<div class="{vclass}">{esc(txt)}</div>'
         # ETUDE-V6-4 (items 10/11/13) — LA phrase « ce qui limite », identique au bandeau de l'écran
         # (champ serveur unique). Absente si rien ne limite (terrain sans contrainte dominante).
@@ -1000,6 +1014,25 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
     retenu = scenario_retenu(payload, scenario_ref)
     if retenu is None:
         raise ValueError(payload.get("message") or "aucun scénario : l'étude ne peut pas être rendue")
+    # RELECTURE-FINALE (6a/6b) — GARDE-FOU D'HONNÊTETÉ (aucune touche au moteur) : si le plancher de l'Étude
+    # DÉPASSE la capacité réglementaire de la fiche (Dossier/Comparatif/pré-dossier), ou si le stationnement
+    # n'est pas vérifiable (barème du PLU indisponible), l'étude n'est JAMAIS dite « exploitable » → « à
+    # vérifier », et on l'écrit en clair. On n'altère que le STATUT AFFICHÉ et on ajoute une note.
+    _gf = []
+    _cap_fiche = payload.get("capacite_fiche_sdp_m2")
+    _cmax = payload.get("capacite_maximale") or {}
+    _etude_sdp = max([x for x in (_cmax.get("sdp_m2"), (retenu.get("resume") or {}).get("sdp_m2")) if x is not None] or [0])
+    if _cap_fiche and _etude_sdp and _etude_sdp > float(_cap_fiche) * 1.05:
+        _gf.append(f"le plancher de cette étude (≈ {round(_etude_sdp)} m²) dépasse la surface de plancher "
+                   f"maximale réglementaire de la fiche (≈ {round(float(_cap_fiche))} m², reprise du Dossier, "
+                   "du Comparatif et du pré-dossier)")
+    _reg_g = (payload.get("stationnement_regimes") or {}).get("general") or {}
+    if _reg_g.get("ratio_par_logement") is None and not _reg_g.get("regle_courte") \
+            and not str(_art_label(_reg_g.get("article")) or "").upper().startswith("L151"):
+        _gf.append("le stationnement n'est pas vérifiable (barème du PLU indisponible)")
+    if _gf and str(retenu.get("statut_etude", "")).startswith("exploitable"):
+        retenu["statut_etude"] = "à vérifier"
+        payload["garde_fou_raison"] = "À vérifier, pas « exploitable » : " + " ; ".join(_gf) + "."
     # DOCS-1 (décision Vic) — le PLAFOND D'EMPRISE AFFICHÉ = la valeur de la fiche (CES × CONTENANCE de
     # l'acte), un fait = une valeur partout (fiche, Dossier, Gabarit, Étude). Le moteur d'implantation
     # garde sa base géométrique interne (surface DESSINÉE, contrôle du plan masse, FAISA-REGLES-1) ; on

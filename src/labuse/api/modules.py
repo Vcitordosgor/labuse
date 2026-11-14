@@ -2350,10 +2350,43 @@ def _attach_contraintes_signalees(db: Session, payload: dict, idus) -> None:
             pass
         try:
             d = _dispositifs_block(db, idu) or {}
-            if d.get("dpu"):   # bloc DPU présent = parcelle dans le périmètre de préemption
+            dpu = d.get("dpu")
+            # RELECTURE-FINALE (5) — UNE SEULE FORMULE, celle du Dossier : le DPU n'est signalé comme
+            # contrainte du terrain QUE s'il s'applique vraiment (périmètre publié). Quand son état est
+            # « non_determinee » (périmètre NON publié au GPU), le Dossier le range dans « hors périmètre
+            # publié / rien à signaler » → l'Étude ne le signale plus « sur le terrain ». (Un dpu non-dict
+            # « vrai » = présence confirmée, chemin historique.)
+            _dpu_etat = dpu.get("etat") if isinstance(dpu, dict) else ("applique" if dpu else None)
+            if dpu and _dpu_etat not in ("non_determinee", "hors_perimetre", "hors", None):
                 _ajoute("Droit de préemption urbain (DPU)")
         except Exception:  # noqa: BLE001
             pass
+        # RELECTURE-FINALE (6c) — les RISQUES de la fiche (mêmes lignes servies que le Dossier) figurent aussi :
+        # système d'endiguement, inondation extrême (TRI, scénario extrême)… que le moteur d'implantation ne
+        # modélise pas mais que le client doit voir.
+        try:
+            from .served_cascade import served_cascade_lines
+            for l in (served_cascade_lines(db, idu) or []):
+                lay = str(l.get("layer_name") or l.get("layer") or "")
+                det = (l.get("detail") or "").strip()
+                if l.get("result") in (None, "PASS") or not det:
+                    continue
+                if lay == "endiguement":
+                    _ajoute("Système d'endiguement — inondation résiduelle en cas de défaillance")
+                elif lay == "tri_zone" and "extrem" in det.lower():
+                    _ajoute("Zone inondable (TRI, scénario extrême)")
+        except Exception:  # noqa: BLE001
+            pass
+    # RELECTURE-FINALE (6a) — la SDP maximale réglementaire de la FICHE (= Dossier/Comparatif/pré-dossier),
+    # attachée pour le garde-fou d'honnêteté du rendu (comparée au plancher de l'Étude), sans toucher au moteur.
+    try:
+        from .app import _potentiel_transformation_block
+        pt = _potentiel_transformation_block(db, (idus or [None])[0]) or {}
+        sdp_fiche = pt.get("surface_plancher_m2") or (pt.get("calcul") or {}).get("sdp_max_m2")
+        if sdp_fiche is not None and isinstance(payload, dict):
+            payload["capacite_fiche_sdp_m2"] = float(sdp_fiche)
+    except Exception:  # noqa: BLE001
+        pass
     if items:
         # FIX-FINAL-1 (régression NU-E-055 / NU-D-001) — `payload["terrain"]` peut être None sur un
         # refus hors périmètre ; `setdefault` renvoyait alors None et `None[...] = …` levait un
