@@ -218,3 +218,4 @@ logs/
 reports/data/*.jsonl
 reports/data/exigu_*_shard_*.log
 reports/data/exigu_v2_*.json
+data/mnt_hr_cache/

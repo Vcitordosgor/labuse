@@ -190,11 +190,23 @@ def _exiger_admin(request: Request) -> None:
 
 
 @router.get("/scene/{idu}")
-def gabarit_scene(idu: str, request: Request, db: Session = Depends(get_db)) -> dict:
-    """Scène 3D du Gabarit (terrain 1 m, limite, zone, bâtiments, règles, 2 coupes, métadonnées)."""
+def gabarit_scene(idu: str, request: Request, db: Session = Depends(get_db), frais: bool = False) -> dict:
+    """Scène 3D du Gabarit (sol mesuré 0,5 m, limite, zone, bâtiments, règles, 2 coupes, métadonnées).
+    `frais=1` (recette) contourne la mémoïsation en mémoire → on observe froid (appel) puis chaud (copie)."""
     _exiger_admin(request)
     from ..gabarit.scene import build_scene
-    return build_scene(db, idu).to_dict()
+    return build_scene(db, idu, use_cache=not frais).to_dict()
+
+
+@router.get("/sol/stats")
+def gabarit_sol_stats(request: Request) -> dict:
+    """GABARIT-3D-3 (LOT 2, recette) — appels EXTÉRIEURS WMS émis + poids/nombre des copies locales.
+    Sert à PROUVER que la 2ᵉ ouverture ne fait aucun appel extérieur, et le plafond 1 Go du cache."""
+    _exiger_admin(request)
+    from ..gabarit import sol
+    octets, fichiers = sol.taille_cache()
+    return {"appels_wms": sol.appels_wms["n"], "cache_octets": octets, "cache_fichiers": fichiers,
+            "cache_max_octets": sol._cache_max()}
 
 
 def _verif_sid(scene, sid: str | None):
@@ -263,7 +275,7 @@ def gabarit_plan_cle_svg(idu: str, request: Request, theme: str = "sombre", sid:
     from ..gabarit.scene import build_scene
     scene = build_scene(db, idu)
     _verif_sid(scene, sid)
-    svg = plan_cle_svg(scene.to_dict(), theme=theme, width=max(160, min(int(w), 600)), height=max(140, min(int(h), 600)))
+    svg = plan_cle_svg(scene.to_dict(), theme=theme, width=max(160, min(int(w), 600)), height=max(100, min(int(h), 600)))
     if not svg:
         raise HTTPException(404, f"Plan-clé indisponible pour {idu}.")
     return Response(svg, media_type="image/svg+xml")

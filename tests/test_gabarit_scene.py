@@ -177,6 +177,151 @@ def _coupe_demo(attribution="bdtopo", plat=False, zone=True):
                                         {"d": 10.0, "z": profil[10]["z"], "role": "facade"}]}}
 
 
+def _coupe_pente(slope):
+    """Coupe : bâti en [10,18], terrain de pente `slope` → écart sur le segment [10, 21] = slope × 11."""
+    profil = [{"d": float(i), "z": round(100 + slope * i, 3)} for i in range(40)]
+    b = {"d0": 10.0, "d1": 18.0, "facade_amont_m": profil[10]["z"], "facade_aval_m": profil[18]["z"],
+         "pied_m": profil[14]["z"], "hauteur_m": 7.0, "attribution": "bdtopo"}
+    return {"label": "A", "titre": "Coupe A", "voie": None, "longueur_m": 39.0,
+            "profil": profil, "limites_parcelle_d": [[2.0, 37.0]],
+            "zone_implantation_d": [[8.0, 22.0]], "zone_presente": True, "batiments": [b],
+            "indicateurs": SC._indicateurs(profil, [[2.0, 37.0]], [[10.0, 18.0]], None),
+            "cotes": SC._stats_coupe(profil), "cotes_points": {"points": []}}
+
+
+def test_rupture_losange_seuil_1m5():
+    """LOT 1 — le losange « rupture à vérifier » n'apparaît QUE si le terrain varie ≥ 1,5 m sur le segment
+    du bâti ; sinon ni losange, ni libellé, ni ligne de légende."""
+    au_dessus = coupe_svg(_coupe_pente(0.3))     # écart 3,3 m ≥ 1,5
+    assert "Rupture du terrain à vérifier" in au_dessus            # losange + libellé
+    assert "rupture du terrain à vérifier" in au_dessus            # ligne de légende (minuscule)
+    en_dessous = coupe_svg(_coupe_pente(0.05))   # écart 0,55 m < 1,5
+    assert "Rupture du terrain à vérifier" not in en_dessous       # pas de losange/libellé
+    assert "rupture du terrain à vérifier" not in en_dessous       # pas de ligne de légende
+
+
+def test_anti_escalier_detecte_les_paliers():
+    """Correction LOT 2 — une coupe ne doit pas être faite de paliers plats + marches (donnée grossière
+    rééchantillonnée). `palier_max_m` ≥ 2 m = escalier : le contrôle « < 2 m » ÉCHOUE sur un escalier
+    (type RGE ALTI 5 m servi en 0,5 m) et PASSE sur un relief naturel fin (LiDAR HD 0,5 m)."""
+    from labuse.gabarit.coupe_svg import palier_max_m
+    SEUIL = 2.0
+    escalier = [{"d": i * 0.5, "z": 100.0 + int((i * 0.5) // 5)} for i in range(60)]   # paliers de 5 m
+    naturel = [{"d": i * 0.5, "z": round(100.0 + 0.005 * i, 3)} for i in range(60)]      # pente douce ~1 %
+    assert palier_max_m(escalier) >= SEUIL, "l'escalier DOIT être détecté (le contrôle < 2 m échouerait)"
+    assert palier_max_m(naturel) < SEUIL, "un relief naturel fin ne doit pas être vu comme un escalier"
+
+
+def _boites_libelles(svg):
+    """Boîtes (x0,x1,y0,y1) des libellés à fond opaque (couples <rect .../><text>…</text> de `_label_box`)."""
+    out = []
+    for m in re.finditer(r'<rect x="([\-\d.]+)" y="([\-\d.]+)" width="([\d.]+)" height="([\d.]+)"[^>]*/>'
+                         r'<text[^>]*>([^<]*)</text>', svg):
+        x, y, w, h = (float(m.group(i)) for i in range(1, 5))
+        out.append((m.group(5), x, x + w, y, y + h))
+    return out
+
+
+def _chevauchent(a, b):
+    return not (a[2] < b[1] or a[1] > b[2] or a[4] < b[3] or a[3] > b[4])
+
+
+def test_sol_non_mesure_sous_element_couvert():
+    """Finition — sous l'emprise bâtie, une BOSSE locale (varangue) qui dépasse les deux sols voisins de
+    ≥ 1,5 m : la bosse N'EST PLUS TRACÉE (trou dans le relevé principal), un trait DROIT pointillé relie les
+    deux sols voisins, UN SEUL libellé « sol non mesuré sous un élément couvert », PAS de losange de rupture,
+    et AUCUNE cote sur la bosse. Une vraie pente ne déclenche rien (pas de faux positif)."""
+    c = _coupe_pente(0.0)                                  # terrain plat à 100 m
+    for p in c["profil"]:
+        if 11.0 <= p["d"] <= 17.0:
+            p["z"] = 102.0                                  # bosse de 2 m sous le bâti [10,18]
+    c["cotes_points"] = {"points": [{"d": 14.0, "z": 102.0, "role": "haut"},   # « haut » tombe SUR la bosse
+                                    {"d": 2.0, "z": 100.0, "role": "limite"}]}
+    svg = coupe_svg(c, detail=True)
+    assert svg.count("sol non mesuré sous un élément couvert") == 2   # 1 libellé + 1 ligne de légende (pas 2 libellés)
+    assert "Rupture du terrain à vérifier" not in svg                # losange supprimé (rupture = l'élément couvert)
+    assert svg.count("102,0 m") == 0                                 # aucune cote sur la bosse (102 m écartée)
+    # un trait DROIT pointillé « 1 3 » (couvert) remplace la bosse dans le relevé principal
+    assert 'stroke-dasharray="1 3"' in svg
+    naturel = coupe_svg(_coupe_pente(0.3))                 # pente franche : un côté haut relève le voisin
+    assert "sol non mesuré sous un élément couvert" not in naturel  # pas de faux positif
+
+
+def test_dedup_cotes_quasi_identiques():
+    """Finition — deux cotes à < 3 m sur l'axe ET < 0,2 m d'altitude font double emploi : on garde LA LIMITE."""
+    from labuse.gabarit.coupe_svg import _dedup_cotes
+    pts = [{"d": 60.0, "z": 401.8, "role": "bas"}, {"d": 61.5, "z": 401.8, "role": "limite"},
+           {"d": 30.0, "z": 406.3, "role": "limite"}, {"d": 31.0, "z": 406.4, "role": "haut"},
+           {"d": 10.0, "z": 410.0, "role": "voie"}]
+    out = _dedup_cotes(pts)
+    assert len(out) == 3                                           # (401,8)×2→1, (406,3/406,4)×2→1, voie
+    bas = [p for p in out if abs(p["z"] - 401.8) < 0.05][0]
+    assert bas["role"] == "limite"                                # on garde la limite, pas le « bas »
+    assert any(p["role"] == "limite" and abs(p["z"] - 406.3) < 0.05 for p in out)   # garde 406,3 (limite)
+    loin = [{"d": 10.0, "z": 400.0, "role": "limite"}, {"d": 20.0, "z": 400.0, "role": "limite"}]
+    assert len(_dedup_cotes(loin)) == 2                           # > 3 m → les deux gardées
+
+
+def test_cote_evite_la_pente_max_5m():
+    """Finition 4a — « pente max N % sur 5 m » et les cotes d'altitude ne se chevauchent JAMAIS (boîtes 2D),
+    même quand une cote tombe sous le libellé de pente (cas CT0442)."""
+    c = _coupe_pente(0.25)                                 # pente forte → pente max 5 m disponible
+    c["cotes_points"] = {"points": [{"d": float(d), "z": round(100 + 0.25 * d, 1), "role": "haut"}
+                                    for d in range(4, 36, 3)]}      # cotes denses tout le long
+    svg = coupe_svg(c, detail=True)
+    boites = _boites_libelles(svg)
+    pentes = [b for b in boites if b[0].startswith("pente max")]
+    cotes = [b for b in boites if b[0].endswith(" m") and not b[0].startswith("pente")]
+    assert pentes and cotes
+    for p in pentes:
+        assert not any(_chevauchent(p, k) for k in cotes), "une cote chevauche « pente max … »"
+
+
+def test_plan_cle_lettres_axe_sans_chevauchement():
+    """Finition 4b — deux extrémités d'axes proches d'un même coin (cas DX0049) : les lettres A/A′/B/B′ (et
+    « voie ») sont décalées → aucune ne se superpose."""
+    scene = {"contour_cadastral": [{"ext": [[0, 0], [20, 0], [20, 20], [0, 20], [0, 0]], "trous": []}],
+             "zone_implantation": [], "batiments": [],
+             "axes_plan": {"A": {"label": "A", "p0": [1, 1], "p1": [19, 12]},
+                           "B": {"label": "B", "p0": [19, 14], "p1": [2, 2]}},   # B′ tombe près de A
+             "coupes": [{"voie": {"etablie": True, "point_local": [18, 13]}}]}
+    svg = plan_cle_svg(scene, theme="sombre", width=210, height=108)
+    lettres = [b for b in _boites_libelles_simple(svg) if b[0] in ("A", "A′", "B", "B′", "voie")]
+    for i in range(len(lettres)):
+        for j in range(i + 1, len(lettres)):
+            assert not _chevauchent(lettres[i], lettres[j]), f"{lettres[i][0]} chevauche {lettres[j][0]}"
+
+
+def test_step_faces_allege_selon_taille():
+    """LOT 5 — le maillage 3D s'allège selon la TAILLE du cadre : 0,5 m (petit) → 1 m → 2 m (plafond)."""
+    from labuse.gabarit.scene import _step_faces
+    assert _step_faces(40, 40, 0.5) == 1          # petit → 0,5 m
+    assert _step_faces(70, 70, 0.5) == 2          # moyen → 1 m
+    assert _step_faces(150, 150, 0.5) == 4         # grand → 2 m
+    assert _step_faces(2000, 2000, 0.5) == 4       # énorme → plafonné à 2 m (temps rapporté)
+
+
+def test_faces_allegees_moins_de_sommets_coupe_inchangee():
+    """LOT 5 — un maillage à 1 m a ~4× moins de sommets qu'à 0,5 m (ouverture bornée) ; la COUPE
+    (profil par franchissement des faces) suit le pas du maillage, mais l'échantillonneur de coupe reste
+    en 0,5 m dans la scène (step 1) — ici on vérifie seulement l'allègement des faces + le pas annoncé."""
+    a = np.fromfunction(lambda i, j: 100 + 0.01 * i + 0.02 * j, (80, 80), dtype="float64")
+    f1 = TerrainMesh(a, 1000.0, 2080.0, 0.5, step=1).faces(1000.0, 2080.0)
+    f2 = TerrainMesh(a, 1000.0, 2080.0, 0.5, step=2).faces(1000.0, 2080.0)
+    assert len(f2["vertices"]) < len(f1["vertices"]) / 3
+    assert f1["pas_m"] == 0.5 and f2["pas_m"] == 1.0
+
+
+def _boites_libelles_simple(svg):
+    """Boîtes des <text> du plan-clé (sans fond) : largeur estimée au glyphe (fs×0,56)."""
+    out = []
+    for m in re.finditer(r'<text x="([\-\d.]+)" y="([\-\d.]+)"[^>]*font-size="(\d+)"[^>]*>([^<]*)</text>', svg):
+        x, y, fs, t = float(m.group(1)), float(m.group(2)), int(m.group(3)), m.group(4)
+        w = max(len(t) * fs * 0.56, 4.0)
+        out.append((t, x - 2, x + w, y - fs, y + 3))
+    return out
+
+
 def _hors_cadre(svg, w, h, tol=1.0):
     faute = []
     for attr, lim in (("x", w), ("cx", w), ("x1", w), ("x2", w), ("y", h), ("cy", h), ("y1", h), ("y2", h)):

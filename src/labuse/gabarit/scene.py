@@ -31,6 +31,134 @@ from .terrain_mesh import TerrainMesh
 _NODATA = -9999.0
 _PENTE_FENETRE_M = 5.0
 _MARGE_FACES_1M = 25.0          # rayon des faces 1 m autour de la parcelle (le reste en 2 m)
+# LOT 5 — le MAILLAGE 3D s'allège au-delà d'un seuil de taille pour borner l'ouverture à froid : on garde
+# ≤ ~12 000 sommets (le coût du rendu three.js est ~linéaire en sommets). La COUPE reste toujours en 0,5 m
+# (elle porte les cotes) ; seules les FACES servies à la visionneuse s'allègent (0,5 m → 1 m → 2 m).
+_FACES_BUDGET_SOMMETS = 6500
+
+
+def _step_faces(largeur_m: float, hauteur_m: float, pas: float) -> int:
+    """Pas d'allègement du maillage 3D (×pas natif) : le plus FIN qui tient sous le budget de sommets, borné
+    à 2 m (step 4 sur du 0,5 m). 1 = 0,5 m, 2 = 1 m, 4 = 2 m. Au-delà, on reste à 2 m (temps rapporté)."""
+    for step in (1, 2, 4):
+        vpas = pas * step
+        if (largeur_m / vpas) * (hauteur_m / vpas) <= _FACES_BUDGET_SOMMETS:
+            return step
+    return 4
+
+
+_COTE_3D_MAX_POINTS = 40000
+
+
+def _cote_3d_sol_degage(sampler, cadastre, batis, ox: float, oy: float):
+    """Cote HAUTE/BASSE de la vue 3D, lues dans le SOL 0,5 m sur les MÊMES positions que les sommets du
+    maillage (centres de pixels natifs) → identiques aux cotes d'avant le LOT 5, quel que soit l'allègement.
+    Sur SOL DÉGAGÉ (intérieur cadastre, hors emprise bâtie — un élément couvert ne porte pas de cote).
+    Rend {'haut':[xl,yl,z], 'bas':[xl,yl,z]} en repère local, ou None. Travail borné (sous-échantillonnage
+    PIXEL-ALIGNÉ pour les très grandes parcelles → la grille reste un sous-ensemble de celle des sommets)."""
+    from shapely.geometry import Point, Polygon
+    from shapely.ops import unary_union
+    from shapely.prepared import prep
+    m = sampler.m
+    try:
+        pc = prep(cadastre)
+    except Exception:  # noqa: BLE001
+        return None
+    pb = None
+    polys = [Polygon([(x + ox, y + oy) for x, y in sub["ext"]])
+             for b in (batis or []) for sub in (b.get("empreinte") or []) if len(sub.get("ext") or []) >= 3]
+    if polys:
+        u = unary_union([g for g in polys if g.is_valid or g.buffer(0).is_valid])
+        if not u.is_empty:
+            pb = prep(u)
+    minx, miny, maxx, maxy = cadastre.bounds
+    pas = m.pas
+    Ja = max(0, int(math.floor((minx - m.ox) / pas - 0.5)))
+    Jb = min(m.nx - 1, int(math.ceil((maxx - m.ox) / pas - 0.5)))
+    Ia = max(0, int(math.floor((m.oy - maxy) / pas - 0.5)))
+    Ib = min(m.ny - 1, int(math.ceil((m.oy - miny) / pas - 0.5)))
+    npix = max((Ib - Ia + 1) * (Jb - Ja + 1), 1)
+    stride = max(1, int(math.ceil((npix / _COTE_3D_MAX_POINTS) ** 0.5)))   # garde la grille des sommets
+    hi = lo = None
+    for I in range(Ia, Ib + 1, stride):
+        y = m.oy - (I + 0.5) * pas
+        for J in range(Ja, Jb + 1, stride):
+            z = m._z(I, J)                                   # valeur de pixel = z du sommet de face (ANCIEN)
+            if z is None:
+                continue
+            x = m.ox + (J + 0.5) * pas
+            if pc.covers(Point(x, y)) and (pb is None or not pb.covers(Point(x, y))):
+                if hi is None or z > hi[2]:
+                    hi = (x, y, z)
+                if lo is None or z < lo[2]:
+                    lo = (x, y, z)
+    if hi is None or lo is None:
+        return None
+    return {"haut": [round(hi[0] - ox, 2), round(hi[1] - oy, 2), round(hi[2], 2)],
+            "bas": [round(lo[0] - ox, 2), round(lo[1] - oy, 2), round(lo[2], 2)]}
+
+
+_COUVERT_SEUIL_M = 1.5          # bosse ≥ 1,5 m au-dessus du sol voisin = élément couvert (varangue), comme la coupe
+# aplanissement 3D : seuil un peu PLUS HAUT que la coupe (le plan de l'anneau n'épouse pas parfaitement un
+# terrain courbe → sur une pente, les résidus montent à ~1,9 m ; 2,0 m garde les pentes INTACTES et n'aplanit
+# que les vraies dalles de varangue, nettement au-dessus du plan du sol voisin).
+_APLANIR_SEUIL_M = 2.0
+
+
+def _sol_sans_bosses_couvertes(surf, batis, ox: float, oy: float):
+    """Tableau du sol avec les BOSSES d'éléments couverts (varangue/auvent pris pour du sol sous le bâti)
+    APLANIES au sol voisin — pour le MAILLAGE 3D seulement (la coupe et les cotes gardent le sol réel).
+
+    On ajuste un PLAN (moindres carrés) au sol de l'ANNEAU autour du bâti : il suit la pente du terrain. Un
+    pixel intérieur à l'emprise qui dépasse ce plan de ≥ 1,5 m est ramené SUR le plan → une varangue (dalle
+    au-dessus du sol voisin) est aplanie, un terrain EN PENTE sous le bâti NE L'EST PAS (le plan épouse la
+    pente), et le raccord reste propre (on ramène à la valeur du plan, pas à un niveau unique). Fit robuste :
+    une 2ᵉ passe écarte les points d'anneau nettement au-dessus du plan (bâti/structure voisine)."""
+    import numpy as np
+    from shapely.geometry import Point, Polygon
+    from shapely.prepared import prep
+    polys = [Polygon([(x + ox, y + oy) for x, y in sub["ext"]])
+             for b in (batis or []) for sub in (b.get("empreinte") or []) if len(sub.get("ext") or [])>= 3]
+    polys = [g for g in polys if g.is_valid and not g.is_empty]
+    if not polys:
+        return surf.a
+    a, pas = surf.a, surf.pas
+    out = None
+    for g in polys:
+        ring = g.buffer(8.0).difference(g)
+        rb = ring.bounds
+        Ja = max(0, int((rb[0] - surf.ox) / pas - 0.5)); Jb = min(surf.nx - 1, int((rb[2] - surf.ox) / pas + 1.5))
+        Ia = max(0, int((surf.oy - rb[3]) / pas - 0.5)); Ib = min(surf.ny - 1, int((surf.oy - rb[1]) / pas + 1.5))
+        if (Ib - Ia + 1) * (Jb - Ja + 1) > 40000:        # emprise démesurée → on ne tente pas (rare)
+            continue
+        pin, pring = prep(g), prep(ring)
+        rx, ry, rz, ins = [], [], [], []
+        for I in range(Ia, Ib + 1):
+            yy = surf.oy - (I + 0.5) * pas
+            for J in range(Ja, Jb + 1):
+                v = a[I, J]
+                if v != v:
+                    continue
+                xx = surf.ox + (J + 0.5) * pas
+                if pring.covers(Point(xx, yy)):
+                    rx.append(xx); ry.append(yy); rz.append(v)
+                elif pin.covers(Point(xx, yy)):
+                    ins.append((I, J, xx, yy, v))
+        if len(rx) < 8 or not ins:
+            continue
+        rX = np.column_stack([rx, ry, np.ones(len(rx))]); rZ = np.asarray(rz)
+        coef, *_ = np.linalg.lstsq(rX, rZ, rcond=None)                 # plan z = c0·x + c1·y + c2
+        resid = rZ - rX @ coef                                         # 2ᵉ passe : écarte les points très hauts (structures)
+        keep = resid <= (np.median(resid) + 2.0)
+        if keep.sum() >= 8 and not keep.all():
+            coef, *_ = np.linalg.lstsq(rX[keep], rZ[keep], rcond=None)
+        for I, J, xx, yy, v in ins:
+            exp = coef[0] * xx + coef[1] * yy + coef[2]
+            if v - exp >= _APLANIR_SEUIL_M:                            # dalle NETTEMENT au-dessus du plan du sol voisin
+                if out is None:
+                    out = a.copy()
+                out[I, J] = exp
+    return out if out is not None else a
 
 
 # ── Fond : lecture calée sur les pixels natifs ────────────────────────────────────────────────────
@@ -89,6 +217,33 @@ def charger_surface(minx: float, miny: float, maxx: float, maxy: float,
         return _Surface(arr, tr.c, tr.f, tr.a)
     except Exception:  # noqa: BLE001
         return None
+
+
+def charger_surface_sol(db, minx: float, miny: float, maxx: float, maxy: float, marge: float = 170.0):
+    """GABARIT-3D-3 (LOT 2) — surface du SOL servie : LiDAR HD 0,5 m (copie locale OU appel WMS court),
+    REPLI sur le fond 1 m si le service ne répond pas et qu'aucune copie n'existe. Rend (_Surface|None,
+    meta) où `meta` DIT ce qui est réellement servi : maille, date d'acquisition lue dans la donnée,
+    source ('lidar_05m'/'copie'/'fond_1m'), repli. Jamais d'écran cassé, jamais un relief inventé."""
+    from . import sol
+    chemin, source = sol.obtenir_fenetre(minx, miny, maxx, maxy, marge)
+    if chemin is not None:
+        try:
+            a, ox, oy, pas = sol.lire_tif(chemin)
+            return _Surface(a, ox, oy, pas), {
+                "maille_m": sol.RES, "acquisition": sol.acquisition(db, minx, miny, maxx, maxy),
+                "acquisition_produit": "dalle LiDAR HD",
+                "source": source, "repli": False, "message": None}
+        except Exception:  # noqa: BLE001 — copie illisible → repli 1 m
+            pass
+    surf = charger_surface(minx, miny, maxx, maxy, marge=marge)
+    fm = _fond_meta()
+    d = fm.get("acquisition_date")
+    return surf, {
+        "maille_m": 1.0, "acquisition": ({"min": str(d), "max": str(d), "n": 1} if d else None),
+        "acquisition_produit": "fond 1 m (RGE ALTI)",
+        "source": "fond_1m", "repli": True,
+        "message": ("Relief fin (0,5 m) indisponible — repli sur le relief 1 m." if surf
+                    else "Relief indisponible pour cette parcelle.")}
 
 
 def sample_points(pts_2975: list[tuple[float, float]]) -> list[Optional[float]]:
@@ -634,9 +789,17 @@ def _build_scene(db, idu: str) -> Scene:
     reculs = _geom_2975(getattr(gr, "retraitsGeoJSON", None))
     excl = _geom_2975(getattr(gr, "exclusionsGeoJSON", None))
 
-    # UN SEUL maillage à 1 m, borné à la parcelle + abords (plus de fenêtre 150 m ni de maillage 2 m)
+    # LOT 2 — le maillage ET les coupes lisent le SOL mesuré (LiDAR HD 0,5 m par parcelle, copie locale
+    # ou WMS ; repli 1 m signalé). Borné à la parcelle + abords. `sol_meta` dit ce qui est servi.
     bounds_1m = (minx - _MARGE_FACES_1M, miny - _MARGE_FACES_1M, maxx + _MARGE_FACES_1M, maxy + _MARGE_FACES_1M)
-    surf = charger_surface(minx, miny, maxx, maxy, marge=_MARGE_FACES_1M + 10)
+    surf, sol_meta = charger_surface_sol(db, minx, miny, maxx, maxy, marge=_MARGE_FACES_1M + 10)
+    acq = sol_meta["acquisition"]        # {min,max,n} ou None — date(s) d'acquisition du produit servi
+    fond_meta = {**fond_meta, "maille_m": sol_meta["maille_m"],
+                 "acquisition_date": (acq["max"] if acq else None),           # date principale (compat) = la plus récente
+                 "acquisition_min": (acq["min"] if acq else None),
+                 "acquisition_n": (acq["n"] if acq else None),                 # >1 → plage (plusieurs acquisitions)
+                 "acquisition_produit": sol_meta.get("acquisition_produit"),   # d'où vient la date
+                 "sol_source": sol_meta["source"], "sol_repli": sol_meta["repli"], "sol_message": sol_meta["message"]}
     sampler = _Sampler(surf, bounds_1m) if surf else None
 
     terrain, coupes, axes_plan, coupes_etat = {}, [], [], []
@@ -689,9 +852,20 @@ def _build_scene(db, idu: str) -> Scene:
             cminx, cminy = min(cminx, px - 4), min(cminy, py - 4)
             cmaxx, cmaxy = max(cmaxx, px + 4), max(cmaxy, py + 4)
         cadre = (cminx, cminy, cmaxx, cmaxy)
-        faces_1m = sampler.m.faces(ox, oy, bounds=cadre)        # faces servies = cadre (coupées net)
+        # LOT 5 — maillage 3D allégé selon la TAILLE du cadre (ouverture bornée). La coupe reste en 0,5 m
+        # (sampler step 1) ; seules les FACES s'allègent. Les cotes 3D viennent du sol 0,5 m, pas d'ici.
+        step_faces = _step_faces(cmaxx - cminx, cmaxy - cminy, surf.pas)
+        # le maillage 3D n'affiche PAS les bosses d'éléments couverts (varangue) : aplaties au sol voisin.
+        # La coupe et les cotes gardent le sol RÉEL (elles lisent `surf`/`sampler`, pas `a_faces`).
+        a_faces = _sol_sans_bosses_couvertes(surf, batis, ox, oy)
+        mesh_faces = TerrainMesh(a_faces, surf.ox, surf.oy, surf.pas, step=step_faces)
+        faces_1m = mesh_faces.faces(ox, oy, bounds=cadre)       # faces servies = cadre (coupées net), allégées
+        maille_3d = round(surf.pas * step_faces, 2)
+        fond_meta = {**fond_meta, "maille_3d_m": maille_3d}
         cadre_local = [round(cminx - ox, 2), round(cminy - oy, 2), round(cmaxx - ox, 2), round(cmaxy - oy, 2)]
+        cote_3d = _cote_3d_sol_degage(sampler, cadastre or ref, batis, ox, oy)   # lues en 0,5 m, sol dégagé
         terrain = {"faces_parcelle": faces_1m, "couverture_parcelle": couverture, "cadre": cadre_local,
+                   "maille_3d_m": maille_3d, "cotes_3d": cote_3d,
                    "origin_2975": [ox, oy]}       # origine locale (EPSG:2975) → reconstruit la bbox absolue (photo IGN)
 
     for b in batis:

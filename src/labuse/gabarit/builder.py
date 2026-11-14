@@ -4,7 +4,7 @@ C'est le SEUL endroit où le réel entre. `compute_gabarit` reste pur : il ne sa
 si l'entrée vient d'ici ou d'une fixture. Correspondances (CDC §11) :
   cadastre → parcel · PLU (zonage.py) → recul (setbackM)/maxFootprint/maxHeight ·
   classification limites (limites.py = adjacence cadastre + BD TOPO) → type de chaque
-  setback (road/side/rear) + géométrie · PPR (cascade_results + spatial_layers) →
+  setback (road/side/rear) + géométrie · PPR (verdict du run servi + spatial_layers) →
   exclusions · analyse → applicableRules · dossier → sources.
 
 GABARIT-2 : la classification des limites passe la mesure (0 faux/70, cf. A0-2-MESURE.md)
@@ -409,10 +409,14 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                                                  detail=_esp_detail, source=_esp_src))
 
     # --- risques : PPR zone rouge (réglementaire, per-parcelle) ---------------
-    ppr = session.execute(text(
-        "SELECT result, severity, detail FROM cascade_results "
-        "WHERE parcel_id = :pid AND layer_name = 'risques' ORDER BY (result = 'HARD_EXCLUDE') DESC LIMIT 1"
-    ), {"pid": pid}).mappings().first()
+    # GABARIT-3D-3 (LOT 3) — le verdict PPR est lu dans le RUN SERVI (`served_cascade_lines` →
+    # `dryrun_cascade_results` du run épinglé, dédupliqué + arbitré), comme le reste de l'app, et NON
+    # plus dans la table figée `cascade_results` (rail legacy mort). La part ROUGE exclue, elle, reste
+    # déterminée EN DIRECT par la géométrie/classification unique `labuse_ppr_couleur` (ci-dessous).
+    from ..api.served_cascade import served_cascade_lines
+    _risques = [l for l in served_cascade_lines(session, idu) if l.get("layer_name") == "risques"]
+    _risques.sort(key=lambda l: l.get("result") == "HARD_EXCLUDE", reverse=True)
+    ppr = _risques[0] if _risques else None
     ppr_src = RegulatorySource(document="PPR — zonage réglementaire", provider=PPR_PROVIDER)
     exclusions: list[Exclusion] = []
     # PPR-UNIQUE-1 — la part ROUGE exclue est déterminée EN DIRECT par la classification UNIQUE
@@ -434,8 +438,8 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             ppr_rouge = True
             exclusions.append(Exclusion(id="ppr-rouge", ruleId="PPR", type="ppr_rouge",
                                         label="PPR zone rouge exclue", geometry=geo, source=ppr_src))
-    racc["ppr"] = {"result": ppr["result"] if ppr else None,
-                   "detail": ppr["detail"] if ppr else None, "rouge": ppr_rouge}
+    racc["ppr"] = {"result": ppr.get("result") if ppr else None,
+                   "detail": ppr.get("detail") if ppr else None, "rouge": ppr_rouge}
     sources.append(ppr_src)
     applicable.append(ApplicableRule(
         id="PPR", label="PPR — analyse", category="exclusion",

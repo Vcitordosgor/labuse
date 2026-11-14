@@ -28,6 +28,15 @@ _THEMES = {
 }
 _FONT = 'font-family="Inter, Helvetica, Arial, sans-serif"'
 _PONT_RECONSTITUE_M = 3.0
+# GABARIT-3D-3 (LOT 1) — le losange « rupture à vérifier » ne s'affiche QUE si le terrain varie d'au moins
+# ce seuil sur le segment du bâti (d0 → d1+3 m). En dessous : rien (ni losange, ni libellé, ni ligne de
+# légende). Une pente douce près d'un bâti n'est pas une rupture à signaler.
+_RUPTURE_SEUIL_M = 1.5
+# GABARIT-3D-3 (correction LOT 2) — ÉLÉMENT COUVERT pris pour du sol par le LiDAR (varangue/auvent/abri) :
+# SOUS l'emprise bâtie, là où le sol dépasse de ≥ ce seuil le sol des façades (appuis extérieurs interpolés),
+# le profil n'est PAS dessiné comme mesuré — trait distinct « sol non mesuré sous un élément couvert », sans
+# cote. Rien d'inventé ailleurs : le reste du sol LiDAR 0,5 m est dessiné tel quel.
+_COUVERT_SEUIL_M = 1.5
 
 
 def _esc(s: Any) -> str:
@@ -178,15 +187,70 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
             out.append(f'<text x="{off_x-6:.1f}" y="{Y(z)+3:.1f}" text-anchor="end" font-size="9" fill="{T["txt_dim"]}">{_fmt(z)}</text>')
         z += zstep
 
-    # TERRAIN : le RELEVÉ reste visible sous le bâti (C11) ; interruption SEULEMENT si les appuis
-    # manquent (portion sans support). Le liseré vert au bas est RETIRÉ (C10).
+    # ÉLÉMENT COUVERT (varangue/auvent pris pour du sol SOUS le bâti) : une BOSSE locale ≥ _COUVERT_SEUIL_M
+    # au-dessus des DEUX sols voisins. On ne la DESSINE PAS (ni dans le tracé principal, ni dans le profil sous
+    # le bâti) : un trait pointillé DROIT relie les deux sols voisins, et un seul libellé l'explique. Pas de
+    # losange de rupture dessus. Détecté AVANT le tracé pour pouvoir retirer la bosse du relevé principal.
+    couvert_present = False
+    couvert_anchor = None
+    batis_couverts = {}            # index bâti → (d_a, d_b) couvert : pas de losange de rupture sur cette portion
+    couvert_spans = []             # (d, d) à RETIRER du tracé principal (de sol voisin à sol voisin)
+    couvert_traits = []            # (pL, pR) trait DROIT reliant les deux sols voisins
+    sous_bati_runs = []            # runs de sol MESURÉ sous le bâti → profil sous le bâti (pointillé orange)
+    _GND = 0.5                     # point à moins de 0,5 m au-dessus du sol voisin = « au sol »
+    for bi, b in enumerate(batis):
+        d0, d1 = b["d0"], b["d1"]
+        pb = [(p["d"], p["z"]) for p in profil if d0 - 1e-6 <= p["d"] <= d1 + 1e-6 and p["z"] is not None]
+        if len(pb) < 2:
+            continue
+        av = [p["z"] for p in profil if p["z"] is not None and d0 - 10.0 <= p["d"] < d0]
+        ap = [p["z"] for p in profil if p["z"] is not None and d1 < p["d"] <= d1 + 10.0]
+        refs = ([min(av)] if av else []) + ([min(ap)] if ap else [])
+        ref = max(refs) if refs else min(z for _, z in pb)
+        # fenêtre élargie (± 3 m) : une varangue dépasse souvent l'emprise (rampe + dalle + bord de dalle). On
+        # découpe les RÉGIONS qui QUITTENT le sol voisin (z > ref + 0,5) ; une région dont le PIC dépasse de
+        # ≥ 1,5 m est un élément couvert → trait DROIT du dernier point AU SOL avant au premier point AU SOL après.
+        win = [(p["d"], p["z"]) for p in profil if d0 - 3.0 <= p["d"] <= d1 + 3.0 and p["z"] is not None]
+        above = [z > ref + _GND for _, z in win]
+        couvert_sous = []
+        i = 0
+        while i < len(win):
+            if not above[i]:
+                i += 1; continue
+            j = i
+            while j + 1 < len(win) and above[j + 1]:
+                j += 1
+            region = win[i:j + 1]
+            if max(z for _, z in region) - ref >= _COUVERT_SEUIL_M:   # élément couvert (varangue)
+                d_a, d_b = region[0][0], region[-1][0]
+                before = [p for p in profil if p["z"] is not None and p["d"] < d_a - 1e-6]
+                after = [p for p in profil if p["z"] is not None and p["d"] > d_b + 1e-6]
+                pL = before[-1] if before else {"d": d_a, "z": ref}
+                pR = after[0] if after else {"d": d_b, "z": ref}
+                couvert_present = True
+                couvert_spans.append((pL["d"], pR["d"]))
+                couvert_sous.append((pL["d"], pR["d"]))
+                couvert_traits.append((pL, pR))
+                prev = batis_couverts.get(bi)
+                batis_couverts[bi] = (min(prev[0], d_a), max(prev[1], d_b)) if prev else (d_a, d_b)
+                if couvert_anchor is None:
+                    couvert_anchor = ((X(pL["d"]) + X(pR["d"])) / 2, (Y(pL["z"]) + Y(pR["z"])) / 2)
+            i = j + 1
+        # sol MESURÉ sous le bâti = emprise hors des portions couvertes → pointillé orange
+        for s0, s1 in _soustraire((pb[0][0], pb[-1][0]), couvert_sous):
+            run = [(d, z) for d, z in pb if s0 - 1e-6 <= d <= s1 + 1e-6]
+            if len(run) >= 2:
+                sous_bati_runs.append(run)
+
+    # TERRAIN : le RELEVÉ reste visible sous le bâti (C11) ; interruption si les appuis manquent OU si c'est un
+    # élément couvert (la bosse n'est pas tracée). Le liseré vert au bas est RETIRÉ (C10).
     runs = _runs(profil)
-    # portions sans appuis (sous un bâti dont la comparaison parallèle échoue) → interrompues
     sans_appui = [(b["d0"], b["d1"]) for b in batis if b.get("appuis") is False]
+    coupe_hors = sans_appui + couvert_spans
     for run in runs:
         if len(run) < 2:
             continue
-        for s0, s1 in _soustraire((run[0]["d"], run[-1]["d"]), sans_appui):
+        for s0, s1 in _soustraire((run[0]["d"], run[-1]["d"]), coupe_hors):
             pts = [(p["d"], p["z"]) for p in run if s0 - 1e-6 <= p["d"] <= s1 + 1e-6]
             if len(pts) < 2:
                 continue
@@ -196,31 +260,40 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
             out.append(f'<polyline points="{path}" fill="none" stroke="{T["terrain"]}" stroke-width="1.8"/>')
     for a, b in zip(runs, runs[1:]):          # profil reconstruit (tirets) sur lacune courte avec appuis
         gap = (a[-1]["d"], b[0]["d"])
-        if gap[1] - gap[0] <= _PONT_RECONSTITUE_M:
+        if gap[1] - gap[0] <= _PONT_RECONSTITUE_M and not any(s0 <= gap[0] and gap[1] <= s1 for s0, s1 in couvert_spans):
             out.append(f'<line x1="{X(gap[0]):.1f}" y1="{Y(a[-1]["z"]):.1f}" x2="{X(gap[1]):.1f}" y2="{Y(b[0]["z"]):.1f}" '
                        f'stroke="{T["terrain"]}" stroke-width="1.4" stroke-dasharray="4 3"/>')
-
-    # 3 bis — le profil SOUS l'emprise bâtie est distingué (trait pointillé « sous_bati ») ; expliqué en légende
-    for b in batis:
-        seg = [(p["d"], p["z"]) for p in profil if b["d0"] - 1e-6 <= p["d"] <= b["d1"] + 1e-6 and p["z"] is not None]
-        if len(seg) >= 2:
-            pts = " ".join(f"{X(d):.1f},{Y(zz):.1f}" for d, zz in seg)
-            out.append(f'<polyline points="{pts}" fill="none" stroke="{T["sous_bati"]}" stroke-width="2.2" stroke-dasharray="3 2.5"/>')
+    # élément couvert : trait DROIT (pointillé) entre les deux sols voisins, à la place de la bosse
+    for pL, pR in couvert_traits:
+        out.append(f'<line x1="{X(pL["d"]):.1f}" y1="{Y(pL["z"]):.1f}" x2="{X(pR["d"]):.1f}" y2="{Y(pR["z"]):.1f}" '
+                   f'stroke="{T["lacune"]}" stroke-width="1.6" stroke-dasharray="1 3"/>')
+    # profil SOUS le bâti là où c'est du sol MESURÉ (interpolé par l'IGN) : pointillé orange
+    for run in sous_bati_runs:
+        pts = " ".join(f"{X(d):.1f},{Y(zz):.1f}" for d, zz in run)
+        out.append(f'<polyline points="{pts}" fill="none" stroke="{T["sous_bati"]}" stroke-width="2.2" stroke-dasharray="3 2.5"/>')
 
     # BÂTI : emprise au sol + RUPTURE du terrain à vérifier (repère distinct des cotes) ; aucun toit
     faitages = []
     rupture = False
     prot = []   # A2 — libellés à FOND OPAQUE émis EN DERNIER (aucun trait au travers) : (svg,)
-    for b in batis:
+    for bi, b in enumerate(batis):
         x0, x1 = X(b["d0"]), X(b["d1"])
         out.append(f'<line x1="{x0:.1f}" y1="{y_base:.1f}" x2="{x1:.1f}" y2="{y_base:.1f}" stroke="{T["bati"]}" stroke-width="3"/>')
         out.append(f'<line x1="{x0:.1f}" y1="{y_base-4:.1f}" x2="{x0:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
         out.append(f'<line x1="{x1:.1f}" y1="{y_base-4:.1f}" x2="{x1:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
         # « emprise bâtie » : plus d'étiquette SUR la courbe → la barre grise est expliquée dans la LÉGENDE.
-        # repère de rupture (losange) sur la PORTION CONCERNÉE = plus forte pente autour du bâti (pas le 1ᵉʳ pied)
-        drb = _rupture_d(profil, b["d0"], min(b["d1"] + 3.0, L))
+        # repère de rupture (losange) sur la PORTION CONCERNÉE = plus forte pente autour du bâti (pas le 1ᵉʳ pied).
+        # LOT 1 — on ne le pose QUE si le terrain varie d'au moins _RUPTURE_SEUIL_M sur le segment du bâti.
+        # Correction : si la rupture tombe sur un ÉLÉMENT COUVERT, pas de losange — elle est déjà expliquée
+        # par « sol non mesuré sous un élément couvert » (un seul libellé, pas de doublon qui se chevauche).
+        d1c = min(b["d1"] + 3.0, L)
+        seg_zs = [p["z"] for p in profil if b["d0"] - 1e-6 <= p["d"] <= d1c + 1e-6 and p["z"] is not None]
+        ecart_m = (max(seg_zs) - min(seg_zs)) if seg_zs else 0.0
+        drb = _rupture_d(profil, b["d0"], d1c)
         zr = z_terrain(drb) if drb is not None else None
-        if zr is not None:
+        cs = batis_couverts.get(bi)
+        sur_couvert = cs is not None and drb is not None and cs[0] - 1.5 <= drb <= cs[1] + 1.5
+        if zr is not None and ecart_m >= _RUPTURE_SEUIL_M and not sur_couvert:
             out.append(f'<path d="M{X(drb):.1f},{Y(zr)-4:.1f} l4,4 l-4,4 l-4,-4 z" fill="none" stroke="{T["lacune"]}" stroke-width="1.4"/>')
             out.append(f'<circle cx="{X(drb):.1f}" cy="{Y(zr):.1f}" r="1.6" fill="{T["lacune"]}"/>')
             rupture = True
@@ -239,6 +312,7 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
         out.append(f'<line x1="{X(dl):.1f}" y1="{PAD_T}" x2="{X(dl):.1f}" y2="{y_base:.1f}" stroke="{T["limite"]}" stroke-width="0.8" stroke-dasharray="5 3"/>')
 
     # pente max sur 5 m : DEUX bornes dessinées (B6)
+    pente_obstacle = []            # BOÎTES (x0,x1,y0,y1) du libellé pente → les cotes les ÉVITENT en 2D (anti-chevauchement)
     pm = (coupe.get("indicateurs") or {}).get("pente_max_5m") or {}
     if pm.get("disponible"):
         for dd in (pm["d0"], pm["d1"]):
@@ -254,12 +328,24 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
             halfp = max(len(txt) * 9 * 0.56 / 2 + 3, 8.0)
             ypm = max(sky_top(xcp, halfp) - 6, PAD_T + 9)
             prot.append(_label_box(xcp, ypm, txt, T["lacune"], T["plot"]))
+            pente_obstacle.append((xcp - halfp, xcp + halfp, ypm - 9, ypm + 4))
 
-    # cotes : APERÇU = voie/haut/bas (2–3) ; DÉTAIL = toutes. Posées DANS LE CIEL, fond opaque (pt 3/4).
+    # élément couvert détecté sous le bâti : UN SEUL libellé dans le ciel + rappel au trait droit (aucune cote).
+    if couvert_present and couvert_anchor is not None:
+        xA, yA = couvert_anchor
+        a_end = xA > off_x + plot_w / 2
+        out.append(f'<line x1="{xA:.1f}" y1="{yA-4:.1f}" x2="{xA:.1f}" y2="{PAD_T+9:.1f}" stroke="{T["lacune"]}" stroke-width="0.5" stroke-dasharray="1 3"/>')
+        prot.append(_label_box(xA + (-6 if a_end else 6), PAD_T + 4, "sol non mesuré sous un élément couvert",
+                               T["lacune"], T["bg"], anchor=("end" if a_end else "start")))
+
+    # cotes : APERÇU = voie + CHAQUE entrée de limite + haut/bas ; DÉTAIL = toutes. Dans le ciel, fond opaque.
+    # AUCUNE cote sur un élément couvert (le « haut » peut tomber sur la dalle d'une varangue → on l'écarte).
     pts = coupe.get("cotes_points", {}).get("points", [])
     if not detail:
-        pts = [p for p in pts if p.get("role") in ("voie", "haut", "bas")]
-    out.append(_cotes(pts, X, Y, T, PAD_T, prot, sky_top))
+        pts = [p for p in pts if p.get("role") in ("voie", "limite", "haut", "bas")]
+    pts = [p for p in pts if not any(s0 - 0.5 <= p["d"] <= s1 + 0.5 for s0, s1 in couvert_spans)]
+    pts = _dedup_cotes(pts)                                 # 2 cotes à < 3 m ET < 0,2 m → une seule (la limite)
+    out.append(_cotes(pts, X, Y, T, PAD_T, prot, sky_top, pente_obstacle))
 
     # VOIE nommée LÀ OÙ la coupe la traverse (C10, coupe B)
     voie = coupe.get("voie") or {}
@@ -287,7 +373,7 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
     else:
         etat = "non traversée" if coupe.get("zone_presente") else "indisponible"
         out.append(f'<text x="8" y="{yb1+3:.1f}" font-size="9" fill="{T["txt_dim"]}">zone d\'implantation — {etat}</text>')
-    out.append(_legende_coupe(yb1 + 19, off_x, T, rupture, bool(batis)))
+    out.append(_legende_coupe(yb1 + 19, off_x, T, rupture, bool(batis), couvert_present))
     # indicateurs (deux pentes, pente max 5 m, accès, bâti) : DÉTAIL seulement
     if detail:
         out.append(_indicateurs(coupe, faitages, rupture, y_base + AX_H + BANDES_H, PAD_L, width - PAD_R, T))
@@ -313,23 +399,49 @@ def _label_box(cx, y, text, color, bg, anchor="middle", fs=9):
             f'<text x="{cx:.1f}" y="{y:.1f}" text-anchor="{anchor}" font-size="{fs}" fill="{color}">{_esc(text)}</text>')
 
 
-def _cotes(points, X, Y, T, ytop, prot, sky_top):
+def _dedup_cotes(points):
+    """Deux cotes à moins de 3 m l'une de l'autre SUR L'AXE et différant de moins de 0,2 m en altitude font
+    double emploi → on n'en garde QU'UNE, celle de la limite (sinon la première). Évite « 401,8 m » / « 401,8 m »
+    et « 406,3 / 406,4 m » superposés."""
+    rang = {"limite": 0, "voie": 1, "facade": 2, "haut": 3, "bas": 3}
+    kept = []
+    for p in sorted(points, key=lambda q: q["d"]):
+        jumeau = next((i for i, q in enumerate(kept)
+                       if abs(p["d"] - q["d"]) < 3.0 and abs((p["z"] or 0) - (q["z"] or 0)) < 0.2), None)
+        if jumeau is None:
+            kept.append(p)
+        elif rang.get(p.get("role"), 9) < rang.get(kept[jumeau].get("role"), 9):
+            kept[jumeau] = p                               # on garde la mieux classée (limite d'abord)
+    return kept
+
+
+def _cotes(points, X, Y, T, ytop, prot, sky_top, obstacles=()):
     """Cotes (décimètre, virgule) posées AU-DESSUS du terrain LOCAL (jamais sur la courbe), à FOND OPAQUE
     (aucun trait vertical au travers) + trait de rappel jusqu'au bord de l'étiquette (pt 3/4). Les étiquettes
-    partent dans `prot` → émises EN DERNIER ; seuls les points et traits de rappel reviennent pour le corps."""
+    partent dans `prot` → émises EN DERNIER ; seuls les points et traits de rappel reviennent pour le corps.
+    `obstacles` = BOÎTES (x0,x1,y0,y1) déjà posées (ex. « pente max ») : une cote qui chevaucherait une boîte
+    (en 2D, pas seulement en x) monte d'une rangée → plus de chevauchement « pente max » / cote (finition 4a)."""
     items = sorted((p for p in points if p["z"] is not None), key=lambda p: p["d"])
-    rows = [[], [], []]       # rangées empilées vers le haut (occupation x)
+    rows = [[], [], [], []]   # rangées empilées vers le haut (occupation x) ; une 4e rangée de secours
     frag = []
+
+    def chevauche(x0, x1, y0, y1):
+        return any(not (x1 < bx0 or x0 > bx1 or y1 < by0 or y0 > by1)
+                   for bx0, bx1, by0, by1 in obstacles)
+
     for p in items:
         x, y = X(p["d"]), Y(p["z"])
         half = len(f'{_fmt(p["z"],1)} m') * 9 * 0.56 / 2 + 3
-        placed = None
-        for r in range(3):
-            if all(abs(x - xx) >= 2 * half + 4 for xx in rows[r]):
-                rows[r].append(x); placed = r; break
+        placed, yy = None, None
+        for r in range(len(rows)):
+            if not all(abs(x - xx) >= 2 * half + 4 for xx in rows[r]):
+                continue
+            cand = max(sky_top(x, half) - 6 - r * 15, ytop + 9)   # empilé vers le haut (pas de 15 > hauteur de boîte 13 → 2 px d'écart)
+            if chevauche(x - half - 3, x + half + 3, cand - 9, cand + 4):   # boîte de la cote vs boîtes obstacles
+                continue
+            rows[r].append(x); placed, yy = r, cand; break
         if placed is None:
             continue
-        yy = max(sky_top(x, half) - 6 - placed * 13, ytop + 9)   # au-dessus du terrain local, empilé vers le haut
         frag.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="1.8" fill="{T["txt"]}"/>')
         frag.append(f'<line x1="{x:.1f}" y1="{y-2:.1f}" x2="{x:.1f}" y2="{yy+4:.1f}" stroke="{T["txt_dim"]}" stroke-width="0.5"/>')  # rappel jusqu'au bord de l'étiquette
         prot.append(_label_box(x, yy, f'{_fmt(p["z"],1)} m', T["txt"], T["plot"]))
@@ -363,8 +475,9 @@ def _bande(spans, y, X, label, T, col=None):
     return "".join(frag)
 
 
-def _legende_coupe(y, x, T, rupture, has_bati):
-    """Légende de la COUPE (aperçu et détail) : terrain, profil sous le bâti (trait différent), rupture."""
+def _legende_coupe(y, x, T, rupture, has_bati, couvert=False):
+    """Légende de la COUPE (aperçu et détail) : terrain, profil sous le bâti (trait différent), rupture,
+    sol non mesuré sous un élément couvert."""
     frag, cx = [], x
     def ent(label, draw, w):
         nonlocal cx
@@ -377,9 +490,30 @@ def _legende_coupe(y, x, T, rupture, has_bati):
         # par l'IGN (MNT bare-earth sans retour sol).
         ent("emprise bâtie", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["bati"]}" stroke-width="3"/>', 16)
         ent("profil sous le bâti (interpolé)", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["sous_bati"]}" stroke-width="2.2" stroke-dasharray="3 2.5"/>', 16)
+    if couvert:
+        ent("sol non mesuré sous un élément couvert", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["lacune"]}" stroke-width="1.6" stroke-dasharray="1 3"/>', 16)
     if rupture:
         ent("rupture du terrain à vérifier", lambda c: f'<path d="M{c+8:.1f},{y-4:.1f} l4,4 l-4,4 l-4,-4 z" fill="none" stroke="{T["lacune"]}" stroke-width="1.4"/>', 16)
     return "".join(frag)
+
+
+def palier_max_m(profil, bati_spans=()) -> float:
+    """GABARIT-3D-3 (contrôle anti-escalier) — longueur du plus long PALIER PLAT (points consécutifs à
+    l'altitude de départ, à ±1 cm) HORS emprise bâtie. Un relief naturel fin (LiDAR HD 0,5 m) ne fait pas
+    de longs paliers plats ; une maille grossière RÉÉCHANTILLONNÉE (ex. RGE ALTI 5 m servi en 0,5 m) en
+    fait. Un palier ≥ ~2 m signale une donnée « en escalier ». (Sur une pente douce, le 3ᵉ point s'écarte
+    de >1 cm du départ → le palier reste court : pas de faux positif.)"""
+    seg = [p for p in profil if p["z"] is not None
+           and not any(a - 1e-6 <= p["d"] <= b + 1e-6 for a, b in bati_spans)]
+    best = 0.0
+    i = 0
+    while i < len(seg):
+        z0, j = seg[i]["z"], i
+        while j + 1 < len(seg) and abs(seg[j + 1]["z"] - z0) <= 0.01:
+            j += 1
+        best = max(best, seg[j]["d"] - seg[i]["d"])
+        i = j + 1
+    return best
 
 
 def _rupture_d(profil, d0, d1):
@@ -459,15 +593,38 @@ def plan_cle_svg(scene, *, theme="sombre", width=380, height=320):
             out.append(f'<path d="{path(sub)}" fill="{T["bati"]}" fill-opacity="0.45" stroke="{T["bati"]}" stroke-width="0.6" fill-rule="evenodd"/>')
     for poly in cad:
         out.append(f'<path d="{path(poly)}" fill="none" stroke="{T["limite"]}" stroke-width="1.4" stroke-dasharray="4 2" fill-rule="evenodd"/>')
+    # lettres d'axe (A A′ B B′) : chacune AU BOUT de son axe, juste au-delà de l'extrémité (hors du dessin de
+    # la parcelle). Si deux lettres (ou la pastille voie) se gênent, on décale LE LONG de l'axe (sortant) — la
+    # lettre reste près de son extrémité, jamais rejetée au loin (finition : « B » collé au bout de son axe).
+    lettres_boxes = []
+    for p in voie_pts:                                 # la pastille « voie » est un obstacle pour les lettres d'axe
+        vx, vy = X(p[0]) + 5, Y(p[1]) + 3
+        lettres_boxes.append((vx - 2, vx + len("voie") * 9 * 0.56, vy - 9, vy + 3))
+    _nx, _ny = width - 22, 30                          # la FLÈCHE DU NORD + « N » sont aussi des obstacles (finition)
+    lettres_boxes.append((_nx - 9, _nx + 9, _ny - 20, _ny + 18))
+
+    def _pose_lettre(px, py, ux, uy, txt):
+        fs, g = 10, 2.0; hw = max(len(txt) * fs * 0.56, 4) / 2 + 2
+        cx, cy = px + ux * 9, py + uy * 9              # juste au-delà de l'extrémité, le long de l'axe (sortant)
+        for _ in range(8):
+            cx = min(max(cx, hw + 1), width - hw - 1); cy = min(max(cy, fs + 1), height - 2)
+            box = (cx - hw - g, cx + hw + g, cy - fs - g, cy + 3 + g)
+            if not any(not (box[1] < b[0] or box[0] > b[1] or box[3] < b[2] or box[2] > b[3]) for b in lettres_boxes):
+                break
+            cx += ux * (fs + 2); cy += uy * (fs + 2)   # déjà pris : on glisse LE LONG de l'axe, pas vers le haut
+        lettres_boxes.append((cx - hw, cx + hw, cy - fs, cy + 3))
+        return f'<text x="{cx:.1f}" y="{cy:.1f}" text-anchor="middle" font-size="{fs}" font-weight="600" fill="{T["axe"]}">{txt}</text>'
     for label, a in axes.items():
         x0, y0, x1, y1 = X(a["p0"][0]), Y(a["p0"][1]), X(a["p1"][0]), Y(a["p1"][1])
         out.append(f'<line x1="{x0:.1f}" y1="{y0:.1f}" x2="{x1:.1f}" y2="{y1:.1f}" stroke="{T["axe"]}" stroke-width="2"/>')
         out.append(_fleche(x0 + (x1 - x0) * 0.72, y0 + (y1 - y0) * 0.72, x1, y1, T["axe"]))
-        out.append(f'<text x="{x0:.1f}" y="{y0-5:.1f}" font-size="10" font-weight="600" fill="{T["axe"]}">{label}</text>')
-        out.append(f'<text x="{x1:.1f}" y="{y1-5:.1f}" font-size="10" font-weight="600" fill="{T["axe"]}">{label}′</text>')
+        mx, my = (x0 + x1) / 2, (y0 + y1) / 2
+        for px, py, txt in ((x0, y0, label), (x1, y1, f"{label}′")):
+            dx, dy = px - mx, py - my; n = (dx * dx + dy * dy) ** 0.5 or 1.0
+            out.append(_pose_lettre(px, py, dx / n, dy / n, txt))
     for p in voie_pts:                                 # voie à son intersection (B8)
         out.append(f'<circle cx="{X(p[0]):.1f}" cy="{Y(p[1]):.1f}" r="3.5" fill="none" stroke="{T["axe"]}" stroke-width="1.5"/>')
-        out.append(f'<text x="{X(p[0])+5:.1f}" y="{Y(p[1])+3:.1f}" font-size="8" fill="{T["axe"]}">voie</text>')
+        out.append(f'<text x="{X(p[0])+5:.1f}" y="{Y(p[1])+3:.1f}" font-size="9" fill="{T["axe"]}">voie</text>')
     nx, ny = width - 22, 30
     out.append(_fleche(nx, ny + 16, nx, ny - 8, T["txt"]))
     out.append(f'<text x="{nx:.1f}" y="{ny-11:.1f}" text-anchor="middle" font-size="9" font-weight="600" fill="{T["txt"]}">N</text>')

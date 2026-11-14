@@ -1019,7 +1019,8 @@ export interface GabScene {
   origine_2975: number[]
   contour_cadastral: GabPoly[]; contour_gabarit: GabPoly[]; zone_implantation: GabPoly[]
   reculs: GabPoly[]; exclusions: GabPoly[]; batiments: GabSceneBati[]
-  terrain: { faces_parcelle?: GabMesh; faces_voisinage?: GabMesh; couverture_parcelle?: number; cadre?: number[] }
+  terrain: { faces_parcelle?: GabMesh; faces_voisinage?: GabMesh; couverture_parcelle?: number; cadre?: number[]
+    maille_3d_m?: number; cotes_3d?: { haut: number[]; bas: number[] } | null }
   coupes: Array<Record<string, unknown>>
   axes_plan: Record<string, { label: string; p0: number[]; p1: number[]; sens: number[] }>
   meta: Record<string, unknown>; message?: string | null
