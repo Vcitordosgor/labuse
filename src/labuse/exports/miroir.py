@@ -444,16 +444,19 @@ def _r_statut_plu(v):
         s = f"PLU approuvé le {_fr_dates(appro)}"
         if evol and evol != appro:
             s += f" — dernière évolution engagée le {_fr_dates(evol)}"
-        if gpu:
-            # EXPORTS-FIX-3 LOT 3 (#1) — ne pas affirmer « (document opposable) » tout court : LABUSE
-            # sert CETTE version à SA date ; une évolution publiée depuis au GPU (ex. La Possession
-            # remplacée le 29/10) n'est pas confrontée ici. On dit la version servie, pas un absolu.
-            s += (f" — version servie par LABUSE, publiée au Géoportail de l'urbanisme le "
-                  f"{_fr_dates(gpu)} (une évolution publiée depuis au GPU n'est pas confrontée ici)")
+        if gpu and str(gpu) != str(appro):
+            # EXPORTS-FIX-3 LOT 3 (#2, relecture) — `horizon` = date_mairie = DATE D'APPROBATION de la
+            # version servie (app._q_v2_fiche : « L'HORIZON du zonage = date d'approbation MAIRIE »),
+            # PAS une date de publication. Libellé exact : « dernière approbation le … ». Une évolution
+            # publiée depuis au GPU n'est pas confrontée ici.
+            s += (f" — version servie par LABUSE, dernière approbation le {_fr_dates(gpu)} "
+                  f"(une évolution publiée depuis au GPU n'est pas confrontée ici)")
+        else:
+            s += " (version servie par LABUSE ; une évolution publiée depuis au GPU n'est pas confrontée ici)"
         return esc(s + ".")
-    if gpu:   # à défaut : dire que la date GPU est une publication, pas une approbation
-        return esc(f"PLU — version servie par LABUSE, publiée au Géoportail de l'urbanisme le "
-                   f"{_fr_dates(gpu)} (une évolution publiée depuis au GPU n'est pas confrontée ici).")
+    if gpu:   # à défaut (pas d'approbation Sudocuh) : la date GPU est une APPROBATION (date_mairie).
+        return esc(f"PLU — version servie par LABUSE, approuvée le {_fr_dates(gpu)} "
+                   f"(une évolution publiée depuis au GPU n'est pas confrontée ici).")
     # EXPORTS-FIX-1 A7 — repli : dates ISO servies → JJ/MM/AAAA.
     return esc(_fr_dates(v.get("libelle") or ""))
 

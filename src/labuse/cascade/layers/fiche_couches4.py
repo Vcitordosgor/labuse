@@ -72,7 +72,10 @@ class VefaNeufLayer(Layer):
         # « ~4878 ») et « aplat commune » (terme de carto) remplacé par « à l'échelle de la commune ».
         prix_fr = f"{round(prix):,}".replace(",", " ") if prix else None
         prix_txt = f" — prix médian ~{prix_fr} €/m²" if prix_fr else ""
-        n_txt = f" ({n} ventes VEFA / 36 mois)" if n is not None else ""
+        # EXPORTS-FIX-3 LOT 3 (#3, relecture) — la médiane VEFA du neuf est calculée sur une fenêtre de
+        # 5 ANS (DGFiP, cf. ingestion/dvf_marche + vefa_neuf), comme le Dossier (« commune, 5 ans ») :
+        # l'étiquette « 36 mois » était fausse (mêmes 158 ventes, deux périodes). Une seule période.
+        n_txt = f" ({n} ventes VEFA / 5 ans)" if n is not None else ""
         return _trace(soft_flag(
             self.name,
             f"Marché du logement neuf (VEFA) sur la commune : {tr}{n_txt}{prix_txt}. "

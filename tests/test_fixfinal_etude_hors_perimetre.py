@@ -36,6 +36,39 @@ def _payload_refus() -> dict:
     }
 
 
+class _FakeResult:
+    def __init__(self, scalar=None, first=None, allrows=None):
+        self._s, self._f, self._a = scalar, first, allrows or []
+
+    def scalar(self):
+        return self._s
+
+    def first(self):
+        return self._f
+
+    def mappings(self):
+        return self
+
+    def all(self):
+        return self._a
+
+
+class _FakeDb:
+    """DB minimale : commune inconnue → DPU « non ingéré », aucune zone TRI/endiguement. Permet de
+    traverser les requêtes de `_attach_contraintes_signalees` sans vraie base (le piège testé reste
+    `terrain=None`, pas la présence d'une base)."""
+
+    def execute(self, q, params=None):
+        s = str(q)
+        if "SELECT commune" in s:
+            return _FakeResult(scalar=None)      # commune inconnue → dpu_ing False → « non ingéré »
+        if "tri_zone" in s:
+            return _FakeResult(allrows=[])
+        if "endiguement" in s:
+            return _FakeResult(first=None)
+        return _FakeResult()
+
+
 def _mock_aleas(monkeypatch):
     """Au moins un aléa + un DPU ⇒ `items` non vide ⇒ déclencheur exact du 500 d'origine."""
     monkeypatch.setattr(app_mod, "_aleas_block", lambda db, idu: {
@@ -49,12 +82,13 @@ def test_contraintes_signalees_ne_plante_pas_sur_terrain_none(monkeypatch):
     payload = _payload_refus()
     idus = payload["entrees"]["idus"]
     # Avant le fix : TypeError 'NoneType' object does not support item assignment → 500.
-    modules._attach_contraintes_signalees(db=None, payload=payload, idus=idus)
+    modules._attach_contraintes_signalees(db=_FakeDb(), payload=payload, idus=idus)
     t = payload["terrain"]
     assert isinstance(t, dict)                      # terrain get-or-créé, jamais None
     contr = t.get("contraintes_signalees") or []
     assert any("inondation" in c for c in contr)    # les contraintes sont bien portées
-    assert any("Droit de préemption" in c for c in contr)
+    # EXPORTS-FIX-3 LOT 3 (#4, relecture) — DPU dit « non ingéré pour cette commune », comme le Dossier.
+    assert any("Droit de préemption" in c and "non ingéré" in c for c in contr)
     # le refus reste un refus : aucune étude n'est née de l'enrichissement
     assert payload["hors_perimetre"] is True and payload["verdict"] == "Étude hors périmètre"
 

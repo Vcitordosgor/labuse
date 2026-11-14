@@ -148,6 +148,11 @@ def _contraintes_txt(r):
     de la colonne — c'était le bug). On ne touche PAS au message partagé de la cascade ; on l'ajuste
     seulement à l'affichage, et seulement dans ce cas (il reste entier sur une parcelle constructible)."""
     cs = list(r.get("contraintes") or [])
+    # EXPORTS-FIX-3 LOT 3 (#3, relecture) — UNE SEULE période pour le marché du neuf (VEFA), celle du
+    # Dossier (« 5 ans »). Le message de la cascade SERVIE est figé à « 36 mois » (texte du dernier run) ;
+    # on l'ajuste À L'AFFICHAGE sur la seule ligne VEFA (le run n'est pas recalculé), pour ne pas servir
+    # deux fenêtres pour les mêmes 158 ventes. Ciblé : on ne touche aucune autre contrainte.
+    cs = [(c.replace("36 mois", "5 ans") if c and "logement neuf (vefa)" in c.lower() else c) for c in cs]
     if _est_non_constructible(r):
         out = []
         for c in cs:

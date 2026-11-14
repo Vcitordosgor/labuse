@@ -2365,7 +2365,8 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
             niveau = {"rouge": "Fort", "bleue": "Modéré"}.get(ppr_zone or "", "Signalé")
         part = it.get("part_pct") if it.get("part_pct") is not None else ppr_part
         zone_part = None
-        if ppr_zone and not _zone_part_affichee:
+        _premier_ppr = bool(ppr_zone) and not _zone_part_affichee
+        if _premier_ppr:
             # EXPORTS-FIX-3 LOT 3b — la part d'une « Zone rouge/bleue » est celle du PPR (fiche :
             # 31 % sur BI0351), JAMAIS celle d'un aléa Géorisques de niveau faible (69 %) qui se
             # superpose. LOT 3 (#3) : la zone PPR couvre 31 % de la PARCELLE (une seule fois), pas
@@ -2375,8 +2376,15 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
             _zone_part_affichee = True
         elif ppr_zone is None and isinstance(part, (int, float)):
             zone_part = f"{int(part)} %"
-        rows.append({"alea": lab, "niveau": niveau, "zone_part": zone_part,
-                     "implique": _implique(ppr_zone, ppr_doc)})
+        # EXPORTS-FIX-3 LOT 3 (relecture, #1) — le COMMENTAIRE de zone (« Zone rouge du PPR — secteur
+        # très contraint… ») est une implication de ZONE : il ne se dit QU'UNE fois (sur le 1ᵉʳ aléa
+        # qui porte la zone), pas répété sur l'aléa suivant (faute : répété sur « mouvement de terrain
+        # faible » de BI0351). Les aléas suivants de la même zone renvoient à la ligne précédente.
+        if ppr_zone and not _premier_ppr:
+            implique = (f"Même zone {ppr_zone} du PPR (voir ci-dessus) ; cet aléa y est pris en compte.")
+        else:
+            implique = _implique(ppr_zone, ppr_doc)
+        rows.append({"alea": lab, "niveau": niveau, "zone_part": zone_part, "implique": implique})
     # EXPORTS-FIX-3 LOT 3 (#e) — un risque présent sur la FICHE figure dans l'Analyse : la zone
     # inondable TRI (directive inondation, scénario fréquent/moyen/extrême) et le système
     # d'endiguement passent par la CASCADE (fiche.lines), pas par aleas.liste — _risques_rows ne les

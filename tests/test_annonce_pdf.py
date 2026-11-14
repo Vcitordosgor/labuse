@@ -297,7 +297,11 @@ def test_risques_rows_une_ligne_par_alea_sans_doublon():
     # (sur le 1ᵉʳ aléa), pas répétée « 23 % par aléa ».
     assert rows[0]["zone_part"] == "Zone rouge · 23 %"
     assert rows[1]["zone_part"] is None
-    assert all("Zone rouge du PPR Saint-Leu (2015)" in r["implique"] for r in rows)
+    # EXPORTS-FIX-3 LOT 3 (#1, relecture) — l'implication de la zone rouge est écrite UNE SEULE fois
+    # (sur le 1ᵉʳ aléa) ; l'aléa suivant RENVOIE à la 1ʳᵉ ligne au lieu de répéter le commentaire.
+    assert "Zone rouge du PPR Saint-Leu (2015)" in rows[0]["implique"]
+    assert "Zone rouge du PPR Saint-Leu (2015)" not in rows[1]["implique"]
+    assert "voir ci-dessus" in rows[1]["implique"] and "pris en compte" in rows[1]["implique"]
     assert _risques_rows({"aleas": {"n": 0, "liste": []}}, "X") == []
 
 

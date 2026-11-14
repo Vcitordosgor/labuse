@@ -246,3 +246,78 @@ le run servi. Le verdict affiché au client est déjà corrigé À LA LECTURE (o
 réelle en direct). Mais les lecteurs SQL purs du run (tri/compteurs de listes, carte) continueront de voir
 `terrain_exigu` jusqu'à un recalcul + bascule d'un run neuf — hors mandat (aucun run île lancé).
 EXIGU-FIX-1 corrige déjà le libellé ; la bascule, elle, relève de la session de déploiement.
+
+---
+
+## Relecture finale (tour 6) — corrections de cohérence inter-documents
+
+Même règle que les tours précédents : une seule formule par fait, lue par tous les documents.
+
+1. **Analyse BI0351** — le commentaire de zone rouge n'est écrit qu'UNE fois. `pige/api._risques_rows`
+   porte un drapeau `_premier_ppr` : la première ligne du PPR porte le commentaire d'implication, les
+   lignes d'aléas suivantes (dont l'aléa faible) renvoient « Même zone … du PPR (voir ci-dessus) ; cet
+   aléa y est pris en compte. » — plus de répétition sur la ligne de l'aléa faible.
+2. **PLU de La Possession** — le 17/12/2025 est la date d'**approbation**, pas de publication.
+   `exports/miroir._r_statut_plu` : « version servie par LABUSE, dernière approbation le 17/12/2025
+   (une évolution publiée depuis au GPU n'est pas confrontée ici) ».
+3. **VEFA neuf (Saint-Pierre)** — une seule période. `cascade/layers/fiche_couches4.py:78` : « (N ventes
+   VEFA / 5 ans) », comme le Dossier (« commune, 5 ans ») ; l'étiquette « 36 mois » du Comparatif est
+   supprimée (mêmes 158 ventes, une période).
+4. **DPU (Saint-Pierre)** — une seule formule, celle du Dossier. `_attach_contraintes_signalees`
+   interroge la présence du périmètre DPU **par commune** : une commune sans couche ingérée donne
+   « Droit de préemption urbain (DPU) — non ingéré pour cette commune (non vérifié) », jamais un DPU
+   « signalé » sur le terrain. L'Étude dit désormais ce que dit le Dossier.
+5. **Étude HT0538 — garde-fou d'honnêteté (aucune correction de moteur)** :
+   - **a.** quand le plancher de l'Étude dépasse la capacité servie par la fiche, le document l'écrit en
+     clair et n'est jamais dit « exploitable » → « À vérifier ». `_attach_garde_fiche` attache la SDP de
+     la fiche (`potentiel_batir.sdp_restante_m2`) ; `etude_faisabilite._gardes_honnete` rétrograde le
+     statut affiché et imprime la raison.
+   - **b.** barème de stationnement indisponible → « Stationnement non vérifié » (jamais « 0 place selon
+     la règle du PLU »), et la conclusion n'est pas « exploitable ».
+   - **c.** les risques de la fiche figurent dans l'Étude : zone inondable TRI et système d'endiguement
+     (ils passent par la cascade, pas par `aleas_parcelle`) sont ré-attachés à §2.
+   - **d.** plan page 6 : la section vient de l'IDU (`planche.py` `_g_zone_limites`), plus de « AW »
+     codé en dur → « HT 538 » au contour comme au cartouche.
+   - Les enrichissements (a–d) sont ré-attachés **à chaque export**, hors du cache de révision, pour
+     qu'une révision stockée avant un correctif ne serve pas un libellé périmé.
+
+---
+
+## Point 6 — diagnostic en lecture seule : pourquoi l'Étude dit 888 m² et la fiche 614 m² (HT0538) ?
+
+**Aucune correction de moteur dans cette branche.** Constat chiffré, mesuré sur le run servi et le
+moteur d'étude le 14/11/2026 (parcelle `97416000HT0538`, Saint-Pierre, zone Ud, 510 m²).
+
+| | Fiche / Dossier / Comparatif / pré-dossier | Étude de faisabilité |
+|---|---|---|
+| Source | `parcel_residuel.sdp_residuelle_m2` (run de nuit, Gabarit) | `implantation.service.etudier_payload` (recherche d'implantation) |
+| **SDP** | **614 m²** | **887,5 m² (10 logements, R+4)** |
+| Hauteur | `hauteur_source = « sans »` → **hauteur non modélisée**, repli prudent (≈ R+1/R+2) | lit la règle réelle du PLU : **15 m à l'égout / 20 m au faîtage → R+4 (5 niveaux)** |
+| Emprise | CES 60 % à plat sur l'assiette : 0,60 × 510 × 2 ≈ 612 ≈ 614 | emprise après **reculs 3 m** (≈ 177 m²/niveau) × 5 niveaux ≈ 888 |
+| Stationnement | non modélisé (sans effet sur la SDP) | **barème indisponible** → 0 place dessinée (aucune contrainte appliquée) |
+| Pleine terre | non défalquée (CES à plat) | non défalquée du chiffre final |
+| Nature du chiffre | `capacite_estimee = False`, `sous_densite = True` — **estimation de criblage, volontairement prudente** | **enveloppe maximale** recherchée, non validée |
+
+**Lecture des règles, moteur par moteur :**
+- **Hauteur — c'est l'écart décisif.** Le moteur de nuit n'a pas pu modéliser la hauteur pour cette
+  parcelle (`hauteur_source = « sans »`) et retient un repli prudent (de l'ordre de 2 niveaux). Le moteur
+  d'étude lit la hauteur réglementaire réelle (15 m à l'égout) et empile 5 niveaux (R+4). À emprise
+  comparable, 5 niveaux contre ≈ 2 expliquent l'essentiel du 888 contre 614.
+- **Emprise.** Le moteur de nuit applique le CES (60 %) à plat sur l'assiette ; le moteur d'étude part de
+  l'emprise réellement disponible après reculs (3 m sur voie et limites), plus petite au sol mais empilée
+  plus haut.
+- **Stationnement.** Le barème de la zone n'est pas servi (`« document manquant — à confirmer »`). Le
+  moteur de nuit ne le modélise pas ; le moteur d'étude dessine 0 place, ce qui ne retranche aucune
+  capacité — d'où un chiffre non bridé par le stationnement.
+- **Pleine terre (20 %).** Ni l'un ni l'autre ne la défalque explicitement du chiffre final.
+
+**Lequel a raison ?** Aucun des deux n'est une capacité ferme « exploitable » :
+- 614 m² est une **estimation de criblage prudente** (hauteur non modélisée → repli, CES à plat) : c'est
+  le verdict servi partout ailleurs, délibérément conservateur.
+- 888 m² est une **enveloppe maximale** qui lit la vraie hauteur mais **ignore un barème de stationnement
+  indisponible** et ne défalque pas la pleine terre : elle **surévalue**.
+
+La correction juste de cette branche n'est donc pas de trancher un chiffre (ce serait toucher au moteur),
+mais d'**empêcher l'Étude de se dire « exploitable »** quand elle dépasse le verdict servi et repose sur
+un barème manquant (garde-fou du point 5). La réconciliation des deux moteurs (modéliser la hauteur du
+run de nuit, ou défalquer stationnement/pleine terre dans l'étude) relève d'un futur mandat moteur.

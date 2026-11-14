@@ -2230,10 +2230,15 @@ def _worker_etude_pdf(data: dict, idus: list[str], scenario_ref: str | None, gen
         payload = revisions_mod.charger(s, study_id)
         if payload is None:
             payload = etudier_payload(s, data)        # chemin de repli : aucune révision stockée
-            _attach_au_ouverture(s, payload, idus)
-            _attach_contraintes_signalees(s, payload, idus)
-            _attach_zone_gabarit(s, payload, idus)
-            revisions_mod.enregistrer(s, payload)     # on l'enregistre pour les prochains exports
+            revisions_mod.enregistrer(s, payload)     # on enregistre le payload MOTEUR (base)
+        # EXPORTS-FIX-3 LOT 3 (relecture) — les enrichissements (contraintes signalées, DPU/TRI/endiguement,
+        # garde d'honnêteté) sont RÉ-ATTACHÉS À CHAQUE EXPORT, hors du cache de révision : une révision
+        # stockée avant un correctif d'affichage ne doit pas servir un libellé périmé (même piège que le
+        # cache de fiche). Déterministes depuis la base → rejeu identique. N'altèrent pas le moteur.
+        _attach_au_ouverture(s, payload, idus)
+        _attach_contraintes_signalees(s, payload, idus)
+        _attach_zone_gabarit(s, payload, idus)
+        _attach_garde_fiche(s, payload, idus)
     # FIX-FINAL-1 (régression NU-E-055 / NU-D-001) — refus « hors périmètre » : document de refus honnête
     # (jamais un 500 technique ni un 400 muet), comme l'écran sert le verdict sans planter.
     if payload.get("hors_perimetre"):
@@ -2348,10 +2353,50 @@ def _attach_contraintes_signalees(db: Session, payload: dict, idus) -> None:
                 _ajoute(nat + (f" — niveau {niv}" if niv else ""))
         except Exception:  # noqa: BLE001 — une contrainte absente n'est jamais un 500
             pass
+        # EXPORTS-FIX-3 LOT 3 (#4, relecture) — DPU : MÊME formule que le Dossier (présence PAR COMMUNE).
+        # Une commune sans périmètre DPU ingéré (ex. Saint-Pierre) est « non vérifié », jamais
+        # « signalé » (faute : l'Étude le signalait sur le terrain pendant que le Dossier le disait non
+        # vérifié). On n'affirme donc « DPU » que si la couche est ingérée POUR cette commune.
         try:
-            d = _dispositifs_block(db, idu) or {}
-            if d.get("dpu"):   # bloc DPU présent = parcelle dans le périmètre de préemption
-                _ajoute("Droit de préemption urbain (DPU)")
+            commune = db.execute(text("SELECT commune FROM parcels WHERE idu=:i"), {"i": idu}).scalar()
+            dpu_ing = bool(commune and db.execute(text(
+                "SELECT EXISTS(SELECT 1 FROM spatial_layers WHERE kind='dpu' AND commune=:c)"),
+                {"c": commune}).scalar())
+            if not dpu_ing:
+                _ajoute("Droit de préemption urbain (DPU) — non ingéré pour cette commune (non vérifié)")
+            else:
+                d = _dispositifs_block(db, idu) or {}
+                if d.get("dpu"):
+                    _ajoute("Droit de préemption urbain (DPU)")
+        except Exception:  # noqa: BLE001
+            pass
+        # EXPORTS-FIX-3 LOT 3 (#5c, relecture) — un risque présent sur la FICHE figure dans l'Étude :
+        # la zone inondable TRI (directive inondation) et le système d'endiguement passent par la cascade
+        # (pas par aleas_parcelle) ; l'Étude les OMETTAIT (HT0538 : inondation extrême, endiguement).
+        # Même logique que les couches (fiche_couches2) : intersection GÉOMÉTRIQUE (pas de jointure commune),
+        # scénario TRI dans `subtype` (le plus probable = fréquent), endiguement = subtype 'zone_protegee'.
+        try:
+            rt = db.execute(text(
+                "SELECT z.subtype AS subtype, round((100*ST_Area(ST_Intersection(ST_MakeValid(z.geom_2975),"
+                " p.geom_2975))/NULLIF(ST_Area(p.geom_2975),0))::numeric) AS pct"
+                " FROM parcels p JOIN spatial_layers z ON z.kind='tri_zone'"
+                " AND ST_Intersects(z.geom_2975, p.geom_2975) WHERE p.idu=:i"),
+                {"i": idu}).mappings().all()
+            rt = [x for x in rt if (x["pct"] or 0) > 0]
+            if rt:
+                _ordre = {"frequent": 0, "moyen": 1, "extreme": 2}
+                pire = min((str(x["subtype"] or "").lower() for x in rt), key=lambda s: _ordre.get(s, 9))
+                _pct = max((x["pct"] for x in rt if str(x["subtype"] or "").lower() == pire), default=None)
+                _ajoute("Zone inondable TRI — scénario " + (pire or "—")
+                        + (f" ({int(_pct)} % de la parcelle)" if _pct else "")
+                        + " : cartographie de la directive inondation (submersion modélisée), complète le PPR.")
+            re_ = db.execute(text(
+                "SELECT 1 FROM parcels p JOIN spatial_layers z ON z.kind='endiguement'"
+                " AND z.subtype='zone_protegee' AND ST_Intersects(z.geom_2975, p.geom_2975)"
+                " WHERE p.idu=:i LIMIT 1"), {"i": idu}).first()
+            if re_:
+                _ajoute("Parcelle protégée par un système d'endiguement — inondation RÉSIDUELLE en cas "
+                        "de défaillance ou de dépassement du niveau de protection.")
         except Exception:  # noqa: BLE001
             pass
     if items:
@@ -2364,6 +2409,22 @@ def _attach_contraintes_signalees(db: Session, payload: dict, idus) -> None:
             t = {}
             payload["terrain"] = t
         t["contraintes_signalees"] = items
+
+
+def _attach_garde_fiche(db: Session, payload: dict, idus) -> None:
+    """EXPORTS-FIX-3 LOT 3 (#5a, relecture) — attache la CAPACITÉ SERVIE par la fiche (SDP résiduelle,
+    la MÊME que le Dossier/Comparatif/pré-dossier) pour le garde-fou d'honnêteté du rendu de l'Étude :
+    si le plancher du scénario la dépasse largement, le document le dit en clair et ne conclut pas
+    « exploitable » (« à vérifier »). Lecture seule, best-effort ; n'altère JAMAIS le moteur."""
+    if not isinstance(payload, dict) or not idus:
+        return
+    try:
+        from ..faisabilite.potentiel_batir import potentiel_batir
+        pot = potentiel_batir(db, idus[0])
+        payload["_garde_fiche"] = {"sdp_fiche_m2": pot.get("sdp_restante_m2"),
+                                   "motif_fiche": pot.get("motif")}
+    except Exception:  # noqa: BLE001 — le garde-fou ne casse jamais l'export
+        pass
 
 
 def _attach_zone_gabarit(db: Session, payload: dict, idus) -> None:
