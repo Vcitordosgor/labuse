@@ -59,6 +59,32 @@ def test_banc_non_vide():
     assert len(_CAS) >= 260, f"banc 212 incomplet : {len(_CAS)} cas lus"
 
 
+# ETUDE-STATIONNEMENT-FIX-2 (banc 212, reliquat) — 5ᵉ PROGRAMME : 20 logements tombant EXACTEMENT sur le
+# seuil de surface de chaque règlement. C'est là que l'inclusivité de la borne se révèle : « ≤ 50 m² »
+# (La Possession, Salazie) met 50 m² dans la tranche BASSE (1 place) ; « < 50 m² » / « ≥ 50 m² » (Saint-André,
+# Sainte-Rose…) la met dans la tranche HAUTE. Valeurs LUES SUR L'IMAGE de la page officielle.
+_SEUILS = [
+    ("97402", "Ua", 100.0, 30, 0),    # Bras-Panon : ≤100→1 / ≥100→1,5 ; à 100 le minimum supérieur gouverne → 1,5
+    ("97408", "UA", 50.0, 24, 0),     # La Possession : « ≤ 50 m² » → 1/logt (+ visiteur 1/5 = 4) = 24, PAS 44
+    ("97409", "UC", 50.0, 30, 0),     # Saint-André : « ≥ 50 m² » → 1,5/logt = 30
+    ("97411", "Uavap", 100.0, 30, 0), # Saint-Denis : « ≥ 100 m² » → 1,5/logt = 30
+    ("97418", "UA", 100.0, 30, 0),    # Sainte-Marie : « ≥ 100 m² » (plusieurs logts) → 1,5/logt = 30
+    ("97419", "Ua", 50.0, 30, 0),     # Sainte-Rose : « ≥ 50 m² » → 1,5/logt = 30
+    ("97420", "UA", 50.0, 40, 10),    # Sainte-Suzanne : « ≥ 50 m² » → 2/logt = 40 (+ 10 publiques, opération > 10)
+    ("97421", "UA", 50.0, 20, 0),     # Salazie : « ≤ 50 m² » → 1/logt = 20, PAS 40
+]
+
+
+@pytest.mark.parametrize("insee,zone,seuil,total,publiques", _SEUILS)
+def test_banc_seuil_surface(insee, zone, seuil, total, publiques):
+    """5ᵉ programme : 20 logements à la surface EXACTE du seuil → la bonne tranche selon l'inclusivité lue
+    sur l'image (La Possession 50 m² = 24, pas 44)."""
+    b = R.charger(insee, zone).stationnement
+    ex = b.exiger([SimpleNamespace(pieces=2, surface_m2=seuil) for _ in range(20)], destination="collectif")
+    assert ex.places == total, f"{insee}/{zone} 20×{seuil:g} m² : moteur {ex.places} ≠ {total} ({ex.formule})"
+    assert ex.places_publiques == publiques
+
+
 @pytest.mark.parametrize("insee,rule_id,zone,prog,total,publiques",
                          _CAS, ids=[f"{c[0]}:{c[1]}:{c[3]}" for c in _CAS])
 def test_banc_212(insee, rule_id, zone, prog, total, publiques):

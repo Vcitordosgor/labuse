@@ -64,6 +64,10 @@ class LigneBareme:
     pieces_max: Optional[int] = None
     sdp_min: Optional[float] = None
     sdp_max: Optional[float] = None
+    # ETUDE-STATIONNEMENT-FIX-2 (banc 212) — l'INCLUSIVITÉ du seuil de surface suit le règlement : par défaut
+    # la tranche est [sdp_min, sdp_max[ ( ≥min et <max, cas « < 100 m² » Saint-Denis). `sdp_max_inclusif`=True
+    # rend la borne haute INCLUSIVE (« ≤ 50 m² » La Possession : 50 m² est DANS la tranche basse, pas la haute).
+    sdp_max_inclusif: bool = False
     logements_min: Optional[int] = None
     destination: str = "collectif"
     role: str = "base"                  # 'base' | 'operation' | 'alt'
@@ -159,7 +163,7 @@ class BaremeStationnement:
                 continue
             if l.sdp_min is not None and sdp_m2 < l.sdp_min:
                 continue
-            if l.sdp_max is not None and sdp_m2 >= l.sdp_max:
+            if l.sdp_max is not None and (sdp_m2 > l.sdp_max if l.sdp_max_inclusif else sdp_m2 >= l.sdp_max):
                 continue
             return l.places
         return None
@@ -229,7 +233,7 @@ class BaremeStationnement:
                 continue
             if l.sdp_min is not None and sdp_m2 < l.sdp_min:
                 continue
-            if l.sdp_max is not None and sdp_m2 >= l.sdp_max:
+            if l.sdp_max is not None and (sdp_m2 > l.sdp_max if l.sdp_max_inclusif else sdp_m2 >= l.sdp_max):
                 continue
             return l
         return None
@@ -653,6 +657,7 @@ def _bareme(stat: dict) -> BaremeStationnement:
                 par_m2=float(d["par_m2"]) if d.get("par_m2") is not None else None,
                 pieces_min=d.get("pieces_min"), pieces_max=d.get("pieces_max"),
                 sdp_min=d.get("sdp_min"), sdp_max=d.get("sdp_max"),
+                sdp_max_inclusif=bool(d.get("sdp_max_inclusif")),
                 logements_min=d.get("logements_min"),
                 destination=d.get("destination") or "collectif",
                 role=d.get("role") or "base", arrondi=_norm_arrondi(d.get("arrondi"), None) if d.get("arrondi") else None,
