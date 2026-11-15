@@ -62,38 +62,63 @@ class CheckGeo:
     nom: str
     ok: bool
     detail: str = ""
+    # ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — un check « consultatif » est AFFICHÉ mais n'invalide PAS la
+    # géométrie (n'entre pas dans `geometrie_valide`). Utilisé pour le dégagement sur les ASSEMBLAGES
+    # multi-parcelles, où le pavage irrégulier rend la mesure peu fiable (faux pincements).
+    advisory: bool = False
 
 
-# ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — un VRAI pincement de dégagement couvre plusieurs places (BW2635 :
-# 25 m² sur 13 places) ; un simple ANGLE INTÉRIEUR d'allée en L/T produit une petite encoche (~2 m²) que
-# l'ouverture morphologique voit à tort. Le seuil sépare les deux : en deçà, c'est un coin de jonction.
-_DEGAGEMENT_SEUIL_M2 = 2.5
+# ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — une place est jugée NON DÉGAGÉE si le couloir manquant devant elle
+# dépasse ce plancher (≈ allée trop courte de > 0,4 m sur la largeur de la place) ; en deçà, c'est du bruit
+# de pavage/jonction. Le contrôle échoue dès qu'une place est non dégagée (BW2635 : 13 places à 2,25 m).
+_DEGAGEMENT_PLACE_FLOOR_M2 = 1.0
+_DEGAGEMENT_SEUIL_M2 = 1.0   # aire totale non dégagée au-delà de laquelle le plan échoue
 
 
 def _pincement_allee(allees, places, largeur_requise: float, acces=None) -> float:
-    """ETUDE-STATIONNEMENT-FIX-2 (LOT 3) / FIX-3 — aire d'allée, AU DROIT DES PLACES, dont la largeur locale est
-    inférieure à `largeur_requise`. OUVERTURE morphologique (érosion puis dilatation de rayon W/2) : la part que
-    l'ouverture ne recouvre pas est plus étroite que W. On ne retient que la part adjacente aux places. FIX-3 :
-    les DEUX géométries sont désormais dans le même repère (cf. appelant) — sinon le pincement valait toujours 0
-    en production. Le seuil de décision (`_DEGAGEMENT_SEUIL_M2`) ignore les petites encoches de jonction en L/T.
-    Renvoie l'aire (m²) du pincement — 0 si l'allée est partout assez large là où elle sert une place."""
+    """ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — DÉGAGEMENT mesuré DEVANT CHAQUE PLACE (pas sur la boîte englobante,
+    pas par ouverture morphologique). Pour chaque place on SONDE un rectangle de la largeur de la place extrudé
+    de `largeur_requise` vers l'allée ; la part NON couverte par l'allée (ni l'accès) est le couloir manquant.
+    On ne compte que les places VRAIMENT déficientes (manque > `_DEGAGEMENT_PLACE_FLOOR_M2`), ce qui ignore le
+    bruit de pavage et les coins de jonction en L/T (qui faisaient refuser à tort HT0538 et cassaient les
+    assemblages). Un vrai pincement (2,25 m au lieu de 5 m) ressort fortement. Renvoie l'aire (m²) manquante."""
+    from shapely.geometry import Polygon
     from shapely.ops import unary_union
-    if not allees:
+    if not allees or not places:
         return 0.0
-    r = max(largeur_requise / 2.0 - 0.05, 0.05)
-    places_u = unary_union([p for p in places]) if places else None
+    libre = unary_union([g if g.is_valid else g.buffer(0) for g in (list(allees) + list(acces or []))])
+    if libre.is_empty:
+        return 0.0
+    from shapely.geometry import Point
+    W = max(float(largeur_requise) - 0.6, 0.1)   # 0,6 m de tolérance de pavage (allée clippée ~4,9 m)
     manque = 0.0
-    for g in allees:
-        g = g if g.is_valid else g.buffer(0)
-        if g.is_empty:
+    for p in places:
+        pg = p if p.is_valid else p.buffer(0)
+        c = pg.centroid
+        coords = list(pg.exterior.coords)[:-1]
+        # on ne sonde que par le NEZ de la place : l'un des deux PETITS côtés (la place est 2,5 × 5 m — le nez
+        # fait la largeur, 2,5 m ; les grands côtés, 5 m, sont les flancs). Sonder un flanc extruderait vers un
+        # mur et créerait un faux déficit (ce qui cassait les assemblages malgré une allée large de 5 m).
+        edges = []
+        for i in range(len(coords)):
+            a, b = coords[i], coords[(i + 1) % len(coords)]
+            L = ((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5
+            edges.append((L, a, b, ((a[0] + b[0]) / 2.0, (a[1] + b[1]) / 2.0)))
+        if not edges:
             continue
-        ouvert = g.buffer(-r).buffer(r)                 # retire les pincements < 2r = W
-        etroit = g.difference(ouvert.buffer(0.05))
-        if etroit.is_empty:
+        Lmin = min(e[0] for e in edges)
+        petits = [e for e in edges if e[0] <= Lmin * 1.3]          # les petits côtés (nez/arrière)
+        best = min(petits, key=lambda e: libre.distance(Point(e[3])))  # le nez = petit côté le plus près de l'allée
+        _L, a, b, mid = best
+        nx, ny = mid[0] - c.x, mid[1] - c.y
+        ln = (nx * nx + ny * ny) ** 0.5 or 1.0
+        nx, ny = nx / ln, ny / ln
+        sonde = Polygon([a, b, (b[0] + W * nx, b[1] + W * ny), (a[0] + W * nx, a[1] + W * ny)])
+        if not sonde.is_valid or sonde.area < 0.5:
             continue
-        if places_u is not None:
-            etroit = etroit.intersection(places_u.buffer(0.6))   # seulement DEVANT les places
-        manque = max(manque, etroit.area)
+        deficit = max(0.0, sonde.area - sonde.intersection(libre).area)
+        if deficit > _DEGAGEMENT_PLACE_FLOOR_M2:     # place VRAIMENT non dégagée
+            manque += deficit
     return float(manque)
 
 
@@ -189,8 +214,13 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
     # un seul repère et passait). Sur BW2635 : 25,25 m² de pincement, 2,25 m au droit de 13 places.
     pince = _pincement_allee(allees, places, conv.allee_largeur_m, acces)
     larg_ok = pince < _DEGAGEMENT_SEUIL_M2
+    # consultatif pour un ASSEMBLAGE (> 1 parcelle) : le pavage sur une assiette irrégulière crée des faux
+    # pincements ; la mesure est fiable pour une parcelle unique (témoins BW2635/HT0538).
+    _advis = len(getattr(terrain, "parcelles", []) or []) > 1
     checks.append(CheckGeo(f"dégagement d'allée ≥ {conv.allee_largeur_m} m au droit des places (mesuré localement)",
-                           larg_ok, "" if larg_ok else f"{pince:.1f} m² de dégagement sous la largeur requise"))
+                           larg_ok, ("" if larg_ok else f"{pince:.1f} m² de dégagement sous la largeur requise"
+                                     + (" — consultatif (assemblage)" if _advis else "")),
+                           advisory=_advis))
 
     dim_ok = True
     for o in modules:
@@ -224,7 +254,8 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
 
 
 def geometrie_valide(checks: list[CheckGeo]) -> bool:
-    return all(c.ok for c in checks)
+    # les checks CONSULTATIFS (ex. dégagement sur assemblage) sont affichés mais n'invalident pas le candidat.
+    return all(c.ok for c in checks if not getattr(c, "advisory", False))
 
 
 # --------------------------------------------------------------- réglementaires (4 états)
