@@ -75,6 +75,13 @@ def _applied(zr, surface: float) -> list[dict]:
             src.get("pleine_terre"), calc=f"{zr.pleine_terre_pct:g} % × {surface:.0f} m²")
     elif zr.pleine_terre_pct:
         add(_pt_lib, zr.pleine_terre_pct, src.get("pleine_terre"))
+    # CHIRURGICAL-FIX-1 (LOT I 3c) — 2e obligation de sol : la surface perméable (enveloppe), distincte
+    # de la pleine terre (le noyau). Le Tampon : les DEUX sont servies (Ud 40 %/30 %, Uav 30 %/20 %).
+    _perm = getattr(zr, "permeabilite_pct", None)
+    if isinstance(_perm, (int, float)):
+        perm_m2 = round(_perm / 100.0 * surface)
+        add("Surface perméable minimale", f"{perm_m2} m² ({_perm:g} % de {surface:.0f} m²)",
+            src.get("pleine_terre"), calc=f"{_perm:g} % × {surface:.0f} m²")
     if zr.hauteur_mode == "prospect":
         out.append({"regle": "Hauteur", "valeur": "calculée par prospect (L ≥ H selon la largeur de voirie)",
                     "source": src.get("hauteur") or "règle de prospect", "note": "dépend de la voirie riveraine"})

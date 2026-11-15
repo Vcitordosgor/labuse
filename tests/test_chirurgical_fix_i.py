@@ -111,6 +111,26 @@ def test_3b_bati_connu_pas_bati_non_determine():
     assert "hauteur de règle non déterminée" in _absence_une_raison(ph, "U", gabarit_bloque=True, bati_connu=True)
 
 
+def test_3c_le_tampon_deux_obligations_de_sol_et_stationnement_barème():
+    """3c — Le Tampon sert les DEUX obligations de sol (pleine terre ET surface perméable) et la ligne
+    stationnement dit sa portée (barème). AD0887=Ud (30 %/40 %), BW2635=Uav (20 %/30 %)."""
+    from labuse.faisabilite.zonage import resolve_zone
+    from labuse.plu_reglement import _regles_valeurs
+    attendu = {"Ud": (30.0, 40.0), "Uav": (20.0, 30.0)}
+    for zc, (pt, perm) in attendu.items():
+        zr = resolve_zone(zc, "Le Tampon")
+        assert zr.pleine_terre_pct == pt and zr.permeabilite_pct == perm
+        lignes = {r["cle"]: r for r in _regles_valeurs(zr, None, 0)}
+        assert lignes["pleine_terre"]["valeur"] == f"{pt:g} %"
+        assert "surface_permeable" in lignes and lignes["surface_permeable"]["valeur"] == f"{perm:g} %"
+        assert lignes["surface_permeable"]["libelle"] == "Surface perméable min"
+        # stationnement : barème avec sa portée (1 place/logt, 1,5 au-delà de 5 lots)
+        stat = lignes["stationnement"]["valeur"]
+        assert "1 place / logement" in stat and "1,5" in stat and "5 lots" in stat
+        # la capacité lit toujours 1 place/logement (le barème ne la change pas)
+        assert zr.places_par_logement() == 1.0
+
+
 def test_pt2_zone_rouge_exclue_de_l_implantation_pas_vigilance_forte():
     """pt2 — la zone rouge marginale est dite INCONSTRUCTIBLE (exclue de l'implantation), prescriptions
     réservées à la zone bleue — plus « vigilance forte ; pas d'exclusion automatique ». La normalisation

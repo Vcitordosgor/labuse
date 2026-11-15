@@ -70,6 +70,9 @@ class ZoneRules:
     recul_limites_alignement: bool = False    #  (idem « en limite séparative ») — 0 EXPLICITE, ≠ absent
     pleine_terre_compose: dict | None = None  # PLU-CALIBRAGE-7 forme 2 : {espaces_verts_pct, part_pct}
     #  pleine_terre_pct = espaces_verts_pct × part_pct / 100 (calculé, JAMAIS stocké — les 2 chiffres sourcés)
+    permeabilite_pct: float | None = None     # CHIRURGICAL-FIX-1 (LOT I 3c) — 2e obligation de sol : la
+    #  SURFACE PERMÉABLE (enveloppe), DISTINCTE de la pleine terre (le noyau). Ex. Le Tampon Ud : « 40 %
+    #  perméable, dont 30 % pleine terre » → permeabilite_pct=40 ET pleine_terre_pct=30 (les deux servies).
     pleine_terre_nature: str | None = None    # CHIRURGICAL-FIX-1 (LOT H pt8) — vraie nature de la règle
     #  « 2.6 » selon sa CITATION : 'permeable' | 'pleine_terre' | 'biotope' | 'espace_vert'. Le champ
     #  pleine_terre_pct agrège des règles DISTINCTES ; le document nomme celle qui est citée (jamais
@@ -256,6 +259,32 @@ def _pleine_terre_nature(reg: dict) -> str | None:
     return None
 
 
+def _permeabilite_pct(reg: dict):
+    """CHIRURGICAL-FIX-1 (LOT I 3c) — 2e obligation de sol : la SURFACE PERMÉABLE (enveloppe), quand la
+    citation en porte DEUX (« X % perméable, dont Y % pleine terre » — Le Tampon Ud 40/30, Ua 20/15…),
+    ou un renvoi « respectivement X % et Y % » (Uav 30/20). `pleine_terre_pct` garde le NOYAU (Y) ; on
+    sert ici l'ENVELOPPE (X), seulement si elle est DISTINCTE (sinon une seule obligation, déjà nommée)."""
+    import re as _re
+    leaf = (reg.get("pleine_terre") or {}).get("pct")
+    if not isinstance(leaf, dict):
+        return None
+    cit = leaf.get("citation") or ""
+    noyau = leaf.get("pct") if isinstance(leaf.get("pct"), (int, float)) else None
+    # forme 1 : « X % … perméable » (enveloppe explicite ; `[^%]*?` s'arrête au 1er « perméable »,
+    # AVANT le « dont Y % … pleine terre » — on capte bien l'enveloppe X, pas le noyau Y).
+    m = _re.search(r"(\d+(?:[.,]\d+)?)\s*%[^%]*?perm[ée]able", cit)
+    perm = None
+    if m:
+        perm = float(m.group(1).replace(",", "."))
+    else:  # forme 2 : renvoi « respectivement X % et Y % » (X = perméable, Y = pleine terre)
+        m = _re.search(r"respectivement.*?(\d+(?:[.,]\d+)?)\s*%\s*et\s*(\d+(?:[.,]\d+)?)\s*%", cit)
+        if m:
+            perm = float(m.group(1).replace(",", "."))
+    if perm is None or (noyau is not None and abs(perm - float(noyau)) < 1e-6):
+        return None            # pas de 2e obligation distincte (une seule règle, déjà nommée)
+    return perm
+
+
 def _pleine_terre_compose(reg: dict) -> dict | None:
     """Forme 2 : les deux chiffres sourcés {espaces_verts_pct, part_pct} d'une feuille pleine terre
     composée VALIDÉE (pour l'affichage de l'étape). None si feuille directe / non validée."""
@@ -390,6 +419,7 @@ def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> Zone
         pleine_terre_pct=_pleine_terre_val(reg),
         pleine_terre_compose=_pleine_terre_compose(reg),
         pleine_terre_nature=_pleine_terre_nature(reg),
+        permeabilite_pct=_permeabilite_pct(reg),
         hauteur_mode=zm.get("hauteur_mode"),
         habitat=zm.get("habitat"),
         constructible_neuf=zm.get("constructible_neuf", True),
@@ -729,12 +759,21 @@ def _calibrage_overlay(code: str, commune: str | None):
             _nat = _pleine_terre_nature(reg)       # CHIRURGICAL-FIX-1 (LOT H pt8) — nom de la règle citée
             if _nat:
                 champs["pleine_terre_nature"] = _nat
+            _perm = _permeabilite_pct(reg)         # CHIRURGICAL-FIX-1 (LOT I 3c) — 2e obligation de sol
+            if _perm is not None:
+                champs["permeabilite_pct"] = _perm
     elif pt and pt.get("absent"):
         src["pleine_terre"] = _src_absente(pt)
 
     # stationnement (par logement)
     st = _feuille("stationnement", "par_logement")
-    if st and not st.get("absent") and isinstance(st.get("places"), (int, float)):
+    # CHIRURGICAL-FIX-1 (LOT I 3c) — un BARÈME chiffré (feuille `bareme`) DIT SA PORTÉE (Le Tampon :
+    # « 1 place / logement ; 1,5 au-delà de 5 lots/logements ») : on le sert tel quel, comme la lecture
+    # de base `_stat_from_regles`, au lieu de réduire au seul « 1 place / logement ».
+    if st and not st.get("absent") and isinstance(st.get("bareme"), str) and st["bareme"].strip():
+        champs["stat_logement"] = st["bareme"].strip()
+        src["stationnement"] = _src_validee(st)
+    elif st and not st.get("absent") and isinstance(st.get("places"), (int, float)):
         p = st["places"]; p = int(p) if float(p).is_integer() else p
         champs["stat_logement"] = f"{p} place / logement" if p == 1 else f"{p} places / logement"
         src["stationnement"] = _src_validee(st)
