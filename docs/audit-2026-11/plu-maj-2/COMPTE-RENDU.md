@@ -240,9 +240,16 @@ Extrait (exemples vérifiés à l'œil) :
 Les 2 échecs de `test_fraicheur.py` (FakeClient DVF) **préexistent** (vérifié par remisage) et sont
 **désélectionnés** par le marqueur du hook (`network`).
 
-**Hook** (`scripts/git-hooks/pre-push`) : secrets · front (tsc -b + vitest, après `npm ci` du worktree) ·
-pytest unitaire (`not db/local/reel/network`) · cohérence (base locale). *Résultat consigné au §7 après
-exécution complète.*
+**Hook** (`scripts/git-hooks/pre-push`) — **VERT, sans `--no-verify`** :
+- **secrets** : rien trouvé ;
+- **front** : `tsc -b` 0 · `vitest` **340 passés** (68 fichiers) ;
+- **pytest unitaire** (`not db/local/reel/network`) : **3368 passés, 50 ignorés, 1952 désélectionnés** (396 s) ;
+- **cohérence** (12 témoins, base locale) : **7 passés, aucun écart (1 €/1 m²)**.
+
+> Note : un premier rejeu de la suite, lancé EN CONCURRENCE avec `npm ci`/`vitest`/les scripts d'audit, avait
+> fait flaker `test_etude_fiable_1::test_r2` (recherche d'Étude coupée par son garde-fou temps sous charge —
+> flake connu, cf. ETUDE-FIABLE-1) ; il passe seul (143 s) et le hook, qui enchaîne ses étapes en série, le
+> rejoue vert. Aucun fichier de l'Étude n'est touché par ce mandat.
 
 ---
 
