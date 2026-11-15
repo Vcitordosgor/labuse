@@ -56,7 +56,21 @@ version antérieure non retenue, ou une autre commune) : ce n'est pas un décala
 
 ---
 
-## 3. Suite
+## 3. Deux règles de pleine terre ajoutées à la configuration (validées)
 
-Rien à mettre à niveau (les quatre éléments sont déjà au `20260805` et cohérents). Tables de travail
-locales `plu_maj2_zone_avant/apres` supprimées. Hook rejoué vert, branche poussée.
+Les deux seules règles de pleine terre réelles de Saint-Denis étaient **absentes** de
+`config/plu_destinations/97411_saint_denis.yaml` (rubrique `pleine_terre`). Elles y sont désormais, au
+statut **`valide`**, avec la citation mot pour mot et la page du règlement en vigueur (image à l'appui) —
+**rien n'est ajouté pour les autres zones** (elles n'ont aucun minimum de pleine terre) :
+
+| Zone | Règle | Citation (mot pour mot) | Article · page | Image | `plu verif` |
+|---|---|---|---|---|---|
+| **Ud** | pleine_terre.pct = **30** | « Minimum 30% de la parcelle doit être en pleine terre » | Article Ud.13 · p46 | `UD_p46.png` | **TROUVE** |
+| **Ui** | pleine_terre.pct = **40** | « Minimum 40% de la parcelle doit être en pleine terre » | Article Ui.13 · p58 | `UI_p58.png` | AMBIGU¹ |
+
+¹ `AMBIGU` honnête : la page porte, après la règle générale, une clause « Toutefois… » (exception de
+secteur) — la valeur 40 % est bien présente et citée ; verif signale seulement l'exception voisine.
+Le verrou V6a (toute règle `valide` porte article + page + citation) reste vert.
+
+Rien d'autre à mettre à niveau (les quatre éléments sont déjà au `20260805` et cohérents). Tables de
+travail locales `plu_maj2_zone_avant/apres` supprimées. Hook rejoué vert, branche poussée.
