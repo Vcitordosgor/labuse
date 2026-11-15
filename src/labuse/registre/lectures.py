@@ -261,6 +261,8 @@ LECTURES: tuple[Lecture, ...] = (
       "Facettes des filtres propriétaire PM (formes juridiques, couverture, millésime) + autocomplétion des dénominations avec compte de parcelles détenues — alimente les filtres/suggestions du Scan patrimoine."),
     L("parcelle_personne_morale", "signaux_vie.py", None, None,
       "Batch signaux de vie : self-join sur siren (groupe 0, ≥3 parcelles) pour écrire le signal « assemblage_pm » dans parcel_signaux_vie — pré-calcul interne, aucun chiffre PM candidat servi directement."),
+    L("parcels", "cascade/layers/phase1.py", None, None,
+      "MOTEUR-VERITE-FIX-4 LOT 4 — jointure parcels (id→idu, géométrie) pour conditionner l'allègement rouge au PLU : zone_fam via parcel_zone_plu et portion U/AU réelle avant d'écrire « capacité réduite, sous prescriptions » — machinerie du verdict cascade, aucun chiffre du cadastre servi."),
     L("parcels", "alertes.py", None, None,
       "JOIN spatial zones de veille × parcels (ST_Intersects) + id→idu pour composer les alertes — aucun des 18 chiffres candidats n'y est produit"),
     L("parcels", "anc_service.py", None, None,

@@ -422,8 +422,21 @@ def faisabilite_surface_incertaine(zone: str | None) -> "Faisabilite":
                        _BANDEAU, calibree=True, cause="surface_incertaine")
 
 
+def faisabilite_ppr_rouge_secteur(zone: str | None, pct: int) -> "Faisabilite":
+    """MOTEUR-VERITE-FIX-4 LOT 4 — secteur d'habitat A/N sous PPR ROUGE dominant SANS reste
+    exploitable : le contrôle du plan de prévention s'applique TOUJOURS, le plafond d'habitat
+    du secteur ne rouvre rien dans la zone rouge (AL0165, 100 % R2, relecture FIX-4)."""
+    return Faisabilite(zone or "?", None, False,
+                       f"Non constructible — PPR zone rouge (inconstructible, L562-1) sur "
+                       f"~{pct} % de la parcelle ; le plafond d'habitat du secteur ne "
+                       "s'applique pas dans la zone rouge.",
+                       [], [], [], [], {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                       _BANDEAU, calibree=True, cause="redhibitoire")
+
+
 def faisabilite_secteur_habitat(zone: str | None, zone_fam: str | None, sect: dict,
-                                surface_m2: float | None = None) -> "Faisabilite":
+                                surface_m2: float | None = None,
+                                avert_ppr: str | None = None) -> "Faisabilite":
     """MOTEUR-VERITE-FIX-1 LOT 4 / FIX-2 LOT B — SECTEUR D'HABITAT d'une zone agricole/naturelle
     (Aba, Arh, Nrh, Nba…) : le règlement ADMET l'habitat NEUF plafonné (règle calibrée, citée).
 
@@ -467,6 +480,8 @@ def faisabilite_secteur_habitat(zone: str | None, zone_fam: str | None, sect: di
     avert = ["Conditions du règlement non modélisées (intégration au site, desserte, sols "
              "naturels…) et enveloppe non calibrée : capacité à vérifier — le plafond du "
              "règlement n'est PAS une capacité."]
+    if avert_ppr:
+        avert.append(avert_ppr)   # MOTEUR-VERITE-FIX-4 LOT 4 — PPR rouge partiel : prescriptions
     fourch = {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0),
               # FIX-2 LOT B — PLAFOND informatif, jamais une SDP (clé distincte, non sommable).
               "plafond_secteur_m2": plafond_servi}

@@ -112,3 +112,42 @@ def test_lot3_udo_capacite_a_verifier(app_session):
         sdp, f = _sdp(app_session, idu)
         assert sdp is None, f"{idu} : {sdp} m² chiffrés sur une hauteur générique"
         assert f.constructible is True and "capacité à vérifier" in f.verdict
+
+
+# LOT 4 — zone rouge et PLU, dans le bon ordre.
+def test_lot4_ppr_avant_secteur_habitat(app_session):
+    """AL0165 (Saint-Joseph, Nba, 100 % en R2) : le contrôle du plan de prévention s'applique
+    AUSSI aux secteurs d'habitat A/N — plus jamais « constructible sous conditions » sur une
+    parcelle entièrement rouge (la branche Nba retournait avant le contrôle PPR)."""
+    from labuse.faisabilite.db import parcel_faisabilite
+    pid = app_session.execute(text("SELECT id FROM parcels WHERE idu='97412000AL0165'")).scalar()
+    if pid is None:
+        pytest.skip("AL0165 absente de la base réelle")
+    _ctx, f = parcel_faisabilite(app_session, pid)
+    assert f.constructible is False
+    assert "PPR zone rouge" in f.verdict and f.cause == "redhibitoire"
+
+
+def test_lot4_cascade_hors_rouge_seulement_si_plu_admet(app_session):
+    """AC0249 (Saint-Benoît, 71 % rouge, zone Acor FERMÉE au PLU) : la cascade n'écrit
+    « capacité réduite » QUE si le PLU admet la construction sur la partie hors rouge —
+    sinon l'exclusion reste. BC1134 (portion UA réelle) garde l'allègement, reformulé
+    « capacité RÉDUITE, SOUS PRESCRIPTIONS » (jamais une promesse)."""
+    from labuse.cascade.context import EvalContext, ParcelRef
+    from labuse.cascade.engine import run_cascade
+    rows = {r[1]: r for r in app_session.execute(text(
+        "SELECT id, idu, commune, coalesce(contenance_m2, ST_Area(geom_2975)) FROM parcels "
+        "WHERE idu IN ('97410000AC0249','97420000BC1134')"))}
+    if len(rows) < 2:
+        pytest.skip("témoins absents de la base réelle")
+    ctx = EvalContext(app_session)
+    for idu, (pid, _idu, commune, surf) in rows.items():
+        res = run_cascade([ParcelRef(id=pid, idu=idu, commune=commune,
+                                     surface_m2=float(surf))], ctx)[pid]
+        exclue = any(v.is_hard_exclude() for v in res)
+        if idu == "97410000AC0249":
+            assert exclue, "AC0249 : zone Acor fermée — l'exclusion rouge doit rester"
+        else:
+            assert not exclue, "BC1134 : portion UA réelle — allègement attendu"
+            flag = next(v for v in res if "SOUS PRESCRIPTIONS" in str(v.detail))
+            assert "capacité RÉDUITE" in str(flag.detail)

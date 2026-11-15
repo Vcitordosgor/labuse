@@ -823,9 +823,30 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             and (rules is None or not rules.constructible_neuf or rules.habitat == "interdit")):
         _sect = secteur_habitat_plafonne(ctx.commune, ctx.zone)
         if _sect is not None:
-            from .engine import faisabilite_secteur_habitat
+            # MOTEUR-VERITE-FIX-4 LOT 4 — le contrôle du PLAN DE PRÉVENTION s'applique TOUJOURS,
+            # y compris dans les secteurs d'habitat A/N : cette branche retournait AVANT le
+            # contrôle PPR (AL0165, 100 % en R2, sortait « constructible sous conditions » —
+            # la cascade l'excluait, la faisabilité non). Rouge DOMINANT (≥ 50 %) sans reste
+            # exploitable → verdict ferme ; sinon le verdict « capacité à vérifier » PORTE le PPR.
+            _rpct = None
+            try:
+                with session.begin_nested():
+                    _rr0 = session.execute(_HORS_PPR_ROUGE, {"pid": parcel_id}).first()
+                if _rr0 is not None and _rr0.parcelle_m2 and float(_rr0.parcelle_m2) > 0:
+                    _rpct = round(100.0 * float(_rr0.rouge_m2 or 0.0) / float(_rr0.parcelle_m2))
+            except Exception:  # noqa: BLE001 — mesure indisponible : verdict secteur conservé
+                _rpct = None
+            from .engine import faisabilite_ppr_rouge_secteur, faisabilite_secteur_habitat
+            if _rpct is not None and _rpct >= 50:
+                _servable, _ = _hors_rouge_fragment_servable(session, parcel_id)
+                if not _servable:
+                    return ctx, faisabilite_ppr_rouge_secteur(ctx.zone, _rpct)
+            _avert_ppr = (f"PPR zone rouge sur ~{_rpct} % de la parcelle — la partie en zone "
+                          "rouge est inconstructible (L562-1), le reste sous prescriptions du "
+                          "règlement du PPR." if _rpct else None)
             return ctx, faisabilite_secteur_habitat(ctx.zone, ctx.zone_fam, _sect,
-                                                     surface_m2=ctx.surface_m2)
+                                                     surface_m2=ctx.surface_m2,
+                                                     avert_ppr=_avert_ppr)
     if rules is None:
         # EXPORTS-FIX-3 LOT 1 — une sous-zone U/AU a été ÉCARTÉE par la garde d'aire réelle, mais la
         # zone dominante (A/N) n'est pas calibrée au PLU de la commune (resolve_zone → None). La

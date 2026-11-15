@@ -696,24 +696,37 @@ class RisquesLayer(Layer):
             cov_pct = red_cov * 100
             red_m2 = round((parcel.surface_m2 or 0) * red_cov)
             if cov_pct >= excl_pct:
-                # MOTEUR-VERITE-FIX-3 LOT 3 — RÉCONCILIATION cascade ↔ capacité (BC1134 : la
-                # faisabilité servait 1 320 m² sur la partie hors rouge pendant que la cascade
-                # excluait à 61 %). MÊME test que le moteur (_hors_rouge_fragment_servable) : si
-                # le plus grand tenant hors rouge est exploitable (≥ 200 m² d'un seul tenant ET
-                # touche une voie), la contrainte PARTIELLE RÉDUIT (flag fort, capacité sur la
-                # partie hors rouge) — on n'exclut que si le reste n'est pas exploitable.
+                # MOTEUR-VERITE-FIX-3 LOT 3 puis FIX-4 LOT 4 — RÉCONCILIATION cascade ↔ capacité
+                # (BC1134). L'allègement n'est accordé QUE si : (a) le PLU ADMET la construction
+                # sur la partie hors rouge (famille U/AU, ou portion U/AU réelle d'une parcelle
+                # mixte — AC0249 Saint-Benoît : 71 % rouge, zone Acor FERMÉE, la cascade disait
+                # « exploitable » pendant que la faisabilité fermait) ; ET (b) le plus grand
+                # tenant hors rouge est ≥ 200 m² d'un seul tenant ET touche une voie (MÊME test
+                # que le moteur). Formulation : « capacité réduite, sous prescriptions » —
+                # jamais une promesse (étude/attestation du règlement du PPR le cas échéant).
                 servable = False
                 try:
-                    from ...faisabilite.db import _hors_rouge_fragment_servable
-                    servable, _ = _hors_rouge_fragment_servable(ctx.session, parcel.id)
+                    from ...faisabilite.db import (_hors_rouge_fragment_servable, _uau_reelle,
+                                                   _uau_portion_reelle)
+                    _zf = ctx.session.execute(text(
+                        "SELECT zp.zone_fam FROM parcel_zone_plu zp JOIN parcels p ON p.idu = zp.idu "
+                        "WHERE p.id = :pid"), {"pid": parcel.id}).scalar()
+                    _plu_admet = str(_zf or "").upper() in ("U", "AU")
+                    if not _plu_admet:
+                        _m2, _pct, _er = _uau_reelle(ctx.session, parcel.id)
+                        _plu_admet = _uau_portion_reelle(_m2, _er)
+                    if _plu_admet:
+                        servable, _ = _hors_rouge_fragment_servable(ctx.session, parcel.id)
                 except Exception:  # noqa: BLE001 — test indisponible : exclusion prudente conservée
                     servable = False
                 if servable:
                     verdicts.append(soft_flag(
                         self.name,
                         f"PPR zone rouge sur {cov_pct:.0f} % de la surface — partie hors rouge "
-                        "exploitable (≥ 200 m² d'un seul tenant, accès voie) : capacité réduite "
-                        "à cette partie, pas d'exclusion automatique.",
+                        "admise par le PLU et desservie (≥ 200 m² d'un seul tenant, accès voie) : "
+                        "capacité RÉDUITE, SOUS PRESCRIPTIONS du règlement du PPR "
+                        "(étude préalable / attestation le cas échéant) — pas d'exclusion "
+                        "automatique.",
                         Severity.FORT, source=SRC_DEAL_PPR))
                 else:
                     verdicts.append(hard_exclude(
