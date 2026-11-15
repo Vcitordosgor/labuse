@@ -853,6 +853,28 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     rules, ctx.regles_non_modelisees = appliquer_exceptions_calcul(
         rules, ctx.commune, ctx.zone, ctx.surface_m2)
 
+    # MOTEUR-VERITE-FIX-4 LOT 2 — CES réduit dans des périmètres REPÉRÉS (prescriptions GPU),
+    # MESURÉ par parcelle : Le Port Uc 7 « 60 % … OAP Mascareignes » (la décision « deja_couvert »
+    # laissait 80 % partout — relecture FIX-4). La réduction ne fait que BAISSER, jamais relever.
+    for _per in (getattr(rules, "ces_perimetres", None) or []):
+        try:
+            _hit = session.execute(text(
+                "SELECT 1 FROM spatial_layers pr, parcels p WHERE p.id = :pid "
+                "AND pr.kind = 'plu_gpu_prescription' AND pr.commune = p.commune "
+                "AND pr.subtype = ANY(:subs) AND pr.attrs->>'libelle' ~* :rx "
+                "AND ST_Intersects(pr.geom_2975, p.geom_2975) LIMIT 1"),
+                {"pid": parcel_id, "subs": list(_per.get("subtypes") or []),
+                 "rx": str(_per.get("libelle_regex") or "")}).scalar()
+        except Exception:  # noqa: BLE001 — couche indisponible : CES de zone conservé
+            _hit = None
+        if _hit and isinstance(_per.get("pct"), (int, float)):
+            _cur = rules.emprise_sol_pct
+            if not isinstance(_cur, (int, float)) or float(_per["pct"]) < float(_cur):
+                rules = replace(rules, emprise_sol_pct=float(_per["pct"]))
+                ctx.contraintes.libelles.append(
+                    f"CES réduit à {_per['pct']:g} % — parcelle dans le périmètre "
+                    f"« {_per.get('libelle_regex')} » ({_per.get('source') or 'règlement'}).")
+
     hyp = Hypotheses.charger(ctx.commune)   # M-N P1-13 : hypothèses de la commune
     # FAISABILITE-1 (lot D) — surcharges d'hypothèses (édition « et si… » de l'utilisateur, jamais
     # persistées en base : portées par le projet côté front). Seules les hypothèses Estimé/Dérivé
@@ -931,6 +953,26 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         er_a *= k_cont; ebc_a *= k_cont; greve_cert *= k_cont; greve_tot *= k_cont
         emprise = max(0.0, emprise_brute - greve_tot)
         racc = gbuild.raccordement or {}
+        # MOTEUR-VERITE-FIX-4 LOT 2 — garde MICRO-PARCELLE : une parcelle SEULE de moins de
+        # 40 m² (AO1876 : 9 m², 5 m² extrudés sur 5 niveaux), ou sans façade suffisante sur
+        # voie (< 3 m — BK0245 : 2,9 m), ne porte AUCUNE capacité chiffrée : la desserte et
+        # l'assemblage du scénario restent à établir (capacité à vérifier, SDP ∅).
+        _surf_garde = float(ctx.surface_m2 or 0.0)
+        _facade = (racc.get("classification") or {}).get("facade_voie_m")
+        if _surf_garde and _surf_garde < 40.0:
+            from .engine import faisabilite_capacite_a_verifier
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                f"Constructible — capacité à vérifier : micro-parcelle ({_surf_garde:.0f} m²) — "
+                "aucune capacité chiffrée seule, assemblage / projet d'ensemble à instruire.",
+                f"Micro-parcelle ({_surf_garde:.0f} m²) : pas de capacité chiffrée seule.")
+        if isinstance(_facade, (int, float)) and 0 < _facade < 3.0:
+            from .engine import faisabilite_capacite_a_verifier
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                f"Constructible — capacité à vérifier : façade sur voie de {_facade:g} m — "
+                "desserte du scénario à établir, aucune capacité chiffrée.",
+                f"Façade sur voie insuffisante ({_facade:g} m) : desserte à établir.")
         ppr_rouge = bool((racc.get("ppr") or {}).get("rouge"))
         # PPR-PARTIEL-A lot 2 — garde-fous : la règle (lot 1) calcule désormais l'emprise sur la
         # partie hors zone rouge, mais on ne la SERT que si cette partie est exploitable. On vérifie

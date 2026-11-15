@@ -791,10 +791,47 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             _larg = _largeur_terrain_m()
         dec_lat = analyser_condition_implantation(imp_lat, _larg, surface)
         dec_fond = analyser_condition_implantation(imp_fond, _larg, surface)
+
+        # MOTEUR-VERITE-FIX-4 LOT 2 — fermoir par PRESCRIPTION GPU mesurée : une feuille peut
+        # déclarer `ferme_si_prescription` (bâtiment patrimonial protégé — Plaine Ub 7.2 ;
+        # périmètre RHI / linéaire commercial — Le Port Uc) : si la parcelle intersecte la
+        # prescription, l'ouverture FERME (règle APPLIQUÉE, motif porté — pas une mention).
+        # Couche non vérifiable → prudence : fermé.
+        _presc_appliques: list[str] = []
+
+        def _prescription_ferme(imp) -> Optional[str]:
+            for r in (imp or {}).get("ferme_si_prescription") or []:
+                try:
+                    hit = session.execute(text(
+                        "SELECT 1 FROM spatial_layers pr, parcels p WHERE p.id = :pid "
+                        "AND pr.kind = 'plu_gpu_prescription' AND pr.commune = p.commune "
+                        "AND pr.subtype = ANY(:subs) AND pr.attrs->>'libelle' ~* :rx "
+                        "AND ST_Intersects(pr.geom_2975, p.geom_2975) LIMIT 1"),
+                        {"pid": pid, "subs": list(r.get("subtypes") or []),
+                         "rx": str(r.get("libelle_regex") or "")}).scalar()
+                except Exception:  # noqa: BLE001 — non vérifiable : prudence, fermé
+                    hit = True
+                if hit:
+                    return str(r.get("motif") or
+                               "prescription du PLU : implantation en limite non appliquée")
+            return None
+
+        for _dec, _imp in ((dec_lat, imp_lat), (dec_fond, imp_fond)):
+            if _dec["ouvre"]:
+                _mp = _prescription_ferme(_imp)
+                if _mp and _mp not in _presc_appliques:
+                    _dec.update(ouvre=False, zero=0, bande_m=None, lineaire_pct=None,
+                                detail=None, mention=None)
+                    _presc_appliques.append(_mp)
+                elif _mp:
+                    _dec.update(ouvre=False, zero=0, bande_m=None, lineaire_pct=None,
+                                detail=None, mention=None)
+
         _mentions = [m for m in (dec_lat["mention"], dec_fond["mention"]) if m]
-        if _mentions or dec_lat["detail"] or dec_fond["detail"]:
+        if _mentions or dec_lat["detail"] or dec_fond["detail"] or _presc_appliques:
             racc["implantation"] = {"laterales": imp_lat, "fond": imp_fond,
-                                    "appliques": [d for d in (dec_lat["detail"], dec_fond["detail"]) if d],
+                                    "appliques": [d for d in (dec_lat["detail"], dec_fond["detail"]) if d]
+                                    + _presc_appliques,
                                     "mentions": _mentions}
 
         def _setbacks_for(edges, include_voie):
@@ -939,7 +976,12 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         else:
             n_voie = sum(1 for e in lim.edges if e.type == "voie")
             n_sep = sum(1 for e in lim.edges if e.type in ("side", "rear"))
-            racc["classification"] = {"provider": bdtopo_src.provider, "voie": n_voie, "side":
+            racc["classification"] = {"provider": bdtopo_src.provider, "voie": n_voie,
+                                      # MOTEUR-VERITE-FIX-4 LOT 2 — façade mesurée (garde micro-parcelle)
+                                      "facade_voie_m": round(sum(
+                                          float(e.geom.length) for e in lim.edges
+                                          if e.type == "voie"), 1),
+                                      "side":
                                       sum(1 for e in lim.edges if e.type == "side"),
                                       "rear": sum(1 for e in lim.edges if e.type == "rear"),
                                       "emprise_publique": sum(1 for e in lim.edges

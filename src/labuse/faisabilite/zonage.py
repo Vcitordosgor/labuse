@@ -66,6 +66,9 @@ class ZoneRules:
     emprise_plage: dict | None = None         # idem emprise au sol
     regle_non_validee: str | None = None      # PLU-CALIBRAGE-6 : liste des feuilles SDP `propose`
     #  (règle PLU non validée) qui BRANCHERAIENT la SDP → capacité non calculable, jamais un défaut
+    ces_perimetres: list | None = None        # MOTEUR-VERITE-FIX-4 LOT 2 : CES réduit dans des
+    #  périmètres REPÉRÉS (prescriptions GPU mesurées par parcelle — ex. Le Port Uc, OAP
+    #  Mascareignes 60 %) ; [{libelle_regex, subtypes, pct, source}]
     capacite_a_verifier: str | None = None    # MOTEUR-VERITE-FIX-3 LOT 2 : la zone a une RÈGLE
     #  PROPRE validée mais non réductible à un nombre (ex. Saint-Denis Udo, hauteur par rue) —
     #  le repli ne sert JAMAIS une valeur générique à sa place : verdict constructible, SDP ∅
@@ -405,7 +408,10 @@ def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> Zone
     from ..plu import destinations as D
     reg = D.regles_zone(_insee(commune) or "", code)
     zm = (zmeta.get("zones") or {}).get(code, {})
+    _ces_leaf = ((reg.get("emprise_sol") or {}).get("ces")) if reg else None
+    _ces_per = (_ces_leaf or {}).get("perimetres_mesures") if isinstance(_ces_leaf, dict) else None
     return ZoneRules(
+        ces_perimetres=_ces_per if isinstance(_ces_per, list) and _ces_per else None,
         code=code, bassin=zm.get("bassin"), mixite=_mixite_leaf(reg),
         exceptions=_exceptions_from_regles(commune, code),
         he_m=_val(reg, "hauteur", "egout", "m"),

@@ -40,9 +40,14 @@ zones:
           implantation_fond:
             liste_blanche:
               declaration: toutes les conditions de l'article sont appliquées
-              justification: 'relecteur FIX-3 : U7.2 et U7.3 p.13 autorisent les latérales et le fond, 3 m en retrait ; aucun plafond de longueur en limite trouvé'
+              justification: 'FIX-4 LOT 2 (relecteur) : U 7.3 p.13 admet LA limite de fond (singulier
+                — UN fond au plus, nombre PRÉSENT au texte, mesuré par le budget) ; article distinct
+                des latérales (U 7.2) donc budgets séparés. Les limites sur servitudes desservant
+                plus de cinq logements sont assimilées aux voies par l''article (non distinguées par
+                la donnée — exposition bornée par le budget) ; terrain longé par plusieurs voies :
+                fond fermé par le moteur (définition du fond selon l''article, FIX-4 LOT 1).'
               conditions:
-                nombre_de_limites: absente_du_texte
+                nombre_de_limites: mesuree
                 lineaire_ou_profondeur_en_limite: absente_du_texte
                 bande_depuis_voie: absente_du_texte
                 hauteur_en_limite: absente_du_texte
@@ -50,7 +55,9 @@ zones:
                 patio: absente_du_texte
                 rupture_mitoyennete: absente_du_texte
                 affectation_graphique: absente_du_texte
-            mode: limite_ou_retrait
+            mode: limite_sous_conditions
+            condition_texte: 'implantation sur LA limite de fond de terrain (une seule)'
+            condition_modelable: 'une_seule_limite'
             statut: valide
             article: 'U 7.3'
             page_pdf: 13
@@ -58,9 +65,14 @@ zones:
           implantation_laterales:
             liste_blanche:
               declaration: toutes les conditions de l'article sont appliquées
-              justification: 'relecteur FIX-3 : U7.2 et U7.3 p.13 autorisent les latérales et le fond, 3 m en retrait ; aucun plafond de longueur en limite trouvé'
+              justification: 'FIX-4 LOT 2 (relecteur) : U 7.2 p.13 — « sur deux limites séparatives
+                latérales, sur une seule ou en retrait » : le nombre EST dans le texte (deux
+                latérales au plus), mesuré par le budget ; article distinct du fond (U 7.3), budgets
+                séparés. Servitudes desservant plus de cinq logements assimilées aux voies (non
+                distinguées par la donnée — exposition bornée par le budget) ; multi-voies : fond
+                fermé par le moteur (FIX-4 LOT 1).'
               conditions:
-                nombre_de_limites: absente_du_texte
+                nombre_de_limites: mesuree
                 lineaire_ou_profondeur_en_limite: absente_du_texte
                 bande_depuis_voie: absente_du_texte
                 hauteur_en_limite: absente_du_texte
@@ -68,7 +80,9 @@ zones:
                 patio: absente_du_texte
                 rupture_mitoyennete: absente_du_texte
                 affectation_graphique: absente_du_texte
-            mode: limite_ou_retrait
+            mode: limite_sous_conditions
+            condition_texte: 'sur deux limites séparatives latérales, sur une seule ou en retrait'
+            condition_modelable: 'deux_limites_max'
             statut: valide
             article: 'U 7.2'
             page_pdf: 13

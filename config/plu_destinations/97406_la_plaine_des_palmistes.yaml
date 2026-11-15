@@ -200,6 +200,10 @@ zones:
             mode: limite_sous_conditions
             statut: valide
             article: 'Article Ub 7'
+            ferme_si_prescription:
+            - subtypes: ['07']
+              libelle_regex: 'patrimoni|intérêt majeur|interet majeur'
+              motif: 'bâtiment patrimonial protégé sur la parcelle (prescription PLU) : implantation en limite interdite (Ub 7.2)'
             page_pdf: 28
             citation: 'Les constructions peuvent être implantées au maximum sur une limite séparative. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
             condition_texte: 'au maximum sur une limite séparative'
@@ -220,6 +224,10 @@ zones:
             mode: limite_sous_conditions
             statut: valide
             article: 'Article Ub 7'
+            ferme_si_prescription:
+            - subtypes: ['07']
+              libelle_regex: 'patrimoni|intérêt majeur|interet majeur'
+              motif: 'bâtiment patrimonial protégé sur la parcelle (prescription PLU) : implantation en limite interdite (Ub 7.2)'
             page_pdf: 28
             citation: 'Les constructions peuvent être implantées au maximum sur une limite séparative. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
             condition_texte: 'au maximum sur une limite séparative'

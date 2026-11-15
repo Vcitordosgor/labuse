@@ -338,6 +338,11 @@ zones:
           citation: L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité
             foncière.
           statut: valide
+          perimetres_mesures:
+          - libelle_regex: 'OAP Mascareignes'
+            subtypes: ['18']
+            pct: 60.0
+            source: 'Uc 7 p.55 — « Dans les secteurs ou périmètres suivants … 60% … OAP Mascareignes » (périmètre OAP, prescription GPU 18)'
           exceptions:
           - texte: "L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité foncière. Dans les secteurs ou périmètres suivants, l'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière : OAP Mascareignes ; Uca ; ZAC « Rivière des Galets »."
             article: "Uc 7"
@@ -376,6 +381,13 @@ zones:
             mode: limite_ou_retrait
             statut: valide
             article: 'Article Uc 5'
+            ferme_si_prescription:
+            - subtypes: ['05']
+              libelle_regex: 'RHI'
+              motif: "périmètre d'opération RHI (prescription PLU) : règle de retrait spécifique — implantation en limite non appliquée, à vérifier"
+            - subtypes: ['22']
+              libelle_regex: 'n[ée]aire commercial'
+              motif: "linéaire commercial (prescription PLU) : alignement imposé sur ce front — implantation en limite non appliquée, à vérifier"
             page_pdf: 54
             citation: 'Les constructions peuvent être implantées soit en limite séparative, soit en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres.'
           implantation_laterales:
@@ -394,6 +406,13 @@ zones:
             mode: limite_ou_retrait
             statut: valide
             article: 'Article Uc 5'
+            ferme_si_prescription:
+            - subtypes: ['05']
+              libelle_regex: 'RHI'
+              motif: "périmètre d'opération RHI (prescription PLU) : règle de retrait spécifique — implantation en limite non appliquée, à vérifier"
+            - subtypes: ['22']
+              libelle_regex: 'n[ée]aire commercial'
+              motif: "linéaire commercial (prescription PLU) : alignement imposé sur ce front — implantation en limite non appliquée, à vérifier"
             page_pdf: 54
             citation: 'Les constructions peuvent être implantées soit en limite séparative, soit en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres.'
           min_m: 4.0
