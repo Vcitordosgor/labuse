@@ -749,6 +749,14 @@ def _detect_prospect(reg: dict) -> Optional[Regle]:
     moteur ne sait pas chiffrer. Détectée dans les formules/citations de reculs ou de hauteur.
     PLU-CALIBRAGE-10 : la feuille `entre_constructions` est EXCLUE — sa forme relative (L ≥ h/2
     entre deux bâtiments de la même propriété) est désormais chiffrée par le contrôle dédié."""
+    # ETUDE-STATIONNEMENT-FIX-3 (LOT 2) — feuille `prospect` EXPLICITE (ex. Saint-Pierre Ud3.5 : prospect sur
+    # voie + gabarit près des limites) : le moteur ne la chiffre pas → contrôle « Non vérifié » avec la règle
+    # citée, jamais « pas de règle de prospect ».
+    pe = reg.get("prospect")
+    if isinstance(pe, dict) and (pe.get("citation") or pe.get("formule")):
+        return Regle(nom="prospect (hauteur relative)", valeur=None, unite="", validee=False,
+                     article=pe.get("article"), page_pdf=pe.get("page_pdf"),
+                     citation=pe.get("citation") or pe.get("formule"))
     marqueurs = ("h/2", "h / 2", "différence d'altitude", "l ≥ h", "l > h", "l>h", "≥ h/")
     for grp in ("retraits", "hauteur"):
         for cle, leaf in (reg.get(grp) or {}).items():

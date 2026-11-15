@@ -131,6 +131,11 @@ zones:
           page_pdf: 70
           citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 30 % minimum avec au moins 20 % de la superficie de l’unité foncière en espace planté de pleine terre,
           statut: valide
+      prospect:
+        article: Ucv3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'art. Ucv1, p. 60 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. Le règlement et le tableau ci-dessous illustre, de manière non exhaustive, ceux qui se trouvent ainsi "autorisés". »'
     note: 'Secteur des 50 pas géométriques (plan de zonage) : « seuls sont autorisés » services publics/équipements collectifs, réaménagement de quartier/logement social/RHI, commerces-artisanat-tourisme justifiés par la proximité de la mer, et adaptation/extension limitée (20 % emprise) de l''existant (art. Ucv1, p. 59-60). Art. Ucv2 (p. 62) : au sein des linéaires d''activités en RDC recensés au plan de zonage, le changement de destination en vue de créer des logements est interdit et les RDC doivent comporter restauration/hôtellerie/artisanat/commerce de détail. Interdits hors nomenclature (occupations du sol) : carrière, camping-caravaning (p. 61), ateliers de réparation automobile, postes de peinture, stations-services (p. 62).'
@@ -378,6 +383,11 @@ zones:
           page_pdf: 91
           citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 30 % minimum avec au moins 20 % de la superficie de l’unité foncière en espace planté de pleine terre,
           statut: valide
+      prospect:
+        article: Ud3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'art. Ud1, p. 77 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. Le règlement et le tableau ci-dessous illustre, de manière non exhaustive, ceux qui se trouvent ainsi "autorisés". »'
     note: 'Tableau art. Ud1 à trois colonnes « Ud / AUd », « Udl », « UdBO » (p. 78) : la colonne « Ud / AUd » vaut pour Ud et AUd. Secteur des 50 pas géométriques (plan de zonage) : « seuls sont autorisés » services publics/équipements collectifs, réaménagement de quartier/logement social/RHI, commerces-artisanat-tourisme justifiés par la proximité de la mer, adaptation/extension limitée (20 % emprise) de l''existant (art. Ud1, p. 77). Interdits hors nomenclature (occupations du sol) : carrière, camping-caravaning (p. 79).'
@@ -627,6 +637,11 @@ zones:
           page_pdf: 91
           citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 30 % minimum avec au moins 20 % de la superficie de l’unité foncière en espace planté de pleine terre,
           statut: valide
+      prospect:
+        article: Udl3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'art. Ud1, p. 77 (le secteur Udl relève de la zone Ud, préambule p. 76 : « Elle comprend un secteur Udl, sur le littoral ») : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
     note: 'Colonne « Udl » propre dans le tableau art. Ud1 (p. 78-79) : identique à Ud / AUd sauf entrepôt, interdit en Udl. Les conditions V* (artisanat-commerce de détail, activités de services) figurent sous les lignes du tableau et s''appliquent aux trois colonnes. Secteur des 50 pas géométriques : mêmes restrictions que zone Ud (art. Ud1, p. 77).'
@@ -875,6 +890,11 @@ zones:
           page_pdf: 91
           citation: 'En secteur UdBO : Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 50 % minimum avec au moins 40 % de la superficie de l’unité foncière en espace planté de pleine terre,'
           statut: valide
+      prospect:
+        article: UdBO3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'art. Ud1, p. 77 (le secteur UdBO relève de la zone Ud, préambule p. 76 : « un secteur UdBO spécifique au quartier de Bois d''Olives ») : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
     note: 'Colonne « UdBO » propre dans le tableau art. Ud1 (p. 78-79) : identique à Ud / AUd sauf entrepôt, interdit en UdBO. Les conditions V* s''appliquent aux trois colonnes. Secteur des 50 pas géométriques : mêmes restrictions que zone Ud (art. Ud1, p. 77).'
@@ -1052,6 +1072,11 @@ zones:
           statut: valide
           raison: valeur non numérique ('a_verifier')
           absent: true
+      prospect:
+        article: AUdma3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'art. Ud1, p. 77 : « En zone AUdma : non règlementé » — le règlement écrit ne règlemente pas les destinations dans cette zone ; préambule p. 76 : « La zone AUdma est uniquement régie par les Orientations d''Aménagement et Programmation » (au titre de l''article R151-8 du code de l''urbanisme).'
     note: 'ATTENTION : le tableau des destinations de l''art. Ud1 ne s''applique PAS en AUdma (« non règlementé », p. 77). Aucune sous-destination n''est donc portée ici : le sort réel des destinations relève des OAP annexées à l''Eco-PLU (pièce non lue dans ce chapitre). Le « silence: autorise » traduit uniquement l''absence de règle écrite dans le règlement — vérifier les OAP avant tout verdict. Tous les articles Ud2 à Ud8 portent aussi « En zone AUdma : non règlementé » (p. 80, 81, 87, 91, 93, 96).'
@@ -1186,6 +1211,11 @@ zones:
           page_pdf: 108
           citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 40 % minimum avec au moins 30 % de la superficie de l’unité foncière en espaces plantés de pleine terre.
           statut: valide
+      prospect:
+        article: Ug3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'Art. Ug1, p. 98 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
     note: 'Tableau unique « Ug / AUg » (p. 98). Régime dérogatoire dans le secteur des 50 pas géométriques (p. 98 : « seuls sont autorisés, sous réserve de la préservation des plages… ») — restriction de secteur graphique, pas une colonne du tableau des destinations. Le tableau liste aussi « Carrière X » et « Terrain de camping et de caravaning X » (occupations du sol, hors référentiel R151-28, p. 100).'
@@ -1444,6 +1474,11 @@ zones:
           page_pdf: 108
           citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 40 % minimum avec au moins 30 % de la superficie de l’unité foncière en espaces plantés de pleine terre.
           statut: valide
+      prospect:
+        article: AUg3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     renvoi: Ug
     renvoi_src: chapitre « Dispositions applicables à la zone Ug et AUg », p. 97, et tableau unique intitulé « Ug / AUg », p. 98 — la zone AUg n'a aucune colonne ni condition propre au chapitre 1
     note: L'urbanisation de la zone AUg n'est possible qu'après réalisation d'opérations d'aménagement d'ensemble (préambule, p. 97) ; OAP à respecter, le règlement prévaut en cas de conflit (p. 97).
@@ -1521,6 +1556,11 @@ zones:
           page_pdf: 123
           citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 50 % minimum avec au moins 40 % de la superficie de l’unité foncière en espaces plantés de pleine terre.
           statut: valide
+      prospect:
+        article: Uf3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'Art. Uf1, p. 113 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
     note: 'Tableau unique « Uf /UfCA / AUf / AUfGB » (p. 114). Régime dérogatoire dans le secteur des 50 pas géométriques (p. 113 : « seuls sont autorisés, sous réserve de la préservation des plages… ») — restriction de secteur graphique, pas une colonne du tableau. Le tableau liste aussi « Carrière X » (occupation du sol, hors référentiel, p. 115) ; pas de ligne camping/caravaning (contrairement à Ug).'
@@ -1717,6 +1757,11 @@ zones:
           page_pdf: 123
           citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 50 % minimum avec au moins 40 % de la superficie de l’unité foncière en espaces plantés de pleine terre.
           statut: valide
+      prospect:
+        article: UfCA3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     renvoi: Uf
     renvoi_src: tableau unique intitulé « Uf /UfCA / AUf / AUfGB », p. 114 — le secteur UfCA n'a aucune colonne ni condition propre pour les destinations (il n'est distingué au chapitre 1 que pour les affouillements/exhaussements, p. 113)
     note: Secteur spécifique à la ZAC Cap Austral à Grand Bois (préambule, p. 112).
@@ -1796,6 +1841,11 @@ zones:
           page_pdf: 123
           citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 50 % minimum avec au moins 40 % de la superficie de l’unité foncière en espaces plantés de pleine terre.
           statut: valide
+      prospect:
+        article: AUf3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     renvoi: Uf
     renvoi_src: chapitre « Dispositions applicables à la zone Uf et AUf », p. 112, et tableau unique intitulé « Uf /UfCA / AUf / AUfGB », p. 114 — aucune colonne ni condition propre au chapitre 1
     note: L'urbanisation des zones AUf et AUfGB n'est possible qu'après réalisation d'opérations d'aménagement d'ensemble (préambule, p. 112) ; OAP à respecter, le règlement prévaut en cas de conflit (p. 112).
@@ -1855,6 +1905,11 @@ zones:
           page_pdf: 123
           citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 50 % minimum avec au moins 40 % de la superficie de l’unité foncière en espaces plantés de pleine terre.
           statut: valide
+      prospect:
+        article: AUfGB3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     renvoi: Uf
     renvoi_src: 'tableau unique intitulé « Uf /UfCA / AUf / AUfGB », p. 114 — aucune colonne ni condition propre au chapitre 1 (seule la hauteur diffère : art. Uf3, p. 119)'
     note: L'urbanisation des zones AUf et AUfGB n'est possible qu'après réalisation d'opérations d'aménagement d'ensemble (préambule, p. 112) ; OAP à respecter, le règlement prévaut en cas de conflit (p. 112).
@@ -1873,6 +1928,11 @@ zones:
           page_pdf: 134
           citation: La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au sommet de l’acrotère et à 11 m au faîtage.
           statut: valide
+      prospect:
+        article: Us3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'Art. Us1, p. 130 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
     note: 'Zone provisoirement gelée : « Provisoirement, elle n''accepte aucune nouvelle construction dans l''attente de l''approbation de la modification du SCoT » (préambule, p. 129 — indicatif). Traduction réglementaire au tableau : toute construction nouvelle privée y est interdite ou limitée aux extensions ; anomalie de forme : le silence structurel reste « autorisé » (p. 130) alors que le tableau interdit quasi tout. Le tableau liste aussi « Carrière X » (occupation du sol, hors référentiel, p. 131).'
@@ -2088,6 +2148,11 @@ zones:
             citation: '2 roues : 5 % de la surface de plancher pour toute construction de plus de 300 m² de surface de plancher'
           conditions:
           - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+      prospect:
+        article: Up3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'Art. Up1, p. 143 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
     sous_destinations:
@@ -2253,6 +2318,11 @@ zones:
           page_pdf: 161
           citation: Les nouvelles constructions doivent être implantées en retrait de 3 m minimum des limites séparatives latérales et de fond de parcelle.
           statut: valide
+      prospect:
+        article: Ut3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'Art. Ut1, p. 157 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
     sous_destinations:
@@ -2409,6 +2479,11 @@ zones:
           page_pdf: 161
           citation: Les nouvelles constructions doivent être implantées en retrait de 3 m minimum des limites séparatives latérales et de fond de parcelle.
           statut: valide
+      prospect:
+        article: AUt13.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'Art. Ut1, p. 157 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun « Dispositions applicables à la zone Ut et AUt », p. 156 ; colonne AUt1 propre au tableau)'
     note: 'Préambule p. 156 : « L''urbanisation des zones AUt1 et AUt2 n''est possible qu''après réalisation d''opérations d''aménagement d''ensemble sur la totalité de la zone ou pour partie lorsqu''elles sont identifiées dans les Orientations d''Aménagement et de Programmation. »'
@@ -2566,6 +2641,11 @@ zones:
           page_pdf: 161
           citation: Les nouvelles constructions doivent être implantées en retrait de 3 m minimum des limites séparatives latérales et de fond de parcelle.
           statut: valide
+      prospect:
+        article: AUt23.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'Art. Ut1, p. 157 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun « Dispositions applicables à la zone Ut et AUt », p. 156 ; colonne AUt2 propre au tableau)'
     note: 'Préambule p. 156 : « L''urbanisation des zones AUt1 et AUt2 n''est possible qu''après réalisation d''opérations d''aménagement d''ensemble sur la totalité de la zone ou pour partie lorsqu''elles sont identifiées dans les Orientations d''Aménagement et de Programmation. »'
@@ -2738,6 +2818,11 @@ zones:
             page_pdf: 182
             porte: exclusion_generique
             modifie_calcul: false
+      prospect:
+        article: Uazp3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun « Dispositions applicables à la zone Ua et AUa », p. 171)'
     note: 'Art. Ua1, p. 173 : « Dans les secteurs Uazp, Uaza, Uazc, AUazc, Uazi et AUazi est autorisé, l''extension des constructions existantes dont les destinations ne sont pas autorisées ci-dessous, dans la limite de 120 m² de surface de plancher supplémentaire maximum sauf pour les constructions à destination de logement ou aucune extension n''est autorisée. » Légende du tableau p. 173 : les « X » interdisent nouvelles constructions ET changement de destination.'
@@ -2910,6 +2995,11 @@ zones:
             page_pdf: 182
             porte: exclusion_generique
             modifie_calcul: false
+      prospect:
+        article: Uazpc3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun « Dispositions applicables à la zone Ua et AUa », p. 171)'
     note: 'Art. Ua1, p. 173 : extension des constructions existantes de destination non autorisée limitée à 120 m² de surface de plancher supplémentaire (aucune extension pour le logement) — le secteur Uazpc n''est PAS cité dans cette phrase (secteurs cités : Uazp, Uaza, Uazc, AUazc, Uazi, AUazi). Légende du tableau p. 173 : les « X » interdisent nouvelles constructions ET changement de destination.'
@@ -3092,6 +3182,11 @@ zones:
             page_pdf: 182
             porte: exclusion_generique
             modifie_calcul: false
+      prospect:
+        article: Uaza3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun « Dispositions applicables à la zone Ua et AUa », p. 171 ; colonne du tableau intitulée « Uaza/AUaza »)'
     note: 'Art. Ua1, p. 173 : extension des constructions existantes de destination non autorisée limitée à 120 m² de surface de plancher supplémentaire (aucune extension pour le logement). Légende du tableau p. 173 : les « X » interdisent nouvelles constructions ET changement de destination.'
@@ -3271,6 +3366,11 @@ zones:
             page_pdf: 182
             porte: exclusion_generique
             modifie_calcul: false
+      prospect:
+        article: Uazc3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun « Dispositions applicables à la zone Ua et AUa », p. 171 ; colonne du tableau intitulée « Uazc / AUazc »)'
     note: 'Art. Ua1, p. 173 : extension des constructions existantes de destination non autorisée limitée à 120 m² de surface de plancher supplémentaire (aucune extension pour le logement). Légende du tableau p. 173 : les « X » interdisent nouvelles constructions ET changement de destination.'
@@ -3447,6 +3547,11 @@ zones:
             page_pdf: 182
             porte: exclusion_generique
             modifie_calcul: false
+      prospect:
+        article: AUazc3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     renvoi: Uazc
     renvoi_src: 'Art. Ua1, tableau p. 173 : colonne unique intitulée « Uazc / AUazc » (mêmes lignes et conditions pour les deux secteurs) ; préambule p. 171 : « Uazc et AUazc sont créés pour n''autoriser que les activités tertiaires et commerciales et industrie. »'
   Uazi:
@@ -3512,6 +3617,11 @@ zones:
             page_pdf: 182
             porte: exclusion_generique
             modifie_calcul: false
+      prospect:
+        article: Uazi3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun « Dispositions applicables à la zone Ua et AUa », p. 171 ; colonne du tableau intitulée « Uazi / AUazi »)'
     note: 'Art. Ua1, p. 173 : extension des constructions existantes de destination non autorisée limitée à 120 m² de surface de plancher supplémentaire (aucune extension pour le logement). Légende du tableau p. 173 : les « X » interdisent nouvelles constructions ET changement de destination. Occupation du sol « Carrière V* » (p. 175) : autorisée dans le secteur de la ZI N°4 identifié au Schéma Départemental des carrières, sous réserve de la remise en état du site après extraction (hors nomenclature des 23 sous-destinations).'
@@ -3699,6 +3809,11 @@ zones:
             page_pdf: 182
             porte: exclusion_generique
             modifie_calcul: false
+      prospect:
+        article: AUazi3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     renvoi: Uazi
     renvoi_src: 'Art. Ua1, tableau p. 173 : colonne unique intitulée « Uazi / AUazi » (mêmes lignes et conditions pour les deux secteurs) ; préambule p. 171 : « AUazi et Uazi destinés à l''accueil d''activités industrielles et artisanales (…) » ; p. 171 : « Les secteurs AUazc et AUazi font l''objet d''Orientations d''Aménagement et de Programmation dont les prescriptions et principes d''aménagement sont à respecter. »'
   Ue:
@@ -3770,6 +3885,11 @@ zones:
           page_pdf: 197
           citation: Le Coefficient de Biotope est de 25 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.
           statut: valide
+      prospect:
+        article: Ue3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'art. Ue1, p. 188 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. Le règlement et le tableau ci-dessous illustre, de manière non exhaustive, ceux qui se trouvent ainsi "autorisés". »'
     note: 'Les X du tableau visent les « Destinations interdites (nouvelles constructions) » (p. 188) ; l''extension ou la transformation des constructions existantes dans leur destination actuelle reste admise sous conditions (art. Ue1, p. 187). Secteur des 50 pas géométriques (plan de zonage) : « seuls sont autorisés » les services publics/équipements d''intérêt collectif, les opérations de réaménagement de quartier/logement social/RHI, les commerces, structures artisanales, équipements touristiques et hôteliers justifiés par la proximité de la mer, et l''adaptation/changement de destination/réfection/extension limitée de l''existant (20 % de l''emprise au sol) (p. 188). Autorisations nommées en Ue (p. 190) : Pôle Déchets Sud, station de traitement des eaux usées de Pierrefonds, unités de tri, installations du port, de l''hôpital, hébergements liés au fonctionnement des équipements (y compris étudiants d''un pôle de formation). Hors nomenclature des destinations : carrière V* (zone de
@@ -3942,6 +4062,11 @@ zones:
           page_pdf: 197
           citation: Le Coefficient de Biotope est de 25 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.
           statut: valide
+      prospect:
+        article: Uea3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     note: Secteur aérodrome de Pierrefonds. Une règle unique couvre toutes les destinations et sous-destinations (aucun silence résiduel — le tableau Ue1 ne comporte que des colonnes Ue et Uep, pas de colonne Uea). Hauteurs soumises au Plan de servitude aéronautique (art. Ue3, p. 193).
     sous_destinations:
       exploitation_agricole:
@@ -4144,6 +4269,11 @@ zones:
           page_pdf: 197
           citation: Le Coefficient de Biotope est de 25 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.
           statut: valide
+      prospect:
+        article: Uemi3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     note: Secteur des activités militaires. Une règle unique couvre toutes les destinations et sous-destinations (aucun silence résiduel — pas de colonne Uemi dans le tableau Ue1). Emprise au sol max 75 % comme en Ue (art. Ue3, p. 192).
     sous_destinations:
       exploitation_agricole:
@@ -4347,6 +4477,11 @@ zones:
           page_pdf: 197
           citation: Le Coefficient de Biotope est de 25 % minimum avec au moins 20% de la superficie de l’unité foncière en espace planté de pleine terre.
           statut: valide
+      prospect:
+        article: Uep3.5
+        page_pdf: 85
+        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        statut: valide
     silence: autorise
     silence_src: 'art. Ue1, p. 188 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (le tableau porte une colonne Uep dédiée qui fixe explicitement le sort de chaque ligne)'
     note: 'Secteur parcs et espaces verts paysagers. p. 190 : « Sont autorisés en zone Uep : Les équipements sportifs ou récréatifs de plein air, ainsi que les constructions et aménagements légers nécessaires à leur fonctionnement. » Emprise au sol limitée à 20 m² par ha (art. Ue3, p. 192). Hors nomenclature : carrière X, terrain de camping et de caravaning X (p. 191).'
