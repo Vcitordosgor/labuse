@@ -68,6 +68,106 @@ def _fraction_hauteur_formule(formule: Optional[str]) -> Optional[float]:
     return (1.0 / int(m.group(1))) if m else None
 
 
+# ── MOTEUR-VERITE-FIX-2 LOT A — implantation en limite : décision PURE et STRICTE ──────────────
+# RÈGLE (gravée par tests/test_moteur_verite_fix2.py) : une capacité ne peut DÉPASSER le niveau
+# prudent que si TOUTES les conditions de l'article qui l'ouvre sont APPLIQUÉES par le moteur.
+# Un seul jeton non modélisé, mal formé ou disjonctif → l'ouverture FERME (retrait prudent),
+# la mention « capacité supérieure possible, à vérifier » reste ; le verdict reste constructible.
+
+_JETON_FLAGS = ("une_seule_limite", "deux_limites_max")
+_JETON_NUMS = ("largeur_terrain_max", "surface_terrain_max", "bascule_surface",
+               "profondeur_bande", "lineaire_max_pct")
+#: forme STRICTE d'un jeton numérique : « nom:12 », « nom:12,5 m », « nom:400 m² » — RIEN d'autre.
+#: (FIX-2 LOT A : « largeur_terrain_max:14 m (≤ 14 m : deux limites…) » était lu 141 414 m — la
+#: concaténation de tous les chiffres — et ouvrait deux limites à toute largeur.)
+_JETON_NUM_RX = re.compile(r"^(?P<nom>[a-z_]+)\s*:\s*(?P<val>\d+(?:[.,]\d+)?)\s*(?:m²|m2|m)?\s*$")
+
+
+def jeton_num_strict(tok: str):
+    """(nom, valeur) si le jeton est de forme stricte, sinon None (→ FERME l'ouverture)."""
+    m = _JETON_NUM_RX.match(tok.strip())
+    if not m or m.group("nom") not in _JETON_NUMS:
+        return None
+    return m.group("nom"), float(m.group("val").replace(",", "."))
+
+
+def analyser_condition_implantation(imp: Optional[dict], largeur_m, surface_m2) -> dict:
+    """Décision d'implantation d'UN côté — {ouvre: bool, zero: 'toutes'|n|0, bande_m,
+    lineaire_pct, detail, mention}. `largeur_m` : largeur mesurée du terrain (ou None),
+    `surface_m2` : surface cadastrale (ou None). PURE (aucune géométrie ici).
+
+    FIX-2 LOT A : TOUT ou RIEN — si un jeton de `condition_modelable` n'est pas STRICTEMENT
+    modélisé (flag exact ou numérique bien formé), le côté N'OUVRE PAS (zero 0) et porte la
+    mention. Fini l'« ouverture + mention » qui chiffrait sans appliquer la condition."""
+    d = {"ouvre": False, "zero": 0, "bande_m": None, "lineaire_pct": None,
+         "detail": None, "mention": None}
+    if imp is None or imp.get("mode") in (None, "retrait_obligatoire"):
+        if imp is not None and imp.get("mode") == "retrait_obligatoire" and imp.get("condition_texte"):
+            d["mention"] = str(imp["condition_texte"]).strip()[:200]
+        return d
+    mode = imp["mode"]
+    art = (imp.get("article") or "").strip()
+    cm = (imp.get("condition_modelable") or "").strip()
+    cond_txt = (imp.get("condition_texte") or "conditions du règlement").strip()
+    if mode in ("limite_ou_retrait", "limite_imposee") and not cm:
+        lib = ("implantation en limite admise sans condition" if mode == "limite_ou_retrait"
+               else "implantation en limite imposée par le règlement")
+        d.update(ouvre=True, zero="toutes", detail=(f"{lib} — {art}" if art else lib))
+        return d
+    jetons = [t.strip() for t in cm.split("+") if t.strip()]
+    details = []
+    for tok in jetons:
+        if tok in _JETON_FLAGS:
+            n = 1 if tok == "une_seule_limite" else 2
+            d["zero"] = "toutes" if d["zero"] == "toutes" else max(d["zero"] or 0, n)
+            details.append("en limite sur une seule limite" if n == 1 else "en limite sur deux limites au plus")
+            continue
+        js = jeton_num_strict(tok)
+        if js is None:
+            # jeton inconnu, « non », disjonctif (« OU ») ou MAL FORMÉ → l'ouverture FERME.
+            d.update(ouvre=False, zero=0, bande_m=None, lineaire_pct=None,
+                     detail=None, mention=cond_txt[:200])
+            return d
+        nom, val = js
+        if nom == "largeur_terrain_max":
+            if largeur_m is None:
+                d.update(ouvre=False, zero=0, bande_m=None, lineaire_pct=None, detail=None,
+                         mention=(cond_txt[:160] + " (largeur du terrain non mesurable)"))
+                return d
+            if largeur_m <= val:
+                d["zero"] = "toutes"
+                details.append(f"largeur du terrain {largeur_m:g} m ≤ {val:g} m")
+            elif mode == "limite_imposee":
+                d["zero"] = "toutes" if d["zero"] == "toutes" else max(d["zero"] or 0, 1)
+                details.append(f"largeur {largeur_m:g} m > {val:g} m — au moins une limite imposée")
+            # sinon : condition évaluée, non remplie → ce jeton n'ouvre rien (pas une mention)
+        elif nom == "surface_terrain_max":
+            if surface_m2 and float(surface_m2) <= val:
+                d["zero"] = "toutes"
+                details.append(f"surface du terrain {float(surface_m2):g} m² ≤ {val:g} m²")
+        elif nom == "bascule_surface":
+            if not surface_m2:
+                d.update(ouvre=False, zero=0, bande_m=None, lineaire_pct=None, detail=None,
+                         mention=(cond_txt[:160] + " (surface non connue)"))
+                return d
+            n = 2 if float(surface_m2) <= val else 1
+            d["zero"] = "toutes" if d["zero"] == "toutes" else max(d["zero"] or 0, n)
+            details.append(f"{n} limite(s) admise(s) (surface {float(surface_m2):g} m² "
+                           f"{'≤' if n == 2 else '>'} {val:g} m²)")
+        elif nom == "profondeur_bande":
+            d["bande_m"] = val
+            details.append(f"dans une bande de {val:g} m depuis la voie")
+        elif nom == "lineaire_max_pct":
+            d["lineaire_pct"] = val
+            details.append(f"sur au plus {val:g} % du linéaire")
+    if d["bande_m"] and not d["zero"]:
+        d["zero"] = "toutes"
+    d["ouvre"] = bool(d["zero"])
+    if details and d["ouvre"]:
+        d["detail"] = ("; ".join(details) + (f" — {art}" if art else ""))[:220]
+    return d
+
+
 def _bdtopo_millesime(session: Session) -> str:
     """Millésime BD TOPO lu depuis data_sources (jamais codé en dur)."""
     row = session.execute(text(
@@ -615,90 +715,23 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             except Exception:  # noqa: BLE001 — largeur non mesurable → condition non évaluée
                 return None
 
-        def _jeton_num(tok, prefixe):
-            import re as _re
+        def _largeur_terrain_m():
             try:
-                return float(_re.sub(r"[^0-9.,]", "", tok.split(":", 1)[1]).replace(",", "."))
-            except (IndexError, ValueError):
+                rect = to_metric(shape_from_geojson(geom)).minimum_rotated_rectangle
+                c = list(rect.exterior.coords)
+                import math
+                return round(min(math.dist(c[0], c[1]), math.dist(c[1], c[2])), 1)
+            except Exception:  # noqa: BLE001 — largeur non mesurable → condition non évaluée (FERME)
                 return None
 
-        def _decision_cote(imp, cote_label):
-            """MOTEUR-VERITE-FIX-1 LOT 5 — décision par côté, jetons COMBINABLES (séparés par «+»).
-            {zero: 'toutes'|n|0, bande_m, lineaire_pct, detail, mention}. Jetons modélisables :
-            une_seule_limite · deux_limites_max · largeur_terrain_max:X (mesurée ; non remplie en
-            mode imposé → au moins UNE limite reste imposée) · surface_terrain_max:X (surface
-            cadastrale) · bascule_surface:X (≤X → deux limites, >X → une) · profondeur_bande:X
-            (la limite ne vaut que dans la bande de X m depuis la voie ; retrait au-delà) ·
-            lineaire_max_pct:P (au plus P % du linéaire de l'arête en limite). Tout jeton inconnu,
-            « non » ou disjonctif (« OU ») → MENTION (capacité supérieure possible, à vérifier)."""
-            d = {"zero": 0, "bande_m": None, "lineaire_pct": None, "detail": None, "mention": None}
-            if imp is None or imp.get("mode") is None:
-                return d
-            mode = imp["mode"]
-            art = (imp.get("article") or "").strip()
-            cm = (imp.get("condition_modelable") or "").strip()
-            cond_txt = (imp.get("condition_texte") or "conditions du règlement").strip()
-            if mode == "retrait_obligatoire":
-                # LOT 5 (décision 8) — retrait obligatoire SANS valeur chiffrée propre : la valeur
-                # des latérales s'applique, dit par une mention quand le calibrage le signale.
-                if cm == "non" or imp.get("condition_texte"):
-                    d["mention"] = cond_txt if imp.get("condition_texte") else None
-                return d
-            if mode in ("limite_ou_retrait", "limite_imposee") and not cm:
-                lib = ("implantation en limite admise sans condition" if mode == "limite_ou_retrait"
-                       else "implantation en limite imposée par le règlement")
-                d.update(zero="toutes", detail=(f"{lib} — {art}" if art else lib))
-                return d
-            jetons = [t.strip() for t in cm.split("+") if t.strip()]
-            details, mentions = [], []
-            for tok in jetons:
-                if " OU " in tok or tok == "non" or not tok:
-                    mentions.append(cond_txt)
-                elif tok.startswith("une_seule_limite"):
-                    d["zero"] = "toutes" if d["zero"] == "toutes" else max(d["zero"] or 0, 1)
-                    details.append("en limite sur une seule limite latérale")
-                elif tok.startswith("deux_limites_max"):
-                    d["zero"] = "toutes" if d["zero"] == "toutes" else max(d["zero"] or 0, 2)
-                    details.append("en limite sur deux limites au plus")
-                elif tok.startswith("largeur_terrain_max:"):
-                    seuil = _jeton_num(tok, "largeur")
-                    larg = _largeur_terrain_m()
-                    if seuil and larg is not None and larg <= seuil:
-                        d["zero"] = "toutes"
-                        details.append(f"largeur du terrain {larg:g} m ≤ {seuil:g} m")
-                    elif seuil and larg is not None and mode == "limite_imposee":
-                        d["zero"] = max(d["zero"] or 0, 1) if d["zero"] != "toutes" else "toutes"
-                        details.append(f"largeur {larg:g} m > {seuil:g} m — au moins une limite imposée")
-                elif tok.startswith("surface_terrain_max:"):
-                    seuil = _jeton_num(tok, "surface")
-                    if seuil and surface and float(surface) <= seuil:
-                        d["zero"] = "toutes"
-                        details.append(f"surface du terrain {float(surface):g} m² ≤ {seuil:g} m²")
-                elif tok.startswith("bascule_surface:"):
-                    seuil = _jeton_num(tok, "bascule")
-                    if seuil and surface:
-                        n = 2 if float(surface) <= seuil else 1
-                        d["zero"] = "toutes" if d["zero"] == "toutes" else max(d["zero"] or 0, n)
-                        details.append(f"{n} limite(s) admise(s) (surface {float(surface):g} m² "
-                                       f"{'≤' if n == 2 else '>'} {seuil:g} m²)")
-                elif tok.startswith("profondeur_bande:"):
-                    d["bande_m"] = _jeton_num(tok, "bande")
-                    details.append(f"dans une bande de {d['bande_m']:g} m depuis la voie")
-                elif tok.startswith("lineaire_max_pct:"):
-                    d["lineaire_pct"] = _jeton_num(tok, "lineaire")
-                    details.append(f"sur au plus {d['lineaire_pct']:g} % du linéaire")
-                else:
-                    mentions.append(cond_txt)
-            if d["bande_m"] and not d["zero"]:
-                d["zero"] = "toutes"          # bande seule : limite admise DANS la bande
-            if mentions:
-                d["mention"] = mentions[0][:200]
-            if details:
-                d["detail"] = ("; ".join(details) + (f" — {art}" if art else ""))[:220]
-            return d
-
-        dec_lat = _decision_cote(imp_lat, "latérales")
-        dec_fond = _decision_cote(imp_fond, "fond de parcelle")
+        # MOTEUR-VERITE-FIX-2 LOT A — décision PURE (analyser_condition_implantation) : tout jeton
+        # non strictement modélisé FERME l'ouverture (chiffre prudent + mention, verdict conservé).
+        _larg = None
+        if any("largeur_terrain_max" in str((i or {}).get("condition_modelable") or "")
+               for i in (imp_lat, imp_fond)):
+            _larg = _largeur_terrain_m()
+        dec_lat = analyser_condition_implantation(imp_lat, _larg, surface)
+        dec_fond = analyser_condition_implantation(imp_fond, _larg, surface)
         _mentions = [m for m in (dec_lat["mention"], dec_fond["mention"]) if m]
         if _mentions or dec_lat["detail"] or dec_fond["detail"]:
             racc["implantation"] = {"laterales": imp_lat, "fond": imp_fond,
@@ -706,25 +739,35 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                                     "mentions": _mentions}
 
         def _setbacks_for(edges, include_voie):
-            # MOTEUR-VERITE-FIX-1 LOT 2/5 — arêtes en limite (recul 0) selon la décision par côté,
-            # avec DÉCOUPAGE géométrique : bande depuis la voie (profondeur_bande) et plafond de
-            # linéaire (lineaire_max_pct) ne mettent à 0 que la PART d'arête couverte par la règle ;
-            # le reste garde le retrait (`limite-sep`, re-insété par la formule H/n du LOT 1).
+            # FIX-2 LOT A — le fond ne passe à 0 que si SON texte l'admet expressément (feuille
+            # fond ouvrante) ; et quand latérales et fond s'ouvrent par le MÊME article indistinct
+            # avec un PLAFOND n de limites, le budget n s'applique AU TOTAL (n arêtes les plus
+            # longues parmi latérales + fond), jamais n latérales PLUS tout le fond.
             from shapely.ops import unary_union as _uu, substring as _substr
             voie_geoms = [e.geom for e in edges if e.type == "voie"]
             def _band(bm):
                 if not bm or not voie_geoms:
                     return None               # pas de voie mesurable → prudence : pas de limite
                 return _uu([g.buffer(bm) for g in voie_geoms])
-            lat_edges = [e for e in edges if e.type == "side"]
-            if dec_lat["zero"] == "toutes":
-                lat_zero = set(id(e) for e in lat_edges)
-            elif dec_lat["zero"]:
-                tri = sorted(lat_edges, key=lambda e: -float(e.geom.length))
-                lat_zero = set(id(e) for e in tri[:int(dec_lat["zero"])])
-            else:
-                lat_zero = set()
-            rear_zero = dec_fond["zero"] == "toutes"
+            side_edges = [e for e in edges if e.type == "side"]
+            rear_edges = [e for e in edges if e.type == "rear"]
+            fond_expres = dec_fond["ouvre"]
+            meme_article = (fond_expres and dec_lat["ouvre"]
+                            and (imp_lat or {}).get("article") == (imp_fond or {}).get("article"))
+            zero_ids = set()
+            if dec_lat["ouvre"] and dec_lat["zero"] == "toutes":
+                zero_ids |= {id(e) for e in side_edges}
+            if fond_expres and dec_fond["zero"] == "toutes" and not (
+                    meme_article and isinstance(dec_lat["zero"], int)):
+                zero_ids |= {id(e) for e in rear_edges}
+            if dec_lat["ouvre"] and isinstance(dec_lat["zero"], int) and dec_lat["zero"] > 0:
+                bassin = side_edges + (rear_edges if meme_article else [])
+                tri = sorted(bassin, key=lambda e: -float(e.geom.length))
+                zero_ids |= {id(e) for e in tri[:dec_lat["zero"]]}
+            if (fond_expres and isinstance(dec_fond["zero"], int) and dec_fond["zero"] > 0
+                    and not meme_article):
+                tri = sorted(rear_edges, key=lambda e: -float(e.geom.length))
+                zero_ids |= {id(e) for e in tri[:dec_fond["zero"]]}
 
             def _emettre(i, e, dec, en_limite):
                 if not en_limite:
@@ -750,20 +793,21 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                         parts_ret.append(_substr(g, frac, 1.0, normalized=True))
                     g_lim = _uu([p for p in parts_lim if not p.is_empty]) if parts_lim else None
                     extra = _uu([p for p in parts_ret if not p.is_empty]) if parts_ret else None
-                    g_ret = _uu([x for x in (g_ret, extra) if x is not None and not x.is_empty])                         if (g_ret is not None or extra is not None) else None
-                for j, (g, rid, d) in enumerate(((g_lim, "limite-sep-limite", 0.0),
-                                                 (g_ret, "limite-sep", recul_sep))):
+                    g_ret = _uu([x for x in (g_ret, extra) if x is not None and not x.is_empty]) \
+                        if (g_ret is not None or extra is not None) else None
+                for j, (g, rid, dd) in enumerate(((g_lim, "limite-sep-limite", 0.0),
+                                                  (g_ret, "limite-sep", recul_sep))):
                     if g is None or g.is_empty or g.length < 0.05:
                         continue
                     setbacks.append(Setback(id=f"lim-{i}-{j}", ruleId=rid, type=e.type,
                                             geometry=geojson_from_shape(to_wgs(g)),
-                                            setbackM=d, source=bdtopo_src))
+                                            setbackM=dd, source=bdtopo_src))
 
             for i, e in enumerate(edges):
                 if e.type == "side":
-                    _emettre(i, e, dec_lat, id(e) in lat_zero)
+                    _emettre(i, e, dec_lat, id(e) in zero_ids)
                 elif e.type == "rear":
-                    _emettre(i, e, dec_fond, rear_zero)
+                    _emettre(i, e, dec_fond if fond_expres else dec_lat, id(e) in zero_ids)
                 elif include_voie and e.type == "voie":
                     setbacks.append(Setback(id=f"lim-{i}", ruleId=_ruleid_for(e), type="road",
                                             geometry=geojson_from_shape(to_wgs(e.geom)),
@@ -776,8 +820,8 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                     category="setback", integrationStatus="integrated",
                     detail=f"Recul séparatif {recul_sep:g} m — PLU {commune} {work_zone} (validé)", source=bdtopo_src))
             # MOTEUR-VERITE-FIX-1 (LOT 2) — arêtes posées EN LIMITE (recul 0 sourcé au règlement).
-            if ((dec_lat["zero"] and any(e.type == "side" for e in edges))
-                    or (dec_fond["zero"] == "toutes" and any(e.type == "rear" for e in edges))):
+            if ((dec_lat["ouvre"] and any(e.type == "side" for e in edges))
+                    or (dec_fond["ouvre"] and any(e.type == "rear" for e in edges))):
                 _det = " ; ".join(d for d in (dec_lat["detail"], dec_fond["detail"]) if d)
                 applicable.append(ApplicableRule(
                     id="limite-sep-limite", label="Limites séparatives — en limite",
