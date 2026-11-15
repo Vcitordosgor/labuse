@@ -1,0 +1,163 @@
+# FRAICHEUR-PROD-3 — rattrapage des deux mises à jour en retard, sur la prod
+
+**Mandat** : lancer une seule fois, dans l'ordre, les deux tâches mensuelles qui ont raté leur
+créneau — les permis (`ingest-sitadel`) puis les dirigeants (`ingest-inpi-rne`) — exactement
+comme le cron, après avoir prouvé qu'une sauvegarde fraîche se relit et que le disque suffit.
+Écriture serveur **limitée à ces deux jobs** : aucun déploiement, aucun classement, calcul de
+nuit toujours gelé, aucun cache vidé à la main.
+**Quand** : dimanche 15/11/2026, 06 h 10 → 06 h 25 (heure Réunion) — hors fenêtre sauvegarde
+(13 h 30–14 h) et hors fenêtre de nuit (1 h–3 h 30).
+**Où** : prod `labuse-vps`, branche déployée `ops/deploy-groupe-3`, worktree
+`~/Desktop/labuse-deploy3` (arbre propre).
+
+---
+
+## Résultat en bref
+
+| Job | Avant | Après | Journal | Verdict |
+|---|---|---|---|---|
+| **ingest-sitadel** (permis) | 50 810 lignes · max **31/08/2026** | **51 063** (+253) · max **30/09/2026** | ok, 54,2 s, 1 067 upserts, 0 erreur | **rattrapé** — l'outil Permis sert désormais septembre |
+| **ingest-inpi-rne** (dirigeants) | 27 146 lignes · 9 337 SIREN · stock **05/07/2026** | **27 241** (+95) · **9 374** SIREN (+37) · stock **15/11/2026** | ok, 198 s, 0 erreur | **rattrapé pour la couverture** (voir nuance § 3) |
+
+Les deux ont augmenté leur nombre de lignes, avancé leur date, et n'ont levé aucune erreur —
+les trois conditions d'arrêt du mandat sont restées vertes à chaque étape. **Recharge DVF
+confirmée : mardi 17/11/2026 à 05 h 00 (heure Réunion)** (§ 4). Aucun classement n'a été promu
+(manifeste toujours `q_v20`), aucun cache vidé, calcul de nuit toujours gelé.
+
+---
+
+## 1. Garde-fous avant écriture (tous verts)
+
+**Sauvegarde fraîche et relisible.** Dernier dump quotidien :
+`/var/backups/labuse/labuse-labuse-20261114-133003.dump` — **14/11 13 h 30, 6,2 Go**.
+`pg_restore --list` réussit : **1 840 objets, 305 tables**, et le sommaire contient bien les deux
+tables visées (`sitadel_permits` et `pm_dirigeants`, en TABLE + TABLE DATA). Témoins concordants :
+test de restauration mensuel **vert le 05/11** (`.restore-test.json` : « lisibilité OK, 1 814 objets »)
+et **copie externe le 13/11** sur disque TOSHIBA (`.copie-externe.json`, sha256 enregistré).
+
+**Disque suffisant.** `/` : 96 Go, **25 Go libres (75 %)** avant comme après les deux jobs (ils
+font de l'upsert delta, pas de gonflement).
+
+**Heure.** 06 h 10 Réunion au démarrage, bien à l'écart des deux fenêtres interdites.
+
+---
+
+## 2. Permis — `ingest-sitadel`
+
+**Commande, fidèle au cron** (utilisateur `labuse`, sourcing de `labuse.env`) :
+`sudo -u labuse sh -c 'cd /home/labuse && set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run ingest-sitadel'`.
+
+**Un premier essai a échoué sans rien toucher.** Lancé d'abord depuis le home de ma session ssh
+(`/home/ubuntu`), le job a levé `PermissionError: '/home/ubuntu'` en 0,1 s — l'utilisateur `labuse`
+ne peut pas lire ce répertoire, alors que le cron tourne depuis `$HOME` (= `/home/labuse`, comme
+le note `labuse.env.example`). Vérifié : `sitadel_permits` **inchangé** (50 810, max 31/08),
+compteurs vides. J'ai corrigé le répertoire de travail et relancé ; l'incident `job-echec:
+ingest-sitadel` ouvert par cet essai a été **auto-refermé à 06 h 13 44** par le run réussi (aucun
+incident pendant).
+
+**Run réussi** — 06 h 12 50 → 06 h 13 44, **54,2 s, statut ok** :
+`{lignes: 1111, upserts: 1067, sans_cadastre: 44, dates_futures: 0, dates_invalides: 0}`.
+
+| Mesure | Avant | Après |
+|---|---|---|
+| Lignes | 50 810 | **51 063** (+253) |
+| Date la plus récente (`max(date)`) | 31/08/2026 | **30/09/2026** |
+| Par mois | 05:209 · 06:247 · 07:271 · 08:237 | 05:199 · 06:257 · 07:275 · 08:249 · **09:253** |
+
+Le mois de **mai passe de 209 à 199 (−10)** : ce n'est pas une perte, c'est la reclassification
+d'un refresh (`ingest-permits --refresh` relit tout le jeu et recorrige des dates ; 1 067 upserts
+sur des lignes existantes, dont quelques permis de mai re-datés). Le **total gouvernant monte**
+(+253) et la **date avance d'un mois** — les deux signaux de santé.
+
+**Pas de classement promu.** Le job comporte, comme chaque mois (description cron « → golden
+candidat »), un **comparatif** run servi vs candidat q_v23 (`promues_servi` 802 / `promues_candidat`
+409), envoyé par mail. C'est une mesure, pas une promotion : le manifeste reste `q_v20`
+(promu le 27/10) et **aucun nouveau run de score** n'est apparu.
+
+**Ce que le client lit maintenant.** La requête qui gouverne l'outil Permis (ancrée sur
+`max(date)`) sert `donnees_jusqu_au = 30/09/2026` ; la fenêtre « Autorisés depuis 90 jours »
+passe de **145 à 400 permis** (253 depuis le 1ᵉʳ septembre, auparavant absents). Exemples de
+nouveaux permis PC du 30/09 rattachés à une parcelle : `97418000BI0104` (Sainte-Marie),
+`97407000AT0029` (Le Port), `97418000AE0286` (Sainte-Marie) — leurs fiches afficheront ce permis.
+Endpoints vivants : `/healthz` **200** ; `/modules/permis` et `/parcels/{idu}` répondent **401**
+(route + authentification en place). Ces endpoints exigent une session utilisateur ; je n'en ai
+pas créé (ce serait une écriture hors mandat), j'ai donc prouvé la donnée servie au niveau base
+(requête exacte de l'endpoint, lecture seule).
+
+---
+
+## 3. Dirigeants — `ingest-inpi-rne`
+
+**Commande, fidèle au cron** :
+`sudo -u labuse sh -c 'cd /home/labuse && set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run ingest-inpi-rne'`.
+
+**Run réussi** — 06 h 17 48 → 06 h 21 06, **198 s, statut ok**. Sortie :
+« 9 614 éligibles, **9 337 déjà faits**, **277 à traiter** → **95 dirigeants, 37 SIREN** »,
+`millesime_donnee: 2026-11-15`.
+
+| Mesure | Avant | Après |
+|---|---|---|
+| Lignes | 27 146 | **27 241** (+95) |
+| SIREN distincts | 9 337 | **9 374** (+37) |
+| Stock ingéré (`max(ingested_at)`) | 05/07/2026 | **15/11/2026 06 h 20** |
+| `max(date_prise_fonction)` | 2023-12-01 | 2023-12-01 (inchangé — propre au stock RNE) |
+
+**Preuve de nouvelle couverture.** Les SIREN enrichis aujourd'hui (ex. `407718360`, `519779813`,
+`519779920`, 5 dirigeants chacun) avaient **0 dirigeant avant ce jour** (vérifié). Ce sont des
+personnes morales devenues éligibles depuis juillet, désormais dotées. L'outil Successions
+(`/modules/successions`, vivant — 401) les affichera.
+
+**Nuance importante — ce job ne rafraîchit PAS les sociétés déjà couvertes.** Les 9 337 SIREN
+« déjà faits » sont sautés : un gérant qui a **changé** depuis juillet dans une société déjà
+enrichie garde sa donnée de juillet. Le rattrapage comble donc les **trous** (nouvelles sociétés),
+il ne corrige pas les **changements** sur l'existant. Le retard « ~4 stocks » signalé en
+FRAICHEUR-PROD-2 est **partiellement** résorbé : la couverture est à jour, la fraîcheur des
+dirigeants déjà connus ne l'est pas (il faudrait un vrai re-stock complet, hors de ce que fait ce job).
+Par ailleurs `parcel_veille_succession` (la couche de veille lue par l'outil) reste **au 13/10** —
+c'est sa cadence propre, ce job ne la recalcule pas.
+
+**Pas de classement touché** : manifeste `q_v20`, aucun nouveau run de score.
+
+---
+
+## 4. Recharge des ventes (DVF) — programmée mardi 17 à 05 h 00
+
+La ligne cron est **active** (non commentée) :
+`0 5 * * 2   labuse  … labuse jobs run ingest-dvf` → **tous les mardis à 05 h 00 (heure Réunion)**.
+Prochain mardi depuis le 15/11 : **17/11/2026**. Donc la recharge DVF partira **mardi 17/11 à
+05 h 00 Réunion**.
+
+Le code déployé est prêt : `/opt/labuse/app/src/labuse/ingestion/dvf_etalab.py` lit le format
+Etalab actuel (`full-AAAA-sN`, témoins `full-2026-s1` présents) — le run de mardi tirera donc le
+semestre S1 2026 (ventes jusqu'au 30/06). Les derniers runs `ingest-dvf` (27/10 et 03/11, 2,5 s,
+ancien lecteur = no-op) n'avaient rien ramené ; l'occurrence du **mardi 10/11 a sauté** (crontab
+re-posé le 13/11, après coup), d'où l'incident `job-retard:ingest-dvf` ouvert le 13/11. Le
+planning est stable depuis le 13/11 et les autres crons tournent normalement — l'occurrence du
+17/11 doit donc se déclencher. **Je ne l'ai pas lancée** (hors mandat : seuls SITADEL et INPI
+étaient demandés).
+
+---
+
+## 5. État des incidents après l'intervention
+
+| Incident | État | Note |
+|---|---|---|
+| `job-echec:ingest-sitadel` (mon 1er essai) | **résolu** 06 h 13 44 | auto-refermé par le run réussi |
+| `escalade:…:job-retard:ingest-sitadel` (« jamais réussi ») | **résolu** 06 h 15 05 | auto-refermé |
+| `fraicheur-retard:SITADEL` | ouvert | se refermera **ce soir au contrôle de 07 h 50** (SITADEL désormais à jour) |
+| `fraicheur-retard:DVF` | ouvert | se refermera après la recharge de **mardi 17/11** |
+| `job-retard:ingest-dvf` | ouvert | idem — après mardi |
+| (aucun incident INPI ouvert) | — | le run réussi a soldé l'éventuel « jamais réussi » |
+
+Rien n'a été fait d'autre : aucun déploiement, aucun run de classement, calcul de nuit toujours
+gelé, aucun cache vidé à la main. Disque inchangé (25 Go libres).
+
+---
+
+## Méthode
+
+Prod écrite **uniquement** via les deux commandes `labuse jobs run …` ci-dessus, exécutées en
+tant qu'utilisateur `labuse` depuis `/home/labuse`, avec sourcing de `/etc/labuse/labuse.env` —
+réplique exacte des lignes du crontab. Toutes les autres requêtes (états avant/après, incidents,
+sauvegarde, liveness) sont en lecture seule (`sudo -u postgres psql`, `pg_restore --list`, `curl`
+sur `/healthz`), avec `statement_timeout` posé, hors des deux fenêtres interdites.
