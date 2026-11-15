@@ -104,6 +104,29 @@ def test_plafond_national_ne_fait_que_baisser():
     assert b2.exiger(_collectif(20), destination="collectif").places == 30
 
 
+def test_plafond_l151_compare_a_l_exigence_applicable():
+    """FIX-3 (LOT 3) — le plafond L151-35 se compare à l'exigence RÉELLEMENT applicable au programme (ligne
+    aidée comprise), pas au forfait général. Le Port Uc : aidé 0,2/logt + 8/1000 m² = 16 ; plafond 0,5/logt
+    le borne à 10 (l'ancien code sautait le plafond car 0,5 ≥ 0,3 forfait général)."""
+    from dataclasses import replace
+    from types import SimpleNamespace
+    b = R.charger("97407", "Uc").stationnement
+    mods = [SimpleNamespace(pieces=3, surface_m2=70.0) for _ in range(20)]
+    assert b.exiger(mods, destination="social").places == 16
+    b05 = replace(b, plafond_national={"ratio": 0.5, "article": "L151-35"})
+    assert b05.exiger(mods, destination="social").places == 10
+
+
+def test_plafond_l151_univ_personnes_agees_0_5_toujours():
+    """FIX-3 (LOT 3) — résidences universitaires et établissements personnes âgées : plafond 0,5 place/logt
+    QUELLE QUE SOIT la distance (le logement aidé, lui, reste à 1 si > 800 m)."""
+    from labuse.implantation import moteur as M
+    b = R.charger("97407", "Uc").stationnement
+    assert M._plafond_l151(None, ["x"], "senior", b)[0] == 0.5      # distance inconnue → 0,5 quand même
+    assert M._plafond_l151(None, ["x"], "etudiante", b)[0] == 0.5
+    assert M._plafond_l151(None, ["x"], "social", b)[0] == 1.0      # aidé loin d'un TCSP → 1,0
+
+
 @pytest.mark.parametrize("insee,zone,fonction_seulement", [
     ("97415", "U1a", False),   # quota de logements locatifs sociaux → vrai programme d'habitation
     ("97414", "UZ", False),    # « maximum 1 logement individuel » dans les espaces d'habitat → vrai habitat

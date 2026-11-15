@@ -583,15 +583,19 @@ def _plafond_l151(session, idus, type_projet, bareme):
     (ratio, article, citation) ou None. L151-35 (résid. univ/social/RPA) : ≤ 1 /logt, ≤ 0,5 si < 800 m
     d'un transport collectif bien desservi. L151-36 (autres logements) : ≤ 1 si < 800 m.
     FAISA-REGLES-1 (E-056) — rayon porté de 500 à 800 m par la loi n° 2025-1129 du 26 novembre 2025."""
-    plu = bareme.flat_places if (bareme.validee and bareme.mode == "par_logement") else None
     dist = _tcsp_dist_m(session, idus)
     sous_800 = dist is not None and dist < 800
     if type_projet in _L15134_F6:
-        cap, art = (0.5 if sous_800 else 1.0), "L151-35"
+        # ETUDE-STATIONNEMENT-FIX-3 (LOT 3) — L151-35 distingue les catégories : le logement locatif AIDÉ est
+        # plafonné à 1 place/logt (0,5 si < 800 m d'un TCSP bien desservi) ; les RÉSIDENCES UNIVERSITAIRES et
+        # les établissements pour PERSONNES ÂGÉES sont plafonnés à 0,5 place/logt QUELLE QUE SOIT la distance.
+        cap = 0.5 if type_projet in ("senior", "etudiante") else (0.5 if sous_800 else 1.0)
+        art = "L151-35"
         cat = _CAT_L15134.get(type_projet, "catégorie L151-34")
+        _motif_dist = (" (terrain à moins de 800 m d'un transport collectif bien desservi, loi 2025-1129)"
+                       if (type_projet == "social" and sous_800) else "")
         cite = (f"Code de l'urbanisme L151-35 : pour une {cat}, il ne peut être exigé plus de {cap:g} "
-                f"aire de stationnement par logement"
-                + (" (terrain à moins de 800 m d'un transport collectif bien desservi, loi 2025-1129)" if sous_800 else "")
+                f"aire de stationnement par logement" + _motif_dist
                 + " — le PLU ne s'applique que s'il est plus favorable ; éligibilité de la catégorie à confirmer.")
     elif type_projet == "collectif" and sous_800:
         cap, art = 1.0, "L151-36"
@@ -600,9 +604,10 @@ def _plafond_l151(session, idus, type_projet, bareme):
                 "— le PLU ne s'applique que s'il est plus favorable.")
     else:
         return None
-    # la loi ne « mord » que si elle plafonne SOUS la règle du PLU par logement.
-    if plu is not None and cap >= plu:
-        return None
+    # ETUDE-STATIONNEMENT-FIX-3 (LOT 3) — on renvoie TOUJOURS le ratio quand la catégorie s'applique : c'est
+    # `exiger._cap_plafond` (au niveau du PROGRAMME) qui ne « mord » que si le plafond est SOUS l'exigence
+    # RÉELLEMENT applicable au programme (ligne aidée comprise). L'ancien court-circuit comparait le plafond
+    # au FORFAIT GÉNÉRAL par logement (0,3 au Port) et sautait le plafond alors que l'aidé exige 0,8/logt.
     return cap, art, cite
 
 
@@ -648,16 +653,13 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
             validee=True, mode="par_logement", base=None, arrondi="superieur",
             flat_places=stationnement_ratio, lignes=(), article=_art151,
             page_pdf=None, citation=_cite151 or f"plafond {stationnement_ratio:g} place / logement sous condition d'éligibilité"))
-    elif _plaf is not None:
-        if regles.stationnement.validee:
-            # barème local validé : on l'ATTACHE comme borne (ne relève jamais, s'applique à la ligne dédiée).
-            regles = replace(regles, stationnement=replace(regles.stationnement, plafond_national=_plaf))
-        else:
-            # aucun barème local : le plafond sert de barème pour chiffrer la capacité (régime réduit).
-            regles = replace(regles, stationnement=BaremeStationnement(
-                validee=True, mode="par_logement", base=None, arrondi="superieur",
-                flat_places=_plaf["ratio"], lignes=(), article=_art151, plafond_national=_plaf,
-                page_pdf=None, citation=_cite151 or f"plafond {_plaf['ratio']:g} place / logement sous condition d'éligibilité"))
+    elif _plaf is not None and regles.stationnement.validee:
+        # barème local validé : on l'ATTACHE comme borne (ne relève jamais, s'applique à la ligne dédiée).
+        regles = replace(regles, stationnement=replace(regles.stationnement, plafond_national=_plaf))
+    # ETUDE-STATIONNEMENT-FIX-3 (LOT 3) — barème local ABSENT : le plafond national NE DEVIENT JAMAIS un
+    # minimum « validé ». C'est un MAXIMUM : sans minimum local, le stationnement reste « non vérifié » et le
+    # plafond n'est affiché que comme borne « à confirmer » (par `_stationnement_regimes.plafond_national`).
+    # (Avant, on fabriquait un barème validee=True au ratio du plafond → le plafond servait de minimum, faux.)
     zi = terrain.zone_implantation
     if zi is None or zi.is_empty or terrain.aire_zone_m2 < 60:
         return ([], [], None,
