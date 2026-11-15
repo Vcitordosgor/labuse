@@ -1324,9 +1324,13 @@ DONNEES: dict[str, Donnee] = {
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:bloc_potentiel (table_rase.plancher_m2)",
     reservoirs=("bd_topo", "cosia", "gpu_plu_api_carto",), portee="run"),
- "marge_surelevation_m": C("Marge de surélévation (au faîtage)", "m", "parcelle",
-    "hauteur restante sous la règle de FAÎTAGE de la zone, comparée au faîtage bâti mesuré (BD "
-    "TOPO) — RECETTE-7 E1 : faîtage contre faîtage ; repli égout+toiture type avec incertitude",
+ # CHIRURGICAL-FIX-1 (LOT H pt6) — libellé SANS face de toit : la marge se compare à l'égout OU au
+ # faîtage selon la contrainte qui mord (LiDAR HD). Le document nomme la face depuis `hauteur_contrainte`
+ # (miroir.rendu_sections / blocs.potentiel) ; le registre ne fige plus « (au faîtage) » (il inversait
+ # le libellé d'AD0887 : 3,9 m à l'égout imprimés « au faîtage »).
+ "marge_surelevation_m": C("Marge de surélévation sous la règle de hauteur", "m", "parcelle",
+    "hauteur restante sous la règle de hauteur de la zone (égout OU faîtage selon la contrainte qui "
+    "mord, LiDAR HD), comparée au bâti mesuré — RECETTE-10 T1 : égout contre égout, faîtage contre faîtage",
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:surelevation",
     # CIRCUIT-6 lot 7 (fuite n°2, fusion RECETTE-10 T1) — quand le LiDAR HD a mesuré égout ET

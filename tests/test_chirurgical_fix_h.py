@@ -101,6 +101,24 @@ def test_dossier_ne_dit_copropriete_que_si_sur_la_parcelle():
     assert sur is not None and len(sur) == 1 and sur[0]["nom_usage"] == "SUR PARCELLE"
 
 
+def test_marge_surelevation_nommee_par_la_contrainte_qui_mord():
+    """pt6 — le libellé de la marge suit `hauteur_contrainte` (source unique), jamais « au faîtage »
+    en dur. AD0887 : 3,9 m À L'ÉGOUT (la contrainte qui mord), 6,3 m au faîtage — plus d'inversion."""
+    from labuse.exports.miroir import libelle_marge_surelevation
+    # AD0887 : LiDAR HD, l'égout mord
+    assert libelle_marge_surelevation(
+        {"hauteur_contrainte": "égout", "hauteur_base": "égout mesuré (LiDAR HD)"}
+    ) == "Marge de surélévation à l'égout"
+    # faîtage mesuré qui mord
+    assert libelle_marge_surelevation(
+        {"hauteur_contrainte": "faîtage", "hauteur_base": "faîtage mesuré (LiDAR HD)"}
+    ) == "Marge de surélévation au faîtage"
+    # BD TOPO (pas de LiDAR) : base « faîtage », pas de contrainte explicite → au faîtage
+    assert libelle_marge_surelevation({"hauteur_base": "faîtage"}) == "Marge de surélévation au faîtage"
+    # inconnu → libellé générique, jamais une face de toit inventée
+    assert libelle_marge_surelevation({}) == "Marge de surélévation sous la règle de hauteur"
+
+
 def test_excel_garde_les_formules_quand_le_resultat_est_calculable():
     e = EntreesBilan(programme=Programme(terrain=2000), produits=[Produit("P1", 10, 600, 4785, 0.20)],
                      postes={"achat": SaisiePoste(valeur=1_000_000, etat="montant"),
