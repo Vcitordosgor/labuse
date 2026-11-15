@@ -66,10 +66,13 @@ zones:
             la marge d'isolement minimale doit être de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2
+        par_typologie:
+          statut: valide
           article: UA 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
+          base: pieces
+          arrondi: superieur
+          retenue: max
           citation: 'Les constructions neuves à usage d’habitation collective ou d’activités, les opérations grou-
 
             pées, auront l’obligation d’avoir un local d’une superficie suffisante pour recevoir les divers
@@ -167,8 +170,27 @@ zones:
             1 place pour 10 logements
 
             ACTIVITES'
-          statut: valide
-          raison: citation non retrouvée (recouvrement 44%)
+          detail:
+          - destination: collectif
+            pieces_max: 2
+            places: 1
+            tranche: studio et 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            pieces_max: 5
+            places: 1.5
+            tranche: 3 et 5 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 6
+            places: 2
+            tranche: 6 pièces et plus
+            role: base
+          - destination: individuel
+            places: 2
+            tranche: habitat individuel
+            role: base
       mixite:
         seuil_m2: 600
         seuil_type: surface_plancher_shon
@@ -490,10 +512,13 @@ zones:
             la marge d'isolement minimale doit être de 3,00m.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2
+        par_typologie:
+          statut: valide
           article: UB 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
+          base: pieces
+          arrondi: superieur
+          retenue: max
           citation: 'Les constructions neuves à usage d’habitation collective ou d’activités, les opérations grou-
 
             pées, auront l’obligation d’avoir un local d’une superficie suffisante pour recevoir les divers
@@ -591,9 +616,27 @@ zones:
             1 place pour 10 logements
 
             ACTIVITES'
-          statut: valide
-          raison: citation non retrouvée (recouvrement 33%)
-          note: 'PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales)).'
+          detail:
+          - destination: collectif
+            pieces_max: 2
+            places: 1
+            tranche: studio et 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            pieces_max: 5
+            places: 1.5
+            tranche: 3 et 5 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 6
+            places: 2
+            tranche: 6 pièces et plus
+            role: base
+          - destination: individuel
+            places: 2
+            tranche: habitat individuel
+            role: base
       pleine_terre:
         pct:
           pct: 30.0
@@ -711,10 +754,13 @@ zones:
             la marge d'isolement minimale doit être de 3,00m.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2
+        par_typologie:
+          statut: valide
           article: UC 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
+          base: pieces
+          arrondi: superieur
+          retenue: max
           citation: 'Les constructions neuves à usage d’habitation collective ou d’activités, les opérations grou-
 
             pées, auront l’obligation d’avoir un local d’une superficie suffisante pour recevoir les divers
@@ -812,9 +858,27 @@ zones:
             1 place pour 10 logements
 
             ACTIVITES'
-          statut: valide
-          raison: citation non retrouvée (recouvrement 33%)
-          note: 'PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales)).'
+          detail:
+          - destination: collectif
+            pieces_max: 2
+            places: 1
+            tranche: studio et 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            pieces_max: 5
+            places: 1.5
+            tranche: 3 et 5 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 6
+            places: 2
+            tranche: 6 pièces et plus
+            role: base
+          - destination: individuel
+            places: 2
+            tranche: habitat individuel
+            role: base
       pleine_terre:
         pct:
           pct: 30.0
@@ -1094,10 +1158,13 @@ zones:
             la marge d'isolement minimale doit être de 3,00m.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2
+        par_typologie:
+          statut: valide
           article: UD 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
+          base: pieces
+          arrondi: superieur
+          retenue: max
           citation: 'Les constructions neuves à usage d’habitation collective ou d’activités, les opérations grou-
 
             pées, auront l’obligation d’avoir un local d’une superficie suffisante pour recevoir les divers
@@ -1195,9 +1262,27 @@ zones:
             1 place pour 10 logements
 
             ACTIVITES'
-          statut: valide
-          raison: citation non retrouvée (recouvrement 33%)
-          note: 'PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales)).'
+          detail:
+          - destination: collectif
+            pieces_max: 2
+            places: 1
+            tranche: studio et 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            pieces_max: 5
+            places: 1.5
+            tranche: 3 et 5 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 6
+            places: 2
+            tranche: 6 pièces et plus
+            role: base
+          - destination: individuel
+            places: 2
+            tranche: habitat individuel
+            role: base
       pleine_terre:
         pct:
           pct: 40.0
@@ -1458,10 +1543,13 @@ zones:
             de 4,00m.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2
+        par_typologie:
+          statut: valide
           article: UE 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
+          base: pieces
+          arrondi: superieur
+          retenue: max
           citation: 'Les constructions neuves à usage d’habitation collective ou d’activités, les opérations grou-
 
             pées, auront l’obligation d’avoir un local d’une superficie suffisante pour recevoir les divers
@@ -1559,9 +1647,27 @@ zones:
             1 place pour 10 logements
 
             ACTIVITES'
-          statut: valide
-          raison: citation non retrouvée (recouvrement 33%)
-          note: 'PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales)).'
+          detail:
+          - destination: collectif
+            pieces_max: 2
+            places: 1
+            tranche: studio et 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            pieces_max: 5
+            places: 1.5
+            tranche: 3 et 5 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 6
+            places: 2
+            tranche: 6 pièces et plus
+            role: base
+          - destination: individuel
+            places: 2
+            tranche: habitat individuel
+            role: base
       pleine_terre:
         pct:
           pct: 30.0
@@ -1638,10 +1744,13 @@ zones:
             construction (L=H), avec un minimum de 4,00m.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2
+        par_typologie:
+          statut: valide
           article: UF 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
+          base: pieces
+          arrondi: superieur
+          retenue: max
           citation: 'Les constructions neuves à usage d’habitation collective ou d’activités, les opérations grou-
 
             pées, auront l’obligation d’avoir un local d’une superficie suffisante pour recevoir les divers
@@ -1739,9 +1848,27 @@ zones:
             1 place pour 10 logements
 
             ACTIVITES'
-          statut: valide
-          raison: citation non retrouvée (recouvrement 33%)
-          note: 'PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales)).'
+          detail:
+          - destination: collectif
+            pieces_max: 2
+            places: 1
+            tranche: studio et 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            pieces_max: 5
+            places: 1.5
+            tranche: 3 et 5 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 6
+            places: 2
+            tranche: 6 pièces et plus
+            role: base
+          - destination: individuel
+            places: 2
+            tranche: habitat individuel
+            role: base
       pleine_terre:
         pct:
           pct: 30.0
@@ -1827,10 +1954,13 @@ zones:
             construction (L=H), avec un minimum de 4,00m.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2
+        par_typologie:
+          statut: valide
           article: UP 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
+          base: pieces
+          arrondi: superieur
+          retenue: max
           citation: 'Les constructions neuves à usage d’habitation collective ou d’activités, les opérations grou-
 
             pées, auront l’obligation d’avoir un local d’une superficie suffisante pour recevoir les divers
@@ -1928,9 +2058,27 @@ zones:
             1 place pour 10 logements
 
             ACTIVITES'
-          statut: valide
-          raison: citation non retrouvée (recouvrement 33%)
-          note: 'PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales)).'
+          detail:
+          - destination: collectif
+            pieces_max: 2
+            places: 1
+            tranche: studio et 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            pieces_max: 5
+            places: 1.5
+            tranche: 3 et 5 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 6
+            places: 2
+            tranche: 6 pièces et plus
+            role: base
+          - destination: individuel
+            places: 2
+            tranche: habitat individuel
+            role: base
     silence: interdit
     silence_src: 'Art. UP1, p. 73 : « Sont interdites toutes les occupations ou utilisations non mentionnées à l''article
       UP2 » — clause explicite « seules sont admises » inversée : le silence vaut interdiction.'

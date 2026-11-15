@@ -136,14 +136,15 @@ def test_hauteur_pres_des_limites_non_verifiee():
 
 
 def test_saint_louis_condition_chiffree_comptee():
-    """Relecture 7 — « opérations > 10 logements : 0,5 place publique/logt » est CHIFFRÉE et comptée dans
-    les places à loger (lecture la plus exigeante)."""
+    """Relecture 7/FIX-2 — « opérations > 10 logements : 0,5 place publique/logt » est CHIFFRÉE et comptée
+    À PART (places PUBLIQUES, hors parcelle), pas gonflée dans les places à dessiner."""
     from types import SimpleNamespace
     from labuse.implantation import regles as R
     b = R.charger("97414", "UA").stationnement
     prog = lambda n: [SimpleNamespace(pieces=3, surface_m2=70) for _ in range(n)]
-    assert b.exiger(prog(8), destination="collectif").places_visiteurs == 0      # ≤ 10 : rien
-    assert b.exiger(prog(20), destination="collectif").places_visiteurs == 10    # 0,5 × 20
+    assert b.exiger(prog(8), destination="collectif").places_publiques == 0      # ≤ 10 : rien
+    ex = b.exiger(prog(20), destination="collectif")
+    assert ex.places_publiques == 10 and ex.places == 40    # 10 publiques à part, 40 à dessiner
 
 
 def test_colonne_places_integrees_condition_bloquante_au_seuil():

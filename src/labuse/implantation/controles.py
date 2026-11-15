@@ -468,6 +468,14 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
         out.append(ControleReg("Stationnement", "règle existante, non ingérée par LABUSE", f"{cap.places} {place_mot}",
                                A_CONFIRMER, detail="règle de stationnement existante au PLU mais non ingérée par LABUSE — à vérifier au règlement"))
 
+    # ETUDE-STATIONNEMENT-FIX-2 — places PUBLIQUES (hors parcelle) : exigées, à réaliser sur le domaine
+    # public, PAS dessinées sur le terrain → affichées À PART, jamais ajoutées aux places à dessiner.
+    _pub = getattr(cap, "places_publiques_imposees", 0) or 0
+    if _pub:
+        out.append(ControleReg("Stationnement public (hors parcelle)", f"{_pub} places sur le domaine public",
+                               "non dessinées sur le terrain", A_CONFIRMER, b.citation_complete if b.validee else None,
+                               detail="places publiques exigées par le règlement, à réaliser hors de la parcelle — à confirmer"))
+
     # ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — conditions NON MODÉLISABLES du barème (ex. « dont au moins 0,5 place
     # à l'extérieur des espaces privatisés ») : affichées « à vérifier », JAMAIS comptées comme satisfaites.
     for cond in (getattr(cap, "stationnement_conditions", ()) or ()):

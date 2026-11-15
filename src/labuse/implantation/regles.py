@@ -79,6 +79,7 @@ class Visiteurs:
     par_logements: Optional[int] = None
     par_m2_sdp: Optional[float] = None
     logements_min: Optional[int] = None    # part visiteur due seulement AU-DELÀ de N logements (ex. Saint-Benoît)
+    publique: bool = False                 # places PUBLIQUES (hors parcelle) — comptées À PART, pas dans le total à dessiner
     arrondi: str = "superieur"
     article: Optional[str] = None
     page_pdf: Optional[int] = None
@@ -101,6 +102,7 @@ class ExigenceStationnement:
     conditions: tuple[str, ...]
     couvert: bool
     details: dict
+    places_publiques: int = 0   # places PUBLIQUES (hors parcelle) — exigées mais NON dessinées sur le terrain
 
 
 @dataclass(frozen=True)
@@ -208,12 +210,13 @@ class BaremeStationnement:
             sp = next((l for l in self.lignes if l.role == "base" and l.destination == destination
                        and (l.places is not None or l.par_m2 is not None)), None)
             if sp is not None:
-                # ligne dédiée muette sur l'arrondi → plus exigeant (supérieur), jamais l'arrondi de la règle générale.
+                # ligne dédiée : arrondi de la LIGNE, sinon celui du barème (qui reflète l'en-tête du tableau,
+                # ex. Trois-Bassins « arrondi à l'entier inférieur ») — jamais « supérieur » par défaut.
                 if sp.par_m2 is not None:
-                    tot = self.arrondir(sdp_tot / sp.par_m2, sp.arrondi or "superieur")
+                    tot = self.arrondir(sdp_tot / sp.par_m2, sp.arrondi)
                     formule = f"{destination} : 1 place / {sp.par_m2:g} m² SDP · {sdp_tot:.0f} m²"
                 else:
-                    tot = self.arrondir(n * sp.places, sp.arrondi or "superieur")
+                    tot = self.arrondir(n * sp.places, sp.arrondi)
                     formule = f"{destination} : {sp.places:g} place/logt × {n} logts"
                 return ExigenceStationnement(int(tot), int(tot), 0, self.mode, formule, (), conditions, True,
                                              {"destination": destination})
@@ -236,12 +239,19 @@ class BaremeStationnement:
             # si TOUS les logements trouvent une ligne de base pour la destination (sinon elle ne couvre pas
             # le programme). Une zone qui n'exprime le collectif QUE par des formules d'opération (ex. Les
             # Avirons : max(1,25/logt, 1/35 m²)) n'a pas de ligne de base : la couverture vient alors des alt.
-            lignes_base_dest = [l for l in self.lignes if l.role == "base" and l.destination == destination]
+            # FIX-2 — une maison seule (destination « individuel ») dans une zone SANS ligne individuelle
+            # dédiée relève de la norme résidentielle GÉNÉRALE (les tranches « collectif » s'appliquent à tout
+            # logement). On retombe alors sur « collectif » pour l'appariement des lignes de base.
+            dest_match = destination
+            if destination != "collectif" and not any(l.role == "base" and l.destination == destination
+                                                       for l in self.lignes):
+                dest_match = "collectif"
+            lignes_base_dest = [l for l in self.lignes if l.role == "base" and l.destination == dest_match]
             base_tot = 0.0
             base_matched = 0
             par_ligne: dict[str, int] = {}
             for m in modules:
-                l = self._ligne_base(int(getattr(m, "pieces", 0)), float(getattr(m, "surface_m2", 0.0)), destination)
+                l = self._ligne_base(int(getattr(m, "pieces", 0)), float(getattr(m, "surface_m2", 0.0)), dest_match)
                 if l is None:
                     continue
                 base_tot += l.places
@@ -258,7 +268,7 @@ class BaremeStationnement:
             for l in self.lignes:
                 if l.role not in ("operation", "alt"):
                     continue
-                if l.destination != destination:
+                if l.destination != dest_match:
                     continue
                 if l.logements_min is not None and n < l.logements_min:
                     continue
@@ -284,23 +294,31 @@ class BaremeStationnement:
             residents, formule = candidats[0]
         ecartees = tuple(f"{lib} = {int(v)}" for v, lib in candidats if (v, lib) != (residents, formule))
 
-        # visiteurs (part additionnelle)
-        vis = 0
+        # visiteurs / places publiques (parts additionnelles). Les places PUBLIQUES (hors parcelle) sont
+        # exigées mais NON dessinées sur le terrain → comptées à part (reviewer : Saint-Louis).
+        vis = pub = 0
         if self.visiteurs is not None and (self.visiteurs.logements_min is None or n >= self.visiteurs.logements_min):
             vz = self.visiteurs
+            v = 0.0
             if vz.par_logements:
-                vis = math.ceil(n / vz.par_logements - 1e-9) * vz.places
+                v = math.ceil(n / vz.par_logements - 1e-9) * vz.places
             elif vz.par_m2_sdp:
-                vis = math.ceil(sdp_tot / vz.par_m2_sdp - 1e-9) * vz.places
-            vis = int(math.floor(vis + 1e-9) if vz.arrondi == "inferieur" else math.ceil(vis - 1e-9))
-            if vis:
-                details["visiteurs"] = vis
+                v = math.ceil(sdp_tot / vz.par_m2_sdp - 1e-9) * vz.places
+            v = int(math.floor(v + 1e-9) if vz.arrondi == "inferieur" else math.ceil(v - 1e-9))
+            if vz.publique:
+                pub = v
+                if pub:
+                    details["publiques"] = pub
+            else:
+                vis = v
+                if vis:
+                    details["visiteurs"] = vis
 
         residents = int(residents)
         return ExigenceStationnement(
             places=residents + vis, places_residents=residents, places_visiteurs=vis,
             base=self.mode, formule=formule, formules_ecartees=ecartees,
-            conditions=conditions, couvert=couvert, details=details)
+            conditions=conditions, couvert=couvert, details=details, places_publiques=pub)
 
     @property
     def citation_complete(self) -> Optional[str]:
@@ -491,7 +509,8 @@ def _parse_visiteurs(form: dict) -> Optional[Visiteurs]:
     return Visiteurs(
         places=float(v["places"]),
         par_logements=v.get("par_logements"), par_m2_sdp=v.get("par_m2_sdp"),
-        logements_min=v.get("logements_min"), arrondi=_norm_arrondi(v.get("arrondi")),
+        logements_min=v.get("logements_min"), publique=bool(v.get("publique")),
+        arrondi=_norm_arrondi(v.get("arrondi")),
         article=v.get("article"), page_pdf=v.get("page_pdf"), citation=v.get("citation"))
 
 

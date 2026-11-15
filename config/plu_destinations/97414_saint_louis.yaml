@@ -104,9 +104,10 @@ zones:
             par_logements: 1
             logements_min: 11
             arrondi: superieur
+            publique: true
             citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
           conditions:
-          - les 0,5 place/logt au-delà de 10 logements sont des places PUBLIQUES (hors parcelle) — à vérifier
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 15.0
@@ -244,9 +245,10 @@ zones:
             par_logements: 1
             logements_min: 11
             arrondi: superieur
+            publique: true
             citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
           conditions:
-          - les 0,5 place/logt au-delà de 10 logements sont des places PUBLIQUES (hors parcelle) — à vérifier
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
     renvoi: UA
     renvoi_src: 'caractère de la zone UA, p. 12 : « Il existe le secteur UA1 correspondant au centre historique
       de Saint-Louis dont la morphologie et les fonctions urbaines doivent être préservées. » — secteur de la zone
@@ -341,9 +343,10 @@ zones:
             par_logements: 1
             logements_min: 11
             arrondi: superieur
+            publique: true
             citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
           conditions:
-          - les 0,5 place/logt au-delà de 10 logements sont des places PUBLIQUES (hors parcelle) — à vérifier
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 20.0
@@ -500,9 +503,10 @@ zones:
             par_logements: 1
             logements_min: 11
             arrondi: superieur
+            publique: true
             citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
           conditions:
-          - les 0,5 place/logt au-delà de 10 logements sont des places PUBLIQUES (hors parcelle) — à vérifier
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -646,9 +650,10 @@ zones:
             par_logements: 1
             logements_min: 11
             arrondi: superieur
+            publique: true
             citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
           conditions:
-          - les 0,5 place/logt au-delà de 10 logements sont des places PUBLIQUES (hors parcelle) — à vérifier
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -745,9 +750,10 @@ zones:
             par_logements: 1
             logements_min: 11
             arrondi: superieur
+            publique: true
             citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
           conditions:
-          - les 0,5 place/logt au-delà de 10 logements sont des places PUBLIQUES (hors parcelle) — à vérifier
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -849,9 +855,10 @@ zones:
             par_logements: 1
             logements_min: 11
             arrondi: superieur
+            publique: true
             citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
           conditions:
-          - les 0,5 place/logt au-delà de 10 logements sont des places PUBLIQUES (hors parcelle) — à vérifier
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 30.0
@@ -1015,9 +1022,10 @@ zones:
             par_logements: 1
             logements_min: 11
             arrondi: superieur
+            publique: true
             citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
           conditions:
-          - les 0,5 place/logt au-delà de 10 logements sont des places PUBLIQUES (hors parcelle) — à vérifier
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 35.0
@@ -1483,9 +1491,10 @@ zones:
             par_logements: 1
             logements_min: 11
             arrondi: superieur
+            publique: true
             citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
           conditions:
-          - les 0,5 place/logt au-delà de 10 logements sont des places PUBLIQUES (hors parcelle) — à vérifier
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 15.0
@@ -1624,9 +1633,10 @@ zones:
             par_logements: 1
             logements_min: 11
             arrondi: superieur
+            publique: true
             citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
           conditions:
-          - les 0,5 place/logt au-delà de 10 logements sont des places PUBLIQUES (hors parcelle) — à vérifier
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -1743,9 +1753,10 @@ zones:
             par_logements: 1
             logements_min: 11
             arrondi: superieur
+            publique: true
             citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
           conditions:
-          - les 0,5 place/logt au-delà de 10 logements sont des places PUBLIQUES (hors parcelle) — à vérifier
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -1849,9 +1860,10 @@ zones:
             par_logements: 1
             logements_min: 11
             arrondi: superieur
+            publique: true
             citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
           conditions:
-          - les 0,5 place/logt au-delà de 10 logements sont des places PUBLIQUES (hors parcelle) — à vérifier
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -1956,9 +1968,10 @@ zones:
             par_logements: 1
             logements_min: 11
             arrondi: superieur
+            publique: true
             citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
           conditions:
-          - les 0,5 place/logt au-delà de 10 logements sont des places PUBLIQUES (hors parcelle) — à vérifier
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 30.0
@@ -2064,9 +2077,10 @@ zones:
             par_logements: 1
             logements_min: 11
             arrondi: superieur
+            publique: true
             citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
           conditions:
-          - les 0,5 place/logt au-delà de 10 logements sont des places PUBLIQUES (hors parcelle) — à vérifier
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 35.0

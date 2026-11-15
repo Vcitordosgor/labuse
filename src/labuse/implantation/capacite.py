@@ -71,6 +71,7 @@ class Capacite:
     stationnement_conditions: tuple = ()
     stationnement_couvert: bool = True
     type_projet: str = "collectif"
+    places_publiques_imposees: int = 0   # places PUBLIQUES exigées (hors parcelle, non dessinées)
 
 
 def _sdp_logement(conv: Conventions, type_logement: str) -> float:
@@ -240,4 +241,5 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None,
         stationnement_conditions=(exig.conditions if exig is not None else ()),
         stationnement_couvert=(exig.couvert if exig is not None else True),
         type_projet=type_projet,
+        places_publiques_imposees=(exig.places_publiques if exig is not None else 0),
     )

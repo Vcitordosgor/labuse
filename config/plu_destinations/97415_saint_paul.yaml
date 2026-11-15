@@ -92,6 +92,12 @@ zones:
 
             logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 10.0
@@ -218,6 +224,12 @@ zones:
 
             logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 30.0
@@ -300,6 +312,12 @@ zones:
 
             logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 30.0
@@ -382,6 +400,12 @@ zones:
 
             logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           article: '13.1'
@@ -428,26 +452,48 @@ zones:
           places: 2.0
           article: '12.2'
           page_pdf: 30
-          citation: 'logements aidés.
+          citation: 'Logements aidés
 
-            1 place de stationnement pour 2 chambres / 1
+            1 place par logement aidé
 
-            place de stationnement pour 2 unités
+            Autres logements
 
-            logements
+            en zones U1a, U1b, U1c, U1d: 1 place / logement
 
-            6 places par tranche de 100 m2 de surface de
+            en zonesU1f, U1g : 2 places / logement
 
-            1 place par tranche de 100 m2 de surface de
+            Règlement – Commune de Saint Paul / Titre 2 – Livret 1 – Bassin de vie Saint Paul centre
 
-            1 place par tranche de 100 m2 de surface de
+            Zones U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso
 
-            1,5 places par tranche de 100 m2 de surface de
+            PLU approuvé le 27 septembre 2012 / Edition mars 2026 / Modifié par DCM du : 25/04/2013,
 
-            16 places par tranche de 1000 m2 de surface de
+            30/05/2013, 21/10/2015, 05/10/2017, 11/10/2018, 11/06/2021, 03/09/2021, 30/06/2022,
 
-            8 places par tranche de 1000 m2 de surface de'
+            08/09/2022, 27/06/2024, 21/11/2024 et du 27/03/2025.
+
+            27
+
+            Lotissements ou opérations de plus de 5
+
+            lots ou 5 logements
+
+            1 place visiteur par tranche de 5 lots ou par
+
+            tranche de 5 logements
+
+            1 place visiteur par tranche de 10 lots ou par
+
+            tranche de 10 logements pour les opérations de
+
+            logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 30.0
@@ -494,26 +540,48 @@ zones:
           places: 2.0
           article: '12.2'
           page_pdf: 30
-          citation: 'logements aidés.
+          citation: 'Logements aidés
 
-            1 place de stationnement pour 2 chambres / 1
+            1 place par logement aidé
 
-            place de stationnement pour 2 unités
+            Autres logements
 
-            logements
+            en zones U1a, U1b, U1c, U1d: 1 place / logement
 
-            6 places par tranche de 100 m2 de surface de
+            en zonesU1f, U1g : 2 places / logement
 
-            1 place par tranche de 100 m2 de surface de
+            Règlement – Commune de Saint Paul / Titre 2 – Livret 1 – Bassin de vie Saint Paul centre
 
-            1 place par tranche de 100 m2 de surface de
+            Zones U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso
 
-            1,5 places par tranche de 100 m2 de surface de
+            PLU approuvé le 27 septembre 2012 / Edition mars 2026 / Modifié par DCM du : 25/04/2013,
 
-            16 places par tranche de 1000 m2 de surface de
+            30/05/2013, 21/10/2015, 05/10/2017, 11/10/2018, 11/06/2021, 03/09/2021, 30/06/2022,
 
-            8 places par tranche de 1000 m2 de surface de'
+            08/09/2022, 27/06/2024, 21/11/2024 et du 27/03/2025.
+
+            27
+
+            Lotissements ou opérations de plus de 5
+
+            lots ou 5 logements
+
+            1 place visiteur par tranche de 5 lots ou par
+
+            tranche de 5 logements
+
+            1 place visiteur par tranche de 10 lots ou par
+
+            tranche de 10 logements pour les opérations de
+
+            logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 30.0
@@ -1044,6 +1112,12 @@ zones:
 
             logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 30.0
@@ -1156,6 +1230,12 @@ zones:
 
             logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 30.0
@@ -1261,6 +1341,12 @@ zones:
 
             logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 50.0
@@ -1367,6 +1453,12 @@ zones:
 
             logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 90.0
@@ -1683,6 +1775,12 @@ zones:
 
             logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 20.0
@@ -1785,6 +1883,12 @@ zones:
 
             logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 30.0
@@ -1830,28 +1934,34 @@ zones:
           places: 2.0
           article: '12.2'
           page_pdf: 120
-          citation: 'logements pour les opérations de logements aidés.
+          citation: 'Logements aidés
 
-            1 place de stationnement par tranche de 2
+            1 place par logement aidé
 
-            chambres / 1 place de stationnement pour 2
+            Autres logements
+
+            en zones U3a, U3b : 1,5 places par logement
+
+            en zone U3c : 2 places / logement
+
+            Lotissements ou opérations de plus de 5
+
+            lots ou 5 logements
+
+            1 place visiteur par tranche de 5 lots ou 5
 
             logements
 
-            6 places par tranche de 100 m2 de surface de
+            1 place visiteur par tranche de 10 lots ou 10
 
-            1 place par tranche de 100 m2 de surface de
-
-            1 place par tranche de 100 m2 de surface de
-
-            1,5 places par tranche de 100 m2 de surface de
-
-            16 places par tranche de 1000 m2 de surface de
-
-            8 places par tranche de 1000 m2 de surface de
-
-            1 place par tranche de 50 m2 de surface de'
+            logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 40.0
@@ -1906,14 +2016,28 @@ zones:
           places: 2.0
           article: '12.2'
           page_pdf: 139
-          citation: 'Logements aidés
+          citation: '2 places / logement
 
-            1 place par logement aidé
+            1 place de stationnement par tranche de 2
 
-            Autres logements
+            chambres / 1 place de stationnement pour 2
 
-            2 places / logement'
+            logements
+
+            6 places par tranche de 100 m2 de surface de
+
+            2 places par tranche de 100 m2 de surface de
+
+            16 places par tranche de 1000 m2 de surface de
+
+            1 place par tranche de 50 m2 de surface de'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 50.0
@@ -2232,6 +2356,12 @@ zones:
 
             logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 20.0
@@ -2322,28 +2452,36 @@ zones:
           places: 2.0
           article: '12.2'
           page_pdf: 182
-          citation: 'logements pour les opérations de logements aidés.
+          citation: 'Logements aidés
 
-            1 place de stationnement pour 2 chambres / 1
+            1 place par logement aidé
 
-            place de stationnement pour 2 unités
+            Autres logements
+
+            en zone U4a : 1,5 places par logement
+
+            en zones U4b, U4c : 2 places / logement
+
+            Lotissements ou opérations de plus de 5
+
+            lots ou 5 logements excepté dans la ZAC
+
+            Marie Caze où les places visiteurs seront
+
+            1 place visiteur par tranche de 5 lots ou 5
 
             logements
 
-            6 places par tranche de 100 m2 de surface de
+            1 place visiteur par tranche de 10 lots ou 10
 
-            1 place par tranche de 100 m2 de surface de
-
-            1 place par tranche de 100 m2 de surface de
-
-            1,5 places par tranche de 100 m2 de surface de
-
-            16 places par tranche de 1000 m2 de surface de
-
-            8 places par tranche de 1000 m2 de surface de
-
-            1 place par tranche de 50 m2 de surface de'
+            logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 30.0
@@ -2392,28 +2530,36 @@ zones:
           places: 2.0
           article: '12.2'
           page_pdf: 182
-          citation: 'logements pour les opérations de logements aidés.
+          citation: 'Logements aidés
 
-            1 place de stationnement pour 2 chambres / 1
+            1 place par logement aidé
 
-            place de stationnement pour 2 unités
+            Autres logements
+
+            en zone U4a : 1,5 places par logement
+
+            en zones U4b, U4c : 2 places / logement
+
+            Lotissements ou opérations de plus de 5
+
+            lots ou 5 logements excepté dans la ZAC
+
+            Marie Caze où les places visiteurs seront
+
+            1 place visiteur par tranche de 5 lots ou 5
 
             logements
 
-            6 places par tranche de 100 m2 de surface de
+            1 place visiteur par tranche de 10 lots ou 10
 
-            1 place par tranche de 100 m2 de surface de
-
-            1 place par tranche de 100 m2 de surface de
-
-            1,5 places par tranche de 100 m2 de surface de
-
-            16 places par tranche de 1000 m2 de surface de
-
-            8 places par tranche de 1000 m2 de surface de
-
-            1 place par tranche de 50 m2 de surface de'
+            logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 40.0
@@ -2504,6 +2650,12 @@ zones:
 
             logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 20.0
@@ -2596,28 +2748,34 @@ zones:
           places: 2.0
           article: '12.2'
           page_pdf: 228
-          citation: 'logements pour les opérations de logements aidés.
+          citation: 'Logements aidés
 
-            1 place de stationnement pour 2 chambres / 1
+            1 place par logement aidé
 
-            place de stationnement pour 2 unités
+            Autres logements
+
+            en zone U5a : 1,5 places par logement
+
+            en zones U5b, U5c : 2 places / logement
+
+            Lotissements ou opérations de plus de 5
+
+            lots ou 5 logements
+
+            1 place visiteur par tranche de 5 lots ou 5
 
             logements
 
-            6 places par tranche de 100 m2 de surface de
+            1 place visiteur par tranche de 10 lots ou 10
 
-            1 place par tranche de 100 m2 de surface de
-
-            1 place par tranche de 100 m2 de surface de
-
-            1,5 places par tranche de 100 m2 de surface de
-
-            16 places par tranche de 1000 m2 de surface de
-
-            8 places par tranche de 1000 m2 de surface de
-
-            1 place par tranche de 50 m2 de surface de'
+            logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 30.0
@@ -2665,28 +2823,34 @@ zones:
           places: 2.0
           article: '12.2'
           page_pdf: 228
-          citation: 'logements pour les opérations de logements aidés.
+          citation: 'Logements aidés
 
-            1 place de stationnement pour 2 chambres / 1
+            1 place par logement aidé
 
-            place de stationnement pour 2 unités
+            Autres logements
+
+            en zone U5a : 1,5 places par logement
+
+            en zones U5b, U5c : 2 places / logement
+
+            Lotissements ou opérations de plus de 5
+
+            lots ou 5 logements
+
+            1 place visiteur par tranche de 5 lots ou 5
 
             logements
 
-            6 places par tranche de 100 m2 de surface de
+            1 place visiteur par tranche de 10 lots ou 10
 
-            1 place par tranche de 100 m2 de surface de
-
-            1 place par tranche de 100 m2 de surface de
-
-            1,5 places par tranche de 100 m2 de surface de
-
-            16 places par tranche de 1000 m2 de surface de
-
-            8 places par tranche de 1000 m2 de surface de
-
-            1 place par tranche de 50 m2 de surface de'
+            logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 40.0
@@ -2956,6 +3120,12 @@ zones:
 
             logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 20.0
@@ -3046,28 +3216,34 @@ zones:
           places: 2.0
           article: '12.2'
           page_pdf: 288
-          citation: 'logements pour les opérations de logements aidés.
+          citation: 'Logements aidés
 
-            1 place de stationnement par tranche de 2
+            1 place par logement aidé
 
-            chambres / 1 place de stationnement pour 2
+            Autres logements
+
+            en zone U6a : 1,5 places par logement
+
+            en zones U6b, U6c : 2 places / logement
+
+            Lotissements ou opérations de plus de 5
+
+            lots ou 5 logements
+
+            1 place visiteur par tranche de 5 lots ou 5
 
             logements
 
-            6 places par tranche de 100 m2 de surface de
+            1 place visiteur par tranche de 10 lots ou 10
 
-            1 place par tranche de 100 m2 de surface de
-
-            1 place par tranche de 100 m2 de surface de
-
-            1,5 places par tranche de 100 m2 de surface de
-
-            16 places par tranche de 1000 m2 de surface de
-
-            8 places par tranche de 1000 m2 de surface de
-
-            1 place par tranche de 50 m2 de surface de'
+            logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 30.0
@@ -3114,28 +3290,34 @@ zones:
           places: 2.0
           article: '12.2'
           page_pdf: 288
-          citation: 'logements pour les opérations de logements aidés.
+          citation: 'Logements aidés
 
-            1 place de stationnement par tranche de 2
+            1 place par logement aidé
 
-            chambres / 1 place de stationnement pour 2
+            Autres logements
+
+            en zone U6a : 1,5 places par logement
+
+            en zones U6b, U6c : 2 places / logement
+
+            Lotissements ou opérations de plus de 5
+
+            lots ou 5 logements
+
+            1 place visiteur par tranche de 5 lots ou 5
 
             logements
 
-            6 places par tranche de 100 m2 de surface de
+            1 place visiteur par tranche de 10 lots ou 10
 
-            1 place par tranche de 100 m2 de surface de
-
-            1 place par tranche de 100 m2 de surface de
-
-            1,5 places par tranche de 100 m2 de surface de
-
-            16 places par tranche de 1000 m2 de surface de
-
-            8 places par tranche de 1000 m2 de surface de
-
-            1 place par tranche de 50 m2 de surface de'
+            logements pour les opérations de logements aidés.'
           statut: valide
+          visiteurs:
+            par_logements: 5
+            places: 1
+            logements_min: 6
+            arrondi: superieur
+            citation: 'Opérations de plus de 5 lots ou 5 logements : 1 place visiteur par tranche de 5 logements.'
       pleine_terre:
         pct:
           pct: 40.0

@@ -79,7 +79,9 @@ zones:
           page_pdf: 25
           places: 1.0
           arrondi: superieur
-          citation: 'd’habitation
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            d’habitation
 
             (Logement ou hébergement)
 
@@ -104,17 +106,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 15.0
@@ -249,7 +249,9 @@ zones:
           page_pdf: 39
           places: 1.0
           arrondi: superieur
-          citation: 'd’habitation
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            d’habitation
 
             (Logement ou hébergement)
 
@@ -265,6 +267,8 @@ zones:
 
             âgées (RPA) 0,5 place de stationnement minimum par logement
 
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
             visiteurs par tranche de 10 logements.
 
             - 1 place de stationnement par seuil de 100 m² de surface de
@@ -274,17 +278,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 15.0
@@ -416,17 +418,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 15.0
@@ -564,17 +564,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 15.0
@@ -709,17 +707,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 25.0
@@ -835,17 +831,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 25.0
@@ -952,7 +946,9 @@ zones:
           page_pdf: 69
           places: 1.0
           arrondi: superieur
-          citation: 'd’habitation
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            d’habitation
 
             (Logement ou hébergement)
 
@@ -968,6 +964,8 @@ zones:
 
             âgées (RPA) 0,5 place de stationnement minimum par logement
 
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
             visiteurs par tranche de 10 logements.
 
             - 1 place de stationnement par seuil de 100 m² de surface de
@@ -977,17 +975,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 10.0
@@ -1137,17 +1133,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 35.0
@@ -1284,17 +1278,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 30.0
@@ -1418,17 +1410,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 15.0
@@ -1545,17 +1535,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 35.0
@@ -1688,17 +1676,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 35.0
@@ -1814,17 +1800,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 35.0
@@ -2267,17 +2251,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 15
@@ -2373,17 +2355,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 25
@@ -2480,17 +2460,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 35
@@ -2577,17 +2555,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 35
@@ -2681,17 +2657,15 @@ zones:
             - 1 place de stationnement minimum pour une capacité d’accueil
 
             sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
-          visiteurs:
-            par_logements: 10
-            places: 1
-            arrondi: superieur
-            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
             tranche: logement locatif prêt aidé (1/logt)
           senior:
+            places: 0.5
+            tranche: 'résidence personnes âgées (RPA) : 0,5 place/logt aidé'
+          etudiant:
             places: 0.3333
-            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
+            tranche: hébergement CASF (1 logement = 3 places)
       pleine_terre:
         pct:
           pct: 35
