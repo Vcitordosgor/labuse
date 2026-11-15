@@ -142,6 +142,10 @@ class BaremeStationnement:
     # PLAFOND : il ne peut que FAIRE BAISSER l'exigence locale, jamais la relever, et il s'applique MÊME
     # quand le PLU sert une ligne dédiée. {ratio, article, citation}. ratio = places/logement au plus.
     plafond_national: Optional[dict] = None
+    # ETUDE-STATIONNEMENT-FIX-2 (reliquat #4) — place visiteur PAR LOT sur voie, EXIGÉE par le règlement pour
+    # les lotissements (ex. « 0,5 place supplémentaire sur voie par lot » > 5 lots). None = le PLU n'en fixe
+    # pas (le lotissement affiche alors une convention « Estimé », jamais un chiffre présenté comme la règle).
+    visiteur_lotissement: Optional[float] = None
 
     def places_pour(self, *, pieces: int, sdp_m2: float, destination: str = "collectif") -> Optional[float]:
         """Ratio par logement pour un logement (aperçu/jauge). Ne renvoie que la part RÉSIDENT par logement
@@ -632,6 +636,7 @@ def _bareme(stat: dict) -> BaremeStationnement:
             flat_places=float(pl["places"]), lignes=tuple(_lignes_destinations(pl)),
             article=pl.get("article"), page_pdf=pl.get("page_pdf"), citation=pl.get("citation"),
             visiteurs=_parse_visiteurs(pl), visiteurs_social=_parse_visiteurs(pl, 'visiteurs_social'),
+            visiteur_lotissement=(float(pl['visiteur_lotissement']) if isinstance(pl.get('visiteur_lotissement'),(int,float)) else None),
             conditions=_parse_conditions(pl),
             integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
     # 2) par_m2_sdp validé — « une place par tranche de N m² de SDP » (ENFIN supporté : tranche complète)
@@ -642,6 +647,7 @@ def _bareme(stat: dict) -> BaremeStationnement:
             flat_places=None, lignes=tuple(_lignes_destinations(pm)), m2_par_place=float(pm["m2_par_place"]),
             article=pm.get("article"), page_pdf=pm.get("page_pdf"), citation=pm.get("citation"),
             visiteurs=_parse_visiteurs(pm), visiteurs_social=_parse_visiteurs(pm, 'visiteurs_social'),
+            visiteur_lotissement=(float(pm['visiteur_lotissement']) if isinstance(pm.get('visiteur_lotissement'),(int,float)) else None),
             conditions=_parse_conditions(pm),
             integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
     # 3) par_typologie validé (pièces OU surface OU formules d'opération/alternatives)
@@ -671,6 +677,7 @@ def _bareme(stat: dict) -> BaremeStationnement:
                 article=pt.get("article"), page_pdf=pt.get("page_pdf"), citation=pt.get("citation"),
                 retenue=(pt.get("retenue") or "max"),
                 visiteurs=_parse_visiteurs(pt), visiteurs_social=_parse_visiteurs(pt, 'visiteurs_social'),
+            visiteur_lotissement=(float(pt['visiteur_lotissement']) if isinstance(pt.get('visiteur_lotissement'),(int,float)) else None),
                 conditions=_parse_conditions(pt),
                 integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
     return BaremeStationnement(False, "absent", None, "superieur", None, (), None, None, None)

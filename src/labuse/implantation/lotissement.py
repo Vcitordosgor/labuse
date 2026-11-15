@@ -331,12 +331,22 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
 
     # ETUDE-V6-6 (item 1) — stationnement par lot LU du PLU de la zone (maison individuelle).
     places_lots = int(math.ceil(nb * places_par_lot))
-    places_visiteurs = math.ceil(nb * 0.8)   # Estimé (non réglementé) — l'archi en pose ~0,8/lot
-    _stat_note = (f"{places_par_lot:g} place(s) / lot — barème « logement individuel » du PLU "
-                  f"(zone {zone}, art. {stat_article}). Visiteurs = convention (Estimé, non réglementé)."
-                  if stat_servie else
-                  f"{places_par_lot:g} place(s) / lot — HYPOTHÈSE (barème non servi pour la zone {zone}). "
-                  "Visiteurs = convention (Estimé, non réglementé).")
+    # ETUDE-STATIONNEMENT-FIX-2 (reliquat #4) — place visiteur par lot : si le RÈGLEMENT la FIXE (ex. « 0,5
+    # place sur voie par lot » pour les lotissements de plus de 5 lots), on l'applique et on le DIT réglementé,
+    # jamais un 0,8 inventé. Sinon seulement, convention « Estimé ».
+    _vis_lot = regles.stationnement.visiteur_lotissement if regles.stationnement.validee else None
+    if _vis_lot is not None:
+        places_visiteurs = math.ceil(nb * _vis_lot)
+        _vis_note = (f"Visiteurs = {_vis_lot:g} place / lot sur voie — règle servie du PLU "
+                     f"(zone {zone}, art. {stat_article}).")
+    else:
+        places_visiteurs = math.ceil(nb * 0.5)   # convention prudente (Estimé), JAMAIS présentée comme la règle
+        _vis_note = "Visiteurs = 0,5 place / lot — convention prudente (Estimé, le PLU n'en fixe pas)."
+    _stat_note = ((f"{places_par_lot:g} place(s) / lot — barème « logement individuel » du PLU "
+                   f"(zone {zone}, art. {stat_article}). "
+                   if stat_servie else
+                   f"{places_par_lot:g} place(s) / lot — HYPOTHÈSE (barème non servi pour la zone {zone}). ")
+                  + _vis_note)
     regime = ("Permis d'aménager (lotissement de plus de 2 lots avec création de voirie/espaces communs) "
               "— à qualifier selon R.421-19 (voirie, équipements communs).")
 
