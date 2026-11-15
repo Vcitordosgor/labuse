@@ -23,7 +23,7 @@ from ..rendu import esc, ligne_kv, note, table_kv
 # la CAPACITÉ CONSTRUCTIBLE (sdp/capacité), le PRIX DE SECTEUR, la HAUTEUR LiDAR (inutile à sa mission).
 IDS = ("surface_parcelle_m2", "zone_plu_famille", "reglement_plu_bloc", "statut_plu",
        "emprise_batie_m2", "n_batiments", "type_proprietaire", "prix_achat_historique_eur",
-       "distance_arret_m", "aleas_parcelle_liste",
+       "distance_arret_m", "aleas_parcelle_liste", "contraintes_parcelle_liste",  # LOT H pt2
        "er_emplacement_reserve", "ebc_classe", "dpu_perimetre", "peb_zone")
 
 # `appearance:auto` : les <input>/<textarea> deviennent des CHAMPS REMPLISSABLES avec
@@ -129,23 +129,30 @@ def _sur_place(valeurs) -> str:
 def _contraintes(valeurs) -> str:
     """Une ligne « Ce qui gêne » : aléas + prescriptions (ER/EBC/DPU) + zone de bruit (PEB). Vide → ''."""
     bits: list[str] = []
-    liste = val(valeurs, "aleas_parcelle_liste") or []
+    # CHIRURGICAL-FIX-1 (LOT H pt2) — MÊME liste que la fiche/Comparatif (toutes les alertes SOFT/HARD),
+    # pas seulement les aléas : l'Apporteur n'omet plus la zone humide (AD0887) ni l'inondation extrême
+    # (BW2635). Repli sur les seuls aléas si le champ complet manque (vieille réponse en cache).
+    full = val(valeurs, "contraintes_parcelle_liste")
+    liste = full or val(valeurs, "aleas_parcelle_liste") or []
     # RECETTE-11 D7 — « Ce qui gêne » reprend la liste du Dossier §4 : on prend la description de
     # l'aléa (libellé court avant « — »), pas seulement sa `nature`. Sinon un PPR « inondation ET
     # mouvement de terrain » se réduisait à « Inondation » — le mouvement de terrain manquait.
     natures = [((x.get("libelle") or "").split(" — ")[0].strip() or x.get("nature"))
                for x in liste if isinstance(x, dict) and (x.get("nature") or x.get("libelle"))]
     bits += list(dict.fromkeys(n for n in natures if n))
-    if a(valeurs, "dpu_perimetre"):
-        bits.append("préemption (DPU)")
-    if a(valeurs, "er_emplacement_reserve"):
-        bits.append("emplacement réservé")
-    if a(valeurs, "ebc_classe"):
-        bits.append("espace boisé classé")
-    peb = val(valeurs, "peb_zone")
-    if peb:
-        bits.append(f"bruit d'aéroport (PEB {esc(str(peb))})" if not isinstance(peb, dict)
-                    else f"bruit d'aéroport (PEB {esc(str(peb.get('zone') or peb.get('libelle') or ''))})")
+    # CHIRURGICAL-FIX-1 (LOT H pt2) — ces prescriptions (DPU/ER/EBC/PEB) ne sont ajoutées QUE sur le
+    # REPLI aléas : la liste complète les porte déjà (dpu, prescription_plu EBC, sup, peb…) — sinon doublon.
+    if not full:
+        if a(valeurs, "dpu_perimetre"):
+            bits.append("préemption (DPU)")
+        if a(valeurs, "er_emplacement_reserve"):
+            bits.append("emplacement réservé")
+        if a(valeurs, "ebc_classe"):
+            bits.append("espace boisé classé")
+        peb = val(valeurs, "peb_zone")
+        if peb:
+            bits.append(f"bruit d'aéroport (PEB {esc(str(peb))})" if not isinstance(peb, dict)
+                        else f"bruit d'aéroport (PEB {esc(str(peb.get('zone') or peb.get('libelle') or ''))})")
     return " · ".join(b for b in bits if b)
 
 
@@ -412,7 +419,13 @@ def rendu(valeurs, ctx=None) -> str:
         # DOC-APPORTEUR-018 (RECETTE-11 D7) — quand la cascade RELÈVE une ICPE, on imprime sa
         # description/distance (« …SCI MILHAC, régime Enregistrement, 93 m »), plus seulement la
         # phrase générique ; l'`icpe_detail` était calculé par le builder mais jamais consommé ici.
-        _aide_poll = "Un ancien site industriel ou un sol pollué est signalé à proximité (analyse de risques)."
+        # CHIRURGICAL-FIX-1 (LOT H pt2) — on ne DIT « ancien site industriel / sol pollué » que si un
+        # INVENTAIRE de pollution est relevé (sol pollué / casias). Sur la seule proximité d'une ICPE,
+        # on dit le FAIT constaté (« installation classée à proximité »), sans inférer la pollution.
+        if ctx.get("pollution_inventaire"):
+            _aide_poll = "Un ancien site industriel ou un sol pollué est signalé à proximité (analyse de risques)."
+        else:
+            _aide_poll = "Une installation classée pour la protection de l'environnement (ICPE) est signalée à proximité."
         _icpe = ctx.get("icpe_detail")
         if _icpe:
             _aide_poll += f" {_icpe}"

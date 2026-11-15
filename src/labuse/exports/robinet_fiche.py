@@ -607,6 +607,22 @@ def _c_aleas(db, idu, f):
     return _nz((f.get("aleas") or {}).get("liste"))
 
 
+@extracteur("contraintes_parcelle_liste")
+def _c_contraintes_parcelle(db, idu, f):
+    # CHIRURGICAL-FIX-1 (LOT H pt2) — LA MÊME liste d'alertes que la fiche §Risques-et-environnement et
+    # le Comparatif : TOUTES les lignes SOFT_FLAG / HARD_EXCLUDE (aléas, zone humide, inondation TRI,
+    # bruit, SUP…), hors bassin versant (contexte, pas une alerte). L'Apporteur, pièce qui circule
+    # seule, lit ce champ pour ne masquer aucune alerte (zone humide AD0887, inondation extrême BW2635).
+    # Hors ALERTE : contexte de marché (VEFA), motifs de SCORING (déclassement, bâti, SDP résiduelle)
+    # et bassin versant (hydrographie) — ce ne sont pas des « contraintes qui gênent le projet ».
+    _hors_alerte = {"bassin_versant", "vefa_neuf", "declassement", "bati", "residuel_socle"}
+    out = [{"libelle": l.get("libelle") or l.get("detail") or "", "nature": l.get("layer")}
+           for l in (f.get("lines") or [])
+           if isinstance(l, dict) and l.get("result") in ("HARD_EXCLUDE", "SOFT_FLAG")
+           and l.get("layer") not in _hors_alerte]
+    return _nz(out)
+
+
 @extracteur("n_vigilances")
 def _c_vigilances(db, idu, f):
     # PPR-UNIQUE-1 (A-011) — compteur de risques UNIQUE, défini EXACTEMENT comme la tuile d'en-tête

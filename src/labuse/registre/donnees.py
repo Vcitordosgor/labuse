@@ -266,6 +266,17 @@ DONNEES: dict[str, Donnee] = {
     # (`georisques_mvt`) et l'inondation AZI/TRI (`georisques_azi_tri`), plus l'arrêté PPR (`deal_ppr`)
     # — au lieu de l'agrégat `georisques_api` (depuis le Circuit, on voit désormais la ligne alimentée).
     reservoirs=("deal_ppr", "georisques_mvt", "georisques_azi_tri",), portee="run", type="liste"),
+ # CHIRURGICAL-FIX-1 (LOT H pt2) — LISTE COMPLÈTE des alertes de la parcelle (toutes les lignes
+ # SOFT/HARD de la fiche §Risques-et-environnement + Comparatif : aléas, zone humide, inondation TRI,
+ # bruit, SUP, ICPE, EBC…), hors marché/scoring. L'Apporteur (pièce qui circule seule) lit CE champ
+ # pour ne masquer aucune alerte — même liste partout.
+ "contraintes_parcelle_liste": C("Contraintes relevées (liste)", "liste", "parcelle",
+    "liste des contraintes/alertes de la parcelle (aléas, zone humide, inondation TRI, bruit, SUP, "
+    "ICPE, EBC, PPR…) — toutes les lignes SOFT/HARD de la cascade servie, hors marché et scoring ; "
+    "même source que la fiche §Risques-et-environnement et le Comparatif",
+    moteur="cascade", calcul="moteur",
+    fonction="src/labuse/exports/robinet_fiche.py:_c_contraintes_parcelle (lignes SOFT_FLAG/HARD_EXCLUDE)",
+    reservoirs=("deal_ppr", "georisques_mvt", "georisques_azi_tri",), portee="run", type="liste"),
  "n_extraits_plu": C("extraits (règlement)", "nombre", "commune",
     "extraits de règlement servis par commune (corpus)",
     moteur="commune_compteurs", calcul="moteur",
