@@ -57,6 +57,15 @@ def _num(x) -> Optional[float]:
     return float(x) if isinstance(x, (int, float)) else None
 
 
+#: MOTEUR-VERITE-FIX-5 LOT 1 — RÈGLE DE NON-HAUSSE : le chiffre servi ne dépasse JAMAIS celui
+#: de main, sauf cas APPROUVÉS (liste fermée du mandat). Les scénarios « hauteur de façade du
+#: projet » (niveau par niveau) ne sont admis QUE sur ces zones, à condition que la hauteur de
+#: façade du scénario respecte les plafonds de l'article (égout / acrotère / faîtage).
+FACADE_NIVEAU_AUTORISEES = {("97418", "UA"), ("97418", "UAz"), ("97402", "Ub"), ("97402", "Uc")}
+#: Scénario H/2 à l'ÉGOUT (niveau par niveau) : admis UNIQUEMENT à La Possession, HORS zones AU
+#: (conditions d'aménagement et OAP non vérifiables — AS0606 non, AC3589/AP0762 oui).
+EGOUT_NIVEAU_COMMUNES = {"97408"}
+
 #: MOTEUR-VERITE-FIX-4 LOT 6 — marge au-dessus du DERNIER PLANCHER quand la référence du
 #: retrait relatif est la hauteur TOTALE de façade : acrotère (~1,2-1,5 m) ou égout de toiture.
 #: FIXÉE à 1,5 m et ÉCRITE dans le scénario servi (H envisagé = n × étage + 1,5 m).
@@ -438,24 +447,45 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             recul_formule_obj = None
             _frac_h = _fraction_hauteur_formule(getattr(zr, "recul_limites_formule", None))
             _h_ref_type = getattr(zr, "h_reference", None)
+            # MOTEUR-VERITE-FIX-5 LOT 1 — règle de NON-HAUSSE : les scénarios niveau par
+            # niveau (source de hausse vs main) ne sont admis que sur la liste fermée :
+            # égout → La Possession hors AU ; façade → Sainte-Marie UA/UAz + Bras-Panon Ub/Uc
+            # (plafonds de hauteur respectés). Partout ailleurs : référence PRUDENTE (capacité
+            # ≤ main), mention « capacité supérieure possible, à vérifier ».
+            from ..faisabilite.zonage import _insee as _insee_commune
+            from ..faisabilite.zone_norm import est_famille as _est_fam
+            _insee_c = _insee_commune(commune) or ""
+            _est_au = bool(work_zone) and _est_fam(work_zone, ("AU",))
+            _scenario_ok = False
+            if _h_ref_type == "egout":
+                _scenario_ok = _insee_c in EGOUT_NIVEAU_COMMUNES and not _est_au
+            elif _h_ref_type == "hauteur_totale_facade":
+                _scenario_ok = ((_insee_c, work_zone) in FACADE_NIVEAU_AUTORISEES
+                                and not _est_au)
             if (_frac_h is not None and recul_sep is not None and recul_sep > 0
-                    and _h_ref_type not in ("egout", "hauteur_totale_facade")):
-                # MOTEUR-VERITE-FIX-3 LOT 1 (resserré FIX-4 LOT 6) — référence NI égout NI hauteur
-                # totale de façade (prospect altimétrique point à point, ou non lue à l'article) :
-                # le scénario niveau-par-niveau ne s'applique PAS. Référence PRUDENTE =
-                # faîtage de la zone (le recul le plus grand plausible — capacité ≤ main).
-                _h_prud = haut if haut is not None else egout
+                    and not _scenario_ok):
+                # Référence PRUDENTE (jamais de hausse) : l'ÉGOUT de la zone quand le texte
+                # vise l'égout (lecture correcte — Saint-Joseph U5 : « égout depuis le sol après
+                # travaux », FIX-5 LOT 2 — jamais le faîtage à sa place), sinon le faîtage (le
+                # recul le plus grand plausible). Le recul reste ≥ au minimum de main.
+                if _h_ref_type == "egout" and egout is not None and not _est_au:
+                    _h_prud = egout
+                else:
+                    # zone AU (conditions d'aménagement/OAP non vérifiables) ou référence non
+                    # égout : prudence MAXIMALE = faîtage (jamais une hausse vs main — AS0606).
+                    _h_prud = haut if haut is not None else egout
                 if _h_prud is not None:
                     _rec_p = round(max(float(recul_sep), float(_h_prud) * _frac_h), 1)
                     if _rec_p > recul_sep:
                         recul_sep = _rec_p
+                    _ref_p = "égout" if (_h_ref_type == "egout" and egout is not None) else "faîtage"
                     recul_sep_formule = (
                         f"recul séparatif = max(min, H×{_frac_h:.3g}) — référence PRUDENTE "
-                        f"H = faîtage {_h_prud:g} m (le texte ne fixe pas l'égout : "
-                        f"{_h_ref_type or 'référence non lue à l''article'}) → {recul_sep:g} m")
+                        f"H = {_ref_p} {_h_prud:g} m (règle de non-hausse : scénario niveau par "
+                        f"niveau réservé à la liste approuvée) → {recul_sep:g} m")
                     racc.setdefault("regles_non_integrees", []).append(
-                        "retrait relatif : référence de hauteur non « égout » — scénario "
-                        "niveau-par-niveau NON appliqué (référence prudente faîtage)")
+                        "retrait relatif : scénario niveau-par-niveau non admis ici (règle de "
+                        "non-hausse) — référence prudente, capacité supérieure possible, à vérifier")
                 else:
                     racc.setdefault("regles_non_integrees", []).append(
                         "recul séparatif lié à la hauteur non chiffrable : hauteur de zone non validée")
@@ -477,6 +507,16 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                     # « différence d'altitude point à point » reste PRUDENTE (branche ci-dessus).
                     _marge = (MARGE_FACADE_TOITURE_M
                               if _h_ref_type == "hauteur_totale_facade" else 0.0)
+                    # FIX-5 LOT 1 — la hauteur de façade du SCÉNARIO respecte les plafonds de
+                    # l'article : n est capé pour que n×étage ≤ plafond à l'égout (s'il existe)
+                    # ET n×étage + marge ≤ plafond faîtage/acrotère (s'il existe).
+                    if _marge:
+                        _n_cap = _nmax
+                        if egout is not None:
+                            _n_cap = min(_n_cap, max(1, int(float(egout) // _etage)))
+                        if haut is not None:
+                            _n_cap = min(_n_cap, max(1, int((float(haut) - _marge) // _etage)))
+                        _nmax = max(1, _n_cap)
                     recul_formule_obj = ReculSepFormule(
                         fraction=_frac_h, minimumM=float(recul_sep), etageM=_etage,
                         niveauxMax=_nmax, margeM=_marge,
@@ -812,6 +852,24 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         dec_lat = analyser_condition_implantation(imp_lat, _larg, surface)
         dec_fond = analyser_condition_implantation(imp_fond, _larg, surface)
 
+        # MOTEUR-VERITE-FIX-5 LOT 1/LOT 2 — FRONTS SUR VOIE qualifiés sur le TERRAIN ENTIER
+        # (avant tout découpage par zone, emprises publiques comptées même ouvertes aux seuls
+        # piétons — AV1339 : 52,7 m de voie BD TOPO ET 40,7 m d'emprise publique). Sert : la
+        # porte Salazie « un seul front établi », et la règle du fond multi-voies.
+        _fronts_cache: list = []
+
+        def _fronts_terrain_entier():
+            if _fronts_cache:
+                return _fronts_cache[0]
+            try:
+                lf = classify_parcel_limits(session, pid, emprises_publiques=True,
+                                            voies_privees=voies_privees)
+                fronts = [e for e in lf.edges if e.type == "voie" and e.length_m >= 2.0]
+            except Exception:  # noqa: BLE001 — classification indisponible : fronts inconnus
+                fronts = None
+            _fronts_cache.append(fronts)
+            return fronts
+
         # MOTEUR-VERITE-FIX-4 LOT 2 — fermoir par PRESCRIPTION GPU mesurée : une feuille peut
         # déclarer `ferme_si_prescription` (bâtiment patrimonial protégé — Plaine Ub 7.2 ;
         # périmètre RHI / linéaire commercial — Le Port Uc) : si la parcelle intersecte la
@@ -847,6 +905,32 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                     _dec.update(ouvre=False, zero=0, bande_m=None, lineaire_pct=None,
                                 detail=None, mention=None)
 
+        # MOTEUR-VERITE-FIX-5 LOT 1 — porte SALAZIE UA : l'ouverture n'est admise que si UN
+        # SEUL front sur voie est établi À L'ÉCHELLE DU TERRAIN ENTIER (art. U 7.1 : le fond se
+        # définit au terrain d'assiette ; AV1267 oui — AV1339 deux emprises, AH0074 51 % rouge :
+        # non). PPR rouge dominant → pas d'ouverture (prudence, prescriptions à instruire).
+        if (dec_lat["ouvre"] or dec_fond["ouvre"]):
+            from ..faisabilite.zonage import _insee as _ins_sal
+            if (_ins_sal(commune) or "") == "97421":
+                _fronts = _fronts_terrain_entier()
+                _rouge_dom = False
+                try:
+                    from ..faisabilite.db import _HORS_PPR_ROUGE
+                    _rr_s = session.execute(_HORS_PPR_ROUGE, {"pid": pid}).first()
+                    if _rr_s is not None and _rr_s.parcelle_m2 and float(_rr_s.parcelle_m2) > 0:
+                        _rouge_dom = (float(_rr_s.rouge_m2 or 0.0)
+                                      / float(_rr_s.parcelle_m2)) >= 0.5
+                except Exception:  # noqa: BLE001 — mesure indisponible : prudence
+                    _rouge_dom = True
+                if _fronts is None or len(_fronts) != 1 or _rouge_dom:
+                    for _d in (dec_lat, dec_fond):
+                        _d.update(ouvre=False, zero=0, bande_m=None, lineaire_pct=None,
+                                  detail=None, mention=None)
+                    racc.setdefault("implantation", {}).setdefault("mentions", []).append(
+                        "ouverture non admise (règle de non-hausse) : front sur voie non unique "
+                        "à l'échelle du terrain entier, ou PPR rouge dominant — implantation en "
+                        "limite non appliquée, capacité supérieure possible, à vérifier")
+
         _mentions = [m for m in (dec_lat["mention"], dec_fond["mention"]) if m]
         if _mentions or dec_lat["detail"] or dec_fond["detail"] or _presc_appliques:
             racc["implantation"] = {"laterales": imp_lat, "fond": imp_fond,
@@ -880,6 +964,12 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             elig_side = [e for e in side_edges if _cote_qualifie(e)]
             elig_rear = [e for e in rear_edges if _cote_qualifie(e)]
             n_voies_distinctes = sum(1 for e in edges if e.type == "voie")
+            if mz_sub_geom_wkt is not None:
+                # FIX-5 LOT 2 — les fronts se qualifient sur le TERRAIN ENTIER avant le
+                # découpage par zone : le morceau peut ne plus voir qu'un front (AV1339).
+                _f_full = _fronts_terrain_entier()
+                if _f_full is not None:
+                    n_voies_distinctes = max(n_voies_distinctes, len(_f_full))
             if n_voies_distinctes >= 2 and elig_rear and (
                     fond_expres or (dec_lat["ouvre"] and meme_article)):
                 elig_rear = []
@@ -1009,6 +1099,16 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         else:
             n_voie = sum(1 for e in lim.edges if e.type == "voie")
             n_sep = sum(1 for e in lim.edges if e.type in ("side", "rear"))
+            # MOTEUR-VERITE-FIX-5 LOT 1 — JAMAIS de hausse sans façade sur voie ÉTABLIE pour
+            # l'assiette calculée (AC3540 : 0 m de façade qualifiée ; AD0323, AK0834) : les
+            # scénarios niveau par niveau sont retirés (le minimum prudent reste servi).
+            _fac_q = sum(float(e.geom.length) for e in lim.edges if e.type == "voie")
+            if recul_formule_obj is not None and _fac_q <= 0.0:
+                recul_formule_obj = None
+                racc.setdefault("regles_non_integrees", []).append(
+                    "scénario niveau-par-niveau retiré : aucune façade sur voie établie pour "
+                    "l'assiette calculée (règle de non-hausse) — capacité supérieure possible, "
+                    "à vérifier")
             racc["classification"] = {"provider": bdtopo_src.provider, "voie": n_voie,
                                       # MOTEUR-VERITE-FIX-4 LOT 2 — façade mesurée (garde micro-parcelle)
                                       "facade_voie_m": round(sum(

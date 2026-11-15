@@ -44,8 +44,12 @@ CAS_LOT1 = [
 
 @pytest.mark.parametrize("idu,plafond", CAS_LOT1)
 def test_lot1_cotes_cadastraux(app_session, idu, plafond):
-    sdp, _f = _sdp(app_session, idu)
-    assert sdp is not None, f"{idu} : SDP absente (attendu ≤ {plafond})"
+    sdp, f = _sdp(app_session, idu)
+    # FIX-5 LOT 1 — une parcelle SANS façade sur voie établie sert « capacité à vérifier »
+    # (SDP ∅) : l'inconnu n'est jamais une hausse, le plafond ne s'applique qu'aux chiffres.
+    if sdp is None:
+        assert "capacité à vérifier" in f.verdict
+        return
     assert sdp <= plafond + 0.5, f"{idu} : {sdp} m² servis > {plafond} m² (côté cadastral seul)"
 
 
@@ -127,8 +131,10 @@ def test_lot6_marge_toiture_ecrite(app_session):
 
 @pytest.mark.parametrize("idu,plafond", CAS_LOT3_PLAFONDS)
 def test_lot3_formules_et_hauteurs(app_session, idu, plafond):
-    sdp, _f = _sdp(app_session, idu)
-    assert sdp is not None, f"{idu} : SDP absente (attendu ≤ {plafond})"
+    sdp, f = _sdp(app_session, idu)
+    if sdp is None:   # FIX-5 LOT 1 — sans façade établie : « à vérifier », jamais une hausse
+        assert "capacité à vérifier" in f.verdict
+        return
     assert sdp <= plafond + 0.5, f"{idu} : {sdp} m² > plafond {plafond} m²"
 
 

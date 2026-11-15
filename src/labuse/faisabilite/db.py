@@ -1008,13 +1008,17 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 f"Constructible — capacité à vérifier : micro-parcelle ({_surf_garde:.0f} m²) — "
                 "aucune capacité chiffrée seule, assemblage / projet d'ensemble à instruire.",
                 f"Micro-parcelle ({_surf_garde:.0f} m²) : pas de capacité chiffrée seule.")
-        if isinstance(_facade, (int, float)) and 0 < _facade < 3.0:
+        if isinstance(_facade, (int, float)) and _facade < 3.0:
+            # FIX-5 LOT 1 — 0 m inclus : sans façade sur voie ÉTABLIE pour l'assiette calculée,
+            # aucune capacité chiffrée (AC3540 servait 174 m² avec 0 m de façade qualifiée).
             from .engine import faisabilite_capacite_a_verifier
+            _lib = (f"façade sur voie de {_facade:g} m" if _facade > 0
+                    else "aucune façade sur voie établie pour l'assiette calculée")
             return ctx, faisabilite_capacite_a_verifier(
                 ctx.zone,
-                f"Constructible — capacité à vérifier : façade sur voie de {_facade:g} m — "
+                f"Constructible — capacité à vérifier : {_lib} — "
                 "desserte du scénario à établir, aucune capacité chiffrée.",
-                f"Façade sur voie insuffisante ({_facade:g} m) : desserte à établir.")
+                f"Façade sur voie non établie ({_facade:g} m) : desserte à établir.")
         ppr_rouge = bool((racc.get("ppr") or {}).get("rouge"))
         # PPR-PARTIEL-A lot 2 — garde-fous : la règle (lot 1) calcule désormais l'emprise sur la
         # partie hors zone rouge, mais on ne la SERT que si cette partie est exploitable. On vérifie
