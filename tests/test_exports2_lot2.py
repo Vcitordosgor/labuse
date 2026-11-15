@@ -172,7 +172,9 @@ def test_archive_reproductible(tmp_path):
     from labuse.exports import archive
     res = _dossier()
     payload = archive.payload_archive("dossier", "97415000BO0852", res.numero, res.valeurs, "2026-09-05")
-    assert payload["numero_rapport"] == "DP-20260905-97415000BO0852"   # E4 — IDU entier
+    # E4 — IDU entier ; LOT I pt4 — + clé de CONTENU (4 hex) : deux versions le même jour diffèrent.
+    assert payload["numero_rapport"].startswith("DP-20260905-97415000BO0852-")
+    assert res.numero == _dossier().numero   # déterministe : même contenu → même numéro (reproductible)
     assert "surface_parcelle_m2" in payload["valeurs"]
     pdf = tmp_path / "d.pdf"
     pdf.write_bytes(b"%PDF fake")

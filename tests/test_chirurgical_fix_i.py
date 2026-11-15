@@ -157,6 +157,26 @@ def test_3e_chaque_ppr_nomme_et_date():
     assert "PPR littoral approuvé le 16/03/2017" in html
 
 
+def test_pt4_numero_deux_versions_different_et_comparatif_toutes_parcelles():
+    """pt4 — deux versions du même export le même jour (données différentes) ont des numéros DIFFÉRENTS ;
+    une génération à l'identique garde le même numéro ; le numéro d'un Comparatif tient compte de TOUTES
+    ses parcelles (changer une parcelle change le numéro)."""
+    from datetime import date
+
+    from labuse.exports.numeros import numero_rapport
+    j = date(2026, 1, 15)
+    a = numero_rapport("dossier", "97411000IS0448", j, discriminant="contenu-A")
+    b = numero_rapport("dossier", "97411000IS0448", j, discriminant="contenu-B")
+    assert a != b and a == numero_rapport("dossier", "97411000IS0448", j, discriminant="contenu-A")
+    assert a.startswith("DP-20260115-97411000IS0448-")
+    # Comparatif : le numéro dépend de TOUTES les parcelles (ordre indifférent)
+    p1 = sorted(["A", "B", "C"]); p2 = sorted(["A", "B", "D"])
+    assert (numero_rapport("comparatif", "A", j, discriminant="|".join(p1))
+            != numero_rapport("comparatif", "A", j, discriminant="|".join(p2)))
+    assert (numero_rapport("comparatif", "A", j, discriminant="|".join(sorted(["A", "B", "C"])))
+            == numero_rapport("comparatif", "A", j, discriminant="|".join(sorted(["C", "B", "A"]))))
+
+
 def test_pt2_zone_rouge_exclue_de_l_implantation_pas_vigilance_forte():
     """pt2 — la zone rouge marginale est dite INCONSTRUCTIBLE (exclue de l'implantation), prescriptions
     réservées à la zone bleue — plus « vigilance forte ; pas d'exclusion automatique ». La normalisation

@@ -23,7 +23,7 @@ def test_apporteur_prend_la_date_opposable_de_la_fiche_pas_sudocuh():
     statut = {"horizon": "2023-08-11", "approbation_sudocuh": "2018-12-08",
               "libelle": "PLU approuvé le 2023-08-11"}
     html = _coup_d_oeil(_valeurs(statut), ctx={})
-    assert "PLU approuvé le 11/08/2023" in html      # la date de la FICHE
+    assert "Version du PLU servie, approuvée le 11/08/2023" in html      # la date de la FICHE
     assert "08/12/2018" not in html                  # jamais l'approbation d'origine Sudocuh périmée
 
 
@@ -31,4 +31,4 @@ def test_apporteur_repli_sudocuh_si_pas_d_horizon():
     # Sans date opposable servie, on retombe sur Sudocuh (repli ultime) — comportement conservé.
     statut = {"approbation_sudocuh": "2019-06-26", "libelle": "PLU"}
     html = _coup_d_oeil(_valeurs(statut), ctx={})
-    assert "PLU approuvé le 26/06/2019" in html
+    assert "Version du PLU servie, approuvée le 26/06/2019" in html

@@ -445,7 +445,7 @@ def _r_statut_plu(v):
     evol = v.get("evolution_sudocuh")
     gpu = v.get("horizon")
     if appro:
-        s = f"PLU approuvé le {_fr_dates(appro)}"
+        s = f"Version du PLU servie, approuvée le {_fr_dates(appro)}"
         if evol and evol != appro:
             s += f" — dernière évolution engagée le {_fr_dates(evol)}"
         if gpu and str(gpu) != str(appro):

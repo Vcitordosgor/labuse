@@ -228,10 +228,10 @@ def _coup_d_oeil(valeurs, ctx) -> str:
             appro = plu.get("approbation_sudocuh")
             if horizon:
                 y, m, d = (horizon.split("T")[0].split("-") + ["", "", ""])[:3]
-                libelle = f"PLU approuvé le {d}/{m}/{y}"
+                libelle = f"Version du PLU servie, approuvée le {d}/{m}/{y}"
             elif appro:
                 y, m, d = (appro.split("T")[0].split("-") + ["", "", ""])[:3]
-                libelle = f"PLU approuvé le {d}/{m}/{y}"
+                libelle = f"Version du PLU servie, approuvée le {d}/{m}/{y}"
             else:
                 libelle = plu.get("libelle")
                 if libelle:

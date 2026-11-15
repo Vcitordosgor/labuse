@@ -1025,6 +1025,11 @@ def _pcmi4(db: Session, idu: str, parcelle: dict, adr: dict | None = None,
                 _vus.add(_nt(_eff))
     except Exception:  # noqa: BLE001
         pass
+    # CHIRURGICAL-FIX-1 (LOT I pt5) — pas de DOUBLES POINTS (« .. ») dans la notice : un détail qui finit
+    # déjà par un point, suivi d'une phrase « . … », en produisait (« (règlement DEAL).. Les prescriptions »,
+    # « niveau fort.. La parcelle »). On replie toute suite de points en un seul.
+    import re as _re
+    lignes = [(titre, _re.sub(r"\.(\s*\.)+", ".", txt), src) for titre, txt, src in lignes]
     rows = "".join(
         f"<tr><td style='width:26%'><b>{titre}</b></td><td>{txt}<div class='src'>Source : {src}</div></td></tr>"
         for titre, txt, src in lignes) or "<tr><td colspan='2'>Données terrain non disponibles.</td></tr>"
