@@ -613,20 +613,19 @@ zones:
             condition_texte: 'alignement sur les constructions limitrophes existantes (décision LOT 5 : ne vise pas le fond) — retrait avec mention'
             condition_modelable: 'non'
           implantation_laterales:
-            mode: limite_imposee
+            mode: limite_sous_conditions
             statut: valide
             article: 'Article Ud 5'
             page_pdf: 68
             citation: 'Les constructions doivent être implantées en limite séparative et/ou suivant l''alignement des constructions limitrophes existantes.'
-            condition_texte: 'et/ou suivant l''alignement des constructions limitrophes existantes'
+            condition_texte: 'et/ou suivant l''alignement des constructions limitrophes existantes — l''alignement des voisins est une ALTERNATIVE à la limite : aucun scénario « en limite 0 m » garanti'
             condition_modelable: 'non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F23) : RECLASSÉ — « et/ou suivant l''alignement des constructions limitrophes » n''est pas une limite imposée pure ; le recul 0 explicite (forme alignement) est retiré, retrait prudent servi, mention « capacité supérieure possible, à vérifier ».'
           article: Ud 5
           page_pdf: 68
           citation: Les constructions doivent être implantées en limite séparative et/ou suivant l’alignement
             des constructions limitrophes existantes.
           statut: valide
-          min_m: 0
-          forme: alignement
       stationnement:
         par_logement:
           places: 0.3

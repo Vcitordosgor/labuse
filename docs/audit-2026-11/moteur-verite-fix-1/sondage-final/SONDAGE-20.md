@@ -7,7 +7,7 @@
 - Images : `SONDAGE-F01-bande.png` / `SONDAGE-F01-page.png`
 
 ## F02 — 97415 zone AU1b (laterales) · mode `limite_sous_conditions` · `une_seule_limite + hauteur_bande:9 m sur bande de 3 m`
-- Article renvoi vers U1 7.2 · page PDF 20 · bande extraite (2 ligne(s), 97415_reglement_20251217.pdf p.20)
+- Article renvoi vers U1 7.2 · page PDF 21 · bande refaite (règle U1b, 97415_reglement_20251217.pdf p.21 — RECALAGE FIX-3/FIX-4)
 - Citation : « « Se reporter au règlement de la zone U1 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.53 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U1b) : en zone U1b — Chaque construction pourra s'implanter sur une limite séparative sur une longu »
 - Images : `SONDAGE-F02-bande.png` / `SONDAGE-F02-page.png`
 
@@ -22,12 +22,12 @@
 - Images : `SONDAGE-F04-bande.png` / `SONDAGE-F04-page.png`
 
 ## F05 — 97414 zone 1AUc oap4 (fond) · mode `limite_sous_conditions` · `hauteur_bande:4 m sur bande de 3 m`
-- Article AUindicée => UC 7.3 · page PDF 45 · ligne non localisée — page entière fournie (97414_reglement_20251218.pdf p.45)
+- Article AUindicée => UC 7.3 · page PDF 46 · bande refaite (97414_reglement_20251218.pdf p.46 — RECALAGE FIX-3/FIX-4)
 - Citation : « 1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hau »
 - Images : `SONDAGE-F05-bande.png` / `SONDAGE-F05-page.png`
 
 ## F06 — 97420 zone 1AUa (fond) · mode `limite_sous_conditions` · `deux_limites_max`
-- Article Article AUindicée 5 (renvoi U5.3, régime UA) · page PDF 30 · ligne non localisée — page entière fournie (97420_reglement_20250929.pdf p.30)
+- Article Article AUindicée 5 (renvoi U5.3, régime UA) · page PDF 13 (règle U5.3 ; renvoi AU p.30 → F06b) · bande refaite (97420_reglement_20250929.pdf p.13 — RECALAGE FIX-3/FIX-4)
 - Citation : « En zone UA, les constructions peuvent être implantées en limite de fond de terrain, si elles s’implantent en retrait ou sur une seule limite séparative latérale. En cas de retrait, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite  »
 - Images : `SONDAGE-F06-bande.png` / `SONDAGE-F06-page.png`
 
@@ -57,7 +57,7 @@
 - Images : `SONDAGE-F11-bande.png` / `SONDAGE-F11-page.png`
 
 ## F12 — 97415 zone U3a (fond) · mode `limite_sous_conditions` · `une_seule_limite`
-- Article U3 7.2 · page PDF 111 · bande extraite (2 ligne(s), 97415_reglement_20251217.pdf p.111)
+- Article U3 7.2 · page PDF 112 · bande refaite (alinéa U3a, 97415_reglement_20251217.pdf p.112 — RECALAGE FIX-3/FIX-4)
 - Citation : « en zone U3a — Les constructions devront s'implanter sur une limite séparative ou en retrait minimum de3 m. [sic, espace manquant dans le texte extrait] »
 - Images : `SONDAGE-F12-bande.png` / `SONDAGE-F12-page.png`
 
@@ -82,7 +82,7 @@
 - Images : `SONDAGE-F16-bande.png` / `SONDAGE-F16-page.png`
 
 ## F17 — 97415 zone AU3b (laterales) · mode `limite_sous_conditions` · `une_seule_limite + hauteur_bande:6 m sur bande de 3 m`
-- Article renvoi vers U3 7.2 · page PDF 111 · bande extraite (4 ligne(s), 97415_reglement_20251217.pdf p.111)
+- Article renvoi vers U3 7.2 · page PDF 112 · bande refaite (règle U3b/U3c, 97415_reglement_20251217.pdf p.112 — RECALAGE FIX-3/FIX-4)
 - Citation : « « Se reporter au règlement de la zone U3 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.158 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U3b) : en zone U3b et U3c — Les constructions pourront s'implanter sur une limite séparative sur u »
 - Images : `SONDAGE-F17-bande.png` / `SONDAGE-F17-page.png`
 
@@ -116,7 +116,7 @@
 - **F17b** (97415) : le RENVOI du chapitre AU — bande extraite (97415_reglement_20251217.pdf p.158). Phrase imagée : « Se reporter au règlement de la zone »
 - **F19b** (97422) : clause de bande (hauteur en limite, art. 10.3) — le FOND est réglé par le même article — bande extraite (97422_reglement_20230811.pdf p.18). Phrase imagée : « dans une bande de 3,60 mètres »
 - **F21** (97423) : LIMITE IMPOSÉE — Trois-Bassins Uaa (Ua 7.2) — bande extraite (97423_reglement_20220602.pdf p.15). Phrase imagée : « doivent joindre au moins une des deux limites séparatives »
-- **F22** (97415) : LIMITE IMPOSÉE — Saint-Paul U1a (RDC d'une limite à l'autre, bande de 10 m) — bande extraite (97415_reglement_20251217.pdf p.20). Phrase imagée : « d'une limite séparative à l'autre »
+- **F22** (97415) : LIMITE IMPOSÉE — Saint-Paul U1a (RDC d'une limite à l'autre DANS LA BANDE DE 10 m depuis la voie) — bande refaite p.21 (RECALAGE FIX-3/FIX-4). Phrase imagée : « Dans une bande de 10 m … les rez-de-chaussée … d'une limite séparative à l'autre »
 - **F23** (97407) : LIMITE IMPOSÉE — Le Port Ud (art. 5) — bande extraite (97407_reglement_20241209.pdf p.68). Phrase imagée : « doivent être implantées en limite séparative et/ou suivant l'alignement »
 
 F09 (Saint-Joseph U3) : le même article 7.2 règle AUSSI le fond (« limites

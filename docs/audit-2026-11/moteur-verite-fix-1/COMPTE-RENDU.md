@@ -500,13 +500,14 @@ sortis (AO1881, AR0040, CD0623).
 
 **LE CONTRÔLE INVERSE FIX-3** (`CONTROLE-INVERSE-FIX3.csv`) : la référence n'est plus
 l'ancien cache de l'audit mais **origin/main ACTUEL (`9058a8f55`) rejoué dans un worktree
-propre** (cache-main3, 6 569 permis). **22 parcelles** au-dessus de main — chacune justifiée
-par des MESURES DE LA PARCELLE (largeur sur voie mesurée sur les arêtes voie, surface, décision
-d'implantation rejouée avec ces mesures — plus un contrôle de syntaxe des paramètres de zone) :
-Salazie UA ×3 (U 7.2/7.3, liste blanche, implantation ouverte avec les mesures), Le Port Uc
-(art. Uc 5, liste blanche), La Possession UB/UBc/AUB ×4 (H/2 à l'ÉGOUT prouvé à l'article,
-art. UB 7 p.30), La Plaine-des-Palmistes Ub ×14 (art. Ub 7, liste blanche). **HORS LISTE
-BLANCHE : 0** — le script SORT EN ÉCHEC (exit 1) si une hausse non listée apparaît : la règle
+propre** (cache-main3, 6 569 permis). **22 parcelles** au-dessus de main (le filtre du
+script écartait les hausses ≤ 2 m² : avec AV0584, le total est **23** — filtre retiré au
+FIX-4) — chacune justifiée par des MESURES DE LA PARCELLE (largeur sur voie mesurée sur les
+arêtes voie, surface, décision d'implantation rejouée avec ces mesures — plus un contrôle de
+syntaxe des paramètres de zone) : **12 La Plaine-des-Palmistes Ub** (art. Ub 7, liste blanche),
+**5 La Possession** (UB/UBc ×2/AUB — H/2 à l'ÉGOUT prouvé, art. UB 7 p.30 — et UAm),
+**3 Salazie UA** (U 7.2/7.3, liste blanche), **2 Le Port Uc** (art. Uc 5, liste blanche).
+**HORS LISTE BLANCHE : 0** — le script SORT EN ÉCHEC (exit 1) si une hausse non listée apparaît : la règle
 FIX-3 est prouvée sur le stock, pas seulement par les tests unitaires.
 
 **Sondage recalé une 2e fois** (`sondage-final/`, section RECALAGE FIX-3) : bandes REFAITES à
@@ -517,3 +518,112 @@ F06 p.13 (U5.3 régime UA), F12/F17 p.112 (U3a ; U3b/U3c). Lectures corrigées :
 non modélisée → aucun scénario chiffré en limite), F23 (Ud « et/ou suivant l'alignement des
 constructions limitrophes » = alternative → reclassé, pas une imposée pure). **Les PNG du
 sondage sont désormais suivis en Git** (`git add -f`, 56 images).
+
+---
+
+# MOTEUR-VERITE-FIX-4 — chaque cas du relecteur devient un test
+
+Troisième relecture indépendante : 17 des 22 hausses défendables, mais des capacités encore
+calculées sur de fausses limites, et le retour au chiffre de main masquait une erreur
+réglementaire majeure (Sainte-Marie H/2). Chaque parcelle de son rapport est désormais un TEST
+(tests/coherence_ecrans/test_moteur_verite_fix4.py, joué au push par le hook).
+
+## LOT 1 — une limite est un côté du contour cadastral (`5d245c4fa`)
+
+Une limite séparative est un CÔTÉ du contour cadastral, partagé avec UNE parcelle voisine —
+jamais une coupe interne de zonage, jamais une ligne hors du contour, jamais une polyligne qui
+fait le tour. `_split_cotes` (limites.py) : les chaînes séparatives contiguës sont FUSIONNÉES
+puis DÉCOUPÉES en côtés (angle franc 25°, dérive de cap cumulée, CHANGEMENT DE VOISIN — AT0753
+fusionnait 29,4 m + 11,5 m) ; LATÉRALE = le côté ABOUTIT à la voie (définition de l'article),
+FOND = le reste, fermé quand le terrain est longé par PLUSIEURS voies ; sur une portion
+multizone chaque segment est confronté au CONTOUR RÉEL (ST_Boundary, tolérance 1 m) —
+`cadastrale=False` n'entre jamais au budget ni en limite 0 m. Rejeux du relecteur reproduits :
+AE0114 109→88 (coupe de 16,3 m fermée ; 88 = côté cadastral de 18,7 m, choix le plus favorable
+admis — son rejeu à 83 ouvrait un autre côté), AT0753 159, AE0249 177, AI1063 220, AK0021 233,
+AV0962 259, AR0087 277, AE0784 274, AV0584 274, AT0800 294, AV1319 174 (exacts) ; AC0460 208
+(côté le plus favorable, son rejeu 198), AE0113 444 (≤ 497). Anneaux FIX-3 inchangés (AH0293
+3313, AY0554 250, AH1368 238, AW0503 72, AS0031 315).
+
+## LOT 2 — la liste blanche aux déclarations exactes (`0d262302f`)
+
+Salazie UA : le nombre EST dans le texte — budgets MESURÉS et SÉPARÉS (deux latérales au plus,
+U 7.2 ; UN fond, U 7.3 — articles distincts), `nombre_de_limites: mesuree` ; servitudes > 5
+logements et multi-voies portés (fond multi-voies fermé par le moteur). AV1339 1482→1327
+(1 latérale cadastrale 37,7 m + 1 fond 24,4 m — ~37 m hors contour fermés), AH0074 647→586
+(2 latérales ; la coupe interne fermée), AV1267 902→752 (prudent). La Plaine Ub : la protection
+patrimoniale (Ub 7.2) est APPLIQUÉE — fermoir `ferme_si_prescription` sur les prescriptions GPU
+07 (134 éléments cartés). Le Port Uc : périmètres RHI (ER 22-25) et linéaires commerciaux
+(prescription 22) MESURÉS ; CES 60 % OAP Mascareignes MESURÉ par parcelle, ZAC Rivière des
+Galets non localisée → règle non modélisée PORTÉE (l'exception « deja_couvert » ne couvrait que
+Uca). GARDE MICRO-PARCELLE : parcelle seule < 40 m² (AO1876 : 9 m², 5 m² extrudés sur 5
+niveaux) ou façade sur voie < 3 m (BK0245 : 2,9 m) → AUCUNE capacité chiffrée (à vérifier).
+
+## LOT 3 — les formules de retrait relatif s'exécutent (`ead3fdb48`)
+
+**Erreur déjà présente dans main, invisible au contrôle inverse** : 37 zones citaient un
+retrait RELATIF (H/2, L=H, moitié de la différence d'altitude) sans formule résolue — le moteur
+gardait le minimum. `FORMULES-FIX4.csv` donne la LISTE COMPLÈTE (37 injectées + 2 exclusions
+motivées : 97413 AUe mur coupe-feu ; 97408 AUAv classement égout FAUX, règle propre 3 m p.68,
+h_reference retiré). Exécution : égout prouvé → niveau par niveau (La Possession UAv, AUBm) ;
+sinon référence PRUDENTE faîtage. Sainte-Marie UAz AS1397 : 5 321 → 241 m² (≤ 519 du
+relecteur, 13,50 m de retrait pour 27 m de façade). Saint-Denis : Ud — hauteur retenue =
+min(prospect CALCULÉ, plage basse) (AO0584 : 10 m calculés, 12 m servis avant → 822 m²) ; Udo —
+« capacité à vérifier » AUSSI par la voie calibrée (AO0742 : 865 m² sur 9 m génériques → SDP ∅ ;
+AO0778 idem, plus de « terrain exigu confirmé ») ; Uicm — plafond PROPRE Ui.10 12 m (p.57) :
+HX0075 2 279 m² et BP0869 1 966 m² (les chiffres du relecteur). Trois-Bassins Ue : FOND à 4 m
+FIXES (Ue 7.3, `limite-sep-fond`) — la formule ne re-calcule jamais le fond.
+
+## LOT 4 — zone rouge et PLU, dans le bon ordre (`ea722ec54`)
+
+Le contrôle du plan de prévention s'applique TOUJOURS, y compris dans les secteurs d'habitat
+A/N : la branche Aba/Nba/Arh retournait AVANT le contrôle PPR — AL0165 (Saint-Joseph, 100 % en
+R2) sortait « constructible sous conditions » ; elle FERME (cause redhibitoire). Rouge partiel :
+le verdict « capacité à vérifier » PORTE le PPR. Cascade : « partie hors rouge exploitable » ne
+s'écrit QUE si le PLU ADMET la construction sur cette partie (famille U/AU ou portion réelle) ET
+qu'elle touche une voie — AC0249 (Saint-Benoît, 71 % rouge, Acor fermée) reste EXCLUE ; BC1134
+garde l'allègement, reformulé « capacité RÉDUITE, SOUS PRESCRIPTIONS du règlement du PPR
+(étude préalable / attestation le cas échéant) » — jamais une promesse.
+
+## LOT 5 — la preuve
+
+| Mesure (cohorte H) | FIX-3 | LOT 1 | LOT 2 | LOT 3 | LOT 4 | **FINAL** |
+|---|---|---|---|---|---|---|
+| Test 1 — « constructible » | 97,2 % | 97,2 % | 97,2 % | 97,2 % | 97,2 % | **97,1 %** (4 641/4 781) |
+| Test 2 — dépassements > 1,10 | 102 | 102 | 101 | 117 | 117 | **118** (3,0 %) |
+| terrain_exigu | 80 | 82 | 76 | 76 | 76 | **83** |
+
+Les **+16 dépassements du LOT 3** sont l'effet DIRECT des formules exécutées — l'enveloppe
+prudente rétrécit là où main servait le minimum pour un retrait relatif : Sainte-Marie UB ×4 /
+UD ×2 / UAz / UC (U 5.2, H/2 de la hauteur TOTALE de façade), Sainte-Rose Uc ×4 / Ub ×2 (UC/UB
+7), Saint-Joseph 1AU5ru, 1 portion (97418 N). Le permis réel y bat l'enveloppe PRUDENTE — la
+mention « capacité supérieure possible, à vérifier » est servie. 0 dépassement sorti.
+
+L'écart LOT 4 → FINAL (−6 « constructibles », +1 dépassement, +7 exigu) vient du DERNIER
+correctif du contrôle inverse : le REPLI « contour inseté » applique désormais la MÊME
+référence prudente que le builder (formule à référence non-égout → recul = max(min,
+faîtage × fraction)). Sans lui, quand le gabarit prudent vidait l'assiette, le repli
+retombait sur le MINIMUM et servait PLUS que main (5 hausses hors liste à Sainte-Rose,
+AR0291 134 → 158 m² d'emprise — détectées par le nouveau contrôle, corrigées, re-rejouées).
+
+**LE CONTRÔLE INVERSE FIX-4** (`CONTROLE-INVERSE-FIX4.csv`) : référence = origin/main
+`9058a8f55` rejoué (cache-main3) ; **SEUIL 0** — les hausses de 1 ou 2 m² sont incluses.
+**21 hausses**, chacune avec : les CÔTÉS CADASTRAUX effectivement posés en limite 0 m par le
+scénario retenu (type latérale/fond, longueur, drapeau cadastral), la CONDITION appliquée, et
+l'EFFET CHIFFRÉ de l'ouverture (capacité re-calculée TOUTES ouvertures fermées — l'écart est
+la part de la hausse due à la condition). Répartition : 11 La Plaine-des-Palmistes Ub
+(ouvertures une-limite mesurées, effet = 100 % de la hausse), 3 Salazie UA (2 latérales +
+1 fond mesurés), 2 Le Port Uc, 5 La Possession (UB/UBc/AUB/UAm — H/2 à l'ÉGOUT prouvé,
+niveau par niveau : AUCUN côté en limite, effet d'ouverture 0, la hausse vient de la formule).
+**HORS LISTE BLANCHE : 0** — le script sort en échec (exit 1) sinon. Les « capacité à
+vérifier » restent `sdp_max_m2: null` (inconnu) dans les caches — jamais une hausse, jamais 0.
+
+**Fichiers de preuve** : les caches sérialisent désormais « capacité à vérifier » en
+`sdp_max_m2: null` + cause (AS0256, CY1293, AO0778 — jamais 0). F08 ré-encodé (Uf3.2 : 2
+limites AU TOTAL, 60 % du linéaire de CHACUNE, profondeurs/décrochés > 4 m non modélisés —
+l'ancienne « bande de 3 m plafonnée à 4 m » était fausse ; 4 zones du tableau Uf/UfCA/AUf/
+AUfGB). F23 reclassé DANS LE YAML (Le Port Ud : « et/ou suivant l'alignement des constructions
+limitrophes » = alternative — `limite_imposee` retiré ET le recul 0 explicite `forme:
+alignement` retiré, retrait prudent + mention). En-têtes du sondage recalés sur les images
+refaites (F02/F22 p.21, F05 p.46, F06 p.13, F12/F17 p.112) ; totaux du contrôle FIX-3 corrigés
+(12 Plaine, 5 Possession, 3 Salazie, 2 Le Port — 23 avec AV0584, le filtre ≤ 2 m² est retiré).
+LISTE-BLANCHE.md régénérée (6 feuilles ouvertes, 18 zones égout — AUAv retiré).

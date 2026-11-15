@@ -86,6 +86,13 @@ def capacite_labuse_vt3(conn, idu: str) -> dict:
         out["cause"] = res_cause or f.cause or "non constructible (moteur)"
         vt._ecrire_cap(idu, out)
         return out
+    # MOTEUR-VERITE-FIX-4 LOT 5 — « capacité à vérifier » (SDP ∅) reste INCONNUE dans les
+    # fichiers de preuve : sdp None + cause, jamais 0 (AS0256/CY1293 sérialisés à 0 avant).
+    if "surface_plancher_m2" not in fr:
+        out["sdp_max_m2"] = None
+        out["cause"] = out.get("cause") or "capacite_a_verifier"
+        vt._ecrire_cap(idu, out)
+        return out
     out["sdp_max_m2"] = float(fr.get("surface_plancher_m2") or 0.0)
     las = fr.get("logements_au_sol") or (0, 0)
     lss = fr.get("logements_sous_sol") or (0, 0)

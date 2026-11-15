@@ -1270,7 +1270,8 @@ zones:
             page_pdf: 117
             citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
             condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
-            condition_modelable: 'une_seule_limite + lineaire_max_pct:60 + non'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1278,7 +1279,8 @@ zones:
             page_pdf: 117
             citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
             condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
-            condition_modelable: 'deux_limites_max + hauteur_bande:4 m sur bande de 3 m'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
           min_m: 3.0
           article: Uf3.2
           page_pdf: 117
@@ -1483,7 +1485,8 @@ zones:
             page_pdf: 117
             citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
             condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
-            condition_modelable: 'une_seule_limite + lineaire_max_pct:60 + non'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1491,7 +1494,8 @@ zones:
             page_pdf: 117
             citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
             condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
-            condition_modelable: 'deux_limites_max + hauteur_bande:4 m sur bande de 3 m'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
           min_m: 3.0
           article: Uf3.2
           page_pdf: 117
@@ -1573,7 +1577,8 @@ zones:
             page_pdf: 117
             citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
             condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
-            condition_modelable: 'une_seule_limite + lineaire_max_pct:60 + non'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1581,7 +1586,8 @@ zones:
             page_pdf: 117
             citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
             condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
-            condition_modelable: 'deux_limites_max + hauteur_bande:4 m sur bande de 3 m'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
           min_m: 3.0
           article: Uf3.2
           page_pdf: 117
@@ -1641,7 +1647,8 @@ zones:
             page_pdf: 117
             citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
             condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
-            condition_modelable: 'une_seule_limite + lineaire_max_pct:60 + non'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1649,7 +1656,8 @@ zones:
             page_pdf: 117
             citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
             condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
-            condition_modelable: 'deux_limites_max + hauteur_bande:4 m sur bande de 3 m'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
           min_m: 3.0
           article: Uf3.2
           page_pdf: 117
