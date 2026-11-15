@@ -110,6 +110,70 @@ réellement exemptée. Preuve `AM0838_…_preuves.txt`. Garde :
 
 ---
 
+## Preuves régénérées pt1 / pt2 / pt3 (demande de contre-vérification)
+
+Les points 1, 2 et 3 (les plus graves) manquaient de preuve tirée d'un document régénéré. Voici les
+documents produits dans `~/Desktop/chasse-1/_lotH-final/` et les valeurs lues.
+
+### pt1 — Bilan : résultat/marge/cash gelés ; taxe PDF sans assiette = « — »
+
+**Excel recalculé RÉELLEMENT** (moteur de formules `formulas`, pas une lecture des valeurs en cache —
+65 cellules recalculées par classeur). Scénario = CA du bien (surface vendable × prix de sortie DVF),
+**coûts vides** — exactement le cas qui affichait un résultat = CA et 100 % de marge. Fichiers
+`bilan_<parcelle>_coutsVides.xlsx` (corrigé) et `bilan_<parcelle>_coutsVides_BUG_avant.xlsx`
+(l'ancien comportement reproduit en forçant l'ancien chemin à formules).
+
+| Parcelle | CA (coûts vides) | AVANT (recalc des formules) | CORRIGÉ (recalc des formules) |
+|----------|------------------|------------------------------|-------------------------------|
+| BW2635 (×4 547 €/m²) | **251 449 €** | Résultat **251 449 €** · marge **100 %** (1,0) · cash **251 449 €** | Résultat **« non calculable — saisissez vos coûts »** · marge **vide** · cash **« non calculable… »** |
+| AM0838 (×4 375 €/m²) | **241 938 €** | Résultat **241 938 €** · marge **100 %** · cash **241 938 €** | **« non calculable… »** · marge **vide** · **« non calculable… »** |
+| AD0887 (×4 318 €/m²) | **238 785 €** | Résultat **238 785 €** · marge **100 %** · cash **238 785 €** | **« non calculable… »** · marge **vide** · **« non calculable… »** |
+
+(Les 251 449 / 241 938 / 238 785 € correspondent aux 251 447 / 241 935 / 238 783 € cités, au centième
+près de la surface vendable retenue.) Le `Moteur().calculer()` renvoie `resultat_net is None` sur ces
+trois entrées → les cellules ne portent PLUS de formule `=D..-D..`, mais un texte ; un recalcul
+LibreOffice/Excel afficherait donc exactement ce texte, aucun 251 449 caché.
+
+**PDF — taxe sans assiette** (`bilan_pt1_PDF_taxe_sans_assiette.html`, taxe d'aménagement à 25 €/m²
+sans surface taxable renseignée) :
+
+> **Taxe d'aménagement** — Assiette : **—** · Taux ou montant : **25 €/m²** · HT : **—** · TVA : **—** · TTC : **—** · État : ratio
+
+(Avant : « 0 € · Sourcé ».)
+
+### pt2 — Apporteur : mêmes alertes que la fiche + ICPE « à proximité »
+
+Documents `apporteur_<parcelle>_<idu>.html` (ligne « Ce qui gêne » / section ICPE).
+
+- **AD0887 — zone humide** : « *Zone humide inventoriée (espace fonctionnel (2009)) : La Grande Ferme
+  (**100 % de la parcelle**)* ». (Avant : omise.)
+- **AM0838 — installation classée** : « *Une installation classée pour la protection de
+  l'environnement (**ICPE**) est signalée **à proximité**. Installation (ICPE) à proximité — LOGISUD,
+  régime Autres régimes, 10 m.* » — plus d'inférence « ancien site industriel / sol pollué ».
+- **BW2635 — inondation** : « Ce qui gêne … · **Zone inondable TRI** · … ». Cette alerte n'apparaissait
+  PAS avant pt2 (la couche `tri_zone` n'est pas dans `aleas_parcelle_liste`, qui ne lit que
+  `layer='risques'`) ; elle vient de la nouvelle liste `contraintes_parcelle_liste`. La ligne « Ce qui
+  gêne » affiche la NATURE de chaque alerte (libellé avant « — », règle RECETTE-11 D7) : la fiche porte
+  le détail complet « *Zone inondable TRI — scénario extreme (85 % de la parcelle)* », et l'Apporteur en
+  reprend la nature « Zone inondable TRI ». L'alerte d'inondation n'est donc plus omise.
+
+### pt3 — Pré-dossier PCMI4 IS0448 : PPR dit comme le Dossier
+
+`PCMI4_IS0448_apres.pdf` (+ `.txt`) :
+
+> **Risque naturel (PPR)** — PPR **zone rouge sur 34 % de la surface** — vigilance forte. Les
+> prescriptions du règlement PPR (niveau de plancher, …) …
+> **Aléa naturel (dans le périmètre PPR)** — Aléa inondation — niveau fort. La parcelle étant en zone
+> de PPR, **les prescriptions du règlement PPR s'appliquent** …
+> **Risque naturel (PPR)** — **Zone bleue PPR** inondation et mouvement de terrain (~38 % / ~28 % de la
+> parcelle) — **constructible SOUS PRESCRIPTIONS** (règlement DEAL) …
+
+La phrase « **aucune prescription PPR opposable** » (et toute forme « aucune prescription… ») est
+**absente** de la notice : 0 occurrence (vérifié sur le texte extrait du PDF). La notice dit désormais
+la même chose que le Dossier/Gabarit (34 % rouge exclu, 66 % bleu sous prescriptions).
+
+---
+
 ## À lister seulement (non corrigés, hors mandat de fix)
 - Étude de zone : « revenu médian » vs « niveau de vie moyen » (vocabulaire INSEE).
 - Estimer BW2635 : les ventes comparables apparaissent en double.
