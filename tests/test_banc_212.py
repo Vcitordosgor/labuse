@@ -75,6 +75,18 @@ _SEUILS = [
 ]
 
 
+def test_regle_complete_le_tampon_type_et_operation():
+    """ETUDE-STATIONNEMENT-FIX-2 (reliquat #6) — la règle de stationnement SERVIE au Dossier est la MÊME,
+    COMPLÈTE, que celle de l'Étude : par type de logement ET par taille d'opération. Le Tampon ne doit plus
+    afficher « 1 place / logement » tronqué mais la typologie + la ligne d'opération avec son seuil."""
+    from labuse.implantation.service import _regle_stationnement_courte
+    rc = _regle_stationnement_courte(R.charger("97422", "Ua").stationnement)
+    assert rc and "1 place / logement" not in rc, f"règle tronquée : {rc}"
+    # typologie par pièces ET dimension d'opération présentes
+    assert "T2" in rc and "T3+" in rc
+    assert "opération" in rc and "> 5" in rc, f"dimension d'opération absente : {rc}"
+
+
 @pytest.mark.parametrize("insee,zone,seuil,total,publiques", _SEUILS)
 def test_banc_seuil_surface(insee, zone, seuil, total, publiques):
     """5ᵉ programme : 20 logements à la surface EXACTE du seuil → la bonne tranche selon l'inclusivité lue

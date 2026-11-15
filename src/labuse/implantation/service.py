@@ -671,9 +671,17 @@ def _regle_stationnement_courte(b) -> Optional[str]:
     # None → l'Étude le déclarait « non vérifié » tout en affichant sa citation validée — HT0538/Ud6).
     if b.mode == "par_m2_sdp" and b.m2_par_place:
         return f"1 place / {nb(b.m2_par_place)} m² de surface de plancher"
+    # ETUDE-STATIONNEMENT-FIX-2 (reliquat #6) — forme COMPLÈTE : par type de logement ET par taille d'opération,
+    # pour que le Dossier lise la MÊME règle que l'Étude (Le Tampon : « 0,5 pl. ≤T1 · 1 pl. T2 · 1,5 pl. T3+ ·
+    # 1,5 pl./logt si opération > 5 logts », JAMAIS un « 1 place / logement » tronqué). Les lignes d'OPÉRATION
+    # portent leur condition de seuil ; les lignes de base, leur tranche de pièces (Tn = n pièces principales).
     parts = []
     for lg in b.lignes:
         if lg.destination and lg.destination != "collectif":
+            continue
+        if lg.role == "operation":
+            seuil = f" si opération > {lg.logements_min - 1} logts" if lg.logements_min else " (opération)"
+            parts.append(f"{nb(lg.places)} pl./logt{seuil}")
             continue
         pmin, pmax = lg.pieces_min, lg.pieces_max
         if pmin and pmax and pmin != pmax:
