@@ -1,4 +1,20 @@
-# MOTEUR-VERITE-FIX-1 — COMPTE-RENDU (lots 1 et 2, puis ARRÊT)
+# MOTEUR-VERITE-FIX-1 — COMPTE-RENDU (lots 1 à 6, ARRÊT final)
+
+## LE TABLEAU COMPLET — permis réels pour juge, lot par lot (cumulatif)
+
+| Mesure | Audit | LOT 1 | LOT 2 | LOT 3 | LOT 4 | LOT 5 | **LOT 6** |
+|---|---|---|---|---|---|---|---|
+| Test 1 — « constructible » sur les 4 812 permis H | 4 632 (96,3 %) | 4 633 | 4 642 | 4 643 | 4 661 | 4 665 | **4 674 (97,1 %)** |
+| Test 2 — dépassements d'enveloppe > 1,10 | 106 (2,6 %) | 103 | 102 | 100 | 97 | 97 | **97 (2,4 %)** — jamais monté |
+| terrain_exigu (parcelles des permis H) | 327 | 322 | 275 | 275 | 275 | 268 | **104** (−68 %) |
+| Cohorte 6 601 — « non constructible LABUSE » | 220 | 219 | 206 | 205 | 184 | 179 | **156** |
+| Cohorte — au-dessus (total) | 2 507 (38,0 %) | 2 492 | 2 486 | 2 485 | 2 477 | 2 477 | **2 477 (37,5 %)** |
+| Garde A/N (capacité nouvelle sans règle) | — | 0 | 0 | 0 | 0* | 0* | **0*** |
+
+\* 22 parcelles A/N deviennent constructibles à partir du LOT 4 — TOUTES « plafonné à X m² »
+avec la règle du secteur citée (Aba/Arh/Nrh/Nba, SDP ≤ plafond vérifiée) : capacité AVEC règle,
+commandée par le mandat. Contrôles inverses : 30 plus fortes hausses relues à CHAQUE lot
+(150 relectures, toutes reproduites au moteur, 0 anomalie). Suite unitaire verte à chaque lot.
 
 Branche `fix/moteur-verite-1` (base `origin/main` `e269abaa0`, audit VERITE-TERRAIN-3 mergé pour
 garder `ERREURS.md`). Juge de paix : les permis réellement accordés (cohorte VT-3 : H = 4 812 PC
@@ -262,3 +278,66 @@ Effet marginal lot4→lot5 MESURÉ : 7 parcelles de Saint-André passent de « t
 Saint-Pierre (+3 à +7 m², linéaire). Contrôle inverse : les 30 plus fortes hausses vs l'audit =
 celles des lots précédents (déjà relues) ; garde A/N inchangée (les mêmes 22 plafonnées avec
 règle). Suite verte (406 tests).
+
+---
+
+## LOT 6 — l'implantation en limite étendue à toutes les communes
+
+Même méthode que le LOT 2 : 17 lecteurs (un par commune restante), citations mot pour mot aux
+règlements officiels — La Possession comprise (son règlement d'implantation est PROUVÉ identique
+à l'ancien : md5 des extraits UA 7/UB 7/UEm 7/AUBm 7/TITRE III strictement égaux entre les
+documents 2025-12-17 et 2026-06-25) ; Saint-Leu lu au PDF de la mairie (md5 = celui du
+calibrage 2013) ; Saint-Denis EXCLU (en attente de confirmation). **595 classements**
+(latérales/fond) injectés en feuilles validées : limite_sous_conditions 375 ·
+retrait_obligatoire 134 · limite_ou_retrait 78 · limite_imposee 8. Zones non injectées, dites :
+AU indicées de Saint-André (renvoi à la zone U d'indice — servies par le renvoi) ; U1lec/U3h/
+Usdu_PlateauCaillou de Saint-Paul (absentes du YAML destinations).
+
+**Mesures après LOT 6** (cumulatif, rejeu complet) : Test 1 **4 674/4 812 (97,1 %)** ·
+Test 2 dépassements **97/4 081 (2,4 %)** — n'a monté à aucun lot · terrain_exigu **104**
+(327 à l'audit, −68 %) · cohorte au-dessus **2 477 (37,5 %)**, non-constructible **156**,
+« capacité nulle » 34 (ce sont les nouveaux « Constructible — capacité à vérifier », SDP ∅
+comptée 0 par le comparateur — honnête). Contrôle inverse : 304 hausses vs l'audit ; les 30
+plus fortes (Saint-André 12, Le Port 7, Saint-Joseph 5…) relues UNE PAR UNE : 30/30 reproduites
+au moteur, 0 anomalie ; **garde A/N : AUCUNE capacité nouvelle en zone agricole ou naturelle
+hors les 22 secteurs plafonnés avec règle du LOT 4** ; rubans verts (406 tests).
+
+Sondage FINAL de vingt règles à graine fixe, toutes communes : `sondage-final/SONDAGE-20.md` —
+**18/20 lignes extraites en image** depuis les PDF officiels (packs GPU téléchargés pour les
+communes tirées), 2 replis en page entière (citations composées de renvois AU).
+
+Nota de commit : les CSV de LECTURE des 17 communes (preuves) sont entrés au commit du LOT 5
+(ajout du dossier docs) ; leur ACTIVATION (feuilles YAML) est dans ce commit LOT 6.
+
+### Les interprétations NOUVELLES de l'extension (à trancher, lectures prudentes en attendant)
+
+1. **« profondeur_bande » à double sens** : plusieurs règlements bornent la PROFONDEUR DE LA
+   CONSTRUCTION le long de la limite (Avirons 12/20 m, Cilaos 15 m, Saint-Leu UA/UB 15 m,
+   Trois-Bassins 1AU 10 m, Bras-Panon UC 20 m « à partir du recul imposé ») quand d'autres
+   définissent une BANDE DEPUIS LA VOIE (Petite-Île 20 m, Saint-Paul U1a 10 m, Le Port Ub
+   20 m). Le moteur modélise UNIFORMÉMENT en bande depuis la voie — approximation prudente
+   (la limite ne sert que près de la voie), à raffiner si une notion de profondeur bâtie est
+   souhaitée.
+2. **Linéaires ABSOLUS en limite** (18 m La Possession, 10/12 m Saint-Paul, 18 m Le Tampon,
+   10 m Saint-Leu UD, 20 m mitoyenneté UEm) : hors vocabulaire (% seulement) → mentions ;
+   suggestion `lineaire_max_m`.
+3. **Clauses d'angle** (interdiction de joindre deux limites contiguës, 3-5 m d'espace libre :
+   La Possession UA/UB, Le Tampon) : non modélisées (mention).
+4. **Saint-Benoît, fond « libre »** : la colonne explicative (non opposable) dit le fond libre,
+   la règle opposable n'ouvre que les latérales → retrait prudent 1 m gravé, lecture
+   alternative documentée.
+5. **Petite-Île** : condition DISJONCTIVE (bande 20 m OU parcelle < 15 m) → « OU » non
+   modélisé (mention) ; coquille « au minimum dans une bande » lue comme la même bande.
+6. **Sainte-Rose UD muet au-delà de 14 m** → lecture la moins permissive (une limite ≤ 14 m,
+   retrait sinon).
+7. **Saint-Leu AUa(slo)/AUb(slo)** : secteurs d'habitat de ZAC omis de la liste limitative
+   AU 2.2 (malfaçon probable du PLU) → exclus, signalé.
+8. **Chapitres AU indicées absents de `plu_reglement_extrait`** dans au moins 8 communes
+   (Avirons p.26-28, Plaine-des-Palmistes p.75-77, Bras-Panon p.77-81, Sainte-Marie p.41,
+   Cilaos collé dans AUst, Le Tampon mal tagué, Saint-Paul, La Possession AUEm absent du
+   règlement même) + tags `zone` faux/vides (Saint-Paul massivement, 97405/97410 vides) —
+   à reprendre à l'ingestion des extraits ; les lectures ont contourné par recherche plein
+   texte et PDF officiels (md5 vérifiés).
+9. **Multi-voies** : règle récurrente « plus de limite de fond » quand le terrain est longé
+   par plusieurs voies — non modélisée.
+10. **OAP** : nombreux renvois « compatibles avec les OAP » — OAP non ingérées, non lues.

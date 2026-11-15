@@ -63,6 +63,20 @@ zones:
             exceptions sont géographiques (axes rue G. Pompidou 7 m, Monfleury/L. Brunet 5 m ; 75 m des RN hors
             agglomération) et ne se rattachent pas au code de zone.'
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'U 7'
+            page_pdf: 11
+            citation: 'Les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m).'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'U 7'
+            page_pdf: 11
+            citation: 'Les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
           forme: alignement
           article: U 7
           page_pdf: 11
@@ -133,6 +147,23 @@ zones:
       l''adaptation, le changement de destination, la réfection ou l''extension limitée des constructions existantes
       » (Art. U-2 2°, p. 5).'
   Uap:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'U 7'
+            page_pdf: 11
+            citation: 'Les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m).'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'U 7'
+            page_pdf: 11
+            citation: 'Les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     silence: autorise
     silence_src: 'Le secteur Uap relève du chapitre ZONES U : « Chaque bâti protégé fait l''objet d''une fiche d''immeuble
       : […] comprenant les règles à respecter en complément du règlement de la zone U. » (Art. U-1, p. 3). Dans
@@ -192,6 +223,20 @@ zones:
             exception, le recul de 75 m des RN hors agglomération (les rues Pompidou/Montfleury/Brunet ne concernent
             pas Ub). Exception géographique, non rattachée au code de zone.'
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'U 7'
+            page_pdf: 11
+            citation: 'Les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m).'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'U 7'
+            page_pdf: 11
+            citation: 'Les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
           forme: alignement
           article: U 7
           page_pdf: 11
@@ -754,6 +799,23 @@ zones:
       AU-2 3°, p. 22) ; l''Art. AU-1 (p. 19) situe cet espace « dans la zone AU n°1 (zone d''activités économiques
       de Beauvallon) », c''est-à-dire AUp1.'
   AUa5:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUa
     renvoi_src: 'Fiche annexe n°05, p. 57 : « FICHE ANNEXE DU REGLEMENT N°05 – ZONE AUa Le Conardel – zone d''habitat
       » (rattache la zone n°5 à la famille AUa) ; Art. AU-1, p. 19 : « Les 18 zones AU sont repérées au règlement
@@ -765,63 +827,318 @@ zones:
       (supérieure à 50 logts/ha) », « Espace destiné à accueillir des équipements et leurs parkings », p. 58) :
       affectations spatiales internes à la zone, pas des statuts de sous-destination.'
   AUa8:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUa
     renvoi_src: 'Fiche annexe n°08, p. 61 : « FICHE ANNEXE DU REGLEMENT N°08 – ZONE AUa Le Cap les Bas, sentier
       des Lataniers » ; Art. AU-1, p. 19 (fiches complétant ou se substituant au règlement général) — la fiche n°08
       ne contient aucune règle de destination.'
   AUa9:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUa
     renvoi_src: 'Fiche annexe n°09, p. 62 : « FICHE ANNEXE DU REGLEMENT N°09 – ZONE AUa Le Cap les Bas, chemin des
       Jonquilles » ; Art. AU-1, p. 19 — la fiche n°09 ne contient aucune règle de destination.'
   AUa18:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUa
     renvoi_src: 'Fiche annexe n°18, p. 71 : « FICHE ANNEXE DU REGLEMENT N°18 – ZONE AUa Petit Saint-Pierre – chemin
       Impérial » ; Art. AU-1, p. 19 — la fiche n°18 ne contient aucune règle de destination.'
   AUb2:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUb
     renvoi_src: 'Fiche annexe n°02, p. 55 : « FICHE ANNEXE DU REGLEMENT N°02 – ZONE Aub Bourbier les Hauts – chemin
       Montjol » (sic « Aub ») ; Art. AU-1, p. 19 — la fiche n°02 ne contient aucune règle de destination.'
   AUb6:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUb
     renvoi_src: 'Fiche annexe n°06, p. 59 : « FICHE ANNEXE DU REGLEMENT N°06 – ZONE AUb Bras-Canot – espace Sarda
       Garriga » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
   AUb7:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUb
     renvoi_src: 'Fiche annexe n°07, p. 60 : « FICHE ANNEXE DU REGLEMENT N°07 – ZONE AUb Bras-Canot - Prévoisy »
       ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
   AUb10:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUb
     renvoi_src: 'Fiche annexe n°10, p. 63 : « FICHE ANNEXE DU REGLEMENT N°10 – ZONE AUb Le Cap les Bas – allée des
       Palmistes » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
   AUb11:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUb
     renvoi_src: 'Fiche annexe n°11, p. 64 : « FICHE ANNEXE DU REGLEMENT N°11 – ZONE AUb Le Cap les Bas – Impasse
       Louis Barnaval » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
   AUb12:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUb
     renvoi_src: 'Fiche annexe n°12, p. 65 : « FICHE ANNEXE DU REGLEMENT N°12 – ZONE AUb Le Cap les Hauts, près du
       Lot. Baies Roses » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
   AUb13:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUb
     renvoi_src: 'Fiche annexe n°13, p. 66 : « FICHE ANNEXE DU REGLEMENT N°13 – ZONE AUb Le Cap les Hauts, impasse
       Lee-Fong-Chi » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
   AUb14:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUb
     renvoi_src: 'Fiche annexe n°14, p. 67 : « FICHE ANNEXE DU REGLEMENT N°14 – ZONE AUb Sainte-Anne, chemin Blémir
       » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
   AUb15:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUb
     renvoi_src: 'Fiche annexe n°15, p. 68 : « FICHE ANNEXE DU REGLEMENT N°15 – ZONE AUb Sainte-Anne – chemin Jacquemin
       » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
   AUb16:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUb
     renvoi_src: 'Fiche annexe n°16, p. 69 : « FICHE ANNEXE DU REGLEMENT N°16 – ZONE AUb Sainte-Anne – chemin Morange
       » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
   AUb17:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUb
     renvoi_src: 'Fiche annexe n°17, p. 70 : « FICHE ANNEXE DU REGLEMENT N°17 – ZONE AUb Petit Saint-Pierre – chemin
       Gallias » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
   AUb19:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
+            condition_texte: 'Règle opposable muette sur le fond : le 1° n’ouvre l’implantation en limite que sur les limites séparatives LATÉRALES — la colonne explicative (non opposable, déclarée telle p.3) écrit : « Seule l’implantation des constructions par rapport aux limites séparatives latérales est réglementée. L’implantation en fond de parcelle est libre. » Doute fond libre vs recul 1 m du 2° → garde-fou : le moteur garde le retrait actuel (recul min 1 m). Réserve supplémentaire : « Sauf disposition contraire figurant dans la fiche de la zone » — fiches annexes N°01-19 non ingérées en base.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AU 7'
+            page_pdf: 25
+            citation: 'Sauf disposition contraire figurant dans la fiche de la zone, les bâtiments doivent être implantés : 1° Soit sur l’une ou sur les deux limites séparatives latérales, 2° Soit avec un recul d’un mètre au moins.'
     renvoi: AUb
     renvoi_src: 'Fiche annexe n°19, p. 72 : « FICHE ANNEXE DU REGLEMENT N°19 – ZONE AUb Cambourg – chemin Baptiste
       » (« Opération SEMAC Amaryllis II ») ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'

@@ -53,6 +53,22 @@ zones:
             est au maximum égal à 6,00 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article Ua 7'
+            page_pdf: 16
+            citation: 'Les constructions peuvent être implantées au maximum sur deux limites séparatives. Toutefois, en cas d''implantation sur la limite de fond de parcelle, la construction ne peut être implantée que sur une seule limite séparative latérale et elle doit respecter un retrait minimal de 3,50 mètres par rapport aux angles du terrain joignant les limites séparatives latérales. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
+            condition_texte: 'en cas d''implantation sur la limite de fond de parcelle, la construction ne peut être implantée que sur une seule limite séparative latérale et elle doit respecter un retrait minimal de 3,50 mètres par rapport aux angles du terrain joignant les limites séparatives latérales'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article Ua 7'
+            page_pdf: 16
+            citation: 'Les constructions peuvent être implantées au maximum sur deux limites séparatives. Toutefois, en cas d''implantation sur la limite de fond de parcelle, la construction ne peut être implantée que sur une seule limite séparative latérale et elle doit respecter un retrait minimal de 3,50 mètres par rapport aux angles du terrain joignant les limites séparatives latérales. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
+            condition_texte: 'au maximum sur deux limites séparatives'
+            condition_modelable: 'deux_limites_max'
           min_m: 3.5
           article: Ua 7.2
           page_pdf: 16
@@ -168,6 +184,22 @@ zones:
             de 4,00 mètres minimum.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article Ub 7'
+            page_pdf: 28
+            citation: 'Les constructions peuvent être implantées au maximum sur une limite séparative. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
+            condition_texte: 'au maximum sur une limite séparative'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article Ub 7'
+            page_pdf: 28
+            citation: 'Les constructions peuvent être implantées au maximum sur une limite séparative. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
+            condition_texte: 'au maximum sur une limite séparative'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.5
           article: Ub 7.2
           page_pdf: 28
@@ -292,6 +324,22 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article Uc 7'
+            page_pdf: 40
+            citation: 'Les constructions peuvent être implantées au maximum sur une limite séparative. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
+            condition_texte: 'au maximum sur une limite séparative'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article Uc 7'
+            page_pdf: 40
+            citation: 'Les constructions peuvent être implantées au maximum sur une limite séparative. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
+            condition_texte: 'au maximum sur une limite séparative'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.5
           article: Uc 7.2
           page_pdf: 40
@@ -409,6 +457,18 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Article Ur 7'
+            page_pdf: 52
+            citation: 'Les constructions doivent être implantées en retrait de toute limite séparative. La distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
+          implantation_laterales:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Article Ur 7'
+            page_pdf: 52
+            citation: 'Les constructions doivent être implantées en retrait de toute limite séparative. La distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
           min_m: 3.5
           article: Ur 7.2
           page_pdf: 52
@@ -687,6 +747,22 @@ zones:
             de 4,00 mètres minimum.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article AUindicée 7 (renvoi Ub 7)'
+            page_pdf: 75
+            citation: '[Renvoi ZONE AUindicée p.75 non extrait en base ; régime Ub 7.2 p.28 :] Les constructions peuvent être implantées au maximum sur une limite séparative. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
+            condition_texte: 'au maximum sur une limite séparative'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article AUindicée 7 (renvoi Ub 7)'
+            page_pdf: 75
+            citation: '[Renvoi ZONE AUindicée p.75 non extrait en base ; régime Ub 7.2 p.28 :] Les constructions peuvent être implantées au maximum sur une limite séparative. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
+            condition_texte: 'au maximum sur une limite séparative'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.5
           article: Ub 7.2
           page_pdf: 28
@@ -764,6 +840,22 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article AUindicée 7 (renvoi Uc 7)'
+            page_pdf: 75
+            citation: '[Renvoi ZONE AUindicée p.75 non extrait en base ; régime Uc 7.2 p.40 :] Les constructions peuvent être implantées au maximum sur une limite séparative. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
+            condition_texte: 'au maximum sur une limite séparative'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article AUindicée 7 (renvoi Uc 7)'
+            page_pdf: 75
+            citation: '[Renvoi ZONE AUindicée p.75 non extrait en base ; régime Uc 7.2 p.40 :] Les constructions peuvent être implantées au maximum sur une limite séparative. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
+            condition_texte: 'au maximum sur une limite séparative'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.5
           article: Uc 7.2
           page_pdf: 40
@@ -901,6 +993,18 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Article AUindicée 7 (renvoi Ur 7)'
+            page_pdf: 75
+            citation: '[Renvoi ZONE AUindicée p.75 non extrait en base ; régime Ur 7.2 p.52 :] Les constructions doivent être implantées en retrait de toute limite séparative. La distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
+          implantation_laterales:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Article AUindicée 7 (renvoi Ur 7)'
+            page_pdf: 75
+            citation: '[Renvoi ZONE AUindicée p.75 non extrait en base ; régime Ur 7.2 p.52 :] Les constructions doivent être implantées en retrait de toute limite séparative. La distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.'
           min_m: 3.5
           article: Ur 7.2
           page_pdf: 52

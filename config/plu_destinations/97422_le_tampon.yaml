@@ -61,6 +61,22 @@ zones:
             porte: "voie_specifique"
             modifie_calcul: true
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ua7.1'
+            page_pdf: 16
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Ua7.1, p.16) La nouvelle construction ne doit pas excéder sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur une hauteur absolue de 18 mètres. Dans le secteur Uav, ce seuil est limité à 13 mètres. (Ua10.3, p.18)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:18 m sur bande de 3,60 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ua7.1'
+            page_pdf: 16
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Ua7.1, p.16) La nouvelle construction ne doit pas excéder sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur une hauteur absolue de 18 mètres. Dans le secteur Uav, ce seuil est limité à 13 mètres. (Ua10.3, p.18)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:18 m sur bande de 3,60 m'
           min_m: 3.0
           article: Ua7.1
           page_pdf: 16
@@ -346,6 +362,22 @@ zones:
             porte: "voie_specifique"
             modifie_calcul: true
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ua7.1 (Uav = secteur de Ua, sans règle d’implantation propre)'
+            page_pdf: 16
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Ua7.1, p.16) La nouvelle construction ne doit pas excéder sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur une hauteur absolue de 18 mètres. Dans le secteur Uav, ce seuil est limité à 13 mètres. (Ua10.3, p.18)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:13 m sur bande de 3,60 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ua7.1 (Uav = secteur de Ua, sans règle d’implantation propre)'
+            page_pdf: 16
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Ua7.1, p.16) La nouvelle construction ne doit pas excéder sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur une hauteur absolue de 18 mètres. Dans le secteur Uav, ce seuil est limité à 13 mètres. (Ua10.3, p.18)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:13 m sur bande de 3,60 m'
           min_m: 3.0
           article: Ua7.1
           page_pdf: 16
@@ -398,6 +430,22 @@ zones:
             l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ub7.1'
+            page_pdf: 31
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Ub7.1, p.31) Il existe des règles de hauteur particulières qui s’appliquent dans une marge de 3,60 mètres de profondeur comptée parallèlement à la limite séparative latérale. La nouvelle construction ne doit pas excéder sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur une hauteur absolue de 10 mètres. (Ub10.3, p.33 — marge dite « latérale », application au fond à vérifier)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:10 m sur bande de 3,60 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ub7.1'
+            page_pdf: 31
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Ub7.1, p.31) Il existe des règles de hauteur particulières qui s’appliquent dans une marge de 3,60 mètres de profondeur comptée parallèlement à la limite séparative latérale. La nouvelle construction ne doit pas excéder sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur une hauteur absolue de 10 mètres. (Ub10.3, p.33)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:10 m sur bande de 3,60 m'
           min_m: 3.0
           article: Ub7.1
           page_pdf: 31
@@ -674,6 +722,22 @@ zones:
             la limite d’emprise de l’emplacement réservé figurant au document graphique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uc7.1'
+            page_pdf: 46
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Uc7.1, p.46) Il existe des règles de hauteur particulières qui s’appliquent dans une marge de 3,60 mètres de profondeur comptée parallèlement à la limite séparative latérale. La nouvelle construction ne doit pas excéder, sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur, une hauteur absolue de 6 mètres. (Uc10.3, p.48 — marge dite « latérale », application au fond à vérifier)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:6 m sur bande de 3,60 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uc7.1'
+            page_pdf: 46
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Uc7.1, p.46) Il existe des règles de hauteur particulières qui s’appliquent dans une marge de 3,60 mètres de profondeur comptée parallèlement à la limite séparative latérale. La nouvelle construction ne doit pas excéder, sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur, une hauteur absolue de 6 mètres. (Uc10.3, p.48)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:6 m sur bande de 3,60 m'
           min_m: 3.0
           article: Uc7.1
           page_pdf: 46
@@ -910,6 +974,22 @@ zones:
             la limite d’emprise de l’emplacement réservé figurant au document graphique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uc7.1 (Ucm = secteur de Uc, servitude PPRT sans règle d’implantation propre)'
+            page_pdf: 46
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Uc7.1, p.46) Il existe des règles de hauteur particulières qui s’appliquent dans une marge de 3,60 mètres de profondeur comptée parallèlement à la limite séparative latérale. La nouvelle construction ne doit pas excéder, sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur, une hauteur absolue de 6 mètres. (Uc10.3, p.48 — marge dite « latérale », application au fond à vérifier)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:6 m sur bande de 3,60 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uc7.1 (Ucm = secteur de Uc, servitude PPRT sans règle d’implantation propre)'
+            page_pdf: 46
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Uc7.1, p.46) Il existe des règles de hauteur particulières qui s’appliquent dans une marge de 3,60 mètres de profondeur comptée parallèlement à la limite séparative latérale. La nouvelle construction ne doit pas excéder, sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur, une hauteur absolue de 6 mètres. (Uc10.3, p.48)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:6 m sur bande de 3,60 m'
           min_m: 3.0
           article: Uc7.1
           page_pdf: 46
@@ -1182,6 +1262,22 @@ zones:
             la limite d’emprise de l’emplacement réservé figurant au document graphique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud7.1'
+            page_pdf: 61
+            citation: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. (Ud7.1, p.61 — pas de règle de hauteur en bande, l’article Ud10 n’a pas de 10.3)'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud7.1'
+            page_pdf: 61
+            citation: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. (Ud7.1, p.61 — pas de règle de hauteur en bande, l’article Ud10 n’a pas de 10.3)'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: Ud7.1
           page_pdf: 61
@@ -1502,6 +1598,22 @@ zones:
             porte: "voie_specifique"
             modifie_calcul: true
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.88, hors table, vérifié au PDF officiel) → Ua7.1'
+            page_pdf: 16
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. / Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Ua7.1, p.16) La nouvelle construction ne doit pas excéder sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur une hauteur absolue de 18 mètres. (Ua10.3, p.18) S’ajoutent les OAP et les conditions AUindicée 2.2 (infrastructures, densité minimale 50 logts/ha)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:18 m sur bande de 3,60 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.88, hors table, vérifié au PDF officiel) → Ua7.1'
+            page_pdf: 16
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. / Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Ua7.1, p.16) La nouvelle construction ne doit pas excéder sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur une hauteur absolue de 18 mètres. (Ua10.3, p.18) S’ajoutent les OAP et les conditions AUindicée 2.2 (infrastructures, densité minimale 50 logts/ha)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:18 m sur bande de 3,60 m'
           min_m: 3.0
           article: Ua7.1
           page_pdf: 16
@@ -1556,6 +1668,22 @@ zones:
             l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.88, hors table, vérifié au PDF officiel) → Ub7.1'
+            page_pdf: 31
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. / Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Ub7.1, p.31) La nouvelle construction ne doit pas excéder sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur une hauteur absolue de 10 mètres. (Ub10.3, p.33 — marge dite « latérale », application au fond à vérifier) S’ajoutent les OAP et les conditions AUindicée 2.2 (infrastructures, densité minimale 50 ou 30 logts/ha selon pôle SAR)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:10 m sur bande de 3,60 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.88, hors table, vérifié au PDF officiel) → Ub7.1'
+            page_pdf: 31
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. / Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Ub7.1, p.31) La nouvelle construction ne doit pas excéder sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur une hauteur absolue de 10 mètres. (Ub10.3, p.33) S’ajoutent les OAP et les conditions AUindicée 2.2 (infrastructures, densité minimale 50 ou 30 logts/ha selon pôle SAR)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:10 m sur bande de 3,60 m'
           min_m: 3.0
           article: Ub7.1
           page_pdf: 31
@@ -1608,6 +1736,22 @@ zones:
             la limite d’emprise de l’emplacement réservé figurant au document graphique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.88, hors table, vérifié au PDF officiel) → Uc7.1'
+            page_pdf: 46
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. / Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Uc7.1, p.46) La nouvelle construction ne doit pas excéder, sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur, une hauteur absolue de 6 mètres. (Uc10.3, p.48 — marge dite « latérale », application au fond à vérifier) S’ajoutent les OAP et les conditions AUindicée 2.2 (infrastructures, densité minimale 50 / 30 / 20 logts/ha selon pôle SAR)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:6 m sur bande de 3,60 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.88, hors table, vérifié au PDF officiel) → Uc7.1'
+            page_pdf: 46
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. / Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. En cas de retrait, la distance comptée de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 3 mètres.'
+            condition_texte: 'La construction ne peut excéder 18 mètres de profondeur sur la limite séparative et en cas d’implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 3 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. (Uc7.1, p.46) La nouvelle construction ne doit pas excéder, sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur, une hauteur absolue de 6 mètres. (Uc10.3, p.48) S’ajoutent les OAP et les conditions AUindicée 2.2 (infrastructures, densité minimale 50 / 30 / 20 logts/ha selon pôle SAR)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:6 m sur bande de 3,60 m'
           min_m: 3.0
           article: Uc7.1
           page_pdf: 46

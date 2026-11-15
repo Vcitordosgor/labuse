@@ -37,6 +37,18 @@ zones:
             de la façade au point le plus proche de la voie, doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'U 7.3'
+            page_pdf: 13
+            citation: 'En zone UA, les constructions peuvent être implantées sur la limite de fond de terrain ou en retrait. [...] En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite de fond de terrain, est de 3 mètres minimum.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'U 7.2'
+            page_pdf: 13
+            citation: 'En zone UA, les constructions peuvent être implantées sur deux limites séparatives latérales, sur une seule ou en retrait. [...] En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.'
           min_m: 3.0
           article: U 7.2
           page_pdf: 13
@@ -115,6 +127,18 @@ zones:
             de la façade au point le plus proche de la voie, doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'U 7.3'
+            page_pdf: 13
+            citation: 'En zone UA, les constructions peuvent être implantées sur la limite de fond de terrain ou en retrait. [...] En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite de fond de terrain, est de 3 mètres minimum.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'U 7.2'
+            page_pdf: 13
+            citation: 'En zone UA, les constructions peuvent être implantées sur deux limites séparatives latérales, sur une seule ou en retrait. [...] En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.'
           min_m: 3.0
           article: U 7.2
           page_pdf: 13
@@ -163,6 +187,22 @@ zones:
             point le plus proche de la voie, doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U 7.3'
+            page_pdf: 13
+            citation: 'En zones UB et UC, les constructions peuvent être implantées sur la limite de fond de terrain dès lors que le bâti contigu à cette limite n’excède pas 4,50 mètres de hauteur absolue sur une profondeur de 3 mètres comptée de tout point de la limite de fond de terrain. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite de fond de terrain, est de 3 mètres minimum.'
+            condition_texte: 'En zones UB et UC, les constructions peuvent être implantées sur la limite de fond de terrain dès lors que le bâti contigu à cette limite n’excède pas 4,50 mètres de hauteur absolue sur une profondeur de 3 mètres comptée de tout point de la limite de fond de terrain.'
+            condition_modelable: 'hauteur_bande:4,5 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U 7.2'
+            page_pdf: 13
+            citation: 'En zones UB et UC, les constructions peuvent être implantées sur deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure à 15 mètres. Dans les autres cas, les constructions peuvent être implantées sur une limite séparative latérale maximum ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.'
+            condition_texte: 'En zones UB et UC, les constructions peuvent être implantées sur deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure à 15 mètres. Dans les autres cas, les constructions peuvent être implantées sur une limite séparative latérale maximum ou en retrait.'
+            condition_modelable: 'largeur_terrain_max:15 m'
           min_m: 3.0
           article: U 7.2
           page_pdf: 13
@@ -238,6 +278,22 @@ zones:
             point le plus proche de la voie, doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U 7.3'
+            page_pdf: 13
+            citation: 'En zones UB et UC, les constructions peuvent être implantées sur la limite de fond de terrain dès lors que le bâti contigu à cette limite n’excède pas 4,50 mètres de hauteur absolue sur une profondeur de 3 mètres comptée de tout point de la limite de fond de terrain. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite de fond de terrain, est de 3 mètres minimum.'
+            condition_texte: 'En zones UB et UC, les constructions peuvent être implantées sur la limite de fond de terrain dès lors que le bâti contigu à cette limite n’excède pas 4,50 mètres de hauteur absolue sur une profondeur de 3 mètres comptée de tout point de la limite de fond de terrain.'
+            condition_modelable: 'hauteur_bande:4,5 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U 7.2'
+            page_pdf: 13
+            citation: 'En zones UB et UC, les constructions peuvent être implantées sur deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure à 15 mètres. Dans les autres cas, les constructions peuvent être implantées sur une limite séparative latérale maximum ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.'
+            condition_texte: 'En zones UB et UC, les constructions peuvent être implantées sur deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure à 15 mètres. Dans les autres cas, les constructions peuvent être implantées sur une limite séparative latérale maximum ou en retrait.'
+            condition_modelable: 'largeur_terrain_max:15 m'
           min_m: 3.0
           article: U 7.2
           page_pdf: 13
@@ -407,6 +463,18 @@ zones:
             de la façade au point le plus proche de la voie, doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AUindicée 7 -> U 7.3'
+            page_pdf: 13
+            citation: 'En zone UA, les constructions peuvent être implantées sur la limite de fond de terrain ou en retrait. [...] En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite de fond de terrain, est de 3 mètres minimum.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AUindicée 7 -> U 7.2'
+            page_pdf: 13
+            citation: 'En zone UA, les constructions peuvent être implantées sur deux limites séparatives latérales, sur une seule ou en retrait. [...] En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.'
           min_m: 3.0
           article: U 7.2
           page_pdf: 13
@@ -462,6 +530,22 @@ zones:
             point le plus proche de la voie, doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 -> U 7.3'
+            page_pdf: 13
+            citation: 'En zones UB et UC, les constructions peuvent être implantées sur la limite de fond de terrain dès lors que le bâti contigu à cette limite n’excède pas 4,50 mètres de hauteur absolue sur une profondeur de 3 mètres comptée de tout point de la limite de fond de terrain. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite de fond de terrain, est de 3 mètres minimum.'
+            condition_texte: 'En zones UB et UC, les constructions peuvent être implantées sur la limite de fond de terrain dès lors que le bâti contigu à cette limite n’excède pas 4,50 mètres de hauteur absolue sur une profondeur de 3 mètres comptée de tout point de la limite de fond de terrain.'
+            condition_modelable: 'hauteur_bande:4,5 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 -> U 7.2'
+            page_pdf: 13
+            citation: 'En zones UB et UC, les constructions peuvent être implantées sur deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure à 15 mètres. Dans les autres cas, les constructions peuvent être implantées sur une limite séparative latérale maximum ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.'
+            condition_texte: 'En zones UB et UC, les constructions peuvent être implantées sur deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure à 15 mètres. Dans les autres cas, les constructions peuvent être implantées sur une limite séparative latérale maximum ou en retrait.'
+            condition_modelable: 'largeur_terrain_max:15 m'
           min_m: 3.0
           article: U 7.2
           page_pdf: 13
@@ -514,6 +598,22 @@ zones:
             point le plus proche de la voie, doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 -> U 7.3'
+            page_pdf: 13
+            citation: 'En zones UB et UC, les constructions peuvent être implantées sur la limite de fond de terrain dès lors que le bâti contigu à cette limite n’excède pas 4,50 mètres de hauteur absolue sur une profondeur de 3 mètres comptée de tout point de la limite de fond de terrain. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite de fond de terrain, est de 3 mètres minimum.'
+            condition_texte: 'En zones UB et UC, les constructions peuvent être implantées sur la limite de fond de terrain dès lors que le bâti contigu à cette limite n’excède pas 4,50 mètres de hauteur absolue sur une profondeur de 3 mètres comptée de tout point de la limite de fond de terrain.'
+            condition_modelable: 'hauteur_bande:4,5 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 -> U 7.2'
+            page_pdf: 13
+            citation: 'En zones UB et UC, les constructions peuvent être implantées sur deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure à 15 mètres. Dans les autres cas, les constructions peuvent être implantées sur une limite séparative latérale maximum ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.'
+            condition_texte: 'En zones UB et UC, les constructions peuvent être implantées sur deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure à 15 mètres. Dans les autres cas, les constructions peuvent être implantées sur une limite séparative latérale maximum ou en retrait.'
+            condition_modelable: 'largeur_terrain_max:15 m'
           min_m: 3.0
           article: U 7.2
           page_pdf: 13

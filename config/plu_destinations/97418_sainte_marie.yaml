@@ -44,6 +44,22 @@ zones:
             par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3
           article: Art. U5.2 « résidentielles »
           page_pdf: 20
@@ -179,6 +195,22 @@ zones:
             par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3.0
           article: U5.2
           page_pdf: 20
@@ -239,6 +271,22 @@ zones:
             par rapport à l’alignement. Ce seuil est réduit à 2,00 mètres minimum en secteur UAz.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3.0
           article: U5.2
           page_pdf: 20
@@ -308,6 +356,22 @@ zones:
             par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3.0
           article: U5.2
           page_pdf: 20
@@ -430,6 +494,22 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3.0
           article: U5.2
           page_pdf: 20
@@ -552,6 +632,22 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3.0
           article: U5.2
           page_pdf: 20
@@ -640,6 +736,22 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3.0
           article: U5.2
           page_pdf: 20
@@ -712,6 +824,22 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3.0
           article: U5.2
           page_pdf: 20
@@ -816,6 +944,22 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3.0
           article: U5.2
           page_pdf: 20
@@ -1739,6 +1883,22 @@ zones:
           min_m: 0
           forme: alignement
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2 via renvoi AUindicée 1.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20) Régime de la zone UB appliqué par renvoi : « Se reporter au règlement de la zone U indiquée en indice » (Art. AUindicée 1.2, p.41 — chapitre AU absent de la table, renvoi lu dans le YAML calibré)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2 via renvoi AUindicée 1.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20) Régime de la zone UB appliqué par renvoi : « Se reporter au règlement de la zone U indiquée en indice » (Art. AUindicée 1.2, p.41 — chapitre AU absent de la table, renvoi lu dans le YAML calibré)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3
           article: Article U5 - Implantation par rapport aux limites séparatives (5.2)
           page_pdf: 20
@@ -1799,6 +1959,22 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2 via renvoi AUindicée 1.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20) Régime de la zone UC appliqué par renvoi : « Se reporter au règlement de la zone U indiquée en indice » (Art. AUindicée 1.2, p.41 — chapitre AU absent de la table, renvoi lu dans le YAML calibré)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (résidentielles) 5.2 via renvoi AUindicée 1.2'
+            page_pdf: 19
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent joindre une ou deux limites séparatives (au maximum deux). Une distance minimale de 3 mètres sera réservée entre deux corps de bâtiments implantés en limite séparative. (U5.2, p.19-20) Régime de la zone UC appliqué par renvoi : « Se reporter au règlement de la zone U indiquée en indice » (Art. AUindicée 1.2, p.41 — chapitre AU absent de la table, renvoi lu dans le YAML calibré)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3
           article: Article U5 - Implantation par rapport aux limites séparatives (5.2)
           page_pdf: 20

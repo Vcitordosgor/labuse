@@ -47,6 +47,22 @@ zones:
             voie, au moins égale à 4 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4.2 (fond — numérotation « 4.2 » dupliquée dans le PDF)'
+            page_pdf: 20
+            citation: 'Sur la limite de fond de propriété, l''implantation d''une construction est possible dès lors que le bâti contigu à cette limite n''excède pas 4 mètres de hauteur absolue, sur une profondeur de 3 mètres comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété. Au-delà de cette bande de 3 mètres de profondeur, la règle générale s''applique, conformément au schéma ci-joint'
+            condition_texte: 'Implantation sur la limite de fond possible dès lors que le bâti contigu à cette limite n''excède pas 4 m de hauteur absolue sur une profondeur de 3 m, puis gabarit formé par un angle à 100 % sur cette bande de 3 m, au-delà la règle générale s''applique (U4.2 fond, p.20). DOUTE : la phrase Ua des latérales dit « retrait des limites séparatives » sans distinction — lecture stricte possible = retrait obligatoire aussi au fond (cf. NOTES, cas douteux 1).'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4.2'
+            page_pdf: 20
+            citation: 'En zone Ua, les constructions doivent être implantées en retrait des limites séparatives, à l''exception des constructions implantées sur des terrains dont la surface est inférieure à 200 m². [...] En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite séparative, doit au moins être égale à 3 mètres.'
+            condition_texte: 'Retrait obligatoire des limites séparatives, à l''exception des constructions implantées sur des terrains dont la surface est inférieure à 200 m² (strictement « inférieure à », U4.2, p.20). En cas d''implantation en limite séparative, un traitement qualitatif sera apporté aux parties apparentes des pignons aveugles.'
+            condition_modelable: 'surface_terrain_max:200 m²'
           min_m: 3.0
           article: U4.2
           page_pdf: 20
@@ -210,6 +226,22 @@ zones:
             voie, au moins égale à 4 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4.2 (fond)'
+            page_pdf: 20
+            citation: 'Sur la limite de fond de propriété, l''implantation d''une construction est possible dès lors que le bâti contigu à cette limite n''excède pas 4 mètres de hauteur absolue, sur une profondeur de 3 mètres comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété. Au-delà de cette bande de 3 mètres de profondeur, la règle générale s''applique, conformément au schéma ci-joint'
+            condition_texte: 'Implantation sur la limite de fond possible dès lors que le bâti contigu à cette limite n''excède pas 4 m de hauteur absolue sur une profondeur de 3 m, puis gabarit formé par un angle à 100 % sur cette bande de 3 m, au-delà la règle générale s''applique (U4.2 fond, p.20). Articulation avec la règle « une seule limite séparative » des latérales non écrite (cf. NOTES, cas douteux 2).'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4.2'
+            page_pdf: 20
+            citation: 'En zone Ub, les constructions peuvent être implantées sur une seule limite séparative ou en retrait. [...] En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite séparative, doit au moins être égale à 3 mètres.'
+            condition_texte: 'Implantation possible sur UNE seule limite séparative ou en retrait (U4.2, p.20). En cas d''implantation en limite, traitement qualitatif des pignons aveugles.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: U4.2
           page_pdf: 20
@@ -371,6 +403,22 @@ zones:
             voie, au moins égale à 4 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4.2 (fond, règle Ub)'
+            page_pdf: 20
+            citation: 'Sur la limite de fond de propriété, l''implantation d''une construction est possible dès lors que le bâti contigu à cette limite n''excède pas 4 mètres de hauteur absolue, sur une profondeur de 3 mètres comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété.'
+            condition_texte: 'Secteur de la zone Ub — règle de fond commune à la zone U. Bâti contigu limité à 4 m de hauteur absolue sur une bande de 3 m depuis la limite de fond, puis gabarit angle 100 %, au-delà règle générale (U4.2 fond, p.20).'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4.2 (règle Ub)'
+            page_pdf: 20
+            citation: 'En zone Ub, les constructions peuvent être implantées sur une seule limite séparative ou en retrait. [...] En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite séparative, doit au moins être égale à 3 mètres. — Il existe deux secteurs (Ub1 et Ub2) dans lesquels les hauteurs des constructions sont limitées afin de favoriser l''intégration des bâtiments dans le grand paysage. (caractère de la zone U, p.16)'
+            condition_texte: 'Secteur de la zone Ub (hauteurs réduites uniquement) — U4 ne distingue pas Ub1 : règle Ub. Implantation possible sur UNE seule limite séparative ou en retrait (U4.2, p.20).'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: U4.2
           page_pdf: 20
@@ -426,6 +474,22 @@ zones:
             voie, au moins égale à 4 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4.2 (fond, règle Ub)'
+            page_pdf: 20
+            citation: 'Sur la limite de fond de propriété, l''implantation d''une construction est possible dès lors que le bâti contigu à cette limite n''excède pas 4 mètres de hauteur absolue, sur une profondeur de 3 mètres comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété.'
+            condition_texte: 'Secteur de la zone Ub — règle de fond commune à la zone U. Bâti contigu limité à 4 m de hauteur absolue sur une bande de 3 m depuis la limite de fond, puis gabarit angle 100 %, au-delà règle générale (U4.2 fond, p.20).'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4.2 (règle Ub)'
+            page_pdf: 20
+            citation: 'En zone Ub, les constructions peuvent être implantées sur une seule limite séparative ou en retrait. [...] En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite séparative, doit au moins être égale à 3 mètres. — Il existe deux secteurs (Ub1 et Ub2) dans lesquels les hauteurs des constructions sont limitées afin de favoriser l''intégration des bâtiments dans le grand paysage. (caractère de la zone U, p.16)'
+            condition_texte: 'Secteur de la zone Ub (hauteurs réduites uniquement) — U4 ne distingue pas Ub2 : règle Ub. Implantation possible sur UNE seule limite séparative ou en retrait (U4.2, p.20).'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: U4.2
           page_pdf: 20
@@ -602,6 +666,22 @@ zones:
           statut: valide
           raison: citation INTROUVABLE à la re-lecture du PDF
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AU4 (renvoi → U4.2 fond, règle Ub)'
+            page_pdf: 30
+            citation: 'Article AU4 - Implantation des constructions par rapport aux limites séparatives — Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux orientations d''aménagement et de programmation. — Sur la limite de fond de propriété, l''implantation d''une construction est possible dès lors que le bâti contigu à cette limite n''excède pas 4 mètres de hauteur absolue, sur une profondeur de 3 mètres comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété.'
+            condition_texte: 'Renvoi écrit AU4 vers la zone U d''indice (b → Ub) — règle de fond commune à la zone U. Bâti contigu limité à 4 m de hauteur absolue sur une bande de 3 m depuis la limite de fond, puis gabarit angle 100 %, au-delà règle générale (U4.2 fond, p.20). Compatibilité OAP requise.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AU4 (renvoi → U4.2, règle Ub)'
+            page_pdf: 30
+            citation: 'Article AU4 - Implantation des constructions par rapport aux limites séparatives — Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux orientations d''aménagement et de programmation. — En zone Ub, les constructions peuvent être implantées sur une seule limite séparative ou en retrait.'
+            condition_texte: 'Renvoi écrit AU4 vers la zone U d''indice (b → Ub). Implantation possible sur UNE seule limite séparative ou en retrait (U4.2, p.20). Ouverture à l''urbanisation sous conditions AU1.2 (réseaux suffisants + densité minimale 20 logts/ha) et compatibilité OAP (cf. NOTES).'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: U4.2
           page_pdf: 20

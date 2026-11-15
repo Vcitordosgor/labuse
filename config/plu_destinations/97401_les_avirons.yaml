@@ -54,6 +54,20 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Art. U 7.3'
+            page_pdf: 11
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de propriété. Le retrait de la construction compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite de fond de propriété, doit être au minimum de : en zones Ua, Uc et Ud : 3 mètres. en zone Ub : 1,90 mètres'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Art. U 7.2'
+            page_pdf: 11
+            citation: 'A l''exception des secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zones Ua, Uc et Ud : - 12 mètres pour les constructions à destination d''habitation, - 15 mètres en rez-de-chaussée pour les constructions à destination autre qu''habitation et 12 mètres à l''étage. en zone Ub : 20 mètres. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.'
+            condition_texte: 'sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : 12 mètres pour les constructions à destination d''habitation'
+            condition_modelable: 'deux_limites_max + profondeur_bande:12 m'
           min_m: 1.9
           article: U 7.2
           page_pdf: 11
@@ -268,6 +282,20 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Art. U 7.3'
+            page_pdf: 11
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de propriété. Le retrait de la construction compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite de fond de propriété, doit être au minimum de : en zones Ua, Uc et Ud : 3 mètres. en zone Ub : 1,90 mètres'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Art. U 7.2'
+            page_pdf: 11
+            citation: 'A l''exception des secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zones Ua, Uc et Ud : - 12 mètres pour les constructions à destination d''habitation, - 15 mètres en rez-de-chaussée pour les constructions à destination autre qu''habitation et 12 mètres à l''étage. en zone Ub : 20 mètres. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.'
+            condition_texte: 'sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zone Ub : 20 mètres'
+            condition_modelable: 'deux_limites_max + profondeur_bande:20 m'
           min_m: 1.9
           article: U 7.2
           page_pdf: 11
@@ -457,6 +485,20 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Art. U 7.3'
+            page_pdf: 11
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de propriété. Le retrait de la construction compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite de fond de propriété, doit être au minimum de : en zones Ua, Uc et Ud : 3 mètres. en zone Ub : 1,90 mètres'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Art. U 7.2'
+            page_pdf: 11
+            citation: 'A l''exception des secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zones Ua, Uc et Ud : - 12 mètres pour les constructions à destination d''habitation, - 15 mètres en rez-de-chaussée pour les constructions à destination autre qu''habitation et 12 mètres à l''étage. en zone Ub : 20 mètres. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.'
+            condition_texte: 'sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zone Ub : 20 mètres'
+            condition_modelable: 'deux_limites_max + profondeur_bande:20 m'
           min_m: 1.9
           article: U 7.2
           page_pdf: 11
@@ -520,6 +562,20 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Art. U 7.3'
+            page_pdf: 11
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de propriété. Le retrait de la construction compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite de fond de propriété, doit être au minimum de : en zones Ua, Uc et Ud : 3 mètres. en zone Ub : 1,90 mètres'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Art. U 7.2'
+            page_pdf: 11
+            citation: 'A l''exception des secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zones Ua, Uc et Ud : - 12 mètres pour les constructions à destination d''habitation, - 15 mètres en rez-de-chaussée pour les constructions à destination autre qu''habitation et 12 mètres à l''étage. en zone Ub : 20 mètres. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.'
+            condition_texte: 'sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zone Ub : 20 mètres'
+            condition_modelable: 'deux_limites_max + profondeur_bande:20 m'
           min_m: 1.9
           article: U 7.2
           page_pdf: 11
@@ -582,6 +638,20 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Art. U 7.3'
+            page_pdf: 11
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de propriété. Le retrait de la construction compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite de fond de propriété, doit être au minimum de : en zones Ua, Uc et Ud : 3 mètres. en zone Ub : 1,90 mètres'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Art. U 7.2'
+            page_pdf: 11
+            citation: 'A l''exception des secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zones Ua, Uc et Ud : - 12 mètres pour les constructions à destination d''habitation, - 15 mètres en rez-de-chaussée pour les constructions à destination autre qu''habitation et 12 mètres à l''étage. en zone Ub : 20 mètres. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.'
+            condition_texte: 'sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zone Ub : 20 mètres'
+            condition_modelable: 'deux_limites_max + profondeur_bande:20 m'
           min_m: 1.9
           article: U 7.2
           page_pdf: 11
@@ -759,6 +829,20 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Art. U 7.3'
+            page_pdf: 11
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de propriété. Le retrait de la construction compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite de fond de propriété, doit être au minimum de : en zones Ua, Uc et Ud : 3 mètres. en zone Ub : 1,90 mètres'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Art. U 7.2'
+            page_pdf: 11
+            citation: 'A l''exception des secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zones Ua, Uc et Ud : - 12 mètres pour les constructions à destination d''habitation, - 15 mètres en rez-de-chaussée pour les constructions à destination autre qu''habitation et 12 mètres à l''étage. en zone Ub : 20 mètres. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.'
+            condition_texte: 'sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : 12 mètres pour les constructions à destination d''habitation'
+            condition_modelable: 'deux_limites_max + profondeur_bande:12 m'
           min_m: 1.9
           article: U 7.2
           page_pdf: 11
@@ -953,6 +1037,20 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Art. U 7.3'
+            page_pdf: 11
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de propriété. Le retrait de la construction compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite de fond de propriété, doit être au minimum de : en zones Ua, Uc et Ud : 3 mètres. en zone Ub : 1,90 mètres'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Art. U 7.2 et U 10.2'
+            page_pdf: 11
+            citation: 'A l''exception des secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zones Ua, Uc et Ud : - 12 mètres pour les constructions à destination d''habitation, - 15 mètres en rez-de-chaussée pour les constructions à destination autre qu''habitation et 12 mètres à l''étage. en zone Ub : 20 mètres. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre. Dans le cas de construction implantée en limite séparative, la hauteur maximale autorisée sera de 6 mètres dans une bande de 3 mètres de profondeur.'
+            condition_texte: 'sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : 12 mètres pour les constructions à destination d''habitation ; Dans le cas de construction implantée en limite séparative, la hauteur maximale autorisée sera de 6 mètres dans une bande de 3 mètres de profondeur.'
+            condition_modelable: 'deux_limites_max + profondeur_bande:12 m + hauteur_bande:6 m sur bande de 3 m'
           min_m: 1.9
           article: U 7.2
           page_pdf: 11
@@ -1019,6 +1117,20 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Art. U 7.3'
+            page_pdf: 11
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de propriété. Le retrait de la construction compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite de fond de propriété, doit être au minimum de : en zones Ua, Uc et Ud : 3 mètres. en zone Ub : 1,90 mètres'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Art. U 7.2 et U 10.2'
+            page_pdf: 11
+            citation: 'En secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une seule limite séparative à condition que la profondeur de la construction n''excède pas : - 12 mètres pour les constructions à destination d''habitation, - 15 mètres en rez-de-chaussée pour les constructions à destination autre qu''habitation et 12 mètres à l''étage. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre. Dans le cas de construction implantée en limite séparative, la hauteur maximale autorisée sera de 6 mètres dans une bande de 3 mètres de profondeur.'
+            condition_texte: 'sur une seule limite séparative à condition que la profondeur de la construction n''excède pas : 12 mètres pour les constructions à destination d''habitation ; Dans le cas de construction implantée en limite séparative, la hauteur maximale autorisée sera de 6 mètres dans une bande de 3 mètres de profondeur.'
+            condition_modelable: 'une_seule_limite + profondeur_bande:12 m + hauteur_bande:6 m sur bande de 3 m'
           min_m: 1.9
           article: U 7.2
           page_pdf: 11
@@ -1088,6 +1200,20 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Art. U 7.3'
+            page_pdf: 11
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de propriété. Le retrait de la construction compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite de fond de propriété, doit être au minimum de : en zones Ua, Uc et Ud : 3 mètres. en zone Ub : 1,90 mètres'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Art. U 7.2'
+            page_pdf: 11
+            citation: 'A l''exception des secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zones Ua, Uc et Ud : - 12 mètres pour les constructions à destination d''habitation, - 15 mètres en rez-de-chaussée pour les constructions à destination autre qu''habitation et 12 mètres à l''étage. en zone Ub : 20 mètres. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.'
+            condition_texte: 'sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : 12 mètres pour les constructions à destination d''habitation'
+            condition_modelable: 'deux_limites_max + profondeur_bande:12 m'
           min_m: 1.9
           article: U 7.2
           page_pdf: 11
@@ -1284,6 +1410,20 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Art. U 7.3'
+            page_pdf: 11
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de propriété. Le retrait de la construction compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite de fond de propriété, doit être au minimum de : en zones Ua, Uc et Ud : 3 mètres. en zone Ub : 1,90 mètres'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Art. U 7.2'
+            page_pdf: 11
+            citation: 'A l''exception des secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zones Ua, Uc et Ud : - 12 mètres pour les constructions à destination d''habitation, - 15 mètres en rez-de-chaussée pour les constructions à destination autre qu''habitation et 12 mètres à l''étage. en zone Ub : 20 mètres. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.'
+            condition_texte: 'sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : 12 mètres pour les constructions à destination d''habitation'
+            condition_modelable: 'deux_limites_max + profondeur_bande:12 m'
           min_m: 1.9
           article: U 7.2
           page_pdf: 11
@@ -1473,6 +1613,20 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Art. U 7.3'
+            page_pdf: 11
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de propriété. Le retrait de la construction compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite de fond de propriété, doit être au minimum de : en zones Ua, Uc et Ud : 3 mètres. en zone Ub : 1,90 mètres'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Art. U 7.2 et U 10.2'
+            page_pdf: 11
+            citation: 'En secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une seule limite séparative à condition que la profondeur de la construction n''excède pas : - 12 mètres pour les constructions à destination d''habitation, - 15 mètres en rez-de-chaussée pour les constructions à destination autre qu''habitation et 12 mètres à l''étage. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre. Dans le cas de construction implantée en limite séparative, la hauteur maximale autorisée sera de 6 mètres dans une bande de 3 mètres de profondeur.'
+            condition_texte: 'sur une seule limite séparative à condition que la profondeur de la construction n''excède pas : 12 mètres pour les constructions à destination d''habitation ; Dans le cas de construction implantée en limite séparative, la hauteur maximale autorisée sera de 6 mètres dans une bande de 3 mètres de profondeur.'
+            condition_modelable: 'une_seule_limite + profondeur_bande:12 m + hauteur_bande:6 m sur bande de 3 m'
           min_m: 1.9
           article: U 7.2
           page_pdf: 11
@@ -1762,6 +1916,20 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Art. U 7.3 (calibrage YAML AUa)'
+            page_pdf: 11
+            citation: '[YAML] En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Art. U 7.2 (calibrage YAML AUa)'
+            page_pdf: 11
+            citation: '[YAML] En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.'
+            condition_texte: 'sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : 12 mètres pour les constructions à destination d''habitation'
+            condition_modelable: 'deux_limites_max + profondeur_bande:12 m'
           min_m: 1.9
           article: U 7.2
           page_pdf: 11
@@ -1836,6 +2004,20 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Art. U 7.3 (via calibrage AUc -> Uc)'
+            page_pdf: 11
+            citation: '[YAML] Renvoi à la zone Uc (Art. AUindicée 2.2.4, p.26). Les constructions doivent être implantées en retrait de la limite de fond de propriété. Le retrait de la construction compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite de fond de propriété, doit être au minimum de : en zones Ua, Uc et Ud : 3 mètres. en zone Ub : 1,90 mètres'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Art. U 7.2 (via calibrage AUc -> Uc)'
+            page_pdf: 11
+            citation: '[YAML] Renvoi à la zone Uc (Art. AUindicée 2.2.4, p.26). A l''exception des secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zones Ua, Uc et Ud : - 12 mètres pour les constructions à destination d''habitation, - 15 mètres en rez-de-chaussée pour les constructions à destination autre qu''habitation et 12 mètres à l''étage. en zone Ub : 20 mètres. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.'
+            condition_texte: 'sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : 12 mètres pour les constructions à destination d''habitation'
+            condition_modelable: 'deux_limites_max + profondeur_bande:12 m'
           min_m: 1.9
           article: U 7.2
           page_pdf: 11
@@ -1908,6 +2090,20 @@ zones:
             porte: "exclusion_generique"
             modifie_calcul: false
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Art. U 7.3 (via calibrage AUd -> Ud)'
+            page_pdf: 11
+            citation: '[YAML] Renvoi à la zone Ud (Art. AUindicée 2.2.4, p.26). Les constructions doivent être implantées en retrait de la limite de fond de propriété. Le retrait de la construction compté horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite de fond de propriété, doit être au minimum de : en zones Ua, Uc et Ud : 3 mètres. en zone Ub : 1,90 mètres'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Art. U 7.2 (via calibrage AUd -> Ud)'
+            page_pdf: 11
+            citation: '[YAML] Renvoi à la zone Ud (Art. AUindicée 2.2.4, p.26). A l''exception des secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : en zones Ua, Uc et Ud : - 12 mètres pour les constructions à destination d''habitation, - 15 mètres en rez-de-chaussée pour les constructions à destination autre qu''habitation et 12 mètres à l''étage. en zone Ub : 20 mètres. En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre.'
+            condition_texte: 'sur une ou deux limites séparatives à condition que la profondeur de la construction n''excède pas : 12 mètres pour les constructions à destination d''habitation'
+            condition_modelable: 'deux_limites_max + profondeur_bande:12 m'
           min_m: 1.9
           article: U 7.2
           page_pdf: 11
