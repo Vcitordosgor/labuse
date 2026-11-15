@@ -144,6 +144,52 @@ def _fr(d: date | None) -> str | None:
     return d.strftime("%d/%m/%Y") if d else None
 
 
+# ─────────────────────────── PLU-MAJ-2 — la SIGNATURE du document publié ───────────────────────────
+# LOT 1 : l'ancienne sonde lisait un COMPTE (totalFeatures) — aveugle au remplacement 1→1 et, pire,
+# aveugle à une REPUBLICATION ou un changement de STATUT à identifiant CONSTANT (ex. Le Port, republié
+# le 18/11/2025 « partiellement annulé » sous le même idurba 97407_PLU_20241209). On signe désormais le
+# document par (IDENTIFIANT + DATE dans l'idurba + HORODATAGE GPU + STATUT). La signature change si
+# l'un des quatre bouge — on ne rate plus un changement.
+
+def _ts_date(ts: str | None) -> date | None:
+    """`2025-11-18T06:36:20.630Z` → date(2025, 11, 18). None si illisible."""
+    if not ts:
+        return None
+    m = re.search(r"(\d{4})-(\d{2})-(\d{2})", str(ts))
+    if not m:
+        return None
+    try:
+        return date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    except ValueError:
+        return None
+
+
+def statut_catalogue(insee: str) -> str | None:
+    """Le `statut` curaté du document (config/plu_millesimes.yaml) : a_jour | annule_partiel |
+    opposabilite_en_attente | rnu. C'est la vérité d'annulation partielle ancrée sur pièces (TA/CAA)."""
+    return (_catalogue().get(insee) or {}).get("statut")
+
+
+def signature_gpu(gpu: dict | None, statut: str | None) -> str | None:
+    """La SIGNATURE du document publié : `idurba|horodatage GPU|statut`. Change si l'identifiant, la
+    date (portée par l'idurba), l'horodatage de republication OU le statut bouge — même à
+    `totalFeatures` constant. None si le publié est inconnu."""
+    if not gpu or not gpu.get("idurba"):
+        return None
+    return f"{gpu['idurba']}|{gpu.get('timestamp') or ''}|{statut or ''}"
+
+
+def _republie_apres_approbation(idurba: str | None, gpu: dict | None) -> date | None:
+    """La date de REPUBLICATION si le GPU a republié le document nettement APRÈS son approbation
+    (horodatage GPU postérieur de > 45 jours à la date de l'idurba) — signature d'une correction, d'une
+    annulation partielle jointe ou d'un versement de jugement à identifiant constant. None sinon."""
+    d_idurba = _date8(idurba)
+    d_ts = _ts_date((gpu or {}).get("timestamp"))
+    if d_idurba and d_ts and (d_ts - d_idurba).days > 45:
+        return d_ts
+    return None
+
+
 # ─────────────────────────── le catalogue des 24 communes ───────────────────────────
 
 def _catalogue() -> dict[str, dict]:
@@ -257,6 +303,12 @@ class EtatPlu:
     ancien: str | None = None
     nouveau: str | None = None
     gestes: list[str] = field(default_factory=list)
+    # PLU-MAJ-2 LOT 1 — la signature du document publié et la vigilance de STATUT.
+    signature: str | None = None                # idurba|horodatage GPU|statut — change = document bougé
+    gpu_timestamp: str | None = None            # horodatage de (re)publication au Géoportail
+    gpu_statut: str | None = None               # statut curaté (annule_partiel, opposabilite_en_attente…)
+    vigilance_statut: bool = False              # annulation partielle / republication → portée à vérifier
+    statut_motif: str | None = None             # le texte de la vigilance de statut
 
     def as_dict(self) -> dict:
         d = dict(self.__dict__)
@@ -290,11 +342,13 @@ def etat_commune(db, insee: str, *, gpu: dict | None = None, publie: str | None 
     ing = idurba_ingere(db, insee, commune)
     reg = idurba_regles(insee)
     return verdict_pur(insee, commune, pub, pub_src, ing, reg,
-                       demande_fn=lambda ref: recalibrage_pending(db, insee, ref))
+                       demande_fn=lambda ref: recalibrage_pending(db, insee, ref),
+                       gpu=gpu, statut=cat.get("statut"))
 
 
 def verdict_pur(insee: str, commune: str, pub: str | None, pub_src: str | None,
-                ing: dict, reg: dict, *, demande_fn=lambda ref: False) -> EtatPlu:
+                ing: dict, reg: dict, *, demande_fn=lambda ref: False,
+                gpu: dict | None = None, statut: str | None = None) -> EtatPlu:
     """Le VERDICT, pur (sans base) : à partir du publié, de l'ingéré par couche (`ing`), des règles
     (`reg`) et d'un prédicat `demande_fn(reference)` (drapeau « à recalibrer »). Testable seul.
 
@@ -336,11 +390,30 @@ def verdict_pur(insee: str, commune: str, pub: str | None, pub_src: str | None,
     if reg_retard:
         en_retard.append("regles")
 
+    # PLU-MAJ-2 LOT 1 — la VIGILANCE DE STATUT, indépendante des couches : une annulation partielle
+    # (statut `annule_partiel`) ou une republication nette après approbation (horodatage GPU > idurba
+    # + 45 j) est un CHANGEMENT à surveiller MÊME à idurba et couches identiques (le cas Le Port). On
+    # ne bascule PAS les parcelles « À vérifier » (le zonage servi reste le document en production) :
+    # on lève une vigilance « portée à vérifier », et la commune entre au contrôle de millésime en
+    # « à vérifier ».
+    republie = _republie_apres_approbation(pub, gpu)
+    vigilance = statut == "annule_partiel" or (bool(republie) and not en_retard)
+    statut_motif = None
+    if statut == "annule_partiel":
+        quand = f" (republié au Géoportail le {_fr(republie)})" if republie else ""
+        statut_motif = (f"PLU partiellement annulé{quand} — portée de l'annulation à vérifier ; "
+                        "zonage résidentiel servi inchangé.")
+    elif vigilance and republie:
+        statut_motif = f"Document republié au Géoportail le {_fr(republie)} à identifiant constant — statut à vérifier."
+
     out = EtatPlu(insee=insee, commune=commune, etat="a_jour" if not en_retard else "desync",
                   niveau=niveau_decalage(en_retard),
                   publie=pub, publie_source=pub_src, reference=reference, date_modif=ref_d,
                   couches=couches, couches_en_retard=en_retard,
-                  recalibrage_pending=bool(en_retard), nouveau=reference)
+                  recalibrage_pending=bool(en_retard), nouveau=reference,
+                  signature=signature_gpu(gpu, statut), gpu_statut=statut,
+                  gpu_timestamp=(gpu or {}).get("timestamp"),
+                  vigilance_statut=vigilance, statut_motif=statut_motif)
     out.ancien = (ing.get("prescriptions") or {}).get("idurba") if "prescriptions" in en_retard else \
         next((couches[c]["idurba"] for c in en_retard if couches[c].get("idurba")), None)
     out.gestes = _gestes(en_retard, couches, reference)
@@ -392,14 +465,28 @@ CREATE TABLE IF NOT EXISTS plu_veille_etat (
   nouveau         text,
   gestes          jsonb,
   detecte_le      timestamptz NOT NULL DEFAULT now(),
-  recalibre_le    timestamptz                    -- quand les règles ont été revalidées (NULL = en cours)
+  recalibre_le    timestamptz,                   -- quand les règles ont été revalidées (NULL = en cours)
+  signature       text,                          -- idurba|horodatage GPU|statut (PLU-MAJ-2 LOT 1)
+  gpu_timestamp   text,                          -- horodatage de (re)publication au Géoportail
+  gpu_statut      text,                          -- statut curaté (annule_partiel…)
+  vigilance_statut boolean NOT NULL DEFAULT false, -- annulation partielle / republication
+  statut_motif    text,
+  signature_changee boolean NOT NULL DEFAULT false -- la signature a bougé depuis le dernier passage
 )
 """
+
+_PLU_VEILLE_COLS = (
+    ("signature", "text"), ("gpu_timestamp", "text"), ("gpu_statut", "text"),
+    ("vigilance_statut", "boolean NOT NULL DEFAULT false"), ("statut_motif", "text"),
+    ("signature_changee", "boolean NOT NULL DEFAULT false"),
+)
 
 
 def ensure_table(db) -> None:
     db.execute(text(_DDL))
     db.execute(text("ALTER TABLE plu_veille_etat ADD COLUMN IF NOT EXISTS niveau text"))
+    for col, typ in _PLU_VEILLE_COLS:
+        db.execute(text(f"ALTER TABLE plu_veille_etat ADD COLUMN IF NOT EXISTS {col} {typ}"))
 
 
 def rejouer_nuit(db, *, gpu_par_insee: dict | None = None) -> dict:
@@ -409,34 +496,80 @@ def rejouer_nuit(db, *, gpu_par_insee: dict | None = None) -> dict:
     import json
     ensure_table(db)
     ancien = {r["insee"]: dict(r) for r in db.execute(text(
-        "SELECT insee, reference, recalibre_le FROM plu_veille_etat")).mappings().all()}
+        "SELECT insee, reference, recalibre_le, signature FROM plu_veille_etat")).mappings().all()}
     etats = tableau_ile(db, gpu_par_insee=gpu_par_insee)
     for e in etats:
         prec = ancien.get(e["insee"])
         # on garde recalibre_le SSI la référence n'a pas changé depuis le dernier passage.
         recalibre = (prec.get("recalibre_le") if prec and prec.get("reference") == e.get("reference")
                      else None)
+        # PLU-MAJ-2 LOT 1 — la SIGNATURE a-t-elle bougé ? (idurba, date, horodatage OU statut) — on
+        # ne rate plus un changement, republication/annulation à idurba constant comprise. Première
+        # observation d'une commune (prec absent) = on enregistre sans crier au changement.
+        sig_changee = bool(prec and prec.get("signature") is not None
+                           and e.get("signature") != prec.get("signature"))
         db.execute(text(
             "INSERT INTO plu_veille_etat (insee, commune, etat, niveau, publie, publie_source, reference, "
             " date_modif, couches_en_retard, recalibrage_pending, ancien, nouveau, gestes, "
-            " detecte_le, recalibre_le) "
+            " detecte_le, recalibre_le, signature, gpu_timestamp, gpu_statut, vigilance_statut, "
+            " statut_motif, signature_changee) "
             "VALUES (:insee, :commune, :etat, :niveau, :publie, :psrc, :ref, :dmod, CAST(:cer AS jsonb), "
-            " :recal, :anc, :nouv, CAST(:gestes AS jsonb), now(), :rl) "
+            " :recal, :anc, :nouv, CAST(:gestes AS jsonb), now(), :rl, :sig, :gts, :gst, :vig, :smot, :sc) "
             "ON CONFLICT (insee) DO UPDATE SET commune=EXCLUDED.commune, etat=EXCLUDED.etat, "
             " niveau=EXCLUDED.niveau, publie=EXCLUDED.publie, publie_source=EXCLUDED.publie_source, "
             " reference=EXCLUDED.reference, date_modif=EXCLUDED.date_modif, "
             " couches_en_retard=EXCLUDED.couches_en_retard, "
             " recalibrage_pending=EXCLUDED.recalibrage_pending, ancien=EXCLUDED.ancien, "
             " nouveau=EXCLUDED.nouveau, gestes=EXCLUDED.gestes, detecte_le=now(), "
-            " recalibre_le=EXCLUDED.recalibre_le"),
+            " recalibre_le=EXCLUDED.recalibre_le, signature=EXCLUDED.signature, "
+            " gpu_timestamp=EXCLUDED.gpu_timestamp, gpu_statut=EXCLUDED.gpu_statut, "
+            " vigilance_statut=EXCLUDED.vigilance_statut, statut_motif=EXCLUDED.statut_motif, "
+            " signature_changee=EXCLUDED.signature_changee"),
             {"insee": e["insee"], "commune": e["commune"], "etat": e["etat"], "niveau": e["niveau"],
              "publie": e["publie"], "psrc": e["publie_source"], "ref": e["reference"], "dmod": e["date_modif"],
              "cer": json.dumps(e["couches_en_retard"]), "recal": e["recalibrage_pending"],
              "anc": e["ancien"], "nouv": e["nouveau"], "gestes": json.dumps(e["gestes"], ensure_ascii=False),
-             "rl": recalibre})
+             "rl": recalibre, "sig": e.get("signature"), "gts": e.get("gpu_timestamp"),
+             "gst": e.get("gpu_statut"), "vig": bool(e.get("vigilance_statut")),
+             "smot": e.get("statut_motif"), "sc": sig_changee})
     desync = [e for e in etats if e["etat"] == "desync"]
     return {"total": len(etats), "desync": desync,
-            "a_jour": sum(1 for e in etats if e["etat"] == "a_jour")}
+            "a_jour": sum(1 for e in etats if e["etat"] == "a_jour"),
+            "vigilance_statut": [e for e in etats if e.get("vigilance_statut")],
+            "signature_changee": [e for e in etats
+                                  if bool(ancien.get(e["insee"]) and ancien[e["insee"]].get("signature")
+                                          is not None and e.get("signature") != ancien[e["insee"]].get("signature"))]}
+
+
+def lignes_controle_millesime(db) -> list[dict]:
+    """PLU-MAJ-2 LOT 1 — FAIT ENTRER LE PLU DANS LE CONTRÔLE DE MILLÉSIME (le même qui attrape DVF /
+    SITADEL). Chaque commune en décalage ressort comme une « source », au format d'`etats_sources` :
+      · `en_retard`  — desync (document/couche servi plus ANCIEN que le Géoportail) : décrochage prouvé ;
+      · `a_verifier` — vigilance de statut (annulation partielle / republication à idurba constant) :
+                       le publié a bougé de statut, l'ingéré n'est pas « à jour » prouvé.
+    Lit l'instantané `plu_veille_etat` (écrit par `rejouer_nuit`). Lève-tôt si la table n'existe pas."""
+    ensure_table(db)
+    rows = db.execute(text(
+        "SELECT insee, commune, etat, reference, ancien, nouveau, vigilance_statut, statut_motif, "
+        " gpu_statut, date_modif FROM plu_veille_etat WHERE etat='desync' OR vigilance_statut")).mappings().all()
+    out: list[dict] = []
+    for r in rows:
+        ref_fr = _fr(_date8(r["reference"]) or r["date_modif"])
+        if r["etat"] == "desync":
+            out.append({
+                "name": f"PLU — {r['commune']}", "etat": "en_retard",
+                "millesime_publie": r["nouveau"] or r["reference"],
+                "millesime_ingere": r["ancien"],
+                "phrase_admin": f"PLU de {r['commune']} : le Géoportail sert {r['nouveau'] or r['reference']}"
+                                f"{' (approuvé le ' + ref_fr + ')' if ref_fr else ''}, LABUSE sert encore "
+                                f"{r['ancien'] or 'une version antérieure'}."})
+        else:  # vigilance de statut (annulation partielle / republication)
+            out.append({
+                "name": f"PLU — {r['commune']}", "etat": "a_verifier",
+                "millesime_publie": r["reference"],
+                "millesime_ingere": r["reference"],
+                "phrase_admin": r["statut_motif"] or f"PLU de {r['commune']} : statut à vérifier."})
+    return out
 
 
 def lire_etat(db, insee: str) -> dict | None:
@@ -444,7 +577,8 @@ def lire_etat(db, insee: str) -> dict | None:
     ensure_table(db)
     r = db.execute(text(
         "SELECT insee, commune, etat, niveau, publie, reference, date_modif, couches_en_retard, "
-        " recalibrage_pending, ancien, nouveau, gestes, detecte_le, recalibre_le "
+        " recalibrage_pending, ancien, nouveau, gestes, detecte_le, recalibre_le, "
+        " vigilance_statut, statut_motif, gpu_statut, signature_changee "
         "FROM plu_veille_etat WHERE insee = :i"), {"i": insee}).mappings().first()
     if r is None:
         return None
@@ -458,6 +592,10 @@ def lire_etat(db, insee: str) -> dict | None:
     # bandeau client PROPORTIONNEL + si les parcelles passent « À vérifier » (décision Vic).
     d["message"] = bandeau_client(d.get("niveau"), d["date_modif_fr"])
     d["avec_a_verifier"] = avec_a_verifier(d.get("niveau"))
+    # PLU-MAJ-2 — vigilance de statut (annulation partielle / republication). Elle s'affiche MÊME
+    # quand la commune est « à jour » sur ses couches : le document a bougé de statut, pas de contenu.
+    if d.get("vigilance_statut") and not d.get("message"):
+        d["message"] = d.get("statut_motif")
     return d
 
 
@@ -509,10 +647,50 @@ def recalibrage_pending(db, insee: str, reference: str | None) -> bool:
         {"i": insee, "r": reference}).scalar())
 
 
+# ─────────────────────────── l'archive datée de l'ancienne version (PLU-MAJ-2 LOT 2) ───────────────────────────
+# Mandat : « l'ancienne version reste archivée et datée ». Avant que le geste unique ne purge/remplace
+# les couches d'une commune, on COPIE l'ancien état (zonage + prescriptions + DPU) dans une archive
+# horodatée, avec l'idurba porté par chaque ligne. Rien n'est perdu : on peut toujours montrer ce que
+# LABUSE servait avant la mise à jour.
+
+_DDL_LAYER_ARCHIVE = """
+CREATE TABLE IF NOT EXISTS plu_layer_archive (
+  id         bigserial PRIMARY KEY,
+  insee      varchar(5),
+  commune    text,
+  kind       text NOT NULL,
+  subtype    text,
+  name       text,
+  idurba     text,
+  geom       geometry(Geometry, 4326),
+  attrs      jsonb,
+  archive_le timestamptz NOT NULL DEFAULT now(),
+  motif      text
+)
+"""
+
+
+def archiver_couches_plu(db, insee: str, commune: str, *, motif: str | None = None) -> dict:
+    """Copie l'état COURANT des couches PLU de la commune (zonage, prescriptions, DPU) dans
+    `plu_layer_archive`, horodaté, avec l'idurba de chaque ligne. Appelé juste AVANT une ré-ingestion
+    (purge/remplacement) pour que l'ancienne version reste archivée et datée. Idempotent par horodatage
+    (chaque archivage est un instantané)."""
+    db.execute(text(_DDL_LAYER_ARCHIVE))
+    bilan: dict[str, int] = {}
+    for _cle, kind, _lib in COUCHES_SPATIALES:
+        n = db.execute(text(
+            "INSERT INTO plu_layer_archive (insee, commune, kind, subtype, name, idurba, geom, attrs, motif) "
+            "SELECT :insee, :commune, kind, subtype, name, attrs->>'idurba', geom, attrs, :motif "
+            "FROM spatial_layers WHERE kind = :k AND commune = :c"),
+            {"insee": insee, "commune": commune, "k": kind, "c": commune, "motif": motif}).rowcount or 0
+        bilan[kind] = n
+    return bilan
+
+
 # ─────────────────────────── le geste unique : appliquer un PLU EN ENTIER ───────────────────────────
 
 def appliquer_plu(db, insee: str, *, commune: str | None = None, bbox=None, run_id=None,
-                  log=print) -> dict:
+                  archive: bool = True, log=print) -> dict:
     """LE GESTE UNIQUE. Applique un document d'urbanisme EN ENTIER, d'un seul tenant, dans UNE
     transaction : zonage + prescriptions + informations (DPU) ré-ingérés ensemble. Il n'existe AUCUN
     chemin qui mette à jour une couche sans les autres : le statut « à jour » d'une commune exige que
@@ -543,6 +721,12 @@ def appliquer_plu(db, insee: str, *, commune: str | None = None, bbox=None, run_
         raise ValueError(f"aucune parcelle en base pour {commune} — ingère la commune d'abord")
 
     bilan: dict[str, object] = {}
+    # 0) ARCHIVE DATÉE de l'ancienne version (mandat PLU-MAJ-2) — avant toute purge, on garde
+    #    l'état servi, horodaté et idurba par ligne, dans `plu_layer_archive`.
+    if archive:
+        ancien_ref = etat_commune(db, insee).reference
+        bilan["archive"] = archiver_couches_plu(
+            db, insee, commune, motif=f"avant application — ancien {ancien_ref or '?'}")
     # 1) zonage — purge la commune puis ré-ingère
     db.execute(text("DELETE FROM spatial_layers WHERE kind='plu_gpu_zone' AND commune=:c"),
                {"c": commune})
