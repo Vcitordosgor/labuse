@@ -277,6 +277,12 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
         out.append(ControleReg("Emprise au sol", f"≤ {plafond:.0f} m² ({r.valeur:.0f} % de la surface du terrain)",
                                f"{cap.emprise_sol_m2:.0f} m²", REUSSI if ok else ECHOUE,
                                r.citation_complete, f"écart {plafond - cap.emprise_sol_m2:+.0f} m²"))
+    elif getattr(r, "absent", False):
+        # ETUDE-STATIONNEMENT-FIX-1 (LOT 5) — le PLU NE RÉGLEMENTE PAS l'emprise (silence prouvé, cité) :
+        # « Non réglementé » (sans objet), pas « Non effectué » (qui laisserait croire à une lacune LABUSE).
+        out.append(ControleReg("Emprise au sol", "non réglementé (silence prouvé)", f"{cap.emprise_sol_m2:.0f} m²",
+                               NON_APPLICABLE, r.citation_complete,
+                               detail="le règlement ne fixe pas d'emprise au sol dans cette zone"))
     else:
         out.append(ControleReg("Emprise au sol", "règle non validée", f"{cap.emprise_sol_m2:.0f} m²", NON_EFFECTUE))
 

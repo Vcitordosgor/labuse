@@ -154,3 +154,86 @@ qui porte chaque chiffre. Contrôle direct image ↔ valeur, sans dépendre d'un
   régénération des PDF dans `~/Desktop/exports-audit-4/` (LOT 6).
 
 **ARRÊT ici** — en attente de relecture avant les autres communes.
+
+---
+
+## Lots 3 à 6 (enchaînés) + quatre règles permanentes
+
+### Quatre règles permanentes (appliquées aussi aux 5 pilotes)
+1. **Couverture complète** — `scripts/stationnement_couverture.py` → `COUVERTURE.md` : chaque zone U/AU des
+   24 communes porte une règle ingérée (synthèse) OU une **raison précise** (habitat interdit · habitat
+   secondaire/usage non principal · renvoi à la zone mère · texte absent de la base). **Plus aucun « None ».**
+   Zones à habitat PRINCIPAL sans barème : **0**. (Saint-Pierre Us sortait « None » au sondage précédent parce
+   que la zone n'avait pas de bloc ; elle relève des secteurs servis par Uf6/renvoi — tracée dans la couverture.)
+2. **Toute la ligne du tableau, toutes les colonnes** — la colonne « part en ouvrage » du Port est lue :
+   `places_integrees` (100 % pour le logement, au-delà de **1 000 m² en Ua/Ub/Uc, 500 m² en Ud**, verbatim
+   p.30/73) → **condition BLOQUANTE** « places à intégrer à la construction, plein air exclu au-delà du seuil ».
+3. **Arrondi : d'abord l'en-tête et les dispositions générales** — Avirons : l'en-tête dit « arrondi à l'entier
+   **supérieur** » → cité comme tel (plus « muet »). « Muet → plus exigeant (supérieur) » n'est écrit qu'après
+   avoir lu en-tête + ligne + dispositions générales (Saint-Benoît tranche de 5, Avirons tranche de 35 m²).
+   Saint-Pierre « tranche complète » → **inférieur**.
+4. **Résidences seniors / étudiantes** — lignes dédiées ingérées et lues par destination : Saint-Pierre
+   **0,3 (Ud) / 0,2 (Ucv) place par hébergement** ; Le Tampon & Saint-Benoît **1 place pour 3** ; Le Port
+   **0,3 place par chambre**. Le plafond national L151-35 ne remplace plus le barème quand le PLU sert la
+   destination (il reste la garde plus favorable). Sans ligne dédiée → destination « Non vérifié ».
+
+### Lot 3 — communes à texte en base
+12 communes réingérées en formes typées depuis le verbatim (Bras-Panon, Entre-Deux, Petite-Île, La Possession,
+Saint-Joseph, Saint-Louis, Sainte-Marie, **Sainte-Rose**, **Sainte-Suzanne — article corrigé U15-15.2 (pas U13)**,
+Salazie, Trois-Bassins, Cilaos) : tranches de surface/pièces, visiteurs, seuils d'opération, social, senior/étudiant,
+arrondi d'en-tête. *Saint-Paul : barème par secteur déjà servi, trop de variantes/`propose` → lot ultérieur (dit).*
+**Sondage du lot 3** : `SONDAGE-10-LOT3.md` — 10 règles tirées à **graine fixe** (commande écrite dans le fichier),
+chacune avec l'**image de sa ligne entière**. (Deux vérifiées à la main ici : Bras-Panon Ub et Saint-Joseph 1AU3 —
+images conformes au tableau.)
+
+### Lot 4 — textes manquants
+L'Étang-Salé (extraction partielle), Saint-André, Saint-Leu (absents), l'annexe de La Plaine-des-Palmistes, les
+dispositions générales XVII de Saint-Denis : **le texte reste introuvable en base** pour le stationnement. Ces
+communes/zones restent **« Non vérifié »** et c'est dit (colonne « texte absent » de `COUVERTURE.md`). La
+réingestion par le chemin d'ingestion (rejouable en prod) de ces PDF/annexes est le reliquat de ce lot.
+
+### Lot 5 — manques d'enveloppe et libellés
+- **Saint-Denis pleine terre INGÉRÉE** depuis le texte : **UH 50 %, UJ/UM 35 %, UI 25 %, UD/UU 10 %, Uat/Ua 15 %**
+  (article U*.13, « % de l'unité foncière laissée libre de toute construction »).
+- **Saint-Benoît hauteur** : fixée par **secteur graphique** (15/13/10/7/4 m à l'égout) → reste **« Non vérifié »**.
+  *Cadrage pour un mandat dédié* : ingérer la couche graphique « secteurs de hauteur » (document graphique),
+  l'intersecter à la parcelle, en déduire le plafond applicable — non chiffrable depuis le seul règlement écrit.
+- **Libellé « Non réglementé »** : nouveau chemin (`Regle.absent`, silence prouvé) → le contrôle Emprise affiche
+  **« non réglementé (silence prouvé) »** (sans objet), plus « Non effectué ». Marqué sur **Le Tampon** (Ud9
+  « Non réglementée », 9 zones). À étendre aux autres zones vérifiées (Salazie, Sainte-Suzanne U7, Saint-Paul,
+  La Possession UA/UB, Entre-Deux Ub/Ue) par le même marqueur `emprise_sol.ces.absent`.
+
+### Lot 6 — statut et preuve finale
+- **Statut global** : une Étude n'est « Exploitable » que si tous ses contrôles durs reposent sur une règle
+  validée correspondant au programme ET qu'aucune condition non modélisable ne reste à vérifier — sinon
+  **« À compléter » (esquisse à vérifier)**. C'est désormais le cas des deux témoins (condition « 0,5 extérieur »
+  du Tampon / « lotissement individuel » de Saint-Pierre → verdict **À compléter**, pas « Exploitable »).
+- **« Surface à retenir »** inchangée : toujours la plus prudente des deux grandeurs (règle existante, non touchée).
+- **Études régénérées** dans `~/Desktop/exports-audit-4/` (`08-etude-faisabilite.html` + `08b-stationnement-regenere.json`) :
+
+  | Parcelle | Programme | Places imposées / dessinées | Formule | Verdict |
+  |---|---|---|---|---|
+  | **97422000AD0887** (Le Tampon Ud) | 8 logts, R+1 | **12 / 12** | 1,5/logt × 8 (opération > 5), arrondi inférieur ; typologie = 11 écartée | **À compléter** (condition 0,5 extérieur à vérifier) |
+  | **97416000HT0538** (Saint-Pierre Ud) | 5 logts, R+4 | **6 / 6** | 1 place / 75 m² · SDP 450 m², arrondi inférieur | **À compléter** (condition lotissement à vérifier) |
+
+### Liste des interprétations (cumulée)
+- **« > 5 »** = ≥ 6 logements (strictement supérieur à 5).
+- **Avirons / Trois-Bassins** « 1 / 35 m² » appliqué à la **SDP totale de l'opération** ; arrondi **supérieur**
+  (en-tête « entier supérieur » aux Avirons ; muet → supérieur à Trois-Bassins). Plafond collectif « 2/logt »
+  (Trois-Bassins) porté en condition (le moteur n'a pas de plafond par-logement).
+- **Saint-Pierre** « tranche complète » → **inférieur** ; dispositions générales NON appliquées (« > 20 places →
+  20 % en ouvrage », vérifiée p.93 ; modulations transport/petites parcelles non retrouvées → non appliquées, dit).
+  Hébergement **0,3 (Ud) / 0,2 (Ucv)** par hébergement. Ligne sociale **1 (Ud) / 0,85 (Ucv)** par logement social.
+- **Senior/étudiant « 1 pour 3 »** encodé **0,3333 place/logt**, arrondi supérieur (muet).
+- **Social** = destination dédiée : Avirons/Le Tampon **1 max** (R.111-25) ; Le Port **0,2/logt** (la part
+  « + 8 places / 1 000 m² » n'est pas modélisée, signalée) ; Petite-Île **LLTS = 0 place**.
+- **Saint-Benoît** visiteur « 1 / 5 logts » seulement **au-delà de 5 logements**, arrondi **supérieur** (muet).
+- **SDP « par m² »** = surface de plancher réelle (modules + noyaux, art. R.111-22).
+- **Sainte-Suzanne** : article corrigé **U15-15.2** (U13 = continuités écologiques).
+
+### Garde-fou ajouté
+`test_controle_citation_identique_implique_regle_identique` étendu à **toutes les communes** (0 violation) :
+aucune citation partagée entre deux zones sans règle appliquée identique.
+
+**Reliquat assumé et dit** : lot 4 (réingestion pipeline des textes manquants), Saint-Paul, extension du libellé
+« Non réglementé » aux autres communes vérifiées, et le mandat dédié « hauteur par secteur graphique » de Saint-Benoît.

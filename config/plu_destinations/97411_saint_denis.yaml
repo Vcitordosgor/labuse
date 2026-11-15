@@ -315,6 +315,13 @@ zones:
       propres à Upr portent sur l'implantation, l'emprise au sol et la hauteur, Up.7/Up.9/Up.10, p. 33-34).
   Ud:
     regles:
+      pleine_terre:
+        pct:
+          statut: valide
+          pct: 10
+          article: Article Uud.13
+          page_pdf: 46
+          citation: 10 % au moins de la superficie de l'unité foncière sera laissée libre de toute construction ou infrastructure (perméabilité).
       hauteur:
         faitage:
           plage: true
@@ -640,6 +647,13 @@ zones:
           Rambaud, Blvd Sud J. Jaurès »'
   Uu:
     regles:
+      pleine_terre:
+        pct:
+          statut: valide
+          pct: 10
+          article: Article Uuu.13
+          page_pdf: 50
+          citation: 10 % au moins de la superficie de l'unité foncière sera laissée libre de toute construction ou infrastructure (perméabilité).
       hauteur:
         faitage:
           absent: true
@@ -716,6 +730,13 @@ zones:
         citation: « Les entrepôts » (interdiction sans renvoi à l'article 2)
   Ui:
     regles:
+      pleine_terre:
+        pct:
+          statut: valide
+          pct: 25
+          article: Article Uui.13
+          page_pdf: 57
+          citation: 25 % au moins de la superficie de l'unité foncière sera laissée libre de toute construction ou infrastructure (perméabilité).
       hauteur:
         faitage:
           m: 18
@@ -887,6 +908,13 @@ zones:
           Rambaud, Blvd Sud J. Jaurès »'
   Uj:
     regles:
+      pleine_terre:
+        pct:
+          statut: valide
+          pct: 35
+          article: Article Uuj.13
+          page_pdf: 64
+          citation: 35 % au moins de la superficie de l'unité foncière sera laissée libre de toute construction ou infrastructure (perméabilité).
       hauteur:
         faitage:
           m: 13
@@ -995,6 +1023,13 @@ zones:
           un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   Um:
     regles:
+      pleine_terre:
+        pct:
+          statut: valide
+          pct: 35
+          article: Article Uum.13
+          page_pdf: 70
+          citation: 35 % au moins de la superficie de l'unité foncière sera laissée libre de toute construction ou infrastructure (perméabilité).
       hauteur:
         faitage:
           m: 10
@@ -1144,6 +1179,13 @@ zones:
           un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   Uh:
     regles:
+      pleine_terre:
+        pct:
+          statut: valide
+          pct: 50
+          article: Article Uuh.13
+          page_pdf: 75
+          citation: 50 % au moins de la superficie de l'unité foncière sera laissée libre de toute construction ou infrastructure (perméabilité).
       hauteur:
         faitage:
           m: 7
@@ -1280,6 +1322,13 @@ zones:
           un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   Ua:
     regles:
+      pleine_terre:
+        pct:
+          statut: valide
+          pct: 15
+          article: Article Uua.13
+          page_pdf: 80
+          citation: 'En secteur Uat : 15 % au moins de la superficie de l''unité foncière sera laissée libre de toute construction ou infrastructure.'
       hauteur:
         faitage:
           m: 18

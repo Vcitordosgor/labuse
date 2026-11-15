@@ -25,6 +25,7 @@ class Regle:
     article: Optional[str] = None
     page_pdf: Optional[int] = None
     citation: Optional[str] = None
+    absent: bool = False   # ETUDE-STATIONNEMENT-FIX-1 (LOT 5) — silence PROUVÉ : le PLU ne réglemente pas (cité)
 
     @property
     def citation_complete(self) -> Optional[str]:
@@ -462,9 +463,11 @@ def _leaf_val(leaf: Optional[dict], key: str, nom: str, unite: str) -> Regle:
     if not isinstance(leaf, dict):
         return Regle(nom=nom, valeur=None, unite=unite, validee=False)
     valide = leaf.get("statut") == "valide" and not leaf.get("absent")
+    # silence PROUVÉ : statut valide + absent:true + citation → la règle est « Non réglementée » (pas « Non effectué »)
+    absent = bool(leaf.get("statut") == "valide" and leaf.get("absent") and str(leaf.get("citation") or "").strip())
     v = leaf.get(key)
     return Regle(
-        nom=nom,
+        nom=nom, absent=absent,
         valeur=float(v) if (valide and isinstance(v, (int, float))) else None,
         unite=unite,
         validee=bool(valide and isinstance(v, (int, float))),

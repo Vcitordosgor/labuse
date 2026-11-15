@@ -28,18 +28,23 @@ def _is_c(z):
     return re.match(r'^\d*(U|AU)', z or "", re.I) is not None
 
 
-def _habitat_possible(zv: dict) -> bool:
-    """Habitat (logement OU hébergement) permis dans la zone ? interdit explicite → non ; sinon (autorisé /
-    sous condition / non mentionné avec silence « autorise ») → oui."""
+def _habitat_statut(zv: dict) -> str:
+    """'principal' (logement autorisé sans condition : habitat = usage principal → barème attendu) ·
+    'secondaire' (logement sous condition / autorisé par le seul silence : usage non principal, ex. logement
+    de fonction → norme d'habitation souvent non distincte) · 'interdit'."""
     sd = zv.get("sous_destinations") or {}
     sil = zv.get("silence")
-    for slug in ("logement", "hebergement"):
-        st = (sd.get(slug) or {}).get("statut") if isinstance(sd.get(slug), dict) else None
-        if st in ("autorise", "sous_condition"):
-            return True
-        if st in (None, "non_mentionne") and sil == "autorise":
-            return True
-    return False
+    st = (sd.get("logement") or {}).get("statut") if isinstance(sd.get("logement"), dict) else None
+    if st == "autorise":
+        return "principal"
+    if st == "sous_condition":
+        return "secondaire"
+    heb = (sd.get("hebergement") or {}).get("statut") if isinstance(sd.get("hebergement"), dict) else None
+    if heb in ("autorise", "sous_condition"):
+        return "secondaire"
+    if st in (None, "non_mentionne") and sil == "autorise":
+        return "secondaire"
+    return "interdit"
 
 
 def _synthese(b: R.BaremeStationnement) -> str:
@@ -84,14 +89,18 @@ def couverture(insee: str):
             rows.append((z, "renvoi", f"règles de la zone {zv['renvoi']}"))
             continue
         b = R.charger(insee, z).stationnement
+        hs = _habitat_statut(zv)
         if b.validee:
             rows.append((z, "ingérée", _synthese(b)))
-        elif not _habitat_possible(zv):
+        elif hs == "interdit":
             rows.append((z, "habitat interdit", "zone d'activité/équipement — pas de norme d'habitation à servir"))
         elif insee in TEXTE_ABSENT:
             rows.append((z, "texte absent", TEXTE_ABSENT[insee]))
+        elif hs == "secondaire":
+            rows.append((z, "habitat secondaire", "logement autorisé sous condition / usage non principal — "
+                         "pas de norme d'habitation distincte dans le texte (logement de fonction ou renvoi), à préciser"))
         else:
-            rows.append((z, "à ingérer", "habitat permis, barème non encore servi — à lire au texte"))
+            rows.append((z, "à ingérer", "habitat PRINCIPAL permis, barème non encore servi — à lire au texte"))
     return rows
 
 
