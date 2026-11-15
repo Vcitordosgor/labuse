@@ -189,6 +189,20 @@ def test_alertes_fiche_dans_les_builders_de_contraintes(session_reelle):
 
 
 @pytest.mark.reel
+def test_alertes_temoins_dans_l_etude(session_reelle):
+    """ETUDE-STATIONNEMENT-FIX-2 (reliquat #1) — « mêmes alertes partout » étendu à l'Étude sur les TÉMOINS :
+    la zone humide d'AD0887 (Le Tampon) et l'inondation de HT0538 (Saint-Pierre), lues en direct par la fiche
+    (`alertes_fiche`), DOIVENT figurer dans les contraintes signalées de l'Étude (`_attach_contraintes_signalees`,
+    la source du §2 de l'Étude de faisabilité)."""
+    from labuse.api.modules import _attach_contraintes_signalees
+    for idu, attendu in (("97422000AD0887", "zone humide"), ("97416000HT0538", "inond")):
+        payload = {"terrain": {}}
+        _attach_contraintes_signalees(session_reelle, payload, [idu])
+        signalees = " ".join(payload["terrain"].get("contraintes_signalees") or []).lower()
+        assert attendu in signalees, f"{idu} : « {attendu} » absente de l'Étude (contraintes : {signalees[:200]})"
+
+
+@pytest.mark.reel
 def test_alertes_fiche_dans_les_pieces_zip(session_reelle):
     """Pièces INTERNES du pré-dossier (ZIP) + Dossier : chaque alerte dormante de la fiche doit figurer
     dans toute pièce qui a une rubrique contraintes/risques (regles-zonage, PCMI4 notice, Dossier §5).

@@ -20,7 +20,7 @@ from labuse.implantation.service import etudier_payload  # noqa: E402
 TEMOINS = [
     ("97422000BW2635", "Le Tampon — dégagement d'allée (LOT 3)"),
     ("97416000HT0538", "Saint-Pierre — barème par m² de SDP servi (LOT 4)"),
-    ("97404000AD0887", "L'Étang-Salé — zone humide (LOT 4 alertes)"),
+    ("97422000AD0887", "Le Tampon — zone humide (reprise des alertes de la fiche)"),
 ]
 
 OUT = Path(__file__).resolve().parent.parent / "docs" / "audit-2026-11" / "stationnement-fix-2"
