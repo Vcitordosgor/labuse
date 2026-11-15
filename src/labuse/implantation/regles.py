@@ -120,6 +120,9 @@ class BaremeStationnement:
     m2_par_place: Optional[float] = None          # mode 'par_m2_sdp' : 1 place / N m² de SDP (tranche complète)
     retenue: str = "max"                          # entre formules concurrentes : 'max' (la plus exigeante)
     visiteurs: Optional[Visiteurs] = None
+    # ETUDE-STATIONNEMENT-FIX-2 (LOT 1, banc 212) — visiteur PROPRE au logement aidé (souvent 1/10, distinct
+    # du visiteur ordinaire 1/5). Appliqué à la destination « social » à la place du visiteur général.
+    visiteurs_social: Optional[Visiteurs] = None
     conditions: tuple[str, ...] = ()              # exigences non modélisables, à afficher « à vérifier »
     # ETUDE-STATIONNEMENT-FIX-1 (LOT 3, règle permanente #2) — colonne « places intégrées à la construction » :
     # au-delà d'un seuil de SDP, une part des places doit être BÂTIE (plein air exclu). Le moteur ne force pas
@@ -165,6 +168,20 @@ class BaremeStationnement:
         """Vrai si le barème sert une ligne DÉDIÉE à cette destination (social/senior/étudiant)."""
         return self.validee and any(l.destination == destination and l.role == "base" and
                                     (l.places is not None or l.par_m2 is not None) for l in self.lignes)
+
+    @staticmethod
+    def _visiteurs_de(vz: "Optional[Visiteurs]", n: int, sdp_tot: float) -> tuple[int, int]:
+        """Compte (visiteurs privés, places publiques) pour une config de visiteurs. 0,0 si None/seuil non
+        atteint. `par_logements` : 1 tranche par N logements ; `par_m2_sdp` : 1 tranche par N m²."""
+        if vz is None or (vz.logements_min is not None and n < vz.logements_min):
+            return 0, 0
+        v = 0.0
+        if vz.par_logements:
+            v = math.ceil(n / vz.par_logements - 1e-9) * vz.places
+        elif vz.par_m2_sdp:
+            v = math.ceil(sdp_tot / vz.par_m2_sdp - 1e-9) * vz.places
+        v = int(math.floor(v + 1e-9) if vz.arrondi == "inferieur" else math.ceil(v - 1e-9))
+        return (0, v) if vz.publique else (v, 0)
 
     def _cap_plafond(self, residents: int, n: int, formule: str, ecartees: tuple) -> tuple[int, str, tuple]:
         """ETUDE-STATIONNEMENT-FIX-2 (LOT 2) — borne l'exigence RÉSIDENT par le plafond national (ne la
@@ -236,8 +253,15 @@ class BaremeStationnement:
                     tot = self.arrondir(n * sp.places, sp.arrondi)
                     formule = f"{destination} : {sp.places:g} place/logt × {n} logts"
                 tot, formule, ecartees = self._cap_plafond(int(tot), n, formule, ())
-                return ExigenceStationnement(int(tot), int(tot), 0, self.mode, formule, ecartees, conditions,
-                                             True, {"destination": destination})
+                # visiteur PROPRE au logement aidé (ex. 1/10) si la destination est « social » ; sinon aucun
+                # visiteur général n'est ajouté à une destination dédiée (il vise le logement ordinaire).
+                svz = self.visiteurs_social if destination == "social" else None
+                svis, spub = self._visiteurs_de(svz, n, sdp_tot)
+                det = {"destination": destination}
+                if svis: det["visiteurs"] = svis
+                if spub: det["publiques"] = spub
+                return ExigenceStationnement(int(tot) + svis, int(tot), svis, self.mode, formule, ecartees,
+                                             conditions, True, det, places_publiques=spub)
 
         candidats: list[tuple[float, str]] = []      # (places résident, libellé de formule)
         couvert = True
@@ -314,23 +338,14 @@ class BaremeStationnement:
 
         # visiteurs / places publiques (parts additionnelles). Les places PUBLIQUES (hors parcelle) sont
         # exigées mais NON dessinées sur le terrain → comptées à part (reviewer : Saint-Louis).
-        vis = pub = 0
-        if self.visiteurs is not None and (self.visiteurs.logements_min is None or n >= self.visiteurs.logements_min):
-            vz = self.visiteurs
-            v = 0.0
-            if vz.par_logements:
-                v = math.ceil(n / vz.par_logements - 1e-9) * vz.places
-            elif vz.par_m2_sdp:
-                v = math.ceil(sdp_tot / vz.par_m2_sdp - 1e-9) * vz.places
-            v = int(math.floor(v + 1e-9) if vz.arrondi == "inferieur" else math.ceil(v - 1e-9))
-            if vz.publique:
-                pub = v
-                if pub:
-                    details["publiques"] = pub
-            else:
-                vis = v
-                if vis:
-                    details["visiteurs"] = vis
+        # visiteurs / places publiques. Le visiteur GÉNÉRAL vise le logement ordinaire ; pour la destination
+        # « social » on applique le visiteur AIDÉ dédié (`visiteurs_social`, souvent 1/10) à la place.
+        _vz = self.visiteurs_social if destination == "social" else self.visiteurs
+        vis, pub = self._visiteurs_de(_vz, n, sdp_tot)
+        if vis:
+            details["visiteurs"] = vis
+        if pub:
+            details["publiques"] = pub
 
         residents = int(residents)
         residents, formule, ecartees = self._cap_plafond(residents, n, formule, ecartees)
@@ -520,9 +535,10 @@ def _norm_arrondi(v, defaut: str = "superieur") -> str:
     return s if s in ("inferieur", "superieur") else defaut
 
 
-def _parse_visiteurs(form: dict) -> Optional[Visiteurs]:
-    """ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — feuille `visiteurs` : places par tranche de logements OU de m²."""
-    v = form.get("visiteurs")
+def _parse_visiteurs(form: dict, key: str = "visiteurs") -> Optional[Visiteurs]:
+    """ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — feuille `visiteurs` : places par tranche de logements OU de m².
+    `key` permet de lire aussi `visiteurs_social` (visiteur propre au logement aidé, FIX-2)."""
+    v = form.get(key)
     if not isinstance(v, dict) or not isinstance(v.get("places"), (int, float)):
         return None
     return Visiteurs(
@@ -585,7 +601,8 @@ def _bareme(stat: dict) -> BaremeStationnement:
             validee=True, mode="par_logement", base=None, arrondi=_norm_arrondi(pl.get("arrondi")),
             flat_places=float(pl["places"]), lignes=tuple(_lignes_destinations(pl)),
             article=pl.get("article"), page_pdf=pl.get("page_pdf"), citation=pl.get("citation"),
-            visiteurs=_parse_visiteurs(pl), conditions=_parse_conditions(pl),
+            visiteurs=_parse_visiteurs(pl), visiteurs_social=_parse_visiteurs(pl, 'visiteurs_social'),
+            conditions=_parse_conditions(pl),
             integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
     # 2) par_m2_sdp validé — « une place par tranche de N m² de SDP » (ENFIN supporté : tranche complète)
     if pm.get("statut") == "valide" and isinstance(pm.get("m2_par_place"), (int, float)):
@@ -594,7 +611,8 @@ def _bareme(stat: dict) -> BaremeStationnement:
             validee=True, mode="par_m2_sdp", base="surface_plancher", arrondi=_norm_arrondi(pm.get("arrondi")),
             flat_places=None, lignes=tuple(_lignes_destinations(pm)), m2_par_place=float(pm["m2_par_place"]),
             article=pm.get("article"), page_pdf=pm.get("page_pdf"), citation=pm.get("citation"),
-            visiteurs=_parse_visiteurs(pm), conditions=_parse_conditions(pm),
+            visiteurs=_parse_visiteurs(pm), visiteurs_social=_parse_visiteurs(pm, 'visiteurs_social'),
+            conditions=_parse_conditions(pm),
             integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
     # 3) par_typologie validé (pièces OU surface OU formules d'opération/alternatives)
     if pt.get("statut") == "valide" and pt.get("detail"):
@@ -621,7 +639,8 @@ def _bareme(stat: dict) -> BaremeStationnement:
                 arrondi=_norm_arrondi(pt.get("arrondi")), flat_places=None, lignes=tuple(lignes),
                 article=pt.get("article"), page_pdf=pt.get("page_pdf"), citation=pt.get("citation"),
                 retenue=(pt.get("retenue") or "max"),
-                visiteurs=_parse_visiteurs(pt), conditions=_parse_conditions(pt),
+                visiteurs=_parse_visiteurs(pt), visiteurs_social=_parse_visiteurs(pt, 'visiteurs_social'),
+                conditions=_parse_conditions(pt),
                 integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
     return BaremeStationnement(False, "absent", None, "superieur", None, (), None, None, None)
 

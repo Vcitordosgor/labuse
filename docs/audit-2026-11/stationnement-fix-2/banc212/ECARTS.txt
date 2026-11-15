@@ -1,5 +1,4 @@
-Cells 273/300 | COUPLES concordants 164/267 | écarts 28
-  97403 97403-R1 [5z Ua] aide_20T3_1400: img=22 vs mot=20
+Cells 288/300 | COUPLES concordants 205/267 | écarts 13
   97407 97407-R1 [2z Ua] aide_20T3_1400: img=16 vs mot=4
   97407 97407-R2 [1z Ub] aide_20T3_1400: img=16 vs mot=4
   97407 97407-R3 [3z Uc] aide_20T3_1400: img=16 vs mot=4
@@ -10,20 +9,6 @@ Cells 273/300 | COUPLES concordants 164/267 | écarts 28
   97414 97414-R2 [5z UB] aide_20T3_1400: img=20 vs mot=20 [pub 10vs0]
   97414 97414-R3 [8z UC] aide_20T3_1400: img=20 vs mot=20 [pub 10vs0]
   97414 97414-R4 [6z UD] aide_20T3_1400: img=20 vs mot=20 [pub 10vs0]
-  97415 97415-R1 [7z U1a] aide_20T3_1400: img=22 vs mot=24
-  97415 97415-R2 [5z U2a] maison_T4_120: img=1 vs mot=2
-  97415 97415-R2 [5z U2a] aide_20T3_1400: img=22 vs mot=34
-  97415 97415-R3 [6z U3a] maison_T4_120: img=1 vs mot=2
-  97415 97415-R3 [6z U3a] aide_20T3_1400: img=22 vs mot=34
-  97415 97415-R4 [1z Usdu] collectif_20T3_1400: img=40 vs mot=44
-  97415 97415-R4 [1z Usdu] aide_20T3_1400: img=20 vs mot=44
-  97415 97415-R4 [1z Usdu] mixte_10x110_10x30: img=40 vs mot=44
-  97415 97415-R5 [5z U4a] maison_T4_120: img=1 vs mot=2
-  97415 97415-R5 [5z U4a] aide_20T3_1400: img=22 vs mot=34
-  97415 97415-R6 [6z U5a] maison_T4_120: img=1 vs mot=2
-  97415 97415-R6 [6z U5a] aide_20T3_1400: img=22 vs mot=34
-  97415 97415-R7 [6z U6a] maison_T4_120: img=1 vs mot=2
-  97415 97415-R7 [6z U6a] aide_20T3_1400: img=22 vs mot=34
   97416 97416-R4 [4z Uf] NON-LU: found=false
   97420 97420-R1 [10z UA] collectif_20T3_1400: img=40 vs mot=40 [pub 10vs0]
   97420 97420-R1 [10z UA] mixte_10x110_10x30: img=30 vs mot=30 [pub 10vs0]
