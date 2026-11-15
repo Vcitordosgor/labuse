@@ -100,3 +100,27 @@
 - Article Article U5 (5.2) · page PDF 13 · bande extraite (4 ligne(s), 97420_reglement_20250929.pdf p.13)
 - Citation : « En zone UC, la construction peut être implantée en retrait ou sur une seule limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres. »
 - Images : `SONDAGE-F20-bande.png` / `SONDAGE-F20-page.png`
+
+---
+
+## RECALAGE FIX-2 (relecture indépendante)
+
+- **F02** (97415) : règle U1 7.2 imagée À SA PAGE ; le renvoi AU est imagé à part (F02b) — bande extraite (97415_reglement_20251217.pdf p.19). Phrase imagée : « Les constructions devront s'implanter sur une limite séparative »
+- **F02b** (97415) : le RENVOI du chapitre AU — bande extraite (97415_reglement_20251217.pdf p.53). Phrase imagée : « Se reporter au règlement de la zone »
+- **F05** (97414) : règle UC 7.3 (fond) imagée à sa vraie page — bande extraite (97414_reglement_20251218.pdf p.46). Phrase imagée : « implantation en limite est possible dès lors que la nouvelle construction »
+- **F05b** (97414) : le RENVOI AUindicée — bande extraite (97414_reglement_20251218.pdf p.107). Phrase imagée : « il convient de se reporter en fonction de l'indice de la zone AU »
+- **F06** (97420) : règle U5.3 (fond, régime UA) imagée à sa vraie page ; renvoi AU p.30 (F06b) — bande extraite (97420_reglement_20250929.pdf p.13). Phrase imagée : « les constructions peuvent être implantées en limite de fond de terrain »
+- **F06b** (97420) : le RENVOI AUindicée 5 — bande extraite (97420_reglement_20250929.pdf p.30). Phrase imagée : « Se reporter au règlement de la zone U »
+- **F12** (97415) : alinéa U3a relocalisé — bande extraite (97415_reglement_20251217.pdf p.112). Phrase imagée : « en zone U3a Les constructions devront s'implanter sur une limite »
+- **F17** (97415) : règle U3 7.2 imagée ; renvoi AU imagé à part (F17b) — bande extraite (97415_reglement_20251217.pdf p.112). Phrase imagée : « Les constructions devront s'implanter sur une limite séparative »
+- **F17b** (97415) : le RENVOI du chapitre AU — bande extraite (97415_reglement_20251217.pdf p.158). Phrase imagée : « Se reporter au règlement de la zone »
+- **F19b** (97422) : clause de bande (hauteur en limite, art. 10.3) — le FOND est réglé par le même article — bande extraite (97422_reglement_20230811.pdf p.18). Phrase imagée : « dans une bande de 3,60 mètres »
+- **F21** (97423) : LIMITE IMPOSÉE — Trois-Bassins Uaa (Ua 7.2) — bande extraite (97423_reglement_20220602.pdf p.15). Phrase imagée : « doivent joindre au moins une des deux limites séparatives »
+- **F22** (97415) : LIMITE IMPOSÉE — Saint-Paul U1a (RDC d'une limite à l'autre, bande de 10 m) — bande extraite (97415_reglement_20251217.pdf p.20). Phrase imagée : « d'une limite séparative à l'autre »
+- **F23** (97407) : LIMITE IMPOSÉE — Le Port Ud (art. 5) — bande extraite (97407_reglement_20241209.pdf p.68). Phrase imagée : « doivent être implantées en limite séparative et/ou suivant l'alignement »
+
+F09 (Saint-Joseph U3) : le même article 7.2 règle AUSSI le fond (« limites
+séparatives » sans distinction — lecture littérale actée) ; depuis FIX-2 LOT C la
+famille U2/U3 est en lecture PRUDENTE (ruptures de mitoyenneté et hauteurs par bande
+non modélisées → pas d'ouverture chiffrée). F19 (Le Tampon Uav) : le fond relève du
+même article ; la clause de bande 10.3 est imagée (F19b).

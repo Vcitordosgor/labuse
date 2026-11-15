@@ -365,3 +365,65 @@ dionysien en vigueur date du 05/08/2026 et la cohorte ne compte que 7 permis pos
 le calibrage joue sur le STOCK des parcelles Ud/Um/Uj… et sera jugeable aux prochains permis.
 **Contrôle inverse : garde A/N inchangée (0 nouvelle), aucune hausse nouvelle au top 30,
 suite verte (411 tests).** ARRÊT.
+
+---
+
+# MOTEUR-VERITE-FIX-2 — réponse au relecteur indépendant (lots A-D)
+
+Le rapport annoncé n'était pas joint au mandat ; chaque cas LISTÉ PAR LE MANDAT est traité et
+gravé en test. RÈGLE gravée (`tests/test_moteur_verite_fix2.py`) : un chiffre de capacité ne
+dépasse main que si TOUTES les conditions de l'article sont appliquées ; sinon niveau prudent +
+« capacité supérieure possible, à vérifier » ; sans capacité établissable : « capacité à
+vérifier », jamais un chiffre — le verdict peut rester « constructible ».
+
+## LOT A — mécanisme (`45b5cfa55`)
+Condition non modélisée → l'ouverture FERME (fini « ouverture + mention ») ; parseur STRICT
+(« 14 m (≤ 14 m : …) » était lu **141 414 m** — Sainte-Rose ouvrait deux limites à toute
+largeur ; « 20 m (…) » lu **2 014 m** de bande — Bras-Panon ; 160 jetons mal lus listés dans
+`LOT-A-SEUILS-MAL-LUS.csv`, 12 nocifs) ; plafond de n limites AU TOTAL fond compris (article
+indistinct), fond à 0 seulement si texte exprès. Décision extraite en fonction PURE testée.
+
+## LOT B — plafond ≠ capacité (`b50c31b8e`)
+Secteurs Aba/Arh/Nrh/Nba : SDP ∅ (« capacité à vérifier »), plafond en clé informative non
+sommable ; « limite totale » = par unité foncière ; Saint-Louis Arh : 50 m² PAR TRANCHE de
+600 m² (tranches complètes, incomplète « à vérifier »).
+
+## LOT C — les cas, un par un (`2603c0270`)
+Saint-André UA/UB : position de FAÇADE (≤ 4/6 m, RD 7 m de l'axe) non modélisée → min prudent
+restauré (capacité ≤ main), alignement en mention. Saint-Joseph famille U2/U3 : ruptures 15 m /
+hauteurs par bande → fermeture prudente (18 feuilles `FIX2-DECISIONS.csv`). CY1293 : AC2 sans
+distinction inscrit/classé dans la donnée → « capacité à vérifier » (SDP ∅) et plus jamais
+« Aucune SUP ». Saint-Denis : AUj/AUm/AUh servaient 0 m (forme alignement malgré conditions
+non modélisées) → 4 m sourcés ; Uicm 5 m (règle propre) ; le REPLI générique lit les retraits
+calibrés (plus le défaut 3 m). AD0863 : fragments séparés par le rouge NON sommés (plus grand
+tenant). BX0750 : verdict constructible, capacité NON chiffrée tant que la limite littorale
+n'est pas qualifiée ; cascade alignée (plus d'exclusion dure). Interprétations risquées :
+couvertes en SURENSEMBLE par le tout-ou-rien du LOT A (toute condition non modélisée est
+désormais prudente).
+
+## LOT D — mesures et preuve
+
+| Mesure | LOT 7 | **FIX-2** |
+|---|---|---|
+| Test 1 — « constructible » (4 812 permis) | 97,1 % | **97,1 %** (identique — 4 674) |
+| Test 2 — dépassements > 1,10 | 97 | **100** (+5/−2, TOUS expliqués ci-dessous) |
+| terrain_exigu (parcelles H) | 104 | **90** |
+| « capacité nulle/∅ » cohorte | 34 | **81** (les nouveaux « à vérifier » honnêtes) |
+
+Les 5 dépassements NOUVEAUX sont l'effet direct des corrections demandées : 4 permis de
+Saint-André UB (l'enveloppe rétrécit quand le recul voie prudent 6 m remplace le min 0 du
+LOT 4) et 1 de Saint-Joseph U3a (famille fermée) — les permis réels y battent l'enveloppe
+PRUDENTE, la mention « capacité supérieure possible » est présente (alignement/limite admis
+non modélisés). 2 dépassements sortis.
+
+**LE VRAI CONTRÔLE INVERSE** (`CONTROLE-INVERSE-VRAI.csv`) : **284 parcelles** au-dessus de
+main — LISTE INTÉGRALE, chacune avec l'ARTICLE qui l'autorise et la preuve que ses conditions
+sont appliquées (retrait relatif H/n à l'égout envisagé ; implantation en limite sans condition
+au règlement ; conditions MESURÉES largeur/surface/bande/linéaire strictes ; portions U/AU avec
+l'article de la sous-zone) — **0 sans justification**. Garde A/N : les mêmes 22 secteurs
+plafonnés (désormais SDP ∅, verdict conservé).
+
+**Sondage recalé** (`sondage-final/`, section RECALAGE FIX-2) : F02/F17 (la règle U imagée ET
+le renvoi AU imagé à part), F05 (vraie page 46), F06 (règle U5.3 p.13 + renvoi p.30), F12
+(p.112) ; F09/F19 fonds complétés (F19b : clause de bande 10.3 imagée) ; **3 cas « limite
+imposée » ajoutés** (F21 Trois-Bassins Uaa, F22 Saint-Paul U1a, F23 Le Port Ud) — 13/13 images.
