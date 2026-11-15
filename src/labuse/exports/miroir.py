@@ -500,13 +500,22 @@ def _r_aleas(v, val: Valeur):
         # « millésime <X> » si publié amont, sinon « ingéré le JJ/MM/AAAA ») s'imprime sur la ligne.
         # DOCS-DA-1 (V10) — pour un PPR : UNE SEULE date, celle de l'APPROBATION du PPR de la COMMUNE
         # (a.ppr[].approbation), JAMAIS la date d'édition de la couche DEAL (île entière, « 16/04/2026 »).
+        # CHIRURGICAL-FIX-1 (LOT I 3e) — CHAQUE plan de prévention cité porte SON nom et SA date : une
+        # parcelle peut relever de plusieurs PPR (AM0838 : PPR mouvement/inondation approuvé le 26/01/2016
+        # ET PPR littoral — PPRL — approuvé le 16/03/2017). On les nomme tous, au lieu du seul premier.
         _ppr = a.get("ppr")
-        _appro = ((_ppr[0] or {}).get("approbation") if isinstance(_ppr, list) and _ppr else None)
+        _noms = {"PPRL": "PPR littoral", "PPRN": "PPR naturels", "PPRM": "PPR miniers"}
+        _parts = []
+        for _p in (_ppr if isinstance(_ppr, list) else []):
+            _ap = (_p or {}).get("approbation")
+            if _ap and len(str(_ap)) >= 10:
+                _a = str(_ap)
+                _nom = _noms.get((_p or {}).get("document") or "PPR", (_p or {}).get("document") or "PPR")
+                _parts.append(f"{_nom} approuvé le {_a[8:10]}/{_a[5:7]}/{_a[0:4]}")
         mill = a.get("millesime") or ""
         _est_edition_deal = ("édition DEAL" in mill) or ("millésime PPR" in mill)
-        if _appro and len(str(_appro)) >= 10:
-            _a = str(_appro)
-            lib += esc(f" · PPR approuvé le {_a[8:10]}/{_a[5:7]}/{_a[0:4]} (commune)")
+        if _parts:
+            lib += esc(" · " + " · ".join(dict.fromkeys(_parts)) + " (commune)")
         elif mill and not _est_edition_deal:
             # la date d'ÉDITION de la couche DEAL (île entière) n'est JAMAIS « la date du PPR » → omise ;
             # les autres millésimes de source restent (jj/mm/aaaa, jamais « ingéré le »).

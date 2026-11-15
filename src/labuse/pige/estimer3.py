@@ -124,7 +124,12 @@ _POOL_SQL = """
 WITH subj AS (SELECT geom_2975 g FROM parcels WHERE idu = :idu),
 muc AS (SELECT id_mutation, count(DISTINCT id_parcelle) np FROM dvf_mutations_parcelle
         WHERE code_commune = :insee GROUP BY 1)
-SELECT dm.id_mutation AS mid, dm.id_parcelle AS idu, dm.type_local,
+-- CHIRURGICAL-FIX-1 (LOT I 3d) — UNE ligne par (mutation, parcelle) : le LEFT JOIN sur
+-- dvf_mutation_detail multiplie sinon la vente par son nombre de lignes de détail (jusqu'à 162×
+-- pour CH0360) → doublons de comparables. DISTINCT ON dédoublonne par l'identifiant de mutation
+-- (+ parcelle), en gardant le détail le plus complet (nombre de pièces max).
+SELECT DISTINCT ON (dm.id_mutation, dm.id_parcelle)
+       dm.id_mutation AS mid, dm.id_parcelle AS idu, dm.type_local,
        round(dm.surface_reelle_bati)::int AS surface_m2,
        round(COALESCE(dm.surface_terrain, 0))::int AS terrain_m2,
        round(dm.valeur_fonciere)::int AS prix_eur,
@@ -145,6 +150,7 @@ WHERE dm.code_commune = :insee
   AND dm.surface_reelle_bati >= 20 AND dm.valeur_fonciere > 0
   AND dm.id_parcelle <> :idu
   AND dm.valeur_fonciere / dm.surface_reelle_bati BETWEEN :lo AND :hi
+ORDER BY dm.id_mutation, dm.id_parcelle, dd.nombre_pieces DESC NULLS LAST
 """
 
 _POOL_CACHE: dict[str, tuple[float, list[dict]]] = {}

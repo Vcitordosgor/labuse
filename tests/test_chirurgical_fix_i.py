@@ -131,6 +131,32 @@ def test_3c_le_tampon_deux_obligations_de_sol_et_stationnement_barème():
         assert zr.places_par_logement() == 1.0
 
 
+def test_3d_comparables_note_8_plus_proches_pas_la_mediane():
+    """3d — le tableau des 8 ventes les plus proches DIT qu'il n'est pas l'échantillon du prix médian
+    (calculé sur tout le secteur) ; et le pool estimer3 dédoublonne par identifiant de mutation."""
+    from labuse.exports.blocs.annonce import _comparables
+    from labuse.pige.estimer3 import _POOL_SQL
+    html = _comparables({"comparables": [{"date": "2025-01-01", "type": "Maison", "surface_m2": 80,
+                                          "prix_eur": 200000, "prix_m2": 2500, "distance_m": 100}]})
+    assert "les plus proches" in html and "médian" in html and "tout le secteur" in html
+    # dédoublonnage par mutation : DISTINCT ON (id_mutation, id_parcelle)
+    assert "DISTINCT ON (dm.id_mutation, dm.id_parcelle)" in _POOL_SQL
+
+
+def test_3e_chaque_ppr_nomme_et_date():
+    """3e — chaque plan de prévention cité porte son nom et sa date : AM0838 relève du PPR (26/01/2016)
+    ET du PPR littoral — PPRL (16/03/2017). Les deux dates sont servies, pas seulement la première."""
+    from labuse.exports.miroir import _r_aleas
+    from labuse.registre.valeur import Valeur
+    v = [{"nature": "PPR — zone bleue", "libelle": "PPR inondation — zone bleue sur 56 %",
+          "ppr": [{"document": "PPR", "approbation": "2016-01-26"},
+                  {"document": "PPRL", "approbation": "2017-03-16"}]}]
+    val = Valeur(valeur=v, chiffre_id="aleas_parcelle_liste", version_def=None, run=None)
+    html = _r_aleas(v, val)
+    assert "approuvé le 26/01/2016" in html
+    assert "PPR littoral approuvé le 16/03/2017" in html
+
+
 def test_pt2_zone_rouge_exclue_de_l_implantation_pas_vigilance_forte():
     """pt2 — la zone rouge marginale est dite INCONSTRUCTIBLE (exclue de l'implantation), prescriptions
     réservées à la zone bleue — plus « vigilance forte ; pas d'exclusion automatique ». La normalisation
