@@ -111,6 +111,11 @@ def test_plafond_national_ne_fait_que_baisser():
     ("97411", "Uac", True),    # renvoi vers Ua (habitation pour direction/surveillance) : hérite
     ("97407", "Ue", True),
     ("97411", "Ua", True),
+    # reliquat #3 — ces deux zones NE sont PAS « habitat interdit / vocation économique » : Le Tampon 2AUa
+    # (renvoi Ua, admis sous conditions) et Saint-Paul U1pso (renvoi U1a, habitat ouvert) sont ADMISES par le
+    # filtre fonction (False) ; elles ne reçoivent donc jamais le motif « habitat interdit (activités) ».
+    ("97422", "2AUa", False),
+    ("97415", "U1pso", False),
 ])
 def test_logement_fonction_detection(insee, zone, fonction_seulement):
     """LOT 2 — le filtre « logement de fonction seulement » : ne se déclenche PAS quand la zone ouvre un vrai
