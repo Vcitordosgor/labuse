@@ -118,6 +118,12 @@ class BaremeStationnement:
     retenue: str = "max"                          # entre formules concurrentes : 'max' (la plus exigeante)
     visiteurs: Optional[Visiteurs] = None
     conditions: tuple[str, ...] = ()              # exigences non modélisables, à afficher « à vérifier »
+    # ETUDE-STATIONNEMENT-FIX-1 (LOT 3, règle permanente #2) — colonne « places intégrées à la construction » :
+    # au-delà d'un seuil de SDP, une part des places doit être BÂTIE (plein air exclu). Le moteur ne force pas
+    # le sous-sol : il l'affiche en CONDITION bloquante à vérifier dès que l'opération dépasse le seuil.
+    integ_pct: Optional[float] = None
+    integ_seuil_m2: Optional[float] = None
+    integ_citation: Optional[str] = None
 
     def places_pour(self, *, pieces: int, sdp_m2: float, destination: str = "collectif") -> Optional[float]:
         """Ratio par logement pour un logement (aperçu/jauge). Ne renvoie que la part RÉSIDENT par logement
@@ -147,6 +153,11 @@ class BaremeStationnement:
     def arrondir(self, total: float, sens: Optional[str] = None) -> int:
         s = sens or self.arrondi
         return int(math.floor(total + 1e-9)) if s == "inferieur" else int(math.ceil(total - 1e-9))
+
+    def has_destination(self, destination: str) -> bool:
+        """Vrai si le barème sert une ligne DÉDIÉE à cette destination (social/senior/étudiant)."""
+        return self.validee and any(l.destination == destination and l.role == "base" and
+                                    (l.places is not None or l.par_m2 is not None) for l in self.lignes)
 
     # ------------------------------------------------------------------ exigence au niveau du PROGRAMME
     def _ligne_base(self, pieces: int, sdp_m2: float, destination: str) -> Optional[LigneBareme]:
@@ -178,9 +189,32 @@ class BaremeStationnement:
         n = len(modules)
         sdp_tot = (float(sdp_total) if sdp_total is not None
                    else sum(float(getattr(m, "surface_m2", 0.0)) for m in modules))
-        conditions = tuple(self.conditions)
+        conditions = list(self.conditions)
+        # Règle permanente #2 — colonne « places intégrées à la construction » : au-delà du seuil de SDP, une
+        # part des places doit être BÂTIE (plein air exclu). Affichée en CONDITION (bloquante) à vérifier.
+        if self.integ_pct and self.integ_seuil_m2 is not None and sdp_tot > self.integ_seuil_m2 + 1e-6:
+            conditions.append(
+                f"{self.integ_pct:g} % des places doivent être intégrées à la construction (opération > "
+                f"{self.integ_seuil_m2:g} m² de surface de plancher) : stationnement en plein air exclu "
+                f"au-delà du seuil — à vérifier" + (f" ({self.integ_citation})" if self.integ_citation else ""))
+        conditions = tuple(conditions)
         if n == 0:
             return ExigenceStationnement(0, 0, 0, self.mode, "aucun logement", (), conditions, True, {})
+
+        # Règle permanente #4 — destination SPÉCIALE (social/senior/étudiant) : une ligne dédiée, si elle
+        # existe, GOUVERNE (remplace la règle générale). Sans ligne → la règle générale s'applique (collectif).
+        if destination != "collectif":
+            sp = next((l for l in self.lignes if l.role == "base" and l.destination == destination
+                       and (l.places is not None or l.par_m2 is not None)), None)
+            if sp is not None:
+                if sp.par_m2 is not None:
+                    tot = self.arrondir(sdp_tot / sp.par_m2, sp.arrondi or "superieur")
+                    formule = f"{destination} : 1 place / {sp.par_m2:g} m² SDP · {sdp_tot:.0f} m²"
+                else:
+                    tot = self.arrondir(n * sp.places, sp.arrondi)
+                    formule = f"{destination} : {sp.places:g} place/logt × {n} logts"
+                return ExigenceStationnement(int(tot), int(tot), 0, self.mode, formule, (), conditions, True,
+                                             {"destination": destination})
 
         candidats: list[tuple[float, str]] = []      # (places résident, libellé de formule)
         couvert = True
@@ -463,13 +497,36 @@ def _parse_conditions(form: dict) -> tuple[str, ...]:
     return ()
 
 
-def _ligne_social(form: dict) -> Optional[LigneBareme]:
-    """Ligne du logement social (`social: {places: X}`), lue quand le projet est social."""
-    s = form.get("social")
-    if not isinstance(s, dict) or not isinstance(s.get("places"), (int, float)):
-        return None
-    return LigneBareme(places=float(s["places"]), destination="social", role="base",
-                       libelle=s.get("tranche") or "logement social")
+_DEST_SPECIALES = {"social": "logement social", "senior": "résidence senior / personnes âgées",
+                   "etudiant": "résidence étudiante / universitaire"}
+
+
+def _lignes_destinations(form: dict) -> list[LigneBareme]:
+    """Lignes des destinations spéciales (`social`/`senior`/`etudiant: {places: X}` OU `{par_m2: Y}`),
+    lues quand le projet est de ce type (règle permanente #4). Sans ligne → destination « Non vérifié »."""
+    out = []
+    for cle, lib in _DEST_SPECIALES.items():
+        s = form.get(cle)
+        if not isinstance(s, dict):
+            continue
+        if isinstance(s.get("places"), (int, float)):
+            out.append(LigneBareme(places=float(s["places"]), destination=cle, role="base",
+                                   arrondi=_norm_arrondi(s.get("arrondi"), None) if s.get("arrondi") else None,
+                                   libelle=s.get("tranche") or lib))
+        elif isinstance(s.get("par_m2"), (int, float)):
+            out.append(LigneBareme(par_m2=float(s["par_m2"]), destination=cle, role="base",
+                                   arrondi=_norm_arrondi(s.get("arrondi"), None) if s.get("arrondi") else None,
+                                   libelle=s.get("tranche") or lib))
+    return out
+
+
+def _integ(form: dict) -> tuple:
+    """Colonne « places intégrées à la construction » (règle permanente #2)."""
+    pi = form.get("places_integrees")
+    if not isinstance(pi, dict) or not isinstance(pi.get("pct"), (int, float)):
+        return (None, None, None)
+    return (float(pi["pct"]), float(pi["seuil_m2"]) if isinstance(pi.get("seuil_m2"), (int, float)) else 0.0,
+            pi.get("citation"))
 
 
 def _bareme(stat: dict) -> BaremeStationnement:
@@ -478,20 +535,22 @@ def _bareme(stat: dict) -> BaremeStationnement:
     pm = stat.get("par_m2_sdp") or {}
     # 1) par_logement scalaire validé — arrondi désormais LU dans la règle (défaut supérieur)
     if pl.get("statut") == "valide" and isinstance(pl.get("places"), (int, float)):
-        lignes = tuple(x for x in (_ligne_social(pl),) if x is not None)
+        ip, isz, ic = _integ(pl)
         return BaremeStationnement(
             validee=True, mode="par_logement", base=None, arrondi=_norm_arrondi(pl.get("arrondi")),
-            flat_places=float(pl["places"]), lignes=lignes,
+            flat_places=float(pl["places"]), lignes=tuple(_lignes_destinations(pl)),
             article=pl.get("article"), page_pdf=pl.get("page_pdf"), citation=pl.get("citation"),
-            visiteurs=_parse_visiteurs(pl), conditions=_parse_conditions(pl))
+            visiteurs=_parse_visiteurs(pl), conditions=_parse_conditions(pl),
+            integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
     # 2) par_m2_sdp validé — « une place par tranche de N m² de SDP » (ENFIN supporté : tranche complète)
     if pm.get("statut") == "valide" and isinstance(pm.get("m2_par_place"), (int, float)):
-        lignes = tuple(x for x in (_ligne_social(pm),) if x is not None)
+        ip, isz, ic = _integ(pm)
         return BaremeStationnement(
             validee=True, mode="par_m2_sdp", base="surface_plancher", arrondi=_norm_arrondi(pm.get("arrondi")),
-            flat_places=None, lignes=lignes, m2_par_place=float(pm["m2_par_place"]),
+            flat_places=None, lignes=tuple(_lignes_destinations(pm)), m2_par_place=float(pm["m2_par_place"]),
             article=pm.get("article"), page_pdf=pm.get("page_pdf"), citation=pm.get("citation"),
-            visiteurs=_parse_visiteurs(pm), conditions=_parse_conditions(pm))
+            visiteurs=_parse_visiteurs(pm), conditions=_parse_conditions(pm),
+            integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
     # 3) par_typologie validé (pièces OU surface OU formules d'opération/alternatives)
     if pt.get("statut") == "valide" and pt.get("detail"):
         lignes = []
@@ -509,16 +568,16 @@ def _bareme(stat: dict) -> BaremeStationnement:
                 destination=d.get("destination") or "collectif",
                 role=d.get("role") or "base", arrondi=_norm_arrondi(d.get("arrondi"), None) if d.get("arrondi") else None,
                 libelle=d.get("tranche") or d.get("typologie") or ""))
-        sl = _ligne_social(pt)
-        if sl is not None:
-            lignes.append(sl)
+        lignes.extend(_lignes_destinations(pt))
         if lignes:
+            ip, isz, ic = _integ(pt)
             return BaremeStationnement(
                 validee=True, mode="par_typologie", base=pt.get("base") or "pieces",
                 arrondi=_norm_arrondi(pt.get("arrondi")), flat_places=None, lignes=tuple(lignes),
                 article=pt.get("article"), page_pdf=pt.get("page_pdf"), citation=pt.get("citation"),
                 retenue=(pt.get("retenue") or "max"),
-                visiteurs=_parse_visiteurs(pt), conditions=_parse_conditions(pt))
+                visiteurs=_parse_visiteurs(pt), conditions=_parse_conditions(pt),
+                integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
     return BaremeStationnement(False, "absent", None, "superieur", None, (), None, None, None)
 
 

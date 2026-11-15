@@ -628,7 +628,14 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
     # transport collectif bien desservi. L151-36 : autres logements < 500 m → au plus 1. On remplace
     # alors le barème servi par ce plafond, et la citation dit la règle RETENUE (loi, article).
     _art151, _cite151 = "L151-35 (plafond national)", None
-    if stationnement_ratio is None and type_projet:
+    # ETUDE-STATIONNEMENT-FIX-1 (LOT 3, règle permanente #4) — si le PLU sert une ligne DÉDIÉE à la
+    # destination du projet (résidence senior/étudiante/logement social), on la lit via `destination`
+    # (barème typé conservé) et le plafond national L151-35 n'entre QUE s'il est plus favorable (contrôle
+    # affiché par `_stationnement_regimes`). Sinon (pas de ligne dédiée) : plafond national comme avant.
+    from .regles import DESTINATION_PAR_PROJET
+    _dest = DESTINATION_PAR_PROJET.get(type_projet or "collectif", "collectif")
+    _sert_dest = _dest != "collectif" and regles.stationnement.has_destination(_dest)
+    if stationnement_ratio is None and type_projet and not _sert_dest:
         _r151 = _plafond_l151(session, idus, type_projet, regles.stationnement)
         if _r151 is not None:
             stationnement_ratio, _art151, _cite151 = _r151

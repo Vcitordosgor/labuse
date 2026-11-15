@@ -113,6 +113,27 @@ def test_regle_ne_couvrant_pas_le_programme_reste_non_verifie():
     assert ex.couvert is False
 
 
+def test_destination_dediee_senior_etudiant_gouverne():
+    """Règle permanente #4 — un projet senior/étudiant lit SA ligne (0,3 ou 0,2 / hébergement), pas la
+    règle collective générale ; sans ligne dédiée la destination reste « Non vérifié » (via le moteur)."""
+    b = _bareme({"par_logement": {"statut": "valide", "article": "x", "page_pdf": 1, "places": 1.5,
+                                  "senior": {"places": 0.3}, "etudiant": {"places": 0.2}}})
+    prog = _prog([(3, 70, 9)])
+    assert b.exiger(prog, destination="collectif").places == 14   # 9 × 1,5 = 13,5 → 14
+    assert b.exiger(prog, destination="senior").places == 3       # 9 × 0,3 = 2,7 → 3
+    assert b.exiger(prog, destination="etudiant").places == 2     # 9 × 0,2 = 1,8 → 2
+    assert b.has_destination("senior") and not b.has_destination("social")
+
+
+def test_colonne_places_integrees_condition_bloquante_au_seuil():
+    """Règle permanente #2 — la colonne « places intégrées » : au-delà du seuil de SDP, une part des places
+    doit être bâtie → condition bloquante à vérifier (plein air exclu). En dessous : rien."""
+    b = _bareme({"par_logement": {"statut": "valide", "article": "x", "page_pdf": 1, "places": 1.0,
+                                  "places_integrees": {"pct": 100, "seuil_m2": 1000}}})
+    assert b.exiger(_prog([(3, 70, 20)]), destination="collectif").conditions   # 1400 m² > 1000 → condition
+    assert not b.exiger(_prog([(3, 70, 5)]), destination="collectif").conditions  # 350 m² < 1000 → aucune
+
+
 def _signature(b):
     """Signature de la RÈGLE appliquée (valeurs, pas le texte) — pour comparer deux zones."""
     lignes = tuple(sorted(
