@@ -94,3 +94,27 @@ corrigés commune par commune.
 Sur-lectures de l'agent écartées par l'image en faveur du moteur (Saint-Pierre « tranche complète » =
 plancher). Structure moteur : `visiteurs_social`, `exclut_social`, `m2_places/m2_tranche`, helper
 `_parts_visiteurs` (public universel vs visiteur privé par destination).
+
+---
+
+## Reliquat (tour 3) — les 7 points
+
+1. **Alertes de la fiche dans l'Étude** — déjà câblé (`_attach_contraintes_signalees` : zone humide AD0887,
+   TRI inondation + endiguement HT0538). Test témoin explicite ajouté (`test_alertes_temoins_dans_l_etude`).
+   Les 3 Études régénérées le montrent (HT0538 inondation+endiguement, AD0887 zone humide).
+2. **Seuil de surface** — `LigneBareme.sdp_max_inclusif` : « ≤ 50 m² » (La Possession, Salazie) met 50 m²
+   dans la tranche basse (La Possession 20×50 m² = 24, pas 44). **5ᵉ programme au banc** : 20 logements à la
+   surface EXACTE du seuil de chaque règlement (8 communes).
+3. **Habitat interdit** — 2AUa (renvoi Ua, admis sous conditions) et U1pso (renvoi U1a) sont ADMISES par le
+   filtre fonction ; elles ne reçoivent jamais « habitat interdit (activités) » (réservé à rules.habitat
+   =='interdit'). Verrou au test. (Aucune parcelle servie dans ces zones pour un contrôle plus poussé.)
+4. **Visiteur de lotissement** — `visiteur_lotissement` : la règle 0,5/lot sur voie (Les Avirons,
+   Trois-Bassins) appliquée et DITE servie ; plus de 0,8/lot inventé présenté comme la règle.
+5. **Vélo chiffré + Non vérifié** — `BaremeStationnement.velo`/`velo_requis()` chiffrent l'exigence vélo
+   (La Plaine 2 m²/logt=40 m² ; Saint-Benoît 1/5 logts=4 ; Saint-Pierre 5 % SDP>300 m²=70 m²). Prospect déjà
+   « À confirmer » ; haie ≥1,50 m + voie piétonne (Saint-Pierre) en condition « à vérifier ».
+6. **Dossier = règle de l'Étude, complète** — `_regle_stationnement_courte` rend la typologie ET la
+   dimension d'opération (Le Tampon : « 0,5 pl. ≤T1 · 1 pl. T2 · 1,5 pl. T3+ · 1,5 pl./logt si opération
+   > 5 logts »), source unique que le Dossier lira (remplace la formule d'attente à la fusion).
+7. **Études régénérées** dans `~/Desktop/exports-audit-4/` après le dernier commit (stamp inclus, alertes
+   enrichies).
