@@ -173,6 +173,26 @@ def test_espaces_libres_regle_garde_son_nom_permeable_vs_pleine_terre():
     assert ligne["libelle"] == "Surface perméable min", ligne["libelle"]
 
 
+def test_stationnement_pas_non_reglemente_en_zone_habitat_interdit():
+    """pt9 — en zone où l'habitat est interdit (AM0838/UE), l'absence de norme PAR LOGEMENT ne se dit
+    pas « stationnement non réglementé » : il n'y a pas de logement, et le règlement fixe des normes
+    pour les autres destinations. Une zone à habitat autorisé reste « à vérifier »/chiffrée."""
+    from labuse.faisabilite.zonage import resolve_zone
+    from labuse.plu_reglement import _regles_valeurs
+
+    zr = resolve_zone("UE", "L'Étang-Salé")
+    assert zr.habitat == "interdit" and zr.stat_logement is None
+    stat = next(r for r in _regles_valeurs(zr, None, 0) if r["cle"] == "stationnement")
+    assert "non réglementé" not in stat["valeur"]
+    assert "habitat interdit" in stat["valeur"] and "autres destinations" in stat["valeur"]
+    assert stat["etat"] != "absent"
+
+    # zone à habitat autorisé : comportement inchangé (jamais le libellé « habitat interdit »)
+    zr2 = resolve_zone("UA", "L'Étang-Salé")
+    stat2 = next(r for r in _regles_valeurs(zr2, None, 0) if r["cle"] == "stationnement")
+    assert "habitat interdit" not in stat2["valeur"]
+
+
 def test_excel_garde_les_formules_quand_le_resultat_est_calculable():
     e = EntreesBilan(programme=Programme(terrain=2000), produits=[Produit("P1", 10, 600, 4785, 0.20)],
                      postes={"achat": SaisiePoste(valeur=1_000_000, etat="montant"),

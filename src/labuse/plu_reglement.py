@@ -104,6 +104,13 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
             formule = str(rules.recul_limites_formule)
             txt = formule if etat != "chiffre" else f"{formule} (plancher {txt})"
             etat = "formule"
+        # CHIRURGICAL-FIX-1 (LOT H pt9) — en zone où l'HABITAT est interdit, l'absence de norme PAR
+        # LOGEMENT ne veut pas dire « stationnement non réglementé » : il n'y a pas de logement, et le
+        # règlement fixe des normes pour les AUTRES destinations (commerces, activités…). On le dit.
+        if cle == "stationnement" and etat == "absent" and getattr(rules, "habitat", None) == "interdit":
+            txt = ("sans objet pour le logement — habitat interdit dans la zone "
+                   "(voir le règlement pour les autres destinations)")
+            etat = "texte"
         ref = src.get(skey)
         out.append({"cle": cle, "libelle": libelle, "valeur": txt, "etat": etat,
                     "reference": ref, "url": _url(ref), "exceptions": _exc(cle)})
