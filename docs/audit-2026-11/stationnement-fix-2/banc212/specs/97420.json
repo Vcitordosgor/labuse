@@ -1,0 +1,28 @@
+{
+ "insee": "97420",
+ "commune": "Sainte-Suzanne",
+ "regles": [
+  {
+   "id": "97420-R1",
+   "article": "U15 - 15.2",
+   "mode": "par_typologie",
+   "zones": [
+    "UA",
+    "UB",
+    "UC",
+    "UAv",
+    "UC1",
+    "1AUa",
+    "1AUb",
+    "1AUc",
+    "2AUa",
+    "2AUb"
+   ],
+   "pages": [
+    16,
+    17,
+    18
+   ]
+  }
+ ]
+}

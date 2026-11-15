@@ -1,0 +1,7 @@
+{"insee":"97401","regles":[
+  {"rule_id":"97401-R1","article":"U 12.2","found":true,
+   "programs":{
+     "maison_T4_120":{"total":2,"residents":2,"visiteurs":0,"publiques":0},
+     "collectif_20T3_1400":{"total":40,"residents":40,"visiteurs":0,"publiques":0},
+     "aide_20T3_1400":{"total":20,"residents":20,"visiteurs":0,"publiques":0},
+     "mixte_10x110_10x30":{"total":40,"residents":40,"visiteurs":0,"publiques":0}}}]}

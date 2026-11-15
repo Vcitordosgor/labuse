@@ -1,0 +1,107 @@
+{
+ "insee": "97414",
+ "regles": [
+  {
+   "rule_id": "97414-R1",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 2
+    },
+    "collectif_20T3_1400": {
+     "total": 40,
+     "publiques": 10
+    },
+    "aide_20T3_1400": {
+     "total": 20,
+     "publiques": 10
+    },
+    "mixte_10x110_10x30": {
+     "total": 40,
+     "publiques": 10
+    }
+   }
+  },
+  {
+   "rule_id": "97414-R2",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 2
+    },
+    "collectif_20T3_1400": {
+     "total": 40,
+     "publiques": 10
+    },
+    "aide_20T3_1400": {
+     "total": 20,
+     "publiques": 10
+    },
+    "mixte_10x110_10x30": {
+     "total": 40,
+     "publiques": 10
+    }
+   }
+  },
+  {
+   "rule_id": "97414-R3",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 2
+    },
+    "collectif_20T3_1400": {
+     "total": 40,
+     "publiques": 10
+    },
+    "aide_20T3_1400": {
+     "total": 20,
+     "publiques": 10
+    },
+    "mixte_10x110_10x30": {
+     "total": 40,
+     "publiques": 10
+    }
+   }
+  },
+  {
+   "rule_id": "97414-R4",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 2
+    },
+    "collectif_20T3_1400": {
+     "total": 40,
+     "publiques": 10
+    },
+    "aide_20T3_1400": {
+     "total": 20,
+     "publiques": 10
+    },
+    "mixte_10x110_10x30": {
+     "total": 40,
+     "publiques": 10
+    }
+   }
+  },
+  {
+   "rule_id": "97414-R5",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 2
+    },
+    "collectif_20T3_1400": {
+     "total": 30
+    },
+    "aide_20T3_1400": {
+     "total": 20
+    },
+    "mixte_10x110_10x30": {
+     "total": 30
+    }
+   }
+  }
+ ]
+}

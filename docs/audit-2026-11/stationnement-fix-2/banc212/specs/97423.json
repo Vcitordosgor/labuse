@@ -1,0 +1,49 @@
+{
+ "insee": "97423",
+ "commune": "Les Trois-Bassins",
+ "regles": [
+  {
+   "id": "97423-R1",
+   "article": "Ua 12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "Ua",
+    "Uaa",
+    "1AUa"
+   ],
+   "pages": [
+    21,
+    22,
+    23
+   ]
+  },
+  {
+   "id": "97423-R2",
+   "article": "Ub 12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "Ub",
+    "1AUb"
+   ],
+   "pages": [
+    35,
+    36,
+    37
+   ]
+  },
+  {
+   "id": "97423-R3",
+   "article": "Uc 12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "Uc",
+    "1AUc"
+   ],
+   "pages": [
+    49,
+    50,
+    51
+   ]
+  }
+ ]
+}

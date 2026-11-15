@@ -1,0 +1,32 @@
+{
+ "insee": "97401",
+ "commune": "Les Avirons",
+ "regles": [
+  {
+   "id": "97401-R1",
+   "article": "U 12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "Ua",
+    "Ub",
+    "Ub1",
+    "Ub2",
+    "Ub3",
+    "Uc",
+    "Uc1",
+    "Uc3",
+    "Ud",
+    "Ud1",
+    "Ud3",
+    "AUa",
+    "AUc",
+    "AUd"
+   ],
+   "pages": [
+    16,
+    17,
+    18
+   ]
+  }
+ ]
+}

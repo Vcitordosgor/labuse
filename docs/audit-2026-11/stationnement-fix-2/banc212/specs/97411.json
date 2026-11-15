@@ -1,0 +1,33 @@
+{
+ "insee": "97411",
+ "commune": "Saint-Denis",
+ "regles": [
+  {
+   "id": "97411-R1",
+   "article": "XVII. STATIONNEMENT",
+   "mode": "par_logement",
+   "zones": [
+    "Uavap",
+    "Up",
+    "Ud",
+    "Udo",
+    "Uu",
+    "Ui",
+    "Uicm",
+    "Uj",
+    "Um",
+    "Uh",
+    "Ua",
+    "Uac",
+    "Uad",
+    "Uat",
+    "Uv"
+   ],
+   "pages": [
+    18,
+    19,
+    20
+   ]
+  }
+ ]
+}

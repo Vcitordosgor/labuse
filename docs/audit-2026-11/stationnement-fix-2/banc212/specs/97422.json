@@ -1,0 +1,63 @@
+{
+ "insee": "97422",
+ "commune": "Le Tampon",
+ "regles": [
+  {
+   "id": "97422-R1",
+   "article": "Ua12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "Ua",
+    "Uav",
+    "1AUa"
+   ],
+   "pages": [
+    21,
+    22,
+    23
+   ]
+  },
+  {
+   "id": "97422-R2",
+   "article": "Ub12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "Ub",
+    "1AUb"
+   ],
+   "pages": [
+    36,
+    37,
+    38
+   ]
+  },
+  {
+   "id": "97422-R3",
+   "article": "Uc12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "Uc",
+    "Ucm",
+    "1AUc"
+   ],
+   "pages": [
+    51,
+    52,
+    53
+   ]
+  },
+  {
+   "id": "97422-R4",
+   "article": "Ud12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "Ud"
+   ],
+   "pages": [
+    66,
+    67,
+    68
+   ]
+  }
+ ]
+}

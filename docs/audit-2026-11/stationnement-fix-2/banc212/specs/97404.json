@@ -1,0 +1,19 @@
+{
+ "insee": "97404",
+ "commune": "L'Étang-Salé",
+ "regles": [
+  {
+   "id": "97404-R1",
+   "article": "UA 2.7.3",
+   "mode": "par_typologie",
+   "zones": [
+    "UA"
+   ],
+   "pages": [
+    21,
+    22,
+    23
+   ]
+  }
+ ]
+}
