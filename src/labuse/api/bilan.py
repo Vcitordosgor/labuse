@@ -69,6 +69,8 @@ class RatioIn(BaseModel):
     tva: float | None = None
 
     _tva_fraction = field_validator("tva")(_valider_tva)
+    # LOT J 1c — un ratio maison (coût) ne peut pas être négatif, comme toute cellule de saisie du Bilan.
+    _ratio_non_negatif = field_validator("valeur")(_valider_non_negatif)
 
 
 @router.get("/bilan-ratios")
@@ -464,6 +466,13 @@ def bilan_xlsx(
 
     corps = _saisies_du_document(db, idu, doc_id, request)
     e = _entrees(corps)
+    # CHIRURGICAL-FIX-1 (LOT J 1e) — comme le PDF, la surface du terrain pré-remplie est la CONTENANCE
+    # cadastrale de la parcelle (jamais une valeur de banc) quand le client ne l'a pas saisie.
+    if e.programme.terrain is None:
+        try:
+            e.programme.terrain = _rep.sources_parcelle(db, idu).get("terrain")
+        except Exception:  # noqa: BLE001 — contenance non résolue : la ligne reste vide, jamais un crash
+            pass
     _refuser_si_ca_nul(Moteur().calculer(e))
     octets = classeur_bilan_bytes(e, titre=f"Bilan — {idu}")
     return Response(

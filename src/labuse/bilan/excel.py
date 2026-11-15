@@ -21,6 +21,7 @@ from typing import Any
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.datavalidation import DataValidation
 
 from .catalogue import Catalogue, assiette_unite, charger_catalogue
 from .moteur import EntreesBilan
@@ -65,6 +66,9 @@ def classeur_bilan(
     # connues les adresses des cellules du corps ; le corps démarre donc plus bas.
     _HEAD_FIN = 25
     r = _HEAD_FIN + 1
+    # CHIRURGICAL-FIX-1 (LOT J 1c) — on collecte les cellules de SAISIE pour y poser une validation
+    # Excel « ≥ 0 » : un coût négatif (ex. −250 000 € sur AD0887 → 128 % de marge) est refusé à la main.
+    saisie_cells: list[str] = []
 
     def entete(label):
         nonlocal r
@@ -89,6 +93,7 @@ def classeur_bilan(
     ws.cell(r, 1, "Loyer (€/m² de surface vendable)")
     ws.cell(r, 2, entrees.programme.loyer)
     r += 2
+    saisie_cells += [cell_terrain, cell_sdp, cell_stax, cell_loyer]   # LOT J 1c — saisies programme
 
     # ---- Produits ----
     entete("Produits")
@@ -106,6 +111,7 @@ def classeur_bilan(
         ws.cell(r, 3, p.suv)
         ws.cell(r, 4, p.prix_ttc_m2_suv)
         ws.cell(r, 5, p.tva).number_format = _PCT
+        saisie_cells += [f"B{r}", f"C{r}", f"D{r}"]   # LOT J 1c — lots / surface vendable / prix
         ws.cell(r, 6, f"=C{r}*D{r}").number_format = _EUR  # CA TTC = SUV × prix
         ws.cell(r, 7, f"=F{r}/(1+E{r})").number_format = _EUR  # CA HT
         prod_ca_ttc_cells.append(f"F{r}")
@@ -117,10 +123,15 @@ def classeur_bilan(
     cell_suv = f"C{r}"
     cell_ca_ttc = f"F{r}"
     cell_ca_ht = f"G{r}"
-    ws.cell(r, 2, f"=SUM(B{prod_first}:B{prod_last})")
-    ws.cell(r, 3, f"=SUM(C{prod_first}:C{prod_last})")
-    ws.cell(r, 6, f"=SUM(F{prod_first}:F{prod_last})").number_format = _EUR
-    ws.cell(r, 7, f"=SUM(G{prod_first}:G{prod_last})").number_format = _EUR
+    # CHIRURGICAL-FIX-1 (LOT J 1a) — SANS produit (AM0838), la plage de total est INVERSÉE et inclut la
+    # ligne de total elle-même (`SUM(B{r}:B{r-1})` avec prod_first = r) → RÉFÉRENCE CIRCULAIRE au recalcul.
+    # On écrit 0 quand il n'y a aucun produit (plage vide) au lieu d'une somme auto-référente.
+    def _somme_produits(col: str):
+        return f"=SUM({col}{prod_first}:{col}{prod_last})" if prod_last >= prod_first else 0
+    ws.cell(r, 2, _somme_produits("B"))
+    ws.cell(r, 3, _somme_produits("C"))
+    ws.cell(r, 6, _somme_produits("F")).number_format = _EUR
+    ws.cell(r, 7, _somme_produits("G")).number_format = _EUR
     for cc in range(1, 8):
         ws.cell(r, cc).fill = _FOND_TOT
     r += 2
@@ -207,12 +218,14 @@ def classeur_bilan(
             aref = assiette_ref(poste, s)
             if poste.assiette in ("pret", "valeur_ajoutee"):
                 ws.cell(rr, 2, s.assiette_valeur).number_format = _assiette_fmt(poste)
+                saisie_cells.append(f"B{rr}")           # LOT J 1c — assiette saisie (prêt / valeur ajoutée)
             elif aref:
                 ws.cell(rr, 2, aref).number_format = _assiette_fmt(poste)
-            # Taux / montant (C)
+            # Taux / montant (C) — cellule de SAISIE du coût (LOT J 1c : validée ≥ 0)
             val = 0.0 if s.etat == "sans_objet" else (s.valeur if s.valeur is not None else None)
             cC = ws.cell(rr, 3, val)
             cC.number_format = _PCT if poste.mode == "pct" else _EUR
+            saisie_cells.append(f"C{rr}")
             tva = taux_tva(poste, s)
             # HT (D)
             if poste.mode == "forfait":
@@ -289,11 +302,18 @@ def classeur_bilan(
         ("Surface de plancher", f"={cell_sdp}", _M2),
         ("Surface taxable", f"={cell_stax}", _M2),
         ("Surface vendable", f"={cell_suv}", _M2),
-        ("Coût const. m² de surface vendable HT", f"=(D{d['constr']}+D{d['aleaC']})/{cell_suv}", _EUR),
-        ("Prix moyen m² de surface vendable HT", f"={cell_ca_ht}/{cell_suv}", _EUR),
+        # CHIRURGICAL-FIX-1 (LOT J 1b) — pas de #DIV/0! quand la surface vendable est nulle (0 produit) :
+        # ces ratios /m² de SUV sont vides tant que SUV = 0.
+        ("Coût const. m² de surface vendable HT",
+         f'=IF({cell_suv}=0,"",(D{d["constr"]}+D{d["aleaC"]})/{cell_suv})', _EUR),
+        ("Prix moyen m² de surface vendable HT", f'=IF({cell_suv}=0,"",{cell_ca_ht}/{cell_suv})', _EUR),
         (
+            # CHIRURGICAL-FIX-1 (LOT J 1e) — le « net promoteur TTC » applique la TVA RÉELLE de la vente
+            # (ratio CA TTC / CA HT du programme), pas la TVA DOM par défaut : un programme vendu à 0 %
+            # (logements VEFA social…) ne doit pas être regonflé de 8,5 %. Vide si pas de SUV / de CA.
             "Net promoteur m² de surface vendable TTC",
-            f"=(({cell_ca_ht}-D{d['acte']}-D{d['pack']}-D{d['proc']})/{cell_suv})*(1+{tva_dom})",
+            f'=IF(OR({cell_suv}=0,{cell_ca_ht}=0),"",'
+            f'(({cell_ca_ht}-D{d["acte"]}-D{d["pack"]}-D{d["proc"]})/{cell_suv})*({cell_ca_ttc}/{cell_ca_ht}))',
             _EUR,
         ),
         ("CA TTC programme", f"={cell_ca_ttc}", _EUR),
@@ -316,6 +336,20 @@ def classeur_bilan(
         txt = "" if off is None else (f"J+{off}" if off else "J")
         ws.cell(rr, 1, etape["libelle"])
         ws.cell(rr, 5, txt)
+
+    # CHIRURGICAL-FIX-1 (LOT J 1c) — validation Excel « ≥ 0 » sur TOUTES les cellules de saisie
+    # (programme, produits, coûts) : un coût/montant négatif est refusé à la main dans le tableur,
+    # avec un message. (Le serveur refuse déjà les coûts négatifs à la saisie — api/bilan.py.)
+    if saisie_cells:
+        dv = DataValidation(type="decimal", operator="greaterThanOrEqual", formula1="0",
+                            allow_blank=True, showErrorMessage=True)
+        dv.errorTitle = "Saisie invalide"
+        dv.error = "Une valeur de saisie (surface, coût, montant) ne peut pas être négative."
+        dv.promptTitle = "Valeur ≥ 0"
+        dv.prompt = "Saisissez une valeur positive ou nulle."
+        ws.add_data_validation(dv)
+        for coord in dict.fromkeys(saisie_cells):     # dédup, ordre stable
+            dv.add(coord)
 
     return wb
 
