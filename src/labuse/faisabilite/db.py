@@ -824,7 +824,8 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         _sect = secteur_habitat_plafonne(ctx.commune, ctx.zone)
         if _sect is not None:
             from .engine import faisabilite_secteur_habitat
-            return ctx, faisabilite_secteur_habitat(ctx.zone, ctx.zone_fam, _sect)
+            return ctx, faisabilite_secteur_habitat(ctx.zone, ctx.zone_fam, _sect,
+                                                     surface_m2=ctx.surface_m2)
     if rules is None:
         # EXPORTS-FIX-3 LOT 1 — une sous-zone U/AU a été ÉCARTÉE par la garde d'aire réelle, mais la
         # zone dominante (A/N) n'est pas calibrée au PLU de la commune (resolve_zone → None). La

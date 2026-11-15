@@ -416,36 +416,59 @@ def faisabilite_surface_incertaine(zone: str | None) -> "Faisabilite":
                        _BANDEAU, calibree=True, cause="surface_incertaine")
 
 
-def faisabilite_secteur_habitat(zone: str | None, zone_fam: str | None, sect: dict) -> "Faisabilite":
-    """MOTEUR-VERITE-FIX-1 LOT 4 (V3) — SECTEUR D'HABITAT d'une zone agricole/naturelle (Aba, Arh,
-    Nrh, Nba…) : le règlement ADMET l'habitat NEUF plafonné à X m² de surface de plancher (règle
-    DÉJÀ calibrée en `sous_destinations.logement`, statut sous_condition + seuil, citée mot pour
-    mot). Le verdict est « constructible sous conditions, plafonné à X m² » — plus jamais
-    « Construction neuve non autorisée » sur un secteur où des permis réels sortent
-    (VERITE-TERRAIN-3 V3 : 11 permis relus, TOUS sous le seuil). La capacité servie est le
-    PLAFOND DE LA RÈGLE (aucune enveloppe de reculs/hauteur n'est calibrée sur ces secteurs :
-    on ne sert que le chiffre écrit au règlement, rien d'inventé)."""
+def faisabilite_secteur_habitat(zone: str | None, zone_fam: str | None, sect: dict,
+                                surface_m2: float | None = None) -> "Faisabilite":
+    """MOTEUR-VERITE-FIX-1 LOT 4 / FIX-2 LOT B — SECTEUR D'HABITAT d'une zone agricole/naturelle
+    (Aba, Arh, Nrh, Nba…) : le règlement ADMET l'habitat NEUF plafonné (règle calibrée, citée).
+
+    FIX-2 LOT B (relecture indépendante) — le plafond est un PLAFOND, pas une capacité : aucune
+    enveloppe (reculs, hauteur) n'est calibrée sur ces secteurs, la capacité ne peut donc pas
+    être ÉTABLIE → le verdict reste « constructible sous conditions, plafonné à X m² » mais la
+    fourchette ne porte AUCUN chiffre (SDP ∅, « capacité à vérifier »). Le plafond est servi à
+    part (`plafond_secteur_m2`, informatif) : « par unité foncière » quand le texte dit « limite
+    totale » (un permis multi-parcelles n'additionne rien — SDP ∅ ne se somme pas) ; à
+    Saint-Louis (Arh), « 50 m² PAR TRANCHE de 600 m² de terrain » → plafond = 50 × tranches
+    COMPLÈTES, et « tranche incomplète : à vérifier » si le terrain n'atteint pas 600 m²."""
     z = zone or (zone_fam or "?")
     plafond = float(sect["seuil_m2"])
     src = f"{sect.get('article') or 'règlement de zone'}" + (
         f" (p. {sect['page_pdf']})" if sect.get("page_pdf") else "")
+    cit = str(sect.get("citation") or "")
+    par_tranche = re.search(r"par\s+tranche\s+de\s+(\d+(?:[.,]\d+)?)\s*m", cit, re.I)
+    plafond_txt = f"{plafond:g} m² de surface de plancher"
+    plafond_servi: float | None = plafond
+    if par_tranche:
+        tranche = float(par_tranche.group(1).replace(",", "."))
+        plafond_txt = f"{plafond:g} m² par tranche de {tranche:g} m² de terrain"
+        if surface_m2 and surface_m2 >= tranche:
+            n_tr = int(surface_m2 // tranche)
+            plafond_servi = plafond * n_tr
+            plafond_txt += f" ({n_tr} tranche(s) complète(s) → plafond {plafond_servi:g} m²)"
+        else:
+            plafond_servi = None
+            plafond_txt += " — tranche incomplète : à vérifier"
+    elif re.search(r"limite\s+totale", cit, re.I):
+        plafond_txt += " (limite TOTALE — par unité foncière, jamais sommée entre parcelles)"
     steps = [Step("Habitat admis — plafond du secteur",
-                  f"construction d'habitation admise sous conditions, dans la limite de "
-                  f"{plafond:g} m² de surface de plancher",
-                  f"{plafond:g} m²", src, prov="sourcee")]
+                  f"construction d'habitation admise sous conditions, {plafond_txt}",
+                  (f"plafond {plafond_servi:g} m²" if plafond_servi else "à vérifier"),
+                  src, prov="sourcee"),
+             Step("Capacité", "aucune enveloppe calibrée sur ce secteur (reculs/hauteur) — la "
+                  "capacité ne peut pas être établie ici", "à vérifier", src, prov="estimee")]
     hypo = []
-    if sect.get("citation"):
-        hypo.append(f"Règle du secteur ({src}) : {str(sect['citation'])[:300]}")
+    if cit:
+        hypo.append(f"Règle du secteur ({src}) : {cit[:300]}")
     avert = ["Conditions du règlement non modélisées (intégration au site, desserte, sols "
-             "naturels…) : constructibilité à confirmer à l'instruction."]
+             "naturels…) et enveloppe non calibrée : capacité à vérifier — le plafond du "
+             "règlement n'est PAS une capacité."]
+    fourch = {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0),
+              # FIX-2 LOT B — PLAFOND informatif, jamais une SDP (clé distincte, non sommable).
+              "plafond_secteur_m2": plafond_servi}
     return Faisabilite(
         z, None, True,
         f"Constructible sous conditions — habitat admis en secteur {z}, plafonné à "
-        f"{plafond:g} m² de surface de plancher ({src}).",
-        steps, hypo, avert, [],
-        {"surface_plancher_m2": round(plafond),
-         "logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
-        _BANDEAU, calibree=True, cause=None)
+        f"{plafond_txt} ({src}) — capacité à vérifier.",
+        steps, hypo, avert, [], fourch, _BANDEAU, calibree=True, cause=None)
 
 
 def faisabilite_zone_non_constructible(zone: str | None, zone_fam: str | None) -> "Faisabilite":

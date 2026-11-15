@@ -60,3 +60,29 @@ def test_retrait_obligatoire_n_ouvre_jamais():
         {"mode": "retrait_obligatoire", "condition_texte": "retrait de fond non chiffré, à vérifier"},
         10.0, 500.0)
     assert d["ouvre"] is False and d["zero"] == 0 and d["mention"]
+
+
+def test_lot_b_plafond_n_est_pas_une_capacite():
+    """FIX-2 LOT B — les secteurs d'habitat A/N n'ont AUCUNE enveloppe calibrée : la capacité ne
+    peut pas être établie → SDP ∅ (jamais le plafond servi comme chiffre) ; le plafond part en
+    clé informative NON sommable ; tranche Arh (50 m²/600 m²) : complètes comptées, incomplète
+    « à vérifier » ; « limite totale » = par unité foncière."""
+    from labuse.faisabilite.engine import faisabilite_secteur_habitat
+    f = faisabilite_secteur_habitat("Aba", "A", {
+        "seuil_m2": 150, "article": "A2.2, 7.", "page_pdf": 42,
+        "citation": "admises dans la limite totale de 150 m² de surface de plancher."})
+    assert f.constructible and f.cause is None
+    assert "surface_plancher_m2" not in (f.fourchette or {})
+    assert (f.fourchette or {}).get("plafond_secteur_m2") == 150.0
+    assert "capacité à vérifier" in f.verdict
+    assert "unité foncière" in f.verdict or "limite TOTALE" in f.verdict
+    # tranches complètes (Saint-Louis Arh)
+    f2 = faisabilite_secteur_habitat("Arh", "A", {
+        "seuil_m2": 50, "citation": "50 m² de surface de plancher par tranche de 600 m² de terrain."},
+        surface_m2=1500)
+    assert (f2.fourchette or {}).get("plafond_secteur_m2") == 100.0
+    # tranche incomplète → aucun plafond chiffré, « à vérifier »
+    f3 = faisabilite_secteur_habitat("Arh", "A", {
+        "seuil_m2": 50, "citation": "par tranche de 600 m² de terrain."}, surface_m2=400)
+    assert (f3.fourchette or {}).get("plafond_secteur_m2") is None
+    assert "tranche incomplète" in f3.verdict
