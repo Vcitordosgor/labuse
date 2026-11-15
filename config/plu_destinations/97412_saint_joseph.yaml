@@ -79,11 +79,31 @@ zones:
           page_pdf: 25
           places: 1.0
           arrondi: superieur
-          citation: '- 1 place de stationnement minimum par logement.
+          citation: 'd’habitation
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            (Logement ou hébergement)
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            - 1 place de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            logement locatif financé par un prêt aidé de l’État accompagné
+
+            de 2 places visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -229,11 +249,31 @@ zones:
           page_pdf: 39
           places: 1.0
           arrondi: superieur
-          citation: '- 1 place de stationnement minimum par logement.
+          citation: 'd’habitation
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            (Logement ou hébergement)
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            - 1 place de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -347,11 +387,35 @@ zones:
           page_pdf: 39
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 1 place de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -471,11 +535,35 @@ zones:
           page_pdf: 55
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -592,11 +680,35 @@ zones:
           page_pdf: 55
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -694,11 +806,35 @@ zones:
           page_pdf: 55
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -816,11 +952,31 @@ zones:
           page_pdf: 69
           places: 1.0
           arrondi: superieur
-          citation: '- 1 place de stationnement minimum par logement.
+          citation: 'd’habitation
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            (Logement ou hébergement)
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            - 1 place de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -952,11 +1108,35 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -1075,11 +1255,35 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -1185,11 +1389,35 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -1288,11 +1516,35 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -1407,11 +1659,35 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -1509,11 +1785,35 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -1938,11 +2238,35 @@ zones:
           page_pdf: 55
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -2020,11 +2344,35 @@ zones:
           page_pdf: 55
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -2103,11 +2451,35 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -2176,11 +2548,35 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1
@@ -2256,11 +2652,35 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '- 2 places de stationnement minimum par logement.
+          citation: 'talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
 
-            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+            d’habitation
 
-            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
+            (Logement ou hébergement)
+
+            - 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs
+
+            financés par un prêt aidé de l’État, et 0,5 place par logement si
+
+            - 1 place de stationnement minimum par tranche de 10
+
+            logements (1 logement étant équivalent à 3 places
+
+            âgées (RPA) 0,5 place de stationnement minimum par logement
+
+            locatif financé par un prêt aidé de l’État accompagné de 2 places
+
+            visiteurs par tranche de 10 logements.
+
+            - 1 place de stationnement par seuil de 100 m² de surface de
+
+            - 1 place de stationnement minimum pour 2 chambres
+
+            - 1 place de stationnement minimum pour une capacité d’accueil
+
+            sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           visiteurs:
             par_logements: 10
             places: 1

@@ -64,7 +64,59 @@ zones:
           statut: valide
           article: Ucv6
           page_pdf: 72
-          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 0,85 place de stationnement par logement social. Hébergement : 0,2 place de stationnement par hébergement. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
+          citation: 'Habitation
+
+            Logement
+
+            1 place de stationnement par tranche de
+
+            75 m² de surface de plancher.
+
+            0,85
+
+            place
+
+            de
+
+            stationnement
+
+            par
+
+            logement social
+
+            5 % de la surface de
+
+            plancher
+
+            pour
+
+            toute
+
+            construction de plus de
+
+            300 m² de surface de
+
+            plancher.
+
+            Hébergement
+
+            (résidences
+
+            personnes âgées,
+
+            étudiants, …)
+
+            0,2
+
+            place
+
+            de
+
+            stationnement
+
+            par
+
+            hébergement.'
           m2_par_place: 75
           arrondi: inferieur
           social:
@@ -261,7 +313,67 @@ zones:
           statut: valide
           article: Ud6
           page_pdf: 93
-          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. Hébergement (résidences personnes âgées, étudiants…) : 0,3 place de stationnement par hébergement. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
+          citation: 'Habitation
+
+            Logement
+
+            1 place de stationnement par tranche
+
+            de 75 m² de surface de plancher.
+
+            1 place pour les logements locatifs
+
+            sociaux
+
+            0,5 place par parcelle, à réaliser au sein
+
+            des
+
+            espaces
+
+            communs,
+
+            pour
+
+            les
+
+            lotissements d’habitat individuel.
+
+            5 % de la surface de
+
+            plancher
+
+            pour
+
+            toute
+
+            construction de plus de
+
+            300 m² de surface de
+
+            plancher.
+
+            Hébergement
+
+            (résidences
+
+            personnes
+
+            âgées,
+
+            étudiants, …)
+
+            0,3
+
+            place
+
+            de
+
+            stationnement
+
+            par
+
+            hébergement.'
           m2_par_place: 75
           arrondi: inferieur
           social:
@@ -464,7 +576,67 @@ zones:
           statut: valide
           article: Ud6
           page_pdf: 93
-          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. Hébergement (résidences personnes âgées, étudiants…) : 0,3 place de stationnement par hébergement. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
+          citation: 'Habitation
+
+            Logement
+
+            1 place de stationnement par tranche
+
+            de 75 m² de surface de plancher.
+
+            1 place pour les logements locatifs
+
+            sociaux
+
+            0,5 place par parcelle, à réaliser au sein
+
+            des
+
+            espaces
+
+            communs,
+
+            pour
+
+            les
+
+            lotissements d’habitat individuel.
+
+            5 % de la surface de
+
+            plancher
+
+            pour
+
+            toute
+
+            construction de plus de
+
+            300 m² de surface de
+
+            plancher.
+
+            Hébergement
+
+            (résidences
+
+            personnes
+
+            âgées,
+
+            étudiants, …)
+
+            0,3
+
+            place
+
+            de
+
+            stationnement
+
+            par
+
+            hébergement.'
           m2_par_place: 75
           arrondi: inferieur
           social:
@@ -663,7 +835,67 @@ zones:
           statut: valide
           article: Ud6
           page_pdf: 93
-          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. Hébergement (résidences personnes âgées, étudiants…) : 0,3 place de stationnement par hébergement. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
+          citation: 'Habitation
+
+            Logement
+
+            1 place de stationnement par tranche
+
+            de 75 m² de surface de plancher.
+
+            1 place pour les logements locatifs
+
+            sociaux
+
+            0,5 place par parcelle, à réaliser au sein
+
+            des
+
+            espaces
+
+            communs,
+
+            pour
+
+            les
+
+            lotissements d’habitat individuel.
+
+            5 % de la surface de
+
+            plancher
+
+            pour
+
+            toute
+
+            construction de plus de
+
+            300 m² de surface de
+
+            plancher.
+
+            Hébergement
+
+            (résidences
+
+            personnes
+
+            âgées,
+
+            étudiants, …)
+
+            0,3
+
+            place
+
+            de
+
+            stationnement
+
+            par
+
+            hébergement.'
           m2_par_place: 75
           arrondi: inferieur
           social:
@@ -1792,7 +2024,41 @@ zones:
           article: Up6
           page_pdf: 153
           places: 1.0
-          citation: 'Habitation / Logement : 1 place de stationnement par logement minimum. 1 place pour les logements locatifs sociaux.'
+          citation: 'Habitation
+
+            Logement
+
+            1 place de stationnement par
+
+            logement minimum
+
+            1 place pour les logements locatifs
+
+            sociaux
+
+            5 % de la surface de
+
+            plancher pour toute
+
+            construction de plus
+
+            de 500m² de surface
+
+            de plancher
+
+            Hébergement
+
+            (résidences
+
+            personnes
+
+            âgées,
+
+            étudiants, …)
+
+            0,3 place de stationnement par
+
+            hébergement'
           social:
             places: 1
             tranche: logement locatif social

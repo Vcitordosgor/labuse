@@ -49,7 +49,25 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          citation: 'minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière
+
+            Logements privés d’une surface de plancher inférieure à 50m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher supérieure ou égale
+
+            2 places minimum par logement
+
+            Logements privés situés à moins de 500 m d’une gare routière ou
+
+            1 place par logement
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 emplacement par logement'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -175,7 +193,25 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          citation: 'minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière
+
+            Logements privés d’une surface de plancher inférieure à 50m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher supérieure ou égale
+
+            2 places minimum par logement
+
+            Logements privés situés à moins de 500 m d’une gare routière ou
+
+            1 place par logement
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 emplacement par logement'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -290,7 +326,25 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          citation: 'minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière
+
+            Logements privés d’une surface de plancher inférieure à 50m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher supérieure ou égale
+
+            2 places minimum par logement
+
+            Logements privés situés à moins de 500 m d’une gare routière ou
+
+            1 place par logement
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 emplacement par logement'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -493,7 +547,25 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          citation: 'minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière
+
+            Logements privés d’une surface de plancher inférieure à 50m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher supérieure ou égale
+
+            2 places minimum par logement
+
+            Logements privés situés à moins de 500 m d’une gare routière ou
+
+            1 place par logement
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 emplacement par logement'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -598,7 +670,25 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          citation: 'minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière
+
+            Logements privés d’une surface de plancher inférieure à 50m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher supérieure ou égale
+
+            2 places minimum par logement
+
+            Logements privés situés à moins de 500 m d’une gare routière ou
+
+            1 place par logement
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 emplacement par logement'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -856,7 +946,25 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          citation: 'minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière
+
+            Logements privés d’une surface de plancher inférieure à 50m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher supérieure ou égale
+
+            2 places minimum par logement
+
+            Logements privés situés à moins de 500 m d’une gare routière ou
+
+            1 place par logement
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 emplacement par logement'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -966,7 +1074,25 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          citation: 'minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière
+
+            Logements privés d’une surface de plancher inférieure à 50m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher supérieure ou égale
+
+            2 places minimum par logement
+
+            Logements privés situés à moins de 500 m d’une gare routière ou
+
+            1 place par logement
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 emplacement par logement'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -1032,7 +1158,25 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          citation: 'minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière
+
+            Logements privés d’une surface de plancher inférieure à 50m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher supérieure ou égale
+
+            2 places minimum par logement
+
+            Logements privés situés à moins de 500 m d’une gare routière ou
+
+            1 place par logement
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 emplacement par logement'
           detail:
           - destination: collectif
             sdp_max: 50

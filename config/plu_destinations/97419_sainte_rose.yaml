@@ -80,7 +80,19 @@ zones:
           base: surface_plancher
           arrondi: inferieur
           retenue: max
-          citation: 'Constructions à destination d''habitation : 1 place min par logement locatif prêt aidé ; 1 place min par logement < 50 m² de SDP ; 1,5 place min par logement ≥ 50 m² de SDP, arrondi à l''entier inférieur.'
+          citation: '1. Pour les constructions à destination d’habitation :
+
+            1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État
+
+            1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m²
+
+            1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi
+
+            4. Pour les constructions à destination d’hébergement hôtelier : 1 place de stationnement minimum pour deux chambres.
+
+            minimum par logement,
+
+            pour les constructions à destination de bureaux : un emplacement minimum par tranche de 100 m² de surface'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -224,7 +236,19 @@ zones:
           base: surface_plancher
           arrondi: inferieur
           retenue: max
-          citation: 'Constructions à destination d''habitation : 1 place min par logement locatif prêt aidé ; 1 place min par logement < 50 m² de SDP ; 1,5 place min par logement ≥ 50 m² de SDP, arrondi à l''entier inférieur.'
+          citation: '1. Pour les constructions à destination d’habitation :
+
+            1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État
+
+            1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m²
+
+            1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi
+
+            4. Pour les constructions à destination d’hébergement hôtelier : 1 place de stationnement minimum pour deux chambres.
+
+            minimum par logement,
+
+            pour les constructions à destination de bureaux : un emplacement minimum par tranche de 100 m² de surface'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -361,7 +385,19 @@ zones:
           base: surface_plancher
           arrondi: inferieur
           retenue: max
-          citation: 'Constructions à destination d''habitation : 1 place min par logement locatif prêt aidé ; 1 place min par logement < 50 m² de SDP ; 1,5 place min par logement ≥ 50 m² de SDP, arrondi à l''entier inférieur.'
+          citation: '1. Pour les constructions à destination d’habitation :
+
+            1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État
+
+            1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m²
+
+            1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi
+
+            4. Pour les constructions à destination d’hébergement hôtelier : 1 place de stationnement minimum pour deux chambres.
+
+            minimum par logement,
+
+            pour les constructions à destination de bureaux : un emplacement minimum par tranche de 100 m² de surface'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -496,7 +532,19 @@ zones:
           base: surface_plancher
           arrondi: inferieur
           retenue: max
-          citation: 'Constructions à destination d''habitation : 1 place min par logement locatif prêt aidé ; 1 place min par logement < 50 m² de SDP ; 1,5 place min par logement ≥ 50 m² de SDP, arrondi à l''entier inférieur.'
+          citation: '1. Pour les constructions à destination d’habitation :
+
+            1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État
+
+            1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m²
+
+            1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi
+
+            4. Pour les constructions à destination d’hébergement hôtelier : 1 place de stationnement minimum pour deux chambres.
+
+            minimum par logement,
+
+            pour les constructions à destination de bureaux : un emplacement minimum par tranche de 100 m² de surface'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -798,7 +846,19 @@ zones:
           base: surface_plancher
           arrondi: inferieur
           retenue: max
-          citation: 'Constructions à destination d''habitation : 1 place min par logement locatif prêt aidé ; 1 place min par logement < 50 m² de SDP ; 1,5 place min par logement ≥ 50 m² de SDP, arrondi à l''entier inférieur.'
+          citation: '1. Pour les constructions à destination d’habitation :
+
+            1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État
+
+            1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m²
+
+            1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi
+
+            4. Pour les constructions à destination d’hébergement hôtelier : 1 place de stationnement minimum pour deux chambres.
+
+            minimum par logement,
+
+            pour les constructions à destination de bureaux : un emplacement minimum par tranche de 100 m² de surface'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -891,7 +951,19 @@ zones:
           base: surface_plancher
           arrondi: inferieur
           retenue: max
-          citation: 'Constructions à destination d''habitation : 1 place min par logement locatif prêt aidé ; 1 place min par logement < 50 m² de SDP ; 1,5 place min par logement ≥ 50 m² de SDP, arrondi à l''entier inférieur.'
+          citation: '1. Pour les constructions à destination d’habitation :
+
+            1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État
+
+            1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m²
+
+            1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi
+
+            4. Pour les constructions à destination d’hébergement hôtelier : 1 place de stationnement minimum pour deux chambres.
+
+            minimum par logement,
+
+            pour les constructions à destination de bureaux : un emplacement minimum par tranche de 100 m² de surface'
           detail:
           - destination: collectif
             sdp_max: 50

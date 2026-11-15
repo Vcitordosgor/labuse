@@ -66,7 +66,7 @@ zones:
           page_pdf: 28
           places: 1.5
           arrondi: superieur
-          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement.'
       pleine_terre:
         pct:
           pct: 10.0
@@ -149,7 +149,7 @@ zones:
           page_pdf: 28
           places: 1.5
           arrondi: superieur
-          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement.'
       pleine_terre:
         pct:
           pct: 10.0
@@ -218,7 +218,7 @@ zones:
           page_pdf: 40
           places: 1.5
           arrondi: superieur
-          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement.'
       pleine_terre:
         pct:
           pct: 40.0
@@ -298,7 +298,7 @@ zones:
           page_pdf: 40
           places: 1.5
           arrondi: superieur
-          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement.'
       pleine_terre:
         pct:
           pct: 40.0
@@ -358,7 +358,7 @@ zones:
           page_pdf: 51
           places: 1.5
           arrondi: superieur
-          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement.'
     silence: autorise
     silence_src: 'Art. Uc 2.2, p. 43 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article Uc 1.2, ainsi, que celles ci-après… » — liste fermée d''interdictions à l''art. Uc 1.2 (p. 42).'
@@ -454,7 +454,7 @@ zones:
           page_pdf: 40
           places: 1.5
           arrondi: superieur
-          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement.'
       pleine_terre:
         pct:
           pct: 40.0
@@ -525,7 +525,7 @@ zones:
           page_pdf: 40
           places: 1.5
           arrondi: superieur
-          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement.'
       pleine_terre:
         pct:
           pct: 40.0
@@ -596,7 +596,7 @@ zones:
           page_pdf: 40
           places: 1.5
           arrondi: superieur
-          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement.'
       pleine_terre:
         pct:
           pct: 30.0

@@ -345,3 +345,34 @@ les traite pas ici et je referai leur stationnement sur le **nouveau texte, à l
 La Possession (lot 3, sur l'ancien texte) est **révoquée** (`git checkout origin/main`) pour ne pas diverger ;
 Saint-Denis était déjà revenue à l'état d'origine (pleine terre retirée). Les deux apparaissent « version en
 cours » dans `COUVERTURE.md`. C'est aussi ce qui explique l'écart base/PDF que j'avais vu à Saint-Denis.
+
+---
+
+## Relecture (4e tour) — citations des règles d'habitation en VERBATIM
+
+### Compte des règles PROUVÉES (ta précision)
+Tant que la citation n'est pas le texte de la page, « chiffre dans la citation » ne prouve rien. Le compte
+honnête des règles **prouvées** = citation mot pour mot sur la page **ET** chaque chiffre dans la citation :
+
+- **Départ : 218** prouvées (1465 − 1247).
+- **Maintenant : 1172 prouvées** (1465 − 293). 0 chiffre hors citation.
+
+### Règles d'HABITATION d'abord, toutes communes, vers 0
+- **15 des 16 communes ingérées sont à 0 échec de citation** (verbatim posé) : Les Avirons, Bras-Panon,
+  Entre-Deux, Petite-Île, Le Port, Saint-Benoît, Saint-Joseph, Saint-Louis, Sainte-Marie, Sainte-Rose,
+  Sainte-Suzanne, Salazie, Le Tampon, Trois-Bassins, Cilaos (+ Saint-Pierre partiel).
+- **Saint-Pierre : 41** zones encore en synthèse (tableau à sous-lignes Habitation/Logement/Hébergement
+  difficile à extraire proprement) — à finir à la main zone par zone.
+- **Valeurs corrigées en relisant : 0** — le verbatim a CONFIRMÉ tous les chiffres appliqués (aucun écart de
+  valeur révélé par la relecture ; les corrections de valeur étaient des tours précédents).
+- Outils : `scripts/stationnement_citation_verbatim.py` (bloc habitation verbatim borné à la section
+  habitation, ne déborde pas sur le « 1 place / 70 m² » du commerce) + `apply_verbatim_citations.py`
+  (ne remplace QUE si le verbatim porte tous les chiffres appliqués — jamais une citation qui ne prouve pas).
+- Contrôle renforcé : la vérification « chiffre dans la citation » accepte les dénominateurs **en toutes
+  lettres** (« 1 place pour **trois** chambres »).
+
+### Reliquat de ce lot (ARRÊT atteint partiellement)
+1. **Saint-Pierre** (41 zones) à passer en verbatim. 2. **Saint-Paul** zone par zone. 3. **52 zones « habitat
+secondaire »** (refus motivé ou ingestion, décompte). 4. **Ua10.3 hauteur** → « Non vérifié ». Sondage à
+graine fixe joint (`SONDAGE-10-LOT3.md`/images régénérés). Non-ingérées (Étang-Salé, Plaine, Saint-André,
+Saint-Leu) et Saint-Denis/La Possession = lots suivants.

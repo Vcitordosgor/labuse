@@ -68,7 +68,31 @@ zones:
           page_pdf: 23
           places: 2.0
           arrondi: superieur
-          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)
@@ -178,7 +202,31 @@ zones:
           page_pdf: 23
           places: 2.0
           arrondi: superieur
-          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)
@@ -245,7 +293,31 @@ zones:
           page_pdf: 37
           places: 2.0
           arrondi: superieur
-          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)
@@ -374,7 +446,31 @@ zones:
           page_pdf: 52
           places: 2.0
           arrondi: superieur
-          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)
@@ -490,7 +586,31 @@ zones:
           page_pdf: 52
           places: 2.0
           arrondi: superieur
-          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)
@@ -559,7 +679,31 @@ zones:
           page_pdf: 52
           places: 2.0
           arrondi: superieur
-          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)
@@ -633,7 +777,31 @@ zones:
           page_pdf: 66
           places: 2.0
           arrondi: superieur
-          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)
@@ -769,7 +937,31 @@ zones:
           page_pdf: 66
           places: 2.0
           arrondi: superieur
-          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)
@@ -1061,7 +1253,19 @@ zones:
           page_pdf: 103
           places: 1.5
           arrondi: superieur
-          citation: 'Constructions à usage d''habitation : 1,5 place de stationnement par logement, arrondi à l''entier supérieur pour l''ensemble de l''opération. Logement social : 1 place par logement.'
+          citation: '1. Pour les constructions à usage d’habitation : 1,5 place de stationnement par logement, arrondi à l’entier
+
+            supérieur pour l’ensemble de l’opération. Pour le logement social : 1 place par logement.
+
+            hôtels et restaurants : 1 place de stationnement pour 2 chambres ; 2 places de stationnement pour
+
+            4. Pour les salles de sports, salle de spectacles et de réunions : 1 place de stationnement pour une capacité
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)
@@ -1205,7 +1409,31 @@ zones:
           page_pdf: 23
           places: 2.0
           arrondi: superieur
-          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)
@@ -1316,7 +1544,31 @@ zones:
           page_pdf: 52
           places: 2.0
           arrondi: superieur
-          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)
@@ -1405,7 +1657,31 @@ zones:
           page_pdf: 52
           places: 2.0
           arrondi: superieur
-          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)
@@ -1481,7 +1757,31 @@ zones:
           page_pdf: 52
           places: 2.0
           arrondi: superieur
-          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)
@@ -1558,7 +1858,31 @@ zones:
           page_pdf: 66
           places: 2.0
           arrondi: superieur
-          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)
@@ -1636,7 +1960,31 @@ zones:
           page_pdf: 66
           places: 2.0
           arrondi: superieur
-          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
           social:
             places: 1
             tranche: logement social (1/logt)

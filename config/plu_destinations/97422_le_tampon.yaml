@@ -79,7 +79,33 @@ zones:
           statut: valide
           article: Ua12.2
           page_pdf: 22
-          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          citation: 'Constructions à destination d’habitation
+
+            Logement locatif financé par un prêt aidé de l’État
+
+            1 place par logement au maximum
+
+            Habitat individuel
+
+            1 place par logement
+
+            Habitat collectif (autre que logements sociaux)
+
+            1 place par logement de 2 pièces
+
+            1,5 place par logement de 3 pièces et plus
+
+            Lotissement ou opération supérieur à 5 lots ou logements
+
+            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+
+            1 place pour 3 chambres ou logements
+
+            1 place pour deux chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
+
+            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -411,7 +437,33 @@ zones:
           statut: valide
           article: Ua12.2
           page_pdf: 22
-          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          citation: 'Constructions à destination d’habitation
+
+            Logement locatif financé par un prêt aidé de l’État
+
+            1 place par logement au maximum
+
+            Habitat individuel
+
+            1 place par logement
+
+            Habitat collectif (autre que logements sociaux)
+
+            1 place par logement de 2 pièces
+
+            1,5 place par logement de 3 pièces et plus
+
+            Lotissement ou opération supérieur à 5 lots ou logements
+
+            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+
+            1 place pour 3 chambres ou logements
+
+            1 place pour deux chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
+
+            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -510,7 +562,33 @@ zones:
           statut: valide
           article: Ub12.2
           page_pdf: 37
-          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          citation: 'Constructions à destination d’habitation
+
+            Logement locatif financé par un prêt aidé de l’État
+
+            1 place par logement au maximum
+
+            Habitat individuel
+
+            1 place par logement
+
+            Habitat collectif (autre que logements sociaux)
+
+            1 place par logement de 2 pièces
+
+            1,5 place par logement de 3 pièces et plus
+
+            Lotissement ou opération supérieur à 5 lots ou logements
+
+            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+
+            1 place pour 3 chambres ou logement
+
+            1 place pour deux chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
+
+            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -833,7 +911,33 @@ zones:
           statut: valide
           article: Uc12.2
           page_pdf: 52
-          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          citation: 'Constructions à destination d’habitation
+
+            Logement locatif financé par un prêt aidé de l’État
+
+            1 place par logement au maximum
+
+            Habitat individuel
+
+            1 place par logement
+
+            Habitat collectif (autre que logements sociaux)
+
+            1 place par logement de 2 pièces
+
+            1,5 place par logement de 3 pièces et plus
+
+            Lotissement ou opération supérieur à 5 lots ou logements
+
+            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+
+            1 place pour 3 chambres ou logement
+
+            1 place pour deux chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
+
+            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -1116,7 +1220,33 @@ zones:
           statut: valide
           article: Uc12.2
           page_pdf: 52
-          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          citation: 'Constructions à destination d’habitation
+
+            Logement locatif financé par un prêt aidé de l’État
+
+            1 place par logement au maximum
+
+            Habitat individuel
+
+            1 place par logement
+
+            Habitat collectif (autre que logements sociaux)
+
+            1 place par logement de 2 pièces
+
+            1,5 place par logement de 3 pièces et plus
+
+            Lotissement ou opération supérieur à 5 lots ou logements
+
+            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+
+            1 place pour 3 chambres ou logement
+
+            1 place pour deux chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
+
+            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -1449,7 +1579,33 @@ zones:
           statut: valide
           article: Ud12.2
           page_pdf: 67
-          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          citation: 'Constructions à destination d’habitation
+
+            Logement locatif financé par un prêt aidé de l’État
+
+            1 place par logement au maximum
+
+            Habitat individuel
+
+            1 place par logement
+
+            Habitat collectif (autre que logements sociaux)
+
+            1 place par logement de 2 pièces
+
+            1,5 place par logement de 3 pièces et plus
+
+            Lotissement ou opération supérieur à 5 lots ou logements
+
+            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+
+            1 place pour 3 chambres ou logement
+
+            1 place pour deux chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
+
+            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -1816,7 +1972,33 @@ zones:
           statut: valide
           article: Ua12.2
           page_pdf: 22
-          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          citation: 'Constructions à destination d’habitation
+
+            Logement locatif financé par un prêt aidé de l’État
+
+            1 place par logement au maximum
+
+            Habitat individuel
+
+            1 place par logement
+
+            Habitat collectif (autre que logements sociaux)
+
+            1 place par logement de 2 pièces
+
+            1,5 place par logement de 3 pièces et plus
+
+            Lotissement ou opération supérieur à 5 lots ou logements
+
+            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+
+            1 place pour 3 chambres ou logements
+
+            1 place pour deux chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
+
+            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -1910,7 +2092,33 @@ zones:
           statut: valide
           article: Ub12.2
           page_pdf: 37
-          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          citation: 'Constructions à destination d’habitation
+
+            Logement locatif financé par un prêt aidé de l’État
+
+            1 place par logement au maximum
+
+            Habitat individuel
+
+            1 place par logement
+
+            Habitat collectif (autre que logements sociaux)
+
+            1 place par logement de 2 pièces
+
+            1,5 place par logement de 3 pièces et plus
+
+            Lotissement ou opération supérieur à 5 lots ou logements
+
+            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+
+            1 place pour 3 chambres ou logement
+
+            1 place pour deux chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
+
+            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -2002,7 +2210,33 @@ zones:
           statut: valide
           article: Uc12.2
           page_pdf: 52
-          citation: 'Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l''entier inférieur dont au moins 0,5 place à l''extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l''État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement.'
+          citation: 'Constructions à destination d’habitation
+
+            Logement locatif financé par un prêt aidé de l’État
+
+            1 place par logement au maximum
+
+            Habitat individuel
+
+            1 place par logement
+
+            Habitat collectif (autre que logements sociaux)
+
+            1 place par logement de 2 pièces
+
+            1,5 place par logement de 3 pièces et plus
+
+            Lotissement ou opération supérieur à 5 lots ou logements
+
+            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+
+            1 place pour 3 chambres ou logement
+
+            1 place pour deux chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
+
+            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
           base: pieces
           arrondi: superieur
           retenue: max

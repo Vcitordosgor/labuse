@@ -61,7 +61,77 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          citation: 'Habitation
+
+            Logements locatifs financés avec un prêt aidé par
+
+            l''Etat
+
+            Conformément à l’article R.111-25 du code de l’urbanisme :
+
+            ‐ il ne peut être exigé la réalisation de plus d''une aire de stationnement par logement lors
+
+            de la construction de logements locatifs financés avec un prêt aidé par l''Etat,
+
+            ‐ l''obligation de réaliser des aires de stationnement n''est pas applicable aux travaux de
+
+            transformation ou d''amélioration de bâtiments affectés à des logements locatifs
+
+            financés avec un prêt aidé par l''Etat, y compris dans le cas où ces travaux
+
+            s''accompagnent de la création de surface de plancher, dans la limite d''un plafond de
+
+            50 % de la surface de plancher existant avant le commencement des travaux.
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière ou d''une station de
+
+            transport public guidé ou de transport collectif en site propre et que la qualité de la
+
+            desserte le permet
+
+            Logements privés d’une surface de plancher
+
+            inférieure à 100 m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher
+
+            supérieure ou égale à 100 m²
+
+            Opération d’un seul logement
+
+            2 places minimum
+
+            Opération de plusieurs logements
+
+            1,5 place minimum par logement
+
+            Logements privés situés à moins de 500 m d’une
+
+            gare routière ou d''une station de transport public
+
+            guidé ou de transport collectif en site propre et que
+
+            la qualité de la desserte le permet
+
+            1 place par logement
+
+            Hébergement
+
+            1 place de stationnement minimum pour trois chambres
+
+            Commerces et activités de services et bureaux
+
+            Commerces, activités de service, locaux, des
+
+            administrations publiques ou assimilés, bureaux et
+
+            activités artisanales
+
+            1 place de stationnement minimum pour 100 m² de surface de plancher y compris l''espace
+
+            de stockage'
           detail:
           - destination: collectif
             sdp_max: 100
@@ -214,7 +284,77 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          citation: 'Habitation
+
+            Logements locatifs financés avec un prêt aidé par
+
+            l''Etat
+
+            Conformément à l’article R.111-25 du code de l’urbanisme :
+
+            ‐ il ne peut être exigé la réalisation de plus d''une aire de stationnement par logement lors
+
+            de la construction de logements locatifs financés avec un prêt aidé par l''Etat,
+
+            ‐ l''obligation de réaliser des aires de stationnement n''est pas applicable aux travaux de
+
+            transformation ou d''amélioration de bâtiments affectés à des logements locatifs
+
+            financés avec un prêt aidé par l''Etat, y compris dans le cas où ces travaux
+
+            s''accompagnent de la création de surface de plancher, dans la limite d''un plafond de
+
+            50 % de la surface de plancher existant avant le commencement des travaux.
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière ou d''une station de
+
+            transport public guidé ou de transport collectif en site propre et que la qualité de la
+
+            desserte le permet
+
+            Logements privés d’une surface de plancher
+
+            inférieure à 100 m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher
+
+            supérieure ou égale à 100 m²
+
+            Opération d’un seul logement
+
+            2 places minimum
+
+            Opération de plusieurs logements
+
+            1,5 place minimum par logement
+
+            Logements privés situés à moins de 500 m d’une
+
+            gare routière ou d''une station de transport public
+
+            guidé ou de transport collectif en site propre et que
+
+            la qualité de la desserte le permet
+
+            1 place par logement
+
+            Hébergement
+
+            1 place de stationnement minimum pour trois chambres
+
+            Commerces et activités de services et bureaux
+
+            Commerces, activités de service, locaux, des
+
+            administrations publiques ou assimilés, bureaux et
+
+            activités artisanales
+
+            1 place de stationnement minimum pour 100 m² de surface de plancher y compris l''espace
+
+            de stockage'
           detail:
           - destination: collectif
             sdp_max: 100
@@ -294,7 +434,77 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          citation: 'Habitation
+
+            Logements locatifs financés avec un prêt aidé par
+
+            l''Etat
+
+            Conformément à l’article R.111-25 du code de l’urbanisme :
+
+            ‐ il ne peut être exigé la réalisation de plus d''une aire de stationnement par logement lors
+
+            de la construction de logements locatifs financés avec un prêt aidé par l''Etat,
+
+            ‐ l''obligation de réaliser des aires de stationnement n''est pas applicable aux travaux de
+
+            transformation ou d''amélioration de bâtiments affectés à des logements locatifs
+
+            financés avec un prêt aidé par l''Etat, y compris dans le cas où ces travaux
+
+            s''accompagnent de la création de surface de plancher, dans la limite d''un plafond de
+
+            50 % de la surface de plancher existant avant le commencement des travaux.
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière ou d''une station de
+
+            transport public guidé ou de transport collectif en site propre et que la qualité de la
+
+            desserte le permet
+
+            Logements privés d’une surface de plancher
+
+            inférieure à 100 m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher
+
+            supérieure ou égale à 100 m²
+
+            Opération d’un seul logement
+
+            2 places minimum
+
+            Opération de plusieurs logements
+
+            1,5 place minimum par logement
+
+            Logements privés situés à moins de 500 m d’une
+
+            gare routière ou d''une station de transport public
+
+            guidé ou de transport collectif en site propre et que
+
+            la qualité de la desserte le permet
+
+            1 place par logement
+
+            Hébergement
+
+            1 place de stationnement minimum pour trois chambres
+
+            Commerces et activités de services et bureaux
+
+            Commerces, activités de service, locaux, des
+
+            administrations publiques ou assimilés, bureaux et
+
+            activités artisanales
+
+            1 place de stationnement minimum pour 100 m² de surface de plancher y compris l''espace
+
+            de stockage'
           detail:
           - destination: collectif
             sdp_max: 100
@@ -383,7 +593,77 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          citation: 'Habitation
+
+            Logements locatifs financés avec un prêt aidé par
+
+            l''Etat
+
+            Conformément à l’article R.111-25 du code de l’urbanisme :
+
+            ‐ il ne peut être exigé la réalisation de plus d''une aire de stationnement par logement lors
+
+            de la construction de logements locatifs financés avec un prêt aidé par l''Etat,
+
+            ‐ l''obligation de réaliser des aires de stationnement n''est pas applicable aux travaux de
+
+            transformation ou d''amélioration de bâtiments affectés à des logements locatifs
+
+            financés avec un prêt aidé par l''Etat, y compris dans le cas où ces travaux
+
+            s''accompagnent de la création de surface de plancher, dans la limite d''un plafond de
+
+            50 % de la surface de plancher existant avant le commencement des travaux.
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière ou d''une station de
+
+            transport public guidé ou de transport collectif en site propre et que la qualité de la
+
+            desserte le permet
+
+            Logements privés d’une surface de plancher
+
+            inférieure à 100 m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher
+
+            supérieure ou égale à 100 m²
+
+            Opération d’un seul logement
+
+            2 places minimum
+
+            Opération de plusieurs logements
+
+            1,5 place minimum par logement
+
+            Logements privés situés à moins de 500 m d’une
+
+            gare routière ou d''une station de transport public
+
+            guidé ou de transport collectif en site propre et que
+
+            la qualité de la desserte le permet
+
+            1 place par logement
+
+            Hébergement
+
+            1 place de stationnement minimum pour trois chambres
+
+            Commerces et activités de services et bureaux
+
+            Commerces, activités de service, locaux, des
+
+            administrations publiques ou assimilés, bureaux et
+
+            activités artisanales
+
+            1 place de stationnement minimum pour 100 m² de surface de plancher y compris l''espace
+
+            de stockage'
           detail:
           - destination: collectif
             sdp_max: 100
@@ -525,7 +805,77 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          citation: 'Habitation
+
+            Logements locatifs financés avec un prêt aidé par
+
+            l''Etat
+
+            Conformément à l’article R.111-25 du code de l’urbanisme :
+
+            ‐ il ne peut être exigé la réalisation de plus d''une aire de stationnement par logement lors
+
+            de la construction de logements locatifs financés avec un prêt aidé par l''Etat,
+
+            ‐ l''obligation de réaliser des aires de stationnement n''est pas applicable aux travaux de
+
+            transformation ou d''amélioration de bâtiments affectés à des logements locatifs
+
+            financés avec un prêt aidé par l''Etat, y compris dans le cas où ces travaux
+
+            s''accompagnent de la création de surface de plancher, dans la limite d''un plafond de
+
+            50 % de la surface de plancher existant avant le commencement des travaux.
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière ou d''une station de
+
+            transport public guidé ou de transport collectif en site propre et que la qualité de la
+
+            desserte le permet
+
+            Logements privés d’une surface de plancher
+
+            inférieure à 100 m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher
+
+            supérieure ou égale à 100 m²
+
+            Opération d’un seul logement
+
+            2 places minimum
+
+            Opération de plusieurs logements
+
+            1,5 place minimum par logement
+
+            Logements privés situés à moins de 500 m d’une
+
+            gare routière ou d''une station de transport public
+
+            guidé ou de transport collectif en site propre et que
+
+            la qualité de la desserte le permet
+
+            1 place par logement
+
+            Hébergement
+
+            1 place de stationnement minimum pour trois chambres
+
+            Commerces et activités de services et bureaux
+
+            Commerces, activités de service, locaux, des
+
+            administrations publiques ou assimilés, bureaux et
+
+            activités artisanales
+
+            1 place de stationnement minimum pour 100 m² de surface de plancher y compris l''espace
+
+            de stockage'
           detail:
           - destination: collectif
             sdp_max: 100
@@ -667,7 +1017,77 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          citation: 'Habitation
+
+            Logements locatifs financés avec un prêt aidé par
+
+            l''Etat
+
+            Conformément à l’article R.111-25 du code de l’urbanisme :
+
+            ‐ il ne peut être exigé la réalisation de plus d''une aire de stationnement par logement lors
+
+            de la construction de logements locatifs financés avec un prêt aidé par l''Etat,
+
+            ‐ l''obligation de réaliser des aires de stationnement n''est pas applicable aux travaux de
+
+            transformation ou d''amélioration de bâtiments affectés à des logements locatifs
+
+            financés avec un prêt aidé par l''Etat, y compris dans le cas où ces travaux
+
+            s''accompagnent de la création de surface de plancher, dans la limite d''un plafond de
+
+            50 % de la surface de plancher existant avant le commencement des travaux.
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière ou d''une station de
+
+            transport public guidé ou de transport collectif en site propre et que la qualité de la
+
+            desserte le permet
+
+            Logements privés d’une surface de plancher
+
+            inférieure à 100 m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher
+
+            supérieure ou égale à 100 m²
+
+            Opération d’un seul logement
+
+            2 places minimum
+
+            Opération de plusieurs logements
+
+            1,5 place minimum par logement
+
+            Logements privés situés à moins de 500 m d’une
+
+            gare routière ou d''une station de transport public
+
+            guidé ou de transport collectif en site propre et que
+
+            la qualité de la desserte le permet
+
+            1 place par logement
+
+            Hébergement
+
+            1 place de stationnement minimum pour trois chambres
+
+            Commerces et activités de services et bureaux
+
+            Commerces, activités de service, locaux, des
+
+            administrations publiques ou assimilés, bureaux et
+
+            activités artisanales
+
+            1 place de stationnement minimum pour 100 m² de surface de plancher y compris l''espace
+
+            de stockage'
           detail:
           - destination: collectif
             sdp_max: 100
@@ -775,7 +1195,77 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          citation: 'Habitation
+
+            Logements locatifs financés avec un prêt aidé par
+
+            l''Etat
+
+            Conformément à l’article R.111-25 du code de l’urbanisme :
+
+            ‐ il ne peut être exigé la réalisation de plus d''une aire de stationnement par logement lors
+
+            de la construction de logements locatifs financés avec un prêt aidé par l''Etat,
+
+            ‐ l''obligation de réaliser des aires de stationnement n''est pas applicable aux travaux de
+
+            transformation ou d''amélioration de bâtiments affectés à des logements locatifs
+
+            financés avec un prêt aidé par l''Etat, y compris dans le cas où ces travaux
+
+            s''accompagnent de la création de surface de plancher, dans la limite d''un plafond de
+
+            50 % de la surface de plancher existant avant le commencement des travaux.
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière ou d''une station de
+
+            transport public guidé ou de transport collectif en site propre et que la qualité de la
+
+            desserte le permet
+
+            Logements privés d’une surface de plancher
+
+            inférieure à 100 m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher
+
+            supérieure ou égale à 100 m²
+
+            Opération d’un seul logement
+
+            2 places minimum
+
+            Opération de plusieurs logements
+
+            1,5 place minimum par logement
+
+            Logements privés situés à moins de 500 m d’une
+
+            gare routière ou d''une station de transport public
+
+            guidé ou de transport collectif en site propre et que
+
+            la qualité de la desserte le permet
+
+            1 place par logement
+
+            Hébergement
+
+            1 place de stationnement minimum pour trois chambres
+
+            Commerces et activités de services et bureaux
+
+            Commerces, activités de service, locaux, des
+
+            administrations publiques ou assimilés, bureaux et
+
+            activités artisanales
+
+            1 place de stationnement minimum pour 100 m² de surface de plancher y compris l''espace
+
+            de stockage'
           detail:
           - destination: collectif
             sdp_max: 100
@@ -867,7 +1357,77 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          citation: 'Habitation
+
+            Logements locatifs financés avec un prêt aidé par
+
+            l''Etat
+
+            Conformément à l’article R.111-25 du code de l’urbanisme :
+
+            ‐ il ne peut être exigé la réalisation de plus d''une aire de stationnement par logement lors
+
+            de la construction de logements locatifs financés avec un prêt aidé par l''Etat,
+
+            ‐ l''obligation de réaliser des aires de stationnement n''est pas applicable aux travaux de
+
+            transformation ou d''amélioration de bâtiments affectés à des logements locatifs
+
+            financés avec un prêt aidé par l''Etat, y compris dans le cas où ces travaux
+
+            s''accompagnent de la création de surface de plancher, dans la limite d''un plafond de
+
+            50 % de la surface de plancher existant avant le commencement des travaux.
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière ou d''une station de
+
+            transport public guidé ou de transport collectif en site propre et que la qualité de la
+
+            desserte le permet
+
+            Logements privés d’une surface de plancher
+
+            inférieure à 100 m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher
+
+            supérieure ou égale à 100 m²
+
+            Opération d’un seul logement
+
+            2 places minimum
+
+            Opération de plusieurs logements
+
+            1,5 place minimum par logement
+
+            Logements privés situés à moins de 500 m d’une
+
+            gare routière ou d''une station de transport public
+
+            guidé ou de transport collectif en site propre et que
+
+            la qualité de la desserte le permet
+
+            1 place par logement
+
+            Hébergement
+
+            1 place de stationnement minimum pour trois chambres
+
+            Commerces et activités de services et bureaux
+
+            Commerces, activités de service, locaux, des
+
+            administrations publiques ou assimilés, bureaux et
+
+            activités artisanales
+
+            1 place de stationnement minimum pour 100 m² de surface de plancher y compris l''espace
+
+            de stockage'
           detail:
           - destination: collectif
             sdp_max: 100
@@ -991,7 +1551,77 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          citation: 'Habitation
+
+            Logements locatifs financés avec un prêt aidé par
+
+            l''Etat
+
+            Conformément à l’article R.111-25 du code de l’urbanisme :
+
+            ‐ il ne peut être exigé la réalisation de plus d''une aire de stationnement par logement lors
+
+            de la construction de logements locatifs financés avec un prêt aidé par l''Etat,
+
+            ‐ l''obligation de réaliser des aires de stationnement n''est pas applicable aux travaux de
+
+            transformation ou d''amélioration de bâtiments affectés à des logements locatifs
+
+            financés avec un prêt aidé par l''Etat, y compris dans le cas où ces travaux
+
+            s''accompagnent de la création de surface de plancher, dans la limite d''un plafond de
+
+            50 % de la surface de plancher existant avant le commencement des travaux.
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière ou d''une station de
+
+            transport public guidé ou de transport collectif en site propre et que la qualité de la
+
+            desserte le permet
+
+            Logements privés d’une surface de plancher
+
+            inférieure à 100 m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher
+
+            supérieure ou égale à 100 m²
+
+            Opération d’un seul logement
+
+            2 places minimum
+
+            Opération de plusieurs logements
+
+            1,5 place minimum par logement
+
+            Logements privés situés à moins de 500 m d’une
+
+            gare routière ou d''une station de transport public
+
+            guidé ou de transport collectif en site propre et que
+
+            la qualité de la desserte le permet
+
+            1 place par logement
+
+            Hébergement
+
+            1 place de stationnement minimum pour trois chambres
+
+            Commerces et activités de services et bureaux
+
+            Commerces, activités de service, locaux, des
+
+            administrations publiques ou assimilés, bureaux et
+
+            activités artisanales
+
+            1 place de stationnement minimum pour 100 m² de surface de plancher y compris l''espace
+
+            de stockage'
           detail:
           - destination: collectif
             sdp_max: 100
@@ -1933,7 +2563,77 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          citation: 'Habitation
+
+            Logements locatifs financés avec un prêt aidé par
+
+            l''Etat
+
+            Conformément à l’article R.111-25 du code de l’urbanisme :
+
+            ‐ il ne peut être exigé la réalisation de plus d''une aire de stationnement par logement lors
+
+            de la construction de logements locatifs financés avec un prêt aidé par l''Etat,
+
+            ‐ l''obligation de réaliser des aires de stationnement n''est pas applicable aux travaux de
+
+            transformation ou d''amélioration de bâtiments affectés à des logements locatifs
+
+            financés avec un prêt aidé par l''Etat, y compris dans le cas où ces travaux
+
+            s''accompagnent de la création de surface de plancher, dans la limite d''un plafond de
+
+            50 % de la surface de plancher existant avant le commencement des travaux.
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière ou d''une station de
+
+            transport public guidé ou de transport collectif en site propre et que la qualité de la
+
+            desserte le permet
+
+            Logements privés d’une surface de plancher
+
+            inférieure à 100 m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher
+
+            supérieure ou égale à 100 m²
+
+            Opération d’un seul logement
+
+            2 places minimum
+
+            Opération de plusieurs logements
+
+            1,5 place minimum par logement
+
+            Logements privés situés à moins de 500 m d’une
+
+            gare routière ou d''une station de transport public
+
+            guidé ou de transport collectif en site propre et que
+
+            la qualité de la desserte le permet
+
+            1 place par logement
+
+            Hébergement
+
+            1 place de stationnement minimum pour trois chambres
+
+            Commerces et activités de services et bureaux
+
+            Commerces, activités de service, locaux, des
+
+            administrations publiques ou assimilés, bureaux et
+
+            activités artisanales
+
+            1 place de stationnement minimum pour 100 m² de surface de plancher y compris l''espace
+
+            de stockage'
           detail:
           - destination: collectif
             sdp_max: 100
@@ -2015,7 +2715,77 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          citation: 'Habitation
+
+            Logements locatifs financés avec un prêt aidé par
+
+            l''Etat
+
+            Conformément à l’article R.111-25 du code de l’urbanisme :
+
+            ‐ il ne peut être exigé la réalisation de plus d''une aire de stationnement par logement lors
+
+            de la construction de logements locatifs financés avec un prêt aidé par l''Etat,
+
+            ‐ l''obligation de réaliser des aires de stationnement n''est pas applicable aux travaux de
+
+            transformation ou d''amélioration de bâtiments affectés à des logements locatifs
+
+            financés avec un prêt aidé par l''Etat, y compris dans le cas où ces travaux
+
+            s''accompagnent de la création de surface de plancher, dans la limite d''un plafond de
+
+            50 % de la surface de plancher existant avant le commencement des travaux.
+
+            0,5 place par logement si situés à moins de 500 m d’une gare routière ou d''une station de
+
+            transport public guidé ou de transport collectif en site propre et que la qualité de la
+
+            desserte le permet
+
+            Logements privés d’une surface de plancher
+
+            inférieure à 100 m²
+
+            1 place minimum par logement
+
+            Logements privés d’une surface de plancher
+
+            supérieure ou égale à 100 m²
+
+            Opération d’un seul logement
+
+            2 places minimum
+
+            Opération de plusieurs logements
+
+            1,5 place minimum par logement
+
+            Logements privés situés à moins de 500 m d’une
+
+            gare routière ou d''une station de transport public
+
+            guidé ou de transport collectif en site propre et que
+
+            la qualité de la desserte le permet
+
+            1 place par logement
+
+            Hébergement
+
+            1 place de stationnement minimum pour trois chambres
+
+            Commerces et activités de services et bureaux
+
+            Commerces, activités de service, locaux, des
+
+            administrations publiques ou assimilés, bureaux et
+
+            activités artisanales
+
+            1 place de stationnement minimum pour 100 m² de surface de plancher y compris l''espace
+
+            de stockage'
           detail:
           - destination: collectif
             sdp_max: 100

@@ -45,12 +45,42 @@ _EXCL = ("mètre", "hauteur", "égout", "faîtage", "faitage", "soutènement", "
          "limite séparative", "recul", "emprise au sol", "haie", "palmier", "mur")
 
 
+_HAB_HEAD = ("constructions à destination d'habitation", "destination d'habitation", "pour les constructions à destination d'habitation",
+             "constructions à usage d'habitation", "habitat individuel", "logements aidés", "logements privés",
+             "logement locatif", "habitation")
+
+
 def verbatim(doc, page_pdf, fig_tokens):
-    """Texte VERBATIM de la norme d'habitation : fenêtre serrée autour des LIGNES qui portent un chiffre
-    appliqué en contexte de stationnement d'habitation (exclut le bruit « logement » des articles hauteur/
-    façades). Renvoie le texte (retours à la ligne réels) ou None si rien de probant."""
+    """Texte VERBATIM de la SECTION habitation de la page : de l'en-tête « habitation » jusqu'à la
+    destination suivante (commerce/bureau/équipement…). Toutes les lignes non vides, telles quelles — chaque
+    ligne se retrouve donc mot pour mot sur la page. Bornée pour ne PAS déborder sur le commerce (le « 1 place
+    / 70 m² » qui pollue sinon le « 1 place / 75 m² » de l'habitation). None si la section n'est pas trouvée
+    ou ne porte pas tous les chiffres appliqués."""
     lines = _lines(doc, page_pdf)
     low = [ln.lower() for _p, ln in lines]
+    # ancre : l'en-tête habitation le plus proche AU-DESSUS de la première ligne-chiffre d'habitation
+    fig_lines = [i for i, l in enumerate(low) if lines[i][1].strip()
+                 and any(t and _norm(t) in _norm(l) for t in fig_tokens)
+                 and any(c in l for c in _CTX) and not any(x in l for x in _EXCL)]
+    if not fig_lines:
+        return _verbatim_fenetre(lines, low, fig_tokens)
+    first = min(fig_lines)
+    start = next((i for i in range(first, -1, -1)
+                  if any(h in low[i] for h in _HAB_HEAD) and not any(x in low[i] for x in _EXCL)), None)
+    if start is None:
+        return _verbatim_fenetre(lines, low, fig_tokens)
+    stop = next((i for i in range(start + 1, len(low)) if any(m in low[i] for m in _STOP)), len(low))
+    block = [lines[i][1].strip() for i in range(start, stop) if lines[i][1].strip()
+             and not any(x in low[i] for x in _EXCL)]
+    txt = re.sub(r'\n{2,}', '\n', "\n".join(block)).strip()
+    # tous les chiffres appliqués présents ? sinon on ne propose rien (l'appelant garde l'existant).
+    if txt and all(_norm(f) in _norm(txt) for f in fig_tokens):
+        return txt
+    return _verbatim_fenetre(lines, low, fig_tokens)
+
+
+def _verbatim_fenetre(lines, low, fig_tokens):
+    """Repli : fenêtre serrée autour des lignes-chiffre (ancienne méthode)."""
     # lignes « norme de stationnement d'habitation » : contexte parking/habitation, chiffre appliqué, ET
     # AUCUN contexte hauteur/façade/plantation (le bruit qui porte aussi des « 1 »/« 1,5 »).
     norme = [i for i, l in enumerate(low)

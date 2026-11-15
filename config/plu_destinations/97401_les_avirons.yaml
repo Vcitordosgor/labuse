@@ -66,7 +66,23 @@ zones:
           statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          citation: 'Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une
+
+            place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de
+
+            1 place de stationnement minimum pour trois chambres
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 place de stationnement pour 10 m² de salle de restaurant
+
+            1 place de stationnement pour une capacité de 10 personnes.
+
+            emplacement minimum par logement,
+
+            pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de plancher,
+
+            emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -300,7 +316,23 @@ zones:
           statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          citation: 'Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une
+
+            place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de
+
+            1 place de stationnement minimum pour trois chambres
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 place de stationnement pour 10 m² de salle de restaurant
+
+            1 place de stationnement pour une capacité de 10 personnes.
+
+            emplacement minimum par logement,
+
+            pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de plancher,
+
+            emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -509,7 +541,23 @@ zones:
           statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          citation: 'Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une
+
+            place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de
+
+            1 place de stationnement minimum pour trois chambres
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 place de stationnement pour 10 m² de salle de restaurant
+
+            1 place de stationnement pour une capacité de 10 personnes.
+
+            emplacement minimum par logement,
+
+            pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de plancher,
+
+            emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -592,7 +640,23 @@ zones:
           statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          citation: 'Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une
+
+            place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de
+
+            1 place de stationnement minimum pour trois chambres
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 place de stationnement pour 10 m² de salle de restaurant
+
+            1 place de stationnement pour une capacité de 10 personnes.
+
+            emplacement minimum par logement,
+
+            pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de plancher,
+
+            emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -674,7 +738,23 @@ zones:
           statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          citation: 'Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une
+
+            place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de
+
+            1 place de stationnement minimum pour trois chambres
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 place de stationnement pour 10 m² de salle de restaurant
+
+            1 place de stationnement pour une capacité de 10 personnes.
+
+            emplacement minimum par logement,
+
+            pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de plancher,
+
+            emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -871,7 +951,23 @@ zones:
           statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          citation: 'Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une
+
+            place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de
+
+            1 place de stationnement minimum pour trois chambres
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 place de stationnement pour 10 m² de salle de restaurant
+
+            1 place de stationnement pour une capacité de 10 personnes.
+
+            emplacement minimum par logement,
+
+            pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de plancher,
+
+            emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -1085,7 +1181,23 @@ zones:
           statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          citation: 'Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une
+
+            place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de
+
+            1 place de stationnement minimum pour trois chambres
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 place de stationnement pour 10 m² de salle de restaurant
+
+            1 place de stationnement pour une capacité de 10 personnes.
+
+            emplacement minimum par logement,
+
+            pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de plancher,
+
+            emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -1171,7 +1283,23 @@ zones:
           statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          citation: 'Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une
+
+            place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de
+
+            1 place de stationnement minimum pour trois chambres
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 place de stationnement pour 10 m² de salle de restaurant
+
+            1 place de stationnement pour une capacité de 10 personnes.
+
+            emplacement minimum par logement,
+
+            pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de plancher,
+
+            emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -1260,7 +1388,23 @@ zones:
           statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          citation: 'Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une
+
+            place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de
+
+            1 place de stationnement minimum pour trois chambres
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 place de stationnement pour 10 m² de salle de restaurant
+
+            1 place de stationnement pour une capacité de 10 personnes.
+
+            emplacement minimum par logement,
+
+            pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de plancher,
+
+            emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -1476,7 +1620,23 @@ zones:
           statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          citation: 'Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une
+
+            place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de
+
+            1 place de stationnement minimum pour trois chambres
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 place de stationnement pour 10 m² de salle de restaurant
+
+            1 place de stationnement pour une capacité de 10 personnes.
+
+            emplacement minimum par logement,
+
+            pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de plancher,
+
+            emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -1686,7 +1846,23 @@ zones:
           statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          citation: 'Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une
+
+            place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de
+
+            1 place de stationnement minimum pour trois chambres
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 place de stationnement pour 10 m² de salle de restaurant
+
+            1 place de stationnement pour une capacité de 10 personnes.
+
+            emplacement minimum par logement,
+
+            pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de plancher,
+
+            emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -1994,7 +2170,23 @@ zones:
           statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          citation: 'Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une
+
+            place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de
+
+            1 place de stationnement minimum pour trois chambres
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 place de stationnement pour 10 m² de salle de restaurant
+
+            1 place de stationnement pour une capacité de 10 personnes.
+
+            emplacement minimum par logement,
+
+            pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de plancher,
+
+            emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -2088,7 +2280,23 @@ zones:
           statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          citation: 'Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une
+
+            place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de
+
+            1 place de stationnement minimum pour trois chambres
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 place de stationnement pour 10 m² de salle de restaurant
+
+            1 place de stationnement pour une capacité de 10 personnes.
+
+            emplacement minimum par logement,
+
+            pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de plancher,
+
+            emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -2180,7 +2388,23 @@ zones:
           statut: valide
           article: U 12.2
           page_pdf: 17
-          citation: 1,5 place par logement. En outre, 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots. Dans le cas d'opération d'habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de stationnement devra être retenue.
+          citation: 'Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une
+
+            place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places de
+
+            1 place de stationnement minimum pour trois chambres
+
+            1 place de stationnement minimum pour deux chambres
+
+            1 place de stationnement pour 10 m² de salle de restaurant
+
+            1 place de stationnement pour une capacité de 10 personnes.
+
+            emplacement minimum par logement,
+
+            pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de plancher,
+
+            emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de surface de plancher pour les autres'
           base: pieces
           arrondi: superieur
           retenue: max

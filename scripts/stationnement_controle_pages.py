@@ -96,8 +96,11 @@ def controle(verbose=False):
             total += 1
             cit = b.citation or ""
             cit_n = _norm(cit)
-            # (2) chaque chiffre appliqué DANS la citation
-            hors = sorted(f for f in figures(b) if _norm(f) not in cit_n)
+            # (2) chaque chiffre appliqué DANS la citation. Les dénominateurs N/M peuvent être écrits EN
+            # TOUTES LETTRES dans le PLU (« 1 place pour trois chambres ») : on accepte le mot équivalent.
+            _mots = {"2": ("2", "deux"), "3": ("3", "trois")}
+            hors = sorted(f for f in figures(b)
+                          if not any(_norm(a) in cit_n for a in _mots.get(f, (f,))))
             if hors:
                 ech_fig.append((insee, z, b.page_pdf, hors))
             # (1) citation verbatim sur la page (par segments de ligne)

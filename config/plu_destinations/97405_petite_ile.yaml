@@ -50,7 +50,21 @@ zones:
           page_pdf: 31
           places: 1.0
           arrondi: superieur
-          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          citation: 'pour les constructions à usage d’habitation : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            stationnement n’est demandée ; pour toute opération de logements collectifs (financés ou non
+
+            financés par un prêt aidé de l’Etat), 20 % de l’espace dédié au stationnement aérien devront être
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale'
           social:
             places: 0.0
             tranche: LLTS (aucune place exigée)
@@ -169,7 +183,19 @@ zones:
           page_pdf: 40
           places: 1.0
           arrondi: superieur
-          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
           social:
             places: 0.0
             tranche: LLTS (aucune place exigée)
@@ -280,7 +306,19 @@ zones:
           page_pdf: 40
           places: 1.0
           arrondi: superieur
-          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
           social:
             places: 0.0
             tranche: LLTS (aucune place exigée)
@@ -398,7 +436,21 @@ zones:
           page_pdf: 50
           places: 1.0
           arrondi: superieur
-          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          citation: 'a) pour les constructions à usage d’habitation : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            Pour toute opération de logements collectifs (financés ou non financés par un prêt aidé de l’Etat), 20 %
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
           social:
             places: 0.0
             tranche: LLTS (aucune place exigée)
@@ -514,7 +566,21 @@ zones:
           page_pdf: 50
           places: 1.0
           arrondi: superieur
-          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          citation: 'a) pour les constructions à usage d’habitation : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            Pour toute opération de logements collectifs (financés ou non financés par un prêt aidé de l’Etat), 20 %
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
           social:
             places: 0.0
             tranche: LLTS (aucune place exigée)
@@ -1034,7 +1100,23 @@ zones:
           page_pdf: 85
           places: 1.0
           arrondi: superieur
-          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          citation: 'pour les constructions à usage d’habitation : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            e) pour les salles de spectacles et de réunions : 1 place de stationnement pour 20 m² de
+
+            f) pour les établissements d’enseignement : 1,5 place de stationnement par classe du premier
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces : 1 place par tranche de 10 salariés ;'
           social:
             places: 0.0
             tranche: LLTS (aucune place exigée)
@@ -1158,7 +1240,23 @@ zones:
           page_pdf: 96
           places: 1.0
           arrondi: superieur
-          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            e) pour les salles de spectacles et de réunions : 1 place de stationnement pour 20 m² de
+
+            f) pour les établissements d’enseignement : 1,5 place de stationnement par classe du premier
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
           social:
             places: 0.0
             tranche: LLTS (aucune place exigée)
@@ -1274,7 +1372,23 @@ zones:
           page_pdf: 96
           places: 1.0
           arrondi: superieur
-          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            e) pour les salles de spectacles et de réunions : 1 place de stationnement pour 20 m² de
+
+            f) pour les établissements d’enseignement : 1,5 place de stationnement par classe du premier
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
           social:
             places: 0.0
             tranche: LLTS (aucune place exigée)
@@ -1405,7 +1519,23 @@ zones:
           page_pdf: 106
           places: 1.0
           arrondi: superieur
-          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            e) pour les salles de spectacles et de réunions : 1 place de stationnement pour 20 m² de
+
+            f) pour les établissements d’enseignement : 1,5 place de stationnement par classe du premier
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
           social:
             places: 0.0
             tranche: LLTS (aucune place exigée)

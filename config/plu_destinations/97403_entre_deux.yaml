@@ -61,7 +61,37 @@ zones:
           page_pdf: 27
           places: 2.0
           arrondi: superieur
-          citation: 'Autres logements : 2 places par logement + 1 place visiteur par tranche de 5 logements ou 5 lots. Logements locatifs prêt aidé : 1 place maximum par logement + 1 place visiteur par tranche de 10 logements.'
+          citation: '- 4 logements dans le cas d’immeubles de logements collectifs,
+
+            - 5 lots dans l’espace collectif d’un lotissement.
+
+            - Pour les opérations d''habitat collectif de plus de 5 logements, il sera d’une surface minimale de 5 m² par logement.
+
+            minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            Logements locatifs financés avec un prêt
+
+            1 place maximum par logement
+
+            1 place visiteur par tranche de 10
+
+            logements
+
+            Autres logements
+
+            2 places par logement
+
+            1 place visiteur par tranche de 5 logements
+
+            1 place de stationnement pour deux chambres / 1 place de stationnement pour 10 m²
+
+            - pour les constructions à destination d’habitation comportant au moins deux logements : un emplacement minimum
+
+            par logement,
+
+            - pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de
+
+            primaires, dix emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de'
           visiteurs:
             par_logements: 5
             places: 1
@@ -234,7 +264,37 @@ zones:
           page_pdf: 27
           places: 2.0
           arrondi: superieur
-          citation: 'Autres logements : 2 places par logement + 1 place visiteur par tranche de 5 logements ou 5 lots. Logements locatifs prêt aidé : 1 place maximum par logement + 1 place visiteur par tranche de 10 logements.'
+          citation: '- 4 logements dans le cas d’immeubles de logements collectifs,
+
+            - 5 lots dans l’espace collectif d’un lotissement.
+
+            - Pour les opérations d''habitat collectif de plus de 5 logements, il sera d’une surface minimale de 5 m² par logement.
+
+            minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            Logements locatifs financés avec un prêt
+
+            1 place maximum par logement
+
+            1 place visiteur par tranche de 10
+
+            logements
+
+            Autres logements
+
+            2 places par logement
+
+            1 place visiteur par tranche de 5 logements
+
+            1 place de stationnement pour deux chambres / 1 place de stationnement pour 10 m²
+
+            - pour les constructions à destination d’habitation comportant au moins deux logements : un emplacement minimum
+
+            par logement,
+
+            - pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de
+
+            primaires, dix emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de'
           visiteurs:
             par_logements: 5
             places: 1
@@ -403,7 +463,37 @@ zones:
           page_pdf: 27
           places: 2.0
           arrondi: superieur
-          citation: 'Autres logements : 2 places par logement + 1 place visiteur par tranche de 5 logements ou 5 lots. Logements locatifs prêt aidé : 1 place maximum par logement + 1 place visiteur par tranche de 10 logements.'
+          citation: '- 4 logements dans le cas d’immeubles de logements collectifs,
+
+            - 5 lots dans l’espace collectif d’un lotissement.
+
+            - Pour les opérations d''habitat collectif de plus de 5 logements, il sera d’une surface minimale de 5 m² par logement.
+
+            minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            Logements locatifs financés avec un prêt
+
+            1 place maximum par logement
+
+            1 place visiteur par tranche de 10
+
+            logements
+
+            Autres logements
+
+            2 places par logement
+
+            1 place visiteur par tranche de 5 logements
+
+            1 place de stationnement pour deux chambres / 1 place de stationnement pour 10 m²
+
+            - pour les constructions à destination d’habitation comportant au moins deux logements : un emplacement minimum
+
+            par logement,
+
+            - pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de
+
+            primaires, dix emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de'
           visiteurs:
             par_logements: 5
             places: 1
@@ -467,7 +557,37 @@ zones:
           page_pdf: 27
           places: 2.0
           arrondi: superieur
-          citation: 'Autres logements : 2 places par logement + 1 place visiteur par tranche de 5 logements ou 5 lots. Logements locatifs prêt aidé : 1 place maximum par logement + 1 place visiteur par tranche de 10 logements.'
+          citation: '- 4 logements dans le cas d’immeubles de logements collectifs,
+
+            - 5 lots dans l’espace collectif d’un lotissement.
+
+            - Pour les opérations d''habitat collectif de plus de 5 logements, il sera d’une surface minimale de 5 m² par logement.
+
+            minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            Logements locatifs financés avec un prêt
+
+            1 place maximum par logement
+
+            1 place visiteur par tranche de 10
+
+            logements
+
+            Autres logements
+
+            2 places par logement
+
+            1 place visiteur par tranche de 5 logements
+
+            1 place de stationnement pour deux chambres / 1 place de stationnement pour 10 m²
+
+            - pour les constructions à destination d’habitation comportant au moins deux logements : un emplacement minimum
+
+            par logement,
+
+            - pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de
+
+            primaires, dix emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de'
           visiteurs:
             par_logements: 5
             places: 1
@@ -651,7 +771,37 @@ zones:
           page_pdf: 27
           places: 2.0
           arrondi: superieur
-          citation: 'Autres logements : 2 places par logement + 1 place visiteur par tranche de 5 logements ou 5 lots. Logements locatifs prêt aidé : 1 place maximum par logement + 1 place visiteur par tranche de 10 logements.'
+          citation: '- 4 logements dans le cas d’immeubles de logements collectifs,
+
+            - 5 lots dans l’espace collectif d’un lotissement.
+
+            - Pour les opérations d''habitat collectif de plus de 5 logements, il sera d’une surface minimale de 5 m² par logement.
+
+            minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            Logements locatifs financés avec un prêt
+
+            1 place maximum par logement
+
+            1 place visiteur par tranche de 10
+
+            logements
+
+            Autres logements
+
+            2 places par logement
+
+            1 place visiteur par tranche de 5 logements
+
+            1 place de stationnement pour deux chambres / 1 place de stationnement pour 10 m²
+
+            - pour les constructions à destination d’habitation comportant au moins deux logements : un emplacement minimum
+
+            par logement,
+
+            - pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de
+
+            primaires, dix emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de'
           visiteurs:
             par_logements: 5
             places: 1

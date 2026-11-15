@@ -53,7 +53,35 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l''entier supérieur (en-tête).'
+          citation: 'Habitations
+
+            Logements locatifs financés avec un prêt
+
+            aidé par l''Etat
+
+            Logements locatifs intermédiaires
+
+            Etablissements assurant l''hébergement
+
+            des personnes âgées
+
+            Résidences universitaires
+
+            1 place par logement
+
+            Logements privés (PSLA, PTZ et libres) < ou
+
+            égale à 50 m² de SDP
+
+            1 place minimum par logement
+
+            Logements privés (PSLA, PTZ et libres) > à
+
+            50 m² de SDP
+
+            2 places minimum par logement
+
+            Commerces et bureaux'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -153,7 +181,35 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l''entier supérieur (en-tête).'
+          citation: 'Habitations
+
+            Logements locatifs financés avec un prêt
+
+            aidé par l''Etat
+
+            Logements locatifs intermédiaires
+
+            Etablissements assurant l''hébergement
+
+            des personnes âgées
+
+            Résidences universitaires
+
+            1 place par logement
+
+            Logements privés (PSLA, PTZ et libres) < ou
+
+            égale à 50 m² de SDP
+
+            1 place minimum par logement
+
+            Logements privés (PSLA, PTZ et libres) > à
+
+            50 m² de SDP
+
+            2 places minimum par logement
+
+            Commerces et bureaux'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -224,7 +280,35 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l''entier supérieur (en-tête).'
+          citation: 'Habitations
+
+            Logements locatifs financés avec un prêt
+
+            aidé par l''Etat
+
+            Logements locatifs intermédiaires
+
+            Etablissements assurant l''hébergement
+
+            des personnes âgées
+
+            Résidences universitaires
+
+            1 place par logement
+
+            Logements privés (PSLA, PTZ et libres) < ou
+
+            égale à 50 m² de SDP
+
+            1 place minimum par logement
+
+            Logements privés (PSLA, PTZ et libres) > à
+
+            50 m² de SDP
+
+            2 places minimum par logement
+
+            Commerces et bureaux'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -321,7 +405,35 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l''entier supérieur (en-tête).'
+          citation: 'Habitations
+
+            Logements locatifs financés avec un prêt
+
+            aidé par l''Etat
+
+            Logements locatifs intermédiaires
+
+            Etablissements assurant l''hébergement
+
+            des personnes âgées
+
+            Résidences universitaires
+
+            1 place par logement
+
+            Logements privés (PSLA, PTZ et libres) < ou
+
+            égale à 50 m² de SDP
+
+            1 place minimum par logement
+
+            Logements privés (PSLA, PTZ et libres) > à
+
+            50 m² de SDP
+
+            2 places minimum par logement
+
+            Commerces et bureaux'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -509,7 +621,35 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l''entier supérieur (en-tête).'
+          citation: 'Habitations
+
+            Logements locatifs financés avec un prêt
+
+            aidé par l''Etat
+
+            Logements locatifs intermédiaires
+
+            Etablissements assurant l''hébergement
+
+            des personnes âgées
+
+            Résidences universitaires
+
+            1 place par logement
+
+            Logements privés (PSLA, PTZ et libres) < ou
+
+            égale à 50 m² de SDP
+
+            1 place minimum par logement
+
+            Logements privés (PSLA, PTZ et libres) > à
+
+            50 m² de SDP
+
+            2 places minimum par logement
+
+            Commerces et bureaux'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -589,7 +729,35 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l''entier supérieur (en-tête).'
+          citation: 'Habitations
+
+            Logements locatifs financés avec un prêt
+
+            aidé par l''Etat
+
+            Logements locatifs intermédiaires
+
+            Etablissements assurant l''hébergement
+
+            des personnes âgées
+
+            Résidences universitaires
+
+            1 place par logement
+
+            Logements privés (PSLA, PTZ et libres) < ou
+
+            égale à 50 m² de SDP
+
+            1 place minimum par logement
+
+            Logements privés (PSLA, PTZ et libres) > à
+
+            50 m² de SDP
+
+            2 places minimum par logement
+
+            Commerces et bureaux'
           detail:
           - destination: collectif
             sdp_max: 50
@@ -663,7 +831,35 @@ zones:
           base: surface_plancher
           arrondi: superieur
           retenue: max
-          citation: 'Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l''entier supérieur (en-tête).'
+          citation: 'Habitations
+
+            Logements locatifs financés avec un prêt
+
+            aidé par l''Etat
+
+            Logements locatifs intermédiaires
+
+            Etablissements assurant l''hébergement
+
+            des personnes âgées
+
+            Résidences universitaires
+
+            1 place par logement
+
+            Logements privés (PSLA, PTZ et libres) < ou
+
+            égale à 50 m² de SDP
+
+            1 place minimum par logement
+
+            Logements privés (PSLA, PTZ et libres) > à
+
+            50 m² de SDP
+
+            2 places minimum par logement
+
+            Commerces et bureaux'
           detail:
           - destination: collectif
             sdp_max: 50

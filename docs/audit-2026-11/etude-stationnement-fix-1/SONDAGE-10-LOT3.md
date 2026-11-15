@@ -4,81 +4,250 @@ ETUDE-STATIONNEMENT-FIX-1 (LOT 3). Tirage **déterministe** (non choisi) sur les
 
 **Commande du tirage :**
 ```
-PYTHONPATH=src python scripts/sondage_tirage.py --seed 20260115 --n 10
-PYTHONPATH=src python scripts/sondage_images.py --seed 20260115 --n 10
+PYTHONPATH=src python scripts/sondage_tirage.py --seed 20260116 --n 10
+PYTHONPATH=src python scripts/sondage_images.py --seed 20260116 --n 10
 ```
 
 Chaque règle : la valeur appliquée, la citation, l'article · page, et l'**image de la ligne entière** du PDF officiel.
 
-## 1. 97412 — zone 1AU3 (article U3 12.2 · p.55)
-- **Valeur appliquée** : 2 place/logt (arr. superieur) · visiteur 1/10 logts
-- **Citation** : « 2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d'un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements. »
-- **Preuve (image de la ligne, p.55) :**
-
-  ![97412 1AU3](pages_lot3/01_97412_1AU3.png)
-
-## 2. 97412 — zone U5vi (article U5 12.2 · p.84)
-- **Valeur appliquée** : 2 place/logt (arr. superieur) · visiteur 1/10 logts
-- **Citation** : « 2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d'un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements. »
-- **Preuve (image de la ligne, p.84) :**
-
-  ![97412 U5vi](pages_lot3/02_97412_U5vi.png)
-
-## 3. 97422 — zone 1AUa (article Ua12.2 · p.22)
-- **Valeur appliquée** : typologie : collectif 0.5/logt ; collectif 1/logt ; collectif 1.5/logt ; individuel 1/logt ; collectif 1.5/logt [operation] ; social 1/logt ; senior 0.3333/logt ; etudiant 0.3333/logt
-- **Condition(s) à vérifier** : dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
-- **Citation** : « Habitat individuel : 1 place par logement. Habitat collectif (autre que logements sociaux) : 0,5 place par chambre et studio ; 1 place par logement de 2 pièces ; 1,5 place par logement de 3 pièces et plus. Lotissement ou opération supérieur à 5 lots ou logements : 1,5 place par logement, arrondi à l'entier inférieur dont au moins 0,5 place à l'extérieur des espaces privatisés. Logement locatif financé par un prêt aidé de l'État : 1 place par logement au maximum. Foyer, résidence sociale (FPA, EHPAD, etc.) : 1 place pour 3 chambres ou logement. »
-- **Preuve (image de la ligne, p.22) :**
-
-  ![97422 1AUa](pages_lot3/03_97422_1AUa.png)
-
-## 4. 97407 — zone 1AUm (article 1AU 12.1 · p.151)
-- **Valeur appliquée** : 0.3 place/logt (arr. superieur) · visiteur 1/100 m² · intégrées 100%>1000m²
-- **Citation** : « 0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l'État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher. »
-- **Preuve (image de la ligne, p.151) :**
-
-  ![97407 1AUm](pages_lot3/04_97407_1AUm.png)
-
-## 5. 97414 — zone UD (article UD 12.2 · p.66)
+## 1. 97408 — zone UBpszc (article UB 12.2 · p.35)
 - **Valeur appliquée** : 2 place/logt (arr. superieur)
-- **Condition(s) à vérifier** : opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier
-- **Citation** : « Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements. »
-- **Preuve (image de la ligne, p.66) :**
-
-  ![97414 UD](pages_lot3/05_97414_UD.png)
-
-## 6. 97421 — zone UB (article U 12.2 · p.18)
-- **Valeur appliquée** : typologie : collectif 1/logt ; collectif 2/logt ; social 1/logt ; senior 1/logt ; etudiant 1/logt
-- **Citation** : « Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l'entier supérieur (en-tête). »
-- **Preuve (image de la ligne, p.18) :**
-
-  ![97421 UB](pages_lot3/06_97421_UB.png)
-
-## 7. 97405 — zone 1AU (article 1AU.12 · p.96)
-- **Valeur appliquée** : 1 place/logt (arr. superieur)
-- **Condition(s) à vérifier** : toute opération de logements collectifs : 20 % de l'espace de stationnement aérien doit être perméable — à vérifier
-- **Citation** : « Pour les constructions à usage d'habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l'espace de stationnement aérien doit être perméable. »
-- **Preuve (image de la ligne, p.96) :**
-
-  ![97405 1AU](pages_lot3/07_97405_1AU.png)
-
-## 8. 97402 — zone Ub (article UB 12.2 · p.35)
-- **Valeur appliquée** : typologie : collectif 1/logt ; collectif 1.5/logt ; social 1/logt ; senior 0.3333/logt ; etudiant 0.3333/logt
-- **Citation** : « Logements aidés : 1 place maximum par logement aidé. Autres logements : 1 place par logement d'une surface de plancher ≤ 100 m² ; 1,5 place par logement d'une surface de plancher ≥ 100 m². Foyers, résidences sociales : 1 place pour 3 logements ou chambres. »
+- **Citation** : « Autres logements > à 50 m² de SDP | 2 places minimum par logement »
 - **Preuve (image de la ligne, p.35) :**
 
-  ![97402 Ub](pages_lot3/08_97402_Ub.png)
+  ![97408 UBpszc](pages_lot3/01_97408_UBpszc.png)
 
-## 9. 97412 — zone U4 (article U4 12.2 · p.69)
-- **Valeur appliquée** : 1 place/logt (arr. superieur) · visiteur 1/10 logts
-- **Citation** : « 1 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d'un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements. »
-- **Preuve (image de la ligne, p.69) :**
+## 2. 97418 — zone UA (article U13 - 13.2 · p.26)
+- **Valeur appliquée** : typologie : collectif 1/logt ; collectif 1.5/logt ; social 1/logt ; senior 0.3333/logt ; etudiant 0.3333/logt
+- **Citation** : « Habitation
+Logements locatifs financés avec un prêt aidé par
+l'Etat
+Conformément à l’article R.111-25 du code de l’urbanisme :
+‐ il ne peut être exigé la réalisation de plus d'une aire de stationnement par logement lors
+de la construction de logements locatifs financés avec un prêt aidé par l'Etat,
+‐ l'obligation de réaliser des aires de stationnement n'est pas applicable aux travaux de
+transformation ou d'amélioration de bâtiments affectés à des logements locatifs
+financés avec un prêt aidé par l'Etat, y compris dans le cas où ces travaux
+s'accompagnent de la création de surface de plancher, dans la limite d'un plafond de
+50 % de la surface de plancher existant avant le commencement des travaux.
+0,5 place par logement si situés à moins de 500 m d’une gare routière ou d'une station de
+transport public guidé ou de transport collectif en site propre et que la qualité de la
+desserte le permet
+Logements privés d’une surface de plancher
+inférieure à 100 m²
+1 place minimum par logement
+Logements privés d’une surface de plancher
+supérieure ou égale à 100 m²
+Opération d’un seul logement
+2 places minimum
+Opération de plusieurs logements
+1,5 place minimum par logement
+Logements privés situés à moins de 500 m d’une
+gare routière ou d'une station de transport public
+guidé ou de transport collectif en site propre et que
+la qualité de la desserte le permet
+1 place par logement
+Hébergement
+1 place de stationnement minimum pour trois chambres
+Commerces et activités de services et bureaux
+Commerces, activités de service, locaux, des
+administrations publiques ou assimilés, bureaux et
+activités artisanales
+1 place de stationnement minimum pour 100 m² de surface de plancher y compris l'espace
+de stockage »
+- **Preuve (image de la ligne, p.26) :**
 
-  ![97412 U4](pages_lot3/09_97412_U4.png)
+  ![97418 UA](pages_lot3/02_97418_UA.png)
 
-## 10. 97408 — zone UApsfr2 (article UA 12.2 · p.21)
-- **Valeur appliquée** : typologie : collectif 1/logt ; collectif 2/logt ; social 1/logt ; senior 0.3333/logt ; etudiant 0.3333/logt · visiteur 1/5 logts
-- **Citation** : « Logements prêt aidé (LLTS/LLS/PLS) : 1 place/logt (0,5 si < 500 m d'un transport collectif). Autres logements ≤ 50 m² de SDP : 1 place min + 1 place visiteur pour 5 logements/lots. Autres logements > 50 m² de SDP : 2 places min. Structures à public spécifique (personnes âgées, résidence universitaire, foyer…) : 1 place pour 3 places d'hébergement. »
-- **Preuve (image de la ligne, p.21) :**
+## 3. 97422 — zone 1AUb (article Ub12.2 · p.37)
+- **Valeur appliquée** : typologie : collectif 0.5/logt ; collectif 1/logt ; collectif 1.5/logt ; individuel 1/logt ; collectif 1.5/logt [operation] ; social 1/logt ; senior 0.3333/logt ; etudiant 0.3333/logt
+- **Condition(s) à vérifier** : dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
+- **Citation** : « Constructions à destination d’habitation
+Logement locatif financé par un prêt aidé de l’État
+1 place par logement au maximum
+Habitat individuel
+1 place par logement
+Habitat collectif (autre que logements sociaux)
+1 place par logement de 2 pièces
+1,5 place par logement de 3 pièces et plus
+Lotissement ou opération supérieur à 5 lots ou logements
+1,5 place par logement, arrondi à l’entier inférieur dont au moins
+1 place pour 3 chambres ou logement
+1 place pour deux chambres
+pour les constructions à destination d'habitation, l'espace possède une superficie de 0,75 m² par
+logement pour les logements jusqu'à deux pièces principales et 1,5 m² par logement dans les »
+- **Preuve (image de la ligne, p.37) :**
 
-  ![97408 UApsfr2](pages_lot3/10_97408_UApsfr2.png)
+  ![97422 1AUb](pages_lot3/03_97422_1AUb.png)
+
+## 4. 97412 — zone U5ru (article U5 12.2 · p.84)
+- **Valeur appliquée** : 2 place/logt (arr. superieur) · visiteur 1/10 logts
+- **Citation** : « talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+d’habitation
+(Logement ou hébergement)
+- 2 places de stationnement minimum par logement.
+- 1 place de stationnement minimum par logement locatifs
+financés par un prêt aidé de l’État, et 0,5 place par logement si
+- 1 place de stationnement minimum par tranche de 10
+logements (1 logement étant équivalent à 3 places
+âgées (RPA) 0,5 place de stationnement minimum par logement
+locatif financé par un prêt aidé de l’État accompagné de 2 places
+visiteurs par tranche de 10 logements.
+- 1 place de stationnement par seuil de 100 m² de surface de
+- 1 place de stationnement minimum pour 2 chambres
+- 1 place de stationnement minimum pour une capacité d’accueil
+sept emplacements par tranche de 100 m² de surface de plancher pour les autres »
+- **Preuve (image de la ligne, p.84) :**
+
+  ![97412 U5ru](pages_lot3/04_97412_U5ru.png)
+
+## 5. 97418 — zone UD (article U13 - 13.2 · p.26)
+- **Valeur appliquée** : typologie : collectif 1/logt ; collectif 1.5/logt ; social 1/logt ; senior 0.3333/logt ; etudiant 0.3333/logt
+- **Citation** : « Habitation
+Logements locatifs financés avec un prêt aidé par
+l'Etat
+Conformément à l’article R.111-25 du code de l’urbanisme :
+‐ il ne peut être exigé la réalisation de plus d'une aire de stationnement par logement lors
+de la construction de logements locatifs financés avec un prêt aidé par l'Etat,
+‐ l'obligation de réaliser des aires de stationnement n'est pas applicable aux travaux de
+transformation ou d'amélioration de bâtiments affectés à des logements locatifs
+financés avec un prêt aidé par l'Etat, y compris dans le cas où ces travaux
+s'accompagnent de la création de surface de plancher, dans la limite d'un plafond de
+50 % de la surface de plancher existant avant le commencement des travaux.
+0,5 place par logement si situés à moins de 500 m d’une gare routière ou d'une station de
+transport public guidé ou de transport collectif en site propre et que la qualité de la
+desserte le permet
+Logements privés d’une surface de plancher
+inférieure à 100 m²
+1 place minimum par logement
+Logements privés d’une surface de plancher
+supérieure ou égale à 100 m²
+Opération d’un seul logement
+2 places minimum
+Opération de plusieurs logements
+1,5 place minimum par logement
+Logements privés situés à moins de 500 m d’une
+gare routière ou d'une station de transport public
+guidé ou de transport collectif en site propre et que
+la qualité de la desserte le permet
+1 place par logement
+Hébergement
+1 place de stationnement minimum pour trois chambres
+Commerces et activités de services et bureaux
+Commerces, activités de service, locaux, des
+administrations publiques ou assimilés, bureaux et
+activités artisanales
+1 place de stationnement minimum pour 100 m² de surface de plancher y compris l'espace
+de stockage »
+- **Preuve (image de la ligne, p.26) :**
+
+  ![97418 UD](pages_lot3/05_97418_UD.png)
+
+## 6. 97412 — zone 1AU3a (article U3 12.2 · p.55)
+- **Valeur appliquée** : 2 place/logt (arr. superieur) · visiteur 1/10 logts
+- **Citation** : « talus, etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+d’habitation
+(Logement ou hébergement)
+- 2 places de stationnement minimum par logement.
+- 1 place de stationnement minimum par logement locatifs
+financés par un prêt aidé de l’État, et 0,5 place par logement si
+- 1 place de stationnement minimum par tranche de 10
+logements (1 logement étant équivalent à 3 places
+âgées (RPA) 0,5 place de stationnement minimum par logement
+locatif financé par un prêt aidé de l’État accompagné de 2 places
+visiteurs par tranche de 10 logements.
+- 1 place de stationnement par seuil de 100 m² de surface de
+- 1 place de stationnement minimum pour 2 chambres
+- 1 place de stationnement minimum pour une capacité d’accueil
+sept emplacements par tranche de 100 m² de surface de plancher pour les autres »
+- **Preuve (image de la ligne, p.55) :**
+
+  ![97412 1AU3a](pages_lot3/06_97412_1AU3a.png)
+
+## 7. 97418 — zone UC1 (article U13 - 13.2 · p.26)
+- **Valeur appliquée** : typologie : collectif 1/logt ; collectif 1.5/logt ; social 1/logt ; senior 0.3333/logt ; etudiant 0.3333/logt
+- **Citation** : « Habitation
+Logements locatifs financés avec un prêt aidé par
+l'Etat
+Conformément à l’article R.111-25 du code de l’urbanisme :
+‐ il ne peut être exigé la réalisation de plus d'une aire de stationnement par logement lors
+de la construction de logements locatifs financés avec un prêt aidé par l'Etat,
+‐ l'obligation de réaliser des aires de stationnement n'est pas applicable aux travaux de
+transformation ou d'amélioration de bâtiments affectés à des logements locatifs
+financés avec un prêt aidé par l'Etat, y compris dans le cas où ces travaux
+s'accompagnent de la création de surface de plancher, dans la limite d'un plafond de
+50 % de la surface de plancher existant avant le commencement des travaux.
+0,5 place par logement si situés à moins de 500 m d’une gare routière ou d'une station de
+transport public guidé ou de transport collectif en site propre et que la qualité de la
+desserte le permet
+Logements privés d’une surface de plancher
+inférieure à 100 m²
+1 place minimum par logement
+Logements privés d’une surface de plancher
+supérieure ou égale à 100 m²
+Opération d’un seul logement
+2 places minimum
+Opération de plusieurs logements
+1,5 place minimum par logement
+Logements privés situés à moins de 500 m d’une
+gare routière ou d'une station de transport public
+guidé ou de transport collectif en site propre et que
+la qualité de la desserte le permet
+1 place par logement
+Hébergement
+1 place de stationnement minimum pour trois chambres
+Commerces et activités de services et bureaux
+Commerces, activités de service, locaux, des
+administrations publiques ou assimilés, bureaux et
+activités artisanales
+1 place de stationnement minimum pour 100 m² de surface de plancher y compris l'espace
+de stockage »
+- **Preuve (image de la ligne, p.26) :**
+
+  ![97418 UC1](pages_lot3/07_97418_UC1.png)
+
+## 8. 97419 — zone 1AUa (article AUINDICEE 12 (renvoi UA 12) · p.17)
+- **Valeur appliquée** : typologie : collectif 1/logt ; collectif 1.5/logt ; social 1/logt
+- **Citation** : « 1. Pour les constructions à destination d’habitation :
+1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État
+1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m²
+1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale à 50m², arrondi
+4. Pour les constructions à destination d’hébergement hôtelier : 1 place de stationnement minimum pour deux chambres.
+minimum par logement,
+pour les constructions à destination de bureaux : un emplacement minimum par tranche de 100 m² de surface »
+- **Preuve (image de la ligne, p.17) :**
+
+  ![97419 1AUa](pages_lot3/08_97419_1AUa.png)
+
+## 9. 97402 — zone 1AUc (article UC 12.2 · p.49)
+- **Valeur appliquée** : typologie : collectif 1/logt ; collectif 1.5/logt ; social 1/logt ; senior 0.3333/logt ; etudiant 0.3333/logt
+- **Citation** : « Autres logements
+1 place maximum par logement aidé
+1 place par logement d’une surface de plancher ≤ 100 m²
+1,5 places par logement d’une surface de plancher ≥ 100 m²
+1 place de stationnement pour 3 chambres
+pour les constructions à destination d'habitation, l'espace possède une superficie de 0,75 m² par logement
+pour les logements jusqu'à deux pièces principales et 1,5 m² par logement dans les autres cas, avec une »
+- **Preuve (image de la ligne, p.49) :**
+
+  ![97402 1AUc](pages_lot3/09_97402_1AUc.png)
+
+## 10. 97414 — zone UC2 (article UC 12.2 · p.52)
+- **Valeur appliquée** : 2 place/logt (arr. superieur)
+- **Condition(s) à vérifier** : opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier
+- **Citation** : « etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+Habitations
+Pour les logements sociaux
+1 place de stationnement par logement
+2 places de stationnement par logement
+Pour les opérations de plus de 10 logements
+1 place de stationnement pour deux chambres
+1 place par tranche de 3 logements.
+1 place visiteur par tranche de 5 logements.
+1 place par tranche de 80 m² de service.
+emplacement par logement,
+pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+emplacements par tranche de 100 m² de surface de plancher pour les autres établissements, »
+- **Preuve (image de la ligne, p.52) :**
+
+  ![97414 UC2](pages_lot3/10_97414_UC2.png)

@@ -87,7 +87,23 @@ zones:
           article: U 12
           page_pdf: 17
           places: 1.0
-          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche de 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          citation: 'logements ou moins :
+
+            1 place par logement.
+
+            plus de 5 logements :
+
+            1 place par logement, plus une place visiteur par
+
+            tranche 5 lots ou 5 logements.
+
+            1 place pour 3 logements ou 3 chambres.
+
+            En zones Ub, Ue, Up, Ut : 1 place pour 2 chambres.
+
+            1 emplacement par tranche de 100m² de surface de
+
+            7 emplacements par tranche de 100 m² de surface de'
           arrondi: superieur
           visiteurs:
             par_logements: 5
@@ -229,7 +245,23 @@ zones:
           article: U 12
           page_pdf: 17
           places: 1.0
-          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche de 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          citation: 'logements ou moins :
+
+            1 place par logement.
+
+            plus de 5 logements :
+
+            1 place par logement, plus une place visiteur par
+
+            tranche 5 lots ou 5 logements.
+
+            1 place pour 3 logements ou 3 chambres.
+
+            En zones Ub, Ue, Up, Ut : 1 place pour 2 chambres.
+
+            1 emplacement par tranche de 100m² de surface de
+
+            7 emplacements par tranche de 100 m² de surface de'
           arrondi: superieur
           visiteurs:
             par_logements: 5
@@ -359,7 +391,23 @@ zones:
           article: U 12
           page_pdf: 17
           places: 1.0
-          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche de 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          citation: 'logements ou moins :
+
+            1 place par logement.
+
+            plus de 5 logements :
+
+            1 place par logement, plus une place visiteur par
+
+            tranche 5 lots ou 5 logements.
+
+            1 place pour 3 logements ou 3 chambres.
+
+            En zones Ub, Ue, Up, Ut : 1 place pour 2 chambres.
+
+            1 emplacement par tranche de 100m² de surface de
+
+            7 emplacements par tranche de 100 m² de surface de'
           arrondi: superieur
           visiteurs:
             par_logements: 5
@@ -485,7 +533,23 @@ zones:
           article: U 12
           page_pdf: 17
           places: 1.0
-          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche de 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          citation: 'logements ou moins :
+
+            1 place par logement.
+
+            plus de 5 logements :
+
+            1 place par logement, plus une place visiteur par
+
+            tranche 5 lots ou 5 logements.
+
+            1 place pour 3 logements ou 3 chambres.
+
+            En zones Ub, Ue, Up, Ut : 1 place pour 2 chambres.
+
+            1 emplacement par tranche de 100m² de surface de
+
+            7 emplacements par tranche de 100 m² de surface de'
           arrondi: superieur
           visiteurs:
             par_logements: 5
@@ -621,7 +685,23 @@ zones:
           article: U 12
           page_pdf: 17
           places: 1.0
-          citation: 'Logements individuels, construction ou opération de 5 logements ou moins : 1 place par logement. Lotissements ou opérations de plus de 5 logements : 1 place par logement, plus une place visiteur par tranche de 5 lots ou 5 logements. Logements aidés : 1 place pour 2 logements. Résidences universitaires et de personnes âgées : 1 place pour 3 logements ou 3 chambres.'
+          citation: 'logements ou moins :
+
+            1 place par logement.
+
+            plus de 5 logements :
+
+            1 place par logement, plus une place visiteur par
+
+            tranche 5 lots ou 5 logements.
+
+            1 place pour 3 logements ou 3 chambres.
+
+            En zones Ub, Ue, Up, Ut : 1 place pour 2 chambres.
+
+            1 emplacement par tranche de 100m² de surface de
+
+            7 emplacements par tranche de 100 m² de surface de'
           arrondi: superieur
           visiteurs:
             par_logements: 5

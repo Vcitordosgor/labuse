@@ -86,7 +86,13 @@ zones:
           base: pieces
           arrondi: inferieur
           retenue: max
-          citation: 'Constructions à destination d''habitation : 1,5 place par logement, arrondi à l''entier inférieur. En outre, 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots. Dans le cas d''opération d''habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher, la norme produisant le plus de places retenue, sans qu''il soit imposé plus de 2 places par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
+
+            Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement
+
+            ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places
+
+            de stationnement devra être retenue sans qu’il soit imposé plus de 2 places par logement.'
           detail:
           - destination: individuel
             places: 1.5
@@ -226,7 +232,13 @@ zones:
           base: pieces
           arrondi: inferieur
           retenue: max
-          citation: 'Constructions à destination d''habitation : 1,5 place par logement, arrondi à l''entier inférieur. En outre, 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots. Dans le cas d''opération d''habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher, la norme produisant le plus de places retenue, sans qu''il soit imposé plus de 2 places par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
+
+            Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement
+
+            ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places
+
+            de stationnement devra être retenue sans qu’il soit imposé plus de 2 places par logement.'
           detail:
           - destination: individuel
             places: 1.5
@@ -319,7 +331,13 @@ zones:
           base: pieces
           arrondi: inferieur
           retenue: max
-          citation: 'Constructions à destination d''habitation : 1,5 place par logement, arrondi à l''entier inférieur. En outre, 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots. Dans le cas d''opération d''habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher, la norme produisant le plus de places retenue, sans qu''il soit imposé plus de 2 places par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
+
+            Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement
+
+            ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places
+
+            de stationnement devra être retenue sans qu’il soit imposé plus de 2 places par logement.'
           detail:
           - destination: individuel
             places: 1.5
@@ -465,7 +483,13 @@ zones:
           base: pieces
           arrondi: inferieur
           retenue: max
-          citation: 'Constructions à destination d''habitation : 1,5 place par logement, arrondi à l''entier inférieur. En outre, 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots. Dans le cas d''opération d''habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher, la norme produisant le plus de places retenue, sans qu''il soit imposé plus de 2 places par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
+
+            Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement
+
+            ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places
+
+            de stationnement devra être retenue sans qu’il soit imposé plus de 2 places par logement.'
           detail:
           - destination: individuel
             places: 1.5
@@ -731,7 +755,13 @@ zones:
           base: pieces
           arrondi: inferieur
           retenue: max
-          citation: 'Constructions à destination d''habitation : 1,5 place par logement, arrondi à l''entier inférieur. En outre, 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots. Dans le cas d''opération d''habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher, la norme produisant le plus de places retenue, sans qu''il soit imposé plus de 2 places par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
+
+            Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement
+
+            ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places
+
+            de stationnement devra être retenue sans qu’il soit imposé plus de 2 places par logement.'
           detail:
           - destination: individuel
             places: 1.5
@@ -864,7 +894,13 @@ zones:
           base: pieces
           arrondi: inferieur
           retenue: max
-          citation: 'Constructions à destination d''habitation : 1,5 place par logement, arrondi à l''entier inférieur. En outre, 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots. Dans le cas d''opération d''habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher, la norme produisant le plus de places retenue, sans qu''il soit imposé plus de 2 places par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
+
+            Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement
+
+            ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places
+
+            de stationnement devra être retenue sans qu’il soit imposé plus de 2 places par logement.'
           detail:
           - destination: individuel
             places: 1.5
@@ -994,7 +1030,13 @@ zones:
           base: pieces
           arrondi: inferieur
           retenue: max
-          citation: 'Constructions à destination d''habitation : 1,5 place par logement, arrondi à l''entier inférieur. En outre, 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots. Dans le cas d''opération d''habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher, la norme produisant le plus de places retenue, sans qu''il soit imposé plus de 2 places par logement.'
+          citation: '1. Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
+
+            Dans le cas d’opération d’habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement
+
+            ou une place par tranche de 35 m² de surface de plancher. La norme produisant le plus de places
+
+            de stationnement devra être retenue sans qu’il soit imposé plus de 2 places par logement.'
           detail:
           - destination: individuel
             places: 1.5

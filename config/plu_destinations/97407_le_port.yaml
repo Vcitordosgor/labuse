@@ -73,7 +73,77 @@ zones:
           article: Ua 12.1
           page_pdf: 30
           places: 0.3
-          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          citation: 'Habitation
+
+            Logement
+
+            Il devra être réalisé au minimum :
+
+            -
+
+            0,3 place de stationnement par logement,
+
+            -
+
+            En outre, il est demandé 1 place de stationnement
+
+            pour visiteur par tranche de 100 m² de surface de
+
+            plancher.
+
+            100%
+
+            Logement locatif financé avec un prêt aidé de l’Etat
+
+            il devra être réalisé au minimum :
+
+            -
+
+            0,2 place / logement + 8 places / 1000 m² de surface
+
+            de plancher
+
+            50% sauf pour les
+
+            maisons de ville et
+
+            les logements
+
+            individuels
+
+            Hébergement
+
+            31
+
+            OAP Spécifiques – interface Ville-Nature
+
+            31 PLU - Pièce écrite n°3 – Règlement – modification n°2
+
+            Il devra être réalisé au minimum :
+
+            0,3 place de stationnement par chambre.
+
+            Néant
+
+            Equipements
+
+            d’intérêt
+
+            collectif et
+
+            services
+
+            publics
+
+            Il devra être réalisé au minimum :
+
+            -
+
+            1 place de stationnement par tranche de 50 m² de
+
+            surface de plancher.
+
+            En outre, le nombre de places à réaliser doit répondre aux'
           arrondi: superieur
           visiteurs:
             par_m2_sdp: 100
@@ -244,7 +314,71 @@ zones:
           article: Ub 12.1
           page_pdf: 44
           places: 0.3
-          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          citation: 'Habitation
+
+            Logement
+
+            Il devra être réalisé au minimum :
+
+            -
+
+            0,3 place de stationnement par logement,
+
+            -
+
+            En outre, il est demandé 1 place de stationnement
+
+            pour visiteur par tranche de 100 m² de surface de
+
+            plancher.
+
+            100%
+
+            Logement locatif financé avec un prêt aidé de l’Etat
+
+            il devra être réalisé au minimum :
+
+            -
+
+            0,2 place / logement + 8 places / 1000 m² de surface
+
+            de plancher
+
+            50% sauf pour les
+
+            maisons de ville et
+
+            les logements
+
+            individuels
+
+            Hébergement
+
+            Il devra être réalisé au minimum :
+
+            0,3 place de stationnement par chambre.
+
+            Néant
+
+            Equipements
+
+            d’intérêt
+
+            collectif et
+
+            services
+
+            publics
+
+            Il devra être réalisé au minimum :
+
+            -
+
+            1 place de stationnement par tranche de 50 m² de
+
+            surface de plancher.
+
+            En outre, le nombre de places à réaliser doit répondre aux'
           arrondi: superieur
           visiteurs:
             par_m2_sdp: 100
@@ -380,7 +514,43 @@ zones:
           article: Uc 12.1
           page_pdf: 59
           places: 0.3
-          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          citation: 'Habitation
+
+            Logement
+
+            Il devra être réalisé au minimum :
+
+            -
+
+            0,3 place de stationnement par logement,
+
+            -
+
+            En outre, il est demandé 1 place de stationnement
+
+            pour visiteur par tranche de 100 m² de surface de
+
+            plancher.
+
+            100%
+
+            Logement locatif financé avec un prêt aidé de l’Etat
+
+            il devra être réalisé au minimum :
+
+            -
+
+            0,2 place / logement + 8 places / 1000 m² de surface
+
+            de plancher
+
+            50% sauf pour les
+
+            maisons de ville et
+
+            les logements
+
+            individuels'
           arrondi: superieur
           visiteurs:
             par_m2_sdp: 100
@@ -503,7 +673,43 @@ zones:
           article: Uc 12.1
           page_pdf: 59
           places: 0.3
-          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          citation: 'Habitation
+
+            Logement
+
+            Il devra être réalisé au minimum :
+
+            -
+
+            0,3 place de stationnement par logement,
+
+            -
+
+            En outre, il est demandé 1 place de stationnement
+
+            pour visiteur par tranche de 100 m² de surface de
+
+            plancher.
+
+            100%
+
+            Logement locatif financé avec un prêt aidé de l’Etat
+
+            il devra être réalisé au minimum :
+
+            -
+
+            0,2 place / logement + 8 places / 1000 m² de surface
+
+            de plancher
+
+            50% sauf pour les
+
+            maisons de ville et
+
+            les logements
+
+            individuels'
           arrondi: superieur
           visiteurs:
             par_m2_sdp: 100
@@ -595,7 +801,71 @@ zones:
           article: Ud 12.1
           page_pdf: 73
           places: 0.3
-          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          citation: 'Habitation
+
+            Logement
+
+            Il devra être réalisé au minimum :
+
+            -
+
+            0,3 place de stationnement par logement,
+
+            -
+
+            En outre, il est demandé 1 place de stationnement
+
+            pour visiteur par tranche de 100 m² de surface de
+
+            plancher.
+
+            100%
+
+            Logement locatif financé avec un prêt aidé de l’Etat
+
+            il devra être réalisé au minimum :
+
+            -
+
+            0,2 place / logement + 8 places / 1000 m² de surface
+
+            de plancher.
+
+            50% sauf pour les
+
+            maisons de ville et
+
+            les logements
+
+            individuels
+
+            Hébergement
+
+            Il devra être réalisé au minimum :
+
+            0,3 place de stationnement par chambre.
+
+            Néant
+
+            Equipements
+
+            d’intérêt
+
+            collectif et
+
+            services
+
+            publics
+
+            Il devra être réalisé au minimum :
+
+            -
+
+            1 place de stationnement par tranche de 50 m² de
+
+            surface de plancher.
+
+            En outre, le nombre de places à réaliser doit répondre aux'
           arrondi: superieur
           visiteurs:
             par_m2_sdp: 100
@@ -1456,7 +1726,59 @@ zones:
           article: Ua 12.1
           page_pdf: 151
           places: 0.3
-          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          citation: 'Habitation
+
+            Logement
+
+            Il devra être réalisé au minimum :
+
+            -
+
+            0,3 place de stationnement par logement,
+
+            -
+
+            En outre, il est demandé 1 place de stationnement
+
+            pour visiteur par tranche de 100 m² de surface de
+
+            plancher.
+
+            100%
+
+            Logement locatif financé avec un prêt aidé de l’Etat
+
+            il devra être réalisé au minimum :
+
+            -
+
+            0,2 place / logement + 8 places / 1000 m² de surface
+
+            de plancher.
+
+            50% sauf pour les
+
+            maisons de ville et
+
+            les logements
+
+            individuels
+
+            Hébergement
+
+            Il devra être réalisé au minimum :
+
+            0,3 place de stationnement par chambre.
+
+            Néant
+
+            Equipements
+
+            d’intérêt
+
+            Il devra être réalisé au minimum :
+
+            Néant'
           arrondi: superieur
           visiteurs:
             par_m2_sdp: 100
@@ -1552,7 +1874,59 @@ zones:
           article: Uc 12.1
           page_pdf: 151
           places: 0.3
-          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          citation: 'Habitation
+
+            Logement
+
+            Il devra être réalisé au minimum :
+
+            -
+
+            0,3 place de stationnement par logement,
+
+            -
+
+            En outre, il est demandé 1 place de stationnement
+
+            pour visiteur par tranche de 100 m² de surface de
+
+            plancher.
+
+            100%
+
+            Logement locatif financé avec un prêt aidé de l’Etat
+
+            il devra être réalisé au minimum :
+
+            -
+
+            0,2 place / logement + 8 places / 1000 m² de surface
+
+            de plancher.
+
+            50% sauf pour les
+
+            maisons de ville et
+
+            les logements
+
+            individuels
+
+            Hébergement
+
+            Il devra être réalisé au minimum :
+
+            0,3 place de stationnement par chambre.
+
+            Néant
+
+            Equipements
+
+            d’intérêt
+
+            Il devra être réalisé au minimum :
+
+            Néant'
           arrondi: superieur
           visiteurs:
             par_m2_sdp: 100
@@ -1690,7 +2064,59 @@ zones:
           article: 1AU 12.1
           page_pdf: 151
           places: 0.3
-          citation: '0,3 place de stationnement par logement. En outre, 1 place de stationnement pour visiteur par tranche de 100 m² de surface de plancher. Logement locatif financé avec un prêt aidé de l''État : 0,2 place par logement, plus 8 places par tranche de 1000 m² de surface de plancher.'
+          citation: 'Habitation
+
+            Logement
+
+            Il devra être réalisé au minimum :
+
+            -
+
+            0,3 place de stationnement par logement,
+
+            -
+
+            En outre, il est demandé 1 place de stationnement
+
+            pour visiteur par tranche de 100 m² de surface de
+
+            plancher.
+
+            100%
+
+            Logement locatif financé avec un prêt aidé de l’Etat
+
+            il devra être réalisé au minimum :
+
+            -
+
+            0,2 place / logement + 8 places / 1000 m² de surface
+
+            de plancher.
+
+            50% sauf pour les
+
+            maisons de ville et
+
+            les logements
+
+            individuels
+
+            Hébergement
+
+            Il devra être réalisé au minimum :
+
+            0,3 place de stationnement par chambre.
+
+            Néant
+
+            Equipements
+
+            d’intérêt
+
+            Il devra être réalisé au minimum :
+
+            Néant'
           arrondi: superieur
           visiteurs:
             par_m2_sdp: 100
