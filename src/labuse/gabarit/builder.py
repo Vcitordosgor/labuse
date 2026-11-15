@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session
 from ..faisabilite.zonage import resolve_zone
 from ..faisabilite.zone_servie import zone_dominante
 from ..plu.destinations import regles_zone
-from ._geom import geojson_from_shape, to_wgs
+from ._geom import geojson_from_shape, shape_from_geojson, to_metric, to_wgs
 from .contract import (
     ApplicableRule,
     Exclusion,
@@ -211,6 +211,8 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     max_height: Optional[MaxHeight] = None
     recul_voie = recul_sep = None
     recul_formule_obj: Optional[ReculSepFormule] = None   # MOTEUR-VERITE-FIX-1 (LOT 1)
+    imp_lat: Optional[dict] = None                        # MOTEUR-VERITE-FIX-1 (LOT 2)
+    imp_fond: Optional[dict] = None
     plu_zone_src: Optional[RegulatorySource] = None
 
     # --- zone dominante + multi-zones (découpage) ----------------------------
@@ -309,6 +311,9 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                            "recul_voie_m": recul_voie, "recul_sep_m": recul_sep, "source": plu_zone_src.document}
             if recul_sep_formule:
                 racc["plu"]["recul_sep_formule"] = recul_sep_formule
+            # MOTEUR-VERITE-FIX-1 (LOT 2) — modes d'implantation par côté (calibrés, validés-only).
+            imp_lat = getattr(zr, "implantation_laterales", None)
+            imp_fond = getattr(zr, "implantation_fond", None)
             silence_total = (not regles_zone(commune, work_zone) and not via_renvoi
                              and emp is None and haut is None and recul_voie is None and recul_sep is None)
             if silence_total:
@@ -573,12 +578,84 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 return "limite-voie-privee"
             return "limite-voie"
 
+        # MOTEUR-VERITE-FIX-1 (LOT 2) — IMPLANTATION PAR CÔTÉ. Quand le règlement admet (ou impose)
+        # la construction EN LIMITE séparative, le retrait n'est plus appliqué sur ces arêtes :
+        #   · limite_ou_retrait / limite_imposee sans condition → recul 0 sur toutes les arêtes du côté ;
+        #   · condition MODÉLISABLE : largeur_terrain_max:X (largeur = petit côté du rectangle englobant
+        #     minimal, mesurée) → 0 si remplie, retrait sinon (condition évaluée, pas de mention) ;
+        #     une_seule_limite / deux_limites_max → recul 0 sur la (les) arête(s) latérale(s) la (les)
+        #     plus longue(s) — le choix qui maximise le plancher, admis par la règle ;
+        #   · condition NON modélisable → retrait appliqué + MENTION « implantation en limite possible
+        #     sous conditions : capacité supérieure possible, à vérifier » (jamais un faux "exigu").
+        # Les arêtes posées en limite portent le ruleId `limite-sep-limite` (recul 0 sourcé) : la
+        # formule H/n du LOT 1 ne re-insète QUE les arêtes `limite-sep` restantes.
+        def _largeur_terrain_m():
+            try:
+                rect = to_metric(shape_from_geojson(geom)).minimum_rotated_rectangle
+                c = list(rect.exterior.coords)
+                import math
+                return round(min(math.dist(c[0], c[1]), math.dist(c[1], c[2])), 1)
+            except Exception:  # noqa: BLE001 — largeur non mesurable → condition non évaluée
+                return None
+
+        def _decision_cote(imp, cote_label):
+            """{zero: 'toutes'|1|2|0, detail, mention} pour un côté (latérales ou fond)."""
+            if imp is None or imp.get("mode") in (None, "retrait_obligatoire"):
+                return {"zero": 0, "detail": None, "mention": None}
+            art = (imp.get("article") or "").strip()
+            cm = (imp.get("condition_modelable") or "").strip()
+            mode = imp["mode"]
+            if mode in ("limite_ou_retrait", "limite_imposee") and not cm:
+                lib = ("implantation en limite admise sans condition" if mode == "limite_ou_retrait"
+                       else "implantation en limite imposée par le règlement")
+                return {"zero": "toutes", "detail": (f"{lib} — {art}" if art else lib), "mention": None}
+            if cm.startswith("largeur_terrain_max:"):
+                try:
+                    seuil = float(re.sub(r"[^0-9.,]", "", cm.split(":", 1)[1]).replace(",", "."))
+                except ValueError:
+                    seuil = None
+                larg = _largeur_terrain_m()
+                if seuil and larg is not None and larg <= seuil:
+                    return {"zero": "toutes",
+                            "detail": f"implantation en limite (largeur du terrain {larg:g} m ≤ "
+                                      f"{seuil:g} m){' — ' + art if art else ''}", "mention": None}
+                if seuil and larg is not None:
+                    return {"zero": 0, "detail": None, "mention": None}   # condition évaluée, non remplie
+            if cm == "une_seule_limite":
+                return {"zero": 1, "detail": f"implantation en limite admise sur une seule limite "
+                                             f"latérale{' — ' + art if art else ''}", "mention": None}
+            if cm == "deux_limites_max":
+                return {"zero": 2, "detail": f"implantation en limite admise sur deux limites au "
+                                             f"plus{' — ' + art if art else ''}", "mention": None}
+            return {"zero": 0, "detail": None,
+                    "mention": (imp.get("condition_texte") or "conditions du règlement").strip()}
+
+        dec_lat = _decision_cote(imp_lat, "latérales")
+        dec_fond = _decision_cote(imp_fond, "fond de parcelle")
+        _mentions = [m for m in (dec_lat["mention"], dec_fond["mention"]) if m]
+        if _mentions or dec_lat["detail"] or dec_fond["detail"]:
+            racc["implantation"] = {"laterales": imp_lat, "fond": imp_fond,
+                                    "appliques": [d for d in (dec_lat["detail"], dec_fond["detail"]) if d],
+                                    "mentions": _mentions}
+
         def _setbacks_for(edges, include_voie):
+            # arêtes latérales posées EN LIMITE (recul 0) selon la décision : 'toutes', ou les n plus longues
+            lat_edges = [e for e in edges if e.type == "side"]
+            if dec_lat["zero"] == "toutes":
+                lat_zero = set(id(e) for e in lat_edges)
+            elif dec_lat["zero"]:
+                tri = sorted(lat_edges, key=lambda e: -float(e.geom.length))
+                lat_zero = set(id(e) for e in tri[:int(dec_lat["zero"])])
+            else:
+                lat_zero = set()
+            rear_zero = dec_fond["zero"] == "toutes"   # une_seule/deux n'ont pas de sens pour le fond
             for i, e in enumerate(edges):
                 if e.type in ("side", "rear"):
-                    setbacks.append(Setback(id=f"lim-{i}", ruleId="limite-sep", type=e.type,
-                                            geometry=geojson_from_shape(to_wgs(e.geom)),
-                                            setbackM=recul_sep, source=bdtopo_src))
+                    en_limite = (id(e) in lat_zero) if e.type == "side" else rear_zero
+                    setbacks.append(Setback(
+                        id=f"lim-{i}", ruleId="limite-sep-limite" if en_limite else "limite-sep",
+                        type=e.type, geometry=geojson_from_shape(to_wgs(e.geom)),
+                        setbackM=0.0 if en_limite else recul_sep, source=bdtopo_src))
                 elif include_voie and e.type == "voie":
                     setbacks.append(Setback(id=f"lim-{i}", ruleId=_ruleid_for(e), type="road",
                                             geometry=geojson_from_shape(to_wgs(e.geom)),
@@ -590,6 +667,15 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 applicable.append(ApplicableRule(id="limite-sep", label="Limites séparatives",
                     category="setback", integrationStatus="integrated",
                     detail=f"Recul séparatif {recul_sep:g} m — PLU {commune} {work_zone} (validé)", source=bdtopo_src))
+            # MOTEUR-VERITE-FIX-1 (LOT 2) — arêtes posées EN LIMITE (recul 0 sourcé au règlement).
+            if ((dec_lat["zero"] and any(e.type == "side" for e in edges))
+                    or (dec_fond["zero"] == "toutes" and any(e.type == "rear" for e in edges))):
+                _det = " ; ".join(d for d in (dec_lat["detail"], dec_fond["detail"]) if d)
+                applicable.append(ApplicableRule(
+                    id="limite-sep-limite", label="Limites séparatives — en limite",
+                    category="setback", integrationStatus="integrated",
+                    detail=f"Recul 0 m — {_det} — PLU {commune} {work_zone} (validé)",
+                    source=bdtopo_src))
             if include_voie and any(e.type == "voie" and e.source_kind == "bdtopo" for e in edges):
                 applicable.append(ApplicableRule(id="limite-voie", label="Recul voie", category="setback",
                     integrationStatus="integrated",

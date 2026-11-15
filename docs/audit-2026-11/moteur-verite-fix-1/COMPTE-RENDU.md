@@ -121,9 +121,35 @@ validées-only) :
 10. Fond de parcelle : plusieurs règlements ne distinguent pas latérales/fond (Saint-Joseph
     U2→U5, Le Port hors Ub) — lecture littérale : même mode des deux côtés.
 
-**Mesures après LOT 2** (rejeu complet, cache `cache-lot2/`) : [MESURES-LOT2]
+**Mesures après LOT 2** (rejeu complet, cache `cache-lot2/`, cumulatif LOT 1 + LOT 2) :
 
-**Contrôle inverse après LOT 2** : [CONTROLE-LOT2]
+| Mesure | Avant (VT-3) | Après LOT 1 | Après LOT 2 |
+|---|---|---|---|
+| Test 1 — « constructible » sur H | 4 632 (96,3 %) | 4 633 (96,3 %) | **4 642/4 812 (96,5 %)** — dont 9 permis par le seul verdict « Constructible — capacité à vérifier » |
+| Test 1 — « non » | 180 | 179 | **170** |
+| Test 2 — dépassements d'enveloppe > 1,10 | 106 (2,6 %) | 103 (2,5 %) | **102/4 077 (2,5 %)** |
+| terrain_exigu (parcelles des permis H) | 327 | 322 | **275** (−52) |
+| Cohorte rejouée — au-dessus | 2 507 (38,0 %) | 2 492 (37,8 %) | **2 486/6 601 (37,7 %)** |
+| — non constructible LABUSE | 220 | 219 | **206** (+11 « capacité nulle » = les nouveaux « à vérifier », SDP ∅ comptée 0 par le comparateur — honnête) |
+| — densité > calibrage | 964 | 950 | 944 |
+
+Lecture honnête : le gain du pilote est VISIBLE mais borné — dans les 5 communes, beaucoup de
+faux « exigu » tombent (−52) et Le Port Uc gagne des capacités réelles (limite admise sans
+condition, jusqu'à +543 m² sur AI1683) ; mais une grande part des zones pilotes est en
+`limite_sous_conditions` NON modélisables (Saint-Pierre en tête) → mention « capacité
+supérieure possible, à vérifier », pas un chiffre. Les cas témoins BI0220 (Saint-André) et
+AL1652 (Le Port) restent bornés par le RECUL SUR VOIE (V5 : maximum modélisé en minimum —
+LOT 4) et l'alignement sur voie non calibré : leurs verdicts sont désormais honnêtes
+(« capacité à vérifier »), la capacité chiffrée viendra du LOT 4.
+
+**Contrôle inverse après LOT 2** (`CONTROLE-INVERSE-lot2.csv`) : 119 parcelles en hausse vs
+l'audit ; les 30 plus fortes relues UNE PAR UNE : 30/30 reproduites au moteur (chaîne emprise ×
+45 % × niveaux respectée), origine identifiée LOT 1 (formule) ou LOT 2 (limite admise — ex. les
+10 Uc du Port, zones `limite_ou_retrait` au verbatim Uc 5 p.54) ; **garde A/N : 0** parcelle
+passée de non-constructible à constructible en zone A ou N (l'unique A du tableau, AK0834,
+était déjà constructible par sa portion U/AU — gain LOT 1 seulement) ; garde des rubans :
+suite unitaire verte (389 tests gabarit/faisabilité/zonage + 4 gardes neuves
+`tests/test_moteur_verite_fix1.py`).
 
 ---
 

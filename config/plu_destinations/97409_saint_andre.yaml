@@ -50,6 +50,20 @@ zones:
             d'une marge de recul de 4 metres parallele a la limite de la voie ou de l'emprise publique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UA 7.3'
+            page_pdf: 16
+            citation: 'L''implantation en limite de fond de terrain est possible, sauf en secteur UA1, si la nouvelle construction ne s''implante que sur une seule limite séparative latérale. Dans ce cas, la nouvelle construction n''excèdera pas 4 mètres de hauteur au droit de cette limite séparative et ce sur une bande de 3 mètres de profondeur. En cas de retrait, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'L''implantation en limite de fond de terrain est possible, sauf en secteur UA1, si la nouvelle construction ne s''implante que sur une seule limite séparative latérale. Dans ce cas, la nouvelle construction n''excèdera pas 4 mètres de hauteur au droit de cette limite séparative et ce sur une bande de 3 mètres de profondeur.'
+            condition_modelable: 'une_seule_limite+hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_imposee
+            statut: valide
+            article: 'UA 7.2'
+            page_pdf: 15
+            citation: 'Les constructions doivent être implantées sur au moins une limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.'
           min_m: 3.0
           article: UA 7
           page_pdf: 15
@@ -115,6 +129,20 @@ zones:
       précises → non écrit par sous-destination.'
   UA1:
     regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UA 7.3'
+            page_pdf: 16
+            citation: 'L''implantation en limite de fond de terrain est possible, sauf en secteur UA1, si la nouvelle construction ne s''implante que sur une seule limite séparative latérale. [...] En cas de retrait, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+          implantation_laterales:
+            mode: limite_imposee
+            statut: valide
+            article: 'UA 7.2'
+            page_pdf: 15
+            citation: 'Les constructions doivent être implantées sur au moins une limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.'
       hauteur:
         egout:
           m: 11.0
@@ -194,6 +222,20 @@ zones:
             d'une marge de recul de 6 metres parallele a la limite de la voie ou de l'emprise publique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.3'
+            page_pdf: 28
+            citation: 'L''implantation en limite de fond de terrain est possible, si la nouvelle construction ne s''implante que sur une seule limite séparative latérale. Dans ce cas, la nouvelle construction n''excèdera pas 4 mètres de hauteur au droit de cette limite séparative et ce sur une bande de 3 mètres de profondeur. En cas de retrait, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'L''implantation en limite de fond de terrain est possible, si la nouvelle construction ne s''implante que sur une seule limite séparative latérale. Dans ce cas, la nouvelle construction n''excèdera pas 4 mètres de hauteur au droit de cette limite séparative et ce sur une bande de 3 mètres de profondeur.'
+            condition_modelable: 'une_seule_limite+hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 27
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
           min_m: 3.0
           article: UB 7
           page_pdf: 27
@@ -310,6 +352,20 @@ zones:
             a 4 metres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UC 7.3'
+            page_pdf: 39
+            citation: 'L''implantation d''une construction en limite de fond de propriété est interdite.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UC 7.2'
+            page_pdf: 39
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: UC 7
           page_pdf: 39
@@ -448,6 +504,20 @@ zones:
             a 6 metres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UD 7.3'
+            page_pdf: 50
+            citation: 'L''implantation d''une construction en limite de fond de propriété est interdite.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UD 7.2'
+            page_pdf: 50
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: UD 7
           page_pdf: 50
@@ -579,6 +649,20 @@ zones:
             a 6 metres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UE 7.3'
+            page_pdf: 62
+            citation: 'Les constructions doivent être implantées en retrait des limites de fond de propriété avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 4 mètres.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UE 7.2'
+            page_pdf: 61
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat.'
+            condition_modelable: 'une_seule_limite+non'
           min_m: 4.0
           article: UE 7
           page_pdf: 61
@@ -750,6 +834,20 @@ zones:
             a 3 metres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'US 7.3'
+            page_pdf: 72
+            citation: 'Les constructions doivent être implantées en retrait des limites de fond de propriété avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 4 mètres.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'US 7.2'
+            page_pdf: 72
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat.'
+            condition_modelable: 'une_seule_limite+non'
           min_m: 3.0
           article: US 7
           page_pdf: 72
@@ -850,6 +948,18 @@ zones:
             a 6 metres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UT 7.2'
+            page_pdf: 83
+            citation: 'Les constructions doivent être implantées en retrait des limites latérales et des limites de fond de propriété. Le retrait de la construction compté horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 4 mètres.'
+          implantation_laterales:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UT 7.2'
+            page_pdf: 83
+            citation: 'Les constructions doivent être implantées en retrait des limites latérales et des limites de fond de propriété. Le retrait de la construction compté horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 4 mètres.'
           min_m: 4.0
           article: UT 7
           page_pdf: 83
@@ -1028,12 +1138,46 @@ zones:
       = 80 m² de surface de plancher (art. AUindicée 2.2 (5), p. 90). Conditions communes AUindicée 2.2 (infrastructures,
       OAP).'
   1AUe:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.91) → UE 7.3'
+            page_pdf: 62
+            citation: 'Les constructions doivent être implantées en retrait des limites de fond de propriété avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 4 mètres.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.91) → UE 7.2'
+            page_pdf: 61
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat.'
+            condition_modelable: 'une_seule_limite+non'
     renvoi: UE
     renvoi_src: 'p. 89 + art. AUindicée 1.2, p. 90 : « Se reporter au règlement de la zone U indiquée en indice
       » (indice e → zone UE — cible résolue par la règle écrite de renvoi)'
     note: 'Code nommé p. 89 : « L''ouverture de la zone 2AUe ne pourra intervenir qu''une fois l''aménagement de
       l''ensemble des zones 1AUe entrepris. » Conditions communes AUindicée 2.2 (infrastructures, OAP), p. 90.'
   2AUb:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.91) → UB 7.3'
+            page_pdf: 28
+            citation: 'L''implantation en limite de fond de terrain est possible, si la nouvelle construction ne s''implante que sur une seule limite séparative latérale. Dans ce cas, la nouvelle construction n''excèdera pas 4 mètres de hauteur au droit de cette limite séparative et ce sur une bande de 3 mètres de profondeur. En cas de retrait, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'L''implantation en limite de fond de terrain est possible, si la nouvelle construction ne s''implante que sur une seule limite séparative latérale. Dans ce cas, la nouvelle construction n''excèdera pas 4 mètres de hauteur au droit de cette limite séparative et ce sur une bande de 3 mètres de profondeur.'
+            condition_modelable: 'une_seule_limite+hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.91) → UB 7.2'
+            page_pdf: 27
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
     renvoi: UB
     renvoi_src: 'p. 89 + art. AUindicée 1.2, p. 90 : « Se reporter au règlement de la zone U indiquée en indice
       » (indice b → zone UB — cible résolue par la règle écrite de renvoi)'
@@ -1044,6 +1188,23 @@ zones:
       2AUb et 2AUc, toute construction ou installation nouvelle doit être raccordée au réseau collectif public d''assainissement
       » (art. AUindicée 4, p. 91).'
   2AUc:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.91) → UC 7.3'
+            page_pdf: 39
+            citation: 'L''implantation d''une construction en limite de fond de propriété est interdite.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.91) → UC 7.2'
+            page_pdf: 39
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale.'
+            condition_modelable: 'une_seule_limite'
     renvoi: UC
     renvoi_src: 'p. 89 + art. AUindicée 1.2, p. 90 : « Se reporter au règlement de la zone U indiquée en indice
       » (indice c → zone UC — cible résolue par la règle écrite de renvoi)'
@@ -1051,6 +1212,23 @@ zones:
       2.2 (3), p. 90). Densités AUc applicables (2.2 (4-5), p. 90). Raccordement obligatoire au réseau collectif
       public d'assainissement (art. AUindicée 4, p. 91).
   2AUe:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.91) → UE 7.3'
+            page_pdf: 62
+            citation: 'Les constructions doivent être implantées en retrait des limites de fond de propriété avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 4 mètres.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.91) → UE 7.2'
+            page_pdf: 61
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat.'
+            condition_modelable: 'une_seule_limite+non'
     renvoi: UE
     renvoi_src: 'p. 89 + art. AUindicée 1.2, p. 90 : « Se reporter au règlement de la zone U indiquée en indice
       » (indice e → zone UE — cible résolue par la règle écrite de renvoi)'
@@ -1062,6 +1240,21 @@ zones:
   1AUcr:
     regles:
       retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: '1AUcr 7.3'
+            page_pdf: 98
+            citation: 'L''implantation d''une construction en limite de fond de propriété est interdite.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: '1AUcr 7.2'
+            page_pdf: 98
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale.'
+            condition_modelable: 'une_seule_limite'
         entre_constructions:
           forme: silence
           absent: true

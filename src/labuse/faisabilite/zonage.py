@@ -68,6 +68,14 @@ class ZoneRules:
     #  (règle PLU non validée) qui BRANCHERAIENT la SDP → capacité non calculable, jamais un défaut
     recul_voirie_alignement: bool = False     # PLU-CALIBRAGE-7 forme 1 : recul 0 = « à l'alignement »
     recul_limites_alignement: bool = False    #  (idem « en limite séparative ») — 0 EXPLICITE, ≠ absent
+    # MOTEUR-VERITE-FIX-1 (LOT 2) — mode d'IMPLANTATION par rapport aux limites séparatives, lu au
+    # règlement et calibré SÉPARÉMENT pour les limites latérales et le fond de parcelle :
+    #   {mode: retrait_obligatoire | limite_ou_retrait | limite_sous_conditions | limite_imposee,
+    #    condition_texte?, condition_modelable? («largeur_terrain_max:X» | «une_seule_limite» |
+    #    «deux_limites_max» | «hauteur_bande:…» | «non»), citation?, article?, page_pdf?}.
+    # None = non calibré → le retrait (min_m / formule) s'applique comme aujourd'hui.
+    implantation_laterales: dict | None = None
+    implantation_fond: dict | None = None
     pleine_terre_compose: dict | None = None  # PLU-CALIBRAGE-7 forme 2 : {espaces_verts_pct, part_pct}
     #  pleine_terre_pct = espaces_verts_pct × part_pct / 100 (calculé, JAMAIS stocké — les 2 chiffres sourcés)
     # FICHE-FIX-2 P4 / PLU-CALIBRAGE-9 — clause de mixité sociale de la zone (LLS), lue des `regles`
@@ -191,6 +199,20 @@ def _regles_sdp_non_validees(reg: dict) -> list[str]:
 
 
 # ── PLU-CALIBRAGE-7 — lecture des deux formes de règle ajoutées au schéma ─────────────────────────
+def _implantation_leaf(reg: dict, cle: str) -> dict | None:
+    """MOTEUR-VERITE-FIX-1 (LOT 2) — mode d'implantation par côté, VALIDÉ seulement.
+    Feuille `retraits.limites_separatives.<implantation_laterales|implantation_fond>` :
+    {mode, condition_texte?, condition_modelable?, citation?, article?, page_pdf?, statut}.
+    `statut` ≠ valide ou mode inconnu → None (le retrait min_m/formule s'applique seul)."""
+    leaf = ((reg.get("retraits") or {}).get("limites_separatives") or {}).get(cle)
+    if not isinstance(leaf, dict) or leaf.get("statut") != "valide":
+        return None
+    if leaf.get("mode") not in ("retrait_obligatoire", "limite_ou_retrait",
+                                "limite_sous_conditions", "limite_imposee"):
+        return None
+    return dict(leaf)
+
+
 def _recul_alignement(reg: dict, feuille: str) -> bool:
     """Forme 1 : la feuille recul (`retraits.<feuille>`) est-elle VALIDÉE en « forme: alignement »
     (recul 0 explicite — « à l'alignement » / « en limite séparative ») ? ≠ absent."""
@@ -345,6 +367,10 @@ def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> Zone
         recul_limites_formule=_val(reg, "retraits", "limites_separatives", "formule"),
         recul_voirie_alignement=_recul_alignement(reg, "voie"),
         recul_limites_alignement=_recul_alignement(reg, "limites_separatives"),
+        # MOTEUR-VERITE-FIX-1 (LOT 2) — mode d'implantation par côté, calibré sous la MÊME feuille
+        # VALIDÉE que le retrait (les dicts passent tels quels ; None = non calibré → retrait).
+        implantation_laterales=_implantation_leaf(reg, "implantation_laterales"),
+        implantation_fond=_implantation_leaf(reg, "implantation_fond"),
         stat_logement=_stat_from_regles(reg),
         pleine_terre_pct=_pleine_terre_val(reg),
         pleine_terre_compose=_pleine_terre_compose(reg),

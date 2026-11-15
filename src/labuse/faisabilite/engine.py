@@ -551,6 +551,23 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
             # superposées / portion U/AU incohérente / géométrie non réparable). On NE dit PLUS « terrain
             # trop étroit » (cause CERTAINE) sur un cas douteux : cause d'IGNORANCE « assiette à vérifier »
             # → bande NC / « À vérifier » (jamais un verdict ferme sans preuve géométrique).
+            # MOTEUR-VERITE-FIX-1 (LOT 2) — l'assiette avec RETRAIT se vide, mais le règlement admet
+            # l'implantation EN LIMITE sous des conditions non modélisées : le verdict est
+            # « constructible, capacité à vérifier », JAMAIS « terrain trop exigu » (le vrai gabarit
+            # en limite peut être substantiel — permis réels à l'appui, VERITE-TERRAIN-3 V1).
+            if raison == "limite_conditions":
+                steps.append(Step(_step1_label, _step1_formule,
+                                  "0 m² avec retrait — implantation en limite à étudier",
+                                  _step1_source if _asrc == "gabarit" else f"{rl_src}",
+                                  prov=_step1_prov))
+                avert.append("Implantation en limite séparative possible sous conditions du "
+                             "règlement (non modélisées) : capacité supérieure possible, à vérifier.")
+                return fini(True,
+                            "Constructible — capacité à vérifier : le règlement admet l'implantation "
+                            "en limite séparative sous conditions ; avec le retrait appliqué, "
+                            "l'assiette se vide. La capacité ne peut pas être affirmée sans étude "
+                            "de l'implantation en limite.",
+                            {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
             if raison == "a_verifier":
                 steps.append(Step(_step1_label, _step1_formule, "à vérifier (assiette non établie)",
                                   _step1_source if _asrc == "gabarit" else f"{rl_src}",
@@ -570,6 +587,11 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                         cause="terrain_exigu", exigu_raison=raison)
         steps.append(Step(_step1_label, _step1_formule,
                           f"~{emprise:.0f} m²", _step1_source, prov=_step1_prov))
+        # MOTEUR-VERITE-FIX-1 (LOT 2) — le règlement admet l'implantation en limite sous des
+        # conditions NON modélisées : la capacité servie (avec retrait) est une borne basse — dit.
+        for _m in (extras.get("implantation_mentions") or []):
+            avert.append(f"Implantation en limite séparative possible sous conditions "
+                         f"(« {_m[:160]} ») : capacité supérieure possible, à vérifier.")
         # FAISABILITE-1 (lot D) — ligne « Espaces inconstructibles déduits » (ER/EBC/greve certaine
         # déjà soustraits de l'emprise en amont, cf. db.py) : dit CE QUI a été retiré, sourcé PLU.
         _dedu = round(float(extras.get("total_deduit_m2", 0)))

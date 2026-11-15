@@ -848,6 +848,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # surface du terrain et que les proportions tiennent. Les FORMES (GeoJSON, reculs, intersections)
     # restent calculées sur le dessin ; seules leurs AIRES scalaires sont ré-échelonnées ici.
     k_cont = ctx.terrain_sur_dessin
+    implantation_mentions: list = []   # MOTEUR-VERITE-FIX-1 (LOT 2) — rempli par le chemin gabarit
     if gab is not None:
         gbuild, gres = gab
         emprise_brute = float(gres.zoneImplantationM2 or 0.0)
@@ -911,6 +912,8 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 "DPF, ravine, 50 pas) soustraits de l'assiette. Le PPR rouge est déjà découpé "
                 "de l'assiette (jamais compté deux fois).")
         greve_a = greve_tot          # déduction NETTE réellement retranchée (extras)
+        # MOTEUR-VERITE-FIX-1 (LOT 2) — mentions d'implantation en limite (conditions non modélisées).
+        implantation_mentions = list((racc.get("implantation") or {}).get("mentions") or [])
         # RECETTE-1 A1 — raison réelle du vidage (message « trop exigu » ciblé, pas « reculs » partout).
         vide_raison = None
         if emprise < SEUIL_EXIGU_M2:
@@ -925,6 +928,11 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 vide_raison = "portion_reduite"
             else:
                 vide_raison = "reculs"
+        # MOTEUR-VERITE-FIX-1 (LOT 2) — vidée par les RETRAITS alors que le règlement admet la
+        # limite sous conditions non modélisées → « constructible, capacité à vérifier » (engine),
+        # jamais un faux « terrain trop exigu ».
+        if vide_raison == "reculs" and implantation_mentions:
+            vide_raison = "limite_conditions"
     else:
         row = session.execute(_EMPRISE, args).one()
         # C3 : aires géométriques (inset reculs, portion U/AU, ER/EBC) → échelle contenance.
@@ -1094,7 +1102,8 @@ def parcel_faisabilite(session: Session, parcel_id: int,
               "total_deduit_m2": greve_a,
               "mixite": bool(eco.get("mixite")),
               "assiette_source": assiette_source,
-              "assiette_vide": vide_raison}   # RECETTE-1 A1 — raison du vidage (message ciblé)
+              "assiette_vide": vide_raison,   # RECETTE-1 A1 — raison du vidage (message ciblé)
+              "implantation_mentions": implantation_mentions}   # LOT 2 — mentions limite/conditions
     # MOTEUR-VERITE-FIX-1 (LOT 1) — recul séparatif en formule H/n : le moteur gabarit a RETENU le
     # scénario (niveaux, recul) qui maximise le plancher, H = égout du bâtiment envisagé. L'assiette
     # ci-dessus est déjà celle du scénario ; on lie AUSSI le nombre de niveaux de la capacité (sinon
