@@ -69,6 +69,7 @@ zones:
       stationnement:
         par_logement:
           places: 1.5
+          arrondi: inferieur
           article: Ua 12.2
           page_pdf: 103
           citation: '1 place par logement
@@ -181,6 +182,7 @@ zones:
       stationnement:
         par_logement:
           places: 1.5
+          arrondi: inferieur
           article: Ub 12.2
           page_pdf: 103
           citation: '1 place par logement
@@ -308,6 +310,7 @@ zones:
       stationnement:
         par_logement:
           places: 1.5
+          arrondi: inferieur
           article: Uc 12.2
           page_pdf: 103
           citation: '1 place par logement
@@ -434,6 +437,7 @@ zones:
       stationnement:
         par_logement:
           places: 1.5
+          arrondi: inferieur
           article: Ur 12.2
           page_pdf: 103
           citation: '1 place par logement
@@ -709,6 +713,7 @@ zones:
       stationnement:
         par_logement:
           places: 1.5
+          arrondi: inferieur
           article: Ub 12.2
           page_pdf: 103
           citation: '1 place par logement
@@ -789,6 +794,7 @@ zones:
       stationnement:
         par_logement:
           places: 1.5
+          arrondi: inferieur
           article: Uc 12.2
           page_pdf: 103
           citation: '1 place par logement
@@ -935,6 +941,7 @@ zones:
       stationnement:
         par_logement:
           places: 1.5
+          arrondi: inferieur
           article: Ur 12.2
           page_pdf: 103
           citation: '1 place par logement
