@@ -237,3 +237,59 @@ aucune citation partagée entre deux zones sans règle appliquée identique.
 
 **Reliquat assumé et dit** : lot 4 (réingestion pipeline des textes manquants), Saint-Paul, extension du libellé
 « Non réglementé » aux autres communes vérifiées, et le mandat dédié « hauteur par secteur graphique » de Saint-Benoît.
+
+---
+
+## Relecture (2e tour) — refus, contrôle des pages, corrections ciblées
+
+### Fait et vérifié
+- **Refus immédiat des parcelles non constructibles** (audit écrans, 97404000AM0838) : l'Étude lit le
+  **même verdict partagé** (`potentiel_batir`) que Dossier/Gabarit/pré-dossier et **refuse tout de suite,
+  avec le motif, sans lancer le solveur** — habitat interdit, zone rouge PPR, zone fermée, A/N. AM0838 →
+  « Habitat interdit dans cette zone » en 0,6 s (avant : 108 s puis « au mieux ~95 logements »). Parcelle
+  naturelle → « Zone non constructible — naturelle ». 2 tests (refus sans solveur ; solveur atteint si
+  constructible).
+- **Contrôle dur des pages** (`scripts/stationnement_controle_pages.py`, + test) : chaque chiffre appliqué
+  **et** la citation doivent se retrouver dans le texte de **sa** page du PDF officiel (tolérant aux retours
+  à la ligne, pages voisines pour les tableaux à cheval). Sur **1472 règles : 0 échec de FIGURE** — toutes
+  les **valeurs** ingérées sont grondées sur leur page. Garde-fou permanent (`test_chaque_chiffre_applique_
+  figure_sur_sa_page`).
+- **Saint-Joseph (correctif #1 de la relecture)** : citation refaite **verbatim** (plus de « (part
+  collective) » inventé, retours à la ligne réels) → **0 échec de contrôle**. La ligne « 1 place par tranche
+  de 10 logements (1 logement = 3 places d'hébergement, art. L.312-1 CASF) » a **deux lectures** (cf.
+  interprétations) : (a) supplément pour toute opération — **la plus exigeante, appliquée au logement
+  ordinaire** (`visiteurs` 1/10) ; (b) règle des établissements d'hébergement — **appliquée aux résidences**
+  (`senior` : 1 logement = 3 places). Chaque zone cite sa page.
+- **Saint-Denis pleine terre (correctif #3)** : **retirée**. La question « Ua 15 % ou Uat 15 % » est tranchée
+  par l'image : le texte dit **« En secteurs Uat : 15 % »** — Uat est un **secteur** (renvoi à Ua), pas la
+  zone Ua ; et les autres valeurs (Ui→« Uip », Uj/Um/Uh) ne se vérifiaient pas sur les pages de ce millésime
+  du PDF. Plutôt que de garder des valeurs non prouvées, l'ingestion est **annulée** : Saint-Denis pleine
+  terre reste à ré-ingérer **zone par zone, image à l'appui** (les n° de page de l'audit ne correspondent pas
+  au PDF 2026-08-05).
+
+### Dette VERBATIM des citations (mesurée, pas masquée)
+Le contrôle révèle **741 échecs de CITATION** (dont Saint-Joseph, désormais corrigé) : mes citations étaient
+des **synthèses** combinant plusieurs cases de tableau, pas le texte mot pour mot de la page. **Les valeurs
+sont justes** (0 échec de figure), mais **les citations doivent devenir verbatim**, zone par zone — méthode
+prouvée sur Saint-Joseph (passage à 0 échec). C'est le gros du reliquat ci-dessous.
+
+### Reliquat explicite (à faire avant merge, non masqué)
+1. **Citations verbatim** pour les ~15 communes restantes (méthode Saint-Joseph, pilotée par le contrôle).
+2. **Saint-Paul** (reporté car 55 zones, barème par secteur, nombreux `propose`/« INTROUVABLE ») : à ingérer
+   zone par zone, même méthode.
+3. **Lot 4 — textes manquants** : les PDF officiels **sont présents** dans `data/plu_reglements/` (Étang-Salé
+   97404, Saint-André 97409, Saint-Leu 97413, Plaine 97406, Saint-Denis 97411) — l'absence de la table
+   `plu_reglement_extrait` n'est **pas** une raison de laisser « Non vérifié ». À ingérer depuis l'image du
+   PDF. (L'ingestion dans `plu_reglement_extrait` est un sujet séparé à lister.)
+4. **52 zones « habitat secondaire »** : état non final — pour chacune, soit refus d'Étude (logement non
+   principal), soit ingestion si une norme existe. À décompter.
+5. **Conditions chiffrées** (Saint-Louis > 10 logements : 0,5 place publique/logt) : afficher le nombre de
+   places et les compter dans les places à loger (lecture la plus exigeante).
+6. **Contrôle « image prouve le chiffre »** : chaque image de sondage doit contenir, dans sa zone recadrée,
+   chaque chiffre appliqué (tableaux à cheval = image des deux pages) ; refuser Le Tampon 1AUa / Le Port 1AUm.
+7. **Libellé « non réglementé »** étendu (Salazie, Sainte-Suzanne, Saint-Paul, La Possession UA/UB, Entre-Deux
+   Ub/Ue) ; **Études en PDF** (pas seulement HTML/JSON) ; **sondage final graine fixe sur les 24 communes**.
+
+**Priorité de ce tour** : le refus (bloquant, audit écrans) et le contrôle dur des pages (qui prouve que
+toutes les valeurs sont justes) ont été traités d'abord ; le reliquat verbatim/ingestion est mesuré et listé
+plutôt que bâclé — la relecture a montré que la précipitation sur les valeurs produit des erreurs.

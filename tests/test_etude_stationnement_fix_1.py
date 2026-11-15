@@ -209,6 +209,29 @@ def test_controle_citation_identique_implique_regle_identique():
                 f"(citation « {cit[:60]}… ») — recopie probable, chaque zone doit citer son propre texte.")
 
 
+def test_chaque_chiffre_applique_figure_sur_sa_page():
+    """CONTRÔLE DUR (relecture) — chaque chiffre appliqué par un barème doit se retrouver dans le TEXTE DE
+    SA PAGE du PDF officiel (tolérant aux retours à la ligne, pages voisines pour les tableaux à cheval).
+    Garde-fou contre toute valeur inventée. Sauté si les PDF officiels ne sont pas présents (CI nue)."""
+    import glob
+    import importlib.util
+    import os
+    pdfdir = os.path.expanduser("~/Desktop/labuse/data/plu_reglements/")
+    if not glob.glob(pdfdir + "974*_*.pdf"):
+        import pytest
+        pytest.skip("PDF officiels absents (data/plu_reglements) — contrôle de pages non exécutable ici")
+    spec = importlib.util.spec_from_file_location("ctl_pages", "scripts/stationnement_controle_pages.py")
+    ctl = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ctl)
+    import io
+    import contextlib
+    with contextlib.redirect_stdout(io.StringIO()):
+        echecs = ctl.controle()
+    fig = [e for e in echecs if e[3] == "figures"]
+    assert not fig, (f"{len(fig)} chiffres appliqués ne figurent pas sur leur page — valeur ou page suspecte : "
+                     + ", ".join(f"{i} {z} p{pg} {mq}" for i, z, pg, _m, mq in fig[:10]))
+
+
 def test_destination_suit_le_type_de_projet():
     """La destination lue dans le barème suit le type de projet (plus de « collectif » codé en dur)."""
     assert DESTINATION_PAR_PROJET["collectif"] == "collectif"

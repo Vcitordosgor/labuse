@@ -79,18 +79,22 @@ zones:
           page_pdf: 25
           places: 1.0
           arrondi: superieur
-          citation: '1 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 1 place de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 15.0
@@ -225,18 +229,22 @@ zones:
           page_pdf: 39
           places: 1.0
           arrondi: superieur
-          citation: '1 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 1 place de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 15.0
@@ -339,18 +347,22 @@ zones:
           page_pdf: 39
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 15.0
@@ -459,18 +471,22 @@ zones:
           page_pdf: 55
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 15.0
@@ -576,18 +592,22 @@ zones:
           page_pdf: 55
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 25.0
@@ -674,18 +694,22 @@ zones:
           page_pdf: 55
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 25.0
@@ -792,18 +816,22 @@ zones:
           page_pdf: 69
           places: 1.0
           arrondi: superieur
-          citation: '1 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 1 place de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 10.0
@@ -924,18 +952,22 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 35.0
@@ -1043,18 +1075,22 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 30.0
@@ -1149,18 +1185,22 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 15.0
@@ -1248,18 +1288,22 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 35.0
@@ -1363,18 +1407,22 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 35.0
@@ -1461,18 +1509,22 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 35.0
@@ -1886,18 +1938,22 @@ zones:
           page_pdf: 55
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 15
@@ -1964,18 +2020,22 @@ zones:
           page_pdf: 55
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 25
@@ -2043,18 +2103,22 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 35
@@ -2112,18 +2176,22 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 35
@@ -2188,18 +2256,22 @@ zones:
           page_pdf: 84
           places: 2.0
           arrondi: superieur
-          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          citation: '- 2 places de stationnement minimum par logement.
+
+            - 1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l''État, et 0,5 place par logement si le projet est situé dans un périmètre de 500 m d''une gare ou d''une station de transport public guidé ou de transport collectif en site propre.
+
+            - 1 place de stationnement minimum par tranche de 10 logements (1 logement étant équivalent à 3 places d''hébergements réalisés dans les établissements et les services mentionnés à l''article L.312-1 du Code de l''action sociale des familles).'
           visiteurs:
             par_logements: 10
             places: 1
             arrondi: superieur
-            citation: 1 place par tranche de 10 logements (part collective)
+            citation: 1 place de stationnement minimum par tranche de 10 logements (lecture la plus exigeante pour le logement ordinaire)
           social:
             places: 1
-            tranche: prêt aidé (1/logt)
+            tranche: logement locatif prêt aidé (1/logt)
           senior:
-            places: 0.5
-            tranche: résidence personnes âgées (0,5/logt aidé)
+            places: 0.3333
+            tranche: établissement d'hébergement (1 logement = 3 places d'hébergement)
       pleine_terre:
         pct:
           pct: 35
