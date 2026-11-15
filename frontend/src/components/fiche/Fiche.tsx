@@ -729,6 +729,11 @@ export function Fiche({ idu }: { idu: string }) {
   // ce qui corrige les libellés-collision (cf. CHANGEMENTS.csv). `null` (famille inconnue) ≠ non
   // constructible : on ne barre pas une parcelle dont la zone n'est pas publiée.
   const nonConstructible = f?.reglement_plu?.constructible_neuf === false
+  // CHIRURGICAL-FIX-1 (LOT A / LOT H pt 10) — le VERDICT servi (potentiel_a_batir) prime sur la seule
+  // famille de zone : une parcelle en zone U mais non retenue pour une AUTRE raison (habitat interdit,
+  // zone rouge) ne doit PAS afficher « PLU · constructible » dans la tuile Zone — le libellé
+  // cohabitait avec « habitat interdit » de l'Analyse. Dans ce cas la tuile Zone reste neutre (« PLU »).
+  const verdictNonConstructible = f?.potentiel_a_batir?.constructible === false
   // RETOURS-11F4 (F5) : logMax/capaciteNulle/logementsTxt (valeur d'en-tête Constructibilité) vivent
   // désormais dans `ConstructibiliteSection` (constructibilite.tsx). Fiche ne les calcule plus.
   // micro-preuve Règles : jauge = part de SDP DÉJÀ consommée (le reste = potentiel).
@@ -976,7 +981,11 @@ export function Fiche({ idu }: { idu: string }) {
           const nf = (n: number) => n.toLocaleString('fr-FR')
           // FRONT-CHIFFRES-2 (F01a) — sous-titre lu de la famille de zone SERVIE (cascade), plus du
           // préfixe du libellé.
+          // CHIRURGICAL-FIX-1 (LOT A / LOT H pt 10) — famille U/AU : on n'affiche « constructible » /
+          // « à urbaniser » QUE si le verdict ne ferme pas la parcelle (sinon « habitat interdit » et
+          // « constructible » cohabiteraient). A/N gardent « agricole »/« naturelle » (déjà justes).
           const zoneSous = !zoneFamille ? undefined
+            : (verdictNonConstructible && (zoneFamille === 'U' || zoneFamille === 'AU')) ? undefined
             : zoneFamille === 'AU' ? 'à urbaniser' : zoneFamille === 'U' ? 'constructible'
             : zoneFamille === 'A' ? 'agricole' : zoneFamille === 'N' ? 'naturelle' : undefined
           const pente = f.terrain?.pente_moy_deg
@@ -1408,7 +1417,11 @@ export function Fiche({ idu }: { idu: string }) {
           // (KELFONCIER-FIX-2 Lot G, maquette v3 : la contenance ne se répète pas dans la section).
           // Zone → §4 Urbanisme (zone PLU au point de la parcelle) + son sous-titre lisible.
           // FRONT-CHIFFRES-2 (F01a) — sous-titre lu de la famille de zone SERVIE (cascade).
+          // CHIRURGICAL-FIX-1 (LOT A / LOT H pt 10) — famille U/AU : on n'affiche « constructible » /
+          // « à urbaniser » QUE si le verdict ne ferme pas la parcelle (sinon « habitat interdit » et
+          // « constructible » cohabiteraient). A/N gardent « agricole »/« naturelle » (déjà justes).
           const zoneSous = !zoneFamille ? undefined
+            : (verdictNonConstructible && (zoneFamille === 'U' || zoneFamille === 'AU')) ? undefined
             : zoneFamille === 'AU' ? 'à urbaniser' : zoneFamille === 'U' ? 'constructible'
             : zoneFamille === 'A' ? 'agricole' : zoneFamille === 'N' ? 'naturelle' : undefined
           const tuileZone = { v: reglesZone ?? 'Non publié au GPU', s: zoneSous, vide: reglesZone == null,
