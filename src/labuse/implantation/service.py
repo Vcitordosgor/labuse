@@ -916,6 +916,27 @@ def _lotissement_payload(session, idus: list[str], entree: dict) -> dict:
 
 
 # ------------------------------------------------------------------ FAISA-REGLES-1 (E-055, D-004)
+def _refus_constructibilite(session, idus: list[str]):
+    """ETUDE-STATIONNEMENT-FIX-1 — verdict partagé `potentiel_batir` : si AUCUNE parcelle de l'assiette n'est
+    constructible, renvoie (zone_lib, motif) pour un REFUS immédiat de l'Étude ; sinon None (on étudie).
+    Lit le même verdict que les autres documents — jamais un re-calcul divergent."""
+    from labuse.faisabilite.potentiel_batir import potentiel_batir_batch
+    fermer = False
+    if session is None:
+        from labuse.db import session_scope
+        _cm = session_scope(); session = _cm.__enter__(); fermer = True
+    try:
+        verdicts = potentiel_batir_batch(session, idus)
+    finally:
+        if fermer:
+            _cm.__exit__(None, None, None)
+    if not verdicts or any(v.get("constructible") for v in verdicts.values()):
+        return None   # au moins une parcelle constructible → on étudie
+    # toutes fermées : motif de celle qui porte le plus de contexte (zone connue), sinon la première
+    principal = max(verdicts.values(), key=lambda v: (v.get("zone_lib") is not None, v.get("sdp_restante_m2") or 0))
+    return (principal.get("zone_lib"), principal.get("motif") or "Parcelle non constructible")
+
+
 def _payload_hors_perimetre(session, idus: list[str], entree: dict, exc) -> dict:
     """Payload de REFUS quand la zone ne permet pas de chiffrer un programme : RNU (aucune zone PLU
     opposable, E-055) ou zone A/N non constructible (D-004). Aucun logement chiffré ; le motif est DIT.
@@ -1018,6 +1039,17 @@ def etudier_payload(session, entree: dict) -> dict:
     # scénarios d'implantation. Même borne de temps (la route 30 s enveloppe cet appel) et même message.
     if type_projet == "lotissement":
         return _lotissement_payload(session, idus, entree)
+
+    # ETUDE-STATIONNEMENT-FIX-1 — l'Étude lit le MÊME verdict de constructibilité que tous les autres
+    # documents (`potentiel_batir`, un seul verdict partout) et REFUSE immédiatement, avec le motif, SANS
+    # lancer le solveur, pour toute parcelle NON CONSTRUCTIBLE quelle qu'en soit la cause (habitat interdit,
+    # zone rouge du PPR, zone fermée, A/N…). Évite le « au mieux ~N logements » après 108 s sur une parcelle
+    # que le Dossier/Gabarit/pré-dossier refusent déjà (audit écrans 97404000AM0838, zone UE habitat interdit).
+    _ferme = _refus_constructibilite(session, idus)
+    if _ferme is not None:
+        return _payload_hors_perimetre(session, idus, entree,
+                                       moteur_mod.EtudeHorsPerimetre("non_constructible", _ferme[1],
+                                                                     zone_dominante=_ferme[0]))
 
     # hypothèses modifiables → conventions surchargées
     hyp = entree.get("hypotheses") or {}

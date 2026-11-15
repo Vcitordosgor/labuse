@@ -134,6 +134,43 @@ def test_colonne_places_integrees_condition_bloquante_au_seuil():
     assert not b.exiger(_prog([(3, 70, 5)]), destination="collectif").conditions  # 350 m² < 1000 → aucune
 
 
+def test_etude_refuse_immediatement_parcelle_non_constructible(monkeypatch):
+    """Audit écrans (97404000AM0838, zone UE habitat interdit) — l'Étude lit le MÊME verdict de
+    constructibilité que les autres documents et REFUSE tout de suite, avec le motif, SANS lancer le
+    solveur, pour toute parcelle non constructible (habitat interdit, zone rouge, A/N…)."""
+    from labuse.implantation import service, moteur as M
+
+    monkeypatch.setattr(service, "_refus_constructibilite",
+                        lambda s, idus: ("UE", "Habitat interdit dans cette zone"))
+    monkeypatch.setattr(service, "_payload_hors_perimetre",
+                        lambda s, idus, entree, exc: {"hors_perimetre": True, "message": str(exc)})
+
+    def _solveur_interdit(*a, **k):
+        raise AssertionError("le solveur ne doit PAS être lancé pour une parcelle non constructible")
+    monkeypatch.setattr(M, "etudier_complet", _solveur_interdit)
+
+    p = service.etudier_payload(None, {"idus": ["97404000AM0838"], "type_projet": "collectif"})
+    assert p["hors_perimetre"] is True
+    assert "Habitat interdit" in p["message"]
+
+
+def test_etude_constructible_atteint_le_solveur(monkeypatch):
+    """Garde-fou symétrique : une parcelle CONSTRUCTIBLE passe le verdict et atteint bien le solveur."""
+    from labuse.implantation import service, moteur as M
+    monkeypatch.setattr(service, "_refus_constructibilite", lambda s, idus: None)
+    atteint = {}
+
+    def _sentinel(*a, **k):
+        atteint["oui"] = True
+        raise RuntimeError("arrêt-après-garde")
+    monkeypatch.setattr(M, "etudier_complet", _sentinel)
+    try:
+        service.etudier_payload(None, {"idus": ["97416000HT0538"], "type_projet": "collectif"})
+    except RuntimeError:
+        pass
+    assert atteint.get("oui") is True
+
+
 def _signature(b):
     """Signature de la RÈGLE appliquée (valeurs, pas le texte) — pour comparer deux zones."""
     lignes = tuple(sorted(
