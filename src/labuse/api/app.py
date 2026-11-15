@@ -3644,9 +3644,13 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
         # CONTENANCE-1 (Lot B) : la surface de terrain (base taxable pré-remplie) = contenance si
         # présente, sinon dessin.
         "SELECT p.commune, round(COALESCE(p.contenance_m2, p.surface_m2)) AS surface_terrain_m2, z.zone_libelle, z.zone_fam,"
-        "       r.sdp_residuelle_m2 AS sdp_gabarit_m2, r.taux_emprise_pct"
+        "       r.sdp_residuelle_m2 AS sdp_gabarit_m2, r.taux_emprise_pct,"
+        # CHIRURGICAL-FIX-1 (E117) — emprise bâtie servie (BD TOPO/CoSIA), peuplée même pour une
+        # parcelle NON constructible (donc absente de parcel_residuel). Repli de `deja_batie`.
+        "       pmb.emprise_bati_m2"
         " FROM parcels p LEFT JOIN parcel_zone_plu z ON z.idu = p.idu"
         " LEFT JOIN parcel_residuel r ON r.parcel_id = p.id"
+        " LEFT JOIN p_model_bati pmb ON pmb.idu = p.idu"
         " WHERE p.idu = :i"),
         {"i": idu}).mappings().first()
     if not row:
@@ -3674,7 +3678,8 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
             # on le libelle pour que l'utilisateur ne confonde pas les deux.
             "sdp_gabarit_libelle": ("SDP résiduelle (droits à bâtir restants, bâti conservé)"
                                     if (sdp is not None and sdp > 0) else None),
-            "deja_batie": bool(row["taux_emprise_pct"] and float(row["taux_emprise_pct"]) > 0),
+            "deja_batie": bool((row["taux_emprise_pct"] and float(row["taux_emprise_pct"]) > 0)
+                               or (row["emprise_bati_m2"] and float(row["emprise_bati_m2"]) > 0)),
             "taux_communal_pct": (pub["part_communale_pct"] if pub else None),
             "taux_communal_source": ("public" if pub else None),
             "taux_communal_millesime": (pub["millesime"] if pub else None),

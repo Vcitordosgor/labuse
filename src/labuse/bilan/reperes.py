@@ -89,6 +89,22 @@ def sources_parcelle(db: Session, idu: str) -> dict[str, Any]:
     zd = _zonage_detail(db, parcel_id) if parcel_id else None
     nc_pct = zd["non_constructible_pct"] if zd else 0.0
     c_pct = zd["constructible_pct"] if zd else 100.0
+    # CHIRURGICAL-FIX-1 (E104) — le modèle doit porter le MÊME verdict que la fiche, lu au point
+    # unique `potentiel_batir`. La part non constructible par famille (A/N) ne suffit pas : une
+    # parcelle en famille U mais non constructible pour une AUTRE raison (habitat interdit en UE,
+    # PPR zone rouge) était présentée 100 % constructible. Si le verdict ferme la parcelle, le
+    # modèle la porte 100 % non constructible et NOMME le motif.
+    non_constructible_motif = None
+    if parcel_id is not None:
+        try:
+            from ..faisabilite.potentiel_batir import potentiel_batir
+            pb = potentiel_batir(db, idu)
+            if pb and (pb.get("rien_a_batir") or not pb.get("constructible", True)):
+                nc_pct = 100.0
+                c_pct = 0.0
+                non_constructible_motif = pb.get("motif")
+        except Exception:  # noqa: BLE001 — enrichissement additif, jamais bloquant
+            pass
     # terrain constructible = terrain × part U/AU, seulement s'il y a du non constructible
     constructible_m2 = (
         round(terrain * c_pct / 100.0)
@@ -103,6 +119,7 @@ def sources_parcelle(db: Session, idu: str) -> dict[str, Any]:
         "zonage": zd["label"] if zd else None,  # Sourcé (PLU)
         "zonage_parts": zd["parts"] if zd else [],
         "non_constructible_pct": nc_pct,
+        "non_constructible_motif": non_constructible_motif,
         "constructible_m2": constructible_m2,
         "prix_achat_dvf": _prix_achat_dvf(db, parcel_id) if parcel_id else None,
     }

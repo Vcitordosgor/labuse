@@ -3482,7 +3482,7 @@ export interface BilanModele {
     idu: string; parcel_id: number | null; commune: string | null
     terrain: number | null; zonage: string | null
     zonage_parts: { zone: string; fam: string; pct: number }[]
-    non_constructible_pct: number; constructible_m2: number | null
+    non_constructible_pct: number; non_constructible_motif?: string | null; constructible_m2: number | null
     prix_achat_dvf: { valeur: number; date: string; label: string } | null
   }
   reperes_publics: Record<string, { valeur: number; n?: number; label: string; source: string; parkings?: number | null; logements?: number[] | null }>

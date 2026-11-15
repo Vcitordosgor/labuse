@@ -45,11 +45,16 @@ const CAUSE_COURT: Record<string, string> = {
   redhibitoire: 'rédhibitoire',
   capacite_nulle: 'capacité nulle',
   bati_non_ingere: 'bâti non estimé',
+  habitat_interdit: 'habitat interdit',
 }
 const causeCourt = (c?: string | null): string | null => {
   if (!c) return null
   if (c.startsWith('zone_non_constructible') || c.startsWith('zone_non_resolue')) return 'zone non constructible'
-  return CAUSE_COURT[c] ?? c.replace(/_/g, ' ')
+  // CHIRURGICAL-FIX-1 (E112a) — une cause « code:ZONE » (ex. « habitat_interdit:UE ») était rendue
+  // brute « habitat interdit:UE » (deux-points + code). On écrit la cause EN CLAIR, zone entre parenthèses.
+  const [head, zone] = c.split(':')
+  const libelle = CAUSE_COURT[head] ?? head.replace(/_/g, ' ')
+  return zone ? `${libelle} (zone ${zone})` : libelle
 }
 
 // RETOURS-29 (Comparatif v2, maquette 15-comparatif-v2) — SEULES les lignes que l'API sert, dans l'ordre

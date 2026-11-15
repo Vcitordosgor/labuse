@@ -78,6 +78,7 @@ _CAUSE_COURT = {
     "terrain_exigu": "terrain exigu", "hors_plu": "hors PLU", "redhibitoire": "rédhibitoire",
     "capacite_nulle": "capacité nulle", "bati_non_ingere": "bâti non estimé",
     "assiette_a_verifier": "assiette à vérifier",   # EXIGU-FIX-1 — ignorance, jamais « trop étroit »
+    "habitat_interdit": "habitat interdit",
 }
 
 
@@ -87,7 +88,11 @@ def _cause_court(c):
         return None
     if c.startswith("zone_non_constructible") or c.startswith("zone_non_resolue"):
         return "zone non constructible"
-    return _CAUSE_COURT.get(c, c.replace("_", " "))
+    # CHIRURGICAL-FIX-1 (E112a) — cause « code:ZONE » (« habitat_interdit:UE ») écrite EN CLAIR,
+    # zone entre parenthèses, au lieu du brut « habitat interdit:UE ».
+    head, _, zone = c.partition(":")
+    libelle = _CAUSE_COURT.get(head, head.replace("_", " "))
+    return f"{libelle} (zone {zone})" if zone else libelle
 
 
 def _sdp_residuelle_cause(r):
