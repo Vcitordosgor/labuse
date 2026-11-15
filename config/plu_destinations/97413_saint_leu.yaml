@@ -1229,6 +1229,8 @@ zones:
             soumise à autorisation).
           statut: valide
         limites_separatives:
+          fond_min_m: 4.0
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : le fond des constructions principales est réglé à 4 m FIXES (UE 7.2) — pas le H/2 des latérales (CD0560, relecture).'
           formule: 'H/2, minimum 4 m'
           note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:

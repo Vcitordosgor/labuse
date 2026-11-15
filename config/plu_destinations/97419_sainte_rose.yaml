@@ -65,6 +65,8 @@ zones:
             à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
+          fond_min_m: 3.0
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : le FOND a sa règle propre (art. 7.3, retrait 3 m) — le H/2 des latérales ne s''y applique jamais (AR0819, relecture).'
           formule: 'H/2, minimum 3 m'
           note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
@@ -213,6 +215,8 @@ zones:
             à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
+          fond_min_m: 3.0
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : le FOND a sa règle propre (art. 7.3, retrait 3 m) — le H/2 des latérales ne s''y applique jamais (AR0819, relecture).'
           formule: 'H/2, minimum 3 m'
           note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
@@ -354,6 +358,8 @@ zones:
             à 4 mètres. Le long de la RN2 et de la RD57, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
+          fond_min_m: 3.0
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : le FOND a sa règle propre (art. 7.3, retrait 3 m) — le H/2 des latérales ne s''y applique jamais (AR0819, relecture).'
           formule: 'H/2, minimum 3 m'
           note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
@@ -491,6 +497,8 @@ zones:
             à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
+          fond_min_m: 3.0
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : le FOND a sa règle propre (art. 7.3, retrait 3 m) — le H/2 des latérales ne s''y applique jamais (AR0819, relecture).'
           formule: 'H/2, minimum 3 m'
           note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade

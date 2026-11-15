@@ -1394,6 +1394,8 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : U5 7.2 mesure la hauteur DU SOL APRÈS TRAVAUX À L''ÉGOUT — référence égout, jamais le faîtage à sa place (AO0951/AV1150, relecture).'
           formule: 'H/2, minimum 3 m'
           note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
@@ -1498,6 +1500,8 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : U5 7.2 mesure la hauteur DU SOL APRÈS TRAVAUX À L''ÉGOUT — référence égout, jamais le faîtage à sa place (AO0951/AV1150, relecture).'
           formule: 'H/2, minimum 3 m'
           note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
@@ -2098,6 +2102,8 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : U5 7.2 mesure la hauteur DU SOL APRÈS TRAVAUX À L''ÉGOUT — référence égout, jamais le faîtage à sa place (AO0951/AV1150, relecture).'
           formule: 'H/2, minimum 3 m'
           note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
@@ -2174,6 +2180,8 @@ zones:
           citation: au point le plus proche de la voie, au moins égale à 4 mètres
           statut: valide
         limites_separatives:
+          h_reference: egout
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : U5 7.2 mesure la hauteur DU SOL APRÈS TRAVAUX À L''ÉGOUT — référence égout, jamais le faîtage à sa place (AO0951/AV1150, relecture).'
           formule: 'H/2, minimum 3 m'
           note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
@@ -2256,6 +2264,8 @@ zones:
           citation: au point le plus proche de la voie, au moins égale à 4 mètres
           statut: valide
         limites_separatives:
+          h_reference: egout
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : U5 7.2 mesure la hauteur DU SOL APRÈS TRAVAUX À L''ÉGOUT — référence égout, jamais le faîtage à sa place (AO0951/AV1150, relecture).'
           formule: 'H/2, minimum 3 m'
           note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:

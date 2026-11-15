@@ -913,6 +913,17 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     if hyp_overrides:
         from .engine import appliquer_overrides_hypotheses
         appliquer_overrides_hypotheses(hyp, hyp_overrides)
+    # MOTEUR-VERITE-FIX-5 LOT 2 — la garde MICRO-PARCELLE s'applique AUSSI au calcul de REPLI
+    # (le test de taille vivait dans le seul chemin gabarit : AB1185 12 m² / AE0736 37 m² à
+    # Saint-Benoît gardaient une capacité). Point commun des chemins : ici.
+    if ctx.surface_m2 and float(ctx.surface_m2) < 40.0:
+        from .engine import faisabilite_capacite_a_verifier
+        return ctx, faisabilite_capacite_a_verifier(
+            ctx.zone,
+            f"Constructible — capacité à vérifier : micro-parcelle ({float(ctx.surface_m2):.0f} m²)"
+            " — aucune capacité chiffrée seule, assemblage / projet d'ensemble à instruire.",
+            f"Micro-parcelle ({float(ctx.surface_m2):.0f} m²) : pas de capacité chiffrée seule.")
+
     recul = (float(rules.recul_limites_sep_m)
              if isinstance(rules.recul_limites_sep_m, (int, float))
              else hyp.recul_limites_defaut_m)
@@ -1669,13 +1680,24 @@ def verdict_ppr_partiel(session: Session, parcel_id: int) -> dict | None:
 # enclavée derrière le rouge reste à 0. L'emprise max PLU s'applique déjà à la portion hors rouge via
 # le gabarit (pm1 n'est plus re-soustraite ; le rouge seul est découpé, builder.py:348-365).
 # Le plus grand fragment hors rouge = parcelle − union(INTERDICTION) (PPR superposés déjà unionnés).
+# MOTEUR-VERITE-FIX-5 LOT 2 — les 200 m² d'un seul tenant et l'accès se vérifient sur le
+# morceau à la fois HORS ROUGE **ET ADMIS PAR LE PLU** (∩ zones U/AU) : la cascade vérifiait
+# « il existe du U/AU quelque part » puis mesurait le plus grand morceau hors rouge sur la
+# parcelle ENTIÈRE (AW1235 87 m², BM0158 144 m², DB0325 167 m², BO0383 194 m² passaient).
 _HORS_ROUGE_FRAGMENT = text(
     "WITH rouge AS ("
     "  SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))) AS g "
     "  FROM spatial_layers sl, parcels p WHERE p.id = :pid AND sl.kind='ppr' "
     "  AND labuse_ppr_couleur(sl.subtype, sl.attrs) <> 'bleu' AND ST_Intersects(sl.geom_2975, p.geom_2975)), "
-    "hr AS (SELECT ST_Difference(p.geom_2975, COALESCE((SELECT g FROM rouge), "
-    "       ST_GeomFromText('POLYGON EMPTY', 2975))) AS g FROM parcels p WHERE p.id = :pid), "
+    "uau AS ("
+    "  SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(z.geom_2975, p.geom_2975))) AS g "
+    "  FROM spatial_layers z, parcels p WHERE p.id = :pid AND z.kind = 'plu_gpu_zone' "
+    "  AND labuse_zone_famille(z.subtype) IN ('U','AU') AND ST_Intersects(z.geom_2975, p.geom_2975)), "
+    "hr AS (SELECT ST_Intersection("
+    "       ST_Difference(p.geom_2975, COALESCE((SELECT g FROM rouge), "
+    "         ST_GeomFromText('POLYGON EMPTY', 2975))), "
+    "       COALESCE((SELECT g FROM uau), p.geom_2975)) AS g "
+    "       FROM parcels p WHERE p.id = :pid), "
     "dump AS (SELECT (ST_Dump(ST_CollectionExtract(ST_MakeValid(g), 3))).geom AS part FROM hr) "
     "SELECT ST_AsText(part) AS wkt, ST_Area(part) AS m2 "
     "FROM dump ORDER BY ST_Area(part) DESC LIMIT 1"

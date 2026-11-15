@@ -658,10 +658,37 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     # `dryrun_cascade_results` du run épinglé, dédupliqué + arbitré), comme le reste de l'app, et NON
     # plus dans la table figée `cascade_results` (rail legacy mort). La part ROUGE exclue, elle, reste
     # déterminée EN DIRECT par la géométrie/classification unique `labuse_ppr_couleur` (ci-dessous).
-    from ..api.served_cascade import served_cascade_lines
-    _risques = [l for l in served_cascade_lines(session, idu) if l.get("layer_name") == "risques"]
-    _risques.sort(key=lambda l: l.get("result") == "HARD_EXCLUDE", reverse=True)
-    ppr = _risques[0] if _risques else None
+    # MOTEUR-VERITE-FIX-5 LOT 2 — le gabarit lit le verdict de la cascade REJOUÉE (couche
+    # risques évaluée en direct), pas le classement ÉPINGLÉ : AH0074 et BC1134 affichaient
+    # « Exclue » (run servi) pendant que la cascade fraîche disait « capacité réduite, sous
+    # prescriptions ». Repli sur le run servi si le rejeu échoue.
+    ppr = None
+    try:
+        from ..cascade.context import EvalContext as _EvalCtx, ParcelRef as _PRef
+        from ..cascade.engine import REGISTRY as _REG, _layers_for_phase as _lfp
+        _cctx = _EvalCtx(session)
+        _lc = next((l for l in _lfp(_cctx.rules, 1) if l["name"] == "risques"), None)
+        if _lc is not None:
+            _srow = session.execute(text(
+                "SELECT commune, COALESCE(contenance_m2, ST_Area(geom_2975)) FROM parcels "
+                "WHERE id = :pid"), {"pid": pid}).first()
+            _vs = _REG["risques"].evaluate(
+                _PRef(id=pid, idu=idu, commune=_srow[0] if _srow else None,
+                      surface_m2=float(_srow[1]) if _srow and _srow[1] else None),
+                _cctx, _lc.get("params") or {})
+            _vs = list(_vs) if isinstance(_vs, (list, tuple)) else [_vs]
+            _vs = [v for v in _vs if v is not None]
+            _vs.sort(key=lambda v: v.is_hard_exclude(), reverse=True)
+            if _vs:
+                ppr = {"result": getattr(_vs[0].result, "value", str(_vs[0].result)),
+                       "detail": _vs[0].detail}
+    except Exception:  # noqa: BLE001 — rejeu indisponible : repli sur le run servi
+        ppr = None
+    if ppr is None:
+        from ..api.served_cascade import served_cascade_lines
+        _risques = [l for l in served_cascade_lines(session, idu) if l.get("layer_name") == "risques"]
+        _risques.sort(key=lambda l: l.get("result") == "HARD_EXCLUDE", reverse=True)
+        ppr = _risques[0] if _risques else None
     ppr_src = RegulatorySource(document="PPR — zonage réglementaire", provider=PPR_PROVIDER)
     exclusions: list[Exclusion] = []
     # PPR-UNIQUE-1 — la part ROUGE exclue est déterminée EN DIRECT par la classification UNIQUE
