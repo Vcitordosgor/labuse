@@ -119,6 +119,35 @@ def test_marge_surelevation_nommee_par_la_contrainte_qui_mord():
     assert libelle_marge_surelevation({}) == "Marge de surélévation sous la règle de hauteur"
 
 
+def test_estimer_aucun_mot_constructible_sur_parcelle_non_constructible():
+    """pt7 — AM0838 (habitat interdit en UE) : Estimer ne qualifie pas 11 762 m² d'« assiette
+    constructible » et la phrase de classement porte le motif, pas « l'assiette constructible limite »."""
+    from labuse.pige.api import _classement_phrase, _contrainte_limitante, _parcelle_mesures
+
+    # phrase de classement : non constructible → motif, jamais « assiette constructible »
+    ph = _classement_phrase("0", "Non retenue",
+                            {"detail": "l'assiette constructible limite : l'aléa fort déduit…"},
+                            nc_motif="Rien à bâtir — Habitat interdit dans cette zone")
+    assert "Habitat interdit" in ph and "assiette constructible" not in ph
+    # la contrainte limitante est neutralisée (pas de règle de capacité sur une parcelle non constructible)
+    assert _contrainte_limitante(None, "x", {}, "UE", "Z", non_constructible=True) == {}
+    # parcelle constructible : la phrase garde sa formulation
+    assert "marge constructible reste ouverte" in _classement_phrase("B", "Bonne", {})
+
+    # le tableau des mesures : « Surface hors aléa fort » (non constr.) vs « Assiette constructible »
+    class _Res:
+        def scalar(self): return 11762
+        def mappings(self): return self
+        def first(self): return None
+    class _DB:
+        def execute(self, *a, **k): return _Res()
+        def rollback(self): pass
+    nc = _parcelle_mesures(_DB(), "x", {"potentiel_transformation": {}}, non_constructible=True)[0]
+    ok = _parcelle_mesures(_DB(), "x", {"potentiel_transformation": {}}, non_constructible=False)[0]
+    assert nc["cle"] == "Surface hors aléa fort" and "constructible" not in nc["cle"]
+    assert ok["cle"] == "Assiette constructible, aléa déduit"
+
+
 def test_excel_garde_les_formules_quand_le_resultat_est_calculable():
     e = EntreesBilan(programme=Programme(terrain=2000), produits=[Produit("P1", 10, 600, 4785, 0.20)],
                      postes={"achat": SaisiePoste(valeur=1_000_000, etat="montant"),
