@@ -150,20 +150,35 @@ class BaremeStationnement:
     # {unite: 'm2_par_logement'|'pct_sdp'|'emplacements_par_logements', valeur, seuil_sdp_m2?, citation}.
     velo: Optional[dict] = None
 
-    def velo_requis(self, logements: int, sdp_m2: float) -> Optional[tuple[str, str]]:
+    def velo_requis(self, logements: int, sdp_m2: float,
+                    par_pieces: "Optional[list[int]]" = None) -> Optional[tuple[str, str]]:
         """(quantité, libellé) du stationnement vélo exigé, ou None si le PLU n'en fixe pas. Ne dessine rien
         (le moteur ne place pas les vélos) : chiffre l'exigence pour l'afficher « à prévoir », jamais « non
-        modélisé »."""
+        modélisé ». `par_pieces` = liste des pièces de chaque logement (pour les normes par TYPOLOGIE)."""
+        def _fr(x):  # format français, garde la demie (22,5 ≠ 22)
+            return (f"{x:.2f}".rstrip("0").rstrip(".")).replace(".", ",")
         v = self.velo
-        if not isinstance(v, dict) or not isinstance(v.get("valeur"), (int, float)):
+        if not isinstance(v, dict):
             return None
-        val = float(v["valeur"]); unite = v.get("unite")
+        unite = v.get("unite")
         if v.get("seuil_sdp_m2") and sdp_m2 < float(v["seuil_sdp_m2"]) - 1e-6:
             return None   # seuil de déclenchement non atteint (ex. Saint-Pierre > 300 m²)
+        # ETUDE-STATIONNEMENT-FIX-3 (LOT 4) — norme PAR TYPOLOGIE (Le Tampon 12.4 : 0,75 m²/logt ≤ 2 pièces,
+        # 1,5 m²/logt au-delà, minimum 3 m²).
+        if unite == "m2_typologie":
+            petit = float(v.get("petit_m2", 0.75)); grand = float(v.get("grand_m2", 1.5))
+            seuil = int(v.get("seuil_pieces", 2)); mini = float(v.get("min_m2", 0.0))
+            pcs = par_pieces if par_pieces else [3] * logements   # défaut prudent (grand) si typologie inconnue
+            tot = sum(petit if (p or 0) <= seuil else grand for p in pcs)
+            tot = max(tot, mini)
+            return (f"{_fr(tot)} m²", f"{petit:g} m²/logt ≤ {seuil} pièces, {grand:g} m²/logt au-delà (min {mini:g} m²)")
+        if not isinstance(v.get("valeur"), (int, float)):
+            return None
+        val = float(v["valeur"])
         if unite == "m2_par_logement":
-            return (f"{val * logements:g} m²", f"{val:g} m² par logement")
+            return (f"{_fr(val * logements)} m²", f"{val:g} m² par logement")
         if unite == "pct_sdp":
-            return (f"{round(val / 100.0 * sdp_m2):g} m²", f"{val:g} % de la surface de plancher")
+            return (f"{_fr(val / 100.0 * sdp_m2)} m²", f"{val:g} % de la surface de plancher")
         if unite == "emplacements_par_logements" and val > 0:
             return (f"{math.ceil(logements / val - 1e-9):g} emplacements", f"1 emplacement / {val:g} logements")
         return None

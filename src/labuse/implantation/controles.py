@@ -572,7 +572,10 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
 
     # ETUDE-STATIONNEMENT-FIX-2 (reliquat #5) — stationnement VÉLO CHIFFRÉ quand le PLU le fixe (le moteur ne
     # le dessine pas → « à prévoir : X », jamais « non modélisé »). Sinon « Non vérifié » (pas « sans règle »).
-    _velo = regles.stationnement.velo_requis(cap.logements, cap.sdp_m2) if regles.stationnement.validee else None
+    _par_pieces = [conv.modules[o.type_logement].pieces for o in scene.of("module")
+                   if o.type_logement in conv.modules]
+    _velo = (regles.stationnement.velo_requis(cap.logements, cap.sdp_m2, _par_pieces)
+             if regles.stationnement.validee else None)
     if _velo is not None:
         _cit = (regles.stationnement.velo or {}).get("citation")
         out.append(ControleReg("Stationnement vélo", f"{_velo[1]} (servi au PLU)", f"à prévoir : {_velo[0]}",
