@@ -851,15 +851,26 @@ def _p5_plan_masse(payload: dict, retenu: dict, *, titre: str = None) -> str:
              "batiment_emprise", "voie"]
     fig = _svg_plan(sc["geojson"], kinds, h=420)
     sm = sc.get("surfaces_mesurees_m2") or {}
+    # CHIRURGICAL-FIX-1 (LOT H pt8) — l'espace libre mesuré prend le NOM de la règle qu'il satisfait
+    # (perméable ≠ pleine terre) : AM0838/UE L'Étang-Salé impose « 25 % perméable », pas de la pleine
+    # terre. Le libellé ne conflue plus les deux notions (« Pleine terre (espace libre perméable) »).
+    _el_nature = None
+    try:
+        from ..faisabilite.zonage import resolve_zone
+        _zr = resolve_zone(payload.get("zone"), payload.get("commune"))
+        _el_nature = getattr(_zr, "pleine_terre_nature", None) if _zr else None
+    except Exception:  # noqa: BLE001 — libellé par défaut, jamais bloquant pour l'Étude
+        _el_nature = None
+    from ..faisabilite.zonage import libelle_espaces_libres
+    _el_lib = f"{libelle_espaces_libres(_el_nature)} (espace libre)"
     rows = [
         f'<tr><td class="k">Emprise des bâtiments</td><td>{_m2(sc.get("emprise_sol_m2"))}</td>'
         f'<td class="n"><span class="chip e">Estimé</span></td></tr>',
         f'<tr><td class="k">Places dessinées</td><td>{sc["stationnement"]["places"]}</td>'
         f'<td class="n"><span class="chip e">Estimé</span></td></tr>',
-        # DOC-ETUDE-029 — le libellé dit ce que la valeur EST : `pleine_terre_m2` (la part pleine terre
-        # perméable), pas le total des espaces libres. Plus de « Espaces libres · dont pleine terre » qui
-        # laissait croire que le chiffre était l'ensemble des espaces libres.
-        f'<tr><td class="k">Pleine terre (espace libre perméable)</td><td>{_m2(sc.get("pleine_terre_m2"))}</td>'
+        # DOC-ETUDE-029 — le libellé dit ce que la valeur EST : la part d'espace libre qui satisfait la
+        # règle de la zone (perméable / pleine terre…), pas le total des espaces libres.
+        f'<tr><td class="k">{_el_lib}</td><td>{_m2(sc.get("pleine_terre_m2"))}</td>'
         f'<td class="n"><span class="chip d">Dérivé</span></td></tr>',
     ]
     acces = sc["stationnement"].get("acces")

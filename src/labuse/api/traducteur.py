@@ -64,12 +64,17 @@ def _applied(zr, surface: float) -> list[dict]:
     add("Recul sur voirie", f"{zr.recul_voirie_m} m" if isinstance(zr.recul_voirie_m, (int, float)) else zr.recul_voirie_m, src.get("recul_voirie"))
     add("Recul sur limites séparatives", f"{zr.recul_limites_sep_m} m" if isinstance(zr.recul_limites_sep_m, (int, float)) else zr.recul_limites_sep_m, src.get("recul_limites"))
     add("Stationnement", zr.stat_logement, src.get("stationnement") or src.get("stat"))
+    # CHIRURGICAL-FIX-1 (LOT H pt8) — la règle d'espaces libres (art. 2.6) garde son nom (perméable ≠
+    # pleine terre) : « minimale » accolé au libellé de nature de la règle citée.
+    from ..faisabilite.zonage import libelle_espaces_libres
+    _pt_lib = libelle_espaces_libres(getattr(zr, "pleine_terre_nature", None)) + " minimale"
+    # (« Surface perméable minimale » / « Pleine terre minimale » selon la citation)
     if isinstance(zr.pleine_terre_pct, (int, float)):
         pt_m2 = round(zr.pleine_terre_pct / 100.0 * surface)
-        add("Pleine terre minimale", f"{pt_m2} m² ({zr.pleine_terre_pct:g} % de {surface:.0f} m²)",
+        add(_pt_lib, f"{pt_m2} m² ({zr.pleine_terre_pct:g} % de {surface:.0f} m²)",
             src.get("pleine_terre"), calc=f"{zr.pleine_terre_pct:g} % × {surface:.0f} m²")
     elif zr.pleine_terre_pct:
-        add("Pleine terre minimale", zr.pleine_terre_pct, src.get("pleine_terre"))
+        add(_pt_lib, zr.pleine_terre_pct, src.get("pleine_terre"))
     if zr.hauteur_mode == "prospect":
         out.append({"regle": "Hauteur", "valeur": "calculée par prospect (L ≥ H selon la largeur de voirie)",
                     "source": src.get("hauteur") or "règle de prospect", "note": "dépend de la voirie riveraine"})

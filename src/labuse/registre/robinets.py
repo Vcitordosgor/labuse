@@ -414,6 +414,13 @@ ROBINETS: dict[str, Robinet] = {
               "prix_achat_historique_eur",)),
  "pdf_pre_dossier_pc": _r("pdf", "Pré-dossier PC (ZIP CERFA 13406*17)", None,
     "/pre-dossier/zip", "pdf", chiffres=("zone_plu_famille", "zonage_plu_couche",)),
+ # CHIRURGICAL-FIX-1 (LOT H pt2) — l'Apporteur (pièce qui circule seule) liste TOUTES les alertes de
+ # la fiche via `contraintes_parcelle_liste` (mono-robinet : vérité tenue par la fiche de règle). Ce
+ # n'est PAS une ligne de fiche (catégorie pdf, pas fiche) : le détail des aléas du Dossier reste
+ # aleas_parcelle_liste au §5.
+ "pdf_apporteur": _r("pdf", "Apporteur d'affaire", None,
+    "/apporteur/{idu} (builder exports EXPORTS-2)", "pdf",
+    chiffres=("contraintes_parcelle_liste",)),
  # DOCS-1 (décision Vic) — le Dossier banquier, l'Argumentaire, la Lettre de zonage ET le document
  # builder-exports « Financier » sont SUPPRIMÉS (routes, cartes, menus, registre, tests). Le SEUL
  # document financier qui reste est le Bilan (écran Bilan, `/bilan/{idu}.pdf`, moteur api/bilan.py).

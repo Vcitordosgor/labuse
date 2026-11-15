@@ -149,7 +149,12 @@ def _c_prix_achat(db, idu, f):
 
 @extracteur("coproprietes_liste")
 def _c_copro(db, idu, f):
-    return _nz(f.get("coproprietes"))
+    # CHIRURGICAL-FIX-1 (LOT H pt5) — le Dossier n'affirme « Bâti en copropriété » que pour une copro
+    # SUR la parcelle (rattachement cadastre/géocode). Les copros « proche_20m » sont des voisines
+    # (BW2635 au 2 rue d'Allemagne listait les 4 et 6) : elles vivent dans la fiche « à proximité »,
+    # pas dans l'identité du bien.
+    sur_parcelle = [c for c in (f.get("coproprietes") or []) if c.get("rattachement") != "proche_20m"]
+    return _nz(sur_parcelle)
 
 
 @extracteur("filiation_parcelle")
@@ -605,6 +610,22 @@ def _c_marge_surel(db, idu, f):
 @extracteur("aleas_parcelle_liste")
 def _c_aleas(db, idu, f):
     return _nz((f.get("aleas") or {}).get("liste"))
+
+
+@extracteur("contraintes_parcelle_liste")
+def _c_contraintes_parcelle(db, idu, f):
+    # CHIRURGICAL-FIX-1 (LOT H pt2) — LA MÊME liste d'alertes que la fiche §Risques-et-environnement et
+    # le Comparatif : TOUTES les lignes SOFT_FLAG / HARD_EXCLUDE (aléas, zone humide, inondation TRI,
+    # bruit, SUP…), hors bassin versant (contexte, pas une alerte). L'Apporteur, pièce qui circule
+    # seule, lit ce champ pour ne masquer aucune alerte (zone humide AD0887, inondation extrême BW2635).
+    # Hors ALERTE : contexte de marché (VEFA), motifs de SCORING (déclassement, bâti, SDP résiduelle)
+    # et bassin versant (hydrographie) — ce ne sont pas des « contraintes qui gênent le projet ».
+    _hors_alerte = {"bassin_versant", "vefa_neuf", "declassement", "bati", "residuel_socle"}
+    out = [{"libelle": l.get("libelle") or l.get("detail") or "", "nature": l.get("layer")}
+           for l in (f.get("lines") or [])
+           if isinstance(l, dict) and l.get("result") in ("HARD_EXCLUDE", "SOFT_FLAG")
+           and l.get("layer") not in _hors_alerte]
+    return _nz(out)
 
 
 @extracteur("n_vigilances")

@@ -266,6 +266,17 @@ DONNEES: dict[str, Donnee] = {
     # (`georisques_mvt`) et l'inondation AZI/TRI (`georisques_azi_tri`), plus l'arrêté PPR (`deal_ppr`)
     # — au lieu de l'agrégat `georisques_api` (depuis le Circuit, on voit désormais la ligne alimentée).
     reservoirs=("deal_ppr", "georisques_mvt", "georisques_azi_tri",), portee="run", type="liste"),
+ # CHIRURGICAL-FIX-1 (LOT H pt2) — LISTE COMPLÈTE des alertes de la parcelle (toutes les lignes
+ # SOFT/HARD de la fiche §Risques-et-environnement + Comparatif : aléas, zone humide, inondation TRI,
+ # bruit, SUP, ICPE, EBC…), hors marché/scoring. L'Apporteur (pièce qui circule seule) lit CE champ
+ # pour ne masquer aucune alerte — même liste partout.
+ "contraintes_parcelle_liste": C("Contraintes relevées (liste)", "liste", "parcelle",
+    "liste des contraintes/alertes de la parcelle (aléas, zone humide, inondation TRI, bruit, SUP, "
+    "ICPE, EBC, PPR…) — toutes les lignes SOFT/HARD de la cascade servie, hors marché et scoring ; "
+    "même source que la fiche §Risques-et-environnement et le Comparatif",
+    moteur="cascade", calcul="moteur",
+    fonction="src/labuse/exports/robinet_fiche.py:_c_contraintes_parcelle (lignes SOFT_FLAG/HARD_EXCLUDE)",
+    reservoirs=("deal_ppr", "georisques_mvt", "georisques_azi_tri",), portee="run", type="liste"),
  "n_extraits_plu": C("extraits (règlement)", "nombre", "commune",
     "extraits de règlement servis par commune (corpus)",
     moteur="commune_compteurs", calcul="moteur",
@@ -1313,9 +1324,13 @@ DONNEES: dict[str, Donnee] = {
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:bloc_potentiel (table_rase.plancher_m2)",
     reservoirs=("bd_topo", "cosia", "gpu_plu_api_carto",), portee="run"),
- "marge_surelevation_m": C("Marge de surélévation (au faîtage)", "m", "parcelle",
-    "hauteur restante sous la règle de FAÎTAGE de la zone, comparée au faîtage bâti mesuré (BD "
-    "TOPO) — RECETTE-7 E1 : faîtage contre faîtage ; repli égout+toiture type avec incertitude",
+ # CHIRURGICAL-FIX-1 (LOT H pt6) — libellé SANS face de toit : la marge se compare à l'égout OU au
+ # faîtage selon la contrainte qui mord (LiDAR HD). Le document nomme la face depuis `hauteur_contrainte`
+ # (miroir.rendu_sections / blocs.potentiel) ; le registre ne fige plus « (au faîtage) » (il inversait
+ # le libellé d'AD0887 : 3,9 m à l'égout imprimés « au faîtage »).
+ "marge_surelevation_m": C("Marge de surélévation sous la règle de hauteur", "m", "parcelle",
+    "hauteur restante sous la règle de hauteur de la zone (égout OU faîtage selon la contrainte qui "
+    "mord, LiDAR HD), comparée au bâti mesuré — RECETTE-10 T1 : égout contre égout, faîtage contre faîtage",
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:surelevation",
     # CIRCUIT-6 lot 7 (fuite n°2, fusion RECETTE-10 T1) — quand le LiDAR HD a mesuré égout ET

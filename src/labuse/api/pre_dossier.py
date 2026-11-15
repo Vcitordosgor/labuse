@@ -911,7 +911,30 @@ def _pcmi4(db: Session, idu: str, parcelle: dict, adr: dict | None = None,
         lignes.insert(1, ("Adresse du terrain",
                           f"{voie}{f', {cp}' if cp else ''} (rattachement automatique BAN, à vérifier "
                           "par le pétitionnaire).", "Base Adresse Nationale"))
-    for it in (data.get("risques") or {}).get("couches", []):
+    _couches = (data.get("risques") or {}).get("couches", [])
+    # CHIRURGICAL-FIX-1 (LOT H pt3) — MÊME clause que le Dossier : on retire « (pas d'exclusion
+    # automatique) » du PPR partiel quand LABUSE n'a rien à construire (zone rouge exclue, SDP nulle).
+    # IS0448 (34 % rouge, SDP 0) l'affichait à tort alors que le Dossier/Gabarit excluent la zone rouge.
+    from .risques_arbitrage import ajuster_clause_affichage
+    _pab = (fiche or {}).get("potentiel_a_batir") or {}
+    _nc_clause = bool(_pab.get("rien_a_batir")) or _pab.get("constructible") is False \
+        or _pab.get("sdp_restante_m2") == 0
+
+    def _det(it):
+        return ajuster_clause_affichage(it.get("detail"), _nc_clause) or "parcelle concernée"
+    # CHIRURGICAL-FIX-1 (LOT H pt3) — « aucune prescription PPR opposable » se décide au niveau de la
+    # PARCELLE, pas couche par couche : IS0448 (34 % zone rouge + 66 % zone bleue) écrivait « aucune
+    # prescription opposable » sur l'aléa fort alors que le Dossier et le Gabarit excluent la zone
+    # rouge. Si UNE couche place la parcelle en zone PPR (rouge/bleue), les prescriptions PPR
+    # s'appliquent — l'aléa ne peut plus se dire « hors zonage PPR ». On regarde aussi la cascade servie.
+    def _txt(x):
+        return ((x.get("label") or "") + " " + (x.get("detail") or "")).lower()
+    _parcelle_en_ppr = any(k in _txt(c) for c in _couches for k in ("zone rouge", "zone bleue")) or any(
+        isinstance(l, dict) and l.get("layer") == "risques"
+        and any(k in ((l.get("libelle") or "") + " " + (l.get("detail") or "")).lower()
+                for k in ("zone rouge", "zone bleue", "ppr"))
+        for l in ((fiche or {}).get("lines") or []))
+    for it in _couches:
         lab = (it.get("label") or "").lower()
         det = (it.get("detail") or "").lower()
         # EXPORTS-FIX-3 LOT 3 (#6) — ne parler de PRESCRIPTIONS PPR que si la parcelle est en ZONE PPR
@@ -921,12 +944,20 @@ def _pcmi4(db: Session, idu: str, parcelle: dict, adr: dict | None = None,
         est_ppr_zone = any(k in det or k in lab for k in ("zone rouge", "zone bleue", "zone rouge ppr"))
         if est_ppr_zone:
             lignes.append(("Risque naturel (PPR)",
-                           f"{it['label']} : {it.get('detail') or 'parcelle concernée'}. Les "
+                           f"{it['label']} : {_det(it)}. Les "
                            "prescriptions du règlement PPR (niveau de plancher, fondations) sont à "
                            "intégrer au projet.", "DEAL Réunion — PPR (Géorisques)"))
+        elif any(k in lab or k in det for k in ("inond", "mouvement", "aléa", "alea")) and _parcelle_en_ppr:
+            # CHIRURGICAL-FIX-1 (LOT H pt3) — la parcelle EST en zone PPR : l'aléa relève du règlement
+            # PPR, on n'écrit JAMAIS « aucune prescription opposable ».
+            lignes.append(("Aléa naturel (dans le périmètre PPR)",
+                           f"{it['label']} : {_det(it)}. La parcelle "
+                           "étant en zone de PPR, les prescriptions du règlement PPR s'appliquent au "
+                           "projet (niveau de plancher, fondations) ; une étude géotechnique reste "
+                           "recommandée.", "DEAL Réunion — PPR (Géorisques)"))
         elif any(k in lab or k in det for k in ("inond", "mouvement", "aléa", "alea")):
             lignes.append(("Aléa naturel (Géorisques)",
-                           f"{it['label']} : {it.get('detail') or 'parcelle concernée'}. Aléa "
+                           f"{it['label']} : {_det(it)}. Aléa "
                            "cartographié HORS zonage PPR réglementaire sur la parcelle — aucune "
                            "prescription PPR opposable ; une étude géotechnique reste recommandée.",
                            "Géorisques — cartographie des aléas (DEAL)"))
