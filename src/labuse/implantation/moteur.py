@@ -628,25 +628,36 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
     # transport collectif bien desservi. L151-36 : autres logements < 500 m → au plus 1. On remplace
     # alors le barème servi par ce plafond, et la citation dit la règle RETENUE (loi, article).
     _art151, _cite151 = "L151-35 (plafond national)", None
-    # ETUDE-STATIONNEMENT-FIX-1 (LOT 3, règle permanente #4) — si le PLU sert une ligne DÉDIÉE à la
-    # destination du projet (résidence senior/étudiante/logement social), on la lit via `destination`
-    # (barème typé conservé) et le plafond national L151-35 n'entre QUE s'il est plus favorable (contrôle
-    # affiché par `_stationnement_regimes`). Sinon (pas de ligne dédiée) : plafond national comme avant.
-    from .regles import DESTINATION_PAR_PROJET
-    _dest = DESTINATION_PAR_PROJET.get(type_projet or "collectif", "collectif")
-    _sert_dest = _dest != "collectif" and regles.stationnement.has_destination(_dest)
-    if stationnement_ratio is None and type_projet and not _sert_dest:
+    from dataclasses import replace
+    from .regles import BaremeStationnement, DESTINATION_PAR_PROJET
+    # ETUDE-STATIONNEMENT-FIX-2 (LOT 2) — le plafond national (L151-35/36) est un PLAFOND : il ne peut que
+    # faire BAISSER l'exigence locale, jamais la relever, et il s'applique MÊME quand le PLU sert une ligne
+    # dédiée (contrairement à FIX-1 qui le court-circuitait sur ligne dédiée). On l'ATTACHE donc au barème
+    # typé comme une borne (`plafond_national`), et `exiger` retient le min. Il ne REMPLACE le barème que
+    # (a) sur demande explicite de l'UI (`stationnement_ratio` passé) ou (b) quand il n'y a PAS de barème
+    # local validé — pour pouvoir chiffrer une capacité sous régime réduit.
+    _plaf = None
+    if stationnement_ratio is None and type_projet:
         _r151 = _plafond_l151(session, idus, type_projet, regles.stationnement)
         if _r151 is not None:
-            stationnement_ratio, _art151, _cite151 = _r151
+            _ratio, _art151, _cite151 = _r151
+            _plaf = {"ratio": _ratio, "article": _art151, "citation": _cite151}
     if stationnement_ratio is not None:
-        from dataclasses import replace
-
-        from .regles import BaremeStationnement
+        # régime réduit choisi dans l'UI : on remplace le barème par le plafond par logement.
         regles = replace(regles, stationnement=BaremeStationnement(
             validee=True, mode="par_logement", base=None, arrondi="superieur",
             flat_places=stationnement_ratio, lignes=(), article=_art151,
             page_pdf=None, citation=_cite151 or f"plafond {stationnement_ratio:g} place / logement sous condition d'éligibilité"))
+    elif _plaf is not None:
+        if regles.stationnement.validee:
+            # barème local validé : on l'ATTACHE comme borne (ne relève jamais, s'applique à la ligne dédiée).
+            regles = replace(regles, stationnement=replace(regles.stationnement, plafond_national=_plaf))
+        else:
+            # aucun barème local : le plafond sert de barème pour chiffrer la capacité (régime réduit).
+            regles = replace(regles, stationnement=BaremeStationnement(
+                validee=True, mode="par_logement", base=None, arrondi="superieur",
+                flat_places=_plaf["ratio"], lignes=(), article=_art151, plafond_national=_plaf,
+                page_pdf=None, citation=_cite151 or f"plafond {_plaf['ratio']:g} place / logement sous condition d'éligibilité"))
     zi = terrain.zone_implantation
     if zi is None or zi.is_empty or terrain.aire_zone_m2 < 60:
         return ([], [], None,

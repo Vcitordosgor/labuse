@@ -87,3 +87,33 @@ def test_saint_leu_collectif_par_pieces():
     """Saint-Leu : habitat collectif par pièces (3-5 pièces = 1,5) → 20 T3 = 30 (était 40, barème individuel)."""
     b = R.charger("97413", "UD").stationnement
     assert b.exiger(_collectif(20), destination="collectif").places == 30
+
+
+def test_plafond_national_ne_fait_que_baisser():
+    """LOT 2 — le plafond national L151-35 est un PLAFOND : attaché à un barème local, il borne l'exigence
+    (la fait baisser) mais ne la relève JAMAIS, et il s'applique même sur une ligne dédiée."""
+    from dataclasses import replace
+    b = R.charger("97413", "UD").stationnement  # collectif = 1,5/logt → 20 = 30
+    assert b.exiger(_collectif(20), destination="collectif").places == 30
+    # plafond 1/logt : borne 30 → 20 (fait baisser)
+    b1 = replace(b, plafond_national={"ratio": 1.0, "article": "L151-35"})
+    ex1 = b1.exiger(_collectif(20), destination="collectif")
+    assert ex1.places == 20 and "barème local = 30" in ex1.formules_ecartees
+    # plafond 2/logt : 20×2 = 40 ≥ 30 → NE relève pas, reste 30
+    b2 = replace(b, plafond_national={"ratio": 2.0, "article": "L151-35"})
+    assert b2.exiger(_collectif(20), destination="collectif").places == 30
+
+
+@pytest.mark.parametrize("insee,zone,fonction_seulement", [
+    ("97415", "U1a", False),   # quota de logements locatifs sociaux → vrai programme d'habitation
+    ("97414", "UZ", False),    # « maximum 1 logement individuel » dans les espaces d'habitat → vrai habitat
+    ("97407", "1AUe", True),   # renvoi vers Ue (logement de fonction) : hérite la restriction
+    ("97411", "Uac", True),    # renvoi vers Ua (habitation pour direction/surveillance) : hérite
+    ("97407", "Ue", True),
+    ("97411", "Ua", True),
+])
+def test_logement_fonction_detection(insee, zone, fonction_seulement):
+    """LOT 2 — le filtre « logement de fonction seulement » : ne se déclenche PAS quand la zone ouvre un vrai
+    programme d'habitation (social, individuel), et HÉRITE la restriction de la zone parente via renvoi."""
+    from labuse.implantation.service import _logement_fonction_seulement
+    assert _logement_fonction_seulement(insee, zone) is fonction_seulement

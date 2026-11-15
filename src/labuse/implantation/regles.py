@@ -127,6 +127,10 @@ class BaremeStationnement:
     integ_pct: Optional[float] = None
     integ_seuil_m2: Optional[float] = None
     integ_citation: Optional[str] = None
+    # ETUDE-STATIONNEMENT-FIX-2 (LOT 2) — plafond NATIONAL du Code de l'urbanisme (L151-35/36). C'est un
+    # PLAFOND : il ne peut que FAIRE BAISSER l'exigence locale, jamais la relever, et il s'applique MÊME
+    # quand le PLU sert une ligne dédiée. {ratio, article, citation}. ratio = places/logement au plus.
+    plafond_national: Optional[dict] = None
 
     def places_pour(self, *, pieces: int, sdp_m2: float, destination: str = "collectif") -> Optional[float]:
         """Ratio par logement pour un logement (aperçu/jauge). Ne renvoie que la part RÉSIDENT par logement
@@ -161,6 +165,19 @@ class BaremeStationnement:
         """Vrai si le barème sert une ligne DÉDIÉE à cette destination (social/senior/étudiant)."""
         return self.validee and any(l.destination == destination and l.role == "base" and
                                     (l.places is not None or l.par_m2 is not None) for l in self.lignes)
+
+    def _cap_plafond(self, residents: int, n: int, formule: str, ecartees: tuple) -> tuple[int, str, tuple]:
+        """ETUDE-STATIONNEMENT-FIX-2 (LOT 2) — borne l'exigence RÉSIDENT par le plafond national (ne la
+        relève jamais, s'applique même sur une ligne dédiée). Renvoie (residents, formule, écartées)."""
+        if not (self.plafond_national and n > 0):
+            return residents, formule, ecartees
+        ratio = float(self.plafond_national.get("ratio", 0.0))
+        cap = int(math.floor(n * ratio + 1e-9))
+        if cap >= residents:
+            return residents, formule, ecartees
+        art = self.plafond_national.get("article", "L151-35")
+        return cap, (f"plafond national {art} : au plus {ratio:g} place/logt × {n} → {cap} "
+                     f"(borne l'exigence locale {residents})"), ecartees + (f"barème local = {residents}",)
 
     # ------------------------------------------------------------------ exigence au niveau du PROGRAMME
     def _ligne_base(self, pieces: int, sdp_m2: float, destination: str) -> Optional[LigneBareme]:
@@ -218,8 +235,9 @@ class BaremeStationnement:
                 else:
                     tot = self.arrondir(n * sp.places, sp.arrondi)
                     formule = f"{destination} : {sp.places:g} place/logt × {n} logts"
-                return ExigenceStationnement(int(tot), int(tot), 0, self.mode, formule, (), conditions, True,
-                                             {"destination": destination})
+                tot, formule, ecartees = self._cap_plafond(int(tot), n, formule, ())
+                return ExigenceStationnement(int(tot), int(tot), 0, self.mode, formule, ecartees, conditions,
+                                             True, {"destination": destination})
 
         candidats: list[tuple[float, str]] = []      # (places résident, libellé de formule)
         couvert = True
@@ -315,6 +333,7 @@ class BaremeStationnement:
                     details["visiteurs"] = vis
 
         residents = int(residents)
+        residents, formule, ecartees = self._cap_plafond(residents, n, formule, ecartees)
         return ExigenceStationnement(
             places=residents + vis, places_residents=residents, places_visiteurs=vis,
             base=self.mode, formule=formule, formules_ecartees=ecartees,

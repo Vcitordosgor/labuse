@@ -935,39 +935,67 @@ def _refus_constructibilite(session, idus: list[str]):
         # ETUDE-STATIONNEMENT-FIX-1 — « habitat secondaire » : si le logement n'est permis dans la zone que
         # comme LOGEMENT DE FONCTION (employés, gardiennage, personnel…), ce n'est PAS un programme
         # d'habitation chiffrable → l'Étude refuse avec ce motif (au lieu de dessiner un immeuble de logements).
-        for idu, v in construct:
-            zone = v.get("zone_lib")
-            if zone and _logement_fonction_seulement(idu[:5], zone):
-                return (zone, "Logement de fonction uniquement (employés / gardiennage) — pas un programme "
-                              "d'habitation chiffrable dans cette zone")
-        return None   # au moins une parcelle vraiment constructible → on étudie
+        # FIX-2 (LOT 2) — ne refuser QUE si TOUTES les parcelles constructibles sont en logement de fonction :
+        # une seule parcelle « fonction » ne doit pas condamner un projet multi-parcelles dont d'autres
+        # parcelles portent un vrai programme d'habitation.
+        non_fonction = [(idu, v) for idu, v in construct
+                        if not (v.get("zone_lib") and _logement_fonction_seulement(idu[:5], v.get("zone_lib")))]
+        if non_fonction:
+            return None   # au moins une parcelle porte un vrai programme d'habitation → on étudie
+        zone = construct[0][1].get("zone_lib")
+        return (zone, "Logement de fonction uniquement (employés / gardiennage) — pas un programme "
+                      "d'habitation chiffrable dans cette zone")
     # toutes fermées : motif de celle qui porte le plus de contexte (zone connue), sinon la première
     principal = max(verdicts.values(), key=lambda v: (v.get("zone_lib") is not None, v.get("sdp_restante_m2") or 0))
     return (principal.get("zone_lib"), principal.get("motif") or "Parcelle non constructible")
 
 
 _FONCTION_MARQ = ("de fonction", "gardien", "surveillance", "personnel", "employé", "usagers des équipement",
-                  "indispensable au fonctionnement")
+                  "fonctionnement", "nécessaires à la direction", "indispensable au fonctionnement")
+# FIX-2 (LOT 2) — marques d'une VRAIE ouverture de l'habitation ordinaire (≠ logement de fonction). Si l'une
+# figure, la zone n'est PAS « fonction seulement » : Saint-Louis UZ (« maximum 1 logement individuel » dans les
+# espaces d'habitat) et Saint-Paul U1a (quota de logements locatifs sociaux) ouvrent un programme d'habitation.
+_HABITAT_OUVERT = ("logement individuel", "logements individuels", "logement collectif", "logements collectifs",
+                   "locatifs sociaux", "logements aidés", "logement aidé", "accession", "mixité sociale",
+                   "llts", "lls", "pls", "habitat dominant", "dominantes en habitat")
+
+
+def _zone_doc(insee: str, zone: str, _prof: int = 0):
+    """Résout la définition d'une zone en SUIVANT les renvois (une sous-zone ex. Uac/1AUe hérite du barème ET
+    des restrictions de sa zone parente ex. Ua/Ue). Renvoie (zv, zone_effective) ou (None, None)."""
+    from labuse.plu import destinations as D
+    doc = D._doc(insee) or {}
+    zones = doc.get("zones") or {}
+    zv = zones.get(zone)
+    if not isinstance(zv, dict):
+        norm = {str(k).lower(): k for k in zones}
+        hit = norm.get(str(zone).lower())
+        zv = zones.get(hit) if hit else None
+        zone = hit or zone
+    if not isinstance(zv, dict):
+        return None, None
+    # renvoi vers une zone parente : hériter si la zone elle-même n'exprime pas le logement.
+    ren = zv.get("renvoi") or zv.get("parent") or zv.get("ref_zone")
+    if ren and _prof < 4 and not (zv.get("sous_destinations") or {}).get("logement"):
+        parent, pz = _zone_doc(insee, ren, _prof + 1)
+        if isinstance(parent, dict):
+            return parent, pz
+    return zv, zone
 
 
 def _logement_fonction_seulement(insee: str, zone: str) -> bool:
     """Le logement n'est admis dans la zone QUE comme logement de fonction (pas un programme d'habitation) :
-    sous-destination `logement` sous condition ET condition citant fonction/gardiennage/personnel/employés,
-    sans aucune autre ouverture de l'habitation."""
-    from labuse.plu import destinations as D
-    doc = D._doc(insee) or {}
-    zv = (doc.get("zones") or {}).get(zone)
-    if not isinstance(zv, dict):
-        # zone via renvoi / casse différente : on tente une résolution souple
-        norm = {str(k).lower(): k for k in (doc.get("zones") or {})}
-        hit = norm.get(str(zone).lower())
-        zv = (doc.get("zones") or {}).get(hit) if hit else None
+    sous-destination `logement` sous condition, condition citant fonction/gardiennage/surveillance/direction,
+    ET aucune ouverture de l'habitation ordinaire. Suit les renvois vers la zone parente (Uac→Ua, 1AUe→Ue)."""
+    zv, _z = _zone_doc(insee, zone)
     if not isinstance(zv, dict):
         return False
     lg = (zv.get("sous_destinations") or {}).get("logement")
     if not isinstance(lg, dict) or lg.get("statut") != "sous_condition":
         return False
     txt = f"{lg.get('condition') or ''} {lg.get('citation') or ''}".lower()
+    if any(m in txt for m in _HABITAT_OUVERT):
+        return False   # la zone ouvre un VRAI programme d'habitation (social, individuel, habitat dominant)
     return any(m in txt for m in _FONCTION_MARQ)
 
 
