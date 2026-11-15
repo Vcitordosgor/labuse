@@ -45,18 +45,17 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UB.12
           page_pdf: 31
-          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
-            ;'
-          statut: valide
-          exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%."
-            article: "UB.12"
-            page_pdf: 31
-            porte: "destination"
-            modifie_calcul: false
+          places: 1.0
+          arrondi: superieur
+          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          social:
+            places: 0.0
+            tranche: LLTS (aucune place exigée)
+          conditions:
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
       pleine_terre:
         pct:
           pct: 25.0
@@ -159,17 +158,17 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UC.12
           page_pdf: 40
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
-          exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%."
-            article: "UC.12"
-            page_pdf: 40
-            porte: "destination"
-            modifie_calcul: false
+          places: 1.0
+          arrondi: superieur
+          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          social:
+            places: 0.0
+            tranche: LLTS (aucune place exigée)
+          conditions:
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
       pleine_terre:
         pct:
           pct: 30.0
@@ -264,17 +263,17 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UC.12
           page_pdf: 40
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
-          exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%."
-            article: "UC.12"
-            page_pdf: 40
-            porte: "destination"
-            modifie_calcul: false
+          places: 1.0
+          arrondi: superieur
+          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          social:
+            places: 0.0
+            tranche: LLTS (aucune place exigée)
+          conditions:
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
       pleine_terre:
         pct:
           pct: 30.0
@@ -376,18 +375,17 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UD.12
           page_pdf: 50
-          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
-            ;'
-          statut: valide
-          exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "UD.12"
-            page_pdf: 50
-            porte: "destination"
-            modifie_calcul: false
+          places: 1.0
+          arrondi: superieur
+          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          social:
+            places: 0.0
+            tranche: LLTS (aucune place exigée)
+          conditions:
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
       pleine_terre:
         pct:
           pct: 35.0
@@ -487,18 +485,17 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UD.12
           page_pdf: 50
-          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
-            ;'
-          statut: valide
-          exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "UD.12"
-            page_pdf: 50
-            porte: "destination"
-            modifie_calcul: false
+          places: 1.0
+          arrondi: superieur
+          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          social:
+            places: 0.0
+            tranche: LLTS (aucune place exigée)
+          conditions:
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
       pleine_terre:
         pct:
           pct: 35.0
@@ -1002,18 +999,17 @@ zones:
           forme: alignement
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UZ.12
           page_pdf: 85
-          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
-            ;'
-          statut: valide
-          exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "UZ.12"
-            page_pdf: 85
-            porte: "destination"
-            modifie_calcul: false
+          places: 1.0
+          arrondi: superieur
+          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          social:
+            places: 0.0
+            tranche: LLTS (aucune place exigée)
+          conditions:
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
       pleine_terre:
         pct:
           pct: 10.0
@@ -1121,17 +1117,17 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: 1AU.12
           page_pdf: 96
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
-          exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "1AU.12"
-            page_pdf: 96
-            porte: "destination"
-            modifie_calcul: false
+          places: 1.0
+          arrondi: superieur
+          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          social:
+            places: 0.0
+            tranche: LLTS (aucune place exigée)
+          conditions:
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
       pleine_terre:
         pct:
           pct: 30.0
@@ -1231,17 +1227,17 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: 1AU.12
           page_pdf: 96
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
-          exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "1AU.12"
-            page_pdf: 96
-            porte: "destination"
-            modifie_calcul: false
+          places: 1.0
+          arrondi: superieur
+          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          social:
+            places: 0.0
+            tranche: LLTS (aucune place exigée)
+          conditions:
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
       pleine_terre:
         pct:
           pct: 30.0
@@ -1356,17 +1352,17 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: 1AUZ.12
           page_pdf: 106
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
-          exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "1AUZ.12"
-            page_pdf: 106
-            porte: "destination"
-            modifie_calcul: false
+          places: 1.0
+          arrondi: superieur
+          citation: 'Pour les constructions à usage d''habitation : 1 place de stationnement par logement. Logement Locatif Très Social (LLTS) : aucune place de stationnement demandée. Toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable.'
+          social:
+            places: 0.0
+            tranche: LLTS (aucune place exigée)
+          conditions:
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
       pleine_terre:
         pct:
           pct: 30.0

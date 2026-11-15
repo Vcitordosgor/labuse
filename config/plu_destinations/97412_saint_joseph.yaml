@@ -74,11 +74,23 @@ zones:
             modifie_calcul: true
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: U1 12.2
           page_pdf: 25
-          citation: '- 1 place de stationnement minimum par logement.'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: '1 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 15.0
@@ -208,11 +220,23 @@ zones:
           formule: H/2, minimum 3 m
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: U2 12.2
           page_pdf: 39
-          citation: '- 1 place de stationnement minimum par logement.'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: '1 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 15.0
@@ -310,12 +334,23 @@ zones:
           formule: H/2, minimum 3 m
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U2 12.2
           page_pdf: 39
-          citation: '- dans le secteur U2a, ce seuil est porté à 2 places de stationnement minimum par logement'
-          statut: valide
-          raison: valeur 1 absente de la citation (harmonisation ≠ texte)
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 15.0
@@ -419,11 +454,23 @@ zones:
           formule: H/2, minimum 3 m
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U3 12.2
           page_pdf: 55
-          citation: '- 2 places de stationnement minimum par logement.'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 15.0
@@ -524,11 +571,23 @@ zones:
           formule: H/2, minimum 3 m
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U3 12.2
           page_pdf: 55
-          citation: '- 2 places de stationnement minimum par logement.'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 25.0
@@ -610,11 +669,23 @@ zones:
           formule: H/2, minimum 3 m
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U3 12.2
           page_pdf: 55
-          citation: '- 2 places de stationnement minimum par logement.'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 25.0
@@ -716,11 +787,23 @@ zones:
           formule: H/2, minimum 1,9 m
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: U4 12.2
           page_pdf: 69
-          citation: '- 1 place de stationnement minimum par logement.'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: '1 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 10.0
@@ -836,11 +919,23 @@ zones:
           formule: H/2, minimum 3 m
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U5 12.2
           page_pdf: 84
-          citation: '- 2 places de stationnement minimum par logement.'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 35.0
@@ -943,11 +1038,23 @@ zones:
           formule: H/2, minimum 3 m (ou sur limites)
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U5 12.2
           page_pdf: 84
-          citation: '- 2 places de stationnement minimum par logement.'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 30.0
@@ -1037,11 +1144,23 @@ zones:
           note: "PLU-CALIBRAGE-8 (oct.) Lot B : la valeur 5 m (invention, passée propose par PLU-VERIF-1) est remplacée par 3 m — le règlement fixe « avec un minimum de 3 mètres » (lu au règlement md5-vérifié, Art. U5 7.2 p.78). Formule H/2 min 3 m ou implantation sur deux limites. IDENTIQUE à la feuille VALIDÉE de la zone sœur U5cv (même phrase du règlement couvre « U5cv et U5cvd »)."
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U5 12.2
           page_pdf: 84
-          citation: '- 2 places de stationnement minimum par logement.'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 15.0
@@ -1124,11 +1243,23 @@ zones:
           formule: H/2, minimum 3 m
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U5 12.2
           page_pdf: 84
-          citation: '- 2 places de stationnement minimum par logement.'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 35.0
@@ -1227,11 +1358,23 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U5 12.2
           page_pdf: 84
-          citation: '- 2 places de stationnement minimum par logement.'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 35.0
@@ -1313,11 +1456,23 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U5 12.2
           page_pdf: 84
-          citation: '- 2 places de stationnement minimum par logement.'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 35.0
@@ -1726,11 +1881,23 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2
+          statut: valide
           article: U3 12.2
           page_pdf: 55
-          citation: 2 places de stationnement minimum par logement.
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 15
@@ -1792,11 +1959,23 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2
+          statut: valide
           article: U3 12.2
           page_pdf: 55
-          citation: 2 places de stationnement minimum par logement.
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 25
@@ -1859,11 +2038,23 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2
+          statut: valide
           article: U5 12.2
           page_pdf: 84
-          citation: 2 places de stationnement minimum par logement.
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 35
@@ -1916,11 +2107,23 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2
+          statut: valide
           article: U5 12.2
           page_pdf: 84
-          citation: '- 2 places de stationnement minimum par logement.'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 35
@@ -1980,11 +2183,23 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2
+          statut: valide
           article: U5 12.2
           page_pdf: 84
-          citation: '- 2 places de stationnement minimum par logement.'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '2 place(s) de stationnement minimum par logement. 1 place par tranche de 10 logements (part collective). Logement prêt aidé : 1/logt (0,5 si < 500 m d''un transport collectif). Résidence pour personnes âgées : 0,5 place/logt aidé + 2 places visiteurs par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 10
+            places: 1
+            arrondi: superieur
+            citation: 1 place par tranche de 10 logements (part collective)
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
+          senior:
+            places: 0.5
+            tranche: résidence personnes âgées (0,5/logt aidé)
       pleine_terre:
         pct:
           pct: 35

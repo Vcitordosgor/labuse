@@ -150,10 +150,11 @@ def test_controle_citation_identique_implique_regle_identique():
     mais Ucv applique 0,85 et Ud applique 1 — signatures ≠). Sur les cinq communes pilotes."""
     from labuse.plu import destinations as D
     from labuse.implantation import regles as R
+    import glob
+    import os
     import re
-    PILOTES = {"97401": "les_avirons", "97407": "le_port", "97410": "saint_benoit",
-               "97416": "saint_pierre", "97422": "le_tampon"}
-    for insee, slug in PILOTES.items():
+    communes = sorted({os.path.basename(p)[:5] for p in glob.glob("config/plu_destinations/974??_*.yaml")})
+    for insee in communes:
         par_citation = {}
         for r in D.regles_commune(insee):
             z = r["zone"]

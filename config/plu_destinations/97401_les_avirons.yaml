@@ -81,6 +81,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
+            arrondi: superieur
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
           social:
@@ -314,6 +315,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
+            arrondi: superieur
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
           social:
@@ -522,6 +524,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
+            arrondi: superieur
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
           social:
@@ -604,6 +607,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
+            arrondi: superieur
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
           social:
@@ -685,6 +689,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
+            arrondi: superieur
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
           social:
@@ -881,6 +886,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
+            arrondi: superieur
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
           social:
@@ -1094,6 +1100,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
+            arrondi: superieur
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
           social:
@@ -1179,6 +1186,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
+            arrondi: superieur
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
           social:
@@ -1267,6 +1275,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
+            arrondi: superieur
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
           social:
@@ -1482,6 +1491,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
+            arrondi: superieur
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
           social:
@@ -1691,6 +1701,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
+            arrondi: superieur
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
           social:
@@ -1998,6 +2009,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
+            arrondi: superieur
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
           social:
@@ -2091,6 +2103,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
+            arrondi: superieur
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
           social:
@@ -2182,6 +2195,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
+            arrondi: superieur
             tranche: collectif 1 place / 35 m² de SDP
             role: alt
           social:

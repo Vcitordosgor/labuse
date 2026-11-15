@@ -207,11 +207,12 @@ class BaremeStationnement:
             sp = next((l for l in self.lignes if l.role == "base" and l.destination == destination
                        and (l.places is not None or l.par_m2 is not None)), None)
             if sp is not None:
+                # ligne dédiée muette sur l'arrondi → plus exigeant (supérieur), jamais l'arrondi de la règle générale.
                 if sp.par_m2 is not None:
                     tot = self.arrondir(sdp_tot / sp.par_m2, sp.arrondi or "superieur")
                     formule = f"{destination} : 1 place / {sp.par_m2:g} m² SDP · {sdp_tot:.0f} m²"
                 else:
-                    tot = self.arrondir(n * sp.places, sp.arrondi)
+                    tot = self.arrondir(n * sp.places, sp.arrondi or "superieur")
                     formule = f"{destination} : {sp.places:g} place/logt × {n} logts"
                 return ExigenceStationnement(int(tot), int(tot), 0, self.mode, formule, (), conditions, True,
                                              {"destination": destination})

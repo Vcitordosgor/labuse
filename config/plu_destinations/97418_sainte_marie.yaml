@@ -54,14 +54,34 @@ zones:
           raison: valeur 7.5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.5
-          article: U13.2
-          page_pdf: 26
-          citation: 'Opération de plusieurs logements
-
-            1,5 place minimum par logement'
+        par_typologie:
           statut: valide
+          article: U13 - 13.2
+          page_pdf: 26
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: privé < 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: privé ≥ 100 m², plusieurs logts
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          senior:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
       pleine_terre:
         pct:
           pct: 20.0
@@ -187,14 +207,34 @@ zones:
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
-          article: U13.2
-          page_pdf: 26
-          citation: 'Opération de plusieurs logements
-
-            1,5 place minimum par logement'
+        par_typologie:
           statut: valide
+          article: U13 - 13.2
+          page_pdf: 26
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: privé < 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: privé ≥ 100 m², plusieurs logts
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          senior:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
       pleine_terre:
         pct:
           pct: 20.0
@@ -247,14 +287,34 @@ zones:
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
-          article: U13.2
-          page_pdf: 26
-          citation: 'Opération de plusieurs logements
-
-            1,5 place minimum par logement'
+        par_typologie:
           statut: valide
+          article: U13 - 13.2
+          page_pdf: 26
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: privé < 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: privé ≥ 100 m², plusieurs logts
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          senior:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
       pleine_terre:
         pct:
           pct: 20.0
@@ -316,14 +376,34 @@ zones:
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
-          article: U13.2
-          page_pdf: 26
-          citation: 'Opération de plusieurs logements
-
-            1,5 place minimum par logement'
+        par_typologie:
           statut: valide
+          article: U13 - 13.2
+          page_pdf: 26
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: privé < 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: privé ≥ 100 m², plusieurs logts
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          senior:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
       pleine_terre:
         pct:
           pct: 25.0
@@ -438,14 +518,34 @@ zones:
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
-          article: U13.2
-          page_pdf: 26
-          citation: 'Opération de plusieurs logements
-
-            1,5 place minimum par logement'
+        par_typologie:
           statut: valide
+          article: U13 - 13.2
+          page_pdf: 26
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: privé < 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: privé ≥ 100 m², plusieurs logts
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          senior:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -560,14 +660,34 @@ zones:
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
-          article: U13.2
-          page_pdf: 26
-          citation: 'Opération de plusieurs logements
-
-            1,5 place minimum par logement'
+        par_typologie:
           statut: valide
+          article: U13 - 13.2
+          page_pdf: 26
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: privé < 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: privé ≥ 100 m², plusieurs logts
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          senior:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -648,14 +768,34 @@ zones:
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
-          article: U13.2
-          page_pdf: 26
-          citation: 'Opération de plusieurs logements
-
-            1,5 place minimum par logement'
+        par_typologie:
           statut: valide
+          article: U13 - 13.2
+          page_pdf: 26
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: privé < 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: privé ≥ 100 m², plusieurs logts
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          senior:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -720,14 +860,34 @@ zones:
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
-          article: U13.2
-          page_pdf: 26
-          citation: 'Opération de plusieurs logements
-
-            1,5 place minimum par logement'
+        par_typologie:
           statut: valide
+          article: U13 - 13.2
+          page_pdf: 26
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: privé < 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: privé ≥ 100 m², plusieurs logts
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          senior:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -824,14 +984,34 @@ zones:
             de la hauteur totale de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
-          article: U13.2
-          page_pdf: 26
-          citation: 'Opération de plusieurs logements
-
-            1,5 place minimum par logement'
+        par_typologie:
           statut: valide
+          article: U13 - 13.2
+          page_pdf: 26
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: privé < 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: privé ≥ 100 m², plusieurs logts
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          senior:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -1746,12 +1926,34 @@ zones:
             être inférieure à 3 mètres
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
-          article: Article U13 - Obligation de réalisation d’aires de stationnement (13.2)
-          page_pdf: 26
-          citation: 1,5 place minimum par logement
+        par_typologie:
           statut: valide
+          article: U13 - 13.2
+          page_pdf: 26
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: privé < 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: privé ≥ 100 m², plusieurs logts
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          senior:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
       pleine_terre:
         pct:
           pct: 25
@@ -1806,12 +2008,34 @@ zones:
             être inférieure à 3 mètres
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
-          article: Article U13 - Obligation de réalisation d’aires de stationnement (13.2)
-          page_pdf: 26
-          citation: 1,5 place minimum par logement
+        par_typologie:
           statut: valide
+          article: U13 - 13.2
+          page_pdf: 26
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé : au plus 1 place/logt (0,5 si < 500 m d''un transport collectif). Logements privés < 100 m² de SDP : 1 place min/logt. Logements privés ≥ 100 m² de SDP : opération d''un seul logement 2 places ; opération de plusieurs logements 1,5 place min/logt. Hébergement : 1 place pour 3 chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: privé < 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: privé ≥ 100 m², plusieurs logts
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          senior:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: hébergement (1 pour 3)
       pleine_terre:
         pct:
           pct: 30

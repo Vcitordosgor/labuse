@@ -61,11 +61,12 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: Ua 12.2
           page_pdf: 28
+          places: 1.5
+          arrondi: superieur
           citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
-          statut: valide
       pleine_terre:
         pct:
           pct: 10.0
@@ -143,11 +144,12 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: Ua 12.2
           page_pdf: 28
+          places: 1.5
+          arrondi: superieur
           citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
-          statut: valide
       pleine_terre:
         pct:
           pct: 10.0
@@ -211,11 +213,12 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: Ub 12.2
           page_pdf: 40
+          places: 1.5
+          arrondi: superieur
           citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
-          statut: valide
       pleine_terre:
         pct:
           pct: 40.0
@@ -290,11 +293,12 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: Ub 12.2
           page_pdf: 40
+          places: 1.5
+          arrondi: superieur
           citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
-          statut: valide
       pleine_terre:
         pct:
           pct: 40.0
@@ -349,11 +353,12 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: Uc 12.2
           page_pdf: 51
+          places: 1.5
+          arrondi: superieur
           citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
-          statut: valide
     silence: autorise
     silence_src: 'Art. Uc 2.2, p. 43 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article Uc 1.2, ainsi, que celles ci-après… » — liste fermée d''interdictions à l''art. Uc 1.2 (p. 42).'
@@ -444,12 +449,12 @@ zones:
             modifie_calcul: false
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: Ub 12.2
           page_pdf: 40
-          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.
-            [via renvoi Ub pour AUb]'
-          statut: valide
+          places: 1.5
+          arrondi: superieur
+          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
       pleine_terre:
         pct:
           pct: 40.0
@@ -515,12 +520,12 @@ zones:
             modifie_calcul: false
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: Ub 12.2
           page_pdf: 40
-          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.
-            [via renvoi Ub pour AUb1]'
-          statut: valide
+          places: 1.5
+          arrondi: superieur
+          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
       pleine_terre:
         pct:
           pct: 40.0
@@ -586,12 +591,12 @@ zones:
             modifie_calcul: false
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: Ub 12.2
           page_pdf: 40
-          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.
-            [via renvoi Ub pour AUb2]'
-          statut: valide
+          places: 1.5
+          arrondi: superieur
+          citation: 'Pour les constructions à destination d''habitation : 1,5 place de stationnement par logement.'
       pleine_terre:
         pct:
           pct: 30.0

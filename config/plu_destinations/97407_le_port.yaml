@@ -78,10 +78,21 @@ zones:
           visiteurs:
             par_m2_sdp: 100
             places: 1
+            arrondi: superieur
             citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
           social:
             places: 0.2
             tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
+          senior:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          etudiant:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          places_integrees:
+            pct: 100
+            seuil_m2: 1000
+            citation: part minimale en ouvrage 100 % pour le logement, opérations > 1000 m²
       pleine_terre:
         pct:
           article: Ua 11.1
@@ -238,10 +249,21 @@ zones:
           visiteurs:
             par_m2_sdp: 100
             places: 1
+            arrondi: superieur
             citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
           social:
             places: 0.2
             tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
+          senior:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          etudiant:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          places_integrees:
+            pct: 100
+            seuil_m2: 1000
+            citation: part minimale en ouvrage 100 % pour le logement, opérations > 1000 m²
       pleine_terre:
         pct:
           pct: 10.0
@@ -363,10 +385,21 @@ zones:
           visiteurs:
             par_m2_sdp: 100
             places: 1
+            arrondi: superieur
             citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
           social:
             places: 0.2
             tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
+          senior:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          etudiant:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          places_integrees:
+            pct: 100
+            seuil_m2: 1000
+            citation: part minimale en ouvrage 100 % pour le logement, opérations > 1000 m²
       pleine_terre:
         pct:
           article: Uc 11.1
@@ -475,10 +508,21 @@ zones:
           visiteurs:
             par_m2_sdp: 100
             places: 1
+            arrondi: superieur
             citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
           social:
             places: 0.2
             tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
+          senior:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          etudiant:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          places_integrees:
+            pct: 100
+            seuil_m2: 1000
+            citation: part minimale en ouvrage 100 % pour le logement, opérations > 1000 m²
       pleine_terre:
         pct:
           article: Uc 11.1
@@ -556,10 +600,21 @@ zones:
           visiteurs:
             par_m2_sdp: 100
             places: 1
+            arrondi: superieur
             citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
           social:
             places: 0.2
             tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
+          senior:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          etudiant:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          places_integrees:
+            pct: 100
+            seuil_m2: 500
+            citation: part minimale en ouvrage 100 % pour le logement, opérations > 500 m²
       pleine_terre:
         pct:
           pct: 20.0
@@ -1406,10 +1461,21 @@ zones:
           visiteurs:
             par_m2_sdp: 100
             places: 1
+            arrondi: superieur
             citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
           social:
             places: 0.2
             tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
+          senior:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          etudiant:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          places_integrees:
+            pct: 100
+            seuil_m2: 1000
+            citation: part minimale en ouvrage 100 % pour le logement, opérations > 1000 m²
       pleine_terre:
         pct:
           article: Ua 11.1 (via renvoi 1AU 11.1)
@@ -1491,10 +1557,21 @@ zones:
           visiteurs:
             par_m2_sdp: 100
             places: 1
+            arrondi: superieur
             citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
           social:
             places: 0.2
             tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
+          senior:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          etudiant:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          places_integrees:
+            pct: 100
+            seuil_m2: 1000
+            citation: part minimale en ouvrage 100 % pour le logement, opérations > 1000 m²
       pleine_terre:
         pct:
           article: Uc 11.1 (via renvoi 1AU 11.1)
@@ -1618,10 +1695,21 @@ zones:
           visiteurs:
             par_m2_sdp: 100
             places: 1
+            arrondi: superieur
             citation: 1 place pour visiteur par tranche de 100 m² de surface de plancher
           social:
             places: 0.2
             tranche: logement locatif prêt aidé (0,2/logt + 8 places / 1000 m²)
+          senior:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          etudiant:
+            places: 0.3
+            tranche: hébergement (0,3 place par chambre)
+          places_integrees:
+            pct: 100
+            seuil_m2: 1000
+            citation: part minimale en ouvrage 100 % pour le logement, opérations > 1000 m²
       pleine_terre:
         pct:
           article: 1AUm 11.1

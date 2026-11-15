@@ -42,13 +42,30 @@ zones:
             latérale, doit être au moins égale 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
-          article: U13
-          page_pdf: 17
-          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
-            par logement'
+        par_typologie:
           statut: valide
+          article: U15 - 15.2
+          page_pdf: 17
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé < 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé ≥ 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          conditions:
+          - 'opération de plus de 10 logements : + 0,5 place publique par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 20.0
@@ -151,13 +168,30 @@ zones:
           citation: En cas de retrait de la construction, la distance ... doit être au moins égale 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
-          article: U13
-          page_pdf: 17
-          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
-            par logement'
+        par_typologie:
           statut: valide
+          article: U15 - 15.2
+          page_pdf: 17
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé < 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé ≥ 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          conditions:
+          - 'opération de plus de 10 logements : + 0,5 place publique par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 30.0
@@ -249,13 +283,30 @@ zones:
             latérale. En cas de retrait ... doit être au moins égale 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
-          article: U13
-          page_pdf: 17
-          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
-            par logement'
+        par_typologie:
           statut: valide
+          article: U15 - 15.2
+          page_pdf: 17
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé < 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé ≥ 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          conditions:
+          - 'opération de plus de 10 logements : + 0,5 place publique par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 40.0
@@ -435,13 +486,30 @@ zones:
             latérale, doit être au moins égale 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
-          article: U13
-          page_pdf: 17
-          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
-            par logement'
+        par_typologie:
           statut: valide
+          article: U15 - 15.2
+          page_pdf: 17
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé < 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé ≥ 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          conditions:
+          - 'opération de plus de 10 logements : + 0,5 place publique par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 20.0
@@ -523,13 +591,30 @@ zones:
             être au moins égale 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
-          article: U13
-          page_pdf: 17
-          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
-            par logement'
+        par_typologie:
           statut: valide
+          article: U15 - 15.2
+          page_pdf: 17
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé < 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé ≥ 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          conditions:
+          - 'opération de plus de 10 logements : + 0,5 place publique par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 40.0
@@ -764,13 +849,30 @@ zones:
           citation: En cas de retrait de la construction, la distance ... doit être au moins égale 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
-          article: U13
-          page_pdf: 17
-          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
-            par logement'
+        par_typologie:
           statut: valide
+          article: U15 - 15.2
+          page_pdf: 17
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé < 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé ≥ 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          conditions:
+          - 'opération de plus de 10 logements : + 0,5 place publique par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 20.0
@@ -857,13 +959,30 @@ zones:
           citation: En cas de retrait de la construction, la distance ... doit être au moins égale 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
-          article: U13
-          page_pdf: 17
-          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
-            par logement'
+        par_typologie:
           statut: valide
+          article: U15 - 15.2
+          page_pdf: 17
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé < 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé ≥ 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          conditions:
+          - 'opération de plus de 10 logements : + 0,5 place publique par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 30.0
@@ -906,13 +1025,30 @@ zones:
             être au moins égale 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
-          article: U13
-          page_pdf: 17
-          citation: 'Logements privés d''une surface de plancher supérieure ou égale à 50m² : 2 places minimum
-            par logement'
+        par_typologie:
           statut: valide
+          article: U15 - 15.2
+          page_pdf: 17
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements privés < 50 m² de SDP : 1 place min/logt (+ 0,5 place publique/logt pour une opération de plus de 10 logements). Logements privés ≥ 50 m² de SDP : 2 places min/logt. Prêt aidé : au plus 1 place/logt. Logement < 500 m d''un transport collectif : 1 place/logt. Arrondi à l''entier supérieur (en-tête du tableau). [Article U15 - 15.2, corrige la référence U13.]'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé < 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé ≥ 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1 max/logt)
+          conditions:
+          - 'opération de plus de 10 logements : + 0,5 place publique par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 40.0

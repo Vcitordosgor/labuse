@@ -106,6 +106,12 @@ zones:
           social:
             places: 1
             tranche: logement locatif prêt aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence sociale (1 place pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 place pour 3)
           conditions:
           - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
@@ -425,6 +431,12 @@ zones:
           social:
             places: 1
             tranche: logement locatif prêt aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence sociale (1 place pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 place pour 3)
           conditions:
           - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
@@ -511,6 +523,12 @@ zones:
           social:
             places: 1
             tranche: logement locatif prêt aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence sociale (1 place pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 place pour 3)
           conditions:
           - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
@@ -821,6 +839,12 @@ zones:
           social:
             places: 1
             tranche: logement locatif prêt aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence sociale (1 place pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 place pour 3)
           conditions:
           - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
@@ -1091,6 +1115,12 @@ zones:
           social:
             places: 1
             tranche: logement locatif prêt aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence sociale (1 place pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 place pour 3)
           conditions:
           - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
@@ -1397,6 +1427,12 @@ zones:
           social:
             places: 1
             tranche: logement locatif prêt aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence sociale (1 place pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 place pour 3)
           conditions:
           - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
@@ -1751,6 +1787,12 @@ zones:
           social:
             places: 1
             tranche: logement locatif prêt aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence sociale (1 place pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 place pour 3)
           conditions:
           - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
@@ -1839,6 +1881,12 @@ zones:
           social:
             places: 1
             tranche: logement locatif prêt aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence sociale (1 place pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 place pour 3)
           conditions:
           - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:
@@ -1925,6 +1973,12 @@ zones:
           social:
             places: 1
             tranche: logement locatif prêt aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence sociale (1 place pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 place pour 3)
           conditions:
           - dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)
       pleine_terre:

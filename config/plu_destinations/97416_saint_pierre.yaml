@@ -70,6 +70,12 @@ zones:
           social:
             places: 0.85
             tranche: logement social
+          senior:
+            places: 0.2
+            tranche: hébergement (0,2 place par hébergement)
+          etudiant:
+            places: 0.2
+            tranche: hébergement (0,2 place par hébergement)
       pleine_terre:
         pct:
           pct: 20.0
@@ -261,6 +267,12 @@ zones:
           social:
             places: 1
             tranche: logement locatif social
+          senior:
+            places: 0.3
+            tranche: hébergement (0,3 place par hébergement)
+          etudiant:
+            places: 0.3
+            tranche: hébergement (0,3 place par hébergement)
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
       pleine_terre:
@@ -458,6 +470,12 @@ zones:
           social:
             places: 1
             tranche: logement locatif social
+          senior:
+            places: 0.3
+            tranche: hébergement (0,3 place par hébergement)
+          etudiant:
+            places: 0.3
+            tranche: hébergement (0,3 place par hébergement)
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
       pleine_terre:
@@ -651,6 +669,12 @@ zones:
           social:
             places: 1
             tranche: logement locatif social
+          senior:
+            places: 0.3
+            tranche: hébergement (0,3 place par hébergement)
+          etudiant:
+            places: 0.3
+            tranche: hébergement (0,3 place par hébergement)
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
       pleine_terre:

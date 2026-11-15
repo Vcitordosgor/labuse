@@ -63,11 +63,20 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UA 12.2
           page_pdf: 23
-          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          conditions:
+          - 'opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 15.0
@@ -164,11 +173,20 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UA 12.2
           page_pdf: 23
-          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UA]'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          conditions:
+          - 'opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier'
     renvoi: UA
     renvoi_src: 'caractère de la zone UA, p. 12 : « Il existe le secteur UA1 correspondant au centre historique
       de Saint-Louis dont la morphologie et les fonctions urbaines doivent être préservées. » — secteur de la zone
@@ -222,11 +240,20 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UB 12.2
           page_pdf: 37
-          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          conditions:
+          - 'opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 20.0
@@ -342,11 +369,20 @@ zones:
             modifie_calcul: true
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          conditions:
+          - 'opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 25.0
@@ -449,11 +485,20 @@ zones:
           formule: H1/2, minimum 3,00 m
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UC]'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          conditions:
+          - 'opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 25.0
@@ -509,11 +554,20 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UC]'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          conditions:
+          - 'opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 25.0
@@ -574,11 +628,20 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UD 12.2
           page_pdf: 66
-          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          conditions:
+          - 'opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 30.0
@@ -701,11 +764,20 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UD 12.2
           page_pdf: 66
-          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UD]'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          conditions:
+          - 'opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 35.0
@@ -984,12 +1056,15 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: UZ 12
           page_pdf: 103
-          citation: 'Pour les constructions à usage d''habitation : 1,5 place de stationnement par logement,
-            arrondi à l''entier supérieur (...). Pour le logement social : 1 place par logement.'
-          statut: valide
+          places: 1.5
+          arrondi: superieur
+          citation: 'Constructions à usage d''habitation : 1,5 place de stationnement par logement, arrondi à l''entier supérieur pour l''ensemble de l''opération. Logement social : 1 place par logement.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
       pleine_terre:
         pct:
           pct: 25.0
@@ -1125,14 +1200,20 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UA 12.2
           page_pdf: 23
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UA : Habitations — Pour les autres constructions : 2 places de stationnement
-            par logement'
-          statut: valide
-          raison: citation non retrouvée autour de p.23 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          conditions:
+          - 'opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 15.0
@@ -1230,14 +1311,20 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UC : Habitations — Pour les autres constructions : 2 places de stationnement
-            par logement'
-          statut: valide
-          raison: citation non retrouvée autour de p.52 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          conditions:
+          - 'opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 25.0
@@ -1313,14 +1400,20 @@ zones:
           formule: H1/2, minimum 3,00 m
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UC1 : Pour les autres constructions : 2 places de stationnement par logement
-            [règle UC]'
-          statut: valide
-          raison: citation non retrouvée autour de p.52 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          conditions:
+          - 'opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 25.0
@@ -1383,14 +1476,20 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UC2 : Pour les autres constructions : 2 places de stationnement par logement
-            [règle UC]'
-          statut: valide
-          raison: citation non retrouvée autour de p.52 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          conditions:
+          - 'opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 25.0
@@ -1454,14 +1553,20 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UD 12.2
           page_pdf: 66
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UD : Habitations — Pour les autres constructions : 2 places de stationnement
-            par logement'
-          statut: valide
-          raison: citation non retrouvée autour de p.66 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          conditions:
+          - 'opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 30.0
@@ -1526,14 +1631,20 @@ zones:
           raison: citation non retrouvée autour de p.60 (recouvrement 47%)
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UD 12.2
           page_pdf: 66
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UD1 : Pour les autres constructions : 2 places de stationnement par logement
-            [règle UD]'
-          statut: valide
-          raison: citation non retrouvée autour de p.66 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'Logements sociaux : 1 place par logement. Autres constructions : 2 places par logement. Opérations de plus de 10 logements : 0,5 place de stationnement public par logement. Résidence pour personnes âgées : 1 place par tranche de 3 logements + 1 place visiteur par tranche de 5 logements.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          conditions:
+          - 'opérations de plus de 10 logements : 0,5 place de stationnement PUBLIC par logement (hors parcelle) — à vérifier'
       pleine_terre:
         pct:
           pct: 35.0

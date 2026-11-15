@@ -79,13 +79,31 @@ zones:
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: Ua 12.2
           page_pdf: 22
-          citation: 'Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
-            arrondi à l’entier inférieur.'
-          statut: valide
+          base: pieces
+          arrondi: inferieur
+          retenue: max
+          citation: 'Constructions à destination d''habitation : 1,5 place par logement, arrondi à l''entier inférieur. En outre, 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots. Dans le cas d''opération d''habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher, la norme produisant le plus de places retenue, sans qu''il soit imposé plus de 2 places par logement.'
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25/logt
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            arrondi: superieur
+            tranche: collectif 1/35 m²
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots
+          - 'collectif : la norme retenue est plafonnée à 2 places par logement — à vérifier si la plus exigeante la dépasse'
       pleine_terre:
         pct:
           pct: 20.0
@@ -201,13 +219,31 @@ zones:
             doit être au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: Ua 12.2
           page_pdf: 22
-          citation: 'Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
-            arrondi à l’entier inférieur.'
-          statut: valide
+          base: pieces
+          arrondi: inferieur
+          retenue: max
+          citation: 'Constructions à destination d''habitation : 1,5 place par logement, arrondi à l''entier inférieur. En outre, 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots. Dans le cas d''opération d''habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher, la norme produisant le plus de places retenue, sans qu''il soit imposé plus de 2 places par logement.'
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25/logt
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            arrondi: superieur
+            tranche: collectif 1/35 m²
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots
+          - 'collectif : la norme retenue est plafonnée à 2 places par logement — à vérifier si la plus exigeante la dépasse'
       pleine_terre:
         pct:
           pct: 20.0
@@ -276,13 +312,31 @@ zones:
             au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: Ub 12.2
           page_pdf: 36
-          citation: 'Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
-            arrondi à l’entier inférieur.'
-          statut: valide
+          base: pieces
+          arrondi: inferieur
+          retenue: max
+          citation: 'Constructions à destination d''habitation : 1,5 place par logement, arrondi à l''entier inférieur. En outre, 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots. Dans le cas d''opération d''habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher, la norme produisant le plus de places retenue, sans qu''il soit imposé plus de 2 places par logement.'
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25/logt
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            arrondi: superieur
+            tranche: collectif 1/35 m²
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots
+          - 'collectif : la norme retenue est plafonnée à 2 places par logement — à vérifier si la plus exigeante la dépasse'
       pleine_terre:
         pct:
           pct: 30.0
@@ -404,13 +458,31 @@ zones:
             au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: Uc 12.2
           page_pdf: 50
-          citation: 'Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
-            arrondi à l’entier inférieur.'
-          statut: valide
+          base: pieces
+          arrondi: inferieur
+          retenue: max
+          citation: 'Constructions à destination d''habitation : 1,5 place par logement, arrondi à l''entier inférieur. En outre, 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots. Dans le cas d''opération d''habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher, la norme produisant le plus de places retenue, sans qu''il soit imposé plus de 2 places par logement.'
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25/logt
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            arrondi: superieur
+            tranche: collectif 1/35 m²
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots
+          - 'collectif : la norme retenue est plafonnée à 2 places par logement — à vérifier si la plus exigeante la dépasse'
       pleine_terre:
         pct:
           pct: 40.0
@@ -652,16 +724,31 @@ zones:
             au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: Ua 12.2
           page_pdf: 22
-          citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
-            qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Ua 12.2
-            p.22 : « Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
-            arrondi à l’entier inférieur. »]'
-          statut: valide
-          note: "PLU-VERIF-1 : page corrigée 67→22 (art. Ua 12.2)."
+          base: pieces
+          arrondi: inferieur
+          retenue: max
+          citation: 'Constructions à destination d''habitation : 1,5 place par logement, arrondi à l''entier inférieur. En outre, 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots. Dans le cas d''opération d''habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher, la norme produisant le plus de places retenue, sans qu''il soit imposé plus de 2 places par logement.'
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25/logt
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            arrondi: superieur
+            tranche: collectif 1/35 m²
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots
+          - 'collectif : la norme retenue est plafonnée à 2 places par logement — à vérifier si la plus exigeante la dépasse'
       pleine_terre:
         pct:
           pct: 20.0
@@ -770,16 +857,31 @@ zones:
             au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: Ub 12.2
           page_pdf: 36
-          citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
-            qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Ub 12.2
-            p.36 : « Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
-            arrondi à l’entier inférieur. »]'
-          statut: valide
-          note: "PLU-VERIF-1 : page corrigée 67→36 (art. Ub 12.2)."
+          base: pieces
+          arrondi: inferieur
+          retenue: max
+          citation: 'Constructions à destination d''habitation : 1,5 place par logement, arrondi à l''entier inférieur. En outre, 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots. Dans le cas d''opération d''habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher, la norme produisant le plus de places retenue, sans qu''il soit imposé plus de 2 places par logement.'
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25/logt
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            arrondi: superieur
+            tranche: collectif 1/35 m²
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots
+          - 'collectif : la norme retenue est plafonnée à 2 places par logement — à vérifier si la plus exigeante la dépasse'
       pleine_terre:
         pct:
           pct: 30.0
@@ -885,16 +987,31 @@ zones:
             au minimum de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: Uc 12.2
           page_pdf: 50
-          citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
-            qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Uc 12.2
-            p.50 : « Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
-            arrondi à l’entier inférieur. »]'
-          statut: valide
-          note: "PLU-VERIF-1 : page corrigée 67→50 (art. Uc 12.2)."
+          base: pieces
+          arrondi: inferieur
+          retenue: max
+          citation: 'Constructions à destination d''habitation : 1,5 place par logement, arrondi à l''entier inférieur. En outre, 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots. Dans le cas d''opération d''habitat collectif, la norme 1,5 est ramenée à 1,25 place par logement ou une place par tranche de 35 m² de surface de plancher, la norme produisant le plus de places retenue, sans qu''il soit imposé plus de 2 places par logement.'
+          detail:
+          - destination: individuel
+            places: 1.5
+            tranche: habitat individuel
+            role: base
+          - destination: collectif
+            places: 1.25
+            tranche: collectif 1,25/logt
+            role: alt
+          - destination: collectif
+            par_m2: 35
+            arrondi: superieur
+            tranche: collectif 1/35 m²
+            role: alt
+          conditions:
+          - 0,5 place supplémentaire sur voie/parcelle pour les lotissements de plus de 5 lots
+          - 'collectif : la norme retenue est plafonnée à 2 places par logement — à vérifier si la plus exigeante la dépasse'
       pleine_terre:
         pct:
           pct: 40.0

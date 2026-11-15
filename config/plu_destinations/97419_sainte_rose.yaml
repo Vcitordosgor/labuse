@@ -73,13 +73,28 @@ zones:
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: UA 12
           page_pdf: 17
-          citation: 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure
-            ou égale à 50m², arrondi à l’entier inférieur.
-          statut: valide
+          base: surface_plancher
+          arrondi: inferieur
+          retenue: max
+          citation: 'Constructions à destination d''habitation : 1 place min par logement locatif prêt aidé ; 1 place min par logement < 50 m² de SDP ; 1,5 place min par logement ≥ 50 m² de SDP, arrondi à l''entier inférieur.'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: logt < 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 1.5
+            tranche: logt ≥ 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
       pleine_terre:
         pct:
           pct: 25.0
@@ -202,13 +217,28 @@ zones:
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: UB 12
           page_pdf: 26
-          citation: 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure
-            ou égale à 50m², arrondi à l’entier inférieur.
-          statut: valide
+          base: surface_plancher
+          arrondi: inferieur
+          retenue: max
+          citation: 'Constructions à destination d''habitation : 1 place min par logement locatif prêt aidé ; 1 place min par logement < 50 m² de SDP ; 1,5 place min par logement ≥ 50 m² de SDP, arrondi à l''entier inférieur.'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: logt < 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 1.5
+            tranche: logt ≥ 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
       pleine_terre:
         pct:
           pct: 30.0
@@ -324,13 +354,28 @@ zones:
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: UC 12
           page_pdf: 35
-          citation: 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure
-            ou égale à 50m², arrondi à l’entier inférieur.
-          statut: valide
+          base: surface_plancher
+          arrondi: inferieur
+          retenue: max
+          citation: 'Constructions à destination d''habitation : 1 place min par logement locatif prêt aidé ; 1 place min par logement < 50 m² de SDP ; 1,5 place min par logement ≥ 50 m² de SDP, arrondi à l''entier inférieur.'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: logt < 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 1.5
+            tranche: logt ≥ 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
       pleine_terre:
         pct:
           pct: 30.0
@@ -444,13 +489,28 @@ zones:
             façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: UD 12
           page_pdf: 43
-          citation: 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure
-            ou égale à 50m², arrondi à l’entier inférieur.
-          statut: valide
+          base: surface_plancher
+          arrondi: inferieur
+          retenue: max
+          citation: 'Constructions à destination d''habitation : 1 place min par logement locatif prêt aidé ; 1 place min par logement < 50 m² de SDP ; 1,5 place min par logement ≥ 50 m² de SDP, arrondi à l''entier inférieur.'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: logt < 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 1.5
+            tranche: logt ≥ 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
       pleine_terre:
         pct:
           pct: 40.0
@@ -731,13 +791,28 @@ zones:
           formule: H/2, minimum 3 m
           note: "PLU-VERIF-1 : page corrigée 55→13 (art. UA 7)."
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: AUINDICEE 12 (renvoi UA 12)
           page_pdf: 17
-          citation: 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure
-            ou égale à 50m², arrondi à l’entier inférieur.
-          statut: valide
+          base: surface_plancher
+          arrondi: inferieur
+          retenue: max
+          citation: 'Constructions à destination d''habitation : 1 place min par logement locatif prêt aidé ; 1 place min par logement < 50 m² de SDP ; 1,5 place min par logement ≥ 50 m² de SDP, arrondi à l''entier inférieur.'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: logt < 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 1.5
+            tranche: logt ≥ 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
       pleine_terre:
         pct:
           pct: 25.0
@@ -809,13 +884,28 @@ zones:
           formule: H/2, minimum 3 m
           note: "PLU-VERIF-1 : page corrigée 55→31 (art. UC 7)."
       stationnement:
-        par_logement:
-          places: 1.5
+        par_typologie:
+          statut: valide
           article: AUINDICEE 12 (renvoi UC 12)
           page_pdf: 35
-          citation: 1,5 places de stationnement minimum par logement d’une surface de plancher supérieure
-            ou égale à 50m², arrondi à l’entier inférieur.
-          statut: valide
+          base: surface_plancher
+          arrondi: inferieur
+          retenue: max
+          citation: 'Constructions à destination d''habitation : 1 place min par logement locatif prêt aidé ; 1 place min par logement < 50 m² de SDP ; 1,5 place min par logement ≥ 50 m² de SDP, arrondi à l''entier inférieur.'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: logt < 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 1.5
+            tranche: logt ≥ 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé (1/logt)
       pleine_terre:
         pct:
           pct: 30.0

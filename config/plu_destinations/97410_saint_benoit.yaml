@@ -93,10 +93,17 @@ zones:
             par_logements: 5
             places: 1
             logements_min: 6
-            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5)
+            arrondi: superieur
+            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5 ; texte muet sur l'arrondi → supérieur, plus exigeant)
           social:
             places: 0.5
             tranche: logement aidé (1 place pour 2 logements)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence universitaire (1 pour 3)
     silence: autorise
     silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative d''interdictions,
       pp. 5-7) puis Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause
@@ -228,10 +235,17 @@ zones:
             par_logements: 5
             places: 1
             logements_min: 6
-            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5)
+            arrondi: superieur
+            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5 ; texte muet sur l'arrondi → supérieur, plus exigeant)
           social:
             places: 0.5
             tranche: logement aidé (1 place pour 2 logements)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence universitaire (1 pour 3)
     silence: autorise
     silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative, pp. 5-7) puis
       Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause « seules sont
@@ -351,10 +365,17 @@ zones:
             par_logements: 5
             places: 1
             logements_min: 6
-            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5)
+            arrondi: superieur
+            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5 ; texte muet sur l'arrondi → supérieur, plus exigeant)
           social:
             places: 0.5
             tranche: logement aidé (1 place pour 2 logements)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence universitaire (1 pour 3)
     silence: autorise
     silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative, pp. 5-7) puis
       Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause « seules sont
@@ -470,10 +491,17 @@ zones:
             par_logements: 5
             places: 1
             logements_min: 6
-            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5)
+            arrondi: superieur
+            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5 ; texte muet sur l'arrondi → supérieur, plus exigeant)
           social:
             places: 0.5
             tranche: logement aidé (1 place pour 2 logements)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence universitaire (1 pour 3)
     silence: autorise
     silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative, pp. 5-7) puis
       Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause « seules sont
@@ -599,10 +627,17 @@ zones:
             par_logements: 5
             places: 1
             logements_min: 6
-            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5)
+            arrondi: superieur
+            citation: plus une place visiteur par tranche de 5 lots ou 5 logements (opération > 5 ; texte muet sur l'arrondi → supérieur, plus exigeant)
           social:
             places: 0.5
             tranche: logement aidé (1 place pour 2 logements)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence universitaire (1 pour 3)
     silence: interdit
     silence_src: 'Art. U-2 6° (p. 7) : « 6° En zone Ut : - Toutes les constructions à l''exception des équipements
       et hébergements touristiques et des constructions affectées au logement du personnel travaillant sur le site.

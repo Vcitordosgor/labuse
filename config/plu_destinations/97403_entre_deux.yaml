@@ -56,11 +56,20 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U12
           page_pdf: 27
-          citation: Autres logements — 2 places par logement
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'Autres logements : 2 places par logement + 1 place visiteur par tranche de 5 logements ou 5 lots. Logements locatifs prêt aidé : 1 place maximum par logement + 1 place visiteur par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 5
+            places: 1
+            arrondi: superieur
+            citation: 1 place visiteur par tranche de 5 logements ou 5 lots (muet → supérieur)
+          social:
+            places: 1
+            tranche: prêt aidé (1 place max)
       pleine_terre:
         pct:
           pct: 40.0
@@ -220,11 +229,20 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U12
           page_pdf: 27
-          citation: Autres logements — 2 places par logement
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'Autres logements : 2 places par logement + 1 place visiteur par tranche de 5 logements ou 5 lots. Logements locatifs prêt aidé : 1 place maximum par logement + 1 place visiteur par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 5
+            places: 1
+            arrondi: superieur
+            citation: 1 place visiteur par tranche de 5 logements ou 5 lots (muet → supérieur)
+          social:
+            places: 1
+            tranche: prêt aidé (1 place max)
       pleine_terre:
         pct:
           pct: 40.0
@@ -380,11 +398,20 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U12
           page_pdf: 27
-          citation: Autres logements — 2 places par logement
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'Autres logements : 2 places par logement + 1 place visiteur par tranche de 5 logements ou 5 lots. Logements locatifs prêt aidé : 1 place maximum par logement + 1 place visiteur par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 5
+            places: 1
+            arrondi: superieur
+            citation: 1 place visiteur par tranche de 5 logements ou 5 lots (muet → supérieur)
+          social:
+            places: 1
+            tranche: prêt aidé (1 place max)
       pleine_terre:
         pct:
           pct: 40.0
@@ -435,11 +462,20 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U12
           page_pdf: 27
-          citation: Autres logements — 2 places par logement
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'Autres logements : 2 places par logement + 1 place visiteur par tranche de 5 logements ou 5 lots. Logements locatifs prêt aidé : 1 place maximum par logement + 1 place visiteur par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 5
+            places: 1
+            arrondi: superieur
+            citation: 1 place visiteur par tranche de 5 logements ou 5 lots (muet → supérieur)
+          social:
+            places: 1
+            tranche: prêt aidé (1 place max)
       pleine_terre:
         pct:
           pct: 40.0
@@ -610,11 +646,20 @@ zones:
           raison: citation INTROUVABLE à la re-lecture du PDF
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U12
           page_pdf: 27
-          citation: Autres logements — 2 places par logement
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'Autres logements : 2 places par logement + 1 place visiteur par tranche de 5 logements ou 5 lots. Logements locatifs prêt aidé : 1 place maximum par logement + 1 place visiteur par tranche de 10 logements.'
+          visiteurs:
+            par_logements: 5
+            places: 1
+            arrondi: superieur
+            citation: 1 place visiteur par tranche de 5 logements ou 5 lots (muet → supérieur)
+          social:
+            places: 1
+            tranche: prêt aidé (1 place max)
       pleine_terre:
         pct:
           pct: 40.0

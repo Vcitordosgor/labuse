@@ -46,12 +46,34 @@ zones:
             minimum.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 18
-          citation: 'Logements privés (PSLA, PTZ et libres) > à 50 m² de SDP : 2 places minimum par logement'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l''entier supérieur (en-tête).'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé ≤ 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé > 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé / intermédiaire (1/logt)
+          senior:
+            places: 1
+            tranche: hébergement personnes âgées (1/logt)
+          etudiant:
+            places: 1
+            tranche: résidence universitaire (1/logt)
       pleine_terre:
         pct:
           pct: 10.0
@@ -124,12 +146,34 @@ zones:
             minimum.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 18
-          citation: 'Logements privés (PSLA, PTZ et libres) > à 50 m² de SDP : 2 places minimum par logement'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l''entier supérieur (en-tête).'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé ≤ 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé > 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé / intermédiaire (1/logt)
+          senior:
+            places: 1
+            tranche: hébergement personnes âgées (1/logt)
+          etudiant:
+            places: 1
+            tranche: résidence universitaire (1/logt)
       pleine_terre:
         pct:
           pct: 10.0
@@ -173,12 +217,34 @@ zones:
             de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 18
-          citation: 'Logements privés (PSLA, PTZ et libres) > à 50 m² de SDP : 2 places minimum par logement'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l''entier supérieur (en-tête).'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé ≤ 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé > 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé / intermédiaire (1/logt)
+          senior:
+            places: 1
+            tranche: hébergement personnes âgées (1/logt)
+          etudiant:
+            places: 1
+            tranche: résidence universitaire (1/logt)
       pleine_terre:
         pct:
           pct: 20.0
@@ -248,12 +314,34 @@ zones:
             de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 18
-          citation: 'Logements privés (PSLA, PTZ et libres) > à 50 m² de SDP : 2 places minimum par logement'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l''entier supérieur (en-tête).'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé ≤ 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé > 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé / intermédiaire (1/logt)
+          senior:
+            places: 1
+            tranche: hébergement personnes âgées (1/logt)
+          etudiant:
+            places: 1
+            tranche: résidence universitaire (1/logt)
       pleine_terre:
         pct:
           pct: 25.0
@@ -414,12 +502,34 @@ zones:
             de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 18
-          citation: 'Logements privés (PSLA, PTZ et libres) > à 50 m² de SDP : 2 places minimum par logement'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l''entier supérieur (en-tête).'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé ≤ 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé > 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé / intermédiaire (1/logt)
+          senior:
+            places: 1
+            tranche: hébergement personnes âgées (1/logt)
+          etudiant:
+            places: 1
+            tranche: résidence universitaire (1/logt)
       pleine_terre:
         pct:
           pct: 10.0
@@ -472,12 +582,34 @@ zones:
             de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 18
-          citation: 'Logements privés (PSLA, PTZ et libres) > à 50 m² de SDP : 2 places minimum par logement'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l''entier supérieur (en-tête).'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé ≤ 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé > 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé / intermédiaire (1/logt)
+          senior:
+            places: 1
+            tranche: hébergement personnes âgées (1/logt)
+          etudiant:
+            places: 1
+            tranche: résidence universitaire (1/logt)
       pleine_terre:
         pct:
           pct: 20.0
@@ -524,12 +656,34 @@ zones:
             de la façade au point le plus proche de la limite séparative latérale est de 3 mètres minimum.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2.0
+        par_typologie:
+          statut: valide
           article: U 12.2
           page_pdf: 18
-          citation: 'Logements privés (PSLA, PTZ et libres) > à 50 m² de SDP : 2 places minimum par logement'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements prêt aidé / intermédiaires / hébergement personnes âgées / résidences universitaires : 1 place par logement. Logements privés (PSLA, PTZ, libres) ≤ 50 m² de SDP : 1 place min/logt. Logements privés > 50 m² de SDP : 2 places min/logt. Arrondi à l''entier supérieur (en-tête).'
+          detail:
+          - destination: collectif
+            sdp_max: 50
+            places: 1
+            tranche: privé ≤ 50 m²
+            role: base
+          - destination: collectif
+            sdp_min: 50
+            places: 2
+            tranche: privé > 50 m²
+            role: base
+          social:
+            places: 1
+            tranche: prêt aidé / intermédiaire (1/logt)
+          senior:
+            places: 1
+            tranche: hébergement personnes âgées (1/logt)
+          etudiant:
+            places: 1
+            tranche: résidence universitaire (1/logt)
       pleine_terre:
         pct:
           pct: 25.0

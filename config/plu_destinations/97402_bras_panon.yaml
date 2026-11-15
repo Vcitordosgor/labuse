@@ -63,14 +63,34 @@ zones:
           raison: valeur 5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UA 12.2
           page_pdf: 22
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements aidés : 1 place maximum par logement aidé. Autres logements : 1 place par logement d''une surface de plancher ≤ 100 m² ; 1,5 place par logement d''une surface de plancher ≥ 100 m². Foyers, résidences sociales : 1 place pour 3 logements ou chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -224,14 +244,34 @@ zones:
           raison: attribution douteuse (citation sous secteur None)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UB 12.2
           page_pdf: 35
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements aidés : 1 place maximum par logement aidé. Autres logements : 1 place par logement d''une surface de plancher ≤ 100 m² ; 1,5 place par logement d''une surface de plancher ≥ 100 m². Foyers, résidences sociales : 1 place pour 3 logements ou chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -366,14 +406,34 @@ zones:
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UB 12.2
           page_pdf: 35
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements aidés : 1 place maximum par logement aidé. Autres logements : 1 place par logement d''une surface de plancher ≤ 100 m² ; 1,5 place par logement d''une surface de plancher ≥ 100 m². Foyers, résidences sociales : 1 place pour 3 logements ou chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -442,14 +502,34 @@ zones:
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UC 12.2
           page_pdf: 49
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements aidés : 1 place maximum par logement aidé. Autres logements : 1 place par logement d''une surface de plancher ≤ 100 m² ; 1,5 place par logement d''une surface de plancher ≥ 100 m². Foyers, résidences sociales : 1 place pour 3 logements ou chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -555,14 +635,34 @@ zones:
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UD 12.2
           page_pdf: 62
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements aidés : 1 place maximum par logement aidé. Autres logements : 1 place par logement d''une surface de plancher ≤ 100 m² ; 1,5 place par logement d''une surface de plancher ≥ 100 m². Foyers, résidences sociales : 1 place pour 3 logements ou chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 40.0
@@ -924,14 +1024,34 @@ zones:
           raison: valeur 5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UA 12.2
           page_pdf: 22
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements aidés : 1 place maximum par logement aidé. Autres logements : 1 place par logement d''une surface de plancher ≤ 100 m² ; 1,5 place par logement d''une surface de plancher ≥ 100 m². Foyers, résidences sociales : 1 place pour 3 logements ou chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -1017,14 +1137,34 @@ zones:
           raison: attribution douteuse (citation sous secteur None)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UB 12.2
           page_pdf: 35
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements aidés : 1 place maximum par logement aidé. Autres logements : 1 place par logement d''une surface de plancher ≤ 100 m² ; 1,5 place par logement d''une surface de plancher ≥ 100 m². Foyers, résidences sociales : 1 place pour 3 logements ou chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -1083,14 +1223,34 @@ zones:
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UC 12.2
           page_pdf: 49
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements aidés : 1 place maximum par logement aidé. Autres logements : 1 place par logement d''une surface de plancher ≤ 100 m² ; 1,5 place par logement d''une surface de plancher ≥ 100 m². Foyers, résidences sociales : 1 place pour 3 logements ou chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -1149,14 +1309,34 @@ zones:
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UD 12.2
           page_pdf: 62
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Logements aidés : 1 place maximum par logement aidé. Autres logements : 1 place par logement d''une surface de plancher ≤ 100 m² ; 1,5 place par logement d''une surface de plancher ≥ 100 m². Foyers, résidences sociales : 1 place pour 3 logements ou chambres.'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 40.0
