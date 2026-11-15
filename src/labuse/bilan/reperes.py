@@ -92,14 +92,18 @@ def sources_parcelle(db: Session, idu: str) -> dict[str, Any]:
     # CHIRURGICAL-FIX-1 (E104) — le modèle doit porter le MÊME verdict que la fiche, lu au point
     # unique `potentiel_batir`. La part non constructible par famille (A/N) ne suffit pas : une
     # parcelle en famille U mais non constructible pour une AUTRE raison (habitat interdit en UE,
-    # PPR zone rouge) était présentée 100 % constructible. Si le verdict ferme la parcelle, le
+    # PPR zone rouge) était présentée 100 % constructible. Si le verdict FERME la parcelle, le
     # modèle la porte 100 % non constructible et NOMME le motif.
+    # CHIRURGICAL-FIX-1 (LOT I 1f) — SATURATION N'EST PAS INTERDICTION : une parcelle CONSTRUCTIBLE
+    # mais sans surface résiduelle (`rien_a_batir` alors que `constructible=True`, IS0448 : SDP 0)
+    # reste constructible — elle NE passe PAS à 100 % non constructible (c'était un motif vide, faux).
+    # Seule une non-constructibilité RÉELLE (`constructible=False`) ferme la parcelle.
     non_constructible_motif = None
     if parcel_id is not None:
         try:
             from ..faisabilite.potentiel_batir import potentiel_batir
             pb = potentiel_batir(db, idu)
-            if pb and (pb.get("rien_a_batir") or not pb.get("constructible", True)):
+            if pb and not pb.get("constructible", True):
                 nc_pct = 100.0
                 c_pct = 0.0
                 non_constructible_motif = pb.get("motif")
