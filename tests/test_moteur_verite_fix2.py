@@ -111,3 +111,53 @@ def test_lot_b_plafond_n_est_pas_une_capacite():
         "seuil_m2": 50, "citation": "par tranche de 600 m² de terrain."}, surface_m2=400)
     assert (f3.fourchette or {}).get("plafond_secteur_m2") is None
     assert "tranche incomplète" in f3.verdict
+
+
+def test_fix3_largeur_est_une_porte_pas_un_nombre():
+    """FIX-3 LOT 2 — Sainte-Rose Ud (AS0031, front 52,6 m) : « une seule limite pour une largeur
+    sur voie au plus égale à 14 m ». La largeur est une PORTE : remplie, elle active le jeton de
+    nombre (une seule) ; non remplie, le côté FERME (règle appliquée, pas une mention). Elle ne
+    vaut jamais « toutes » quand un jeton de nombre l'accompagne."""
+    lb = {"declaration": "toutes les conditions de l'article sont appliquées",
+          "conditions": {k: ("mesuree" if k == "nombre_de_limites" else "absente_du_texte")
+                         for k in ("nombre_de_limites", "lineaire_ou_profondeur_en_limite",
+                                   "bande_depuis_voie", "hauteur_en_limite", "angle", "patio",
+                                   "rupture_mitoyennete", "affectation_graphique")}}
+    imp = {"mode": "limite_sous_conditions", "liste_blanche": lb,
+           "condition_modelable": "largeur_terrain_max:14 m + une_seule_limite"}
+    d = analyser_condition_implantation(imp, 12.0, None)
+    assert d["ouvre"] is True and d["zero"] == 1          # jamais « toutes »
+    d = analyser_condition_implantation(imp, 52.6, None)
+    assert d["ouvre"] is False and d["zero"] == 0 and d["mention"] is None
+    # largeur non mesurable → prudent, mention
+    d = analyser_condition_implantation(imp, None, None)
+    assert d["ouvre"] is False and d["mention"]
+    # mode imposé : au-delà du seuil, « au moins une » reste imposée
+    impi = {"mode": "limite_imposee", "liste_blanche": lb,
+            "condition_modelable": "largeur_terrain_max:14 m"}
+    d = analyser_condition_implantation(impi, 52.6, None)
+    assert d["ouvre"] is True and d["zero"] == 1
+
+
+def test_fix3_repli_regle_propre_jamais_generique():
+    """FIX-3 LOT 2 — le repli générique applique les règles PROPRES de la zone quand elles
+    existent (feuilles validées) : Saint-Denis Uicm = 5 m ET CES 40 % (Ui.9 p.56) ; Udo = 4 m
+    (Ud.7 p.42) et sa hauteur (règle propre par rue, Ud.10 p.44) n'est JAMAIS remplacée par la
+    hauteur générique → capacité à vérifier (constructible, SDP ∅)."""
+    from labuse.faisabilite.engine import estimate_capacity
+    from labuse.faisabilite.zonage import _zone_generique
+    zr = _zone_generique("Uicm", "Saint-Denis")
+    assert zr.calibree is False
+    assert zr.recul_limites_sep_m == 5.0
+    assert zr.emprise_sol_pct == 40.0
+    assert zr.capacite_a_verifier is None
+    zr2 = _zone_generique("Udo", "Saint-Denis")
+    assert zr2.recul_limites_sep_m == 4.0
+    assert zr2.capacite_a_verifier and "Ud.10" in zr2.capacite_a_verifier
+    f = estimate_capacity(zr2, 800.0)
+    assert f.constructible is True
+    assert "capacité à vérifier" in f.verdict
+    assert "surface_plancher_m2" not in (f.fourchette or {})
+    # zone sans aucune feuille : le générique pur reste servi (rien ne casse)
+    zr3 = _zone_generique("Uzz", "Cilaos")
+    assert zr3.capacite_a_verifier is None and zr3.he_m is not None

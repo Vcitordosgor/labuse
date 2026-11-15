@@ -32,7 +32,7 @@ def _fichiers_plu():
 # `entre_constructions` NE DOIT PAS le toucher.
 ZONES_CALIBREES_ATTENDUES = {
     "97401": 19, "97402": 14, "97403": 5, "97404": 12, "97405": 15, "97406": 9, "97407": 13,
-    "97408": 22, "97409": 8, "97410": 5, "97411": 22,  # FIX-2 LOT C : +Uicm (5 m, règle propre Ui.7 p.55, Saint-Denis confirmé)
+    "97408": 22, "97409": 8, "97410": 5, "97411": 23,  # FIX-2 LOT C : +Uicm (5 m, Ui.7 p.55) ; FIX-3 LOT 2 : +Udo (4 m, Ud.7 p.42, règle propre lue par le repli)
      "97412": 24, "97413": 18, "97414": 18,
     "97415": 31, "97416": 27, "97418": 19, "97419": 9, "97420": 12, "97421": 10, "97422": 20,
     "97423": 9, "97424": 8,

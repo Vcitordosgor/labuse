@@ -963,21 +963,36 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                             f"tenant est retenu (~{round(100 * _amax / _atot)} % de l'assiette hors rouge).")
             except Exception:  # noqa: BLE001 — géométrie pathologique : on garde l'assiette totale
                 pass
-        # MOTEUR-VERITE-FIX-2 LOT C — SUP AC2 (sites) : la donnée ne distingue pas site INSCRIT
-        # (avis ABF) de site CLASSÉ (AUTORISATION SPÉCIALE) → prudence : le verdict reste
-        # constructible mais AUCUNE capacité n'est chiffrée (« capacité à vérifier »).
+        # MOTEUR-VERITE-FIX-2 LOT C puis FIX-3 LOT 2 — SUP AC2 (sites) : la SUP seule ne distingue
+        # pas site INSCRIT (avis ABF) de site CLASSÉ (AUTORISATION SPÉCIALE, art. L341-10) — mais la
+        # couche DEAL (spatial_layers kind='ens', subtypes site_classe/site_inscrit, périmètres sans
+        # commune) le dit : on la croise pour SERVIR LE BON RÉGIME (CY1293, relecture indépendante).
+        # Couche muette ou indisponible → libellé prudent inchangé. Jamais « aucune SUP ».
         if any("AC2" in str(a) for a in (racc.get("alertes") or [])):
             from .engine import faisabilite_capacite_a_verifier
-            ctx.contraintes.libelles.append(
-                "Site protégé (SUP AC2) — autorisation spéciale / avis de l'architecte des "
-                "Bâtiments de France requis ; la donnée ne distingue pas inscrit/classé.")
+            _sites: set[str] = set()
+            try:
+                _sites = {r[0] for r in session.execute(text(
+                    "SELECT DISTINCT e.subtype FROM spatial_layers e, parcels p "
+                    "WHERE p.id = :pid AND e.kind = 'ens' "
+                    "AND e.subtype IN ('site_classe','site_inscrit') "
+                    "AND ST_Intersects(e.geom_2975, p.geom_2975)"), {"pid": parcel_id}) if r[0]}
+            except Exception:  # noqa: BLE001 — couche indisponible : on reste sur le libellé prudent
+                _sites = set()
+            if "site_classe" in _sites:
+                regime = ("site CLASSÉ (couche DEAL) : autorisation spéciale requise "
+                          "(art. L341-10 du code de l'environnement)")
+            elif "site_inscrit" in _sites:
+                regime = "site INSCRIT (couche DEAL) : avis de l'architecte des Bâtiments de France"
+            else:
+                regime = ("régime inscrit/classé non déterminé par la donnée : autorisation "
+                          "spéciale ou avis ABF, à instruire")
+            ctx.contraintes.libelles.append(f"Site protégé (SUP AC2) — {regime}.")
             return ctx, faisabilite_capacite_a_verifier(
                 ctx.zone,
-                "Constructible — capacité à vérifier : site protégé (SUP AC2). La donnée ne "
-                "distingue pas le site inscrit (avis ABF) du site classé (autorisation spéciale) : "
-                "aucune capacité chiffrée sans instruction.",
-                "Site protégé AC2 : autorisation spéciale ou avis ABF selon le régime "
-                "(inscrit/classé) — à instruire ; capacité non chiffrée.")
+                f"Constructible — capacité à vérifier : site protégé (SUP AC2), {regime}. "
+                "Aucune capacité chiffrée sans instruction.",
+                f"Site protégé AC2 — {regime} ; capacité non chiffrée.")
 
         servie_sur = (racc.get("multizone") or {}).get("servie_sur")
         if servie_sur:

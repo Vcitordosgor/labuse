@@ -143,6 +143,9 @@ def analyser_condition_implantation(imp: Optional[dict], largeur_m, surface_m2) 
         return d
     jetons = [t.strip() for t in cm.split("+") if t.strip()]
     details = []
+    porte_largeur = False
+    porte_fermee = False
+    a_porte = any(t.strip().startswith("largeur_terrain_max:") for t in jetons)
     for tok in jetons:
         if tok in _JETON_FLAGS:
             n = 1 if tok == "une_seule_limite" else 2
@@ -157,17 +160,23 @@ def analyser_condition_implantation(imp: Optional[dict], largeur_m, surface_m2) 
             return d
         nom, val = js
         if nom == "largeur_terrain_max":
+            # FIX-3 LOT 2 — la largeur est une PORTE mesurée SUR LA VOIE : remplie, elle ACTIVE
+            # les jetons de nombre de limites ; non remplie, le côté FERME (règle appliquée,
+            # pas une mention) — Sainte-Rose Ud ouvrait « toutes » sous le seuil et une au-delà.
+            # En mode imposé, « au moins une » reste imposée au-delà du seuil.
             if largeur_m is None:
                 d.update(ouvre=False, zero=0, bande_m=None, lineaire_pct=None, detail=None,
-                         mention=(cond_txt[:160] + " (largeur du terrain non mesurable)"))
+                         mention=(cond_txt[:160] + " (largeur sur voie non mesurable)"))
                 return d
             if largeur_m <= val:
-                d["zero"] = "toutes"
-                details.append(f"largeur du terrain {largeur_m:g} m ≤ {val:g} m")
+                porte_largeur = True
+                details.append(f"largeur sur voie {largeur_m:g} m ≤ {val:g} m")
             elif mode == "limite_imposee":
+                porte_largeur = True
                 d["zero"] = "toutes" if d["zero"] == "toutes" else max(d["zero"] or 0, 1)
                 details.append(f"largeur {largeur_m:g} m > {val:g} m — au moins une limite imposée")
-            # sinon : condition évaluée, non remplie → ce jeton n'ouvre rien (pas une mention)
+            else:
+                porte_fermee = True
         elif nom == "surface_terrain_max":
             if surface_m2 and float(surface_m2) <= val:
                 d["zero"] = "toutes"
@@ -187,6 +196,12 @@ def analyser_condition_implantation(imp: Optional[dict], largeur_m, surface_m2) 
         elif nom == "lineaire_max_pct":
             d["lineaire_pct"] = val
             details.append(f"sur au plus {val:g} % du linéaire")
+    if porte_fermee:
+        # porte de largeur évaluée NON remplie → le côté ferme, règle appliquée (pas de mention)
+        return {"ouvre": False, "zero": 0, "bande_m": None, "lineaire_pct": None,
+                "detail": None, "mention": None}
+    if a_porte and porte_largeur and not d["zero"]:
+        d["zero"] = "toutes"          # porte seule, sans jeton de nombre : le texte n'en fixe pas
     if d["bande_m"] and not d["zero"]:
         d["zero"] = "toutes"
     d["ouvre"] = bool(d["zero"])
@@ -758,21 +773,14 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         # Les arêtes posées en limite portent le ruleId `limite-sep-limite` (recul 0 sourcé) : la
         # formule H/n du LOT 1 ne re-insète QUE les arêtes `limite-sep` restantes.
         def _largeur_terrain_m():
+            # MOTEUR-VERITE-FIX-3 LOT 2 — la « largeur sur voie » des règlements se mesure SUR LA
+            # VOIE (somme des arêtes classées voie), jamais sur le petit côté du rectangle
+            # englobant (doublon FIX-2 retiré). Pas d'arête voie qualifiée → None (condition non
+            # évaluable → l'ouverture FERME, mention).
             try:
-                rect = to_metric(shape_from_geojson(geom)).minimum_rotated_rectangle
-                c = list(rect.exterior.coords)
-                import math
-                return round(min(math.dist(c[0], c[1]), math.dist(c[1], c[2])), 1)
-            except Exception:  # noqa: BLE001 — largeur non mesurable → condition non évaluée
-                return None
-
-        def _largeur_terrain_m():
-            try:
-                rect = to_metric(shape_from_geojson(geom)).minimum_rotated_rectangle
-                c = list(rect.exterior.coords)
-                import math
-                return round(min(math.dist(c[0], c[1]), math.dist(c[1], c[2])), 1)
-            except Exception:  # noqa: BLE001 — largeur non mesurable → condition non évaluée (FERME)
+                _l = sum(float(e.geom.length) for e in lim.edges if e.type == "voie")
+                return round(_l, 1) if _l > 0 else None
+            except Exception:  # noqa: BLE001
                 return None
 
         # MOTEUR-VERITE-FIX-2 LOT A — décision PURE (analyser_condition_implantation) : tout jeton
@@ -821,6 +829,15 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 zero_ids |= {id(e) for e in tri[:dec_fond["zero"]]}
 
             def _emettre(i, e, dec, en_limite):
+                # FIX-3 LOT 2 — un CONTOUR FERMÉ (anneau : parcelle enclavée dont tout le périmètre
+                # est classé en une seule « arête ») n'est JAMAIS posé en limite : le mettre à 0
+                # ouvrait tout le périmètre (Sainte-Suzanne AH0293, L'Étang-Salé AY0554,
+                # Saint-Paul AH1368, Le Tampon AW0503 — relecture FIX-3).
+                if en_limite and getattr(e.geom, "is_ring", False):
+                    en_limite = False
+                    racc.setdefault("implantation", {}).setdefault("mentions", []).append(
+                        "contour fermé non qualifié (une seule arête sur tout le périmètre) : "
+                        "implantation en limite non appliquée — à vérifier")
                 if not en_limite:
                     setbacks.append(Setback(id=f"lim-{i}", ruleId="limite-sep", type=e.type,
                                             geometry=geojson_from_shape(to_wgs(e.geom)),

@@ -66,6 +66,9 @@ class ZoneRules:
     emprise_plage: dict | None = None         # idem emprise au sol
     regle_non_validee: str | None = None      # PLU-CALIBRAGE-6 : liste des feuilles SDP `propose`
     #  (règle PLU non validée) qui BRANCHERAIENT la SDP → capacité non calculable, jamais un défaut
+    capacite_a_verifier: str | None = None    # MOTEUR-VERITE-FIX-3 LOT 2 : la zone a une RÈGLE
+    #  PROPRE validée mais non réductible à un nombre (ex. Saint-Denis Udo, hauteur par rue) —
+    #  le repli ne sert JAMAIS une valeur générique à sa place : verdict constructible, SDP ∅
     recul_voirie_alignement: bool = False     # PLU-CALIBRAGE-7 forme 1 : recul 0 = « à l'alignement »
     recul_limites_alignement: bool = False    #  (idem « en limite séparative ») — 0 EXPLICITE, ≠ absent
     # MOTEUR-VERITE-FIX-1 (LOT 2) — mode d'IMPLANTATION par rapport aux limites séparatives, lu au
@@ -917,23 +920,50 @@ def _zone_generique(code: str, commune: str | None = None) -> ZoneRules:
                          notes=[note], sources={"zone": "estimation générique"})
     from .engine import HE_DEFAUT_GENERIQUE_M
     he = float(HE_DEFAUT_GENERIQUE_M)
-    # MOTEUR-VERITE-FIX-2 LOT C — le REPLI générique lit les RETRAITS calibrés de la zone quand
-    # ils existent (feuilles validées des destinations), au lieu du défaut (3 m) : Saint-Denis
-    # Uicm porte « 5 m minimum » en propre, le repli servait 3 m. Rien d'autre n'est repris
-    # (hauteur/emprise restent génériques prudents — la zone n'est pas « calibrée » pour autant).
+    # MOTEUR-VERITE-FIX-2 LOT C puis FIX-3 LOT 2 — le REPLI générique lit TOUTES les valeurs
+    # calibrées de la zone quand elles existent (feuilles validées des destinations), au lieu
+    # des défauts : Saint-Denis Uicm porte « 5 m minimum » ET un CES de 40 % (Ui.9) en propre,
+    # le repli servait 3 m et le CES générique ; même chose pour la hauteur (Udo a sa propre
+    # règle). La zone n'est pas « calibrée » pour autant (calibree=False, avertissement servi).
     _reg = None
     if commune:
         from ..plu import destinations as _D
         _reg = _D.regles_zone(_insee(commune) or "", code) or None
-    _rv = _val(_reg, "retraits", "voie", "min_m") if _reg else None
-    _rl = _val(_reg, "retraits", "limites_separatives", "min_m") if _reg else None
-    # le libellé de SOURCE reste mot pour mot celui de l'ancien système (comparé par le
-    # traducteur) — seule la note, non comparée, dit la nouvelle voie de calibrage.
-    return ZoneRules(code=code, calibree=False, he_m=he, notes=[note],
-                     recul_voirie_m=_rv if isinstance(_rv, (int, float)) else None,
-                     recul_limites_sep_m=_rl if isinstance(_rl, (int, float)) else None,
-                     sources={"hauteur": "estimation générique (PLU non outillé)",
-                              "zone": "estimation générique"})
+
+    def _num(rub: str, feuille: str, cle: str):
+        v = _val(_reg, rub, feuille, cle) if _reg else None
+        return float(v) if isinstance(v, (int, float)) else None
+
+    _he = _num("hauteur", "egout", "m")
+    _hf = _num("hauteur", "faitage", "m")
+
+    def _regle_sans_valeur(rub: str, feuille: str, cle: str) -> dict | None:
+        """Feuille VALIDÉE avec citation mais SANS valeur numérique : la zone a une règle propre
+        non réductible à un nombre — le générique ne doit pas la remplacer."""
+        leaf = ((_reg.get(rub) or {}).get(feuille)) if _reg else None
+        if (isinstance(leaf, dict) and leaf.get("statut") == "valide" and not leaf.get("absent")
+                and not leaf.get("plage") and leaf.get(cle) is None
+                and (leaf.get("citation") or "").strip()):
+            return leaf
+        return None
+
+    _cav = None
+    if _he is None and _hf is None:
+        _lh = _regle_sans_valeur("hauteur", "egout", "m") or _regle_sans_valeur("hauteur", "faitage", "m")
+        if _lh is not None:
+            _cav = (f"hauteur en zone {code} réglée en propre ({_lh.get('article') or '?'}, "
+                    f"p. {_lh.get('page_pdf') or '?'}) mais non réductible à un nombre par "
+                    "parcelle — aucune hauteur générique appliquée à sa place.")
+    src_h = ("règle propre de la zone (feuille validée lue par le repli)"
+             if (_he is not None or _hf is not None)
+             else "estimation générique (PLU non outillé)")
+    return ZoneRules(code=code, calibree=False, notes=[note],
+                     he_m=_he if _he is not None else he, hf_m=_hf,
+                     emprise_sol_pct=_num("emprise_sol", "ces", "pct"),
+                     recul_voirie_m=_num("retraits", "voie", "min_m"),
+                     recul_limites_sep_m=_num("retraits", "limites_separatives", "min_m"),
+                     capacite_a_verifier=_cav,
+                     sources={"hauteur": src_h, "zone": "estimation générique"})
 
 
 def hypotheses_faisabilite(commune: str | None = None) -> dict:

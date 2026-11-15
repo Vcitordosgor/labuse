@@ -524,6 +524,15 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                            steps, hypotheses, avert, modul, fourchette, _BANDEAU,
                            calibree=rules.calibree, cause=cause, exigu_raison=exigu_raison)
 
+    # MOTEUR-VERITE-FIX-3 LOT 2 — la zone a une RÈGLE PROPRE validée non réductible à un nombre
+    # (ex. Saint-Denis Udo : prospect général écarté, plafonds de hauteur par rue) : le repli ne
+    # sert JAMAIS une valeur générique à sa place. Verdict constructible, capacité à vérifier
+    # (SDP ∅ — aucune clé `surface_plancher_m2`, le chiffre ne peut pas être établi).
+    if rules.capacite_a_verifier:
+        avert.append(f"Capacité à vérifier : {rules.capacite_a_verifier}")
+        return fini(True, f"Constructible — capacité à vérifier : {rules.capacite_a_verifier}",
+                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
+
     # PLU-CALIBRAGE-6 — GARDE : une règle SDP encore `propose` (non validée) rend la capacité NON
     # CALCULABLE, jamais une valeur par défaut. On sort AVANT tout calcul (donc avant les reculs
     # `hypothèse prudente`, la hauteur générique, etc.) : aucun chiffre non sourcé n'entre dans la SDP.

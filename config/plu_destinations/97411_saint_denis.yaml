@@ -512,8 +512,21 @@ zones:
           un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   Udo:
     regles:
+      hauteur:
+        faitage:
+          article: Ud.10
+          page_pdf: 44
+          citation: "En secteur Udo : Les Dispositions Générales, paragraphe XV. Prospects. Hauteur maximale des constructions ne s'applique pas en secteur Udo. — En bordure de la grande place publique : La hauteur maximale H, mesurée à compter du niveau de la grande place, ne dépassera pas 50 m. Rue Maréchal Leclerc et Boulevard Jawaharlal Nehru (ex boulevard de l'Océan) : La hauteur maximale H ne dépassera pas 50 m."
+          note_fix3: 'MOTEUR-VERITE-FIX-3 LOT 2 : la hauteur Udo a une RÈGLE PROPRE (prospect général écarté, plafonds 50 m par rue) non réductible à un nombre par parcelle — feuille SANS valeur : le repli ne doit JAMAIS servir une hauteur générique à sa place (capacité à vérifier).'
+          statut: valide
       retraits:
         limites_separatives:
+          min_m: 4.0
+          article: Ud.7
+          page_pdf: 42
+          citation: "Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s'implanter à une distance L (comptée horizontalement de tout point d'une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d'altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2."
+          note_fix3: 'MOTEUR-VERITE-FIX-3 LOT 2 : retrait PROPRE de la zone (4 m, Ud.7), que le repli générique remplaçait par le défaut de 3 m.'
+          statut: valide
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -994,6 +1007,14 @@ zones:
           un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   Uicm:
     regles:
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: Ui.9
+          page_pdf: 56
+          citation: "En secteur Uicm : L'emprise au sol des constructions est limitée à 40 % de la superficie de l'unité foncière."
+          note_fix3: 'MOTEUR-VERITE-FIX-3 LOT 2 : CES PROPRE du secteur (40 %), que le repli générique remplaçait par la valeur générique.'
+          statut: valide
       retraits:
         limites_separatives:
           min_m: 5.0
