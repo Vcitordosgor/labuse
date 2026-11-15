@@ -23,7 +23,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 from .catalogue import Catalogue, assiette_unite, charger_catalogue
-from .moteur import EntreesBilan, Moteur
+from .moteur import EntreesBilan
 
 # CHIRURGICAL-FIX-1 (LOT H pt1) — même texte que le PDF (bilan/pdf.py) quand un coût requis manque :
 # le classeur ne doit PAS afficher un résultat (= CA), 100 % de marge et un cash-flow calculés par
@@ -52,10 +52,6 @@ def classeur_bilan(
 ) -> Workbook:
     cat = catalogue or charger_catalogue()
     tva_dom = float(cat.tva_legales["dom_standard"])
-    # CHIRURGICAL-FIX-1 (LOT H pt1) — complétude lue au MOTEUR (même source que le PDF) : si un coût
-    # requis manque, resultat_net est None → on gèle résultat/marge/cash-flow/renta au lieu de laisser
-    # des formules recalculer « CA − 0 = CA » et « 100 % ».
-    _incomplet = Moteur(cat).calculer(entrees).resultat_net is None
     wb = Workbook()
     ws = wb.active
     ws.title = "Bilan"
@@ -272,15 +268,15 @@ def classeur_bilan(
     ligne("TVA résiduelle", f=f"=(E{row_dep + 1}) - E{row_dep}")  # (CA TTC-HT) - dépenses TVA
     row_res = r
     mod_row = ligne_poste["mod"]
-    if _incomplet:
-        # Gelé comme le PDF : ni résultat, ni marge, ni cash-flow tant qu'un coût requis manque.
-        ligne("Résultat net", d=_NON_CALCULABLE, fmt="@", gras=True)
-        ligne("Cash flow", d=_NON_CALCULABLE, fmt="@")
-    else:
-        ligne("Résultat net", d=f"=D{row_dep + 1}-D{row_dep}", gras=True)  # CA HT - dépenses HT
-        ws.cell(row_res, 5, f"=D{row_res}/D{row_dep + 1}").number_format = _PCT  # marge % du CA HT
-        ws.cell(row_res, 5).font = _GRAS
-        ligne("Cash flow", d=f"=D{row_res}+D{mod_row}")
+    # CHIRURGICAL-FIX-1 (LOT H pt1) — formule VIVANTE (pas un texte figé, qui ne se recalculerait pas
+    # quand le client saisit ses coûts) : tant qu'aucun COÛT MAJEUR n'est saisi (achat terrain OU
+    # construction, même règle que le moteur `cout_majeur`), la cellule AFFICHE « non calculable… » ;
+    # dès qu'un coût majeur est entré, elle CALCULE (le classeur reste à formules vivantes).
+    _cm = f"AND(D{ligne_poste['achat']}<=0,D{ligne_poste['constr']}<=0)"   # aucun coût majeur
+    ligne("Résultat net", d=f'=IF({_cm},"{_NON_CALCULABLE}",D{row_dep + 1}-D{row_dep})', gras=True)
+    ws.cell(row_res, 5, f'=IF({_cm},"",D{row_res}/D{row_dep + 1})').number_format = _PCT  # marge % du CA HT
+    ws.cell(row_res, 5).font = _GRAS
+    ligne("Cash flow", d=f'=IF({_cm},"{_NON_CALCULABLE}",D{row_res}+D{mod_row})')
 
     # ---- Haut de feuille : ratios & programme (ordre du modèle) + calendrier ----
     # Rempli ici car il référence des cellules du corps, maintenant connues.
@@ -298,9 +294,9 @@ def classeur_bilan(
             _EUR,
         ),
         ("CA TTC programme", f"={cell_ca_ttc}", _EUR),
-        # CHIRURGICAL-FIX-1 (LOT H pt1) — gelée quand incomplet : D{row_res} porte alors un texte
-        # (« non calculable »), pas un nombre ; une division afficherait 100 % ou une erreur.
-        ("Renta nette / CA HT", ("" if _incomplet else f"=D{row_res}/{cell_ca_ht}"), ("@" if _incomplet else _PCT)),
+        # CHIRURGICAL-FIX-1 (LOT H pt1) — même garde VIVANTE : vide tant qu'aucun coût majeur n'est
+        # saisi (D{row_res} porte alors le texte « non calculable »), calculée dès qu'il l'est.
+        ("Renta nette / CA HT", f'=IF({_cm},"",D{row_res}/{cell_ca_ht})', _PCT),
         ("Nombre de lots", f"={cell_lots}", '#,##0'),
     ]
     ws.cell(3, 1, "Ratios & programme").font = _GRAS

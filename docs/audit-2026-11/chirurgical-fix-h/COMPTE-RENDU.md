@@ -110,7 +110,44 @@ réellement exemptée. Preuve `AM0838_…_preuves.txt`. Garde :
 
 ---
 
-## Preuves régénérées pt1 / pt2 / pt3 (demande de contre-vérification)
+## Correctifs après contre-vérification (pt1 formule vivante, pt2 gravité+part)
+
+**pt1 — le Bilan Excel reste à FORMULES VIVANTES.** La première version gelait les cellules en TEXTE
+quand les coûts étaient vides : c'était une régression (le classeur ne se recalculait plus quand le
+client saisissait ses coûts). Corrigé (`bilan/excel.py`) : la cellule GARDE sa formule, conditionnée —
+`=IF(AND(D{achat}<=0, D{constr}<=0), "non calculable — saisissez vos coûts", D{CA}-D{dép})` (même règle
+que le moteur `cout_majeur` : achat terrain OU construction). Marge et cash-flow idem. **Preuve par
+recalcul dans les deux états** (moteur `formulas`) sur BW2635 :
+
+| État | Résultat net | Marge | Cash-flow |
+|------|--------------|-------|-----------|
+| **coûts vides** | « non calculable — saisissez vos coûts » | (vide) | « non calculable… » |
+| **coûts saisis** (achat terrain 1 000 m² × 100 €/m² = 100 000 € HT) | **151 449,10 €** | **60,2 %** | **151 449,10 €** |
+
+Vérification à la main (état coûts saisis) : CA HT 251 449,10 − dépenses HT 100 000,00 = **151 449,10 €**
+(= Résultat) ; marge = 151 449,10 / 251 449,10 = **0,6023 = 60,2 %** ; cash = Résultat + MOD (0) =
+151 449,10 €. La MÊME cellule affiche « non calculable » à vide et calcule dès la saisie — plus de
+texte figé. Fichiers `bilan_BW2635_etat1_coutsVides.xlsx` / `bilan_BW2635_etat2_coutsSaisis.xlsx`.
+Gardes : `test_excel_resultat_formule_vivante_gelee_si_cout_majeur_absent`,
+`test_excel_formule_resultat_identique_coûts_vides_ou_saisis`, + évaluateur IF/AND de
+`test_bilan_excel.py` (Excel == moteur au centime, inchangé).
+
+**pt2 — une alerte reprise porte la MÊME nature, gravité et part que la fiche.** `apporteur.py`
+(`_desc_alerte`) ne tronque plus à « — » (qui perdait la gravité) : il garde nature + gravité + part et
+ne jette que l'explication longue. Ligne « Ce qui gêne » régénérée :
+
+- **BW2635** : « **Zone inondable TRI — scénario extreme (85 % de la parcelle)** » (avant : « Zone
+  inondable TRI »).
+- **AD0887 (zone humide)** : « **Zone humide inventoriée (espace fonctionnel (2009)) : La Grande Ferme
+  (100 % de la parcelle)** ».
+- **IS0448 (zone rouge)** : « **PPR zone rouge sur 34 % de la surface — vigilance forte** » ; zone bleue
+  « Zone bleue PPR … (~28 %) — constructible SOUS PRESCRIPTIONS ».
+- Les alertes sans gravité/part gardent leur nature seule (DPU → « Droit de préemption urbain
+  renforcé », l'explication est jetée). Garde : `test_apporteur_alerte_porte_nature_gravite_et_part`.
+
+---
+
+## Preuves régénérées pt1 / pt2 / pt3 (demande de contre-vérification initiale)
 
 Les points 1, 2 et 3 (les plus graves) manquaient de preuve tirée d'un document régénéré. Voici les
 documents produits dans `~/Desktop/chasse-1/_lotH-final/` et les valeurs lues.
@@ -130,9 +167,10 @@ documents produits dans `~/Desktop/chasse-1/_lotH-final/` et les valeurs lues.
 | AD0887 (×4 318 €/m²) | **238 785 €** | Résultat **238 785 €** · marge **100 %** · cash **238 785 €** | **« non calculable… »** · marge **vide** · **« non calculable… »** |
 
 (Les 251 449 / 241 938 / 238 785 € correspondent aux 251 447 / 241 935 / 238 783 € cités, au centième
-près de la surface vendable retenue.) Le `Moteur().calculer()` renvoie `resultat_net is None` sur ces
-trois entrées → les cellules ne portent PLUS de formule `=D..-D..`, mais un texte ; un recalcul
-LibreOffice/Excel afficherait donc exactement ce texte, aucun 251 449 caché.
+près de la surface vendable retenue.) **Mise à jour (correctif ci-dessus)** : la version corrigée NE
+fige PLUS un texte — la cellule garde une **formule conditionnelle vivante** qui affiche « non
+calculable… » tant que les coûts sont vides et **calcule dès qu'ils sont saisis** (preuve des deux
+états dans le correctif pt1). Les valeurs « CORRIGÉ » ci-dessus sont celles du recalcul **coûts vides**.
 
 **PDF — taxe sans assiette** (`bilan_pt1_PDF_taxe_sans_assiette.html`, taxe d'aménagement à 25 €/m²
 sans surface taxable renseignée) :
@@ -150,12 +188,11 @@ Documents `apporteur_<parcelle>_<idu>.html` (ligne « Ce qui gêne » / section 
 - **AM0838 — installation classée** : « *Une installation classée pour la protection de
   l'environnement (**ICPE**) est signalée **à proximité**. Installation (ICPE) à proximité — LOGISUD,
   régime Autres régimes, 10 m.* » — plus d'inférence « ancien site industriel / sol pollué ».
-- **BW2635 — inondation** : « Ce qui gêne … · **Zone inondable TRI** · … ». Cette alerte n'apparaissait
-  PAS avant pt2 (la couche `tri_zone` n'est pas dans `aleas_parcelle_liste`, qui ne lit que
-  `layer='risques'`) ; elle vient de la nouvelle liste `contraintes_parcelle_liste`. La ligne « Ce qui
-  gêne » affiche la NATURE de chaque alerte (libellé avant « — », règle RECETTE-11 D7) : la fiche porte
-  le détail complet « *Zone inondable TRI — scénario extreme (85 % de la parcelle)* », et l'Apporteur en
-  reprend la nature « Zone inondable TRI ». L'alerte d'inondation n'est donc plus omise.
+- **BW2635 — inondation** : « Ce qui gêne … · **Zone inondable TRI — scénario extreme (85 % de la
+  parcelle)** · … ». Cette alerte n'apparaissait PAS avant pt2 (la couche `tri_zone` n'est pas dans
+  `aleas_parcelle_liste`, qui ne lit que `layer='risques'`) ; elle vient de la nouvelle liste
+  `contraintes_parcelle_liste`, et depuis le correctif pt2 ci-dessus elle porte sa **gravité** et sa
+  **part** comme la fiche (voir § « Correctifs après contre-vérification »).
 
 ### pt3 — Pré-dossier PCMI4 IS0448 : PPR dit comme le Dossier
 

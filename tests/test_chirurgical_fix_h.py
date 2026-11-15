@@ -14,20 +14,37 @@ def _ws_rows(wb):
     return {r[0].value: (r[3].value, r[4].value) for r in wb.active.iter_rows() if r[0].value}
 
 
-def test_excel_gele_resultat_si_cout_requis_manquant():
-    # Programme + produit (donc un CA), AUCUN coût → le moteur ne calcule pas de résultat.
+def test_excel_resultat_formule_vivante_gelee_si_cout_majeur_absent():
+    """pt1 — le Résultat net reste une FORMULE VIVANTE (pas un texte figé) : IF(aucun coût majeur,
+    « non calculable… », CA−dépenses). Tant qu'achat terrain ET construction sont vides, la cellule
+    AFFICHE « non calculable » ; dès qu'un coût majeur est saisi, elle CALCULE (recalcul du client)."""
     e = EntreesBilan(programme=Programme(terrain=2000),
                      produits=[Produit("P1", 10, 600, 4785, 0.20)], postes={})
     assert Moteur().calculer(e).resultat_net is None, "pré-condition : incomplet"
     rows = _ws_rows(classeur_bilan(e, titre="t"))
-    # Résultat net & cash-flow : texte « non calculable », PAS une formule « =D..-D.. ».
-    assert rows["Résultat net"][0] == "non calculable — saisissez vos coûts"
-    assert not str(rows["Résultat net"][0]).startswith("=")
-    assert rows["Cash flow"][0] == "non calculable — saisissez vos coûts"
-    # Marge % (colonne E de la ligne Résultat) : vide, jamais « 100 % ».
-    assert rows["Résultat net"][1] in (None, "")
-    # Renta nette / CA HT : vide quand incomplet (pas de division sur un texte).
-    assert rows["Renta nette / CA HT"][1] in (None, "")
+    f_res, f_marge = str(rows["Résultat net"][0]), str(rows["Résultat net"][1])
+    f_cash = str(rows["Cash flow"][0])
+    # Résultat & cash-flow : FORMULE conditionnelle, pas un texte figé.
+    assert f_res.startswith("=IF(") and "non calculable — saisissez vos coûts" in f_res
+    assert "AND(" in f_res and "<=0" in f_res            # condition : aucun coût majeur saisi
+    assert "-D" in f_res                                  # branche calcul : CA HT − dépenses HT
+    assert f_cash.startswith("=IF(") and "non calculable" in f_cash
+    # Marge % (col E) & Renta : formule « vide tant qu'incomplet, sinon division » (jamais « 100 % »).
+    assert f_marge.startswith("=IF(") and '""' in f_marge
+    assert str(rows["Renta nette / CA HT"][1]).startswith("=IF(")
+
+
+def test_excel_formule_resultat_identique_coûts_vides_ou_saisis():
+    """pt1 — la formule du Résultat net est la MÊME que les coûts soient vides ou saisis : c'est la
+    cellule qui décide à l'affichage. Un classeur généré « coûts vides » calcule donc dès que le
+    client remplit ses coûts (preuve de non-régression : plus de texte figé par état)."""
+    prod = [Produit("P1", 1, 55.0, 4500.0, 0.0)]
+    vide = _ws_rows(classeur_bilan(EntreesBilan(programme=Programme(), produits=prod, postes={})))
+    plein = _ws_rows(classeur_bilan(EntreesBilan(
+        programme=Programme(terrain=1000), produits=prod,
+        postes={"achat": SaisiePoste(valeur=100.0, etat="ratio")})))
+    assert vide["Résultat net"][0] == plein["Résultat net"][0]
+    assert str(vide["Résultat net"][0]).startswith("=IF(")
 
 
 def test_apporteur_liste_alertes_complete_et_filtree():
@@ -51,6 +68,28 @@ def test_apporteur_liste_alertes_complete_et_filtree():
     assert not ({"vefa_neuf", "declassement", "residuel_socle", "bassin_versant"} & layers), \
         "marché/scoring/bassin versant ne sont pas des alertes"
     assert "zone_plu" not in layers  # une ligne PASS n'est pas une alerte
+
+
+def test_apporteur_alerte_porte_nature_gravite_et_part():
+    """pt2 — une alerte reprise dans un document porte la MÊME nature, gravité et part que la fiche :
+    « scénario extreme, 85 % » (TRI), « vigilance forte, 34 % » (zone rouge), « 100 % » (zone humide) ;
+    seule l'explication longue est jetée (DPU → nature seule)."""
+    from labuse.exports.blocs.apporteur import _desc_alerte
+    assert _desc_alerte(
+        "Zone inondable TRI — scénario extreme (85 % de la parcelle) : cartographie de la directive "
+        "inondation ; complète le PPR.") == "Zone inondable TRI — scénario extreme (85 % de la parcelle)"
+    assert _desc_alerte(
+        "Zone humide inventoriée (espace fonctionnel (2009)) : La Grande Ferme (100 % de la parcelle) "
+        "— loi sur l'eau") == "Zone humide inventoriée (espace fonctionnel (2009)) : La Grande Ferme (100 % de la parcelle)"
+    assert _desc_alerte(
+        "PPR zone rouge sur 34 % de la surface — vigilance forte ; constructibilité à vérifier "
+        "(pas d'exclusion automatique).") == "PPR zone rouge sur 34 % de la surface — vigilance forte"
+    # explication longue sans gravité ni part → nature seule
+    assert _desc_alerte(
+        "Droit de préemption urbain renforcé — la commune peut préempter à la vente (DIA obligatoire)."
+    ) == "Droit de préemption urbain renforcé"
+    # gravité courte conservée
+    assert _desc_alerte("Aléa mouvement de terrain — niveau faible.") == "Aléa mouvement de terrain — niveau faible"
 
 
 def test_apporteur_contraintes_sans_doublon_depuis_la_liste_complete():
