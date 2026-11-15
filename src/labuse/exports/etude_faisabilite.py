@@ -607,6 +607,7 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
          esc((haut['nom'][:1].upper() + haut['nom'][1:]) if haut and haut.get('nom') else "Hauteur")),
         (aides_txt, "Logements aidés imposés"),
         (str(places_imp) if places_imp is not None else "—", "Places imposées"),
+        (str(cc.get("a_confirmer", 0)), "Contrôles à confirmer"),
         (str(cc["non_effectue"]), "Contrôles non effectués"),
     ]
     tiles_html = "".join('<div class="tile"><div class="v">%s</div><div class="l">%s</div></div>'
@@ -615,8 +616,20 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     # en premier, le MAXIMUM DU TERRAIN ensuite. Deux lignes lisibles par le client.
     cmax = payload.get("capacite_maximale") or {}
     # EXPORTS-FIX-3 LOT 3 (#5a/#5b) — statut AFFICHÉ rétrogradé à « À vérifier » dès qu'un garde-fou tombe.
-    _statut_aff = "À vérifier" if _gardes else _statut_court(retenu["statut_etude"])
-    stc = "cp" if _gardes else _statut_classe(retenu["statut_etude"])
+    # ETUDE-STATIONNEMENT-FIX-3 (LOT 1 #3) — le statut affiché est celui du CALCUL COURANT : le VERDICT GLOBAL
+    # du scénario (`verdict`, qui déclasse « Exploitable » dès qu'un contrôle À CONFIRMER bloquant tombe), et
+    # non le `statut_etude` (aveugle aux À confirmer). Les 3 témoins passent de « Exploitable » à « À compléter ».
+    _vg = str(retenu.get("verdict") or "")
+    if _gardes:
+        _statut_aff, stc = "À vérifier", "cp"
+    elif _vg.startswith("Exploitable"):
+        _statut_aff, stc = "Exploitable", "ok"
+    elif _vg.startswith("Impossible"):
+        _statut_aff, stc = "Impossible", "no"
+    elif _vg:
+        _statut_aff, stc = "À compléter", "cp"      # « À compléter » (À confirmer bloquant, échec, etc.)
+    else:                                            # repli : ancien statut de scénario
+        _statut_aff, stc = _statut_court(retenu["statut_etude"]), _statut_classe(retenu["statut_etude"])
     # CAPACITE-1 (B4) — colonne « Places » : quand le barème n'est pas servi, « 0 » ment (ce n'est pas
     # « 0 place exigée » mais NON calculé) → « stationnement non vérifié », partout dans le tableau (`_stat_nv`).
     def _places_cell(v) -> str:
@@ -677,7 +690,8 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
            if (payload.get("recherche") or {}).get("etat") in ("partielle", "non_aboutie") else '')
         + '<div class="ef-status">'
         f'<div><b>Contrôles automatisés de votre projet</b>'
-        f'{cc["reussi"]} réussis · {cc["echoue"]} échoués · {cc["non_effectue"]} non effectués</div>'
+        f'{cc["reussi"]} réussis · {cc["echoue"]} échoués · {cc.get("a_confirmer", 0)} à confirmer · '
+        f'{cc["non_effectue"]} non effectués</div>'
         f'<div><b>Statut de l\'étude</b>{esc(_statut_aff)} — '
         'à faire confirmer par un architecte</div></div>'
         # EXPORTS-FIX-3 LOT 3 (#5a/#5b) — garde-fou d'honnêteté : raisons AFFICHÉES pour lesquelles ce
