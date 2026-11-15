@@ -89,6 +89,7 @@ zones:
           article: Ua12.2
           page_pdf: 22
           citation: Habitat individuel 1 place par logement
+          bareme: '1 place / logement ; 1,5 place / logement pour une opération de plus de 5 lots ou logements'
           statut: valide
       pleine_terre:
         pct:
@@ -390,6 +391,7 @@ zones:
           article: Ua12.2
           page_pdf: 22
           citation: Habitat individuel 1 place par logement
+          bareme: '1 place / logement ; 1,5 place / logement pour une opération de plus de 5 lots ou logements'
           statut: valide
       pleine_terre:
         pct:
@@ -458,6 +460,7 @@ zones:
           article: Ub12.2
           page_pdf: 37
           citation: Habitat individuel 1 place par logement
+          bareme: '1 place / logement ; 1,5 place / logement pour une opération de plus de 5 lots ou logements'
           statut: valide
       pleine_terre:
         pct:
@@ -750,6 +753,7 @@ zones:
           article: Uc12.2
           page_pdf: 52
           citation: Habitat individuel 1 place par logement
+          bareme: '1 place / logement ; 1,5 place / logement pour une opération de plus de 5 lots ou logements'
           statut: valide
       pleine_terre:
         pct:
@@ -1002,6 +1006,7 @@ zones:
           article: Uc12.2
           page_pdf: 52
           citation: Habitat individuel 1 place par logement
+          bareme: '1 place / logement ; 1,5 place / logement pour une opération de plus de 5 lots ou logements'
           statut: valide
       pleine_terre:
         pct:
@@ -1290,6 +1295,7 @@ zones:
           article: Ud12.2
           page_pdf: 67
           citation: Habitat individuel 1 place par logement
+          bareme: '1 place / logement ; 1,5 place / logement pour une opération de plus de 5 lots ou logements'
           statut: valide
       pleine_terre:
         pct:
@@ -1626,6 +1632,7 @@ zones:
           article: Ua12.2
           page_pdf: 22
           citation: Habitat individuel 1 place par logement
+          bareme: '1 place / logement ; 1,5 place / logement pour une opération de plus de 5 lots ou logements'
           statut: valide
       pleine_terre:
         pct:
@@ -1696,6 +1703,7 @@ zones:
           article: Ub12.2
           page_pdf: 37
           citation: Habitat individuel 1 place par logement
+          bareme: '1 place / logement ; 1,5 place / logement pour une opération de plus de 5 lots ou logements'
           statut: valide
       pleine_terre:
         pct:
@@ -1764,6 +1772,7 @@ zones:
           article: Uc12.2
           page_pdf: 52
           citation: Habitat individuel 1 place par logement
+          bareme: '1 place / logement ; 1,5 place / logement pour une opération de plus de 5 lots ou logements'
           statut: valide
       pleine_terre:
         pct:

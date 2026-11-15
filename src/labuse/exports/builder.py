@@ -8,6 +8,7 @@ bout sur les quatre témoins ; les lots 2-7 ajoutent les blocs.
 """
 from __future__ import annotations
 
+import hashlib
 import logging
 from dataclasses import dataclass
 from datetime import date
@@ -400,6 +401,12 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
     }
 
 
+def _signature_valeurs(valeurs: dict) -> str:
+    """CHIRURGICAL-FIX-1 (LOT I pt4) — signature STABLE du contenu servi (les Valeur), pour discriminer
+    deux versions d'un document le même jour. Déterministe (tri par id) ; même données → même clé."""
+    return "|".join(f"{k}={getattr(valeurs[k], 'valeur', None)!r}" for k in sorted(valeurs))
+
+
 def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = None,
                jour: date | None = None, compte_id: int | None = None) -> ResultatDoc:
     """Assemble le HTML complet d'un document et les Valeur lues (pour l'archive). Pour le Financier,
@@ -413,12 +420,15 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     # NUMÉRO identiques (preuve : pdftotext diff vide). L'entrée « flash » reste acceptée
     # (facturation _flash_fulfill), le document rendu est LE Dossier.
     document = "dossier" if document == "flash" else document
-    numero = numeros.numero_rapport(document, idu, j)
     if DOCUMENTS[document] == _MIROIR:
         from . import miroir
         ids = sorted(ids_m for ids_m in miroir.ids_declares() | {"run_label_servi"}
                      if ids_m in EXTRACTEURS)
         valeurs = collecte(db, idu, ids, fiche=f)
+        # CHIRURGICAL-FIX-1 (LOT I pt4) — numéro calculé APRÈS la lecture : il porte une clé stable du
+        # CONTENU (valeurs servies) → deux versions du même export le même jour (données différentes)
+        # diffèrent, une génération à l'identique garde le même numéro.
+        numero = numeros.numero_rapport(document, idu, j, discriminant=_signature_valeurs(valeurs))
         label, _st = _LABEL["dossier"]
         adresse = f.get("adresse") or ""
         au = f.get("donnees_labuse_au") or _donnees_labuse_au() or f"{j:%d/%m/%Y}"
@@ -450,6 +460,7 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     blocs = DOCUMENTS[document]
     ids = sorted({cid for b in blocs for cid in b.IDS})
     valeurs = collecte(db, idu, ids, fiche=f)
+    numero = numeros.numero_rapport(document, idu, j, discriminant=_signature_valeurs(valeurs))
     ctx = None
     if document == "apporteur":
         ctx = _apporteur_contexte(db, idu, f, j, compte_id)
@@ -595,7 +606,9 @@ def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | Non
     j = jour or today_reunion()
     ids = [i.strip() for i in idus if i and i.strip()][:3]
     ref0 = ids[0] if ids else ""
-    numero = numeros.numero_rapport("comparatif", ref0, j)
+    # CHIRURGICAL-FIX-1 (LOT I pt4) — le numéro du Comparatif tient compte de TOUTES ses parcelles
+    # (pas de la seule première) : deux comparatifs de jeux de parcelles différents diffèrent.
+    numero = numeros.numero_rapport("comparatif", ref0, j, discriminant="|".join(sorted(ids)))
     suffixe = f"{len(rows)} parcelles"
     cart = _cart("comparatif", suffixe, " · ".join(ids), numero, j)
     _note_html = (f'<p class="notice" style="color:#b06a2c">{esc(note_limite)}</p>'

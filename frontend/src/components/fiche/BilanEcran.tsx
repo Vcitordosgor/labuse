@@ -81,15 +81,20 @@ export function entreesInitiales(m: BilanModele, etude?: BilanDepuisEtude | null
   const calendrier: Record<string, number | null> = {}
   for (const c of m.calendrier ?? []) calendrier[c.id] = c.defaut
   // « Depuis l'Étude » : SDP du scénario + logements (par type) comme 1er produit. Sinon tout à blanc.
-  const parType = etude?.par_type ? Object.entries(etude.par_type).filter(([, n]) => n > 0).map(([t, n]) => `${t}×${n}`).join(' · ') : ''
+  // CHIRURGICAL-FIX-1 (LOT I 1e) — sur une parcelle où l'HABITAT est interdit (non constructible,
+  // motif servi), on ne PROPOSE jamais un produit « Logements » avec un chiffre d'affaires : le
+  // programme reste à blanc, même si une Étude était reliée (il n'y a pas de logements à y construire).
+  const interdit = !!m.sourcee.non_constructible_motif
+  const depuisEtude: BilanDepuisEtude | null = etude && !interdit ? etude : null
+  const parType = depuisEtude?.par_type ? Object.entries(depuisEtude.par_type).filter(([, n]) => n > 0).map(([t, n]) => `${t}×${n}`).join(' · ') : ''
   return {
     programme: {
       terrain: m.sourcee.terrain ?? null, surface_taxable: null, loyer: null,
-      sdp: etude ? etude.sdp_m2 : null,
+      sdp: depuisEtude ? depuisEtude.sdp_m2 : null,
     },
-    produits: etude
+    produits: depuisEtude
       ? [
-          { libelle: parType ? `Logements · ${parType}` : 'Logements', lots: etude.logements, suv: etude.shab_m2 ?? null, prix_ttc_m2_suv: null, tva: null },
+          { libelle: parType ? `Logements · ${parType}` : 'Logements', lots: depuisEtude.logements, suv: depuisEtude.shab_m2 ?? null, prix_ttc_m2_suv: null, tva: null },
           { libelle: 'Produit 2', lots: null, suv: null, prix_ttc_m2_suv: null, tva: null },
         ]
       : [

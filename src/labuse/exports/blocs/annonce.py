@@ -371,6 +371,11 @@ def _comparables(est: dict) -> str:
         foot = (f"{_int(autres)} autre" + ("s" if autres > 1 else "") + " vente"
                 + ("s" if autres > 1 else "") + " " + _de(esc(pl)) + f" {esc(peri)}. ")
     foot += f"Source : DVF, ventes {_de(esc(pl))}" + (f", {esc(per)}" if per else "") + "."
+    # CHIRURGICAL-FIX-1 (LOT I 3d) — ces 8 ventes sont les plus PROCHES, pas l'échantillon du prix
+    # médian de tête (calculé, lui, sur l'ensemble du secteur) : on le dit, pour ne pas laisser croire
+    # que la médiane affichée se lit sur ce tableau.
+    foot += (" Ces 8 ventes sont les plus proches ; le prix médian indiqué plus haut est calculé sur "
+             "tout le secteur, pas sur ce seul tableau.")
     titre = ("Les 8 ventes de terrain nu les plus proches" if terrain
              else "Les 8 ventes les plus proches retenues")
     return (f'<h2>{titre}</h2>'

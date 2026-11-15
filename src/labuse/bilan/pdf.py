@@ -187,7 +187,11 @@ def construire_html(
 ) -> tuple[str, Cartouche]:
     cat = cat or charger_catalogue()
     j = jour or today_reunion()
-    numero = numeros.numero_rapport("bilan", idu, j)
+    # CHIRURGICAL-FIX-1 (LOT I pt4) — le numéro porte une clé du CONTENU (CA / dépenses / résultat) :
+    # deux Bilans de SAISIES différentes le même jour reçoivent des numéros différents, un recalcul à
+    # l'identique garde le même numéro.
+    _sig = f"{r.ca_ht}|{r.depenses_ht}|{r.resultat_net}|{r.marge_pct}"
+    numero = numeros.numero_rapport("bilan", idu, j, discriminant=_sig)
 
     # DOCS-COHERENCE-1 (recette Vic, G6) — en-tête COMPLET : adresse + Étude reliée + prix demandé,
     # comme à l'écran. « — » honnête quand une donnée n'est pas servie (jamais un zéro inventé).

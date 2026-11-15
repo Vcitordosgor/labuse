@@ -417,12 +417,14 @@ class Moteur:
         ratios = self._ratios(lignes, blocs_tot, pt, ctx, res_net)
         vrais = self._vraisemblance(lignes, pt, e.programme, marge, not manquants)
 
-        # DOCS-1 (décision Vic) — tant qu'aucun COÛT MAJEUR (terrain OU construction) n'est saisi, le
-        # résultat SERVI reste « non calculable » : afficher res_net = CA (dépenses nulles) serait un
-        # bénéfice trompeur. Le calcul interne (ratios, vraisemblance) garde ses valeurs ; seuls les
-        # champs CLIENT (résultat, rentabilité, cash-flow, avec/sans aléas) sont masqués.
-        cout_majeur = ((ht_de("achat") or 0.0) > 0.0) or ((ht_de("constr") or 0.0) > 0.0)
-        if not cout_majeur:
+        # DOCS-1 (décision Vic) + CHIRURGICAL-FIX-1 (LOT I 1a) — le résultat SERVI reste « non
+        # calculable » tant qu'un COÛT REQUIS manque : il en faut DEUX, l'achat du terrain ET la
+        # construction (c'est un ET, pas un OU). Avec le seul achat, afficher ~60 % de marge
+        # (construction nulle) serait un bénéfice trompeur. Le calcul interne (ratios, vraisemblance)
+        # garde ses valeurs ; seuls les champs CLIENT (résultat, rentabilité, cash-flow, avec/sans
+        # aléas) sont masqués tant que les deux coûts requis ne sont pas saisis.
+        couts_requis = ((ht_de("achat") or 0.0) > 0.0) and ((ht_de("constr") or 0.0) > 0.0)
+        if not couts_requis:
             res_net = marge = cash = res_sa = marge_sa = None
 
         return ResultatBilan(

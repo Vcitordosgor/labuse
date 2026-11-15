@@ -734,10 +734,16 @@ class RisquesLayer(Layer):
                         f"Exclue : PPR zone rouge (inconstructible) — {cov_pct:.0f} % de la surface.",
                         kind="exclue", source=SRC_DEAL_PPR))
             elif cov_pct >= marg_pct:
+                # CHIRURGICAL-FIX-1 (LOT I pt2) — la PARTIE en zone rouge est inconstructible : on le dit
+                # (exclue de l'implantation, comme le Dossier et le Gabarit qui la retranchent), plutôt
+                # que « vigilance forte ; pas d'exclusion automatique » (qui laissait croire que le rouge
+                # restait peut-être bâtissable). La parcelle n'est pas rejetée (< 50 %) : on construit sur
+                # le reste, et les prescriptions du règlement PPR relèvent de la zone bleue.
                 verdicts.append(soft_flag(
                     self.name,
-                    f"PPR zone rouge sur {cov_pct:.0f} % de la surface — vigilance forte ; "
-                    "constructibilité à vérifier au règlement (pas d'exclusion automatique).",
+                    f"PPR zone rouge sur {cov_pct:.0f} % de la surface — cette partie est inconstructible "
+                    "(exclue de l'implantation) ; les prescriptions du règlement PPR ne s'appliquent qu'en "
+                    "zone bleue.",
                     Severity.FORT, source=SRC_DEAL_PPR))
             else:
                 verdicts.append(soft_flag(

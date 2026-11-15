@@ -114,6 +114,15 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
         ref = src.get(skey)
         out.append({"cle": cle, "libelle": libelle, "valeur": txt, "etat": etat,
                     "reference": ref, "url": _url(ref), "exceptions": _exc(cle)})
+        # CHIRURGICAL-FIX-1 (LOT I 3c) — deux obligations de sol distinctes : la pleine terre (le
+        # noyau, ci-dessus) ET la surface perméable (l'enveloppe). Le Tampon Ud « 40 % perméable, dont
+        # 30 % pleine terre », Uav « 30 % / 20 % » : on sert les DEUX lignes, pas seulement la pleine terre.
+        _perm = getattr(rules, "permeabilite_pct", None)
+        if cle == "pleine_terre" and isinstance(_perm, (int, float)):
+            _ptxt, _petat = _fmt_valeur(_perm, "%")
+            out.append({"cle": "surface_permeable", "libelle": "Surface perméable min",
+                        "valeur": _ptxt, "etat": _petat, "reference": ref, "url": _url(ref),
+                        "exceptions": _exc("pleine_terre")})
     return out
 
 
