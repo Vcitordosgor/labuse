@@ -1,7 +1,1 @@
-Cells 295/300 | COUPLES concordants 255/267 | écarts 6
-  97407 97407-R1 [2z Ua] aide_20T3_1400: img=16 vs mot=4
-  97407 97407-R2 [1z Ub] aide_20T3_1400: img=16 vs mot=4
-  97407 97407-R3 [3z Uc] aide_20T3_1400: img=16 vs mot=4
-  97407 97407-R4 [1z Ud] aide_20T3_1400: img=16 vs mot=4
-  97407 97407-R5 [1z 1AUm] aide_20T3_1400: img=16 vs mot=4
-  97416 97416-R4 [4z Uf] NON-LU: found=false
+Cells 304/304 | COUPLES concordants 267/267 | écarts 0

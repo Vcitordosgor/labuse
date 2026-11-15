@@ -57,8 +57,21 @@
   },
   {
    "rule_id": "97416-R4",
-   "found": false,
-   "programs": {}
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 2
+    },
+    "collectif_20T3_1400": {
+     "total": 30
+    },
+    "aide_20T3_1400": {
+     "total": 20
+    },
+    "mixte_10x110_10x30": {
+     "total": 30
+    }
+   }
   },
   {
    "rule_id": "97416-R5",

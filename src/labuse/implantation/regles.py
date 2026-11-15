@@ -69,6 +69,9 @@ class LigneBareme:
     role: str = "base"                  # 'base' | 'operation' | 'alt'
     arrondi: Optional[str] = None
     libelle: str = ""
+    # ETUDE-STATIONNEMENT-FIX-2 (banc 212) — terme ADDITIF au m² (ex. Le Port aidé : 0,2/logt + 8 places/1000 m²).
+    m2_places: Optional[float] = None   # s'AJOUTE à `places` : m2_places places par tranche de m2_tranche m²
+    m2_tranche: Optional[float] = None
 
 
 @dataclass(frozen=True)
@@ -269,8 +272,14 @@ class BaremeStationnement:
                     tot = self.arrondir(sdp_tot / sp.par_m2, sp.arrondi)
                     formule = f"{destination} : 1 place / {sp.par_m2:g} m² SDP · {sdp_tot:.0f} m²"
                 else:
-                    tot = self.arrondir(n * sp.places, sp.arrondi)
-                    formule = f"{destination} : {sp.places:g} place/logt × {n} logts"
+                    # part par logement + part ADDITIVE au m² (ex. Le Port : 0,2/logt + 8 places/1000 m²).
+                    raw = n * (sp.places or 0.0)
+                    _m2 = ""
+                    if sp.m2_places and sp.m2_tranche:
+                        raw += (sdp_tot / sp.m2_tranche) * sp.m2_places
+                        _m2 = f" + {sp.m2_places:g} places/{sp.m2_tranche:g} m²"
+                    tot = self.arrondir(raw, sp.arrondi)
+                    formule = f"{destination} : {sp.places:g} place/logt × {n} logts{_m2}"
                 tot, formule, ecartees = self._cap_plafond(int(tot), n, formule, ())
                 svis, spub = self._parts_visiteurs(destination, n, sdp_tot)
                 det = {"destination": destination}
@@ -588,6 +597,8 @@ def _lignes_destinations(form: dict) -> list[LigneBareme]:
         if isinstance(s.get("places"), (int, float)):
             out.append(LigneBareme(places=float(s["places"]), destination=cle, role="base",
                                    arrondi=_norm_arrondi(s.get("arrondi"), None) if s.get("arrondi") else None,
+                                   m2_places=float(s["m2_places"]) if isinstance(s.get("m2_places"), (int, float)) else None,
+                                   m2_tranche=float(s["m2_tranche"]) if isinstance(s.get("m2_tranche"), (int, float)) else None,
                                    libelle=s.get("tranche") or lib))
         elif isinstance(s.get("par_m2"), (int, float)):
             out.append(LigneBareme(par_m2=float(s["par_m2"]), destination=cle, role="base",
