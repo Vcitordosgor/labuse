@@ -39,6 +39,13 @@ def main() -> int:
             except ValueError as e:
                 print(f"  {idu} : entrée refusée — {e}")
                 continue
+            # reliquat #1 — enrichissement API : reprise des alertes de la fiche (zone humide, inondation…)
+            # dans l'Étude (comme la route /modules/etude), sinon le PDF régénéré hors API les omettrait.
+            try:
+                from labuse.api.modules import _attach_contraintes_signalees
+                _attach_contraintes_signalees(s, payload, [idu])
+            except Exception as _e:  # noqa: BLE001 — annexe, jamais bloquant pour le rendu
+                print(f"    (alertes non enrichies : {_e})")
             try:
                 rendu = rendu_etude(payload, genere_le=genere_le)
             except ValueError:
