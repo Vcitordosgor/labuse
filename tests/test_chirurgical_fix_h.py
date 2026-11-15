@@ -68,6 +68,20 @@ def test_apporteur_contraintes_sans_doublon_depuis_la_liste_complete():
     assert "Droit de préemption urbain" in out
 
 
+def test_compare_bati_pct_depuis_le_bien_et_proprio_non_determine():
+    """pt4 — le Comparatif lit l'emprise SERVIE (le_bien, = la fiche), pas le résiduel : IS0448
+    128/959 = 13 %, plus 27 % (résiduel 259). Sans personne morale, propriétaire « non déterminé »."""
+    from labuse.api.app import _compare_row
+    qv2 = {"idu": "97411000IS0448", "commune": "Saint-Denis",
+           "le_bien": {"emprise_batie_m2": 128}, "surface_terrain_m2": 959,
+           "proprietaire_moral": None, "score_v2": {}, "potentiel_transformation": {},
+           "potentiel_a_batir": {}, "lines": []}
+    faisab = {"residuel": {"disponible": True, "emprise_batie_m2": 259}, "fourchette": {}, "bilan": {}}
+    row = _compare_row(qv2, faisab)
+    assert row["bati_existant_pct"] == 13, "le bâti % doit venir de le_bien (128), pas du résiduel (259)"
+    assert row["proprietaire"] == "non_determine", "sans PM → non déterminé (comme le Dossier), pas particulier"
+
+
 def test_excel_garde_les_formules_quand_le_resultat_est_calculable():
     e = EntreesBilan(programme=Programme(terrain=2000), produits=[Produit("P1", 10, 600, 4785, 0.20)],
                      postes={"achat": SaisiePoste(valeur=1_000_000, etat="montant"),

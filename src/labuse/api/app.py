@@ -9272,13 +9272,20 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
             proprietaire = {"Succession": "succession", "Indivision": "indivision"}.get(
                 tete_denomination(pm.get("denomination")), "morale")
     else:
-        proprietaire = "particulier"
+        # CHIRURGICAL-FIX-1 (LOT H pt4) — sans personne morale, le propriétaire est « non déterminé »
+        # (comme le Dossier et la fiche « Propriétaire non identifié »), PAS « particulier » : LABUSE
+        # n'a pas le nom, on n'affirme pas qu'il s'agit d'un particulier. Même valeur partout.
+        proprietaire = "non_determine"
     # bâti existant % = emprise bâtie (BD TOPO/CoSIA) ÷ surface terrain — jamais un « 0 » inventé.
-    # NU-3-J#8 — MÊME dénominateur que la fiche : la surface de TERRAIN servie (contenance|dessin),
-    # pas la surface de dessin brute — sinon le taux divergeait de la fiche de ±1 à 4 points.
+    # NU-3-J#8 — MÊME dénominateur que la fiche : la surface de TERRAIN servie (contenance|dessin).
+    # CHIRURGICAL-FIX-1 (LOT H pt4) — et MÊME NUMÉRATEUR que la fiche : l'emprise bâtie SERVIE
+    # (le_bien.emprise_batie_m2, BD TOPO), PAS res["emprise_batie_m2"] (résiduel) qui divergeait
+    # (IS0448 : résiduel 259 → 27 % alors que la fiche sert 128 → 13 %). Repli résiduel si le_bien absent.
     surf = qv2.get("surface_terrain_m2") or qv2.get("surface_m2") or 0
-    bati_pct = (round(100 * res["emprise_batie_m2"] / surf)
-                if res.get("disponible") and res.get("emprise_batie_m2") is not None and surf else None)
+    _emprise = (qv2.get("le_bien") or {}).get("emprise_batie_m2")   # emprise SERVIE par la fiche (= 128 pour IS0448)
+    if _emprise is None and res.get("disponible"):
+        _emprise = res.get("emprise_batie_m2")
+    bati_pct = (round(100 * _emprise / surf) if _emprise is not None and surf else None)
     # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — logements_min/logements_possibles NE SONT PLUS SERVIS :
     # aucun nombre de logements de l'ancien calcul de capacité (fourchette estimate_capacity,
     # SDP ÷ logement moyen) dans Comparer — la ligne (écran ET PDF) renvoie à l'Étude de faisabilité

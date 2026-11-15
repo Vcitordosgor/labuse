@@ -190,7 +190,8 @@ def _bati_existant(r):
 # RETOURS-29 (Comparatif v2, maquette 15) — le PDF suit le MÊME CONTENU que l'écran : mêmes lignes (dans
 # le même ordre), mêmes badges sourcé/estimé. Plus de classement LABUSE, de prix de marché, de logements.
 _PROPRIO = {"morale": "personne morale", "public": "public", "particulier": "particulier",
-            "succession": "succession", "indivision": "indivision"}
+            "succession": "succession", "indivision": "indivision",
+            "non_determine": "non déterminé"}   # CHIRURGICAL-FIX-1 (LOT H pt4) — comme le Dossier
 _LIGNES = [
     # TERRAIN
     ("Surface", "s", lambda r: _m2(r, "surface_m2")),
