@@ -1,0 +1,13 @@
+idu,commune,surface_m2,red_area_m2,red_pct,blue_pct,cascade_detail,aleas_part_rouge_pct,fiche_zone_rouge_signal,divergence,note
+97422000AD0887,Le Tampon,1698.6,0.0,0.0,0.0,(aucun PPR rouge),N/A (table absente),no PPR zone signal,False,
+97416000HT0538,Saint-Pierre,508.7,0.0,0.0,0.0,(aucun PPR rouge),N/A (table absente),no PPR zone signal,False,
+97403000AR1517,Entre-Deux,734.3,0.0,0.0,50.8,(aucun PPR rouge),N/A (table absente),bleue 51% (pas de rouge),False,
+97404000AM0838,L'Étang-Salé,20798.0,9036.0,43.4,56.3,43%,N/A (table absente),rouge 43%,False,
+97417000AO0050,Saint-Philippe,1548.9,0.0,0.0,0.0,(aucun PPR rouge),N/A (table absente),PPR non classé (périmètre),False,
+97411000IS0448,Saint-Denis,818.1,279.5,34.2,65.8,34%,N/A (table absente),rouge 34%,False,
+97404000AY0153,L'Étang-Salé,256.1,103.8,40.5,59.5,41%,N/A (table absente),rouge 41%,False,
+97414000CO0153,Saint-Louis,6669.8,1249.3,18.7,10.9,19%,N/A (table absente),rouge 19%,False,
+97421000BN0260,Salazie,3353.4,3353.4,100.0,0.0,100%,N/A (table absente),rouge 100%,False,
+97422000BW2635,Le Tampon,2001.8,0.0,0.0,0.0,(aucun PPR rouge),N/A (table absente),no PPR zone signal,False,
+97412000CV0446,Saint-Joseph,566.7,0.0,0.0,0.0,(aucun PPR rouge),N/A (table absente),no PPR zone signal,False,
+97424000AO1198,Cilaos,0.7,0.0,0.0,0.0,(aucun PPR rouge),N/A (table absente),no PPR zone signal,False,"(micro-parcelle 0,7 m2, aucune intersection PPR)"
