@@ -975,6 +975,12 @@ zones:
     regles:
       retraits:
         limites_separatives:
+          min_m: 5.0
+          article: Ui.7
+          page_pdf: 55
+          citation: "En secteur Uicm : Chaque construction s'implantera à 5m minimum des limites séparatives."
+          note_fix2: 'MOTEUR-VERITE-FIX-2 LOT C : règle PROPRE du secteur (5 m), que le repli générique remplaçait par le défaut de 3 m.'
+          statut: valide
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -2079,7 +2085,10 @@ zones:
             citation: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite. Des constructions non contiguës pourront être édifiées le long des limites séparatives. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
             condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite.'
             condition_modelable: 'deux_limites_max + non'
-          forme: alignement
+          min_m: 4.0
+          note_fix2: 'MOTEUR-VERITE-FIX-2 LOT C : « forme: alignement »
+            (recul 0) retiré — l''implantation en limite est bornée (longueur max par limite,
+            non modélisée) et le retrait écrit est « L ≥ h/2 avec minimum 4 m ». Min prudent 4 m.'
           article: AUj.7
           page_pdf: 92
           citation: Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives
@@ -2181,7 +2190,10 @@ zones:
             citation: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 10 m par limite. Des constructions non contiguës pourront être édifiées le long des limites séparatives. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
             condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 10 m par limite.'
             condition_modelable: 'deux_limites_max + non'
-          forme: alignement
+          min_m: 4.0
+          note_fix2: 'MOTEUR-VERITE-FIX-2 LOT C : « forme: alignement »
+            (recul 0) retiré — l''implantation en limite est bornée (longueur max par limite,
+            non modélisée) et le retrait écrit est « L ≥ h/2 avec minimum 4 m ». Min prudent 4 m.'
           article: AUm.7
           page_pdf: 98
           citation: Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives
@@ -2306,7 +2318,10 @@ zones:
             citation: 'Sur l''ensemble de la zone : Chaque construction pourra s''implanter sur 1 limite séparative sur une longueur maximale de 10 mètres et sur une hauteur maximale H de 4,5m. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
             condition_texte: 'Chaque construction pourra s''implanter sur 1 limite séparative sur une longueur maximale de 10 mètres et sur une hauteur maximale H de 4,5m.'
             condition_modelable: 'une_seule_limite + non'
-          forme: alignement
+          min_m: 4.0
+          note_fix2: 'MOTEUR-VERITE-FIX-2 LOT C : « forme: alignement »
+            (recul 0) retiré — l''implantation en limite est bornée (longueur max par limite,
+            non modélisée) et le retrait écrit est « L ≥ h/2 avec minimum 4 m ». Min prudent 4 m.'
           article: AUh.7
           page_pdf: 103
           citation: Chaque construction pourra s'implanter sur 1 limite séparative sur

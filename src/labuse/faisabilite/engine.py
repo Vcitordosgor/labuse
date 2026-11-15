@@ -471,6 +471,14 @@ def faisabilite_secteur_habitat(zone: str | None, zone_fam: str | None, sect: di
         steps, hypo, avert, [], fourch, _BANDEAU, calibree=True, cause=None)
 
 
+def faisabilite_capacite_a_verifier(zone: str | None, verdict: str, avert: str) -> "Faisabilite":
+    """MOTEUR-VERITE-FIX-2 — verdict CONSTRUCTIBLE sans capacité chiffrée (« capacité à
+    vérifier ») : SUP AC2 (site inscrit/classé non distingué par la donnée), etc."""
+    return Faisabilite(zone or "?", None, True, verdict, [], [], [avert], [],
+                       {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                       _BANDEAU, calibree=True, cause=None)
+
+
 def faisabilite_zone_non_constructible(zone: str | None, zone_fam: str | None) -> "Faisabilite":
     """EXPORTS-FIX-3 LOT 1 — zone dominante de famille A/N dont le CODE n'est pas calibré au PLU de la
     commune (`resolve_zone` → None) ET dont la seule portion U/AU est infime (écartée par la garde
@@ -938,15 +946,20 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         facteur = min(facteur, f)
         modul.append(f"Aléa {c.alea_ppr} (PPR) → prescriptions, capacité réduite (~×{f:g}).")
     if c.littoral_pct and c.littoral_pct > 0.005:
-        # MOTEUR-VERITE-FIX-1 (LOT 3, V7) — la couche `trait_de_cote` (bandes courte/longue) est une
-        # PROJECTION d'érosion (recul prospectif du trait de côte), PAS une servitude d'interdiction :
-        # une maison réelle y a été autorisée et ACHEVÉE (97410000BX0750, DAACT 17/07/2025) alors que
-        # le facteur 0 la disait « rédhibitoire ». ALERTE « à vérifier », aucune surface retirée —
-        # ni facteur (l'ancien ×(1−part) allait jusqu'au 0 total à 100 %).
+        # MOTEUR-VERITE-FIX-2 LOT C (V7 resserré par la relecture) — la couche `trait_de_cote` est
+        # une PROJECTION d'érosion : ni une interdiction (le facteur 0 du stock disait
+        # « rédhibitoire » une maison ACHEVÉE, BX0750), ni une donnée qui autorise un CHIFFRE —
+        # tant que la limite littorale n'est pas QUALIFIÉE, le verdict reste constructible mais la
+        # capacité n'est PAS chiffrée (« capacité à vérifier », SDP ∅).
         pct = round(c.littoral_pct * 100)
         avert.append(f"Recul prospectif du trait de côte sur ~{pct} % de la parcelle — projection "
                      "d'érosion (bande courte/longue), pas une interdiction réglementaire : "
                      "constructibilité à vérifier auprès des services de l'État.")
+        return fini(True,
+                    f"Constructible — capacité à vérifier : recul prospectif du trait de côte sur "
+                    f"~{pct} % de la parcelle (limite littorale non qualifiée). Aucune capacité "
+                    "chiffrée tant que la limite n'est pas qualifiée.",
+                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
     if c.pente_pct is not None:
         if c.pente_pct >= 30:
             facteur = min(facteur, 0.4)

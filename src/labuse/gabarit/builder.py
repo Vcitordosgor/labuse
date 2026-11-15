@@ -629,11 +629,12 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         "SELECT COALESCE(sl.attrs->>'libelle', sl.name) FROM spatial_layers sl, parcels p "
         "WHERE p.id = :pid AND sl.kind = 'sup' AND sl.subtype = 'ac2' AND sl.commune = p.commune "
         "AND ST_Intersects(sl.geom_2975, p.geom_2975) LIMIT 1"), {"pid": pid}).first()
+    _ac2 = _ac2[0] if (_ac2 and _ac2[0]) else None     # (None,) des bases de test = absente
     if _ac2:
         applicable.append(ApplicableRule(
             id="sup-ac2", label="Site protégé (AC2)", category="exclusion",
             integrationStatus="integrated",
-            detail=(f"Servitude AC2 « {(_ac2[0] or 'site').strip()} » : avis de l'architecte des "
+            detail=(f"Servitude AC2 « {str(_ac2).strip()} » : avis de l'architecte des "
                     "Bâtiments de France requis — aucune surface retirée (régime d'avis, pas une "
                     "interdiction)."), source=sup_src))
         racc.setdefault("alertes", []).append("AC2 — avis ABF requis (aucune surface retirée)")
@@ -645,7 +646,8 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         id="SUP", label="Servitudes d'utilité publique", category="exclusion",
         integrationStatus="integrated",
         detail=("assiette SUP déduite de la zone d'implantation" if _sup_present
-                else "Aucune SUP sur la parcelle"), source=sup_src))
+                else ("SUP présente : AC2 (site protégé — autorisation spéciale/avis ABF, aucune "
+                      "surface déduite)" if _ac2 else "Aucune SUP sur la parcelle")), source=sup_src))
 
     # --- citation PLU retraits.voie : couvre-t-elle « voies ET emprises publiques » / voies privées ?
     emprises_publiques = voies_privees = False

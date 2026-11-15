@@ -439,7 +439,7 @@ def _resolve_zone_base(code: str, commune: str | None = None) -> ZoneRules | Non
                     r, he_m=float(HE_DEFAUT_GENERIQUE_M), hauteur_estimee=True,
                     notes=[*(r.notes or []), _NOTE_HAUTEUR_GRAPHIQUE],
                     sources={**(r.sources or {}), "hauteur": "hauteur estimée (table graphique par secteur, non chiffrable en valeur unique)"})
-            return _zone_generique(lib)
+            return _zone_generique(lib, commune)
 
         # 1) correspondance directe (normalisée)
         hit = norm.get(normalize_key(code))
@@ -482,9 +482,9 @@ def _resolve_zone_base(code: str, commune: str | None = None) -> ZoneRules | Non
                 return r
 
         # 4) code hors zonage : strict → None ; progressif → estimation
-        return None if strict else _zone_generique(code)
+        return None if strict else _zone_generique(code, commune)
 
-    return _zone_generique(code)                    # commune SANS calibrage → capacité ESTIMÉE générique
+    return _zone_generique(code, commune)           # commune SANS calibrage → capacité ESTIMÉE générique
 
 
 def resolve_zone(code: str, commune: str | None = None) -> ZoneRules | None:
@@ -853,7 +853,7 @@ def _positive_prefixes() -> tuple[str, ...]:
     return ("U", "AU")
 
 
-def _zone_generique(code: str) -> ZoneRules:
+def _zone_generique(code: str, commune: str | None = None) -> ZoneRules:
     """Règles ESTIMÉES pour une zone hors calibrage (calibree=False) : préfixe U/AU →
     constructible (hé générique prudent) ; N/A → non constructible."""
     from .zone_norm import est_famille
@@ -865,9 +865,21 @@ def _zone_generique(code: str) -> ZoneRules:
                          notes=[note], sources={"zone": "estimation générique"})
     from .engine import HE_DEFAUT_GENERIQUE_M
     he = float(HE_DEFAUT_GENERIQUE_M)
+    # MOTEUR-VERITE-FIX-2 LOT C — le REPLI générique lit les RETRAITS calibrés de la zone quand
+    # ils existent (feuilles validées des destinations), au lieu du défaut (3 m) : Saint-Denis
+    # Uicm porte « 5 m minimum » en propre, le repli servait 3 m. Rien d'autre n'est repris
+    # (hauteur/emprise restent génériques prudents — la zone n'est pas « calibrée » pour autant).
+    _reg = None
+    if commune:
+        from ..plu import destinations as _D
+        _reg = _D.regles_zone(_insee(commune) or "", code) or None
+    _rv = _val(_reg, "retraits", "voie", "min_m") if _reg else None
+    _rl = _val(_reg, "retraits", "limites_separatives", "min_m") if _reg else None
     # le libellé de SOURCE reste mot pour mot celui de l'ancien système (comparé par le
     # traducteur) — seule la note, non comparée, dit la nouvelle voie de calibrage.
     return ZoneRules(code=code, calibree=False, he_m=he, notes=[note],
+                     recul_voirie_m=_rv if isinstance(_rv, (int, float)) else None,
+                     recul_limites_sep_m=_rl if isinstance(_rl, (int, float)) else None,
                      sources={"hauteur": "estimation générique (PLU non outillé)",
                               "zone": "estimation générique"})
 

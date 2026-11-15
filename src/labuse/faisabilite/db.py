@@ -946,6 +946,39 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         ctx.contraintes.libelles.append(
             "Assiette = zone d'implantation réglementaire (moteur gabarit) : reculs par côté "
             "voie/limites" + (", PPR zone rouge découpée" if ppr_rouge else "") + ".")
+        # MOTEUR-VERITE-FIX-2 LOT C — PPR rouge PARTIEL : des fragments d'assiette SÉPARÉS par le
+        # rouge ne s'additionnent pas (on ne bâtit pas un projet sur des morceaux disjoints) — seule
+        # la part du PLUS GRAND TENANT est retenue (AD0863 et consorts, relecture indépendante).
+        if ppr_rouge and emprise > 0:
+            try:
+                from shapely.geometry import shape as _shape
+                _g = _shape(gres.zoneImplantationGeoJSON) if gres.zoneImplantationGeoJSON else None
+                if _g is not None and _g.geom_type == "MultiPolygon" and len(_g.geoms) > 1:
+                    _amax = max(p.area for p in _g.geoms)
+                    _atot = sum(p.area for p in _g.geoms)
+                    if _atot > 0 and _amax < _atot:
+                        emprise = emprise * (_amax / _atot)
+                        ctx.contraintes.libelles.append(
+                            "Assiette fragmentée par la zone rouge du PPR : seul le plus grand "
+                            f"tenant est retenu (~{round(100 * _amax / _atot)} % de l'assiette hors rouge).")
+            except Exception:  # noqa: BLE001 — géométrie pathologique : on garde l'assiette totale
+                pass
+        # MOTEUR-VERITE-FIX-2 LOT C — SUP AC2 (sites) : la donnée ne distingue pas site INSCRIT
+        # (avis ABF) de site CLASSÉ (AUTORISATION SPÉCIALE) → prudence : le verdict reste
+        # constructible mais AUCUNE capacité n'est chiffrée (« capacité à vérifier »).
+        if any("AC2" in str(a) for a in (racc.get("alertes") or [])):
+            from .engine import faisabilite_capacite_a_verifier
+            ctx.contraintes.libelles.append(
+                "Site protégé (SUP AC2) — autorisation spéciale / avis de l'architecte des "
+                "Bâtiments de France requis ; la donnée ne distingue pas inscrit/classé.")
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                "Constructible — capacité à vérifier : site protégé (SUP AC2). La donnée ne "
+                "distingue pas le site inscrit (avis ABF) du site classé (autorisation spéciale) : "
+                "aucune capacité chiffrée sans instruction.",
+                "Site protégé AC2 : autorisation spéciale ou avis ABF selon le régime "
+                "(inscrit/classé) — à instruire ; capacité non chiffrée.")
+
         servie_sur = (racc.get("multizone") or {}).get("servie_sur")
         if servie_sur:
             ctx.contraintes.libelles.append(
