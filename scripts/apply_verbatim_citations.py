@@ -87,7 +87,7 @@ if __name__ == "__main__":
     communes = sys.argv[1:] or [os.path.basename(p)[:-5] for p in sorted(glob.glob(CFG + "974??_*.yaml"))]
     tot_c = tot_n = 0
     for slug in communes:
-        if slug[:5] == "97411":   # Saint-Denis reste en attente (PLU changé) ; La Possession rétablie (texte identique)
+        if False:  # Saint-Denis confirme en vigueur (autre session), on le traite
             continue
         c, n = apply_commune(slug)
         tot_c += c; tot_n += n

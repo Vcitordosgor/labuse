@@ -24,7 +24,19 @@ zones:
           places: 1
           article: XVII. STATIONNEMENT
           page_pdf: 19
-          citation: 1 place par logement d'une surface plancher < 100 m2
+          citation: 'Logements aidés
+
+            Autres logements
+
+            1 place par logement aidé
+
+            1 place par logement d''une surface plancher < 100
+
+            m2
+
+            1,5 places par logement d''une surface plancher > ou
+
+            = 100 m2'
           statut: valide
       mixite:
         seuil_logements: 30
@@ -135,7 +147,19 @@ zones:
           places: 1
           article: XVII. STATIONNEMENT
           page_pdf: 19
-          citation: 1 place par logement d'une surface plancher < 100 m2
+          citation: 'Logements aidés
+
+            Autres logements
+
+            1 place par logement aidé
+
+            1 place par logement d''une surface plancher < 100
+
+            m2
+
+            1,5 places par logement d''une surface plancher > ou
+
+            = 100 m2'
           statut: valide
       mixite:
         seuil_logements: 30
@@ -387,7 +411,19 @@ zones:
           places: 1
           article: XVII. STATIONNEMENT
           page_pdf: 19
-          citation: 1 place par logement d'une surface plancher < 100 m2
+          citation: 'Logements aidés
+
+            Autres logements
+
+            1 place par logement aidé
+
+            1 place par logement d''une surface plancher < 100
+
+            m2
+
+            1,5 places par logement d''une surface plancher > ou
+
+            = 100 m2'
           statut: valide
       mixite:
         seuil_logements: 30
@@ -686,7 +722,19 @@ zones:
           places: 1
           article: XVII. STATIONNEMENT
           page_pdf: 19
-          citation: 1 place par logement d'une surface plancher < 100 m2
+          citation: 'Logements aidés
+
+            Autres logements
+
+            1 place par logement aidé
+
+            1 place par logement d''une surface plancher < 100
+
+            m2
+
+            1,5 places par logement d''une surface plancher > ou
+
+            = 100 m2'
           statut: valide
     silence: autorise
     silence_src: 'Le règlement procède par liste fermée d''interdictions : article Uu.1 « Occupations et utilisations
@@ -778,7 +826,19 @@ zones:
           places: 1
           article: XVII. STATIONNEMENT
           page_pdf: 19
-          citation: 1 place par logement d'une surface plancher < 100 m2
+          citation: 'Logements aidés
+
+            Autres logements
+
+            1 place par logement aidé
+
+            1 place par logement d''une surface plancher < 100
+
+            m2
+
+            1,5 places par logement d''une surface plancher > ou
+
+            = 100 m2'
           statut: valide
       mixite:
         seuil_logements: 30
@@ -941,7 +1001,19 @@ zones:
           places: 1
           article: XVII. STATIONNEMENT
           page_pdf: 19
-          citation: 1 place par logement d'une surface plancher < 100 m2
+          citation: 'Logements aidés
+
+            Autres logements
+
+            1 place par logement aidé
+
+            1 place par logement d''une surface plancher < 100
+
+            m2
+
+            1,5 places par logement d''une surface plancher > ou
+
+            = 100 m2'
           statut: valide
       mixite:
         seuil_logements: 30
@@ -1049,7 +1121,19 @@ zones:
           places: 1
           article: XVII. STATIONNEMENT
           page_pdf: 19
-          citation: 1 place par logement d'une surface plancher < 100 m2
+          citation: 'Logements aidés
+
+            Autres logements
+
+            1 place par logement aidé
+
+            1 place par logement d''une surface plancher < 100
+
+            m2
+
+            1,5 places par logement d''une surface plancher > ou
+
+            = 100 m2'
           statut: valide
       mixite:
         seuil_logements: 30
@@ -1198,7 +1282,19 @@ zones:
           places: 1
           article: XVII. STATIONNEMENT
           page_pdf: 19
-          citation: 1 place par logement d'une surface plancher < 100 m2
+          citation: 'Logements aidés
+
+            Autres logements
+
+            1 place par logement aidé
+
+            1 place par logement d''une surface plancher < 100
+
+            m2
+
+            1,5 places par logement d''une surface plancher > ou
+
+            = 100 m2'
           statut: valide
       mixite:
         seuil_logements: 30
@@ -1327,7 +1423,19 @@ zones:
           places: 1
           article: XVII. STATIONNEMENT
           page_pdf: 19
-          citation: 1 place par logement d'une surface plancher < 100 m2
+          citation: 'Logements aidés
+
+            Autres logements
+
+            1 place par logement aidé
+
+            1 place par logement d''une surface plancher < 100
+
+            m2
+
+            1,5 places par logement d''une surface plancher > ou
+
+            = 100 m2'
           statut: valide
     silence: autorise
     silence_src: 'Art. Ua.1 « Occupations et utilisations du sol interdites — Sont interdits : … » (liste fermée
@@ -1401,7 +1509,19 @@ zones:
           places: 1
           article: XVII. STATIONNEMENT
           page_pdf: 19
-          citation: 1 place par logement d'une surface plancher < 100 m2
+          citation: 'Logements aidés
+
+            Autres logements
+
+            1 place par logement aidé
+
+            1 place par logement d''une surface plancher < 100
+
+            m2
+
+            1,5 places par logement d''une surface plancher > ou
+
+            = 100 m2'
           statut: valide
     silence: interdit
     silence_src: 'Art. Uv.1 (p. 81) : « Sont interdites : toutes les constructions ou installations autres que celles

@@ -345,8 +345,14 @@ zones:
             sdp_max: null
             places: 1.5
           article: UC 12.2
-          page_pdf: 42
-          citation: 1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ; 1,5 places de stationnement minimum par logement d'une surface de plancher superieure ou egale a 50m2, arrondi a l'entier inferieur.
+          page_pdf: 20
+          citation: '1 place de stationnement minimum par logement locatifs financés par un prêt aidé de l’État
+
+            1 place de stationnement minimum par logement d’une surface de plancher inférieure à 50m²
+
+            1 place de stationnement minimum par logement situé à moins de 500m d’une gare routière
+
+            1,5 places de stationnement minimum par logement d’une surface de plancher supérieure ou égale'
           statut: valide
       pleine_terre:
         pct:

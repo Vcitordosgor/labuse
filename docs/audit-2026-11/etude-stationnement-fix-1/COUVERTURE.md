@@ -359,19 +359,19 @@ ETUDE-STATIONNEMENT-FIX-1 (LOT 3). Chaque zone U/AU : règle ingérée (synthès
 
 | Zone | État | Détail |
 |---|---|---|
-| 1AUa | ingérée | 2 place/logt (arr. superieur) · social · senior |
+| 1AUa | ingérée | 2 place/logt (arr. superieur) · visiteur 0.5/1 logts · social · senior |
 | 1AUa oap1 | renvoi | règles de la zone UA |
 | 1AUa oap2 | renvoi | règles de la zone UA |
 | 1AUa oap3 | renvoi | règles de la zone UA |
 | 1AUb1 | renvoi | règles de la zone UB |
 | 1AUb2 | renvoi | règles de la zone UB |
-| 1AUc | ingérée | 2 place/logt (arr. superieur) · social · senior |
+| 1AUc | ingérée | 2 place/logt (arr. superieur) · visiteur 0.5/1 logts · social · senior |
 | 1AUc oap4 | renvoi | règles de la zone UC |
 | 1AUc oap5 | renvoi | règles de la zone UC |
-| 1AUc1 | ingérée | 2 place/logt (arr. superieur) · social · senior |
-| 1AUc2 | ingérée | 2 place/logt (arr. superieur) · social · senior |
-| 1AUd | ingérée | 2 place/logt (arr. superieur) · social · senior |
-| 1AUd1 | ingérée | 2 place/logt (arr. superieur) · social · senior |
+| 1AUc1 | ingérée | 2 place/logt (arr. superieur) · visiteur 0.5/1 logts · social · senior |
+| 1AUc2 | ingérée | 2 place/logt (arr. superieur) · visiteur 0.5/1 logts · social · senior |
+| 1AUd | ingérée | 2 place/logt (arr. superieur) · visiteur 0.5/1 logts · social · senior |
+| 1AUd1 | ingérée | 2 place/logt (arr. superieur) · visiteur 0.5/1 logts · social · senior |
 | 1AUe | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
 | 1AUe oap2 | renvoi | règles de la zone UE |
 | 1AUst | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
@@ -383,14 +383,14 @@ ETUDE-STATIONNEMENT-FIX-1 (LOT 3). Chaque zone U/AU : règle ingérée (synthès
 | 2AUe | renvoi | règles de la zone UE |
 | 2AUst | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
 | 2AUste | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
-| UA | ingérée | 2 place/logt (arr. superieur) · social · senior |
-| UA1 | ingérée | 2 place/logt (arr. superieur) · social · senior |
-| UB | ingérée | 2 place/logt (arr. superieur) · social · senior |
-| UC | ingérée | 2 place/logt (arr. superieur) · social · senior |
-| UC1 | ingérée | 2 place/logt (arr. superieur) · social · senior |
-| UC2 | ingérée | 2 place/logt (arr. superieur) · social · senior |
-| UD | ingérée | 2 place/logt (arr. superieur) · social · senior |
-| UD1 | ingérée | 2 place/logt (arr. superieur) · social · senior |
+| UA | ingérée | 2 place/logt (arr. superieur) · visiteur 0.5/1 logts · social · senior |
+| UA1 | ingérée | 2 place/logt (arr. superieur) · visiteur 0.5/1 logts · social · senior |
+| UB | ingérée | 2 place/logt (arr. superieur) · visiteur 0.5/1 logts · social · senior |
+| UC | ingérée | 2 place/logt (arr. superieur) · visiteur 0.5/1 logts · social · senior |
+| UC1 | ingérée | 2 place/logt (arr. superieur) · visiteur 0.5/1 logts · social · senior |
+| UC2 | ingérée | 2 place/logt (arr. superieur) · visiteur 0.5/1 logts · social · senior |
+| UD | ingérée | 2 place/logt (arr. superieur) · visiteur 0.5/1 logts · social · senior |
+| UD1 | ingérée | 2 place/logt (arr. superieur) · visiteur 0.5/1 logts · social · senior |
 | UE | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
 | US | habitat secondaire | logement autorisé sous condition / usage non principal — pas de norme d'habitation distincte dans le texte (logement de fonction ou renvoi), à préciser |
 | UZ | ingérée | 1.5 place/logt (arr. superieur) · social |

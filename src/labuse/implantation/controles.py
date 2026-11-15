@@ -350,6 +350,18 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                         f"{he.valeur:.0f} m partout. LABUSE le suppose (R+{cap.niveaux - 1} conservé) ; à CONFIRMER par "
                         f"l'architecte (partie aval possiblement R+{max(0, cap.niveaux - 2)}).")))
 
+    # ETUDE-STATIONNEMENT-FIX-1 — hauteur PRÈS DES LIMITES (ex. Ua10.3, bande de 3,60 m) : la règle EXISTE
+    # mais le moteur ne sait pas la chiffrer → « Non vérifié », jamais traitée comme absente.
+    bande = getattr(regles, "hauteur_bande_limite", None)
+    if bande:
+        _art = bande.get("article")
+        _cit = (f"PLU art. {_art}" if _art else "") + (f" · p. {bande['page_pdf']}" if bande.get("page_pdf") else "")
+        _cit = (_cit + (f" — « {bande['citation']} »" if bande.get("citation") else "")) or None
+        out.append(ControleReg("Hauteur près des limites", "règle existante, non chiffrable par le moteur",
+                               "à vérifier", A_CONFIRMER, _cit,
+                               detail="une hauteur réduite s'applique dans une bande le long des limites "
+                                      "séparatives (règle de gabarit) — non modélisée ici, à vérifier au projet"))
+
     # Prospect / hauteur relative (ex. L ≥ h/2) : non chiffrable par le moteur -> Non effectué
     if regles.prospect is not None:
         out.append(ControleReg("Prospect (hauteur relative)", "non chiffrable par le moteur",
@@ -591,6 +603,7 @@ _A_CONFIRMER_BLOQUANTS = frozenset({
     # l'ancien contrôle « PPR zone bleue » qui, lorsqu'il touchait le bâti, rendait l'étude non exploitable).
     "Prescriptions PPR à vérifier",
     "Stationnement", "Stationnement — condition à vérifier",
+    "Hauteur près des limites",
     "Prospect (hauteur relative)", "ER / EBC / SUP / servitudes",
     "Accès (voie)",   # RECETTE-4 — accès hypothétique (aucune voie classée) → verdict non « Exploitable »
 })

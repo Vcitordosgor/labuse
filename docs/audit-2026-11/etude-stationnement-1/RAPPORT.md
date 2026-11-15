@@ -212,3 +212,26 @@ Tant que les lots ne sont pas validés : **ne jamais afficher « Réussi » au s
 - Barème ingéré : `config/plu_destinations/<insee>_*.yaml`, lecture `destinations.py:673`.
 - **Texte opposable (lu ici)** : table `plu_reglement_extrait` (base locale) — verbatim, article, page. Absent pour 97404 (partiel), 97409, 97413, et pour les barèmes en annexe (97406) / dispositions générales (97411).
 - HT0538 (étude stockée) : `docs/audit-2026-11/exports-fix-3/COMPTE-RENDU.md:288-325`.
+
+---
+
+## Addendum (ETUDE-STATIONNEMENT-FIX-1, relecture 7) — pistes NON VÉRIFIÉES de ce rapport
+
+Ce rapport d'audit a été écrit avant la mise en place du **contrôle par l'image** (chaque chiffre prouvé sur
+la page du PDF officiel). Les constats **de stationnement** ont depuis été **tous vérifiés par l'image**
+(1465 règles prouvées, 0 chiffre hors citation). En revanche, les constats **hors stationnement** issus de la
+**même extraction par agent de la table `plu_reglement_extrait`, non vérifiée par l'image**, sont des
+**PISTES NON VÉRIFIÉES** tant qu'une image ne les confirme pas :
+
+- **Saint-Denis — pleine terre** : les valeurs citées ici (**UH 50 %, UJ/UM 35 %, UI 25 %, UD/UU 10 %, Uat
+  15 %**) **sont FAUSSES** — elles ne figurent nulle part dans le règlement en vigueur (05/08/2026). Les
+  seules règles réelles sont **UD 30 % et UI 40 %** (vérifiées par l'autre session). Le « 15 % » lu sur une
+  image était une **mixité sociale** (15 % de logements aidés, opérations d'habitat collectif de 30+
+  logements), pas une pleine terre. → **piste non vérifiée, corrigée.**
+- **Saint-Benoît — hauteur par secteur graphique** (15/13/10/7/4 m) : **piste non vérifiée** (non confirmée
+  par l'image dans ce travail) ; à vérifier sur le document graphique avant toute ingestion.
+- **Tout autre chiffre hors stationnement** de ce rapport (emprises, hauteurs, reculs « manquants »,
+  perméabilités) relevant de la même extraction : **piste non vérifiée** jusqu'à confirmation par l'image.
+
+Règle retenue : **un chiffre ne vaut que prouvé par l'image de sa page**. La pleine terre de Saint-Denis l'a
+appris à nos dépens ; la méthode est désormais le contrôle de pages (`scripts/stationnement_controle_pages.py`).

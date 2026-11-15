@@ -125,6 +125,27 @@ def test_destination_dediee_senior_etudiant_gouverne():
     assert b.has_destination("senior") and not b.has_destination("social")
 
 
+def test_hauteur_pres_des_limites_non_verifiee():
+    """Contre-audit — une règle de hauteur près des limites (Le Tampon Ua10.3, bande de 3,60 m) que le
+    moteur ne sait pas chiffrer est DÉTECTÉE (→ contrôle « Non vérifié »), jamais traitée comme absente."""
+    from labuse.implantation import regles as R
+    rz = R.charger("97422", "Ua")
+    assert rz.hauteur_bande_limite is not None
+    assert rz.hauteur_bande_limite.get("article") == "Ua10.3"
+    assert R.charger("97424", "Ua").hauteur_bande_limite is None   # Cilaos : pas de telle règle
+
+
+def test_saint_louis_condition_chiffree_comptee():
+    """Relecture 7 — « opérations > 10 logements : 0,5 place publique/logt » est CHIFFRÉE et comptée dans
+    les places à loger (lecture la plus exigeante)."""
+    from types import SimpleNamespace
+    from labuse.implantation import regles as R
+    b = R.charger("97414", "UA").stationnement
+    prog = lambda n: [SimpleNamespace(pieces=3, surface_m2=70) for _ in range(n)]
+    assert b.exiger(prog(8), destination="collectif").places_visiteurs == 0      # ≤ 10 : rien
+    assert b.exiger(prog(20), destination="collectif").places_visiteurs == 10    # 0,5 × 20
+
+
 def test_colonne_places_integrees_condition_bloquante_au_seuil():
     """Règle permanente #2 — la colonne « places intégrées » : au-delà du seuil de SDP, une part des places
     doit être bâtie → condition bloquante à vérifier (plein air exclu). En dessous : rien."""

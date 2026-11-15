@@ -444,6 +444,9 @@ class ReglesZone:
     prospect: Optional[Regle] = None   # règle de hauteur RELATIVE non chiffrable (ex. L ≥ h/2)
     espaces_verts: "EspacesVerts" = field(default_factory=lambda: EspacesVerts(validee=False))
     marge_plantee: "MargePlantee" = field(default_factory=lambda: MargePlantee(validee=False))
+    # ETUDE-STATIONNEMENT-FIX-1 — règle de hauteur PRÈS DES LIMITES (ex. Le Tampon Ua10.3, bande de 3,60 m)
+    # que le moteur ne sait pas chiffrer : existe → contrôle « Non vérifié », jamais absente.
+    hauteur_bande_limite: Optional[dict] = None
 
     @property
     def hauteur_plafond(self) -> Regle:
@@ -657,8 +660,20 @@ def charger(insee: str, zone: str) -> ReglesZone:
         quota_pct=float(mix["quota_pct"]) if (mix_valide and mix.get("quota_pct") is not None) else None,
         article=mix.get("article"), page_pdf=mix.get("page_pdf"), citation=mix.get("citation"))
 
+    # règle de hauteur près des limites (bande_limite) portée en exception d'une feuille de hauteur.
+    hauteur_bande = None
+    for _leaf in (hauteur.get("faitage"), hauteur.get("egout"), hauteur.get("niveaux")):
+        for _e in ((_leaf or {}).get("exceptions") or []):
+            if isinstance(_e, dict) and _e.get("porte") == "bande_limite":
+                hauteur_bande = {"article": _e.get("article"), "page_pdf": _e.get("page_pdf"),
+                                 "citation": _e.get("texte") or _e.get("citation")}
+                break
+        if hauteur_bande:
+            break
+
     return ReglesZone(
         insee=insee, zone=zone,
+        hauteur_bande_limite=hauteur_bande,
         hauteur_egout=_leaf_val(hauteur.get("egout"), "m", "hauteur à l'égout", "m"),
         hauteur_faitage=_leaf_val(hauteur.get("faitage"), "m", "hauteur au faîtage", "m"),
         emprise_ces=_leaf_val(emprise.get("ces"), "pct", "emprise au sol (CES)", "%"),

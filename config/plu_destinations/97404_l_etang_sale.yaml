@@ -108,7 +108,25 @@ zones:
             places: 2
           article: UA 2.7.3
           page_pdf: 22
-          citation: Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2
+          citation: 'Logement individuel
+
+            Par logement
+
+            2
+
+            Logement collectif
+
+            1 et 2 pièces
+
+            1
+
+            3 et 4 pièces
+
+            1,5
+
+            5 pièces et plus
+
+            2'
           statut: valide
       pleine_terre:
         pct:

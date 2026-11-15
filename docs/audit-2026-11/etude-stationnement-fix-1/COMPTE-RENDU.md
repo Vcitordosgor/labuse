@@ -451,3 +451,37 @@ collectif, opération > 5), toutes « À compléter » (condition à vérifier).
 - **21 citations** restantes (Étang-Salé, Saint-André) + **Saint-Denis stationnement**.
 - Livrables : contrôle ci-dessus, `COUVERTURE.md` (24 communes), `SONDAGE-10-LOT3.md` (20 règles à graine
   fixe, image de la ligne entière).
+
+---
+
+## Relecture (7e tour, dernier) — habitation à 0, item 4
+
+### Contrôle (habitation) — ARRÊT
+**1465 règles prouvées sur 1465 — 0 échec de citation · 0 chiffre hors citation · 0 association à relire.**
+Fini : L'Étang-Salé, Saint-André (forme VALIDÉE `par_typologie` ciblée, n° de page corrigé base→PDF), et
+**Saint-Denis stationnement** (confirmé en vigueur par l'autre session) — tous verbatim.
+
+### Item 4
+- **Ua10.3 (hauteur près des limites) → « Non vérifié »** : la règle (bande de 3,60 m le long des
+  séparatives, portée en exception) est DÉTECTÉE (`ReglesZone.hauteur_bande_limite`) et sort un contrôle
+  « Hauteur près des limites — Non vérifié » (bloquant « Exploitable »), jamais traitée comme absente. Testé.
+- **Conditions chiffrées (Saint-Louis)** : « opérations > 10 logements : 0,5 place publique/logt » est
+  CHIFFRÉE et comptée dans les places à loger (20 logts → 40 + 10 = 50). Testé.
+- **Libellé « non réglementé »** : réservé au cas où le règlement le DIT (feuille `absent: true` + citation,
+  ex. Le Tampon emprise « Non réglementée »). Jamais affiché sans preuve. Extension aux autres zones vérifiées
+  = reliquat (per-zone).
+- **Autres destinations** (commerce, bureaux…) : AUCUN barème d'autre destination n'est ingéré → servi nulle
+  part comme vérifié ; seule l'habitation est servie et prouvée.
+- **10 zones à condition réelle** : étudiées via le renvoi à la zone mère ; résolution fine (norme propre ou
+  confirmation du renvoi) = reliquat.
+
+### Item 3 — rapport d'audit marqué
+`docs/audit-2026-11/etude-stationnement-1/RAPPORT.md` : addendum « pistes NON VÉRIFIÉES » — la pleine terre
+Saint-Denis (valeurs fausses, corrigées) et la hauteur par secteur graphique de Saint-Benoît sont marquées
+« piste non vérifiée », avec la règle : un chiffre ne vaut que prouvé par l'image.
+
+### Livrables ARRÊT
+- Contrôle : **1465/1465 prouvées**, 0 échec.
+- `COUVERTURE.md` : 24 communes, chaque zone U/AU (règle ou raison).
+- `SONDAGE-10-LOT3.md` : **20 règles à graine fixe**, image de la ligne entière.
+- Études PDF (AD0887, HT0538, BW2635) dans `~/Desktop/exports-audit-4/`.
