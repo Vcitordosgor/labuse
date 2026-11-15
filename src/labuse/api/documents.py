@@ -105,34 +105,20 @@ def rendre_document(db, idu: str, request: Request, document: str, *,
 def apporteur_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
     # DOCS-1 (décision Vic) — l'Apporteur est signé du CLIENT : sans nom exploitable (ni société, ni
     # prénom + nom ; jamais l'e-mail), le document REFUSE de générer et dit quoi renseigner.
-    _refus = _refus_sans_nom(db, request)
-    if _refus is not None:
-        return _refus
+    _exiger_nom_du_compte(db, request)
     return rendre_document(db, idu, request, "apporteur", forms=True, marque=False)
 
 
-def _refus_sans_nom(db: Session, request: Request) -> Response | None:
-    """Refus partagé Courrier/Apporteur : aucun nom exploitable sur le compte → PDF d'une ligne
-    « Renseignez le nom de votre société dans Compte », jamais un document signé d'une adresse e-mail."""
+def _exiger_nom_du_compte(db: Session, request: Request) -> None:
+    """CHIRURGICAL-FIX-1 (E2) — Apporteur signé du CLIENT : sans nom exploitable sur le compte, on
+    REFUSE PROPREMENT (HTTP 422 + message accentué), jamais un « PDF d'erreur » livré en 200 (un
+    document « réussi » qui est en fait une erreur, avec un libellé ASCII « Document non genere »)."""
     from ..courrier_compose import MSG_SANS_NOM, expediteur_du_compte, ExpediteurSansNom
     from .courrier import _marque_du_compte
     try:
         expediteur_du_compte(_marque_du_compte(db, request), None)
-        return None
     except ExpediteurSansNom:
-        from fpdf import FPDF
-        from fpdf.enums import XPos, YPos
-        p = FPDF(format="A4")
-        p.set_auto_page_break(True, margin=28)
-        p.set_margins(22, 24, 22)
-        p.add_page()
-        p.set_font("Helvetica", "B", 13)
-        p.multi_cell(p.epw, 8, "Document non genere", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        p.ln(2)
-        p.set_font("Helvetica", "", 11)
-        p.multi_cell(p.epw, 6, MSG_SANS_NOM, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        return Response(content=bytes(p.output()), media_type="application/pdf",
-                        headers={"Content-Disposition": 'attachment; filename="apporteur.pdf"'})
+        raise HTTPException(status_code=422, detail=MSG_SANS_NOM)
 
 
 # ── DOCS-1 (Lot C) — les 3 nouveaux documents : miroirs des outils Gabarit, Comparer, Étude de zone. ──
@@ -194,26 +180,44 @@ def _gabarit_refus_pdf(db: Session, idu: str, manques: list) -> Response:
     réelle est connue."""
     from ..exports.rendu import Cartouche, esc, page_html, render_pdf
     motif = (manques[0].get("libelle") if manques else None)
+    # CHIRURGICAL-FIX-1 (E107) — deux cas BIEN DISTINCTS : (1) la parcelle est VRAIMENT non
+    # constructible (verdict potentiel_batir : zone N/A, habitat interdit, zone rouge) → on le dit ;
+    # (2) la parcelle reste constructible mais le GABARIT n'est pas calculable (limite non qualifiée)
+    # → on ne doit JAMAIS écrire « ne porte pas d'enveloppe constructible » (faux), et on renvoie à la
+    # capacité estimée de la fiche. Avant, le cas (2) empruntait le texte du cas (1) (AD0887 : 719 m²
+    # de SDP, pourtant « ne porte pas d'enveloppe constructible : … : … »).
+    verdict_inconstructible = False
     try:
         from ..faisabilite.potentiel_batir import POTENTIEL_ABSENT, potentiel_batir
         pb = potentiel_batir(db, idu)
         if pb is not POTENTIEL_ABSENT and pb.get("constructible") is False and pb.get("motif"):
             motif = pb["motif"]                      # « Zone non constructible (N) », etc.
+            verdict_inconstructible = True
     except Exception:  # noqa: BLE001 — la raison précise n'est jamais un bloqueur du document de refus
         pass
-    motif = motif or "Parcelle inconstructible"
     cart = Cartouche(
         doc_title=f"LABUSE — Gabarit · {idu}",
         doc_ref=idu,
         doc_foot="Gabarit · enveloppe réglementaire · pré-analyse, non contractuel.")
-    corps = (
-        '<section><h2>Enveloppe constructible</h2>'
-        f'<div class="verdict">Cette parcelle ne porte pas d\'enveloppe constructible : {esc(motif)}.</div>'
-        '<p class="note">Le Gabarit dessine l\'enveloppe réglementaire d\'une parcelle constructible. '
-        'Sur une parcelle inconstructible (zone naturelle N, zone agricole fermée, habitat interdit, '
-        'ou zone rouge d\'un plan de prévention des risques), il n\'y a pas de volume à dessiner : le '
-        'document le dit, il ne fabrique pas une enveloppe qui n\'existe pas. Les contraintes et le '
-        'zonage détaillés figurent au Dossier de la parcelle.</p></section>')
+    if verdict_inconstructible:
+        corps = (
+            '<section><h2>Enveloppe constructible</h2>'
+            f'<div class="verdict">Cette parcelle ne porte pas d\'enveloppe constructible : {esc(motif)}.</div>'
+            '<p class="note">Le Gabarit dessine l\'enveloppe réglementaire d\'une parcelle constructible. '
+            'Sur une parcelle inconstructible (zone naturelle N, zone agricole fermée, habitat interdit, '
+            'ou zone rouge d\'un plan de prévention des risques), il n\'y a pas de volume à dessiner : le '
+            'document le dit, il ne fabrique pas une enveloppe qui n\'existe pas. Les contraintes et le '
+            'zonage détaillés figurent au Dossier de la parcelle.</p></section>')
+    else:
+        raison = esc(motif or "une limite de la parcelle n'est pas qualifiée")
+        corps = (
+            '<section><h2>Enveloppe constructible</h2>'
+            f'<div class="verdict">{raison}.</div>'
+            '<p class="note">Le gabarit ne peut pas être dessiné ici (une limite de la parcelle — bord '
+            'de ravine, littoral ou domaine public — n\'est pas qualifiée, donc le recul ne peut être '
+            'posé). <b>Cela ne préjuge pas de la constructibilité</b> : la capacité estimée de la '
+            'parcelle reste indiquée dans sa fiche (Dossier). Le calcul reprendra dès que la limite '
+            'sera renseignée.</p></section>')
     pdf = render_pdf(page_html("Gabarit", cart, corps))
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="gabarit-{idu}.pdf"',

@@ -370,7 +370,10 @@ function FicheSoleil({ f }: { f: SolaireFiche }) {
       </div>
       <div className="mt-2 grid grid-cols-2 gap-1.5">
         <KPI k="Potentiel" v={num(f.productible)} u="kWh/kWc/an" prov="Estimé" />
-        <KPI k="Toiture (emprise)" v={num(f.toit_m2, ' m²')} prov="Sourcé" />
+        {/* CHIRURGICAL-FIX-1 (Solaire) — on NOMME la grandeur : « Surface de toiture » (proxy pans de
+            toit, p_model_bati BD TOPO/CoSIA), DISTINCTE de l'« emprise au sol » de la fiche. La
+            toiture (débords, pente) dépasse normalement l'emprise au sol — ce ne sont pas le même m². */}
+        <KPI k="Surface de toiture" v={num(f.toit_m2, ' m²')} prov="Sourcé" />
         {/* A6 — puissance installable + production annuelle SERVIES par le back ; ratio kWc/m² écrit ci-dessous. */}
         <KPI k="Puissance installable" v={kwc == null ? '—' : String(kwc).replace('.', ',')} u="kWc" prov="Estimé" />
         <KPI k="Production annuelle" v={num(prodAn)} u="kWh/an" prov="Estimé" />
@@ -386,7 +389,8 @@ function FicheSoleil({ f }: { f: SolaireFiche }) {
       {/* A6 — l'hypothèse de dimensionnement (ratio kWc/m²) est ÉCRITE à côté du résultat, servie de la config. */}
       {kwcParM2 != null && kwc != null && (
         <p data-solaire-kwc-hyp className="mt-1 text-[9px] leading-snug text-txt-dim">
-          Puissance installable = emprise toit × {String(kwcParM2).replace('.', ',')} kWc/m² (hypothèse) ; production annuelle = puissance × potentiel PVGIS.
+          Puissance installable = surface de toiture × {String(kwcParM2).replace('.', ',')} kWc/m² (hypothèse) ; production annuelle = puissance × potentiel PVGIS.
+          La surface de toiture (pans de toit modélisés) diffère de l'emprise au sol de la fiche : elle la dépasse normalement (débords, pente).
         </p>
       )}
       {/* RETOURS-25 (pt 9) — ligne « Nature du toit : {statut} — {méthode} » RETIRÉE (doublon de la tuile

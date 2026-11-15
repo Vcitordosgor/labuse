@@ -27,7 +27,11 @@ from .contract import (
 )
 from .validate import validate_input
 
-INCOMPLETE_MESSAGE = "Calcul incomplet — donnée réglementaire manquante"
+# CHIRURGICAL-FIX-1 (E107) — le message ne doit JAMAIS laisser croire que la parcelle est non
+# constructible : c'est le GABARIT qui n'est pas calculable (une limite de la parcelle n'est pas
+# qualifiée). La raison précise vit dans validationErrors ; la constructibilité et la capacité
+# estimée restent dans la fiche. (« Calcul incomplet » se lisait comme un verdict défavorable.)
+INCOMPLETE_MESSAGE = "Gabarit non calculable sur cette parcelle"
 
 
 def _round(x: float, n: int = 1) -> float:

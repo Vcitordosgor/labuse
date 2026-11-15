@@ -464,7 +464,9 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
 
 
 # ── DOCS-1 (Lot C) — les 3 nouveaux documents : miroirs des outils, même builder/couverture/pied. ──
-_GABARIT_INCALCULABLE = "Gabarit non calculable sur cette parcelle : donnée réglementaire manquante"
+# CHIRURGICAL-FIX-1 (E107) — marqueur du cas « gabarit non calculable » (limite non qualifiée),
+# DISTINCT d'un verdict de non-constructibilité. Pas de deux-points en fin : le rendu l'enrobe.
+_GABARIT_INCALCULABLE = "Gabarit non calculable sur cette parcelle (une limite n'est pas qualifiée)"
 
 
 def _entete_doc(document: str, ref_ligne: str, numero: str, jour: date) -> str:
