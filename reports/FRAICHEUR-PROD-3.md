@@ -209,3 +209,74 @@ en `--resume` (saute tout SIREN déjà présent). Trois options, par ordre de pr
    le quota par les `ingested_at` les plus anciens.
 3. **Plein périodique** : lancer `--no-resume` une fois par trimestre (accepte le ~2 h et le
    quota) — le plus simple, le moins fin.
+
+---
+
+## 7. Rafraîchissement complet des dirigeants — décision de Vic (une fois)
+
+**Garde-fous** (identiques au § 1) : dump du 14/11 13 h 30 relu (`pg_restore --list` OK), disque
+25 Go libres. **Gate horaire** : cadence mesurée **~0,74 s/SIREN** sur les 300 premiers → ~1 h 58
+pour 9 614, fin prévue **~08 h 43**, avant 13 h → lancement autorisé.
+
+**Lancement fidèle au cron, avec le drapeau plein.** Le job `labuse jobs run ingest-inpi-rne`
+n'accepte pas `--no-resume` (il appelle la CLI en mode `--resume`). J'ai donc lancé la **commande
+CLI** `labuse ingest-inpi-rne --no-resume`, en tant qu'utilisateur `labuse`, depuis `/home/labuse`,
+avec sourcing de `/etc/labuse/labuse.env` (throttle 0,5 s anti-ban, commit par lot de 100),
+détachée (`setsid nohup`).
+
+**Déroulé** : démarré **06 h 45 31**, terminé **08 h 43 43** (Réunion), **1 h 58**, les **9 614
+SIREN traités, aucun arrêt quota**. Bilan du job : 27 312 dirigeants écrits, 9 374 SIREN avec
+dirigeant. *(Point 2 du mandat — arrêt quota — sans objet : le run est allé au bout. Aucune
+reprise à programmer.)*
+
+### Avant / après
+
+| Mesure | Avant (05/07) | Après (15/11) |
+|---|---|---|
+| Sociétés couvertes (SIREN) | 9 374 | 9 374 |
+| Sociétés avec ≥ 1 dirigeant actif (personne physique) | 8 927 | **8 931** (+4) |
+| Lignes `pm_dirigeants` | 27 146 | **27 580** (+434) |
+| Lecture la plus ancienne **par société** | 05/07/2026 | **15/11/2026 06 h 45** (0 société non relue) |
+| **Sociétés dont l'ensemble des dirigeants actifs a changé** | — | **111 / 9 374 (1,2 %)** |
+
+Les 111 changements : **97 ajouts seuls, 14 remaniements, 0 retrait seul**. Exemples foncier :
+`311210827` (+LAMY), `329086847` Gilbert Canabady (+VADAMOOTOO, +MOUTIEN), `322153172` (+LOCATE).
+
+**Vérification Successions** (donnée lue par l'outil — endpoint vivant, 401 car session requise ;
+contrôlé au niveau base) sur trois sociétés **changées et foncières** :
+- **SA Adrien Bellier** (`310862131`, 663 parcelles) : 12 dirigeants lus aujourd'hui, propension
+  « très élevé » (aîné 77 ans) — le 5ᵉ BARAU ajouté est présent.
+- **SELARL Franklin Bach** (`810061713`, 104 parcelles) : 2 dirigeants lus aujourd'hui (BACH,
+  TRON), propension « modéré » (59 ans).
+- **Gilbert Canabady** (`329086847`, 50 parcelles) : 3 dirigeants lus aujourd'hui, propension
+  « très élevé » (86 ans).
+
+### Deux limites honnêtes
+
+1. **Les départs ne sont pas purgés.** L'upsert `ON CONFLICT … ingested_at=now()` met à jour les
+   dirigeants que le RNE renvoie ; il ne désactive pas ceux qu'il ne renvoie plus. Résultat :
+   **268 lignes orphelines actives sur 173 sociétés** (un dirigeant présent au 05/07 que le RNE
+   ne liste plus) subsistent `actif=true`, datées du 05/07 — c'est pourquoi le `min(ingested_at)`
+   **au niveau ligne** reste au 05/07 (au niveau **société**, tout a été relu aujourd'hui). Un
+   gérant parti peut donc encore s'afficher ; le « 0 retrait seul » ci-dessus en découle. Exemple :
+   `329086847` garde 2 lignes du 05/07 (Gilbert et Gérard Canabady) à côté des 3 lues ce jour.
+2. **La mesure §6 (~15 %) était surestimée.** Elle comparait à l'API publique **Recherche
+   d'entreprises (DINUM)**, qui modélise les dirigeants différemment du flux INPI RNE que nous
+   ingérons (elle développe des représentants que le RNE compte autrement). La mesure
+   **autoritaire**, faite ici sur la vraie source après refresh complet, est **1,2 %** de sociétés
+   réellement modifiées — à retenir à la place de l'ordre de grandeur du § 6.
+
+### Modification à faire sur la tâche mensuelle (à livrer avec la mise en ligne — NON appliquée ici)
+
+La tâche `ingest-inpi-rne` tourne en `--resume` (saute tout SIREN déjà présent → l'existant n'est
+jamais revu). **Modification à livrer** : **relecture roulante** — ne sauter un SIREN que si sa
+dernière lecture (`max(ingested_at)` par société) a **moins de 90 jours** ; sinon le relire,
+**plafonné par le quota quotidien** (trier par lecture la plus ancienne d'abord, s'arrêter au
+quota, reprendre le lendemain). Ainsi chaque société est revue au moins une fois par trimestre,
+sans pic de 2 h ni risque de quota. *(À prévoir en complément, hors de cette modification : la
+désactivation des dirigeants que le RNE ne renvoie plus, pour résorber les 268 lignes orphelines —
+la relecture roulante rafraîchit, mais ne purge pas les départs.)*
+
+*Méthode : écriture prod limitée à la commande `ingest-inpi-rne --no-resume` (utilisateur
+`labuse`, env sourcé) ; tout le reste (avant/après, orphelins, vérif) en lecture seule. Lanceur
+temporaire retiré. Hors fenêtres backup/nuit.*
