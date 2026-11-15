@@ -19,6 +19,24 @@ meta:
 zones:
   Uavap:
     regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Uavap.7'
+            page_pdf: 28
+            citation: 'Article Uavap.7 Implantation des constructions par rapport aux limites séparatives Il sera fait application des prescriptions mentionnées dans l''AVAP annexé au PLU, en son article 2 « implantation des constructions par rapport aux limites séparatives » de son chapitre « Prescriptions particulières par secteur » sur chacun de ses 6 secteurs.'
+            condition_texte: 'Renvoi intégral à l''AVAP annexée au PLU (article 2 de son chapitre « Prescriptions particulières par secteur », 6 secteurs) ; l''AVAP n''est pas ingérée dans plu_reglement_extrait → règle chiffrée introuvable en base. Garde-fou : le moteur garde le retrait (classement prudent, pas une lecture de l''AVAP).'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Uavap.7'
+            page_pdf: 28
+            citation: 'Article Uavap.7 Implantation des constructions par rapport aux limites séparatives Il sera fait application des prescriptions mentionnées dans l''AVAP annexé au PLU, en son article 2 « implantation des constructions par rapport aux limites séparatives » de son chapitre « Prescriptions particulières par secteur » sur chacun de ses 6 secteurs.'
+            condition_texte: 'Renvoi intégral à l''AVAP annexée au PLU (article 2 de son chapitre « Prescriptions particulières par secteur », 6 secteurs) ; l''AVAP n''est pas ingérée dans plu_reglement_extrait → règle chiffrée introuvable en base. Garde-fou : le moteur garde le retrait (classement prudent, pas une lecture de l''AVAP).'
+            condition_modelable: 'non'
       stationnement:
         par_logement:
           places: 1
@@ -247,6 +265,18 @@ zones:
             pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à l''alignement.'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'Up.7'
+            page_pdf: 33
+            citation: 'Les constructions seront implantées : - soit sur une ou plusieurs limites séparatives - soit avec un recul : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à la limite séparative.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'Up.7'
+            page_pdf: 33
+            citation: 'Les constructions seront implantées : - soit sur une ou plusieurs limites séparatives - soit avec un recul : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à la limite séparative.'
           min_m: 3.0
           article: Up.7
           page_pdf: 33
@@ -301,6 +331,18 @@ zones:
             4 m.)'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'Up.7'
+            page_pdf: 33
+            citation: 'Les constructions seront implantées : - soit sur une ou plusieurs limites séparatives - soit avec un recul : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à la limite séparative. Dans le secteur Upr ; Sans préjudice du paragraphe précédent, les constructions seront implantées avec un recul de 6 m par rapport au pied de la falaise repérée sur le plan N°3 annexé.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'Up.7'
+            page_pdf: 33
+            citation: 'Les constructions seront implantées : - soit sur une ou plusieurs limites séparatives - soit avec un recul : de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à la limite séparative. Dans le secteur Upr ; Sans préjudice du paragraphe précédent, les constructions seront implantées avec un recul de 6 m par rapport au pied de la falaise repérée sur le plan N°3 annexé.'
           min_m: 4.0
           article: Up.7
           page_pdf: 33
@@ -373,6 +415,22 @@ zones:
             porte: "autre"
             modifie_calcul: true
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud.7'
+            page_pdf: 42
+            citation: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une hauteur maximale de 18 m par limite. Au-delà de cette hauteur, les constructions seront implantées en tout point à 4 mètres minimum de la limite séparative. Des constructions non contiguës pourront être édifiées le long des limites séparatives. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une hauteur maximale de 18 m par limite. Au-delà de cette hauteur, les constructions seront implantées en tout point à 4 mètres minimum de la limite séparative.'
+            condition_modelable: 'deux_limites_max + non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud.7'
+            page_pdf: 42
+            citation: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une hauteur maximale de 18 m par limite. Au-delà de cette hauteur, les constructions seront implantées en tout point à 4 mètres minimum de la limite séparative. Des constructions non contiguës pourront être édifiées le long des limites séparatives. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une hauteur maximale de 18 m par limite. Au-delà de cette hauteur, les constructions seront implantées en tout point à 4 mètres minimum de la limite séparative. — En sus, pour les constructions nouvelles : en bordure de voie et sur une longueur de 12 m mesurée par rapport à l''alignement, les constructions seront édifiées d''une limite latérale à l''autre. Toutefois, cette règle n''est pas imposée lorsque la construction édifiée à l''alignement intéresse une unité foncière ayant au moins 20 m de front sur voie, la mitoyenneté pouvant alors être réalisée sur une seule limite séparative donnant sur la voie. (Mitoyenneté IMPOSÉE sur la bande des 12 m depuis l''alignement — non modélisée, cf. NOTES.)'
+            condition_modelable: 'deux_limites_max + non'
           formule: Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives sur une hauteur maximale
             de 18 m par limite. Au-delà de cette hauteur, les constructions seront implantées en tout point
             à 4 mètres minimum de la limite séparative. ... 4m ≤ L ≥ h/2.
@@ -443,6 +501,25 @@ zones:
         citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent
           un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   Udo:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud.7'
+            page_pdf: 42
+            citation: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une hauteur maximale de 18 m par limite. Au-delà de cette hauteur, les constructions seront implantées en tout point à 4 mètres minimum de la limite séparative. Des constructions non contiguës pourront être édifiées le long des limites séparatives. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une hauteur maximale de 18 m par limite. Au-delà de cette hauteur, les constructions seront implantées en tout point à 4 mètres minimum de la limite séparative.'
+            condition_modelable: 'deux_limites_max + non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud.7'
+            page_pdf: 42
+            citation: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une hauteur maximale de 18 m par limite. Au-delà de cette hauteur, les constructions seront implantées en tout point à 4 mètres minimum de la limite séparative. Des constructions non contiguës pourront être édifiées le long des limites séparatives. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une hauteur maximale de 18 m par limite. Au-delà de cette hauteur, les constructions seront implantées en tout point à 4 mètres minimum de la limite séparative. — En sus, pour les constructions nouvelles : en bordure de voie et sur une longueur de 12 m mesurée par rapport à l''alignement, les constructions seront édifiées d''une limite latérale à l''autre. Toutefois, cette règle n''est pas imposée lorsque la construction édifiée à l''alignement intéresse une unité foncière ayant au moins 20 m de front sur voie, la mitoyenneté pouvant alors être réalisée sur une seule limite séparative donnant sur la voie. (Mitoyenneté IMPOSÉE sur la bande des 12 m depuis l''alignement — non modélisée, cf. NOTES.)'
+            condition_modelable: 'deux_limites_max + non'
     renvoi: Ud
     renvoi_src: « Elle contient un sous-secteur Udo correspondant aux sites des opérations Océan et Butor » (caractère
       de la zone Ud, p. 37). Les articles Ud.1 et Ud.2 (p. 38-39) ne prévoient aucune règle de destination propre
@@ -483,6 +560,22 @@ zones:
             seront implantées à 4 m minimum de l''alignement.'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud.7'
+            page_pdf: 43
+            citation: 'En secteur Udp, Udop : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives Des constructions non contiguës pourront être édifiées le long des limites séparatives Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4 m : 4 m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud.7'
+            page_pdf: 43
+            citation: 'En secteur Udp, Udop : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives Des constructions non contiguës pourront être édifiées le long des limites séparatives Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4 m : 4 m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives'
+            condition_modelable: 'deux_limites_max'
           min_m: 4.0
           article: Ud.7
           page_pdf: 43
@@ -579,6 +672,22 @@ zones:
             de 12 m : Les constructions seront implantées à 4 m minimum de l''alignement.'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud.7'
+            page_pdf: 43
+            citation: 'En secteur Udp, Udop : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives Des constructions non contiguës pourront être édifiées le long des limites séparatives Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4 m : 4 m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud.7'
+            page_pdf: 43
+            citation: 'En secteur Udp, Udop : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives Des constructions non contiguës pourront être édifiées le long des limites séparatives Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4 m : 4 m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives'
+            condition_modelable: 'deux_limites_max'
           min_m: 4.0
           article: Ud.7
           page_pdf: 43
@@ -672,6 +781,22 @@ zones:
           citation: soit avec un recul de 4 m minimum par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uu.7'
+            page_pdf: 49
+            citation: 'Limites séparatives correspondant aux limites de la zone Uu : Les constructions devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2. Dans les autres cas : Chaque construction pourra s''implanter sur une ou plusieurs limites séparatives. Des constructions non contiguës pourront être édifiées le long des limites séparatives.'
+            condition_texte: 'Implantation en limite admise « Dans les autres cas » seulement ; sur les « Limites séparatives correspondant aux limites de la zone Uu », retrait obligatoire L ≥ h/2, minimum 4 m. Le côté (latéral/fond) ne dit pas si la limite coïncide avec la limite de zone → condition non modélisable sur ce seul critère.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uu.7'
+            page_pdf: 49
+            citation: 'Limites séparatives correspondant aux limites de la zone Uu : Les constructions devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2. Dans les autres cas : Chaque construction pourra s''implanter sur une ou plusieurs limites séparatives. Des constructions non contiguës pourront être édifiées le long des limites séparatives.'
+            condition_texte: 'Implantation en limite admise « Dans les autres cas » seulement ; sur les « Limites séparatives correspondant aux limites de la zone Uu », retrait obligatoire L ≥ h/2, minimum 4 m. Le côté (latéral/fond) ne dit pas si la limite coïncide avec la limite de zone → condition non modélisable sur ce seul critère.'
+            condition_modelable: 'non'
           formule: 'Chaque construction pourra s''implanter sur une ou plusieurs limites séparatives. ...
             à une distance L supérieure ou égale à la moitié de la différence d''altitude h entre ces deux
             points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
@@ -765,6 +890,22 @@ zones:
             porte: "autre"
             modifie_calcul: true
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ui.7'
+            page_pdf: 55
+            citation: 'En secteur Ui : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite. Des constructions non contiguës peuvent être édifiées le long des limites séparatives Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite.'
+            condition_modelable: 'deux_limites_max + non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ui.7'
+            page_pdf: 55
+            citation: 'En secteur Ui : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite. Des constructions non contiguës peuvent être édifiées le long des limites séparatives Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite.'
+            condition_modelable: 'deux_limites_max + non'
           formule: 'En secteur Ui : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives
             sur une longueur maximale de 18 mètres par limite. ... 4m ≤ L ≥ h/2.'
           min_m: 4
@@ -831,12 +972,46 @@ zones:
         citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent
           un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   Uicm:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Ui.7'
+            page_pdf: 55
+            citation: 'En secteur Uicm : Chaque construction s''implantera à 5m minimum des limites séparatives.'
+          implantation_laterales:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Ui.7'
+            page_pdf: 55
+            citation: 'En secteur Uicm : Chaque construction s''implantera à 5m minimum des limites séparatives.'
     renvoi: Ui
     renvoi_src: 'caractère de la zone, p. 51 : « Cette zone contient un secteur Uicm qui concerne le secteur Canne
       Mapou […] Sa vocation générale est celle de la zone Ui » ; les articles Ui.1 et Ui.2 (p. 51-52) ne comportent
       aucune disposition propre au secteur Uicm (les règles particulières Uicm ne portent que sur les articles Ui.6,
       Ui.7, Ui.9 et Ui.10 — implantation, emprise, hauteur), les règles de destination sont donc identiques à Ui.'
   Uip:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ui.7'
+            page_pdf: 55
+            citation: 'En secteur Uip : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives Des constructions non contiguës pourront être édifiées le long des limites séparatives Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4 m : 4 m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ui.7'
+            page_pdf: 55
+            citation: 'En secteur Uip : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives Des constructions non contiguës pourront être édifiées le long des limites séparatives Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4 m : 4 m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives'
+            condition_modelable: 'deux_limites_max'
     silence: autorise
     silence_src: 'Le secteur Uip relève des articles Ui.1 « Occupations et utilisations du sol interdites » (« Sont
       interdits : … », p. 51, complété « En sus dans le secteur Uip », p. 52) et Ui.2 « … soumises à des conditions
@@ -928,6 +1103,22 @@ zones:
             à 3 m minimum de l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uj.7'
+            page_pdf: 61
+            citation: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite. Des constructions non contiguës pourront être édifiées le long des limites séparatives Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite.'
+            condition_modelable: 'deux_limites_max + non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uj.7'
+            page_pdf: 61
+            citation: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite. Des constructions non contiguës pourront être édifiées le long des limites séparatives Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite.'
+            condition_modelable: 'deux_limites_max + non'
           formule: Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives sur une longueur
             maximale de 18 mètres par limite. ... 4m ≤ L ≥ h/2
           min_m: 4
@@ -1036,6 +1227,22 @@ zones:
             à 3 m minimum de l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Um.7'
+            page_pdf: 67
+            citation: 'Sur l''ensemble de la zone : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 10m par limite. Cette règle n''est pas applicable aux extensions / surélévations des constructions régulièrement édifiées sur des unités foncières dont la superficie est inférieure ou égale à 300 m² à la date d''approbation du présent PLU. Des constructions non contiguës pourront être édifiées le long des limites séparatives. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude he entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 10m par limite.'
+            condition_modelable: 'deux_limites_max + non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Um.7'
+            page_pdf: 67
+            citation: 'Sur l''ensemble de la zone : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 10m par limite. Cette règle n''est pas applicable aux extensions / surélévations des constructions régulièrement édifiées sur des unités foncières dont la superficie est inférieure ou égale à 300 m² à la date d''approbation du présent PLU. Des constructions non contiguës pourront être édifiées le long des limites séparatives. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude he entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 10m par limite.'
+            condition_modelable: 'deux_limites_max + non'
           formule: Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives sur une longueur
             maximale de 10m par limite. ... 4m ≤ L ≥ h/2.
           min_m: 4
@@ -1185,6 +1392,22 @@ zones:
             à 3 m minimum de l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uh.7'
+            page_pdf: 73
+            citation: 'Chaque construction pourra s''implanter sur 1 limite séparative sur une longueur maximale de 10 mètres et sur une hauteur maximale H de 4,5m. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 limite séparative sur une longueur maximale de 10 mètres et sur une hauteur maximale H de 4,5m.'
+            condition_modelable: 'une_seule_limite + non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uh.7'
+            page_pdf: 73
+            citation: 'Chaque construction pourra s''implanter sur 1 limite séparative sur une longueur maximale de 10 mètres et sur une hauteur maximale H de 4,5m. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 limite séparative sur une longueur maximale de 10 mètres et sur une hauteur maximale H de 4,5m.'
+            condition_modelable: 'une_seule_limite + non'
           formule: Chaque construction pourra s'implanter sur 1 limite séparative sur une longueur maximale
             de 10 mètres et sur une hauteur maximale H de 4,5m. ... 4m ≤ L ≥ h/2.
           min_m: 4
@@ -1840,6 +2063,22 @@ zones:
             3 m en voies étroites, annexes à l''alignement.'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUj.7'
+            page_pdf: 92
+            citation: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite. Des constructions non contiguës pourront être édifiées le long des limites séparatives. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite.'
+            condition_modelable: 'deux_limites_max + non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUj.7'
+            page_pdf: 92
+            citation: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite. Des constructions non contiguës pourront être édifiées le long des limites séparatives. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite.'
+            condition_modelable: 'deux_limites_max + non'
           forme: alignement
           article: AUj.7
           page_pdf: 92
@@ -1926,6 +2165,22 @@ zones:
             < 3,50 m ; annexes de stationnement à l''alignement.'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUm.7'
+            page_pdf: 98
+            citation: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 10 m par limite. Des constructions non contiguës pourront être édifiées le long des limites séparatives. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 10 m par limite.'
+            condition_modelable: 'deux_limites_max + non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUm.7'
+            page_pdf: 98
+            citation: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 10 m par limite. Des constructions non contiguës pourront être édifiées le long des limites séparatives. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 10 m par limite.'
+            condition_modelable: 'deux_limites_max + non'
           forme: alignement
           article: AUm.7
           page_pdf: 98
@@ -2035,6 +2290,22 @@ zones:
             stationnement à l''alignement.'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Auh.7'
+            page_pdf: 103
+            citation: 'Sur l''ensemble de la zone : Chaque construction pourra s''implanter sur 1 limite séparative sur une longueur maximale de 10 mètres et sur une hauteur maximale H de 4,5m. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 limite séparative sur une longueur maximale de 10 mètres et sur une hauteur maximale H de 4,5m.'
+            condition_modelable: 'une_seule_limite + non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Auh.7'
+            page_pdf: 103
+            citation: 'Sur l''ensemble de la zone : Chaque construction pourra s''implanter sur 1 limite séparative sur une longueur maximale de 10 mètres et sur une hauteur maximale H de 4,5m. Les constructions ou parties de constructions ne jouxtant pas la ou les limites séparatives devront s''implanter à une distance L (comptée horizontalement de tout point d''une construction au point le plus proche de la limite) supérieure ou égale à la moitié de la différence d''altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2.'
+            condition_texte: 'Chaque construction pourra s''implanter sur 1 limite séparative sur une longueur maximale de 10 mètres et sur une hauteur maximale H de 4,5m.'
+            condition_modelable: 'une_seule_limite + non'
           forme: alignement
           article: AUh.7
           page_pdf: 103

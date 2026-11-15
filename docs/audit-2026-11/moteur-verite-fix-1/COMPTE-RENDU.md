@@ -341,3 +341,27 @@ Nota de commit : les CSV de LECTURE des 17 communes (preuves) sont entrés au co
 9. **Multi-voies** : règle récurrente « plus de limite de fond » quand le terrain est longé
    par plusieurs voies — non modélisée.
 10. **OAP** : nombreux renvois « compatibles avec les OAP » — OAP non ingérées, non lues.
+
+---
+
+## LOT 7 — Saint-Denis (sur confirmation du donneur d'ordre)
+
+Document en vigueur confirmé (zonage, texte, PDF, règles — vérifié par une autre session).
+Lecture mot pour mot (`implantation/97411.csv`, 34 lignes, les 34 citations retrouvées
+caractère pour caractère dans `plu_reglement_extrait`) : 17 zones habitat × 2 côtés —
+limite_sous_conditions 26 (Ud/Udo/Udp/Udop/Uip `deux_limites_max`, plafonds de hauteur/longueur
+par limite en mention ; Um/AUm 10 m par limite ; Uh/AUh une seule limite ; Uu hors limites de
+zone) · limite_ou_retrait 4 (Upi 3 m, Upr 4 m) · retrait_obligatoire 4 (Uavap — règle dans
+l'AVAP non ingérée, garde-fou ; Uicm 5 m, règle propre que le YAML destinations gommait) ·
+imposée 0. Indices d'audit confirmés mot pour mot (Um.7 p.67 « 10 m par limite » = longueur ;
+Ud.7 p.42 « 1 ou 2 limites… hauteur maximale de 18 m par limite »). Incertitudes consignées :
+AVAP annexée absente de la base ; mitoyenneté imposée Ud/Udo sur 12 m depuis l'alignement
+(citée, non modélisée) ; plafonds en mètres par limite hors vocabulaire (« + non »).
+
+**Mesures après LOT 7** (cumulatif) : INCHANGÉES sur la cohorte — Test 1 **4 674/4 812
+(97,1 %)**, dépassements **97 (2,4 %)**, terrain_exigu **104**, cohorte au-dessus 2 477. Effet
+propre lot6→lot7 MESURÉ : **1 parcelle** (97411000HB0251, Uj, +4 m²) — attendu : le PLU
+dionysien en vigueur date du 05/08/2026 et la cohorte ne compte que 7 permis postérieurs ;
+le calibrage joue sur le STOCK des parcelles Ud/Um/Uj… et sera jugeable aux prochains permis.
+**Contrôle inverse : garde A/N inchangée (0 nouvelle), aucune hausse nouvelle au top 30,
+suite verte (411 tests).** ARRÊT.
