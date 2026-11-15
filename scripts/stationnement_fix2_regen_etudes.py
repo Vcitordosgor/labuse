@@ -23,7 +23,8 @@ TEMOINS = [
     ("97422000AD0887", "Le Tampon — zone humide (reprise des alertes de la fiche)"),
 ]
 
-OUT = Path(__file__).resolve().parent.parent / "docs" / "audit-2026-11" / "stationnement-fix-2"
+# reliquat #7 — livraison des Études régénérées dans ~/Desktop/exports-audit-4/ (emplacement demandé).
+OUT = Path(os.path.expanduser("~/Desktop/exports-audit-4"))
 OUT.mkdir(parents=True, exist_ok=True)
 
 
