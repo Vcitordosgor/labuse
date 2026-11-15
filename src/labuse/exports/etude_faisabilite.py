@@ -21,6 +21,25 @@ from typing import Any, Optional
 from .rendu import FOOT_LIGNE, Cartouche, esc, page_html
 
 
+def _commit_build() -> Optional[str]:
+    """ETUDE-STATIONNEMENT-FIX-2 (LOT 4) — le commit QUI A PRODUIT le document, pour que chaque PDF porte
+    sa version de calcul. Priorité à la variable d'env `LABUSE_BUILD_COMMIT` (posée au déploiement) ; à
+    défaut, le HEAD du dépôt (régénérations locales) ; None si rien n'est lisible (prod sans git ni env)."""
+    import os
+    sha = os.environ.get("LABUSE_BUILD_COMMIT")
+    if sha:
+        return sha.strip()[:12]
+    try:
+        import subprocess
+        out = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"], capture_output=True, text=True,
+                             timeout=2, cwd=os.path.dirname(__file__))
+        if out.returncode == 0 and out.stdout.strip():
+            return out.stdout.strip()
+    except Exception:  # noqa: BLE001 — stamp best-effort, jamais bloquant
+        pass
+    return None
+
+
 def _donnees_labuse_au_etude(genere_le: str) -> str:
     """DOCS-COHERENCE-1 (A10) — pied unique « Données LABUSE au JJ/MM/AAAA » = date de la DONNÉE
     servie (run servi, `served_manifest.json promoted_at`), identique aux 7 autres documents ;
@@ -1073,7 +1092,9 @@ def _p8_hypotheses(payload: dict, retenu: dict, numero: str) -> str:
         ("Cadastre DGFiP · PPR, servitudes (GPU, Géorisques)", "données publiques"),
         ("LiDAR HD IGN · BD TOPO", "terrain naturel, limites"),
         # ETUDE-V6-4 (item 12) — plus de nom technique (livrable IMPLANTATION-2, version conventions).
-        ("Moteur d'implantation LABUSE", f"hypothèses « {esc(m.get('etiquette') or 'Estimé')} », modifiables dans l'outil"),
+        ("Moteur d'implantation LABUSE",
+         f"hypothèses « {esc(m.get('etiquette') or 'Estimé')} », modifiables dans l'outil"
+         + (f" · version {esc(_commit_build())}" if _commit_build() else "")),
     ]
     src_html = "".join(f'<tr><td class="k">{esc(a)}</td><td>{esc(b)}</td></tr>' for a, b in sources)
     return (
