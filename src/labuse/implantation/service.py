@@ -667,6 +667,10 @@ def _regle_stationnement_courte(b) -> Optional[str]:
     if b.mode == "par_logement" and b.flat_places is not None:
         # DOCS-COHERENCE-1 (F9/A6) — format client « 2 places / logement » (jamais « 2 place/logt »).
         return f"{nb(b.flat_places)} place{'s' if b.flat_places >= 2 else ''} / logement"
+    # ETUDE-STATIONNEMENT-FIX-2 (LOT 4) — barème « par tranche de m² de SDP » : règle courte DÉCRITE (sinon
+    # None → l'Étude le déclarait « non vérifié » tout en affichant sa citation validée — HT0538/Ud6).
+    if b.mode == "par_m2_sdp" and b.m2_par_place:
+        return f"1 place / {nb(b.m2_par_place)} m² de surface de plancher"
     parts = []
     for lg in b.lignes:
         if lg.destination and lg.destination != "collectif":

@@ -133,3 +133,20 @@ def test_degagement_allee_mesure_localement_pas_boite():
     # allée large de 5 m partout → acceptée (le liseré d'ouverture reste sous le seuil).
     ok = box(0, 0, 20, 5.0)
     assert _pincement_allee([ok], places, 5.0) < 1.0
+
+
+def test_bareme_existence_source_unique_par_m2_sdp():
+    """LOT 4 (HT0538/Ud) — un barème « par m² de SDP » est VALIDÉ : l'Étude ne doit plus le déclarer « absent »
+    d'un côté (garde-fou) et « validé » de l'autre (citation). Source unique = le drapeau `validee`, et la
+    règle courte DÉCRIT le barème au m² au lieu de rester vide."""
+    from labuse.implantation.service import _regle_stationnement_courte
+    from labuse.exports.etude_faisabilite import _bareme_stationnement_absent
+    b = R.charger("97416", "Ud").stationnement
+    assert b.validee and b.mode == "par_m2_sdp"
+    assert _regle_stationnement_courte(b) == "1 place / 75 m² de surface de plancher"
+    payload = {"stationnement_regimes": {"general": {"validee": True, "article": "Ud6",
+                                                     "regle_courte": _regle_stationnement_courte(b),
+                                                     "ratio_par_logement": None}}}
+    assert _bareme_stationnement_absent(payload) is False
+    # non validé → bien « absent »
+    assert _bareme_stationnement_absent({"stationnement_regimes": {"general": {"validee": False}}}) is True

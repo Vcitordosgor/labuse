@@ -146,6 +146,13 @@ def _bareme_stationnement_absent(payload: dict) -> bool:
     de places n'est PAS calculé (un « 0 » afficherait « 0 place exigée », faux : c'est NON vérifié).
     Détection extraite de `_gardes_honnete` (b) pour l'afficher « stationnement non vérifié » partout."""
     reg = (payload.get("stationnement_regimes") or {}).get("general") or {}
+    # ETUDE-STATIONNEMENT-FIX-2 (LOT 4) — SOURCE UNIQUE de « le barème existe-t-il » : le drapeau `validee`
+    # (le MÊME que celui qui déclenche l'affichage de la citation validée plus loin dans le document). On ne
+    # re-dérive plus l'absence depuis ratio/regle_courte : un barème « par m² de SDP » ou « par typologie »
+    # n'a pas de ratio par logement et était déclaré ABSENT tout en montrant sa citation validée en page
+    # suivante (HT0538/Ud : 1 place / 75 m²). Repli sur l'ancienne heuristique pour les payloads sans `validee`.
+    if "validee" in reg:
+        return not bool(reg.get("validee"))
     _art = _art_label(reg.get("article"))
     return (reg.get("ratio_par_logement") is None and not reg.get("regle_courte")
             and not str(_art or "").upper().startswith("L151"))
@@ -291,7 +298,9 @@ def _stationnement_3lignes(payload: dict, retenu: dict) -> str:
     _is_loi = str(_art).upper().startswith("L151")
     # EXPORTS-FIX-3 LOT 3 (#5b, relecture) — barème indisponible : JAMAIS « 0 place selon la règle du PLU »
     # ni « exige un barème par typologie ». On le dit en clair : stationnement non vérifié.
-    _bareme_absent = _rp is None and not g.get("regle_courte") and not _is_loi
+    # FIX-2 (LOT 4) — MÊME source unique que le garde-fou (`_bareme_stationnement_absent`, drapeau `validee`)
+    # pour que les deux ne se contredisent plus (HT0538 : « absent » ici, « validé » page suivante).
+    _bareme_absent = _bareme_stationnement_absent(payload)
     if _bareme_absent:
         # CAPACITE-1 (C4) — ne pas laisser croire que le stationnement n'est pas réglementé : la RÈGLE
         # EXISTE au PLU, elle n'est simplement pas ingérée par LABUSE (donc non déduite ici).
