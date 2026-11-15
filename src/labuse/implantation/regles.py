@@ -80,6 +80,7 @@ class Visiteurs:
     par_m2_sdp: Optional[float] = None
     logements_min: Optional[int] = None    # part visiteur due seulement AU-DELÀ de N logements (ex. Saint-Benoît)
     publique: bool = False                 # places PUBLIQUES (hors parcelle) — comptées À PART, pas dans le total à dessiner
+    exclut_social: bool = False            # FIX-2 : places publiques rattachées au logement PRIVÉ seul (pas l'aidé) — ex. Sainte-Suzanne
     arrondi: str = "superieur"
     article: Optional[str] = None
     page_pdf: Optional[int] = None
@@ -177,7 +178,8 @@ class BaremeStationnement:
         vis = pub = 0
         if self.visiteurs is not None:
             gv, gp = self._visiteurs_de(self.visiteurs, n, sdp_tot)
-            pub += gp                                       # public : universel
+            if not (destination == "social" and self.visiteurs.exclut_social):
+                pub += gp                                   # public (universel sauf `exclut_social` pour l'aidé)
             if destination != "social" and not self.visiteurs.publique:
                 vis += gv                                   # visiteur privé ordinaire (logement non-aidé)
         if destination == "social" and self.visiteurs_social is not None:
@@ -557,6 +559,7 @@ def _parse_visiteurs(form: dict, key: str = "visiteurs") -> Optional[Visiteurs]:
         places=float(v["places"]),
         par_logements=v.get("par_logements"), par_m2_sdp=v.get("par_m2_sdp"),
         logements_min=v.get("logements_min"), publique=bool(v.get("publique")),
+        exclut_social=bool(v.get("exclut_social")),
         arrondi=_norm_arrondi(v.get("arrondi")),
         article=v.get("article"), page_pdf=v.get("page_pdf"), citation=v.get("citation"))
 
