@@ -295,6 +295,7 @@ ROBINETS: dict[str, Robinet] = {
  # la cascade risques sert aussi la zone inondable TRI (couche tri_zone), portée au Dossier.
  "fiche_parcelle_risques": _r("fiche", "Risques et protections", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("n_vigilances", "aleas_parcelle_liste",
+                                                "contraintes_parcelle_liste",  # CHIRURGICAL-FIX-1 (LOT H pt2)
                                                 "sar_divergence", "endiguement_zone_protegee",
                                                 "tri_zone_inondable",)),
  "fiche_parcelle_marche": _r("fiche", "Marché et secteur", "fiche_parcelle",
