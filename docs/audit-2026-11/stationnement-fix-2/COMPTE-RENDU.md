@@ -69,3 +69,28 @@ La Possession seuil 50 m² ; lotissement 0,8 visiteur/lot ; Saint-Pierre haie 1,
 « Non vérifié » ; prospect/implantation « Non vérifié » ; stationnement vélo chiffré ; « mêmes alertes
 partout » étendu à l'Étude (zone humide, inondation) ; statut de couverture = contrôles ;
 pleine terre / sol perméable / biotope distincts.
+
+---
+
+## Banc 212 — recalcul de TOUS les couples depuis l'image (tour 2)
+
+Le banc ne couvrait que les 15 zones du relecteur. **Les 267 couples commune-zone validés (23 communes,
+78 règles distinctes, renvois compris) ont été recalculés**, chacun par un agent qui LIT L'IMAGE de la
+page officielle (jamais le code), pour les 4 programmes du mandat. Écarts tranchés par l'image, puis
+corrigés commune par commune.
+
+**Résultat : 267/267 couples concordants 4 programmes/4, 0 écart.** Banc permanent
+`tests/test_banc_212.py` (305 cas). Contrôle citation inchangé (1465, 0 hors citation).
+
+Écarts trouvés (37) et corrigés, par catégorie :
+- **Arrondi inférieur** (La Plaine, Saint-Paul) : `arrondi: inferieur` sur l'opération → maison 1,5→1.
+- **Plafond aidé 1/logt** (Étang-Salé, Saint-André, Cilaos, Saint-Paul Usdu) : ligne `social {places: 1.0}`.
+- **Visiteur aidé 1/10** (Entre-Deux, Saint-Paul) : `visiteurs_social` (distinct du visiteur ordinaire 1/5).
+- **Terme au m² de l'aidé** (Le Port) : `m2_places/m2_tranche` additifs (0,2/logt + 8/1000 m² = 16).
+- **Places publiques** : Saint-Louis (universelles, aidé compris) ; Sainte-Suzanne (`exclut_social`, privé seul).
+- **Seuil de surface par logement** (Saint-Denis) : barème remodelé en tiers (< 100 m²→1 / ≥100→1,5).
+- **Couverture** (Saint-Pierre Uf6) : barème pointait la mauvaise page (109=Ug6) → corrigé p.126 + social.
+
+Sur-lectures de l'agent écartées par l'image en faveur du moteur (Saint-Pierre « tranche complète » =
+plancher). Structure moteur : `visiteurs_social`, `exclut_social`, `m2_places/m2_tranche`, helper
+`_parts_visiteurs` (public universel vs visiteur privé par destination).
