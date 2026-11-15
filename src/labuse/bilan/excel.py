@@ -354,8 +354,10 @@ def _valeurs_calculees(ws) -> dict[str, object]:
         if not isinstance(v, str) or not v.startswith("="):
             cache[coord] = v  # libellé texte (pas une formule)
             return v
+        # SUM(plage) → somme des cellules ; une plage VIDE/inversée (ex. produits=[] → SUM(F5:F4))
+        # vaut 0 (comme Excel), jamais « () ».
         expr = _SUM_RE.sub(
-            lambda m: "(" + "+".join(f"{m.group(1)}{r}" for r in range(int(m.group(2)), int(m.group(4)) + 1)) + ")",
+            lambda m: "(" + ("+".join(f"{m.group(1)}{r}" for r in range(int(m.group(2)), int(m.group(4)) + 1)) or "0") + ")",
             v[1:])
         expr = _REF_RE.sub(lambda m: repr(ev(f"{m.group(1)}{m.group(2)}")), expr)
         expr = _EQ_RE.sub("==", expr)
