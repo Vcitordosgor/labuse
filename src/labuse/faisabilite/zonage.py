@@ -70,6 +70,10 @@ class ZoneRules:
     recul_limites_alignement: bool = False    #  (idem « en limite séparative ») — 0 EXPLICITE, ≠ absent
     pleine_terre_compose: dict | None = None  # PLU-CALIBRAGE-7 forme 2 : {espaces_verts_pct, part_pct}
     #  pleine_terre_pct = espaces_verts_pct × part_pct / 100 (calculé, JAMAIS stocké — les 2 chiffres sourcés)
+    pleine_terre_nature: str | None = None    # CHIRURGICAL-FIX-1 (LOT H pt8) — vraie nature de la règle
+    #  « 2.6 » selon sa CITATION : 'permeable' | 'pleine_terre' | 'biotope' | 'espace_vert'. Le champ
+    #  pleine_terre_pct agrège des règles DISTINCTES ; le document nomme celle qui est citée (jamais
+    #  « pleine terre » pour une règle de perméabilité — AM0838/UE L'Étang-Salé : « 25 % … perméable »).
     # FICHE-FIX-2 P4 / PLU-CALIBRAGE-9 — clause de mixité sociale de la zone (LLS), lue des `regles`
     #  calibrées : {seuil_m2|seuil_logements, quota_pct, quota_base?, produits?, portee, article,
     #  page_pdf, citation, statut}. None si la zone n'en porte pas. `statut` = 'valide' → branchée
@@ -215,6 +219,43 @@ def _pleine_terre_val(reg: dict):
     return None
 
 
+_LIBELLE_ESPACES_LIBRES = {
+    "permeable": "Surface perméable",
+    "biotope": "Coefficient de biotope",
+    "espace_vert": "Espaces verts",
+    "pleine_terre": "Pleine terre",
+}
+
+
+def libelle_espaces_libres(nature: str | None, defaut: str = "Pleine terre") -> str:
+    """CHIRURGICAL-FIX-1 (LOT H pt8) — nom de base de la règle d'espaces libres (art. 2.6) selon sa
+    nature citée : surface perméable ≠ pleine terre ≠ biotope ≠ espaces verts. Le suffixe (« min » /
+    « minimale ») est ajouté par l'appelant. Défaut « Pleine terre » (rétro-compatibilité)."""
+    return _LIBELLE_ESPACES_LIBRES.get(nature or "", defaut)
+
+
+def _pleine_terre_nature(reg: dict) -> str | None:
+    """CHIRURGICAL-FIX-1 (LOT H pt8) — nature RÉELLE de la règle d'« espaces libres / art. 2.6 » lue de
+    sa CITATION sourcée : surface perméable, pleine terre, coefficient de biotope ou espace vert. Le
+    champ `pleine_terre_pct` agrège ces règles distinctes ; le libellé du document doit nommer celle
+    qui est citée (« pleine terre » prioritaire si la citation la nomme explicitement)."""
+    leaf = (reg.get("pleine_terre") or {}).get("pct")
+    if not isinstance(leaf, dict):
+        return None
+    cit = (leaf.get("citation") or "").lower()
+    if not cit:
+        return None
+    if "pleine terre" in cit:
+        return "pleine_terre"
+    if "biotope" in cit:
+        return "biotope"
+    if "perméab" in cit or "permeab" in cit:
+        return "permeable"
+    if "espace" in cit and "vert" in cit:
+        return "espace_vert"
+    return None
+
+
 def _pleine_terre_compose(reg: dict) -> dict | None:
     """Forme 2 : les deux chiffres sourcés {espaces_verts_pct, part_pct} d'une feuille pleine terre
     composée VALIDÉE (pour l'affichage de l'étape). None si feuille directe / non validée."""
@@ -348,6 +389,7 @@ def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> Zone
         stat_logement=_stat_from_regles(reg),
         pleine_terre_pct=_pleine_terre_val(reg),
         pleine_terre_compose=_pleine_terre_compose(reg),
+        pleine_terre_nature=_pleine_terre_nature(reg),
         hauteur_mode=zm.get("hauteur_mode"),
         habitat=zm.get("habitat"),
         constructible_neuf=zm.get("constructible_neuf", True),
@@ -684,6 +726,9 @@ def _calibrage_overlay(code: str, commune: str | None):
             _cmp = _pleine_terre_compose(reg)
             if _cmp:
                 champs["pleine_terre_compose"] = _cmp
+            _nat = _pleine_terre_nature(reg)       # CHIRURGICAL-FIX-1 (LOT H pt8) — nom de la règle citée
+            if _nat:
+                champs["pleine_terre_nature"] = _nat
     elif pt and pt.get("absent"):
         src["pleine_terre"] = _src_absente(pt)
 

@@ -85,11 +85,16 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
     ref_h = src.get("hauteur")
     out.append({"cle": "hauteur", "libelle": "Hauteur max", "valeur": htxt, "etat": hetat,
                 "reference": ref_h, "url": _url(ref_h), "exceptions": _exc("hauteur")})
+    # CHIRURGICAL-FIX-1 (LOT H pt8) — la règle d'« espaces libres » (art. 2.6) garde SON nom : surface
+    # perméable, pleine terre, biotope ou espaces verts selon sa citation (jamais « pleine terre » pour
+    # une règle de perméabilité — AM0838/UE L'Étang-Salé : « 25 % … perméable »).
+    from .faisabilite.zonage import libelle_espaces_libres
+    _pt_lib = libelle_espaces_libres(getattr(rules, "pleine_terre_nature", None)) + " min"
     for cle, libelle, val, unite, skey in (
         ("emprise", "Emprise au sol max", rules.emprise_sol_pct, "%", "emprise"),
         ("recul_voirie", "Recul sur voie", rules.recul_voirie_m, "m", "recul_voirie"),
         ("recul_limites", "Recul limites séparatives", rules.recul_limites_sep_m, "m", "recul_limites"),
-        ("pleine_terre", "Pleine terre min", rules.pleine_terre_pct, "%", "pleine_terre"),
+        ("pleine_terre", _pt_lib, rules.pleine_terre_pct, "%", "pleine_terre"),
         ("stationnement", "Stationnement", rules.stat_logement, "", "stat"),
     ):
         txt, etat = _fmt_valeur(val, unite)

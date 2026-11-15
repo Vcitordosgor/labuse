@@ -148,6 +148,31 @@ def test_estimer_aucun_mot_constructible_sur_parcelle_non_constructible():
     assert ok["cle"] == "Assiette constructible, aléa déduit"
 
 
+def test_espaces_libres_regle_garde_son_nom_permeable_vs_pleine_terre():
+    """pt8 — la règle « art. 2.6 » garde SON nom selon sa citation sourcée : AM0838/UE L'Étang-Salé
+    impose « 25 % … perméable » → « Surface perméable », jamais « Pleine terre ». Les vraies règles
+    de pleine terre et de biotope gardent le leur."""
+    from labuse.faisabilite.zonage import (_pleine_terre_nature, libelle_espaces_libres,
+                                            resolve_zone)
+    from labuse.plu_reglement import _regles_valeurs
+
+    # classifieur par citation
+    cit = lambda c: {"pleine_terre": {"pct": {"pct": 25.0, "citation": c, "statut": "valide"}}}
+    assert _pleine_terre_nature(cit("Au moins 25% de la surface de la parcelle doit être perméable.")) == "permeable"
+    assert _pleine_terre_nature(cit("conservés en espaces de pleine terre à hauteur de 30 %")) == "pleine_terre"
+    assert _pleine_terre_nature(cit("Le coefficient de Biotope est de 30 % minimum")) == "biotope"
+    assert _pleine_terre_nature(cit("40% traité en espace vert")) == "espace_vert"
+    # libellés
+    assert libelle_espaces_libres("permeable") == "Surface perméable"
+    assert libelle_espaces_libres(None) == "Pleine terre"      # défaut rétro-compatible
+
+    # bout-à-bout : la zone UE de L'Étang-Salé et le libellé rendu dans le règlement
+    zr = resolve_zone("UE", "L'Étang-Salé")
+    assert zr.pleine_terre_nature == "permeable" and zr.pleine_terre_pct == 25.0
+    ligne = next(r for r in _regles_valeurs(zr, None, 0) if r["cle"] == "pleine_terre")
+    assert ligne["libelle"] == "Surface perméable min", ligne["libelle"]
+
+
 def test_excel_garde_les_formules_quand_le_resultat_est_calculable():
     e = EntreesBilan(programme=Programme(terrain=2000), produits=[Produit("P1", 10, 600, 4785, 0.20)],
                      postes={"achat": SaisiePoste(valeur=1_000_000, etat="montant"),
