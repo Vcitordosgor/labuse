@@ -56,6 +56,18 @@ def verdict_zonage(valeurs: dict[str, Valeur]) -> Verdict | None:
                 f"{_NON_CONSTRUCTIBLE[fam]} sont admises, et sous conditions (voir la liste "
                 f"des destinations ci-dessous).", "warn", "")
     if fam in _CONSTRUCTIBLE:
+        # CHIRURGICAL-FIX-1 (LOT F, C-iii) — le §2 ne proclame plus « constructible » quand le §3 conclut
+        # que CETTE parcelle n'est pas retenue (habitat interdit en UE, terrain exigu, PPR rouge… = une
+        # `cause` servie par le bloc potentiel). On nomme la FAMILLE de zone et on renvoie au §3, sans
+        # affirmer une constructibilité que la parcelle n'a pas (même boussole « jamais un faux
+        # constructible » que le §3). La SATURATION (zone constructible, SDP consommée → `cause` absente)
+        # garde « constructible » : la zone l'est, seul le résiduel manque.
+        pot = _val(valeurs, "potentiel_verdict")
+        if isinstance(pot, dict) and pot.get("cause"):
+            famille = "urbaine" if fam == "U" else "à urbaniser (ouverture sous conditions)"
+            return (f"{lib} — zone {famille}, mais <strong>cette parcelle n'est pas retenue comme "
+                    f"constructible</strong> (voir le potentiel, section 3). Le document opposable du "
+                    f"Géoportail de l'urbanisme fait foi.", "warn", "")
         return (f"{lib} — {_CONSTRUCTIBLE[fam]}. Le document opposable du Géoportail de "
                 f"l'urbanisme fait foi ; les valeurs de règle ci-dessous sont une aide à la lecture.",
                 "", "")
