@@ -42,3 +42,29 @@ describe('RETOURS-17 — la carte « Analyse LABUSE » n\'affiche AUCUN identifi
     expect(container.textContent ?? '').not.toMatch(/q_v\d/i)
   })
 })
+
+describe('CHIRURGICAL-FIX-1 (E101) — la fiche montre la VRAIE cause (comme la liste), pas la contribution', () => {
+  // AM0838 : zone UE (famille U) mais habitat interdit → bande 0 + cause_libelle. Avant le correctif
+  // la carte n'affichait que la contribution « aucune SDP résiduelle exploitable » (trompeur : il y a
+  // de la place, c'est l'habitat qui est interdit) et jetait le cause_libelle serveur.
+  const AM0838: AnalyseLabuse = {
+    bande: '0', signal_niveau: 'faible',
+    contributions: [{ sens: 'baisse', libelle: 'aucune SDP résiduelle exploitable' }],
+    cause: 'habitat_interdit:UE',
+    cause_libelle: 'Non retenue — habitat interdit en zone UE.',
+    non_calculable: false, sdp_residuelle_m2: null,
+  }
+  it('affiche le cause_libelle serveur et masque la contribution trompeuse', () => {
+    const { container } = render(<AnalyseLabuseCard analyse={AM0838} />)
+    expect(container.querySelector('[data-fiche-cause]')?.textContent)
+      .toBe('Non retenue — habitat interdit en zone UE.')
+    // la contribution « aucune SDP résiduelle exploitable » ne doit PLUS être rendue tant qu'une cause écarte
+    expect(container.querySelector('[data-fiche-contributions]')).toBeNull()
+    expect(container.textContent ?? '').not.toContain('aucune SDP résiduelle exploitable')
+  })
+  it('sans cause, les contributions « Ce qui compte » restent affichées', () => {
+    const { container } = render(<AnalyseLabuseCard analyse={ANALYSE} />)
+    expect(container.querySelector('[data-fiche-contributions]')).toBeTruthy()
+    expect(container.querySelector('[data-fiche-cause]')).toBeNull()
+  })
+})

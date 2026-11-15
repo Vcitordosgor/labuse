@@ -15,6 +15,11 @@ export interface AnalyseLabuse {
   signal_niveau: string | null
   contributions: { sens: 'hausse' | 'baisse'; libelle: string }[] | null
   cause: string | null
+  // CHIRURGICAL-FIX-1 (E101) — libellé serveur de la cause (« Non retenue — habitat interdit en
+  // zone UE. »). Présent dès qu'une cause écarte la parcelle, PAS seulement en bande NC. La fiche
+  // doit le montrer comme la liste (ResultsSection), sinon une parcelle « famille U » non
+  // constructible pour une AUTRE raison affiche un motif trompeur (« aucune SDP résiduelle »).
+  cause_libelle?: string | null
   non_calculable?: boolean | null
   sdp_residuelle_m2?: number | null
 }
@@ -61,10 +66,14 @@ export function AnalyseLabuseCard({ analyse, zone, onClasserPar, onComprendre }:
           <span data-fiche-zone={zone} style={{ fontSize: 11, fontWeight: 500, color: 'var(--txt-dim)', border: '1px solid var(--line-2)', borderRadius: 9999, padding: '2px 8px' }}>zone {zone}</span>
         )}
       </div>
-      {nc && analyse.cause && (
-        <p data-fiche-cause style={{ margin: '9px 0 0', fontSize: 12, color: BANDE_META.NC.color }}>Analyse incomplète — {analyse.cause}.</p>
+      {/* CHIRURGICAL-FIX-1 (E101) — on affiche le libellé serveur de la cause DÈS QU'IL EXISTE
+          (bande NC « Analyse incomplète » ET bande 0 « Non retenue — habitat interdit en zone UE »),
+          exactement comme la liste. Les contributions (« Ce qui compte ») ne s'affichent plus QUE
+          lorsqu'aucune cause n'écarte la parcelle — sinon le motif réel était masqué. */}
+      {(analyse.cause_libelle || (nc && analyse.cause)) && (
+        <p data-fiche-cause style={{ margin: '9px 0 0', fontSize: 12, color: nc ? BANDE_META.NC.color : bm.color }}>{analyse.cause_libelle ?? `Analyse incomplète — ${analyse.cause}.`}</p>
       )}
-      {!nc && analyse.contributions && analyse.contributions.length > 0 && (
+      {!nc && !analyse.cause_libelle && analyse.contributions && analyse.contributions.length > 0 && (
         <div data-fiche-contributions style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 4 }}>
           <p style={{ margin: 0, fontSize: 10, letterSpacing: 1, color: 'var(--txt-off)', textTransform: 'uppercase' }}>Ce qui compte</p>
           {analyse.contributions.map((c, i) => {

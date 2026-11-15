@@ -1,0 +1,224 @@
+idu,doc,method,url,status,size,note
+97422000AD0887,dossier,GET,/dossier/97422000AD0887.pdf,200,247119,
+97422000AD0887,gabarit,GET,/gabarit/97422000AD0887.pdf,200,9569,
+97422000AD0887,apporteur,GET,/apporteur/97422000AD0887.pdf,200,299490,
+97422000AD0887,estimer_parcelle,GET,/analyse-annonce/97422000AD0887.pdf,200,132065,
+97422000AD0887,etude_zone,GET,/etude-zone.pdf?idu=97422000AD0887&rayon_km=1,200,122190,
+97422000AD0887,predossier_zip,GET,/pre-dossier/97422000AD0887.zip,200,1407349,
+97422000AD0887,predossier_pieces,-,-,OK,0,"97422000AD0887-labuse-CERFA-13406-17-prerempli.pdf,97422000AD0887-labuse-PCMI1-plan-situation.pdf,97422000AD0887-labuse-PCMI2-plan-masse-existant.pdf,97422000AD0887-labuse-PCMI4-notice-terrain.pdf,97422000AD0887-labuse-PCMI7-8-prises-de-vue.pdf,97422000AD0887-labuse-regles-zonage.pdf,97422000AD0887-labuse-LISEZMOI.txt"
+97422000AD0887,bilan_generer_defaut,POST,/bilan/97422000AD0887/generer,200,0,doc_id=813 complet=False vides=45
+97422000AD0887,bilan_pdf_defaut,GET,/bilan/97422000AD0887.pdf?doc_id=813,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97422000AD0887,bilan_xlsx_defaut,GET,/bilan/97422000AD0887.xlsx?doc_id=813,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97422000AD0887,bilan_generer_rempli,POST,/bilan/97422000AD0887/generer,200,0,doc_id=814 prix=4318.0 complet=False
+97422000AD0887,bilan_pdf,GET,/bilan/97422000AD0887.pdf?doc_id=814,200,125210,
+97422000AD0887,bilan_xlsx,GET,/bilan/97422000AD0887.xlsx?doc_id=814,200,8756,
+97422000AD0887,courrier_composer,POST,/courrier/composer,200,2058,
+97422000AD0887,courrier_pdf,POST,/courrier/pdf,200,18057,
+97422000AD0887,etude_faisa_json,POST,/modules/etude,200,114606,
+97422000AD0887,etude_faisa_pdf,POST,/modules/etude/pdf,200,102498,
+97422000AD0887,stationnement,POST,/modules/etude/stationnement,200,475,
+97422000AD0887,fiche,GET,/parcels/97422000AD0887,200,81587,
+97416000HT0538,dossier,GET,/dossier/97416000HT0538.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97416000HT0538,gabarit,GET,/gabarit/97416000HT0538.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97416000HT0538,apporteur,GET,/apporteur/97416000HT0538.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97416000HT0538,estimer_parcelle,GET,/analyse-annonce/97416000HT0538.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97416000HT0538,etude_zone,GET,/etude-zone.pdf?idu=97416000HT0538&rayon_km=1,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97416000HT0538,predossier_zip,GET,/pre-dossier/97416000HT0538.zip,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97416000HT0538,bilan_generer_defaut,POST,/bilan/97416000HT0538/generer,200,0,doc_id=821 complet=False vides=45
+97416000HT0538,bilan_pdf_defaut,GET,/bilan/97416000HT0538.pdf?doc_id=821,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97416000HT0538,bilan_xlsx_defaut,GET,/bilan/97416000HT0538.xlsx?doc_id=821,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97416000HT0538,bilan_generer_rempli,POST,/bilan/97416000HT0538/generer,200,0,doc_id=822 prix=4258.0 complet=False
+97416000HT0538,bilan_pdf,GET,/bilan/97416000HT0538.pdf?doc_id=822,200,128194,
+97416000HT0538,bilan_xlsx,GET,/bilan/97416000HT0538.xlsx?doc_id=822,200,8756,
+97416000HT0538,courrier_composer,POST,/courrier/composer,200,1885,
+97416000HT0538,courrier_pdf,POST,/courrier/pdf,200,18087,
+97416000HT0538,etude_faisa_json,POST,/modules/etude,200,101954,
+97416000HT0538,etude_faisa_pdf,POST,/modules/etude/pdf,200,100636,
+97416000HT0538,stationnement,POST,/modules/etude/stationnement,200,436,
+97416000HT0538,fiche,GET,/parcels/97416000HT0538,200,71031,
+97403000AR1517,dossier,GET,/dossier/97403000AR1517.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97403000AR1517,gabarit,GET,/gabarit/97403000AR1517.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97403000AR1517,apporteur,GET,/apporteur/97403000AR1517.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97403000AR1517,estimer_parcelle,GET,/analyse-annonce/97403000AR1517.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97403000AR1517,etude_zone,GET,/etude-zone.pdf?idu=97403000AR1517&rayon_km=1,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97403000AR1517,predossier_zip,GET,/pre-dossier/97403000AR1517.zip,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97403000AR1517,bilan_generer_defaut,POST,/bilan/97403000AR1517/generer,200,0,doc_id=824 complet=False vides=45
+97403000AR1517,bilan_pdf_defaut,GET,/bilan/97403000AR1517.pdf?doc_id=824,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97403000AR1517,bilan_xlsx_defaut,GET,/bilan/97403000AR1517.xlsx?doc_id=824,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97403000AR1517,bilan_generer_rempli,POST,/bilan/97403000AR1517/generer,200,0,doc_id=825 prix=4000.0 complet=False
+97403000AR1517,bilan_pdf,GET,/bilan/97403000AR1517.pdf?doc_id=825,200,125198,
+97403000AR1517,bilan_xlsx,GET,/bilan/97403000AR1517.xlsx?doc_id=825,200,8756,
+97403000AR1517,courrier_composer,POST,/courrier/composer,200,1879,
+97403000AR1517,courrier_pdf,POST,/courrier/pdf,200,17715,
+97403000AR1517,etude_faisa_json,POST,/modules/etude,200,109776,
+97403000AR1517,etude_faisa_pdf,POST,/modules/etude/pdf,200,105170,
+97403000AR1517,stationnement,POST,/modules/etude/stationnement,200,477,
+97403000AR1517,fiche,GET,/parcels/97403000AR1517,200,68218,
+97404000AM0838,dossier,GET,/dossier/97404000AM0838.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97404000AM0838,gabarit,GET,/gabarit/97404000AM0838.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97404000AM0838,apporteur,GET,/apporteur/97404000AM0838.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97404000AM0838,estimer_parcelle,GET,/analyse-annonce/97404000AM0838.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97404000AM0838,etude_zone,GET,/etude-zone.pdf?idu=97404000AM0838&rayon_km=1,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97404000AM0838,predossier_zip,GET,/pre-dossier/97404000AM0838.zip,422,257,"{""detail"":{""erreur"":""non_constructible"",""message"":""Parcelle non constructible — Habitat interdit dans cette zone. Aucun "
+97404000AM0838,bilan_generer_defaut,POST,/bilan/97404000AM0838/generer,200,0,doc_id=827 complet=False vides=45
+97404000AM0838,bilan_pdf_defaut,GET,/bilan/97404000AM0838.pdf?doc_id=827,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97404000AM0838,bilan_xlsx_defaut,GET,/bilan/97404000AM0838.xlsx?doc_id=827,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97404000AM0838,bilan_generer_rempli,POST,/bilan/97404000AM0838/generer,200,0,doc_id=828 prix=4375.0 complet=False
+97404000AM0838,bilan_pdf,GET,/bilan/97404000AM0838.pdf?doc_id=828,200,141740,
+97404000AM0838,bilan_xlsx,GET,/bilan/97404000AM0838.xlsx?doc_id=828,200,8758,
+97404000AM0838,courrier_composer,POST,/courrier/composer,200,1972,
+97404000AM0838,courrier_pdf,POST,/courrier/pdf,200,18721,
+97404000AM0838,etude_faisa_json,POST,/modules/etude,200,157932,
+97404000AM0838,etude_faisa_pdf,POST,/modules/etude/pdf,200,118975,
+97404000AM0838,stationnement,POST,/modules/etude/stationnement,200,438,
+97404000AM0838,fiche,GET,/parcels/97404000AM0838,200,84842,
+97417000AO0050,dossier,GET,/dossier/97417000AO0050.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97417000AO0050,gabarit,GET,/gabarit/97417000AO0050.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97417000AO0050,apporteur,GET,/apporteur/97417000AO0050.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97417000AO0050,estimer_parcelle,GET,/analyse-annonce/97417000AO0050.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97417000AO0050,etude_zone,GET,/etude-zone.pdf?idu=97417000AO0050&rayon_km=1,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97417000AO0050,predossier_zip,GET,/pre-dossier/97417000AO0050.zip,422,265,"{""detail"":{""erreur"":""non_constructible"",""message"":""Parcelle non constructible — Pas de potentiel constructible résiduel."
+97417000AO0050,bilan_generer_defaut,POST,/bilan/97417000AO0050/generer,200,0,doc_id=841 complet=False vides=45
+97417000AO0050,bilan_pdf_defaut,GET,/bilan/97417000AO0050.pdf?doc_id=841,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97417000AO0050,bilan_xlsx_defaut,GET,/bilan/97417000AO0050.xlsx?doc_id=841,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97417000AO0050,bilan_generer_rempli,POST,/bilan/97417000AO0050/generer,200,0,doc_id=842 prix=4000.0 complet=False
+97417000AO0050,bilan_pdf,GET,/bilan/97417000AO0050.pdf?doc_id=842,200,128214,
+97417000AO0050,bilan_xlsx,GET,/bilan/97417000AO0050.xlsx?doc_id=842,200,8756,
+97417000AO0050,courrier_composer,POST,/courrier/composer,200,1828,
+97417000AO0050,courrier_pdf,POST,/courrier/pdf,200,17422,
+97417000AO0050,etude_faisa_json,POST,/modules/etude,200,1636,
+97417000AO0050,etude_faisa_pdf,POST,/modules/etude/pdf,200,11906,
+97417000AO0050,stationnement,POST,/modules/etude/stationnement,400,150,
+97417000AO0050,fiche,GET,/parcels/97417000AO0050,200,51623,
+97411000IS0448,dossier,GET,/dossier/97411000IS0448.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97411000IS0448,gabarit,GET,/gabarit/97411000IS0448.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97411000IS0448,apporteur,GET,/apporteur/97411000IS0448.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97411000IS0448,estimer_parcelle,GET,/analyse-annonce/97411000IS0448.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97411000IS0448,etude_zone,GET,/etude-zone.pdf?idu=97411000IS0448&rayon_km=1,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97411000IS0448,predossier_zip,GET,/pre-dossier/97411000IS0448.zip,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97411000IS0448,bilan_generer_defaut,POST,/bilan/97411000IS0448/generer,200,0,doc_id=847 complet=False vides=45
+97411000IS0448,bilan_pdf_defaut,GET,/bilan/97411000IS0448.pdf?doc_id=847,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97411000IS0448,bilan_xlsx_defaut,GET,/bilan/97411000IS0448.xlsx?doc_id=847,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97411000IS0448,bilan_generer_rempli,POST,/bilan/97411000IS0448/generer,200,0,doc_id=848 prix=4275.0 complet=False
+97411000IS0448,bilan_pdf,GET,/bilan/97411000IS0448.pdf?doc_id=848,200,123834,
+97411000IS0448,bilan_xlsx,GET,/bilan/97411000IS0448.xlsx?doc_id=848,200,8757,
+97411000IS0448,courrier_composer,POST,/courrier/composer,200,2055,
+97411000IS0448,courrier_pdf,POST,/courrier/pdf,200,17713,
+97411000IS0448,etude_faisa_json,POST,/modules/etude,200,6775,
+97411000IS0448,etude_faisa_pdf,POST,/modules/etude/pdf,200,9572,
+97411000IS0448,stationnement,POST,/modules/etude/stationnement,200,900,
+97411000IS0448,fiche,GET,/parcels/97411000IS0448,200,116215,
+97404000AY0153,dossier,GET,/dossier/97404000AY0153.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97404000AY0153,gabarit,GET,/gabarit/97404000AY0153.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97404000AY0153,apporteur,GET,/apporteur/97404000AY0153.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97404000AY0153,estimer_parcelle,GET,/analyse-annonce/97404000AY0153.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97404000AY0153,etude_zone,GET,/etude-zone.pdf?idu=97404000AY0153&rayon_km=1,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97404000AY0153,predossier_zip,GET,/pre-dossier/97404000AY0153.zip,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97404000AY0153,bilan_generer_defaut,POST,/bilan/97404000AY0153/generer,200,0,doc_id=854 complet=False vides=45
+97404000AY0153,bilan_pdf_defaut,GET,/bilan/97404000AY0153.pdf?doc_id=854,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97404000AY0153,bilan_xlsx_defaut,GET,/bilan/97404000AY0153.xlsx?doc_id=854,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97404000AY0153,bilan_generer_rempli,POST,/bilan/97404000AY0153/generer,200,0,doc_id=855 prix=4375.0 complet=False
+97404000AY0153,bilan_pdf,GET,/bilan/97404000AY0153.pdf?doc_id=855,200,130225,
+97404000AY0153,bilan_xlsx,GET,/bilan/97404000AY0153.xlsx?doc_id=855,200,8758,
+97404000AY0153,courrier_composer,POST,/courrier/composer,200,2075,
+97404000AY0153,courrier_pdf,POST,/courrier/pdf,200,18342,
+97404000AY0153,etude_faisa_json,POST,/modules/etude,200,6423,
+97404000AY0153,etude_faisa_pdf,POST,/modules/etude/pdf,200,9826,
+97404000AY0153,stationnement,POST,/modules/etude/stationnement,200,1000,
+97404000AY0153,fiche,GET,/parcels/97404000AY0153,200,81460,
+97414000CO0153,dossier,GET,/dossier/97414000CO0153.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97414000CO0153,gabarit,GET,/gabarit/97414000CO0153.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97414000CO0153,apporteur,GET,/apporteur/97414000CO0153.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97414000CO0153,estimer_parcelle,GET,/analyse-annonce/97414000CO0153.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97414000CO0153,etude_zone,GET,/etude-zone.pdf?idu=97414000CO0153&rayon_km=1,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97414000CO0153,predossier_zip,GET,/pre-dossier/97414000CO0153.zip,422,260,"{""detail"":{""erreur"":""non_constructible"",""message"":""Parcelle non constructible — Zone non constructible — agricole. Aucun"
+97414000CO0153,bilan_generer_defaut,POST,/bilan/97414000CO0153/generer,200,0,doc_id=856 complet=False vides=45
+97414000CO0153,bilan_pdf_defaut,GET,/bilan/97414000CO0153.pdf?doc_id=856,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97414000CO0153,bilan_xlsx_defaut,GET,/bilan/97414000CO0153.xlsx?doc_id=856,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97414000CO0153,bilan_generer_rempli,POST,/bilan/97414000CO0153/generer,200,0,doc_id=857 prix=4375.0 complet=False
+97414000CO0153,bilan_pdf,GET,/bilan/97414000CO0153.pdf?doc_id=857,200,149372,
+97414000CO0153,bilan_xlsx,GET,/bilan/97414000CO0153.xlsx?doc_id=857,200,8756,
+97414000CO0153,courrier_composer,POST,/courrier/composer,200,1876,
+97414000CO0153,courrier_pdf,POST,/courrier/pdf,200,18109,
+97414000CO0153,etude_faisa_json,POST,/modules/etude,200,1691,
+97414000CO0153,etude_faisa_pdf,POST,/modules/etude/pdf,200,12514,
+97414000CO0153,stationnement,POST,/modules/etude/stationnement,400,113,
+97414000CO0153,fiche,GET,/parcels/97414000CO0153,200,106581,
+97421000BN0260,dossier,GET,/dossier/97421000BN0260.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97421000BN0260,gabarit,GET,/gabarit/97421000BN0260.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97421000BN0260,apporteur,GET,/apporteur/97421000BN0260.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97421000BN0260,estimer_parcelle,GET,/analyse-annonce/97421000BN0260.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97421000BN0260,etude_zone,GET,/etude-zone.pdf?idu=97421000BN0260&rayon_km=1,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97421000BN0260,predossier_zip,GET,/pre-dossier/97421000BN0260.zip,422,260,"{""detail"":{""erreur"":""non_constructible"",""message"":""Parcelle non constructible — Zone non constructible — agricole. Aucun"
+97421000BN0260,bilan_generer_defaut,POST,/bilan/97421000BN0260/generer,200,0,doc_id=859 complet=False vides=45
+97421000BN0260,bilan_pdf_defaut,GET,/bilan/97421000BN0260.pdf?doc_id=859,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97421000BN0260,bilan_xlsx_defaut,GET,/bilan/97421000BN0260.xlsx?doc_id=859,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97421000BN0260,bilan_generer_rempli,POST,/bilan/97421000BN0260/generer,200,0,doc_id=860 prix=4375.0 complet=False
+97421000BN0260,bilan_pdf,GET,/bilan/97421000BN0260.pdf?doc_id=860,200,134480,
+97421000BN0260,bilan_xlsx,GET,/bilan/97421000BN0260.xlsx?doc_id=860,200,8758,
+97421000BN0260,courrier_composer,POST,/courrier/composer,200,1836,
+97421000BN0260,courrier_pdf,POST,/courrier/pdf,200,18360,
+97421000BN0260,etude_faisa_json,POST,/modules/etude,200,1510,
+97421000BN0260,etude_faisa_pdf,POST,/modules/etude/pdf,200,12217,
+97421000BN0260,stationnement,POST,/modules/etude/stationnement,400,113,
+97421000BN0260,fiche,GET,/parcels/97421000BN0260,200,103987,
+97422000BW2635,dossier,GET,/dossier/97422000BW2635.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97422000BW2635,gabarit,GET,/gabarit/97422000BW2635.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97422000BW2635,apporteur,GET,/apporteur/97422000BW2635.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97422000BW2635,estimer_parcelle,GET,/analyse-annonce/97422000BW2635.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97422000BW2635,etude_zone,GET,/etude-zone.pdf?idu=97422000BW2635&rayon_km=1,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97422000BW2635,predossier_zip,GET,/pre-dossier/97422000BW2635.zip,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97422000BW2635,bilan_generer_defaut,POST,/bilan/97422000BW2635/generer,200,0,doc_id=862 complet=False vides=45
+97422000BW2635,bilan_pdf_defaut,GET,/bilan/97422000BW2635.pdf?doc_id=862,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97422000BW2635,bilan_xlsx_defaut,GET,/bilan/97422000BW2635.xlsx?doc_id=862,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97422000BW2635,bilan_generer_rempli,POST,/bilan/97422000BW2635/generer,200,0,doc_id=863 prix=4547.0 complet=False
+97422000BW2635,bilan_pdf,GET,/bilan/97422000BW2635.pdf?doc_id=863,200,152071,
+97422000BW2635,bilan_xlsx,GET,/bilan/97422000BW2635.xlsx?doc_id=863,200,8759,
+97422000BW2635,courrier_composer,POST,/courrier/composer,200,2036,
+97422000BW2635,courrier_pdf,POST,/courrier/pdf,200,18393,
+97422000BW2635,etude_faisa_json,POST,/modules/etude,200,177047,
+97422000BW2635,etude_faisa_pdf,POST,/modules/etude/pdf,200,114947,
+97422000BW2635,stationnement,POST,/modules/etude/stationnement,200,476,
+97422000BW2635,fiche,GET,/parcels/97422000BW2635,200,98083,
+97412000CV0446,dossier,GET,/dossier/97412000CV0446.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97412000CV0446,gabarit,GET,/gabarit/97412000CV0446.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97412000CV0446,apporteur,GET,/apporteur/97412000CV0446.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97412000CV0446,estimer_parcelle,GET,/analyse-annonce/97412000CV0446.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97412000CV0446,etude_zone,GET,/etude-zone.pdf?idu=97412000CV0446&rayon_km=1,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97412000CV0446,predossier_zip,GET,/pre-dossier/97412000CV0446.zip,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97412000CV0446,bilan_generer_defaut,POST,/bilan/97412000CV0446/generer,200,0,doc_id=870 complet=False vides=45
+97412000CV0446,bilan_pdf_defaut,GET,/bilan/97412000CV0446.pdf?doc_id=870,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97412000CV0446,bilan_xlsx_defaut,GET,/bilan/97412000CV0446.xlsx?doc_id=870,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97412000CV0446,bilan_generer_rempli,POST,/bilan/97412000CV0446/generer,200,0,doc_id=871 prix=4000.0 complet=False
+97412000CV0446,bilan_pdf,GET,/bilan/97412000CV0446.pdf?doc_id=871,200,117812,
+97412000CV0446,bilan_xlsx,GET,/bilan/97412000CV0446.xlsx?doc_id=871,200,8757,
+97412000CV0446,courrier_composer,POST,/courrier/composer,200,1929,
+97412000CV0446,courrier_pdf,POST,/courrier/pdf,200,18358,
+97412000CV0446,etude_faisa_json,POST,/modules/etude,200,6693,
+97412000CV0446,etude_faisa_pdf,POST,/modules/etude/pdf,200,9572,
+97412000CV0446,stationnement,POST,/modules/etude/stationnement,200,807,
+97412000CV0446,fiche,GET,/parcels/97412000CV0446,200,76916,
+97424000AO1198,dossier,GET,/dossier/97424000AO1198.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97424000AO1198,gabarit,GET,/gabarit/97424000AO1198.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97424000AO1198,apporteur,GET,/apporteur/97424000AO1198.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97424000AO1198,estimer_parcelle,GET,/analyse-annonce/97424000AO1198.pdf,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97424000AO1198,etude_zone,GET,/etude-zone.pdf?idu=97424000AO1198&rayon_km=1,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+97424000AO1198,predossier_zip,GET,/pre-dossier/97424000AO1198.zip,422,258,"{""detail"":{""erreur"":""non_constructible"",""message"":""Parcelle non constructible — Terrain trop exigu pour un projet. Aucun"
+97424000AO1198,bilan_generer_defaut,POST,/bilan/97424000AO1198/generer,200,0,doc_id=872 complet=False vides=45
+97424000AO1198,bilan_pdf_defaut,GET,/bilan/97424000AO1198.pdf?doc_id=872,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97424000AO1198,bilan_xlsx_defaut,GET,/bilan/97424000AO1198.xlsx?doc_id=872,422,104,"{""detail"":""Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.""}"
+97424000AO1198,bilan_generer_rempli,POST,/bilan/97424000AO1198/generer,200,0,doc_id=873 prix=4000.0 complet=False
+97424000AO1198,bilan_pdf,GET,/bilan/97424000AO1198.pdf?doc_id=873,200,124319,
+97424000AO1198,bilan_xlsx,GET,/bilan/97424000AO1198.xlsx?doc_id=873,200,8755,
+97424000AO1198,courrier_composer,POST,/courrier/composer,200,1801,
+97424000AO1198,courrier_pdf,POST,/courrier/pdf,200,17843,
+97424000AO1198,etude_faisa_json,POST,/modules/etude,200,6510,
+97424000AO1198,etude_faisa_pdf,POST,/modules/etude/pdf,200,9626,
+97424000AO1198,stationnement,POST,/modules/etude/stationnement,200,529,
+97424000AO1198,fiche,GET,/parcels/97424000AO1198,200,72750,
+c1_constructibles,comparatif,GET,"/comparatif.pdf?idus=97422000AD0887,97416000HT0538,97403000AR1517",429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+c2_rouge_grandes,comparatif,GET,"/comparatif.pdf?idus=97404000AY0153,97414000CO0153,97404000AM0838",429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+c3_cheval_public_copro,comparatif,GET,"/comparatif.pdf?idus=97411000IS0448,97412000CV0446,97422000BW2635",429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+c4_rnu_exigu_salazie,comparatif,GET,"/comparatif.pdf?idus=97417000AO0050,97424000AO1198,97421000BN0260",429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+lien1,estimer_lien,GET,/analyse-annonce.pdf?url=https%3A%2F%2Fwww.leboncoin.fr%2Fad%2Fventes_immobilieres%2F3277950605,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"
+lien2,estimer_lien,GET,/analyse-annonce.pdf?url=https%3A%2F%2Fwww.leboncoin.fr%2Fad%2Fventes_immobilieres%2F3280024527,429,255,"{""detail"":""Plafond quotidien d'usage loyal atteint : 30 exports aujourd'hui (offre Intégral). Vos exports reprennent dem"

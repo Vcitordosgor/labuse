@@ -160,7 +160,15 @@ def scenario_etude_persiste(db, idu: str) -> dict | None:
     try:
         from ..implantation import revisions as _rev
         from ..implantation.service import _study_id
-        cfg = {"idus": [idu], "type_projet": "collectif", "objectif": "equilibre", "stationnement": "aerien"}
+        # CHIRURGICAL-FIX-1 (LOT E) — l'empreinte `_study_id` hache AUSSI `terrain` et `niveaux_sous_sol` :
+        # l'Étude persiste sa révision avec les défauts de `EtudeIn` (terrain="libere", niveaux=None), mais
+        # ce lookup les OMETTAIT → `terrain` None ≠ "libere" → study_id différent → esquisse introuvable →
+        # le Dossier retombait sur l'estimation rapide (la plus grande) pendant que l'Étude retenait
+        # l'esquisse (BW2635 : Dossier 3 317 vs Étude 2 625). On reconstitue ICI la config PAR DÉFAUT
+        # complète (mêmes clés et mêmes défauts que `EtudeIn`) → même study_id → même esquisse lue.
+        cfg = {"idus": [idu], "type_projet": "collectif", "objectif": "equilibre",
+               "stationnement": "aerien", "terrain": "libere", "niveaux_sous_sol": None,
+               "programme": None, "hypotheses": None}
         payload = _rev.charger(db, _study_id(cfg))
     except Exception:  # noqa: BLE001 — lecture annexe, jamais bloquante pour le Dossier
         return None

@@ -45,11 +45,16 @@ const CAUSE_COURT: Record<string, string> = {
   redhibitoire: 'rédhibitoire',
   capacite_nulle: 'capacité nulle',
   bati_non_ingere: 'bâti non estimé',
+  habitat_interdit: 'habitat interdit',
 }
 const causeCourt = (c?: string | null): string | null => {
   if (!c) return null
   if (c.startsWith('zone_non_constructible') || c.startsWith('zone_non_resolue')) return 'zone non constructible'
-  return CAUSE_COURT[c] ?? c.replace(/_/g, ' ')
+  // CHIRURGICAL-FIX-1 (E112a) — une cause « code:ZONE » (ex. « habitat_interdit:UE ») était rendue
+  // brute « habitat interdit:UE » (deux-points + code). On écrit la cause EN CLAIR, zone entre parenthèses.
+  const [head, zone] = c.split(':')
+  const libelle = CAUSE_COURT[head] ?? head.replace(/_/g, ' ')
+  return zone ? `${libelle} (zone ${zone})` : libelle
 }
 
 // RETOURS-29 (Comparatif v2, maquette 15-comparatif-v2) — SEULES les lignes que l'API sert, dans l'ordre
@@ -100,9 +105,9 @@ const ROWS: Row[] = [
   { label: 'Assainissement', prov: 'source', val: (r) => r.assainissement ? `Secteur : ${r.assainissement}` : '—',
     title: 'Desserte d\'assainissement — constat de SECTEUR (statistique du zonage d\'assainissement), pas un raccordement vérifié à la parcelle. D\'où le préfixe « Secteur : ».' },
   { label: 'Contraintes relevées', prov: 'source',
-    val: (r) => (r.contraintes ?? []).length ? `${(r.contraintes ?? []).length} relevée${(r.contraintes ?? []).length > 1 ? 's' : ''}` : 'aucune relevée',
+    val: (r) => { const n = dedupContraintes(r.contraintes ?? []).length; return n ? `${n} relevée${n > 1 ? 's' : ''}` : 'aucune relevée' },
     render: (r) => {
-      const cs = r.contraintes ?? []
+      const cs = dedupContraintes(r.contraintes ?? [])
       if (!cs.length) return <span className="text-txt-dim">aucune relevée</span>
       return (
         <div className="flex flex-wrap gap-1">
@@ -131,6 +136,20 @@ const SECTION_OF: Record<string, Section> = {
 function contrainteCourt(c: string): string {
   const court = c.split(/\s[—·:(]/)[0].trim()
   return court.length > 34 ? `${court.slice(0, 32)}…` : court
+}
+
+// CHIRURGICAL-FIX-1 (E112b) — une même contrainte (même libellé COURT) pouvait apparaître plusieurs
+// fois (un aléa par niveau : « Aléa mouvement de terrain » ×3, « Aléa inondation » ×2…). On
+// DÉDOUBLONNE par le libellé affiché : une puce par contrainte distincte (la 1re infobulle complète
+// est conservée), et le compteur suit le nombre de puces distinctes.
+function dedupContraintes(cs: string[]): string[] {
+  const vus = new Set<string>()
+  const out: string[] = []
+  for (const c of cs) {
+    const k = contrainteCourt(c)
+    if (!vus.has(k)) { vus.add(k); out.push(c) }
+  }
+  return out
 }
 
 // RETOURS-29 (maquette 15) — badge de provenance en OUTLINE : « sourcé » (vert) / « estimé » (ambre).

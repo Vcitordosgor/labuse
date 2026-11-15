@@ -180,10 +180,16 @@ def _coup_d_oeil(valeurs, ctx) -> str:
         plu = val(valeurs, "statut_plu")
         libelle = None
         if isinstance(plu, dict):
-            # EXPORTS-FIX-1 C1/A7 — date d'APPROBATION réelle (Sudocuh) et format JJ/MM/AAAA, jamais
-            # la date de publication GPU en ISO (« 2025-12-17 ») : cohérent avec le Dossier.
+            # CHIRURGICAL-FIX-1 (LOT F, E7) — la date d'approbation est celle de la FICHE : le DOCUMENT
+            # OPPOSABLE servi (`plu_fraicheur.horizon`, ex. 2023-08-11 pour 97422_PLU_20230811), et non
+            # l'approbation d'ORIGINE Sudocuh (`approbation_opp`), qui précède une révision et affichait
+            # une date périmée (08/12/2018) divergente de la fiche. Sudocuh ne reste qu'en repli ultime.
+            horizon = plu.get("horizon")
             appro = plu.get("approbation_sudocuh")
-            if appro:
+            if horizon:
+                y, m, d = (horizon.split("T")[0].split("-") + ["", "", ""])[:3]
+                libelle = f"PLU approuvé le {d}/{m}/{y}"
+            elif appro:
                 y, m, d = (appro.split("T")[0].split("-") + ["", "", ""])[:3]
                 libelle = f"PLU approuvé le {d}/{m}/{y}"
             else:

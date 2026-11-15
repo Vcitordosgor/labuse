@@ -1,0 +1,496 @@
+idu,fait,document,valeur
+97422000AD0887,commune,DOSSIER,Le Tampon
+97422000AD0887,surface_cadastre_m2,DOSSIER,1 703 m²
+97422000AD0887,zone_lib,DOSSIER,Ud
+97422000AD0887,pente,DOSSIER,"1,5° (3 %)"
+97422000AD0887,sdp_restante_m2,DOSSIER,719 m²
+97422000AD0887,constructible_verdict,DOSSIER,Fort potentiel — parcelle en forte sous-densité
+97422000AD0887,surface_a_retenir_m2,DOSSIER,"795 m² (esquisse d'implantation, stationnement à vérifier : la surface réelle peut être inférieure)"
+97422000AD0887,estimation_rapide_m2,DOSSIER,"L'estimation rapide donnait 1 047 m², hors stationnement"
+97422000AD0887,saturation_densite,DOSSIER,31 % consommé · 69 % résiduel
+97422000AD0887,hauteur_max_reglementaire,DOSSIER,11 m au faîtage · 7 m à l'égout Art. Ud10.2 · p.63
+97422000AD0887,emprise_max_pct,DOSSIER,non réglementé
+97422000AD0887,recul_voie_m,DOSSIER,4 m Art. Ud6.2 · p.60
+97422000AD0887,recul_limites_m,DOSSIER,3 m Art. Ud7.1 · p.61
+97422000AD0887,aleas_n,DOSSIER,1 aléa (badge) · Points de risque 1
+97422000AD0887,aleas_detail,DOSSIER,Aléa mouvement de terrain — niveau faible sur ~100 % de la parcelle.
+97422000AD0887,emprise_batie_m2,DOSSIER,345 m²
+97422000AD0887,nb_batiments,DOSSIER,2
+97422000AD0887,hauteur_faitage_m,DOSSIER,"4,7 m"
+97422000AD0887,hauteur_egout_m,DOSSIER,"3,1 m"
+97422000AD0887,surface_libre_m2,DOSSIER,1 358 m²
+97422000AD0887,prix_ancien_median,DOSSIER,2 577 €/m²
+97422000AD0887,prix_ancien_n,DOSSIER,8
+97422000AD0887,prix_ancien_type,DOSSIER,maison
+97422000AD0887,prix_ancien_rayon_m,DOSSIER,moins de 500 m
+97422000AD0887,prix_ancien_periode,DOSSIER,2022–2025
+97422000AD0887,prix_q1,DOSSIER,2 473
+97422000AD0887,prix_mediane,DOSSIER,2 577
+97422000AD0887,prix_q3,DOSSIER,3 333
+97422000AD0887,prix_min,DOSSIER,1 310
+97422000AD0887,prix_max,DOSSIER,3 473
+97422000AD0887,dvf_secteur_mediane,DOSSIER,"1 890 €/m² — 28 ventes · secteur cadastral, 2021-2025"
+97422000AD0887,terrain_nu_eur_m2,DOSSIER,"171 €/m² — terrain nu, 20 ventes · section cadastrale · 2021-2025"
+97422000AD0887,taxe_taux_communal_pct,DOSSIER,"5,0 %"
+97422000AD0887,taxe_taux_departemental_pct,DOSSIER,"2,5 %"
+97422000AD0887,loyer_oll,DOSSIER,"9,2 €/m² — zone 6"
+97422000AD0887,derniere_vente,DOSSIER,aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025)
+97422000AD0887,dvf_sale,DOSSIER,05/2025|Maison|110 m²|1 800 €/m²|150 m
+97422000AD0887,dvf_sale,DOSSIER,05/2025|Maison|60 m²|3 300 €/m²|150 m
+97422000AD0887,dvf_sale,DOSSIER,05/2025|Maison|82 m²|2 415 €/m²|150 m
+97422000AD0887,dvf_sale,DOSSIER,08/2025|Maison|55 m²|3 473 €/m²|322 m
+97422000AD0887,dvf_sale,DOSSIER,02/2025|Maison|61 m²|3 118 €/m²|284 m
+97422000AD0887,dvf_sale,DOSSIER,08/2023|Maison|88 m²|2 500 €/m²|258 m
+97422000AD0887,dvf_sale,DOSSIER,04/2023|Maison|185 m²|2 151 €/m²|422 m
+97422000AD0887,dvf_sale,DOSSIER,10/2024|Maison|93 m²|2 473 €/m²|448 m
+97422000AD0887,gabarit_status,GABARIT,INCONSTRUCTIBLE page — Gabarit non calculable sur cette parcelle : donnée réglementaire manquante.
+97416000HT0538,commune,DOSSIER,Saint-Pierre
+97416000HT0538,surface_cadastre_m2,DOSSIER,510 m²
+97416000HT0538,zone_lib,DOSSIER,Ud
+97416000HT0538,pente,DOSSIER,"4,4° (8 %)"
+97416000HT0538,sdp_restante_m2,DOSSIER,614 m²
+97416000HT0538,constructible_verdict,DOSSIER,Fort potentiel — parcelle en forte sous-densité
+97416000HT0538,surface_a_retenir_m2,DOSSIER,614 m² (estimation rapide)
+97416000HT0538,estimation_rapide_m2,DOSSIER,"Surface à retenir : 614 m² (estimation rapide). L'esquisse d'implantation atteint 888 m², à vérifier : stationnement non déduit."
+97416000HT0538,saturation_densite,DOSSIER,0 % consommé · 100 % résiduel
+97416000HT0538,hauteur_max_reglementaire,DOSSIER,20 m au faîtage · 15 m à l'égout Art. Ud3.5 · p.84
+97416000HT0538,emprise_max_pct,DOSSIER,60 % Art. Ud3.4 · p.83
+97416000HT0538,recul_voie_m,DOSSIER,3 m Art. Ud3.1 · p.81
+97416000HT0538,recul_limites_m,DOSSIER,3 m Art. Ud3.2 · p.82
+97416000HT0538,zone_implantation_m2,DOSSIER,273 m²
+97416000HT0538,plafond_emprise_m2,DOSSIER,306 m²
+97416000HT0538,aleas_n,DOSSIER,1 aléa (badge) · Points de risque 3
+97416000HT0538,aleas_detail,DOSSIER,Zone inondable TRI — scénario extreme (100 %) ; Aléa mouvement de terrain — niveau faible sur ~100 %
+97416000HT0538,emprise_batie_m2,DOSSIER,0 m²
+97416000HT0538,nb_batiments,DOSSIER,0
+97416000HT0538,prix_q1,DOSSIER,2 027
+97416000HT0538,prix_mediane,DOSSIER,2 545
+97416000HT0538,prix_q3,DOSSIER,2 974
+97416000HT0538,prix_min,DOSSIER,1 440
+97416000HT0538,prix_max,DOSSIER,6 176
+97416000HT0538,dvf_secteur_mediane,DOSSIER,"Appartement 2 118 €/m² — 30 ventes ; Maison 2 456 €/m² — 26 ventes · secteur cadastral, 2021-2025"
+97416000HT0538,terrain_nu_eur_m2,DOSSIER,"— (3 ventes, échantillon insuffisant)"
+97416000HT0538,taxe_taux_communal_pct,DOSSIER,"5,0 %"
+97416000HT0538,taxe_taux_departemental_pct,DOSSIER,"2,5 %"
+97416000HT0538,loyer_oll,DOSSIER,"10,3 €/m² — zone 5"
+97416000HT0538,dvf_sale,DOSSIER,11/2023|Terrain|416 m²|989 €/m²|127 m
+97416000HT0538,dvf_sale,DOSSIER,06/2024|Terrain|1027 m²|399 €/m²|138 m
+97416000HT0538,dvf_sale,DOSSIER,07/2022|Terrain|464 m²|401 €/m²|153 m
+97416000HT0538,dvf_sale,DOSSIER,08/2022|Terrain|1018 m²|227 €/m²|245 m
+97416000HT0538,dvf_sale,DOSSIER,06/2021|Terrain|1898 m²|223 €/m²|251 m
+97416000HT0538,dvf_sale,DOSSIER,03/2025|Terrain|1898 m²|196 €/m²|251 m
+97416000HT0538,dvf_sale,DOSSIER,12/2025|Terrain|1898 m²|211 €/m²|251 m
+97416000HT0538,dvf_sale,DOSSIER,12/2022|Terrain|1431 m²|384 €/m²|259 m
+97416000HT0538,gabarit_status,GABARIT,"FULL gabarit — Vérifié : reculs, emprise, hauteur · analyse du règlement PPR non intégrée"
+97416000HT0538,zone_implantation_m2,GABARIT,273 m²
+97416000HT0538,plafond_emprise_m2,GABARIT,306 m²
+97416000HT0538,hauteur_max_reglementaire,GABARIT,20 m au faîtage · 15 m à l'égout
+97416000HT0538,recul_voie_m,GABARIT,"Recul voie : 3,0 m"
+97416000HT0538,recul_limites_m,GABARIT,"Limites séparatives : 3,0 m"
+97416000HT0538,emprise_max_pct,GABARIT,Emprise maximale : 60 %
+97416000HT0538,hauteur_max_reglementaire,GABARIT,"Hauteur maximale : 20,0 m"
+97403000AR1517,commune,DOSSIER,Entre-Deux
+97403000AR1517,surface_cadastre_m2,DOSSIER,733 m²
+97403000AR1517,zone_lib,DOSSIER,Ua
+97403000AR1517,sdp_restante_m2,DOSSIER,309 m²
+97403000AR1517,constructible_verdict,DOSSIER,Fort potentiel — parcelle en forte sous-densité
+97403000AR1517,surface_a_retenir_m2,DOSSIER,352 m² (estimation rapide)
+97403000AR1517,estimation_rapide_m2,DOSSIER,Surface à retenir : 352 m² (estimation rapide)
+97403000AR1517,saturation_densite,DOSSIER,12 % consommé · 88 % résiduel
+97403000AR1517,hauteur_max_reglementaire,DOSSIER,11 m au faîtage · 7 m à l'égout Art. U7.2 · p.21
+97403000AR1517,emprise_max_pct,DOSSIER,60 % Art. U6.2 · p.21
+97403000AR1517,recul_voie_m,DOSSIER,4 m Art. U3.2 · p.19
+97403000AR1517,recul_limites_m,DOSSIER,3 m Art. U4.2 · p.20
+97403000AR1517,zone_implantation_m2,DOSSIER,391 m²
+97403000AR1517,plafond_emprise_m2,DOSSIER,440 m²
+97403000AR1517,hauteur_faitage_m,DOSSIER,"7,4 m"
+97403000AR1517,aleas_n,DOSSIER,2 aléas (badge) · Points de risque 3
+97403000AR1517,aleas_zone_rouge_pct,DOSSIER,PPR inondation et mouvement de terrain — zone bleue sur 51 % de la parcelle
+97403000AR1517,aleas_detail,DOSSIER,Aléa mouvement de terrain niveau moyen ~51 % ; niveau faible ~49 %
+97403000AR1517,emprise_batie_m2,DOSSIER,23 m²
+97403000AR1517,nb_batiments,DOSSIER,1
+97403000AR1517,prix_ancien_median,DOSSIER,3 582 €/m²
+97403000AR1517,prix_ancien_n,DOSSIER,26
+97403000AR1517,prix_ancien_type,DOSSIER,mixte (appart+maison)
+97403000AR1517,prix_ancien_rayon_m,DOSSIER,moins de 500 m
+97403000AR1517,prix_ancien_periode,DOSSIER,2022–2026
+97403000AR1517,prix_q1,DOSSIER,2 558
+97403000AR1517,prix_mediane,DOSSIER,3 582
+97403000AR1517,prix_q3,DOSSIER,4 068
+97403000AR1517,prix_min,DOSSIER,1 029
+97403000AR1517,prix_max,DOSSIER,9 217
+97403000AR1517,dvf_secteur_mediane,DOSSIER,"Maison 2 961 €/m² — 32 ventes · secteur cadastral, 2021-2025"
+97403000AR1517,terrain_nu_eur_m2,DOSSIER,"181 €/m² — terrain nu, 21 ventes · section cadastrale · 2021-2025"
+97403000AR1517,taxe_taux_communal_pct,DOSSIER,"5,0 %"
+97403000AR1517,taxe_taux_departemental_pct,DOSSIER,"2,5 %"
+97403000AR1517,loyer_oll,DOSSIER,"9,2 €/m² — zone 6"
+97403000AR1517,dvf_sale,DOSSIER,12/2024|Maison|102 m²|3 607 €/m²|25 m
+97403000AR1517,dvf_sale,DOSSIER,09/2025|Maison|70 m²|2 143 €/m²|69 m
+97403000AR1517,dvf_sale,DOSSIER,09/2025|Maison|50 m²|3 000 €/m²|69 m
+97403000AR1517,dvf_sale,DOSSIER,09/2025|Maison|120 m²|1 250 €/m²|69 m
+97403000AR1517,dvf_sale,DOSSIER,11/2025|Maison|52 m²|6 154 €/m²|498 m
+97403000AR1517,dvf_sale,DOSSIER,03/2025|Maison|75 m²|4 068 €/m²|405 m
+97403000AR1517,dvf_sale,DOSSIER,12/2023|Maison|96 m²|4 604 €/m²|253 m
+97403000AR1517,dvf_sale,DOSSIER,07/2025|Maison|67 m²|3 582 €/m²|237 m
+97403000AR1517,gabarit_status,GABARIT,"FULL gabarit — Vérifié : reculs, emprise, hauteur · analyse du règlement PPR non intégrée"
+97403000AR1517,zone_implantation_m2,GABARIT,391 m²
+97403000AR1517,plafond_emprise_m2,GABARIT,440 m²
+97403000AR1517,hauteur_max_reglementaire,GABARIT,11 m au faîtage · 7 m à l'égout
+97403000AR1517,recul_voie_m,GABARIT,"Recul voie : 4,0 m"
+97403000AR1517,recul_limites_m,GABARIT,"Limites séparatives : 3,0 m"
+97403000AR1517,emprise_max_pct,GABARIT,Emprise maximale : 60 %
+97403000AR1517,hauteur_max_reglementaire,GABARIT,"Hauteur maximale : 11,0 m"
+97403000AR1517,aleas_zone_rouge_pct,GABARIT,Zone bleue PPR inondation et mouvement de terrain (~51% de la parcelle) — constructible SOUS PRESCRIPTIONS (règlement DEAL).
+97404000AM0838,commune,DOSSIER,L'Étang-Salé
+97404000AM0838,surface_cadastre_m2,DOSSIER,20 336 m²
+97404000AM0838,zone_lib,DOSSIER,UE
+97404000AM0838,constructible_verdict,DOSSIER,Non retenue — habitat interdit en zone UE.
+97404000AM0838,sdp_restante_m2,DOSSIER,0 m²
+97404000AM0838,saturation_densite,DOSSIER,Capacité (logements) : non estimable sur cette parcelle.
+97404000AM0838,emprise_batie_m2,DOSSIER,1 252 m²
+97404000AM0838,nb_batiments,DOSSIER,10
+97404000AM0838,hauteur_faitage_m,DOSSIER,"13,0 m"
+97404000AM0838,hauteur_egout_m,DOSSIER,"10,8 m"
+97404000AM0838,recul_voie_m,DOSSIER,4 m Art. UE 2.1 · p.56
+97404000AM0838,recul_limites_m,DOSSIER,4 m Art. UE 2.2 · p.56
+97404000AM0838,emprise_max_pct,DOSSIER,75 % Art. UE 2.4 · p.57
+97404000AM0838,hauteur_max_reglementaire,DOSSIER,18 m au faîtage · 15 m à l'égout Art. UE 2.5.2 · p.57
+97404000AM0838,zone_implantation_m2,DOSSIER,10 319 m²
+97404000AM0838,plafond_emprise_m2,DOSSIER,15 252 m²
+97404000AM0838,pente,DOSSIER,"2,1° (4 %)"
+97404000AM0838,aleas_n,DOSSIER,2 aléas (badge) · Points de risque 7
+97404000AM0838,aleas_zone_rouge_pct,DOSSIER,zone rouge sur 43 % de la parcelle
+97404000AM0838,aleas_detail,DOSSIER,PPR inondation et mouvement de terrain — zone rouge sur 43 % : INCONSTRUCTIBLE ; hors zone rouge 57 %
+97404000AM0838,prix_ancien_median,DOSSIER,1 909 €/m²
+97404000AM0838,prix_ancien_n,DOSSIER,43 ventes à moins de 1 000 m
+97404000AM0838,prix_ancien_type,DOSSIER,maison
+97404000AM0838,prix_ancien_periode,DOSSIER,2022–2026
+97404000AM0838,prix_q1,DOSSIER,1 862
+97404000AM0838,prix_mediane,DOSSIER,1 909
+97404000AM0838,prix_q3,DOSSIER,2 609
+97404000AM0838,prix_min,DOSSIER,1 186
+97404000AM0838,prix_max,DOSSIER,7 901
+97404000AM0838,terrain_nu_eur_m2,DOSSIER,"236 €/m² — terrain nu, 28 ventes · section cadastrale · 2021-2025"
+97404000AM0838,taxe_taux_communal_pct,DOSSIER,"5,0 %"
+97404000AM0838,taxe_taux_departemental_pct,DOSSIER,"2,5 %"
+97404000AM0838,loyer_oll,DOSSIER,"12,2 €/m² — zone 2"
+97404000AM0838,derniere_vente,DOSSIER,aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025)
+97404000AM0838,gabarit_status,GABARIT,INCONSTRUCTIBLE page — Habitat interdit dans cette zone.
+97417000AO0050,commune,DOSSIER,Saint-Philippe
+97417000AO0050,surface_cadastre_m2,DOSSIER,1 540 m²
+97417000AO0050,zone_lib,DOSSIER,Aucun PLU — RNU (règlement national d'urbanisme) ; aucun zonage communal servi.
+97417000AO0050,constructible_verdict,DOSSIER,Analyse incomplète — parcelle hors du PLU outillé.
+97417000AO0050,constructible_motif,DOSSIER,Gabarit réglementaire : zone PLU indéterminée — non chiffré ici.
+97417000AO0050,saturation_densite,DOSSIER,Capacité (logements) : non estimable sur cette parcelle.
+97417000AO0050,emprise_batie_m2,DOSSIER,0 m²
+97417000AO0050,nb_batiments,DOSSIER,0
+97417000AO0050,pente,DOSSIER,"6,8° (12 %)"
+97417000AO0050,aleas_n,DOSSIER,2 aléas (badge) · Points de risque 5
+97417000AO0050,aleas_zone_rouge_pct,DOSSIER,Zonage PPR non classé — code PPR non reconnu sur 100 % (risque inondation)
+97417000AO0050,aleas_detail,DOSSIER,Zonage PPR non classé ; Aléa inondation niveau fort ~82 % ; exposition totale ~100 %
+97417000AO0050,prix_ancien_median,DOSSIER,2 188 €/m²
+97417000AO0050,prix_ancien_n,DOSSIER,11 ventes à moins de 1 000 m
+97417000AO0050,prix_ancien_type,DOSSIER,mixte (appart+maison)
+97417000AO0050,prix_ancien_periode,DOSSIER,2022–2025
+97417000AO0050,prix_q1,DOSSIER,1 824
+97417000AO0050,prix_mediane,DOSSIER,2 188
+97417000AO0050,prix_q3,DOSSIER,2 903
+97417000AO0050,prix_min,DOSSIER,1 371
+97417000AO0050,prix_max,DOSSIER,4 310
+97417000AO0050,dvf_secteur_mediane,DOSSIER,"2 111 €/m² — 15 ventes · secteur cadastral, 2021-2025"
+97417000AO0050,terrain_nu_eur_m2,DOSSIER,"88 €/m² — terrain nu, 12 ventes · section cadastrale · 2021-2025"
+97417000AO0050,taxe_taux_communal_pct,DOSSIER,"5,0 %"
+97417000AO0050,taxe_taux_departemental_pct,DOSSIER,"2,5 %"
+97417000AO0050,loyer_oll,DOSSIER,"9,2 €/m² — zone 6"
+97417000AO0050,derniere_vente,DOSSIER,aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025)
+97417000AO0050,gabarit_status,GABARIT,INCONSTRUCTIBLE page — Pas de potentiel constructible résiduel.
+97411000IS0448,commune,DOSSIER,Saint-Denis
+97411000IS0448,surface_cadastre_m2,DOSSIER,959 m²
+97411000IS0448,zone_lib,DOSSIER,Uh
+97411000IS0448,zone_a_cheval,DOSSIER,Contenance 959 m² — dont ~629 m² en zone Uh (parcelle à cheval). Part NON constructible (A/N) : ~34 %.
+97411000IS0448,constructible_verdict,DOSSIER,Densité autorisée atteinte ou dépassée
+97411000IS0448,constructible_motif,DOSSIER,Parcelle bâtie et saturée : SDP autorisée déjà consommée (286 %).
+97411000IS0448,sdp_restante_m2,DOSSIER,0 m²
+97411000IS0448,estimation_rapide_m2,DOSSIER,85 m² : ~189 m² emprise × 45 % occupation (hypothèse) × 1 niveau
+97411000IS0448,saturation_densite,DOSSIER,286 % consommé · 0 % résiduel
+97411000IS0448,emprise_batie_m2,DOSSIER,128 m²
+97411000IS0448,nb_batiments,DOSSIER,2
+97411000IS0448,hauteur_faitage_m,DOSSIER,"5,7 m"
+97411000IS0448,hauteur_egout_m,DOSSIER,"4,1 m"
+97411000IS0448,recul_voie_m,DOSSIER,3 m Art. Uh.6 · p.72
+97411000IS0448,emprise_max_pct,DOSSIER,30 % Art. Uh.9 · p.73
+97411000IS0448,hauteur_max_reglementaire,DOSSIER,"7 m au faîtage · 4,5 m à l'égout Art. Uh.10 · p.73"
+97411000IS0448,zone_implantation_m2,DOSSIER,142 m²
+97411000IS0448,plafond_emprise_m2,DOSSIER,161 m²
+97411000IS0448,pente,DOSSIER,"18,1° (33 %)"
+97411000IS0448,aleas_n,DOSSIER,2 aléas (badge) · Points de risque 3
+97411000IS0448,aleas_zone_rouge_pct,DOSSIER,zone rouge sur 34 % de la parcelle
+97411000IS0448,aleas_detail,DOSSIER,PPR inondation et mouvement de terrain — zone rouge 34 % INCONSTRUCTIBLE ; hors zone rouge 66 %
+97411000IS0448,prix_ancien_median,DOSSIER,2 480 €/m²
+97411000IS0448,prix_ancien_n,DOSSIER,21 ventes à moins de 1 000 m
+97411000IS0448,prix_ancien_type,DOSSIER,maison
+97411000IS0448,prix_ancien_periode,DOSSIER,2022–2026
+97411000IS0448,prix_q1,DOSSIER,2 000
+97411000IS0448,prix_mediane,DOSSIER,2 480
+97411000IS0448,prix_q3,DOSSIER,3 300
+97411000IS0448,prix_min,DOSSIER,1 233
+97411000IS0448,prix_max,DOSSIER,6 420
+97411000IS0448,dvf_secteur_mediane,DOSSIER,"1 961 €/m² — 22 ventes · secteur cadastral, 2021-2025"
+97411000IS0448,terrain_nu_eur_m2,DOSSIER,"— (2 ventes, échantillon insuffisant)"
+97411000IS0448,taxe_taux_communal_pct,DOSSIER,"3,0 %"
+97411000IS0448,taxe_taux_departemental_pct,DOSSIER,"2,5 %"
+97411000IS0448,loyer_oll,DOSSIER,"11,0 €/m² — zone 4"
+97411000IS0448,derniere_vente,DOSSIER,aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025)
+97411000IS0448,dvf_sale,DOSSIER,07/2025|Maison|85 m²|2 689 €/m²|52 m
+97411000IS0448,dvf_sale,DOSSIER,10/2025|Maison|50 m²|2 000 €/m²|662 m
+97411000IS0448,dvf_sale,DOSSIER,08/2025|Maison|150 m²|1 667 €/m²|604 m
+97411000IS0448,dvf_sale,DOSSIER,06/2022|Maison|100 m²|3 300 €/m²|90 m
+97411000IS0448,dvf_sale,DOSSIER,09/2024|Maison|80 m²|2 112 €/m²|563 m
+97411000IS0448,dvf_sale,DOSSIER,01/2025|Maison|125 m²|2 532 €/m²|801 m
+97411000IS0448,dvf_sale,DOSSIER,05/2023|Maison|105 m²|1 233 €/m²|532 m
+97411000IS0448,dvf_sale,DOSSIER,08/2025|Maison|133 m²|2 481 €/m²|737 m
+97411000IS0448,gabarit_status,GABARIT,"FULL gabarit — Vérifié : reculs, emprise, hauteur, risques · non modélisé : Stationnement, Espaces libres"
+97411000IS0448,zone_implantation_m2,GABARIT,142 m²
+97411000IS0448,plafond_emprise_m2,GABARIT,161 m²
+97411000IS0448,zone_a_cheval,GABARIT,Contenance 959 m² — dont ~629 m² en zone Uh (parcelle à cheval). Part NON constructible (A/N) : ~34 %.
+97411000IS0448,hauteur_max_reglementaire,GABARIT,"7 m au faîtage · 4,5 m à l'égout"
+97411000IS0448,emprise_max_pct,GABARIT,Emprise maximale : 30 %
+97411000IS0448,recul_limites_m,GABARIT,"Limites séparatives : 4,0 m"
+97404000AY0153,commune,DOSSIER,L'Étang-Salé
+97404000AY0153,surface_cadastre_m2,DOSSIER,262 m²
+97404000AY0153,zone_lib,DOSSIER,UA
+97404000AY0153,constructible_verdict,DOSSIER,Densité autorisée atteinte ou dépassée
+97404000AY0153,constructible_motif,DOSSIER,Parcelle bâtie et saturée : SDP autorisée déjà consommée (115 %).
+97404000AY0153,sdp_restante_m2,DOSSIER,0 m²
+97404000AY0153,estimation_rapide_m2,DOSSIER,99 m²
+97404000AY0153,saturation_densite,DOSSIER,115 % consommé · 0 % résiduel
+97404000AY0153,emprise_batie_m2,DOSSIER,70 m²
+97404000AY0153,nb_batiments,DOSSIER,2
+97404000AY0153,hauteur_faitage_m,DOSSIER,"8,7 m"
+97404000AY0153,hauteur_egout_m,DOSSIER,"6,9 m"
+97404000AY0153,recul_voie_m,DOSSIER,4 m Art. UA 2.1 · p.17
+97404000AY0153,recul_limites_m,DOSSIER,3 m Art. UA 2.2 · p.17
+97404000AY0153,emprise_max_pct,DOSSIER,70 % Art. UA 2.4 · p.18
+97404000AY0153,hauteur_max_reglementaire,DOSSIER,15 m au faîtage · 12 m à l'égout Art. UA 2.5.2 · p.19
+97404000AY0153,zone_implantation_m2,DOSSIER,44 m²
+97404000AY0153,plafond_emprise_m2,DOSSIER,183 m²
+97404000AY0153,pente,DOSSIER,"2,2° (4 %)"
+97404000AY0153,aleas_n,DOSSIER,2 aléas (badge)
+97404000AY0153,aleas_zone_rouge_pct,DOSSIER,zone bleue 59 % (pas de zone rouge)
+97404000AY0153,aleas_detail,DOSSIER,Aléa inondation fort ~41 % ; moyen ~59 % ; mouvement de terrain faible ~100 %
+97404000AY0153,prix_ancien_median,DOSSIER,2 333 €/m²
+97404000AY0153,prix_ancien_n,DOSSIER,43 ventes
+97404000AY0153,prix_ancien_type,DOSSIER,maison
+97404000AY0153,prix_ancien_rayon_m,DOSSIER,moins de 500 m
+97404000AY0153,prix_ancien_periode,DOSSIER,2022–2026
+97404000AY0153,prix_q1,DOSSIER,1 711
+97404000AY0153,prix_mediane,DOSSIER,2 333
+97404000AY0153,prix_q3,DOSSIER,3 831
+97404000AY0153,prix_min,DOSSIER,1 186
+97404000AY0153,prix_max,DOSSIER,7 901
+97404000AY0153,dvf_secteur_mediane,DOSSIER,"2 972 €/m² — 26 ventes · secteur cadastral, 2021-2025"
+97404000AY0153,terrain_nu_eur_m2,DOSSIER,"— (3 ventes, échantillon insuffisant)"
+97404000AY0153,taxe_taux_communal_pct,DOSSIER,"5,0 %"
+97404000AY0153,taxe_taux_departemental_pct,DOSSIER,"2,5 %"
+97404000AY0153,loyer_oll,DOSSIER,"12,2 €/m² — zone 2"
+97404000AY0153,derniere_vente,DOSSIER,aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025)
+97404000AY0153,dvf_sale,DOSSIER,11/2025|Maison|55 m²|1 909 €/m²|108 m
+97404000AY0153,dvf_sale,DOSSIER,11/2025|Maison|32 m²|1 862 €/m²|108 m
+97404000AY0153,dvf_sale,DOSSIER,11/2025|Maison|23 m²|2 609 €/m²|100 m
+97404000AY0153,dvf_sale,DOSSIER,12/2025|Maison|23 m²|2 013 €/m²|137 m
+97404000AY0153,dvf_sale,DOSSIER,08/2025|Maison|43 m²|1 186 €/m²|138 m
+97404000AY0153,dvf_sale,DOSSIER,07/2025|Maison|100 m²|5 320 €/m²|47 m
+97404000AY0153,dvf_sale,DOSSIER,07/2025|Maison|94 m²|5 660 €/m²|47 m
+97404000AY0153,dvf_sale,DOSSIER,03/2025|Maison|69 m²|5 847 €/m²|259 m
+97404000AY0153,zone_implantation_m2,GABARIT,44 m²
+97404000AY0153,plafond_emprise_m2,GABARIT,183 m²
+97404000AY0153,hauteur_max_reglementaire,GABARIT,15 m au faîtage · 12 m à l'égout
+97404000AY0153,recul_voie_m,GABARIT,"Recul voie : 4,0 m"
+97404000AY0153,recul_limites_m,GABARIT,"Limites séparatives : 3,0 m"
+97404000AY0153,emprise_max_pct,GABARIT,Emprise maximale : 70 %
+97404000AY0153,gabarit_status,GABARIT,"FULL gabarit — Vérifié : reculs, emprise, hauteur, risques"
+97414000CO0153,commune,DOSSIER,Saint-Louis
+97414000CO0153,surface_cadastre_m2,DOSSIER,6 860 m²
+97414000CO0153,zone_lib,DOSSIER,A
+97414000CO0153,constructible_verdict,DOSSIER,Terrain non constructible — zone agricole (zone A) : potentiel de construction nul par la règle de zonage.
+97414000CO0153,zone_a_cheval,DOSSIER,à cheval (2 zones) ; zone rouge 19 % ; hors zone rouge 81 % ; zone bleue 11 %
+97414000CO0153,sdp_restante_m2,DOSSIER,0 m²
+97414000CO0153,emprise_batie_m2,DOSSIER,94 m²
+97414000CO0153,nb_batiments,DOSSIER,1
+97414000CO0153,hauteur_faitage_m,DOSSIER,"2,7 m"
+97414000CO0153,pente,DOSSIER,"14,5° (26 %)"
+97414000CO0153,aleas_n,DOSSIER,2 aléas (badge)
+97414000CO0153,aleas_zone_rouge_pct,DOSSIER,19 %
+97414000CO0153,aleas_detail,DOSSIER,Aléa inondation fort ~19 % ; mouvement de terrain fort ~19 % moyen ~11 % faible ~70 % ; zone bleue 11 %
+97414000CO0153,prix_ancien_median,DOSSIER,3 012 €/m²
+97414000CO0153,prix_ancien_n,DOSSIER,22 ventes
+97414000CO0153,prix_ancien_type,DOSSIER,maison
+97414000CO0153,prix_ancien_rayon_m,DOSSIER,moins de 1 000 m
+97414000CO0153,prix_ancien_periode,DOSSIER,2022–2026
+97414000CO0153,prix_q1,DOSSIER,2 571
+97414000CO0153,prix_mediane,DOSSIER,3 012
+97414000CO0153,prix_q3,DOSSIER,3 012
+97414000CO0153,prix_min,DOSSIER,1 019
+97414000CO0153,prix_max,DOSSIER,3 837
+97414000CO0153,dvf_secteur_mediane,DOSSIER,"1 848 €/m² — 17 ventes · secteur cadastral, 2021-2025"
+97414000CO0153,terrain_nu_eur_m2,DOSSIER,"140 €/m² — terrain nu, 15 ventes · section cadastrale · 2021-2025"
+97414000CO0153,taxe_taux_communal_pct,DOSSIER,"5,0 %"
+97414000CO0153,taxe_taux_departemental_pct,DOSSIER,"2,5 %"
+97414000CO0153,loyer_oll,DOSSIER,"10,3 €/m² — zone 5"
+97414000CO0153,derniere_vente,DOSSIER,aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025)
+97414000CO0153,gabarit_status,GABARIT,INCONSTRUCTIBLE page — Zone non constructible — agricole.
+97414000CO0153,constructible_verdict,GABARIT,Zone non constructible — agricole
+97421000BN0260,commune,DOSSIER,Salazie
+97421000BN0260,surface_cadastre_m2,DOSSIER,3 335 m²
+97421000BN0260,zone_lib,DOSSIER,A
+97421000BN0260,constructible_verdict,DOSSIER,Terrain non constructible — zone agricole (zone A) : potentiel de construction nul par la règle de zonage.
+97421000BN0260,zone_a_cheval,DOSSIER,à cheval (2 zones) ; Zone rouge 100 % : parcelle entièrement INCONSTRUCTIBLE
+97421000BN0260,sdp_restante_m2,DOSSIER,0 m²
+97421000BN0260,emprise_batie_m2,DOSSIER,0 m²
+97421000BN0260,nb_batiments,DOSSIER,0
+97421000BN0260,pente,DOSSIER,"16,6° (30 %)"
+97421000BN0260,aleas_n,DOSSIER,2 aléas (badge)
+97421000BN0260,aleas_zone_rouge_pct,DOSSIER,100 %
+97421000BN0260,aleas_detail,DOSSIER,Aléa inondation fort ~8 % ; mouvement de terrain fort ~56 % moyen ~44 %
+97421000BN0260,prix_ancien_median,DOSSIER,1 857 €/m²
+97421000BN0260,prix_ancien_n,DOSSIER,63 ventes
+97421000BN0260,prix_ancien_type,DOSSIER,mixte (appart+maison)
+97421000BN0260,prix_ancien_rayon_m,DOSSIER,sur la commune
+97421000BN0260,prix_ancien_periode,DOSSIER,2022–2026
+97421000BN0260,prix_q1,DOSSIER,1 000
+97421000BN0260,prix_mediane,DOSSIER,1 857
+97421000BN0260,prix_q3,DOSSIER,1 857
+97421000BN0260,prix_min,DOSSIER,1 000
+97421000BN0260,prix_max,DOSSIER,4 500
+97421000BN0260,terrain_nu_eur_m2,DOSSIER,"— (5 ventes, échantillon insuffisant)"
+97421000BN0260,taxe_taux_communal_pct,DOSSIER,"3,0 %"
+97421000BN0260,taxe_taux_departemental_pct,DOSSIER,"2,5 %"
+97421000BN0260,loyer_oll,DOSSIER,"9,2 €/m² — zone 6"
+97421000BN0260,derniere_vente,DOSSIER,aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025)
+97421000BN0260,gabarit_status,GABARIT,INCONSTRUCTIBLE page — Zone non constructible — agricole.
+97421000BN0260,constructible_verdict,GABARIT,Zone non constructible — agricole
+97422000BW2635,commune,DOSSIER,Le Tampon
+97422000BW2635,surface_cadastre_m2,DOSSIER,2 003 m²
+97422000BW2635,zone_lib,DOSSIER,Uav
+97422000BW2635,constructible_verdict,DOSSIER,Potentiel faible — parcelle proche de sa densité autorisée
+97422000BW2635,sdp_restante_m2,DOSSIER,827 m²
+97422000BW2635,surface_a_retenir_m2,DOSSIER,3 317 m² (estimation rapide)
+97422000BW2635,estimation_rapide_m2,DOSSIER,3 317 m² (estimation rapide)
+97422000BW2635,saturation_densite,DOSSIER,75 % consommé · 25 % résiduel
+97422000BW2635,emprise_batie_m2,DOSSIER,655 m²
+97422000BW2635,nb_batiments,DOSSIER,2
+97422000BW2635,hauteur_faitage_m,DOSSIER,"14,7 m"
+97422000BW2635,hauteur_egout_m,DOSSIER,"11,0 m"
+97422000BW2635,recul_voie_m,DOSSIER,4 m Art. Ua6.2 · p.15
+97422000BW2635,recul_limites_m,DOSSIER,3 m Art. Ua7.1 · p.16
+97422000BW2635,emprise_max_pct,DOSSIER,non réglementé
+97422000BW2635,hauteur_max_reglementaire,DOSSIER,20 m au faîtage · 16 m à l'égout Art. Ua10.2 · p.18
+97422000BW2635,pente,DOSSIER,"5,7° (10 %)"
+97422000BW2635,aleas_n,DOSSIER,3 (Points de risque) · badge 1 aléa
+97422000BW2635,aleas_detail,DOSSIER,Zone inondable TRI — scénario extreme (85 %) ; 18 arrêtés CatNat ; mouvement de terrain faible ~100 %
+97422000BW2635,prix_ancien_median,DOSSIER,3 000 €/m²
+97422000BW2635,prix_ancien_n,DOSSIER,53 ventes
+97422000BW2635,prix_ancien_type,DOSSIER,appartement
+97422000BW2635,prix_ancien_rayon_m,DOSSIER,moins de 1 000 m
+97422000BW2635,prix_ancien_periode,DOSSIER,2022–2026
+97422000BW2635,prix_q1,DOSSIER,2 500
+97422000BW2635,prix_mediane,DOSSIER,3 000
+97422000BW2635,prix_q3,DOSSIER,3 571
+97422000BW2635,prix_min,DOSSIER,1 558
+97422000BW2635,prix_max,DOSSIER,5 595
+97422000BW2635,dvf_secteur_mediane,DOSSIER,"Appartement 2 789 €/m² — 168 ventes ; Maison 2 480 €/m² — 85 ventes · secteur cadastral, 2021-2025"
+97422000BW2635,terrain_nu_eur_m2,DOSSIER,"376 €/m² — terrain nu, 18 ventes · section cadastrale · 2021-2025"
+97422000BW2635,taxe_taux_communal_pct,DOSSIER,"5,0 %"
+97422000BW2635,taxe_taux_departemental_pct,DOSSIER,"2,5 %"
+97422000BW2635,loyer_oll,DOSSIER,"10,3 €/m² — zone 5"
+97422000BW2635,derniere_vente,DOSSIER,aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025)
+97422000BW2635,dvf_sale,DOSSIER,12/2024|Appart.|41 m²|4 073 €/m²|321 m
+97422000BW2635,dvf_sale,DOSSIER,12/2024|Appart.|41 m²|3 951 €/m²|321 m
+97422000BW2635,dvf_sale,DOSSIER,05/2024|Appart.|41 m²|3 951 €/m²|321 m
+97422000BW2635,dvf_sale,DOSSIER,05/2024|Appart.|41 m²|3 951 €/m²|321 m
+97422000BW2635,dvf_sale,DOSSIER,06/2023|Appart.|50 m²|4 700 €/m²|297 m
+97422000BW2635,dvf_sale,DOSSIER,06/2023|Appart.|90 m²|2 611 €/m²|297 m
+97422000BW2635,dvf_sale,DOSSIER,06/2023|Appart.|90 m²|2 611 €/m²|297 m
+97422000BW2635,dvf_sale,DOSSIER,05/2024|Appart.|25 m²|3 251 €/m²|615 m
+97422000BW2635,gabarit_status,GABARIT,INCONSTRUCTIBLE page — Gabarit non calculable sur cette parcelle : donnée réglementaire manquante.
+97412000CV0446,commune,DOSSIER,Saint-Joseph
+97412000CV0446,surface_cadastre_m2,DOSSIER,551 m²
+97412000CV0446,zone_lib,DOSSIER,U5
+97412000CV0446,constructible_verdict,DOSSIER,Fort potentiel — parcelle en forte sous-densité
+97412000CV0446,sdp_restante_m2,DOSSIER,241 m²
+97412000CV0446,surface_a_retenir_m2,DOSSIER,165 m² (estimation rapide)
+97412000CV0446,estimation_rapide_m2,DOSSIER,165 m² (estimation rapide)
+97412000CV0446,saturation_densite,DOSSIER,0 % consommé · 100 % résiduel
+97412000CV0446,emprise_batie_m2,DOSSIER,0 m²
+97412000CV0446,nb_batiments,DOSSIER,0
+97412000CV0446,recul_voie_m,DOSSIER,4 m Art. U5 6.2 · p.77
+97412000CV0446,recul_limites_m,DOSSIER,"H/2, minimum 3 m (plancher 3 m) Art. U5 7.2 · p.78"
+97412000CV0446,emprise_max_pct,DOSSIER,50 % Art. U5 9.2 · p.80
+97412000CV0446,hauteur_max_reglementaire,DOSSIER,9 m au faîtage · 7 m à l'égout Art. U5 10.2 · p.80
+97412000CV0446,zone_implantation_m2,DOSSIER,184 m²
+97412000CV0446,plafond_emprise_m2,DOSSIER,276 m²
+97412000CV0446,pente,DOSSIER,"12,8° (23 %)"
+97412000CV0446,aleas_n,DOSSIER,1 aléa (badge)
+97412000CV0446,aleas_detail,DOSSIER,Aléa mouvement de terrain — niveau faible sur ~100 %
+97412000CV0446,prix_q1,DOSSIER,1 835
+97412000CV0446,prix_mediane,DOSSIER,2 180
+97412000CV0446,prix_q3,DOSSIER,2 923
+97412000CV0446,prix_min,DOSSIER,1 042
+97412000CV0446,prix_max,DOSSIER,8 714
+97412000CV0446,dvf_secteur_mediane,DOSSIER,"Maison 1 833 €/m² — 15 ventes · secteur cadastral, 2021-2025"
+97412000CV0446,terrain_nu_eur_m2,DOSSIER,"234 €/m² — terrain nu, 15 ventes · section cadastrale · 2021-2025"
+97412000CV0446,taxe_taux_communal_pct,DOSSIER,"3,0 %"
+97412000CV0446,taxe_taux_departemental_pct,DOSSIER,"2,5 %"
+97412000CV0446,loyer_oll,DOSSIER,"9,2 €/m² — zone 6"
+97412000CV0446,derniere_vente,DOSSIER,aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025)
+97412000CV0446,dvf_sale,DOSSIER,03/2021|Terrain|666 m²|450 €/m²|112 m
+97412000CV0446,dvf_sale,DOSSIER,08/2021|Terrain|687 m²|597 €/m²|133 m
+97412000CV0446,dvf_sale,DOSSIER,09/2025|Terrain|162 m²|228 €/m²|140 m
+97412000CV0446,dvf_sale,DOSSIER,05/2021|Terrain|7814 m²|100 €/m²|142 m
+97412000CV0446,dvf_sale,DOSSIER,07/2024|Terrain|1280 m²|234 €/m²|144 m
+97412000CV0446,dvf_sale,DOSSIER,11/2021|Terrain|526 m²|316 €/m²|247 m
+97412000CV0446,dvf_sale,DOSSIER,12/2022|Terrain|405 m²|217 €/m²|254 m
+97412000CV0446,dvf_sale,DOSSIER,04/2021|Terrain|238 m²|651 €/m²|291 m
+97412000CV0446,gabarit_status,GABARIT,"FULL gabarit — Vérifié : reculs, emprise, hauteur"
+97412000CV0446,zone_implantation_m2,GABARIT,184 m²
+97412000CV0446,plafond_emprise_m2,GABARIT,276 m²
+97412000CV0446,hauteur_max_reglementaire,GABARIT,9 m au faîtage · 7 m à l'égout
+97412000CV0446,recul_voie_m,GABARIT,"Recul voie : 4,0 m"
+97412000CV0446,recul_limites_m,GABARIT,"Limites séparatives : 4,5 m"
+97412000CV0446,emprise_max_pct,GABARIT,Emprise maximale : 50 %
+97412000CV0446,aleas_detail,GABARIT,Aléa mouvement de terrain — niveau faible
+97424000AO1198,commune,DOSSIER,Cilaos
+97424000AO1198,surface_cadastre_m2,DOSSIER,1 m²
+97424000AO1198,zone_lib,DOSSIER,Ub
+97424000AO1198,constructible_verdict,DOSSIER,"Section 2 header: « Zone Ub (famille U) — urbaine, constructible » ; Section 3 Potentiel: « Non retenue — terrain trop étroit une fois appliqués les reculs réglementaires »"
+97424000AO1198,constructible_motif,DOSSIER,Non retenue — terrain trop étroit une fois appliqués les reculs réglementaires
+97424000AO1198,sdp_restante_m2,DOSSIER,0 m²
+97424000AO1198,saturation_densite,DOSSIER,Surface de plancher estimée non calculable (capacité nulle)
+97424000AO1198,emprise_batie_m2,DOSSIER,0 m²
+97424000AO1198,nb_batiments,DOSSIER,0
+97424000AO1198,recul_voie_m,DOSSIER,3 m Art. Ub 6.2 · p.34
+97424000AO1198,recul_limites_m,DOSSIER,3 m Art. Ub 7.2/7.3 · p.35
+97424000AO1198,emprise_max_pct,DOSSIER,50 % Art. Ub 9.2 · p.37
+97424000AO1198,hauteur_max_reglementaire,DOSSIER,11 m au faîtage · 7 m à l'égout Art. Ub 10.2 · p.37
+97424000AO1198,zone_implantation_m2,DOSSIER,0 m²
+97424000AO1198,plafond_emprise_m2,DOSSIER,0 m²
+97424000AO1198,pente,DOSSIER,"8,2° (14 %)"
+97424000AO1198,aleas_n,DOSSIER,1 aléa (badge)
+97424000AO1198,aleas_detail,DOSSIER,16 arrêtés CatNat ; mouvement de terrain faible ~100 %
+97424000AO1198,prix_ancien_median,DOSSIER,2 333 €/m²
+97424000AO1198,prix_ancien_n,DOSSIER,86 ventes
+97424000AO1198,prix_ancien_type,DOSSIER,mixte (appart+maison)
+97424000AO1198,prix_ancien_rayon_m,DOSSIER,sur la commune
+97424000AO1198,prix_ancien_periode,DOSSIER,2022–2026
+97424000AO1198,prix_q1,DOSSIER,1 370
+97424000AO1198,prix_mediane,DOSSIER,2 333
+97424000AO1198,prix_q3,DOSSIER,2 333
+97424000AO1198,prix_min,DOSSIER,1 000
+97424000AO1198,prix_max,DOSSIER,5 500
+97424000AO1198,dvf_secteur_mediane,DOSSIER,89 €/m² (terrain nu secteur) ; ancien 2 333 €/m² 86 ventes commune
+97424000AO1198,terrain_nu_eur_m2,DOSSIER,"89 €/m² — terrain nu, 12 ventes · section cadastrale · 2021-2025"
+97424000AO1198,taxe_taux_communal_pct,DOSSIER,"5,0 %"
+97424000AO1198,taxe_taux_departemental_pct,DOSSIER,"2,5 %"
+97424000AO1198,loyer_oll,DOSSIER,"9,2 €/m² — zone 6"
+97424000AO1198,derniere_vente,DOSSIER,aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025)
+97424000AO1198,gabarit_status,GABARIT,INCONSTRUCTIBLE page — Terrain trop exigu pour un projet.

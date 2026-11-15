@@ -46,9 +46,26 @@ def estimation_rapide_m2(db, idu: str):
         return None
 
 
-def surface_a_retenir(estimation_rapide_m2, esquisse=None) -> dict:
+def _amorce(bati: bool, copropriete: bool) -> str:
+    """CHIRURGICAL-FIX-1 (LOT E) — le chiffre retenu nomme TOUJOURS son scénario. Sur une parcelle
+    BÂTIE, l'estimation rapide / l'esquisse supposent le terrain LIBÉRÉ (démolition de l'existant) :
+    on le dit, à côté de la ligne « bâti conservé » (SDP résiduelle de la fiche, rendue par le §3).
+    En COPROPRIÉTÉ, la démolition est peu réaliste — le chiffre reste indicatif, jamais mis en avant."""
+    if not bati:
+        return "Surface à retenir : "
+    if copropriete:
+        return "Terrain libéré (démolition, peu réaliste en copropriété — chiffre indicatif) : "
+    return "Terrain libéré (démolition) : "
+
+
+def surface_a_retenir(estimation_rapide_m2, esquisse=None, *, bati: bool = False,
+                      copropriete: bool = False) -> dict:
     """`esquisse` = la SDP de l'esquisse d'implantation (float), ou un dict {"sdp_m2": …} (compat), ou
     None quand aucune Étude n'a été dessinée.
+
+    `bati` / `copropriete` (CHIRURGICAL-FIX-1 LOT E) — contexte de la parcelle : sur une parcelle bâtie,
+    le chiffre retenu est un scénario « terrain libéré (démolition) », distinct de la SDP résiduelle
+    « bâti conservé » (rendue à part par le §3). En copropriété, la démolition est signalée peu réaliste.
 
     Retourne {"valeur_m2", "source" (GRANDEUR_*), "phrase", "estimation_rapide_m2", "esquisse_m2"}.
 
@@ -64,6 +81,7 @@ def surface_a_retenir(estimation_rapide_m2, esquisse=None) -> dict:
         esquisse = esquisse.get("sdp_m2")
     if esquisse not in (None, ""):
         esq = round(float(esquisse))
+    amorce = _amorce(bati, copropriete)
 
     def _out(valeur, source, phrase):
         return {"valeur_m2": valeur, "source": source, "phrase": phrase,
@@ -71,16 +89,16 @@ def surface_a_retenir(estimation_rapide_m2, esquisse=None) -> dict:
 
     if est is None and esq is None:
         return _out(None, GRANDEUR_ESTIMATION,
-                    "Surface à retenir : non calculée (capacité nulle ou non constructible).")
+                    f"{amorce}non calculée (capacité nulle ou non constructible).")
     if esq is None:                                   # aucune esquisse → estimation rapide
-        return _out(est, GRANDEUR_ESTIMATION, f"Surface à retenir : {_m2(est)} ({GRANDEUR_ESTIMATION}).")
+        return _out(est, GRANDEUR_ESTIMATION, f"{amorce}{_m2(est)} ({GRANDEUR_ESTIMATION}).")
     if est is None or esq < est:                      # esquisse retenue (la plus petite / prudente)
-        phrase = (f"Surface à retenir : {_m2(esq)} ({GRANDEUR_ESQUISSE}, stationnement à vérifier : "
+        phrase = (f"{amorce}{_m2(esq)} ({GRANDEUR_ESQUISSE}, stationnement à vérifier : "
                   "la surface réelle peut être inférieure).")
         if est is not None:
             phrase += f" L'estimation rapide donnait {_m2(est)}, hors stationnement."
         return _out(esq, GRANDEUR_ESQUISSE, phrase)
     # estimation ≤ esquisse → estimation retenue (l'esquisse est un majorant)
     return _out(est, GRANDEUR_ESTIMATION,
-                f"Surface à retenir : {_m2(est)} ({GRANDEUR_ESTIMATION}). L'esquisse d'implantation "
+                f"{amorce}{_m2(est)} ({GRANDEUR_ESTIMATION}). L'esquisse d'implantation "
                 f"atteint {_m2(esq)}, à vérifier : stationnement non déduit.")

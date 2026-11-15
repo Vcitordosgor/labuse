@@ -45,9 +45,23 @@ def test_plans_ne_contient_plus_l_offre_fantome():
 
 
 def test_message_quota_sans_offre_fantome():
-    m = quota.message_depassement("integral", 30)
+    m = quota.message_depassement("integral", 120)
     assert "Illimité" not in m and "499" not in m
-    assert "Intégral" in m and "Flash" in m
+    assert "Flash" in m
+
+
+def test_message_quota_dit_le_chiffre_et_l_heure_de_remise_a_zero():
+    # CHIRURGICAL-FIX-DOCS (LOT G) — le message porte le CHIFFRE du plafond et l'HEURE de remise à zéro.
+    m = quota.message_depassement("integral", 120)
+    assert "120 exports" in m                        # le chiffre
+    assert "minuit" in m and "La Réunion" in m       # l'heure de remise à zéro (jour Réunion)
+
+
+def test_plafonds_jour_integral_120_essentiel_30_sans_inversion():
+    # Intégral passe à 120 ; Essentiel reste 30 ; aucune formule moins chère ne dépasse une plus chère.
+    assert quota.PLAFONDS_JOUR["integral"] == 120
+    assert quota.PLAFONDS_JOUR["essentiel"] == 30
+    assert quota.PLAFONDS_JOUR["essentiel"] < quota.PLAFONDS_JOUR["integral"]   # moins cher < plus cher
 
 
 def test_source_verite_unique_prix_suit_la_config(monkeypatch):

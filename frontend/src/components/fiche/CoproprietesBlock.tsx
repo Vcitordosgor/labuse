@@ -6,6 +6,22 @@
 import type { Copropriete } from '../../lib/types'
 import { GroupLabel, FactNote } from './primitives'
 
+// CHIRURGICAL-FIX-1 (E100) — la période de construction RNIC est une ÉNUMÉRATION brute
+// (« DE_2001_A_2010 », « AVANT_1949 », « A_COMPTER_DE_2011 »…). On la rend LISIBLE pour le client
+// (« 2001–2010 », « avant 1949 », « à compter de 2011 ») au lieu d'afficher le code tel quel.
+function periodeLisible(code: string | null | undefined): string | null {
+  if (!code) return null
+  const c = code.trim()
+  if (/^NON_CONNUE$/i.test(c) || /non renseign/i.test(c)) return null
+  let m = c.match(/^DE_(\d{4})_A_(\d{4})$/i)
+  if (m) return `${m[1]}–${m[2]}`
+  m = c.match(/^AVANT_(\d{4})$/i)
+  if (m) return `avant ${m[1]}`
+  m = c.match(/^A_COMPTER_DE_(\d{4})$/i)
+  if (m) return `à compter de ${m[1]}`
+  return c.replace(/_/g, ' ').toLowerCase()   // repli : jamais le code brut à deux-points/soulignés
+}
+
 function detail(c: Copropriete): string {
   const bouts: string[] = []
   if (c.nb_lots_total != null) {
@@ -17,7 +33,7 @@ function detail(c: Copropriete): string {
     if (c.nb_lots_hab_bur_com) lots += `, ${c.nb_lots_hab_bur_com} hab./bur./com.`
     bouts.push(lots)
   }
-  if (c.periode_construction) bouts.push(c.periode_construction)
+  { const per = periodeLisible(c.periode_construction); if (per) bouts.push(per) }
   if (c.residence_service === 'oui') bouts.push('résidence-service')
   if (c.syndicat_cooperatif === 'oui') bouts.push('syndicat coopératif')
   if (c.syndic_nom || c.syndic_type) {

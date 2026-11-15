@@ -69,9 +69,8 @@ REGISTRE: dict[str, Template] = {
     "retablissement": Template(11, "LABUSE-C-RETABLI",       "Rétablissement",
                                ("PRENOM",), (),
                                "brevo_tpl_retablissement"),
-    "radar_digest":   Template(12, "LABUSE-12-RADAR-DIGEST", "Radar — digest quotidien",
-                               ("PRENOM", "DATE", "NB_BIENS", "CARTES"), (),
-                               "brevo_tpl_radar_digest"),
+    # CHIRURGICAL-FIX-1 (E119, décision Vic) — radar_digest (template 12) RETIRÉ : legacy sans
+    # déclencheur live (le digest réel = smtp_digest_notifications). Alias « radar » retiré aussi.
     "radar_alerte":   Template(13, "LABUSE-13-RADAR-ALERTE", "Radar — alerte de veille",
                                ("PRENOM", "VEILLE", "NB_BIENS", "CRITERES", "CARTES"), (),
                                "brevo_tpl_radar_alerte"),
@@ -89,9 +88,8 @@ REGISTRE: dict[str, Template] = {
     "flash_pret":     Template(17, "LABUSE-G-FLASH-PRET",    "Flash prêt",
                                ("LIEN_PDF", "VALIDITE", "IDU", "COMMUNE"), (),
                                "brevo_tpl_flash_pret"),
-    "email_change":   Template(18, "LABUSE-H-EMAIL-CHANGE",  "Adresse e-mail changée",
-                               ("PRENOM", "ANCIEN_EMAIL", "NOUVEL_EMAIL"), (),
-                               "brevo_tpl_email_change"),
+    # CHIRURGICAL-FIX-1 (E109, décision Vic) — email_change (template 18) RETIRÉ : aucun déclencheur
+    # (aucune route ne mute l'adresse de connexion, aucune UI). Code mort supprimé.
     "retour_traite":  Template(19, "LABUSE-I-RETOUR-TRAITE", "Réponse à un signalement",
                                ("PRENOM", "SON_MESSAGE", "REPONSE"), (),
                                "brevo_tpl_retour_traite"),
@@ -112,9 +110,9 @@ TEMPLATES: dict[str, str] = {k: t.env_champ for k, t in REGISTRE.items() if t.en
 #: Rétro-compat — libellés servis (source unique = REGISTRE).
 LIBELLES: dict[str, str] = {k: t.libelle for k, t in REGISTRE.items()}
 
-# Clé LEGACY 'radar' (ancien digest, ID 12) : retirée du registre canonique (doublon de radar_digest).
-# Un appel avec key='radar' est routé vers radar_digest ci-dessous (aucun lecteur ne doit casser).
-_ALIAS = {"radar": "radar_digest"}
+# CHIRURGICAL-FIX-1 (E119) — l'alias legacy « radar » → radar_digest est retiré en même temps que
+# radar_digest. Plus d'alias de mail (le registre est la seule source).
+_ALIAS: dict[str, str] = {}
 
 
 def _canon(key: str) -> str:
@@ -168,59 +166,38 @@ def etat_configuration() -> dict:
 
 
 def verifier_templates(timeout: float = 30.0) -> dict:
-    """COMPTE-2 Lot 1 — VÉRIFICATION PAR APPEL API : les templates du registre existent chez Brevo,
-    sont actifs, portent le nom attendu et exposent les params attendus. Ne lève jamais : renvoie
-    {ok, api, expéditeur_unique?, lignes:[{key, id, existe, actif, nom_ok, params_manquants, ...}]}.
-    Un template attendu absent / inactif / mal nommé = écart (🔴) signalé, jamais une exception."""
+    """CHIRURGICAL-FIX-1 (E110, décision Vic) — VÉRIFICATION branchée sur le RENDU LOCAL (la source de
+    vérité ; Brevo n'est plus qu'un transport). On ne lit plus le HTML mort de Brevo : on exige que
+    chaque clé du registre ait un rendu local (`mails_contenu`) qui produit un mail SANS résidu de
+    gabarit (`{{ … }}`, `{% … %}`) ni « None ». Ne lève jamais : renvoie {ok, lignes:[{key, id, rend,
+    rend_ok, residus?, erreur?}]}. Un rendu manquant ou laissant une variable à nu = écart (🔴)."""
     import re
 
-    import httpx
-    out = {"ok": False, "api": bool(_api_key()), "lignes": []}
-    api_key = _api_key()
-    if not api_key:
-        out["raison"] = "Brevo non configuré (BREVO_API_KEY absente)."
-        return out
-    pat = re.compile(r"\{\{\s*params\.([A-Za-z0-9_]+)")
-    senders: set[str] = set()
+    from . import mails_contenu
+    _ = timeout  # signature conservée (lecteurs existants), plus d'appel réseau
+    pat = re.compile(r"\{\{|\{%|(?<![A-Za-z])None(?![A-Za-z])")
     lignes = []
     ok_global = True
     for key, t in REGISTRE.items():
-        tid = template_id(key)
-        ligne = {"key": key, "id": tid, "nom_attendu": t.nom}
+        ligne = {"key": key, "id": template_id(key), "nom_attendu": t.nom}
+        if not mails_contenu.gere(key):
+            ligne.update(rend=False, rend_ok=False, erreur="aucun rendu local pour cette clé")
+            ok_global = False
+            lignes.append(ligne)
+            continue
         try:
-            r = httpx.get(f"{_API}/smtp/templates/{tid}", headers={"api-key": api_key}, timeout=timeout)
+            ech = mails_contenu.SPECIMENS.get(key, {})
+            mail = mails_contenu.rendre(key, ech)
+            corpus = f"{mail.sujet} {mail.html} {mail.texte}"
+            residus = sorted(set(pat.findall(corpus)) - {""})
+            ligne.update(rend=True, rend_ok=not residus, residus=residus)
+            if residus:
+                ok_global = False
         except Exception as exc:  # noqa: BLE001
-            ligne.update(existe=False, erreur=f"Brevo injoignable ({type(exc).__name__}).")
-            ok_global = False
-            lignes.append(ligne)
-            continue
-        if r.status_code // 100 != 2:
-            ligne.update(existe=False, erreur=f"HTTP {r.status_code}")
-            ok_global = False
-            lignes.append(ligne)
-            continue
-        data = r.json()
-        nom = (data.get("name") or "").strip()
-        actif = bool(data.get("isActive"))
-        sender = (data.get("sender") or {}).get("email")
-        if sender:
-            senders.add(sender)
-        html = (data.get("subject") or "") + " " + (data.get("htmlContent") or "")
-        vus = set(pat.findall(html))
-        # nom_ok : le nom Brevo porte le nom attendu (les 14→19 sont préfixés « NN · », toléré).
-        nom_ok = t.nom in nom
-        manquants = [p for p in t.params if p not in vus]
-        ligne.update(existe=True, actif=actif, nom_brevo=nom, nom_ok=nom_ok,
-                     expediteur=sender, params_manquants=manquants,
-                     params_en_trop=sorted(vus - set(t.params) - set(t.flags)))
-        if not (actif and nom_ok and not manquants):
+            ligne.update(rend=True, rend_ok=False, erreur=f"{type(exc).__name__}: {exc}")
             ok_global = False
         lignes.append(ligne)
-    out["lignes"] = lignes
-    out["ok"] = ok_global
-    out["expediteur_unique"] = (list(senders)[0] if len(senders) == 1 else None)
-    out["expediteurs"] = sorted(senders)
-    return out
+    return {"ok": ok_global, "source": "rendu local (mails_contenu)", "lignes": lignes}
 
 
 def _evaluer_conditions(txt: str, params: dict) -> str:
@@ -244,42 +221,24 @@ def _evaluer_conditions(txt: str, params: dict) -> str:
 
 
 def apercu_template(key: str, params: dict | None = None) -> dict:
-    """APERÇU du mail réel : lit le template chez Brevo (GET /v3/smtp/templates/{id}) et substitue
-    naïvement les variables du compte ({{ params.x }} / {{params.x}}). Ne lève JAMAIS : non configuré /
-    template absent / Brevo injoignable → {configure:false, raison, params}. Le rendu Brevo étant
-    server-side, la substitution ici est indicative (les blocs conditionnels ne sont pas évalués)."""
+    """CHIRURGICAL-FIX-1 (E110, décision Vic) — APERÇU = le RENDU LOCAL réel (`mails_contenu`), qui est
+    ce qui PART désormais (Brevo n'est plus qu'un transport ; le HTML des templates Brevo n'est plus
+    jamais rendu). On ne lit donc plus le HTML MORT de Brevo — l'aperçu montre le vrai mail. Ne lève
+    JAMAIS : clé inconnue / pas de rendu local → {configure:false, raison, params}."""
     params = params or {}
     t = template(key)
     base = {"configure": False, "key": key, "libelle": (t.libelle if t else key), "params": params}
-    if not t:
-        return {**base, "raison": f"Template inconnu « {key} »."}
-    api_key = _api_key()
-    if not api_key:
-        return {**base, "raison": "Brevo non configuré (BREVO_API_KEY absente)."}
-    tpl = template_id(key)
     try:
-        import re
-
-        import httpx
-        r = httpx.get(f"{_API}/smtp/templates/{tpl}",
-                      headers={"api-key": api_key}, timeout=15.0)
-        if r.status_code // 100 != 2:
-            return {**base, "raison": f"Brevo a refusé la lecture du template (HTTP {r.status_code})."}
-        data = r.json()
-        subject = data.get("subject") or ""
-        html = data.get("htmlContent") or ""
-
-        def _sub(txt: str) -> str:
-            txt = _evaluer_conditions(txt, params)
-            for k, v in params.items():
-                # tolère un filtre Jinja optionnel : {{ params.X }} comme {{ params.X | safe }}.
-                txt = re.sub(r"\{\{\s*(?:params\.)?" + re.escape(k) + r"\s*(?:\|[^}]*)?\}\}", str(v), txt)
-            return txt
-        return {"configure": True, "key": key, "libelle": t.libelle,
-                "params": params, "subject": _sub(subject), "html": _sub(html)}
+        from . import mails_contenu
+        if not mails_contenu.gere(key):
+            return {**base, "raison": f"Aucun rendu local pour « {key} »."}
+        mail = mails_contenu.rendre(key, params)
+        return {"configure": True, "key": key, "libelle": (t.libelle if t else key),
+                "params": params, "subject": mail.sujet, "html": mail.html,
+                "texte": mail.texte, "source": "rendu local (mails_contenu)"}
     except Exception as exc:  # noqa: BLE001 — l'aperçu n'échoue jamais en dur
-        log.warning("Brevo apercu %s injoignable : %s", key, exc)
-        return {**base, "raison": f"Brevo injoignable ({type(exc).__name__})."}
+        log.warning("apercu rendu local %s : %s", key, exc)
+        return {**base, "raison": f"Rendu local indisponible ({type(exc).__name__})."}
 
 
 def envoyer_template(to: str, key: str, params: dict | None = None) -> dict:

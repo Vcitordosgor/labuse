@@ -1,0 +1,1026 @@
+idu,famille,fait,source,valeur
+97401000AS0869,A_constructible_commune,surface_dessin_m2,FICHE,1764.4
+97401000AS0869,A_constructible_commune,surface_cadastre_m2,FICHE,1778
+97401000AS0869,A_constructible_commune,surface_m2,ORACLE(ST_Area),1764.4
+97401000AS0869,A_constructible_commune,zone_fam,FICHE,U
+97401000AS0869,A_constructible_commune,zone_lib,FICHE,Uc
+97401000AS0869,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97401000AS0869,A_constructible_commune,constructible,FICHE,True
+97401000AS0869,A_constructible_commune,constructible_motif,FICHE,≈ 950 m² encore constructibles
+97401000AS0869,A_constructible_commune,sdp_restante_m2,FICHE,950
+97401000AS0869,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),10
+97401000AS0869,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),10.3
+97401000AS0869,A_constructible_commune,hauteur_faitage_m,FICHE,6.0
+97401000AS0869,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/moyen/100%; PPR — zone bleue/None/100%
+97401000AS0869,A_constructible_commune,aleas_fort,ORACLE,
+97401000AS0869,A_constructible_commune,score_tier,FICHE,sans_signal
+97401000AS0869,A_constructible_commune,score_label,FICHE,Sans signal
+97401000AS0869,A_constructible_commune,score_declasse,FICHE,False
+97401000AS0869,A_constructible_commune,prix_m2_terrain_secteur,FICHE,293
+97401000AS0869,A_constructible_commune,n_ventes_terrain_secteur,FICHE,14
+97401000AS0869,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97401000AS0869,A_constructible_commune,estimation_terrain_eur,FICHE,520954
+97401000AS0869,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97401000AS0869,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97401000AS0869,A_constructible_commune,dpu,FICHE,non_determinee
+97401000AS0869,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97401000AS0869,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97401_PLU_20241206', 'horizon': '2024-12-06', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2024-12-06 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2024-12-06', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97401000AS0869,A_constructible_commune,pente_moy_pct,ORACLE,29.6
+97401000AS1256,B5_copropriete,surface_dessin_m2,FICHE,971.5
+97401000AS1256,B5_copropriete,surface_cadastre_m2,FICHE,962
+97401000AS1256,B5_copropriete,surface_m2,ORACLE(ST_Area),971.5
+97401000AS1256,B5_copropriete,zone_fam,FICHE,U
+97401000AS1256,B5_copropriete,zone_lib,FICHE,Ua
+97401000AS1256,B5_copropriete,zone_parts,ORACLE,U=100.0%
+97401000AS1256,B5_copropriete,constructible,FICHE,True
+97401000AS1256,B5_copropriete,constructible_motif,FICHE,≈ 608 m² encore constructibles
+97401000AS1256,B5_copropriete,sdp_restante_m2,FICHE,608
+97401000AS1256,B5_copropriete,emprise_batie_m2,FICHE(le_bien),350
+97401000AS1256,B5_copropriete,emprise_batie_m2,ORACLE(BDTOPO union),350.1
+97401000AS1256,B5_copropriete,hauteur_faitage_m,FICHE,10.5
+97401000AS1256,B5_copropriete,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97401000AS1256,B5_copropriete,aleas_fort,ORACLE,
+97401000AS1256,B5_copropriete,score_tier,FICHE,a_suivre
+97401000AS1256,B5_copropriete,score_label,FICHE,À suivre
+97401000AS1256,B5_copropriete,score_declasse,FICHE,True
+97401000AS1256,B5_copropriete,prix_m2_terrain_secteur,FICHE,293
+97401000AS1256,B5_copropriete,n_ventes_terrain_secteur,FICHE,14
+97401000AS1256,B5_copropriete,prix_fenetre,FICHE,2021-2025
+97401000AS1256,B5_copropriete,estimation_terrain_eur,FICHE,281866
+97401000AS1256,B5_copropriete,derniere_vente,FICHE,2025-10-30
+97401000AS1256,B5_copropriete,derniere_vente,ORACLE,2025-10-30
+97401000AS1256,B5_copropriete,dpu,FICHE,non_determinee
+97401000AS1256,B5_copropriete,taxe_taux_communal_pct,FICHE,5.0
+97401000AS1256,B5_copropriete,plu_fraicheur,FICHE,"{'idurba': '97401_PLU_20241206', 'horizon': '2024-12-06', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2024-12-06 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2024-12-06', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97401000AS1256,B5_copropriete,pente_moy_pct,ORACLE,20.8
+97402000AH1301,A_constructible_commune,surface_dessin_m2,FICHE,128.3
+97402000AH1301,A_constructible_commune,surface_cadastre_m2,FICHE,119
+97402000AH1301,A_constructible_commune,surface_m2,ORACLE(ST_Area),128.3
+97402000AH1301,A_constructible_commune,zone_fam,FICHE,U
+97402000AH1301,A_constructible_commune,zone_lib,FICHE,Ua
+97402000AH1301,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97402000AH1301,A_constructible_commune,constructible,FICHE,False
+97402000AH1301,A_constructible_commune,constructible_motif,FICHE,Terrain trop exigu pour un projet
+97402000AH1301,A_constructible_commune,sdp_restante_m2,FICHE,0
+97402000AH1301,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),36
+97402000AH1301,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),36.3
+97402000AH1301,A_constructible_commune,emprise_batie_m2,SCORE_MOTIF,91.0
+97402000AH1301,A_constructible_commune,hauteur_faitage_m,FICHE,12.9
+97402000AH1301,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97402000AH1301,A_constructible_commune,aleas_fort,ORACLE,
+97402000AH1301,A_constructible_commune,score_tier,FICHE,sans_signal
+97402000AH1301,A_constructible_commune,score_label,FICHE,Sans signal
+97402000AH1301,A_constructible_commune,score_declasse,FICHE,True
+97402000AH1301,A_constructible_commune,prix_m2_terrain_secteur,FICHE,208
+97402000AH1301,A_constructible_commune,n_ventes_terrain_secteur,FICHE,13
+97402000AH1301,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97402000AH1301,A_constructible_commune,estimation_terrain_eur,FICHE,24752
+97402000AH1301,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97402000AH1301,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97402000AH1301,A_constructible_commune,dpu,FICHE,non_determinee
+97402000AH1301,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97402000AH1301,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97402_PLU_20260428', 'horizon': '2026-04-28', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2026-04-28 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2026-04-28', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97402000AH1301,A_constructible_commune,pente_moy_pct,ORACLE,3.6
+97403000AR1517,A_constructible_commune,surface_dessin_m2,FICHE,734.3
+97403000AR1517,A_constructible_commune,surface_cadastre_m2,FICHE,733
+97403000AR1517,A_constructible_commune,surface_m2,ORACLE(ST_Area),734.3
+97403000AR1517,A_constructible_commune,zone_fam,FICHE,U
+97403000AR1517,A_constructible_commune,zone_lib,FICHE,Ua
+97403000AR1517,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97403000AR1517,A_constructible_commune,constructible,FICHE,True
+97403000AR1517,A_constructible_commune,constructible_motif,FICHE,≈ 309 m² encore constructibles
+97403000AR1517,A_constructible_commune,sdp_restante_m2,FICHE,309
+97403000AR1517,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),23
+97403000AR1517,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),22.7
+97403000AR1517,A_constructible_commune,hauteur_faitage_m,FICHE,
+97403000AR1517,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/moyen/51%; Aléa mouvement_terrain/faible/49%; PPR — zone bleue/None/51%
+97403000AR1517,A_constructible_commune,aleas_fort,ORACLE,
+97403000AR1517,A_constructible_commune,score_tier,FICHE,sans_signal
+97403000AR1517,A_constructible_commune,score_label,FICHE,Sans signal
+97403000AR1517,A_constructible_commune,score_declasse,FICHE,False
+97403000AR1517,A_constructible_commune,prix_m2_terrain_secteur,FICHE,181
+97403000AR1517,A_constructible_commune,n_ventes_terrain_secteur,FICHE,21
+97403000AR1517,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97403000AR1517,A_constructible_commune,estimation_terrain_eur,FICHE,132673
+97403000AR1517,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97403000AR1517,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97403000AR1517,A_constructible_commune,dpu,FICHE,non_determinee
+97403000AR1517,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97403000AR1517,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97403_plu_20240924', 'horizon': '2024-09-24', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2024-09-24 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2024-09-24', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97403000AR1517,A_constructible_commune,pente_moy_pct,ORACLE,17.7
+97404000AM0838,B4_grande_zone_urbaine,surface_dessin_m2,FICHE,20798.0
+97404000AM0838,B4_grande_zone_urbaine,surface_cadastre_m2,FICHE,20336
+97404000AM0838,B4_grande_zone_urbaine,surface_m2,ORACLE(ST_Area),20798.0
+97404000AM0838,B4_grande_zone_urbaine,zone_fam,FICHE,U
+97404000AM0838,B4_grande_zone_urbaine,zone_lib,FICHE,UE
+97404000AM0838,B4_grande_zone_urbaine,zone_parts,ORACLE,U=100.0%
+97404000AM0838,B4_grande_zone_urbaine,constructible,FICHE,False
+97404000AM0838,B4_grande_zone_urbaine,constructible_motif,FICHE,Habitat interdit dans cette zone
+97404000AM0838,B4_grande_zone_urbaine,sdp_restante_m2,FICHE,0
+97404000AM0838,B4_grande_zone_urbaine,emprise_batie_m2,FICHE(le_bien),1252
+97404000AM0838,B4_grande_zone_urbaine,emprise_batie_m2,ORACLE(BDTOPO union),1252.0
+97404000AM0838,B4_grande_zone_urbaine,hauteur_faitage_m,FICHE,13.0
+97404000AM0838,B4_grande_zone_urbaine,aleas,FICHE,PPR — zone rouge/None/43%; Aléa inondation/fort/43%; Aléa inondation/moyen/56%; Aléa mouvement_terrain/moyen/43%; Aléa mouvement_terrain/faible/57%; PPR — zone bleue/None/56%
+97404000AM0838,B4_grande_zone_urbaine,aleas_fort,ORACLE,inondation=43.4%
+97404000AM0838,B4_grande_zone_urbaine,score_tier,FICHE,ecartee
+97404000AM0838,B4_grande_zone_urbaine,score_label,FICHE,Écartée
+97404000AM0838,B4_grande_zone_urbaine,score_declasse,FICHE,False
+97404000AM0838,B4_grande_zone_urbaine,prix_m2_terrain_secteur,FICHE,236
+97404000AM0838,B4_grande_zone_urbaine,n_ventes_terrain_secteur,FICHE,28
+97404000AM0838,B4_grande_zone_urbaine,prix_fenetre,FICHE,2021-2025
+97404000AM0838,B4_grande_zone_urbaine,estimation_terrain_eur,FICHE,4799296
+97404000AM0838,B4_grande_zone_urbaine,derniere_vente,FICHE,(aucune)
+97404000AM0838,B4_grande_zone_urbaine,derniere_vente,ORACLE,(aucune)
+97404000AM0838,B4_grande_zone_urbaine,dpu,FICHE,non_determinee
+97404000AM0838,B4_grande_zone_urbaine,taxe_taux_communal_pct,FICHE,5.0
+97404000AM0838,B4_grande_zone_urbaine,plu_fraicheur,FICHE,"{'idurba': '97404_PLU_20250917', 'horizon': '2025-09-17', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2025-09-17 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2025-09-17', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97404000AM0838,B4_grande_zone_urbaine,pente_moy_pct,ORACLE,1.0
+97404000AP0024,A_constructible_commune,surface_dessin_m2,FICHE,640.4
+97404000AP0024,A_constructible_commune,surface_cadastre_m2,FICHE,642
+97404000AP0024,A_constructible_commune,surface_m2,ORACLE(ST_Area),640.4
+97404000AP0024,A_constructible_commune,zone_fam,FICHE,U
+97404000AP0024,A_constructible_commune,zone_lib,FICHE,UBv
+97404000AP0024,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97404000AP0024,A_constructible_commune,constructible,FICHE,True
+97404000AP0024,A_constructible_commune,constructible_motif,FICHE,Rien à bâtir — parcelle déjà construite au maximum
+97404000AP0024,A_constructible_commune,sdp_restante_m2,FICHE,0
+97404000AP0024,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),292
+97404000AP0024,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),292.2
+97404000AP0024,A_constructible_commune,emprise_batie_m2,SCORE_MOTIF,298.0
+97404000AP0024,A_constructible_commune,hauteur_faitage_m,FICHE,7.4
+97404000AP0024,A_constructible_commune,aleas,FICHE,
+97404000AP0024,A_constructible_commune,aleas_fort,ORACLE,
+97404000AP0024,A_constructible_commune,score_tier,FICHE,sans_signal
+97404000AP0024,A_constructible_commune,score_label,FICHE,Sans signal
+97404000AP0024,A_constructible_commune,score_declasse,FICHE,True
+97404000AP0024,A_constructible_commune,estimation_terrain_eur,FICHE,
+97404000AP0024,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97404000AP0024,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97404000AP0024,A_constructible_commune,dpu,FICHE,non_determinee
+97404000AP0024,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97404000AP0024,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97404_PLU_20250917', 'horizon': '2025-09-17', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2025-09-17 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2025-09-17', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97404000AP0024,A_constructible_commune,pente_moy_pct,ORACLE,5.3
+97404000AY0153,B3_zone_rouge_partielle,surface_dessin_m2,FICHE,256.1
+97404000AY0153,B3_zone_rouge_partielle,surface_cadastre_m2,FICHE,262
+97404000AY0153,B3_zone_rouge_partielle,surface_m2,ORACLE(ST_Area),256.1
+97404000AY0153,B3_zone_rouge_partielle,zone_fam,FICHE,U
+97404000AY0153,B3_zone_rouge_partielle,zone_lib,FICHE,UA
+97404000AY0153,B3_zone_rouge_partielle,zone_parts,ORACLE,U=100.0%
+97404000AY0153,B3_zone_rouge_partielle,constructible,FICHE,True
+97404000AY0153,B3_zone_rouge_partielle,constructible_motif,FICHE,Rien à bâtir — parcelle déjà construite au maximum
+97404000AY0153,B3_zone_rouge_partielle,sdp_restante_m2,FICHE,0
+97404000AY0153,B3_zone_rouge_partielle,emprise_batie_m2,FICHE(le_bien),70
+97404000AY0153,B3_zone_rouge_partielle,emprise_batie_m2,ORACLE(BDTOPO union),69.8
+97404000AY0153,B3_zone_rouge_partielle,emprise_batie_m2,SCORE_MOTIF,114.0
+97404000AY0153,B3_zone_rouge_partielle,hauteur_faitage_m,FICHE,8.7
+97404000AY0153,B3_zone_rouge_partielle,aleas,FICHE,PPR — zone rouge/None/41%; Aléa inondation/fort/41%; Aléa inondation/moyen/59%; Aléa mouvement_terrain/faible/100%; PPR — zone bleue/None/59%
+97404000AY0153,B3_zone_rouge_partielle,aleas_fort,ORACLE,inondation=40.5%
+97404000AY0153,B3_zone_rouge_partielle,score_tier,FICHE,sans_signal
+97404000AY0153,B3_zone_rouge_partielle,score_label,FICHE,Sans signal
+97404000AY0153,B3_zone_rouge_partielle,score_declasse,FICHE,True
+97404000AY0153,B3_zone_rouge_partielle,prix_m2_terrain_secteur,FICHE,459
+97404000AY0153,B3_zone_rouge_partielle,n_ventes_terrain_secteur,FICHE,3
+97404000AY0153,B3_zone_rouge_partielle,prix_fenetre,FICHE,2021-2025
+97404000AY0153,B3_zone_rouge_partielle,estimation_terrain_eur,FICHE,120258
+97404000AY0153,B3_zone_rouge_partielle,derniere_vente,FICHE,(aucune)
+97404000AY0153,B3_zone_rouge_partielle,derniere_vente,ORACLE,(aucune)
+97404000AY0153,B3_zone_rouge_partielle,dpu,FICHE,non_determinee
+97404000AY0153,B3_zone_rouge_partielle,taxe_taux_communal_pct,FICHE,5.0
+97404000AY0153,B3_zone_rouge_partielle,plu_fraicheur,FICHE,"{'idurba': '97404_PLU_20250917', 'horizon': '2025-09-17', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2025-09-17 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2025-09-17', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97404000AY0153,B3_zone_rouge_partielle,pente_moy_pct,ORACLE,3.4
+97405000AZ0993,A_constructible_commune,surface_dessin_m2,FICHE,10.9
+97405000AZ0993,A_constructible_commune,surface_cadastre_m2,FICHE,11
+97405000AZ0993,A_constructible_commune,surface_m2,ORACLE(ST_Area),10.9
+97405000AZ0993,A_constructible_commune,zone_fam,FICHE,U
+97405000AZ0993,A_constructible_commune,zone_lib,FICHE,UD
+97405000AZ0993,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97405000AZ0993,A_constructible_commune,constructible,FICHE,False
+97405000AZ0993,A_constructible_commune,constructible_motif,FICHE,Terrain trop exigu pour un projet
+97405000AZ0993,A_constructible_commune,sdp_restante_m2,FICHE,0
+97405000AZ0993,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),3
+97405000AZ0993,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),3.0
+97405000AZ0993,A_constructible_commune,hauteur_faitage_m,FICHE,
+97405000AZ0993,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97405000AZ0993,A_constructible_commune,aleas_fort,ORACLE,
+97405000AZ0993,A_constructible_commune,score_tier,FICHE,ecartee
+97405000AZ0993,A_constructible_commune,score_label,FICHE,Écartée
+97405000AZ0993,A_constructible_commune,score_declasse,FICHE,False
+97405000AZ0993,A_constructible_commune,prix_m2_terrain_secteur,FICHE,327
+97405000AZ0993,A_constructible_commune,n_ventes_terrain_secteur,FICHE,9
+97405000AZ0993,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97405000AZ0993,A_constructible_commune,estimation_terrain_eur,FICHE,3597
+97405000AZ0993,A_constructible_commune,derniere_vente,FICHE,2021-11-17
+97405000AZ0993,A_constructible_commune,derniere_vente,ORACLE,2021-11-17
+97405000AZ0993,A_constructible_commune,dpu,FICHE,non_determinee
+97405000AZ0993,A_constructible_commune,taxe_taux_communal_pct,FICHE,3.5
+97405000AZ0993,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97405_PLU_20230609', 'horizon': '2023-06-09', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2023-06-09 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2023-06-09', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97405000AZ0993,A_constructible_commune,pente_moy_pct,ORACLE,19.3
+97406000AM0811,A_constructible_commune,surface_dessin_m2,FICHE,932.1
+97406000AM0811,A_constructible_commune,surface_cadastre_m2,FICHE,928
+97406000AM0811,A_constructible_commune,surface_m2,ORACLE(ST_Area),932.1
+97406000AM0811,A_constructible_commune,zone_fam,FICHE,U
+97406000AM0811,A_constructible_commune,zone_lib,FICHE,Uc
+97406000AM0811,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97406000AM0811,A_constructible_commune,constructible,FICHE,True
+97406000AM0811,A_constructible_commune,constructible_motif,FICHE,≈ 109 m² encore constructibles
+97406000AM0811,A_constructible_commune,sdp_restante_m2,FICHE,109
+97406000AM0811,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),119
+97406000AM0811,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),119.0
+97406000AM0811,A_constructible_commune,hauteur_faitage_m,FICHE,7.3
+97406000AM0811,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/fort/11%; Aléa inondation/moyen/1%; Aléa mouvement_terrain/moyen/26%; Aléa mouvement_terrain/faible/62%; PPR — zone bleue/None/100%
+97406000AM0811,A_constructible_commune,aleas_fort,ORACLE,mouvement_terrain=11.2%
+97406000AM0811,A_constructible_commune,score_tier,FICHE,sans_signal
+97406000AM0811,A_constructible_commune,score_label,FICHE,Sans signal
+97406000AM0811,A_constructible_commune,score_declasse,FICHE,True
+97406000AM0811,A_constructible_commune,prix_m2_terrain_secteur,FICHE,129
+97406000AM0811,A_constructible_commune,n_ventes_terrain_secteur,FICHE,30
+97406000AM0811,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97406000AM0811,A_constructible_commune,estimation_terrain_eur,FICHE,119712
+97406000AM0811,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97406000AM0811,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97406000AM0811,A_constructible_commune,dpu,FICHE,non_determinee
+97406000AM0811,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97406000AM0811,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97406_PLU_20230527', 'horizon': '2023-05-27', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2023-05-27 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2023-05-27', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97406000AM0811,A_constructible_commune,pente_moy_pct,ORACLE,7.3
+97407000AI0933,A_constructible_commune,surface_dessin_m2,FICHE,68.1
+97407000AI0933,A_constructible_commune,surface_cadastre_m2,FICHE,75
+97407000AI0933,A_constructible_commune,surface_m2,ORACLE(ST_Area),68.1
+97407000AI0933,A_constructible_commune,zone_fam,FICHE,U
+97407000AI0933,A_constructible_commune,zone_lib,FICHE,Uc
+97407000AI0933,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97407000AI0933,A_constructible_commune,constructible,FICHE,False
+97407000AI0933,A_constructible_commune,constructible_motif,FICHE,Terrain trop exigu pour un projet
+97407000AI0933,A_constructible_commune,sdp_restante_m2,FICHE,0
+97407000AI0933,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),0
+97407000AI0933,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),0.0
+97407000AI0933,A_constructible_commune,hauteur_faitage_m,FICHE,
+97407000AI0933,A_constructible_commune,aleas,FICHE,
+97407000AI0933,A_constructible_commune,aleas_fort,ORACLE,
+97407000AI0933,A_constructible_commune,score_tier,FICHE,sans_signal
+97407000AI0933,A_constructible_commune,score_label,FICHE,Sans signal
+97407000AI0933,A_constructible_commune,score_declasse,FICHE,True
+97407000AI0933,A_constructible_commune,prix_m2_terrain_secteur,FICHE,296
+97407000AI0933,A_constructible_commune,n_ventes_terrain_secteur,FICHE,8
+97407000AI0933,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97407000AI0933,A_constructible_commune,estimation_terrain_eur,FICHE,22200
+97407000AI0933,A_constructible_commune,derniere_vente,FICHE,2024-10-21
+97407000AI0933,A_constructible_commune,derniere_vente,ORACLE,2024-10-21
+97407000AI0933,A_constructible_commune,dpu,FICHE,non_determinee
+97407000AI0933,A_constructible_commune,taxe_taux_communal_pct,FICHE,3.0
+97407000AI0933,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97407_PLU_20241209', 'horizon': '2024-12-09', 'statut': 'annule_partiel', 'libelle': ""PLU approuvé le 2024-12-09 — Document opposable servi — l'annulation partielle ne touche pas le zonage servi."", 'note': 'annulation limitée au secteur Uppp/Up2 (concession portuaire) — TA 1900330 + CAA 22BX01470 ; zones AU/N/U résidentielles intactes', 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2024-12-09', 'fait_foi': ""Document opposable servi — l'annulation partielle ne touche pas le zonage servi."", 'en_cours': 'Annulation contentieuse limitée, hors zonage servi (détail en note).', 'action': ""Pour le secteur visé par l'annulation, vérifier le règlement en mairie."", 'fait_foi_ok': True}"
+97407000AI0933,A_constructible_commune,pente_moy_pct,ORACLE,2.7
+97408000AV0078,B4_grande_zone_urbaine,surface_dessin_m2,FICHE,20376.0
+97408000AV0078,B4_grande_zone_urbaine,surface_cadastre_m2,FICHE,20300
+97408000AV0078,B4_grande_zone_urbaine,surface_m2,ORACLE(ST_Area),20376.0
+97408000AV0078,B4_grande_zone_urbaine,zone_fam,FICHE,U
+97408000AV0078,B4_grande_zone_urbaine,zone_lib,FICHE,UBb
+97408000AV0078,B4_grande_zone_urbaine,zone_parts,ORACLE,A=26.6% N=8.6% U=64.8%
+97408000AV0078,B4_grande_zone_urbaine,constructible,FICHE,True
+97408000AV0078,B4_grande_zone_urbaine,constructible_motif,FICHE,≈ 1 251 m² encore constructibles
+97408000AV0078,B4_grande_zone_urbaine,sdp_restante_m2,FICHE,1251
+97408000AV0078,B4_grande_zone_urbaine,emprise_batie_m2,FICHE(le_bien),2638
+97408000AV0078,B4_grande_zone_urbaine,emprise_batie_m2,ORACLE(BDTOPO union),2638.2
+97408000AV0078,B4_grande_zone_urbaine,hauteur_faitage_m,FICHE,4.8
+97408000AV0078,B4_grande_zone_urbaine,aleas,FICHE,PPR — zone rouge/None/64%; Aléa mouvement_terrain/fort/56%; Aléa mouvement_terrain/moyen/15%; Aléa mouvement_terrain/faible/30%; PPR — zone bleue/None/7%
+97408000AV0078,B4_grande_zone_urbaine,aleas_fort,ORACLE,mouvement_terrain=55.5%
+97408000AV0078,B4_grande_zone_urbaine,score_tier,FICHE,ecartee
+97408000AV0078,B4_grande_zone_urbaine,score_label,FICHE,Écartée
+97408000AV0078,B4_grande_zone_urbaine,score_declasse,FICHE,False
+97408000AV0078,B4_grande_zone_urbaine,prix_m2_terrain_secteur,FICHE,391
+97408000AV0078,B4_grande_zone_urbaine,n_ventes_terrain_secteur,FICHE,32
+97408000AV0078,B4_grande_zone_urbaine,prix_fenetre,FICHE,2021-2025
+97408000AV0078,B4_grande_zone_urbaine,estimation_terrain_eur,FICHE,7937300
+97408000AV0078,B4_grande_zone_urbaine,derniere_vente,FICHE,(aucune)
+97408000AV0078,B4_grande_zone_urbaine,derniere_vente,ORACLE,(aucune)
+97408000AV0078,B4_grande_zone_urbaine,dpu,FICHE,non_determinee
+97408000AV0078,B4_grande_zone_urbaine,taxe_taux_communal_pct,FICHE,5.0
+97408000AV0078,B4_grande_zone_urbaine,plu_fraicheur,FICHE,"{'idurba': '97408_PLU_20251217', 'horizon': '2025-12-17', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2025-12-17 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2025-12-17', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97408000AV0078,B4_grande_zone_urbaine,pente_moy_pct,ORACLE,65.3
+97408000BO0279,A_constructible_commune,surface_dessin_m2,FICHE,19.0
+97408000BO0279,A_constructible_commune,surface_cadastre_m2,FICHE,19
+97408000BO0279,A_constructible_commune,surface_m2,ORACLE(ST_Area),19.0
+97408000BO0279,A_constructible_commune,zone_fam,FICHE,U
+97408000BO0279,A_constructible_commune,zone_lib,FICHE,UAv
+97408000BO0279,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97408000BO0279,A_constructible_commune,constructible,FICHE,False
+97408000BO0279,A_constructible_commune,constructible_motif,FICHE,Terrain trop exigu pour un projet
+97408000BO0279,A_constructible_commune,sdp_restante_m2,FICHE,0
+97408000BO0279,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),0
+97408000BO0279,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),0.0
+97408000BO0279,A_constructible_commune,hauteur_faitage_m,FICHE,
+97408000BO0279,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97408000BO0279,A_constructible_commune,aleas_fort,ORACLE,
+97408000BO0279,A_constructible_commune,score_tier,FICHE,ecartee
+97408000BO0279,A_constructible_commune,score_label,FICHE,Écartée
+97408000BO0279,A_constructible_commune,score_declasse,FICHE,False
+97408000BO0279,A_constructible_commune,prix_m2_terrain_secteur,FICHE,473
+97408000BO0279,A_constructible_commune,n_ventes_terrain_secteur,FICHE,29
+97408000BO0279,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97408000BO0279,A_constructible_commune,estimation_terrain_eur,FICHE,8987
+97408000BO0279,A_constructible_commune,derniere_vente,FICHE,2023-12-29
+97408000BO0279,A_constructible_commune,derniere_vente,ORACLE,2023-12-29
+97408000BO0279,A_constructible_commune,dpu,FICHE,non_determinee
+97408000BO0279,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97408000BO0279,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97408_PLU_20251217', 'horizon': '2025-12-17', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2025-12-17 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2025-12-17', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97408000BO0279,A_constructible_commune,pente_moy_pct,ORACLE,12.1
+97409000AR0736,A_constructible_commune,surface_dessin_m2,FICHE,851.8
+97409000AR0736,A_constructible_commune,surface_cadastre_m2,FICHE,807
+97409000AR0736,A_constructible_commune,surface_m2,ORACLE(ST_Area),851.8
+97409000AR0736,A_constructible_commune,zone_fam,FICHE,U
+97409000AR0736,A_constructible_commune,zone_lib,FICHE,UB
+97409000AR0736,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97409000AR0736,A_constructible_commune,constructible,FICHE,True
+97409000AR0736,A_constructible_commune,constructible_motif,FICHE,≈ 600 m² encore constructibles
+97409000AR0736,A_constructible_commune,sdp_restante_m2,FICHE,600
+97409000AR0736,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),150
+97409000AR0736,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),150.4
+97409000AR0736,A_constructible_commune,hauteur_faitage_m,FICHE,7.0
+97409000AR0736,A_constructible_commune,aleas,FICHE,Aléa inondation/moyen/100%; Aléa mouvement_terrain/faible/100%; PPR — zone bleue/None/100%
+97409000AR0736,A_constructible_commune,aleas_fort,ORACLE,
+97409000AR0736,A_constructible_commune,score_tier,FICHE,sans_signal
+97409000AR0736,A_constructible_commune,score_label,FICHE,Sans signal
+97409000AR0736,A_constructible_commune,score_declasse,FICHE,True
+97409000AR0736,A_constructible_commune,prix_m2_terrain_secteur,FICHE,258
+97409000AR0736,A_constructible_commune,n_ventes_terrain_secteur,FICHE,39
+97409000AR0736,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97409000AR0736,A_constructible_commune,estimation_terrain_eur,FICHE,208206
+97409000AR0736,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97409000AR0736,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97409000AR0736,A_constructible_commune,dpu,FICHE,non_determinee
+97409000AR0736,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97409000AR0736,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97409_20190228', 'horizon': '2019-02-28', 'statut': 'opposabilite_en_attente', 'libelle': 'PLU approuvé le 2019-02-28 (opposable en mairie ; publication au GPU à vérifier) — Document opposable en mairie — il fait foi à ce jour.', 'note': ""PLU retiré du Géoportail de l'urbanisme : LABUSE sert les règles du dernier état connu (voir §Urbanisme). La mention « présent au GPU » n'est plus d'actualité."", 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2019-02-28 (opposable en mairie ; publication au GPU à vérifier)', 'fait_foi': 'Document opposable en mairie — il fait foi à ce jour.', 'en_cours': 'révision générale du PLU, prescrite le 2022-06-22 (Sourcé Sudocuh 31/12/2024 (prescription), constaté le 2026-08-06)', 'action': 'Vérifier en mairie le document opposable et le calendrier de révision avant engagement.', 'fait_foi_ok': True}"
+97409000AR0736,A_constructible_commune,pente_moy_pct,ORACLE,3.6
+97410000BK0251,A_constructible_commune,surface_dessin_m2,FICHE,269.5
+97410000BK0251,A_constructible_commune,surface_cadastre_m2,FICHE,243
+97410000BK0251,A_constructible_commune,surface_m2,ORACLE(ST_Area),269.5
+97410000BK0251,A_constructible_commune,zone_fam,FICHE,U
+97410000BK0251,A_constructible_commune,zone_lib,FICHE,Ub
+97410000BK0251,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97410000BK0251,A_constructible_commune,constructible,FICHE,True
+97410000BK0251,A_constructible_commune,constructible_motif,FICHE,≈ 110 m² encore constructibles
+97410000BK0251,A_constructible_commune,sdp_restante_m2,FICHE,110
+97410000BK0251,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),177
+97410000BK0251,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),177.4
+97410000BK0251,A_constructible_commune,hauteur_faitage_m,FICHE,7.1
+97410000BK0251,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97410000BK0251,A_constructible_commune,aleas_fort,ORACLE,
+97410000BK0251,A_constructible_commune,score_tier,FICHE,sans_signal
+97410000BK0251,A_constructible_commune,score_label,FICHE,Sans signal
+97410000BK0251,A_constructible_commune,score_declasse,FICHE,True
+97410000BK0251,A_constructible_commune,prix_m2_terrain_secteur,FICHE,191
+97410000BK0251,A_constructible_commune,n_ventes_terrain_secteur,FICHE,12
+97410000BK0251,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97410000BK0251,A_constructible_commune,estimation_terrain_eur,FICHE,46413
+97410000BK0251,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97410000BK0251,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97410000BK0251,A_constructible_commune,dpu,FICHE,non_determinee
+97410000BK0251,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97410000BK0251,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97410_PLU_20200206', 'horizon': '2020-02-06', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2020-02-06 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': ""PLU 2020 opposable servi et présent au GPU (idurba 97410_PLU_20200206). D'éventuelles modifications approuvées postérieurement (n°2/n°3 évoquées) ne seraient PAS intégrées au GPU — à confirmer en mairie (hors open-data). [M40 : modifs non vérifiables sur pièces — incertitude consignée, non fabriquée.]"", 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2020-02-06', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97410000BK0251,A_constructible_commune,pente_moy_pct,ORACLE,8.9
+97411000BC0287,A_constructible_commune,surface_dessin_m2,FICHE,223.6
+97411000BC0287,A_constructible_commune,surface_cadastre_m2,FICHE,221
+97411000BC0287,A_constructible_commune,surface_m2,ORACLE(ST_Area),223.6
+97411000BC0287,A_constructible_commune,zone_fam,FICHE,U
+97411000BC0287,A_constructible_commune,zone_lib,FICHE,Ud
+97411000BC0287,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97411000BC0287,A_constructible_commune,constructible,FICHE,True
+97411000BC0287,A_constructible_commune,constructible_motif,FICHE,≈ 42 m² encore constructibles
+97411000BC0287,A_constructible_commune,sdp_restante_m2,FICHE,42
+97411000BC0287,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),2
+97411000BC0287,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),2.3
+97411000BC0287,A_constructible_commune,hauteur_faitage_m,FICHE,
+97411000BC0287,A_constructible_commune,aleas,FICHE,Aléa inondation/moyen/2%
+97411000BC0287,A_constructible_commune,aleas_fort,ORACLE,
+97411000BC0287,A_constructible_commune,score_tier,FICHE,sans_signal
+97411000BC0287,A_constructible_commune,score_label,FICHE,Sans signal
+97411000BC0287,A_constructible_commune,score_declasse,FICHE,False
+97411000BC0287,A_constructible_commune,prix_m2_terrain_secteur,FICHE,455
+97411000BC0287,A_constructible_commune,n_ventes_terrain_secteur,FICHE,5
+97411000BC0287,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97411000BC0287,A_constructible_commune,estimation_terrain_eur,FICHE,100555
+97411000BC0287,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97411000BC0287,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97411000BC0287,A_constructible_commune,dpu,FICHE,servi
+97411000BC0287,A_constructible_commune,taxe_taux_communal_pct,FICHE,3.0
+97411000BC0287,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97411_PLU_20260805', 'horizon': '2026-08-05', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2026-08-05 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2026-08-05', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97411000BC0287,A_constructible_commune,pente_moy_pct,ORACLE,5.0
+97411000IS0448,B2_a_cheval,surface_dessin_m2,FICHE,818.1
+97411000IS0448,B2_a_cheval,surface_cadastre_m2,FICHE,959
+97411000IS0448,B2_a_cheval,surface_m2,ORACLE(ST_Area),818.1
+97411000IS0448,B2_a_cheval,zone_fam,FICHE,U
+97411000IS0448,B2_a_cheval,zone_lib,FICHE,Uh
+97411000IS0448,B2_a_cheval,zone_parts,ORACLE,N=34.4% U=65.6%
+97411000IS0448,B2_a_cheval,constructible,FICHE,True
+97411000IS0448,B2_a_cheval,constructible_motif,FICHE,Rien à bâtir — parcelle déjà construite au maximum
+97411000IS0448,B2_a_cheval,sdp_restante_m2,FICHE,0
+97411000IS0448,B2_a_cheval,emprise_batie_m2,FICHE(le_bien),128
+97411000IS0448,B2_a_cheval,emprise_batie_m2,ORACLE(BDTOPO union),127.8
+97411000IS0448,B2_a_cheval,hauteur_faitage_m,FICHE,5.7
+97411000IS0448,B2_a_cheval,aleas,FICHE,PPR — zone rouge/None/34%; Aléa inondation/fort/5%; PPR — zone bleue/None/66%
+97411000IS0448,B2_a_cheval,aleas_fort,ORACLE,inondation=4.6%
+97411000IS0448,B2_a_cheval,score_tier,FICHE,sans_signal
+97411000IS0448,B2_a_cheval,score_label,FICHE,Sans signal
+97411000IS0448,B2_a_cheval,score_declasse,FICHE,True
+97411000IS0448,B2_a_cheval,prix_m2_terrain_secteur,FICHE,500
+97411000IS0448,B2_a_cheval,n_ventes_terrain_secteur,FICHE,2
+97411000IS0448,B2_a_cheval,prix_fenetre,FICHE,2021-2025
+97411000IS0448,B2_a_cheval,estimation_terrain_eur,FICHE,479500
+97411000IS0448,B2_a_cheval,derniere_vente,FICHE,(aucune)
+97411000IS0448,B2_a_cheval,derniere_vente,ORACLE,(aucune)
+97411000IS0448,B2_a_cheval,dpu,FICHE,servi
+97411000IS0448,B2_a_cheval,taxe_taux_communal_pct,FICHE,3.0
+97411000IS0448,B2_a_cheval,plu_fraicheur,FICHE,"{'idurba': '97411_PLU_20260805', 'horizon': '2026-08-05', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2026-08-05 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2026-08-05', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97411000IS0448,B2_a_cheval,pente_moy_pct,ORACLE,31.7
+97412000BV0308,A_constructible_commune,surface_dessin_m2,FICHE,548.8
+97412000BV0308,A_constructible_commune,surface_cadastre_m2,FICHE,542
+97412000BV0308,A_constructible_commune,surface_m2,ORACLE(ST_Area),548.8
+97412000BV0308,A_constructible_commune,zone_fam,FICHE,U
+97412000BV0308,A_constructible_commune,zone_lib,FICHE,U2
+97412000BV0308,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97412000BV0308,A_constructible_commune,constructible,FICHE,True
+97412000BV0308,A_constructible_commune,constructible_motif,FICHE,Rien à bâtir — parcelle déjà construite au maximum
+97412000BV0308,A_constructible_commune,sdp_restante_m2,FICHE,0
+97412000BV0308,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),449
+97412000BV0308,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),449.3
+97412000BV0308,A_constructible_commune,hauteur_faitage_m,FICHE,5.6
+97412000BV0308,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97412000BV0308,A_constructible_commune,aleas_fort,ORACLE,
+97412000BV0308,A_constructible_commune,score_tier,FICHE,sans_signal
+97412000BV0308,A_constructible_commune,score_label,FICHE,Sans signal
+97412000BV0308,A_constructible_commune,score_declasse,FICHE,True
+97412000BV0308,A_constructible_commune,prix_m2_terrain_secteur,FICHE,271
+97412000BV0308,A_constructible_commune,n_ventes_terrain_secteur,FICHE,5
+97412000BV0308,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97412000BV0308,A_constructible_commune,estimation_terrain_eur,FICHE,146882
+97412000BV0308,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97412000BV0308,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97412000BV0308,A_constructible_commune,dpu,FICHE,non_determinee
+97412000BV0308,A_constructible_commune,taxe_taux_communal_pct,FICHE,3.0
+97412000BV0308,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97412_PLU_20251210', 'horizon': '2025-12-10', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2025-12-10 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2025-12-10', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97412000BV0308,A_constructible_commune,pente_moy_pct,ORACLE,8.3
+97412000CL0200,B1_agricole_naturelle,surface_dessin_m2,FICHE,1892.0
+97412000CL0200,B1_agricole_naturelle,surface_cadastre_m2,FICHE,2000
+97412000CL0200,B1_agricole_naturelle,surface_m2,ORACLE(ST_Area),1892.0
+97412000CL0200,B1_agricole_naturelle,zone_fam,FICHE,A
+97412000CL0200,B1_agricole_naturelle,zone_lib,FICHE,A
+97412000CL0200,B1_agricole_naturelle,zone_parts,ORACLE,A=100.0%
+97412000CL0200,B1_agricole_naturelle,constructible,FICHE,False
+97412000CL0200,B1_agricole_naturelle,constructible_motif,FICHE,Zone non constructible — agricole
+97412000CL0200,B1_agricole_naturelle,sdp_restante_m2,FICHE,0
+97412000CL0200,B1_agricole_naturelle,emprise_batie_m2,FICHE(le_bien),34
+97412000CL0200,B1_agricole_naturelle,emprise_batie_m2,ORACLE(BDTOPO union),33.9
+97412000CL0200,B1_agricole_naturelle,hauteur_faitage_m,FICHE,2.2
+97412000CL0200,B1_agricole_naturelle,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97412000CL0200,B1_agricole_naturelle,aleas_fort,ORACLE,
+97412000CL0200,B1_agricole_naturelle,score_tier,FICHE,ecartee
+97412000CL0200,B1_agricole_naturelle,score_label,FICHE,Écartée
+97412000CL0200,B1_agricole_naturelle,score_declasse,FICHE,False
+97412000CL0200,B1_agricole_naturelle,prix_m2_terrain_secteur,FICHE,56
+97412000CL0200,B1_agricole_naturelle,n_ventes_terrain_secteur,FICHE,3
+97412000CL0200,B1_agricole_naturelle,prix_fenetre,FICHE,2021-2025
+97412000CL0200,B1_agricole_naturelle,estimation_terrain_eur,FICHE,112000
+97412000CL0200,B1_agricole_naturelle,derniere_vente,FICHE,2020-12-31
+97412000CL0200,B1_agricole_naturelle,derniere_vente,ORACLE,(aucune)
+97412000CL0200,B1_agricole_naturelle,dpu,FICHE,non_determinee
+97412000CL0200,B1_agricole_naturelle,taxe_taux_communal_pct,FICHE,3.0
+97412000CL0200,B1_agricole_naturelle,plu_fraicheur,FICHE,"{'idurba': '97412_PLU_20251210', 'horizon': '2025-12-10', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2025-12-10 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2025-12-10', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97412000CL0200,B1_agricole_naturelle,pente_moy_pct,ORACLE,31.5
+97412000CV0446,B6_proprietaire_public,surface_dessin_m2,FICHE,566.7
+97412000CV0446,B6_proprietaire_public,surface_cadastre_m2,FICHE,551
+97412000CV0446,B6_proprietaire_public,surface_m2,ORACLE(ST_Area),566.7
+97412000CV0446,B6_proprietaire_public,zone_fam,FICHE,U
+97412000CV0446,B6_proprietaire_public,zone_lib,FICHE,U5
+97412000CV0446,B6_proprietaire_public,zone_parts,ORACLE,U=100.0%
+97412000CV0446,B6_proprietaire_public,constructible,FICHE,True
+97412000CV0446,B6_proprietaire_public,constructible_motif,FICHE,≈ 241 m² encore constructibles
+97412000CV0446,B6_proprietaire_public,sdp_restante_m2,FICHE,241
+97412000CV0446,B6_proprietaire_public,emprise_batie_m2,FICHE(le_bien),0
+97412000CV0446,B6_proprietaire_public,emprise_batie_m2,ORACLE(BDTOPO union),0.0
+97412000CV0446,B6_proprietaire_public,hauteur_faitage_m,FICHE,
+97412000CV0446,B6_proprietaire_public,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97412000CV0446,B6_proprietaire_public,aleas_fort,ORACLE,
+97412000CV0446,B6_proprietaire_public,score_tier,FICHE,sans_signal
+97412000CV0446,B6_proprietaire_public,score_label,FICHE,Sans signal
+97412000CV0446,B6_proprietaire_public,score_declasse,FICHE,False
+97412000CV0446,B6_proprietaire_public,prix_m2_terrain_secteur,FICHE,234
+97412000CV0446,B6_proprietaire_public,n_ventes_terrain_secteur,FICHE,15
+97412000CV0446,B6_proprietaire_public,prix_fenetre,FICHE,2021-2025
+97412000CV0446,B6_proprietaire_public,estimation_terrain_eur,FICHE,128934
+97412000CV0446,B6_proprietaire_public,derniere_vente,FICHE,(aucune)
+97412000CV0446,B6_proprietaire_public,derniere_vente,ORACLE,(aucune)
+97412000CV0446,B6_proprietaire_public,dpu,FICHE,non_determinee
+97412000CV0446,B6_proprietaire_public,taxe_taux_communal_pct,FICHE,3.0
+97412000CV0446,B6_proprietaire_public,plu_fraicheur,FICHE,"{'idurba': '97412_PLU_20251210', 'horizon': '2025-12-10', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2025-12-10 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2025-12-10', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97412000CV0446,B6_proprietaire_public,pente_moy_pct,ORACLE,14.4
+97413000CN0764,A_constructible_commune,surface_dessin_m2,FICHE,263.7
+97413000CN0764,A_constructible_commune,surface_cadastre_m2,FICHE,275
+97413000CN0764,A_constructible_commune,surface_m2,ORACLE(ST_Area),263.7
+97413000CN0764,A_constructible_commune,zone_fam,FICHE,U
+97413000CN0764,A_constructible_commune,zone_lib,FICHE,UB
+97413000CN0764,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97413000CN0764,A_constructible_commune,constructible,FICHE,True
+97413000CN0764,A_constructible_commune,constructible_motif,FICHE,Rien à bâtir — parcelle déjà construite au maximum
+97413000CN0764,A_constructible_commune,sdp_restante_m2,FICHE,0
+97413000CN0764,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),125
+97413000CN0764,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),124.8
+97413000CN0764,A_constructible_commune,hauteur_faitage_m,FICHE,8.0
+97413000CN0764,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97413000CN0764,A_constructible_commune,aleas_fort,ORACLE,
+97413000CN0764,A_constructible_commune,score_tier,FICHE,sans_signal
+97413000CN0764,A_constructible_commune,score_label,FICHE,Sans signal
+97413000CN0764,A_constructible_commune,score_declasse,FICHE,True
+97413000CN0764,A_constructible_commune,prix_m2_terrain_secteur,FICHE,120
+97413000CN0764,A_constructible_commune,n_ventes_terrain_secteur,FICHE,22
+97413000CN0764,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97413000CN0764,A_constructible_commune,estimation_terrain_eur,FICHE,33000
+97413000CN0764,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97413000CN0764,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97413000CN0764,A_constructible_commune,dpu,FICHE,non_determinee
+97413000CN0764,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97413000CN0764,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97413_20070226', 'horizon': '2007-02-26', 'statut': 'opposabilite_en_attente', 'libelle': 'PLU approuvé le 2007-02-26 (opposable en mairie ; publication au GPU à vérifier) — Document opposable en mairie — il fait foi à ce jour.', 'note': ""PLU retiré du Géoportail de l'urbanisme : LABUSE sert les règles du dernier état connu (voir §Urbanisme). La mention « présent au GPU » n'est plus d'actualité."", 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2007-02-26 (opposable en mairie ; publication au GPU à vérifier)', 'fait_foi': 'Document opposable en mairie — il fait foi à ce jour.', 'en_cours': 'révision générale du PLU, prescrite le 2022-05-17 (Sourcé Sudocuh 31/12/2024 (prescription), constaté le 2026-08-06)', 'action': 'Vérifier en mairie le document opposable et le calendrier de révision avant engagement.', 'fait_foi_ok': True}"
+97413000CN0764,A_constructible_commune,pente_moy_pct,ORACLE,30.2
+97414000CH0839,A_constructible_commune,surface_dessin_m2,FICHE,673.4
+97414000CH0839,A_constructible_commune,surface_cadastre_m2,FICHE,691
+97414000CH0839,A_constructible_commune,surface_m2,ORACLE(ST_Area),673.4
+97414000CH0839,A_constructible_commune,zone_fam,FICHE,U
+97414000CH0839,A_constructible_commune,zone_lib,FICHE,UD1
+97414000CH0839,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97414000CH0839,A_constructible_commune,constructible,FICHE,True
+97414000CH0839,A_constructible_commune,constructible_motif,FICHE,≈ 97 m² encore constructibles
+97414000CH0839,A_constructible_commune,sdp_restante_m2,FICHE,97
+97414000CH0839,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),156
+97414000CH0839,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),156.1
+97414000CH0839,A_constructible_commune,hauteur_faitage_m,FICHE,3.4
+97414000CH0839,A_constructible_commune,aleas,FICHE,Aléa inondation/faible/100%; Aléa mouvement_terrain/faible/100%; PPR — zone bleue/None/100%
+97414000CH0839,A_constructible_commune,aleas_fort,ORACLE,
+97414000CH0839,A_constructible_commune,score_tier,FICHE,sans_signal
+97414000CH0839,A_constructible_commune,score_label,FICHE,Sans signal
+97414000CH0839,A_constructible_commune,score_declasse,FICHE,True
+97414000CH0839,A_constructible_commune,prix_m2_terrain_secteur,FICHE,136
+97414000CH0839,A_constructible_commune,n_ventes_terrain_secteur,FICHE,34
+97414000CH0839,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97414000CH0839,A_constructible_commune,estimation_terrain_eur,FICHE,93976
+97414000CH0839,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97414000CH0839,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97414000CH0839,A_constructible_commune,dpu,FICHE,non_determinee
+97414000CH0839,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97414000CH0839,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97414_PLU_20251218', 'horizon': '2025-12-18', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2025-12-18 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': 'republication faite — EN_VIGUEUR confirmé M32 (05/08)', 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2025-12-18', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97414000CH0839,A_constructible_commune,pente_moy_pct,ORACLE,15.9
+97414000CO0153,B3_zone_rouge_partielle,surface_dessin_m2,FICHE,6669.8
+97414000CO0153,B3_zone_rouge_partielle,surface_cadastre_m2,FICHE,6860
+97414000CO0153,B3_zone_rouge_partielle,surface_m2,ORACLE(ST_Area),6669.8
+97414000CO0153,B3_zone_rouge_partielle,zone_fam,FICHE,A
+97414000CO0153,B3_zone_rouge_partielle,zone_lib,FICHE,A
+97414000CO0153,B3_zone_rouge_partielle,zone_parts,ORACLE,A=81.3% N=18.7%
+97414000CO0153,B3_zone_rouge_partielle,constructible,FICHE,False
+97414000CO0153,B3_zone_rouge_partielle,constructible_motif,FICHE,Zone non constructible — agricole
+97414000CO0153,B3_zone_rouge_partielle,sdp_restante_m2,FICHE,0
+97414000CO0153,B3_zone_rouge_partielle,emprise_batie_m2,FICHE(le_bien),94
+97414000CO0153,B3_zone_rouge_partielle,emprise_batie_m2,ORACLE(BDTOPO union),93.5
+97414000CO0153,B3_zone_rouge_partielle,hauteur_faitage_m,FICHE,2.7
+97414000CO0153,B3_zone_rouge_partielle,aleas,FICHE,PPR — zone rouge/None/19%; Aléa inondation/fort/19%; Aléa mouvement_terrain/fort/19%; Aléa mouvement_terrain/moyen/11%; Aléa mouvement_terrain/faible/70%; PPR — zone bleue/None/11%
+97414000CO0153,B3_zone_rouge_partielle,aleas_fort,ORACLE,inondation=18.7% mouvement_terrain=18.7%
+97414000CO0153,B3_zone_rouge_partielle,score_tier,FICHE,ecartee
+97414000CO0153,B3_zone_rouge_partielle,score_label,FICHE,Écartée
+97414000CO0153,B3_zone_rouge_partielle,score_declasse,FICHE,False
+97414000CO0153,B3_zone_rouge_partielle,prix_m2_terrain_secteur,FICHE,140
+97414000CO0153,B3_zone_rouge_partielle,n_ventes_terrain_secteur,FICHE,15
+97414000CO0153,B3_zone_rouge_partielle,prix_fenetre,FICHE,2021-2025
+97414000CO0153,B3_zone_rouge_partielle,estimation_terrain_eur,FICHE,960400
+97414000CO0153,B3_zone_rouge_partielle,derniere_vente,FICHE,(aucune)
+97414000CO0153,B3_zone_rouge_partielle,derniere_vente,ORACLE,(aucune)
+97414000CO0153,B3_zone_rouge_partielle,dpu,FICHE,non_determinee
+97414000CO0153,B3_zone_rouge_partielle,taxe_taux_communal_pct,FICHE,5.0
+97414000CO0153,B3_zone_rouge_partielle,plu_fraicheur,FICHE,"{'idurba': '97414_PLU_20251218', 'horizon': '2025-12-18', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2025-12-18 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': 'republication faite — EN_VIGUEUR confirmé M32 (05/08)', 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2025-12-18', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97414000CO0153,B3_zone_rouge_partielle,pente_moy_pct,ORACLE,24.3
+97415000DE0669,B6_proprietaire_public,surface_dessin_m2,FICHE,16.6
+97415000DE0669,B6_proprietaire_public,surface_cadastre_m2,FICHE,16
+97415000DE0669,B6_proprietaire_public,surface_m2,ORACLE(ST_Area),16.6
+97415000DE0669,B6_proprietaire_public,zone_fam,FICHE,U
+97415000DE0669,B6_proprietaire_public,zone_lib,FICHE,U2c
+97415000DE0669,B6_proprietaire_public,zone_parts,ORACLE,U=100.0%
+97415000DE0669,B6_proprietaire_public,constructible,FICHE,False
+97415000DE0669,B6_proprietaire_public,constructible_motif,FICHE,Terrain trop exigu pour un projet
+97415000DE0669,B6_proprietaire_public,sdp_restante_m2,FICHE,0
+97415000DE0669,B6_proprietaire_public,emprise_batie_m2,FICHE(le_bien),0
+97415000DE0669,B6_proprietaire_public,emprise_batie_m2,ORACLE(BDTOPO union),0.0
+97415000DE0669,B6_proprietaire_public,hauteur_faitage_m,FICHE,
+97415000DE0669,B6_proprietaire_public,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97415000DE0669,B6_proprietaire_public,aleas_fort,ORACLE,
+97415000DE0669,B6_proprietaire_public,score_tier,FICHE,ecartee
+97415000DE0669,B6_proprietaire_public,score_label,FICHE,Écartée
+97415000DE0669,B6_proprietaire_public,score_declasse,FICHE,False
+97415000DE0669,B6_proprietaire_public,prix_m2_terrain_secteur,FICHE,1072
+97415000DE0669,B6_proprietaire_public,n_ventes_terrain_secteur,FICHE,14
+97415000DE0669,B6_proprietaire_public,prix_fenetre,FICHE,2021-2025
+97415000DE0669,B6_proprietaire_public,estimation_terrain_eur,FICHE,17152
+97415000DE0669,B6_proprietaire_public,derniere_vente,FICHE,(aucune)
+97415000DE0669,B6_proprietaire_public,derniere_vente,ORACLE,(aucune)
+97415000DE0669,B6_proprietaire_public,dpu,FICHE,servi
+97415000DE0669,B6_proprietaire_public,taxe_taux_communal_pct,FICHE,5.0
+97415000DE0669,B6_proprietaire_public,plu_fraicheur,FICHE,"{'idurba': '97415_PLU_20251217', 'horizon': '2025-12-17', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2025-12-17 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2025-12-17', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97415000DE0669,B6_proprietaire_public,pente_moy_pct,ORACLE,19.0
+97415000HP0177,A_constructible_commune,surface_dessin_m2,FICHE,506.3
+97415000HP0177,A_constructible_commune,surface_cadastre_m2,FICHE,512
+97415000HP0177,A_constructible_commune,surface_m2,ORACLE(ST_Area),506.3
+97415000HP0177,A_constructible_commune,zone_fam,FICHE,U
+97415000HP0177,A_constructible_commune,zone_lib,FICHE,U5b
+97415000HP0177,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97415000HP0177,A_constructible_commune,constructible,FICHE,True
+97415000HP0177,A_constructible_commune,constructible_motif,FICHE,≈ 129 m² encore constructibles
+97415000HP0177,A_constructible_commune,sdp_restante_m2,FICHE,129
+97415000HP0177,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),127
+97415000HP0177,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),127.0
+97415000HP0177,A_constructible_commune,hauteur_faitage_m,FICHE,7.3
+97415000HP0177,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97415000HP0177,A_constructible_commune,aleas_fort,ORACLE,
+97415000HP0177,A_constructible_commune,score_tier,FICHE,sans_signal
+97415000HP0177,A_constructible_commune,score_label,FICHE,Sans signal
+97415000HP0177,A_constructible_commune,score_declasse,FICHE,True
+97415000HP0177,A_constructible_commune,prix_m2_terrain_secteur,FICHE,264
+97415000HP0177,A_constructible_commune,n_ventes_terrain_secteur,FICHE,9
+97415000HP0177,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97415000HP0177,A_constructible_commune,estimation_terrain_eur,FICHE,135168
+97415000HP0177,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97415000HP0177,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97415000HP0177,A_constructible_commune,dpu,FICHE,servi
+97415000HP0177,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97415000HP0177,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97415_PLU_20251217', 'horizon': '2025-12-17', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2025-12-17 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2025-12-17', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97415000HP0177,A_constructible_commune,pente_moy_pct,ORACLE,12.4
+97416000CY0658,B1_agricole_naturelle,surface_dessin_m2,FICHE,1444.6
+97416000CY0658,B1_agricole_naturelle,surface_cadastre_m2,FICHE,1460
+97416000CY0658,B1_agricole_naturelle,surface_m2,ORACLE(ST_Area),1444.6
+97416000CY0658,B1_agricole_naturelle,zone_fam,FICHE,A
+97416000CY0658,B1_agricole_naturelle,zone_lib,FICHE,A
+97416000CY0658,B1_agricole_naturelle,zone_parts,ORACLE,A=100.0%
+97416000CY0658,B1_agricole_naturelle,constructible,FICHE,False
+97416000CY0658,B1_agricole_naturelle,constructible_motif,FICHE,Zone non constructible — agricole
+97416000CY0658,B1_agricole_naturelle,sdp_restante_m2,FICHE,0
+97416000CY0658,B1_agricole_naturelle,emprise_batie_m2,FICHE(le_bien),189
+97416000CY0658,B1_agricole_naturelle,emprise_batie_m2,ORACLE(BDTOPO union),188.8
+97416000CY0658,B1_agricole_naturelle,hauteur_faitage_m,FICHE,5.2
+97416000CY0658,B1_agricole_naturelle,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97416000CY0658,B1_agricole_naturelle,aleas_fort,ORACLE,
+97416000CY0658,B1_agricole_naturelle,score_tier,FICHE,ecartee
+97416000CY0658,B1_agricole_naturelle,score_label,FICHE,Écartée
+97416000CY0658,B1_agricole_naturelle,score_declasse,FICHE,True
+97416000CY0658,B1_agricole_naturelle,prix_m2_terrain_secteur,FICHE,351
+97416000CY0658,B1_agricole_naturelle,n_ventes_terrain_secteur,FICHE,8
+97416000CY0658,B1_agricole_naturelle,prix_fenetre,FICHE,2021-2025
+97416000CY0658,B1_agricole_naturelle,estimation_terrain_eur,FICHE,512460
+97416000CY0658,B1_agricole_naturelle,derniere_vente,FICHE,(aucune)
+97416000CY0658,B1_agricole_naturelle,derniere_vente,ORACLE,(aucune)
+97416000CY0658,B1_agricole_naturelle,dpu,FICHE,non_determinee
+97416000CY0658,B1_agricole_naturelle,taxe_taux_communal_pct,FICHE,5.0
+97416000CY0658,B1_agricole_naturelle,plu_fraicheur,FICHE,"{'idurba': '97416_PLU_20240625', 'horizon': '2024-06-25', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2024-06-25 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2024-06-25', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97416000CY0658,B1_agricole_naturelle,pente_moy_pct,ORACLE,6.3
+97416000DT0356,A_constructible_commune,surface_dessin_m2,FICHE,521.0
+97416000DT0356,A_constructible_commune,surface_cadastre_m2,FICHE,537
+97416000DT0356,A_constructible_commune,surface_m2,ORACLE(ST_Area),521.0
+97416000DT0356,A_constructible_commune,zone_fam,FICHE,U
+97416000DT0356,A_constructible_commune,zone_lib,FICHE,Ucv
+97416000DT0356,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97416000DT0356,A_constructible_commune,constructible,FICHE,True
+97416000DT0356,A_constructible_commune,constructible_motif,FICHE,≈ 352 m² encore constructibles
+97416000DT0356,A_constructible_commune,sdp_restante_m2,FICHE,352
+97416000DT0356,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),168
+97416000DT0356,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),167.8
+97416000DT0356,A_constructible_commune,emprise_batie_m2,SCORE_MOTIF,238.0
+97416000DT0356,A_constructible_commune,hauteur_faitage_m,FICHE,9.8
+97416000DT0356,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97416000DT0356,A_constructible_commune,aleas_fort,ORACLE,
+97416000DT0356,A_constructible_commune,score_tier,FICHE,sans_signal
+97416000DT0356,A_constructible_commune,score_label,FICHE,Sans signal
+97416000DT0356,A_constructible_commune,score_declasse,FICHE,True
+97416000DT0356,A_constructible_commune,prix_m2_terrain_secteur,FICHE,568
+97416000DT0356,A_constructible_commune,n_ventes_terrain_secteur,FICHE,9
+97416000DT0356,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97416000DT0356,A_constructible_commune,estimation_terrain_eur,FICHE,305016
+97416000DT0356,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97416000DT0356,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97416000DT0356,A_constructible_commune,dpu,FICHE,non_determinee
+97416000DT0356,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97416000DT0356,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97416_PLU_20240625', 'horizon': '2024-06-25', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2024-06-25 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2024-06-25', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97416000DT0356,A_constructible_commune,pente_moy_pct,ORACLE,4.0
+97416000HT0538,C_canari,surface_dessin_m2,FICHE,508.7
+97416000HT0538,C_canari,surface_cadastre_m2,FICHE,510
+97416000HT0538,C_canari,surface_m2,ORACLE(ST_Area),508.7
+97416000HT0538,C_canari,zone_fam,FICHE,U
+97416000HT0538,C_canari,zone_lib,FICHE,Ud
+97416000HT0538,C_canari,zone_parts,ORACLE,U=100.0%
+97416000HT0538,C_canari,constructible,FICHE,True
+97416000HT0538,C_canari,constructible_motif,FICHE,≈ 614 m² encore constructibles
+97416000HT0538,C_canari,sdp_restante_m2,FICHE,614
+97416000HT0538,C_canari,emprise_batie_m2,FICHE(le_bien),0
+97416000HT0538,C_canari,emprise_batie_m2,ORACLE(BDTOPO union),0.0
+97416000HT0538,C_canari,hauteur_faitage_m,FICHE,
+97416000HT0538,C_canari,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97416000HT0538,C_canari,aleas_fort,ORACLE,
+97416000HT0538,C_canari,score_tier,FICHE,sans_signal
+97416000HT0538,C_canari,score_label,FICHE,Sans signal
+97416000HT0538,C_canari,score_declasse,FICHE,False
+97416000HT0538,C_canari,prix_m2_terrain_secteur,FICHE,354
+97416000HT0538,C_canari,n_ventes_terrain_secteur,FICHE,3
+97416000HT0538,C_canari,prix_fenetre,FICHE,2021-2025
+97416000HT0538,C_canari,estimation_terrain_eur,FICHE,180540
+97416000HT0538,C_canari,derniere_vente,FICHE,(aucune)
+97416000HT0538,C_canari,derniere_vente,ORACLE,(aucune)
+97416000HT0538,C_canari,dpu,FICHE,non_determinee
+97416000HT0538,C_canari,taxe_taux_communal_pct,FICHE,5.0
+97416000HT0538,C_canari,plu_fraicheur,FICHE,"{'idurba': '97416_PLU_20240625', 'horizon': '2024-06-25', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2024-06-25 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2024-06-25', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97416000HT0538,C_canari,pente_moy_pct,ORACLE,4.5
+97417000AO0050,A_constructible_commune,surface_dessin_m2,FICHE,1548.9
+97417000AO0050,A_constructible_commune,surface_cadastre_m2,FICHE,1540
+97417000AO0050,A_constructible_commune,surface_m2,ORACLE(ST_Area),1548.9
+97417000AO0050,A_constructible_commune,zone_fam,FICHE,
+97417000AO0050,A_constructible_commune,zone_lib,FICHE,
+97417000AO0050,A_constructible_commune,zone_parts,ORACLE,
+97417000AO0050,A_constructible_commune,constructible,FICHE,False
+97417000AO0050,A_constructible_commune,constructible_motif,FICHE,Pas de potentiel constructible résiduel
+97417000AO0050,A_constructible_commune,sdp_restante_m2,FICHE,0
+97417000AO0050,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),0
+97417000AO0050,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),0.0
+97417000AO0050,A_constructible_commune,hauteur_faitage_m,FICHE,
+97417000AO0050,A_constructible_commune,aleas,FICHE,PPR — zonage non classé/None/100%; Aléa inondation/fort/82%; Aléa mouvement_terrain/fort/82%; Aléa mouvement_terrain/moyen/18%; Aléa inondation/faible/18%
+97417000AO0050,A_constructible_commune,aleas_fort,ORACLE,inondation=82.3% mouvement_terrain=82.4%
+97417000AO0050,A_constructible_commune,score_tier,FICHE,ecartee
+97417000AO0050,A_constructible_commune,score_label,FICHE,Écartée
+97417000AO0050,A_constructible_commune,score_declasse,FICHE,False
+97417000AO0050,A_constructible_commune,prix_m2_terrain_secteur,FICHE,88
+97417000AO0050,A_constructible_commune,n_ventes_terrain_secteur,FICHE,12
+97417000AO0050,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97417000AO0050,A_constructible_commune,estimation_terrain_eur,FICHE,135520
+97417000AO0050,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97417000AO0050,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97417000AO0050,A_constructible_commune,dpu,FICHE,non_determinee
+97417000AO0050,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97417000AO0050,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': None, 'horizon': None, 'statut': 'rnu', 'libelle': ""Aucun PLU — RNU (règlement national d'urbanisme). — Le RNU s'applique ; aucun zonage communal servi."", 'note': ""RNU (règlement national d'urbanisme) — aucun PLU, zéro zonage au bourg"", 'cadence': 'révisions (périodique)', 'document_servi': ""Aucun PLU — RNU (règlement national d'urbanisme)."", 'fait_foi': ""Le RNU s'applique ; aucun zonage communal servi."", 'en_cours': None, 'action': 'Constructibilité au cas par cas (RNU) — vérifier en mairie.', 'fait_foi_ok': False}"
+97417000AO0050,A_constructible_commune,pente_moy_pct,ORACLE,9.0
+97418000AV1861,A_constructible_commune,surface_dessin_m2,FICHE,293.3
+97418000AV1861,A_constructible_commune,surface_cadastre_m2,FICHE,287
+97418000AV1861,A_constructible_commune,surface_m2,ORACLE(ST_Area),293.3
+97418000AV1861,A_constructible_commune,zone_fam,FICHE,U
+97418000AV1861,A_constructible_commune,zone_lib,FICHE,UB
+97418000AV1861,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97418000AV1861,A_constructible_commune,constructible,FICHE,True
+97418000AV1861,A_constructible_commune,constructible_motif,FICHE,≈ 68 m² encore constructibles
+97418000AV1861,A_constructible_commune,sdp_restante_m2,FICHE,68
+97418000AV1861,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),143
+97418000AV1861,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),143.0
+97418000AV1861,A_constructible_commune,hauteur_faitage_m,FICHE,4.8
+97418000AV1861,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97418000AV1861,A_constructible_commune,aleas_fort,ORACLE,
+97418000AV1861,A_constructible_commune,score_tier,FICHE,sans_signal
+97418000AV1861,A_constructible_commune,score_label,FICHE,Sans signal
+97418000AV1861,A_constructible_commune,score_declasse,FICHE,True
+97418000AV1861,A_constructible_commune,prix_m2_terrain_secteur,FICHE,220
+97418000AV1861,A_constructible_commune,n_ventes_terrain_secteur,FICHE,16
+97418000AV1861,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97418000AV1861,A_constructible_commune,estimation_terrain_eur,FICHE,63140
+97418000AV1861,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97418000AV1861,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97418000AV1861,A_constructible_commune,dpu,FICHE,servi
+97418000AV1861,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97418000AV1861,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97418_plu_20251126', 'horizon': '2025-11-26', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2025-11-26 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2025-11-26', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97418000AV1861,A_constructible_commune,pente_moy_pct,ORACLE,16.1
+97419000AL0062,A_constructible_commune,surface_dessin_m2,FICHE,866.5
+97419000AL0062,A_constructible_commune,surface_cadastre_m2,FICHE,806
+97419000AL0062,A_constructible_commune,surface_m2,ORACLE(ST_Area),866.5
+97419000AL0062,A_constructible_commune,zone_fam,FICHE,U
+97419000AL0062,A_constructible_commune,zone_lib,FICHE,Ua
+97419000AL0062,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97419000AL0062,A_constructible_commune,constructible,FICHE,True
+97419000AL0062,A_constructible_commune,constructible_motif,FICHE,≈ 520 m² encore constructibles
+97419000AL0062,A_constructible_commune,sdp_restante_m2,FICHE,520
+97419000AL0062,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),127
+97419000AL0062,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),127.1
+97419000AL0062,A_constructible_commune,hauteur_faitage_m,FICHE,7.3
+97419000AL0062,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97419000AL0062,A_constructible_commune,aleas_fort,ORACLE,
+97419000AL0062,A_constructible_commune,score_tier,FICHE,sans_signal
+97419000AL0062,A_constructible_commune,score_label,FICHE,Sans signal
+97419000AL0062,A_constructible_commune,score_declasse,FICHE,False
+97419000AL0062,A_constructible_commune,prix_m2_terrain_secteur,FICHE,139
+97419000AL0062,A_constructible_commune,n_ventes_terrain_secteur,FICHE,31
+97419000AL0062,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97419000AL0062,A_constructible_commune,estimation_terrain_eur,FICHE,112034
+97419000AL0062,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97419000AL0062,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97419000AL0062,A_constructible_commune,dpu,FICHE,non_determinee
+97419000AL0062,A_constructible_commune,taxe_taux_communal_pct,FICHE,1.0
+97419000AL0062,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97419_PLU_20190504', 'horizon': '2019-05-04', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2019-05-04 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2019-05-04', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97419000AL0062,A_constructible_commune,pente_moy_pct,ORACLE,20.3
+97420000BH2056,A_constructible_commune,surface_dessin_m2,FICHE,231.7
+97420000BH2056,A_constructible_commune,surface_cadastre_m2,FICHE,232
+97420000BH2056,A_constructible_commune,surface_m2,ORACLE(ST_Area),231.7
+97420000BH2056,A_constructible_commune,zone_fam,FICHE,U
+97420000BH2056,A_constructible_commune,zone_lib,FICHE,UB
+97420000BH2056,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97420000BH2056,A_constructible_commune,constructible,FICHE,False
+97420000BH2056,A_constructible_commune,constructible_motif,FICHE,Terrain trop exigu pour un projet
+97420000BH2056,A_constructible_commune,sdp_restante_m2,FICHE,0
+97420000BH2056,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),0
+97420000BH2056,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),0.0
+97420000BH2056,A_constructible_commune,hauteur_faitage_m,FICHE,
+97420000BH2056,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97420000BH2056,A_constructible_commune,aleas_fort,ORACLE,
+97420000BH2056,A_constructible_commune,score_tier,FICHE,ecartee
+97420000BH2056,A_constructible_commune,score_label,FICHE,Écartée
+97420000BH2056,A_constructible_commune,score_declasse,FICHE,False
+97420000BH2056,A_constructible_commune,prix_m2_terrain_secteur,FICHE,84
+97420000BH2056,A_constructible_commune,n_ventes_terrain_secteur,FICHE,46
+97420000BH2056,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97420000BH2056,A_constructible_commune,estimation_terrain_eur,FICHE,19488
+97420000BH2056,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97420000BH2056,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97420000BH2056,A_constructible_commune,dpu,FICHE,non_determinee
+97420000BH2056,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97420000BH2056,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97420_plu_20250929', 'horizon': '2025-09-29', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2025-09-29 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2025-09-29', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97420000BH2056,A_constructible_commune,pente_moy_pct,ORACLE,3.6
+97421000BC0100,A_constructible_commune,surface_dessin_m2,FICHE,1156.9
+97421000BC0100,A_constructible_commune,surface_cadastre_m2,FICHE,1162
+97421000BC0100,A_constructible_commune,surface_m2,ORACLE(ST_Area),1156.9
+97421000BC0100,A_constructible_commune,zone_fam,FICHE,U
+97421000BC0100,A_constructible_commune,zone_lib,FICHE,UA1
+97421000BC0100,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97421000BC0100,A_constructible_commune,constructible,FICHE,False
+97421000BC0100,A_constructible_commune,constructible_motif,FICHE,Terrain trop exigu pour un projet
+97421000BC0100,A_constructible_commune,sdp_restante_m2,FICHE,0
+97421000BC0100,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),97
+97421000BC0100,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),97.5
+97421000BC0100,A_constructible_commune,hauteur_faitage_m,FICHE,5.4
+97421000BC0100,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97421000BC0100,A_constructible_commune,aleas_fort,ORACLE,
+97421000BC0100,A_constructible_commune,score_tier,FICHE,ecartee
+97421000BC0100,A_constructible_commune,score_label,FICHE,Écartée
+97421000BC0100,A_constructible_commune,score_declasse,FICHE,False
+97421000BC0100,A_constructible_commune,prix_m2_terrain_secteur,FICHE,182
+97421000BC0100,A_constructible_commune,n_ventes_terrain_secteur,FICHE,6
+97421000BC0100,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97421000BC0100,A_constructible_commune,estimation_terrain_eur,FICHE,211484
+97421000BC0100,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97421000BC0100,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97421000BC0100,A_constructible_commune,dpu,FICHE,non_determinee
+97421000BC0100,A_constructible_commune,taxe_taux_communal_pct,FICHE,3.0
+97421000BC0100,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97421_PLU_20220524', 'horizon': '2022-05-24', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2022-05-24 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2022-05-24', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97421000BC0100,A_constructible_commune,pente_moy_pct,ORACLE,11.0
+97421000BN0260,B2_a_cheval,surface_dessin_m2,FICHE,3353.4
+97421000BN0260,B2_a_cheval,surface_cadastre_m2,FICHE,3335
+97421000BN0260,B2_a_cheval,surface_m2,ORACLE(ST_Area),3353.4
+97421000BN0260,B2_a_cheval,zone_fam,FICHE,A
+97421000BN0260,B2_a_cheval,zone_lib,FICHE,A
+97421000BN0260,B2_a_cheval,zone_parts,ORACLE,A=77.1% N=22.9%
+97421000BN0260,B2_a_cheval,constructible,FICHE,False
+97421000BN0260,B2_a_cheval,constructible_motif,FICHE,Zone non constructible — agricole
+97421000BN0260,B2_a_cheval,sdp_restante_m2,FICHE,0
+97421000BN0260,B2_a_cheval,emprise_batie_m2,FICHE(le_bien),0
+97421000BN0260,B2_a_cheval,emprise_batie_m2,ORACLE(BDTOPO union),0.0
+97421000BN0260,B2_a_cheval,hauteur_faitage_m,FICHE,
+97421000BN0260,B2_a_cheval,aleas,FICHE,PPR — zone rouge/None/100%; Aléa inondation/fort/8%; Aléa mouvement_terrain/fort/56%; Aléa mouvement_terrain/moyen/44%
+97421000BN0260,B2_a_cheval,aleas_fort,ORACLE,inondation=7.6% mouvement_terrain=55.5%
+97421000BN0260,B2_a_cheval,score_tier,FICHE,ecartee
+97421000BN0260,B2_a_cheval,score_label,FICHE,Écartée
+97421000BN0260,B2_a_cheval,score_declasse,FICHE,False
+97421000BN0260,B2_a_cheval,prix_m2_terrain_secteur,FICHE,101
+97421000BN0260,B2_a_cheval,n_ventes_terrain_secteur,FICHE,5
+97421000BN0260,B2_a_cheval,prix_fenetre,FICHE,2021-2025
+97421000BN0260,B2_a_cheval,estimation_terrain_eur,FICHE,336835
+97421000BN0260,B2_a_cheval,derniere_vente,FICHE,(aucune)
+97421000BN0260,B2_a_cheval,derniere_vente,ORACLE,(aucune)
+97421000BN0260,B2_a_cheval,dpu,FICHE,non_determinee
+97421000BN0260,B2_a_cheval,taxe_taux_communal_pct,FICHE,3.0
+97421000BN0260,B2_a_cheval,plu_fraicheur,FICHE,"{'idurba': '97421_PLU_20220524', 'horizon': '2022-05-24', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2022-05-24 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2022-05-24', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97421000BN0260,B2_a_cheval,pente_moy_pct,ORACLE,30.4
+97422000AD0887,C_canari,surface_dessin_m2,FICHE,1698.6
+97422000AD0887,C_canari,surface_cadastre_m2,FICHE,1703
+97422000AD0887,C_canari,surface_m2,ORACLE(ST_Area),1698.6
+97422000AD0887,C_canari,zone_fam,FICHE,U
+97422000AD0887,C_canari,zone_lib,FICHE,Ud
+97422000AD0887,C_canari,zone_parts,ORACLE,U=100.0%
+97422000AD0887,C_canari,constructible,FICHE,True
+97422000AD0887,C_canari,constructible_motif,FICHE,≈ 719 m² encore constructibles
+97422000AD0887,C_canari,sdp_restante_m2,FICHE,719
+97422000AD0887,C_canari,emprise_batie_m2,FICHE(le_bien),345
+97422000AD0887,C_canari,emprise_batie_m2,ORACLE(BDTOPO union),344.7
+97422000AD0887,C_canari,emprise_batie_m2,SCORE_MOTIF,689.0
+97422000AD0887,C_canari,hauteur_faitage_m,FICHE,4.7
+97422000AD0887,C_canari,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97422000AD0887,C_canari,aleas_fort,ORACLE,
+97422000AD0887,C_canari,score_tier,FICHE,sans_signal
+97422000AD0887,C_canari,score_label,FICHE,Sans signal
+97422000AD0887,C_canari,score_declasse,FICHE,True
+97422000AD0887,C_canari,prix_m2_terrain_secteur,FICHE,171
+97422000AD0887,C_canari,n_ventes_terrain_secteur,FICHE,20
+97422000AD0887,C_canari,prix_fenetre,FICHE,2021-2025
+97422000AD0887,C_canari,estimation_terrain_eur,FICHE,291213
+97422000AD0887,C_canari,derniere_vente,FICHE,(aucune)
+97422000AD0887,C_canari,derniere_vente,ORACLE,(aucune)
+97422000AD0887,C_canari,dpu,FICHE,hors
+97422000AD0887,C_canari,taxe_taux_communal_pct,FICHE,5.0
+97422000AD0887,C_canari,plu_fraicheur,FICHE,"{'idurba': '97422_PLU_20230811', 'horizon': '2023-08-11', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2023-08-11 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2023-08-11', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97422000AD0887,C_canari,pente_moy_pct,ORACLE,6.4
+97422000BR1212,A_constructible_commune,surface_dessin_m2,FICHE,898.9
+97422000BR1212,A_constructible_commune,surface_cadastre_m2,FICHE,1028
+97422000BR1212,A_constructible_commune,surface_m2,ORACLE(ST_Area),898.9
+97422000BR1212,A_constructible_commune,zone_fam,FICHE,U
+97422000BR1212,A_constructible_commune,zone_lib,FICHE,Uc
+97422000BR1212,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97422000BR1212,A_constructible_commune,constructible,FICHE,True
+97422000BR1212,A_constructible_commune,constructible_motif,FICHE,≈ 524 m² encore constructibles
+97422000BR1212,A_constructible_commune,sdp_restante_m2,FICHE,524
+97422000BR1212,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),103
+97422000BR1212,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),103.1
+97422000BR1212,A_constructible_commune,hauteur_faitage_m,FICHE,3.0
+97422000BR1212,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97422000BR1212,A_constructible_commune,aleas_fort,ORACLE,
+97422000BR1212,A_constructible_commune,score_tier,FICHE,sans_signal
+97422000BR1212,A_constructible_commune,score_label,FICHE,Sans signal
+97422000BR1212,A_constructible_commune,score_declasse,FICHE,False
+97422000BR1212,A_constructible_commune,prix_m2_terrain_secteur,FICHE,202
+97422000BR1212,A_constructible_commune,n_ventes_terrain_secteur,FICHE,29
+97422000BR1212,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97422000BR1212,A_constructible_commune,estimation_terrain_eur,FICHE,207656
+97422000BR1212,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97422000BR1212,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97422000BR1212,A_constructible_commune,dpu,FICHE,hors
+97422000BR1212,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97422000BR1212,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97422_PLU_20230811', 'horizon': '2023-08-11', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2023-08-11 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2023-08-11', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97422000BR1212,A_constructible_commune,pente_moy_pct,ORACLE,24.1
+97422000BW2635,B5_copropriete,surface_dessin_m2,FICHE,2001.8
+97422000BW2635,B5_copropriete,surface_cadastre_m2,FICHE,2003
+97422000BW2635,B5_copropriete,surface_m2,ORACLE(ST_Area),2001.8
+97422000BW2635,B5_copropriete,zone_fam,FICHE,U
+97422000BW2635,B5_copropriete,zone_lib,FICHE,Uav
+97422000BW2635,B5_copropriete,zone_parts,ORACLE,U=100.0%
+97422000BW2635,B5_copropriete,constructible,FICHE,True
+97422000BW2635,B5_copropriete,constructible_motif,FICHE,≈ 827 m² encore constructibles
+97422000BW2635,B5_copropriete,sdp_restante_m2,FICHE,827
+97422000BW2635,B5_copropriete,emprise_batie_m2,FICHE(le_bien),655
+97422000BW2635,B5_copropriete,emprise_batie_m2,ORACLE(BDTOPO union),654.8
+97422000BW2635,B5_copropriete,hauteur_faitage_m,FICHE,14.7
+97422000BW2635,B5_copropriete,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97422000BW2635,B5_copropriete,aleas_fort,ORACLE,
+97422000BW2635,B5_copropriete,score_tier,FICHE,sans_signal
+97422000BW2635,B5_copropriete,score_label,FICHE,Sans signal
+97422000BW2635,B5_copropriete,score_declasse,FICHE,True
+97422000BW2635,B5_copropriete,prix_m2_terrain_secteur,FICHE,376
+97422000BW2635,B5_copropriete,n_ventes_terrain_secteur,FICHE,18
+97422000BW2635,B5_copropriete,prix_fenetre,FICHE,2021-2025
+97422000BW2635,B5_copropriete,estimation_terrain_eur,FICHE,753128
+97422000BW2635,B5_copropriete,derniere_vente,FICHE,(aucune)
+97422000BW2635,B5_copropriete,derniere_vente,ORACLE,(aucune)
+97422000BW2635,B5_copropriete,dpu,FICHE,servi
+97422000BW2635,B5_copropriete,taxe_taux_communal_pct,FICHE,5.0
+97422000BW2635,B5_copropriete,plu_fraicheur,FICHE,"{'idurba': '97422_PLU_20230811', 'horizon': '2023-08-11', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2023-08-11 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2023-08-11', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97422000BW2635,B5_copropriete,pente_moy_pct,ORACLE,11.1
+97423000AC0275,A_constructible_commune,surface_dessin_m2,FICHE,419.9
+97423000AC0275,A_constructible_commune,surface_cadastre_m2,FICHE,357
+97423000AC0275,A_constructible_commune,surface_m2,ORACLE(ST_Area),419.9
+97423000AC0275,A_constructible_commune,zone_fam,FICHE,U
+97423000AC0275,A_constructible_commune,zone_lib,FICHE,Ub
+97423000AC0275,A_constructible_commune,zone_parts,ORACLE,U=100.0%
+97423000AC0275,A_constructible_commune,constructible,FICHE,True
+97423000AC0275,A_constructible_commune,constructible_motif,FICHE,≈ 102 m² encore constructibles
+97423000AC0275,A_constructible_commune,sdp_restante_m2,FICHE,102
+97423000AC0275,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),72
+97423000AC0275,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),72.0
+97423000AC0275,A_constructible_commune,hauteur_faitage_m,FICHE,4.1
+97423000AC0275,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%; PPR — zone bleue/None/100%
+97423000AC0275,A_constructible_commune,aleas_fort,ORACLE,
+97423000AC0275,A_constructible_commune,score_tier,FICHE,sans_signal
+97423000AC0275,A_constructible_commune,score_label,FICHE,Sans signal
+97423000AC0275,A_constructible_commune,score_declasse,FICHE,True
+97423000AC0275,A_constructible_commune,estimation_terrain_eur,FICHE,
+97423000AC0275,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97423000AC0275,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97423000AC0275,A_constructible_commune,dpu,FICHE,non_determinee
+97423000AC0275,A_constructible_commune,taxe_taux_communal_pct,FICHE,3.0
+97423000AC0275,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97423_PLU_20220602', 'horizon': '2017-02-21', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2017-02-21 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': ""[M41] date_mairie corrigée 2022-06-02 → 2017-02-21 : le 2022-06-02 était la date de PRESCRIPTION de la révision (Sudocuh 31/12/2024), PAS l'approbation de l'opposable (approuvé 2017-02-21, Sudocuh). idurba GPU conservé (97423_PLU_20220602 — ce que le GPU sert) : discordance GPU↔Sudocuh à investiguer côté M40. Révision en cours = radar M41."", 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2017-02-21', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'révision générale du PLU, prescrite le 2022-06-02 (Sourcé Sudocuh 31/12/2024 (prescription), constaté le 2026-08-06)', 'action': None, 'fait_foi_ok': True}"
+97423000AC0275,A_constructible_commune,pente_moy_pct,ORACLE,15.3
+97424000AO1198,A_constructible_commune,surface_dessin_m2,FICHE,0.7
+97424000AO1198,A_constructible_commune,surface_cadastre_m2,FICHE,1
+97424000AO1198,A_constructible_commune,surface_m2,ORACLE(ST_Area),0.7
+97424000AO1198,A_constructible_commune,zone_fam,FICHE,U
+97424000AO1198,A_constructible_commune,zone_lib,FICHE,Ub
+97424000AO1198,A_constructible_commune,zone_parts,ORACLE,
+97424000AO1198,A_constructible_commune,constructible,FICHE,False
+97424000AO1198,A_constructible_commune,constructible_motif,FICHE,Terrain trop exigu pour un projet
+97424000AO1198,A_constructible_commune,sdp_restante_m2,FICHE,0
+97424000AO1198,A_constructible_commune,emprise_batie_m2,FICHE(le_bien),0
+97424000AO1198,A_constructible_commune,emprise_batie_m2,ORACLE(BDTOPO union),0.0
+97424000AO1198,A_constructible_commune,hauteur_faitage_m,FICHE,
+97424000AO1198,A_constructible_commune,aleas,FICHE,Aléa mouvement_terrain/faible/100%
+97424000AO1198,A_constructible_commune,aleas_fort,ORACLE,
+97424000AO1198,A_constructible_commune,score_tier,FICHE,ecartee
+97424000AO1198,A_constructible_commune,score_label,FICHE,Écartée
+97424000AO1198,A_constructible_commune,score_declasse,FICHE,False
+97424000AO1198,A_constructible_commune,prix_m2_terrain_secteur,FICHE,89
+97424000AO1198,A_constructible_commune,n_ventes_terrain_secteur,FICHE,12
+97424000AO1198,A_constructible_commune,prix_fenetre,FICHE,2021-2025
+97424000AO1198,A_constructible_commune,estimation_terrain_eur,FICHE,89
+97424000AO1198,A_constructible_commune,derniere_vente,FICHE,(aucune)
+97424000AO1198,A_constructible_commune,derniere_vente,ORACLE,(aucune)
+97424000AO1198,A_constructible_commune,dpu,FICHE,non_determinee
+97424000AO1198,A_constructible_commune,taxe_taux_communal_pct,FICHE,5.0
+97424000AO1198,A_constructible_commune,plu_fraicheur,FICHE,"{'idurba': '97424_plu_20240213', 'horizon': '2024-02-13', 'statut': 'a_jour', 'libelle': ""PLU approuvé le 2024-02-13 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'note': None, 'cadence': 'révisions (périodique)', 'document_servi': 'PLU approuvé le 2024-02-13', 'fait_foi': ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", 'en_cours': 'Des modifications postérieures au document peuvent exister — à confirmer en mairie.', 'action': None, 'fait_foi_ok': True}"
+97424000AO1198,A_constructible_commune,pente_moy_pct,ORACLE,24.5

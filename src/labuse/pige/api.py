@@ -2634,6 +2634,14 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
     commune = (fiche or {}).get("commune")
     nature = _nature_parcelle(db, idu)
     est = _est_bloc_depuis_estimer3(db, idu, fiche, surface_hab, pieces=pieces, ecartees=ecartees)
+    # CHIRURGICAL-FIX-1 (LOT F, E8) — le PRIX DE SECTEUR d'Estimer est celui de la FICHE (`prix_ancien`,
+    # médiane pondérée du secteur), distinct du « Prix estimé au m² » (ESTIMER-3, estimation pour CE bien) :
+    # les deux documents LABUSE affichent alors le MÊME prix de secteur. Écran == PDF (même `est`).
+    _pa = (fiche or {}).get("prix_ancien") or {}
+    if isinstance(est, dict) and isinstance(_pa.get("median"), (int, float)):
+        est["secteur_fiche"] = {"median": _pa.get("median"), "n": _pa.get("n"),
+                                "radius_m": _pa.get("radius_m"), "type_prix": _pa.get("type_prix"),
+                                "periode": _pa.get("periode")}
     try:
         cls = _classement_bande(db, idu)
     except Exception:  # noqa: BLE001

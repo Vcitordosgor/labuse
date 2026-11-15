@@ -52,11 +52,45 @@ def test_jamais_le_plus_grand_par_defaut():
     assert surface_a_retenir(2000, 614)["valeur_m2"] == 614
 
 
+# ── CHIRURGICAL-FIX-1 (LOT E) — le chiffre retenu nomme TOUJOURS son scénario ────────────────────
+def test_bati_nomme_terrain_libere_demolition():
+    # Parcelle BÂTIE : l'estimation/esquisse supposent le terrain libéré → le chiffre le DIT.
+    r = surface_a_retenir(1047, {"sdp_m2": 795}, bati=True)
+    assert r["valeur_m2"] == 795 and r["source"] == GRANDEUR_ESQUISSE
+    assert r["phrase"].startswith("Terrain libéré (démolition) : 795 m²")
+    assert "peu réaliste" not in r["phrase"]
+
+
+def test_copropriete_demolition_peu_realiste_jamais_le_plus_grand():
+    # BW2635 — copropriété bâtie : on retient 2 625 (esquisse, la plus petite), JAMAIS 3 317
+    # (estimation rapide, > parcelle) ; la démolition est signalée peu réaliste, chiffre indicatif.
+    r = surface_a_retenir(3317, {"sdp_m2": 2625}, bati=True, copropriete=True)
+    assert r["valeur_m2"] == 2625 and r["valeur_m2"] != 3317
+    assert "peu réaliste en copropriété" in r["phrase"] and "chiffre indicatif" in r["phrase"]
+    assert "2 625 m²" in r["phrase"] and "3 317 m²" in r["phrase"]
+
+
+def test_bati_sans_etude_nomme_le_scenario_jamais_un_chiffre_nu():
+    # Parcelle bâtie SANS Étude (aucune esquisse) → estimation rapide, mais NOMMÉE « terrain libéré
+    # (démolition) », jamais un chiffre nu « surface à retenir ».
+    r = surface_a_retenir(3317, None, bati=True)
+    assert r["valeur_m2"] == 3317
+    assert r["phrase"].startswith("Terrain libéré (démolition) : 3 317 m² (estimation rapide)")
+
+
+def test_non_bati_garde_la_formulation_surface_a_retenir():
+    # Terrain nu (non bâti) : pas de démolition → libellé historique inchangé.
+    assert surface_a_retenir(614, None, bati=False)["phrase"].startswith("Surface à retenir : 614 m²")
+
+
 # ── Garde-fou : un seul « surface à retenir » par parcelle, TOUS les documents (C6/C9) ───────────
 @pytest.mark.reel
 @pytest.mark.parametrize("idu, valeur_attendue, source_attendue", [
     ("97416000HT0538", 614, GRANDEUR_ESTIMATION),   # stationnement non ingéré → estimation (888 non retenu)
     ("97422000AD0887", 795, GRANDEUR_SCENARIO),     # stationnement déduit → scénario (jamais 1 047 nu)
+    # CHIRURGICAL-FIX-1 (LOT E) — BW2635 (copropriété bâtie) : Dossier et Étude retiennent 2 625 (esquisse),
+    # JAMAIS 3 317 (estimation rapide, > parcelle). Avant le fix du study_id, le Dossier retombait sur 3 317.
+    ("97422000BW2635", 2625, GRANDEUR_ESQUISSE),
 ])
 def test_un_seul_surface_a_retenir_tous_documents(session_reelle, idu, valeur_attendue, source_attendue):
     """Dossier (scénario PERSISTÉ), Étude (scénario LIVE) ET Comparatif (compare()) doivent produire LA
@@ -72,7 +106,10 @@ def test_un_seul_surface_a_retenir_tous_documents(session_reelle, idu, valeur_at
 
     if session_reelle.execute(text("SELECT count(*) FROM parcels WHERE idu=:i"), {"i": idu}).scalar() != 1:
         pytest.skip(f"parcelle {idu} absente")
-    cfg = {"idus": [idu], "type_projet": "collectif", "objectif": "equilibre", "stationnement": "aerien"}
+    # CHIRURGICAL-FIX-1 (LOT E) — config PAR DÉFAUT COMPLÈTE (mêmes clés/défauts que `EtudeIn`, dont
+    # terrain="libere") : le study_id persisté par la prod inclut `terrain`, le lookup du Dossier aussi.
+    cfg = {"idus": [idu], "type_projet": "collectif", "objectif": "equilibre",
+           "stationnement": "aerien", "terrain": "libere", "niveaux_sous_sol": None}
     payload = etudier_payload(session_reelle, cfg)
     _rev.enregistrer(session_reelle, payload)          # persiste (Dossier/Comparatif/pré-dossier le reliront)
 

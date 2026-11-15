@@ -25,10 +25,16 @@ PREFIXE = {
 
 
 def numero_rapport(document: str, idu: str, jour: date | None = None) -> str:
-    """Numéro de rapport, format court des anciens documents : `<préfixe>-<AAAAMMJJ>-<4 derniers
-    chiffres de l'IDU>` (lisible en pied de page ; l'IDU ENTIER vit dans le cartouche @page —
-    doc_ref — et sur la page de garde). `document` ∈ PREFIXE ; `jour` injectable (test/repro)."""
+    """Numéro de rapport : `<préfixe>-<AAAAMMJJ>-<IDU ENTIER>`. `document` ∈ PREFIXE ; `jour`
+    injectable (test/repro).
+
+    CHIRURGICAL-FIX-1 (LOT F, E4) — on portait les 4 DERNIERS caractères de l'IDU (`idu[-4:]`) :
+    deux parcelles de sections/communes différentes mais de même suffixe (97404000AY**0153** et
+    97414000CO**0153**) recevaient le MÊME numéro le même jour (434 582 parcelles pour 4 358 suffixes
+    distincts → ~100 collisions par suffixe). On porte l'IDU ENTIER (comme l'affirme déjà l'en-tête du
+    module) : un numéro ne peut plus désigner deux parcelles. Toujours lisible, et le préfixe + la date
+    gardent leur sens."""
     if document not in PREFIXE:
         raise ValueError(f"document inconnu : {document!r} (attendu {sorted(PREFIXE)})")
     j = jour or today_reunion()
-    return f"{PREFIXE[document]}-{j:%Y%m%d}-{idu[-4:]}"
+    return f"{PREFIXE[document]}-{j:%Y%m%d}-{idu}"

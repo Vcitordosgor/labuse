@@ -371,16 +371,24 @@ def _arr_m2(n):
     return f"{int(round(n)):,}".replace(",", " ") if isinstance(n, (int, float)) else "—"
 
 
+# CHIRURGICAL-FIX-1 (E105) — mots-têtes qui RESSEMBLENT à un code court mais n'en sont PAS un : sur une
+# commune au RNU, le libellé de zone est « Pas de PLU local… » → l'ancien extracteur rendait « Pas » et
+# affichait « zone non constructible (Pas) ». Un vrai code PLU (A, N, Ud, 1AU…) n'est jamais un de ces mots.
+_NON_CODES = {"pas", "zone", "sans", "non", "aucun", "aucune", "hors", "rnu", "plu",
+              "le", "la", "les", "des", "une", "un", "terrain", "parcelle", "commune"}
+
+
 def _zone_code(s) -> str | None:
     """Code de zone PLU court (« A », « N », « 1AU »…) extrait d'un libellé ou d'un motif : « Zone non
-    constructible (A) » → « A », « N - Naturelle » → « N ». None si rien d'exploitable."""
+    constructible (A) » → « A », « N - Naturelle » → « N ». None si rien d'exploitable (dont RNU)."""
     if not isinstance(s, str) or not s.strip():
         return None
     m = re.search(r"\(([0-9]{0,2}[A-Za-z]{1,4}[0-9a-z]?)\)", s)   # code entre parenthèses
-    if m:
+    if m and m.group(1).lower() not in _NON_CODES:
         return m.group(1)
     tete = s.strip().split()[0].rstrip("-–—,").strip()
-    if re.fullmatch(r"[0-9]{0,2}[A-Za-z]{1,4}[0-9a-z]?", tete) and len(tete) <= 5:
+    if (re.fullmatch(r"[0-9]{0,2}[A-Za-z]{1,4}[0-9a-z]?", tete) and len(tete) <= 5
+            and tete.lower() not in _NON_CODES):
         return tete
     return None
 

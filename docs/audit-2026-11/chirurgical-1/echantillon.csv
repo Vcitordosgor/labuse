@@ -1,0 +1,39 @@
+idu,commune,surface_m2,zone_fam,groupe,famille
+97402000AH1301,Bras-Panon,128.3196890939186,U,A,A_constructible_commune
+97424000AO1198,Cilaos,0.6913888384177149,U,A,A_constructible_commune
+97403000AR1517,Entre-Deux,734.2546329439402,U,A,A_constructible_commune
+97404000AP0024,L'Étang-Salé,640.352964861523,U,A,A_constructible_commune
+97406000AM0811,La Plaine-des-Palmistes,932.1101691759965,U,A,A_constructible_commune
+97408000BO0279,La Possession,19.042480807108486,U,A,A_constructible_commune
+97407000AI0933,Le Port,68.05248858940244,U,A,A_constructible_commune
+97422000BR1212,Le Tampon,898.9379244442077,U,A,A_constructible_commune
+97401000AS0869,Les Avirons,1764.371959019061,U,A,A_constructible_commune
+97423000AC0275,Les Trois-Bassins,419.8733638339834,U,A,A_constructible_commune
+97405000AZ0993,Petite-Île,10.876745988140947,U,A,A_constructible_commune
+97409000AR0736,Saint-André,851.7519364683966,U,A,A_constructible_commune
+97410000BK0251,Saint-Benoît,269.5360979090829,U,A,A_constructible_commune
+97411000BC0287,Saint-Denis,223.56054170156952,U,A,A_constructible_commune
+97412000BV0308,Saint-Joseph,548.8175890025547,U,A,A_constructible_commune
+97413000CN0764,Saint-Leu,263.6699113370911,U,A,A_constructible_commune
+97414000CH0839,Saint-Louis,673.4373723440999,U,A,A_constructible_commune
+97415000HP0177,Saint-Paul,506.2747865500134,U,A,A_constructible_commune
+97417000AO0050,Saint-Philippe,1548.8680127620376,,A,A_constructible_commune
+97416000DT0356,Saint-Pierre,520.9761751086957,U,A,A_constructible_commune
+97418000AV1861,Sainte-Marie,293.32757196474915,U,A,A_constructible_commune
+97419000AL0062,Sainte-Rose,866.4715810670084,U,A,A_constructible_commune
+97420000BH2056,Sainte-Suzanne,231.70637038906335,U,A,A_constructible_commune
+97421000BC0100,Salazie,1156.861189109065,U,A,A_constructible_commune
+97412000CL0200,Saint-Joseph,1891.9749069035352,A,B,B1_agricole_naturelle
+97416000CY0658,Saint-Pierre,1444.5624369311718,A,B,B1_agricole_naturelle
+97411000IS0448,Saint-Denis,818.1337441745947,U,B,B2_a_cheval
+97421000BN0260,Salazie,3353.4210264714056,A,B,B2_a_cheval
+97404000AY0153,L'Étang-Salé,256.1334945938958,U,B,B3_zone_rouge_partielle
+97414000CO0153,Saint-Louis,6669.837517567377,A,B,B3_zone_rouge_partielle
+97404000AM0838,L'Étang-Salé,20798.03553917674,U,B,B4_grande_zone_urbaine
+97408000AV0078,La Possession,20376.04055719246,U,B,B4_grande_zone_urbaine
+97422000BW2635,Le Tampon,2001.7637832947623,U,B,B5_copropriete
+97401000AS1256,Les Avirons,971.4787702969672,U,B,B5_copropriete
+97412000CV0446,Saint-Joseph,566.7066061793444,U,B,B6_proprietaire_public
+97415000DE0669,Saint-Paul,16.55308439884775,U,B,B6_proprietaire_public
+97422000AD0887,Le Tampon,1698.5871853100011,U,C,C_canari
+97416000HT0538,Saint-Pierre,508.6683535388757,U,C,C_canari

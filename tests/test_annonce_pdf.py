@@ -246,7 +246,7 @@ def test_construire_lien_document_deterministe():
     res2 = builder.construire_analyse_annonce_lien(_RAPPORT_LIEN, jour=J)
     assert res1.html == res2.html                    # même entrée → même HTML (PDF outil == PDF Docs)
     assert "Estimer un bien" in res1.cartouche.doc_title   # RECETTE-4 — titre PDF renommé
-    assert res1.numero == "AA-20261027-7890"   # suffixe = 4 derniers chiffres du list_id (ASCII, stable)
+    assert res1.numero == "AA-20261027-1234567890"   # E4 — identifiant ENTIER du list_id (cohérent avec _ref_droite)
     assert "Voir l'annonce" in res1.html and "leboncoin.fr/ad" in res1.html
     # DOCS-DA-1 (V11) — pied UNIFORME, une ligne, pour tous les documents (l'attribution « DVF · Radar »
     # et la mention « avis de valeur » vivent dans le CORPS de l'Estimer, plus au pied).
@@ -393,7 +393,7 @@ def test_plan_cadre_parcelle_allongee_verticalement():
 
 
 def test_numero_prefixe_analyse_annonce():
-    assert numeros.numero_rapport("analyse-annonce", "97411000AB0123", J) == "AA-20261027-0123"
+    assert numeros.numero_rapport("analyse-annonce", "97411000AB0123", J) == "AA-20261027-97411000AB0123"
 
 
 def test_message_echec_lien_identique_a_l_outil():
