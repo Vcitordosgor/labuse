@@ -241,3 +241,28 @@ def test_pt3g_plu_une_seule_version_servie():
     # la 2e date est un REPÈRE, pas une seconde « version servie »
     assert "approbation enregistrée au GPU le 01/01/2024" in html
     assert html.count("ersion du PLU servie") == 1
+
+
+# ── pt4 — le numéro porte TOUT le contenu rendu : contenu affiché différent ⇒ numéro différent ──
+class _FakeDB:
+    def execute(self, *a, **k):
+        raise RuntimeError("pas de base en test unitaire")
+
+
+def test_pt4_numero_depend_du_contenu_rendu():
+    from datetime import date
+    from labuse.exports import builder
+    j = date(2026, 9, 5)
+    base = {"surface_m2": 742, "adresse": "103 Chaussée Royale, Saint-Paul",
+            "commune": "Saint-Paul", "proprietaire_moral": True}
+    r1 = builder.construire(_FakeDB(), "97415000BO0852", "dossier", fiche=dict(base), jour=j)
+    r1b = builder.construire(_FakeDB(), "97415000BO0852", "dossier", fiche=dict(base), jour=j)
+    # une adresse DIFFÉRENTE est AFFICHÉE mais n'est pas dans les `valeurs` : l'ancienne clé (valeurs
+    # seules) aurait collisionné ; la clé de CONTENU les sépare.
+    r2 = builder.construire(_FakeDB(), "97415000BO0852", "dossier",
+                            fiche=dict(base, adresse="1 Rue Autre, Saint-Paul"), jour=j)
+    assert r1.numero == r1b.numero                      # même contenu → même numéro (idempotent)
+    assert r1.numero != r2.numero                       # contenu affiché différent → numéro différent
+    assert r1.numero.startswith("DP-20260905-97415000BO0852-")
+    assert r1.cartouche.doc_ref.endswith(r1.numero)
+    assert "\x00" not in r1.html                        # le jeton de numéro ne fuit jamais

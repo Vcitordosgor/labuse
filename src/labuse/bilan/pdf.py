@@ -187,11 +187,12 @@ def construire_html(
 ) -> tuple[str, Cartouche]:
     cat = cat or charger_catalogue()
     j = jour or today_reunion()
-    # CHIRURGICAL-FIX-1 (LOT I pt4) — le numéro porte une clé du CONTENU (CA / dépenses / résultat) :
-    # deux Bilans de SAISIES différentes le même jour reçoivent des numéros différents, un recalcul à
-    # l'identique garde le même numéro.
-    _sig = f"{r.ca_ht}|{r.depenses_ht}|{r.resultat_net}|{r.marge_pct}"
-    numero = numeros.numero_rapport("bilan", idu, j, discriminant=_sig)
+    # CHIRURGICAL-FIX-1 (LOT I pt4 / LOT J pt4) — le numéro porte une clé de TOUT le contenu rendu (pas
+    # seulement CA/dépenses/résultat : aussi le programme, chaque poste, l'adresse…). On rend d'abord le
+    # corps avec un jeton, on signe, puis on substitue le vrai numéro. Deux Bilans au contenu affiché
+    # différent le même jour reçoivent des numéros différents ; un recalcul à l'identique garde le même.
+    from ..exports.builder import _NUMERO_PLACEHOLDER, _signature_contenu
+    numero = _NUMERO_PLACEHOLDER
 
     # DOCS-COHERENCE-1 (recette Vic, G6) — en-tête COMPLET : adresse + Étude reliée + prix demandé,
     # comme à l'écran. « — » honnête quand une donnée n'est pas servie (jamais un zéro inventé).
@@ -305,12 +306,16 @@ def construire_html(
     # DOCS-COHERENCE-1 (recette Vic) — pied « Données LABUSE au <date du RUN servi> » (comme les 7
     # autres documents : 21/10/2026), pas la date de génération du jour.
     au = donnees_au or f"{j:%d/%m/%Y}"
+    # LOT J pt4 — on connaît enfin le corps complet : on en tire la signature et on substitue le numéro.
+    corps_str = "".join(corps)
+    numero = numeros.numero_rapport("bilan", idu, j, discriminant=_signature_contenu(corps_str))
+    corps_str = corps_str.replace(_NUMERO_PLACEHOLDER, numero)
     cart = Cartouche(
         doc_title=f"LABUSE — Bilan" + (f" · {adresse}" if adresse else ""),
         doc_ref=f"{idu} · {numero}",
         doc_foot=FOOT_LIGNE,   # DOCS-DA-1 (V11) — pied uniforme, une ligne, sans date
     )
-    html = page_html("Bilan", cart, f"<style>{_CSS}</style>" + "".join(corps))
+    html = page_html("Bilan", cart, f"<style>{_CSS}</style>" + corps_str)
     return html, cart
 
 

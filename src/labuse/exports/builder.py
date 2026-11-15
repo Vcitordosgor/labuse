@@ -407,6 +407,23 @@ def _signature_valeurs(valeurs: dict) -> str:
     return "|".join(f"{k}={getattr(valeurs[k], 'valeur', None)!r}" for k in sorted(valeurs))
 
 
+import re as _re_sig  # noqa: E402
+
+
+def _signature_contenu(corps: str) -> str:
+    """CHIRURGICAL-FIX-1 (LOT J pt4) — signature du CONTENU RÉELLEMENT RENDU (le corps HTML, numéro mis
+    à part). Deux documents dont le contenu AFFICHÉ diffère ne peuvent pas recevoir le même numéro ; une
+    génération à l'identique garde le même numéro. On retire d'abord les éléments VISUELS volatils (cartes
+    SVG, images encodées en base64) pour que deux rendus identiques du même contenu restent stables."""
+    t = _re_sig.sub(r"<svg\b[^>]*>.*?</svg>", "", corps, flags=_re_sig.S)
+    t = _re_sig.sub(r"data:image/[^\"')\s]+", "", t)
+    return hashlib.sha1(t.encode("utf-8")).hexdigest()
+
+
+#: jeton substitué par le vrai numéro une fois le corps rendu (sert à calculer la signature du contenu).
+_NUMERO_PLACEHOLDER = "\x00§NUMERO§\x00"
+
+
 def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = None,
                jour: date | None = None, compte_id: int | None = None) -> ResultatDoc:
     """Assemble le HTML complet d'un document et les Valeur lues (pour l'archive). Pour le Financier,
@@ -425,17 +442,9 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
         ids = sorted(ids_m for ids_m in miroir.ids_declares() | {"run_label_servi"}
                      if ids_m in EXTRACTEURS)
         valeurs = collecte(db, idu, ids, fiche=f)
-        # CHIRURGICAL-FIX-1 (LOT I pt4) — numéro calculé APRÈS la lecture : il porte une clé stable du
-        # CONTENU (valeurs servies) → deux versions du même export le même jour (données différentes)
-        # diffèrent, une génération à l'identique garde le même numéro.
-        numero = numeros.numero_rapport(document, idu, j, discriminant=_signature_valeurs(valeurs))
         label, _st = _LABEL["dossier"]
         adresse = f.get("adresse") or ""
         au = f.get("donnees_labuse_au") or _donnees_labuse_au() or f"{j:%d/%m/%Y}"
-        cart = Cartouche(
-            doc_title=f"LABUSE — {label}" + (f" · {adresse}" if adresse else ""),
-            doc_ref=f"{idu} · {numero}",
-            doc_foot=_FOOT["dossier"].format(au=au))
         # EXPORTS-REBRANCHEMENT-2 lot 1 — le plan de situation de §1 = le MÊME composant que
         # l'Apporteur (ortho IGN + contour + voisines du même propriétaire). Best-effort : réseau
         # indisponible / parcelle sans géométrie → cadre neutre, jamais une erreur.
@@ -451,30 +460,42 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
             f["_alertes_dormantes"] = []
         # DOCS-1 (décision Vic) — la carte de situation remonte sur la PAGE DE GARDE (couverture avec
         # carte + résumé) ; elle n'est plus répétée en §1 (une seule carte de situation par Dossier).
-        corps = (miroir.cover_dossier(idu, f, numero, j, valeurs, MODELE_VERSION,
+        # CHIRURGICAL-FIX-1 (LOT J pt4) — le numéro porte une clé du CONTENU RÉELLEMENT RENDU : on rend
+        # d'abord le corps avec un jeton, on en tire la signature, puis on substitue le vrai numéro.
+        corps = (miroir.cover_dossier(idu, f, _NUMERO_PLACEHOLDER, j, valeurs, MODELE_VERSION,
                                       plan_html=plan_html, donnees_au=au)
                  + miroir.rendu_sections(valeurs, f, plan_html=""))
+        numero = numeros.numero_rapport(document, idu, j, discriminant=_signature_contenu(corps))
+        corps = corps.replace(_NUMERO_PLACEHOLDER, numero)
+        cart = Cartouche(
+            doc_title=f"LABUSE — {label}" + (f" · {adresse}" if adresse else ""),
+            doc_ref=f"{idu} · {numero}",
+            doc_foot=_FOOT["dossier"].format(au=au))
         html = page_html(label, cart, corps)
         return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart,
                            contexte={"adresse": adresse})
     blocs = DOCUMENTS[document]
     ids = sorted({cid for b in blocs for cid in b.IDS})
     valeurs = collecte(db, idu, ids, fiche=f)
-    numero = numeros.numero_rapport(document, idu, j, discriminant=_signature_valeurs(valeurs))
     ctx = None
     if document == "apporteur":
         ctx = _apporteur_contexte(db, idu, f, j, compte_id)
     label, _ = _LABEL.get(document, (document, ""))
     adresse = f.get("adresse") or ""
     au = f.get("donnees_labuse_au") or _donnees_labuse_au() or f"{j:%d/%m/%Y}"
+    # CHIRURGICAL-FIX-1 (LOT J pt4) — numéro = clé du CONTENU rendu (couverture + blocs + contexte, p.
+    # ex. l'Apporteur) : on rend d'abord avec un jeton, on signe, puis on substitue le vrai numéro. Deux
+    # documents au contenu affiché différent ne peuvent plus partager un numéro.
+    corps = _cover(document, idu, f, _NUMERO_PLACEHOLDER, j, valeurs)
+    for b in blocs:
+        corps += b.rendu(valeurs, ctx) if document in _AVEC_CONTEXTE else b.rendu(valeurs)
+    numero = numeros.numero_rapport(document, idu, j, discriminant=_signature_contenu(corps))
+    corps = corps.replace(_NUMERO_PLACEHOLDER, numero)
     cart = Cartouche(
         doc_title=f"LABUSE — {label}" + (f" · {adresse}" if adresse else ""),
         doc_ref=f"{idu} · {numero}",
         doc_foot=_FOOT.get(document, "Document d'information LABUSE.").format(au=au),
     )
-    corps = _cover(document, idu, f, numero, j, valeurs)
-    for b in blocs:
-        corps += b.rendu(valeurs, ctx) if document in _AVEC_CONTEXTE else b.rendu(valeurs)
     html = page_html(label, cart, corps)
     return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart,
                        contexte={**(ctx or {}), "adresse": adresse})
