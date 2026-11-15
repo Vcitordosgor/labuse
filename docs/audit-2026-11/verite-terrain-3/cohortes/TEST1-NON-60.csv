@@ -1,0 +1,61 @@
+permit_id,insee,commune,d_aut,type_projet,mono,nb_lgt,surf_hab,n_parc,idus,zones,zone_fam,direct_constructible,direct_causes_non,servi_ouvert,servi_causes
+97441323A0224,97413,Saint-Leu,2024-03-19,individuel,t,1,69,1,97413000BD0029,N,N,False,zone_non_constructible:N,False,zone_non_constructible:N
+97441021A0277,97410,Saint-Benoît,2022-07-08,individuel,t,1,114,1,97410000CL0598,Ns28,N,False,zone_non_constructible:Ns28,False,zone_non_constructible:Ns28
+97441021A0323,97410,Saint-Benoît,2022-03-10,individuel,t,1,103,1,97410000BL0333,Ns41,N,False,zone_non_constructible:Ns41,False,zone_non_constructible:Ns41
+9744222600036,97422,Le Tampon,2026-05-27,individuel,t,1,115,1,97422000AZ0506,Aba,A,False,zone_non_constructible:Aba,False,zone_non_constructible:Aba
+97442124A0010,97421,Salazie,2024-07-04,individuel,t,1,42,1,97421000AV1300,UC,U,False,terrain_exigu,False,terrain_exigu
+97441624A0218,97416,Saint-Pierre,2024-07-05,individuel,t,1,114,1,97416000HO0272,Uf,U,False,terrain_exigu,False,terrain_exigu
+97441024A0073,97410,Saint-Benoît,2024-07-25,collectif_ou_groupe,t,2,0,1,97410000CK0099,A,A,False,zone_non_constructible:A,False,zone_non_constructible:A
+9744072500021,97407,Le Port,2025-07-30,individuel,t,1,87,1,97407000AL1652,Ub,U,False,terrain_exigu,False,terrain_exigu
+97441021A0400,97410,Saint-Benoît,2022-08-25,individuel,t,1,90,1,97410000AC0407,Ns21,N,False,zone_non_constructible:Ns21,False,zone_non_constructible:Ns21
+97440623A0013,97406,La Plaine-des-Palmistes,2023-06-22,collectif_ou_groupe,t,3,133,1,97406000AW0550,A,A,False,zone_non_constructible:A,False,zone_non_constructible:A
+9744102100326,97410,Saint-Benoît,2022-07-07,collectif_ou_groupe,t,2,146,1,97410000BL0114,Ns41,N,False,zone_non_constructible:Ns41,False,zone_non_constructible:Ns41
+97441313A0107,97413,Saint-Leu,2013-07-16,individuel,t,1,91,1,97413000CY1217,UD,U,False,terrain_exigu,False,terrain_exigu
+97441315A0075,97413,Saint-Leu,2015-06-18,individuel,t,1,56,1,97413000DE2186,?,?,False,hors_plu,False,hors_plu
+97441320A0012,97413,Saint-Leu,2020-05-20,individuel,t,1,107,1,97413000CX0435,APF,A,False,zone_transition,True,
+9744212600010,97421,Salazie,2026-04-24,individuel,f,1,113,3,97421000AS0250 97421000AS0256 97421000AS0217,Aba,A,False,zone_non_constructible:Aba,False,zone_non_constructible:Aba
+97440919A0060,97409,Saint-André,2019-09-03,individuel,t,1,97,1,97409000BC0138,Aba,A,False,zone_non_constructible:Aba,False,zone_non_constructible:Aba
+9744212500022,97421,Salazie,2025-09-01,individuel,t,1,117,1,97421000AB0337,Aba,A,False,zone_non_constructible:Aba,False,zone_non_constructible:Aba
+97442122A0025,97421,Salazie,2022-12-08,individuel,f,1,80,2,97421000AK0325 97421000AK0328,Aba|N,A|N,False,zone_non_constructible:Aba ; zone_non_constructible:N,False,zone_non_constructible:Aba ; zone_non_constructible:N
+97440624A0002,97406,La Plaine-des-Palmistes,2024-02-27,individuel,t,1,87,1,97406000AD0863,Uc,U,False,terrain_exigu,False,terrain_exigu
+9744122500200,97412,Saint-Joseph,2026-04-14,collectif_ou_groupe,f,26,1755,3,97412000AO0432 97412000AO0433 97412000AO0434,1AU5vi,AU,False,terrain_exigu,False,terrain_exigu
+97440921A0264,97409,Saint-André,2022-05-16,collectif_ou_groupe,t,5,219,1,97409000BI0220,UB,U,False,terrain_exigu,False,terrain_exigu
+97441021A0214,97410,Saint-Benoît,2021-12-15,individuel,t,1,99,1,97410000AC0670,Ns21,N,False,zone_non_constructible:Ns21,False,zone_non_constructible:Ns21
+97440324A0047,97403,Entre-Deux,2025-03-31,individuel,t,1,129,1,97403000AK0037,N,N,False,zone_non_constructible:N,False,zone_non_constructible:N
+97441021A0365,97410,Saint-Benoît,2022-05-03,individuel,t,1,159,1,97410000CL0520,Ns27,N,False,zone_non_constructible:Ns27,False,zone_non_constructible:Ns27
+97440623A0040,97406,La Plaine-des-Palmistes,2023-06-05,individuel,t,1,76,1,97406000AD0854,Uc,U,False,terrain_exigu,False,terrain_exigu
+97441022A0123,97410,Saint-Benoît,2022-12-12,individuel,t,1,144,1,97410000CL0769,A,A,False,zone_non_constructible:A,False,zone_non_constructible:A
+97441323A0068,97413,Saint-Leu,2023-10-24,individuel,f,1,59,2,97413000CN0467 97413000CN0304,UB,U,False,terrain_exigu,False,terrain_exigu
+97440921A0047,97409,Saint-André,2021-09-20,collectif_ou_groupe,t,2,113,1,97409000BC0139,Aba,A,False,zone_non_constructible:Aba,False,zone_non_constructible:Aba
+97441022A0133,97410,Saint-Benoît,2023-01-23,individuel,t,1,60,1,97410000BI0470,A,A,False,zone_non_constructible:A,False,zone_non_constructible:A
+9744222500054,97422,Le Tampon,2025-09-15,individuel,t,1,54,1,97422000CX0775,2AUc,AU,False,zone_non_constructible:2AUc,False,zone_non_constructible:2AUc
+9744012620021,97401,Les Avirons,2026-08-10,individuel,t,1,137,1,97401000AS1520,Uc,U,False,terrain_exigu,False,terrain_exigu
+9744222600064,97422,Le Tampon,2026-07-20,individuel,t,1,128,1,97422000BM1486,2AUc,AU,False,zone_non_constructible:2AUc,False,zone_non_constructible:2AUc
+97441022A0135,97410,Saint-Benoît,2023-03-01,individuel,t,1,60,1,97410000BI0471,A,A,False,zone_non_constructible:A,False,zone_non_constructible:A
+9744222500057,97422,Le Tampon,2025-06-11,individuel,t,1,72,1,97422000CX0778,2AUc,AU,False,zone_non_constructible:2AUc,False,zone_non_constructible:2AUc
+97440124A0059,97401,Les Avirons,2025-03-25,individuel,f,1,142,2,97401000AP1120 97401000AP0182,A,A,False,zone_non_constructible:A,False,zone_non_constructible:A
+97441021A0336,97410,Saint-Benoît,2022-07-07,individuel,t,1,90,1,97410000AC0410,Ns21,N,False,zone_non_constructible:Ns21,False,zone_non_constructible:Ns21
+97442122A0074,97421,Salazie,2023-03-29,collectif_ou_groupe,t,2,146,1,97421000AL0400,Aba,A,False,zone_non_constructible:Aba,False,zone_non_constructible:Aba
+97442322A0076,97423,Les Trois-Bassins,2022-11-02,individuel,t,1,80,1,97423000AI0813,1AUa,AU,False,terrain_exigu,False,terrain_exigu
+97440624A0087,97406,La Plaine-des-Palmistes,2025-01-16,individuel,t,1,53,1,97406000AW0822,Ur,U,False,terrain_exigu,False,terrain_exigu
+97441021A0282,97410,Saint-Benoît,2022-01-27,individuel,t,1,149,1,97410000AC0629,Ns21,N,False,zone_non_constructible:Ns21,False,zone_non_constructible:Ns21
+97441623A0473,97416,Saint-Pierre,2024-07-05,collectif_ou_groupe,t,2,101,1,97416000HX0656,Us,U,False,zone_non_constructible:Us,False,zone_non_constructible:Us
+97442025A0053,97420,Sainte-Suzanne,2025-10-13,individuel,t,1,62,1,97420000AR0798,A,A,False,zone_non_constructible:A,False,zone_non_constructible:A
+97441625A0474,97416,Saint-Pierre,2026-01-13,individuel,t,1,141,1,97416000HI1129,Us,U,False,zone_non_constructible:Us,False,zone_non_constructible:Us
+9744222600045,97422,Le Tampon,2026-07-08,collectif_ou_groupe,t,2,122,1,97422000BK2541,2AUc,AU,False,zone_non_constructible:2AUc,False,zone_non_constructible:2AUc
+97441021A0217,97410,Saint-Benoît,2022-03-24,collectif_ou_groupe,f,4,120,2,97410000CL0848 97410000CL0849,Ns32,N,False,zone_non_constructible:Ns32,False,zone_non_constructible:Ns32
+97441021A0259,97410,Saint-Benoît,2023-04-03,individuel,t,1,80,1,97410000BI0321,Ns40,N,False,zone_non_constructible:Ns40,False,zone_non_constructible:Ns40
+97441313A0266,97413,Saint-Leu,2014-01-30,individuel,t,1,46,1,97413000AC0017,A,A,False,zone_non_constructible:A,False,zone_non_constructible:A
+9744232600011,97423,Les Trois-Bassins,2026-04-28,individuel,t,1,77,1,97423000AK1813,Arh,A,False,zone_non_constructible:Arh,False,zone_non_constructible:Arh
+97441022A0170,97410,Saint-Benoît,2023-02-24,individuel,t,1,80,1,97410000CL0481,A,A,False,zone_non_constructible:A,False,zone_non_constructible:A
+97442224A0401,97422,Le Tampon,2025-03-06,individuel,t,1,135,1,97422000BK2512,2AUc,AU,False,zone_non_constructible:2AUc,False,zone_non_constructible:2AUc
+97441021A0308,97410,Saint-Benoît,2022-07-28,individuel,t,1,65,1,97410000BI0426,Ns40,N,False,zone_non_constructible:Ns40,False,zone_non_constructible:Ns40
+9744072600012,97407,Le Port,2026-04-22,individuel,f,1,122,2,97407000AL1669 97407000AL1670,Ub,U,False,terrain_exigu,False,terrain_exigu
+97442224A0251,97422,Le Tampon,2024-09-09,individuel,t,1,34,1,97422000CX0570,2AUc,AU,False,zone_non_constructible:2AUc,False,zone_non_constructible:2AUc
+97441021A0161,97410,Saint-Benoît,2021-08-27,individuel,t,1,67,1,97410000BX0750,Ua,U,False,redhibitoire,False,redhibitoire
+9744122600079,97412,Saint-Joseph,2026-08-21,collectif_ou_groupe,t,28,1466,1,97412000CY0017,U5,U,False,terrain_exigu,False,terrain_exigu
+97441020A0111,97410,Saint-Benoît,2021-02-23,individuel,t,1,100,1,97410000CL0966,Ns32,N,False,zone_non_constructible:Ns32,False,zone_non_constructible:Ns32
+97442224A0131,97422,Le Tampon,2024-10-03,collectif_ou_groupe,f,7,681,2,97422000CM0863 97422000CM0864,Uc,U,False,terrain_exigu,False,terrain_exigu
+97441021A0399,97410,Saint-Benoît,2022-08-04,individuel,t,1,67,1,97410000BN0440,Ns46,N,False,zone_non_constructible:Ns46,False,zone_non_constructible:Ns46
+97441021A0354,97410,Saint-Benoît,2022-07-28,collectif_ou_groupe,t,2,196,1,97410000BI0406,Ns40,N,False,zone_non_constructible:Ns40,False,zone_non_constructible:Ns40
+97441022A0230,97410,Saint-Benoît,2023-02-20,individuel,t,1,89,1,97410000AO0473,N,N,False,terrain_exigu,False,terrain_exigu
