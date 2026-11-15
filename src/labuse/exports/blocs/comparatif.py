@@ -160,7 +160,14 @@ def _contraintes_txt(r):
     from ...api.risques_arbitrage import ajuster_clause_affichage
     _nc = _est_non_constructible(r)
     cs = [x for x in (ajuster_clause_affichage(c, _nc) for c in cs) if x]
-    return " · ".join(esc(c) for c in cs) if cs else "aucune relevée"
+    # CHIRURGICAL-FIX-1 (E112b) — DÉDOUBLONNAGE (en gardant l'ordre) : jamais deux fois la même
+    # contrainte dans la colonne (cohérent avec les puces dédoublonnées de l'écran Comparer).
+    _vus, _uniq = set(), []
+    for c in cs:
+        if c not in _vus:
+            _vus.add(c)
+            _uniq.append(c)
+    return " · ".join(esc(c) for c in _uniq) if _uniq else "aucune relevée"
 
 
 def _bati_existant(r):

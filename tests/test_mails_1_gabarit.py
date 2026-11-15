@@ -2,7 +2,7 @@
 
 Vérifie, sur CHAQUE mail (les 21 du catalogue + le mail de fin d'essai rendu par code) :
   · le BOUTON d'action principal (vert) est présent et pointe vers un lien cliquable ;
-  · la SIGNATURE « Victor Lagane, fondateur de LABUSE » + le VRAI numéro, sur les mails personnels
+  · la SIGNATURE « Victor Lagane, Gestionnaire relation entreprise » + le VRAI numéro, sur les mails personnels
     (et son ABSENCE sur les mails automatiques, qui portent une étiquette de couleur) ;
   · le PIED de page : contact, « Gérer mes notifications », « Confidentialité », « Mentions légales »,
     et « Me désinscrire » SAUF sur les mails de sécurité ;

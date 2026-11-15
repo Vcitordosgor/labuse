@@ -9,7 +9,7 @@ historiques `PRENOM`/`LIEN_*` pour le cycle de vie ; dict normalisé pour les ma
 produit (sujet, html, texte, headers). `gere(key)` dit si une clé est prise en charge ici.
 
 Deux REGISTRES (mandat) :
-  · personnel — ton direct, signature « Victor Lagane, fondateur de LABUSE » ;
+  · personnel — ton direct, signature « Victor Lagane, Gestionnaire relation entreprise » ;
   · automatique — étiquette de couleur par nature, faits en clair, pas de signature.
 Les mails de SÉCURITÉ (mot de passe, adresse) gardent le pied SANS désinscription.
 

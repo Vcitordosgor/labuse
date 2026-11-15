@@ -199,10 +199,10 @@ export function RadarMarcheColonne({ commune, bienId, onCloseBien }: {
 
           {/* pied de colonne */}
           <p className="mt-5 text-[10.5px] leading-relaxed text-txt-dim">
-            {/* CHASSE-APP-FIX-2 (point 7, Radar) — « les portails » → « Leboncoin » (seule source
-                servie) ; la DATE DE RELEVÉ (« dernière capture le … ») est retirée (décision Vic 18/09 :
-                on n'affiche aucune date de relevé). */}
-            Prix demandés : annonces collectées sur Leboncoin.
+            {/* CHIRURGICAL-FIX-1 (E115) — la pige collecte sur PLUSIEURS portails (Leboncoin ET
+                Bien'ici) : on ne nomme plus un site unique. La DATE DE RELEVÉ reste retirée
+                (décision Vic 18/09 : aucune date de relevé affichée). */}
+            Prix demandés : annonces collectées sur les portails d'annonces (Leboncoin, Bien'ici).
             Prix actés : DVF (DGFiP){data.millesime_dvf ? ` — ${data.millesime_dvf}` : ''}. L’écart est « indicatif »
             de {data.seuil_indicatif_n} à {data.seuil_ecart_n - 1} annonces, ferme à {data.seuil_ecart_n}, « sous le seuil » en deçà.
             Les appartements comptent dans les chiffres mais ne sont pas listés.

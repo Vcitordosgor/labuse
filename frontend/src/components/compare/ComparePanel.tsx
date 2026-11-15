@@ -105,9 +105,9 @@ const ROWS: Row[] = [
   { label: 'Assainissement', prov: 'source', val: (r) => r.assainissement ? `Secteur : ${r.assainissement}` : '—',
     title: 'Desserte d\'assainissement — constat de SECTEUR (statistique du zonage d\'assainissement), pas un raccordement vérifié à la parcelle. D\'où le préfixe « Secteur : ».' },
   { label: 'Contraintes relevées', prov: 'source',
-    val: (r) => (r.contraintes ?? []).length ? `${(r.contraintes ?? []).length} relevée${(r.contraintes ?? []).length > 1 ? 's' : ''}` : 'aucune relevée',
+    val: (r) => { const n = dedupContraintes(r.contraintes ?? []).length; return n ? `${n} relevée${n > 1 ? 's' : ''}` : 'aucune relevée' },
     render: (r) => {
-      const cs = r.contraintes ?? []
+      const cs = dedupContraintes(r.contraintes ?? [])
       if (!cs.length) return <span className="text-txt-dim">aucune relevée</span>
       return (
         <div className="flex flex-wrap gap-1">
@@ -136,6 +136,20 @@ const SECTION_OF: Record<string, Section> = {
 function contrainteCourt(c: string): string {
   const court = c.split(/\s[—·:(]/)[0].trim()
   return court.length > 34 ? `${court.slice(0, 32)}…` : court
+}
+
+// CHIRURGICAL-FIX-1 (E112b) — une même contrainte (même libellé COURT) pouvait apparaître plusieurs
+// fois (un aléa par niveau : « Aléa mouvement de terrain » ×3, « Aléa inondation » ×2…). On
+// DÉDOUBLONNE par le libellé affiché : une puce par contrainte distincte (la 1re infobulle complète
+// est conservée), et le compteur suit le nombre de puces distinctes.
+function dedupContraintes(cs: string[]): string[] {
+  const vus = new Set<string>()
+  const out: string[] = []
+  for (const c of cs) {
+    const k = contrainteCourt(c)
+    if (!vus.has(k)) { vus.add(k); out.push(c) }
+  }
+  return out
 }
 
 // RETOURS-29 (maquette 15) — badge de provenance en OUTLINE : « sourcé » (vert) / « estimé » (ambre).

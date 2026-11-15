@@ -120,8 +120,11 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, onEditNote, column
       {/* RETOURS-19 (pt 14) — la note s'affiche EN ENTIER, jamais coupée en haut : plus de hauteur
           bornée ni de défilement interne (qui masquait la première ligne). Elle s'enroule librement. */}
       {note && (
-        <button data-crm-note-edit onClick={(ev) => { stop(ev); onEditNote() }}
-          className="w-full whitespace-pre-wrap [overflow-wrap:anywhere] rounded-md px-0 text-left text-[12.5px] leading-snug text-txt transition-colors duration-quick hover:text-txt-hi">
+        // CHIRURGICAL-FIX-1 (E113) — la note est TRONQUÉE à 4 lignes (line-clamp) : une note longue
+        // n'étire plus la carte sur toute la hauteur de la colonne. Le clic ouvre l'édition et montre
+        // la note entière (le bouton le fait déjà) ; `title` donne l'aperçu complet au survol.
+        <button data-crm-note-edit onClick={(ev) => { stop(ev); onEditNote() }} title={note}
+          className="line-clamp-4 w-full whitespace-pre-wrap [overflow-wrap:anywhere] rounded-md px-0 text-left text-[12.5px] leading-snug text-txt transition-colors duration-quick hover:text-txt-hi">
           {note}
         </button>
       )}

@@ -2,7 +2,8 @@
 
 Un seul modèle, décliné en deux REGISTRES (décision Vic, maquette validée 07/11) :
   · `personnel`  — bienvenue, essai, paiement, résiliation… ton direct, signé « Victor Lagane,
-                   fondateur de LABUSE » (encart avatar « VL »), pas d'étiquette.
+                   Gestionnaire relation entreprise » (encart avatar « VL »), pas d'étiquette.
+                   (CHIRURGICAL-FIX-1 E116 — commentaire aligné sur SIGNATURE_TITRE, décision Vic.)
   · `auto`       — Radar, veille, rapport prêt, maintenance, annonce, mise en vente… une ÉTIQUETTE
                    de couleur selon la nature, les faits en clair, pas de signature personnelle.
 
