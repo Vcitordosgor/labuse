@@ -185,6 +185,18 @@ zones:
           statut: valide
         limites_separatives:
           implantation_fond:
+            liste_blanche:
+              declaration: toutes les conditions de l'article sont appliquées
+              justification: 'relecteur FIX-3 : Ub7 p.28 permet une limite AU TOTAL et demande 3,50 m ailleurs — nombre de limites MESURÉ (budget 1, fond compris)'
+              conditions:
+                nombre_de_limites: mesuree
+                lineaire_ou_profondeur_en_limite: absente_du_texte
+                bande_depuis_voie: absente_du_texte
+                hauteur_en_limite: absente_du_texte
+                angle: absente_du_texte
+                patio: absente_du_texte
+                rupture_mitoyennete: absente_du_texte
+                affectation_graphique: absente_du_texte
             mode: limite_sous_conditions
             statut: valide
             article: 'Article Ub 7'
@@ -193,6 +205,18 @@ zones:
             condition_texte: 'au maximum sur une limite séparative'
             condition_modelable: 'une_seule_limite'
           implantation_laterales:
+            liste_blanche:
+              declaration: toutes les conditions de l'article sont appliquées
+              justification: 'relecteur FIX-3 : Ub7 p.28 permet une limite AU TOTAL et demande 3,50 m ailleurs — nombre de limites MESURÉ (budget 1, fond compris)'
+              conditions:
+                nombre_de_limites: mesuree
+                lineaire_ou_profondeur_en_limite: absente_du_texte
+                bande_depuis_voie: absente_du_texte
+                hauteur_en_limite: absente_du_texte
+                angle: absente_du_texte
+                patio: absente_du_texte
+                rupture_mitoyennete: absente_du_texte
+                affectation_graphique: absente_du_texte
             mode: limite_sous_conditions
             statut: valide
             article: 'Article Ub 7'

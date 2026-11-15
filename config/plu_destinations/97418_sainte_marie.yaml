@@ -44,6 +44,7 @@ zones:
             par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -195,6 +196,7 @@ zones:
             par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -271,6 +273,7 @@ zones:
             par rapport à l’alignement. Ce seuil est réduit à 2,00 mètres minimum en secteur UAz.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -356,6 +359,7 @@ zones:
             par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -494,6 +498,7 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -632,6 +637,7 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -736,6 +742,7 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -824,6 +831,7 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -944,6 +952,7 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1034,6 +1043,7 @@ zones:
             • en zones UEa et UR : 5 mètres'
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 4
           article: Art. U5.2 « activités »
           page_pdf: 33
@@ -1195,6 +1205,7 @@ zones:
           citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 4
           article: Art. U5.2 « activités »
           page_pdf: 33
@@ -1319,6 +1330,7 @@ zones:
           citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 4
           article: Art. U5.2 « activités »
           page_pdf: 33
@@ -1459,6 +1471,7 @@ zones:
           citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 4
           article: Art. U5.2 « activités »
           page_pdf: 33
@@ -1603,6 +1616,7 @@ zones:
           citation: 'en zones UEa et UR : 5 mètres'
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 4
           article: Art. U5.2 « activités »
           page_pdf: 33
@@ -1763,6 +1777,7 @@ zones:
           citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 4
           article: Art. U5.2 « activités »
           page_pdf: 33
@@ -1819,6 +1834,7 @@ zones:
           citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 4
           article: Art. U5.2 « activités »
           page_pdf: 33
@@ -1883,6 +1899,7 @@ zones:
           min_m: 0
           forme: alignement
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1959,6 +1976,7 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -2025,6 +2043,7 @@ zones:
           citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 4
           article: Article U5 « activités » - Implantation par rapport aux limites séparatives (5.2)
           page_pdf: 33

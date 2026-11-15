@@ -5,6 +5,30 @@ moteur. Un jeton non modélisé, mal formé, disjonctif ou non mesurable FERME l
 from labuse.gabarit.builder import analyser_condition_implantation, jeton_num_strict
 
 
+LB = {"declaration": "toutes les conditions de l'article sont appliquées",
+      "conditions": {k: "absente_du_texte" for k in (
+          "nombre_de_limites", "lineaire_ou_profondeur_en_limite", "bande_depuis_voie",
+          "hauteur_en_limite", "angle", "patio", "rupture_mitoyennete", "affectation_graphique")}}
+
+
+def test_fix3_liste_blanche_obligatoire():
+    """FIX-3 LOT 1 — tout est fermé par défaut : l'ouverture chiffrée exige la déclaration
+    complète (8 conditions, chacune absente_du_texte ou mesuree). Une condition présente
+    seulement dans le texte (clé manquante ou autre valeur) FERME."""
+    imp = {"mode": "limite_ou_retrait", "article": "Uc 5", "liste_blanche": LB}
+    assert analyser_condition_implantation(imp, None, None)["zero"] == "toutes"
+    import copy
+    imp2 = copy.deepcopy(imp)
+    del imp2["liste_blanche"]["conditions"]["patio"]
+    assert analyser_condition_implantation(imp2, None, None)["ouvre"] is False
+    imp3 = copy.deepcopy(imp)
+    imp3["liste_blanche"]["conditions"]["angle"] = "presente_dans_le_texte"
+    assert analyser_condition_implantation(imp3, None, None)["ouvre"] is False
+    imp4 = copy.deepcopy(imp)
+    imp4["liste_blanche"]["declaration"] = "conditions appliquées"
+    assert analyser_condition_implantation(imp4, None, None)["ouvre"] is False
+
+
 def test_parseur_strict_jamais_141414():
     # FIX-2 LOT A — « 14 m » annoté était lu 141 414 m (concaténation des chiffres) et ouvrait
     # deux limites à toute largeur (Sainte-Rose Ua/Ub/Uc) ; « 20 m (…) » était lu 2 014 m de
@@ -39,7 +63,7 @@ def test_condition_non_modelisee_ferme_l_ouverture():
 
 def test_conditions_toutes_appliquees_ouvrent():
     imp = {"mode": "limite_sous_conditions", "article": "UA 7",
-           "condition_modelable": "largeur_terrain_max:14 m"}
+           "condition_modelable": "largeur_terrain_max:14 m", "liste_blanche": LB}
     assert analyser_condition_implantation(imp, 12.0, 300.0)["zero"] == "toutes"
     # condition évaluée NON remplie → pas d'ouverture, pas de mention (la règle est appliquée)
     d = analyser_condition_implantation(imp, 18.0, 300.0)
@@ -48,11 +72,12 @@ def test_conditions_toutes_appliquees_ouvrent():
     d2 = analyser_condition_implantation(imp, None, 300.0)
     assert d2["ouvre"] is False and d2["mention"]
     # bascule de surface : mesurée des deux côtés du seuil
-    imp3 = {"mode": "limite_sous_conditions", "condition_modelable": "bascule_surface:400"}
+    imp3 = {"mode": "limite_sous_conditions", "condition_modelable": "bascule_surface:400",
+            "liste_blanche": LB}
     assert analyser_condition_implantation(imp3, None, 300.0)["zero"] == 2
     assert analyser_condition_implantation(imp3, None, 900.0)["zero"] == 1
-    # sans condition écrite, le libre choix reste ouvert
-    assert analyser_condition_implantation({"mode": "limite_ou_retrait"}, None, None)["zero"] == "toutes"
+    # FIX-3 : SANS déclaration de liste blanche, même le « libre choix » reste FERMÉ
+    assert analyser_condition_implantation({"mode": "limite_ou_retrait"}, None, None)["ouvre"] is False
 
 
 def test_retrait_obligatoire_n_ouvre_jamais():

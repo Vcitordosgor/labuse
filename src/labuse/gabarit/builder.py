@@ -91,6 +91,28 @@ def jeton_num_strict(tok: str):
     return m.group("nom"), float(m.group("val").replace(",", "."))
 
 
+#: MOTEUR-VERITE-FIX-3 LOT 1 — LISTE BLANCHE. Tout est fermé par défaut : une ouverture
+#: chiffrée n'existe que si la feuille porte la déclaration explicite ET l'état de CHACUNE des
+#: huit conditions possibles de l'article (absente_du_texte = l'article ne la pose pas ;
+#: mesuree = le moteur la mesure sur la parcelle). Sans cela : retrait prudent, verdict
+#: « constructible, capacité supérieure possible, à vérifier ». Le relecteur contrôle la liste
+#: EN ENTIER (docs/audit-2026-11/moteur-verite-fix-1/LISTE-BLANCHE.md).
+DECLARATION_LISTE_BLANCHE = "toutes les conditions de l'article sont appliquées"
+CONDITIONS_LISTE_BLANCHE = (
+    "nombre_de_limites", "lineaire_ou_profondeur_en_limite", "bande_depuis_voie",
+    "hauteur_en_limite", "angle", "patio", "rupture_mitoyennete", "affectation_graphique")
+
+
+def liste_blanche_ok(imp: Optional[dict]) -> bool:
+    """La feuille porte-t-elle une déclaration de liste blanche COMPLÈTE ?"""
+    lb = (imp or {}).get("liste_blanche") or {}
+    if str(lb.get("declaration") or "").strip() != DECLARATION_LISTE_BLANCHE:
+        return False
+    conds = lb.get("conditions") or {}
+    return all(str(conds.get(k) or "") in ("absente_du_texte", "mesuree")
+               for k in CONDITIONS_LISTE_BLANCHE)
+
+
 def analyser_condition_implantation(imp: Optional[dict], largeur_m, surface_m2) -> dict:
     """Décision d'implantation d'UN côté — {ouvre: bool, zero: 'toutes'|n|0, bande_m,
     lineaire_pct, detail, mention}. `largeur_m` : largeur mesurée du terrain (ou None),
@@ -109,6 +131,11 @@ def analyser_condition_implantation(imp: Optional[dict], largeur_m, surface_m2) 
     art = (imp.get("article") or "").strip()
     cm = (imp.get("condition_modelable") or "").strip()
     cond_txt = (imp.get("condition_texte") or "conditions du règlement").strip()
+    # FIX-3 LOT 1 — LISTE BLANCHE : sans déclaration complète, AUCUNE ouverture chiffrée
+    # (même « limite_ou_retrait sans condition » : une condition peut vivre dans le seul texte).
+    if not liste_blanche_ok(imp):
+        d["mention"] = cond_txt[:200]
+        return d
     if mode in ("limite_ou_retrait", "limite_imposee") and not cm:
         lib = ("implantation en limite admise sans condition" if mode == "limite_ou_retrait"
                else "implantation en limite imposée par le règlement")
@@ -385,7 +412,29 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             recul_sep_formule = None
             recul_formule_obj = None
             _frac_h = _fraction_hauteur_formule(getattr(zr, "recul_limites_formule", None))
-            if _frac_h is not None and recul_sep is not None and recul_sep > 0:
+            _h_ref_type = getattr(zr, "h_reference", None)
+            if (_frac_h is not None and recul_sep is not None and recul_sep > 0
+                    and _h_ref_type != "egout"):
+                # MOTEUR-VERITE-FIX-3 LOT 1 — le texte ne fixe PAS l'égout comme référence
+                # (hauteur totale de façade, prospect altimétrique point à point, ou non lu) :
+                # le scénario niveau-par-niveau à l'égout ne s'applique PAS. Référence PRUDENTE =
+                # faîtage de la zone (le recul le plus grand plausible — capacité ≤ main).
+                _h_prud = haut if haut is not None else egout
+                if _h_prud is not None:
+                    _rec_p = round(max(float(recul_sep), float(_h_prud) * _frac_h), 1)
+                    if _rec_p > recul_sep:
+                        recul_sep = _rec_p
+                    recul_sep_formule = (
+                        f"recul séparatif = max(min, H×{_frac_h:.3g}) — référence PRUDENTE "
+                        f"H = faîtage {_h_prud:g} m (le texte ne fixe pas l'égout : "
+                        f"{_h_ref_type or 'référence non lue à l''article'}) → {recul_sep:g} m")
+                    racc.setdefault("regles_non_integrees", []).append(
+                        "retrait relatif : référence de hauteur non « égout » — scénario "
+                        "niveau-par-niveau NON appliqué (référence prudente faîtage)")
+                else:
+                    racc.setdefault("regles_non_integrees", []).append(
+                        "recul séparatif lié à la hauteur non chiffrable : hauteur de zone non validée")
+            elif _frac_h is not None and recul_sep is not None and recul_sep > 0:
                 from ..faisabilite.engine import Hypotheses
                 _etage = float(Hypotheses.charger(commune).etage_m)
                 _nmax = None

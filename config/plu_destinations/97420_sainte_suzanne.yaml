@@ -668,6 +668,7 @@ zones:
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 5 m
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 4
           article: UE5.2
           page_pdf: 22
@@ -1060,6 +1061,7 @@ zones:
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 5 m
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 4
           article: UE5.2
           page_pdf: 22

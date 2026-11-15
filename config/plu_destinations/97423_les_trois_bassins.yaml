@@ -573,6 +573,7 @@ zones:
             de l’alignement est de 4 mètres minimum.
           statut: valide
         limites_separatives:
+          h_reference: egout
           min_m: 4.0
           article: Ue 7.2-7.3
           page_pdf: 57

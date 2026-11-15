@@ -361,12 +361,36 @@ zones:
           statut: valide
         limites_separatives:
           implantation_fond:
+            liste_blanche:
+              declaration: toutes les conditions de l'article sont appliquées
+              justification: 'relecteur FIX-3 : Uc5 p.54 permet la limite ou le retrait, sans plafond de mitoyenneté dans la règle générale'
+              conditions:
+                nombre_de_limites: absente_du_texte
+                lineaire_ou_profondeur_en_limite: absente_du_texte
+                bande_depuis_voie: absente_du_texte
+                hauteur_en_limite: absente_du_texte
+                angle: absente_du_texte
+                patio: absente_du_texte
+                rupture_mitoyennete: absente_du_texte
+                affectation_graphique: absente_du_texte
             mode: limite_ou_retrait
             statut: valide
             article: 'Article Uc 5'
             page_pdf: 54
             citation: 'Les constructions peuvent être implantées soit en limite séparative, soit en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres.'
           implantation_laterales:
+            liste_blanche:
+              declaration: toutes les conditions de l'article sont appliquées
+              justification: 'relecteur FIX-3 : Uc5 p.54 permet la limite ou le retrait, sans plafond de mitoyenneté dans la règle générale'
+              conditions:
+                nombre_de_limites: absente_du_texte
+                lineaire_ou_profondeur_en_limite: absente_du_texte
+                bande_depuis_voie: absente_du_texte
+                hauteur_en_limite: absente_du_texte
+                angle: absente_du_texte
+                patio: absente_du_texte
+                rupture_mitoyennete: absente_du_texte
+                affectation_graphique: absente_du_texte
             mode: limite_ou_retrait
             statut: valide
             article: 'Article Uc 5'

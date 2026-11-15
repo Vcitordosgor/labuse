@@ -49,6 +49,7 @@ zones:
             à 3 mètres (voir illustrations explicatives dans les annexes du règlement).
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -174,6 +175,7 @@ zones:
             à 3 mètres (voir illustrations explicatives dans les annexes du règlement).
           statut: valide
         limites_separatives:
+          h_reference: egout
           min_m: 3
           article: UA 7
           page_pdf: 15
@@ -268,6 +270,7 @@ zones:
           min_m: 0
           forme: alignement
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -374,6 +377,7 @@ zones:
             à 3 mètres (voir illustrations explicatives dans les annexes du règlement).
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -492,6 +496,7 @@ zones:
             proche de la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -609,6 +614,7 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -736,6 +742,7 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -838,6 +845,7 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -939,6 +947,7 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1052,6 +1061,7 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1157,6 +1167,7 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1477,6 +1488,7 @@ zones:
             à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1879,6 +1891,7 @@ zones:
             voie au moins égale à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -2011,6 +2024,7 @@ zones:
             proche de la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -2096,6 +2110,7 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -2169,6 +2184,7 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -2253,6 +2269,7 @@ zones:
             de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -2363,6 +2380,7 @@ zones:
             à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide

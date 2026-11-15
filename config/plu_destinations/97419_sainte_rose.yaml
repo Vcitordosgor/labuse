@@ -65,6 +65,7 @@ zones:
             à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -210,6 +211,7 @@ zones:
             à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -348,6 +350,7 @@ zones:
             à 4 mètres. Le long de la RN2 et de la RD57, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -482,6 +485,7 @@ zones:
             à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -589,6 +593,7 @@ zones:
             à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 5
           article: UE 7
           page_pdf: 49
@@ -785,6 +790,7 @@ zones:
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
           note: "PLU-VERIF-1 : page corrigée 55→13 (art. UA 6)."
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -879,6 +885,7 @@ zones:
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
           note: "PLU-VERIF-1 : page corrigée 55→31 (art. UC 6)."
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -970,6 +977,7 @@ zones:
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
           note: "PLU-VERIF-1 : page corrigée 55→49 (art. UE 6)."
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 5
           article: UE 7
           page_pdf: 49

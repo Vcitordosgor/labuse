@@ -498,6 +498,7 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -1537,6 +1538,7 @@ zones:
             (...) au moins égale à 4 mètres.'
           statut: valide
         limites_separatives:
+          h_reference: egout
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide

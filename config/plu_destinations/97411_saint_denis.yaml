@@ -424,6 +424,7 @@ zones:
             porte: "autre"
             modifie_calcul: true
         limites_separatives:
+          h_reference: altitude_point_a_point
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -790,6 +791,7 @@ zones:
           citation: soit avec un recul de 4 m minimum par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          h_reference: altitude_point_a_point
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -908,6 +910,7 @@ zones:
             porte: "autre"
             modifie_calcul: true
         limites_separatives:
+          h_reference: altitude_point_a_point
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1127,6 +1130,7 @@ zones:
             à 3 m minimum de l'alignement.
           statut: valide
         limites_separatives:
+          h_reference: altitude_point_a_point
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1251,6 +1255,7 @@ zones:
             à 3 m minimum de l'alignement.
           statut: valide
         limites_separatives:
+          h_reference: altitude_point_a_point
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1416,6 +1421,7 @@ zones:
             à 3 m minimum de l'alignement.
           statut: valide
         limites_separatives:
+          h_reference: altitude_point_a_point
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide

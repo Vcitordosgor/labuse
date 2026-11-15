@@ -53,6 +53,7 @@ zones:
             à 2 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -226,6 +227,7 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -382,6 +384,7 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -470,6 +473,7 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -597,6 +601,7 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -718,6 +723,7 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -1008,6 +1014,7 @@ zones:
             à 2 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -1113,6 +1120,7 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -1191,6 +1199,7 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -1271,6 +1280,7 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -1419,6 +1429,7 @@ zones:
             à 2 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -1566,6 +1577,7 @@ zones:
             à 2 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide

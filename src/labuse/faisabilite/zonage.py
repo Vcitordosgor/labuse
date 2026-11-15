@@ -76,6 +76,11 @@ class ZoneRules:
     # None = non calibré → le retrait (min_m / formule) s'applique comme aujourd'hui.
     implantation_laterales: dict | None = None
     implantation_fond: dict | None = None
+    # MOTEUR-VERITE-FIX-3 LOT 1 — référence de hauteur du retrait relatif, LUE À L'ARTICLE :
+    # 'egout' (seul cas où le scénario niveau-par-niveau à l'égout s'applique),
+    # 'hauteur_totale_facade', 'altitude_point_a_point'. None/au-delà → référence PRUDENTE
+    # (faîtage de la zone).
+    h_reference: str | None = None
     pleine_terre_compose: dict | None = None  # PLU-CALIBRAGE-7 forme 2 : {espaces_verts_pct, part_pct}
     #  pleine_terre_pct = espaces_verts_pct × part_pct / 100 (calculé, JAMAIS stocké — les 2 chiffres sourcés)
     pleine_terre_nature: str | None = None    # CHIRURGICAL-FIX-1 (LOT H pt8) — vraie nature de la règle
@@ -412,6 +417,8 @@ def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> Zone
         # VALIDÉE que le retrait (les dicts passent tels quels ; None = non calibré → retrait).
         implantation_laterales=_implantation_leaf(reg, "implantation_laterales"),
         implantation_fond=_implantation_leaf(reg, "implantation_fond"),
+        h_reference=(((reg.get("retraits") or {}).get("limites_separatives") or {})
+                     .get("h_reference") or None),
         stat_logement=_stat_from_regles(reg),
         pleine_terre_pct=_pleine_terre_val(reg),
         pleine_terre_compose=_pleine_terre_compose(reg),
