@@ -1219,10 +1219,15 @@ def pre_dossier_zip(idu: str, request: Request, db: Session = Depends(get_db)) -
             "message": (f"Parcelle non constructible — {_motif}. Aucun pré-dossier de permis "
                         "(ni formulaire CERFA) n'est généré : il n'y a pas de projet constructible "
                         "à instruire sur cette parcelle.")})
+    # CHIRURGICAL-FIX-1 (LOT J pt2) — UNE parcelle, UNE adresse : le CERFA (PCMI4) choisit EXACTEMENT
+    # la même ligne BAN que la fiche/le Dossier/l'Apporteur. Avant, l'ORDER BY différait (il manquait le
+    # départage par numéro de voie) → AM0838 : « 14 Rue de la Boulangerie » au CERFA vs « 4 Impasse Henri
+    # Madore » sur la fiche. On reprend l'ordre canonique de la fiche (`_BAN_ORDER`, source unique).
+    from .app import _BAN_ORDER
     adresse = db.execute(text(
-        """SELECT a.numero, a.rep, a.voie, a.code_postal FROM adresse_parcelles ap
+        f"""SELECT a.numero, a.rep, a.voie, a.code_postal FROM adresse_parcelles ap
            JOIN adresses a ON a.id_ban = ap.id_ban WHERE ap.idu = :idu
-           ORDER BY (ap.source = 'principal') DESC, a.id_ban LIMIT 1"""),
+           ORDER BY {_BAN_ORDER} LIMIT 1"""),
         {"idu": idu}).mappings().first() if db.execute(text(
             "SELECT to_regclass('adresse_parcelles') IS NOT NULL")).scalar() else None
 

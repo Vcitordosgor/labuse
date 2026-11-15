@@ -17,8 +17,12 @@ import warnings
 import pytest
 from openpyxl import load_workbook
 
+from pathlib import Path
+
 from labuse.bilan.excel import classeur_bilan, classeur_bilan_bytes
 from labuse.bilan.moteur import EntreesBilan, Produit, Programme, SaisiePoste
+
+_SRC = Path(__file__).resolve().parents[1] / "src" / "labuse"
 
 
 # ── Profils des 4 parcelles (dont AM0838, habitat interdit → non constructible, 0 produit) ──
@@ -146,3 +150,12 @@ def test_1e_net_promoteur_applique_la_tva_de_la_vente():
     assert ligne, "ligne « Net promoteur … » absente"
     frm = ws.cell(ligne, 5).value
     assert isinstance(frm, str) and "/" in frm and "*(" in frm, f"net promoteur sans multiplicateur TVA : {frm}"
+
+
+# ── pt2 — une parcelle, une adresse : le CERFA (PCMI4) choisit la MÊME ligne BAN que la fiche ──
+def test_pt2_pcmi4_meme_ordre_adresse_que_la_fiche():
+    pd = (_SRC / "api" / "pre_dossier.py").read_text()
+    # le CERFA reprend l'ordre canonique `_BAN_ORDER` (celui de _ban_adresse / la fiche)…
+    assert "from .app import _BAN_ORDER" in pd and "ORDER BY {_BAN_ORDER} LIMIT 1" in pd
+    # … et n'a plus son propre ORDER BY divergent (qui prenait une autre adresse).
+    assert "ORDER BY (ap.source = 'principal') DESC, a.id_ban LIMIT 1" not in pd
