@@ -293,3 +293,45 @@ prouvée sur Saint-Joseph (passage à 0 échec). C'est le gros du reliquat ci-de
 **Priorité de ce tour** : le refus (bloquant, audit écrans) et le contrôle dur des pages (qui prouve que
 toutes les valeurs sont justes) ont été traités d'abord ; le reliquat verbatim/ingestion est mesuré et listé
 plutôt que bâclé — la relecture a montré que la précipitation sur les valeurs produit des erreurs.
+
+---
+
+## Relecture (3e tour) — contrôle renforcé, barème collectif prouvé, version Saint-Denis
+
+### Contrôle durci (ta remarque A)
+Le contrôle vérifie désormais la VRAIE preuve : (1) la citation se retrouve **mot pour mot** sur sa page
+(par segments de ligne, tolérant aux retours à la ligne), ET (2) **chaque chiffre appliqué figure DANS la
+citation** (plus « quelque part sur la page »). Résultat sur **1465 règles** :
+- **0 chiffre hors citation** — tout chiffre appliqué est présent dans la citation de sa règle (garde-fou
+  `test_chaque_chiffre_applique_figure_dans_sa_citation`). Corrigé au passage : Saint-Pierre (ligne
+  hébergement 0,3/0,2 ajoutée à la citation), la colonne « places intégrées » porte sa propre citation.
+- **1247 citations pas encore verbatim** — c'est la DETTE : mes citations étaient des synthèses. Outil
+  `scripts/stationnement_citation_verbatim.py` construit le bloc verbatim depuis la page (propre sur Le
+  Tampon, Cilaos, etc. ; reste à régler les cases de tableau sur 2 lignes et les dispositions générales).
+  La conversion commune par commune, pilotée par le contrôle jusqu'à 0, est le gros du reliquat.
+
+### Contre-audit 97422000BW2635 (barème individuel sur collectif)
+Vérifié : le moteur applique BIEN le **collectif**, jamais l'individuel. BW2635 (zone Uav, 20 logements) →
+**30 places = 1,5 × 20 (opération > 5)**, formule « barème par typologie / opération > 5 », pas « habitat
+individuel ». Pour **30 logements → 45 places** (1,5 × 30), exactement le ~45 attendu. Aucune révision en
+cache pour BW2635 : l'écran « 30/30 individuel » relevé était un état **antérieur au correctif**. Test
+ajouté (`test_le_tampon_collectif_jamais_le_bareme_individuel`, 8→12, 20→30, 30→45).
+
+### Saint-Denis — version en vigueur (ta remarque B)
+Le règlement en vigueur servi par le GPU est **2026-08-05** (`97411_reglement_20260805.pdf`,
+`https://data.geopf.fr/annexes/gpu/documents/DU_97411/…`). La table `plu_reglement_extrait` sert **la même
+version** — l'écart ne vient pas des versions mais de **n° de page mal transcrits à l'audit** : sur ce PDF,
+« 15 % » est **« En secteurs Uat »** (secteur, renvoi à Ua), et « 25 % » est **« En secteurs Uip »** — des
+sous-secteurs, pas les zones Ua/Ui. La pleine terre Saint-Denis est à ré-ingérer **zone par zone, image à
+l'appui** sur ce PDF 2026-08-05 (fait au lot d'après, hors périmètre stationnement de ce tour).
+
+### Deuxième cas du contre-audit — hauteur près des limites (Ua10.3)
+Noté : une règle de hauteur près des limites (art. Ua10.3) que le moteur ne sait pas chiffrer doit
+s'afficher **« Non vérifié »**, jamais être traitée comme absente (même principe que le prospect L ≥ h/2).
+À implémenter (contrôle dédié), reliquat.
+
+### Reliquat de ce lot (à finir avant merge)
+1. **Citations verbatim** : 1247 → 0 (conversion commune par commune, outil prêt, contrôle comme juge).
+2. **Saint-Paul** zone par zone. 3. **52 zones « habitat secondaire »** : refus motivé ou ingestion, décompte.
+4. Ua10.3 hauteur « Non vérifié ». 5. Saint-Denis pleine terre (image à l'appui). 6. Lot 4, conditions
+chiffrées, « non réglementé », Études PDF, sondage final (lot d'après).

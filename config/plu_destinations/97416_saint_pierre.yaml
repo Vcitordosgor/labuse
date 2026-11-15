@@ -64,7 +64,7 @@ zones:
           statut: valide
           article: Ucv6
           page_pdf: 72
-          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 0,85 place de stationnement par logement social. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
+          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 0,85 place de stationnement par logement social. Hébergement : 0,2 place de stationnement par hébergement. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
           m2_par_place: 75
           arrondi: inferieur
           social:
@@ -261,7 +261,7 @@ zones:
           statut: valide
           article: Ud6
           page_pdf: 93
-          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
+          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. Hébergement (résidences personnes âgées, étudiants…) : 0,3 place de stationnement par hébergement. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
           m2_par_place: 75
           arrondi: inferieur
           social:
@@ -464,7 +464,7 @@ zones:
           statut: valide
           article: Ud6
           page_pdf: 93
-          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
+          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. Hébergement (résidences personnes âgées, étudiants…) : 0,3 place de stationnement par hébergement. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
           m2_par_place: 75
           arrondi: inferieur
           social:
@@ -663,7 +663,7 @@ zones:
           statut: valide
           article: Ud6
           page_pdf: 93
-          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
+          citation: 'Habitation / Logement : 1 place de stationnement par tranche de 75 m² de surface de plancher. 1 place pour les logements locatifs sociaux. 0,5 place par parcelle, à réaliser au sein des espaces communs, pour les lotissements d''habitat individuel. Hébergement (résidences personnes âgées, étudiants…) : 0,3 place de stationnement par hébergement. La place de stationnement est comptabilisée par tranche complète (arrondi inférieur).'
           m2_par_place: 75
           arrondi: inferieur
           social:

@@ -134,6 +134,22 @@ def test_colonne_places_integrees_condition_bloquante_au_seuil():
     assert not b.exiger(_prog([(3, 70, 5)]), destination="collectif").conditions  # 350 m² < 1000 → aucune
 
 
+def test_le_tampon_collectif_jamais_le_bareme_individuel():
+    """Contre-audit 97422000BW2635 (Le Tampon) — une opération collective ne doit JAMAIS être chiffrée au
+    barème de l'habitat individuel (1 place/logt). Le texte Ud/Ua12.2 donne le collectif (1,5 place/logt au
+    3 pièces et plus, ou la règle d'opération > 5) : 30 logements → ~45 places, pas 30."""
+    from types import SimpleNamespace
+    from labuse.implantation import regles as R
+    b = R.charger("97422", "Uav").stationnement
+
+    def prog(n, pieces=3, surface=70):
+        return [SimpleNamespace(pieces=pieces, surface_m2=surface) for _ in range(n)]
+    for n, attendu in [(8, 12), (20, 30), (30, 45)]:
+        ex = b.exiger(prog(n), destination="collectif")
+        assert ex.places == attendu, f"{n} logts collectif → {ex.places}, attendu {attendu}"
+        assert "individuel" not in ex.formule.lower()
+
+
 def test_etude_refuse_immediatement_parcelle_non_constructible(monkeypatch):
     """Audit écrans (97404000AM0838, zone UE habitat interdit) — l'Étude lit le MÊME verdict de
     constructibilité que les autres documents et REFUSE tout de suite, avec le motif, SANS lancer le
@@ -209,10 +225,11 @@ def test_controle_citation_identique_implique_regle_identique():
                 f"(citation « {cit[:60]}… ») — recopie probable, chaque zone doit citer son propre texte.")
 
 
-def test_chaque_chiffre_applique_figure_sur_sa_page():
-    """CONTRÔLE DUR (relecture) — chaque chiffre appliqué par un barème doit se retrouver dans le TEXTE DE
-    SA PAGE du PDF officiel (tolérant aux retours à la ligne, pages voisines pour les tableaux à cheval).
-    Garde-fou contre toute valeur inventée. Sauté si les PDF officiels ne sont pas présents (CI nue)."""
+def test_chaque_chiffre_applique_figure_dans_sa_citation():
+    """CONTRÔLE DUR (relecture 3) — chaque chiffre appliqué par un barème doit figurer DANS SA CITATION (pas
+    seulement « quelque part sur la page » : un « 1 » s'y trouve partout). Garde-fou contre toute valeur sans
+    source citée. Sauté si les PDF officiels ne sont pas présents (CI nue). (La conversion des citations en
+    texte VERBATIM sur la page — l'autre moitié du contrôle — est une dette suivie dans le compte-rendu.)"""
     import glob
     import importlib.util
     import os
@@ -226,10 +243,10 @@ def test_chaque_chiffre_applique_figure_sur_sa_page():
     import io
     import contextlib
     with contextlib.redirect_stdout(io.StringIO()):
-        echecs = ctl.controle()
-    fig = [e for e in echecs if e[3] == "figures"]
-    assert not fig, (f"{len(fig)} chiffres appliqués ne figurent pas sur leur page — valeur ou page suspecte : "
-                     + ", ".join(f"{i} {z} p{pg} {mq}" for i, z, pg, _m, mq in fig[:10]))
+        res = ctl.controle()
+    fig = res["fig"]
+    assert not fig, (f"{len(fig)} règles appliquent un chiffre absent de leur citation : "
+                     + ", ".join(f"{i} {z} {h}" for i, z, _pg, h in fig[:10]))
 
 
 def test_destination_suit_le_type_de_projet():

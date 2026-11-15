@@ -1,6 +1,9 @@
-"""ETUDE-STATIONNEMENT-FIX-1 — CONTRÔLE DUR : chaque chiffre appliqué et la citation d'une zone doivent se
-retrouver dans le TEXTE DE SA PAGE du PDF officiel (tolérant aux retours à la ligne). Tourne sur TOUTES les
-règles ingérées, pas seulement le sondage. Rend le nombre d'échecs et le détail.
+"""ETUDE-STATIONNEMENT-FIX-1 — CONTRÔLE DUR (relecture 3). La vraie preuve d'une règle :
+  (1) sa CITATION se retrouve MOT POUR MOT dans le texte de SA page du PDF officiel (tolérant aux retours
+      à la ligne ; pages voisines pour un tableau à cheval) ;
+  (2) CHAQUE chiffre appliqué par le barème figure DANS CETTE CITATION (pas seulement « quelque part sur la
+      page » : un « 1 » ou « 1,5 » s'y trouve partout).
+Tourne sur TOUTES les règles ingérées. Rend : règles, échecs de citation, chiffres hors citation.
 
     PYTHONPATH=src python scripts/stationnement_controle_pages.py [--verbose]
 """
@@ -23,48 +26,49 @@ def pdf_for(insee):
 
 
 def _norm(s: str) -> str:
-    return re.sub(r'\s+', '', (s or "").lower().replace(" ", " ").replace("’", "'"))
+    return re.sub(r'\s+', '', (s or "").lower().replace("’", "'").replace("œ", "oe"))
 
 
 def _fr(x: float) -> str:
-    """Nombre tel qu'écrit dans un PLU : '1,5', '0,85', '75', '2'."""
     if abs(x - round(x)) < 1e-9:
         return str(int(round(x)))
     return ("%g" % x).replace(".", ",")
 
 
 def figures(b: R.BaremeStationnement):
-    """Les chiffres DISTINCTIFS appliqués (ceux qui doivent apparaître verbatim sur la page). Les encodages
-    N/M (ex. 0,3333 = « 1 pour 3 ») sont rendus par leur DÉNOMINATEUR attendu dans le texte."""
+    """Chiffres appliqués, en forme TEXTE telle qu'écrite dans un PLU. Les encodages N/M (0,3333 = « 1 pour
+    3 » ; 0,5 = « 1 pour 2 ») sont rendus par leur DÉNOMINATEUR, attendu dans la citation."""
     out = set()
+    def add(v):
+        if abs(v - 1 / 3) < 1e-3:
+            out.add("3")
+        elif abs(v - 0.5) < 1e-9:
+            out.add("2")
+        else:
+            out.add(_fr(v))
     if b.flat_places is not None:
-        out.add(_fr(b.flat_places))
+        add(b.flat_places)
     if b.m2_par_place is not None:
         out.add(_fr(b.m2_par_place))
     for l in b.lignes:
         if l.places is not None:
-            # encodages N/M (« 1 place pour M ») → on cherche le DÉNOMINATEUR M dans le texte
-            if abs(l.places - 1 / 3) < 1e-3:
-                out.add("3")
-            elif abs(l.places - 0.5) < 1e-9:
-                out.add("2")
-            else:
-                out.add(_fr(l.places))
+            add(l.places)
         if l.par_m2 is not None:
             out.add(_fr(l.par_m2))
+        for bound in (l.sdp_min, l.sdp_max):
+            if bound:
+                out.add(_fr(bound))
     if b.visiteurs:
         if b.visiteurs.par_logements:
             out.add(_fr(b.visiteurs.par_logements))
         if b.visiteurs.par_m2_sdp:
             out.add(_fr(b.visiteurs.par_m2_sdp))
-    if b.integ_seuil_m2:
-        out.add(_fr(b.integ_seuil_m2))
-    # retire les tokens trop courts/ambigus (« 1 », « 2 ») : non distinctifs, présents partout
-    return {f for f in out if not (len(f) == 1 and f in "012")}
+    # integ (« places intégrées ») porte sa PROPRE citation (`integ_citation`), vérifiée à part — pas dans la
+    # citation de la norme d'habitation.
+    return out
 
 
 def page_text(doc, page_pdf):
-    """Texte de la page (1-indexée) + voisines (tableau à cheval sur deux pages)."""
     idx = page_pdf - 1
     txt = ""
     for j in (idx - 1, idx, idx + 1):
@@ -76,11 +80,12 @@ def page_text(doc, page_pdf):
 def controle(verbose=False):
     communes = sorted({os.path.basename(p)[:5] for p in glob.glob("config/plu_destinations/974??_*.yaml")})
     total = 0
-    echecs = []
+    ech_cit = []     # citation pas verbatim sur la page
+    ech_fig = []     # chiffre appliqué absent de la citation
     sans_pdf = set()
     for insee in communes:
         pdf = pdf_for(insee)
-        docs = fitz.open(pdf) if pdf else None
+        doc = fitz.open(pdf) if pdf else None
         for r in D.regles_commune(insee):
             z = r["zone"]
             if not re.match(r'^\d*(U|AU)', z, re.I):
@@ -89,34 +94,37 @@ def controle(verbose=False):
             if not b.validee or b.page_pdf is None:
                 continue
             total += 1
-            if docs is None:
+            cit = b.citation or ""
+            cit_n = _norm(cit)
+            # (2) chaque chiffre appliqué DANS la citation
+            hors = sorted(f for f in figures(b) if _norm(f) not in cit_n)
+            if hors:
+                ech_fig.append((insee, z, b.page_pdf, hors))
+            # (1) citation verbatim sur la page (par segments de ligne)
+            if doc is None:
                 sans_pdf.add(insee)
-                echecs.append((insee, z, b.page_pdf, "PDF absent", []))
+                ech_cit.append((insee, z, b.page_pdf, "PDF absent"))
                 continue
-            txt = _norm(page_text(docs, b.page_pdf))
-            manquants = [f for f in figures(b) if _norm(f) not in txt]
-            # citation : au moins un segment distinctif (> 12 car.) doit se retrouver
-            cit_ok = True
-            if b.citation:
-                segs = [s.strip() for s in re.split(r'[.;]', b.citation) if len(s.strip()) > 15]
-                cit_ok = any(_norm(s)[:40] in txt for s in segs) if segs else True
-            if manquants or not cit_ok:
-                echecs.append((insee, z, b.page_pdf, "figures" if manquants else "citation", manquants))
-        if docs:
-            docs.close()
-    print(f"CONTRÔLE PAGES — {total} règles contrôlées · {len(echecs)} échecs"
-          + (f" ({len(sans_pdf)} communes sans PDF local : {sorted(sans_pdf)})" if sans_pdf else ""))
-    # regroupe par commune
+            page_n = _norm(page_text(doc, b.page_pdf))
+            segs = [s for s in re.split(r'[\n]+', cit) if len(_norm(s)) >= 12]
+            manque = [s for s in segs if _norm(s) not in page_n]
+            if (segs and manque) or (not segs and cit_n and cit_n not in page_n):
+                ech_cit.append((insee, z, b.page_pdf, "citation hors page"))
+        if doc:
+            doc.close()
+    print(f"CONTRÔLE — {total} règles · {len(ech_cit)} citations hors page · {len(ech_fig)} règles avec chiffre hors citation"
+          + (f" ({sorted(sans_pdf)} sans PDF)" if sans_pdf else ""))
     parc = {}
-    for insee, z, pg, motif, mq in echecs:
-        parc.setdefault(insee, []).append((z, pg, motif, mq))
+    for insee, z, pg, _m in ech_cit:
+        parc.setdefault(insee, {"cit": 0, "fig": 0})["cit"] += 1
+    for insee, z, pg, _h in ech_fig:
+        parc.setdefault(insee, {"cit": 0, "fig": 0})["fig"] += 1
     for insee in sorted(parc):
-        zs = parc[insee]
-        print(f"  {insee} : {len(zs)} échecs" + (f" — ex. {zs[0][0]} p{zs[0][1]} {zs[0][2]} {zs[0][3]}" if zs else ""))
-        if verbose:
-            for z, pg, motif, mq in zs:
-                print(f"      {z} p{pg} — {motif} {mq}")
-    return echecs
+        print(f"  {insee} : {parc[insee]['cit']} citation · {parc[insee]['fig']} chiffre hors citation")
+    if verbose:
+        for insee, z, pg, h in ech_fig:
+            print(f"    FIG {insee} {z} p{pg} hors citation : {h}")
+    return {"total": total, "cit": ech_cit, "fig": ech_fig}
 
 
 if __name__ == "__main__":
