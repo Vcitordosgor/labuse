@@ -342,9 +342,11 @@ def _comparables(est: dict) -> str:
     comps = est.get("comparables") or []
     if not comps:
         return ""
-    comps = sorted(comps, key=lambda c: (c.get("distance_m") is None,
-                                         c.get("distance_m") if isinstance(c.get("distance_m"),
-                                                                           (int, float)) else 0))[:_MAX_COMPARABLES]
+    # CHIRURGICAL-FIX-1 (LOT J pt3e) — les comparables sont classés par RESSEMBLANCE (le poids d'Estimer :
+    # type, surface, période…), PAS par distance. On ne les re-trie donc pas par distance (sinon une vente
+    # plus proche mais moins ressemblante passait devant) : on garde l'ordre de ressemblance servi, et le
+    # titre le dit. La colonne « Distance » reste, informative, mais n'est pas la clé de tri.
+    comps = list(comps)[:_MAX_COMPARABLES]
     head = ('<tr><th>Date</th><th>Type</th><th class="r">Surface</th><th class="r">Prix</th>'
             '<th class="r">€/m²</th><th class="r">Distance</th></tr>')
     rows = ""
@@ -371,13 +373,13 @@ def _comparables(est: dict) -> str:
         foot = (f"{_int(autres)} autre" + ("s" if autres > 1 else "") + " vente"
                 + ("s" if autres > 1 else "") + " " + _de(esc(pl)) + f" {esc(peri)}. ")
     foot += f"Source : DVF, ventes {_de(esc(pl))}" + (f", {esc(per)}" if per else "") + "."
-    # CHIRURGICAL-FIX-1 (LOT I 3d) — ces 8 ventes sont les plus PROCHES, pas l'échantillon du prix
-    # médian de tête (calculé, lui, sur l'ensemble du secteur) : on le dit, pour ne pas laisser croire
-    # que la médiane affichée se lit sur ce tableau.
-    foot += (" Ces 8 ventes sont les plus proches ; le prix médian indiqué plus haut est calculé sur "
-             "tout le secteur, pas sur ce seul tableau.")
-    titre = ("Les 8 ventes de terrain nu les plus proches" if terrain
-             else "Les 8 ventes les plus proches retenues")
+    # CHIRURGICAL-FIX-1 (LOT I 3d / LOT J pt3e) — ces 8 ventes sont les plus RESSEMBLANTES (par le poids
+    # d'Estimer), pas l'échantillon du prix médian de tête (calculé, lui, sur l'ensemble du secteur) : on
+    # le dit, pour ne pas laisser croire que la médiane affichée se lit sur ce tableau.
+    foot += (" Ces 8 ventes sont les plus ressemblantes (classées par ressemblance, pas par distance) ; "
+             "le prix médian indiqué plus haut est calculé sur tout le secteur, pas sur ce seul tableau.")
+    titre = ("Les 8 ventes de terrain nu les plus ressemblantes" if terrain
+             else "Les 8 ventes les plus ressemblantes retenues")
     return (f'<h2>{titre}</h2>'
             f'<table class="acomp">{head}{rows}</table>'
             f'<p class="anote">{foot}</p>')

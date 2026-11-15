@@ -134,7 +134,7 @@ def test_parcelle_structure_maquette():
     # lecture FONCIÈRE à côté de la lecture bâti (comme la variante lien)
     assert "Lecture foncière" in html and "186 000 €" in html and "26 % de l" in html
     # tableau des comparables + total
-    assert "Les 8 ventes les plus proches retenues" in html and "08/2025" in html and "103 m" in html
+    assert "Les 8 ventes les plus ressemblantes retenues" in html and "08/2025" in html and "103 m" in html
     # CHASSE-4-FIX (C4-005) — le périmètre des comparables est DIT avec le rayon réel (radius_m = 500 m).
     assert "41 autres ventes de maisons à moins de 500 m" in html and "Source : DVF, ventes de maisons" in html
     # page 2 : foncier + classement DÉRIVÉ DES RÈGLES + risques UNE LIGNE PAR ALÉA + marché + à vérifier
@@ -154,7 +154,7 @@ def test_parcelle_nue_titre_et_comparables_terrain():
     html = bloc.rendu_parcelle(_RAPPORT_NUE, plan_ortho_html="", plan_zonage_html="").replace("\u00a0", " ")
     assert "Parcelle CX0800" in html and "Saint-Leu" in html  # titre sans adresse (esc_noms span nb)
     assert "495 €/m²" in html and "Ordre de grandeur du terrain" in html and "900 000 €" in html
-    assert "Les 8 ventes de terrain nu les plus proches" in html and "06/2024" in html and "Terrain" in html
+    assert "Les 8 ventes de terrain nu les plus ressemblantes" in html and "06/2024" in html and "Terrain" in html
     assert "Source : DVF, ventes de terrain nu" in html
     assert "Lecture foncière" not in html                    # la nue EST foncière (pas de double lecture)
 

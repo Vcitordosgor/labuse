@@ -614,7 +614,23 @@ def _c_marge_surel(db, idu, f):
 
 @extracteur("aleas_parcelle_liste")
 def _c_aleas(db, idu, f):
-    return _nz((f.get("aleas") or {}).get("liste"))
+    bloc = f.get("aleas") or {}
+    liste = bloc.get("liste")
+    # CHIRURGICAL-FIX-1 (LOT J pt3f) — on porte les plans de prévention de la commune qui NE COUVRENT PAS
+    # la parcelle sur le premier aléa PPR, pour que le Dossier les cite à part (« existe dans la commune,
+    # ne couvre pas la parcelle ») sans les confondre avec le plan qui couvre réellement.
+    autres = bloc.get("ppr_commune_autres")
+    if liste and autres:
+        marque = False
+        out = []
+        for x in liste:
+            if not marque and str(x.get("nature") or "").startswith("PPR"):
+                out.append({**x, "ppr_commune_autres": autres})
+                marque = True
+            else:
+                out.append(x)
+        liste = out
+    return _nz(liste)
 
 
 @extracteur("contraintes_parcelle_liste")

@@ -52,6 +52,14 @@ def _fmt_valeur(v, unite: str) -> tuple[str | None, str]:
     return str(v), "texte"   # ex. stationnement « 1 place / logement »
 
 
+def _article_court(source: str | None) -> str | None:
+    """« Art. Ud12.2 · p.67 (…) » → « Ud 12.2 » : un renvoi d'article lisible pour le client."""
+    if not source:
+        return None
+    m = re.search(r"Art\.?\s*([A-Za-z]+)\s*(\d+(?:\.\d+)?)", source)
+    return f"{m.group(1)} {m.group(2)}" if m else None
+
+
 def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
     """Le TABLEAU des règles clés de la zone AVEC leurs VALEURS (F4) — pas seulement des références
     d'articles. Chaque ligne : libellé · valeur formatée · état · source (article/page) + lien profond.
@@ -95,7 +103,7 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
         ("recul_voirie", "Recul sur voie", rules.recul_voirie_m, "m", "recul_voirie"),
         ("recul_limites", "Recul limites séparatives", rules.recul_limites_sep_m, "m", "recul_limites"),
         ("pleine_terre", _pt_lib, rules.pleine_terre_pct, "%", "pleine_terre"),
-        ("stationnement", "Stationnement", rules.stat_logement, "", "stat"),
+        ("stationnement", "Stationnement", rules.stat_logement, "", "stationnement"),
     ):
         txt, etat = _fmt_valeur(val, unite)
         # CHASSE-DONNEES-FIX-1 (Lot 6, D-50) — quand le recul limites sépar. porte une FORMULE
@@ -111,18 +119,27 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
             txt = ("sans objet pour le logement — habitat interdit dans la zone "
                    "(voir le règlement pour les autres destinations)")
             etat = "texte"
+        # CHIRURGICAL-FIX-1 (LOT J pt3a) — barème de stationnement à PLUSIEURS paliers (type de logement,
+        # taille de l'opération) : LABUSE n'en sert pas tout le détail. On ne montre donc PAS un nombre
+        # partiel (« 1 place / logement »), qui est le seul palier de base : la ligne RENVOIE à l'article.
+        # La capacité, elle, lit toujours le ratio de base via places_par_logement() — donnée inchangée.
+        if cle == "stationnement" and etat in ("texte", "chiffre") and ";" in (rules.stat_logement or ""):
+            _art = _article_court(src.get("stationnement"))
+            txt = ("barème selon le type de logement et la taille de l'opération"
+                   + (f" — voir l'article {_art}" if _art else " — voir le règlement de la zone"))
+            etat = "texte"
+        # CHIRURGICAL-FIX-1 (LOT J pt3c) — UNE seule phrase de sol : « X % de surface perméable, dont au
+        # moins Y % en pleine terre » (l'enveloppe perméable ET son noyau de pleine terre), au lieu de
+        # deux lignes séparées qui laissaient croire à deux obligations indépendantes.
+        _perm = getattr(rules, "permeabilite_pct", None)
+        if cle == "pleine_terre" and etat == "chiffre" and isinstance(_perm, (int, float)):
+            _permtxt, _ = _fmt_valeur(_perm, "%")
+            txt = f"{_permtxt} de surface perméable, dont au moins {txt} en pleine terre"
+            libelle = "Surface perméable et pleine terre"
+            etat = "texte"
         ref = src.get(skey)
         out.append({"cle": cle, "libelle": libelle, "valeur": txt, "etat": etat,
                     "reference": ref, "url": _url(ref), "exceptions": _exc(cle)})
-        # CHIRURGICAL-FIX-1 (LOT I 3c) — deux obligations de sol distinctes : la pleine terre (le
-        # noyau, ci-dessus) ET la surface perméable (l'enveloppe). Le Tampon Ud « 40 % perméable, dont
-        # 30 % pleine terre », Uav « 30 % / 20 % » : on sert les DEUX lignes, pas seulement la pleine terre.
-        _perm = getattr(rules, "permeabilite_pct", None)
-        if cle == "pleine_terre" and isinstance(_perm, (int, float)):
-            _ptxt, _petat = _fmt_valeur(_perm, "%")
-            out.append({"cle": "surface_permeable", "libelle": "Surface perméable min",
-                        "valeur": _ptxt, "etat": _petat, "reference": ref, "url": _url(ref),
-                        "exceptions": _exc("pleine_terre")})
     return out
 
 

@@ -184,19 +184,28 @@ def _est_non_dispo(phrase: str) -> bool:
 
 
 def _absence_une_raison(phrase: str, zone, *, gabarit_bloque: bool = False,
-                        bati_connu: bool = False) -> str:
+                        bati_connu: bool = False, hauteur_mesuree: bool = False) -> str:
     # EXPORTS-FIX-1 C6 / BIS point 11 — jamais « A ou B » : on tranche selon le contexte réel.
     #  · « (zone non constructible ou X) » → selon la zone (A/N → non constructible) ;
     #  · « (hauteur de règle ou bâti non déterminés) » → si le gabarit est bloqué, c'est la hauteur de
     #    règle ; CHIRURGICAL-FIX-1 (LOT I 3b) : si l'EMPRISE BÂTIE est connue (le Dossier donne p. ex.
-    #    128 m² bâtis sur IS0448), le bâti N'EST PAS « non déterminé » — c'est sa HAUTEUR qui n'est pas
-    #    mesurée (ni LiDAR à l'égout, ni faîtage BD TOPO exploitable) ; sinon on garde « bâti non déterminé ».
+    #    128 m² bâtis sur IS0448), le bâti N'EST PAS « non déterminé » ;
+    #    CHIRURGICAL-FIX-1 (LOT J pt3d) : si en plus la HAUTEUR du bâti est MESURÉE (IS0448 : 4,1 m à
+    #    l'égout, le Dossier l'affiche), on ne dit pas « hauteur du bâti non mesurée » (faux) — la marge
+    #    manque parce que la règle de hauteur de la zone n'est pas comparable à cette mesure (référence
+    #    ou valeur non résolue). Sinon seulement : « hauteur du bâti non mesurée » / « bâti non déterminé ».
     non_constructible = str(zone or "").upper() in ("A", "N")
     p = _re.sub(r"\(zone non constructible ou ([^)]+)\)",
                 lambda m: "(zone non constructible)" if non_constructible else f"({m.group(1)})",
                 str(phrase))
-    _bati = ("hauteur de règle non déterminée" if gabarit_bloque
-             else "hauteur du bâti non mesurée" if bati_connu else "bâti non déterminé")
+    if gabarit_bloque:
+        _bati = "hauteur de règle non déterminée"
+    elif hauteur_mesuree:
+        _bati = "hauteur de la zone non comparable à la hauteur mesurée du bâti"
+    elif bati_connu:
+        _bati = "hauteur du bâti non mesurée"
+    else:
+        _bati = "bâti non déterminé"
     p = _re.sub(r"\(hauteur de règle ou bâti non déterminés\)", f"({_bati})", p)
     return p
 
@@ -445,18 +454,17 @@ def _r_statut_plu(v):
     evol = v.get("evolution_sudocuh")
     gpu = v.get("horizon")
     if appro:
+        # CHIRURGICAL-FIX-1 (LOT J pt3g) — UNE SEULE date porte « version servie » (l'approbation de la
+        # version que LABUSE sert, ci-dessous) : les autres dates (évolution engagée, approbation
+        # enregistrée au GPU) sont des REPÈRES, jamais une seconde « version servie » (ambiguïté levée).
         s = f"Version du PLU servie, approuvée le {_fr_dates(appro)}"
         if evol and evol != appro:
             s += f" — dernière évolution engagée le {_fr_dates(evol)}"
         if gpu and str(gpu) != str(appro):
-            # EXPORTS-FIX-3 LOT 3 (#2, relecture) — `horizon` = date_mairie = DATE D'APPROBATION de la
-            # version servie (app._q_v2_fiche : « L'HORIZON du zonage = date d'approbation MAIRIE »),
-            # PAS une date de publication. Libellé exact : « dernière approbation le … ». Une évolution
-            # publiée depuis au GPU n'est pas confrontée ici.
-            s += (f" — version servie par LABUSE, dernière approbation le {_fr_dates(gpu)} "
-                  f"(une évolution publiée depuis au GPU n'est pas confrontée ici)")
-        else:
-            s += " (version servie par LABUSE ; une évolution publiée depuis au GPU n'est pas confrontée ici)"
+            # `horizon` = date_mairie = date d'approbation enregistrée au GPU (app._q_v2_fiche), citée ici
+            # comme repère (pas « version servie »).
+            s += f" — approbation enregistrée au GPU le {_fr_dates(gpu)}"
+        s += " (une évolution publiée depuis au GPU n'est pas confrontée ici)"
         return esc(s + ".")
     if gpu:   # à défaut (pas d'approbation Sudocuh) : la date GPU est une APPROBATION (date_mairie).
         return esc(f"PLU — version servie par LABUSE, approuvée le {_fr_dates(gpu)} "
@@ -515,7 +523,18 @@ def _r_aleas(v, val: Valeur):
         mill = a.get("millesime") or ""
         _est_edition_deal = ("édition DEAL" in mill) or ("millésime PPR" in mill)
         if _parts:
-            lib += esc(" · " + " · ".join(dict.fromkeys(_parts)) + " (commune)")
+            # CHIRURGICAL-FIX-1 (LOT J pt3f) — ce(s) plan(s) COUVRENT la parcelle (leur zonage l'intersecte).
+            lib += esc(" · " + " · ".join(dict.fromkeys(_parts)) + " (couvre la parcelle)")
+            # … les autres plans de prévention de la commune, qui NE la couvrent PAS, sont cités à part.
+            _autres = []
+            for _p in (a.get("ppr_commune_autres") or []):
+                _ap = str((_p or {}).get("approbation") or "")
+                if len(_ap) >= 10:
+                    _nom = _noms.get((_p or {}).get("document") or "PPR", (_p or {}).get("document") or "PPR")
+                    _autres.append(f"{_nom} approuvé le {_ap[8:10]}/{_ap[5:7]}/{_ap[0:4]}")
+            if _autres:
+                lib += esc(" · Autres plans dans la commune (ne couvrent pas la parcelle) : "
+                           + " · ".join(dict.fromkeys(_autres)) + ".")
         elif mill and not _est_edition_deal:
             # la date d'ÉDITION de la couche DEAL (île entière) n'est JAMAIS « la date du PPR » → omise ;
             # les autres millésimes de source restent (jj/mm/aaaa, jamais « ingéré le »).
@@ -1045,10 +1064,16 @@ def _r_comparables(v, val=None):
                  f'<td class="num">{esc(c.get("distance_m"))} m</td></tr>')
     if not rows:
         return ""
-    return ('<div data-quoi="comparables_proches" class="keep"><h3>Les 8 comparables les plus proches '
+    # CHIRURGICAL-FIX-1 (LOT J pt3e) — ce tableau est classé par RESSEMBLANCE (le poids d'Estimer), pas par
+    # distance (une vente à 321 m plus ressemblante passe devant une à 297 m) : on le NOMME ainsi. Et comme
+    # Estimer, on dit qu'il n'est PAS l'échantillon du prix médian (calculé, lui, sur tout le secteur).
+    note = ('<p class="note">Ces 8 ventes sont les plus ressemblantes (classées par ressemblance, pas par '
+            'distance) ; le prix médian indiqué plus haut est calculé sur tout le secteur, pas sur ce seul '
+            'tableau.</p>')
+    return ('<div data-quoi="comparables_proches" class="keep"><h3>Les 8 comparables les plus ressemblants '
             '(comme Estimer)</h3><table class="kv">'
             '<tr><th>Vente</th><th>Type</th><th class="num">Surface</th>'
-            '<th class="num">Prix</th><th class="num">Distance</th></tr>' + rows + '</table></div>')
+            '<th class="num">Prix</th><th class="num">Distance</th></tr>' + rows + '</table>' + note + '</div>')
 
 
 def _r_gabarit_plan_3d(brute, val=None):
@@ -1692,6 +1717,9 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
             _zone = _v(valeurs, "zone_plu_famille")
             _gab_bloque = valeurs.get("gabarit_motif_blocage") is not None
             _bati_connu = bool(_v(valeurs, "emprise_batie_m2"))   # LOT I 3b — bâti mesuré ≠ « non déterminé »
+            # LOT J pt3d — hauteur du bâti RÉELLEMENT mesurée (LiDAR HD à l'égout) : l'absence de marge
+            # ne vient pas d'une mesure manquante mais d'une règle non comparable.
+            _haut_mesuree = _v(valeurs, "hauteur_egout_mesuree_m") is not None
             # EXPORTS-FIX-1-BIS point 2 — quand une SDP RÉSIDUELLE est servie (droits à bâtir non
             # consommés), aucune ligne ne doit la contredire : on retire « surface de plancher non
             # calculable (capacité nulle) » et on dit la vraie raison de la capacité (pas « capacité nulle »).
@@ -1739,7 +1767,7 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                           "hors stationnement et pleine terre). Le programme relève de l'Étude de "
                           "faisabilité.")
                 phc = _absence_une_raison(_absence_clair(q, ph), _zone, gabarit_bloque=_gab_bloque,
-                                          bati_connu=_bati_connu)
+                                          bati_connu=_bati_connu, hauteur_mesuree=_haut_mesuree)
                 li = f'<li data-quoi="{esc(q)}">{esc(phc)}</li>'
                 (nondispo if _est_non_dispo(phc) else verifie).append(li)
             if verifie:

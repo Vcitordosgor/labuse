@@ -111,9 +111,10 @@ def test_3b_bati_connu_pas_bati_non_determine():
     assert "hauteur de règle non déterminée" in _absence_une_raison(ph, "U", gabarit_bloque=True, bati_connu=True)
 
 
-def test_3c_le_tampon_deux_obligations_de_sol_et_stationnement_barème():
-    """3c — Le Tampon sert les DEUX obligations de sol (pleine terre ET surface perméable) et la ligne
-    stationnement dit sa portée (barème). AD0887=Ud (30 %/40 %), BW2635=Uav (20 %/30 %)."""
+def test_3c_le_tampon_sol_combine_et_stationnement_renvoi():
+    """3c (révisé LOT J pt3a/pt3c) — Le Tampon : les deux obligations de sol tiennent en UNE phrase
+    (« X % perméable, dont au moins Y % en pleine terre »), et la ligne stationnement RENVOIE à son
+    article (barème à paliers non servi en détail). AD0887=Ud (30 %/40 %), BW2635=Uav (20 %/30 %)."""
     from labuse.faisabilite.zonage import resolve_zone
     from labuse.plu_reglement import _regles_valeurs
     attendu = {"Ud": (30.0, 40.0), "Uav": (20.0, 30.0)}
@@ -121,13 +122,16 @@ def test_3c_le_tampon_deux_obligations_de_sol_et_stationnement_barème():
         zr = resolve_zone(zc, "Le Tampon")
         assert zr.pleine_terre_pct == pt and zr.permeabilite_pct == perm
         lignes = {r["cle"]: r for r in _regles_valeurs(zr, None, 0)}
-        assert lignes["pleine_terre"]["valeur"] == f"{pt:g} %"
-        assert "surface_permeable" in lignes and lignes["surface_permeable"]["valeur"] == f"{perm:g} %"
-        assert lignes["surface_permeable"]["libelle"] == "Surface perméable min"
-        # stationnement : barème avec sa portée (1 place/logt, 1,5 au-delà de 5 lots)
+        # LOT J pt3c — UNE phrase combinée, plus de ligne « surface_permeable » séparée.
+        assert lignes["pleine_terre"]["valeur"] == f"{perm:g} % de surface perméable, dont au moins {pt:g} % en pleine terre"
+        assert lignes["pleine_terre"]["libelle"] == "Surface perméable et pleine terre"
+        assert "surface_permeable" not in lignes
+        # LOT J pt3a — renvoi à l'article, jamais un nombre partiel.
         stat = lignes["stationnement"]["valeur"]
-        assert "1 place / logement" in stat and "1,5" in stat and "5 lots" in stat
-        # la capacité lit toujours 1 place/logement (le barème ne la change pas)
+        assert "barème selon le type de logement et la taille de l'opération" in stat
+        assert f"article {'Ud' if zc == 'Ud' else 'Ua'} 12.2" in stat
+        assert "1 place" not in stat
+        # la capacité lit toujours 1 place/logement (le renvoi ne la change pas)
         assert zr.places_par_logement() == 1.0
 
 
@@ -138,7 +142,8 @@ def test_3d_comparables_note_8_plus_proches_pas_la_mediane():
     from labuse.pige.estimer3 import _POOL_SQL
     html = _comparables({"comparables": [{"date": "2025-01-01", "type": "Maison", "surface_m2": 80,
                                           "prix_eur": 200000, "prix_m2": 2500, "distance_m": 100}]})
-    assert "les plus proches" in html and "médian" in html and "tout le secteur" in html
+    # LOT J pt3e — classées par RESSEMBLANCE (plus « les plus proches »), et toujours distinguées de la médiane.
+    assert "ressemblant" in html and "médian" in html and "tout le secteur" in html
     # dédoublonnage par mutation : DISTINCT ON (id_mutation, id_parcelle)
     assert "DISTINCT ON (dm.id_mutation, dm.id_parcelle)" in _POOL_SQL
 
@@ -178,16 +183,18 @@ def test_pt4_numero_deux_versions_different_et_comparatif_toutes_parcelles():
 
 
 def test_pt2_zone_rouge_exclue_de_l_implantation_pas_vigilance_forte():
-    """pt2 — la zone rouge marginale est dite INCONSTRUCTIBLE (exclue de l'implantation), prescriptions
-    réservées à la zone bleue — plus « vigilance forte ; pas d'exclusion automatique ». La normalisation
-    reformule les libellés STOCKÉS (compat des runs servis), et phase1.py l'émet nativement."""
+    """pt2 (reformulé LOT J pt3b) — la zone rouge marginale est dite EXCLUE de l'implantation, le RESTE
+    soumis au règlement du plan de prévention — plus « vigilance forte ; pas d'exclusion automatique »,
+    ni « … ne s'appliquent qu'en zone bleue ». La normalisation reformule les libellés STOCKÉS (compat
+    des runs servis), et phase1.py l'émet nativement."""
     from labuse.api.risques_arbitrage import libelle_client_detail
     ancien = ("PPR zone rouge sur 34 % de la surface — vigilance forte ; constructibilité à vérifier "
               "au règlement (pas d'exclusion automatique).")
     neuf = libelle_client_detail(ancien)
-    assert "inconstructible" in neuf and "exclue de l'implantation" in neuf
-    assert "zone bleue" in neuf
+    assert "la partie en zone rouge est exclue de l'implantation" in neuf
+    assert "le reste est soumis au règlement du plan de prévention" in neuf
     assert "vigilance forte" not in neuf and "exclusion automatique" not in neuf
+    assert "qu'en zone bleue" not in neuf           # LOT J pt3b — plus de « ne s'appliquent qu'en zone bleue »
     assert neuf.startswith("PPR zone rouge sur 34 % de la surface —")
     # un libellé déjà au nouveau format n'est pas re-réécrit
     assert libelle_client_detail(neuf) == neuf

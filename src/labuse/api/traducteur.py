@@ -63,22 +63,39 @@ def _applied(zr, surface: float) -> list[dict]:
     add("Hauteur au faîtage", f"{zr.hf_m} m" if isinstance(zr.hf_m, (int, float)) else zr.hf_m, src.get("hauteur") or src.get("hf"))
     add("Recul sur voirie", f"{zr.recul_voirie_m} m" if isinstance(zr.recul_voirie_m, (int, float)) else zr.recul_voirie_m, src.get("recul_voirie"))
     add("Recul sur limites séparatives", f"{zr.recul_limites_sep_m} m" if isinstance(zr.recul_limites_sep_m, (int, float)) else zr.recul_limites_sep_m, src.get("recul_limites"))
-    add("Stationnement", zr.stat_logement, src.get("stationnement") or src.get("stat"))
+    # CHIRURGICAL-FIX-1 (LOT J pt3a) — barème de stationnement à plusieurs paliers : on ne sert pas un
+    # nombre partiel, on RENVOIE à l'article (la capacité lit toujours le ratio de base par ailleurs).
+    if zr.stat_logement and ";" in zr.stat_logement:
+        from ..plu_reglement import _article_court
+        _art = _article_court(src.get("stationnement") or src.get("stat"))
+        add("Stationnement",
+            "barème selon le type de logement et la taille de l'opération"
+            + (f" — voir l'article {_art}" if _art else " — voir le règlement de la zone"),
+            src.get("stationnement") or src.get("stat"))
+    else:
+        add("Stationnement", zr.stat_logement, src.get("stationnement") or src.get("stat"))
     # CHIRURGICAL-FIX-1 (LOT H pt8) — la règle d'espaces libres (art. 2.6) garde son nom (perméable ≠
     # pleine terre) : « minimale » accolé au libellé de nature de la règle citée.
     from ..faisabilite.zonage import libelle_espaces_libres
     _pt_lib = libelle_espaces_libres(getattr(zr, "pleine_terre_nature", None)) + " minimale"
     # (« Surface perméable minimale » / « Pleine terre minimale » selon la citation)
-    if isinstance(zr.pleine_terre_pct, (int, float)):
+    # CHIRURGICAL-FIX-1 (LOT J pt3c) — quand la zone porte À LA FOIS une surface perméable (enveloppe)
+    # ET une pleine terre (noyau), on sert UNE seule phrase combinée, pas deux lignes séparées.
+    _perm = getattr(zr, "permeabilite_pct", None)
+    if isinstance(zr.pleine_terre_pct, (int, float)) and isinstance(_perm, (int, float)):
+        pt_m2 = round(zr.pleine_terre_pct / 100.0 * surface)
+        perm_m2 = round(_perm / 100.0 * surface)
+        add("Surface perméable et pleine terre",
+            f"{_perm:g} % de surface perméable ({perm_m2} m²), dont au moins "
+            f"{zr.pleine_terre_pct:g} % en pleine terre ({pt_m2} m²) sur {surface:.0f} m²",
+            src.get("pleine_terre"))
+    elif isinstance(zr.pleine_terre_pct, (int, float)):
         pt_m2 = round(zr.pleine_terre_pct / 100.0 * surface)
         add(_pt_lib, f"{pt_m2} m² ({zr.pleine_terre_pct:g} % de {surface:.0f} m²)",
             src.get("pleine_terre"), calc=f"{zr.pleine_terre_pct:g} % × {surface:.0f} m²")
     elif zr.pleine_terre_pct:
         add(_pt_lib, zr.pleine_terre_pct, src.get("pleine_terre"))
-    # CHIRURGICAL-FIX-1 (LOT I 3c) — 2e obligation de sol : la surface perméable (enveloppe), distincte
-    # de la pleine terre (le noyau). Le Tampon : les DEUX sont servies (Ud 40 %/30 %, Uav 30 %/20 %).
-    _perm = getattr(zr, "permeabilite_pct", None)
-    if isinstance(_perm, (int, float)):
+    elif isinstance(_perm, (int, float)):
         perm_m2 = round(_perm / 100.0 * surface)
         add("Surface perméable minimale", f"{perm_m2} m² ({_perm:g} % de {surface:.0f} m²)",
             src.get("pleine_terre"), calc=f"{_perm:g} % × {surface:.0f} m²")

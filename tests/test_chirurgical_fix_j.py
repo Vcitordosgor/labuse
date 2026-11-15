@@ -159,3 +159,85 @@ def test_pt2_pcmi4_meme_ordre_adresse_que_la_fiche():
     assert "from .app import _BAN_ORDER" in pd and "ORDER BY {_BAN_ORDER} LIMIT 1" in pd
     # … et n'a plus son propre ORDER BY divergent (qui prenait une autre adresse).
     assert "ORDER BY (ap.source = 'principal') DESC, a.id_ban LIMIT 1" not in pd
+
+
+# ── pt3b — zone rouge : le RESTE soumis au règlement du plan de prévention (plus « qu'en zone bleue ») ──
+def test_pt3b_zone_rouge_reste_soumis_au_plan():
+    from labuse.api.risques_arbitrage import libelle_client_detail
+    ancien = ("PPR zone rouge sur 34 % de la surface — vigilance forte ; constructibilité à vérifier "
+              "au règlement (pas d'exclusion automatique).")
+    neuf = libelle_client_detail(ancien)
+    assert "la partie en zone rouge est exclue de l'implantation" in neuf
+    assert "le reste est soumis au règlement du plan de prévention" in neuf
+    assert "qu'en zone bleue" not in neuf
+
+
+# ── pt3a / pt3c — stationnement renvoi + sol combiné (Le Tampon), capacité inchangée ─────────
+def test_pt3ac_stationnement_renvoi_et_sol_combine():
+    from labuse.faisabilite.zonage import resolve_zone
+    from labuse.plu_reglement import _regles_valeurs
+    for zc, pt, perm in (("Ud", 30.0, 40.0), ("Uav", 20.0, 30.0)):
+        z = resolve_zone(zc, "Le Tampon")
+        lignes = {r["cle"]: r for r in _regles_valeurs(z, None, 0)}
+        stat = lignes["stationnement"]["valeur"]
+        assert stat.startswith("barème selon le type de logement et la taille de l'opération")
+        assert "1 place" not in stat
+        assert lignes["pleine_terre"]["valeur"] == (
+            f"{perm:g} % de surface perméable, dont au moins {pt:g} % en pleine terre")
+        assert "surface_permeable" not in lignes
+        assert z.places_par_logement() == 1.0          # la capacité ne change pas
+
+
+# ── pt3d — bâti mesuré : raison VRAIE de l'absence de marge (pas « hauteur du bâti non mesurée ») ──
+def test_pt3d_hauteur_mesuree_raison_vraie():
+    from labuse.exports.miroir import _absence_une_raison
+    ph = "Marge de surélévation non calculable (hauteur de règle ou bâti non déterminés)."
+    # hauteur réellement mesurée (IS0448 : 4,1 m à l'égout) → ce n'est PAS « non mesurée »
+    r = _absence_une_raison(ph, "U", bati_connu=True, hauteur_mesuree=True)
+    assert "hauteur du bâti non mesurée" not in r
+    assert "non comparable à la hauteur mesurée" in r
+    # sans mesure (emprise connue seulement) → on garde « hauteur du bâti non mesurée » (LOT I 3b)
+    assert "hauteur du bâti non mesurée" in _absence_une_raison(ph, "U", bati_connu=True)
+
+
+# ── pt3e — comparables : classés par RESSEMBLANCE + note qui les distingue de la médiane ─────
+def test_pt3e_comparables_ressemblance_et_note():
+    from labuse.exports.blocs.annonce import _comparables
+    from labuse.exports.miroir import _r_comparables
+    from labuse.registre.valeur import Valeur
+    comp = {"date": "2025-01-01", "type": "Maison", "surface_m2": 80,
+            "prix_eur": 200000, "prix_m2": 2500, "distance_m": 321}
+    # Estimer (annonce)
+    h = _comparables({"comparables": [comp]})
+    assert "ressemblant" in h and "pas par distance" in h and "tout le secteur" in h
+    assert "les plus proches" not in h
+    # Dossier (miroir) — titre « ressemblants » + note médiane présente
+    v = [comp]
+    val = Valeur(valeur=v, chiffre_id="comparables_proches", version_def=None, run=None)
+    hd = _r_comparables(v, val)
+    assert "les plus ressemblants" in hd and "tout le secteur" in hd
+    assert "les plus proches" not in hd
+
+
+# ── pt3f — plans de prévention : couvre la parcelle ≠ existe dans la commune ─────────────────
+def test_pt3f_ppr_couvre_vs_commune():
+    from labuse.exports.miroir import _r_aleas
+    from labuse.registre.valeur import Valeur
+    v = [{"nature": "PPR — zone bleue", "libelle": "PPR inondation — zone bleue sur 56 %",
+          "ppr": [{"document": "PPR", "approbation": "2016-01-26"}],
+          "ppr_commune_autres": [{"document": "PPRL", "approbation": "2017-03-16"}]}]
+    val = Valeur(valeur=v, chiffre_id="aleas_parcelle_liste", version_def=None, run=None)
+    html = _r_aleas(v, val)
+    assert "approuvé le 26/01/2016" in html and "couvre la parcelle" in html
+    assert "PPR littoral approuvé le 16/03/2017" in html and "ne couvrent pas la parcelle" in html
+
+
+# ── pt3g — PLU : UNE SEULE date porte « version servie » ──────────────────────────────────────
+def test_pt3g_plu_une_seule_version_servie():
+    from labuse.exports.miroir import _r_statut_plu
+    html = _r_statut_plu({"approbation_sudocuh": "2023-08-11", "horizon": "2024-01-01"})
+    assert "Version du PLU servie, approuvée le 11/08/2023" in html
+    assert "version servie par LABUSE, dernière approbation" not in html
+    # la 2e date est un REPÈRE, pas une seconde « version servie »
+    assert "approbation enregistrée au GPU le 01/01/2024" in html
+    assert html.count("ersion du PLU servie") == 1

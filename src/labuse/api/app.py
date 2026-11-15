@@ -5829,6 +5829,21 @@ def _ppr_reference_commune(db: Session, insee: str) -> list[dict] | None:
     return [{"document": r["document"], "approbation": r["approbation"]} for r in rows] or None
 
 
+def _ppr_documents_couvrant(db: Session, idu: str) -> set[str]:
+    """CHIRURGICAL-FIX-1 (LOT J pt3f) — les documents PPR qui COUVRENT réellement la parcelle (leur zonage
+    l'intersecte), à distinguer de ceux qui EXISTENT seulement dans la commune (AM0838 : seul le PPR 2016
+    la touche ; le PPRL 2017 existe dans la commune mais ne la couvre pas). Repli : set vide (jamais un crash)."""
+    try:
+        rows = db.execute(text(
+            "WITH p AS (SELECT geom_2975 g FROM parcels WHERE idu = :idu) "
+            "SELECT DISTINCT sl.attrs->>'document' AS document FROM spatial_layers sl CROSS JOIN p "
+            "WHERE sl.kind = 'ppr' AND sl.geom_2975 IS NOT NULL AND ST_Intersects(sl.geom_2975, p.g) "
+            "AND sl.attrs->>'document' IS NOT NULL"), {"idu": idu}).scalars().all()
+        return {r for r in rows if r}
+    except Exception:  # noqa: BLE001
+        return set()
+
+
 def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict | None:
     """PIEGES-RISQUES-2 (Lot C) — la LISTE des aléas de la fiche §Pièges & risques lit désormais la MÊME
     fonction que l'outil (`servitudes.aleas_parcelle`, couches `spatial_layers` EN DIRECT) au lieu de la
@@ -5842,6 +5857,13 @@ def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict
     if not al:
         return None
     ppr_ref = _ppr_reference_commune(db, idu[:5])
+    # CHIRURGICAL-FIX-1 (LOT J pt3f) — on distingue le plan qui COUVRE la parcelle (son zonage l'intersecte)
+    # de celui qui EXISTE seulement dans la commune. On N'adosse à l'aléa PPR que le(s) document(s) couvrant(s)
+    # (AM0838 : le PPR 2016, pas le PPRL 2017) ; les autres plans de la commune sont listés à part.
+    _couvrants = _ppr_documents_couvrant(db, idu)
+    ppr_couvre = ([p for p in ppr_ref if p["document"] in _couvrants] or ppr_ref) if ppr_ref else None
+    ppr_commune_autres = ([p for p in ppr_ref if p["document"] not in _couvrants]
+                          if (ppr_ref and _couvrants) else None) or None
     items: list[dict] = []
     for a in al:
         is_ppr = a["nature"].startswith("PPR")
@@ -5854,7 +5876,7 @@ def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict
             "redhibitoire": a["redhibitoire"],
             "source": a["source"],
             "millesime": a["millesime"],
-            "ppr": ppr_ref if is_ppr else None,
+            "ppr": ppr_couvre if is_ppr else None,
         })
     items.sort(key=lambda a: (not a["redhibitoire"],
                               -_ALEA_NIVEAU_RANG.get((a["niveau"] or "").lower(), 0)))
@@ -5873,7 +5895,9 @@ def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict
     # reste servi pour la liste ; la tuile « Aléas » affiche `n_hazards` pour ne plus diverger d'Estimer.
     from ..pige.api import distinct_hazards as _distinct_hazards
     return {"n": len(items), "n_hazards": len(_distinct_hazards(items)),
-            "liste": items, "synthese": synthese}
+            "liste": items, "synthese": synthese,
+            # LOT J pt3f — plans de prévention présents dans la commune mais qui NE COUVRENT PAS la parcelle.
+            "ppr_commune_autres": ppr_commune_autres}
 
 
 def _dpe_connu_block(db: Session, idu: str) -> dict | None:
