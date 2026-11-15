@@ -37,6 +37,8 @@ _NIVEAU_LABEL = {
 _ALEA_RE = re.compile(r"^Aléa\s+(?P<type>.+?)\s+—\s+niveau\s+(?P<niveau>[^.\s]+)", re.IGNORECASE)
 #: identifiant technique de servitude entre parenthèses : « PM1 (PM1_PPR_i_mvt_..._ass) » → « PM1 ».
 _SUP_ID_RE = re.compile(r"\s*\([A-Z0-9]+_[A-Za-z0-9_]+\)")
+#: LOT I pt2 — tête d'un libellé de zone rouge marginale (« PPR zone rouge sur N % de la surface »).
+_ZONE_ROUGE_MARG_RE = re.compile(r"^(PPR zone rouge sur [\d.,]+ % de la surface)\s*—")
 
 
 def libelle_client_detail(detail: str | None) -> str | None:
@@ -66,6 +68,14 @@ def libelle_client_detail(detail: str | None) -> str | None:
     # Depuis la graduation PPR (M-I), une part rouge marginale n'est plus une CONTRADICTION (elle ne
     # coexiste plus avec une exclusion) mais un verdict à part entière ; on la NOMME proprement.
     d = d.replace("intersection marginale", "recouvrement marginal")
+    # CHIRURGICAL-FIX-1 (LOT I pt2) — zone rouge marginale (< 50 %) : la PARTIE rouge est
+    # inconstructible (exclue de l'implantation), les prescriptions relèvent de la zone bleue. On
+    # reformule le libellé STOCKÉ « — vigilance forte ; … pas d'exclusion automatique » (que
+    # phase1.py n'émet plus ; compat des runs déjà servis) pour dire la même chose que le Dossier.
+    _zr = _ZONE_ROUGE_MARG_RE.match(d.strip())
+    if _zr and "vigilance forte" in d:
+        d = (f"{_zr.group(1)} — cette partie est inconstructible (exclue de l'implantation) ; "
+             "les prescriptions du règlement PPR ne s'appliquent qu'en zone bleue.")
     return d
 
 

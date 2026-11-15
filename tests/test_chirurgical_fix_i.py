@@ -85,3 +85,19 @@ def test_1b_cout_negatif_refuse_a_la_saisie():
         SaisieIn(valeur=-100.0)
     with pytest.raises(ValueError):
         SaisieIn(assiette_valeur=-5.0)
+
+
+def test_pt2_zone_rouge_exclue_de_l_implantation_pas_vigilance_forte():
+    """pt2 — la zone rouge marginale est dite INCONSTRUCTIBLE (exclue de l'implantation), prescriptions
+    réservées à la zone bleue — plus « vigilance forte ; pas d'exclusion automatique ». La normalisation
+    reformule les libellés STOCKÉS (compat des runs servis), et phase1.py l'émet nativement."""
+    from labuse.api.risques_arbitrage import libelle_client_detail
+    ancien = ("PPR zone rouge sur 34 % de la surface — vigilance forte ; constructibilité à vérifier "
+              "au règlement (pas d'exclusion automatique).")
+    neuf = libelle_client_detail(ancien)
+    assert "inconstructible" in neuf and "exclue de l'implantation" in neuf
+    assert "zone bleue" in neuf
+    assert "vigilance forte" not in neuf and "exclusion automatique" not in neuf
+    assert neuf.startswith("PPR zone rouge sur 34 % de la surface —")
+    # un libellé déjà au nouveau format n'est pas re-réécrit
+    assert libelle_client_detail(neuf) == neuf

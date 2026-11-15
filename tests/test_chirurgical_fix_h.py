@@ -84,8 +84,9 @@ def test_apporteur_alerte_porte_nature_gravite_et_part():
         "Zone humide inventoriée (espace fonctionnel (2009)) : La Grande Ferme (100 % de la parcelle) "
         "— loi sur l'eau") == "Zone humide inventoriée (espace fonctionnel (2009)) : La Grande Ferme (100 % de la parcelle)"
     assert _desc_alerte(
-        "PPR zone rouge sur 34 % de la surface — vigilance forte ; constructibilité à vérifier "
-        "(pas d'exclusion automatique).") == "PPR zone rouge sur 34 % de la surface — vigilance forte"
+        "PPR zone rouge sur 34 % de la surface — cette partie est inconstructible (exclue de "
+        "l'implantation) ; les prescriptions du règlement PPR ne s'appliquent qu'en zone bleue."
+    ) == "PPR zone rouge sur 34 % de la surface — cette partie est inconstructible (exclue de l'implantation)"
     # explication longue sans gravité ni part → nature seule
     assert _desc_alerte(
         "Droit de préemption urbain renforcé — la commune peut préempter à la vente (DIA obligatoire)."
