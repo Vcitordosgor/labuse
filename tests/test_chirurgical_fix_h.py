@@ -82,6 +82,25 @@ def test_compare_bati_pct_depuis_le_bien_et_proprio_non_determine():
     assert row["proprietaire"] == "non_determine", "sans PM → non déterminé (comme le Dossier), pas particulier"
 
 
+def test_dossier_ne_dit_copropriete_que_si_sur_la_parcelle():
+    """pt5 — une copro « proche_20m » est une voisine (≤ 20 m), pas celle de la parcelle : le Dossier
+    ne doit pas la compter dans « Bâti en copropriété ». BW2635 (au 2 rue d'Allemagne) ne possède que
+    les copros des 4 et 6 en proche_20m → identité du bien sans copropriété."""
+    from labuse.exports.robinet_fiche import EXTRACTEURS
+    f = {"coproprietes": [
+        {"nom_usage": "BELLEVUE A", "rattachement": "proche_20m", "nb_lots_total": 8},
+        {"nom_usage": "BELLEVUE A", "rattachement": "proche_20m", "nb_lots_total": 57},
+    ]}
+    assert EXTRACTEURS["coproprietes_liste"](None, "x", f) is None, \
+        "aucune copro SUR la parcelle → rien à afficher comme copropriété du bien"
+    f2 = {"coproprietes": [
+        {"nom_usage": "SUR PARCELLE", "rattachement": "cadastre", "nb_lots_total": 12},
+        {"nom_usage": "VOISINE", "rattachement": "proche_20m", "nb_lots_total": 8},
+    ]}
+    sur = EXTRACTEURS["coproprietes_liste"](None, "x", f2)
+    assert sur is not None and len(sur) == 1 and sur[0]["nom_usage"] == "SUR PARCELLE"
+
+
 def test_excel_garde_les_formules_quand_le_resultat_est_calculable():
     e = EntreesBilan(programme=Programme(terrain=2000), produits=[Produit("P1", 10, 600, 4785, 0.20)],
                      postes={"achat": SaisiePoste(valeur=1_000_000, etat="montant"),

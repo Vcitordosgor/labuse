@@ -149,7 +149,12 @@ def _c_prix_achat(db, idu, f):
 
 @extracteur("coproprietes_liste")
 def _c_copro(db, idu, f):
-    return _nz(f.get("coproprietes"))
+    # CHIRURGICAL-FIX-1 (LOT H pt5) — le Dossier n'affirme « Bâti en copropriété » que pour une copro
+    # SUR la parcelle (rattachement cadastre/géocode). Les copros « proche_20m » sont des voisines
+    # (BW2635 au 2 rue d'Allemagne listait les 4 et 6) : elles vivent dans la fiche « à proximité »,
+    # pas dans l'identité du bien.
+    sur_parcelle = [c for c in (f.get("coproprietes") or []) if c.get("rattachement") != "proche_20m"]
+    return _nz(sur_parcelle)
 
 
 @extracteur("filiation_parcelle")

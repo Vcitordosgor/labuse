@@ -45,18 +45,26 @@ function detail(c: Copropriete): string {
   return bouts.join(' · ')
 }
 
+// CHIRURGICAL-FIX-1 (LOT H pt5) — une copropriété rattachée « proche_20m » est À PROXIMITÉ (dans un
+// rayon de 20 m), PAS sur la parcelle : BW2635 (au 2 rue d'Allemagne) affichait les copros des 4 et 6
+// comme les siennes. On distingue le rattachement cadastre/géocode (sur la parcelle) du voisinage.
+const estProche = (c: Copropriete) => c.rattachement === 'proche_20m'
+
 export function CoproprietesBlock({ copros }: { copros: Copropriete[] }) {
   if (!copros || copros.length === 0) return null
+  const toutesProches = copros.every(estProche)
+  const pl = copros.length > 1 ? 's' : ''
   return (
     <div data-coproprietes>
       {/* RETOURS-23 Z3 — plus de card-elev : kicker + faits à plat. */}
-      <GroupLabel>Copropriété{copros.length > 1 ? 's' : ''} rattachée{copros.length > 1 ? 's' : ''}</GroupLabel>
+      <GroupLabel>Copropriété{pl} {toutesProches ? 'à proximité' : `rattachée${pl}`}</GroupLabel>
       <div className="mt-1 flex flex-col gap-1.5">
         {copros.map((c) => (
           <div key={c.numero_immatriculation} className="text-[11px] leading-snug text-txt">
             <b className="font-medium text-txt-hi">{c.nom_usage || c.numero_immatriculation}</b>
+            {estProche(c) && <span className="ml-1 rounded-full border border-line-2 px-1.5 py-0.5 text-[9.5px] text-txt-mut">à proximité</span>}
             {detail(c) && <span className="text-txt-mut"> · {detail(c)}</span>}
-            {c.adresse && <div className="text-[10.5px] text-txt-dim">{c.adresse}</div>}
+            {c.adresse && <div className="text-[10.5px] text-txt-dim">{c.adresse}{estProche(c) ? ' — à proximité (≤ 20 m), pas sur la parcelle' : ''}</div>}
           </div>
         ))}
       </div>
