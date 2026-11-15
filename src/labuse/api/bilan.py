@@ -32,6 +32,14 @@ def _valider_tva(v: float | None) -> float | None:
         )
     return v
 
+
+def _valider_non_negatif(v: float | None) -> float | None:
+    """CHIRURGICAL-FIX-1 (LOT I 1b) — un COÛT (taux ou montant d'un poste) ne peut pas être négatif :
+    il est refusé à la saisie (une dépense négative = une recette déguisée, qui gonflerait la marge)."""
+    if v is not None and v < 0:
+        raise ValueError("Un coût ne peut pas être négatif.")
+    return v
+
 from ..bilan.catalogue import Poste, charger_catalogue
 from ..bilan.moteur import (
     EntreesBilan,
@@ -141,6 +149,8 @@ class SaisieIn(BaseModel):
     assiette_valeur: float | None = None
 
     _tva_fraction = field_validator("tva")(_valider_tva)
+    # LOT I 1b — un coût négatif est refusé à la saisie (taux/montant ET assiette).
+    _cout_non_negatif = field_validator("valeur", "assiette_valeur")(_valider_non_negatif)
 
 
 class CalculIn(BaseModel):

@@ -54,6 +54,8 @@ def _evaluateur(grille):
 
         expr = _SUM.sub(som, expr)
         expr = _REF.sub(lambda m: repr(ev(f"{m.group(1)}{m.group(2)}")), expr)
+        # Excel « = » (égalité, ex. « D89=0 ») → Python « == » (hors <=, >=, ==, !=).
+        expr = re.sub(r"(?<![<>=!])=(?!=)", "==", expr)
         # CHIRURGICAL-FIX-1 (LOT H pt1) — le résultat/cash/marge sont des formules VIVANTES
         # `=IF(AND(coût majeur absent), "non calculable…", calcul)` : l'évaluateur connaît IF/AND, et
         # une cellule peut rendre un texte (coûts vides) qu'on retourne tel quel (pas de float()).
@@ -63,7 +65,10 @@ def _evaluateur(grille):
         def _AND(*xs):
             return all(xs)
 
-        raw = eval(expr, {"__builtins__": {}}, {"IF": _IF, "AND": _AND})  # noqa: S307 — vocabulaire contrôlé
+        def _OR(*xs):
+            return any(xs)
+
+        raw = eval(expr, {"__builtins__": {}}, {"IF": _IF, "AND": _AND, "OR": _OR})  # noqa: S307 — vocabulaire contrôlé
         val = float(raw) if isinstance(raw, (int, float, bool)) else raw
         cache[coord] = val
         return val

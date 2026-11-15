@@ -268,13 +268,16 @@ def classeur_bilan(
     ligne("TVA résiduelle", f=f"=(E{row_dep + 1}) - E{row_dep}")  # (CA TTC-HT) - dépenses TVA
     row_res = r
     mod_row = ligne_poste["mod"]
-    # CHIRURGICAL-FIX-1 (LOT H pt1) — formule VIVANTE (pas un texte figé, qui ne se recalculerait pas
-    # quand le client saisit ses coûts) : tant qu'aucun COÛT MAJEUR n'est saisi (achat terrain OU
-    # construction, même règle que le moteur `cout_majeur`), la cellule AFFICHE « non calculable… » ;
-    # dès qu'un coût majeur est entré, elle CALCULE (le classeur reste à formules vivantes).
-    _cm = f"AND(D{ligne_poste['achat']}<=0,D{ligne_poste['constr']}<=0)"   # aucun coût majeur
-    ligne("Résultat net", d=f'=IF({_cm},"{_NON_CALCULABLE}",D{row_dep + 1}-D{row_dep})', gras=True)
-    ws.cell(row_res, 5, f'=IF({_cm},"",D{row_res}/D{row_dep + 1})').number_format = _PCT  # marge % du CA HT
+    # CHIRURGICAL-FIX-1 (LOT H pt1 + LOT I 1a/1b) — formule VIVANTE (pas un texte figé, qui ne se
+    # recalculerait pas à la saisie). Tant qu'un COÛT REQUIS manque — l'achat du terrain OU la
+    # construction est à 0 — la cellule AFFICHE « non calculable… » (c'est un OU : il faut les DEUX,
+    # même règle que le moteur `couts_requis`). Dès que les deux sont saisis, elle CALCULE.
+    _cm = f"OR(D{ligne_poste['achat']}<=0,D{ligne_poste['constr']}<=0)"   # un coût requis manque
+    # 1b — la marge ne divise JAMAIS par un CA nul (ventes à zéro) : sinon #DIV/0!. On la laisse vide.
+    _ca = f"D{row_dep + 1}"
+    _marge_vide = f"OR({_cm},{_ca}=0)"
+    ligne("Résultat net", d=f'=IF({_cm},"{_NON_CALCULABLE}",{_ca}-D{row_dep})', gras=True)
+    ws.cell(row_res, 5, f'=IF({_marge_vide},"",D{row_res}/{_ca})').number_format = _PCT  # marge % du CA HT
     ws.cell(row_res, 5).font = _GRAS
     ligne("Cash flow", d=f'=IF({_cm},"{_NON_CALCULABLE}",D{row_res}+D{mod_row})')
 
@@ -294,9 +297,10 @@ def classeur_bilan(
             _EUR,
         ),
         ("CA TTC programme", f"={cell_ca_ttc}", _EUR),
-        # CHIRURGICAL-FIX-1 (LOT H pt1) — même garde VIVANTE : vide tant qu'aucun coût majeur n'est
-        # saisi (D{row_res} porte alors le texte « non calculable »), calculée dès qu'il l'est.
-        ("Renta nette / CA HT", f'=IF({_cm},"",D{row_res}/{cell_ca_ht})', _PCT),
+        # CHIRURGICAL-FIX-1 (LOT H pt1 + LOT I 1b) — même garde VIVANTE : vide tant qu'un coût requis
+        # manque (D{row_res} porte alors le texte « non calculable ») OU quand le CA HT est nul (pas de
+        # #DIV/0!), calculée dès que les deux coûts sont saisis et qu'il y a du CA.
+        ("Renta nette / CA HT", f'=IF(OR({_cm},{cell_ca_ht}=0),"",D{row_res}/{cell_ca_ht})', _PCT),
         ("Nombre de lots", f"={cell_lots}", '#,##0'),
     ]
     ws.cell(3, 1, "Ratios & programme").font = _GRAS
@@ -316,10 +320,94 @@ def classeur_bilan(
     return wb
 
 
+# ── CHIRURGICAL-FIX-1 (LOT I 1c) — valeurs calculées écrites EN PLUS des formules ──────────────────
+# openpyxl écrit les cellules de formule « <f>…</f><v/> » (cache VIDE) : un aperçu (Finder, téléphone,
+# pièce jointe) ne recalcule pas → tout apparaît blanc. On évalue le graphe (même vocabulaire que le
+# test) et on injecte la valeur dans le cache `<v>` de chaque formule. Le classeur reste VIVANT
+# (`fullCalcOnLoad=1`, les formules sont intactes) ; relu SANS recalcul, il montre les mêmes chiffres
+# que le moteur.
+import re as _re
+
+_SUM_RE = _re.compile(r"SUM\(([A-Z]+)(\d+):([A-Z]+)(\d+)\)")
+_REF_RE = _re.compile(r"(?<![A-Za-z_])([A-Z]{1,3})(\d+)")
+_EQ_RE = _re.compile(r"(?<![<>=!])=(?!=)")
+_FNS = {"IF": lambda c, a, b: a if c else b, "AND": lambda *x: all(x), "OR": lambda *x: any(x)}
+
+
+def _valeurs_calculees(ws) -> dict[str, object]:
+    """Évalue toutes les cellules de formule de la feuille → {coordonnée: valeur}. Vocabulaire :
+    références, `+ - * /`, parenthèses, `SUM(plage)`, `IF/AND/OR`, comparateurs. Division par zéro ou
+    expression non évaluable → la cellule est laissée sans cache (aperçu vide, jamais un faux chiffre)."""
+    grille = {c.coordinate: c.value for row in ws.iter_rows() for c in row if c.value is not None}
+    cache: dict[str, object] = {}
+
+    def ev(coord: str):
+        if coord in cache:
+            return cache[coord]
+        cache[coord] = 0.0  # garde-fou anti-cycle (le bilan est acyclique)
+        v = grille.get(coord)
+        if v is None:
+            return 0.0
+        if isinstance(v, (int, float)):
+            cache[coord] = float(v)
+            return cache[coord]
+        if not isinstance(v, str) or not v.startswith("="):
+            cache[coord] = v  # libellé texte (pas une formule)
+            return v
+        expr = _SUM_RE.sub(
+            lambda m: "(" + "+".join(f"{m.group(1)}{r}" for r in range(int(m.group(2)), int(m.group(4)) + 1)) + ")",
+            v[1:])
+        expr = _REF_RE.sub(lambda m: repr(ev(f"{m.group(1)}{m.group(2)}")), expr)
+        expr = _EQ_RE.sub("==", expr)
+        try:
+            raw = eval(expr, {"__builtins__": {}}, dict(_FNS))  # noqa: S307 — vocabulaire contrôlé
+            val = float(raw) if isinstance(raw, (int, float, bool)) else raw
+        except Exception:  # noqa: BLE001 — div/0, ref vide… → pas de cache
+            val = None
+        cache[coord] = val
+        return val
+
+    return {coord: ev(coord) for coord, v in grille.items() if isinstance(v, str) and v.startswith("=")}
+
+
+_CELL_RE = _re.compile(
+    r'(?P<open><c r="(?P<r>[A-Z]+\d+)"(?P<attrs>[^>]*)>)(?P<f><f>.*?</f>)<v\s*/>(?P<close></c>)')
+
+
+def _injecter_valeurs(octets: bytes, vals: dict[str, object]) -> bytes:
+    import io
+    import zipfile
+    from xml.sax.saxutils import escape
+
+    def _repl(m):
+        coord = m.group("r")
+        val = vals.get(coord)
+        if val is None or (isinstance(val, float) and (val != val or val in (float("inf"), float("-inf")))):
+            return m.group(0)
+        if isinstance(val, bool):
+            val = 1 if val else 0
+        if isinstance(val, (int, float)):
+            return f'{m.group("open")}{m.group("f")}<v>{val!r}</v>{m.group("close")}'
+        attrs = m.group("attrs")
+        open_tag = m.group("open") if 't="' in attrs else f'<c r="{coord}"{attrs} t="str">'
+        return f'{open_tag}{m.group("f")}<v>{escape(str(val))}</v>{m.group("close")}'
+
+    zin = zipfile.ZipFile(io.BytesIO(octets))
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zout:
+        for item in zin.infolist():
+            data = zin.read(item.filename)
+            if item.filename == "xl/worksheets/sheet1.xml":
+                data = _CELL_RE.sub(_repl, data.decode("utf-8")).encode("utf-8")
+            zout.writestr(item, data)
+    return out.getvalue()
+
+
 def classeur_bilan_bytes(entrees: EntreesBilan, **kw: Any) -> bytes:
     import io
 
     wb = classeur_bilan(entrees, **kw)
+    vals = _valeurs_calculees(wb.active)       # LOT I 1c — cache des valeurs (aperçu non vide)
     buf = io.BytesIO()
     wb.save(buf)
-    return buf.getvalue()
+    return _injecter_valeurs(buf.getvalue(), vals)

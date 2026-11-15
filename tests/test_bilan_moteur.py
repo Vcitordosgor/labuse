@@ -126,16 +126,17 @@ def entrees_temoin_promotrice() -> EntreesBilan:
 # Mécanique du moteur (sans le modèle)
 # ---------------------------------------------------------------------------
 def test_calcul_en_continu_moitie_rempli():
-    """BILAN-2 : calcul EN CONTINU (comme l'Excel) — une case vide vaut 0, la marge
-    et les totaux s'affichent dès la première saisie ; les lignes vides sont juste
-    COMPTÉES (information), jamais bloquantes."""
+    """BILAN-2 : calcul EN CONTINU (comme l'Excel) — une case vide vaut 0, la marge et les totaux
+    s'affichent dès que les COÛTS REQUIS sont là ; les lignes vides sont juste COMPTÉES (information),
+    jamais bloquantes. CHIRURGICAL-FIX-1 (LOT I 1a) : il faut l'achat ET la construction."""
     e = EntreesBilan(
         programme=Programme(terrain=1000),
         produits=[Produit("Libre", 10, 800, 5000, 0.085)],
-        postes={"achat": SaisiePoste(1000, SAISI, tva=0.0)},
+        postes={"achat": SaisiePoste(1000, SAISI, tva=0.0),
+                "constr": SaisiePoste(1500, SAISI, tva=0.085)},
     )
     r = Moteur().calculer(e)
-    assert r.resultat_net is not None  # le bilan calcule malgré des lignes vides
+    assert r.resultat_net is not None  # achat ET construction posés → le bilan calcule
     assert r.ca_ht is not None and r.ca_ht > 0
     assert r.marge_pct is not None
     assert r.lignes_vides > 0 and not r.complet  # compteur informatif, non bloquant
@@ -145,6 +146,18 @@ def test_calcul_en_continu_moitie_rempli():
     # une ligne vide vaut 0 (jamais None), et reste marquée « vide »
     topo = next(ln for ln in r.lignes if ln.id == "topo")
     assert topo.ht == 0 and topo.manquant
+
+
+def test_achat_seul_sans_construction_non_calculable():
+    """CHIRURGICAL-FIX-1 (LOT I 1a) — l'achat SEUL (sans coût de construction) ne suffit pas : le
+    résultat reste « non calculable » (afficher ~60 % de marge avec le seul terrain serait trompeur)."""
+    e = EntreesBilan(
+        programme=Programme(terrain=1000),
+        produits=[Produit("Libre", 10, 800, 5000, 0.085)],
+        postes={"achat": SaisiePoste(1000, SAISI, tva=0.0)},
+    )
+    r = Moteur().calculer(e)
+    assert r.resultat_net is None and r.marge_pct is None and r.cash_flow is None
 
 
 def test_bilan_totalement_vide_non_calculable():

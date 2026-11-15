@@ -26,7 +26,8 @@ def test_excel_resultat_formule_vivante_gelee_si_cout_majeur_absent():
     f_cash = str(rows["Cash flow"][0])
     # Résultat & cash-flow : FORMULE conditionnelle, pas un texte figé.
     assert f_res.startswith("=IF(") and "non calculable — saisissez vos coûts" in f_res
-    assert "AND(" in f_res and "<=0" in f_res            # condition : aucun coût majeur saisi
+    # LOT I 1a — condition « un coût requis manque » = OU (achat<=0 OU construction<=0).
+    assert "OR(" in f_res and "<=0" in f_res
     assert "-D" in f_res                                  # branche calcul : CA HT − dépenses HT
     assert f_cash.startswith("=IF(") and "non calculable" in f_cash
     # Marge % (col E) & Renta : formule « vide tant qu'incomplet, sinon division » (jamais « 100 % »).
@@ -42,7 +43,8 @@ def test_excel_formule_resultat_identique_coûts_vides_ou_saisis():
     vide = _ws_rows(classeur_bilan(EntreesBilan(programme=Programme(), produits=prod, postes={})))
     plein = _ws_rows(classeur_bilan(EntreesBilan(
         programme=Programme(terrain=1000), produits=prod,
-        postes={"achat": SaisiePoste(valeur=100.0, etat="ratio")})))
+        postes={"achat": SaisiePoste(valeur=100.0, etat="ratio"),
+                "constr": SaisiePoste(valeur=1500.0, etat="ratio")})))
     assert vide["Résultat net"][0] == plein["Résultat net"][0]
     assert str(vide["Résultat net"][0]).startswith("=IF(")
 
