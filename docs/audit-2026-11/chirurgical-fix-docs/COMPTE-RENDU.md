@@ -83,17 +83,24 @@ constructible, SDP consommée, sans `cause`) garde « constructible ». Garde-fo
 
 ---
 
-## LOT G — Plafond d'export (clarification, SANS correction)
+## LOT G — Plafond d'export (clarification + relèvement Intégral)
 
 - **Plan du compte de test** : `AUDIT-TEST` était en plan **`integral`** (créé puis supprimé par l'audit).
+- **Relèvement (décision Vic)** : le plafond **Intégral passe de 30 à 120 exports/jour**. Les autres formules
+  ne changent pas. Essentiel est désormais **pinglé** à 30 dans `PLAFONDS_JOUR` (il suivait le défaut) pour ne
+  pas bouger par accident. Le message de dépassement dit le **chiffre** ET l'**heure de remise à zéro** (minuit,
+  heure de La Réunion — le compteur est journalier). Test : `tests/test_offres.py` (chiffre + remise à zéro +
+  `PLAFONDS_JOUR` 120/30 sans inversion).
 - **Plafonds par plan** (`quota.PLAFONDS_JOUR` / `PLAFOND_DEFAUT`, par JOUR, par compte, `kind="export"`,
   compteur `usage_compteurs`) :
   | Plan | Plafond export / jour |
   |------|-----------------------|
-  | **Intégral** | **30** |
-  | **Essentiel** | 30 (défaut) **+** quota mensuel de Dossiers parcelle = **20/mois** (`config.dossier_quota_mois`) |
-  | `interne` / `illimite` (admin/legacy) | illimité (10⁹) |
+  | **Intégral** (349 €/mois) | **120** (était 30) |
+  | **Essentiel** | 30 **+** quota mensuel de Dossiers parcelle = **20/mois** (`config.dossier_quota_mois`) |
+  | `interne` / `illimite` (admin/legacy, non commercial) | illimité (10⁹) |
   | **Flash** (rapport à l'unité) | **hors quota** (jamais compté) |
+- **Pas d'inversion de prix** : Essentiel (moins cher) reste à 30 < Intégral (plus cher) à 120. Aucune formule
+  moins chère ne dépasse une formule plus chère.
 - **Documents gatés** (comptent un export chacun — `porte_export`) : **Dossier, Gabarit, Apporteur, Estimer
   (par parcelle), Estimer (par lien), Étude de zone, Pré-dossier, Comparatif** = 8 types. **NON gatés** :
   Bilan (PDF/Excel), Courrier, Étude de faisabilité, stationnement, Flash.
