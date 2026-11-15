@@ -45,7 +45,7 @@ def tcsp(monkeypatch):
 # ── règle APPLIQUÉE (moteur._plafond_l151) ────────────────────────────────────────────────
 
 @pytest.mark.parametrize("type_projet,dist,attendu_art,attendu_ratio", [
-    ("etudiante", 7817, "L151-35", 1.0),   # étudiante, loin d'un TCSP → 1/logt
+    ("etudiante", 7817, "L151-35", 0.5),   # FIX-3 : résidence universitaire → 0,5 QUELLE QUE SOIT la distance
     ("etudiante", 120,  "L151-35", 0.5),   # étudiante < 800 m → 0,5
     ("senior",    300,  "L151-35", 0.5),   # senior < 800 m → 0,5
     ("senior",    600,  "L151-35", 0.5),   # E-056 : 600 m — AVANT (500 m) = 1/logt, APRÈS (800 m) = 0,5
@@ -67,16 +67,26 @@ def test_plafond_applique_collectif_hors_800m_aucun(tcsp):
     assert M._plafond_l151(None, ["x"], "collectif", _bareme()) is None
 
 
-def test_plafond_ne_mord_pas_si_plu_deja_plus_favorable(tcsp):
-    """La loi ne « mord » que si elle plafonne SOUS la règle PLU : PLU 0,5/logt ≤ L151-35 1 → None."""
-    tcsp(7817)
-    assert M._plafond_l151(None, ["x"], "etudiante", _bareme(flat=0.5)) is None
+def test_plafond_ne_mord_pas_si_exigence_deja_plus_favorable():
+    """FIX-3 (LOT 3) — le plafond ne « mord » que s'il est SOUS l'exigence du PROGRAMME : la comparaison se
+    fait désormais au niveau de `exiger._cap_plafond` (exigence réelle, ligne aidée comprise), plus dans
+    `_plafond_l151` (qui comparait au forfait général et sautait le plafond à tort). Un barème qui exige
+    déjà ≤ 1 place/logt n'est pas relevé par un plafond de 1/logt."""
+    from dataclasses import replace
+    from labuse.implantation import regles as R
+    from types import SimpleNamespace as NS
+    b = R.charger("97405", "UB").stationnement        # 1 place/logt (≤ plafond 1)
+    mods = [NS(pieces=3, surface_m2=70.0) for _ in range(20)]
+    base = b.exiger(mods, destination="collectif").places
+    capped = replace(b, plafond_national={"ratio": 1.0, "article": "L151-35"}).exiger(
+        mods, destination="collectif").places
+    assert capped == base, "un plafond de 1/logt ne doit pas relever une exigence déjà ≤ 1/logt"
 
 
 # ── règle AFFICHÉE (service._stationnement_regimes) — doit coller à l'appliquée ────────────
 
 @pytest.mark.parametrize("type_projet,dist,ref,ratio,cond", [
-    ("etudiante", 7817, "L151-35", 1.0, False),   # affiché 1/logt, condition 800 m NON remplie
+    ("etudiante", 7817, "L151-35", 0.5, False),   # FIX-3 : univ → 0,5 toujours ; condition 800 m NON remplie
     ("etudiante", 120,  "L151-35", 0.5, True),
     ("senior",    300,  "L151-35", 0.5, True),
     ("senior",    600,  "L151-35", 0.5, True),     # E-056 : 600 m → désormais remplie (seuil 800 m)

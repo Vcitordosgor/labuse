@@ -614,7 +614,12 @@ _L15134 = {
 _RAYON_TCSP_M = 800
 
 
-def _ratio_l15135(sous_rayon: bool) -> float:
+def _ratio_l15135(sous_rayon: bool, type_projet: str = "social") -> float:
+    # ETUDE-STATIONNEMENT-FIX-3 (LOT 3) — résidences universitaires et établissements personnes âgées :
+    # L151-35 les plafonne à 0,5 place/logt QUELLE QUE SOIT la distance ; le logement aidé, lui, à 1 (0,5
+    # si < 800 m d'un TCSP). L'affiché doit coller à l'appliqué (`moteur._plafond_l151`).
+    if type_projet in ("senior", "etudiante"):
+        return 0.5
     return 0.5 if sous_rayon else 1.0
 
 
@@ -719,7 +724,7 @@ def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, i
     plafond = None
     if cat:
         # L151-35 — logement aidé / senior / résidence universitaire : au plus 1 place/logt, 0,5 si < 800 m.
-        ratio = _ratio_l15135(sous_rayon)
+        ratio = _ratio_l15135(sous_rayon, type_projet)
         plafond = {
             "categorie": cat, "reference": "L151-35", "ratio_plafond": ratio,
             # clé historique (lue par l'écran) conservée ; le seuil est désormais 800 m (loi 2025-1129).
