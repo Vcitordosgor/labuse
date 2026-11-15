@@ -23,13 +23,13 @@ ATTENDU = {
     "relance_carte":  (9,  "LABUSE-A-CARTE-REFUSEE", {"PRENOM", "LIEN_PAIEMENT"}),
     "suspension":     (10, "LABUSE-B-SUSPENSION",    {"PRENOM", "LIEN_PAIEMENT"}),
     "retablissement": (11, "LABUSE-C-RETABLI",       {"PRENOM"}),
-    "radar_digest":   (12, "LABUSE-12-RADAR-DIGEST", {"PRENOM", "DATE", "NB_BIENS", "CARTES"}),
+    # CHIRURGICAL-FIX-1 (E119) — radar_digest (12) retiré du registre (legacy sans déclencheur live).
     "radar_alerte":   (13, "LABUSE-13-RADAR-ALERTE", {"PRENOM", "VEILLE", "NB_BIENS", "CRITERES", "CARTES"}),
     "mdp_oublie":     (14, "LABUSE-D-MDP-OUBLIE",    {"PRENOM", "LIEN_RESET", "VALIDITE"}),
     "mdp_modifie":    (15, "LABUSE-D-MDP-MODIFIE",   {"PRENOM", "DATE_HEURE"}),
     "resiliation":    (16, "LABUSE-F-RESILIATION",   {"PRENOM", "DATE_FIN_ACCES"}),
     "flash_pret":     (17, "LABUSE-G-FLASH-PRET",    {"LIEN_PDF", "VALIDITE", "IDU", "COMMUNE"}),
-    "email_change":   (18, "LABUSE-H-EMAIL-CHANGE",  {"PRENOM", "ANCIEN_EMAIL", "NOUVEL_EMAIL"}),
+    # CHIRURGICAL-FIX-1 (E109) — email_change (18) retiré du registre (aucun déclencheur, code mort).
     "retour_traite":  (19, "LABUSE-I-RETOUR-TRAITE", {"PRENOM", "SON_MESSAGE", "REPONSE"}),
     # NU5-FIX-1 (C-F7) — avertissement J-1 de fin d'essai (template Brevo id 20 à créer, geste console).
     "essai_fin_proche": (20, "LABUSE-J-ESSAI-FIN-PROCHE", {"PRENOM", "DATE_FIN", "LIEN_PAIEMENT"}),
@@ -68,10 +68,11 @@ def test_template_id_sans_env_rend_l_id_canonique(monkeypatch):
         assert brevo.template_id(key) == tid
 
 
-def test_alias_radar_legacy_route_vers_digest():
-    # l'ancienne clé 'radar' (doublon ID 12) ne casse aucun lecteur : elle route vers radar_digest.
-    assert brevo.template_id("radar") == 12
-    assert brevo.template("radar").id == 12
+def test_alias_radar_legacy_retire():
+    # CHIRURGICAL-FIX-1 (E119) — l'alias legacy 'radar' est retiré en même temps que radar_digest :
+    # la clé ne résout plus aucun template (le registre est la seule source).
+    assert brevo.template_id("radar") is None
+    assert brevo.template("radar") is None
 
 
 def test_flags_conditionnels_hors_params():
@@ -95,48 +96,27 @@ def test_evaluer_conditions_offline():
     assert ev("x{% if params.NB %}y{% endif %}", {}) == "x"
 
 
-@pytest.mark.local
-def test_apercu_seize_rendus_sans_reste_brut():
-    """Recette réelle (`pytest -m local`) : les 16 templates rendus avec des params représentatifs —
-    zéro « {{ params.X }} » brut, zéro bloc {% %} visible, aucun « Bonjour , » vide."""
+def test_apercu_branche_sur_le_rendu_local():
+    """CHIRURGICAL-FIX-1 (E110) — l'aperçu est désormais le RENDU LOCAL réel (plus le HTML mort de
+    Brevo), SANS clé Brevo : chaque clé du registre rend `configure:true`, sans reste de gabarit
+    ({{ }} / {% %}) ni « Bonjour , » vide. C'est le mail qui PART qu'on prévisualise."""
     import re
-    if not (os.environ.get("BREVO_API_KEY") or os.environ.get("LABUSE_BREVO_API_KEY")):
-        pytest.skip("BREVO_API_KEY absente")
-    # MDP_PROVISOIRE et LIEN_INVITATION tous deux fournis : rendu propre que le template Brevo porte
-    # encore l'ancien param ou déjà le nouveau (transition Vic).
-    ech = {"PRENOM": "Victor", "EMAIL": "v@labuse.test", "MDP_PROVISOIRE": "x",
-           "LIEN_INVITATION": "https://x", "FIN_ESSAI": "le 12/09",
-           "LIEN_SOUSCRIPTION": "https://x", "LIEN_PAIEMENT": "https://x", "LIEN_RESET": "https://x",
-           "LIEN_PDF": "https://x", "VALIDITE": "1 heure", "DATE_HEURE": "le 07/09", "DATE": "jeudi",
-           "DATE_FIN_ACCES": "le 30/09", "NB_BIENS": 7, "CARTES": "<p>x</p>", "VEILLE": "v",
-           "CRITERES": "c", "IDU": "974 AB", "COMMUNE": "Saint-Paul", "ANCIEN_EMAIL": "a@x",
-           "NOUVEL_EMAIL": "b@x", "SON_MESSAGE": "m", "REPONSE": "r", "RENVOI": False,
-           "JAMAIS_CONNECTE": True}
+
+    from labuse import mails_contenu as mc
     for key in brevo.REGISTRE:
-        if key in _PENDING_BREVO:
-            continue   # template Brevo pas encore créé (geste console) — couvert dès qu'il existe
-        a = brevo.apercu_template(key, ech)
+        a = brevo.apercu_template(key, mc.SPECIMENS.get(key, {}))
         assert a.get("configure"), f"{key}: {a.get('raison')}"
-        blob = a["subject"] + " " + a["html"]
-        assert not re.search(r"\{\{\s*params\.", blob), f"{key}: reste brut"
-        assert not re.search(r"\{%[^%]*%\}", blob), f"{key}: bloc conditionnel visible"
-        assert "Bonjour ," not in blob
+        assert a.get("source", "").startswith("rendu local"), f"{key}: l'aperçu n'est pas le rendu local"
+        blob = f"{a['subject']} {a['html']}"
+        assert "{{" not in blob and "{%" not in blob, f"{key}: reste brut"
+        assert "Bonjour ," not in blob, f"{key}: salutation vide"
 
 
-@pytest.mark.local
-def test_verification_api_brevo_reelle():
-    """CIRCUIT-P3 — joué à la main avec la vraie clé (`pytest -m local`). Confirme, côté Brevo :
-    les seize existent, actifs, nom attendu, params présents, expéditeur unique victor@labuse.immo."""
-    if not (os.environ.get("BREVO_API_KEY") or os.environ.get("LABUSE_BREVO_API_KEY")):
-        pytest.skip("BREVO_API_KEY absente")
+def test_verification_branchee_sur_le_rendu_local():
+    """CHIRURGICAL-FIX-1 (E110) — la vérification porte sur le RENDU LOCAL (source de vérité), sans
+    appel Brevo : chaque clé du registre a un rendu local propre (rend_ok, aucun résidu)."""
     res = brevo.verifier_templates()
-    assert res["api"] is True
-    assert res["expediteur_unique"] == "victor@labuse.immo"
-    ecarts = [l for l in res["lignes"]
-              if l.get("key") not in _PENDING_BREVO
-              and not (l.get("existe") and l.get("actif") and l.get("nom_ok") and not l.get("params_manquants"))]
-    assert not ecarts, f"écarts Brevo : {ecarts}"
-    # res["ok"] agrège TOUS les templates, y compris ceux en attente de création côté Brevo
-    # (geste console `brevo-stripe.md`) : on ne l'exige vrai QUE s'il n'y a aucun pending.
-    if not _PENDING_BREVO:
-        assert res["ok"] is True
+    assert res.get("source", "").startswith("rendu local")
+    ecarts = [l for l in res["lignes"] if not l.get("rend_ok")]
+    assert not ecarts, f"écarts de rendu local : {ecarts}"
+    assert res["ok"] is True

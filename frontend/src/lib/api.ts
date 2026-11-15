@@ -2876,7 +2876,8 @@ export const createProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?
 export interface ApercuTop { idu: string; commune: string; statut: string | null; pourquoi: string[] }  // M139 bricole : q_score retiré (toujours None, non rendu)
 export interface Apercu { nom: string; n: number; total: number; cap: number; sdp_besoin_m2: number | null; source: string; top: ApercuTop[] }
 // PROJETS-CRM-FIX-1 (lot 2) — `projetPdfUrl` supprimé : /projets/{id}/export.pdf est retiré (410,
-// remplacé par le document « Financier »). Plus aucun bouton n'y renvoie (export.csv reste, projetCsvUrl).
+// remplacé par le document « Financier »). CHIRURGICAL-FIX-1 (E114) — `projetCsvUrl` supprimé aussi
+// (sortie morte sans appelant) : /projets/{id}/export.csv répond désormais 410.
 export const patchProjet = (id: number, body: { nom?: string; statut?: string; cadrage?: Cadrage; identite?: Identite }) =>
   j<{ ok: boolean; projet: Projet }>(`/projets/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 // M120 — rejouer À LA DEMANDE : rend le diff (entrées / sorties / tris conservés).
@@ -2934,8 +2935,9 @@ export interface CarteDecision {
 // côté serveur avec le cadrage du projet (une seule requête, aucun moteur parallèle).
 export const getParcoursEtat = (id: number, offset = 0, limit = 60, tier?: string | null, sf?: Cadrage | null) =>
   j<ParcoursEtat>(`/projets/${id}/parcelles?offset=${offset}&limit=${limit}${tier ? `&tier=${tier}` : ''}${sf && Object.keys(sf).length ? `&sf=${encodeURIComponent(JSON.stringify(sf))}` : ''}`)
-// M140 Lot B — export CSV de la liste COMPLÈTE des retenues (streamé, non stocké, zéro rang/score).
-export const projetCsvUrl = (id: number) => `/projets/${id}/export.csv`
+// CHIRURGICAL-FIX-1 (E114, décision Vic) — `projetCsvUrl` SUPPRIMÉ : il n'avait AUCUN appelant (aucun
+// bouton d'export sur l'écran Projet), une sortie morte. L'endpoint back répond désormais 410 (comme
+// l'export PDF projet). Le détail du cadrage se consulte à l'écran ; l'export par parcelle = documents.
 export const getCarteDecision = (id: number, idu: string) => j<CarteDecision>(`/projets/${id}/carte/${idu}`)
 export const setStatutParcelle = (id: number, idu: string, statut: StatutParcelle) =>
   j<{ ok: boolean; idu: string; statut: StatutParcelle; counts: ParcoursCounts }>(
@@ -3482,7 +3484,7 @@ export interface BilanModele {
     idu: string; parcel_id: number | null; commune: string | null
     terrain: number | null; zonage: string | null
     zonage_parts: { zone: string; fam: string; pct: number }[]
-    non_constructible_pct: number; constructible_m2: number | null
+    non_constructible_pct: number; non_constructible_motif?: string | null; constructible_m2: number | null
     prix_achat_dvf: { valeur: number; date: string; label: string } | null
   }
   reperes_publics: Record<string, { valeur: number; n?: number; label: string; source: string; parkings?: number | null; logements?: number[] | null }>

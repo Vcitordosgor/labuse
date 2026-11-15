@@ -14,9 +14,23 @@ from __future__ import annotations
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+
+
+# CHIRURGICAL-FIX-1 (E103) — la TVA est une FRACTION (0.021 social, 0.055 interm., 0.20 plein), comme
+# le front l'envoie TOUJOURS (champ saisi en % puis divisé par 100 : BilanEcran.tsx). Un appel direct
+# qui passerait un POURCENTAGE brut (« 20 ») faisait `ca_ht = ttc / 21` → CA HT faux ×~17, en 200.
+# On BORNE et VALIDE donc le taux à l'entrée : hors [0, 1] → 422 explicite, jamais un bilan absurde.
+def _valider_tva(v: float | None) -> float | None:
+    if v is None:
+        return None
+    if not (0.0 <= v <= 1.0):
+        raise ValueError(
+            "La TVA doit être une fraction entre 0 et 1 (ex. 0.20 pour 20 %), pas un pourcentage"
+        )
+    return v
 
 from ..bilan.catalogue import Poste, charger_catalogue
 from ..bilan.moteur import (
@@ -45,6 +59,8 @@ def _postes_connus() -> set[str]:
 class RatioIn(BaseModel):
     valeur: float
     tva: float | None = None
+
+    _tva_fraction = field_validator("tva")(_valider_tva)
 
 
 @router.get("/bilan-ratios")
@@ -108,6 +124,8 @@ class ProduitIn(BaseModel):
     prix_ttc_m2_suv: float | None = None
     tva: float | None = None
 
+    _tva_fraction = field_validator("tva")(_valider_tva)
+
 
 class ProgrammeIn(BaseModel):
     terrain: float | None = None
@@ -121,6 +139,8 @@ class SaisieIn(BaseModel):
     etat: str = "a_renseigner"
     tva: float | None = None
     assiette_valeur: float | None = None
+
+    _tva_fraction = field_validator("tva")(_valider_tva)
 
 
 class CalculIn(BaseModel):

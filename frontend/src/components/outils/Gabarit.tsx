@@ -388,9 +388,13 @@ export function Gabarit() {
               {res.validationErrors.map((e, i) => <li key={i}>{e}</li>)}
             </ul>
           )}
+          {/* CHIRURGICAL-FIX-1 (E107) — on rappelle que l'absence de gabarit ne vaut PAS « non
+              constructible » : la constructibilité et la capacité estimée restent dans la fiche. */}
           <p className="text-[10px] leading-snug text-txt-dim">
-            Contour de la parcelle tracé sur la carte. Le calcul du gabarit reprendra dès que la donnée
-            manquante sera disponible.
+            Contour de la parcelle tracé sur la carte. L'absence de gabarit ne préjuge pas de la
+            constructibilité — la capacité estimée reste indiquée dans la fiche de la parcelle. Le
+            calcul reprendra dès qu'une limite non qualifiée (bord de ravine, littoral ou domaine
+            public) sera renseignée.
           </p>
         </div>
       )}

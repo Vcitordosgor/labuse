@@ -151,13 +151,18 @@ def _sugg_cadastre(db: Session, q: str, n: int) -> list[dict]:
         sec, num = m.group(1).upper(), m.group(2).lstrip("0") or "0"
         # exactes d'abord (toutes les communes apparaissent), puis les préfixes pour compléter
         items = db.execute(text(
-            """SELECT idu, commune, surface_m2, ST_X(ST_Centroid(geom)) lon, ST_Y(ST_Centroid(geom)) lat
+            # CHIRURGICAL-FIX-1 (E1) — surface du menu = surface de la FICHE : le cadastre (contenance)
+            # quand il existe, sinon le dessin. L'autocomplétion montrait le dessin (1 699) là où la
+            # fiche affiche le cadastre (1 703) — deux surfaces pour un même fait.
+            """SELECT idu, commune, COALESCE(contenance_m2, surface_m2) AS surface_m2,
+                      ST_X(ST_Centroid(geom)) lon, ST_Y(ST_Centroid(geom)) lat
                FROM parcels WHERE section = :s AND (numero = :n OR numero LIKE :np)
                ORDER BY (numero = :n) DESC, length(numero), numero, commune LIMIT :lim"""),
             {"s": sec, "n": num, "np": f"{num}%", "lim": n}).all()
     elif _RE_IDU_PARTIEL.match(dg):
         items = db.execute(text(
-            """SELECT idu, commune, surface_m2, ST_X(ST_Centroid(geom)) lon, ST_Y(ST_Centroid(geom)) lat
+            """SELECT idu, commune, COALESCE(contenance_m2, surface_m2) AS surface_m2,
+                      ST_X(ST_Centroid(geom)) lon, ST_Y(ST_Centroid(geom)) lat
                FROM parcels WHERE idu LIKE :p ORDER BY idu LIMIT :lim"""),
             {"p": f"{dg}%", "lim": n}).all()
     out = []

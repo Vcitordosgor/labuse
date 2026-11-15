@@ -1144,6 +1144,18 @@ def _chip_de(quoi: str, v: Valeur) -> str:
     return chip(v)
 
 
+def libelle_marge_surelevation(pt: dict | None) -> str:
+    """CHIRURGICAL-FIX-1 (LOT H pt6) — libellé de la marge de surélévation NOMMÉ d'après la contrainte
+    qui mord (`hauteur_contrainte`, la MÊME source que la fiche et le bloc Potentiel), jamais « au
+    faîtage » en dur. AD0887 : 3,9 m à l'égout (et 6,3 m au faîtage) — plus d'inversion. Source unique."""
+    pt = pt or {}
+    ct = pt.get("hauteur_contrainte")
+    base = str(pt.get("hauteur_base") or "")
+    ref = ("à l'égout" if ct == "égout"
+           else "au faîtage" if (ct == "faîtage" or base.startswith("faîtage")) else None)
+    return f"Marge de surélévation {ref}" if ref else "Marge de surélévation sous la règle de hauteur"
+
+
 def _ligne_tr(cid: str, cle: str, valeur_html: str, chip_html: str) -> str:
     return (f'<tr data-quoi="{esc(cid)}"><td class="k">{esc(cle)}</td><td>{valeur_html}</td>'
             f'<td class="n">{chip_html}</td></tr>')
@@ -1612,6 +1624,8 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                              f'(hypothèse, pas une règle du PLU) × {int(_niv)} niveaux — '
                              'hors stationnement et pleine terre</span>')
             lib = (l.comment or {}).get("libelle") or l.quoi
+            if l.quoi == "marge_surelevation_m":
+                lib = libelle_marge_surelevation(fiche.get("potentiel_transformation"))
             grp = l.section if (l.section and l.section != sec["titre"]) else ""
             groupes.setdefault(grp, []).append(_ligne_tr(l.quoi, lib, html, _chip_de(l.quoi, v)))  # B9
         # EXPORTS-FIX-1-BIS point 8 — §5 : ABF / ICPE / cavités, citées en source mais sans ligne,

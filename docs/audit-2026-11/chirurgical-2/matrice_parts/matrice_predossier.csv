@@ -1,0 +1,182 @@
+idu,fait,document,valeur
+97422000AD0887,commune,CERFA,Le Tampon
+97422000AD0887,cadastre_section_numero,CERFA,prefixe 000 section AD n° 887
+97422000AD0887,cadastre_section_numero,PCMI1,Le Tampon section AD n° 887
+97422000AD0887,cadastre_section_numero,PCMI2,Commune du Tampon section AD n° 887
+97422000AD0887,cadastre_idu,PCMI4,97422000AD0887 commune du Tampon section AD n° 887 zone Ud
+97422000AD0887,cadastre_idu,REGLES_ZONAGE,97422000AD0887
+97422000AD0887,cerfa_superficie_cadre2,CERFA,BLANK (non pre-rempli, par doctrine)
+97422000AD0887,adresse_ban,CERFA,9 Chemin de la Grande Ferme / Le Tampon
+97422000AD0887,adresse_ban,PCMI4,"9 Chemin de la Grande Ferme, 97418 (BAN a verifier)"
+97422000AD0887,surface_reelle_m2,PCMI2,~1699 (enveloppe ~61 x ~73 m)
+97422000AD0887,emprise_batie_m2,PCMI2,~345 (BD TOPO)
+97422000AD0887,emprise_batie_m2,PCMI4,~345 (BD TOPO)
+97422000AD0887,zone_plu,REGLES_ZONAGE,Ud 100%
+97422000AD0887,zone_plu,PCMI4,Ud
+97422000AD0887,hauteur_egout_m,REGLES_ZONAGE,7
+97422000AD0887,hauteur_faitage_m,REGLES_ZONAGE,11
+97422000AD0887,destinations_autorisees,REGLES_ZONAGE,Agricole/Forestiere/Logement/Hebergement/Bureaux publics/Enseignement-sante/Salles spectacle
+97422000AD0887,destinations_interdites,REGLES_ZONAGE,Industrie/Entrepot (CDAC >1000 m2)
+97422000AD0887,servitude_alerte,PCMI4,Aléa mouvement terrain faible HORS PPR + Zone humide La Grande Ferme (loi sur l'eau) + Parc National adhesion
+97422000AD0887,servitude_alerte,REGLES_ZONAGE,Parc National adhesion + Aléa mvt terrain faible + Zone humide La Grande Ferme
+97422000AD0887,taxe_taux_communal_pct,REGLES_ZONAGE,5
+97422000AD0887,redevance_archeo_pct,REGLES_ZONAGE,"0,40"
+97422000AD0887,capacite_sdp_estimee_m2,REGLES_ZONAGE,~1047
+97422000AD0887,capacite_surface_a_retenir_m2,REGLES_ZONAGE,795 (esquisse; stationnement a verifier)
+97422000AD0887,cerfa_choisi,LISEZMOI,13406*17 (maison individuelle)
+97422000AD0887,cerfa_millesime,LISEZMOI,verifiee le 21/08/2026 (non perime)
+97422000AD0887,logements_crees,CERFA,BLANK
+97416000HT0538,commune,CERFA,Saint-Pierre
+97416000HT0538,cadastre_section_numero,CERFA,prefixe 000 section HT n° 538
+97416000HT0538,cadastre_section_numero,PCMI1,Saint-Pierre section HT n° 538
+97416000HT0538,cadastre_idu,PCMI4,97416000HT0538 section HT n° 538 zone Ud
+97416000HT0538,cadastre_idu,REGLES_ZONAGE,97416000HT0538
+97416000HT0538,cerfa_superficie_cadre2,CERFA,BLANK (non pre-rempli)
+97416000HT0538,adresse_ban,CERFA,BLANK (localite Saint-Pierre seule)
+97416000HT0538,adresse_ban,LISEZMOI,Aucune adresse BAN rattachee - a renseigner par le porteur
+97416000HT0538,surface_reelle_m2,PCMI2,~509 (enveloppe ~32 x ~31 m)
+97416000HT0538,emprise_batie_m2,PCMI2,NON CHIFFREE (bati gris non quantifie; terrain nu fiche=0)
+97416000HT0538,zone_plu,REGLES_ZONAGE,Ud 100%
+97416000HT0538,zone_plu,PCMI4,Ud
+97416000HT0538,hauteur_egout_m,REGLES_ZONAGE,15
+97416000HT0538,hauteur_faitage_m,REGLES_ZONAGE,20
+97416000HT0538,emprise_au_sol_plafond_m2,ENVELOPPE,306
+97416000HT0538,destinations_autorisees,REGLES_ZONAGE,Logement/Hebergement/Restauration/Cinema/Hotels/Hebergements touristiques/Bureaux publics
+97416000HT0538,destinations_interdites,REGLES_ZONAGE,Agricole/Forestiere/Commerce de gros/Industrie (CDAC >1000 m2)
+97416000HT0538,servitude_alerte,PCMI4,Aléa mvt terrain faible HORS PPR + Systeme endiguement Ravine Trois Mares (classe B) + Zone inondable TRI extreme 100% + DPU non determine
+97416000HT0538,servitude_alerte,ENVELOPPE,Aucune SUP sur la parcelle
+97416000HT0538,taxe_taux_communal_pct,REGLES_ZONAGE,5
+97416000HT0538,redevance_archeo_pct,REGLES_ZONAGE,"0,40"
+97416000HT0538,capacite_sdp_estimee_m2,REGLES_ZONAGE,~614 (esquisse atteint 888 a verifier; stationnement non deduit)
+97416000HT0538,capacite_surface_a_retenir_m2,REGLES_ZONAGE,614 (estimation rapide)
+97416000HT0538,cerfa_choisi,LISEZMOI,13406*17 (maison individuelle)
+97416000HT0538,cerfa_millesime,LISEZMOI,verifiee le 21/08/2026 (non perime)
+97416000HT0538,logements_crees,CERFA,BLANK
+97403000AR1517,commune,CERFA,Entre-Deux
+97403000AR1517,cadastre_section_numero,CERFA,prefixe 000 section AR n° 1517
+97403000AR1517,cadastre_section_numero,PCMI1,Entre-Deux section AR n° 1517
+97403000AR1517,cadastre_idu,PCMI4,97403000AR1517 commune Entre-Deux section AR n° 1517 zone Ua
+97403000AR1517,cerfa_superficie_cadre2,CERFA,BLANK (non pre-rempli)
+97403000AR1517,adresse_ban,CERFA,BLANK (localite Entre-Deux seule)
+97403000AR1517,adresse_ban,LISEZMOI,Aucune adresse BAN rattachee - a renseigner par le porteur
+97403000AR1517,surface_reelle_m2,PCMI2,~734 (enveloppe ~36 x ~36 m)
+97403000AR1517,emprise_batie_m2,PCMI2,~23 (BD TOPO)
+97403000AR1517,zone_plu,REGLES_ZONAGE,Ua 100%
+97403000AR1517,zone_plu,PCMI4,Ua
+97403000AR1517,hauteur_egout_m,REGLES_ZONAGE,7
+97403000AR1517,hauteur_faitage_m,REGLES_ZONAGE,11
+97403000AR1517,emprise_au_sol_plafond_m2,ENVELOPPE,440
+97403000AR1517,destinations_autorisees,REGLES_ZONAGE,Logement/Hebergement/Restauration/Commerce gros/Services clientele/Cinema/Hotels/Hebergements touristiques
+97403000AR1517,destinations_interdites,REGLES_ZONAGE,Agricole/Forestiere/Lieux de culte/Industrie/Entrepot/Cuisine vente en ligne
+97403000AR1517,servitude_alerte,PCMI4,Zone bleue PPR inond+mvt ~51% (sous prescriptions) + Aléa mvt terrain moyen + PM1 SUP + Parc National adhesion
+97403000AR1517,servitude_alerte,REGLES_ZONAGE,Batiment protege + DPU non determine (tres probable U/AU)
+97403000AR1517,taxe_taux_communal_pct,REGLES_ZONAGE,5
+97403000AR1517,redevance_archeo_pct,REGLES_ZONAGE,"0,40"
+97403000AR1517,capacite_sdp_estimee_m2,REGLES_ZONAGE,~352
+97403000AR1517,capacite_surface_a_retenir_m2,REGLES_ZONAGE,352
+97403000AR1517,cerfa_choisi,LISEZMOI,13406*17 (maison individuelle)
+97403000AR1517,cerfa_millesime,LISEZMOI,verifiee le 21/08/2026 (non perime)
+97403000AR1517,logements_crees,CERFA,BLANK
+97411000IS0448,commune,CERFA,Saint-Denis
+97411000IS0448,cadastre_section_numero,CERFA,prefixe 000 section IS n° 448
+97411000IS0448,cadastre_section_numero,PCMI1,Saint-Denis section IS n° 448
+97411000IS0448,cadastre_idu,PCMI4,97411000IS0448 commune Saint-Denis section IS n° 448 zone Uh
+97411000IS0448,cerfa_superficie_cadre2,CERFA,BLANK (non pre-rempli)
+97411000IS0448,adresse_ban,CERFA,18 Route Antide Boyer / Saint-Denis 97417
+97411000IS0448,adresse_ban,PCMI4,"18 ter Route Antide Boyer, 97417 (BAN a verifier)"
+97411000IS0448,surface_reelle_m2,PCMI2,~818 (enveloppe ~52 x ~34 m)
+97411000IS0448,emprise_batie_m2,PCMI2,~128 (BD TOPO)
+97411000IS0448,zone_plu,REGLES_ZONAGE,Uh 66% + N 34% (a cheval 2 zones)
+97411000IS0448,zone_plu,PCMI4,Uh
+97411000IS0448,hauteur_egout_m,REGLES_ZONAGE,"4,5"
+97411000IS0448,hauteur_faitage_m,REGLES_ZONAGE,7
+97411000IS0448,emprise_au_sol_plafond_m2,ENVELOPPE,161
+97411000IS0448,destinations_autorisees,REGLES_ZONAGE,Hebergement/Restauration/Cinema/Hotels/Hebergements touristiques/Bureaux publics/Enseignement-sante
+97411000IS0448,destinations_interdites,REGLES_ZONAGE,Forestiere/Industrie/Entrepot
+97411000IS0448,servitude_alerte,PCMI4,PPR zone rouge 34% + Aléa inondation fort + Zone bleue PPR ~38% et ~28% + PM1 SUP (65.8% + 34.2%) + DPU + EBC
+97411000IS0448,servitude_alerte,REGLES_ZONAGE,Parc National adhesion + EBC 34.4% (art L113-1/L113-2 CU)
+97411000IS0448,taxe_taux_communal_pct,REGLES_ZONAGE,3
+97411000IS0448,redevance_archeo_pct,REGLES_ZONAGE,"0,40"
+97411000IS0448,capacite_sdp_estimee_m2,REGLES_ZONAGE,~85
+97411000IS0448,capacite_surface_a_retenir_m2,REGLES_ZONAGE,85 (estimation rapide)
+97411000IS0448,cerfa_choisi,LISEZMOI,13406*17 (maison individuelle)
+97411000IS0448,cerfa_millesime,LISEZMOI,verifiee le 21/08/2026 (non perime)
+97411000IS0448,logements_crees,CERFA,BLANK
+97404000AY0153,commune,CERFA,L'Étang-Salé
+97404000AY0153,cadastre_section_numero,CERFA,prefixe 000 section AY n° 153
+97404000AY0153,cadastre_section_numero,PCMI1,L'Étang-Salé section AY n° 153
+97404000AY0153,cadastre_idu,PCMI4,97404000AY0153 commune L'Étang-Salé section AY n° 153 zone UA
+97404000AY0153,cerfa_superficie_cadre2,CERFA,BLANK (non pre-rempli)
+97404000AY0153,adresse_ban,CERFA,35 Avenue Raymond Barre / L'Étang-Salé 97427
+97404000AY0153,adresse_ban,PCMI4,"35 Avenue Raymond Barre, 97427 (BAN a verifier)"
+97404000AY0153,surface_reelle_m2,PCMI2,~256 (enveloppe ~20 x ~26 m)
+97404000AY0153,surface_parcelle_m2,ENVELOPPE,262
+97404000AY0153,emprise_batie_m2,PCMI2,~70 (BD TOPO)
+97404000AY0153,zone_plu,REGLES_ZONAGE,UA 100%
+97404000AY0153,zone_plu,PCMI4,UA
+97404000AY0153,hauteur_egout_m,REGLES_ZONAGE,12
+97404000AY0153,hauteur_faitage_m,REGLES_ZONAGE,15
+97404000AY0153,emprise_au_sol_plafond_m2,ENVELOPPE,183
+97404000AY0153,destinations_autorisees,REGLES_ZONAGE,Forestiere/Hebergement/Restauration/Cinema/Hotels/Hebergements touristiques/Bureaux publics
+97404000AY0153,destinations_interdites,REGLES_ZONAGE,Agricole/Industrie (CDAC >1000 m2)
+97404000AY0153,servitude_alerte,PCMI4,PPR zone rouge 41% + Aléa inondation fort + Zone bleue PPR ~59% + Aléa mvt faible + Bruit cat.3 bande 100m + PM1 SUP (59.5% + 40.5%)
+97404000AY0153,servitude_alerte,REGLES_ZONAGE,DPU non determine (tres probable U/AU)
+97404000AY0153,taxe_taux_communal_pct,REGLES_ZONAGE,5
+97404000AY0153,redevance_archeo_pct,REGLES_ZONAGE,"0,40"
+97404000AY0153,capacite_sdp_estimee_m2,REGLES_ZONAGE,~99
+97404000AY0153,capacite_surface_a_retenir_m2,REGLES_ZONAGE,99 (estimation rapide)
+97404000AY0153,cerfa_choisi,LISEZMOI,13406*17 (maison individuelle)
+97404000AY0153,cerfa_millesime,LISEZMOI,verifiee le 21/08/2026 (non perime)
+97404000AY0153,logements_crees,CERFA,BLANK
+97422000BW2635,commune,CERFA,Le Tampon
+97422000BW2635,cadastre_section_numero,CERFA,prefixe 000 section BW n° 2635
+97422000BW2635,cadastre_section_numero,PCMI1,Le Tampon section BW n° 2635
+97422000BW2635,cadastre_idu,PCMI4,97422000BW2635 commune du Tampon section BW n° 2635 zone Uav
+97422000BW2635,cerfa_superficie_cadre2,CERFA,BLANK (non pre-rempli)
+97422000BW2635,adresse_ban,CERFA,2 Rue d'Allemagne / Le Tampon 97430
+97422000BW2635,adresse_ban,PCMI4,"2 Rue d'Allemagne, 97430 (BAN a verifier)"
+97422000BW2635,surface_reelle_m2,PCMI2,~2002 (enveloppe ~51 x ~76 m)
+97422000BW2635,emprise_batie_m2,PCMI2,~655 (BD TOPO)
+97422000BW2635,zone_plu,REGLES_ZONAGE,Uav 100%
+97422000BW2635,zone_plu,PCMI4,Uav
+97422000BW2635,hauteur_egout_m,REGLES_ZONAGE,16
+97422000BW2635,hauteur_faitage_m,REGLES_ZONAGE,20
+97422000BW2635,recul_voie_citation,REGLES_ZONAGE,"Ua6.2 p.15: alignement ou 4 m min; RD3 recul 10,50 m de l'axe"
+97422000BW2635,destinations_autorisees,REGLES_ZONAGE,Forestiere/Hebergement
+97422000BW2635,destinations_interdites,REGLES_ZONAGE,Agricole/Industrie/Entrepot (CDAC >1000 m2)
+97422000BW2635,servitude_alerte,PCMI4,Aléa mvt terrain faible HORS PPR + Bruit cat.4 bande 30m + Zone inondable TRI extreme 85% + DPU renforce
+97422000BW2635,servitude_alerte,REGLES_ZONAGE,Quartier Prioritaire La Chatoire + Aléa mvt faible + Bruit cat.4 + DPU renforce
+97422000BW2635,taxe_taux_communal_pct,REGLES_ZONAGE,5
+97422000BW2635,redevance_archeo_pct,REGLES_ZONAGE,"0,40"
+97422000BW2635,capacite_sdp_estimee_m2,REGLES_ZONAGE,~3317
+97422000BW2635,capacite_surface_a_retenir_m2,REGLES_ZONAGE,3317
+97422000BW2635,cerfa_choisi,LISEZMOI,13406*17 (maison individuelle)
+97422000BW2635,cerfa_millesime,LISEZMOI,verifiee le 21/08/2026 (non perime)
+97422000BW2635,logements_crees,CERFA,BLANK
+97412000CV0446,commune,CERFA,Saint-Joseph
+97412000CV0446,cadastre_section_numero,CERFA,prefixe 000 section CV n° 446
+97412000CV0446,cadastre_section_numero,PCMI1,section CV n° 446
+97412000CV0446,cadastre_idu,PCMI4,97412000CV0446 commune Saint-Joseph section CV n° 446 zone U5
+97412000CV0446,cerfa_superficie_cadre2,CERFA,BLANK (non pre-rempli)
+97412000CV0446,adresse_ban,CERFA,51 Rue Georges Fourcade / Saint-Joseph 97480
+97412000CV0446,adresse_ban,PCMI4,"51 a Rue Georges Fourcade, 97480 (BAN a verifier)"
+97412000CV0446,surface_reelle_m2,PCMI2,~567 (enveloppe ~38 x ~29 m)
+97412000CV0446,surface_parcelle_m2,ENVELOPPE,551
+97412000CV0446,emprise_batie_m2,PCMI2,NON CHIFFREE (terrain nu; fiche=0)
+97412000CV0446,zone_plu,REGLES_ZONAGE,U5 100%
+97412000CV0446,zone_plu,PCMI4,U5
+97412000CV0446,hauteur_egout_m,REGLES_ZONAGE,7
+97412000CV0446,hauteur_faitage_m,REGLES_ZONAGE,9
+97412000CV0446,emprise_au_sol_plafond_m2,ENVELOPPE,276
+97412000CV0446,emprise_au_sol_citation,REGLES_ZONAGE,"U5 9.2 p.80: emprise <=50% (U5cvd 75%, U5cv 60%, U5ma/ru/vi 40%)"
+97412000CV0446,destinations_autorisees,REGLES_ZONAGE,Forestiere/Logement/Hebergement/Artisanat-commerce detail/Restauration/Commerce gros/Services clientele/Cinema
+97412000CV0446,destinations_interdites,REGLES_ZONAGE,Agricole/Industrie (CDAC >1000 m2)
+97412000CV0446,servitude_alerte,PCMI4,Aléa mvt terrain faible HORS PPR opposable
+97412000CV0446,servitude_alerte,REGLES_ZONAGE,DPU non determine (tres probable U/AU) + Aléa mvt faible
+97412000CV0446,taxe_taux_communal_pct,REGLES_ZONAGE,3
+97412000CV0446,redevance_archeo_pct,REGLES_ZONAGE,"0,40"
+97412000CV0446,capacite_sdp_estimee_m2,REGLES_ZONAGE,~241
+97412000CV0446,capacite_surface_a_retenir_m2,REGLES_ZONAGE,165 (estimation rapide)
+97412000CV0446,cerfa_choisi,LISEZMOI,13406*17 (maison individuelle)
+97412000CV0446,cerfa_millesime,LISEZMOI,verifiee le 21/08/2026 (non perime)
+97412000CV0446,logements_crees,CERFA,BLANK

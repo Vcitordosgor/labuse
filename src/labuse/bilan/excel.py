@@ -25,6 +25,11 @@ from openpyxl.utils import get_column_letter
 from .catalogue import Catalogue, assiette_unite, charger_catalogue
 from .moteur import EntreesBilan
 
+# CHIRURGICAL-FIX-1 (LOT H pt1) — même texte que le PDF (bilan/pdf.py) quand un coût requis manque :
+# le classeur ne doit PAS afficher un résultat (= CA), 100 % de marge et un cash-flow calculés par
+# des FORMULES Excel qui recalculent « dépenses vides = 0 ». Il gèle ces lignes comme le PDF.
+_NON_CALCULABLE = "non calculable — saisissez vos coûts"
+
 _EUR = '#,##0 €'
 _PCT = '0.0 %'   # DOCS-1 : les taux (TVA, marge) s'affichent « 8,5 % », jamais « 0.085 » ni « 8,50 % »
 _M2 = '#,##0 "m²"'
@@ -262,11 +267,16 @@ def classeur_bilan(
     ligne("Chiffre d'affaires", d=f"={cell_ca_ht}", e=f"={cell_ca_ttc}-{cell_ca_ht}", f=f"={cell_ca_ttc}", gras=True)
     ligne("TVA résiduelle", f=f"=(E{row_dep + 1}) - E{row_dep}")  # (CA TTC-HT) - dépenses TVA
     row_res = r
-    ligne("Résultat net", d=f"=D{row_dep + 1}-D{row_dep}", gras=True)  # CA HT - dépenses HT
-    ws.cell(row_res, 5, f"=D{row_res}/D{row_dep + 1}").number_format = _PCT  # marge % du CA HT
-    ws.cell(row_res, 5).font = _GRAS
     mod_row = ligne_poste["mod"]
-    ligne("Cash flow", d=f"=D{row_res}+D{mod_row}")
+    # CHIRURGICAL-FIX-1 (LOT H pt1) — formule VIVANTE (pas un texte figé, qui ne se recalculerait pas
+    # quand le client saisit ses coûts) : tant qu'aucun COÛT MAJEUR n'est saisi (achat terrain OU
+    # construction, même règle que le moteur `cout_majeur`), la cellule AFFICHE « non calculable… » ;
+    # dès qu'un coût majeur est entré, elle CALCULE (le classeur reste à formules vivantes).
+    _cm = f"AND(D{ligne_poste['achat']}<=0,D{ligne_poste['constr']}<=0)"   # aucun coût majeur
+    ligne("Résultat net", d=f'=IF({_cm},"{_NON_CALCULABLE}",D{row_dep + 1}-D{row_dep})', gras=True)
+    ws.cell(row_res, 5, f'=IF({_cm},"",D{row_res}/D{row_dep + 1})').number_format = _PCT  # marge % du CA HT
+    ws.cell(row_res, 5).font = _GRAS
+    ligne("Cash flow", d=f'=IF({_cm},"{_NON_CALCULABLE}",D{row_res}+D{mod_row})')
 
     # ---- Haut de feuille : ratios & programme (ordre du modèle) + calendrier ----
     # Rempli ici car il référence des cellules du corps, maintenant connues.
@@ -284,7 +294,9 @@ def classeur_bilan(
             _EUR,
         ),
         ("CA TTC programme", f"={cell_ca_ttc}", _EUR),
-        ("Renta nette / CA HT", f"=D{row_res}/{cell_ca_ht}", _PCT),
+        # CHIRURGICAL-FIX-1 (LOT H pt1) — même garde VIVANTE : vide tant qu'aucun coût majeur n'est
+        # saisi (D{row_res} porte alors le texte « non calculable »), calculée dès qu'il l'est.
+        ("Renta nette / CA HT", f'=IF({_cm},"",D{row_res}/{cell_ca_ht})', _PCT),
         ("Nombre de lots", f"={cell_lots}", '#,##0'),
     ]
     ws.cell(3, 1, "Ratios & programme").font = _GRAS

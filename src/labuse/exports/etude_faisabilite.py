@@ -160,7 +160,15 @@ def scenario_etude_persiste(db, idu: str) -> dict | None:
     try:
         from ..implantation import revisions as _rev
         from ..implantation.service import _study_id
-        cfg = {"idus": [idu], "type_projet": "collectif", "objectif": "equilibre", "stationnement": "aerien"}
+        # CHIRURGICAL-FIX-1 (LOT E) — l'empreinte `_study_id` hache AUSSI `terrain` et `niveaux_sous_sol` :
+        # l'Étude persiste sa révision avec les défauts de `EtudeIn` (terrain="libere", niveaux=None), mais
+        # ce lookup les OMETTAIT → `terrain` None ≠ "libere" → study_id différent → esquisse introuvable →
+        # le Dossier retombait sur l'estimation rapide (la plus grande) pendant que l'Étude retenait
+        # l'esquisse (BW2635 : Dossier 3 317 vs Étude 2 625). On reconstitue ICI la config PAR DÉFAUT
+        # complète (mêmes clés et mêmes défauts que `EtudeIn`) → même study_id → même esquisse lue.
+        cfg = {"idus": [idu], "type_projet": "collectif", "objectif": "equilibre",
+               "stationnement": "aerien", "terrain": "libere", "niveaux_sous_sol": None,
+               "programme": None, "hypotheses": None}
         payload = _rev.charger(db, _study_id(cfg))
     except Exception:  # noqa: BLE001 — lecture annexe, jamais bloquante pour le Dossier
         return None
@@ -843,15 +851,26 @@ def _p5_plan_masse(payload: dict, retenu: dict, *, titre: str = None) -> str:
              "batiment_emprise", "voie"]
     fig = _svg_plan(sc["geojson"], kinds, h=420)
     sm = sc.get("surfaces_mesurees_m2") or {}
+    # CHIRURGICAL-FIX-1 (LOT H pt8) — l'espace libre mesuré prend le NOM de la règle qu'il satisfait
+    # (perméable ≠ pleine terre) : AM0838/UE L'Étang-Salé impose « 25 % perméable », pas de la pleine
+    # terre. Le libellé ne conflue plus les deux notions (« Pleine terre (espace libre perméable) »).
+    _el_nature = None
+    try:
+        from ..faisabilite.zonage import resolve_zone
+        _zr = resolve_zone(payload.get("zone"), payload.get("commune"))
+        _el_nature = getattr(_zr, "pleine_terre_nature", None) if _zr else None
+    except Exception:  # noqa: BLE001 — libellé par défaut, jamais bloquant pour l'Étude
+        _el_nature = None
+    from ..faisabilite.zonage import libelle_espaces_libres
+    _el_lib = f"{libelle_espaces_libres(_el_nature)} (espace libre)"
     rows = [
         f'<tr><td class="k">Emprise des bâtiments</td><td>{_m2(sc.get("emprise_sol_m2"))}</td>'
         f'<td class="n"><span class="chip e">Estimé</span></td></tr>',
         f'<tr><td class="k">Places dessinées</td><td>{sc["stationnement"]["places"]}</td>'
         f'<td class="n"><span class="chip e">Estimé</span></td></tr>',
-        # DOC-ETUDE-029 — le libellé dit ce que la valeur EST : `pleine_terre_m2` (la part pleine terre
-        # perméable), pas le total des espaces libres. Plus de « Espaces libres · dont pleine terre » qui
-        # laissait croire que le chiffre était l'ensemble des espaces libres.
-        f'<tr><td class="k">Pleine terre (espace libre perméable)</td><td>{_m2(sc.get("pleine_terre_m2"))}</td>'
+        # DOC-ETUDE-029 — le libellé dit ce que la valeur EST : la part d'espace libre qui satisfait la
+        # règle de la zone (perméable / pleine terre…), pas le total des espaces libres.
+        f'<tr><td class="k">{_el_lib}</td><td>{_m2(sc.get("pleine_terre_m2"))}</td>'
         f'<td class="n"><span class="chip d">Dérivé</span></td></tr>',
     ]
     acces = sc["stationnement"].get("acces")

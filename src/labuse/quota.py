@@ -2,7 +2,8 @@
 
 Plafonds QUOTIDIENS par plan, tous documents abonné confondus (Dossier, Financier,
 Argumentaire, Potentiel, Lettre) :
-  · Intégral  →  30 exports / jour (plafond d'usage loyal) ;
+  · Intégral  →  120 exports / jour (plafond d'usage loyal ; décision Vic, LOT G) ;
+  · Essentiel →  30 exports / jour (inchangé) ;
   · interne   →  non borné (comptes admin/système, hors facturation).
 Le FLASH (paiement unique) est À L'UNITÉ, HORS quota (ni compté, ni bloqué — paiement propre).
 E1 (27/08) : l'ancienne offre « Illimité 499 € » est RETIRÉE (offre fantôme, jamais vendue).
@@ -28,11 +29,15 @@ from sqlalchemy import text
 #: plafond « non borné » des comptes internes (admin/système, hors facturation).
 _NON_BORNE = 10**9
 
-#: plafonds quotidiens par plan. Seul Intégral est commercial ; 'interne' n'est pas borné.
-#: 'illimite' est un ALIAS LEGACY (comptes admin d'avant E1 encore à ce plan en base) → interne.
-PLAFONDS_JOUR: dict[str, int] = {"integral": 30, "interne": _NON_BORNE, "illimite": _NON_BORNE}
+#: plafonds quotidiens par plan. 'interne'/'illimite' (admin/legacy) ne sont pas bornés.
+#: CHIRURGICAL-FIX-DOCS (LOT G, décision Vic) — le plafond Intégral passe de 30 à **120 exports/jour**.
+#: Essentiel est PINGLÉ à 30 (inchangé) pour ne pas suivre le défaut par accident. Intégral (349 €/mois)
+#: reste au-dessus d'Essentiel (moins cher) : aucune formule moins chère ne dépasse une plus chère.
+PLAFONDS_JOUR: dict[str, int] = {"integral": 120, "essentiel": 30,
+                                 "interne": _NON_BORNE, "illimite": _NON_BORNE}
 
-#: plan inconnu/legacy → traité comme Intégral (jamais un accès non borné par accident).
+#: plan inconnu/legacy → plafond PRUDENT 30 (jamais non borné par accident, et sous Intégral : on ne
+#: sur-accorde pas un plan non identifié).
 PLAFOND_DEFAUT = 30
 
 
@@ -52,11 +57,12 @@ def _compte(request: Request, db) -> dict | None:
 
 
 def message_depassement(plan: str, plafond: int) -> str:
-    """Message HONNÊTE de dépassement — pas une erreur technique brute."""
-    return (f"Plafond quotidien d'usage loyal atteint : {plafond} exports aujourd'hui "
-            f"(offre Intégral). Vos exports reprennent demain. Le rapport Flash à l'unité "
-            f"reste disponible, hors quota. Un besoin ponctuel plus large ? "
-            f"Écrivez-nous : contact@labuse.immo.")
+    """Message HONNÊTE de dépassement — pas une erreur technique brute : le CHIFFRE du plafond ET
+    l'HEURE de remise à zéro (le compteur est journalier, jour Réunion → minuit heure de La Réunion)."""
+    return (f"Plafond quotidien d'usage loyal atteint : {plafond} exports aujourd'hui. "
+            f"Le compteur se remet à zéro à minuit (00 h 00, heure de La Réunion) — vos exports "
+            f"repartent alors. Le rapport Flash à l'unité reste disponible, hors quota. "
+            f"Un besoin ponctuel plus large ? Écrivez-nous : contact@labuse.immo.")
 
 
 def porte_export(request: Request, db, *, kind: str = "export") -> dict:

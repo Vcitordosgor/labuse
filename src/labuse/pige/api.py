@@ -2226,14 +2226,18 @@ def _regles_zone(zone: str | None, commune: str | None) -> list[dict]:
     return out
 
 
-def _parcelle_mesures(db, idu: str, fiche: dict) -> list[dict]:
+def _parcelle_mesures(db, idu: str, fiche: dict, non_constructible: bool = False) -> list[dict]:
     """Les mesures DE LA PARCELLE face aux règles : assiette (aléa déduit), emprise bâtie, hauteurs LiDAR
     (faîtage / égout) + date de survol, SDP restante. Chaque mesure absente est OMISE."""
     pot = (fiche or {}).get("potentiel_transformation") or {}
     out = []
     ass = _assiette_alea_deduite(db, idu)
     if ass:
-        out.append({"cle": "Assiette constructible, aléa déduit", "valeur": f"{_fmt_m2_fr(ass)}"})
+        # CHIRURGICAL-FIX-1 (LOT H pt7) — JAMAIS « assiette constructible » sur une parcelle NON
+        # constructible (AM0838, habitat interdit en UE) : la surface hors aléa fort est un fait
+        # mesuré, pas une assiette à bâtir. Le mot « constructible » suit le verdict de la fiche.
+        cle = "Surface hors aléa fort" if non_constructible else "Assiette constructible, aléa déduit"
+        out.append({"cle": cle, "valeur": f"{_fmt_m2_fr(ass)}"})
     emp = _emprise_bati_fiche_m2(fiche)   # FIX-P-1 (P-03) — emprise UNIQUE de la fiche (BD TOPO clippée)
     if emp:
         out.append({"cle": "Bâti existant, emprise", "valeur": f"{_fmt_m2_fr(emp)}"})
@@ -2467,10 +2471,16 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
     return rows
 
 
-def _contrainte_limitante(db, idu: str, fiche: dict, zone: str | None, commune: str | None) -> dict:
+def _contrainte_limitante(db, idu: str, fiche: dict, zone: str | None, commune: str | None,
+                          non_constructible: bool = False) -> dict:
     """ANNONCE-5-FIX — LA règle qui limite la capacité, avec ses chiffres : hauteur (bâti existant au-delà
     du plafond), emprise (occupation proche du maximum), assiette (aléa fort déduit). Renvoie {"detail":…}
     (phrase chiffrée) ou {} si AUCUNE règle ne mord nettement. Jamais une phrase qui contredit le tableau."""
+    # CHIRURGICAL-FIX-1 (LOT H pt7) — une parcelle NON constructible n'a pas de « règle qui limite la
+    # capacité » : le vrai verrou est le verdict (habitat interdit…). On ne fabrique pas de phrase
+    # « l'assiette constructible limite » ; la phrase de classement portera le motif de non-constructibilité.
+    if non_constructible:
+        return {}
     try:
         from ..faisabilite.zonage import resolve_zone
         zr = resolve_zone(zone, commune) if zone else None
@@ -2506,7 +2516,7 @@ def _contrainte_limitante(db, idu: str, fiche: dict, zone: str | None, commune: 
 
 
 def _classement_phrase(bande: str | None, libelle: str | None, contrainte: dict | None,
-                       stationnement_verifie: bool = True) -> str | None:
+                       stationnement_verifie: bool = True, nc_motif: str | None = None) -> str | None:
     """ANNONCE-5-FIX — phrase du classement DÉRIVÉE DES RÈGLES : elle nomme la règle qui limite avec ses
     chiffres (via `_contrainte_limitante`), ou dit ce qui est vérifié et ce qui ne l'est pas. Jamais une
     phrase qui contredit le tableau des règles au-dessus. None si pas de bande.
@@ -2515,6 +2525,11 @@ def _classement_phrase(bande: str | None, libelle: str | None, contrainte: dict 
     if not bande:
         return None
     tete = f"Classement {bande} · {libelle}" if libelle and libelle != bande else f"Classement {bande}"
+    # CHIRURGICAL-FIX-1 (LOT H pt7) — parcelle NON constructible : la phrase PORTE LE MOTIF de la fiche
+    # (« Rien à bâtir — habitat interdit… »), jamais « assiette constructible limite » ni « aucune règle
+    # ne mord » (qui laisseraient croire à une marge à bâtir).
+    if nc_motif:
+        return f"{tete} : {nc_motif}"
     if str(bande) == "NC":
         return f"{tete} : analyse incomplète — une donnée réglementaire manque pour classer la parcelle."
     detail = (contrainte or {}).get("detail")
@@ -2634,6 +2649,14 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
     commune = (fiche or {}).get("commune")
     nature = _nature_parcelle(db, idu)
     est = _est_bloc_depuis_estimer3(db, idu, fiche, surface_hab, pieces=pieces, ecartees=ecartees)
+    # CHIRURGICAL-FIX-1 (LOT F, E8) — le PRIX DE SECTEUR d'Estimer est celui de la FICHE (`prix_ancien`,
+    # médiane pondérée du secteur), distinct du « Prix estimé au m² » (ESTIMER-3, estimation pour CE bien) :
+    # les deux documents LABUSE affichent alors le MÊME prix de secteur. Écran == PDF (même `est`).
+    _pa = (fiche or {}).get("prix_ancien") or {}
+    if isinstance(est, dict) and isinstance(_pa.get("median"), (int, float)):
+        est["secteur_fiche"] = {"median": _pa.get("median"), "n": _pa.get("n"),
+                                "radius_m": _pa.get("radius_m"), "type_prix": _pa.get("type_prix"),
+                                "periode": _pa.get("periode")}
     try:
         cls = _classement_bande(db, idu)
     except Exception:  # noqa: BLE001
@@ -2668,7 +2691,14 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
     except Exception as exc:  # noqa: BLE001
         log.warning("rapport parcelle %s : marché commune indisponible (%s)", idu, exc)
         marche = None
-    contrainte = _contrainte_limitante(db, idu, fiche, zone, commune)
+    # CHIRURGICAL-FIX-1 (LOT H pt7) — verdict de constructibilité de la FICHE (point unique
+    # `potentiel_a_batir`) : sur une parcelle non constructible, Estimer ne parle pas d'« assiette
+    # constructible » et nomme le motif (habitat interdit…) dans la phrase de classement.
+    _pab = (fiche or {}).get("potentiel_a_batir") or {}
+    _non_constructible = _pab.get("constructible") is False
+    _nc_motif = (_pab.get("libelle") or "Parcelle non constructible") if _non_constructible else None
+    contrainte = _contrainte_limitante(db, idu, fiche, zone, commune,
+                                       non_constructible=_non_constructible)
     # CAPACITE-1 (E2) — le stationnement de la zone est-il VÉRIFIÉ (règle chiffrée servie) ? Sinon la
     # phrase de classement ne dit pas « marge ouverte » sans réserve.
     try:
@@ -2696,10 +2726,12 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
         "derniere_vente": derniere_vente,
         "classement": {"bande": cls.get("bande"), "libelle": cls.get("libelle"),
                        "phrase": _classement_phrase(cls.get("bande"), cls.get("libelle"), contrainte,
-                                                     stationnement_verifie=_stat_verif)},
+                                                     stationnement_verifie=_stat_verif,
+                                                     nc_motif=_nc_motif)},
         "foncier": {"zone": zone, "commune": commune,
                     "regles": _regles_zone(zone, commune),
-                    "parcelle": _parcelle_mesures(db, idu, fiche)},
+                    "parcelle": _parcelle_mesures(db, idu, fiche,
+                                                  non_constructible=_non_constructible)},
         "risques": _risques_complet(db, idu, fiche, commune),
         "marche": marche,
         "a_verifier": _a_verifier(fiche, nature, zone),

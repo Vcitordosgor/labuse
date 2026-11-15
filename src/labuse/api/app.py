@@ -3644,9 +3644,13 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
         # CONTENANCE-1 (Lot B) : la surface de terrain (base taxable pré-remplie) = contenance si
         # présente, sinon dessin.
         "SELECT p.commune, round(COALESCE(p.contenance_m2, p.surface_m2)) AS surface_terrain_m2, z.zone_libelle, z.zone_fam,"
-        "       r.sdp_residuelle_m2 AS sdp_gabarit_m2, r.taux_emprise_pct"
+        "       r.sdp_residuelle_m2 AS sdp_gabarit_m2, r.taux_emprise_pct,"
+        # CHIRURGICAL-FIX-1 (E117) — emprise bâtie servie (BD TOPO/CoSIA), peuplée même pour une
+        # parcelle NON constructible (donc absente de parcel_residuel). Repli de `deja_batie`.
+        "       pmb.emprise_bati_m2"
         " FROM parcels p LEFT JOIN parcel_zone_plu z ON z.idu = p.idu"
         " LEFT JOIN parcel_residuel r ON r.parcel_id = p.id"
+        " LEFT JOIN p_model_bati pmb ON pmb.idu = p.idu"
         " WHERE p.idu = :i"),
         {"i": idu}).mappings().first()
     if not row:
@@ -3674,7 +3678,8 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
             # on le libelle pour que l'utilisateur ne confonde pas les deux.
             "sdp_gabarit_libelle": ("SDP résiduelle (droits à bâtir restants, bâti conservé)"
                                     if (sdp is not None and sdp > 0) else None),
-            "deja_batie": bool(row["taux_emprise_pct"] and float(row["taux_emprise_pct"]) > 0),
+            "deja_batie": bool((row["taux_emprise_pct"] and float(row["taux_emprise_pct"]) > 0)
+                               or (row["emprise_bati_m2"] and float(row["emprise_bati_m2"]) > 0)),
             "taux_communal_pct": (pub["part_communale_pct"] if pub else None),
             "taux_communal_source": ("public" if pub else None),
             "taux_communal_millesime": (pub["millesime"] if pub else None),
@@ -5320,6 +5325,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # KELFONCIER-FIX-1 (Lot A) — statut d'ouverture de la zone AU (§4 Urbanisme + cause §10).
         "au_ouverture": _au_ouverture_block(db, idu),
         "plu_fraicheur": _plu_fraicheur(idu),   # M32 §2 : fraîcheur GPU-vs-mairie du zonage
+        "plu_modifie": _plu_modifie(db, idu),   # PLU-VEILLE-FIX-1 : bandeau « PLU modifié — règles en cours »
         "radar_procedure": _radar_proc(idu, (score_v2 or {}).get("tier")),   # M41 — radar procédures PLU
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
         "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
@@ -6494,6 +6500,30 @@ def _icd_block(s2) -> dict | None:
 
 
 _PLU_FRAICHEUR_CACHE: dict = {}
+
+
+def _plu_modifie(db, idu: str) -> dict | None:
+    """PLU-VEILLE-FIX-1 — le bandeau CLIENT « PLU modifié le jj/mm/aaaa — règles en cours de mise à
+    jour », servi sur la fiche ET dans les documents TANT que la commune est en cours de mise à jour
+    (une couche d'urbanisme en retard sur le Géoportail, ou règles pas encore recalibrées/validées).
+    None quand la commune est à jour. Jamais un 500 : une veille absente = pas de bandeau."""
+    insee = (idu or "")[:5]
+    if not insee:
+        return None
+    try:
+        from .. import controle_plu
+        e = controle_plu.lire_etat(db, insee)
+    except Exception:  # noqa: BLE001 — la fiche ne tombe jamais pour un défaut de veille
+        return None
+    if not e or e.get("etat") != "desync":
+        return None
+    # Bandeau PROPORTIONNEL (décision Vic) : le message et le fait que les parcelles passent
+    # « À vérifier » dépendent de la couche en décalage (fort / prescriptions / informations).
+    return {"date": e.get("date_modif_fr"), "niveau": e.get("niveau"),
+            "ancien": e.get("ancien"), "nouveau": e.get("nouveau"),
+            "couches": e.get("couches_en_retard") or [],
+            "avec_a_verifier": bool(e.get("avec_a_verifier")),
+            "message": e.get("message") or "PLU mis à jour — intégration en cours."}
 
 
 def _plu_fraicheur(idu: str) -> dict | None:
@@ -9080,6 +9110,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         # M40 — source qui fait foi (GPU-vs-mairie) : présent aussi sur le payload par défaut et les
         # exports (md/html), pas seulement la fiche premium. Jamais un zonage servi sans mention.
         "plu_fraicheur": _plu_fraicheur(idu),
+        "plu_modifie": _plu_modifie(db, idu),   # PLU-VEILLE-FIX-1 : bandeau « PLU modifié — règles en cours »
         "radar_procedure": _radar_proc(idu, verdict_block["tier"]),   # M41 — radar procédures PLU
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
         "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
@@ -9267,13 +9298,20 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
             proprietaire = {"Succession": "succession", "Indivision": "indivision"}.get(
                 tete_denomination(pm.get("denomination")), "morale")
     else:
-        proprietaire = "particulier"
+        # CHIRURGICAL-FIX-1 (LOT H pt4) — sans personne morale, le propriétaire est « non déterminé »
+        # (comme le Dossier et la fiche « Propriétaire non identifié »), PAS « particulier » : LABUSE
+        # n'a pas le nom, on n'affirme pas qu'il s'agit d'un particulier. Même valeur partout.
+        proprietaire = "non_determine"
     # bâti existant % = emprise bâtie (BD TOPO/CoSIA) ÷ surface terrain — jamais un « 0 » inventé.
-    # NU-3-J#8 — MÊME dénominateur que la fiche : la surface de TERRAIN servie (contenance|dessin),
-    # pas la surface de dessin brute — sinon le taux divergeait de la fiche de ±1 à 4 points.
+    # NU-3-J#8 — MÊME dénominateur que la fiche : la surface de TERRAIN servie (contenance|dessin).
+    # CHIRURGICAL-FIX-1 (LOT H pt4) — et MÊME NUMÉRATEUR que la fiche : l'emprise bâtie SERVIE
+    # (le_bien.emprise_batie_m2, BD TOPO), PAS res["emprise_batie_m2"] (résiduel) qui divergeait
+    # (IS0448 : résiduel 259 → 27 % alors que la fiche sert 128 → 13 %). Repli résiduel si le_bien absent.
     surf = qv2.get("surface_terrain_m2") or qv2.get("surface_m2") or 0
-    bati_pct = (round(100 * res["emprise_batie_m2"] / surf)
-                if res.get("disponible") and res.get("emprise_batie_m2") is not None and surf else None)
+    _emprise = (qv2.get("le_bien") or {}).get("emprise_batie_m2")   # emprise SERVIE par la fiche (= 128 pour IS0448)
+    if _emprise is None and res.get("disponible"):
+        _emprise = res.get("emprise_batie_m2")
+    bati_pct = (round(100 * _emprise / surf) if _emprise is not None and surf else None)
     # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — logements_min/logements_possibles NE SONT PLUS SERVIS :
     # aucun nombre de logements de l'ancien calcul de capacité (fourchette estimate_capacity,
     # SDP ÷ logement moyen) dans Comparer — la ligne (écran ET PDF) renvoie à l'Étude de faisabilité

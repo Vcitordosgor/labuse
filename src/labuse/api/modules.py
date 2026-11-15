@@ -362,7 +362,12 @@ def patrimoine(siren: str, fmt: str = "json",
     # est un ANGLE MORT (INPI non résolu chez nous), pas une preuve d'absence de dirigeant : on ne
     # l'affiche donc pas. Sans cette garde, un simple « 0 parcelle » se doublait d'un encart d'approche
     # trompeur. (bool(siren) restait vrai même sur une entreprise inconnue → faux signal.)
-    inpi_sans_dirigeant = bool(rows) and bool(nom) and not db.execute(text(
+    # CHIRURGICAL-FIX-1 (E106) — le signal « succession / sommeil » n'a de sens que pour une
+    # ENTREPRISE (SIREN à 9 chiffres). Une ASL / un syndicat de copropriété porte un identifiant
+    # non-entreprise (ex. « U23889204 », « W97400… ») : il n'a par nature AUCUN dirigeant INPI et
+    # ne « tombe pas en sommeil ». Sans ce garde-fou, le scan d'une ASL affichait un faux signal.
+    _siren_entreprise = bool(re.fullmatch(r"\d{9}", str(siren or "")))
+    inpi_sans_dirigeant = _siren_entreprise and bool(rows) and bool(nom) and not db.execute(text(
         "SELECT EXISTS (SELECT 1 FROM pm_dirigeants WHERE siren = :s)"), {"s": siren}).scalar()
     # #2 l'agrégat dit l'ACTIONNABLE. « Écartées » de base = étage 0 cascade (exclues/faux positif).
     # CONNEXIONS-2 Lot 4 (KO-10) : si le COMPTE courant a explicitement ÉCARTÉ des parcelles dans un

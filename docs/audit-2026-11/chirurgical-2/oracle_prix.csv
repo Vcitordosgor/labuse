@@ -1,0 +1,13 @@
+idu,commune,type_servi,tp_oracle,n_servi,rayon_servi,periode_servi,median_servi_weighted,median_avant,median_apres,n_kept_oracle,radius_oracle,median_simple_oracle,median_weighted_oracle,min_oracle,max_oracle,q1_oracle,q3_oracle,periode_oracle,n_dup_oracle,periode_seg,within_minmax,within_q1q3_simple,delta_weighted_vs_simple_pct,metadata_match,note
+97422000AD0887,Le Tampon,maison,maison,8,500,"[2022, 2025]",2577,2500,2539,8,500,2539,2577,1310,3473,2373,3225,"[2022, 2025]",0,recente,True,True,1.5,True,
+97416000HT0538,Saint-Pierre,appartement,,36,500,"[2022, 2026]",2545,2503,2582,36,500,2582,2545,1440,6176,2052,2965,"[2022, 2026]",0,recente,True,True,-1.4,True,
+97403000AR1517,Entre-Deux,mixte (appart+maison),,26,500,"[2022, 2026]",3582,3537,3594,26,500,3594,3582,1029,9217,2558,4068,"[2022, 2026]",0,recente,True,True,-0.3,True,
+97404000AM0838,L'Étang-Salé,maison,maison,43,1000,"[2022, 2026]",1909,2013,2260,43,1000,2260,1909,1186,7901,1711,3882,"[2022, 2026]",0,recente,True,True,-15.5,True,W_VS_SIMPLE -15.5%;
+97417000AO0050,Saint-Philippe,mixte (appart+maison),,11,1000,"[2022, 2025]",2188,2094,2328,11,1000,2328,2188,1371,4310,1850,3816,"[2022, 2025]",0,recente,True,True,-6.0,True,
+97411000IS0448,Saint-Denis,maison,maison,21,1000,"[2022, 2026]",2480,2481,2481,21,1000,2481,2480,1233,6420,2056,3596,"[2022, 2026]",0,recente,True,True,-0.0,True,
+97404000AY0153,L'Étang-Salé,maison,maison,43,500,"[2022, 2026]",2333,2173,2333,43,500,2333,2333,1186,7901,1711,4167,"[2022, 2026]",0,recente,True,True,0.0,True,
+97414000CO0153,Saint-Louis,maison,maison,22,1000,"[2022, 2026]",3012,2401,2401,22,1000,2401,3012,1019,3837,1538,2944,"[2022, 2026]",0,recente,True,False,25.4,True,W_VS_SIMPLE +25.4%;
+97421000BN0260,Salazie,mixte (appart+maison),,63,commune,"[2022, 2026]",1857,1500,1848,63,commune,1848,1857,1000,4500,1364,2000,"[2022, 2026]",0,recente,True,True,0.5,True,
+97422000BW2635,Le Tampon,appartement,,53,1000,"[2022, 2026]",3000,3251,2794,53,1000,2794,3000,1558,5595,2173,3365,"[2022, 2026]",0,recente,True,True,7.4,True,
+97412000CV0446,Saint-Joseph,mixte (appart+maison),,17,500,"[2022, 2025]",2180,2294,2294,17,500,2294,2180,1042,8714,1784,2987,"[2022, 2025]",0,recente,True,True,-5.0,True,
+97424000AO1198,Cilaos,mixte (appart+maison),,86,commune,"[2022, 2026]",2333,1726,1877,86,commune,1877,2333,1000,5500,1407,2828,"[2022, 2026]",0,recente,True,True,24.3,True,W_VS_SIMPLE +24.3%;

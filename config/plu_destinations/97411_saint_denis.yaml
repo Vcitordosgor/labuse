@@ -357,6 +357,15 @@ zones:
       propres à Upr portent sur l'implantation, l'emprise au sol et la hauteur, Up.7/Up.9/Up.10, p. 33-34).
   Ud:
     regles:
+      pleine_terre:
+        # [PLU-MAJ-2] seule règle de pleine terre réelle de la zone Ud (art. Ud.13, p46).
+        # Preuve : docs/audit-2026-11/plu-maj-2/images/saint-denis-pleine-terre/UD_p46.png
+        pct:
+          pct: 30
+          article: Article Ud.13
+          page_pdf: 46
+          citation: Minimum 30% de la parcelle doit être en pleine terre
+          statut: valide
       hauteur:
         faitage:
           plage: true
@@ -841,6 +850,15 @@ zones:
         citation: « Les entrepôts » (interdiction sans renvoi à l'article 2)
   Ui:
     regles:
+      pleine_terre:
+        # [PLU-MAJ-2] seule règle de pleine terre réelle de la zone Ui (art. Ui.13, p58).
+        # Preuve : docs/audit-2026-11/plu-maj-2/images/saint-denis-pleine-terre/UI_p58.png
+        pct:
+          pct: 40
+          article: Article Ui.13
+          page_pdf: 58
+          citation: Minimum 40% de la parcelle doit être en pleine terre
+          statut: valide
       hauteur:
         faitage:
           m: 18

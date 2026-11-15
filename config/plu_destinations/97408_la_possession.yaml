@@ -1,14 +1,19 @@
 meta:
   insee: '97408'
   commune: La Possession
-  document: 97408_reglement_20251217.pdf
-  document_gpu: 97408_PLU_20251217
-  gpu_doc_id: 3fa1dbaa347af47ed5b743696ea098f6
-  url: https://data.geopf.fr/annexes/gpu/documents/DU_97408/3fa1dbaa347af47ed5b743696ea098f6/97408_reglement_20251217.pdf
+  document: 97408_reglement_20260625.pdf
+  document_gpu: 97408_PLU_20260625
+  gpu_doc_id: 77244f114938a3230afb98948d9498bc
+  url: https://data.geopf.fr/annexes/gpu/documents/DU_97408/77244f114938a3230afb98948d9498bc/97408_reglement_20260625.pdf
   md5: 8b3bd9de4c9a3d23f91307c31c457007
-  millesime: '2025-12-17'
+  millesime: '2026-06-25'
   pages_total: 164
   lu_le: '2026-09-03'
+  # [PLU-MAJ-2] modif. simplifiée n°2 (application d'un jugement du TA), idurba 97408_PLU_20260625.
+  # Le règlement 20260625 est OCTET-POUR-OCTET IDENTIQUE au 20251217 (même md5 8b3bd9de…, 164 pages,
+  # 0 page différente — vérifié). AUCUNE règle chiffrée ne change : le calibrage ci-dessous reste
+  # valide, seul l'identifiant du document est re-pointé. Ancien document 97408_reglement_20251217.pdf
+  # (hash GPU 3fa1dbaa… désormais 404) conservé dans data/plu_reglements/ et archivé (plu_layer_archive).
   structure: 'Ancien format : zones U avec clause « sont admises toutes les occupations non citées à l''article
     1.2 » (silence = autorisé) sauf UBpszc et UT/UTfr2 fermées (silence = interdit) ; AU indicée = renvoi ÉCRIT
     (DG art. 3 2°, p. 7) vers la zone urbaine d''indice ; AUst fermée ; A/N/Npnr/Nr/Nli fermées ; Ni1/Ni2 (Mafate)

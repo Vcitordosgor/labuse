@@ -94,6 +94,27 @@ class _Pdf(FPDF):
 _LOGO_PTS = [(2.0,15.0),(8.9,14.4),(15.7,14.0),(22.3,13.7),(28.8,13.5),(35.1,13.5),(41.2,13.5),(47.2,13.6),(53.0,13.9),(58.7,14.2),(64.1,14.7),(69.4,15.2),(74.5,15.8),(79.4,16.4),(84.1,17.1),(88.6,17.9),(93.0,18.8),(97.1,19.7),(101.0,20.6),(104.7,21.6),(108.2,22.6),(111.5,23.7),(114.5,24.8),(117.4,25.9),(120.0,27.0),(122.6,25.9),(125.5,24.8),(128.5,23.7),(131.8,22.6),(135.3,21.6),(139.0,20.6),(142.9,19.7),(147.0,18.8),(151.4,17.9),(155.9,17.1),(160.6,16.4),(165.5,15.8),(170.6,15.2),(175.9,14.7),(181.3,14.2),(187.0,13.9),(192.8,13.6),(198.8,13.5),(204.9,13.5),(211.2,13.5),(217.7,13.7),(224.3,14.0),(231.1,14.4),(238.0,15.0),(233.5,16.7),(228.9,18.4),(224.3,20.1),(219.7,21.7),(215.1,23.3),(210.5,24.9),(205.9,26.4),(201.3,27.9),(196.7,29.4),(192.1,30.8),(187.6,32.2),(183.1,33.5),(178.7,34.8),(174.3,36.0),(170.0,37.2),(165.7,38.4),(161.5,39.5),(157.4,40.6),(153.4,41.6),(149.5,42.6),(145.7,43.5),(142.0,44.4),(138.4,45.2),(135.0,46.0),(134.0,46.4),(133.1,46.8),(132.1,47.2),(131.2,47.6),(130.4,48.0),(129.6,48.5),(128.8,48.9),(128.0,49.4),(127.3,49.9),(126.6,50.4),(125.9,50.9),(125.2,51.5),(124.6,52.1),(124.1,52.7),(123.5,53.3),(123.0,53.9),(122.5,54.6),(122.1,55.3),(121.6,56.0),(121.2,56.7),(120.9,57.5),(120.6,58.3),(120.3,59.1),(120.0,60.0),(119.7,59.1),(119.4,58.3),(119.1,57.5),(118.8,56.7),(118.4,56.0),(117.9,55.3),(117.5,54.6),(117.0,53.9),(116.5,53.3),(115.9,52.7),(115.4,52.1),(114.8,51.5),(114.1,50.9),(113.4,50.4),(112.7,49.9),(112.0,49.4),(111.2,48.9),(110.4,48.5),(109.6,48.0),(108.8,47.6),(107.9,47.2),(106.9,46.8),(106.0,46.4),(105.0,46.0),(101.6,45.2),(98.0,44.4),(94.3,43.5),(90.5,42.6),(86.6,41.6),(82.6,40.6),(78.5,39.5),(74.3,38.4),(70.0,37.2),(65.7,36.0),(61.3,34.8),(56.9,33.5),(52.4,32.2),(47.9,30.8),(43.3,29.4),(38.7,27.9),(34.1,26.4),(29.5,24.9),(24.9,23.3),(20.3,21.7),(15.7,20.1),(11.1,18.4),(6.5,16.7),(2.0,15.0)]
 
 
+def _periode_lisible(code) -> str | None:
+    """CHIRURGICAL-FIX-1 (E100) — rend LISIBLE la période de construction RNIC (énumération brute
+    « DE_2001_A_2010 », « AVANT_1949 », « A_COMPTER_DE_2011 »…) : « 2001–2010 », « avant 1949 »,
+    « à compter de 2011 ». None si inconnue — jamais le code brut dans le document client."""
+    if not code:
+        return None
+    c = str(code).strip()
+    if re.fullmatch(r"NON_CONNUE", c, re.I) or re.search(r"non renseign", c, re.I):
+        return None
+    m = re.fullmatch(r"DE_(\d{4})_A_(\d{4})", c, re.I)
+    if m:
+        return f"{m.group(1)}–{m.group(2)}"
+    m = re.fullmatch(r"AVANT_(\d{4})", c, re.I)
+    if m:
+        return f"avant {m.group(1)}"
+    m = re.fullmatch(r"A_COMPTER_DE_(\d{4})", c, re.I)
+    if m:
+        return f"à compter de {m.group(1)}"
+    return c.replace("_", " ").lower()
+
+
 def _logo(pdf: FPDF, x: float, y: float, w: float) -> None:
     k = w / 240.0
     pdf.set_fill_color(*GREEN)                       # M126 — vert canonique #4ADE80
@@ -668,6 +689,17 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                 lignes.append(entete)
         _section(pdf, "RÈGLEMENT PLU PAR ZONE", lignes, source=rp.get("disclaimer"))
 
+    # PLU-VEILLE-FIX-1 — le bandeau « PLU modifié — règles en cours de mise à jour », SERVI AVANT le
+    # reste de l'urbanisme : le document d'urbanisme a changé au Géoportail et les règles ne sont pas
+    # encore recalibrées/validées → les chiffres restent à confirmer.
+    pm = fiche.get("plu_modifie")
+    if pm:
+        _section(pdf, "PLU MODIFIÉ — MISE À JOUR EN COURS",
+                 [pm.get("message"),
+                  (f"Nouveau document : {pm['nouveau']}" if pm.get("nouveau") else None),
+                  "Les règles chiffrées sont en cours de recalibrage : les capacités de cette "
+                  "commune sont « à vérifier » le temps de la mise à jour."])
+
     pf = fiche.get("plu_fraicheur")
     if pf:
         _section(pdf, "FRAÎCHEUR DU ZONAGE (GPU vs mairie)",
@@ -935,6 +967,8 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     copros = fiche.get("coproprietes") or []
     if copros:
         lignes = []
+        # CHIRURGICAL-FIX-1 (LOT H pt5) — « proche_20m » = copropriété À PROXIMITÉ (≤ 20 m), pas sur la
+        # parcelle : BW2635 (au 2 rue d'Allemagne) listait les copros des 4 et 6 comme les siennes.
         for c in copros[:6]:
             nom = c.get("nom_usage") or c.get("numero_immatriculation") or "copropriété"
             lots = f"{c['nb_lots_total']} lots" if c.get("nb_lots_total") is not None else ""
@@ -942,15 +976,19 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             # SOURCES-4 lot 1 — stationnement / commerce-bureaux (raw ANAH, jusque-là non servis).
             stat = (f", {c['nb_lots_stationnement']} stationnement"
                     if c.get("nb_lots_stationnement") else "")
-            per = f" · {c['periode_construction']}" if c.get("periode_construction") else ""
+            _per_lis = _periode_lisible(c.get("periode_construction"))
+            per = f" · {_per_lis}" if _per_lis else ""
             rs = " · résidence-service" if c.get("residence_service") == "oui" else ""
             coop = " · syndicat coopératif" if c.get("syndicat_cooperatif") == "oui" else ""
             # SOURCES-4 lot 1 — SIRET du syndic surfacé.
             sir = f" (SIRET {c['syndic_siret']})" if c.get("syndic_siret") else ""
             syn = (f" · syndic {c.get('syndic_type') or ''} {c.get('syndic_nom') or ''}{sir}".rstrip()
                    if c.get("syndic_type") or c.get("syndic_nom") else "")
-            lignes.append(f"{nom} — {lots}{hab}{stat}{per}{rs}{coop}{syn}".strip(" —"))
-        _section(pdf, "COPROPRIÉTÉ(S) RATTACHÉE(S)", lignes,
+            prox = " · à proximité (≤ 20 m, pas sur la parcelle)" if c.get("rattachement") == "proche_20m" else ""
+            lignes.append(f"{nom} — {lots}{hab}{stat}{per}{rs}{coop}{syn}{prox}".strip(" —"))
+        _toutes_proches = all(c.get("rattachement") == "proche_20m" for c in copros[:6])
+        _titre_copro = "COPROPRIÉTÉ(S) À PROXIMITÉ" if _toutes_proches else "COPROPRIÉTÉ(S) RATTACHÉE(S)"
+        _section(pdf, _titre_copro, lignes,
                  source="Source : RNIC (registre national des copropriétés) — information.")
 
     ren = fiche.get("renouvellement")

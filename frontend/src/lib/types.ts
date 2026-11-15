@@ -297,7 +297,7 @@ export interface Fiche {
   analyse_labuse?: {
     bande: string | null; signal_niveau: string | null
     contributions: { sens: 'hausse' | 'baisse'; libelle: string }[] | null
-    cause: string | null; non_calculable: boolean | null; sdp_residuelle_m2: number | null
+    cause: string | null; cause_libelle?: string | null; non_calculable: boolean | null; sdp_residuelle_m2: number | null
   } | null
   adresse?: string | null   // M6 2a (§1.8) : meilleure adresse postale BAN — null si aucune
   secteur?: string | null   // GEOPF-3 : lieu-dit BD NYME le plus proche (rayon borné) — null si aucun
@@ -378,6 +378,13 @@ export interface Fiche {
     // M40 : les 3 choses distinctes (jamais mélangées) + action.
     document_servi?: string | null; fait_foi?: string | null
     en_cours?: string | null; action?: string | null; fait_foi_ok?: boolean
+  } | null
+  // PLU-VEILLE-FIX-1 : bandeau PROPORTIONNEL (desync). niveau = fort | prescriptions | informations ;
+  // avec_a_verifier = les parcelles de la commune passent « À vérifier » (pas pour informations).
+  plu_modifie?: {
+    date: string | null; niveau: 'fort' | 'prescriptions' | 'informations' | null
+    ancien: string | null; nouveau: string | null
+    couches: string[]; avec_a_verifier: boolean; message: string
   } | null
   // M41 : radar procédures PLU (stade + conséquences parcellaires servables ; jamais l'issue).
   radar_procedure?: {

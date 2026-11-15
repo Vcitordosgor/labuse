@@ -371,7 +371,12 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
                or any(isinstance(a, dict) and any(
                       k in ((a.get("nature") or "") + " " + (a.get("libelle") or "")).lower()
                       for k in ("inond", "submers", "ravine", "humide")) for a in _aleas))
-    obs_pollution = industriel or _releve("sol_pollue") or _releve("casias")
+    # CHIRURGICAL-FIX-1 (LOT H pt2) — on DISTINGUE un inventaire de pollution RELEVÉ (sol pollué /
+    # casias) d'une simple ICPE à proximité : sans inventaire, on ne parle pas d'« ancien site
+    # industriel / sol pollué » (la fiche ne relève rien dans les inventaires) — juste « installation
+    # classée à proximité ». `obs_pollution` (= pose la question d'observation) reste l'union des deux.
+    pollution_inventaire = bool(_releve("sol_pollue") or _releve("casias"))
+    obs_pollution = industriel or pollution_inventaire
     # DOCS-COHERENCE-1 (C2) — question « Mouvements de sol » quand un aléa de mouvement de terrain est
     # relevé (au lieu de la question d'eau, qui ne concerne que inondation/ravine/zone humide).
     obs_mouvement = (_releve("mouvement_terrain") or any(
@@ -388,6 +393,7 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
         # la ligne HTA/HTB (< 50 m) n'a AUCUNE couche fiable dans le socle → le drapeau `obs_ligne_ht`
         # (toujours False) et sa question morte ont été retirés (cf. blocs/apporteur.py §6).
         "obs_eau": obs_eau, "obs_mouvement": obs_mouvement, "obs_pollution": obs_pollution,
+        "pollution_inventaire": pollution_inventaire,   # CHIRURGICAL-FIX-1 (LOT H pt2)
         "icpe_detail": icpe_detail,   # RECETTE-11 D7 — description/distance de l'ICPE relevée
         "voisines": voisines,
         "plan": _apporteur_plan(db, idu, voisines),
@@ -464,7 +470,9 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
 
 
 # ── DOCS-1 (Lot C) — les 3 nouveaux documents : miroirs des outils, même builder/couverture/pied. ──
-_GABARIT_INCALCULABLE = "Gabarit non calculable sur cette parcelle : donnée réglementaire manquante"
+# CHIRURGICAL-FIX-1 (E107) — marqueur du cas « gabarit non calculable » (limite non qualifiée),
+# DISTINCT d'un verdict de non-constructibilité. Pas de deux-points en fin : le rendu l'enrobe.
+_GABARIT_INCALCULABLE = "Gabarit non calculable sur cette parcelle (une limite n'est pas qualifiée)"
 
 
 def _entete_doc(document: str, ref_ligne: str, numero: str, jour: date) -> str:

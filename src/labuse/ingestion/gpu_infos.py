@@ -66,12 +66,23 @@ def _peb_zone(txt: str | None, libelle: str | None) -> str | None:
 
 def ingest_gpu_infos(session: Session, run_id: int | None = None,
                      source_id_dpu: int | None = None, source_id_peb: int | None = None,
-                     log=print, client: httpx.Client | None = None) -> dict:
+                     log=print, client: httpx.Client | None = None,
+                     only_insee: str | None = None) -> dict:
     """Ingère DPU (par commune, filtré partition) et PEB (île, dédoublonné) via info-surf.
 
     Rend {"dpu": n, "peb": n, "dpu_non_publie": [noms], "peb_zones": {...},
-    "peb_illisibles": n}. Purge kinds 'dpu' et 'peb' avant (idempotent)."""
-    session.execute(text("DELETE FROM spatial_layers WHERE kind IN ('dpu', 'peb')"))
+    "peb_illisibles": n}. Purge kinds 'dpu' et 'peb' avant (idempotent).
+
+    PLU-VEILLE-FIX-1 — `only_insee` cible UNE commune (geste unique PLU) : on ne purge QUE son DPU
+    (le PEB est une emprise aéroport île-entière, laissé intact) et on ne traite QUE son info-surf."""
+    communes_cibles = ([(insee, nom) for insee, nom in REUNION_COMMUNES if insee == only_insee]
+                       if only_insee else list(REUNION_COMMUNES))
+    if only_insee:
+        nom_cible = communes_cibles[0][1] if communes_cibles else None
+        session.execute(text("DELETE FROM spatial_layers WHERE kind = 'dpu' AND commune = :c"),
+                        {"c": nom_cible})
+    else:
+        session.execute(text("DELETE FROM spatial_layers WHERE kind IN ('dpu', 'peb')"))
     n_dpu = 0
     dpu_communes: set[str] = set()
     peb_vus: set[str] = set()
@@ -83,7 +94,7 @@ def ingest_gpu_infos(session: Session, run_id: int | None = None,
                                headers={"User-Agent": constants.USER_AGENT},
                                follow_redirects=True)
     try:
-        for insee, nom in REUNION_COMMUNES:
+        for insee, nom in communes_cibles:
             geom = _bbox_geom(session, nom)
             if geom is None:
                 continue

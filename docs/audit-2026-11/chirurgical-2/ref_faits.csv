@@ -1,0 +1,481 @@
+idu,fait,valeur
+97422000AD0887,commune,Le Tampon
+97422000AD0887,surface_dessin_m2,1699
+97422000AD0887,contenance_cadastre_m2,1703
+97422000AD0887,surface_source,cadastre
+97422000AD0887,zone_fam,U
+97422000AD0887,zone_lib,Ud
+97422000AD0887,zone_a_cheval,False
+97422000AD0887,n_zones,1
+97422000AD0887,constructible,True
+97422000AD0887,constructible_motif,
+97422000AD0887,constructible_libelle,≈ 719 m² encore constructibles
+97422000AD0887,rien_a_batir,False
+97422000AD0887,sdp_restante_m2,719
+97422000AD0887,emprise_batie_m2,345
+97422000AD0887,emprise_source,BD TOPO IGN
+97422000AD0887,nb_batiments,2
+97422000AD0887,surface_libre_m2,1358
+97422000AD0887,hauteur_faitage_m,4.7
+97422000AD0887,hauteur_source,"LiDAR HD MNS (IGN), mesuré, survol de septembre 2023"
+97422000AD0887,prix_ancien_median,2577
+97422000AD0887,prix_ancien_type,maison
+97422000AD0887,prix_ancien_n,8
+97422000AD0887,prix_ancien_radius_m,500.0
+97422000AD0887,prix_ancien_periode,"[2022, 2025]"
+97422000AD0887,prix_ancien_fiable,True
+97422000AD0887,marche_synthese,"Prix ancien médian 2 577 €/m² (maison, 8 ventes, rayon 500 m, ventes 2022–2025)"
+97422000AD0887,taxe_taux_communal_pct,5.0
+97422000AD0887,taxe_taux_departemental_pct,2.5
+97422000AD0887,taxe_total_eur,
+97422000AD0887,taxe_annee,2026
+97422000AD0887,score_tier,sans_signal
+97422000AD0887,score_label,Sans signal
+97422000AD0887,score_declasse,True
+97422000AD0887,score_motif,"bâtie saturée — ratio 41 % (emprise 689 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))"
+97422000AD0887,aleas_n,1
+97422000AD0887,aleas_synthese,
+97422000AD0887,rnu,False
+97422000AD0887,dvf_secteur_mediane_prix_m2,1890
+97422000AD0887,valeur_terrain_secteur_eur,291213
+97422000AD0887,plu_fraicheur,"{""idurba"": ""97422_PLU_20230811"", ""horizon"": ""2023-08-11"", ""statut"": ""a_jour"", ""libelle"": ""PLU approuvé le 2023-08-11 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""note"": null, ""cadence"": ""révisions (périodique)"", ""document_servi"": ""PLU approuvé le 2023-08-11"", ""fait_foi"": ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""en_cours"": ""Des modifications postérieures au document peuvent exister — à confirmer en mairie."", ""action"": null, ""fait_foi_ok"": true}"
+97416000HT0538,commune,Saint-Pierre
+97416000HT0538,surface_dessin_m2,509
+97416000HT0538,contenance_cadastre_m2,510
+97416000HT0538,surface_source,cadastre
+97416000HT0538,zone_fam,U
+97416000HT0538,zone_lib,Ud
+97416000HT0538,zone_a_cheval,False
+97416000HT0538,n_zones,1
+97416000HT0538,constructible,True
+97416000HT0538,constructible_motif,
+97416000HT0538,constructible_libelle,≈ 614 m² encore constructibles
+97416000HT0538,rien_a_batir,False
+97416000HT0538,sdp_restante_m2,614
+97416000HT0538,emprise_batie_m2,0
+97416000HT0538,emprise_source,BD TOPO IGN
+97416000HT0538,nb_batiments,0
+97416000HT0538,surface_libre_m2,510
+97416000HT0538,hauteur_faitage_m,
+97416000HT0538,hauteur_source,
+97416000HT0538,prix_ancien_median,2545
+97416000HT0538,prix_ancien_type,appartement
+97416000HT0538,prix_ancien_n,36
+97416000HT0538,prix_ancien_radius_m,500.0
+97416000HT0538,prix_ancien_periode,"[2022, 2026]"
+97416000HT0538,prix_ancien_fiable,True
+97416000HT0538,marche_synthese,"Prix ancien médian 2 545 €/m² (appartement, 36 ventes, rayon 500 m, ventes 2022–2026)"
+97416000HT0538,taxe_taux_communal_pct,5.0
+97416000HT0538,taxe_taux_departemental_pct,2.5
+97416000HT0538,taxe_total_eur,
+97416000HT0538,taxe_annee,2026
+97416000HT0538,score_tier,sans_signal
+97416000HT0538,score_label,Sans signal
+97416000HT0538,score_declasse,False
+97416000HT0538,score_motif,
+97416000HT0538,aleas_n,1
+97416000HT0538,aleas_synthese,
+97416000HT0538,rnu,False
+97416000HT0538,dvf_secteur_mediane_prix_m2,2118
+97416000HT0538,valeur_terrain_secteur_eur,180540
+97416000HT0538,plu_fraicheur,"{""note"": null, ""action"": null, ""idurba"": ""97416_PLU_20240625"", ""statut"": ""a_jour"", ""cadence"": ""révisions (périodique)"", ""horizon"": ""2024-06-25"", ""libelle"": ""PLU approuvé le 2024-06-25 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""en_cours"": ""Des modifications postérieures au document peuvent exister — à confirmer en mairie."", ""fait_foi"": ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""fait_foi_ok"": true, ""document_servi"": ""PLU approuvé le 2024-06-25""}"
+97403000AR1517,commune,Entre-Deux
+97403000AR1517,surface_dessin_m2,734
+97403000AR1517,contenance_cadastre_m2,733
+97403000AR1517,surface_source,cadastre
+97403000AR1517,zone_fam,U
+97403000AR1517,zone_lib,Ua
+97403000AR1517,zone_a_cheval,False
+97403000AR1517,n_zones,1
+97403000AR1517,constructible,True
+97403000AR1517,constructible_motif,
+97403000AR1517,constructible_libelle,≈ 309 m² encore constructibles
+97403000AR1517,rien_a_batir,False
+97403000AR1517,sdp_restante_m2,309
+97403000AR1517,emprise_batie_m2,23
+97403000AR1517,emprise_source,BD TOPO IGN
+97403000AR1517,nb_batiments,1
+97403000AR1517,surface_libre_m2,710
+97403000AR1517,hauteur_faitage_m,
+97403000AR1517,hauteur_source,BD TOPO® (hauteur déclarée)
+97403000AR1517,prix_ancien_median,3582
+97403000AR1517,prix_ancien_type,mixte (appart+maison)
+97403000AR1517,prix_ancien_n,26
+97403000AR1517,prix_ancien_radius_m,500.0
+97403000AR1517,prix_ancien_periode,"[2022, 2026]"
+97403000AR1517,prix_ancien_fiable,True
+97403000AR1517,marche_synthese,"Prix ancien médian 3 582 €/m² (mixte (appart+maison), 26 ventes, rayon 500 m, ventes 2022–2026)"
+97403000AR1517,taxe_taux_communal_pct,5.0
+97403000AR1517,taxe_taux_departemental_pct,2.5
+97403000AR1517,taxe_total_eur,
+97403000AR1517,taxe_annee,2026
+97403000AR1517,score_tier,sans_signal
+97403000AR1517,score_label,Sans signal
+97403000AR1517,score_declasse,False
+97403000AR1517,score_motif,
+97403000AR1517,aleas_n,3
+97403000AR1517,aleas_synthese,
+97403000AR1517,rnu,False
+97403000AR1517,dvf_secteur_mediane_prix_m2,2961
+97403000AR1517,valeur_terrain_secteur_eur,132673
+97403000AR1517,plu_fraicheur,"{""idurba"": ""97403_plu_20240924"", ""horizon"": ""2024-09-24"", ""statut"": ""a_jour"", ""libelle"": ""PLU approuvé le 2024-09-24 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""note"": null, ""cadence"": ""révisions (périodique)"", ""document_servi"": ""PLU approuvé le 2024-09-24"", ""fait_foi"": ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""en_cours"": ""Des modifications postérieures au document peuvent exister — à confirmer en mairie."", ""action"": null, ""fait_foi_ok"": true}"
+97404000AM0838,commune,L'Étang-Salé
+97404000AM0838,surface_dessin_m2,20798
+97404000AM0838,contenance_cadastre_m2,20336
+97404000AM0838,surface_source,cadastre
+97404000AM0838,zone_fam,U
+97404000AM0838,zone_lib,UE
+97404000AM0838,zone_a_cheval,False
+97404000AM0838,n_zones,1
+97404000AM0838,constructible,False
+97404000AM0838,constructible_motif,Habitat interdit dans cette zone
+97404000AM0838,constructible_libelle,Rien à bâtir — Habitat interdit dans cette zone
+97404000AM0838,rien_a_batir,True
+97404000AM0838,sdp_restante_m2,0
+97404000AM0838,emprise_batie_m2,1252
+97404000AM0838,emprise_source,BD TOPO IGN
+97404000AM0838,nb_batiments,10
+97404000AM0838,surface_libre_m2,10048
+97404000AM0838,hauteur_faitage_m,13.0
+97404000AM0838,hauteur_source,"LiDAR HD MNS (IGN), mesuré, survol de août 2023"
+97404000AM0838,prix_ancien_median,1909
+97404000AM0838,prix_ancien_type,maison
+97404000AM0838,prix_ancien_n,43
+97404000AM0838,prix_ancien_radius_m,1000.0
+97404000AM0838,prix_ancien_periode,"[2022, 2026]"
+97404000AM0838,prix_ancien_fiable,True
+97404000AM0838,marche_synthese,"Prix ancien médian 1 909 €/m² (maison, 43 ventes, rayon 1000 m, ventes 2022–2026)"
+97404000AM0838,taxe_taux_communal_pct,5.0
+97404000AM0838,taxe_taux_departemental_pct,2.5
+97404000AM0838,taxe_total_eur,
+97404000AM0838,taxe_annee,2026
+97404000AM0838,score_tier,ecartee
+97404000AM0838,score_label,Écartée
+97404000AM0838,score_declasse,False
+97404000AM0838,score_motif,
+97404000AM0838,aleas_n,6
+97404000AM0838,aleas_synthese,redhibitoire
+97404000AM0838,rnu,False
+97404000AM0838,dvf_secteur_mediane_prix_m2,236
+97404000AM0838,valeur_terrain_secteur_eur,4799296
+97404000AM0838,plu_fraicheur,"{""note"": null, ""action"": null, ""idurba"": ""97404_PLU_20250917"", ""statut"": ""a_jour"", ""cadence"": ""révisions (périodique)"", ""horizon"": ""2025-09-17"", ""libelle"": ""PLU approuvé le 2025-09-17 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""en_cours"": ""Des modifications postérieures au document peuvent exister — à confirmer en mairie."", ""fait_foi"": ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""fait_foi_ok"": true, ""document_servi"": ""PLU approuvé le 2025-09-17""}"
+97417000AO0050,commune,Saint-Philippe
+97417000AO0050,surface_dessin_m2,1549
+97417000AO0050,contenance_cadastre_m2,1540
+97417000AO0050,surface_source,cadastre
+97417000AO0050,zone_fam,
+97417000AO0050,zone_lib,
+97417000AO0050,zone_a_cheval,
+97417000AO0050,n_zones,0
+97417000AO0050,constructible,False
+97417000AO0050,constructible_motif,Pas de potentiel constructible résiduel
+97417000AO0050,constructible_libelle,Rien à bâtir — Pas de potentiel constructible résiduel
+97417000AO0050,rien_a_batir,True
+97417000AO0050,sdp_restante_m2,0
+97417000AO0050,emprise_batie_m2,0
+97417000AO0050,emprise_source,BD TOPO IGN
+97417000AO0050,nb_batiments,0
+97417000AO0050,surface_libre_m2,0
+97417000AO0050,hauteur_faitage_m,
+97417000AO0050,hauteur_source,
+97417000AO0050,prix_ancien_median,2188
+97417000AO0050,prix_ancien_type,mixte (appart+maison)
+97417000AO0050,prix_ancien_n,11
+97417000AO0050,prix_ancien_radius_m,1000.0
+97417000AO0050,prix_ancien_periode,"[2022, 2025]"
+97417000AO0050,prix_ancien_fiable,True
+97417000AO0050,marche_synthese,"Prix ancien médian 2 188 €/m² (mixte (appart+maison), 11 ventes, rayon 1000 m, ventes 2022–2025)"
+97417000AO0050,taxe_taux_communal_pct,5.0
+97417000AO0050,taxe_taux_departemental_pct,2.5
+97417000AO0050,taxe_total_eur,
+97417000AO0050,taxe_annee,2026
+97417000AO0050,score_tier,ecartee
+97417000AO0050,score_label,Écartée
+97417000AO0050,score_declasse,False
+97417000AO0050,score_motif,
+97417000AO0050,aleas_n,5
+97417000AO0050,aleas_synthese,redhibitoire
+97417000AO0050,rnu,True
+97417000AO0050,dvf_secteur_mediane_prix_m2,2111
+97417000AO0050,valeur_terrain_secteur_eur,135520
+97417000AO0050,plu_fraicheur,"{""note"": ""RNU (règlement national d'urbanisme) — aucun PLU, zéro zonage au bourg"", ""action"": ""Constructibilité au cas par cas (RNU) — vérifier en mairie."", ""idurba"": null, ""statut"": ""rnu"", ""cadence"": ""révisions (périodique)"", ""horizon"": null, ""libelle"": ""Aucun PLU — RNU (règlement national d'urbanisme). — Le RNU s'applique ; aucun zonage communal servi."", ""en_cours"": null, ""fait_foi"": ""Le RNU s'applique ; aucun zonage communal servi."", ""fait_foi_ok"": false, ""document_servi"": ""Aucun PLU — RNU (règlement national d'urbanisme).""}"
+97411000IS0448,commune,Saint-Denis
+97411000IS0448,surface_dessin_m2,818
+97411000IS0448,contenance_cadastre_m2,959
+97411000IS0448,surface_source,cadastre
+97411000IS0448,zone_fam,U
+97411000IS0448,zone_lib,Uh
+97411000IS0448,zone_a_cheval,True
+97411000IS0448,n_zones,2
+97411000IS0448,constructible,True
+97411000IS0448,constructible_motif,
+97411000IS0448,constructible_libelle,Rien à bâtir — parcelle déjà construite au maximum
+97411000IS0448,rien_a_batir,True
+97411000IS0448,sdp_restante_m2,0
+97411000IS0448,emprise_batie_m2,128
+97411000IS0448,emprise_source,BD TOPO IGN
+97411000IS0448,nb_batiments,2
+97411000IS0448,surface_libre_m2,552
+97411000IS0448,hauteur_faitage_m,5.7
+97411000IS0448,hauteur_source,"LiDAR HD MNS (IGN), mesuré, survol de septembre 2023"
+97411000IS0448,prix_ancien_median,2480
+97411000IS0448,prix_ancien_type,maison
+97411000IS0448,prix_ancien_n,21
+97411000IS0448,prix_ancien_radius_m,1000.0
+97411000IS0448,prix_ancien_periode,"[2022, 2026]"
+97411000IS0448,prix_ancien_fiable,True
+97411000IS0448,marche_synthese,"Prix ancien médian 2 480 €/m² (maison, 21 ventes, rayon 1000 m, ventes 2022–2026)"
+97411000IS0448,taxe_taux_communal_pct,3.0
+97411000IS0448,taxe_taux_departemental_pct,2.5
+97411000IS0448,taxe_total_eur,
+97411000IS0448,taxe_annee,2026
+97411000IS0448,score_tier,sans_signal
+97411000IS0448,score_label,Sans signal
+97411000IS0448,score_declasse,True
+97411000IS0448,score_motif,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97411000IS0448,aleas_n,3
+97411000IS0448,aleas_synthese,redhibitoire
+97411000IS0448,rnu,False
+97411000IS0448,dvf_secteur_mediane_prix_m2,1961
+97411000IS0448,valeur_terrain_secteur_eur,479500
+97411000IS0448,plu_fraicheur,"{""idurba"": ""97411_PLU_20260805"", ""horizon"": ""2026-08-05"", ""statut"": ""a_jour"", ""libelle"": ""PLU approuvé le 2026-08-05 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""note"": null, ""cadence"": ""révisions (périodique)"", ""document_servi"": ""PLU approuvé le 2026-08-05"", ""fait_foi"": ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""en_cours"": ""Des modifications postérieures au document peuvent exister — à confirmer en mairie."", ""action"": null, ""fait_foi_ok"": true}"
+97404000AY0153,commune,L'Étang-Salé
+97404000AY0153,surface_dessin_m2,256
+97404000AY0153,contenance_cadastre_m2,262
+97404000AY0153,surface_source,cadastre
+97404000AY0153,zone_fam,U
+97404000AY0153,zone_lib,UA
+97404000AY0153,zone_a_cheval,False
+97404000AY0153,n_zones,1
+97404000AY0153,constructible,True
+97404000AY0153,constructible_motif,
+97404000AY0153,constructible_libelle,Rien à bâtir — parcelle déjà construite au maximum
+97404000AY0153,rien_a_batir,True
+97404000AY0153,sdp_restante_m2,0
+97404000AY0153,emprise_batie_m2,70
+97404000AY0153,emprise_source,BD TOPO IGN
+97404000AY0153,nb_batiments,2
+97404000AY0153,surface_libre_m2,88
+97404000AY0153,hauteur_faitage_m,8.7
+97404000AY0153,hauteur_source,"LiDAR HD MNS (IGN), mesuré, survol de août 2023"
+97404000AY0153,prix_ancien_median,2333
+97404000AY0153,prix_ancien_type,maison
+97404000AY0153,prix_ancien_n,43
+97404000AY0153,prix_ancien_radius_m,500.0
+97404000AY0153,prix_ancien_periode,"[2022, 2026]"
+97404000AY0153,prix_ancien_fiable,True
+97404000AY0153,marche_synthese,"Prix ancien médian 2 333 €/m² (maison, 43 ventes, rayon 500 m, ventes 2022–2026)"
+97404000AY0153,taxe_taux_communal_pct,5.0
+97404000AY0153,taxe_taux_departemental_pct,2.5
+97404000AY0153,taxe_total_eur,
+97404000AY0153,taxe_annee,2026
+97404000AY0153,score_tier,sans_signal
+97404000AY0153,score_label,Sans signal
+97404000AY0153,score_declasse,True
+97404000AY0153,score_motif,"bâtie saturée — ratio 44 % (emprise 114 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))"
+97404000AY0153,aleas_n,5
+97404000AY0153,aleas_synthese,redhibitoire
+97404000AY0153,rnu,False
+97404000AY0153,dvf_secteur_mediane_prix_m2,2972
+97404000AY0153,valeur_terrain_secteur_eur,120258
+97404000AY0153,plu_fraicheur,"{""idurba"": ""97404_PLU_20250917"", ""horizon"": ""2025-09-17"", ""statut"": ""a_jour"", ""libelle"": ""PLU approuvé le 2025-09-17 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""note"": null, ""cadence"": ""révisions (périodique)"", ""document_servi"": ""PLU approuvé le 2025-09-17"", ""fait_foi"": ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""en_cours"": ""Des modifications postérieures au document peuvent exister — à confirmer en mairie."", ""action"": null, ""fait_foi_ok"": true}"
+97414000CO0153,commune,Saint-Louis
+97414000CO0153,surface_dessin_m2,6670
+97414000CO0153,contenance_cadastre_m2,6860
+97414000CO0153,surface_source,cadastre
+97414000CO0153,zone_fam,A
+97414000CO0153,zone_lib,A
+97414000CO0153,zone_a_cheval,True
+97414000CO0153,n_zones,2
+97414000CO0153,constructible,False
+97414000CO0153,constructible_motif,Zone non constructible — agricole
+97414000CO0153,constructible_libelle,Rien à bâtir — Zone non constructible — agricole
+97414000CO0153,rien_a_batir,True
+97414000CO0153,sdp_restante_m2,0
+97414000CO0153,emprise_batie_m2,94
+97414000CO0153,emprise_source,BD TOPO IGN
+97414000CO0153,nb_batiments,1
+97414000CO0153,surface_libre_m2,5517
+97414000CO0153,hauteur_faitage_m,2.7
+97414000CO0153,hauteur_source,"LiDAR HD MNS (IGN), mesuré, survol de août 2023"
+97414000CO0153,prix_ancien_median,3012
+97414000CO0153,prix_ancien_type,maison
+97414000CO0153,prix_ancien_n,22
+97414000CO0153,prix_ancien_radius_m,1000.0
+97414000CO0153,prix_ancien_periode,"[2022, 2026]"
+97414000CO0153,prix_ancien_fiable,True
+97414000CO0153,marche_synthese,"Prix ancien médian 3 012 €/m² (maison, 22 ventes, rayon 1000 m, ventes 2022–2026)"
+97414000CO0153,taxe_taux_communal_pct,5.0
+97414000CO0153,taxe_taux_departemental_pct,2.5
+97414000CO0153,taxe_total_eur,
+97414000CO0153,taxe_annee,2026
+97414000CO0153,score_tier,ecartee
+97414000CO0153,score_label,Écartée
+97414000CO0153,score_declasse,False
+97414000CO0153,score_motif,
+97414000CO0153,aleas_n,6
+97414000CO0153,aleas_synthese,redhibitoire
+97414000CO0153,rnu,False
+97414000CO0153,dvf_secteur_mediane_prix_m2,1848
+97414000CO0153,valeur_terrain_secteur_eur,960400
+97414000CO0153,plu_fraicheur,"{""idurba"": ""97414_PLU_20251218"", ""horizon"": ""2025-12-18"", ""statut"": ""a_jour"", ""libelle"": ""PLU approuvé le 2025-12-18 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""note"": ""republication faite — EN_VIGUEUR confirmé M32 (05/08)"", ""cadence"": ""révisions (périodique)"", ""document_servi"": ""PLU approuvé le 2025-12-18"", ""fait_foi"": ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""en_cours"": ""Des modifications postérieures au document peuvent exister — à confirmer en mairie."", ""action"": null, ""fait_foi_ok"": true}"
+97421000BN0260,commune,Salazie
+97421000BN0260,surface_dessin_m2,3353
+97421000BN0260,contenance_cadastre_m2,3335
+97421000BN0260,surface_source,cadastre
+97421000BN0260,zone_fam,A
+97421000BN0260,zone_lib,A
+97421000BN0260,zone_a_cheval,True
+97421000BN0260,n_zones,2
+97421000BN0260,constructible,False
+97421000BN0260,constructible_motif,Zone non constructible — agricole
+97421000BN0260,constructible_libelle,Rien à bâtir — Zone non constructible — agricole
+97421000BN0260,rien_a_batir,True
+97421000BN0260,sdp_restante_m2,0
+97421000BN0260,emprise_batie_m2,0
+97421000BN0260,emprise_source,BD TOPO IGN
+97421000BN0260,nb_batiments,0
+97421000BN0260,surface_libre_m2,0
+97421000BN0260,hauteur_faitage_m,
+97421000BN0260,hauteur_source,
+97421000BN0260,prix_ancien_median,1857
+97421000BN0260,prix_ancien_type,mixte (appart+maison)
+97421000BN0260,prix_ancien_n,63
+97421000BN0260,prix_ancien_radius_m,1500.0
+97421000BN0260,prix_ancien_periode,"[2022, 2026]"
+97421000BN0260,prix_ancien_fiable,True
+97421000BN0260,marche_synthese,"Prix ancien médian 1 857 €/m² (mixte (appart+maison), 63 ventes, commune entière, ventes 2022–2026)"
+97421000BN0260,taxe_taux_communal_pct,3.0
+97421000BN0260,taxe_taux_departemental_pct,2.5
+97421000BN0260,taxe_total_eur,
+97421000BN0260,taxe_annee,2026
+97421000BN0260,score_tier,ecartee
+97421000BN0260,score_label,Écartée
+97421000BN0260,score_declasse,False
+97421000BN0260,score_motif,
+97421000BN0260,aleas_n,4
+97421000BN0260,aleas_synthese,redhibitoire
+97421000BN0260,rnu,False
+97421000BN0260,dvf_secteur_mediane_prix_m2,101
+97421000BN0260,valeur_terrain_secteur_eur,336835
+97421000BN0260,plu_fraicheur,"{""idurba"": ""97421_PLU_20220524"", ""horizon"": ""2022-05-24"", ""statut"": ""a_jour"", ""libelle"": ""PLU approuvé le 2022-05-24 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""note"": null, ""cadence"": ""révisions (périodique)"", ""document_servi"": ""PLU approuvé le 2022-05-24"", ""fait_foi"": ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""en_cours"": ""Des modifications postérieures au document peuvent exister — à confirmer en mairie."", ""action"": null, ""fait_foi_ok"": true}"
+97422000BW2635,commune,Le Tampon
+97422000BW2635,surface_dessin_m2,2002
+97422000BW2635,contenance_cadastre_m2,2003
+97422000BW2635,surface_source,cadastre
+97422000BW2635,zone_fam,U
+97422000BW2635,zone_lib,Uav
+97422000BW2635,zone_a_cheval,False
+97422000BW2635,n_zones,1
+97422000BW2635,constructible,True
+97422000BW2635,constructible_motif,
+97422000BW2635,constructible_libelle,≈ 827 m² encore constructibles
+97422000BW2635,rien_a_batir,False
+97422000BW2635,sdp_restante_m2,827
+97422000BW2635,emprise_batie_m2,655
+97422000BW2635,emprise_source,BD TOPO IGN
+97422000BW2635,nb_batiments,2
+97422000BW2635,surface_libre_m2,1348
+97422000BW2635,hauteur_faitage_m,14.7
+97422000BW2635,hauteur_source,"LiDAR HD MNS (IGN), mesuré, survol de août 2023"
+97422000BW2635,prix_ancien_median,3000
+97422000BW2635,prix_ancien_type,appartement
+97422000BW2635,prix_ancien_n,53
+97422000BW2635,prix_ancien_radius_m,1000.0
+97422000BW2635,prix_ancien_periode,"[2022, 2026]"
+97422000BW2635,prix_ancien_fiable,True
+97422000BW2635,marche_synthese,"Prix ancien médian 3 000 €/m² (appartement, 53 ventes, rayon 1000 m, ventes 2022–2026)"
+97422000BW2635,taxe_taux_communal_pct,5.0
+97422000BW2635,taxe_taux_departemental_pct,2.5
+97422000BW2635,taxe_total_eur,
+97422000BW2635,taxe_annee,2026
+97422000BW2635,score_tier,sans_signal
+97422000BW2635,score_label,Sans signal
+97422000BW2635,score_declasse,True
+97422000BW2635,score_motif,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97422000BW2635,aleas_n,1
+97422000BW2635,aleas_synthese,
+97422000BW2635,rnu,False
+97422000BW2635,dvf_secteur_mediane_prix_m2,2789
+97422000BW2635,valeur_terrain_secteur_eur,753128
+97422000BW2635,plu_fraicheur,"{""idurba"": ""97422_PLU_20230811"", ""horizon"": ""2023-08-11"", ""statut"": ""a_jour"", ""libelle"": ""PLU approuvé le 2023-08-11 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""note"": null, ""cadence"": ""révisions (périodique)"", ""document_servi"": ""PLU approuvé le 2023-08-11"", ""fait_foi"": ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""en_cours"": ""Des modifications postérieures au document peuvent exister — à confirmer en mairie."", ""action"": null, ""fait_foi_ok"": true}"
+97412000CV0446,commune,Saint-Joseph
+97412000CV0446,surface_dessin_m2,567
+97412000CV0446,contenance_cadastre_m2,551
+97412000CV0446,surface_source,cadastre
+97412000CV0446,zone_fam,U
+97412000CV0446,zone_lib,U5
+97412000CV0446,zone_a_cheval,False
+97412000CV0446,n_zones,1
+97412000CV0446,constructible,True
+97412000CV0446,constructible_motif,
+97412000CV0446,constructible_libelle,≈ 241 m² encore constructibles
+97412000CV0446,rien_a_batir,False
+97412000CV0446,sdp_restante_m2,241
+97412000CV0446,emprise_batie_m2,0
+97412000CV0446,emprise_source,BD TOPO IGN
+97412000CV0446,nb_batiments,0
+97412000CV0446,surface_libre_m2,551
+97412000CV0446,hauteur_faitage_m,
+97412000CV0446,hauteur_source,
+97412000CV0446,prix_ancien_median,2180
+97412000CV0446,prix_ancien_type,mixte (appart+maison)
+97412000CV0446,prix_ancien_n,17
+97412000CV0446,prix_ancien_radius_m,500.0
+97412000CV0446,prix_ancien_periode,"[2022, 2025]"
+97412000CV0446,prix_ancien_fiable,True
+97412000CV0446,marche_synthese,"Prix ancien médian 2 180 €/m² (mixte (appart+maison), 17 ventes, rayon 500 m, ventes 2022–2025)"
+97412000CV0446,taxe_taux_communal_pct,3.0
+97412000CV0446,taxe_taux_departemental_pct,2.5
+97412000CV0446,taxe_total_eur,
+97412000CV0446,taxe_annee,2026
+97412000CV0446,score_tier,sans_signal
+97412000CV0446,score_label,Sans signal
+97412000CV0446,score_declasse,False
+97412000CV0446,score_motif,
+97412000CV0446,aleas_n,1
+97412000CV0446,aleas_synthese,
+97412000CV0446,rnu,False
+97412000CV0446,dvf_secteur_mediane_prix_m2,1833
+97412000CV0446,valeur_terrain_secteur_eur,128934
+97412000CV0446,plu_fraicheur,"{""idurba"": ""97412_PLU_20251210"", ""horizon"": ""2025-12-10"", ""statut"": ""a_jour"", ""libelle"": ""PLU approuvé le 2025-12-10 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""note"": null, ""cadence"": ""révisions (périodique)"", ""document_servi"": ""PLU approuvé le 2025-12-10"", ""fait_foi"": ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""en_cours"": ""Des modifications postérieures au document peuvent exister — à confirmer en mairie."", ""action"": null, ""fait_foi_ok"": true}"
+97424000AO1198,commune,Cilaos
+97424000AO1198,surface_dessin_m2,1
+97424000AO1198,contenance_cadastre_m2,1
+97424000AO1198,surface_source,cadastre
+97424000AO1198,zone_fam,U
+97424000AO1198,zone_lib,Ub
+97424000AO1198,zone_a_cheval,False
+97424000AO1198,n_zones,1
+97424000AO1198,constructible,False
+97424000AO1198,constructible_motif,Terrain trop exigu pour un projet
+97424000AO1198,constructible_libelle,Rien à bâtir — Terrain trop exigu pour un projet
+97424000AO1198,rien_a_batir,True
+97424000AO1198,sdp_restante_m2,0
+97424000AO1198,emprise_batie_m2,0
+97424000AO1198,emprise_source,BD TOPO IGN
+97424000AO1198,nb_batiments,0
+97424000AO1198,surface_libre_m2,1
+97424000AO1198,hauteur_faitage_m,
+97424000AO1198,hauteur_source,
+97424000AO1198,prix_ancien_median,2333
+97424000AO1198,prix_ancien_type,mixte (appart+maison)
+97424000AO1198,prix_ancien_n,86
+97424000AO1198,prix_ancien_radius_m,1500.0
+97424000AO1198,prix_ancien_periode,"[2022, 2026]"
+97424000AO1198,prix_ancien_fiable,True
+97424000AO1198,marche_synthese,"Prix ancien médian 2 333 €/m² (mixte (appart+maison), 86 ventes, commune entière, ventes 2022–2026)"
+97424000AO1198,taxe_taux_communal_pct,5.0
+97424000AO1198,taxe_taux_departemental_pct,2.5
+97424000AO1198,taxe_total_eur,
+97424000AO1198,taxe_annee,2026
+97424000AO1198,score_tier,ecartee
+97424000AO1198,score_label,Écartée
+97424000AO1198,score_declasse,False
+97424000AO1198,score_motif,
+97424000AO1198,aleas_n,1
+97424000AO1198,aleas_synthese,
+97424000AO1198,rnu,False
+97424000AO1198,dvf_secteur_mediane_prix_m2,89
+97424000AO1198,valeur_terrain_secteur_eur,89
+97424000AO1198,plu_fraicheur,"{""idurba"": ""97424_plu_20240213"", ""horizon"": ""2024-02-13"", ""statut"": ""a_jour"", ""libelle"": ""PLU approuvé le 2024-02-13 — Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""note"": null, ""cadence"": ""révisions (périodique)"", ""document_servi"": ""PLU approuvé le 2024-02-13"", ""fait_foi"": ""Document opposable à la date des données LABUSE (voir la couverture) — une évolution publiée depuis n'est pas confrontée ici."", ""en_cours"": ""Des modifications postérieures au document peuvent exister — à confirmer en mairie."", ""action"": null, ""fait_foi_ok"": true}"
