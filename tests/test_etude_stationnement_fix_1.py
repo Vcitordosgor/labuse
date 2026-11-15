@@ -170,6 +170,17 @@ def test_etude_refuse_immediatement_parcelle_non_constructible(monkeypatch):
     assert "Habitat interdit" in p["message"]
 
 
+def test_logement_de_fonction_refuse_mais_pas_le_logement_conditionnel():
+    """Les 52+ zones « habitat secondaire » (correctif relecture) — le logement de FONCTION (employés,
+    gardiennage) n'est pas un programme d'habitation → l'Étude refuse ; mais une zone où le logement est
+    permis sous condition RÉELLE (opérations d'ensemble, déficit social…) reste étudiée."""
+    from labuse.implantation.service import _logement_fonction_seulement as f
+    assert f("97405", "UEa") is True      # Petite-Île : « logements des employés »
+    assert f("97405", "AUE") is True
+    assert f("97404", "AUa") is False     # Étang-Salé : « opérations d'ensemble ≥ 10 logements » (vrai logement)
+    assert f("97409", "UB") is False      # Saint-André : « programme de logements > 2 000 m² »
+
+
 def test_etude_constructible_atteint_le_solveur(monkeypatch):
     """Garde-fou symétrique : une parcelle CONSTRUCTIBLE passe le verdict et atteint bien le solveur."""
     from labuse.implantation import service, moteur as M
@@ -220,11 +231,28 @@ def test_controle_citation_identique_implique_regle_identique():
         for cit, items in par_citation.items():
             sigs = {sig for _z, sig in items}
             zones = [z for z, _s in items]
-            assert len(sigs) == 1, (
-                f"{insee} : la même citation est servie à des zones de règle DIFFÉRENTE {zones} "
-                f"(citation « {cit[:60]}… ») — recopie probable, chaque zone doit citer son propre texte.")
+            if len(sigs) == 1:
+                continue
+            # citations VERBATIM : un même TABLEAU de page peut légitimement servir plusieurs zones à
+            # valeurs différentes (Saint-Paul p.81 : « en zones U2a, U2b : 1,5 ; en zones U2c, U2d : 2 »).
+            # Ce n'est une RECOPIE suspecte que si la valeur appliquée d'une zone est ABSENTE de la citation
+            # partagée (le cas Ucv-copie-Ud). On l'autorise donc tant que chaque valeur figure dans la citation.
+            import re as _re
+            cit_n = _re.sub(r'\s+', '', cit.lower().replace("’", "'"))
+            def _fr(x):
+                return str(int(round(x))) if abs(x - round(x)) < 1e-9 else ("%g" % x).replace(".", ",")
+            manque = []
+            for z in zones:
+                bz = R.charger(insee, z).stationnement
+                for v in (bz.flat_places, bz.m2_par_place):
+                    if v is not None and _fr(v) not in cit_n:
+                        manque.append((z, _fr(v)))
+            assert not manque, (
+                f"{insee} : citation partagée entre zones de règle différente {zones}, et une valeur "
+                f"appliquée est ABSENTE de la citation {manque[:4]} (citation « {cit[:50]}… ») — recopie probable.")
 
 
+@__import__("pytest").mark.local  # ouvre une vingtaine de PDF via pymupdf → hors filet rapide (pré-push), tourne en CI/manuel
 def test_chaque_chiffre_applique_figure_dans_sa_citation():
     """CONTRÔLE DUR (relecture 3) — chaque chiffre appliqué par un barème doit figurer DANS SA CITATION (pas
     seulement « quelque part sur la page » : un « 1 » s'y trouve partout). Garde-fou contre toute valeur sans

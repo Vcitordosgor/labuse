@@ -930,11 +930,45 @@ def _refus_constructibilite(session, idus: list[str]):
     finally:
         if fermer:
             _cm.__exit__(None, None, None)
-    if not verdicts or any(v.get("constructible") for v in verdicts.values()):
-        return None   # au moins une parcelle constructible → on étudie
+    construct = [(i, v) for i, v in verdicts.items() if v.get("constructible")]
+    if construct:
+        # ETUDE-STATIONNEMENT-FIX-1 — « habitat secondaire » : si le logement n'est permis dans la zone que
+        # comme LOGEMENT DE FONCTION (employés, gardiennage, personnel…), ce n'est PAS un programme
+        # d'habitation chiffrable → l'Étude refuse avec ce motif (au lieu de dessiner un immeuble de logements).
+        for idu, v in construct:
+            zone = v.get("zone_lib")
+            if zone and _logement_fonction_seulement(idu[:5], zone):
+                return (zone, "Logement de fonction uniquement (employés / gardiennage) — pas un programme "
+                              "d'habitation chiffrable dans cette zone")
+        return None   # au moins une parcelle vraiment constructible → on étudie
     # toutes fermées : motif de celle qui porte le plus de contexte (zone connue), sinon la première
     principal = max(verdicts.values(), key=lambda v: (v.get("zone_lib") is not None, v.get("sdp_restante_m2") or 0))
     return (principal.get("zone_lib"), principal.get("motif") or "Parcelle non constructible")
+
+
+_FONCTION_MARQ = ("de fonction", "gardien", "surveillance", "personnel", "employé", "usagers des équipement",
+                  "indispensable au fonctionnement")
+
+
+def _logement_fonction_seulement(insee: str, zone: str) -> bool:
+    """Le logement n'est admis dans la zone QUE comme logement de fonction (pas un programme d'habitation) :
+    sous-destination `logement` sous condition ET condition citant fonction/gardiennage/personnel/employés,
+    sans aucune autre ouverture de l'habitation."""
+    from labuse.plu import destinations as D
+    doc = D._doc(insee) or {}
+    zv = (doc.get("zones") or {}).get(zone)
+    if not isinstance(zv, dict):
+        # zone via renvoi / casse différente : on tente une résolution souple
+        norm = {str(k).lower(): k for k in (doc.get("zones") or {})}
+        hit = norm.get(str(zone).lower())
+        zv = (doc.get("zones") or {}).get(hit) if hit else None
+    if not isinstance(zv, dict):
+        return False
+    lg = (zv.get("sous_destinations") or {}).get("logement")
+    if not isinstance(lg, dict) or lg.get("statut") != "sous_condition":
+        return False
+    txt = f"{lg.get('condition') or ''} {lg.get('citation') or ''}".lower()
+    return any(m in txt for m in _FONCTION_MARQ)
 
 
 def _payload_hors_perimetre(session, idus: list[str], entree: dict, exc) -> dict:

@@ -376,3 +376,37 @@ honnête des règles **prouvées** = citation mot pour mot sur la page **ET** ch
 secondaire »** (refus motivé ou ingestion, décompte). 4. **Ua10.3 hauteur** → « Non vérifié ». Sondage à
 graine fixe joint (`SONDAGE-10-LOT3.md`/images régénérés). Non-ingérées (Étang-Salé, Plaine, Saint-André,
 Saint-Leu) et Saint-Denis/La Possession = lots suivants.
+
+---
+
+## Relecture (5e tour) — habitation à 0, Saint-Paul, décompte des zones secondaires
+
+### Résultat du contrôle sur l'HABITATION
+Règles prouvées (citation mot pour mot sur la page ET chaque chiffre dans la citation) :
+- **1338 prouvées** sur 1465 (**127 échecs** restants = uniquement les communes LOT 4 : Étang-Salé 12,
+  La Plaine 52, Saint-André 9, Saint-Leu 54). **0 chiffre hors citation.**
+- **TOUTES les communes ingérées sont à 0 échec de citation** : les 16 du tour précédent + **Saint-Pierre**
+  (41 zones finies à la main, pages corrigées) + **Saint-Paul** (item 2, 23 zones verbatim) + **La Possession**
+  (rétablie — texte identique à l'octet près, confirmé par l'autre session). **0 valeur corrigée en relisant.**
+
+### Item 2 — Saint-Paul fait, zone par zone
+Citations verbatim posées pour toutes les zones servies (par secteur : U1a-d 1 ; U1f/g, U2c/d, U3c, U4b/c,
+U5b/c, U6b/c 2 ; U2a/b, U3a/b, U4a, U5a, U6a 1,5). Contrôle d'identité assoupli : un MÊME tableau de page
+sert légitimement plusieurs zones à valeurs différentes (p.81 : « U2a, U2b : 1,5 ; U2c, U2d : 2 ») — autorisé
+tant que chaque valeur figure dans la citation partagée (sinon recopie suspecte, comme Ucv-copie-Ud).
+
+### Item 3 — les zones « habitat secondaire », décompte
+**66 zones** au total (≈ 52 dans un instantané antérieur ; le nombre a bougé avec les réingestions) :
+- **(1) 37 zones « logement de fonction »** (employés, gardiennage, usagers des équipements) → **l'Étude
+  REFUSE** avec le motif « Logement de fonction uniquement — pas un programme d'habitation chiffrable »
+  (`_logement_fonction_seulement`, branché dans le refus partagé, testé). Ex. Petite-Île UEa/AUE/AUs, Le Port
+  Ue/Up/Us, Le Tampon UCto, Sainte-Marie UEa/UEc.
+- **(2) 10 zones** à logement sous condition RÉELLE (opérations d'ensemble, déficit social) dans des communes
+  ingérées → l'Étude les étudie (barème du parent via renvoi) ; à résoudre au cas par cas (ingérer la norme
+  propre ou confirmer le renvoi) — ex. Saint-Pierre Us/Ut/Ue, Saint-Paul U1l/U2h.
+- **(3) 19 zones** en communes LOT 4 (Étang-Salé, Saint-André, Saint-Leu) → traitées au lot 4.
+
+### Item 4 — Ua10.3 (hauteur près des limites) : reliquat
+Une règle de hauteur près des limites que le moteur ne sait pas chiffrer doit s'afficher « Non vérifié »
+(comme le prospect). Non implémenté ce tour (bornage temps) — mécanisme identifié (feuille `hauteur` à
+marqueur de gradation → contrôle dédié « Non vérifié »). Reliquat, avec le lot 4.
