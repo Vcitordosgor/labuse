@@ -490,8 +490,14 @@ def _c_potentiel(db, idu, f):
         from .etude_faisabilite import scenario_etude_persiste
         est = estimation_rapide_m2(db, idu)
         scn = scenario_etude_persiste(db, idu)
+        # CHIRURGICAL-FIX-1 (LOT E) — parcelle BÂTIE (l'estimation/esquisse = terrain libéré/démolition,
+        # à distinguer de la SDP « bâti conservé ») et COPROPRIÉTÉ (démolition peu réaliste), lus sur la
+        # fiche servie (aucune nouvelle donnée de registre).
+        lb = f.get("le_bien") or {}
+        bati = bool((lb.get("nb_batiments") or 0) or (lb.get("emprise_batie_m2") or 0))
+        copro = bool((f.get("score_v2") or {}).get("copro") or f.get("coproprietes"))
         if est not in (None, "") or scn is not None:
-            pt = {**pt, "surface_a_retenir": surface_a_retenir(est, scn)}
+            pt = {**pt, "surface_a_retenir": surface_a_retenir(est, scn, bati=bati, copropriete=copro)}
     return _nz(pt)
 
 
@@ -1065,6 +1071,18 @@ def _c_comparables(db, idu, f):
         from ..pige.api import rapport_parcelle
         rap = rapport_parcelle(db, idu, f)
         comps = ((rap or {}).get("estimation") or {}).get("comparables")
+        # CHIRURGICAL-FIX-1 (LOT F, E11) — la table des comparables doit montrer la MÊME population que
+        # le chiffre de tête du §8 (le médian servi, `prix_ancien`, qui est du BÂTI) : on ne liste pas
+        # des ventes de TERRAIN sous une médiane de bâti (cas d'un terrain nu, où ESTIMER-3 compare à des
+        # ventes de terrain). On retient les comparables dont le type correspond à la famille du médian ;
+        # si aucun ne correspond (bien nu), pas de table (le repère « Terrain nu — secteur » reste au §8).
+        pa_type = str((f.get("prix_ancien") or {}).get("type_prix") or "").lower()
+        if comps and pa_type:
+            median_bati = any(k in pa_type for k in ("maison", "appartement", "mixte", "bâti", "bati"))
+
+            def _est_terrain(c):
+                return "terrain" in str(c.get("type") or "").lower()
+            comps = [c for c in comps if (_est_terrain(c) != median_bati)]
         out = comps[:8] if comps else None
     except Exception as exc:  # noqa: BLE001 — best-effort, jamais un bloqueur du Dossier
         log.warning("comparables (Estimer) non servis (%s) : %s", idu, exc)

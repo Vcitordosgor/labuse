@@ -237,16 +237,39 @@ def _estimation(est: dict) -> str:
                 "Le lot exact (étage, surface) n'est pas connu du modèle." + prec_txt)
     else:
         pl = est.get("type_label_pluriel") or "biens bâtis anciens"
-        note = (f"{(est.get('type_bien') or 'Bâti').capitalize()} — comparé aux ventes de <b>{esc(pl)}</b> "
-                "autour de la parcelle. État et prestations du bien non connus du modèle." + prec_txt)
+        # CHIRURGICAL-FIX-1 (E8) — ce chiffre est l'ESTIMATION du prix de CE bien (ESTIMER-3, pondérée par
+        # la ressemblance), NOMMÉE comme telle : jamais « le prix du secteur » (qui, lui, est servi
+        # ci-dessous par la fiche). On le dit explicitement pour qu'un lecteur ne confonde pas les deux.
+        note = (f"{(est.get('type_bien') or 'Bâti').capitalize()} — <b>estimation du prix de ce bien</b> "
+                f"d'après les ventes de <b>{esc(pl)}</b> semblables (méthode LABUSE pondérée par la "
+                "ressemblance) ; ce n'est pas le prix médian du secteur. État et prestations du bien non "
+                "connus du modèle." + prec_txt)
     # FIX-P-1 (P-04) — le prix au m² d'Estimer est une ESTIMATION pondérée (comparables de précision),
     # JAMAIS une médiane : il porte son propre libellé « Prix estimé au m² ». La « médiane » de marché
     # reste exclusivement le module unique marche_dvf_commune (bloc « La commune », « Prix médian … »).
-    gauche = ('<div class="estkicker">Prix estimé au m²</div>'
+    # CHIRURGICAL-FIX-1 (E8) — le PRIX DE SECTEUR affiché est celui de la FICHE (prix_ancien), pour que
+    # les deux documents (fiche/Dossier et Estimer) ne montrent jamais deux « prix de secteur » différents.
+    sect = est.get("secteur_fiche") if isinstance(est.get("secteur_fiche"), dict) else None
+    sect_html = ""
+    if sect and isinstance(sect.get("median"), (int, float)):
+        _bits = []
+        if isinstance(sect.get("n"), (int, float)):
+            _bits.append(f"{_int(sect['n'])} vente" + ("s" if sect["n"] != 1 else ""))
+        if isinstance(sect.get("radius_m"), (int, float)):
+            _bits.append(f"rayon {_int(sect['radius_m'])} m")
+        _per = _periode(sect.get("periode"))
+        if _per:
+            _bits.append(_per)
+        _src = (" · ".join(_bits))
+        sect_html = (f'<div class="estsecteur"><span class="muted">Prix médian du secteur (fiche) : </span>'
+                     f'<b>{_int(sect["median"])} €/m²</b>'
+                     + (f' <span class="muted">{esc(_src)}</span>' if _src else "") + "</div>")
+    gauche = ('<div class="estkicker">Prix estimé au m² — ce bien</div>'
               + f'<div class="estbig">{_int(median)} €/m²'
               + (f' <span class="estrange">{esc(fourch)}</span>' if fourch else "") + "</div>"
               + f'<div class="estmeta">{_chip(chip_cls, "Fiabilité " + niv)}'
               + (f' <span class="muted">{esc(source)}</span>' if source else "") + "</div>"
+              + sect_html
               + f'<p class="anote">{note}</p>')
     droite = _valeur_indicative(est) + ("" if terrain else _lecture_fonciere_box(est))
     return ('<h2>Estimation du prix</h2>'
