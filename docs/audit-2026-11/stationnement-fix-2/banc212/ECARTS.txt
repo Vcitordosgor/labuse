@@ -1,14 +1,10 @@
-Cells 288/300 | COUPLES concordants 205/267 | écarts 13
+Cells 292/300 | COUPLES concordants 230/267 | écarts 9
   97407 97407-R1 [2z Ua] aide_20T3_1400: img=16 vs mot=4
   97407 97407-R2 [1z Ub] aide_20T3_1400: img=16 vs mot=4
   97407 97407-R3 [3z Uc] aide_20T3_1400: img=16 vs mot=4
   97407 97407-R4 [1z Ud] aide_20T3_1400: img=16 vs mot=4
   97407 97407-R5 [1z 1AUm] aide_20T3_1400: img=16 vs mot=4
   97411 97411-R1 [15z Uavap] mixte_10x110_10x30: img=25 vs mot=20
-  97414 97414-R1 [6z UA] aide_20T3_1400: img=20 vs mot=20 [pub 10vs0]
-  97414 97414-R2 [5z UB] aide_20T3_1400: img=20 vs mot=20 [pub 10vs0]
-  97414 97414-R3 [8z UC] aide_20T3_1400: img=20 vs mot=20 [pub 10vs0]
-  97414 97414-R4 [6z UD] aide_20T3_1400: img=20 vs mot=20 [pub 10vs0]
   97416 97416-R4 [4z Uf] NON-LU: found=false
   97420 97420-R1 [10z UA] collectif_20T3_1400: img=40 vs mot=40 [pub 10vs0]
   97420 97420-R1 [10z UA] mixte_10x110_10x30: img=30 vs mot=30 [pub 10vs0]

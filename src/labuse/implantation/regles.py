@@ -169,6 +169,23 @@ class BaremeStationnement:
         return self.validee and any(l.destination == destination and l.role == "base" and
                                     (l.places is not None or l.par_m2 is not None) for l in self.lignes)
 
+    def _parts_visiteurs(self, destination: str, n: int, sdp_tot: float) -> tuple[int, int]:
+        """(visiteurs privés, places publiques) pour le programme. Les places PUBLIQUES (hors parcelle,
+        `publique=True`) sont UNIVERSELLES : exigées pour toute destination, y compris le logement aidé
+        (ex. Saint-Louis « opération > 10 logts : +0,5 place publique/logt »). Le visiteur PRIVÉ est propre
+        à la destination : `visiteurs_social` pour l'aidé, `visiteurs` (s'il n'est pas public) sinon."""
+        vis = pub = 0
+        if self.visiteurs is not None:
+            gv, gp = self._visiteurs_de(self.visiteurs, n, sdp_tot)
+            pub += gp                                       # public : universel
+            if destination != "social" and not self.visiteurs.publique:
+                vis += gv                                   # visiteur privé ordinaire (logement non-aidé)
+        if destination == "social" and self.visiteurs_social is not None:
+            sv, sp = self._visiteurs_de(self.visiteurs_social, n, sdp_tot)
+            vis += sv
+            pub += sp
+        return vis, pub
+
     @staticmethod
     def _visiteurs_de(vz: "Optional[Visiteurs]", n: int, sdp_tot: float) -> tuple[int, int]:
         """Compte (visiteurs privés, places publiques) pour une config de visiteurs. 0,0 si None/seuil non
@@ -253,10 +270,7 @@ class BaremeStationnement:
                     tot = self.arrondir(n * sp.places, sp.arrondi)
                     formule = f"{destination} : {sp.places:g} place/logt × {n} logts"
                 tot, formule, ecartees = self._cap_plafond(int(tot), n, formule, ())
-                # visiteur PROPRE au logement aidé (ex. 1/10) si la destination est « social » ; sinon aucun
-                # visiteur général n'est ajouté à une destination dédiée (il vise le logement ordinaire).
-                svz = self.visiteurs_social if destination == "social" else None
-                svis, spub = self._visiteurs_de(svz, n, sdp_tot)
+                svis, spub = self._parts_visiteurs(destination, n, sdp_tot)
                 det = {"destination": destination}
                 if svis: det["visiteurs"] = svis
                 if spub: det["publiques"] = spub
@@ -338,10 +352,8 @@ class BaremeStationnement:
 
         # visiteurs / places publiques (parts additionnelles). Les places PUBLIQUES (hors parcelle) sont
         # exigées mais NON dessinées sur le terrain → comptées à part (reviewer : Saint-Louis).
-        # visiteurs / places publiques. Le visiteur GÉNÉRAL vise le logement ordinaire ; pour la destination
-        # « social » on applique le visiteur AIDÉ dédié (`visiteurs_social`, souvent 1/10) à la place.
-        _vz = self.visiteurs_social if destination == "social" else self.visiteurs
-        vis, pub = self._visiteurs_de(_vz, n, sdp_tot)
+        # visiteurs privés (par destination) + places publiques (universelles).
+        vis, pub = self._parts_visiteurs(destination, n, sdp_tot)
         if vis:
             details["visiteurs"] = vis
         if pub:
