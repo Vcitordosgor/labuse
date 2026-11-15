@@ -573,6 +573,8 @@ zones:
             de l’alignement est de 4 mètres minimum.
           statut: valide
         limites_separatives:
+          fond_min_m: 4.0
+          note_fix4_fond: 'MOTEUR-VERITE-FIX-4 LOT 3 : Ue 7.3 donne 4 m FIXES au fond (p.57) — la formule H/2 ne s''applique qu''aux latérales (Ue 7.2), jamais re-calculée sur le fond.'
           h_reference: egout
           min_m: 4.0
           article: Ue 7.2-7.3

@@ -1394,6 +1394,8 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1496,6 +1498,8 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1925,6 +1929,8 @@ zones:
             de la voie, doit être au minimum égale à 3 mètres.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -2007,6 +2013,8 @@ zones:
             la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -2090,6 +2098,8 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -2164,6 +2174,8 @@ zones:
           citation: au point le plus proche de la voie, au moins égale à 4 mètres
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -2244,6 +2256,8 @@ zones:
           citation: au point le plus proche de la voie, au moins égale à 4 mètres
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -2335,6 +2349,8 @@ zones:
           citation: au point le plus proche de la voie, au moins égale à 4 mètres
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           min_m: 3
           article: U6 7.2
           page_pdf: 92
@@ -2390,6 +2406,8 @@ zones:
           citation: au point le plus proche de la voie, au moins égale à 4 mètres
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           min_m: 3
           article: U6 7.2
           page_pdf: 92

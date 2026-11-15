@@ -496,6 +496,8 @@ zones:
             proche de la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
@@ -1891,6 +1893,8 @@ zones:
             voie au moins égale à 4 mètres.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: egout
           implantation_fond:
             mode: limite_sous_conditions
@@ -2024,7 +2028,7 @@ zones:
             proche de la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
-          h_reference: egout
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : classement égout RETIRÉ (relecture) — la règle PROPRE p.68 prescrit 3 m ; seuls les îlots 10C, 8D et 5B permettent la limite sous condition de profondeur 10 m (non modélisés). Aucun scénario H/2 ici.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide

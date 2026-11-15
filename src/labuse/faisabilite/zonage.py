@@ -69,6 +69,9 @@ class ZoneRules:
     ces_perimetres: list | None = None        # MOTEUR-VERITE-FIX-4 LOT 2 : CES réduit dans des
     #  périmètres REPÉRÉS (prescriptions GPU mesurées par parcelle — ex. Le Port Uc, OAP
     #  Mascareignes 60 %) ; [{libelle_regex, subtypes, pct, source}]
+    recul_fond_m: float | None = None         # MOTEUR-VERITE-FIX-4 LOT 3 : retrait FIXE propre au
+    #  FOND (ex. Trois-Bassins Ue 7.3 « 4 m ») — la formule H/2 ne s'applique alors qu'aux
+    #  latérales, jamais re-calculée sur le fond
     capacite_a_verifier: str | None = None    # MOTEUR-VERITE-FIX-3 LOT 2 : la zone a une RÈGLE
     #  PROPRE validée mais non réductible à un nombre (ex. Saint-Denis Udo, hauteur par rue) —
     #  le repli ne sert JAMAIS une valeur générique à sa place : verdict constructible, SDP ∅
@@ -403,15 +406,47 @@ def _exceptions_from_regles(commune: str | None, code: str) -> dict[str, list[di
     return out
 
 
+def _hauteur_regle_sans_valeur(reg: dict | None) -> dict | None:
+    """MOTEUR-VERITE-FIX-4 LOT 3 — feuille hauteur VALIDÉE avec citation mais SANS valeur
+    numérique ni plage ni R+n (ex. Saint-Denis Udo : plafonds par rue nommée, Ud.10 p.44) :
+    la zone a une règle propre non chiffrable — AUCUNE hauteur générique à sa place."""
+    if not reg:
+        return None
+    h = reg.get("hauteur") or {}
+    for feuille, cle in (("egout", "m"), ("faitage", "m")):
+        leaf = h.get(feuille)
+        if (isinstance(leaf, dict) and leaf.get("statut") == "valide" and not leaf.get("absent")
+                and not leaf.get("plage") and leaf.get(cle) is None
+                and (leaf.get("citation") or "").strip()):
+            return leaf
+    return None
+
+
 def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> ZoneRules:
     """ZoneRules d'une zone CALIBRÉE : valeurs des regles + métadonnée de zone (plu_zonage)."""
     from ..plu import destinations as D
     reg = D.regles_zone(_insee(commune) or "", code)
     zm = (zmeta.get("zones") or {}).get(code, {})
+    # MOTEUR-VERITE-FIX-4 LOT 3 — une zone CALIBRÉE dont la hauteur est une règle propre SANS
+    # valeur (Udo : plafonds par rue) ne reçoit AUCUNE hauteur par défaut : capacité à vérifier
+    # (le repli générique le faisait déjà — la voie calibrée servait 9 m, AO0742 865 m²).
+    _cav = None
+    _he0, _hf0 = _val(reg, "hauteur", "egout", "m"), _val(reg, "hauteur", "faitage", "m")
+    _niv0 = _val(reg, "hauteur", "niveaux", "r_plus")
+    if (not isinstance(_he0, (int, float)) and not isinstance(_hf0, (int, float))
+            and not isinstance(_niv0, (int, float)) and zm.get("hauteur_mode") != "prospect"):
+        _lh = _hauteur_regle_sans_valeur(reg)
+        if _lh is not None:
+            _cav = (f"hauteur en zone {code} réglée en propre ({_lh.get('article') or '?'}, "
+                    f"p. {_lh.get('page_pdf') or '?'}) mais non réductible à un nombre par "
+                    "parcelle — aucune hauteur générique appliquée à sa place.")
+    _fond = _val(reg, "retraits", "limites_separatives", "fond_min_m")
     _ces_leaf = ((reg.get("emprise_sol") or {}).get("ces")) if reg else None
     _ces_per = (_ces_leaf or {}).get("perimetres_mesures") if isinstance(_ces_leaf, dict) else None
     return ZoneRules(
+        capacite_a_verifier=_cav,
         ces_perimetres=_ces_per if isinstance(_ces_per, list) and _ces_per else None,
+        recul_fond_m=_fond if isinstance(_fond, (int, float)) else None,
         code=code, bassin=zm.get("bassin"), mixite=_mixite_leaf(reg),
         exceptions=_exceptions_from_regles(commune, code),
         he_m=_val(reg, "hauteur", "egout", "m"),

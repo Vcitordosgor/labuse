@@ -64,7 +64,11 @@ def _fraction_hauteur_formule(formule: Optional[str]) -> Optional[float]:
     plancher sourcé s'applique seul)."""
     if not formule:
         return None
-    m = re.search(r"\bh\s*/\s*([234])\b", str(formule).lower())
+    s = str(formule).lower()
+    # MOTEUR-VERITE-FIX-4 LOT 3 — « L = H » (recul égal à la hauteur, Saint-Leu UF/UP) : fraction 1.
+    if re.search(r"\bl\s*=\s*h\b", s):
+        return 1.0
+    m = re.search(r"\bh\s*/\s*([234])\b", s)
     return (1.0 / int(m.group(1))) if m else None
 
 
@@ -897,6 +901,16 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                         "contour fermé non qualifié (une seule arête sur tout le périmètre) : "
                         "implantation en limite non appliquée — à vérifier")
                 if not en_limite:
+                    # MOTEUR-VERITE-FIX-4 LOT 3 — FOND à retrait FIXE propre (Trois-Bassins Ue 7.3
+                    # « 4 m ») : ruleId distinct, la formule H/2 (variantes) ne patche que
+                    # « limite-sep » — le fond garde sa valeur, jamais re-calculé.
+                    _fond_fixe = getattr(zr, "recul_fond_m", None)
+                    if e.type == "rear" and isinstance(_fond_fixe, (int, float)):
+                        setbacks.append(Setback(id=f"lim-{i}", ruleId="limite-sep-fond",
+                                                type=e.type,
+                                                geometry=geojson_from_shape(to_wgs(e.geom)),
+                                                setbackM=float(_fond_fixe), source=bdtopo_src))
+                        return
                     setbacks.append(Setback(id=f"lim-{i}", ruleId="limite-sep", type=e.type,
                                             geometry=geojson_from_shape(to_wgs(e.geom)),
                                             setbackM=recul_sep, source=bdtopo_src))
@@ -921,8 +935,11 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                     extra = _uu([p for p in parts_ret if not p.is_empty]) if parts_ret else None
                     g_ret = _uu([x for x in (g_ret, extra) if x is not None and not x.is_empty]) \
                         if (g_ret is not None or extra is not None) else None
+                _ret_rid, _ret_val = "limite-sep", recul_sep
+                if e.type == "rear" and isinstance(getattr(zr, "recul_fond_m", None), (int, float)):
+                    _ret_rid, _ret_val = "limite-sep-fond", float(zr.recul_fond_m)
                 for j, (g, rid, dd) in enumerate(((g_lim, "limite-sep-limite", 0.0),
-                                                  (g_ret, "limite-sep", recul_sep))):
+                                                  (g_ret, _ret_rid, _ret_val))):
                     if g is None or g.is_empty or g.length < 0.05:
                         continue
                     setbacks.append(Setback(id=f"lim-{i}-{j}", ruleId=rid, type=e.type,

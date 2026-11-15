@@ -83,3 +83,32 @@ def test_lot2_micro_parcelle_sans_capacite_chiffree(app_session, idu, motif):
     assert sdp is None, f"{idu} : {sdp} m² chiffrés sur une parcelle {motif}"
     assert f.constructible is True
     assert "capacité à vérifier" in f.verdict
+
+
+# LOT 3 — les formules de retrait relatif s'exécutent (erreurs déjà présentes dans MAIN) +
+# hauteurs Saint-Denis (Udo par rue → à vérifier ; Ud ≤ prospect calculé ; Uicm plafond Ui.10).
+CAS_LOT3_PLAFONDS = [
+    ("97418000AS1397", 519),     # UAz : H/2 de la hauteur TOTALE de façade (27 m → 13,50 m de
+    #  retrait) — 5 321 m² servis avec 3 m avant le fix ; 519 = recalcul du relecteur à 27 m
+    ("97411000AO0584", 822),     # Ud : hauteur retenue = min(prospect calculé 10 m, plage) —
+    #  12 m/1 645 m² servis avant le fix
+    ("97411000HX0075", 2279),    # Uicm : retrait 5 m + CES 40 % + plafond Ui.10 12 m (chiffre
+    #  du relecteur à hypothèses identiques)
+    ("97411000BP0869", 1966),    # idem (chiffre du relecteur)
+]
+
+
+@pytest.mark.parametrize("idu,plafond", CAS_LOT3_PLAFONDS)
+def test_lot3_formules_et_hauteurs(app_session, idu, plafond):
+    sdp, _f = _sdp(app_session, idu)
+    assert sdp is not None, f"{idu} : SDP absente (attendu ≤ {plafond})"
+    assert sdp <= plafond + 0.5, f"{idu} : {sdp} m² > plafond {plafond} m²"
+
+
+def test_lot3_udo_capacite_a_verifier(app_session):
+    """Saint-Denis Udo : hauteurs par rue nommée (Ud.10 p.44) — plus JAMAIS 9 m génériques
+    (AO0742 servait 865 m², AO0778 « terrain exigu confirmé »)."""
+    for idu in ("97411000AO0742", "97411000AO0778"):
+        sdp, f = _sdp(app_session, idu)
+        assert sdp is None, f"{idu} : {sdp} m² chiffrés sur une hauteur générique"
+        assert f.constructible is True and "capacité à vérifier" in f.verdict

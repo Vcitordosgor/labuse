@@ -1096,6 +1096,8 @@ zones:
           statut: valide
       retraits:
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide

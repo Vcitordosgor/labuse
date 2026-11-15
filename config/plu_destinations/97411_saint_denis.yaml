@@ -521,6 +521,8 @@ zones:
           statut: valide
       retraits:
         limites_separatives:
+          formule: 'H/2, minimum 4 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           min_m: 4.0
           article: Ud.7
           page_pdf: 42
@@ -583,6 +585,8 @@ zones:
             seront implantées à 4 m minimum de l''alignement.'
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 4 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -695,6 +699,8 @@ zones:
             de 12 m : Les constructions seront implantées à 4 m minimum de l''alignement.'
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 4 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -1007,6 +1013,14 @@ zones:
           un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   Uicm:
     regles:
+      hauteur:
+        faitage:
+          m: 12.0
+          article: Ui.10
+          page_pdf: 57
+          citation: "En secteur Uicm : La hauteur maximale H des constructions ne doit pas excéder 12m."
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : plafond PROPRE du secteur (12 m, Ui.10) — le repli servait 9 m génériques (HX0075, BP0869).'
+          statut: valide
       emprise_sol:
         ces:
           pct: 40.0
@@ -2114,6 +2128,8 @@ zones:
             3 m en voies étroites, annexes à l''alignement.'
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 4 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -2219,6 +2235,8 @@ zones:
             < 3,50 m ; annexes de stationnement à l''alignement.'
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 4 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
@@ -2347,6 +2365,8 @@ zones:
             stationnement à l''alignement.'
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 4 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide

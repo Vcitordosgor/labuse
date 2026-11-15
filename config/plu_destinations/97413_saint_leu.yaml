@@ -1229,6 +1229,8 @@ zones:
             soumise à autorisation).
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 4 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -1330,6 +1332,8 @@ zones:
             des voies ou emprises publiques.
           statut: valide
         limites_separatives:
+          formule: 'L = H, minimum 4 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
@@ -1435,6 +1439,8 @@ zones:
             des voies ou emprises publiques.
           statut: valide
         limites_separatives:
+          formule: 'L = H, minimum 4 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide

@@ -384,6 +384,8 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
           implantation_fond:
             mode: retrait_obligatoire

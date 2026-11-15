@@ -196,6 +196,8 @@ zones:
             par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
@@ -273,6 +275,8 @@ zones:
             par rapport à l’alignement. Ce seuil est réduit à 2,00 mètres minimum en secteur UAz.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
@@ -359,6 +363,8 @@ zones:
             par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
@@ -498,6 +504,8 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
@@ -637,6 +645,8 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
@@ -742,6 +752,8 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
@@ -831,6 +843,8 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
@@ -952,6 +966,8 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
@@ -1899,6 +1915,8 @@ zones:
           min_m: 0
           forme: alignement
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
@@ -1976,6 +1994,8 @@ zones:
             mètres par rapport à l’alignement.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
           implantation_fond:
             mode: limite_sous_conditions
@@ -2043,6 +2063,8 @@ zones:
           citation: 'en zones UEc, UEm, UEp et UT : 3 mètres'
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 4 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           h_reference: hauteur_totale_facade
           min_m: 4
           article: Article U5 « activités » - Implantation par rapport aux limites séparatives (5.2)

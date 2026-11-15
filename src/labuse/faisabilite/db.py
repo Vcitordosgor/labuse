@@ -840,9 +840,19 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     if rules.hauteur_mode == 'prospect':
         largeur, src = _facade_largeur(session, parcel_id, ctx.commune)
         L = _prospect_hauteur(largeur)
-        rules = replace(rules, hf_m=L, calibree=True,
+        # MOTEUR-VERITE-FIX-4 LOT 3 — le prospect CALCULÉ PAR PARCELLE plafonne toute plage de
+        # hauteur par secteur : la hauteur retenue = min(prospect, borne basse de la plage).
+        # Avant, la branche « hauteur_plage » du moteur passait DEVANT le prospect (Saint-Denis
+        # Ud AO0584 : prospect 10 m calculé, 12 m servis — relecture FIX-4).
+        _pl = (rules.hauteur_plage or {}).get("plage_m") or {}
+        _h_eff, _note_pl = L, ""
+        if isinstance(_pl.get("min"), (int, float)):
+            _h_eff = min(L, float(_pl["min"]))
+            _note_pl = f" ; plafonnée par min(prospect, plage basse {_pl['min']:g} m)"
+        rules = replace(rules, hf_m=_h_eff, hauteur_plage=None, calibree=True,
                         notes=[*rules.notes,
-                               f"Hauteur prospect L≥H = {L:.0f} m (largeur chaussée BD TOPO : {src})"])
+                               f"Hauteur prospect L≥H = {_h_eff:.0f} m (largeur chaussée BD "
+                               f"TOPO : {src}{_note_pl})"])
 
     # DONNEES-FIX-1 point 4 — les exceptions PLU `modifie_calcul=true` entrent au moteur par le même
     # système (zonage). Une majoration conditionnée à la surface (terrain ≥ seuil) relève la hauteur ;
@@ -885,6 +895,17 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     recul = (float(rules.recul_limites_sep_m)
              if isinstance(rules.recul_limites_sep_m, (int, float))
              else hyp.recul_limites_defaut_m)
+    # MOTEUR-VERITE-FIX-4 LOT 3 (contrôle inverse) — le REPLI « contour inseté » applique la MÊME
+    # référence PRUDENTE que le builder : formule de retrait relatif à référence NON-égout
+    # (hauteur totale de façade…) → recul = max(min, faîtage × fraction). Sans quoi, quand le
+    # gabarit (recul prudent) vide l'assiette, le repli retombait sur le MINIMUM et servait PLUS
+    # que main (Sainte-Rose Ua/Ub, AR0291 134→158 m² d'emprise — hausse hors liste blanche).
+    # L'ancienne borne-haute D-50 reste valable pour l'égout (scénario niveau par niveau).
+    from ..gabarit.builder import _fraction_hauteur_formule as _ffh
+    _frac_db = _ffh(getattr(rules, "recul_limites_formule", None))
+    if (_frac_db is not None and getattr(rules, "h_reference", None) != "egout"
+            and isinstance(rules.hf_m, (int, float))):
+        recul = max(recul, round(float(rules.hf_m) * _frac_db, 1))
     # CHASSE-DONNEES-FIX-1 (suite 1, D-50) — recul limites séparatives EN FORMULE « H/2, minimum X » :
     # on NE couple PAS mécaniquement recul=H/2 au moteur. Mesuré (BW2262 503→131, AL1115 313→exigu,
     # AV1095 376→55) : inseter H/2 sur TOUTES les limites effondre la SDP de 74-85 %, car la géométrie
