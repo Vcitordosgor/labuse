@@ -813,19 +813,40 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             fond_expres = dec_fond["ouvre"]
             meme_article = (fond_expres and dec_lat["ouvre"]
                             and (imp_lat or {}).get("article") == (imp_fond or {}).get("article"))
+            # MOTEUR-VERITE-FIX-4 LOT 1 — seuls les CÔTÉS CADASTRAUX entrent au budget et peuvent
+            # être posés en limite : jamais une coupe interne de zonage ni une ligne hors du
+            # contour (AE0114, AV1339, AH0074) ; jamais un anneau (garde FIX-3). Le FOND n'est pas
+            # posé en limite quand le terrain est longé par PLUSIEURS voies : la définition du
+            # fond relève alors de l'article (non modélisée) — mention, à vérifier.
+            def _cote_qualifie(e):
+                return getattr(e, "cadastrale", True) and not getattr(e.geom, "is_ring", False)
+            elig_side = [e for e in side_edges if _cote_qualifie(e)]
+            elig_rear = [e for e in rear_edges if _cote_qualifie(e)]
+            n_voies_distinctes = sum(1 for e in edges if e.type == "voie")
+            if n_voies_distinctes >= 2 and elig_rear and (
+                    fond_expres or (dec_lat["ouvre"] and meme_article)):
+                elig_rear = []
+                racc.setdefault("implantation", {}).setdefault("mentions", []).append(
+                    "terrain longé par plusieurs voies : la définition du fond relève de "
+                    "l'article — fond non posé en limite, à vérifier")
+            if (dec_lat["ouvre"] or fond_expres) and any(
+                    not getattr(e, "cadastrale", True) for e in side_edges + rear_edges):
+                racc.setdefault("implantation", {}).setdefault("mentions", []).append(
+                    "coupe interne / ligne hors du contour cadastral : implantation en limite "
+                    "non appliquée sur ces lignes (retrait conservé), à vérifier")
             zero_ids = set()
             if dec_lat["ouvre"] and dec_lat["zero"] == "toutes":
-                zero_ids |= {id(e) for e in side_edges}
+                zero_ids |= {id(e) for e in elig_side}
             if fond_expres and dec_fond["zero"] == "toutes" and not (
                     meme_article and isinstance(dec_lat["zero"], int)):
-                zero_ids |= {id(e) for e in rear_edges}
+                zero_ids |= {id(e) for e in elig_rear}
             if dec_lat["ouvre"] and isinstance(dec_lat["zero"], int) and dec_lat["zero"] > 0:
-                bassin = side_edges + (rear_edges if meme_article else [])
+                bassin = elig_side + (elig_rear if meme_article else [])
                 tri = sorted(bassin, key=lambda e: -float(e.geom.length))
                 zero_ids |= {id(e) for e in tri[:dec_lat["zero"]]}
             if (fond_expres and isinstance(dec_fond["zero"], int) and dec_fond["zero"] > 0
                     and not meme_article):
-                tri = sorted(rear_edges, key=lambda e: -float(e.geom.length))
+                tri = sorted(elig_rear, key=lambda e: -float(e.geom.length))
                 zero_ids |= {id(e) for e in tri[:dec_fond["zero"]]}
 
             def _emettre(i, e, dec, en_limite):
