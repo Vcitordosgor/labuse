@@ -117,6 +117,13 @@ zones:
           etudiant:
             places: 0.2
             tranche: hébergement (0,2 place par hébergement)
+          velo:
+            unite: pct_sdp
+            valeur: 5
+            seuil_sdp_m2: 300
+            citation: '2 roues : 5 % de la surface de plancher pour toute construction de plus de 300 m² de surface de plancher'
+          conditions:
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
       pleine_terre:
         pct:
           pct: 20.0
@@ -358,6 +365,12 @@ zones:
             tranche: hébergement (0,3 place par hébergement)
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          velo:
+            unite: pct_sdp
+            valeur: 5
+            seuil_sdp_m2: 300
+            citation: '2 roues : 5 % de la surface de plancher pour toute construction de plus de 300 m² de surface de plancher'
       pleine_terre:
         pct:
           pct: 20.0
@@ -601,6 +614,12 @@ zones:
             tranche: hébergement (0,3 place par hébergement)
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          velo:
+            unite: pct_sdp
+            valeur: 5
+            seuil_sdp_m2: 300
+            citation: '2 roues : 5 % de la surface de plancher pour toute construction de plus de 300 m² de surface de plancher'
       pleine_terre:
         pct:
           pct: 20.0
@@ -843,6 +862,12 @@ zones:
             tranche: hébergement (0,3 place par hébergement)
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          velo:
+            unite: pct_sdp
+            valeur: 5
+            seuil_sdp_m2: 300
+            citation: '2 roues : 5 % de la surface de plancher pour toute construction de plus de 300 m² de surface de plancher'
       pleine_terre:
         pct:
           pct: 40.0
@@ -1148,6 +1173,12 @@ zones:
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          velo:
+            unite: pct_sdp
+            valeur: 5
+            seuil_sdp_m2: 300
+            citation: '2 roues : 5 % de la surface de plancher pour toute construction de plus de 300 m² de surface de plancher'
       pleine_terre:
         pct:
           pct: 30.0
@@ -1400,6 +1431,12 @@ zones:
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          velo:
+            unite: pct_sdp
+            valeur: 5
+            seuil_sdp_m2: 300
+            citation: '2 roues : 5 % de la surface de plancher pour toute construction de plus de 300 m² de surface de plancher'
       pleine_terre:
         pct:
           pct: 30.0
@@ -1471,6 +1508,12 @@ zones:
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          velo:
+            unite: pct_sdp
+            valeur: 5
+            seuil_sdp_m2: 300
+            citation: '2 roues : 5 % de la surface de plancher pour toute construction de plus de 300 m² de surface de plancher'
       pleine_terre:
         pct:
           pct: 40.0
@@ -1661,6 +1704,12 @@ zones:
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          velo:
+            unite: pct_sdp
+            valeur: 5
+            seuil_sdp_m2: 300
+            citation: '2 roues : 5 % de la surface de plancher pour toute construction de plus de 300 m² de surface de plancher'
       pleine_terre:
         pct:
           pct: 40.0
@@ -1734,6 +1783,12 @@ zones:
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          velo:
+            unite: pct_sdp
+            valeur: 5
+            seuil_sdp_m2: 300
+            citation: '2 roues : 5 % de la surface de plancher pour toute construction de plus de 300 m² de surface de plancher'
       pleine_terre:
         pct:
           pct: 40.0
@@ -1787,6 +1842,12 @@ zones:
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          velo:
+            unite: pct_sdp
+            valeur: 5
+            seuil_sdp_m2: 300
+            citation: '2 roues : 5 % de la surface de plancher pour toute construction de plus de 300 m² de surface de plancher'
       pleine_terre:
         pct:
           pct: 40.0
@@ -2020,6 +2081,13 @@ zones:
           social:
             places: 1
             tranche: logement locatif social
+          velo:
+            unite: pct_sdp
+            valeur: 5
+            seuil_sdp_m2: 300
+            citation: '2 roues : 5 % de la surface de plancher pour toute construction de plus de 300 m² de surface de plancher'
+          conditions:
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
     silence: autorise
     silence_src: 'Art. Up1, p. 143 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
     sous_destinations:

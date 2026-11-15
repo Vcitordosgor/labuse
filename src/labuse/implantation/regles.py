@@ -146,6 +146,27 @@ class BaremeStationnement:
     # les lotissements (ex. « 0,5 place supplémentaire sur voie par lot » > 5 lots). None = le PLU n'en fixe
     # pas (le lotissement affiche alors une convention « Estimé », jamais un chiffre présenté comme la règle).
     visiteur_lotissement: Optional[float] = None
+    # ETUDE-STATIONNEMENT-FIX-2 (reliquat #5) — norme de stationnement VÉLO, CHIFFRÉE quand le PLU la fixe.
+    # {unite: 'm2_par_logement'|'pct_sdp'|'emplacements_par_logements', valeur, seuil_sdp_m2?, citation}.
+    velo: Optional[dict] = None
+
+    def velo_requis(self, logements: int, sdp_m2: float) -> Optional[tuple[str, str]]:
+        """(quantité, libellé) du stationnement vélo exigé, ou None si le PLU n'en fixe pas. Ne dessine rien
+        (le moteur ne place pas les vélos) : chiffre l'exigence pour l'afficher « à prévoir », jamais « non
+        modélisé »."""
+        v = self.velo
+        if not isinstance(v, dict) or not isinstance(v.get("valeur"), (int, float)):
+            return None
+        val = float(v["valeur"]); unite = v.get("unite")
+        if v.get("seuil_sdp_m2") and sdp_m2 < float(v["seuil_sdp_m2"]) - 1e-6:
+            return None   # seuil de déclenchement non atteint (ex. Saint-Pierre > 300 m²)
+        if unite == "m2_par_logement":
+            return (f"{val * logements:g} m²", f"{val:g} m² par logement")
+        if unite == "pct_sdp":
+            return (f"{round(val / 100.0 * sdp_m2):g} m²", f"{val:g} % de la surface de plancher")
+        if unite == "emplacements_par_logements" and val > 0:
+            return (f"{math.ceil(logements / val - 1e-9):g} emplacements", f"1 emplacement / {val:g} logements")
+        return None
 
     def places_pour(self, *, pieces: int, sdp_m2: float, destination: str = "collectif") -> Optional[float]:
         """Ratio par logement pour un logement (aperçu/jauge). Ne renvoie que la part RÉSIDENT par logement
@@ -637,6 +658,7 @@ def _bareme(stat: dict) -> BaremeStationnement:
             article=pl.get("article"), page_pdf=pl.get("page_pdf"), citation=pl.get("citation"),
             visiteurs=_parse_visiteurs(pl), visiteurs_social=_parse_visiteurs(pl, 'visiteurs_social'),
             visiteur_lotissement=(float(pl['visiteur_lotissement']) if isinstance(pl.get('visiteur_lotissement'),(int,float)) else None),
+            velo=(pl.get('velo') if isinstance(pl.get('velo'),dict) else None),
             conditions=_parse_conditions(pl),
             integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
     # 2) par_m2_sdp validé — « une place par tranche de N m² de SDP » (ENFIN supporté : tranche complète)
@@ -648,6 +670,7 @@ def _bareme(stat: dict) -> BaremeStationnement:
             article=pm.get("article"), page_pdf=pm.get("page_pdf"), citation=pm.get("citation"),
             visiteurs=_parse_visiteurs(pm), visiteurs_social=_parse_visiteurs(pm, 'visiteurs_social'),
             visiteur_lotissement=(float(pm['visiteur_lotissement']) if isinstance(pm.get('visiteur_lotissement'),(int,float)) else None),
+            velo=(pm.get('velo') if isinstance(pm.get('velo'),dict) else None),
             conditions=_parse_conditions(pm),
             integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
     # 3) par_typologie validé (pièces OU surface OU formules d'opération/alternatives)
@@ -678,6 +701,7 @@ def _bareme(stat: dict) -> BaremeStationnement:
                 retenue=(pt.get("retenue") or "max"),
                 visiteurs=_parse_visiteurs(pt), visiteurs_social=_parse_visiteurs(pt, 'visiteurs_social'),
             visiteur_lotissement=(float(pt['visiteur_lotissement']) if isinstance(pt.get('visiteur_lotissement'),(int,float)) else None),
+            velo=(pt.get('velo') if isinstance(pt.get('velo'),dict) else None),
                 conditions=_parse_conditions(pt),
                 integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
     return BaremeStationnement(False, "absent", None, "superieur", None, (), None, None, None)

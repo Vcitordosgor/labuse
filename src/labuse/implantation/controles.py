@@ -566,7 +566,18 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                                f"{nb_bati} bâtiments · {dmes:.1f} m mesurés", NON_EFFECTUE,
                                detail="distance inter-bâtiments non calibrée sur cette zone — à vérifier"))
 
-    out.append(ControleReg("Locaux vélos · déchets", "non modélisés", "—", NON_EFFECTUE))
+    # ETUDE-STATIONNEMENT-FIX-2 (reliquat #5) — stationnement VÉLO CHIFFRÉ quand le PLU le fixe (le moteur ne
+    # le dessine pas → « à prévoir : X », jamais « non modélisé »). Sinon « Non vérifié » (pas « sans règle »).
+    _velo = regles.stationnement.velo_requis(cap.logements, cap.sdp_m2) if regles.stationnement.validee else None
+    if _velo is not None:
+        _cit = (regles.stationnement.velo or {}).get("citation")
+        out.append(ControleReg("Stationnement vélo", f"{_velo[1]} (servi au PLU)", f"à prévoir : {_velo[0]}",
+                               A_CONFIRMER, _cit,
+                               detail="exigence vélo chiffrée ; emplacement à confirmer (non dessiné par le moteur)"))
+    else:
+        out.append(ControleReg("Stationnement vélo", "norme non servie pour cette zone", "—", A_CONFIRMER,
+                               detail="à vérifier au règlement (local vélos) — non modélisé"))
+    out.append(ControleReg("Local déchets", "non modélisé", "—", NON_EFFECTUE))
 
     # PPR rouge (interdiction) : déduite de l'implantation, mais l'interdiction reste à CONFIRMER au
     # règlement (on la retire par prudence, ce n'est pas une preuve de constructibilité du reste).
