@@ -266,3 +266,16 @@ def test_pt4_numero_depend_du_contenu_rendu():
     assert r1.numero.startswith("DP-20260905-97415000BO0852-")
     assert r1.cartouche.doc_ref.endswith(r1.numero)
     assert "\x00" not in r1.html                        # le jeton de numéro ne fuit jamais
+
+
+# ── Complément dvf — garde STATIQUE (hook) : les 3 lecteurs de prix dédoublonnent par couple ──
+def test_dvf_lecteurs_prix_dedoublonnent_par_couple():
+    bilan = (_SRC / "faisabilite" / "bilan.py").read_text()
+    pmodel = (_SRC / "scoring" / "p_model" / "sql.py").read_text()
+    marche = (_SRC / "faisabilite" / "marche_commune.py").read_text()
+    # _surface_terrain_sujet : somme sur des lignes DISTINCT (plus un sum brut)
+    assert "SELECT DISTINCT id_mutation, type_local, surface_reelle_bati" in bilan
+    # p_model_mut_l2 : s_bati sommé sur la CTE dédoublonnée `ded`
+    assert "WITH ded AS (" in pmodel and "FROM ded" in pmodel
+    # _median_terrain_commune : une surface de terrain par couple (max OVER PARTITION) avant somme
+    assert "OVER (PARTITION BY dm.id_mutation, dm.id_parcelle)" in marche
