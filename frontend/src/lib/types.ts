@@ -379,6 +379,13 @@ export interface Fiche {
     document_servi?: string | null; fait_foi?: string | null
     en_cours?: string | null; action?: string | null; fait_foi_ok?: boolean
   } | null
+  // PLU-VEILLE-FIX-1 : bandeau PROPORTIONNEL (desync). niveau = fort | prescriptions | informations ;
+  // avec_a_verifier = les parcelles de la commune passent « À vérifier » (pas pour informations).
+  plu_modifie?: {
+    date: string | null; niveau: 'fort' | 'prescriptions' | 'informations' | null
+    ancien: string | null; nouveau: string | null
+    couches: string[]; avec_a_verifier: boolean; message: string
+  } | null
   // M41 : radar procédures PLU (stade + conséquences parcellaires servables ; jamais l'issue).
   radar_procedure?: {
     indisponible?: boolean; raison?: string   // M125 — état PANNE (≠ absence)

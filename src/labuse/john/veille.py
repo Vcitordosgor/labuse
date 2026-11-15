@@ -170,6 +170,30 @@ def signaler_retard_source(db, nom: str, millesime_attendu, millesime_servi) -> 
     return True
 
 
+def signaler_plu_modifie(db, commune: str, insee: str, ancien, nouveau, date_modif_fr,
+                         gestes: list[str]) -> bool:
+    """PLU-VEILLE-FIX-1 — remonte à John (axe « reglementaire », libellé « à intégrer ») qu'une
+    commune a changé de document d'urbanisme au Géoportail, avec l'ancien/le nouveau document et la
+    liste des gestes. IDEMPOTENT par jour et par nouveau document (dédup source + date_vue)."""
+    ensure(db)
+    titre = f"PLU modifié — {commune} ({nouveau})"
+    source = f"Géoportail de l'urbanisme — DU_{insee}"
+    deja = db.execute(text(
+        "SELECT 1 FROM john_veille WHERE axe = 'reglementaire' AND source = :s "
+        "AND date_vue = :d AND ts::date = (now() AT TIME ZONE 'UTC')::date"),
+        {"s": source, "d": str(nouveau)}).scalar()
+    if deja:
+        return False
+    extrait = (f"Document {ancien or '—'} → {nouveau}"
+               + (f" (modifié le {date_modif_fr})" if date_modif_fr else "")
+               + ". Gestes : " + " ; ".join(gestes or ["appliquer d'un seul geste"]))
+    db.execute(text(
+        "INSERT INTO john_veille (axe, titre, source, date_vue, libelle, url, extrait) "
+        "VALUES ('reglementaire', :t, :s, :d, 'à intégrer', '/donnees', :e)"),
+        {"t": titre, "s": source, "d": str(nouveau), "e": extrait[:500]})
+    return True
+
+
 def recentes(db, n: int = 20) -> list[dict]:
     """Les derniers éléments de veille (pour l'onglet)."""
     ensure(db)
