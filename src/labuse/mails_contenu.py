@@ -286,20 +286,9 @@ def _mdp_modifie(p: dict) -> g.Mail:
                     pied=_pied(p, R_SECU, securite=True, desabo=False))
 
 
-def _email_change(p: dict) -> g.Mail:
-    anc, nouv = _s(p.get("ANCIEN_EMAIL")), _s(p.get("NOUVEL_EMAIL"))
-    blocs = [
-        g.paragraphe(_greet(p)),
-        g.paragraphe(f"L'adresse de connexion de votre compte LABUSE est passée de {anc} à {nouv}."),
-        g.paragraphe("Votre mot de passe n'a pas changé. Connectez-vous désormais avec la nouvelle "
-                     "adresse."),
-        g.bouton("Me connecter à LABUSE", _lien(p, "LIEN_APP")),
-        g.paragraphe("Ce message est envoyé aux deux adresses. Si ce changement n'est pas de votre "
-                     "fait, répondez immédiatement à ce mail."),
-    ]
-    return g.rendre(sujet="Votre adresse de connexion LABUSE a changé", registre="personnel", blocs=blocs,
-                    apercu="Votre adresse de connexion a changé.",
-                    pied=_pied(p, R_SECU, securite=True, desabo=False))
+# CHIRURGICAL-FIX-1 (E109, décision Vic) — le mail « changement d'e-mail » (_email_change / template
+# Brevo 18) est RETIRÉ : aucun déclencheur n'existe dans le produit (aucune route ne mute l'adresse de
+# connexion, aucune UI), c'était du code mort. Builder, template et échantillon supprimés.
 
 
 # ════════════════════════════ MAILS AUTOMATIQUES ════════════════════════════
@@ -312,30 +301,9 @@ def _biens_bloc(p: dict) -> g.Bloc:
     return g.paragraphe("")
 
 
-def _radar_digest(p: dict) -> g.Mail:
-    date = _s(p.get("DATE")) or "aujourd'hui"
-    nb = _s(p.get("NB_BIENS")) or "0"
-    greet = _greet(p)
-    blocs = [
-        g.etiquette("RADAR · DIGEST", "radar"),
-        g.titre_auto(f"Le point Radar du {date}"),
-        g.paragraphe(f"{greet} voici les nouveautés repérées sur vos communes "
-                     f"({nb} ce jour).", html_brut=f"{g.esc(greet)} voici les nouveautés repérées sur "
-                     f"vos communes (<b>{g.esc(nb)}</b> ce jour)."),
-    ]
-    biens = _biens_bloc(p)
-    if biens[0]:
-        blocs.append(biens)
-    else:
-        blocs.append(g.paragraphe("Rien de neuf aujourd'hui sur vos critères."))
-    blocs += [
-        g.bouton("Ouvrir le Radar", _lien(p, "LIEN_RADAR")),
-        g.note("LABUSE ne republie aucune annonce : chaque lien renvoie au portail d'origine. Les "
-               "faits affichés sont ceux relevés à la date indiquée."),
-    ]
-    return g.rendre(sujet=f"Radar — {nb} nouveauté{'s' if nb not in ('0','1') else ''} le {date}",
-                    registre="auto", blocs=blocs, apercu="Les nouveautés du Radar sur vos communes.",
-                    pied=_pied(p, R_RADAR))
+# CHIRURGICAL-FIX-1 (E119, décision Vic) — le digest Radar legacy (_radar_digest / template Brevo 12)
+# est RETIRÉ : aucun déclencheur live (le job digest réel envoie `smtp_digest_notifications`), c'était
+# un doublon legacy. Builder, template, alias « radar » et échantillon supprimés.
 
 
 def _radar_alerte(p: dict) -> g.Mail:
@@ -499,8 +467,8 @@ _BUILDERS = {
     # UN SEUL mail de réinitialisation (mandat Vic) : `mdp_oublie` est l'unique chemin ;
     # la clé historique `smtp_reset_password` est supprimée (plus de doublon).
     "mdp_oublie": _mdp_oublie,
-    "mdp_modifie": _mdp_modifie, "email_change": _email_change,
-    "radar_digest": _radar_digest, "radar_alerte": _radar_alerte, "flash_pret": _flash_pret,
+    "mdp_modifie": _mdp_modifie,   # email_change retiré (E109) · radar_digest retiré (E119)
+    "radar_alerte": _radar_alerte, "flash_pret": _flash_pret,
     "smtp_digest_notifications": _digest_notifications, "smtp_annonce": _annonce,
     "smtp_maintenance": _maintenance, "smtp_mise_en_vente": _mise_en_vente,
     "mise_en_vente": _mise_en_vente,
@@ -524,8 +492,8 @@ def rendre(key: str, params: dict | None = None) -> g.Mail:
 #: (ancien #17) est RETIRÉ — un seul mail de reset (`mdp_oublie`). Il reste donc 20 mails distincts.
 ORDRE_CATALOGUE = [
     "essai", "souscription", "onboarding1", "onboarding2", "onboarding3",
-    "relance_carte", "suspension", "retablissement", "radar_digest", "radar_alerte",
-    "mdp_oublie", "mdp_modifie", "resiliation", "flash_pret", "email_change", "retour_traite",
+    "relance_carte", "suspension", "retablissement", "radar_alerte",
+    "mdp_oublie", "mdp_modifie", "resiliation", "flash_pret", "retour_traite",
     "smtp_digest_notifications", "smtp_annonce", "smtp_maintenance", "smtp_mise_en_vente",
 ]
 
@@ -551,8 +519,6 @@ SPECIMENS: dict[str, dict] = {
     "relance_carte": {**_COMMUN, "LIEN_PAIEMENT": f"{_B}/facturation"},
     "suspension": {**_COMMUN, "LIEN_PAIEMENT": f"{_B}/facturation"},
     "retablissement": {**_COMMUN},
-    "radar_digest": {**_COMMUN, "DATE": "07/11/2026", "NB_BIENS": "3", "BIENS": _BIENS_RADAR,
-                     "LIEN_RADAR": f"{_B}/radar"},
     "radar_alerte": {**_COMMUN, "VEILLE": "Saint-Denis — terrains de plus de 400 m²", "NB_BIENS": "3",
                      "CRITERES": "Terrain · plus de 400 m² · zone U · Saint-Denis", "BIENS": _BIENS_RADAR,
                      "LIEN_RADAR": f"{_B}/radar", "LIEN_VEILLE": f"{_B}/radar?veille=1"},
@@ -561,7 +527,6 @@ SPECIMENS: dict[str, dict] = {
     "resiliation": {**_COMMUN, "DATE_FIN_ACCES": "30/11/2026", "LIEN_PAIEMENT": f"{_B}/facturation"},
     "flash_pret": {"LIEN_PDF": f"{_B}/flash/97411000BZ1065.pdf", "VALIDITE": "30",
                    "IDU": "97411000BZ1065", "COMMUNE": "La Montagne"},
-    "email_change": {**_COMMUN, "ANCIEN_EMAIL": "ancienne@exemple.fr", "NOUVEL_EMAIL": "nouvelle@exemple.fr"},
     "retour_traite": {**_COMMUN,
                       "SON_MESSAGE": "Bonjour, la zone PLU d'une de mes parcelles me semble fausse.",
                       "REPONSE": "Merci de votre signalement : c'est corrigé, la parcelle est bien en zone U."},
