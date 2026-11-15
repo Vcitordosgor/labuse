@@ -64,11 +64,18 @@ class CheckGeo:
     detail: str = ""
 
 
-def _pincement_allee(allees, places, largeur_requise: float) -> float:
-    """ETUDE-STATIONNEMENT-FIX-2 (LOT 3) — aire d'allée, AU DROIT DES PLACES, dont la largeur locale est
-    inférieure à `largeur_requise`. Mesure robuste par OUVERTURE morphologique (érosion puis dilatation de
-    rayon W/2) : la part que l'ouverture ne recouvre pas est un pincement plus étroit que W. On ne retient
-    que la part adjacente aux places (le dégagement DEVANT les places ; un sur-longueur dans le vide, non).
+# ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — un VRAI pincement de dégagement couvre plusieurs places (BW2635 :
+# 25 m² sur 13 places) ; un simple ANGLE INTÉRIEUR d'allée en L/T produit une petite encoche (~2 m²) que
+# l'ouverture morphologique voit à tort. Le seuil sépare les deux : en deçà, c'est un coin de jonction.
+_DEGAGEMENT_SEUIL_M2 = 2.5
+
+
+def _pincement_allee(allees, places, largeur_requise: float, acces=None) -> float:
+    """ETUDE-STATIONNEMENT-FIX-2 (LOT 3) / FIX-3 — aire d'allée, AU DROIT DES PLACES, dont la largeur locale est
+    inférieure à `largeur_requise`. OUVERTURE morphologique (érosion puis dilatation de rayon W/2) : la part que
+    l'ouverture ne recouvre pas est plus étroite que W. On ne retient que la part adjacente aux places. FIX-3 :
+    les DEUX géométries sont désormais dans le même repère (cf. appelant) — sinon le pincement valait toujours 0
+    en production. Le seuil de décision (`_DEGAGEMENT_SEUIL_M2`) ignore les petites encoches de jonction en L/T.
     Renvoie l'aire (m²) du pincement — 0 si l'allée est partout assez large là où elle sert une place."""
     from shapely.ops import unary_union
     if not allees:
@@ -180,8 +187,8 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
     # ici en coordonnées PROJETÉES (geom_world) ; l'ancien code passait l'allée en geom_local → intersection
     # avec les places (geom_world) vide → pincement toujours 0 en production (le test unitaire, lui, était dans
     # un seul repère et passait). Sur BW2635 : 25,25 m² de pincement, 2,25 m au droit de 13 places.
-    pince = _pincement_allee(allees, places, conv.allee_largeur_m)
-    larg_ok = pince < 1.0
+    pince = _pincement_allee(allees, places, conv.allee_largeur_m, acces)
+    larg_ok = pince < _DEGAGEMENT_SEUIL_M2
     checks.append(CheckGeo(f"dégagement d'allée ≥ {conv.allee_largeur_m} m au droit des places (mesuré localement)",
                            larg_ok, "" if larg_ok else f"{pince:.1f} m² de dégagement sous la largeur requise"))
 
