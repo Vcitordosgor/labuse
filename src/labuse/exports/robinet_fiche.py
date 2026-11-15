@@ -500,7 +500,12 @@ def _c_potentiel(db, idu, f):
         # fiche servie (aucune nouvelle donnée de registre).
         lb = f.get("le_bien") or {}
         bati = bool((lb.get("nb_batiments") or 0) or (lb.get("emprise_batie_m2") or 0))
-        copro = bool((f.get("score_v2") or {}).get("copro") or f.get("coproprietes"))
+        # CHIRURGICAL-FIX-1 (LOT I 3a) — « démolition peu réaliste en copropriété » ne vaut que si la
+        # parcelle EST en copropriété : on ne compte QUE les copros SUR la parcelle (rattachement
+        # cadastre/géocode), pas les voisines « proche_20m ». BW2635 (au 2 rue d'Allemagne) n'a que les
+        # copros des 4 et 6 en voisinage → plus de « peu réaliste en copropriété ». `score_v2.copro`
+        # n'est pas fiable (il était vrai sur ces voisines), on ne s'y fie plus.
+        copro = any(c.get("rattachement") != "proche_20m" for c in (f.get("coproprietes") or []))
         if est not in (None, "") or scn is not None:
             pt = {**pt, "surface_a_retenir": surface_a_retenir(est, scn, bati=bati, copropriete=copro)}
     return _nz(pt)

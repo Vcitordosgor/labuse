@@ -183,17 +183,21 @@ def _est_non_dispo(phrase: str) -> bool:
     return any(m in p for m in _MARQUEURS_NON_DISPO)
 
 
-def _absence_une_raison(phrase: str, zone, *, gabarit_bloque: bool = False) -> str:
+def _absence_une_raison(phrase: str, zone, *, gabarit_bloque: bool = False,
+                        bati_connu: bool = False) -> str:
     # EXPORTS-FIX-1 C6 / BIS point 11 — jamais « A ou B » : on tranche selon le contexte réel.
     #  · « (zone non constructible ou X) » → selon la zone (A/N → non constructible) ;
-    #  · « (hauteur de règle ou bâti non déterminés) » → si le gabarit est bloqué, c'est la hauteur
-    #    de règle (pas le bâti) ; sinon on garde le bâti.
+    #  · « (hauteur de règle ou bâti non déterminés) » → si le gabarit est bloqué, c'est la hauteur de
+    #    règle ; CHIRURGICAL-FIX-1 (LOT I 3b) : si l'EMPRISE BÂTIE est connue (le Dossier donne p. ex.
+    #    128 m² bâtis sur IS0448), le bâti N'EST PAS « non déterminé » — c'est sa HAUTEUR qui n'est pas
+    #    mesurée (ni LiDAR à l'égout, ni faîtage BD TOPO exploitable) ; sinon on garde « bâti non déterminé ».
     non_constructible = str(zone or "").upper() in ("A", "N")
     p = _re.sub(r"\(zone non constructible ou ([^)]+)\)",
                 lambda m: "(zone non constructible)" if non_constructible else f"({m.group(1)})",
                 str(phrase))
-    p = _re.sub(r"\(hauteur de règle ou bâti non déterminés\)",
-                "(hauteur de règle non déterminée)" if gabarit_bloque else "(bâti non déterminé)", p)
+    _bati = ("hauteur de règle non déterminée" if gabarit_bloque
+             else "hauteur du bâti non mesurée" if bati_connu else "bâti non déterminé")
+    p = _re.sub(r"\(hauteur de règle ou bâti non déterminés\)", f"({_bati})", p)
     return p
 
 
@@ -1678,6 +1682,7 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
             # jamais « A ou B » (résolu selon la zone).
             _zone = _v(valeurs, "zone_plu_famille")
             _gab_bloque = valeurs.get("gabarit_motif_blocage") is not None
+            _bati_connu = bool(_v(valeurs, "emprise_batie_m2"))   # LOT I 3b — bâti mesuré ≠ « non déterminé »
             # EXPORTS-FIX-1-BIS point 2 — quand une SDP RÉSIDUELLE est servie (droits à bâtir non
             # consommés), aucune ligne ne doit la contredire : on retire « surface de plancher non
             # calculable (capacité nulle) » et on dit la vraie raison de la capacité (pas « capacité nulle »).
@@ -1724,7 +1729,8 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                           "revendables, distincte de la surface de plancher ESTIMÉE (la SDP ci-dessus, "
                           "hors stationnement et pleine terre). Le programme relève de l'Étude de "
                           "faisabilité.")
-                phc = _absence_une_raison(_absence_clair(q, ph), _zone, gabarit_bloque=_gab_bloque)
+                phc = _absence_une_raison(_absence_clair(q, ph), _zone, gabarit_bloque=_gab_bloque,
+                                          bati_connu=_bati_connu)
                 li = f'<li data-quoi="{esc(q)}">{esc(phc)}</li>'
                 (nondispo if _est_non_dispo(phc) else verifie).append(li)
             if verifie:

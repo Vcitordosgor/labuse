@@ -87,6 +87,30 @@ def test_1b_cout_negatif_refuse_a_la_saisie():
         SaisieIn(assiette_valeur=-5.0)
 
 
+def test_3a_copro_voisine_pas_peu_realiste():
+    """3a — « démolition peu réaliste en copropriété » ne vaut que si la parcelle EST en copropriété
+    (copro sur la parcelle), pas si la copro est seulement voisine (proche_20m — BW2635)."""
+    from labuse.faisabilite.surface_retenue import _amorce
+    assert "peu réaliste" not in _amorce(True, False)      # bâti, pas de copro sur la parcelle
+    assert "peu réaliste" in _amorce(True, True)           # bâti + copro sur la parcelle
+    # le drapeau copro ne compte QUE les copros non « proche_20m »
+    voisines = [{"rattachement": "proche_20m"}, {"rattachement": "proche_20m"}]
+    assert any(c.get("rattachement") != "proche_20m" for c in voisines) is False
+
+
+def test_3b_bati_connu_pas_bati_non_determine():
+    """3b — quand l'emprise bâtie est connue (IS0448 : 128 m²), l'absence de marge de hauteur n'est pas
+    « bâti non déterminé » mais « hauteur du bâti non mesurée »."""
+    from labuse.exports.miroir import _absence_une_raison
+    ph = "Marge de surélévation non calculable (hauteur de règle ou bâti non déterminés)."
+    assert "hauteur du bâti non mesurée" in _absence_une_raison(ph, "U", bati_connu=True)
+    assert "bâti non déterminé" not in _absence_une_raison(ph, "U", bati_connu=True)
+    # bâti inconnu → on garde « bâti non déterminé »
+    assert "bâti non déterminé" in _absence_une_raison(ph, "U", bati_connu=False)
+    # gabarit bloqué → c'est la hauteur de règle
+    assert "hauteur de règle non déterminée" in _absence_une_raison(ph, "U", gabarit_bloque=True, bati_connu=True)
+
+
 def test_pt2_zone_rouge_exclue_de_l_implantation_pas_vigilance_forte():
     """pt2 — la zone rouge marginale est dite INCONSTRUCTIBLE (exclue de l'implantation), prescriptions
     réservées à la zone bleue — plus « vigilance forte ; pas d'exclusion automatique ». La normalisation
