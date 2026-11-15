@@ -57,5 +57,12 @@ La session « docs » touche Apporteur, Estimer, Dossier. Mes changements les pl
 - **`api/documents.py`** (E2 Apporteur `_exiger_nom_du_compte` → 422 ; E107 `_gabarit_refus_pdf` sépare « inconstructible » de « incalculable »). Isolé du contenu Apporteur (date PLU).
 - **`api/pdf_premium.py`** (E100 `_periode_lisible`) : helper ajouté + 1 ligne d'usage.
 
-## Reste à faire
-- **LOT H** (contre-audit documents, points 1–9 ; le point 10 est fait ci-dessus). Même branche.
+## LOT H — contre-audit documents (état : investigué, à exécuter en passe dédiée)
+Le **point 10** (fiche « PLU constructible » vs « habitat interdit ») est **fait** (ci-dessus, `a84d0d0fa`).
+Les **points 1–9** touchent la génération des documents (Bilan Excel/PDF, Apporteur, Pré-dossier, Comparatif, Dossier, Estimer). J'ai produit la **carte du code** complète (fichier:ligne + correctif par point) : `LOT-H-carte-code.md`.
+
+**Pourquoi une passe dédiée** : la régénération des documents est sensible (pièges confirmés cette session) et le mandat exige une **preuve citée depuis le fichier régénéré** par point. Deux obstacles rencontrés :
+1. **Processus API fantômes** : plusieurs uvicorn sur `:7460` survivaient aux relances (nohup détaché) et resservaient du code périmé → régénération trompeuse. (Remède : `kill -9` par `lsof -ti tcp:7460` AVANT relance, lancer via background harnais, et vérifier `etime`/PID.)
+2. **Point 6 (marge de hauteur)** : la seule définition du libellé « Marge de surélévation (au faîtage) » est `registre/donnees.py` (vérifié par grep exhaustif). Je l'ai corrigé en « (sous la règle de hauteur) » et **vérifié en process** (`DONNEES['marge_surelevation_m'].libelle` = nouveau libellé), MAIS le Dossier régénéré affichait toujours l'ancien libellé — une **seconde source de rendu** du libellé reste à localiser (archive/miroir) avant de pouvoir prouver la correction. Changement **reverté** pour ne pas laisser un correctif non prouvé sur une donnée lue partout.
+
+**À exécuter (par ordre de gravité, voir la carte)** : 1 Bilan Excel 100 % marge coûts vides (+ taxe sans assiette dans le PDF) ; 2 Apporteur mêmes alertes que la fiche + ICPE ; 3 Pré-dossier PCMI4 IS0448 PPR ; 4 Comparatif bâti 27 vs 13 % + proprio ; 5 copropriété voisine « à proximité » ; 6 marges hauteur nommées (source libellé à localiser) ; 7 Estimer « assiette constructible » AM0838 ; 8 perméable ≠ pleine terre ; 9 stationnement non réglementé. À LISTER seulement : Étude de zone (revenu/niveau de vie), ventes double Estimer BW2635. Fichiers partagés `fix/chirurgical-docs` (Apporteur/Estimer/Dossier) : changement minimal + listé.
