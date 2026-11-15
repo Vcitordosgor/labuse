@@ -849,6 +849,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # restent calculées sur le dessin ; seules leurs AIRES scalaires sont ré-échelonnées ici.
     k_cont = ctx.terrain_sur_dessin
     implantation_mentions: list = []   # MOTEUR-VERITE-FIX-1 (LOT 2) — rempli par le chemin gabarit
+    ppr_rouge_pct = None               # MOTEUR-VERITE-FIX-1 (LOT 3, V6) — part rouge mesurée (vidage)
     if gab is not None:
         gbuild, gres = gab
         emprise_brute = float(gres.zoneImplantationM2 or 0.0)
@@ -914,12 +915,26 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         greve_a = greve_tot          # déduction NETTE réellement retranchée (extras)
         # MOTEUR-VERITE-FIX-1 (LOT 2) — mentions d'implantation en limite (conditions non modélisées).
         implantation_mentions = list((racc.get("implantation") or {}).get("mentions") or [])
+        # MOTEUR-VERITE-FIX-1 (LOT 3, V6) — le PPR rouge n'est accusé du vidage QUE s'il est DOMINANT
+        # (≥ 50 % de la parcelle, mesuré). Une touche rouge de 9 % sur une assiette vidée par les ER et
+        # les reculs disait « Parcelle couverte par le PPR en zone rouge » (faux : la part rouge est
+        # DÉJÀ découpée, le reste est mangé par d'autres contraintes) — VERITE-TERRAIN-3, AD0863.
+        ppr_rouge_pct = None
+        if ppr_rouge and emprise < SEUIL_EXIGU_M2:
+            try:
+                with session.begin_nested():
+                    _rr = session.execute(_HORS_PPR_ROUGE, {"pid": parcel_id}).first()
+                if _rr is not None and _rr.parcelle_m2 and float(_rr.parcelle_m2) > 0:
+                    ppr_rouge_pct = round(100.0 * float(_rr.rouge_m2 or 0.0) / float(_rr.parcelle_m2))
+            except Exception:  # noqa: BLE001 — géométrie pathologique : attribution par défaut
+                ppr_rouge_pct = None
+        _rouge_dominant = ppr_rouge_pct is not None and ppr_rouge_pct >= 50
         # RECETTE-1 A1 — raison réelle du vidage (message « trop exigu » ciblé, pas « reculs » partout).
         vide_raison = None
         if emprise < SEUIL_EXIGU_M2:
             if hors_rouge_vide:
                 vide_raison = hors_rouge_vide     # garde-fou PPR-PARTIEL-A : partie hors rouge inexploitable
-            elif ppr_rouge:
+            elif ppr_rouge and _rouge_dominant:
                 vide_raison = "ppr_rouge"
             elif emprise_brute >= SEUIL_EXIGU_M2 and greve_tot >= 0.9 * emprise_brute:
                 vide_raison = ("emplacement_reserve" if er_a >= max(ebc_a, greve_cert)
@@ -1103,7 +1118,8 @@ def parcel_faisabilite(session: Session, parcel_id: int,
               "mixite": bool(eco.get("mixite")),
               "assiette_source": assiette_source,
               "assiette_vide": vide_raison,   # RECETTE-1 A1 — raison du vidage (message ciblé)
-              "implantation_mentions": implantation_mentions}   # LOT 2 — mentions limite/conditions
+              "implantation_mentions": implantation_mentions,   # LOT 2 — mentions limite/conditions
+              "ppr_rouge_pct": ppr_rouge_pct}   # LOT 3 (V6) — part rouge mesurée (message du vidage)
     # MOTEUR-VERITE-FIX-1 (LOT 1) — recul séparatif en formule H/n : le moteur gabarit a RETENU le
     # scénario (niveaux, recul) qui maximise le plancher, H = égout du bâtiment envisagé. L'assiette
     # ci-dessus est déjà celle du scénario ; on lie AUSSI le nombre de niveaux de la capacité (sinon

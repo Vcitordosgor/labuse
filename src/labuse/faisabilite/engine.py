@@ -284,8 +284,12 @@ def _rng(lo: float, hi: float) -> tuple[int, int]:
 # RECETTE-1 A1 — verdict d'assiette vide, par RAISON réelle (plus de « compte tenu des reculs »
 # générique). Même fourchette (0) dans tous les cas : ce qui change, c'est QUI vide l'assiette.
 _ASSIETTE_VIDE_LIB = {
-    "ppr_rouge": ("Parcelle couverte par le PPR en zone rouge (inconstructible) — aucune emprise "
-                  "constructible, non constructible en l'état.", "0 m² (PPR zone rouge)"),
+    # MOTEUR-VERITE-FIX-1 (LOT 3, V6) — cette raison n'est posée QUE si le rouge est DOMINANT
+    # (≥ 50 % mesuré, cf. db.py) : seule la part rouge est retirée, le message le dit — plus
+    # jamais « couverte par le PPR » sur une touche de 9 % (le % mesuré est ajouté au verdict).
+    "ppr_rouge": ("Majoritairement en zone rouge du PPR — la part rouge est retirée de l'assiette "
+                  "et le reste ne porte aucune emprise exploitable. Non constructible en l'état.",
+                  "0 m² (part rouge du PPR retirée)"),
     "emplacement_reserve": ("Emplacement réservé couvrant la parcelle — l'emprise constructible "
                             "résiduelle est nulle (terrain réservé à un projet public).",
                             "0 m² (emplacement réservé)"),
@@ -579,6 +583,11 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                             {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
                             cause="assiette_a_verifier")
             verdict, step_val = _verdict_assiette_vide(raison, recul_used)
+            # LOT 3 (V6) — le % rouge MESURÉ entre dans le verdict quand le rouge est la raison.
+            if raison == "ppr_rouge" and extras.get("ppr_rouge_pct"):
+                verdict = (f"En zone rouge du PPR sur ~{extras['ppr_rouge_pct']} % de la parcelle — "
+                           "la part rouge est retirée de l'assiette et le reste ne porte aucune "
+                           "emprise exploitable. Non constructible en l'état.")
             steps.append(Step(_step1_label, _step1_formule, step_val,
                               _step1_source if _asrc == "gabarit" else f"{rl_src}",
                               prov=_step1_prov))
@@ -874,14 +883,15 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         facteur = min(facteur, f)
         modul.append(f"Aléa {c.alea_ppr} (PPR) → prescriptions, capacité réduite (~×{f:g}).")
     if c.littoral_pct and c.littoral_pct > 0.005:
-        # PPR-UNIQUE-1 (E-006) — seule la PART réellement dans la bande littorale est retirée
-        # (plus d'annulation de toute la parcelle par un simple contact de 12 %). Le facteur est
-        # plafonné à la part HORS bande ; la parcelle entièrement dans la bande reste inconstructible.
-        f = max(0.0, 1.0 - c.littoral_pct)
-        facteur = min(facteur, f)
+        # MOTEUR-VERITE-FIX-1 (LOT 3, V7) — la couche `trait_de_cote` (bandes courte/longue) est une
+        # PROJECTION d'érosion (recul prospectif du trait de côte), PAS une servitude d'interdiction :
+        # une maison réelle y a été autorisée et ACHEVÉE (97410000BX0750, DAACT 17/07/2025) alors que
+        # le facteur 0 la disait « rédhibitoire ». ALERTE « à vérifier », aucune surface retirée —
+        # ni facteur (l'ancien ×(1−part) allait jusqu'au 0 total à 100 %).
         pct = round(c.littoral_pct * 100)
-        modul.append(f"Trait de côte / bande littorale sur ~{pct} % de la parcelle → seule la part "
-                     f"dans la bande est retirée (capacité ~×{f:.2f}).")
+        avert.append(f"Recul prospectif du trait de côte sur ~{pct} % de la parcelle — projection "
+                     "d'érosion (bande courte/longue), pas une interdiction réglementaire : "
+                     "constructibilité à vérifier auprès des services de l'État.")
     if c.pente_pct is not None:
         if c.pente_pct >= 30:
             facteur = min(facteur, 0.4)

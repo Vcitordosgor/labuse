@@ -165,3 +165,44 @@ suite unitaire verte (389 tests gabarit/faisabilité/zonage + 4 gardes neuves
 
 Conformément au mandat, ARRÊT après le LOT 2 : les lots 3 (exclusions trop dures) et 4 (règles
 mal lues) attendent la validation de ces mesures et des interprétations ci-dessus.
+
+---
+
+## LOT 3 — les exclusions trop dures (V4, V6, V7, V8, V9, V10)
+
+**Ce qui change** :
+- **V6 (PPR rouge partiel)** : la part rouge était DÉJÀ découpée par le moteur — l'erreur était
+  double : (a) le MESSAGE accusait le PPR en entier (« Parcelle couverte par le PPR en zone
+  rouge ») même à 9 % de rouge quand l'assiette était en réalité vidée par les emplacements
+  réservés et les reculs (AD0863 : Uc 80 %, ER 179 m²) ; (b) la raison « ppr_rouge » était posée
+  dès que le rouge touchait. Désormais la raison n'est posée que si le rouge est DOMINANT
+  (≥ 50 % MESURÉ, requête `_HORS_PPR_ROUGE`) et le verdict porte le % ; sinon l'attribution va
+  aux vrais consommateurs (ER/EBC/contraintes/reculs). POURQUOI la dérogation PPR-PARTIEL n'a
+  pas joué sur AD0863 : `verdict_ppr_partiel` exige que le reste hors rouge soit RÉELLEMENT
+  constructible au moteur — il ne l'est pas (ER + reculs), le refus de dérogation était correct ;
+  seul le message mentait. Témoin : AD0863 dit maintenant « Emplacement réservé couvrant la
+  parcelle ».
+- **V7 (trait de côte prospectif)** : la couche `trait_de_cote` (bandes courte/longue) est une
+  PROJECTION d'érosion — le facteur ×(1−part) (jusqu'au 0 « rédhibitoire » à 100 %) devient une
+  ALERTE « à vérifier auprès des services de l'État », aucune surface retirée. Témoin BX0750
+  (Ua Saint-Benoît, maison ACHEVÉE, DAACT 17/07/2025) : 0 → 468 m².
+- **V8 (SUP AC2)** : sortie de la déduction (gabarit/builder) — régime d'AVIS de l'ABF, pas une
+  interdiction ; une ALERTE sourcée la signale (« Site protégé (AC2) — avis ABF requis, aucune
+  surface retirée »). Témoin CY1293 (83 % retirés avant) : 73 m² servis.
+- **V4/V9 (ignorances)** : le gate du potentiel (`potentiel_batir`, Python ET jumeau SQL
+  `_sql_gate`/`sql_sdp_restante`/`sql_a_construire`/`est_ferme_parcel`) ne ferme plus sur une
+  cause d'IGNORANCE — « Analyse incomplète — <cause> », SDP ∅ (jamais le 0 stocké pollué).
+  Impact servi MESURÉ : **16 272 parcelles** requalifiées (zone_non_resolue 10 397, hors_plu
+  4 255, surface_incertaine 1 586, hauteur_indispo 34). Témoin DE2186 (trou de couche à 23 m
+  d'une zone UC) : « Analyse incomplète — parcelle hors du PLU outillé ».
+- **V10 (AU « générique »)** : l'AU différée sert UN SEUL verdict cohérent avec la surface
+  stockée — « Potentiel différé — ouverture de la zone requise · ≈ N m² après ouverture »
+  (**1 238 parcelles** avec SDP > 0 concernées). Test adapté (`test_au_non_ouverte_ferme`).
+
+**Mesures après LOT 3** (cumulatif) : Test 1 **4 643/4 812 (96,5 %)** · Test 2 dépassements
+**100/4 077 (2,5 %)** — ne monte pas · terrain_exigu **275** · cohorte au-dessus **2 485
+(37,6 %)**, non-constructible **205**.
+
+**Contrôle inverse** : 123 hausses ; top 30 = celles des lots 1-2 (déjà relues) + **BX0750
+0→468 m²** (V7, permis réel achevé — relu, reproduit) ; AC2 CY1293 +73 m² (hors top 30, relu).
+**Garde A/N : 0** nouvelle constructibilité. Rubans : suite verte (406 tests).

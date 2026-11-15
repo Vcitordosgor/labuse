@@ -507,11 +507,16 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     # zone rouge », plus HARD_EXCLUDE) — une seule géométrie, deux lecteurs, plus d'incohérence. Les
     # garde-fous (tenant / surface / accès voie / emprise) décident si ce > 0 est servi ou ramené à 0
     # AVEC MOTIF (jamais un 0 muet). Les autres SUP (ac1..el10, pm2/pm3) restent des exclusions réelles.
+    # MOTEUR-VERITE-FIX-1 (LOT 3, V8) — la SUP `ac2` (sites inscrits/classés) est un régime d'AVIS
+    # de l'architecte des Bâtiments de France, PAS une interdiction de construire : elle retirait
+    # 83 % d'une parcelle réelle (97413000CY1293, « LA POINTE AU SEL ») alors qu'on y construit sous
+    # avis. Elle sort de la déduction ; une ALERTE la signale (règle vérifiée, surface intacte).
     sup_gj = session.execute(text(
         "SELECT ST_AsGeoJSON(ST_CollectionExtract(ST_Transform(ST_Intersection("
         "  ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))), p.geom_2975), 4326), 3)) "
         "FROM spatial_layers sl, parcels p WHERE p.id = :pid AND sl.kind = 'sup' "
         "AND sl.subtype <> 'pm1' "          # enveloppe PPR : JAMAIS re-soustraite (rouge seul déjà déduit)
+        "AND sl.subtype <> 'ac2' "          # LOT 3 (V8) : avis ABF, jamais une surface retirée
         "AND sl.commune = p.commune "
         "AND ST_Intersects(sl.geom_2975, p.geom_2975) GROUP BY p.geom_2975"
     ), {"pid": pid}).first()
@@ -520,6 +525,18 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         exclusions.append(Exclusion(id="sup", ruleId="SUP", type="sup",
                                     label="Servitude d'utilité publique déduite",
                                     geometry=json.loads(sup_gj[0]), source=sup_src))
+    _ac2 = session.execute(text(
+        "SELECT COALESCE(sl.attrs->>'libelle', sl.name) FROM spatial_layers sl, parcels p "
+        "WHERE p.id = :pid AND sl.kind = 'sup' AND sl.subtype = 'ac2' AND sl.commune = p.commune "
+        "AND ST_Intersects(sl.geom_2975, p.geom_2975) LIMIT 1"), {"pid": pid}).first()
+    if _ac2:
+        applicable.append(ApplicableRule(
+            id="sup-ac2", label="Site protégé (AC2)", category="exclusion",
+            integrationStatus="integrated",
+            detail=(f"Servitude AC2 « {(_ac2[0] or 'site').strip()} » : avis de l'architecte des "
+                    "Bâtiments de France requis — aucune surface retirée (régime d'avis, pas une "
+                    "interdiction)."), source=sup_src))
+        racc.setdefault("alertes", []).append("AC2 — avis ABF requis (aucune surface retirée)")
     # RECETTE-OUTILS-2 (R17) — les SUP sont TOUJOURS contrôlées (la requête ci-dessus tranche présence
     # vs absence) : une absence VÉRIFIÉE est « intégrée » (vérifiée), pas « non modélisée ». Avant, le
     # PDF/outil marquait les SUP « non modélisées » tout en écrivant « Aucune SUP sur la parcelle » —

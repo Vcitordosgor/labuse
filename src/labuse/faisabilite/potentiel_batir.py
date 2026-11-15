@@ -45,6 +45,22 @@ from .constructibilite import DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE
 #: labels de constructibilité qui FERMENT (déclassement A « zone fermée » / B « non constructible »).
 _CONSTR_FERME = (DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE)
 
+#: MOTEUR-VERITE-FIX-1 (LOT 3, V4/V9) — seules les causes CERTAINES ferment le gate. Une cause
+#: d'IGNORANCE (assiette_a_verifier, hors_plu, zone_non_resolue, indetermine, bati_non_ingere…)
+#: donne « Analyse incomplète », JAMAIS « rien à bâtir ». Même partition que
+#: `faisabilite.engine.cause_certaine` (source unique, importée pour le jumeau SQL).
+from .engine import _CAUSES_CERTAINES, cause_certaine, cause_libelle  # noqa: E402
+
+_SQL_CAUSE_CERTAINE = ("split_part({r}.cause, ':', 1) IN ("
+                       + ", ".join(f"'{c}'" for c in sorted(_CAUSES_CERTAINES)) + ")")
+
+
+def sql_analyse_incomplete(r_alias: str = "r") -> str:
+    """Expression SQL : TRUE si la parcelle porte une cause d'IGNORANCE (analyse incomplète) —
+    le complément du gate, à servir « ∅ » (jamais un 0 ni un « rien à bâtir »)."""
+    return (f"({r_alias}.cause IS NOT NULL AND NOT "
+            + _SQL_CAUSE_CERTAINE.format(r=r_alias) + ")")
+
 #: valeur « rien à lire » (parcelle hors run / sans donnée résiduelle) — un dict, jamais None.
 POTENTIEL_ABSENT = {
     "sdp_restante_m2": None, "zone_ouverte": None, "zone_fam": None, "zone_lib": None,
@@ -55,9 +71,10 @@ POTENTIEL_ABSENT = {
 
 def _sql_gate(r_alias: str = "r", pc_alias: str = "pc", au_alias: str = "au") -> str:
     """Fragment SQL booléen « la zone est fermée / rien à servir » — LA définition unique du gate,
-    réutilisée par les listes et la carte (mêmes alias de jointure à fournir). NULL-safe."""
+    réutilisée par les listes et la carte (mêmes alias de jointure à fournir). NULL-safe.
+    LOT 3 (V4/V9) : une cause d'IGNORANCE ne ferme pas (→ « Analyse incomplète »)."""
     return (
-        f"({r_alias}.cause IS NOT NULL"
+        f"(({r_alias}.cause IS NOT NULL AND " + _SQL_CAUSE_CERTAINE.format(r=r_alias) + ")"
         f" OR COALESCE({pc_alias}.label IN ('{DECLASSE_ZONE_FERMEE}', '{DECLASSE_NON_CONSTRUCTIBLE}'), false)"
         f" OR COALESCE({au_alias}.classe IN (" + ", ".join(f"'{c}'" for c in sorted(AU_CLASSES_DIFFEREES))
         + f"), false))")
@@ -82,15 +99,20 @@ def sql_zone_fermee_verdict(pc_alias: str = "pc", au_alias: str = "au") -> str:
 
 
 def sql_sdp_restante(r_alias: str = "r", pc_alias: str = "pc", au_alias: str = "au") -> str:
-    """Expression SQL : SDP restante SERVIE (0 si zone fermée), même règle que la lecture Python."""
+    """Expression SQL : SDP restante SERVIE (0 si zone fermée), même règle que la lecture Python.
+    LOT 3 (V4/V9) : une cause d'IGNORANCE sert NULL (SDP ∅ « à vérifier »), jamais le 0 stocké
+    pollué ni un faux chiffre."""
     return (f"CASE WHEN {_sql_gate(r_alias, pc_alias, au_alias)} THEN 0 "
+            f"WHEN {sql_analyse_incomplete(r_alias)} THEN NULL "
             f"ELSE COALESCE({r_alias}.sdp_residuelle_m2, 0) END")
 
 
 def sql_a_construire(r_alias: str = "r", pc_alias: str = "pc", au_alias: str = "au") -> str:
     """Expression SQL : TRUE si la parcelle a RÉELLEMENT quelque chose à bâtir (zone ouverte ET
-    SDP restante > 0) — le prédicat du tri « À construire ». Même règle que `rien_a_batir`."""
+    SDP restante > 0) — le prédicat du tri « À construire ». Même règle que `rien_a_batir`.
+    LOT 3 : une analyse incomplète n'est JAMAIS « à construire » (on ne sait pas)."""
     return (f"(NOT {_sql_gate(r_alias, pc_alias, au_alias)} "
+            f"AND NOT {sql_analyse_incomplete(r_alias)} "
             f"AND COALESCE({r_alias}.sdp_residuelle_m2, 0) > 0)")
 
 
@@ -126,11 +148,31 @@ def _assemble(sdp_raw, cause, constr_label, au_classe, zone_fam, zone_lib) -> di
         return dict(POTENTIEL_ABSENT)
     constr_ferme = constr_label in _CONSTR_FERME
     au_differe = au_classe in AU_CLASSES_DIFFEREES
-    gate_ferme = (cause is not None) or constr_ferme or au_differe
+    # MOTEUR-VERITE-FIX-1 (LOT 3, V4/V9) — seule une cause CERTAINE ferme ; une IGNORANCE donne
+    # « Analyse incomplète » avec sa cause (SDP ∅, jamais le 0 stocké), jamais « rien à bâtir ».
+    cause_ferme = cause is not None and cause_certaine(cause)
+    ignorance = cause is not None and not cause_certaine(cause) and not constr_ferme and not au_differe
+    gate_ferme = cause_ferme or constr_ferme or au_differe
+
+    if ignorance:
+        lib_cause = cause_libelle(cause) or str(cause)
+        lib = lib_cause if lib_cause.startswith("Analyse incomplète") else f"Analyse incomplète — {lib_cause}"
+        return {
+            "sdp_restante_m2": None,
+            "zone_ouverte": None, "zone_fam": zone_fam, "zone_lib": zone_lib,
+            "constructible": None, "rien_a_batir": None,
+            "motif": lib,
+            "libelle": lib,
+        }
 
     sdp_restante = 0 if gate_ferme else (int(round(sdp_raw)) if sdp_raw is not None else None)
+    # MOTEUR-VERITE-FIX-1 (LOT 3, V10) — AU DIFFÉRÉE : un seul verdict, cohérent avec la surface
+    # servie. La capacité stockée est PRÉSENTÉE « après ouverture » (doctrine CHASSE-FIX-1/C06 :
+    # différée, pas exclue) — fini l'écran qui montre 168 m² quand le gate dit « rien à bâtir ».
+    if au_differe and not constr_ferme and not cause_ferme and sdp_raw is not None and sdp_raw > 0:
+        sdp_restante = int(round(sdp_raw))
     zone_ouverte = not gate_ferme
-    constructible = not (constr_ferme or (cause is not None) or au_differe)
+    constructible = not (constr_ferme or cause_ferme or au_differe)
     rien_a_batir = gate_ferme or (sdp_restante is not None and sdp_restante <= 0)
 
     # motif : POURQUOI il n'y a rien, None si constructible.
@@ -170,7 +212,11 @@ def _assemble(sdp_raw, cause, constr_label, au_classe, zone_fam, zone_lib) -> di
             motif = "Pas de potentiel constructible résiduel"
 
     # libellé de synthèse (une ligne, servi tel quel partout).
-    if gate_ferme:
+    if au_differe and not constr_ferme and not cause_ferme and (sdp_restante or 0) > 0:
+        # LOT 3 (V10) — différé AVEC sa surface : le même chiffre que l'écran, une seule histoire.
+        from .au_differe import libelle_differe
+        libelle = libelle_differe(sdp_restante)
+    elif gate_ferme:
         libelle = f"Rien à bâtir — {motif}" if motif else "Rien à bâtir"
     elif sdp_restante is None:
         libelle = "Potentiel à bâtir non calculé"
@@ -289,7 +335,8 @@ def est_ferme_parcel(db: Session, parcel_id: int) -> bool:
         return False
     if not row:
         return False
-    ferme = (row["resid_cause"] is not None
+    # LOT 3 (V4/V9) — même partition que le gate : une cause d'IGNORANCE ne ferme pas.
+    ferme = (cause_certaine(row["resid_cause"])
              or row["constr_label"] in _CONSTR_FERME
              or row["au_classe"] in AU_CLASSES_DIFFEREES)
     # PPR-PARTIEL (DOCS-1) — une parcelle fermée par sa SEULE cause résiduelle en zone constructible,
