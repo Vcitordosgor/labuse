@@ -176,7 +176,11 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
     # ETUDE-STATIONNEMENT-FIX-2 (LOT 3) — largeur du DÉGAGEMENT devant les places mesurée LOCALEMENT, pas sur
     # la boîte englobante : une allée clippée à un bord oblique peut pincer à 2,25 m au droit des places tout en
     # ayant une boîte de 5 m (cas BW2635 : 13 places à 2,25 m « validées » à tort). On mesure le pincement réel.
-    pince = _pincement_allee([o.geom_local for o in scene.of("allee")], places, conv.allee_largeur_m)
+    # ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — les DEUX géométries DANS LE MÊME REPÈRE : `allees` et `places` sont
+    # ici en coordonnées PROJETÉES (geom_world) ; l'ancien code passait l'allée en geom_local → intersection
+    # avec les places (geom_world) vide → pincement toujours 0 en production (le test unitaire, lui, était dans
+    # un seul repère et passait). Sur BW2635 : 25,25 m² de pincement, 2,25 m au droit de 13 places.
+    pince = _pincement_allee(allees, places, conv.allee_largeur_m)
     larg_ok = pince < 1.0
     checks.append(CheckGeo(f"dégagement d'allée ≥ {conv.allee_largeur_m} m au droit des places (mesuré localement)",
                            larg_ok, "" if larg_ok else f"{pince:.1f} m² de dégagement sous la largeur requise"))

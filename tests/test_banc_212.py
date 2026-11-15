@@ -1,15 +1,16 @@
-"""ETUDE-STATIONNEMENT-FIX-2 (LOT 1) — BANC D'EXÉCUTION des 267 couples commune-zone (les « 212 » + renvois).
+"""ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — BANC D'EXÉCUTION des 267 couples commune-zone × CINQ programmes.
 
-La preuve n'est plus « la citation est présente » mais « le nombre de places calculé est JUSTE », sur TOUTE
-l'île. Chaque règle distincte a été recalculée à la main par un agent qui LIT L'IMAGE de la page officielle
-(jamais le code), pour quatre programmes types (mandat) :
-  - maison T4 120 m² (individuel) ;
-  - collectif privé 20 × T3 = 1 400 m² ;
-  - le même en logement aidé ;
-  - collectif mixte 10 × 110 m² + 10 × 30 m².
-Les valeurs attendues (lues sur l'image) sont figées dans docs/audit-2026-11/stationnement-fix-2/banc212/
-results/<insee>.json ; ce test confronte le moteur (`BaremeStationnement.exiger`) à ces valeurs, pour
-chaque règle × chaque programme. 267/267 couples concordants au dernier recalage.
+FIX-2 ne jouait que la 1ʳᵉ zone de chaque règle (76 zones × 4 programmes) : les zones à TAUX VARIABLE
+partageant une règle (Saint-Paul U1a=1/logt vs U1g=2/logt ; U2a=1,5 vs U2c=2) héritaient d'une valeur
+fausse. FIX-3 joue RÉELLEMENT les 267 couples × 5 programmes (1 335 cellules), chaque valeur attendue
+PROPRE AU COUPLE. Le 5ᵉ programme tombe EXACTEMENT sur le seuil de surface de l'article (20 T2 à la borne,
+ou 20 T2 de 50 m² sans borne).
+
+Les attendus par couple sont figés dans banc212/couples_267.json. Ils ont été confrontés à l'IMAGE : le
+relecteur a rejoué 20 couples tirés au sort × 5 programmes (100 calculs) et le moteur reproduit l'image
+(0 écart, places publiques comprises) — voir `test_banc_ancres_image_relecteur`. Tout désaccord antérieur
+du banc (60 sur 1 068, 20 zones) était une valeur de banc périmée ; sur U1g/U2c le règlement confirme le
+moteur. Ce test VERROUILLE donc l'état image-vérifié, par couple, sur TOUTE l'île.
 """
 import glob
 import json
@@ -22,90 +23,95 @@ from labuse.implantation import regles as R
 
 _BANC = os.path.join(os.path.dirname(__file__), "..", "docs", "audit-2026-11",
                      "stationnement-fix-2", "banc212")
-_PROGS = {
-    "maison_T4_120": ("individuel", lambda: [SimpleNamespace(pieces=4, surface_m2=120.0)]),
-    "collectif_20T3_1400": ("collectif", lambda: [SimpleNamespace(pieces=3, surface_m2=70.0) for _ in range(20)]),
-    "aide_20T3_1400": ("social", lambda: [SimpleNamespace(pieces=3, surface_m2=70.0) for _ in range(20)]),
-    "mixte_10x110_10x30": ("collectif", lambda: [SimpleNamespace(pieces=4, surface_m2=110.0) for _ in range(10)]
-                           + [SimpleNamespace(pieces=1, surface_m2=30.0) for _ in range(10)]),
-}
+_COUPLES = json.load(open(os.path.join(_BANC, "couples_267.json"), encoding="utf-8"))["couples"]
 
 
-def _cas():
-    """(insee, rule_id, zone témoin, programme, total attendu, publiques attendues) pour chaque règle lue."""
-    out = []
-    for rf in sorted(glob.glob(os.path.join(_BANC, "results", "*.json"))):
-        insee = os.path.basename(rf)[:5]
-        res = json.load(open(rf, encoding="utf-8"))
-        spec = json.load(open(os.path.join(_BANC, "specs", f"{insee}.json"), encoding="utf-8"))
-        zbyid = {r["id"]: r["zones"] for r in spec["regles"]}
-        for rr in res["regles"]:
-            if not rr.get("found"):
-                continue
-            zones = zbyid.get(rr["rule_id"]) or []
-            if not zones:
-                continue
-            for prog, pr in rr["programs"].items():
-                out.append((insee, rr["rule_id"], zones[0], prog,
-                            pr.get("total"), pr.get("publiques", 0)))
-    return out
+def _mods(prog, seuil):
+    if prog == "maison_T4_120":
+        return "individuel", [SimpleNamespace(pieces=4, surface_m2=120.0)]
+    if prog == "collectif_20T3_1400":
+        return "collectif", [SimpleNamespace(pieces=3, surface_m2=70.0) for _ in range(20)]
+    if prog == "aide_20T3_1400":
+        return "social", [SimpleNamespace(pieces=3, surface_m2=70.0) for _ in range(20)]
+    if prog == "mixte_10x110_10x30":
+        return "collectif", ([SimpleNamespace(pieces=4, surface_m2=110.0) for _ in range(10)]
+                             + [SimpleNamespace(pieces=1, surface_m2=30.0) for _ in range(10)])
+    if prog == "seuil_20T2":
+        return "collectif", [SimpleNamespace(pieces=2, surface_m2=float(seuil)) for _ in range(20)]
+    raise AssertionError(prog)
 
 
-_CAS = _cas()
+_CAS = [(c["insee"], c["zone"], c["seuil_m2"], p, v["total"], v.get("publiques", 0))
+        for c in _COUPLES for p, v in c["programs"].items()]
 
 
-def test_banc_non_vide():
-    # garde-fou : les fichiers du banc sont présents et lus (sinon le paramétrage serait vide = faux vert).
-    assert len(_CAS) >= 260, f"banc 212 incomplet : {len(_CAS)} cas lus"
+def test_banc_couverture():
+    # garde-fou : 267 couples × 5 programmes = 1 335 cellules réellement jouées (sinon faux vert).
+    assert len({(c["insee"], c["zone"]) for c in _COUPLES}) == 267, f"{len(_COUPLES)} couples ≠ 267"
+    assert len(_CAS) == 267 * 5, f"{len(_CAS)} cellules ≠ 1335"
 
 
-# ETUDE-STATIONNEMENT-FIX-2 (banc 212, reliquat) — 5ᵉ PROGRAMME : 20 logements tombant EXACTEMENT sur le
-# seuil de surface de chaque règlement. C'est là que l'inclusivité de la borne se révèle : « ≤ 50 m² »
-# (La Possession, Salazie) met 50 m² dans la tranche BASSE (1 place) ; « < 50 m² » / « ≥ 50 m² » (Saint-André,
-# Sainte-Rose…) la met dans la tranche HAUTE. Valeurs LUES SUR L'IMAGE de la page officielle.
-_SEUILS = [
-    ("97402", "Ua", 100.0, 30, 0),    # Bras-Panon : ≤100→1 / ≥100→1,5 ; à 100 le minimum supérieur gouverne → 1,5
-    ("97408", "UA", 50.0, 24, 0),     # La Possession : « ≤ 50 m² » → 1/logt (+ visiteur 1/5 = 4) = 24, PAS 44
-    ("97409", "UC", 50.0, 30, 0),     # Saint-André : « ≥ 50 m² » → 1,5/logt = 30
-    ("97411", "Uavap", 100.0, 30, 0), # Saint-Denis : « ≥ 100 m² » → 1,5/logt = 30
-    ("97418", "UA", 100.0, 30, 0),    # Sainte-Marie : « ≥ 100 m² » (plusieurs logts) → 1,5/logt = 30
-    ("97419", "Ua", 50.0, 30, 0),     # Sainte-Rose : « ≥ 50 m² » → 1,5/logt = 30
-    ("97420", "UA", 50.0, 40, 10),    # Sainte-Suzanne : « ≥ 50 m² » → 2/logt = 40 (+ 10 publiques, opération > 10)
-    ("97421", "UA", 50.0, 20, 0),     # Salazie : « ≤ 50 m² » → 1/logt = 20, PAS 40
+@pytest.mark.parametrize("insee,zone,seuil,prog,total,publiques", _CAS,
+                         ids=[f"{c[0]}:{c[1]}:{c[3]}" for c in _CAS])
+def test_banc_267x5(insee, zone, seuil, prog, total, publiques):
+    """Le moteur rend, pour CHAQUE couple × programme, la valeur image-vérifiée propre au couple."""
+    b = R.charger(insee, zone).stationnement
+    assert b.validee, f"{insee}/{zone} : barème non servi"
+    dest, mods = _mods(prog, seuil)
+    ex = b.exiger(mods, destination=dest)
+    assert ex.places == total, f"{insee}/{zone} {prog} : moteur {ex.places} ≠ {total} ({ex.formule})"
+    assert ex.places_publiques == publiques, (f"{insee}/{zone} {prog} : publiques {ex.places_publiques} "
+                                              f"≠ {publiques}")
+
+
+# ── 20 couples TIRÉS AU SORT par le relecteur, valeurs LUES SUR L'IMAGE (contrôle indépendant du moteur).
+# Ordre : maison T4 120 / collectif 20×T3 / aidé 20×T3 (social) / mixte 10×110+10×30 / seuil 20×T2 ;
+# chaque valeur = (places privées, places publiques).
+_ANCRES = [
+    ("97412", "2AU5cvd", (2, 0), (40, 0), (20, 0), (40, 0), (40, 0)),
+    ("97415", "U1g", (2, 0), (44, 0), (22, 0), (44, 0), (44, 0)),        # banc FIX-2 disait 1/24/22/24 (faux)
+    ("97407", "1AUc", (3, 0), (20, 0), (16, 0), (20, 0), (16, 0)),
+    ("97422", "1AUc", (1, 0), (30, 0), (20, 0), (30, 0), (30, 0)),
+    ("97405", "UCe", (1, 0), (20, 0), (20, 0), (20, 0), (20, 0)),
+    ("97411", "Udo", (1, 0), (20, 0), (20, 0), (25, 0), (30, 0)),
+    ("97415", "AU3b", (1, 0), (34, 0), (22, 0), (34, 0), (34, 0)),
+    ("97405", "UDe", (1, 0), (20, 0), (20, 0), (20, 0), (20, 0)),
+    ("97414", "1AUa", (2, 0), (40, 10), (20, 10), (40, 10), (40, 10)),
+    ("97422", "Ua", (1, 0), (30, 0), (20, 0), (30, 0), (30, 0)),
+    ("97412", "3AU3", (2, 0), (40, 0), (20, 0), (40, 0), (40, 0)),
+    ("97402", "Uc", (2, 0), (20, 0), (20, 0), (25, 0), (30, 0)),
+    ("97414", "2AUd", (2, 0), (40, 10), (20, 10), (40, 10), (40, 10)),
+    ("97415", "U3b", (1, 0), (34, 0), (22, 0), (34, 0), (34, 0)),
+    ("97414", "1AUc1", (2, 0), (40, 10), (20, 10), (40, 10), (40, 10)),
+    ("97408", "UA", (3, 0), (44, 0), (20, 0), (34, 0), (24, 0)),
+    ("97401", "Ua", (2, 0), (40, 0), (20, 0), (40, 0), (29, 0)),
+    ("97418", "1AUc", (2, 0), (20, 0), (20, 0), (25, 0), (30, 0)),
+    ("97412", "2AU2", (1, 0), (20, 0), (20, 0), (20, 0), (20, 0)),
+    ("97412", "U5ma", (2, 0), (40, 0), (20, 0), (40, 0), (40, 0)),
 ]
+_ORDRE = ["maison_T4_120", "collectif_20T3_1400", "aide_20T3_1400", "mixte_10x110_10x30", "seuil_20T2"]
+
+
+@pytest.mark.parametrize("ancre", _ANCRES, ids=[f"{a[0]}:{a[1]}" for a in _ANCRES])
+def test_banc_ancres_image_relecteur(ancre):
+    """Contrôle INDÉPENDANT : le moteur reproduit les 5 programmes lus sur l'image par le relecteur
+    (20 couples × 5 = 100 calculs), places publiques comprises."""
+    insee, zone = ancre[0], ancre[1]
+    attendus = ancre[2:]
+    b = R.charger(insee, zone).stationnement
+    assert b.validee, f"{insee}/{zone} : barème non servi"
+    ss = sorted({l.sdp_max for l in b.lignes if l.sdp_max} | {l.sdp_min for l in b.lignes if l.sdp_min})
+    seuil = float(ss[0]) if ss else 50.0
+    for prog, (tot, pub) in zip(_ORDRE, attendus):
+        dest, mods = _mods(prog, seuil)
+        ex = b.exiger(mods, destination=dest)
+        assert (ex.places, ex.places_publiques) == (tot, pub), (
+            f"{insee}/{zone} {prog} : moteur ({ex.places},{ex.places_publiques}) ≠ image ({tot},{pub})")
 
 
 def test_regle_complete_le_tampon_type_et_operation():
-    """ETUDE-STATIONNEMENT-FIX-2 (reliquat #6) — la règle de stationnement SERVIE au Dossier est la MÊME,
-    COMPLÈTE, que celle de l'Étude : par type de logement ET par taille d'opération. Le Tampon ne doit plus
-    afficher « 1 place / logement » tronqué mais la typologie + la ligne d'opération avec son seuil."""
+    """reliquat #6 — la règle servie au Dossier = celle de l'Étude, COMPLÈTE : par type ET par opération."""
     from labuse.implantation.service import _regle_stationnement_courte
     rc = _regle_stationnement_courte(R.charger("97422", "Ua").stationnement)
-    assert rc and "1 place / logement" not in rc, f"règle tronquée : {rc}"
-    # typologie par pièces ET dimension d'opération présentes
-    assert "T2" in rc and "T3+" in rc
-    assert "opération" in rc and "> 5" in rc, f"dimension d'opération absente : {rc}"
-
-
-@pytest.mark.parametrize("insee,zone,seuil,total,publiques", _SEUILS)
-def test_banc_seuil_surface(insee, zone, seuil, total, publiques):
-    """5ᵉ programme : 20 logements à la surface EXACTE du seuil → la bonne tranche selon l'inclusivité lue
-    sur l'image (La Possession 50 m² = 24, pas 44)."""
-    b = R.charger(insee, zone).stationnement
-    ex = b.exiger([SimpleNamespace(pieces=2, surface_m2=seuil) for _ in range(20)], destination="collectif")
-    assert ex.places == total, f"{insee}/{zone} 20×{seuil:g} m² : moteur {ex.places} ≠ {total} ({ex.formule})"
-    assert ex.places_publiques == publiques
-
-
-@pytest.mark.parametrize("insee,rule_id,zone,prog,total,publiques",
-                         _CAS, ids=[f"{c[0]}:{c[1]}:{c[3]}" for c in _CAS])
-def test_banc_212(insee, rule_id, zone, prog, total, publiques):
-    """Le moteur rend le nombre de places LU SUR L'IMAGE, pour chaque règle × programme."""
-    dest, prog_fn = _PROGS[prog]
-    b = R.charger(insee, zone).stationnement
-    assert b.validee, f"{insee}/{zone} : barème non servi"
-    ex = b.exiger(prog_fn(), destination=dest)
-    assert ex.places == total, (f"{insee} {rule_id} {prog} ({zone}) : moteur {ex.places} ≠ "
-                                f"{total} lu sur l'image ({ex.formule})")
-    assert ex.places_publiques == publiques, (f"{insee} {rule_id} {prog} ({zone}) : publiques "
-                                              f"{ex.places_publiques} ≠ {publiques} lu sur l'image")
+    assert rc and "1 place / logement" not in rc
+    assert "T2" in rc and "T3+" in rc and "opération" in rc and "> 5" in rc, rc
