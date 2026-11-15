@@ -43,7 +43,12 @@ zones:
           citation: 'Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces principales d’habitations soit de 8 mètres.'
           statut: valide
         voie:
-          min_m: 4.0
+          min_m: 0.0
+          max_m: 4.0
+          forme: bande_max
+          note_calibrage: 'MOTEUR-VERITE-FIX-1 LOT 4 (V5) : « ne doit pas etre implantee au-dela »
+            = recul MAXIMUM (4 m), pas un minimum — l''alignement est permis, la facade principale
+            doit rester dans la bande 0-4 m depuis la voie. L''ancien min_m 4 insetait a tort.'
           article: UA 6
           page_pdf: 15
           citation: Toutefois, la facade principale de la construction ne doit pas etre implantee au-dela
@@ -215,7 +220,12 @@ zones:
           citation: 'Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces principales d’habitations soit de 8 mètres.'
           statut: valide
         voie:
-          min_m: 6.0
+          min_m: 0.0
+          max_m: 6.0
+          forme: bande_max
+          note_calibrage: 'MOTEUR-VERITE-FIX-1 LOT 4 (V5) : « ne doit pas etre implantee au-dela »
+            = recul MAXIMUM (6 m), pas un minimum — l''alignement est permis, la facade principale
+            doit rester dans la bande 0-6 m depuis la voie. L''ancien min_m 6 insetait a tort.'
           article: UB 6
           page_pdf: 27
           citation: Toutefois, la facade principale de la construction ne doit pas etre implantee au-dela

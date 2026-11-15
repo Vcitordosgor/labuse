@@ -206,3 +206,33 @@ mal lues) attendent la validation de ces mesures et des interprétations ci-dess
 **Contrôle inverse** : 123 hausses ; top 30 = celles des lots 1-2 (déjà relues) + **BX0750
 0→468 m²** (V7, permis réel achevé — relu, reproduit) ; AC2 CY1293 +73 m² (hors top 30, relu).
 **Garde A/N : 0** nouvelle constructibilité. Rubans : suite verte (406 tests).
+
+---
+
+## LOT 4 — deux règles mal lues (V5, V3)
+
+**V5 — recul sur voie MAXIMUM lu comme minimum (Saint-André)** : les citations stockées disaient
+elles-mêmes « la façade principale ne doit pas être implantée **au-delà** d'une marge de recul de
+4/6 mètres » — une BANDE d'implantation, pas un retrait. Feuilles `retraits.voie` UA/UB corrigées
+(`min_m: 0`, `max_m: 4/6`, `forme: bande_max`, note de calibrage). La même tournure a été
+CHERCHÉE dans les 3 258 extraits des autres communes : AUCUNE autre occurrence (tournure propre à
+Saint-André ; les 4/6 m des autres communes sont de vrais minima, vérifié au verbatim).
+
+**V3 — secteurs d'habitat des zones A/N** : le moteur lit désormais la règle DÉJÀ calibrée
+(`sous_destinations.logement`, sous_condition + seuil en surface de plancher) et sert
+« Constructible sous conditions — habitat admis en secteur X, plafonné à N m² » avec la citation.
+DOUBLE GARDE mesurée : les logements d'exploitant/de fonction sont écartés par mot-clé, et la
+GARDE DU NEUF n'ouvre que si l'admission des constructions NOUVELLES est écrite au verbatim —
+52 des 60 feuilles A/N à seuil (extensions d'existant, caretaker…) restent fermées. Secteurs
+ouverts : **8 exactement** — Aba (Saint-André 120, Saint-Joseph 120, Salazie 150, Le Tampon 120),
+Nba (Saint-Joseph 120), Arh (Saint-Louis 50, Trois-Bassins 120), Nrh (Saint-Paul 100).
+
+**Mesures après LOT 4** (cumulatif) : Test 1 **4 661/4 812 (96,9 %)** · Test 2 dépassements
+**97/4 081 (2,4 %)** — en baisse · terrain_exigu 275 · cohorte au-dessus **2 477 (37,5 %)**,
+non-constructible **184** (−36 depuis l'audit).
+
+**Contrôle inverse** : 265 hausses ; les 30 plus fortes relues : 30/30 reproduites (les
+nouvelles = Saint-André UB, +380 à +430 m², libération de la bande avant par le recul voie
+0-6 m). **Garde A/N : 22 parcelles** passées constructibles en zone A/N — TOUTES portent le
+verdict « plafonné à X m² » avec la règle citée (vérifié : SDP ≤ plafond partout) ; c'est la
+capacité AVEC règle prouvée commandée par le mandat, zéro ouverture sans règle.

@@ -416,6 +416,38 @@ def faisabilite_surface_incertaine(zone: str | None) -> "Faisabilite":
                        _BANDEAU, calibree=True, cause="surface_incertaine")
 
 
+def faisabilite_secteur_habitat(zone: str | None, zone_fam: str | None, sect: dict) -> "Faisabilite":
+    """MOTEUR-VERITE-FIX-1 LOT 4 (V3) — SECTEUR D'HABITAT d'une zone agricole/naturelle (Aba, Arh,
+    Nrh, Nba…) : le règlement ADMET l'habitat NEUF plafonné à X m² de surface de plancher (règle
+    DÉJÀ calibrée en `sous_destinations.logement`, statut sous_condition + seuil, citée mot pour
+    mot). Le verdict est « constructible sous conditions, plafonné à X m² » — plus jamais
+    « Construction neuve non autorisée » sur un secteur où des permis réels sortent
+    (VERITE-TERRAIN-3 V3 : 11 permis relus, TOUS sous le seuil). La capacité servie est le
+    PLAFOND DE LA RÈGLE (aucune enveloppe de reculs/hauteur n'est calibrée sur ces secteurs :
+    on ne sert que le chiffre écrit au règlement, rien d'inventé)."""
+    z = zone or (zone_fam or "?")
+    plafond = float(sect["seuil_m2"])
+    src = f"{sect.get('article') or 'règlement de zone'}" + (
+        f" (p. {sect['page_pdf']})" if sect.get("page_pdf") else "")
+    steps = [Step("Habitat admis — plafond du secteur",
+                  f"construction d'habitation admise sous conditions, dans la limite de "
+                  f"{plafond:g} m² de surface de plancher",
+                  f"{plafond:g} m²", src, prov="sourcee")]
+    hypo = []
+    if sect.get("citation"):
+        hypo.append(f"Règle du secteur ({src}) : {str(sect['citation'])[:300]}")
+    avert = ["Conditions du règlement non modélisées (intégration au site, desserte, sols "
+             "naturels…) : constructibilité à confirmer à l'instruction."]
+    return Faisabilite(
+        z, None, True,
+        f"Constructible sous conditions — habitat admis en secteur {z}, plafonné à "
+        f"{plafond:g} m² de surface de plancher ({src}).",
+        steps, hypo, avert, [],
+        {"surface_plancher_m2": round(plafond),
+         "logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+        _BANDEAU, calibree=True, cause=None)
+
+
 def faisabilite_zone_non_constructible(zone: str | None, zone_fam: str | None) -> "Faisabilite":
     """EXPORTS-FIX-3 LOT 1 — zone dominante de famille A/N dont le CODE n'est pas calibré au PLU de la
     commune (`resolve_zone` → None) ET dont la seule portion U/AU est infime (écartée par la garde

@@ -595,6 +595,53 @@ def _repli_qualifiable(blocages: list[str]) -> bool:
         b.startswith(_MOTIF_LEGACY_BENIN) and "voie privée" not in b for b in blocages)
 
 
+_EXPLOITANT_RX = re.compile(r"exploit|agricult|logement de fonction|gardiennage", re.I)
+
+
+def secteur_habitat_plafonne(commune: str | None, zone: str | None) -> dict | None:
+    """MOTEUR-VERITE-FIX-1 LOT 4 (V3) — la zone est-elle un SECTEUR D'HABITAT d'une zone A/N où le
+    règlement ADMET l'habitat neuf plafonné (Aba, Arh, Nrh, Nba…) ? Lit la calibration DÉJÀ posée
+    (`sous_destinations.logement`, statut sous_condition + seuil_m2 en SURFACE DE PLANCHER) et
+    ÉCARTE les logements d'exploitant/de fonction (exception légale réservée à l'agriculteur —
+    l'ouvrir à tout acheteur créerait une capacité A/N fantôme sur toute l'île). Rend
+    {seuil_m2, article, page_pdf, citation, condition} ou None."""
+    if not commune or not zone:
+        return None
+    from ..plu import destinations as D
+    doc = D._doc(commune)
+    if not doc:
+        return None
+    _, entry = D._zone_entry(doc, zone)
+    log = ((entry or {}).get("sous_destinations") or {}).get("logement") or {}
+    if log.get("statut") != "sous_condition":
+        return None
+    seuil = log.get("seuil_m2")
+    if not isinstance(seuil, (int, float)) or seuil <= 0:
+        return None
+    if str(log.get("seuil_type") or "") != "surface_plancher":
+        return None
+    texte = f"{log.get('condition') or ''} {log.get('citation') or ''}"
+    if _EXPLOITANT_RX.search(texte):
+        return None
+    # GARDE DU NEUF — la plupart des feuilles A/N « sous_condition » ne couvrent QUE l'extension/
+    # l'amélioration de bâtiments EXISTANTS (mesuré : 52 des 60 feuilles à seuil) : les ouvrir au
+    # neuf créerait une capacité A/N sans règle. On n'ouvre que si l'ADMISSION du neuf est écrite.
+    # La garde juge le VERBATIM (citation) — le commentaire `condition` peut récapituler une règle
+    # d'extension VOISINE (Le Tampon Aba) sans retirer l'admission du neuf écrite au règlement.
+    t = (str(log.get("citation") or "") or str(log.get("condition") or "")).lower()
+    if "admis" not in t:
+        return None
+    _marqueurs_existant = re.search(
+        r"non prévue|exclu|existant|extension|amélioration|aménagement|réhabilit|reconstruction"
+        r"|strictement nécessaire|mise aux normes", t)
+    if _marqueurs_existant and not re.search(r"constructions? nouvelles?[^.]{0,250}admis", t):
+        return None
+    return {"seuil_m2": float(seuil), "article": log.get("article"),
+            "page_pdf": log.get("page_pdf"),
+            "citation": log.get("citation") or log.get("condition"),
+            "condition": log.get("condition")}
+
+
 def _sous_zone_constructible(ctx: ParcelContext):
     """SCORING-6 lot A — assiette clippée : quand la zone DOMINANTE n'est pas constructible
     (A/N, habitat interdit) mais qu'une portion U/AU subsiste, résout les règles de la plus
@@ -767,6 +814,17 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             # sinon : éclat U/AU < 50 m² OU RUBAN (vide après érosion de 3 m) → `rules` reste la zone
             # dominante (A/N) non constructible ; estimate_capacity rendra « non constructible en zone
             # <dominante> » (jamais un chiffre sur une portion non bâtissable).
+    # MOTEUR-VERITE-FIX-1 LOT 4 (V3) — SECTEUR D'HABITAT d'une zone A/N : avant de fermer (« zone
+    # non constructible » / hors PLU), on lit la calibration des destinations. Si l'habitat NEUF y
+    # est admis sous conditions avec un PLAFOND de surface de plancher (Aba, Arh, Nrh… — jamais le
+    # logement d'exploitant, écarté par mot-clé), le verdict est « constructible sous conditions,
+    # plafonné à X m² » avec la citation. La portion U/AU réelle (alt) garde la priorité ci-dessus.
+    if (ctx.zone_fam in ("A", "N")
+            and (rules is None or not rules.constructible_neuf or rules.habitat == "interdit")):
+        _sect = secteur_habitat_plafonne(ctx.commune, ctx.zone)
+        if _sect is not None:
+            from .engine import faisabilite_secteur_habitat
+            return ctx, faisabilite_secteur_habitat(ctx.zone, ctx.zone_fam, _sect)
     if rules is None:
         # EXPORTS-FIX-3 LOT 1 — une sous-zone U/AU a été ÉCARTÉE par la garde d'aire réelle, mais la
         # zone dominante (A/N) n'est pas calibrée au PLU de la commune (resolve_zone → None). La
