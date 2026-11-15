@@ -51,6 +51,9 @@ Tests : `test_mails_1_gabarit` + `test_compte2_brevo` = **193 passed**.
 | **E116** signature : commentaires « fondateur » ≠ valeur « Gestionnaire relation entreprise » | `gabarit_mail.py`/`mails_contenu.py`/test : commentaires alignés (valeur inchangée) | — |
 | **comptes de risques** | **Vérifié** : chacun nomme déjà son unité (fiche « N aléas distincts » + infobulle, Pièges « N contraintes relevées sur la parcelle », Comparatif « Contraintes relevées » dédoublonné). Métriques différentes, pas le même nombre. Aucun changement au-delà d'E112b | — |
 
+## Fusion `origin/main` (session `fix/chirurgical-docs` mergée) — faite
+`git merge origin/main` dans `fix/chirurgical-1` : **aucun conflit** (les deux sessions ont fait le plus petit changement possible sur les fichiers partagés, zones non chevauchantes). Rien de ce que la session docs a corrigé n'est défait (surface à retenir, numéros de documents, date PLU Apporteur, prix Estimer, comparables, section 2 Dossier, plafond exports). Tests rejoués après merge : **pytest 220** (dont `test_apporteur_plu_date`, `test_estimer_secteur_fiche`, `test_surface_retenue` réels), **tsc 0**, **vitest 37**. Détail des zones partagées ci-dessous.
+
 ## Pour la fusion (fichiers partagés avec `fix/chirurgical-docs`)
 La session « docs » touche Apporteur, Estimer, Dossier. Mes changements les plus petits possibles sur ces zones, à fusionner :
 - **`pige/estimer3.py`** (E105) : ajout du blocklist `_NON_CODES` + garde dans `_zone_code` (10 lignes, isolé). N'affecte pas les prix/comparables.
