@@ -155,33 +155,33 @@ ETUDE-STATIONNEMENT-FIX-1 (LOT 3). Chaque zone U/AU : règle ingérée (synthès
 | Us | habitat secondaire | logement autorisé sous condition / usage non principal — pas de norme d'habitation distincte dans le texte (logement de fonction ou renvoi), à préciser |
 | Uv | habitat secondaire | logement autorisé sous condition / usage non principal — pas de norme d'habitation distincte dans le texte (logement de fonction ou renvoi), à préciser |
 
-## 97408 — la_possession (13/23 zones servies)
+## 97408 — la_possession (0/23 zones servies)
 
 | Zone | État | Détail |
 |---|---|---|
-| AUAv | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
-| AUB | ingérée | typologie [collectif 1/logt ; collectif 2/logt] (retenue max) · visiteur 1/5 logts · social · senior · etudiant |
-| AUBb | ingérée | typologie [collectif 1/logt ; collectif 2/logt] (retenue max) · visiteur 1/5 logts · social · senior · etudiant |
-| AUBm | ingérée | typologie [collectif 1/logt ; collectif 2/logt] (retenue max) · visiteur 1/5 logts · social · senior · etudiant |
-| AUBpsfr2 | ingérée | typologie [collectif 1/logt ; collectif 2/logt] (retenue max) · visiteur 1/5 logts · social · senior · etudiant |
-| AUEm | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
-| AUT | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
-| AUst | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
-| UA | ingérée | typologie [collectif 1/logt ; collectif 2/logt] (retenue max) · visiteur 1/5 logts · social · senior · etudiant |
-| UAa | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
-| UAm | ingérée | typologie [collectif 1/logt ; collectif 2/logt] (retenue max) · visiteur 1/5 logts · social · senior · etudiant |
-| UApsfr2 | ingérée | typologie [collectif 1/logt ; collectif 2/logt] (retenue max) · visiteur 1/5 logts · social · senior · etudiant |
-| UAv | habitat secondaire | logement autorisé sous condition / usage non principal — pas de norme d'habitation distincte dans le texte (logement de fonction ou renvoi), à préciser |
-| UB | ingérée | typologie [collectif 1/logt ; collectif 2/logt] (retenue max) · visiteur 1/5 logts · social · senior · etudiant |
-| UBa | ingérée | typologie [collectif 1/logt ; collectif 2/logt] (retenue max) · visiteur 1/5 logts · social · senior · etudiant |
-| UBb | ingérée | typologie [collectif 1/logt ; collectif 2/logt] (retenue max) · visiteur 1/5 logts · social · senior · etudiant |
-| UBc | ingérée | typologie [collectif 1/logt ; collectif 2/logt] (retenue max) · visiteur 1/5 logts · social · senior · etudiant |
-| UBpsfr2 | ingérée | typologie [collectif 1/logt ; collectif 2/logt] (retenue max) · visiteur 1/5 logts · social · senior · etudiant |
-| UBpszc | ingérée | typologie [collectif 1/logt ; collectif 2/logt] (retenue max) · visiteur 1/5 logts · social · senior · etudiant |
-| UE | habitat secondaire | logement autorisé sous condition / usage non principal — pas de norme d'habitation distincte dans le texte (logement de fonction ou renvoi), à préciser |
-| UEm | habitat secondaire | logement autorisé sous condition / usage non principal — pas de norme d'habitation distincte dans le texte (logement de fonction ou renvoi), à préciser |
-| UT | habitat secondaire | logement autorisé sous condition / usage non principal — pas de norme d'habitation distincte dans le texte (logement de fonction ou renvoi), à préciser |
-| UTfr2 | habitat secondaire | logement autorisé sous condition / usage non principal — pas de norme d'habitation distincte dans le texte (logement de fonction ou renvoi), à préciser |
+| AUAv | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| AUB | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| AUBb | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| AUBm | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| AUBpsfr2 | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| AUEm | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| AUT | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| AUst | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UA | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UAa | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UAm | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UApsfr2 | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UAv | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UB | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UBa | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UBb | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UBc | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UBpsfr2 | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UBpszc | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UE | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UEm | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UT | version en cours | La Possession — modification du 25/06/2026 (autre session) |
+| UTfr2 | version en cours | La Possession — modification du 25/06/2026 (autre session) |
 
 ## 97409 — saint_andre (1/17 zones servies)
 
@@ -238,39 +238,39 @@ ETUDE-STATIONNEMENT-FIX-1 (LOT 3). Chaque zone U/AU : règle ingérée (synthès
 | Up | ingérée | 1 place/logt (arr. superieur) · visiteur 1/5 logts · social · senior · etudiant |
 | Ut | ingérée | 1 place/logt (arr. superieur) · visiteur 1/5 logts · social · senior · etudiant |
 
-## 97411 — saint_denis (10/29 zones servies)
+## 97411 — saint_denis (0/29 zones servies)
 
 | Zone | État | Détail |
 |---|---|---|
-| AUa | texte absent | barème en dispositions générales XVII non ingéré |
-| AUh | texte absent | barème en dispositions générales XVII non ingéré |
-| AUj | texte absent | barème en dispositions générales XVII non ingéré |
-| AUm | texte absent | barème en dispositions générales XVII non ingéré |
-| AUx | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
-| Ua | ingérée | 1 place/logt (arr. superieur) |
+| AUa | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| AUh | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| AUj | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| AUm | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| AUx | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Ua | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
 | Uac | renvoi | règles de la zone Ua |
 | Uad | renvoi | règles de la zone Ua |
 | Uat | renvoi | règles de la zone Ua |
-| Uavap | ingérée | 1 place/logt (arr. superieur) |
-| Ud | ingérée | 1 place/logt (arr. superieur) |
+| Uavap | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Ud | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
 | Udo | renvoi | règles de la zone Ud |
-| Udop | texte absent | barème en dispositions générales XVII non ingéré |
-| Udp | texte absent | barème en dispositions générales XVII non ingéré |
-| Uh | ingérée | 1 place/logt (arr. superieur) |
-| Ui | ingérée | 1 place/logt (arr. superieur) |
+| Udop | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Udp | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Uh | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Ui | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
 | Uicm | renvoi | règles de la zone Ui |
-| Uip | texte absent | barème en dispositions générales XVII non ingéré |
-| Uj | ingérée | 1 place/logt (arr. superieur) |
-| Um | ingérée | 1 place/logt (arr. superieur) |
-| Uma | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
-| Up | ingérée | 1 place/logt (arr. superieur) |
-| Upi | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
-| Upr | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
-| Uu | ingérée | 1 place/logt (arr. superieur) |
-| Uv | ingérée | 1 place/logt (arr. superieur) |
-| Uva | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
-| Uvac | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
-| Uvl | habitat interdit | zone d'activité/équipement — pas de norme d'habitation à servir |
+| Uip | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Uj | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Um | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Uma | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Up | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Upi | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Upr | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Uu | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Uv | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Uva | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Uvac | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
+| Uvl | version en cours | Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session) |
 
 ## 97412 — saint_joseph (18/47 zones servies)
 

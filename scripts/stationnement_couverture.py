@@ -20,8 +20,11 @@ from labuse.plu import destinations as D
 CFG = "config/plu_destinations/"
 PILOTES = {"97401", "97407", "97410", "97416", "97422"}
 TEXTE_ABSENT = {"97404": "extraction partielle (12 p./97)", "97409": "règlement absent de la base",
-                "97413": "règlement absent de la base", "97406": "barème en annexe non ingérée",
-                "97411": "barème en dispositions générales XVII non ingéré"}
+                "97413": "règlement absent de la base", "97406": "barème en annexe non ingérée"}
+# Communes dont le PLU vient de CHANGER : version en vigueur ingérée par une AUTRE session ; je referai
+# leur stationnement sur le nouveau texte À LA FIN — pas traitées dans ce lot.
+VERSION_EN_COURS = {"97411": "Saint-Denis — nouveau PLU approuvé le 05/08/2026 (autre session)",
+                    "97408": "La Possession — modification du 25/06/2026 (autre session)"}
 
 
 def _is_c(z):
@@ -90,6 +93,9 @@ def couverture(insee: str):
             continue
         b = R.charger(insee, z).stationnement
         hs = _habitat_statut(zv)
+        if insee in VERSION_EN_COURS:
+            rows.append((z, "version en cours", VERSION_EN_COURS[insee]))
+            continue
         if b.validee:
             rows.append((z, "ingérée", _synthese(b)))
         elif hs == "interdit":

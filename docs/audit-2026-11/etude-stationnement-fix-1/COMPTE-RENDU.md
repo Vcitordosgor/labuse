@@ -335,3 +335,13 @@ s'afficher **« Non vérifié »**, jamais être traitée comme absente (même p
 2. **Saint-Paul** zone par zone. 3. **52 zones « habitat secondaire »** : refus motivé ou ingestion, décompte.
 4. Ua10.3 hauteur « Non vérifié ». 5. Saint-Denis pleine terre (image à l'appui). 6. Lot 4, conditions
 chiffrées, « non réglementé », Études PDF, sondage final (lot d'après).
+
+---
+
+## Info reçue — Saint-Denis et La Possession exclues de ce lot
+Les PLU de **Saint-Denis** (nouveau document approuvé le **05/08/2026**) et de **La Possession**
+(modification du **25/06/2026**) ont changé ; une **autre session** ingère les versions en vigueur. Je ne
+les traite pas ici et je referai leur stationnement sur le **nouveau texte, à la fin**. Mon ingestion de
+La Possession (lot 3, sur l'ancien texte) est **révoquée** (`git checkout origin/main`) pour ne pas diverger ;
+Saint-Denis était déjà revenue à l'état d'origine (pleine terre retirée). Les deux apparaissent « version en
+cours » dans `COUVERTURE.md`. C'est aussi ce qui explique l'écart base/PDF que j'avais vu à Saint-Denis.

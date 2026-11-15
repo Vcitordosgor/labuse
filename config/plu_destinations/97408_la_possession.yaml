@@ -55,39 +55,12 @@ zones:
           raison: valeur 8 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_typologie:
-          statut: valide
+        par_logement:
+          places: 2.0
           article: UA 12.2
           page_pdf: 21
-          base: surface_plancher
-          arrondi: superieur
-          retenue: max
-          citation: 'Logements prêt aidé (LLTS/LLS/PLS) : 1 place/logt (0,5 si < 500 m d''un transport collectif). Autres logements ≤ 50 m² de SDP : 1 place min + 1 place visiteur pour 5 logements/lots. Autres logements > 50 m² de SDP : 2 places min. Structures à public spécifique (personnes âgées, résidence universitaire, foyer…) : 1 place pour 3 places d''hébergement.'
-          detail:
-          - destination: collectif
-            sdp_max: 50
-            places: 1
-            tranche: autre logt ≤ 50 m²
-            role: base
-          - destination: collectif
-            sdp_min: 50
-            places: 2
-            tranche: autre logt > 50 m²
-            role: base
-          visiteurs:
-            par_logements: 5
-            places: 1
-            arrondi: superieur
-            citation: 1 place visiteur pour 5 logements/lots
-          social:
-            places: 1
-            tranche: prêt aidé (1/logt)
-          senior:
-            places: 0.3333
-            tranche: structure spécifique (1 pour 3)
-          etudiant:
-            places: 0.3333
-            tranche: résidence universitaire (1 pour 3)
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
       pleine_terre:
         pct:
           pct: 35.0
@@ -285,39 +258,12 @@ zones:
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_typologie:
-          statut: valide
+        par_logement:
+          places: 2.0
           article: UA 12.2
           page_pdf: 21
-          base: surface_plancher
-          arrondi: superieur
-          retenue: max
-          citation: 'Logements prêt aidé (LLTS/LLS/PLS) : 1 place/logt (0,5 si < 500 m d''un transport collectif). Autres logements ≤ 50 m² de SDP : 1 place min + 1 place visiteur pour 5 logements/lots. Autres logements > 50 m² de SDP : 2 places min. Structures à public spécifique (personnes âgées, résidence universitaire, foyer…) : 1 place pour 3 places d''hébergement.'
-          detail:
-          - destination: collectif
-            sdp_max: 50
-            places: 1
-            tranche: autre logt ≤ 50 m²
-            role: base
-          - destination: collectif
-            sdp_min: 50
-            places: 2
-            tranche: autre logt > 50 m²
-            role: base
-          visiteurs:
-            par_logements: 5
-            places: 1
-            arrondi: superieur
-            citation: 1 place visiteur pour 5 logements/lots
-          social:
-            places: 1
-            tranche: prêt aidé (1/logt)
-          senior:
-            places: 0.3333
-            tranche: structure spécifique (1 pour 3)
-          etudiant:
-            places: 0.3333
-            tranche: résidence universitaire (1 pour 3)
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
       pleine_terre:
         pct:
           pct: 25
@@ -402,39 +348,12 @@ zones:
           raison: valeur non numérique ('a_verifier')
           formule: H/2, minimum 3 m
       stationnement:
-        par_typologie:
-          statut: valide
+        par_logement:
+          places: 2.0
           article: UA 12.2
           page_pdf: 21
-          base: surface_plancher
-          arrondi: superieur
-          retenue: max
-          citation: 'Logements prêt aidé (LLTS/LLS/PLS) : 1 place/logt (0,5 si < 500 m d''un transport collectif). Autres logements ≤ 50 m² de SDP : 1 place min + 1 place visiteur pour 5 logements/lots. Autres logements > 50 m² de SDP : 2 places min. Structures à public spécifique (personnes âgées, résidence universitaire, foyer…) : 1 place pour 3 places d''hébergement.'
-          detail:
-          - destination: collectif
-            sdp_max: 50
-            places: 1
-            tranche: autre logt ≤ 50 m²
-            role: base
-          - destination: collectif
-            sdp_min: 50
-            places: 2
-            tranche: autre logt > 50 m²
-            role: base
-          visiteurs:
-            par_logements: 5
-            places: 1
-            arrondi: superieur
-            citation: 1 place visiteur pour 5 logements/lots
-          social:
-            places: 1
-            tranche: prêt aidé (1/logt)
-          senior:
-            places: 0.3333
-            tranche: structure spécifique (1 pour 3)
-          etudiant:
-            places: 0.3333
-            tranche: résidence universitaire (1 pour 3)
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
       pleine_terre:
         pct:
           pct: 40.0
@@ -632,39 +551,12 @@ zones:
           raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_typologie:
-          statut: valide
+        par_logement:
+          places: 2.0
           article: UB 12.2
           page_pdf: 35
-          base: surface_plancher
-          arrondi: superieur
-          retenue: max
-          citation: 'Logements prêt aidé (LLTS/LLS/PLS) : 1 place/logt (0,5 si < 500 m d''un transport collectif). Autres logements ≤ 50 m² de SDP : 1 place min + 1 place visiteur pour 5 logements/lots. Autres logements > 50 m² de SDP : 2 places min. Structures à public spécifique (personnes âgées, résidence universitaire, foyer…) : 1 place pour 3 places d''hébergement.'
-          detail:
-          - destination: collectif
-            sdp_max: 50
-            places: 1
-            tranche: autre logt ≤ 50 m²
-            role: base
-          - destination: collectif
-            sdp_min: 50
-            places: 2
-            tranche: autre logt > 50 m²
-            role: base
-          visiteurs:
-            par_logements: 5
-            places: 1
-            arrondi: superieur
-            citation: 1 place visiteur pour 5 logements/lots
-          social:
-            places: 1
-            tranche: prêt aidé (1/logt)
-          senior:
-            places: 0.3333
-            tranche: structure spécifique (1 pour 3)
-          etudiant:
-            places: 0.3333
-            tranche: résidence universitaire (1 pour 3)
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
       pleine_terre:
         pct:
           pct: 35.0
@@ -770,39 +662,12 @@ zones:
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_typologie:
-          statut: valide
+        par_logement:
+          places: 2.0
           article: UB 12.2
           page_pdf: 35
-          base: surface_plancher
-          arrondi: superieur
-          retenue: max
-          citation: 'Logements prêt aidé (LLTS/LLS/PLS) : 1 place/logt (0,5 si < 500 m d''un transport collectif). Autres logements ≤ 50 m² de SDP : 1 place min + 1 place visiteur pour 5 logements/lots. Autres logements > 50 m² de SDP : 2 places min. Structures à public spécifique (personnes âgées, résidence universitaire, foyer…) : 1 place pour 3 places d''hébergement.'
-          detail:
-          - destination: collectif
-            sdp_max: 50
-            places: 1
-            tranche: autre logt ≤ 50 m²
-            role: base
-          - destination: collectif
-            sdp_min: 50
-            places: 2
-            tranche: autre logt > 50 m²
-            role: base
-          visiteurs:
-            par_logements: 5
-            places: 1
-            arrondi: superieur
-            citation: 1 place visiteur pour 5 logements/lots
-          social:
-            places: 1
-            tranche: prêt aidé (1/logt)
-          senior:
-            places: 0.3333
-            tranche: structure spécifique (1 pour 3)
-          etudiant:
-            places: 0.3333
-            tranche: résidence universitaire (1 pour 3)
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
       pleine_terre:
         pct:
           pct: 50.0
@@ -883,39 +748,12 @@ zones:
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_typologie:
-          statut: valide
+        par_logement:
+          places: 2.0
           article: UB 12.2
           page_pdf: 35
-          base: surface_plancher
-          arrondi: superieur
-          retenue: max
-          citation: 'Logements prêt aidé (LLTS/LLS/PLS) : 1 place/logt (0,5 si < 500 m d''un transport collectif). Autres logements ≤ 50 m² de SDP : 1 place min + 1 place visiteur pour 5 logements/lots. Autres logements > 50 m² de SDP : 2 places min. Structures à public spécifique (personnes âgées, résidence universitaire, foyer…) : 1 place pour 3 places d''hébergement.'
-          detail:
-          - destination: collectif
-            sdp_max: 50
-            places: 1
-            tranche: autre logt ≤ 50 m²
-            role: base
-          - destination: collectif
-            sdp_min: 50
-            places: 2
-            tranche: autre logt > 50 m²
-            role: base
-          visiteurs:
-            par_logements: 5
-            places: 1
-            arrondi: superieur
-            citation: 1 place visiteur pour 5 logements/lots
-          social:
-            places: 1
-            tranche: prêt aidé (1/logt)
-          senior:
-            places: 0.3333
-            tranche: structure spécifique (1 pour 3)
-          etudiant:
-            places: 0.3333
-            tranche: résidence universitaire (1 pour 3)
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
       pleine_terre:
         pct:
           pct: 40.0
@@ -995,39 +833,12 @@ zones:
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_typologie:
-          statut: valide
+        par_logement:
+          places: 2.0
           article: UB 12.2
           page_pdf: 35
-          base: surface_plancher
-          arrondi: superieur
-          retenue: max
-          citation: 'Logements prêt aidé (LLTS/LLS/PLS) : 1 place/logt (0,5 si < 500 m d''un transport collectif). Autres logements ≤ 50 m² de SDP : 1 place min + 1 place visiteur pour 5 logements/lots. Autres logements > 50 m² de SDP : 2 places min. Structures à public spécifique (personnes âgées, résidence universitaire, foyer…) : 1 place pour 3 places d''hébergement.'
-          detail:
-          - destination: collectif
-            sdp_max: 50
-            places: 1
-            tranche: autre logt ≤ 50 m²
-            role: base
-          - destination: collectif
-            sdp_min: 50
-            places: 2
-            tranche: autre logt > 50 m²
-            role: base
-          visiteurs:
-            par_logements: 5
-            places: 1
-            arrondi: superieur
-            citation: 1 place visiteur pour 5 logements/lots
-          social:
-            places: 1
-            tranche: prêt aidé (1/logt)
-          senior:
-            places: 0.3333
-            tranche: structure spécifique (1 pour 3)
-          etudiant:
-            places: 0.3333
-            tranche: résidence universitaire (1 pour 3)
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
       pleine_terre:
         pct:
           pct: 40.0
@@ -1119,39 +930,12 @@ zones:
           raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_typologie:
-          statut: valide
+        par_logement:
+          places: 2.0
           article: UB 12.2
           page_pdf: 35
-          base: surface_plancher
-          arrondi: superieur
-          retenue: max
-          citation: 'Logements prêt aidé (LLTS/LLS/PLS) : 1 place/logt (0,5 si < 500 m d''un transport collectif). Autres logements ≤ 50 m² de SDP : 1 place min + 1 place visiteur pour 5 logements/lots. Autres logements > 50 m² de SDP : 2 places min. Structures à public spécifique (personnes âgées, résidence universitaire, foyer…) : 1 place pour 3 places d''hébergement.'
-          detail:
-          - destination: collectif
-            sdp_max: 50
-            places: 1
-            tranche: autre logt ≤ 50 m²
-            role: base
-          - destination: collectif
-            sdp_min: 50
-            places: 2
-            tranche: autre logt > 50 m²
-            role: base
-          visiteurs:
-            par_logements: 5
-            places: 1
-            arrondi: superieur
-            citation: 1 place visiteur pour 5 logements/lots
-          social:
-            places: 1
-            tranche: prêt aidé (1/logt)
-          senior:
-            places: 0.3333
-            tranche: structure spécifique (1 pour 3)
-          etudiant:
-            places: 0.3333
-            tranche: résidence universitaire (1 pour 3)
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
       pleine_terre:
         pct:
           pct: 40.0
@@ -1235,39 +1019,12 @@ zones:
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_typologie:
-          statut: valide
+        par_logement:
+          places: 2.0
           article: UB 12.2
           page_pdf: 35
-          base: surface_plancher
-          arrondi: superieur
-          retenue: max
-          citation: 'Logements prêt aidé (LLTS/LLS/PLS) : 1 place/logt (0,5 si < 500 m d''un transport collectif). Autres logements ≤ 50 m² de SDP : 1 place min + 1 place visiteur pour 5 logements/lots. Autres logements > 50 m² de SDP : 2 places min. Structures à public spécifique (personnes âgées, résidence universitaire, foyer…) : 1 place pour 3 places d''hébergement.'
-          detail:
-          - destination: collectif
-            sdp_max: 50
-            places: 1
-            tranche: autre logt ≤ 50 m²
-            role: base
-          - destination: collectif
-            sdp_min: 50
-            places: 2
-            tranche: autre logt > 50 m²
-            role: base
-          visiteurs:
-            par_logements: 5
-            places: 1
-            arrondi: superieur
-            citation: 1 place visiteur pour 5 logements/lots
-          social:
-            places: 1
-            tranche: prêt aidé (1/logt)
-          senior:
-            places: 0.3333
-            tranche: structure spécifique (1 pour 3)
-          etudiant:
-            places: 0.3333
-            tranche: résidence universitaire (1 pour 3)
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
       pleine_terre:
         pct:
           pct: 40.0
@@ -1950,39 +1707,12 @@ zones:
             mètres.
           statut: valide
       stationnement:
-        par_typologie:
-          statut: valide
+        par_logement:
+          places: 2.0
           article: AUBm 12
           page_pdf: 78
-          base: surface_plancher
-          arrondi: superieur
-          retenue: max
-          citation: 'Logements prêt aidé (LLTS/LLS/PLS) : 1 place/logt (0,5 si < 500 m d''un transport collectif). Autres logements ≤ 50 m² de SDP : 1 place min + 1 place visiteur pour 5 logements/lots. Autres logements > 50 m² de SDP : 2 places min. Structures à public spécifique (personnes âgées, résidence universitaire, foyer…) : 1 place pour 3 places d''hébergement.'
-          detail:
-          - destination: collectif
-            sdp_max: 50
-            places: 1
-            tranche: autre logt ≤ 50 m²
-            role: base
-          - destination: collectif
-            sdp_min: 50
-            places: 2
-            tranche: autre logt > 50 m²
-            role: base
-          visiteurs:
-            par_logements: 5
-            places: 1
-            arrondi: superieur
-            citation: 1 place visiteur pour 5 logements/lots
-          social:
-            places: 1
-            tranche: prêt aidé (1/logt)
-          senior:
-            places: 0.3333
-            tranche: structure spécifique (1 pour 3)
-          etudiant:
-            places: 0.3333
-            tranche: résidence universitaire (1 pour 3)
+          citation: Autre logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
       pleine_terre:
         pct:
           pct: 25.0
@@ -2164,39 +1894,12 @@ zones:
           raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_typologie:
-          statut: valide
+        par_logement:
+          places: 2.0
           article: UB 12.2
           page_pdf: 35
-          base: surface_plancher
-          arrondi: superieur
-          retenue: max
-          citation: 'Logements prêt aidé (LLTS/LLS/PLS) : 1 place/logt (0,5 si < 500 m d''un transport collectif). Autres logements ≤ 50 m² de SDP : 1 place min + 1 place visiteur pour 5 logements/lots. Autres logements > 50 m² de SDP : 2 places min. Structures à public spécifique (personnes âgées, résidence universitaire, foyer…) : 1 place pour 3 places d''hébergement.'
-          detail:
-          - destination: collectif
-            sdp_max: 50
-            places: 1
-            tranche: autre logt ≤ 50 m²
-            role: base
-          - destination: collectif
-            sdp_min: 50
-            places: 2
-            tranche: autre logt > 50 m²
-            role: base
-          visiteurs:
-            par_logements: 5
-            places: 1
-            arrondi: superieur
-            citation: 1 place visiteur pour 5 logements/lots
-          social:
-            places: 1
-            tranche: prêt aidé (1/logt)
-          senior:
-            places: 0.3333
-            tranche: structure spécifique (1 pour 3)
-          etudiant:
-            places: 0.3333
-            tranche: résidence universitaire (1 pour 3)
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
       pleine_terre:
         pct:
           pct: 35.0
@@ -2248,39 +1951,12 @@ zones:
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_typologie:
-          statut: valide
+        par_logement:
+          places: 2.0
           article: UB 12.2
           page_pdf: 35
-          base: surface_plancher
-          arrondi: superieur
-          retenue: max
-          citation: 'Logements prêt aidé (LLTS/LLS/PLS) : 1 place/logt (0,5 si < 500 m d''un transport collectif). Autres logements ≤ 50 m² de SDP : 1 place min + 1 place visiteur pour 5 logements/lots. Autres logements > 50 m² de SDP : 2 places min. Structures à public spécifique (personnes âgées, résidence universitaire, foyer…) : 1 place pour 3 places d''hébergement.'
-          detail:
-          - destination: collectif
-            sdp_max: 50
-            places: 1
-            tranche: autre logt ≤ 50 m²
-            role: base
-          - destination: collectif
-            sdp_min: 50
-            places: 2
-            tranche: autre logt > 50 m²
-            role: base
-          visiteurs:
-            par_logements: 5
-            places: 1
-            arrondi: superieur
-            citation: 1 place visiteur pour 5 logements/lots
-          social:
-            places: 1
-            tranche: prêt aidé (1/logt)
-          senior:
-            places: 0.3333
-            tranche: structure spécifique (1 pour 3)
-          etudiant:
-            places: 0.3333
-            tranche: résidence universitaire (1 pour 3)
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
       pleine_terre:
         pct:
           pct: 40.0
@@ -2343,39 +2019,12 @@ zones:
           raison: valeur 4.5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_typologie:
-          statut: valide
+        par_logement:
+          places: 2.0
           article: UB 12.2
           page_pdf: 35
-          base: surface_plancher
-          arrondi: superieur
-          retenue: max
-          citation: 'Logements prêt aidé (LLTS/LLS/PLS) : 1 place/logt (0,5 si < 500 m d''un transport collectif). Autres logements ≤ 50 m² de SDP : 1 place min + 1 place visiteur pour 5 logements/lots. Autres logements > 50 m² de SDP : 2 places min. Structures à public spécifique (personnes âgées, résidence universitaire, foyer…) : 1 place pour 3 places d''hébergement.'
-          detail:
-          - destination: collectif
-            sdp_max: 50
-            places: 1
-            tranche: autre logt ≤ 50 m²
-            role: base
-          - destination: collectif
-            sdp_min: 50
-            places: 2
-            tranche: autre logt > 50 m²
-            role: base
-          visiteurs:
-            par_logements: 5
-            places: 1
-            arrondi: superieur
-            citation: 1 place visiteur pour 5 logements/lots
-          social:
-            places: 1
-            tranche: prêt aidé (1/logt)
-          senior:
-            places: 0.3333
-            tranche: structure spécifique (1 pour 3)
-          etudiant:
-            places: 0.3333
-            tranche: résidence universitaire (1 pour 3)
+          citation: Autres logements > à 50 m² de SDP | 2 places minimum par logement
+          statut: valide
       pleine_terre:
         pct:
           pct: 40.0
