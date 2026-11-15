@@ -117,3 +117,19 @@ def test_logement_fonction_detection(insee, zone, fonction_seulement):
     programme d'habitation (social, individuel), et HÉRITE la restriction de la zone parente via renvoi."""
     from labuse.implantation.service import _logement_fonction_seulement
     assert _logement_fonction_seulement(insee, zone) is fonction_seulement
+
+
+def test_degagement_allee_mesure_localement_pas_boite():
+    """LOT 3 (BW2635) — le dégagement devant les places est mesuré LOCALEMENT, pas sur la boîte englobante :
+    une allée pincée à 2,25 m devant les places mais dont la boîte fait 5 m est REFUSÉE (avant : validée)."""
+    from shapely.geometry import box
+    from shapely.ops import unary_union
+    from labuse.implantation.controles import _pincement_allee
+    # allée pincée à 2,25 m devant 6 places, mais un tronçon large (5 m) ailleurs → boîte 5 m, ancien test « passe ».
+    allee = unary_union([box(0, 0, 15, 2.25), box(15, 0, 20, 5.0)])
+    places = [box(i * 2.5, -5, i * 2.5 + 2.5, 0) for i in range(6)]
+    assert min(allee.bounds[2] - allee.bounds[0], allee.bounds[3] - allee.bounds[1]) >= 5.0  # ancien test aveugle
+    assert _pincement_allee([allee], places, 5.0) >= 1.0                                     # nouveau : pincement vu
+    # allée large de 5 m partout → acceptée (le liseré d'ouverture reste sous le seuil).
+    ok = box(0, 0, 20, 5.0)
+    assert _pincement_allee([ok], places, 5.0) < 1.0

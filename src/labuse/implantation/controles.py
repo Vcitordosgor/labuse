@@ -64,6 +64,32 @@ class CheckGeo:
     detail: str = ""
 
 
+def _pincement_allee(allees, places, largeur_requise: float) -> float:
+    """ETUDE-STATIONNEMENT-FIX-2 (LOT 3) — aire d'allée, AU DROIT DES PLACES, dont la largeur locale est
+    inférieure à `largeur_requise`. Mesure robuste par OUVERTURE morphologique (érosion puis dilatation de
+    rayon W/2) : la part que l'ouverture ne recouvre pas est un pincement plus étroit que W. On ne retient
+    que la part adjacente aux places (le dégagement DEVANT les places ; un sur-longueur dans le vide, non).
+    Renvoie l'aire (m²) du pincement — 0 si l'allée est partout assez large là où elle sert une place."""
+    from shapely.ops import unary_union
+    if not allees:
+        return 0.0
+    r = max(largeur_requise / 2.0 - 0.05, 0.05)
+    places_u = unary_union([p for p in places]) if places else None
+    manque = 0.0
+    for g in allees:
+        g = g if g.is_valid else g.buffer(0)
+        if g.is_empty:
+            continue
+        ouvert = g.buffer(-r).buffer(r)                 # retire les pincements < 2r = W
+        etroit = g.difference(ouvert.buffer(0.05))
+        if etroit.is_empty:
+            continue
+        if places_u is not None:
+            etroit = etroit.intersection(places_u.buffer(0.6))   # seulement DEVANT les places
+        manque = max(manque, etroit.area)
+    return float(manque)
+
+
 def _ground_tiles(scene: Scene):
     """Objets du PLAN DE SOL (niveau 0 pour le bâti) qui pavent l'assiette sans se chevaucher."""
     out = []
@@ -147,10 +173,13 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
         checks.append(CheckGeo("allée sans tronçon mort (coupée au droit des places)",
                                mort.area < 1.0, f"{mort.area:.1f} m² morts"))
 
-    larg_ok = all(min(o.geom_local.bounds[2] - o.geom_local.bounds[0],
-                      o.geom_local.bounds[3] - o.geom_local.bounds[1]) >= conv.allee_largeur_m - 0.05
-                  for o in scene.of("allee"))
-    checks.append(CheckGeo(f"largeur d'allée ≥ {conv.allee_largeur_m} m", larg_ok))
+    # ETUDE-STATIONNEMENT-FIX-2 (LOT 3) — largeur du DÉGAGEMENT devant les places mesurée LOCALEMENT, pas sur
+    # la boîte englobante : une allée clippée à un bord oblique peut pincer à 2,25 m au droit des places tout en
+    # ayant une boîte de 5 m (cas BW2635 : 13 places à 2,25 m « validées » à tort). On mesure le pincement réel.
+    pince = _pincement_allee([o.geom_local for o in scene.of("allee")], places, conv.allee_largeur_m)
+    larg_ok = pince < 1.0
+    checks.append(CheckGeo(f"dégagement d'allée ≥ {conv.allee_largeur_m} m au droit des places (mesuré localement)",
+                           larg_ok, "" if larg_ok else f"{pince:.1f} m² de dégagement sous la largeur requise"))
 
     dim_ok = True
     for o in modules:
