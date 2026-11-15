@@ -368,6 +368,7 @@ zones:
             article: 'UC 7.3'
             page_pdf: 39
             citation: 'L''implantation d''une construction en limite de fond de propriété est interdite.'
+            condition_texte: 'retrait de fond non chiffré au règlement, valeur des latérales appliquée, à vérifier'
           implantation_laterales:
             mode: limite_sous_conditions
             statut: valide
@@ -520,6 +521,7 @@ zones:
             article: 'UD 7.3'
             page_pdf: 50
             citation: 'L''implantation d''une construction en limite de fond de propriété est interdite.'
+            condition_texte: 'retrait de fond non chiffré au règlement, valeur des latérales appliquée, à vérifier'
           implantation_laterales:
             mode: limite_sous_conditions
             statut: valide

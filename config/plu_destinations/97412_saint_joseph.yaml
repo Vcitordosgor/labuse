@@ -788,7 +788,7 @@ zones:
             page_pdf: 63
             citation: '- sur une seule limite séparative, si le terrain d’assiette est supérieur à 400 m². En cas de retrait de la construction, la distance (D) comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 1,9 mètre.'
             condition_texte: 'sur une seule limite séparative, si le terrain d’assiette est supérieur à 400 m²'
-            condition_modelable: 'une_seule_limite'
+            condition_modelable: 'bascule_surface:400 m²'
           implantation_laterales:
             mode: limite_sous_conditions
             statut: valide
@@ -796,7 +796,7 @@ zones:
             page_pdf: 63
             citation: '- sur une seule limite séparative, si le terrain d’assiette est supérieur à 400 m². En cas de retrait de la construction, la distance (D) comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 1,9 mètre.'
             condition_texte: 'sur une seule limite séparative, si le terrain d’assiette est supérieur à 400 m²'
-            condition_modelable: 'une_seule_limite'
+            condition_modelable: 'bascule_surface:400 m²'
           min_m: 1.9
           article: U4 7.2
           page_pdf: 63

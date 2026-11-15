@@ -230,12 +230,6 @@ zones:
             de 3 mètres.
           statut: valide
         limites_separatives:
-          implantation_fond:
-            mode: retrait_obligatoire
-            statut: valide
-            article: 'Article Ub 5'
-            page_pdf: 38
-            citation: 'Sur la limite de fond de propriété, seule l''implantation des annexes et des dépendances est admise dès lors que ces bâtiments sont regroupés en un seul point et qu''ils ne sont pas intégrés au corps du bâtiment principal.'
           implantation_laterales:
             mode: limite_imposee
             statut: valide
@@ -243,7 +237,13 @@ zones:
             page_pdf: 38
             citation: 'Dans une bande de 20 mètres de profondeur à partir de l''alignement, les constructions principales doivent être implantées : sur les deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure ou égale à 12 mètres ; sur au moins une des limites séparatives latérales pour les terrains dont la largeur sur voie est supérieure à 12 mètres. Au-delà de la bande de 20 mètres de profondeur à partir de l''alignement, les constructions principales peuvent être implantées en retrait des limites séparatives latérales. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.'
             condition_texte: 'Dans une bande de 20 mètres de profondeur à partir de l''alignement, les constructions principales doivent être implantées : sur les deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure ou égale à 12 mètres ; sur au moins une des limites séparatives latérales pour les terrains dont la largeur sur voie est supérieure à 12 mètres.'
-            condition_modelable: 'largeur_terrain_max:12 m'
+            condition_modelable: 'profondeur_bande:20 m + largeur_terrain_max:12 m'
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Article Ub 5'
+            page_pdf: 38
+            citation: 'Sur la limite de fond de propriété, seule l''implantation des annexes et des dépendances est admise dès lors que ces bâtiments sont regroupés en un seul point et qu''ils ne sont pas intégrés au corps du bâtiment principal.'
           min_m: 3.0
           article: Ub 5
           page_pdf: 38
@@ -562,12 +562,12 @@ zones:
           statut: valide
         limites_separatives:
           implantation_fond:
-            mode: limite_imposee
+            mode: limite_sous_conditions
             statut: valide
             article: 'Article Ud 5'
             page_pdf: 68
             citation: 'Les constructions doivent être implantées en limite séparative et/ou suivant l''alignement des constructions limitrophes existantes.'
-            condition_texte: 'et/ou suivant l''alignement des constructions limitrophes existantes'
+            condition_texte: 'alignement sur les constructions limitrophes existantes (décision LOT 5 : ne vise pas le fond) — retrait avec mention'
             condition_modelable: 'non'
           implantation_laterales:
             mode: limite_imposee

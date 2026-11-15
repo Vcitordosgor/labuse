@@ -22,7 +22,11 @@ import yaml
 
 RACINE = Path(__file__).resolve().parents[4]
 IMPL = RACINE / "docs" / "audit-2026-11" / "moteur-verite-fix-1" / "implantation"
-PILOTES = ["97407", "97409", "97412", "97414", "97416"]
+# LOT 2 : 5 pilotes ; LOT 6 : toutes les communes lues (Saint-Denis 97411 EXCLU — attente de
+# confirmation du donneur d'ordre ; Saint-Philippe 97417 RNU sans PLU).
+PILOTES = ["97401", "97402", "97403", "97404", "97405", "97406", "97407", "97408", "97409",
+           "97410", "97412", "97413", "97414", "97415", "97416", "97418", "97419", "97420",
+           "97421", "97422", "97423", "97424"]
 
 
 def _q(s: str) -> str:

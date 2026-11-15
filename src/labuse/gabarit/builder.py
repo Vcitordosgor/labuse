@@ -615,37 +615,87 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             except Exception:  # noqa: BLE001 — largeur non mesurable → condition non évaluée
                 return None
 
+        def _jeton_num(tok, prefixe):
+            import re as _re
+            try:
+                return float(_re.sub(r"[^0-9.,]", "", tok.split(":", 1)[1]).replace(",", "."))
+            except (IndexError, ValueError):
+                return None
+
         def _decision_cote(imp, cote_label):
-            """{zero: 'toutes'|1|2|0, detail, mention} pour un côté (latérales ou fond)."""
-            if imp is None or imp.get("mode") in (None, "retrait_obligatoire"):
-                return {"zero": 0, "detail": None, "mention": None}
+            """MOTEUR-VERITE-FIX-1 LOT 5 — décision par côté, jetons COMBINABLES (séparés par «+»).
+            {zero: 'toutes'|n|0, bande_m, lineaire_pct, detail, mention}. Jetons modélisables :
+            une_seule_limite · deux_limites_max · largeur_terrain_max:X (mesurée ; non remplie en
+            mode imposé → au moins UNE limite reste imposée) · surface_terrain_max:X (surface
+            cadastrale) · bascule_surface:X (≤X → deux limites, >X → une) · profondeur_bande:X
+            (la limite ne vaut que dans la bande de X m depuis la voie ; retrait au-delà) ·
+            lineaire_max_pct:P (au plus P % du linéaire de l'arête en limite). Tout jeton inconnu,
+            « non » ou disjonctif (« OU ») → MENTION (capacité supérieure possible, à vérifier)."""
+            d = {"zero": 0, "bande_m": None, "lineaire_pct": None, "detail": None, "mention": None}
+            if imp is None or imp.get("mode") is None:
+                return d
+            mode = imp["mode"]
             art = (imp.get("article") or "").strip()
             cm = (imp.get("condition_modelable") or "").strip()
-            mode = imp["mode"]
+            cond_txt = (imp.get("condition_texte") or "conditions du règlement").strip()
+            if mode == "retrait_obligatoire":
+                # LOT 5 (décision 8) — retrait obligatoire SANS valeur chiffrée propre : la valeur
+                # des latérales s'applique, dit par une mention quand le calibrage le signale.
+                if cm == "non" or imp.get("condition_texte"):
+                    d["mention"] = cond_txt if imp.get("condition_texte") else None
+                return d
             if mode in ("limite_ou_retrait", "limite_imposee") and not cm:
                 lib = ("implantation en limite admise sans condition" if mode == "limite_ou_retrait"
                        else "implantation en limite imposée par le règlement")
-                return {"zero": "toutes", "detail": (f"{lib} — {art}" if art else lib), "mention": None}
-            if cm.startswith("largeur_terrain_max:"):
-                try:
-                    seuil = float(re.sub(r"[^0-9.,]", "", cm.split(":", 1)[1]).replace(",", "."))
-                except ValueError:
-                    seuil = None
-                larg = _largeur_terrain_m()
-                if seuil and larg is not None and larg <= seuil:
-                    return {"zero": "toutes",
-                            "detail": f"implantation en limite (largeur du terrain {larg:g} m ≤ "
-                                      f"{seuil:g} m){' — ' + art if art else ''}", "mention": None}
-                if seuil and larg is not None:
-                    return {"zero": 0, "detail": None, "mention": None}   # condition évaluée, non remplie
-            if cm == "une_seule_limite":
-                return {"zero": 1, "detail": f"implantation en limite admise sur une seule limite "
-                                             f"latérale{' — ' + art if art else ''}", "mention": None}
-            if cm == "deux_limites_max":
-                return {"zero": 2, "detail": f"implantation en limite admise sur deux limites au "
-                                             f"plus{' — ' + art if art else ''}", "mention": None}
-            return {"zero": 0, "detail": None,
-                    "mention": (imp.get("condition_texte") or "conditions du règlement").strip()}
+                d.update(zero="toutes", detail=(f"{lib} — {art}" if art else lib))
+                return d
+            jetons = [t.strip() for t in cm.split("+") if t.strip()]
+            details, mentions = [], []
+            for tok in jetons:
+                if " OU " in tok or tok == "non" or not tok:
+                    mentions.append(cond_txt)
+                elif tok.startswith("une_seule_limite"):
+                    d["zero"] = "toutes" if d["zero"] == "toutes" else max(d["zero"] or 0, 1)
+                    details.append("en limite sur une seule limite latérale")
+                elif tok.startswith("deux_limites_max"):
+                    d["zero"] = "toutes" if d["zero"] == "toutes" else max(d["zero"] or 0, 2)
+                    details.append("en limite sur deux limites au plus")
+                elif tok.startswith("largeur_terrain_max:"):
+                    seuil = _jeton_num(tok, "largeur")
+                    larg = _largeur_terrain_m()
+                    if seuil and larg is not None and larg <= seuil:
+                        d["zero"] = "toutes"
+                        details.append(f"largeur du terrain {larg:g} m ≤ {seuil:g} m")
+                    elif seuil and larg is not None and mode == "limite_imposee":
+                        d["zero"] = max(d["zero"] or 0, 1) if d["zero"] != "toutes" else "toutes"
+                        details.append(f"largeur {larg:g} m > {seuil:g} m — au moins une limite imposée")
+                elif tok.startswith("surface_terrain_max:"):
+                    seuil = _jeton_num(tok, "surface")
+                    if seuil and surface and float(surface) <= seuil:
+                        d["zero"] = "toutes"
+                        details.append(f"surface du terrain {float(surface):g} m² ≤ {seuil:g} m²")
+                elif tok.startswith("bascule_surface:"):
+                    seuil = _jeton_num(tok, "bascule")
+                    if seuil and surface:
+                        n = 2 if float(surface) <= seuil else 1
+                        d["zero"] = "toutes" if d["zero"] == "toutes" else max(d["zero"] or 0, n)
+                        details.append(f"{n} limite(s) admise(s) (surface {float(surface):g} m² "
+                                       f"{'≤' if n == 2 else '>'} {seuil:g} m²)")
+                elif tok.startswith("profondeur_bande:"):
+                    d["bande_m"] = _jeton_num(tok, "bande")
+                    details.append(f"dans une bande de {d['bande_m']:g} m depuis la voie")
+                elif tok.startswith("lineaire_max_pct:"):
+                    d["lineaire_pct"] = _jeton_num(tok, "lineaire")
+                    details.append(f"sur au plus {d['lineaire_pct']:g} % du linéaire")
+                else:
+                    mentions.append(cond_txt)
+            if d["bande_m"] and not d["zero"]:
+                d["zero"] = "toutes"          # bande seule : limite admise DANS la bande
+            if mentions:
+                d["mention"] = mentions[0][:200]
+            if details:
+                d["detail"] = ("; ".join(details) + (f" — {art}" if art else ""))[:220]
+            return d
 
         dec_lat = _decision_cote(imp_lat, "latérales")
         dec_fond = _decision_cote(imp_fond, "fond de parcelle")
@@ -656,7 +706,16 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                                     "mentions": _mentions}
 
         def _setbacks_for(edges, include_voie):
-            # arêtes latérales posées EN LIMITE (recul 0) selon la décision : 'toutes', ou les n plus longues
+            # MOTEUR-VERITE-FIX-1 LOT 2/5 — arêtes en limite (recul 0) selon la décision par côté,
+            # avec DÉCOUPAGE géométrique : bande depuis la voie (profondeur_bande) et plafond de
+            # linéaire (lineaire_max_pct) ne mettent à 0 que la PART d'arête couverte par la règle ;
+            # le reste garde le retrait (`limite-sep`, re-insété par la formule H/n du LOT 1).
+            from shapely.ops import unary_union as _uu, substring as _substr
+            voie_geoms = [e.geom for e in edges if e.type == "voie"]
+            def _band(bm):
+                if not bm or not voie_geoms:
+                    return None               # pas de voie mesurable → prudence : pas de limite
+                return _uu([g.buffer(bm) for g in voie_geoms])
             lat_edges = [e for e in edges if e.type == "side"]
             if dec_lat["zero"] == "toutes":
                 lat_zero = set(id(e) for e in lat_edges)
@@ -665,14 +724,46 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 lat_zero = set(id(e) for e in tri[:int(dec_lat["zero"])])
             else:
                 lat_zero = set()
-            rear_zero = dec_fond["zero"] == "toutes"   # une_seule/deux n'ont pas de sens pour le fond
+            rear_zero = dec_fond["zero"] == "toutes"
+
+            def _emettre(i, e, dec, en_limite):
+                if not en_limite:
+                    setbacks.append(Setback(id=f"lim-{i}", ruleId="limite-sep", type=e.type,
+                                            geometry=geojson_from_shape(to_wgs(e.geom)),
+                                            setbackM=recul_sep, source=bdtopo_src))
+                    return
+                g_lim, g_ret = e.geom, None
+                band = _band(dec["bande_m"])
+                if dec["bande_m"]:
+                    if band is None:
+                        g_lim, g_ret = None, e.geom       # bande non mesurable → tout en retrait
+                    else:
+                        g_lim = e.geom.intersection(band)
+                        g_ret = e.geom.difference(band)
+                if g_lim is not None and not g_lim.is_empty and dec["lineaire_pct"]:
+                    frac = max(0.0, min(1.0, dec["lineaire_pct"] / 100.0))
+                    parts_lim, parts_ret = [], []
+                    geoms = ([g_lim] if g_lim.geom_type == "LineString"
+                             else [g for g in getattr(g_lim, "geoms", []) if g.geom_type == "LineString"])
+                    for g in geoms:
+                        parts_lim.append(_substr(g, 0.0, frac, normalized=True))
+                        parts_ret.append(_substr(g, frac, 1.0, normalized=True))
+                    g_lim = _uu([p for p in parts_lim if not p.is_empty]) if parts_lim else None
+                    extra = _uu([p for p in parts_ret if not p.is_empty]) if parts_ret else None
+                    g_ret = _uu([x for x in (g_ret, extra) if x is not None and not x.is_empty])                         if (g_ret is not None or extra is not None) else None
+                for j, (g, rid, d) in enumerate(((g_lim, "limite-sep-limite", 0.0),
+                                                 (g_ret, "limite-sep", recul_sep))):
+                    if g is None or g.is_empty or g.length < 0.05:
+                        continue
+                    setbacks.append(Setback(id=f"lim-{i}-{j}", ruleId=rid, type=e.type,
+                                            geometry=geojson_from_shape(to_wgs(g)),
+                                            setbackM=d, source=bdtopo_src))
+
             for i, e in enumerate(edges):
-                if e.type in ("side", "rear"):
-                    en_limite = (id(e) in lat_zero) if e.type == "side" else rear_zero
-                    setbacks.append(Setback(
-                        id=f"lim-{i}", ruleId="limite-sep-limite" if en_limite else "limite-sep",
-                        type=e.type, geometry=geojson_from_shape(to_wgs(e.geom)),
-                        setbackM=0.0 if en_limite else recul_sep, source=bdtopo_src))
+                if e.type == "side":
+                    _emettre(i, e, dec_lat, id(e) in lat_zero)
+                elif e.type == "rear":
+                    _emettre(i, e, dec_fond, rear_zero)
                 elif include_voie and e.type == "voie":
                     setbacks.append(Setback(id=f"lim-{i}", ruleId=_ruleid_for(e), type="road",
                                             geometry=geojson_from_shape(to_wgs(e.geom)),

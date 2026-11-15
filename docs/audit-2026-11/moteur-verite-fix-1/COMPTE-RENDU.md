@@ -236,3 +236,29 @@ nouvelles = Saint-André UB, +380 à +430 m², libération de la bande avant par
 0-6 m). **Garde A/N : 22 parcelles** passées constructibles en zone A/N — TOUTES portent le
 verdict « plafonné à X m² » avec la règle citée (vérifié : SDP ≤ plafond partout) ; c'est la
 capacité AVEC règle prouvée commandée par le mandat, zéro ouverture sans règle.
+
+---
+
+## LOT 5 — les décisions du relecteur + le vocabulaire mesurable
+
+Décisions appliquées (overlay `implantation/LOT5-DECISIONS.csv`, 18 feuilles) : **1** Le Port Ub —
+bande de 20 m MODÉLISÉE (limite dans la bande depuis la voie, retrait au-delà ; ≤ 12 m de
+largeur → deux limites, sinon au moins une, mode imposé) ; **2** Le Port Ud fond — retrait +
+mention (l'alignement visé est celui des voisins, pas le fond) ; **7** Saint-Joseph U4 — bascule
+MESURÉE à 400 m² de terrain (`bascule_surface:400`) ; **8** Saint-André UC/UD fond — mention
+« retrait de fond non chiffré au règlement, valeur des latérales appliquée, à vérifier » ;
+**10** lecture littérale des « limites séparatives » indistinctes actée (citations à l'appui) ;
+**3/4/5/6/9** lectures prudentes maintenues. Nouveau vocabulaire moteur (jetons COMBINABLES) :
+`profondeur_bande:X` (bande depuis la voie — découpage géométrique de l'arête),
+`lineaire_max_pct:P` (part du linéaire en limite, découpage par substring),
+`surface_terrain_max:X` / `bascule_surface:X` (surface cadastrale mesurée), largeur en mode
+imposé → au moins une limite. Saint-Pierre encodé avec ce vocabulaire (linéaires 60-80 % par
+zone, imposition du premier rideau ; la hauteur-sur-bande reste une mention).
+
+**Mesures après LOT 5** (cumulatif) : Test 1 **4 665/4 812 (96,9 %)** · dépassements **97
+(2,4 %)** — stable · terrain_exigu **268** · cohorte au-dessus 2 477, non-constructible **179**.
+Effet marginal lot4→lot5 MESURÉ : 7 parcelles de Saint-André passent de « terrain exigu » à
+« Constructible — capacité à vérifier » (mention de fond, décision 8) ; 4 hausses Up
+Saint-Pierre (+3 à +7 m², linéaire). Contrôle inverse : les 30 plus fortes hausses vs l'audit =
+celles des lots précédents (déjà relues) ; garde A/N inchangée (les mêmes 22 plafonnées avec
+règle). Suite verte (406 tests).
