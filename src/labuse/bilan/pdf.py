@@ -236,15 +236,20 @@ def construire_html(
             lib = esc(poste.libelle) + (f" <small>{esc(poste.sub)}</small>" if poste.sub else "")
             # Une ligne vide ne porte pas de montant (elle vaut 0 dans le total).
             vide = ln.manquant
+            # CHIRURGICAL-FIX-1 (LOT H pt1) — un poste à ASSIETTE (taux × assiette : taxe d'aménagement,
+            # redevance…) dont l'ASSIETTE n'est pas renseignée donne un montant INDÉTERMINÉ, pas « 0 € ».
+            # Avant, une taxe « Sourcé » sans assiette affichait « 0 € · Sourcé » (faux : rien n'est à 0,
+            # l'assiette manque). On rend « — » pour HT/TVA/TTC, comme l'assiette.
+            sans_assiette = (not vide) and poste.mode in ("pct", "unit") and not ln.assiette_valeur
             etat = _ETAT_LABEL.get(ln.etat, ln.etat)
             corps.append(
                 f"<tr><td>{lib}</td>"
                 f"<td class='num'>{_assiette(ln, poste)}</td>"
                 f"<td class='num'>{_taux(ln, poste)}</td>"
-                f"<td class='num'>{'' if vide else _eur(ln.ht)}</td>"
+                f"<td class='num'>{'' if vide else ('—' if sans_assiette else _eur(ln.ht))}</td>"
                 # DOCS-1 (décision Vic) — une TVA nulle (taxes : 0 % de TVA) s'écrit « — », jamais « 0 € ».
-                f"<td class='num'>{'' if vide else (_eur(ln.tva) if ln.tva else '—')}</td>"
-                f"<td class='num'>{'' if vide else _eur(ln.ttc)}</td>"
+                f"<td class='num'>{'' if vide else ('—' if sans_assiette else (_eur(ln.tva) if ln.tva else '—'))}</td>"
+                f"<td class='num'>{'' if vide else ('—' if sans_assiette else _eur(ln.ttc))}</td>"
                 f"<td>{f'<span class=badge>{esc(etat)}</span>' if etat else ''}</td></tr>"
             )
         lib_tot = f"Total {n} · {esc(b.titre)}" if n else f"Total — {esc(b.titre)}"
