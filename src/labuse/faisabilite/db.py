@@ -1335,8 +1335,35 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         if getattr(_gres, "niveauxRetenus", None):
             extras["niveaux_retenus"] = int(_gres.niveauxRetenus)
             extras["recul_sep_scenario"] = _gres.reculSepScenario
-    return ctx, estimate_capacity(rules, surface_assiette, ctx.contraintes, hyp=hyp,
-                                  emprise_geo=(emprise, recul), extras=extras)
+    _f_cap = estimate_capacity(rules, surface_assiette, ctx.contraintes, hyp=hyp,
+                               emprise_geo=(emprise, recul), extras=extras)
+    # MOTEUR-VERITE-FIX-5 LOT 3 — toute capacité CHIFFRÉE porte ses RÉSERVES, écrites par le
+    # moteur : zone AU (conditions d'aménagement/OAP), zone bleue du PPR (prescriptions),
+    # scénario par niveau (hauteur de façade supposée).
+    if _f_cap is not None and "surface_plancher_m2" in (_f_cap.fourchette or {}):
+        from .zone_norm import est_famille as _ef5
+        if ctx.zone and _ef5(ctx.zone, ("AU",)):
+            _f_cap.avertissements.append(
+                "Capacité sous réserve des conditions d'aménagement de la zone et de l'OAP "
+                "(zone AU : échéancier, desserte et organisation d'ensemble à instruire).")
+        try:
+            _bleu = session.execute(text(
+                "SELECT 1 FROM spatial_layers sl, parcels p WHERE p.id = :pid "
+                "AND sl.kind = 'ppr' AND labuse_ppr_couleur(sl.subtype, sl.attrs) = 'bleu' "
+                "AND ST_Intersects(sl.geom_2975, p.geom_2975) LIMIT 1"),
+                {"pid": parcel_id}).scalar()
+        except Exception:  # noqa: BLE001 — couche indisponible : pas de réserve inventée
+            _bleu = None
+        if _bleu:
+            _f_cap.avertissements.append(
+                "Capacité sous prescriptions du plan de prévention (zone bleue : règles "
+                "constructives du règlement du PPR à respecter).")
+        if extras.get("niveaux_retenus"):
+            _f_cap.avertissements.append(
+                "Scénario par niveau : hauteur de façade SUPPOSÉE "
+                f"({extras['niveaux_retenus']} niveau(x) — {extras.get('recul_sep_scenario') or ''})".rstrip()
+                + ".")
+    return ctx, _f_cap
 
 
 # 3.D — Empreintes pour le gabarit 3D : parcelle + emprise insetée du recul, RECENTRÉES sur le

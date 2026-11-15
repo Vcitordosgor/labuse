@@ -100,3 +100,20 @@ def test_lot2_gabarit_lit_cascade_rejouee(app_session):
         det = str((gb.raccordement.get("ppr") or {}).get("detail") or "")
         assert "Exclue" not in det, f"{idu} : le gabarit lit encore le classement épinglé"
         assert "PRESCRIPTIONS" in det or "prescriptions" in det
+
+
+# LOT 3 — toute capacité chiffrée porte ses réserves, ÉCRITES par le moteur.
+RESERVES = [
+    ("97402000AD1041", "conditions d'aménagement"),          # zone AU
+    ("97420000BC1134", "prescriptions du plan de prévention"),  # zone bleue PPR
+    ("97418000AS1397", "hauteur de façade SUPPOSÉE"),        # scénario par niveau
+]
+
+
+@pytest.mark.parametrize("idu,attendu", RESERVES)
+def test_lot3_reserves_ecrites(app_session, idu, attendu):
+    sdp, f = _sdp(app_session, idu)
+    if sdp is None:
+        pytest.skip(f"{idu} : capacité à vérifier (pas de chiffre, pas de réserve attendue)")
+    assert any(attendu in a for a in (f.avertissements or [])), \
+        f"{idu} : capacité chiffrée ({sdp} m²) sans la réserve « {attendu} »"
