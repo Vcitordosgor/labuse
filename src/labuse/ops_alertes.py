@@ -242,6 +242,16 @@ def resoudre(db, cle: str) -> bool:
     return True
 
 
+def age_incident_jours(db, cle: str) -> float | None:
+    """Âge (en jours) d'un incident OUVERT de clé `cle`, depuis son ouverture. None s'il n'est pas
+    ouvert. Sert au rappel « rien fait depuis 7 jours » (PLU-VEILLE-FIX-1)."""
+    ensure_table(db)
+    r = db.execute(text(
+        "SELECT EXTRACT(EPOCH FROM (now() - ouvert_at)) / 86400.0 FROM ops_incidents "
+        "WHERE cle = :c AND resolu_at IS NULL"), {"c": cle}).scalar()
+    return float(r) if r is not None else None
+
+
 def incidents_ouverts(db) -> list[dict]:
     """Les incidents encore ouverts (pour le récap du matin + la page admin)."""
     ensure_table(db)
