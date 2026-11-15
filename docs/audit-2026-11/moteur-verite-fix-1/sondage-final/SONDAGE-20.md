@@ -124,3 +124,22 @@ séparatives » sans distinction — lecture littérale actée) ; depuis FIX-2 L
 famille U2/U3 est en lecture PRUDENTE (ruptures de mitoyenneté et hauteurs par bande
 non modélisées → pas d'ouverture chiffrée). F19 (Le Tampon Uav) : le fond relève du
 même article ; la clause de bande 10.3 est imagée (F19b).
+
+---
+
+## RECALAGE FIX-3 (2e relecture indépendante)
+
+Bandes REFAITES sous les mêmes noms, à la page de la règle réellement appliquée :
+
+- **F02** (97415) : règle U1b (art. 7) imagée p.21 — l'ancienne bande montrait p.20 (exceptions art. 6) — bande refaite (97415_reglement_20251217.pdf p.21). Phrase imagée : « en zone U1b Chaque construction pourra s'implanter sur une limite séparative sur une longueur maximale de 18 m »
+- **F05** (97414) : règle UC 7.3 (fond) imagée à sa vraie page (46), plus de « ligne non localisée » — bande refaite (97414_reglement_20251218.pdf p.46). Phrase imagée : « L'implantation en limite est possible dès lors que la nouvelle construction n'excède pas 4 mètres de hauteur absolue »
+- **F06** (97420) : règle U5.3 (fond, régime UA) imagée à sa vraie page (13) — bande refaite (97420_reglement_20250929.pdf p.13). Phrase imagée : « les constructions peuvent être implantées en limite de fond de terrain »
+- **F12** (97415) : alinéa U3a imagé p.112 (et non 111) — bande refaite (97415_reglement_20251217.pdf p.112). Phrase imagée : « en zone U3a Les constructions devront s'implanter sur une limite séparative ou en retrait minimum »
+- **F17** (97415) : règle U3b/U3c imagée p.112 — LECTURE : AU3b renvoie vers U3b, FACULTÉ sous conditions (« pourront »), fermée sous liste blanche FIX-3 — bande refaite (97415_reglement_20251217.pdf p.112).
+- **F22** (97415) : règle U1a imagée p.21 : le RDC est imposé d'une limite à l'autre DANS LA BANDE DE 10 m depuis la voie (pas sur toute la parcelle) — bande refaite (97415_reglement_20251217.pdf p.21). Phrase imagée : « les rez-de-chaussée de constructions devront être édifiés d'une limite séparative à l'autre »
+
+Lectures corrigées :
+
+- **F17** (97415 AU3b → U3b) : la règle U3b est une FACULTÉ sous conditions (« pourront s'implanter sur une limite séparative sur une longueur maximale… ») — pas une obligation ; sous la liste blanche FIX-3 la zone reste FERMÉE (conditions non toutes mesurées).
+- **F21** (97423 Uaa, p.15) : limite IMPOSÉE AVEC CONDITION PATIO — le même article 7.2 impose « des espaces libres de type patio de 3 mètres minimum » aux habitations de plus de 10 m de profondeur en limite (5 m au-delà de 20 m pour les autres constructions). La condition patio n'est pas modélisée → l'imposée ne sert aucun scénario chiffré en limite (prudence maintenue, condition `patio` de la liste blanche non mesurée).
+- **F23** (97407 Ud, art. 5) : « Les constructions doivent être implantées en limite séparative ET/OU suivant l'alignement des constructions limitrophes existantes » — l'alignement des voisins est une ALTERNATIVE à la limite : RECLASSÉ, ce n'est pas une limite imposée pure (aucun scénario « en limite 0 m » garanti).

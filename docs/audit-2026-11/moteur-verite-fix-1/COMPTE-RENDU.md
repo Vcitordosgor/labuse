@@ -388,7 +388,7 @@ Secteurs Aba/Arh/Nrh/Nba : SDP ∅ (« capacité à vérifier »), plafond en cl
 sommable ; « limite totale » = par unité foncière ; Saint-Louis Arh : 50 m² PAR TRANCHE de
 600 m² (tranches complètes, incomplète « à vérifier »).
 
-## LOT C — les cas, un par un (`2603c0270`)
+## LOT C — les cas, un par un (`2a1deba35`)
 Saint-André UA/UB : position de FAÇADE (≤ 4/6 m, RD 7 m de l'axe) non modélisée → min prudent
 restauré (capacité ≤ main), alignement en mention. Saint-Joseph famille U2/U3 : ruptures 15 m /
 hauteurs par bande → fermeture prudente (18 feuilles `FIX2-DECISIONS.csv`). CY1293 : AC2 sans
@@ -427,3 +427,93 @@ plafonnés (désormais SDP ∅, verdict conservé).
 le renvoi AU imagé à part), F05 (vraie page 46), F06 (règle U5.3 p.13 + renvoi p.30), F12
 (p.112) ; F09/F19 fonds complétés (F19b : clause de bande 10.3 imagée) ; **3 cas « limite
 imposée » ajoutés** (F21 Trois-Bassins Uaa, F22 Saint-Paul U1a, F23 Le Port Ud) — 13/13 images.
+
+---
+
+# MOTEUR-VERITE-FIX-3 — la liste blanche : tout est fermé par défaut
+
+Inversion de méthode demandée par la 2e relecture indépendante : un chiffre de capacité ne peut
+dépasser celui de main QUE pour une zone inscrite sur une LISTE BLANCHE explicite, article par
+article. Base : merge d'origin/main `9058a8f55` (`cf935cfdf`).
+
+## LOT 1 — liste blanche (`47a1d2376`)
+
+Chaque feuille d'implantation qui OUVRE doit porter la déclaration « toutes les conditions de
+l'article sont appliquées » + les 8 conditions (nombre_de_limites, lineaire_ou_profondeur_en_
+limite, bande_depuis_voie, hauteur_en_limite, angle, patio, rupture_mitoyennete,
+affectation_graphique), chacune `absente_du_texte` ou `mesuree` — sinon le moteur FERME
+(`liste_blanche_ok`, gate dans `analyser_condition_implantation`). Liste initiale : **Le Port Uc,
+Salazie UA, La Plaine-des-Palmistes Ub** (6 feuilles ; Plaine = budget 1 limite TOTAL). La
+référence de hauteur `h_reference` est lue À L'ARTICLE pour 68 zones : **19 à l'égout prouvé**
+(La Possession UA/UB et famille, Saint-Louis UC1/1AUc1, Trois-Bassins Ue) → scénario H/2 niveau
+par niveau ; les autres (faîtage/altitude) restent au faîtage PRUDENT. `LISTE-BLANCHE.md`
+généré pour relecture complète.
+
+## LOT 2 — les bugs reproduits par le relecteur (`178c48742`)
+
+* **Largeur = PORTE mesurée SUR LA VOIE** (somme des arêtes voie — plus jamais le petit côté du
+  rectangle englobant). Remplie, elle ACTIVE les jetons de nombre (Sainte-Rose Ud : une seule
+  limite sous 14 m — AS0031, front 52,6 m, ouvrait « toutes » sous le seuil et une au-delà) ;
+  non remplie, le côté FERME (règle appliquée, pas une mention) ; en mode imposé, « au moins
+  une » reste. Test de régression dédié.
+* **Contour fermé** : une arête-anneau n'est JAMAIS « fond en limite 0 m » (AH0293, AY0554,
+  AH1368, AW0503) — mention « à vérifier ».
+* **Le repli applique les règles PROPRES de la zone** : Saint-Denis Uicm 5 m ET CES 40 % (Ui.9
+  p.56) ; Udo 4 m (Ud.7 p.42) ; une règle propre NON réductible à un nombre (hauteur Udo par
+  rue, Ud.10 p.44) n'est JAMAIS remplacée par une valeur générique → « capacité à vérifier »
+  (champ `ZoneRules.capacite_a_verifier`, verdict constructible, SDP ∅).
+* **SUP AC2 distinguée par la couche DEAL** (`spatial_layers kind='ens'`) : site CLASSÉ →
+  « Autorisation spéciale requise (art. L341-10) » (CY1293 le sert), site INSCRIT → avis ABF ;
+  couche muette → libellé prudent ; jamais « aucune SUP ».
+* Saint-Joseph U3 (hauteurs par bande 8 m/6 m) : FERMÉ par la liste blanche (vérifié) —
+  l'ouverture exigera `hauteur_en_limite: mesuree`.
+
+## LOT 3 — « capacité à vérifier » n'est pas un zéro (`45ded1670`)
+
+Une faisabilité constructible SANS `surface_plancher_m2` (SDP ∅) écrivait `capacite_nulle`/0
+dans le résiduel. Désormais : **SDP écrite NULL + cause `capacite_a_verifier`** (famille
+IGNORANCE — le jumeau SQL du gate et le filet du score servent « Analyse incomplète », jamais
+« rien à bâtir »). Témoins : AS0256 (Salazie Aba), CY1293 (Saint-Leu). **Réconciliation
+cascade ↔ capacité (BC1134, 61 % rouge)** : l'exclusion PPR rouge ≥ 50 % applique le MÊME test
+que le moteur (`_hors_rouge_fragment_servable`) — partie hors rouge exploitable → FLAG FORT
+« capacité réduite à cette partie » ; l'exclusion ne tombe que si le reste n'est pas
+exploitable (contre-témoin BN0009, 100 % rouge : exclue). **RNU** : une commune au
+règlement national d'urbanisme (Saint-Philippe) n'est PAS une ignorance « hors du PLU
+outillé » — c'est un régime connu : le potentiel sert « constructibilité limitée aux parties
+actuellement urbanisées, analyse au cas par cas » (constructible False, jamais un prix de
+terrain à bâtir dans Estimer — E105 du contre-audit chirurgical, test de cohérence vert).
+
+## LOT 4 — mesures et preuve
+
+| Mesure | LOT 7 | FIX-2 | **FIX-3** |
+|---|---|---|---|
+| Test 1 — « constructible » (cohorte H) | 97,1 % | 97,1 % | **97,2 %** (4 646/4 781) |
+| Test 2 — dépassements > 1,10 | 97 | 100 | **102** (+5/−3, TOUS expliqués) |
+| terrain_exigu (parcelles H) | 104 | 90 | **80** |
+
+Les 5 dépassements NOUVEAUX sont tous des RÉTRÉCISSEMENTS PRUDENTS d'enveloppe (le permis réel
+bat l'enveloppe prudente, mention « capacité supérieure possible, à vérifier » servie —
+vérifiée sur AL1109) : AY0595 Étang-Salé UA (contour fermé non qualifié), IZ0339 Saint-Denis Um
+(« 1 ou 2 limites sur 10 m » hors liste blanche), BX0548/CD1576 Saint-Joseph U3a (famille
+fermée), AL1109 Sainte-Rose 1AUa (porte de largeur fermée au-delà de 14 m). 3 dépassements
+sortis (AO1881, AR0040, CD0623).
+
+**LE CONTRÔLE INVERSE FIX-3** (`CONTROLE-INVERSE-FIX3.csv`) : la référence n'est plus
+l'ancien cache de l'audit mais **origin/main ACTUEL (`9058a8f55`) rejoué dans un worktree
+propre** (cache-main3, 6 569 permis). **22 parcelles** au-dessus de main — chacune justifiée
+par des MESURES DE LA PARCELLE (largeur sur voie mesurée sur les arêtes voie, surface, décision
+d'implantation rejouée avec ces mesures — plus un contrôle de syntaxe des paramètres de zone) :
+Salazie UA ×3 (U 7.2/7.3, liste blanche, implantation ouverte avec les mesures), Le Port Uc
+(art. Uc 5, liste blanche), La Possession UB/UBc/AUB ×4 (H/2 à l'ÉGOUT prouvé à l'article,
+art. UB 7 p.30), La Plaine-des-Palmistes Ub ×14 (art. Ub 7, liste blanche). **HORS LISTE
+BLANCHE : 0** — le script SORT EN ÉCHEC (exit 1) si une hausse non listée apparaît : la règle
+FIX-3 est prouvée sur le stock, pas seulement par les tests unitaires.
+
+**Sondage recalé une 2e fois** (`sondage-final/`, section RECALAGE FIX-3) : bandes REFAITES à
+la page de la règle réellement appliquée — F02/F22 p.21 (U1b 18 m ; U1a « les rez-de-chaussée…
+d'une limite séparative à l'autre » DANS la bande de 10 m depuis la voie), F05 p.46 (UC 7.3),
+F06 p.13 (U5.3 régime UA), F12/F17 p.112 (U3a ; U3b/U3c). Lectures corrigées : F17 (AU3b → U3b
+= FACULTÉ sous conditions, fermée sous liste blanche), F21 (Uaa imposée AVEC condition patio
+non modélisée → aucun scénario chiffré en limite), F23 (Ud « et/ou suivant l'alignement des
+constructions limitrophes » = alternative → reclassé, pas une imposée pure). **Les PNG du
+sondage sont désormais suivis en Git** (`git add -f`, 56 images).
