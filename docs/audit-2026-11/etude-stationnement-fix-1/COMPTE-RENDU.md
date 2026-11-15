@@ -410,3 +410,44 @@ tant que chaque valeur figure dans la citation partagée (sinon recopie suspecte
 Une règle de hauteur près des limites que le moteur ne sait pas chiffrer doit s'afficher « Non vérifié »
 (comme le prospect). Non implémenté ce tour (bornage temps) — mécanisme identifié (feuille `hauteur` à
 marqueur de gradation → contrôle dédié « Non vérifié »). Reliquat, avec le lot 4.
+
+---
+
+## Relecture (6e tour) — association secteur-valeur, 4 communes, PDF, ARRÊT
+
+### Résultat du contrôle (habitation)
+**1444 règles prouvées sur 1465** · **21 échecs de citation** (uniquement L'Étang-Salé 12 + Saint-André 9,
+tableaux `par_typologie` à cheval + millésime de PDF différent de la page auditée) · **0 chiffre hors
+citation** · **0 association secteur-valeur à relire**.
+
+### Item 1 — association secteur-valeur (ta remarque)
+Contrôle renforcé : quand une citation est un TABLEAU partagé (« U2a, U2b : 1,5 ; U2c, U2d : 2 »), on vérifie
+que la valeur appliquée est celle ASSOCIÉE à CE secteur (le code de zone, en TOKEN — plus en sous-chaîne de
+« immeubles » — doit être dans le même segment que sa valeur). **Résultat : 0 à relire par l'image** — toutes
+les associations se lisent (Saint-Paul U2a↔1,5, U2c↔2 confirmés `ok_associe`). Test dédié.
+
+### Item 2 — Saint-Denis
+La ligne « 15 % » lue sur l'image EST une **mixité sociale** (« les opérations nouvelles d'habitat collectif
+de 30 logements et plus… 15 % de logements aidés », `mixite.quota_pct: 15`), **pas une pleine terre**. Les
+pleines terres UH 50 % / UJ-UM 35 % / UI 25 % / UD-UU 10 % de mon audit **ne figurent nulle part** : seules
+UD 30 % et UI 40 % existent (ajoutées par l'autre session). **Origine des valeurs fausses** : l'extraction
+par agent de la table `plu_reglement_extrait` à l'audit, **non vérifiée par l'image** — exactement la faille
+que le contrôle par image a fermée depuis. Mon stationnement, lui, est 100 % image-vérifié (0 chiffre hors
+citation). Saint-Denis **stationnement** : citations à passer en verbatim (reliquat, avec Étang-Salé/Saint-André).
+
+### Item 3 — 4 communes sans texte, depuis les PDF
+**La Plaine-des-Palmistes et Saint-Leu : 0 échec** (citations verbatim depuis les PDF officiels).
+**L'Étang-Salé (12) et Saint-André (9)** : reliquat — tableaux `par_typologie` + le n° de page de la base
+(42) ne correspond pas au PDF 2019 (norme en p.20) ; à finir à la main.
+
+### Item 5 — Études en PDF
+Régénérées dans `~/Desktop/exports-audit-4/` : **AD0887 12/12**, **HT0538 6/6**, **BW2635 30/30** (barème
+collectif, opération > 5), toutes « À compléter » (condition à vérifier). `08-etude-faisabilite.pdf`.
+
+### ARRÊT — reliquat honnête
+- **Item 4** non fait ce tour : Ua10.3 « Non vérifié » ; les 10 zones à condition réelle ; conditions
+  chiffrées (Saint-Louis > 10 logts) ; libellé « non réglementé » étendu ; autres destinations marquées non
+  prouvées. Mécanismes identifiés.
+- **21 citations** restantes (Étang-Salé, Saint-André) + **Saint-Denis stationnement**.
+- Livrables : contrôle ci-dessus, `COUVERTURE.md` (24 communes), `SONDAGE-10-LOT3.md` (20 règles à graine
+  fixe, image de la ligne entière).

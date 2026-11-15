@@ -277,6 +277,35 @@ def test_chaque_chiffre_applique_figure_dans_sa_citation():
                      + ", ".join(f"{i} {z} {h}" for i, z, _pg, h in fig[:10]))
 
 
+def test_association_secteur_valeur_dans_citation_partagee():
+    """Relecture 6 — quand un tableau sert plusieurs secteurs à valeurs différentes (« U2a, U2b : 1,5 ;
+    U2c, U2d : 2 »), la valeur appliquée doit être celle ASSOCIÉE à ce secteur dans la citation (pas juste
+    présente quelque part). Les cas où l'association ne se lit pas vont en relecture image. Ici : 0."""
+    import glob
+    import importlib.util
+    import os
+    import re
+    spec = importlib.util.spec_from_file_location("ctl_assoc", "scripts/stationnement_controle_pages.py")
+    ctl = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ctl)
+    from labuse.implantation import regles as R
+    from labuse.plu import destinations as D
+    a_relire = []
+    for p in sorted(glob.glob("config/plu_destinations/974??_*.yaml")):
+        insee = os.path.basename(p)[:5]
+        for r in D.regles_commune(insee):
+            z = r["zone"]
+            if not re.match(r'^\d*(U|AU)', z, re.I):
+                continue
+            b = R.charger(insee, z).stationnement
+            if b.validee and ctl.association_secteur(b, z) == "image":
+                a_relire.append(f"{insee}/{z}")
+    assert not a_relire, f"{len(a_relire)} associations secteur-valeur non lisibles : {a_relire[:10]}"
+    # et la bonne association est bien DÉTECTÉE (pas seulement 'ok_simple') sur le cas Saint-Paul
+    assert ctl.association_secteur(R.charger("97415", "U2a").stationnement, "U2a") == "ok_associe"
+    assert ctl.association_secteur(R.charger("97415", "U2c").stationnement, "U2c") == "ok_associe"
+
+
 def test_destination_suit_le_type_de_projet():
     """La destination lue dans le barème suit le type de projet (plus de « collectif » codé en dur)."""
     assert DESTINATION_PAR_PROJET["collectif"] == "collectif"

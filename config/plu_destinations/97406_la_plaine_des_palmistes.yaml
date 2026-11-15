@@ -71,14 +71,17 @@ zones:
           places: 1.5
           article: Ua 12.2
           page_pdf: 103
-          citation: 'logement de plus de 30 m² : 1,5 place par logement arrondi à l''entier
-            (NORMES DE STATIONNEMENT, annexe du règlement)'
+          citation: '1 place par logement
+
+            - logement de plus de 30 m²
+
+            1,5 place par logement arrondi à l’entier'
           statut: valide
           exceptions:
-          - texte: "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération"
-            article: "Ua 12.2 (renvoi annexe)"
+          - texte: '- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération'
+            article: Ua 12.2 (renvoi annexe)
             page_pdf: 103
-            porte: "majoration_conditionnelle"
+            porte: majoration_conditionnelle
             modifie_calcul: true
       pleine_terre:
         pct:
@@ -180,14 +183,17 @@ zones:
           places: 1.5
           article: Ub 12.2
           page_pdf: 103
-          citation: 'logement de plus de 30 m² : 1,5 place par logement arrondi à l''entier
-            (NORMES DE STATIONNEMENT, annexe du règlement)'
+          citation: '1 place par logement
+
+            - logement de plus de 30 m²
+
+            1,5 place par logement arrondi à l’entier'
           statut: valide
           exceptions:
-          - texte: "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération"
-            article: "Ub 12.2 (renvoi annexe)"
+          - texte: '- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération'
+            article: Ub 12.2 (renvoi annexe)
             page_pdf: 103
-            porte: "majoration_conditionnelle"
+            porte: majoration_conditionnelle
             modifie_calcul: true
       pleine_terre:
         pct:
@@ -304,14 +310,17 @@ zones:
           places: 1.5
           article: Uc 12.2
           page_pdf: 103
-          citation: 'logement de plus de 30 m² : 1,5 place par logement arrondi à l''entier
-            (NORMES DE STATIONNEMENT, annexe du règlement)'
+          citation: '1 place par logement
+
+            - logement de plus de 30 m²
+
+            1,5 place par logement arrondi à l’entier'
           statut: valide
           exceptions:
-          - texte: "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération"
-            article: "Uc 12.2 (renvoi annexe)"
+          - texte: '- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération'
+            article: Uc 12.2 (renvoi annexe)
             page_pdf: 103
-            porte: "majoration_conditionnelle"
+            porte: majoration_conditionnelle
             modifie_calcul: true
       pleine_terre:
         pct:
@@ -427,14 +436,17 @@ zones:
           places: 1.5
           article: Ur 12.2
           page_pdf: 103
-          citation: 'logement de plus de 30 m² : 1,5 place par logement arrondi à l''entier
-            (NORMES DE STATIONNEMENT, annexe du règlement)'
+          citation: '1 place par logement
+
+            - logement de plus de 30 m²
+
+            1,5 place par logement arrondi à l’entier'
           statut: valide
           exceptions:
-          - texte: "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération"
-            article: "Ur 12.2 (renvoi annexe)"
+          - texte: '- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération'
+            article: Ur 12.2 (renvoi annexe)
             page_pdf: 103
-            porte: "majoration_conditionnelle"
+            porte: majoration_conditionnelle
             modifie_calcul: true
       pleine_terre:
         pct:
@@ -699,14 +711,17 @@ zones:
           places: 1.5
           article: Ub 12.2
           page_pdf: 103
-          citation: 'logement de plus de 30 m² : 1,5 place par logement arrondi à l''entier
-            (NORMES DE STATIONNEMENT, annexe du règlement)'
+          citation: '1 place par logement
+
+            - logement de plus de 30 m²
+
+            1,5 place par logement arrondi à l’entier'
           statut: valide
           exceptions:
-          - texte: "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération"
-            article: "Ub 12.2 (renvoi annexe)"
+          - texte: '- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération'
+            article: Ub 12.2 (renvoi annexe)
             page_pdf: 103
-            porte: "majoration_conditionnelle"
+            porte: majoration_conditionnelle
             modifie_calcul: true
       pleine_terre:
         pct:
@@ -776,14 +791,17 @@ zones:
           places: 1.5
           article: Uc 12.2
           page_pdf: 103
-          citation: 'logement de plus de 30 m² : 1,5 place par logement arrondi à l''entier
-            (NORMES DE STATIONNEMENT, annexe du règlement)'
+          citation: '1 place par logement
+
+            - logement de plus de 30 m²
+
+            1,5 place par logement arrondi à l’entier'
           statut: valide
           exceptions:
-          - texte: "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération"
-            article: "Uc 12.2 (renvoi annexe)"
+          - texte: '- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération'
+            article: Uc 12.2 (renvoi annexe)
             page_pdf: 103
-            porte: "majoration_conditionnelle"
+            porte: majoration_conditionnelle
             modifie_calcul: true
       pleine_terre:
         pct:
@@ -919,14 +937,17 @@ zones:
           places: 1.5
           article: Ur 12.2
           page_pdf: 103
-          citation: 'logement de plus de 30 m² : 1,5 place par logement arrondi à l''entier
-            (NORMES DE STATIONNEMENT, annexe du règlement)'
+          citation: '1 place par logement
+
+            - logement de plus de 30 m²
+
+            1,5 place par logement arrondi à l’entier'
           statut: valide
           exceptions:
-          - texte: "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération"
-            article: "Ur 12.2 (renvoi annexe)"
+          - texte: '- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération'
+            article: Ur 12.2 (renvoi annexe)
             page_pdf: 103
-            porte: "majoration_conditionnelle"
+            porte: majoration_conditionnelle
             modifie_calcul: true
       pleine_terre:
         pct:

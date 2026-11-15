@@ -68,6 +68,30 @@ def figures(b: R.BaremeStationnement):
     return out
 
 
+def association_secteur(b, zone):
+    """Relecture 6 — quand une citation est un TABLEAU partagé (« en zones U2a, U2b : 1,5 ; U2c, U2d : 2 »),
+    vérifie que la valeur appliquée est bien celle ASSOCIÉE à CE secteur. Renvoie :
+      · 'ok_simple'   : la citation ne nomme pas ce secteur → pas d'ambiguïté multi-secteurs ;
+      · 'ok_associe'  : le secteur est nommé dans le MÊME segment que sa valeur appliquée ;
+      · 'image'       : le secteur est nommé mais l'association valeur ne se lit pas → relecture par l'image.
+    """
+    cit = b.citation or ""
+    # le code de zone doit apparaître comme TOKEN (pas en sous-chaîne : « Ub » ∉ « immeuBles »).
+    tok = re.compile(r'(?<![a-zàâäéèêëïîôöùûüç0-9])' + re.escape(zone.lower()) + r'(?![a-zàâäéèêëïîôöùûüç0-9])')
+    if not tok.search(cit.lower()):
+        return "ok_simple"           # la citation ne NOMME pas ce secteur → pas d'ambiguïté multi-secteurs
+    val = b.flat_places if b.flat_places is not None else b.m2_par_place
+    if val is None:
+        return "ok_simple"
+    vt = _fr(val)
+    segs = re.split(r'[\n]+', cit)
+    for i, s in enumerate(segs):
+        if tok.search(s.lower()):
+            fen = " ".join(segs[max(0, i - 1):i + 2])
+            return "ok_associe" if _norm(vt) in _norm(fen) else "image"
+    return "image"
+
+
 def page_text(doc, page_pdf):
     idx = page_pdf - 1
     txt = ""
@@ -82,6 +106,7 @@ def controle(verbose=False):
     total = 0
     ech_cit = []     # citation pas verbatim sur la page
     ech_fig = []     # chiffre appliqué absent de la citation
+    a_relire = []    # association secteur-valeur non lisible → relecture par l'image
     sans_pdf = set()
     for insee in communes:
         pdf = pdf_for(insee)
@@ -103,6 +128,9 @@ def controle(verbose=False):
                           if not any(_norm(a) in cit_n for a in _mots.get(f, (f,))))
             if hors:
                 ech_fig.append((insee, z, b.page_pdf, hors))
+            # (3) association secteur-valeur dans un tableau partagé
+            if association_secteur(b, z) == "image":
+                a_relire.append((insee, z, b.page_pdf))
             # (1) citation verbatim sur la page (par segments de ligne)
             if doc is None:
                 sans_pdf.add(insee)
@@ -116,6 +144,7 @@ def controle(verbose=False):
         if doc:
             doc.close()
     print(f"CONTRÔLE — {total} règles · {len(ech_cit)} citations hors page · {len(ech_fig)} règles avec chiffre hors citation"
+          f" · {len(a_relire)} associations secteur-valeur à relire par l'image"
           + (f" ({sorted(sans_pdf)} sans PDF)" if sans_pdf else ""))
     parc = {}
     for insee, z, pg, _m in ech_cit:
@@ -127,7 +156,10 @@ def controle(verbose=False):
     if verbose:
         for insee, z, pg, h in ech_fig:
             print(f"    FIG {insee} {z} p{pg} hors citation : {h}")
-    return {"total": total, "cit": ech_cit, "fig": ech_fig}
+    if a_relire:
+        print("  à relire (secteur nommé, valeur non associée automatiquement) : "
+              + ", ".join(f"{i}/{z}" for i, z, _p in a_relire[:20]) + (" …" if len(a_relire) > 20 else ""))
+    return {"total": total, "cit": ech_cit, "fig": ech_fig, "image": a_relire}
 
 
 if __name__ == "__main__":
