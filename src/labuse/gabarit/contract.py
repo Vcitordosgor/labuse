@@ -47,6 +47,21 @@ class Setback(BaseModel):
     source: Optional[RegulatorySource] = None
 
 
+class ReculSepFormule(BaseModel):
+    """MOTEUR-VERITE-FIX-1 (LOT 1, corrige la régression D-024) — recul séparatif EN FORMULE
+    (« L ≥ H/2, minimum N m »). H est la hauteur à l'ÉGOUT du bâtiment ENVISAGÉ, pas le faîtage
+    maximal de la zone : le moteur évalue chaque nombre de niveaux admis (1..niveauxMax, égout
+    envisagé = n × etageM) et RETIENT le scénario qui donne le plus de plancher. La formule ne
+    s'applique qu'aux limites où le règlement exige un retrait (setbacks `limite-sep`)."""
+
+    model_config = ConfigDict(extra="forbid")
+    fraction: float                      # 0,5 pour H/2, 1/3 pour H/3…
+    minimumM: float                      # plancher du règlement (« minimum 3 m »)
+    etageM: float                        # hauteur d'un niveau (hypothèse île, 3 m)
+    niveauxMax: int                      # niveaux admis par la hauteur réglementaire de la zone
+    formule: Optional[str] = None        # texte de la règle, pour l'affichage
+
+
 class MaxFootprint(BaseModel):
     model_config = ConfigDict(extra="forbid")
     ruleId: Optional[str] = None
@@ -98,6 +113,9 @@ class GabaritInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     parcel: Optional[ParcelInput] = None
     setbacks: list[Setback] = Field(default_factory=list)
+    # MOTEUR-VERITE-FIX-1 (LOT 1) — présent quand le recul séparatif est une formule liée à la
+    # hauteur : engine.compute_gabarit évalue alors les variantes niveau par niveau.
+    reculSepFormule: Optional[ReculSepFormule] = None
     maxFootprint: Optional[MaxFootprint] = None
     maxHeight: Optional[MaxHeight] = None
     exclusions: list[Exclusion] = Field(default_factory=list)
@@ -187,6 +205,12 @@ class GabaritResult(BaseModel):
     # CHASSE-CALCULS-FIX-1 Lot 6 (E-C1) — l'extrusion 3D est posée À PLAT (le relief n'entre pas dans
     # le volume) : on le DIT quand une hauteur permet un 3D. `terrainNote` est affichée en mode 3D.
     terrainNote: Optional[str] = None
+
+    # MOTEUR-VERITE-FIX-1 (LOT 1) — scénario RETENU quand le recul séparatif est une formule H/n :
+    # nombre de niveaux qui maximise le plancher, recul effectivement appliqué, phrase de preuve.
+    niveauxRetenus: Optional[int] = None
+    reculSepRetenuM: Optional[float] = None
+    reculSepScenario: Optional[str] = None
 
     coverage: Optional[Coverage] = None
     appliedRules: list[AppliedRule] = Field(default_factory=list)

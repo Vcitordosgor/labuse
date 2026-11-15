@@ -1095,6 +1095,15 @@ def parcel_faisabilite(session: Session, parcel_id: int,
               "mixite": bool(eco.get("mixite")),
               "assiette_source": assiette_source,
               "assiette_vide": vide_raison}   # RECETTE-1 A1 — raison du vidage (message ciblé)
+    # MOTEUR-VERITE-FIX-1 (LOT 1) — recul séparatif en formule H/n : le moteur gabarit a RETENU le
+    # scénario (niveaux, recul) qui maximise le plancher, H = égout du bâtiment envisagé. L'assiette
+    # ci-dessus est déjà celle du scénario ; on lie AUSSI le nombre de niveaux de la capacité (sinon
+    # l'engine recompterait les niveaux pleins de la zone sur une assiette insétée pour moins haut).
+    if gab is not None:
+        _gres = gab[1]
+        if getattr(_gres, "niveauxRetenus", None):
+            extras["niveaux_retenus"] = int(_gres.niveauxRetenus)
+            extras["recul_sep_scenario"] = _gres.reculSepScenario
     return ctx, estimate_capacity(rules, surface_assiette, ctx.contraintes, hyp=hyp,
                                   emprise_geo=(emprise, recul), extras=extras)
 

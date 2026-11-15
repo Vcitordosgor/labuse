@@ -33,6 +33,7 @@ from .contract import (
     MaxFootprint,
     MaxHeight,
     ParcelInput,
+    ReculSepFormule,
     RegulatorySource,
     Setback,
 )
@@ -209,6 +210,7 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     max_footprint: Optional[MaxFootprint] = None
     max_height: Optional[MaxHeight] = None
     recul_voie = recul_sep = None
+    recul_formule_obj: Optional[ReculSepFormule] = None   # MOTEUR-VERITE-FIX-1 (LOT 1)
     plu_zone_src: Optional[RegulatorySource] = None
 
     # --- zone dominante + multi-zones (découpage) ----------------------------
@@ -270,22 +272,36 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 recul_voie = 0.0   # alignement = recul 0 explicite, sourcé
             if recul_sep is None and getattr(zr, "recul_limites_alignement", False):
                 recul_sep = 0.0
-            # FAISA-REGLES-1 (D-024) — recul séparatif « L ≥ h/2 (min N m) » appliqué EN ENTIER : si la
-            # formule du règlement lie le recul à la hauteur (h/2, h/3…), le recul retenu = max(minimum,
-            # h × fraction), h = FAÎTAGE de la zone (hauteur prudente) — jamais réduit au seul plancher
-            # (NU-D-024 : min 4 m appliqué seul sur-estimait la zone d'implantation de ~15 %). Si la hauteur
-            # n'est pas validée, la formule reste « non intégrée » (on ne devine pas h).
+            # MOTEUR-VERITE-FIX-1 (LOT 1) — recul séparatif « L ≥ H/n (min X m) » : H est la hauteur
+            # à l'ÉGOUT du bâtiment ENVISAGÉ, pas le faîtage maximal de la zone (la régression D-024
+            # du 31/10 insétait h×frac au faîtage sur toutes les limites : 19 permis réels couverts en
+            # octobre ne l'étaient plus — VERITE-TERRAIN-3, erreur V1 étage 2, témoin AO1919
+            # 564 m² → 73 m²). Le builder transmet désormais la FORMULE au moteur (reculSepFormule) ;
+            # engine.compute_gabarit évalue chaque nombre de niveaux admis (égout envisagé = n × étage)
+            # et RETIENT le scénario au plancher maximal. Les setbacks d'entrée portent le MINIMUM
+            # sourcé ; sans hauteur validée, la formule reste « non intégrée » (on ne devine pas H).
             recul_sep_formule = None
+            recul_formule_obj = None
             _frac_h = _fraction_hauteur_formule(getattr(zr, "recul_limites_formule", None))
-            if _frac_h is not None and recul_sep is not None:
-                _h_ref = haut if haut is not None else egout
-                if _h_ref is not None:
-                    _rec_h = round(_h_ref * _frac_h, 1)
-                    if _rec_h > recul_sep:
-                        recul_sep_formule = (
-                            f"recul séparatif = max({recul_sep:g} m, h×{_frac_h:.3g} = {_rec_h:g} m) "
-                            f"= {_rec_h:g} m (h = faîtage {_h_ref:g} m)")
-                        recul_sep = _rec_h
+            if _frac_h is not None and recul_sep is not None and recul_sep > 0:
+                from ..faisabilite.engine import Hypotheses
+                _etage = float(Hypotheses.charger(commune).etage_m)
+                _nmax = None
+                if isinstance(getattr(zr, "niveaux_max", None), int):
+                    _nmax = int(zr.niveaux_max) + 1
+                elif egout is not None:
+                    _nmax = max(1, int(egout // _etage))
+                elif haut is not None:
+                    _nmax = max(1, int((haut - _etage) // _etage))
+                if _nmax is not None:
+                    recul_formule_obj = ReculSepFormule(
+                        fraction=_frac_h, minimumM=float(recul_sep), etageM=_etage,
+                        niveauxMax=_nmax,
+                        formule=str(getattr(zr, "recul_limites_formule", "") or ""))
+                    recul_sep_formule = (
+                        f"recul séparatif = max({recul_sep:g} m, H×{_frac_h:.3g}), H = égout du "
+                        f"bâtiment envisagé — scénario retenu par le moteur niveau par niveau "
+                        f"(R+0…R+{_nmax - 1})")
                 else:
                     racc.setdefault("regles_non_integrees", []).append(
                         "recul séparatif lié à la hauteur (ex. h/2) non chiffrable : hauteur de zone non validée")
@@ -655,6 +671,7 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         parcel=ParcelInput(id=idu, geometry=geom, areaM2=round(surface, 1) if surface else None,
                            source=cadastre_src),
         setbacks=setbacks,
+        reculSepFormule=recul_formule_obj,
         maxFootprint=max_footprint,
         maxHeight=max_height,
         exclusions=exclusions,

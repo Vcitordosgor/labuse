@@ -660,7 +660,21 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
 
     # ---- Niveaux (hé prioritaire) ----
     he_src = rules.sources.get("hauteur", "Art. 10")
-    if rules.niveaux_max is not None:
+    _n_retenu = extras.get("niveaux_retenus")
+    if _n_retenu:
+        # MOTEUR-VERITE-FIX-1 (LOT 1) — recul séparatif en formule H/n : le moteur gabarit a évalué
+        # chaque nombre de niveaux admis (H = égout du bâtiment envisagé) et retenu le scénario au
+        # plancher maximal. L'assiette transmise est CELLE de ce scénario : la capacité compte les
+        # MÊMES niveaux (jamais les niveaux pleins de la zone sur une assiette insétée pour moins
+        # haut). `niveauxMax` du scénario est dérivé de la même échelle que ci-dessous — jamais plus.
+        niveaux = int(_n_retenu)
+        steps.append(Step("Niveaux constructibles",
+                          (extras.get("recul_sep_scenario")
+                           or "recul séparatif lié à la hauteur (formule du règlement)"),
+                          f"R+{max(0, niveaux - 1)}", he_src, prov="sourcee"))
+        hypotheses.append("Recul séparatif en formule (H/n) : scénario niveaux×recul retenu au "
+                          "plancher maximal, H = égout du bâtiment envisagé.")
+    elif rules.niveaux_max is not None:
         # PLU-CALIBRAGE-2 : R+n LU au règlement (feuille `niveaux` validée) — la valeur est
         # utilisée telle quelle, jamais dérivée d'une hauteur (l'étape passe SOURCÉ).
         niveaux = int(rules.niveaux_max) + 1
