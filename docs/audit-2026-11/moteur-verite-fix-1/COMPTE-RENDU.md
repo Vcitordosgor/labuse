@@ -627,3 +627,36 @@ alignement` retiré, retrait prudent + mention). En-têtes du sondage recalés s
 refaites (F02/F22 p.21, F05 p.46, F06 p.13, F12/F17 p.112) ; totaux du contrôle FIX-3 corrigés
 (12 Plaine, 5 Possession, 3 Salazie, 2 Le Port — 23 avec AV0584, le filtre ≤ 2 m² est retiré).
 LISTE-BLANCHE.md régénérée (6 feuilles ouvertes, 18 zones égout — AUAv retiré).
+
+## LOT 6 — la hauteur de façade est celle du bâtiment envisagé
+
+Les +16 dépassements du LOT 3 montraient une enveloppe TROP prudente là où le règlement dit
+« moitié de la hauteur totale de la façade » : le recul était pris au faîtage MAXIMAL de la
+zone (AS1397 : 241 m², moins que les 519 m² du relecteur à 27 m — alors qu'un bâtiment plus
+bas recule moins).
+
+**Règle posée** : pour les zones à référence « hauteur totale de façade », la formule s'exécute
+NIVEAU PAR NIVEAU avec la façade du BÂTIMENT ENVISAGÉ — H(n) = n × hauteur d'étage + **marge de
+toiture/acrotère FIXÉE à 1,5 m** (constante `MARGE_FACADE_TOITURE_M`, couvrant un acrotère
+(~1,2-1,5 m) ou l'égout de toiture au-dessus du dernier plancher), ÉCRITE mot pour mot dans le
+scénario servi. Le moteur retient le nombre de niveaux qui donne le plus de plancher
+(`ReculSepFormule.margeM/reference`). Les zones « différence d'altitude point à point »
+RESTENT en référence prudente (faîtage).
+
+**Témoins** : AS1397 (Sainte-Marie UAz) 241 → **1 352 m²** — R+3 retenu, façade envisagée
+13,5 m, recul 6,75 m (sous les 5 321 m² de main, au-dessus des 519 m² à 27 m fixes ; « un
+projet plus bas peut donner davantage », c'est désormais calculé). AV2758 (Sainte-Marie UA)
+335 → **578 m²** (optimum niveau par niveau, < main 1 814).
+
+**Mesures** (cohorte H) : Test 1 = **97,1 %** (4 642/4 781) ; Test 2 = **108** dépassements
+(2,7 % — était 118) ; terrain_exigu = **82**. **13 des 16 dépassements du LOT 3 sont sortis**
+(Sainte-Marie UB ×4/UD/UC, Sainte-Rose Uc ×3/Ub ×2/1AUa, 1 portion) ; les **7 restants**
+(Sainte-Marie UD ×2/UAz, Saint-Joseph 1AU5ru/U5ru, Sainte-Rose Uc/Ub) sont des permis réels
+qui battent MÊME l'optimum niveau par niveau — mitoyennetés réelles non modélisées, la mention
+« capacité supérieure possible, à vérifier » est servie.
+
+**Contrôle inverse** (CONTROLE-INVERSE-FIX4.csv, re-généré sur cache-fix4lot6) : **46 hausses**
+vs origin/main rejoué, seuil 0 — chacune avec ses côtés en limite, sa condition et son effet
+chiffré ; les nouvelles (AV2758 +243, AK0024 +200, AK0834 +188, Bras-Panon Ud/Ub/Uc…) portent
+la justification `facade_niveau_par_niveau` (formule du règlement exécutée, AUCUN côté posé en
+limite, effet d'ouverture 0). **HORS LISTE BLANCHE : 0** (exit 0).

@@ -57,6 +57,12 @@ def _num(x) -> Optional[float]:
     return float(x) if isinstance(x, (int, float)) else None
 
 
+#: MOTEUR-VERITE-FIX-4 LOT 6 — marge au-dessus du DERNIER PLANCHER quand la référence du
+#: retrait relatif est la hauteur TOTALE de façade : acrotère (~1,2-1,5 m) ou égout de toiture.
+#: FIXÉE à 1,5 m et ÉCRITE dans le scénario servi (H envisagé = n × étage + 1,5 m).
+MARGE_FACADE_TOITURE_M = 1.5
+
+
 def _fraction_hauteur_formule(formule: Optional[str]) -> Optional[float]:
     """FAISA-REGLES-1 (D-024) — lit la FRACTION DE HAUTEUR d'une formule de recul séparatif (« L ≥ h/2 »,
     « au tiers de la différence d'altitude h : h/3 »…) : rend 0,5 pour h/2, 1/3 pour h/3, None si la
@@ -433,10 +439,10 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             _frac_h = _fraction_hauteur_formule(getattr(zr, "recul_limites_formule", None))
             _h_ref_type = getattr(zr, "h_reference", None)
             if (_frac_h is not None and recul_sep is not None and recul_sep > 0
-                    and _h_ref_type != "egout"):
-                # MOTEUR-VERITE-FIX-3 LOT 1 — le texte ne fixe PAS l'égout comme référence
-                # (hauteur totale de façade, prospect altimétrique point à point, ou non lu) :
-                # le scénario niveau-par-niveau à l'égout ne s'applique PAS. Référence PRUDENTE =
+                    and _h_ref_type not in ("egout", "hauteur_totale_facade")):
+                # MOTEUR-VERITE-FIX-3 LOT 1 (resserré FIX-4 LOT 6) — référence NI égout NI hauteur
+                # totale de façade (prospect altimétrique point à point, ou non lue à l'article) :
+                # le scénario niveau-par-niveau ne s'applique PAS. Référence PRUDENTE =
                 # faîtage de la zone (le recul le plus grand plausible — capacité ≤ main).
                 _h_prud = haut if haut is not None else egout
                 if _h_prud is not None:
@@ -464,14 +470,24 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 elif haut is not None:
                     _nmax = max(1, int((haut - _etage) // _etage))
                 if _nmax is not None:
+                    # MOTEUR-VERITE-FIX-4 LOT 6 — « hauteur totale de façade » : la hauteur de
+                    # façade est celle du BÂTIMENT ENVISAGÉ (n × étage + marge toiture/acrotère
+                    # 1,5 m, écrite), pas le maximum de la zone (AS1397 servait 241 m² sur un
+                    # recul au faîtage 27 m — un bâtiment plus bas recule moins). La référence
+                    # « différence d'altitude point à point » reste PRUDENTE (branche ci-dessus).
+                    _marge = (MARGE_FACADE_TOITURE_M
+                              if _h_ref_type == "hauteur_totale_facade" else 0.0)
                     recul_formule_obj = ReculSepFormule(
                         fraction=_frac_h, minimumM=float(recul_sep), etageM=_etage,
-                        niveauxMax=_nmax,
+                        niveauxMax=_nmax, margeM=_marge,
+                        reference=_h_ref_type or "egout",
                         formule=str(getattr(zr, "recul_limites_formule", "") or ""))
+                    _ref_lbl = ("hauteur totale de façade du bâtiment envisagé "
+                                f"(n × {_etage:g} m + {_marge:g} m de toiture/acrotère)"
+                                if _marge else "égout du bâtiment envisagé")
                     recul_sep_formule = (
-                        f"recul séparatif = max({recul_sep:g} m, H×{_frac_h:.3g}), H = égout du "
-                        f"bâtiment envisagé — scénario retenu par le moteur niveau par niveau "
-                        f"(R+0…R+{_nmax - 1})")
+                        f"recul séparatif = max({recul_sep:g} m, H×{_frac_h:.3g}), H = {_ref_lbl}"
+                        f" — scénario retenu par le moteur niveau par niveau (R+0…R+{_nmax - 1})")
                 else:
                     racc.setdefault("regles_non_integrees", []).append(
                         "recul séparatif lié à la hauteur (ex. h/2) non chiffrable : hauteur de zone non validée")

@@ -139,14 +139,19 @@ def main() -> None:
             pass
         z_eff = sous_zone or zone
         zr = resolve_zone(z_eff, commune) if z_eff else None
-        lb_ok = egout_ok = False
+        lb_ok = egout_ok = facade_ok = False
         if zr is not None:
             lb_ok = any(liste_blanche_ok(i) for i in (zr.implantation_laterales,
                                                       zr.implantation_fond) if i)
             frac = _fraction_hauteur_formule(getattr(zr, "recul_limites_formule", None))
-            egout_ok = (frac is not None and getattr(zr, "h_reference", None) == "egout"
+            _href = getattr(zr, "h_reference", None)
+            egout_ok = (frac is not None and _href == "egout"
                         and isinstance(zr.recul_limites_sep_m, (int, float)))
-        ok = "" if (lb_ok or egout_ok) else "⚠"
+            # FIX-4 LOT 6 — « hauteur totale de façade » : niveau par niveau avec la façade du
+            # bâtiment ENVISAGÉ (n × étage + marge toiture 1,5 m écrite) — justification admise.
+            facade_ok = (frac is not None and _href == "hauteur_totale_facade"
+                         and isinstance(zr.recul_limites_sep_m, (int, float)))
+        ok = "" if (lb_ok or egout_ok or facade_ok) else "⚠"
         if ok:
             echecs += 1
         lignes.append({
@@ -160,7 +165,8 @@ def main() -> None:
             "mentions": " | ".join(mentions),
             "sdp_toutes_fermees": sdp_f if sdp_f is not None else "inconnu",
             "effet_ouverture_m2": effet if effet is not None else "",
-            "liste_blanche": "ouverture" if lb_ok else ("egout" if egout_ok else "HORS LISTE"),
+            "liste_blanche": ("ouverture" if lb_ok else "egout" if egout_ok
+                              else "facade_niveau_par_niveau" if facade_ok else "HORS LISTE"),
             "alerte": ok})
 
     lignes.sort(key=lambda r: -r["delta"])

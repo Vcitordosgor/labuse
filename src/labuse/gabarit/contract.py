@@ -59,6 +59,10 @@ class ReculSepFormule(BaseModel):
     minimumM: float                      # plancher du règlement (« minimum 3 m »)
     etageM: float                        # hauteur d'un niveau (hypothèse île, 3 m)
     niveauxMax: int                      # niveaux admis par la hauteur réglementaire de la zone
+    margeM: float = 0.0                  # MOTEUR-VERITE-FIX-4 LOT 6 : marge au-dessus du dernier
+    #  plancher quand H = hauteur TOTALE de façade (acrotère / égout de toiture) — H envisagé
+    #  = n × etageM + margeM ; 0 pour la référence égout (H = n × etageM)
+    reference: str = "egout"             # 'egout' | 'hauteur_totale_facade' (pour l'affichage)
     formule: Optional[str] = None        # texte de la règle, pour l'affichage
 
 

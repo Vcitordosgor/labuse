@@ -118,7 +118,11 @@ def compute_gabarit(inp: GabaritInput) -> GabaritResult:
                  else _surf * float(_mf.percent) / 100.0)
         best = None   # (proxy_plancher, -recul, n, zone, apres, union, recul)
         for n in range(1, max(1, int(f.niveauxMax)) + 1):
-            rec_n = round(max(float(f.minimumM), float(f.fraction) * n * float(f.etageM)), 2)
+            # MOTEUR-VERITE-FIX-4 LOT 6 — H envisagé = n × étage (+ marge de toiture/acrotère
+            # quand la référence est la hauteur TOTALE de façade) : la hauteur de façade est
+            # celle du BÂTIMENT ENVISAGÉ, pas le maximum de la zone.
+            h_n = n * float(f.etageM) + float(getattr(f, "margeM", 0.0) or 0.0)
+            rec_n = round(max(float(f.minimumM), float(f.fraction) * h_n), 2)
             zone_n, apres_n, union_n = _zone_apres_reculs(rec_n)
             aire_n = float(zone_n.area)
             proxy = (min(aire_n, _plaf) if _plaf is not None else aire_n) * n
@@ -126,9 +130,15 @@ def compute_gabarit(inp: GabaritInput) -> GabaritResult:
             if best is None or (cand[0], cand[1]) > (best[0], best[1]):
                 best = cand
         _, _, niveaux_retenus, zone_m, after_setbacks, setback_union, recul_sep_retenu = best
+        _marge = float(getattr(f, "margeM", 0.0) or 0.0)
+        _h_ret = niveaux_retenus * float(f.etageM) + _marge
+        _ref_txt = ("hauteur totale de façade du bâtiment envisagé "
+                    f"({niveaux_retenus} niveau(x) × {f.etageM:g} m + marge toiture/acrotère "
+                    f"{_marge:g} m = {_h_ret:g} m)" if _marge > 0 else
+                    f"égout du bâtiment envisagé ({niveaux_retenus} niveau(x) × {f.etageM:g} m"
+                    f" = {_h_ret:g} m)")
         scenario_txt = (f"recul séparatif = max({f.minimumM:g} m, H×{f.fraction:.3g}) avec H = "
-                        f"égout du bâtiment envisagé ({niveaux_retenus} niveau(x) × {f.etageM:g} m"
-                        f" = {niveaux_retenus * f.etageM:g} m) → {recul_sep_retenu:g} m ; scénario"
+                        f"{_ref_txt} → {recul_sep_retenu:g} m ; scénario"
                         f" retenu = plancher maximal parmi R+0…R+{int(f.niveauxMax) - 1}")
     else:
         zone_m, after_setbacks, setback_union = _zone_apres_reculs(None)

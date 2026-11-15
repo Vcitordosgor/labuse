@@ -88,14 +88,41 @@ def test_lot2_micro_parcelle_sans_capacite_chiffree(app_session, idu, motif):
 # LOT 3 — les formules de retrait relatif s'exécutent (erreurs déjà présentes dans MAIN) +
 # hauteurs Saint-Denis (Udo par rue → à vérifier ; Ud ≤ prospect calculé ; Uicm plafond Ui.10).
 CAS_LOT3_PLAFONDS = [
-    ("97418000AS1397", 519),     # UAz : H/2 de la hauteur TOTALE de façade (27 m → 13,50 m de
-    #  retrait) — 5 321 m² servis avec 3 m avant le fix ; 519 = recalcul du relecteur à 27 m
+    ("97418000AS1397", 1352),    # UAz : H/2 de la hauteur TOTALE de façade — 5 321 m² servis
+    #  avec 3 m avant le fix. FIX-4 LOT 6 : façade = celle du BÂTIMENT ENVISAGÉ, niveau par
+    #  niveau (n × 3 m + 1,5 m de toiture/acrotère) → R+3, recul 6,75 m, 1 352 m² (le 519 du
+    #  relecteur était à 27 m FIXES ; « un projet plus bas peut donner davantage »)
     ("97411000AO0584", 822),     # Ud : hauteur retenue = min(prospect calculé 10 m, plage) —
     #  12 m/1 645 m² servis avant le fix
     ("97411000HX0075", 2279),    # Uicm : retrait 5 m + CES 40 % + plafond Ui.10 12 m (chiffre
     #  du relecteur à hypothèses identiques)
     ("97411000BP0869", 1966),    # idem (chiffre du relecteur)
 ]
+
+
+# LOT 6 — « hauteur totale de façade » = la façade du bâtiment ENVISAGÉ, niveau par niveau
+# (n × étage + marge toiture/acrotère 1,5 m, ÉCRITE au scénario) ; « différence d'altitude
+# point à point » reste en référence prudente.
+CAS_LOT6_PLAFONDS = [
+    ("97418000AV2758", 578),     # Sainte-Marie UA : optimum niveau par niveau, < main (1 814)
+]
+
+
+@pytest.mark.parametrize("idu,plafond", CAS_LOT6_PLAFONDS)
+def test_lot6_facade_envisagee(app_session, idu, plafond):
+    sdp, _f = _sdp(app_session, idu)
+    assert sdp is not None and sdp <= plafond + 0.5, f"{idu} : {sdp} m² > plafond {plafond} m²"
+
+
+def test_lot6_marge_toiture_ecrite(app_session):
+    """La marge de toiture/acrotère (1,5 m) est FIXÉE et ÉCRITE dans le scénario servi."""
+    from labuse.gabarit.builder import MARGE_FACADE_TOITURE_M, build_gabarit_input
+    assert MARGE_FACADE_TOITURE_M == 1.5
+    gb = build_gabarit_input(app_session, "97418000AS1397")
+    if gb is None:
+        pytest.skip("AS1397 absente")
+    txt = (gb.raccordement.get("plu") or {}).get("recul_sep_formule", "")
+    assert "hauteur totale de façade du bâtiment envisagé" in txt and "1.5 m" in txt
 
 
 @pytest.mark.parametrize("idu,plafond", CAS_LOT3_PLAFONDS)
