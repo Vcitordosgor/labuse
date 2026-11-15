@@ -280,3 +280,95 @@ la relecture roulante rafraîchit, mais ne purge pas les départs.)*
 *Méthode : écriture prod limitée à la commande `ingest-inpi-rne --no-resume` (utilisateur
 `labuse`, env sourcé) ; tout le reste (avant/après, orphelins, vérif) en lecture seule. Lanceur
 temporaire retiré. Hors fenêtres backup/nuit.*
+
+---
+
+## 8. Recharge des ventes (DVF) maintenant — décision de Vic
+
+Première exécution du nouveau lecteur Etalab en prod, sous surveillance, au lieu d'attendre
+mardi 05 h.
+
+**Garde-fous** : sauvegarde **du jour** (15/11 13 h 30, 6,2 Go) relue (`pg_restore --list` OK),
+disque 25 Go. **Fenêtre horaire** : lancé à **16 h 09** (après la sauvegarde du jour, loin de la
+fenêtre de nuit) → fin ~16 h 13, aucune collision ; le garde « fin avant 13 h » (éviter le dump de
+13 h 30) est sans objet l'après-midi.
+
+**Lancement** : `labuse jobs run ingest-dvf`, utilisateur `labuse`, depuis `/home/labuse`, env
+sourcé — **exactement comme le cron** (le job passe par le runner : journal, verrou, incidents).
+**Déroulé** : 16 h 09 30 → 16 h 12 36, **186 s, statut ok, aucune erreur**.
+
+### Avant / après — ventes par année (`dvf_mutations`)
+
+| Année | Avant | Après | Δ |
+|---|---|---|---|
+| 2021 | 6 852 | 6 733 | −119 |
+| 2022 | 7 029 | 6 776 | −253 |
+| 2023 | 5 942 | 5 900 | −42 |
+| 2024 | 4 840 | 4 908 | +68 |
+| 2025 | 4 902 | **5 156** | **+254** |
+| 2026 | — | **1 606** | **+1 606** |
+| **Total** | **29 565** | **31 079** | **+1 514** |
+| **Date de vente la plus récente** | 31/12/2025 | **30/06/2026** | ✓ attendu |
+
+**Aucune année n'a disparu, aucune baisse inexpliquée.** Le lecteur **remplace chaque période**
+par le fichier Etalab officiel courant (`full-2021-s2`, `full-2022`…`full-2025`, `full-2026-s1`) :
+il supprime la fenêtre de dates de la période puis réinsère les mutations 974 (jamais remplacer du
+réel par du vide). Les petits écarts 2021-2023 (−) et 2024-2025 (+) sont les **révisions DGFiP**
+intégrées depuis l'ancienne ingestion (le fichier officiel actuel fait foi). **2025 augmente
+(+254)** — plus complet, pas une perte. Le **2026-S1 = 1 606** coïncide **exactement** avec le test
+local FRAICHEUR-FIX-1 → lecteur déterministe et correct. Les archives ≤ 2020 (`dvf_mutations_histo`)
+ne sont jamais touchées ; 2021-S1 (hors fenêtre amont) est conservé.
+
+### Trois parcelles — médiane bâti de la fiche (€/m², 36 mois, borne 1 000-12 000)
+
+| Parcelle | Commune | Médiane avant | Médiane après | Comparables | Période après |
+|---|---|---|---|---|---|
+| 97411000AB0006 | Saint-Denis | 2 608 | **2 667** | 3 935 → 3 712 | 06/2023→**06/2026** |
+| 97416000CD0006 | Saint-Pierre | 3 273 | **3 333** | 1 586 → 1 507 | 12/2022→12/2025 ⇒ 06/2023→**06/2026** |
+| 97421000AB0001 | Salazie (petite commune) | 1 855 | **1 741** | 43 → 41 | 01/2023→12/2025 ⇒ 07/2023→**06/2026** |
+
+La médiane de la fiche lit `dvf_mutations` en **direct**, fenêtre ancrée sur `max(date_mutation)` :
+après la recharge, la fenêtre avance à **06/2026** et les médianes bougent (Saint-Denis et
+Saint-Pierre +2 %, Salazie −6 % — petit échantillon, roulement de fenêtre). La baisse de Salazie
+et le léger recul des comparables (fenêtre glissante : perte du début 2023, ajout du 1ᵉʳ semestre
+2026) sont **expliqués par le roulement de fenêtre**, pas une perte. **Estimer, Marché et la fiche
+répondent** (`/healthz` 200 ; `/parcels/…`, `/modules/patrimoine`, `/estimer/…` → 401 : routés,
+session requise — la donnée servie, vérifiée au niveau base, est la médiane live à jour).
+
+### Caches et fraîcheur des prix affichés (point 4)
+
+**Ce que le job fait des caches** : il écrit `dvf_mutations`, enregistre la version de chaque
+période (`fraicheur_etat` `dvf:res:*` = `20261020-*`), et met à jour `data_sources` (millésime
+« géo-DVF Etalab — millésime 2026-S1 », `last_sync_at`, `fraicheur_statut = à jour`). Il **ne
+recalcule pas** `dvf_secteur_medianes` et **ne reconstruit pas** `dvf_mutations_parcelle`.
+
+**Les prix servis au client sont à jour** : les lecteurs servis (fiche, documents) lisent la
+médiane **LIVE** `marche_dvf_commune` / `marche_dvf` sur `dvf_mutations` — démontré ci-dessus, les
+médianes incluent le 1ᵉʳ semestre 2026. Les caches à **clé de fraîcheur** (fiche, commune,
+tuiles) s'auto-invalident parce que la date DVF a bougé (30/06/2026) et se recalculent à la
+prochaine lecture sur la médiane live.
+
+**Deux dérivés restent en 2025 — dette de donnée, hors chemin servi** :
+1. `dvf_mutations_parcelle` (niveau parcelle) **n'est pas rechargé** (max resté 31/12/2025) : le
+   `source_horizon_at` de DVF (libellé « DVF jusqu'au … ») et le **prix terrain €/m²** en
+   dérivent et affichent encore 2025.
+2. `dvf_secteur_medianes` (cache de médianes secteur, millésime 2025, calculé le 02/11) **n'est
+   pas recalculé** — mais, par conception (`fraicheur_caches._etat_marche_medianes`), il **n'est
+   pas sur le chemin servi** (les lecteurs servent la médiane live) ; sa péremption est une dette
+   signalée sur la page Données / `/sante/fraicheur`, résorbée par `labuse rebuild`, **pas** par
+   `ingest-dvf`.
+
+En clair : **la médiane de prix de la fiche est à jour ; le libellé de millésime DVF et le prix
+terrain (dérivés de la table parcelle) ne le seront qu'après un `rebuild`** (non demandé ici).
+
+**Le cron de mardi 17/11 sera un no-op** : les 6 versions de période sont enregistrées
+(`dvf:res:*`) ; `check_dvf_livraison` comparera la version amont à l'enregistrée et, sans nouvelle
+publication Etalab d'ici là, ne verra **aucune ressource modifiée** → aucun rechargement, aucun
+travail en double.
+
+### Limites et conformité
+
+Aucune année disparue, aucune baisse inexpliquée, aucune erreur de journal → aucune condition
+d'arrêt déclenchée. Rien d'autre fait : pas de déploiement, pas de classement, calcul de nuit
+toujours gelé, aucun cache vidé à la main. Écriture prod limitée à `labuse jobs run ingest-dvf` ;
+le reste en lecture seule. Lanceur temporaire retiré.
