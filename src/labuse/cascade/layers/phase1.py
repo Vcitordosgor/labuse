@@ -696,10 +696,30 @@ class RisquesLayer(Layer):
             cov_pct = red_cov * 100
             red_m2 = round((parcel.surface_m2 or 0) * red_cov)
             if cov_pct >= excl_pct:
-                verdicts.append(hard_exclude(
-                    self.name,
-                    f"Exclue : PPR zone rouge (inconstructible) — {cov_pct:.0f} % de la surface.",
-                    kind="exclue", source=SRC_DEAL_PPR))
+                # MOTEUR-VERITE-FIX-3 LOT 3 — RÉCONCILIATION cascade ↔ capacité (BC1134 : la
+                # faisabilité servait 1 320 m² sur la partie hors rouge pendant que la cascade
+                # excluait à 61 %). MÊME test que le moteur (_hors_rouge_fragment_servable) : si
+                # le plus grand tenant hors rouge est exploitable (≥ 200 m² d'un seul tenant ET
+                # touche une voie), la contrainte PARTIELLE RÉDUIT (flag fort, capacité sur la
+                # partie hors rouge) — on n'exclut que si le reste n'est pas exploitable.
+                servable = False
+                try:
+                    from ...faisabilite.db import _hors_rouge_fragment_servable
+                    servable, _ = _hors_rouge_fragment_servable(ctx.session, parcel.id)
+                except Exception:  # noqa: BLE001 — test indisponible : exclusion prudente conservée
+                    servable = False
+                if servable:
+                    verdicts.append(soft_flag(
+                        self.name,
+                        f"PPR zone rouge sur {cov_pct:.0f} % de la surface — partie hors rouge "
+                        "exploitable (≥ 200 m² d'un seul tenant, accès voie) : capacité réduite "
+                        "à cette partie, pas d'exclusion automatique.",
+                        Severity.FORT, source=SRC_DEAL_PPR))
+                else:
+                    verdicts.append(hard_exclude(
+                        self.name,
+                        f"Exclue : PPR zone rouge (inconstructible) — {cov_pct:.0f} % de la surface.",
+                        kind="exclue", source=SRC_DEAL_PPR))
             elif cov_pct >= marg_pct:
                 verdicts.append(soft_flag(
                     self.name,

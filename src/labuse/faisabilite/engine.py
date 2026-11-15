@@ -384,6 +384,12 @@ def cause_libelle(cause: str | None, exigu_raison: str | None = None) -> str | N
     if head == "capacite_nulle":
         return "Non retenue — capacité constructible nulle au règlement."
     # ── causes d'IGNORANCE (« Analyse incomplète ») ──
+    # MOTEUR-VERITE-FIX-3 LOT 3 — verdict constructible mais capacité NON chiffrable (SDP ∅ :
+    # site protégé AC2, plafond d'habitat A/N, hauteur propre par rue, littoral prospectif) :
+    # l'inconnu RESTE inconnu à travers le résiduel et le score, jamais un 0.
+    if head == "capacite_a_verifier":
+        return ("Analyse incomplète — capacité à vérifier (constructible, aucune capacité "
+                "chiffrée sans instruction).")
     if head == "regle_plu_non_validee":
         return f"Analyse incomplète — règle PLU de la zone {zone} non validée." if zone else \
             "Analyse incomplète — règle PLU non validée."

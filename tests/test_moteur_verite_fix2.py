@@ -161,3 +161,32 @@ def test_fix3_repli_regle_propre_jamais_generique():
     # zone sans aucune feuille : le générique pur reste servi (rien ne casse)
     zr3 = _zone_generique("Uzz", "Cilaos")
     assert zr3.capacite_a_verifier is None and zr3.he_m is not None
+
+
+def test_fix3_capacite_a_verifier_n_est_pas_zero(monkeypatch):
+    """FIX-3 LOT 3 — une faisabilité constructible SANS `surface_plancher_m2` (SDP ∅ : capacité
+    à vérifier) ne devient JAMAIS `capacite_nulle`/0 dans le résiduel : SDP écrite NULL + cause
+    d'IGNORANCE (gate et score servent « Analyse incomplète », pas « rien à bâtir »).
+    Témoins AS0256 (Salazie Aba), CY1293 (Saint-Leu, site classé)."""
+    from labuse.faisabilite import residuel as R
+    from labuse.faisabilite.engine import cause_certaine, cause_libelle
+
+    monkeypatch.setattr(R.bati_mod, "layer_available", lambda s: True)
+
+    class _F:
+        constructible = True
+        fourchette = {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)}  # SDP ∅
+        cause = None
+        zone = "Aba"
+    out = R.compute_residuel(None, 0, faisa=(object(), _F()))
+    assert out["disponible"] is False
+    assert out["cause"] == "capacite_a_verifier"
+    assert out["sdp_ecrite"] is None                      # l'inconnu RESTE inconnu, jamais 0
+    assert cause_certaine("capacite_a_verifier") is False  # famille IGNORANCE (gate + score)
+    assert "Analyse incomplète" in (cause_libelle("capacite_a_verifier") or "")
+    # une vraie capacité nulle (clé présente, valeur 0) garde son verdict ferme
+    class _F0(_F):
+        fourchette = {"surface_plancher_m2": 0, "emprise_constructible_m2": 0,
+                      "logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)}
+    out0 = R.compute_residuel(None, 0, faisa=(object(), _F0()))
+    assert out0["cause"] == "capacite_nulle" and out0["sdp_ecrite"] == 0

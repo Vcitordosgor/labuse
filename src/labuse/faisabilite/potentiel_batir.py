@@ -292,6 +292,24 @@ def potentiel_batir_batch(db: Session, idus: list[str]) -> dict[str, dict]:
     for idu, row in rows.items():
         out[idu] = _assemble(row["sdp_raw"], row["resid_cause"], row["constr_label"],
                              row["au_classe"], row["zone_fam"], row["zone_lib"])
+    # MOTEUR-VERITE-FIX-3 — commune au RNU : « hors du PLU outillé » n'est PAS une ignorance,
+    # c'est un RÉGIME NATIONAL connu (rnu.py, doctrine : on n'affirme JAMAIS une constructibilité
+    # au RNU). L'ignorance « Analyse incomplète » laissait Estimer servir un prix de terrain À
+    # BÂTIR sur Saint-Philippe (E105). On ne remplace qu'un verdict d'ignorance/absence — jamais
+    # un verdict ferme venu d'une autre couche.
+    for idu in idus:
+        if out[idu].get("constructible") is None:
+            try:
+                from ..rnu import LIBELLE_RNU, is_rnu_idu
+            except Exception:  # noqa: BLE001 — module indisponible : on garde l'assemblage
+                break
+            if is_rnu_idu(idu):
+                lib = (f"{LIBELLE_RNU} — constructibilité limitée aux parties actuellement "
+                       "urbanisées, analyse au cas par cas.")
+                out[idu] = {"sdp_restante_m2": None,
+                            "zone_ouverte": None, "zone_fam": None, "zone_lib": None,
+                            "constructible": False, "rien_a_batir": None,
+                            "motif": lib, "libelle": lib}
     # PPR-PARTIEL — correction à la lecture, UNIQUEMENT pour les parcelles fermées par leur seule cause
     # résiduelle en zone constructible (candidat rare : ~cause présente, pas de déclassement/AU différée).
     from .au_differe import AU_CLASSES_DIFFEREES
