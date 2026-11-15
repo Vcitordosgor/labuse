@@ -161,3 +161,51 @@ tant qu'utilisateur `labuse` depuis `/home/labuse`, avec sourcing de `/etc/labus
 réplique exacte des lignes du crontab. Toutes les autres requêtes (états avant/après, incidents,
 sauvegarde, liveness) sont en lecture seule (`sudo -u postgres psql`, `pg_restore --list`, `curl`
 sur `/healthz`), avec `statement_timeout` posé, hors des deux fenêtres interdites.
+
+---
+
+## 6. Addendum (lecture seule) — rafraîchir aussi l'existant ?
+
+**Combien de sociétés déjà couvertes ont changé de dirigeant depuis le 05/07 ?** Mesure sur un
+échantillon de **200 SIREN à graine fixe** (ordre `md5(siren||'fp3-graine')`, cohorte 05/07 hors
+les 277 neufs). Notre base ne permet pas le diff seule (tout l'existant est figé au 05/07) : j'ai
+donc comparé à la source publique **Recherche d'entreprises (DINUM)** — qui expose les dirigeants
+du RNE —, en lecture seule, **sans toucher l'API INPI ni son quota de prod**. Résultat :
+
+- **~15 % de vrais remaniements** : 24 des 159 SIREN peuplés des deux côtés ont un patronyme de
+  dirigeant ajouté ou retiré (ex. `383968716` JAUZELON → +DELEFLIE, `389203191` FRECAUT ISAUTIER →
+  −ISAUTIER, `428173702` BALBOLIA → 7 dirigeants). Ordre de grandeur : **~1 société sur 7, soit
+  ~1 400 des 9 337 couvertes**.
+- **~14 % de trous de couverture** (28/200) : le stock 05/07 n'a stocké **aucun** dirigeant
+  physique alors que le producteur en affiche — ce n'est pas un changement mais une lacune, que le
+  rattrapage corrigerait aussi.
+- Le reste (51 % brut au premier passage) était du **bruit de format** (noms d'usage « X (Y) »,
+  artefact « ACTIF », variantes d'orthographe) — écarté après normalisation en jetons de patronymes.
+
+*Limites : source proxy (DINUM agrège le RNE, pas le stock INPI brut qu'on ingère) ; appariement
+par patronyme (grossier — gonfle un peu) ; « changé » inclut des corrections. Ordre de grandeur,
+pas un compte exact.*
+
+**Ce que coûterait un rafraîchissement complet** (`ingest-inpi-rne --no-resume`, ~9 579 SIREN) :
+- **Durée** : ~1 h 45 – 2 h (mesuré : 277 SIREN en 198 s ≈ 0,7 s/SIREN, throttle 0,5 s anti-ban).
+- **Disque** : négligeable — `pm_dirigeants` ~27 k lignes, l'upsert écrit sur place (pas de
+  croissance notable, pas de table neuve) ; quelques Mo.
+- **Risque** : faible. Le vrai risque est le **quota quotidien INPI** (`QuotaExceededError`) : le
+  job peut s'arrêter en cours — mais il est **résumable** sans perte (commit par lot de 100). Pas
+  d'impact schéma ni score (étage 2 non branché). À lancer **hors** des fenêtres backup/nuit (2 h
+  est long → risque de chevaucher le dump de 13 h 30 si lancé trop tard).
+- **À l'écran** : Successions et Courrier afficheraient les dirigeants **actuels** et le signal
+  « âge du dirigeant » (propension à vendre) recalculé — correction là où un gérant est parti,
+  décédé ou ajouté (~1 fiche société sur 7), plus les ~14 % de sociétés qui gagneraient un
+  dirigeant là où elles n'en montraient aucun.
+
+**Comment modifier la tâche mensuelle pour rafraîchir aussi l'existant** — aujourd'hui elle tourne
+en `--resume` (saute tout SIREN déjà présent). Trois options, par ordre de préférence :
+1. **Fenêtre de fraîcheur (recommandé)** : remplacer le saut « déjà présent » par « déjà présent
+   **et** `ingested_at ≥ now() − N jours** » (ex. 90 j), plafonné par le quota → chaque société
+   est relue au moins une fois par trimestre, sans pic mensuel de 2 h ; un lot roulant par nuit.
+2. **Priorisé par signal** : relire d'abord les SIREN touchés par une procédure BODACC ou une mise
+   à jour SIRENE depuis la dernière lecture (les plus susceptibles d'avoir changé), puis compléter
+   le quota par les `ingested_at` les plus anciens.
+3. **Plein périodique** : lancer `--no-resume` une fois par trimestre (accepte le ~2 h et le
+   quota) — le plus simple, le moins fin.
