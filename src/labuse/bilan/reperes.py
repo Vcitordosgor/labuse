@@ -130,16 +130,19 @@ def sources_parcelle(db: Session, idu: str) -> dict[str, Any]:
 
 
 def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
-                    postes_saisis: set[str] | None = None) -> dict[str, Any]:
-    """CHIRURGICAL-FIX-1 (LOT K 2b / LOT L 2) — le GARDE-FOU en tête du Bilan. Un Bilan est un programme
-    SAISI ; s'il contredit ce que le Dossier retient, on le dit EN TÊTE, avec le motif :
-      · parcelle non constructible / habitat interdit → motif de la fiche ;
+                    postes_saisis: set[str] | None = None,
+                    programme_saisi: bool = True) -> dict[str, Any]:
+    """CHIRURGICAL-FIX-1 (LOT K 2b / LOT L 2 / LOT M 3) — le GARDE-FOU en tête du Bilan. Un Bilan chiffre
+    un programme ; s'il contredit ce que le Dossier retient, on le dit EN TÊTE, avec le motif :
+      · parcelle non constructible / habitat interdit → motif de la fiche, et AUCUNE « surface à retenir »
+        (le Dossier ne donne pas de capacité résidentielle : on ne cite JAMAIS une ancienne simulation) ;
       · la SDP SAISIE dépasse la **surface À RETENIR du Dossier** (la règle unique `surface_a_retenir`,
-        prudente — PAS l'estimation haute « table rase ») → on compare et on le signale ;
+        prudente — PAS l'estimation haute « table rase ») → on compare au MÊME seuil que l'Excel ;
       · scénario « terrain libéré » (démolition) → on le DIT en tête, et si aucun **coût de démolition**
         n'est saisi, on le signale (le bilan sous-estime alors les dépenses).
-    `postes_saisis` = les ids de postes réellement renseignés (pour vérifier la démolition). Renvoie
-    `{alertes, surface_a_retenir, terrain_libere, non_constructible, sdp_saisie}`."""
+    `programme_saisi` = False quand le Bilan est livré SANS programme (l'outil le produit de lui-même) :
+    le bandeau dira « aucun programme », pas « programme saisi ». Renvoie
+    `{alertes, surface_a_retenir, terrain_libere, non_constructible, sdp_saisie, programme_saisi}`."""
     src = sources_parcelle(db, idu) or {}
     motif_nc = src.get("non_constructible_motif")
     sar_val = None
@@ -157,6 +160,12 @@ def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
             terrain_libere = bati and "terrain libéré" in (sar.get("phrase") or "").lower()
     except Exception:  # noqa: BLE001 — surface à retenir non résolue : on garde le reste du garde-fou
         pass
+    # LOT M 3 — habitat interdit / non constructible : le Dossier ne donne AUCUNE capacité résidentielle.
+    # On écarte toute « surface à retenir » (sinon on citait 8 125 m² d'une ancienne simulation d'AM0838)
+    # et le scénario « terrain libéré » (pas de logements à y construire) : seul le motif reste.
+    if motif_nc:
+        sar_val = None
+        terrain_libere = False
     alertes: list[str] = []
     if motif_nc:
         alertes.append(motif_nc)
@@ -164,13 +173,16 @@ def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
         alertes.append("Scénario « terrain libéré » : le potentiel suppose la démolition du bâti existant.")
         if not (postes_saisis and "demol" in postes_saisis):
             alertes.append("Coût de démolition non renseigné — les dépenses sont sous-estimées.")
+    # LOT M 3 — MÊME seuil que l'Excel (`SDP > round(surface_à_retenir)`), au mètre près : plus d'écart
+    # d'un mètre entre le PDF (ancien `round(sar)+1`) et le tableur.
     if (sdp_saisie and isinstance(sdp_saisie, (int, float)) and isinstance(sar_val, (int, float))
-            and sdp_saisie > round(sar_val) + 1):
+            and round(sdp_saisie) > round(sar_val)):
         alertes.append(
             f"La surface de plancher saisie ({round(sdp_saisie)} m²) dépasse la surface à retenir du "
             f"Dossier ({round(sar_val)} m²).")
     return {"alertes": alertes, "surface_a_retenir": sar_val, "terrain_libere": terrain_libere,
-            "non_constructible": bool(motif_nc), "sdp_saisie": sdp_saisie}
+            "non_constructible": bool(motif_nc), "sdp_saisie": sdp_saisie,
+            "programme_saisi": programme_saisi}
 
 
 def _emprise_batie(db: Session, idu: str) -> float | None:

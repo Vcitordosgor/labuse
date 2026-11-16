@@ -630,9 +630,12 @@ def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | Non
     suffixe = f"{len(rows)} parcelles"
     _note_html = (f'<p class="notice" style="color:#b06a2c">{esc(note_limite)}</p>'
                   if note_limite else "")
-    # CHIRURGICAL-FIX-1 (LOT L 5) — la carte de couverture du Comparatif est COMPACTE (hauteur bornée)
-    # pour que le résumé + la carte + le tableau tiennent ensemble, sans pousser une page presque vide.
-    _cover = (f'<div class="cmp-cover">{_resume_comparatif(rows)}{map_html or ""}</div>')
+    # CHIRURGICAL-FIX-1 (LOT L 5 / LOT M mineur) — couverture COMPACTE EN DEUX COLONNES (résumé à
+    # gauche, carte à droite) : plus de couverture presque vide suivie d'une carte seule sur sa propre
+    # page. Le tableau enchaîne juste après.
+    _cover = (f'<div class="cmp-cover">'
+              f'<div class="cmp-resume">{_resume_comparatif(rows)}</div>'
+              f'<div class="cmp-carte">{map_html or ""}</div></div>')
     # CHIRURGICAL-FIX-1 (LOT I pt4 / LOT K 3g) — le numéro du Comparatif tient compte de TOUTES ses
     # parcelles ET de TOUT son contenu rendu : deux comparatifs au contenu affiché différent diffèrent.
     corps = (_entete_doc("comparatif", suffixe, _NUMERO_PLACEHOLDER, j)
@@ -641,8 +644,11 @@ def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | Non
                                     discriminant="|".join(sorted(ids)) + "|" + _signature_contenu(corps))
     corps = corps.replace(_NUMERO_PLACEHOLDER, numero)
     cart = _cart("comparatif", suffixe, " · ".join(ids), numero, j)
-    _cmp_css = (".cmp-cover{margin:2pt 0 6pt}.cmp-cover .plan{max-height:52mm;overflow:hidden}"
-                ".cmp-cover .plan img,.cmp-cover .plan svg{max-height:48mm;width:auto}"
+    _cmp_css = (".cmp-cover{display:flex;gap:10pt;align-items:flex-start;margin:2pt 0 6pt;"
+                "page-break-inside:avoid}"
+                ".cmp-resume{flex:1 1 55%}.cmp-carte{flex:1 1 45%}"
+                ".cmp-cover .plan{max-height:46mm;overflow:hidden;margin:0}"
+                ".cmp-cover .plan img,.cmp-cover .plan svg{max-height:44mm;width:auto}"
                 ".cmp-bloc{page-break-before:avoid}")
     html = page_html(_LABEL["comparatif"][0], cart, corps, paysage=True, page_extra_css=_cmp_css)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
