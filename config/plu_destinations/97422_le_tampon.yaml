@@ -325,6 +325,13 @@ zones:
             page_pdf: 18
             texte: "Dans une marge de 3,60 m de profondeur comptée parallèlement à la limite séparative, la hauteur absolue ne doit pas excéder 18 m ; dans le secteur Uav, ce seuil est limité à 13 m."
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: Ua8.2
+          page_pdf: 17
+          citation: "La distance séparant deux bâtiments sur une même unité foncière doit être au moins égale à 3 mètres ; dans le cas d'un bâtiment comportant plus de cinq logements, ce seuil minimal est porté à 6 mètres, hors circulations extérieures de type coursive."
+          statut: valide
         voie:
           min_m: 4.0
           article: Ua6.2

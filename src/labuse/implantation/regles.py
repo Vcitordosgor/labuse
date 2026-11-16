@@ -358,11 +358,21 @@ class BaremeStationnement:
                 # (le texte « plus de 30 m² » laisse la borne ambiguë → lecture prudente = plus exigeante).
                 n_sous = sum(1 for m in modules
                              if float(getattr(m, "surface_m2", 0.0)) < self.seuil_surface_m2)
+                n_pile = sum(1 for m in modules
+                             if abs(float(getattr(m, "surface_m2", 0.0)) - self.seuil_surface_m2) < 0.5)
                 n_sur = n - n_sous
                 tot = n_sous * self.places_sous_seuil + n_sur * self.flat_places
-                candidats.append((self.arrondir(tot),
-                                  f"{self.places_sous_seuil:g} place < {self.seuil_surface_m2:g} m² · "
-                                  f"{self.flat_places:g} place ≥ {self.seuil_surface_m2:g} m² ({n_sous}+{n_sur} logts)"))
+                _form = (f"{self.places_sous_seuil:g} place < {self.seuil_surface_m2:g} m² · "
+                         f"{self.flat_places:g} place ≥ {self.seuil_surface_m2:g} m² ({n_sous}+{n_sur} logts)")
+                if n_pile:
+                    # ETUDE-STATIONNEMENT-FIX-5 (point 2) — BORNE AMBIGUË : des logements sont PILE au seuil et
+                    # le texte (« plus de N m² ») permet DEUX lectures. On DONNE les deux résultats et celui qui
+                    # est retenu (lecture prudente = la plus exigeante), au lieu de présenter une seule valeur.
+                    _prud = self.arrondir(tot)
+                    _bas = self.arrondir(tot - n_pile * (self.flat_places - self.places_sous_seuil))
+                    _form += (f" — borne {self.seuil_surface_m2:g} m² AMBIGUË ({n_pile} logt(s) pile) : le texte "
+                              f"permet {_bas} ou {_prud} places ; lecture prudente {_prud} retenue")
+                candidats.append((self.arrondir(tot), _form))
             else:
                 tot = n * self.flat_places
                 candidats.append((self.arrondir(tot), f"{self.flat_places:g} place/logt × {n} logts"))

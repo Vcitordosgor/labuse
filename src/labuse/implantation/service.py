@@ -685,9 +685,15 @@ def _regle_stationnement_courte(b) -> Optional[str]:
     for lg in b.lignes:
         if lg.destination and lg.destination != "collectif":
             continue
+        _pm = getattr(lg, "par_m2", None)   # ligne « 1 place / N m² de SDP » : places est None (FIX-5 : NE PLUS
+        #                                     la formater comme un par-logement → crash AH0853/Trois-Bassins)
         if lg.role == "operation":
             seuil = f" si opération > {lg.logements_min - 1} logts" if lg.logements_min else " (opération)"
-            parts.append(f"{nb(lg.places)} pl./logt{seuil}")
+            _arr = " (arrondi à l'entier inférieur)" if getattr(lg, "arrondi", None) == "inferieur" else ""
+            if _pm:
+                parts.append(f"1 pl./{nb(_pm)} m²{seuil}{_arr}")
+            elif lg.places is not None:
+                parts.append(f"{nb(lg.places)} pl./logt{seuil}{_arr}")
             continue
         pmin, pmax = lg.pieces_min, lg.pieces_max
         if pmin and pmax and pmin != pmax:
@@ -700,8 +706,22 @@ def _regle_stationnement_courte(b) -> Optional[str]:
             lab = f"≤T{pmax}"
         else:
             lab = "logt"
-        parts.append(f"{nb(lg.places)} pl. {lab}")
-    return " · ".join(parts) if parts else None
+        if _pm:
+            parts.append(f"1 pl./{nb(_pm)} m² ({lab})")
+        elif lg.places is not None:
+            parts.append(f"{nb(lg.places)} pl. {lab}")
+    if not parts:
+        return None
+    rule = " · ".join(parts)
+    # ETUDE-STATIONNEMENT-FIX-5 (point 2) — la règle SERVIE au Dossier doit être ENTIÈRE, comme l'Étude :
+    # l'ARRONDI (inférieur) et la clause des PLACES HORS ESPACES PRIVATISÉS en font partie (Le Tampon Ud12.2).
+    if getattr(b, "arrondi", None) == "inferieur":
+        rule += " (arrondi à l'entier inférieur)"
+    for c in (getattr(b, "conditions", ()) or ()):
+        if "privatis" in c.lower():
+            rule += " · " + c
+            break
+    return rule
 
 
 def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, insee: str) -> dict:
@@ -1350,6 +1370,14 @@ def etudier_payload(session, entree: dict) -> dict:
     # reculs, stationnement). Cas des assemblages dont la part d'habitat (UB) est une bande étroite.
     verdict = next((v["verdict"] for v in variantes_pub if not v.get("absente")),
                    "Aucun plan trouvé sous ces hypothèses")
+    # ETUDE-STATIONNEMENT-FIX-5 (point 3) — UN SEUL message, cohérent avec le titre : quand le verdict est
+    # « Aucun plan trouvé sous ces hypothèses », le message ne doit PLUS commencer par « simulation impossible »
+    # (le titre et le texte se contredisaient). On ne garde que la RAISON, capitalisée.
+    if verdict == "Aucun plan trouvé sous ces hypothèses" and isinstance(message, str):
+        _m = message.strip()
+        if _m.lower().startswith("simulation impossible"):
+            _m = _m.split(":", 1)[1].strip() if ":" in _m else ""
+            message = (_m[:1].upper() + _m[1:]) if _m else "Aucune implantation n'a pu être dessinée sous ces hypothèses."
 
     # ETUDE-V6 (Lot C) — régimes de stationnement (règle générale PLU + plafond national à confirmer),
     # et capacité SOUS le régime réduit (2ᵉ passage moteur au ratio plafonné), seulement si le plafond est

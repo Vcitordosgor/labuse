@@ -469,12 +469,18 @@ def _acces_corridor(scene: Scene, conv: Conventions, allee_g: Polygon,
         return None
     vp, ap = nearest_points(voie, allee_g)
     seg = LineString([vp, ap])
+    # ETUDE-STATIONNEMENT-FIX-5 (point 1) — l'accès doit RECOUPER l'allée (et la voie) sur une LARGEUR
+    # ROULANTE, pas la toucher en un coin. On PROLONGE le point d'accostage DANS l'allée (d'`acces_largeur`) :
+    # le corridor franchit alors la limite de l'allée sur toute sa largeur → jonction allée–accès large, pas
+    # ponctuelle (cause des faux « 9/10/6 places » reliées par un seul point).
     if seg.length < 0.1:
         corridor = vp.buffer(conv.acces_largeur_m / 2.0, cap_style=3)
     else:
-        corridor = seg.buffer(conv.acces_largeur_m / 2.0, cap_style=2)
+        dx, dy = (ap.x - vp.x) / seg.length, (ap.y - vp.y) / seg.length
+        ap2 = (ap.x + dx * conv.acces_largeur_m, ap.y + dy * conv.acces_largeur_m)
+        corridor = LineString([vp, ap2]).buffer(conv.acces_largeur_m / 2.0, cap_style=2)
     corridor = scene.assiette_local.intersection(corridor)
-    # l'accès TOUCHE l'allée (partage d'arête) mais ne la recouvre pas, évite le bâti et la PPR rouge
+    # l'accès TOUCHE l'allée (sur une arête désormais) mais ne la recouvre pas, évite le bâti et la PPR rouge
     corridor = corridor.difference(allee_g)
     if bati is not None and not corridor.is_empty:
         corridor = corridor.difference(bati)

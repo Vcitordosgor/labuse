@@ -104,48 +104,47 @@ def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=No
     libre = unary_union([g if g.is_valid else g.buffer(0) for g in (list(allees) + list(acces or []))])
     if libre.is_empty:
         return 0.0
+    _aire_places = float(sum((p if p.is_valid else p.buffer(0)).area for p in places))
     r_pass = _PASSAGE_MIN_M / 2.0
-    # (2) PINCEMENT DE CIRCULATION : une place n'est desservie que si une VOITURE peut l'atteindre depuis la
-    # VOIE sans franchir de goulet plus étroit que `_PASSAGE_MIN_M`. Le réseau atteignable = allées + accès +
-    # la VOIE (chaque accès rejoint la voie publique, qui relie les bandes entre elles) : sans la voie, deux
-    # bandes reliées PAR elle semblent déconnectées → on strandait à tort un pavage multi-bandes. On érode ce
-    # réseau : un vrai étranglement (BW2635 : 2,25 m DANS une allée) le coupe en morceaux ; seul celui qui
-    # touche la voie reste atteignable (l'ouverture morpho ne suffit pas, la dilatation reboucherait le goulet).
+    # (2) PASSAGE ROULANT CONTINU JUSQU'À LA VOIE (ETUDE-STATIONNEMENT-FIX-5, point 1) — une place n'est
+    # desservie que si une VOITURE peut l'atteindre depuis la voie par un couloir d'une LARGEUR ≥ `_PASSAGE_MIN_M`
+    # SUR TOUT son trajet : les jonctions allée–accès et accès–voie se mesurent en LARGEUR, pas en contact. On
+    # ÉRODE le réseau (allées + accès + voie) de la demi-largeur de passage : toute jonction plus étroite (un
+    # simple POINT, un goulet) DISPARAÎT. Le réseau RÉELLEMENT roulant est la ou les composantes atteignables
+    # depuis le noyau de la VOIE ; une allée reliée par un point, ou via un accès isolé de la voie, en est exclue.
     voie_poly = None
     if voie is not None and not getattr(voie, "is_empty", True):
-        voie_poly = (voie.buffer(r_pass) if voie.geom_type in ("LineString", "MultiLineString")
+        # la voie est une LIGNE (bord de parcelle) : on l'épaissit en bande de ROULEMENT (≥ passage) pour que
+        # son noyau survive à l'érosion et serve d'ancre atteignable (sinon rien n'est relié à la voie).
+        voie_poly = (voie.buffer(_PASSAGE_MIN_M) if voie.geom_type in ("LineString", "MultiLineString")
                      else (voie if voie.is_valid else voie.buffer(0)))
     circ = unary_union([libre, voie_poly]).buffer(0) if voie_poly is not None else libre
     noyau = circ.buffer(-r_pass).buffer(0)
     if noyau.is_empty:
-        return float(sum((p if p.is_valid else p.buffer(0)).area for p in places))
+        return _aire_places
     comps = list(noyau.geoms) if noyau.geom_type == "MultiPolygon" else [noyau]
-    # on ne déclare un étranglement que si l'érosion coupe DEUX morceaux SIGNIFICATIFS (chacun capable
-    # d'accueillir le dégagement d'une place) : sinon ce sont des échardes de bord d'une petite allée — qui
-    # faisaient écrouler HT0538 à tort. Un vrai goulet (BW2635) sépare deux vraies zones de stationnement.
-    signif = [g for g in comps if g.area >= _COMP_SIGNIF_M2]
-    reach = None
-    if len(signif) > 1:
-        ancre = voie_poly
-        if ancre is None or ancre.is_empty:
-            ancre = unary_union([g if g.is_valid else g.buffer(0) for g in (acces or [])]) if acces else None
-        if ancre is None or ancre.is_empty:
-            ancre = max(signif, key=lambda g: g.area)        # ni voie ni accès connus : le plus grand morceau
-        reach = min(signif, key=lambda g: g.distance(ancre))  # le noyau qui touche la voie
+    # composantes ATTEIGNABLES depuis la voie : celles dont le noyau touche le noyau de la voie (jonction
+    # accès–voie ≥ passage). Sans voie connue (tests unitaires), on part de la plus grande composante.
+    if voie_poly is not None and not voie_poly.is_empty:
+        vn = voie_poly.buffer(-r_pass).buffer(0)
+        reach_comps = [g for g in comps
+                       if (not vn.is_empty and g.intersects(vn)) or g.distance(voie_poly) <= 0.05]
+    else:
+        reach_comps = [max(comps, key=lambda g: g.area)] if comps else []
+    if not reach_comps:
+        return _aire_places
+    reach = unary_union(reach_comps)
+    # l'allée/accès RÉELLEMENT desservi(e) = ce que le réseau roulant atteignable recouvre, redilaté à la
+    # largeur de passage (on ne redilate QUE le réseau atteignable : un point/goulet n'est pas rebouché).
+    desservi = reach.buffer(r_pass + 0.02).intersection(libre).buffer(0)
+    if desservi.is_empty:
+        return _aire_places
     from shapely.geometry import Point
     W = max(float(largeur_requise), 0.1)   # FIX-4 : rectangle de dégagement ENTIER, aucune marge retranchée
     manque = 0.0
     for p in places:
         pg = p if p.is_valid else p.buffer(0)
         c = pg.centroid
-        # PLACE DE L'AUTRE CÔTÉ DU GOULET : si le noyau atteignable depuis l'accès existe et que CETTE place
-        # est plus proche d'un AUTRE morceau de noyau, aucune voiture ne peut l'atteindre → place perdue. On ne
-        # redilate pas `reach` (cela rebouche le goulet) : on strande par APPARTENANCE au morceau le plus proche.
-        if reach is not None and signif:
-            proche = min(signif, key=lambda g: g.distance(c))
-            if proche is not reach and reach.distance(c) > r_pass + 0.5:
-                manque += pg.area
-                continue
         coords = list(pg.exterior.coords)[:-1]
         # on ne sonde que par le NEZ de la place : l'un des deux PETITS côtés (la place est 2,5 × 5 m — le nez
         # fait la largeur, 2,5 m ; les grands côtés, 5 m, sont les flancs). Sonder un flanc extruderait vers un
@@ -163,7 +162,7 @@ def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=No
         # par UN seul côté ; l'autre donne sur le mur/la place voisine. Prendre le plus près de l'allée se
         # trompait de côté quand une allée mince longeait l'arrière (faux déficit de 4 m sur une allée de 5 m,
         # qui écroulait les parkings denses). Le côté d'accès réel = celui où le dégagement manque le MOINS.
-        deficits = []
+        options = []   # (déficit de dégagement EXACT contre `libre`, desservie jusqu'à la voie ?)
         for _L, a, b, mid in petits:
             nx, ny = mid[0] - c.x, mid[1] - c.y
             ln = (nx * nx + ny * ny) ** 0.5 or 1.0
@@ -171,11 +170,21 @@ def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=No
             sonde = Polygon([a, b, (b[0] + W * nx, b[1] + W * ny), (a[0] + W * nx, a[1] + W * ny)])
             if not sonde.is_valid or sonde.area < 0.5:
                 continue
-            deficits.append(max(0.0, sonde.area - sonde.intersection(libre).area))
-        if not deficits:
+            # (a) dégagement EXACT : la part du rectangle NON couverte par la surface libre (allée + accès).
+            clear = sonde.intersection(libre)
+            deficit = max(0.0, sonde.area - clear.area)
+            # (b) DESSERTE : ce dégagement doit toucher le réseau ROULANT atteignable depuis la voie — sinon la
+            # place est reliée par un simple point / un accès isolé et aucune voiture ne peut l'atteindre.
+            desservie = (not clear.is_empty) and (clear.intersects(reach) or clear.distance(reach) <= 0.05)
+            options.append((deficit, desservie))
+        if not options:
             continue
-        deficit = min(deficits)                      # le côté d'accès = le mieux dégagé des deux
-        if deficit > _DEGAGEMENT_PLACE_FLOOR_M2:     # place VRAIMENT non dégagée des DEUX côtés
+        desservies = [d for d, sv in options if sv]
+        if not desservies:
+            manque += pg.area        # aucun couloir roulant jusqu'à la voie → place NON comptée
+            continue
+        deficit = min(desservies)    # le meilleur côté RÉELLEMENT DESSERVI
+        if deficit > _DEGAGEMENT_PLACE_FLOOR_M2:
             manque += deficit
     return float(manque)
 
@@ -546,10 +555,22 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     r = regles.pleine_terre
     if r.validee and r.valeur is not None:
         requis = contenance * r.valeur / 100.0
-        ok = cap.pleine_terre_m2 >= requis - 1e-6
-        out.append(ControleReg("Perméabilité (pleine terre)", f"≥ {requis:.0f} m² ({r.valeur:.0f} % de la surface du terrain)",
-                               f"{cap.pleine_terre_m2:.0f} m²", REUSSI if ok else ECHOUE,
-                               r.citation_complete, f"écart {cap.pleine_terre_m2 - requis:+.0f} m²"))
+        assez = cap.pleine_terre_m2 >= requis - 1e-6
+        # ETUDE-STATIONNEMENT-FIX-5 (point 4) — « Réussi » est réservé à ce qui est MESURÉ. La surface libre
+        # mesurée montre la PLACE DISPONIBLE, pas que la pleine terre sera plantée et perméable : si la place
+        # suffit, on dit « surface disponible : X pour Y exigés ; caractère planté et perméable à confirmer »
+        # (À confirmer), jamais « Réussi ». Si la place manque, c'est un ÉCHEC franc.
+        if assez:
+            out.append(ControleReg(
+                "Perméabilité (pleine terre)", f"≥ {requis:.0f} m² ({r.valeur:.0f} % de la surface du terrain)",
+                f"surface disponible {cap.pleine_terre_m2:.0f} m²", A_CONFIRMER, r.citation_complete,
+                detail="la surface libre mesurée suffit ; le caractère PLANTÉ et PERMÉABLE de la pleine terre "
+                       "reste à confirmer au projet (ce contrôle ne mesure que la place disponible)"))
+        else:
+            out.append(ControleReg(
+                "Perméabilité (pleine terre)", f"≥ {requis:.0f} m² ({r.valeur:.0f} % de la surface du terrain)",
+                f"surface disponible {cap.pleine_terre_m2:.0f} m²", ECHOUE, r.citation_complete,
+                f"écart {cap.pleine_terre_m2 - requis:+.0f} m² (place insuffisante)"))
     else:
         out.append(ControleReg("Perméabilité (pleine terre)", "règle non validée",
                                f"{cap.pleine_terre_m2:.0f} m²", NON_EFFECTUE))

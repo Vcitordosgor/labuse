@@ -93,7 +93,7 @@ def test_non_bati_garde_la_formulation_surface_a_retenir():
     # partout) sur ces valeurs à jour.
     # FIX-4 (LOT 1) — HT0538 : plan en échec (haie 1,4 m < 1,5 m) → « surface testée », pas « à retenir ».
     ("97416000HT0538", 450, GRANDEUR_TESTEE),       # esquisse 450 mais contrôle haie en échec → surface testée
-    ("97422000AD0887", 595, GRANDEUR_SCENARIO),     # dégagement exact : 7 logts / 10 places → esquisse 595
+    ("97422000AD0887", 555, GRANDEUR_SCENARIO),     # desserte roulante continue : 6 logts / 9 places → esquisse 555
     ("97422000BW2635", 535, GRANDEUR_ESQUISSE),     # scénario servi 6 logts (535) < estimation 3 317
 ])
 def test_un_seul_surface_a_retenir_tous_documents(session_reelle, idu, valeur_attendue, source_attendue):

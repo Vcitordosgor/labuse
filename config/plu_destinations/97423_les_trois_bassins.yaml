@@ -96,7 +96,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
-            arrondi: superieur
+            arrondi: inferieur
             tranche: collectif 1/35 m²
             role: alt
           conditions:
@@ -217,7 +217,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
-            arrondi: superieur
+            arrondi: inferieur
             tranche: collectif 1/35 m²
             role: alt
           conditions:
@@ -303,7 +303,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
-            arrondi: superieur
+            arrondi: inferieur
             tranche: collectif 1/35 m²
             role: alt
           conditions:
@@ -433,7 +433,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
-            arrondi: superieur
+            arrondi: inferieur
             tranche: collectif 1/35 m²
             role: alt
           conditions:
@@ -653,7 +653,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
-            arrondi: superieur
+            arrondi: inferieur
             tranche: collectif 1/35 m²
             role: alt
           conditions:
@@ -765,7 +765,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
-            arrondi: superieur
+            arrondi: inferieur
             tranche: collectif 1/35 m²
             role: alt
           conditions:
@@ -877,7 +877,7 @@ zones:
             role: alt
           - destination: collectif
             par_m2: 35
-            arrondi: superieur
+            arrondi: inferieur
             tranche: collectif 1/35 m²
             role: alt
           conditions:
