@@ -199,9 +199,12 @@ def _cerfa_prerempli(parcelle: dict, adresse: dict | None, cerfa_num: str = "134
     reader = PdfReader(str(chemin))
     writer = PdfWriter(clone_from=reader)
     idu = parcelle["idu"]
+    # CHIRURGICAL-FIX-1 (LOT K 3g) — le numéro de voie garde son INDICE de répétition (bis/ter/… = champ
+    # `rep`) : « 18 ter » ne perd plus son « ter » (on ne remplissait que `numero`).
+    _num_voie = " ".join(x for x in ((adresse or {}).get("numero"), (adresse or {}).get("rep")) if x)
     champs = {
         # adresse du terrain (BAN si connue)
-        "T2Q_numero": (adresse or {}).get("numero") or "",
+        "T2Q_numero": _num_voie,
         "T2V_voie": (adresse or {}).get("voie") or "",
         "T2W_lieudit": "",
         "T2L_localite": parcelle["commune"],

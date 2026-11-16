@@ -627,15 +627,18 @@ def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | Non
     j = jour or today_reunion()
     ids = [i.strip() for i in idus if i and i.strip()][:3]
     ref0 = ids[0] if ids else ""
-    # CHIRURGICAL-FIX-1 (LOT I pt4) — le numéro du Comparatif tient compte de TOUTES ses parcelles
-    # (pas de la seule première) : deux comparatifs de jeux de parcelles différents diffèrent.
-    numero = numeros.numero_rapport("comparatif", ref0, j, discriminant="|".join(sorted(ids)))
     suffixe = f"{len(rows)} parcelles"
-    cart = _cart("comparatif", suffixe, " · ".join(ids), numero, j)
     _note_html = (f'<p class="notice" style="color:#b06a2c">{esc(note_limite)}</p>'
                   if note_limite else "")
     _cover = _resume_comparatif(rows) + (map_html or "")
-    corps = _entete_doc("comparatif", suffixe, numero, j) + _cover + _note_html + bloc_comparatif.rendu(rows)
+    # CHIRURGICAL-FIX-1 (LOT I pt4 / LOT K 3g) — le numéro du Comparatif tient compte de TOUTES ses
+    # parcelles ET de TOUT son contenu rendu : deux comparatifs au contenu affiché différent diffèrent.
+    corps = (_entete_doc("comparatif", suffixe, _NUMERO_PLACEHOLDER, j)
+             + _cover + _note_html + bloc_comparatif.rendu(rows))
+    numero = numeros.numero_rapport("comparatif", ref0, j,
+                                    discriminant="|".join(sorted(ids)) + "|" + _signature_contenu(corps))
+    corps = corps.replace(_NUMERO_PLACEHOLDER, numero)
+    cart = _cart("comparatif", suffixe, " · ".join(ids), numero, j)
     html = page_html(_LABEL["comparatif"][0], cart, corps, paysage=True)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
                        contexte={"comparatif": rows})
@@ -897,14 +900,17 @@ def construire_analyse_annonce_parc(db, idu: str, *, request=None, surface_hab: 
     fiche = parcel_fiche(idu, db=db, request=request)
     rapport = rapport_parcelle(db, idu, fiche, surface_hab=surface_hab,
                                pieces=pieces, ecartees=ecartees)
-    numero = numeros.numero_rapport("analyse-annonce", idu, j)
-    rapport["_ref_droite"] = f"{numero} · {j:%d/%m/%Y}"
+    # CHIRURGICAL-FIX-1 (LOT K 3g) — le numéro d'Estimer change quand SON CONTENU change (surface, pièces,
+    # ventes retenues…) : on rend avec un jeton, on signe le corps, puis on substitue le vrai numéro.
+    rapport["_ref_droite"] = f"{_NUMERO_PLACEHOLDER} · {j:%d/%m/%Y}"
     adresse = rapport.get("adresse") or ""
     lieu = adresse or rapport.get("commune") or idu
     carte_ortho = _carte_ortho_html(db, idu)
     carte_zon = _carte_zonage_html(db, idu, zone_label=rapport.get("zone"),
                                    alea_label=_alea_label_carte(rapport.get("risques")))
     corps = bloc_annonce.rendu_parcelle(rapport, plan_ortho_html=carte_ortho, plan_zonage_html=carte_zon)
+    numero = numeros.numero_rapport("analyse-annonce", idu, j, discriminant=_signature_contenu(corps))
+    corps = corps.replace(_NUMERO_PLACEHOLDER, numero)
     cart = _cart("analyse-annonce", lieu, idu, numero, j)
     html = page_html(_LABEL["analyse-annonce"][0], cart, corps, page_extra_css=_ANNONCE_PAGE_CSS)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
