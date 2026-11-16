@@ -1176,6 +1176,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         _href_rp = getattr(rules, "h_reference", None)
         from ..gabarit.builder import (recul_scenario_niveaux as _rsn,
                                         scenario_niveaux_autorise as _sna,
+                                        niveaux_max_plafond as _nmp,
                                         MARGE_FACADE_TOITURE_M as _MARGE)
         from .zone_norm import est_famille as _ef_rp
         _insee_rp = (ctx.idu or "")[:5]
@@ -1183,15 +1184,13 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         if (_frac_rp is not None and _sna(_insee_rp, ctx.zone or "", _href_rp, _est_au_rp)
                 and isinstance(rules.recul_limites_sep_m, (int, float))):
             _etg = float(hyp.etage_m)
-            _hh = rules.hf_m if isinstance(rules.hf_m, (int, float)) else rules.he_m
-            _nmx = max(1, int(float(_hh) // _etg)) if isinstance(_hh, (int, float)) else 1
             _mrg = _MARGE if _href_rp == "hauteur_totale_facade" else 0.0
-            # plafonds de hauteur respectés (mêmes gardes que le gabarit FIX-5)
-            if _mrg:
-                if isinstance(rules.he_m, (int, float)):
-                    _nmx = min(_nmx, max(1, int(float(rules.he_m) // _etg)))
-                if isinstance(rules.hf_m, (int, float)):
-                    _nmx = min(_nmx, max(1, int((float(rules.hf_m) - _mrg) // _etg)))
+            # MOTEUR-VERITE-FIX-7 LOT 1 — niveaux bornés par les MÊMES plafonds que le gabarit
+            # (égout d'abord, puis faîtage, par secteur via he_m/hf_m résolus), par la MÊME
+            # fonction. Avant, le repli partait du faîtage et dépassait le plafond à l'égout
+            # (AC1866 La Possession UBc : 3 niveaux = 9 m à l'égout pour 7 m admis → retombe à 2).
+            _nmx = _nmp(rules.he_m, rules.hf_m, _etg,
+                        getattr(rules, "niveaux_max", None), _href_rp) or 1
 
             def _emprise_base(_rec):
                 _a = dict(args); _a["d"] = _rec

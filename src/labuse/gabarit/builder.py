@@ -102,6 +102,41 @@ def recul_scenario_niveaux(frac: float, minimum_m: float, etage_m: float, niveau
     return (best[3], best[2]) if best else (float(minimum_m), 1)
 
 
+def niveaux_max_plafond(egout, faitage, etage_m: float, niveaux_max_zone=None,
+                        h_reference=None) -> Optional[int]:
+    """MOTEUR-VERITE-FIX-7 LOT 1 — NOMBRE DE NIVEAUX maximal admis par les plafonds de HAUTEUR
+    de la zone (égout, faîtage, et par secteur via les valeurs déjà résolues he_m/hf_m). MÊME
+    fonction pour le gabarit ET le repli : un bâtiment de n niveaux a un égout n × étage et un
+    faîtage n × étage + marge ; ces deux hauteurs doivent rester SOUS les plafonds de l'article.
+
+    Priorité de la base (comme le gabarit) : nombre de niveaux explicite de l'article s'il existe,
+    sinon le plafond à l'égout, sinon le faîtage. Puis, quand la référence du retrait est la
+    hauteur TOTALE de façade (marge toiture/acrotère), on cape aussi par l'égout et par le faîtage
+    moins la marge. `egout`/`faitage`/`niveaux_max_zone` valant None quand l'article ne les fixe pas.
+
+    AVANT FIX-7 le repli choisissait ses niveaux depuis le FAÎTAGE (hf_m d'abord), dépassant le
+    plafond à l'égout (AC1866 La Possession UBc : 3 niveaux = 9 m à l'égout pour 7 m admis). Le
+    gabarit, lui, part de l'égout. Les deux chemins partagent désormais CETTE borne."""
+    etage = float(etage_m)
+    _eg = float(egout) if isinstance(egout, (int, float)) else None
+    _ft = float(faitage) if isinstance(faitage, (int, float)) else None
+    if isinstance(niveaux_max_zone, int):
+        nmax = int(niveaux_max_zone) + 1
+    elif _eg is not None:
+        nmax = max(1, int(_eg // etage))
+    elif _ft is not None:
+        nmax = max(1, int((_ft - etage) // etage))
+    else:
+        return None
+    marge = MARGE_FACADE_TOITURE_M if h_reference == "hauteur_totale_facade" else 0.0
+    if marge:
+        if _eg is not None:
+            nmax = min(nmax, max(1, int(_eg // etage)))
+        if _ft is not None:
+            nmax = min(nmax, max(1, int((_ft - marge) // etage)))
+    return max(1, nmax)
+
+
 def _fraction_hauteur_formule(formule: Optional[str]) -> Optional[float]:
     """FAISA-REGLES-1 (D-024) — lit la FRACTION DE HAUTEUR d'une formule de recul séparatif (« L ≥ h/2 »,
     « au tiers de la différence d'altitude h : h/3 »…) : rend 0,5 pour h/2, 1/3 pour h/3, None si la
@@ -527,31 +562,14 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             elif _frac_h is not None and recul_sep is not None and recul_sep > 0:
                 from ..faisabilite.engine import Hypotheses
                 _etage = float(Hypotheses.charger(commune).etage_m)
-                _nmax = None
-                if isinstance(getattr(zr, "niveaux_max", None), int):
-                    _nmax = int(zr.niveaux_max) + 1
-                elif egout is not None:
-                    _nmax = max(1, int(egout // _etage))
-                elif haut is not None:
-                    _nmax = max(1, int((haut - _etage) // _etage))
+                # MOTEUR-VERITE-FIX-7 LOT 1 — niveaux bornés par les plafonds de hauteur via la
+                # MÊME fonction que le repli (égout d'abord, puis faîtage). Comportement identique
+                # au calcul inline antérieur (AS1397, FIX-4 LOT 6 ; plafonds FIX-5 LOT 1).
+                _marge = (MARGE_FACADE_TOITURE_M
+                          if _h_ref_type == "hauteur_totale_facade" else 0.0)
+                _nmax = niveaux_max_plafond(egout, haut, _etage,
+                                            getattr(zr, "niveaux_max", None), _h_ref_type)
                 if _nmax is not None:
-                    # MOTEUR-VERITE-FIX-4 LOT 6 — « hauteur totale de façade » : la hauteur de
-                    # façade est celle du BÂTIMENT ENVISAGÉ (n × étage + marge toiture/acrotère
-                    # 1,5 m, écrite), pas le maximum de la zone (AS1397 servait 241 m² sur un
-                    # recul au faîtage 27 m — un bâtiment plus bas recule moins). La référence
-                    # « différence d'altitude point à point » reste PRUDENTE (branche ci-dessus).
-                    _marge = (MARGE_FACADE_TOITURE_M
-                              if _h_ref_type == "hauteur_totale_facade" else 0.0)
-                    # FIX-5 LOT 1 — la hauteur de façade du SCÉNARIO respecte les plafonds de
-                    # l'article : n est capé pour que n×étage ≤ plafond à l'égout (s'il existe)
-                    # ET n×étage + marge ≤ plafond faîtage/acrotère (s'il existe).
-                    if _marge:
-                        _n_cap = _nmax
-                        if egout is not None:
-                            _n_cap = min(_n_cap, max(1, int(float(egout) // _etage)))
-                        if haut is not None:
-                            _n_cap = min(_n_cap, max(1, int((float(haut) - _marge) // _etage)))
-                        _nmax = max(1, _n_cap)
                     recul_formule_obj = ReculSepFormule(
                         fraction=_frac_h, minimumM=float(recul_sep), etageM=_etage,
                         niveauxMax=_nmax, margeM=_marge,
