@@ -125,7 +125,7 @@ def test_3c_le_tampon_sol_combine_et_stationnement_renvoi():
         assert zr.pleine_terre_pct == pt and zr.permeabilite_pct == perm
         lignes = {r["cle"]: r for r in _regles_valeurs(zr, None, 0)}
         # LOT J pt3c — UNE phrase combinée, plus de ligne « surface_permeable » séparée.
-        assert lignes["pleine_terre"]["valeur"] == f"{perm:g} % de la parcelle en surface perméable et {pt:g} % de la parcelle en pleine terre"
+        assert lignes["pleine_terre"]["valeur"] == f"{perm:g} % de l'unité foncière en surface perméable et {pt:g} % de l'unité foncière en pleine terre"
         assert lignes["pleine_terre"]["libelle"] == "Surface perméable et pleine terre"
         assert "surface_permeable" not in lignes
         # LOT J pt3a — renvoi à l'article, jamais un nombre partiel.

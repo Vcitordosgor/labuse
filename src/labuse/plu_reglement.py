@@ -136,7 +136,7 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
             _permtxt, _ = _fmt_valeur(_perm, "%")
             # LOT K 3b — « X % de LA PARCELLE … et Y % de LA PARCELLE … » (pas « dont », qui se lit
             # « Y % de X % ») : les deux taux portent sur la parcelle, pas l'un sur l'autre.
-            txt = f"{_permtxt} de la parcelle en surface perméable et {txt} de la parcelle en pleine terre"
+            txt = f"{_permtxt} de l'unité foncière en surface perméable et {txt} de l'unité foncière en pleine terre"
             libelle = "Surface perméable et pleine terre"
             etat = "texte"
         ref = src.get(skey)

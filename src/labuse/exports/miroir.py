@@ -1355,7 +1355,7 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
     return None
 
 
-def _bandeau(sec_id: str, valeurs: dict[str, Valeur]) -> str:
+def _bandeau(sec_id: str, valeurs: dict[str, Valeur], fiche: dict | None = None) -> str:
     """Le verdict-phrase de tête de section. Moteurs réels quand ils existent (urbanisme, potentiel,
     réseaux, risques) ; sinon une synthèse FACTUELLE déterministe (identité, terrain, bâti, fiscalité,
     marché, quartier). Rien pour §10 si la fiche ne sert pas de potentiel (pas de bandeau vide)."""
@@ -1375,16 +1375,27 @@ def _bandeau(sec_id: str, valeurs: dict[str, Valeur]) -> str:
         if rouges:
             return (f'<div data-quoi="aleas_parcelle_liste">'
                     f'{verdict(esc(rouges[0].get("libelle") or ""), ton="warn")}</div>')
-        # CHIRURGICAL-FIX-1 (LOT K 3d) — une ZONE HUMIDE (souvent 100 % de la parcelle) est une contrainte
-        # MAJEURE même si elle n'est pas « rédhibitoire » au sens aléa : on la NOMME, avec sa part, au lieu
-        # d'un « aucun rédhibitoire » sec qui l'écrase (AD0887 : La Grande Ferme, 100 %).
+        # CHIRURGICAL-FIX-1 (LOT K 3d / LOT L 5) — une ZONE HUMIDE (souvent 100 % de la parcelle) est une
+        # contrainte MAJEURE même si elle n'est pas « rédhibitoire » au sens aléa : on la NOMME, AVEC SA
+        # PART, au lieu d'un « aucun rédhibitoire » sec qui l'écrase (AD0887 : La Grande Ferme, 100 %). On
+        # la lit sur `contraintes_parcelle_liste` si collecté, sinon sur les LIGNES de la fiche (le bloc
+        # contraintes n'est pas toujours servi au verdict).
         cv = valeurs.get("contraintes_parcelle_liste")
+        _lib_h = None
         humide = next((c for c in ((cv.valeur if cv else None) or [])
                        if isinstance(c, dict)
                        and "humide" in str((c.get("nature") or "") + (c.get("libelle") or "")).lower()), None)
         if humide:
+            _lib_h = humide.get("libelle")
+        elif fiche:
+            for l in (fiche.get("lines") or []):
+                if (isinstance(l, dict) and l.get("result") in ("HARD_EXCLUDE", "SOFT_FLAG")
+                        and "humide" in str((l.get("layer") or "") + (l.get("libelle") or "")).lower()):
+                    _lib_h = l.get("libelle") or l.get("detail")
+                    break
+        if _lib_h:
             return (f'<div data-quoi="contraintes_parcelle_liste">'
-                    f'{verdict(esc(humide.get("libelle") or "Zone humide sur la parcelle"), ton="warn")}</div>')
+                    f'{verdict(esc(_lib_h), ton="warn")}</div>')
         if av is not None:
             return f'<div data-quoi="aleas_parcelle_liste">{verdict("Aléas relevés — aucun rédhibitoire.", ton="neutral")}</div>'
         return ""
@@ -1538,6 +1549,11 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
                     _mot = _re.sub(r"^Non retenue\s*[—–-]\s*", "", str(_pvv.get("libelle") or "")).strip(" .")
                     if _mot:
                         aff = f'0 m² — {esc(_mot)}'
+                # CHIRURGICAL-FIX-1 (LOT L 5) — parcelle CONSTRUCTIBLE mais SDP résiduelle nulle : ce n'est
+                # pas « 0 m² » tout court, c'est le BÂTI EXISTANT qui sature l'enveloppe (IS0448). On le dit ;
+                # le potentiel réel passe par le « terrain libéré » (démolition), au §Potentiel.
+                elif _v(valeurs, "emprise_batie_m2"):
+                    aff = '0 m² — bâti existant saturé (potentiel en terrain libéré)'
         # EXPORTS-FIX-1 C7 — aucun champ vide imprimé : une tuile sans valeur est OMISE (pas de « — »).
         if aff is None:
             continue
@@ -1604,7 +1620,7 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
         numero += 1
         titre = f"{numero}. {sec['titre']}" if sec.get("numerote", True) else sec["titre"]
         frags: list[str] = []
-        frags.append(_bandeau(sec["id"], valeurs))
+        frags.append(_bandeau(sec["id"], valeurs, fiche=fiche))
         # PPR-PARTIEL-FIX-1 (étape B) — sur une parcelle partiellement rouge servie 0 par prudence, le
         # §risques dit AUSSI qu'il reste du foncier hors zone rouge (MÊME chiffre que le §potentiel et la
         # fiche : source unique db.surface_hors_ppr_rouge, portée par potentiel_verdict.hors_ppr_rouge).

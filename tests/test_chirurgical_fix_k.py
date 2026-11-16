@@ -71,7 +71,7 @@ def test_k3b_sol_deux_pourcentages_de_la_parcelle():
     from labuse.plu_reglement import _regles_valeurs
     z = resolve_zone("Ud", "Le Tampon")
     v = {r["cle"]: r for r in _regles_valeurs(z, None, 0)}["pleine_terre"]["valeur"]
-    assert v == "40 % de la parcelle en surface perméable et 30 % de la parcelle en pleine terre"
+    assert v == "40 % de l'unité foncière en surface perméable et 30 % de l'unité foncière en pleine terre"
     assert "dont" not in v
 
 

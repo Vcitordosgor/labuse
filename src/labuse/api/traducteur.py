@@ -86,8 +86,8 @@ def _applied(zr, surface: float) -> list[dict]:
         pt_m2 = round(zr.pleine_terre_pct / 100.0 * surface)
         perm_m2 = round(_perm / 100.0 * surface)
         add("Surface perméable et pleine terre",
-            f"{_perm:g} % de la parcelle en surface perméable ({perm_m2} m²) et "
-            f"{zr.pleine_terre_pct:g} % de la parcelle en pleine terre ({pt_m2} m²), sur {surface:.0f} m²",
+            f"{_perm:g} % de l'unité foncière en surface perméable ({perm_m2} m²) et "
+            f"{zr.pleine_terre_pct:g} % de l'unité foncière en pleine terre ({pt_m2} m²), sur {surface:.0f} m²",
             src.get("pleine_terre"))
     elif isinstance(zr.pleine_terre_pct, (int, float)):
         pt_m2 = round(zr.pleine_terre_pct / 100.0 * surface)

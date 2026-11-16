@@ -183,7 +183,7 @@ def test_pt3ac_stationnement_renvoi_et_sol_combine():
         assert stat.startswith("barème selon le type de logement et la taille de l'opération")
         assert "1 place" not in stat
         assert lignes["pleine_terre"]["valeur"] == (
-            f"{perm:g} % de la parcelle en surface perméable et {pt:g} % de la parcelle en pleine terre")
+            f"{perm:g} % de l'unité foncière en surface perméable et {pt:g} % de l'unité foncière en pleine terre")
         assert "surface_permeable" not in lignes
         assert z.places_par_logement() == 1.0          # la capacité ne change pas
 
