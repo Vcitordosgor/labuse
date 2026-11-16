@@ -76,8 +76,12 @@ Livraison par les **vraies routes HTTP** (compte authentifié, comme l'écran), 
 
 - Pour les **constructibles**, seules la surface, les lots (scénario retenu de l'Étude) et le **prix
   de vente du neuf servi** pour le secteur (`resolve_prix_neuf_marche`) sont posés ; **chaque
-  hypothèse est nommée** dans le libellé du produit et dans `_saisies.json`. Ce que l'outil ne
-  préremplit pas (coût d'achat, coût de construction, TVA de vente) **reste vide** → **« non calculable »**.
+  hypothèse est nommée dans le document** — l'en-tête du PDF porte désormais *« Programme : scénario
+  de l'Étude (8 lots, 795 m²) · prix de vente = neuf VEFA commune · Prix demandé : 4 318 € »*
+  (`_hypotheses_bilan` ; auparavant figé à *« aucune Étude reliée · non renseigné »*, ce qui
+  contredisait le contenu). Ce que l'outil ne préremplit pas (coût d'achat, coût de construction,
+  TVA de vente) **reste vide** → **« non calculable »**. Les sans-capacité gardent, à juste titre,
+  *« aucune Étude reliée »* (aucun programme injecté).
 - Pour les **sans capacité**, **aucun programme fabriqué** : le Bilan livré est celui que l'outil
   produit **de lui-même** (terrain + taxe + archéologie préremplis) avec **son garde-fou en tête**.
   L'export d'un Bilan sans CA n'est autorisé **que** parce qu'il porte un garde-fou
