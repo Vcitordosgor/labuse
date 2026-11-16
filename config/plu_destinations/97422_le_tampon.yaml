@@ -1373,6 +1373,10 @@ zones:
           page_pdf: 69
           citation: Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 30% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre
           statut: valide
+      pente_toiture:
+        article: Ud11.5
+        page_pdf: 63
+        citation: Les toitures doivent présenter une pente moyenne comprise entre 30 % minimum et 10 % maximum sur au moins 60 % de l’emprise de la construction. Cette règle ne concerne pas les dépendances.
     silence: autorise
     silence_src: 'Art. Ud2.2, p. 57 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article Ud1.2 »'
     notes:

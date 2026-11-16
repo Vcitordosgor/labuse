@@ -575,6 +575,14 @@ class ReglesZone:
     # somme PONDÉRÉE de surfaces (toitures végétalisées, dalle plantée…) que ce moteur ne calcule pas → il
     # l'affiche en exigence SÉPARÉE « à vérifier », jamais fondue dans la pleine terre.
     biotope: Optional[Regle] = None
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — règle de PENTE DE TOITURE (ex. Le Tampon Ud11.5 : pente moyenne
+    # bornée sur ≥ 60 % de l'emprise) que le moteur ne modélise pas (il ne dessine pas la toiture) → affichée
+    # « Non vérifié » avec la règle citée, comme le premier rideau. Dict {article, page_pdf, citation} ou None.
+    pente_toiture: Optional[dict] = None
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — habitat admis SOUS CONDITION d'un schéma d'affectation en annexe
+    # NON lu (ex. Saint-Louis UZ : tertiaire vs habitat selon le schéma) : on ne peut pas accepter la zone
+    # entière → l'admission de l'habitat est « à vérifier ». Dict {article, page_pdf, citation} ou None.
+    habitat_a_verifier: Optional[dict] = None
 
     @property
     def hauteur_plafond(self) -> Regle:
@@ -836,6 +844,7 @@ def charger(insee: str, zone: str) -> ReglesZone:
         # global (Le Tampon). Le libellé est porté par la config (`libelle`), défaut « coefficient de biotope ».
         biotope=_leaf_val((reg.get("biotope") or {}).get("pct"), "pct",
                           ((reg.get("biotope") or {}).get("pct") or {}).get("libelle") or "coefficient de biotope (CBS)", "%"),
+        pente_toiture=(reg.get("pente_toiture") if isinstance(reg.get("pente_toiture"), dict) else None),
         mixite=mixite,
         stationnement=_bareme(reg.get("stationnement") or {}),
         distance_constructions=_distance_constructions(retraits),

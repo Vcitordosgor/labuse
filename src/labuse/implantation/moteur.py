@@ -240,6 +240,13 @@ def _charger(session, idus, zone, conv, avec_pente):
             # (RNU / zone A/N) plutôt que de retomber sur un défaut.
             zone = _resoudre_zone(session, idus)
         regles = regles_mod.charger(insee, zone)
+        # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — habitat admis sous condition d'un schéma d'affectation non lu
+        # (Saint-Louis UZ) : on marque l'admission « à vérifier » sur les règles (le contrôle la rendra visible).
+        from dataclasses import replace as _replace
+        from .service import _habitat_sous_schema
+        _hv = _habitat_sous_schema(insee, zone)
+        if _hv is not None:
+            regles = _replace(regles, habitat_a_verifier=_hv)
         terrain = terrain_mod.charger(
             session, idus,
             recul_voie_m=regles.recul_voie.valeur or 0.0,

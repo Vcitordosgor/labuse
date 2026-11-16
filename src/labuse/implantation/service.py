@@ -1016,6 +1016,23 @@ def _logement_fonction_seulement(insee: str, zone: str) -> bool:
     return any(m in txt for m in _FONCTION_MARQ)
 
 
+def _habitat_sous_schema(insee: str, zone: str) -> Optional[dict]:
+    """ETUDE-STATIONNEMENT-FIX-3 (reliquat) — l'habitat est admis SOUS CONDITION d'un schéma d'affectation en
+    ANNEXE non lu (ex. Saint-Louis UZ : selon le schéma, l'espace est « activités tertiaires » — logement de
+    gardiennage seulement — ou « affectations dominantes en habitat ») : on ne peut pas statuer sur l'admission
+    de la zone entière → « à vérifier ». Renvoie {article, page_pdf, citation} ou None. Suit les renvois."""
+    zv, _z = _zone_doc(insee, zone)
+    if not isinstance(zv, dict):
+        return None
+    lg = (zv.get("sous_destinations") or {}).get("logement")
+    if not isinstance(lg, dict) or lg.get("statut") != "sous_condition":
+        return None
+    txt = f"{lg.get('condition') or ''} {lg.get('citation') or ''}".lower()
+    if any(m in txt for m in ("schéma", "schema", "annexe")):
+        return {"article": lg.get("article"), "page_pdf": lg.get("page_pdf"), "citation": lg.get("citation")}
+    return None
+
+
 def _payload_hors_perimetre(session, idus: list[str], entree: dict, exc) -> dict:
     """Payload de REFUS quand la zone ne permet pas de chiffrer un programme : RNU (aucune zone PLU
     opposable, E-055) ou zone A/N non constructible (D-004). Aucun logement chiffré ; le motif est DIT.

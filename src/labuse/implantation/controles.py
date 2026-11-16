@@ -80,7 +80,7 @@ _PASSAGE_MIN_M = 2.4         # largeur mini de circulation d'une voiture ; sous 
 _COMP_SIGNIF_M2 = 8.0        # aire mini d'un morceau d'allée pour qu'un étranglement le séparant compte
 
 
-def _pincement_allee(allees, places, largeur_requise: float, acces=None) -> float:
+def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=None) -> float:
     """ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — DÉGAGEMENT mesuré DEVANT CHAQUE PLACE, sur l'allée DÉSÉTRANGLÉE.
     Deux pièges du PLAN réel, traités ensemble :
       1. CLEARANCE devant la place — on sonde un rectangle de la largeur de la place extrudé de `largeur_requise`
@@ -100,13 +100,19 @@ def _pincement_allee(allees, places, largeur_requise: float, acces=None) -> floa
     libre = unary_union([g if g.is_valid else g.buffer(0) for g in (list(allees) + list(acces or []))])
     if libre.is_empty:
         return 0.0
-    # (2) PINCEMENT DE CIRCULATION : une place n'est desservie que si une VOITURE peut l'atteindre depuis
-    # l'accès sans franchir de goulet plus étroit que `_PASSAGE_MIN_M`. On ÉRODE l'allée de la demi-largeur de
-    # passage : un vrai étranglement (BW2635 : 2,25 m) SÉPARE le noyau en plusieurs morceaux ; seul celui qui
-    # touche l'accès reste atteignable (une ouverture morphologique ne suffit pas — la dilatation rebouche le
-    # goulet). Les places desservies uniquement par un morceau coupé de l'accès perdront leur dégagement.
     r_pass = _PASSAGE_MIN_M / 2.0
-    noyau = libre.buffer(-r_pass).buffer(0)
+    # (2) PINCEMENT DE CIRCULATION : une place n'est desservie que si une VOITURE peut l'atteindre depuis la
+    # VOIE sans franchir de goulet plus étroit que `_PASSAGE_MIN_M`. Le réseau atteignable = allées + accès +
+    # la VOIE (chaque accès rejoint la voie publique, qui relie les bandes entre elles) : sans la voie, deux
+    # bandes reliées PAR elle semblent déconnectées → on strandait à tort un pavage multi-bandes. On érode ce
+    # réseau : un vrai étranglement (BW2635 : 2,25 m DANS une allée) le coupe en morceaux ; seul celui qui
+    # touche la voie reste atteignable (l'ouverture morpho ne suffit pas, la dilatation reboucherait le goulet).
+    voie_poly = None
+    if voie is not None and not getattr(voie, "is_empty", True):
+        voie_poly = (voie.buffer(r_pass) if voie.geom_type in ("LineString", "MultiLineString")
+                     else (voie if voie.is_valid else voie.buffer(0)))
+    circ = unary_union([libre, voie_poly]).buffer(0) if voie_poly is not None else libre
+    noyau = circ.buffer(-r_pass).buffer(0)
     if noyau.is_empty:
         return float(sum((p if p.is_valid else p.buffer(0)).area for p in places))
     comps = list(noyau.geoms) if noyau.geom_type == "MultiPolygon" else [noyau]
@@ -116,10 +122,12 @@ def _pincement_allee(allees, places, largeur_requise: float, acces=None) -> floa
     signif = [g for g in comps if g.area >= _COMP_SIGNIF_M2]
     reach = None
     if len(signif) > 1:
-        ancre = unary_union([g if g.is_valid else g.buffer(0) for g in (acces or [])]) if acces else None
+        ancre = voie_poly
         if ancre is None or ancre.is_empty:
-            ancre = max(signif, key=lambda g: g.area)        # pas d'accès connu : le plus grand morceau
-        reach = min(signif, key=lambda g: g.distance(ancre))  # le noyau qui touche l'accès
+            ancre = unary_union([g if g.is_valid else g.buffer(0) for g in (acces or [])]) if acces else None
+        if ancre is None or ancre.is_empty:
+            ancre = max(signif, key=lambda g: g.area)        # ni voie ni accès connus : le plus grand morceau
+        reach = min(signif, key=lambda g: g.distance(ancre))  # le noyau qui touche la voie
     from shapely.geometry import Point
     W = max(float(largeur_requise) - 0.6, 0.1)   # 0,6 m de tolérance de pavage (allée clippée ~4,9 m)
     manque = 0.0
@@ -258,7 +266,8 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
     # ici en coordonnées PROJETÉES (geom_world) ; l'ancien code passait l'allée en geom_local → intersection
     # avec les places (geom_world) vide → pincement toujours 0 en production (le test unitaire, lui, était dans
     # un seul repère et passait). Sur BW2635 : 25,25 m² de pincement, 2,25 m au droit de 13 places.
-    pince = _pincement_allee(allees, places, conv.allee_largeur_m, acces)
+    _voie_u = unary_union(terrain.voie_edges) if getattr(terrain, "voie_edges", None) else None
+    pince = _pincement_allee(allees, places, conv.allee_largeur_m, acces, voie=_voie_u)
     larg_ok = pince < _DEGAGEMENT_SEUIL_M2
     # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — contrôle DUR, y compris sur un ASSEMBLAGE : la mesure par sonde du
     # meilleur des deux côtés (nez/arrière) + désétranglement de la circulation ne crée plus de faux pincements
@@ -533,6 +542,31 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     # pleine terre : c'est une somme PONDÉRÉE de surfaces éco-aménageables (toiture végétalisée, dalle
     # plantée, pleine terre…) que ce moteur ne sait pas calculer → affichée SÉPARÉMENT « à vérifier », jamais
     # fondue dans la perméabilité (Saint-Pierre Ud5.1 : CBS 30 % AVEC au moins 20 % de pleine terre).
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — ADMISSION DE L'HABITAT sous condition d'un schéma d'affectation en
+    # annexe NON lu (ex. Saint-Louis UZ) : on N'ACCEPTE PAS la zone entière → « à vérifier » (bloquant pour un
+    # verdict « Exploitable »), avec la règle citée. L'étude est servie, mais son admission même reste à établir.
+    hav = getattr(regles, "habitat_a_verifier", None)
+    if isinstance(hav, dict) and (hav.get("citation") or hav.get("article")):
+        _cit = hav.get("citation")
+        if hav.get("article"):
+            _cit = f"{hav['article']}" + (f" · p. {hav['page_pdf']}" if hav.get("page_pdf") else "") + (f" — {_cit}" if _cit else "")
+        out.append(ControleReg("Admission de l'habitat", "soumise à un schéma d'affectation (annexe)",
+                               "à vérifier : l'habitat n'est pas admis sur toute la zone", A_CONFIRMER, _cit,
+                               detail="l'admission de l'habitat dépend du schéma d'affectation en annexe, non "
+                                      "lu par le moteur — à vérifier avant tout projet de logements"))
+
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — PENTE DE TOITURE (ex. Le Tampon Ud11.5) : le moteur ne dessine pas
+    # la toiture → règle de POSITION/forme non modélisée, affichée « Non vérifié » avec la règle citée (comme le
+    # premier rideau), jamais passée sous silence.
+    pt = getattr(regles, "pente_toiture", None)
+    if isinstance(pt, dict) and (pt.get("citation") or pt.get("article")):
+        _cit = pt.get("citation")
+        if pt.get("article"):
+            _cit = f"{pt['article']}" + (f" · p. {pt['page_pdf']}" if pt.get("page_pdf") else "") + (f" — {_cit}" if _cit else "")
+        out.append(ControleReg("Pente de toiture", "règle de pente non modélisée",
+                               "non vérifié (toiture non dessinée par le moteur)", A_CONFIRMER, _cit,
+                               detail="pente de toiture imposée par le PLU — à vérifier au projet d'architecte"))
+
     rb = getattr(regles, "biotope", None)
     if rb is not None and rb.validee and rb.valeur is not None:
         _nom = (rb.nom or "coefficient de biotope (CBS)").strip()
@@ -785,6 +819,7 @@ _A_CONFIRMER_BLOQUANTS = frozenset({
     # l'ancien contrôle « PPR zone bleue » qui, lorsqu'il touchait le bâti, rendait l'étude non exploitable).
     "Prescriptions PPR à vérifier",
     "Stationnement", "Stationnement — condition à vérifier",
+    "Admission de l'habitat",   # habitat sous condition d'un schéma d'affectation non lu (Saint-Louis UZ)
     "Hauteur près des limites",
     "Prospect (hauteur relative)", "ER / EBC / SUP / servitudes",
     "Accès (voie)",   # RECETTE-4 — accès hypothétique (aucune voie classée) → verdict non « Exploitable »
