@@ -994,6 +994,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     k_cont = ctx.terrain_sur_dessin
     implantation_mentions: list = []   # MOTEUR-VERITE-FIX-1 (LOT 2) — rempli par le chemin gabarit
     ppr_rouge_pct = None               # MOTEUR-VERITE-FIX-1 (LOT 3, V6) — part rouge mesurée (vidage)
+    niveaux_repli = None               # MOTEUR-VERITE-FIX-6 LOT 2 — niveaux du scénario niveau-par-niveau au repli
     if gab is not None:
         gbuild, gres = gab
         emprise_brute = float(gres.zoneImplantationM2 or 0.0)
@@ -1165,6 +1166,45 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         if vide_raison == "reculs" and implantation_mentions:
             vide_raison = "limite_conditions"
     else:
+        # MOTEUR-VERITE-FIX-6 LOT 2 — UN SEUL JEU DE RÈGLES : le REPLI applique le MÊME retrait
+        # relatif NIVEAU PAR NIVEAU que le gabarit pour les zones AUTORISÉES (retrait du bâtiment
+        # ENVISAGÉ), au lieu d'un retrait uniforme au faîtage qui vide l'assiette à tort (AD0173
+        # Sainte-Marie UA : 9 m uniformes → 0 « trop exigu » ; R+1 à 3,75 m conserve ~114 m²).
+        # Hors zones autorisées, le retrait prudent faîtage est conservé (règle de non-hausse).
+        _frac_rp = _ffh(getattr(rules, "recul_limites_formule", None))
+        _href_rp = getattr(rules, "h_reference", None)
+        from ..gabarit.builder import (recul_scenario_niveaux as _rsn,
+                                        scenario_niveaux_autorise as _sna,
+                                        MARGE_FACADE_TOITURE_M as _MARGE)
+        from .zone_norm import est_famille as _ef_rp
+        _insee_rp = (ctx.idu or "")[:5]
+        _est_au_rp = bool(ctx.zone and _ef_rp(ctx.zone, ("AU",)))
+        if (_frac_rp is not None and _sna(_insee_rp, ctx.zone or "", _href_rp, _est_au_rp)
+                and isinstance(rules.recul_limites_sep_m, (int, float))):
+            _etg = float(hyp.etage_m)
+            _hh = rules.hf_m if isinstance(rules.hf_m, (int, float)) else rules.he_m
+            _nmx = max(1, int(float(_hh) // _etg)) if isinstance(_hh, (int, float)) else 1
+            _mrg = _MARGE if _href_rp == "hauteur_totale_facade" else 0.0
+            # plafonds de hauteur respectés (mêmes gardes que le gabarit FIX-5)
+            if _mrg:
+                if isinstance(rules.he_m, (int, float)):
+                    _nmx = min(_nmx, max(1, int(float(rules.he_m) // _etg)))
+                if isinstance(rules.hf_m, (int, float)):
+                    _nmx = min(_nmx, max(1, int((float(rules.hf_m) - _mrg) // _etg)))
+
+            def _emprise_base(_rec):
+                _a = dict(args); _a["d"] = _rec
+                _r = session.execute(_EMPRISE, _a).one()
+                _fa = float(_r.full_area or 0.0)
+                _ua = float(_r.uau_area) if _r.uau_area is not None else None
+                return _fa if _ua is None else min(_fa, _ua)
+
+            recul, niveaux_repli = _rsn(_frac_rp, float(rules.recul_limites_sep_m), _etg,
+                                        _nmx, _mrg, _emprise_base)
+            args = dict(args); args["d"] = recul
+            ctx.contraintes.libelles.append(
+                f"Repli : retrait relatif niveau par niveau (R+{niveaux_repli - 1}, recul "
+                f"{recul:g} m) — même règle que le gabarit (zone autorisée).")
         row = session.execute(_EMPRISE, args).one()
         # C3 : aires géométriques (inset reculs, portion U/AU, ER/EBC) → échelle contenance.
         full_a = float(row.full_area or 0.0) * k_cont
@@ -1239,10 +1279,29 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 f"Assiette clippée : {greve_cert:.0f} m² de contraintes géométriques certaines "
                 "(PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) soustraits de l'emprise — "
                 "union globale avec ER/EBC, aucun chevauchement compté deux fois.")
+        # MOTEUR-VERITE-FIX-6 LOT 2 — TEST CONJOINT ZONE ROUGE ET PLU, aussi au REPLI : la partie
+        # hors rouge doit être exploitable (≥ 200 m² d'un seul tenant, ∩ U/AU, accès voie) — sinon
+        # l'emprise est ramenée à 0. Le chemin gabarit faisait déjà ce test ; le repli servait un
+        # chiffre que la cascade excluait (AW1235 6 m², BM0158 111 m², BO0383 102 m²).
+        hors_rouge_vide_legacy = None
+        if emprise > 0:
+            try:
+                with session.begin_nested():
+                    _rrl = session.execute(_HORS_PPR_ROUGE, {"pid": parcel_id}).first()
+                _touche_rouge = _rrl is not None and float(_rrl.rouge_m2 or 0.0) > 0.5
+            except Exception:  # noqa: BLE001 — mesure indisponible : emprise conservée
+                _touche_rouge = False
+            if _touche_rouge:
+                servable_l, hors_rouge_vide_legacy = _hors_rouge_fragment_servable(
+                    session, parcel_id, k_cont)
+                if not servable_l:
+                    emprise = 0.0
         # RECETTE-1 A1 — raison réelle du vidage (chemin legacy).
         vide_raison = None
         if emprise < SEUIL_EXIGU_M2:
-            if full_a < SEUIL_EXIGU_M2:
+            if hors_rouge_vide_legacy:
+                vide_raison = hors_rouge_vide_legacy   # FIX-6 LOT 2 — partie hors rouge inexploitable
+            elif full_a < SEUIL_EXIGU_M2:
                 vide_raison = "reculs"            # parcelle réellement étroite (inset vide)
             elif base < SEUIL_EXIGU_M2:
                 vide_raison = "portion_reduite"   # portion U/AU résiduelle minuscule
@@ -1369,6 +1428,13 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         if getattr(_gres, "niveauxRetenus", None):
             extras["niveaux_retenus"] = int(_gres.niveauxRetenus)
             extras["recul_sep_scenario"] = _gres.reculSepScenario
+    elif niveaux_repli is not None:
+        # MOTEUR-VERITE-FIX-6 LOT 2 — le repli niveau-par-niveau lie AUSSI ses niveaux (sinon
+        # l'engine recompterait R+full de la zone sur une assiette insétée pour moins haut).
+        extras["niveaux_retenus"] = int(niveaux_repli)
+        extras["recul_sep_scenario"] = (
+            f"recul séparatif niveau par niveau (repli, R+{niveaux_repli - 1}, {recul:g} m) — "
+            "hauteur de façade du bâtiment envisagé")
     _f_cap = estimate_capacity(rules, surface_assiette, ctx.contraintes, hyp=hyp,
                                emprise_geo=(emprise, recul), extras=extras)
     # MOTEUR-VERITE-FIX-5 LOT 3 — toute capacité CHIFFRÉE porte ses RÉSERVES, écrites par le

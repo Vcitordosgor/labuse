@@ -72,6 +72,36 @@ EGOUT_NIVEAU_COMMUNES = {"97408"}
 MARGE_FACADE_TOITURE_M = 1.5
 
 
+def scenario_niveaux_autorise(insee: str, zone: str, h_reference, est_au: bool) -> bool:
+    """MOTEUR-VERITE-FIX-6 LOT 2 — le scénario niveau-par-niveau (retrait relatif exécuté sur le
+    bâtiment ENVISAGÉ) est-il autorisé pour (commune, zone) ? MÊME liste fermée que le gabarit
+    (règle de non-hausse) — exposé pour que le REPLI applique les MÊMES règles que le gabarit."""
+    if h_reference == "egout":
+        return insee in EGOUT_NIVEAU_COMMUNES and not est_au
+    if h_reference == "hauteur_totale_facade":
+        return (insee, zone) in FACADE_NIVEAU_AUTORISEES and not est_au
+    return False
+
+
+def recul_scenario_niveaux(frac: float, minimum_m: float, etage_m: float, niveaux_max: int,
+                           marge_m: float, aire_fn) -> tuple[float, int]:
+    """MOTEUR-VERITE-FIX-6 LOT 2 — recul du scénario niveau-par-niveau, calculé par la MÊME
+    logique que compute_gabarit : pour chaque n (1..niveauxMax), recul_n = max(min, frac × H(n))
+    avec H(n) = n × étage (+ marge toiture/acrotère quand la référence est la hauteur totale de
+    façade) ; on retient le n qui MAXIMISE le plancher (aire(recul_n) × n). `aire_fn(recul)` rend
+    l'emprise au recul donné (uniforme, côté legacy ; ou la zone d'implantation, côté gabarit).
+    Rend (recul_retenu, niveaux_retenus). Sert à aligner le REPLI sur le gabarit (AD0173)."""
+    best = None   # (plancher, -recul, n, recul)
+    for n in range(1, max(1, int(niveaux_max)) + 1):
+        h_n = n * float(etage_m) + float(marge_m or 0.0)
+        rec_n = round(max(float(minimum_m), float(frac) * h_n), 2)
+        aire_n = float(aire_fn(rec_n) or 0.0)
+        cand = (aire_n * n, -rec_n, n, rec_n)
+        if best is None or (cand[0], cand[1]) > (best[0], best[1]):
+            best = cand
+    return (best[3], best[2]) if best else (float(minimum_m), 1)
+
+
 def _fraction_hauteur_formule(formule: Optional[str]) -> Optional[float]:
     """FAISA-REGLES-1 (D-024) — lit la FRACTION DE HAUTEUR d'une formule de recul séparatif (« L ≥ h/2 »,
     « au tiers de la différence d'altitude h : h/3 »…) : rend 0,5 pour h/2, 1/3 pour h/3, None si la
