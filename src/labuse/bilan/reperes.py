@@ -18,6 +18,13 @@ from sqlalchemy.orm import Session
 T = TypeVar("T")
 
 
+def _dec_m2(x: float) -> str:
+    """CHIRURGICAL-FIX-1 (LOT O 2) — surface AVEC sa décimale quand elle en a (« 595,1 »), entière sinon
+    (« 595 »), virgule française : assez de décimales pour voir le dépassement (595,1 contre 595)."""
+    s = f"{float(x):.1f}".rstrip("0").rstrip(".")
+    return s.replace(".", ",")
+
+
 def _sans_poison(db: Session, fn: Callable[[], T]) -> T | None:
     """Exécute une lecture best-effort sous SAVEPOINT : si elle échoue (table
     absente, parcelle atypique), le savepoint est annulé et la transaction de la
@@ -189,19 +196,21 @@ def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
             alertes.append("Coût de démolition non renseigné — les dépenses sont sous-estimées.")
     # LOT M 3 — MÊME seuil que l'Excel (`SDP > round(surface_à_retenir)`), au mètre près : plus d'écart
     # d'un mètre entre le PDF (ancien `round(sar)+1`) et le tableur.
+    # LOT O 2 — comparaison SUR LES DÉCIMALES (aucun arrondi avant comparaison : 595,1 > 595 alerte des
+    # DEUX côtés), le MÊME seuil que l'Excel ; l'alerte AFFICHE assez de décimales pour voir le dépassement.
     if (sdp_saisie and isinstance(sdp_saisie, (int, float)) and isinstance(sar_val, (int, float))
-            and round(sdp_saisie) > round(sar_val)):
+            and sdp_saisie > sar_val):
         alertes.append(
-            f"La surface de plancher saisie ({round(sdp_saisie)} m²) dépasse la surface à retenir du "
-            f"Dossier ({round(sar_val)} m²).")
-    # LOT N 2 — COHÉRENCE surface vendable / surface de plancher, dans le garde-fou → affichée DANS LE
-    # PDF **et** dans l'Excel (bandeau), comme à l'écran. Comparaison sur les DÉCIMALES (pas d'arrondi :
-    # 595,1 > 595 alerte) ; une surface vendable positive avec une SDP nulle ou vide est aussi incohérente.
+            f"La surface de plancher saisie ({_dec_m2(sdp_saisie)} m²) dépasse la surface à retenir du "
+            f"Dossier ({_dec_m2(sar_val)} m²).")
+    # LOT N 2 / LOT O 2 — COHÉRENCE surface vendable / surface de plancher, dans le garde-fou → affichée
+    # DANS LE PDF **et** dans l'Excel (bandeau). Comparaison sur les DÉCIMALES (pas d'arrondi) ; une
+    # surface vendable positive avec une SDP nulle ou vide est aussi incohérente. Décimales affichées.
     if (isinstance(suv_saisie, (int, float)) and suv_saisie > 0
             and suv_saisie > (sdp_saisie if isinstance(sdp_saisie, (int, float)) else 0.0)):
-        _sdp_txt = f"{round(sdp_saisie)} m²" if isinstance(sdp_saisie, (int, float)) and sdp_saisie else "nulle / non renseignée"
+        _sdp_txt = f"{_dec_m2(sdp_saisie)} m²" if isinstance(sdp_saisie, (int, float)) and sdp_saisie else "nulle / non renseignée"
         alertes.append(
-            f"Surface vendable ({round(suv_saisie)} m²) supérieure à la surface de plancher "
+            f"Surface vendable ({_dec_m2(suv_saisie)} m²) supérieure à la surface de plancher "
             f"({_sdp_txt}) — incohérent (le chiffre d'affaires est surestimé).")
     return {"alertes": alertes, "surface_a_retenir": sar_val, "terrain_libere": terrain_libere,
             "non_constructible": bool(motif_nc), "sdp_saisie": sdp_saisie,

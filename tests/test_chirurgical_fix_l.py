@@ -159,9 +159,11 @@ def test_l2_avertissement_sdp_est_une_formule_vivante():
     ws = classeur_bilan(e, None, "t",
                         garde_fou={"surface_a_retenir": 795,
                                    "alertes": ["La surface de plancher saisie dépasse la surface à retenir"]}).active
+    # LOT O 1 — l'alerte est désormais ENVELOPPÉE par la validité (`=IF(I1<>"",…,IF(AND(…))`) : on la
+    # cherche par son contenu (formule AND vivante), pas par un préfixe figé.
     formules = [c.value for row in ws.iter_rows() for c in row
-                if isinstance(c.value, str) and c.value.startswith("=IF(AND(")
-                and "dépasse la surface à retenir" in c.value]
+                if isinstance(c.value, str) and "dépasse la surface à retenir" in c.value
+                and "AND(" in c.value]
     assert formules, "l'avertissement SDP > surface à retenir doit être une FORMULE (pas un texte figé)"
     assert "795" in formules[0]
 

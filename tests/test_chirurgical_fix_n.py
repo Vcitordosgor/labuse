@@ -120,17 +120,16 @@ def test_n1_validite_rejette_le_texte():
 
 
 def test_n1_toutes_les_cases_calculees_sont_enveloppees():
-    """Chaque formule calculée est enveloppée par la validité `=IF(I1<>"","saisie invalide",…)` — sauf
-    la cellule de validité elle-même et les alertes vivantes (pas des cases calculées)."""
+    """LOT O 1 — TOUTE formule de la feuille (y compris les alertes de surface) est enveloppée par la
+    validité `=IF(I1<>"","saisie invalide",…)` ; SEULE la cellule de validité elle-même est épargnée."""
     ws = classeur_bilan(_bilan_complet()).active
-    _ALERTES = ("surface vendable > surface de plancher", "dépasse la surface à retenir")
     nues = []
     for row in ws.iter_rows():
         for c in row:
             v = c.value
             if not (isinstance(v, str) and v.startswith("=")):
                 continue
-            if c.coordinate == "I1" or any(a in v for a in _ALERTES):
+            if c.coordinate == "I1":
                 continue
             if not v.startswith('=IF(I1<>"",'):
                 nues.append((c.coordinate, v[:40]))

@@ -31,6 +31,13 @@ from .moteur import EntreesBilan
 # des FORMULES Excel qui recalculent « dépenses vides = 0 ». Il gèle ces lignes comme le PDF.
 _NON_CALCULABLE = "non calculable — saisissez vos coûts"
 
+def _dec_m2(x: float) -> str:
+    """CHIRURGICAL-FIX-1 (LOT O 2) — surface AVEC sa décimale quand elle en a (« 595,1 »), entière sinon
+    (« 595 »), virgule française : assez de décimales pour VOIR le dépassement (595,1 contre 595)."""
+    s = f"{float(x):.1f}".rstrip("0").rstrip(".")
+    return s.replace(".", ",")
+
+
 _EUR = '#,##0 €'
 _PCT = '0.0 %'   # DOCS-1 : les taux (TVA, marge) s'affichent « 8,5 % », jamais « 0.085 » ni « 8,50 % »
 _M2 = '#,##0 "m²"'
@@ -115,11 +122,12 @@ def classeur_bilan(
     cell_sdp = f"B{r}"
     ws.cell(r, 1, "Surface de plancher (m²)")
     ws.cell(r, 2, entrees.programme.sdp)
-    # CHIRURGICAL-FIX-1 (LOT L 2) — avertissement VIVANT à côté de la SDP : compare la cellule de SDP à la
-    # surface à retenir du Dossier. Il réagit quand on change la surface de plancher (pas un texte figé).
+    # CHIRURGICAL-FIX-1 (LOT L 2 / LOT O 2) — avertissement VIVANT à côté de la SDP : compare la cellule de
+    # SDP à la surface à retenir du Dossier, SUR LES DÉCIMALES (pas d'arrondi avant comparaison : 595,1 >
+    # 595 alerte), le MÊME seuil que le PDF (garde_fou). Il réagit quand on change la surface de plancher.
     if isinstance(_sar, (int, float)):
-        wf = (f'=IF(AND({cell_sdp}>0,{cell_sdp}>{round(_sar)}),'
-              f'"⚠ dépasse la surface à retenir du Dossier ({round(_sar)} m²) — à vérifier","")')
+        wf = (f'=IF(AND({cell_sdp}>0,{cell_sdp}>{_sar}),'
+              f'"⚠ dépasse la surface à retenir du Dossier ({_dec_m2(_sar)} m²) — à vérifier","")')
         wc = ws.cell(r, 3, wf)
         wc.font = Font(bold=True, color="B45309")
     r += 1
@@ -175,9 +183,12 @@ def classeur_bilan(
     cell_ca_ht = f"G{r}"
     # CHIRURGICAL-FIX-1 (LOT J 1a) — SANS produit (AM0838), la plage de total est INVERSÉE et inclut la
     # ligne de total elle-même (`SUM(B{r}:B{r-1})` avec prod_first = r) → RÉFÉRENCE CIRCULAIRE au recalcul.
-    # On écrit 0 quand il n'y a aucun produit (plage vide) au lieu d'une somme auto-référente.
+    # On écrit `=0` (FORMULE, pas un 0 littéral) quand il n'y a aucun produit (plage vide) : LOT O 1 —
+    # la ligne « Total produits » (AM0838 / IS0448, 0 produit) devient ainsi une case CALCULÉE, donc
+    # ENVELOPPÉE par la validité → elle affiche « saisie invalide » comme les autres après un rejet (plus
+    # de quatre zéros qui résistent). Jamais une somme auto-référente (plage inversée).
     def _somme_produits(col: str):
-        return f"=SUM({col}{prod_first}:{col}{prod_last})" if prod_last >= prod_first else 0
+        return f"=SUM({col}{prod_first}:{col}{prod_last})" if prod_last >= prod_first else "=0"
 
     # CHIRURGICAL-FIX-1 (LOT M 2) — le CA HT total propage le « non calculable » : on ADDITIONNE les
     # cellules (« + », PAS SUM — SUM IGNORE le texte et rendrait 0, le bug « CA HT à zéro »). Si un
@@ -185,7 +196,7 @@ def classeur_bilan(
     # HT fabriqué sur une TVA supposée nulle).
     def _somme_ca_ht():
         if not prod_ht_cells:
-            return 0
+            return "=0"      # LOT O 1 — formule (enveloppée), pas un 0 littéral qui résisterait au rejet
         return f'=IFERROR({"+".join(prod_ht_cells)},"non calculable")'
     ws.cell(r, 2, _somme_produits("B"))
     ws.cell(r, 3, _somme_produits("C"))
@@ -453,28 +464,33 @@ def classeur_bilan(
         for coord in dict.fromkeys(tva_cells):
             dvt.add(coord)
 
-    # CHIRURGICAL-FIX-1 (LOT L 3 / LOT N 1) — la cellule de VALIDITÉ unique. RÈGLE : chaque case de saisie
-    # doit être VIDE **ou** un NOMBRE dans ses bornes. Un TEXTE (« n/a » collé dans un coût) n'est pas un
-    # nombre → invalide ; un coût < 0 ou une TVA hors [0, 1] → invalide. Dès qu'UNE case est fausse,
-    # TOUTES les cases calculées liront « saisie invalide » (cf. l'enveloppe de validité ci-dessous).
-    _checks = [f'AND(NOT(ISBLANK({c})),OR(NOT(ISNUMBER({c})),{c}<0))' for c in dict.fromkeys(saisie_cells)]
-    _checks += [f'AND(NOT(ISBLANK({t})),OR(NOT(ISNUMBER({t})),{t}<0,{t}>1))' for t in dict.fromkeys(tva_cells)]
+    # CHIRURGICAL-FIX-1 (LOT L 3 / LOT N 1 / LOT O 1) — la cellule de VALIDITÉ unique. RÈGLE : chaque case
+    # de saisie doit être VIDE **ou** un NOMBRE dans ses bornes. Un TEXTE n'est pas un nombre → invalide ;
+    # un coût < 0 ou une TVA hors [0, 1] → invalide. LOT O : une VALEUR D'ERREUR Excel (#N/A, #DIV/0!,
+    # #VALUE!) collée dans une case est AUSSI une saisie invalide — on enveloppe CHAQUE test d'un
+    # `IFERROR(…, TRUE)` pour que l'erreur ne CONTAMINE pas la cellule de validité (en vrai Excel,
+    # `#N/A < 0` propage l'erreur à travers OR/AND) : une case en erreur → invalide, jamais #N/A dans I1.
+    _checks = [f'IFERROR(AND(NOT(ISBLANK({c})),OR(NOT(ISNUMBER({c})),{c}<0)),TRUE)'
+               for c in dict.fromkeys(saisie_cells)]
+    _checks += [f'IFERROR(AND(NOT(ISBLANK({t})),OR(NOT(ISNUMBER({t})),{t}<0,{t}>1)),TRUE)'
+                for t in dict.fromkeys(tva_cells)]
     ws[cell_valid] = (f'=IF(OR({",".join(_checks)}),"saisie invalide","")' if _checks else "")
     ws[cell_valid].font = Font(color="B45309")
 
-    # CHIRURGICAL-FIX-1 (LOT N 1) — ENVELOPPE DE VALIDITÉ sur TOUTES les cases calculées : chaque formule
-    # (ligne, sous-total, total, CA TTC/HT, ratio, résultat) devient `=IF(validité, "saisie invalide", …)`.
-    # Excel court-circuite le IF → quand une saisie est invalide, le calcul N'EST PAS tenté (jamais de
-    # #VALUE! ni de chiffre faux) ; sur une saisie valide, la cellule calcule normalement. On saute la
-    # cellule de validité elle-même et les ALERTES vivantes (ce ne sont pas des cases calculées).
-    _ALERTES = ("surface vendable > surface de plancher", "dépasse la surface à retenir")
+    # CHIRURGICAL-FIX-1 (LOT N 1 / LOT O 1) — ENVELOPPE DE VALIDITÉ sur TOUTE formule de la feuille :
+    # chaque case calculée (ligne, sous-total, total, CA TTC/HT, ratio, résultat ET les alertes de
+    # surface) devient `=IF(validité, "saisie invalide", …)`. Excel court-circuite le IF → quand une
+    # saisie est invalide, le calcul N'EST PAS tenté (jamais de #VALUE! ni de chiffre faux) ; sur une
+    # saisie valide, la cellule calcule normalement. LOT O : les ALERTES de surface sont AUSSI enveloppées
+    # (une alerte ne s'affiche que sur une saisie valide ; sinon « saisie invalide », pas l'alerte à
+    # tort). SEULE la cellule de validité elle-même est épargnée (elle est la source de vérité).
     _gate_prefixe = f'=IF({cell_valid}<>"",'
     for row in ws.iter_rows():
         for c in row:
             v = c.value
             if not (isinstance(v, str) and v.startswith("=")):
                 continue
-            if c.coordinate == cell_valid or any(a in v for a in _ALERTES):
+            if c.coordinate == cell_valid:
                 continue
             if v.startswith(_gate_prefixe):     # déjà enveloppée (ratios, synthèse via _si_valide)
                 continue
@@ -504,7 +520,8 @@ def _iferror(a, b):
 
 _FNS = {"IF": lambda c, a, b: a if c else b, "AND": lambda *x: all(x), "OR": lambda *x: any(x),
         "IFERROR": _iferror, "ISTEXT": lambda x: isinstance(x, str), "NOT": lambda x: not x,
-        "ISNUMBER": lambda x: isinstance(x, (int, float)) and not isinstance(x, bool)}
+        "ISNUMBER": lambda x: isinstance(x, (int, float)) and not isinstance(x, bool),
+        "TRUE": True, "FALSE": False}   # LOT O 1 — littéraux booléens Excel (IFERROR(…,TRUE))
 
 
 def _valeurs_calculees(ws) -> dict[str, object]:

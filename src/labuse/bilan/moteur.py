@@ -493,10 +493,12 @@ class Moteur:
         # SUV positive avec une SDP nulle ou vide est AUSSI incohérente (plancher manquant).
         sdp = programme.sdp
         if suv and suv > (sdp or 0.0):
-            _sdp_txt = f"{round(sdp)} m²" if sdp else "nulle / non renseignée"
+            # LOT O 2 — affiche les décimales (595,1 contre 595, pas 595 contre 595).
+            _d = lambda x: f"{float(x):.1f}".rstrip("0").rstrip(".").replace(".", ",")  # noqa: E731
+            _sdp_txt = f"{_d(sdp)} m²" if sdp else "nulle / non renseignée"
             out.append({
                 "cible": "suv_sdp",
-                "message": f"Surface vendable ({round(suv)} m²) supérieure à la surface de plancher "
+                "message": f"Surface vendable ({_d(suv)} m²) supérieure à la surface de plancher "
                            f"({_sdp_txt}) — incohérent, à vérifier (le CA est surestimé).",
             })
         # Surface taxable très basse par rapport à la surface vendable totale

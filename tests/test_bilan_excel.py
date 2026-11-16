@@ -79,7 +79,8 @@ def _evaluateur(grille):
             raw = eval(expr, {"__builtins__": {}},  # noqa: S307 — vocabulaire contrôlé
                        {"IF": _IF, "AND": _AND, "OR": _OR, "IFERROR": _IFERROR,
                         "ISTEXT": lambda x: isinstance(x, str), "NOT": lambda x: not x,
-                        "ISNUMBER": lambda x: isinstance(x, (int, float)) and not isinstance(x, bool)})
+                        "ISNUMBER": lambda x: isinstance(x, (int, float)) and not isinstance(x, bool),
+                        "TRUE": True, "FALSE": False})   # LOT O 1 — littéraux booléens Excel
             val = float(raw) if isinstance(raw, (int, float, bool)) else raw
         except Exception:  # noqa: BLE001 — eval EAGER (vs Excel paresseux) : une branche NON prise qui
             val = None     # mêle texte et nombre lève ; on dégrade en None (cf. _valeurs_calculees).

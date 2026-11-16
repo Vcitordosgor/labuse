@@ -81,9 +81,10 @@ def test_m1_excel_alerte_suv_sdp_est_vivante():
     e = EntreesBilan(programme=Programme(terrain=1703, sdp=795),
                      produits=[Produit("X", suv=572, prix_ttc_m2_suv=4000, tva=0.085)])
     ws = classeur_bilan(e).active
+    # LOT O 1 — l'alerte est désormais ENVELOPPÉE par la validité ; on la cherche par son contenu.
     formules = [c.value for row in ws.iter_rows() for c in row
-                if isinstance(c.value, str) and c.value.startswith("=IF(AND(")
-                and "surface vendable > surface de plancher" in c.value]
+                if isinstance(c.value, str) and "surface vendable > surface de plancher" in c.value
+                and "AND(" in c.value]
     assert formules, "l'alerte surface vendable > surface de plancher doit être une FORMULE vivante"
 
 
@@ -185,12 +186,12 @@ def test_m3_non_constructible_pas_de_surface_a_retenir(monkeypatch):
 
 
 def test_m3_seuil_identique_pdf_et_excel():
-    """Le seuil « SDP > surface à retenir » est le MÊME au mètre près côté Python (garde-fou/PDF) et
-    côté Excel (formule) : plus d'écart d'un mètre."""
+    """Le seuil « SDP > surface à retenir » est le MÊME côté Python (garde-fou/PDF) et Excel. LOT O 2 :
+    comparaison SUR LES DÉCIMALES (plus d'arrondi avant comparaison, dans aucun des deux)."""
     rep = (_SRC / "bilan" / "reperes.py").read_text()
     exc = (_SRC / "bilan" / "excel.py").read_text()
-    assert "round(sdp_saisie) > round(sar_val)" in rep and "round(sar_val) + 1" not in rep
-    assert "{cell_sdp}>{round(_sar)}" in exc        # Excel : SDP > round(surface à retenir)
+    assert "sdp_saisie > sar_val" in rep and "round(sdp_saisie)" not in rep
+    assert "{cell_sdp}>{_sar}" in exc and "{round(_sar)}" not in exc   # Excel : seuil brut (décimales)
 
 
 def test_m3_bandeau_aucun_programme():
