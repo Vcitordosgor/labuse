@@ -129,6 +129,47 @@ def sources_parcelle(db: Session, idu: str) -> dict[str, Any]:
     }
 
 
+def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None) -> dict[str, Any]:
+    """CHIRURGICAL-FIX-1 (LOT K 2b) — le GARDE-FOU en tête du Bilan. Un Bilan est un programme SAISI par
+    l'utilisateur ; s'il contredit ce que la fiche écarte, on le dit EN TÊTE, en clair, avec le motif :
+      · la parcelle n'admet pas le projet (habitat interdit / non constructible) → motif de la fiche ;
+      · la surface de plancher SAISIE dépasse la capacité de la fiche (SDP au sol bâti conservé /
+        table rase terrain libéré) → on compare et on le signale.
+    Le résultat reste identifié comme celui d'un PROGRAMME SAISI, NON VÉRIFIÉ par LABUSE. Renvoie
+    `{alertes:[...], capacite:{bati_conserve, terrain_libere}, non_constructible: bool}`."""
+    src = sources_parcelle(db, idu) or {}
+    parcel_id = src.get("parcel_id")
+    motif_nc = src.get("non_constructible_motif")
+    capacite: dict[str, float | None] = {"bati_conserve": None, "terrain_libere": None}
+    if parcel_id is not None:
+        try:
+            from ..faisabilite.potentiel import bloc_potentiel
+            bp = bloc_potentiel(db, parcel_id)
+            if bp:
+                capacite["bati_conserve"] = (bp.get("au_sol") or {}).get("sdp_residuelle_m2")
+                capacite["terrain_libere"] = (bp.get("table_rase") or {}).get("plancher_m2")
+        except Exception:  # noqa: BLE001 — capacité non résolue : on garde le reste du garde-fou
+            pass
+    alertes: list[str] = []
+    if motif_nc:
+        alertes.append(motif_nc)
+    # SDP saisie vs capacité de la fiche (la plus haute des deux : terrain libéré ≥ bâti conservé)
+    cap_max = max([v for v in capacite.values() if isinstance(v, (int, float))], default=None)
+    if (sdp_saisie and isinstance(sdp_saisie, (int, float)) and cap_max is not None
+            and sdp_saisie > round(cap_max) + 1):  # +1 m² de tolérance d'arrondi
+        _bc = capacite["bati_conserve"]
+        _tl = capacite["terrain_libere"]
+        _det = []
+        if isinstance(_bc, (int, float)):
+            _det.append(f"{round(_bc)} m² avec le bâti conservé")
+        if isinstance(_tl, (int, float)):
+            _det.append(f"{round(_tl)} m² en terrain libéré")
+        alertes.append(
+            f"La surface de plancher saisie ({round(sdp_saisie)} m²) dépasse la capacité estimée de la "
+            f"fiche" + (" (" + " ; ".join(_det) + ")" if _det else "") + ".")
+    return {"alertes": alertes, "capacite": capacite, "non_constructible": bool(motif_nc)}
+
+
 def _prix_achat_dvf(db: Session, parcel_id: int) -> dict | None:
     """Dernier prix d'achat connu de la parcelle (DVF), pour affichage INFO (hors
     calcul, règle validée). Best-effort : None si aucune mutation lisible."""

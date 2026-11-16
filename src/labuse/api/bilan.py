@@ -197,6 +197,15 @@ def _entrees(corps: CalculIn) -> EntreesBilan:
     )
 
 
+def _terrain_sourcee(db: Session, idu: str) -> float | None:
+    """CHIRURGICAL-FIX-1 (LOT K 2) — la surface de terrain pré-remplie = la CONTENANCE CADASTRALE de la
+    parcelle (Sourcé), MÊME source pour le PDF et l'Excel. L'import de `reperes` est fait ici (il manquait
+    dans la route Excel, où un `NameError` était avalé en silence → terrain vide). L'erreur n'est PLUS
+    avalée : si la contenance ne se résout pas, ça remonte au lieu de servir discrètement un blanc."""
+    from ..bilan import reperes as _rep
+    return _rep.sources_parcelle(db, idu).get("terrain")
+
+
 def _resultat_dict(r: ResultatBilan) -> dict:
     return {
         "complet": r.complet,
@@ -437,10 +446,7 @@ def bilan_pdf(
     # pas saisi la surface du terrain, on sert la contenance sourcée (jamais un « — » quand la fiche sait).
     _prog = corps.programme.model_dump()
     if _prog.get("terrain") is None:
-        try:
-            _prog["terrain"] = _rep.sources_parcelle(db, idu).get("terrain")
-        except Exception:  # noqa: BLE001 — contenance non résolue : la ligne reste « — », jamais un crash
-            pass
+        _prog["terrain"] = _terrain_sourcee(db, idu)
     octets = _pdf.construire_pdf(
         r,
         idu=idu,
@@ -450,6 +456,8 @@ def bilan_pdf(
         programme=_prog,
         calendrier=dict(corps.calendrier),
         map_html=_map,
+        # CHIRURGICAL-FIX-1 (LOT K 2b) — garde-fou : la fiche écarte-t-elle ce programme saisi ?
+        garde_fou=_rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp),
     )
     return Response(
         content=octets,
@@ -466,15 +474,16 @@ def bilan_xlsx(
 
     corps = _saisies_du_document(db, idu, doc_id, request)
     e = _entrees(corps)
-    # CHIRURGICAL-FIX-1 (LOT J 1e) — comme le PDF, la surface du terrain pré-remplie est la CONTENANCE
-    # cadastrale de la parcelle (jamais une valeur de banc) quand le client ne l'a pas saisie.
+    # CHIRURGICAL-FIX-1 (LOT J 1e / LOT K 2) — comme le PDF, la surface du terrain pré-remplie est la
+    # CONTENANCE cadastrale de la parcelle (jamais une valeur de banc, jamais un blanc avalé) quand le
+    # client ne l'a pas saisie. MÊME source que le PDF (`_terrain_sourcee`), erreur non masquée.
     if e.programme.terrain is None:
-        try:
-            e.programme.terrain = _rep.sources_parcelle(db, idu).get("terrain")
-        except Exception:  # noqa: BLE001 — contenance non résolue : la ligne reste vide, jamais un crash
-            pass
+        e.programme.terrain = _terrain_sourcee(db, idu)
     _refuser_si_ca_nul(Moteur().calculer(e))
-    octets = classeur_bilan_bytes(e, titre=f"Bilan — {idu}")
+    # CHIRURGICAL-FIX-1 (LOT K 2b) — même garde-fou que le PDF, en tête du classeur.
+    from ..bilan import reperes as _rep
+    _gf = _rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp)
+    octets = classeur_bilan_bytes(e, titre=f"Bilan — {idu}", garde_fou=_gf)
     return Response(
         content=octets,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

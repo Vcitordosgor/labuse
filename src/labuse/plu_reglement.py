@@ -134,7 +134,9 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
         _perm = getattr(rules, "permeabilite_pct", None)
         if cle == "pleine_terre" and etat == "chiffre" and isinstance(_perm, (int, float)):
             _permtxt, _ = _fmt_valeur(_perm, "%")
-            txt = f"{_permtxt} de surface perméable, dont au moins {txt} en pleine terre"
+            # LOT K 3b — « X % de LA PARCELLE … et Y % de LA PARCELLE … » (pas « dont », qui se lit
+            # « Y % de X % ») : les deux taux portent sur la parcelle, pas l'un sur l'autre.
+            txt = f"{_permtxt} de la parcelle en surface perméable et {txt} de la parcelle en pleine terre"
             libelle = "Surface perméable et pleine terre"
             etat = "texte"
         ref = src.get(skey)

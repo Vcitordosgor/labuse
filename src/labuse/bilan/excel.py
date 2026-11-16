@@ -49,7 +49,8 @@ _BORD = Border(bottom=_FIN)
 
 
 def classeur_bilan(
-    entrees: EntreesBilan, catalogue: Catalogue | None = None, titre: str = "Bilan"
+    entrees: EntreesBilan, catalogue: Catalogue | None = None, titre: str = "Bilan",
+    garde_fou: dict | None = None,
 ) -> Workbook:
     cat = catalogue or charger_catalogue()
     tva_dom = float(cat.tva_legales["dom_standard"])
@@ -61,6 +62,17 @@ def classeur_bilan(
         ws.column_dimensions[col].width = w
 
     ws.cell(1, 1, titre).font = Font(bold=True, size=14)
+    # CHIRURGICAL-FIX-1 (LOT K 2b) — bandeau garde-fou en tête (ligne 2) : MÊME contenu que le PDF.
+    _gf_alertes = (garde_fou or {}).get("alertes") or []
+    if _gf_alertes:
+        _txt = ("Programme saisi — non vérifié par LABUSE : " + " ; ".join(_gf_alertes)
+                + " Les chiffres ci-dessous découlent de cette saisie.")
+        c = ws.cell(2, 1, _txt)
+        c.font = Font(bold=True, color="7C2D12")
+        c.fill = PatternFill("solid", fgColor="FFF7ED")
+        c.alignment = Alignment(wrap_text=True, vertical="top")
+        ws.merge_cells("A2:F2")
+        ws.row_dimensions[2].height = 42
     # BILAN-2 : le haut de feuille (lignes 3..24) reçoit le bloc de ratios &
     # programme + le calendrier (comme le modèle). Il est REMPLI à la fin, une fois
     # connues les adresses des cellules du corps ; le corps démarre donc plus bas.
@@ -104,6 +116,7 @@ def classeur_bilan(
         c.fill = _FOND
     r += 1
     prod_ca_ttc_cells: list[str] = []
+    tva_cells: list[str] = []          # LOT K 2 — cellules de TVA (validées 0..1 à la main)
     prod_first = r
     for p in entrees.produits:
         ws.cell(r, 1, p.libelle)
@@ -112,8 +125,12 @@ def classeur_bilan(
         ws.cell(r, 4, p.prix_ttc_m2_suv)
         ws.cell(r, 5, p.tva).number_format = _PCT
         saisie_cells += [f"B{r}", f"C{r}", f"D{r}"]   # LOT J 1c — lots / surface vendable / prix
+        tva_cells.append(f"E{r}")
         ws.cell(r, 6, f"=C{r}*D{r}").number_format = _EUR  # CA TTC = SUV × prix
-        ws.cell(r, 7, f"=F{r}/(1+E{r})").number_format = _EUR  # CA HT
+        # CHIRURGICAL-FIX-1 (LOT K 2d) — une TVA de vente hors [0 %, 100 %] casse le HT (TVA = −100 %
+        # → division par 0 → #DIV/0!). La formule dit « saisie invalide » au lieu de propager l'erreur ;
+        # la validation Excel (plus bas) refuse déjà la saisie hors bornes.
+        ws.cell(r, 7, f'=IF(OR(E{r}<0,E{r}>1),"saisie invalide",F{r}/(1+E{r}))').number_format = _EUR  # CA HT
         prod_ca_ttc_cells.append(f"F{r}")
         r += 1
     prod_last = r - 1
@@ -350,6 +367,19 @@ def classeur_bilan(
         ws.add_data_validation(dv)
         for coord in dict.fromkeys(saisie_cells):     # dédup, ordre stable
             dv.add(coord)
+
+    # CHIRURGICAL-FIX-1 (LOT K 2d) — la TVA de vente est une FRACTION dans [0 %, 100 %] : on la valide à
+    # part (une TVA négative ou > 100 % casse le HT). Hors bornes → refus à la saisie dans le tableur.
+    if tva_cells:
+        dvt = DataValidation(type="decimal", operator="between", formula1="0", formula2="1",
+                             allow_blank=True, showErrorMessage=True)
+        dvt.errorTitle = "TVA invalide"
+        dvt.error = "La TVA de vente doit être comprise entre 0 % et 100 %."
+        dvt.promptTitle = "TVA entre 0 % et 100 %"
+        dvt.prompt = "Saisissez un taux entre 0 % et 100 % (ex. 8,5 %)."
+        ws.add_data_validation(dvt)
+        for coord in dict.fromkeys(tva_cells):
+            dvt.add(coord)
 
     return wb
 

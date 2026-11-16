@@ -88,9 +88,9 @@ def test_1c_validation_cellules_saisie_non_negatif():
     for couts in (False, True):
         ws = _ws(_entrees(_parcelles()["AD0887"], couts=couts))
         dvs = list(ws.data_validations.dataValidation)
-        assert len(dvs) == 1, "une seule règle de validation attendue"
-        dv = dvs[0]
-        assert dv.type == "decimal" and dv.operator == "greaterThanOrEqual" and dv.formula1 == "0"
+        # LOT K 2d — en plus de la validation « ≥ 0 », une validation TVA « entre 0 et 1 » peut exister.
+        dv = next(d for d in dvs if d.operator == "greaterThanOrEqual")
+        assert dv.type == "decimal" and dv.formula1 == "0"
         assert len(str(dv.sqref).split()) >= 4, "la validation doit couvrir plusieurs cellules de saisie"
 
 
@@ -183,7 +183,7 @@ def test_pt3ac_stationnement_renvoi_et_sol_combine():
         assert stat.startswith("barème selon le type de logement et la taille de l'opération")
         assert "1 place" not in stat
         assert lignes["pleine_terre"]["valeur"] == (
-            f"{perm:g} % de surface perméable, dont au moins {pt:g} % en pleine terre")
+            f"{perm:g} % de la parcelle en surface perméable et {pt:g} % de la parcelle en pleine terre")
         assert "surface_permeable" not in lignes
         assert z.places_par_logement() == 1.0          # la capacité ne change pas
 

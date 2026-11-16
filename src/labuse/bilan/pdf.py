@@ -170,6 +170,25 @@ def _tete(
     )
 
 
+def _bandeau_garde_fou(garde_fou: dict | None) -> str:
+    """CHIRURGICAL-FIX-1 (LOT K 2b) — bandeau EN TÊTE quand la fiche écarte ce que le Bilan simule
+    (habitat interdit / non constructible, ou SDP saisie > capacité de la fiche). Le résultat y est
+    identifié comme celui d'un PROGRAMME SAISI, non vérifié par LABUSE."""
+    alertes = (garde_fou or {}).get("alertes") or []
+    if not alertes:
+        return ""
+    lignes = "".join(f"<li>{esc(a)}</li>" for a in alertes)
+    return (
+        '<div class="gardefou" style="border:1.5px solid #b45309;background:#fff7ed;border-radius:6px;'
+        'padding:10px 12px;margin:8px 0;color:#7c2d12">'
+        '<div style="font-weight:700;margin-bottom:3px">Programme saisi — non vérifié par LABUSE</div>'
+        f'<ul style="margin:4px 0 0 18px;padding:0">{lignes}</ul>'
+        '<div style="margin-top:5px;font-size:10.5px">Ce bilan chiffre un programme SAISI par '
+        'l\'utilisateur ; il ne vaut pas pour acquis que la parcelle l\'autorise. Les chiffres ci-dessous '
+        'découlent de cette saisie.</div></div>'
+    )
+
+
 def construire_html(
     r: ResultatBilan,
     *,
@@ -184,6 +203,7 @@ def construire_html(
     prix_demande: float | None = None,
     donnees_au: str | None = None,
     map_html: str = "",
+    garde_fou: dict | None = None,
 ) -> tuple[str, Cartouche]:
     cat = cat or charger_catalogue()
     j = jour or today_reunion()
@@ -217,6 +237,7 @@ def construire_html(
     )
 
     corps = ['<div class="bilan">', tete]
+    corps.append(_bandeau_garde_fou(garde_fou))
     corps.append(_tete(r, programme, calendrier, cat))
     if r.lignes_vides:
         # DOCS-COHERENCE-1 (G4) — plus aucune mention de l'Excel côté client.

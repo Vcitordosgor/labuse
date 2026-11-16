@@ -183,6 +183,30 @@ def _est_non_dispo(phrase: str) -> bool:
     return any(m in p for m in _MARQUEURS_NON_DISPO)
 
 
+def _raison_marge_surelevation(fiche: dict, valeurs) -> str | None:
+    """CHIRURGICAL-FIX-1 (LOT K 3c) — raison CONCRÈTE de l'absence de marge de surélévation, avec les
+    chiffres : hauteur mesurée à l'égout vs limites réglementaires (égout ET faîtage). IS0448 : 4,1 m
+    mesurés à l'égout, limite 4,5 m à l'égout mais 7 m au faîtage — la surélévation se juge au faîtage,
+    repère différent de la mesure, d'où pas de marge unique. None si on n'a pas les chiffres."""
+    eg = _v(valeurs, "hauteur_egout_mesuree_m")
+    if not isinstance(eg, (int, float)):
+        return None
+    he = hf = None
+    try:
+        from ..faisabilite.zonage import resolve_zone
+        _zc = next((z.get("zone") for z in ((fiche.get("reglement_plu") or {}).get("zones") or [])), None)
+        zr = resolve_zone(_zc, fiche.get("commune")) if _zc else None
+        he, hf = getattr(zr, "he_m", None), getattr(zr, "hf_m", None)
+    except Exception:  # noqa: BLE001
+        pass
+    if not (isinstance(he, (int, float)) and isinstance(hf, (int, float))):
+        return None
+    _f = lambda x: f"{x:g}".replace(".", ",")   # noqa: E731
+    return (f"Marge de surélévation non calculable : la hauteur est mesurée à l'égout ({_f(eg)} m, sous "
+            f"la limite d'égout de {_f(he)} m), mais la surélévation est plafonnée au faîtage ({_f(hf)} m) "
+            "— un repère différent de la mesure, d'où pas de marge au même niveau.")
+
+
 def _absence_une_raison(phrase: str, zone, *, gabarit_bloque: bool = False,
                         bati_connu: bool = False, hauteur_mesuree: bool = False) -> str:
     # EXPORTS-FIX-1 C6 / BIS point 11 — jamais « A ou B » : on tranche selon le contexte réel.
@@ -1766,6 +1790,12 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                           "revendables, distincte de la surface de plancher ESTIMÉE (la SDP ci-dessus, "
                           "hors stationnement et pleine terre). Le programme relève de l'Étude de "
                           "faisabilité.")
+                # LOT K 3c — marge de surélévation : raison CONCRÈTE avec les chiffres (mesuré à l'égout
+                # vs limites égout/faîtage), au lieu du « non comparable » générique.
+                if q == "marge_surelevation_m" and _haut_mesuree:
+                    _r_ms = _raison_marge_surelevation(fiche, valeurs)
+                    if _r_ms:
+                        ph = _r_ms
                 phc = _absence_une_raison(_absence_clair(q, ph), _zone, gabarit_bloque=_gab_bloque,
                                           bati_connu=_bati_connu, hauteur_mesuree=_haut_mesuree)
                 li = f'<li data-quoi="{esc(q)}">{esc(phc)}</li>'
