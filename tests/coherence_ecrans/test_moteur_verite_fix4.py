@@ -182,5 +182,7 @@ def test_lot4_cascade_hors_rouge_seulement_si_plu_admet(app_session):
             assert exclue, "AC0249 : zone Acor fermée — l'exclusion rouge doit rester"
         else:
             assert not exclue, "BC1134 : portion UA réelle — allègement attendu"
-            flag = next(v for v in res if "SOUS PRESCRIPTIONS" in str(v.detail))
-            assert "capacité RÉDUITE" in str(flag.detail)
+            # MOTEUR-VERITE-FIX-6 LOT 3 — le flag rouge-partiel dit « capacité RÉDUITE à cette
+            # partie » (« sous prescriptions » réservé aux zones bleues, portées à part).
+            flag = next(v for v in res if "capacité RÉDUITE" in str(v.detail))
+            assert "à vérifier" in str(flag.detail) or "pas d'exclusion" in str(flag.detail)

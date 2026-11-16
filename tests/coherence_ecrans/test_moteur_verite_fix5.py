@@ -99,7 +99,9 @@ def test_lot2_gabarit_lit_cascade_rejouee(app_session):
             pytest.skip(f"{idu} sans gabarit")
         det = str((gb.raccordement.get("ppr") or {}).get("detail") or "")
         assert "Exclue" not in det, f"{idu} : le gabarit lit encore le classement épinglé"
-        assert "PRESCRIPTIONS" in det or "prescriptions" in det
+        # MOTEUR-VERITE-FIX-6 LOT 3 — « sous prescriptions » réservé aux zones bleues : pour une
+        # partie hors rouge la cascade dit « capacité RÉDUITE à cette partie ».
+        assert "RÉDUITE" in det or "réduite" in det or "prescriptions" in det
 
 
 # LOT 3 — toute capacité chiffrée porte ses réserves, ÉCRITES par le moteur.

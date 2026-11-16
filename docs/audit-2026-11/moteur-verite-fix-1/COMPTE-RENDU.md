@@ -756,3 +756,77 @@ jamais de hausse à Sainte-Rose : capacité à vérifier ; (3) la garde « sans 
 large basculait 1 403 parcelles en « à vérifier » (10× l'attendu) — resserrée : façade 0 →
 chiffre au recul PRUDENT faîtage (= main : AC3540 85, AD0323 452, AK0834 1 763), « à
 vérifier » réservé aux façades qualifiées < 3 m.
+
+---
+
+# MOTEUR-VERITE-FIX-6 — fermer les deux vrais défauts, prouver sur l'île
+
+Les 20 hausses sont exactes. Ce tour ferme l'ordre des verdicts et l'unification du repli,
+corrige les libellés, et prouve la règle de non-hausse À L'ÉCHELLE DE L'ÎLE (pas la seule
+cohorte des permis).
+
+## LOT 1 — un refus établi ne s'efface jamais (`2674ea94e`)
+
+Les refus réglementaires/établis passent AVANT les gardes de taille. `faisabilite_refus_
+reglementaire` est appelé dès que la zone est résolue (avant les gardes micro-parcelle/façade),
+plus en fin d'`estimate_capacity` : AC1634 (Sainte-Marie UEm, 20 m²) ressortait « constructible,
+capacité à vérifier » parce que la garde micro précédait le contrôle habitat interdit —
+désormais « habitat interdit ». Et quand EXIGU-FIX-1 prouve ~0 m² net exploitable, la mention
+« implantation en limite » ne rescape plus (CG0875 Saint-Leu, 92 m², que main refusait). **Preuve
+sur les 525 refus de main (cache-main5) rejoués** : 125 changements de verdict, **AUCUN ne sert
+un chiffre positif** sur une parcelle refusée — 94 micro-parcelles « à vérifier », 22 secteurs
+d'habitat A/N (plafond cité), 6 façades < 3 m, 2 littoral, 1 portion repli, tous « à vérifier »
+ou règle écrite (`FIX6-CHANGEMENTS-VERDICT.csv`).
+
+## LOT 2 — un seul jeu de règles pour le repli (`3a858d557`)
+
+Le repli appliquait des règles différentes du gabarit. Deux corrections, mêmes fonctions :
+retrait relatif NIVEAU PAR NIVEAU au repli pour les zones autorisées (`recul_scenario_niveaux`
+partagé) — AD0173 (Sainte-Marie UA) servait 0 « trop exigu » sur 9 m uniformes, désormais
+102 m² (R+1, 3,75 m ; baisse vs main 363, jamais un refus ferme injustifié) ; et le TEST
+CONJOINT zone rouge ∩ PLU au repli — AW1235/BM0158/BO0383 servaient un chiffre que la cascade
+excluait, ils ferment (les parcelles dont la partie hors rouge est exploitable gardent leur
+capacité : BC1134, AH0074). Part de chaque chemin (échantillon 600 U/AU graine fixe) : gabarit
+78,5 %, repli qualifié 10,8 %, repli non qualifié 10,7 %.
+
+## LOT 3 — réserves et libellés (`4cfd21e01`)
+
+La réserve « zone AU » suit la PORTION servie (rules.code), pas la zone dominante : AK0834 (A
+dominant, portion 1AUa) et AE0409 (N dominant, portion 1AUc) portent désormais la réserve
+d'aménagement/OAP. La hauteur porte son vrai nom : AS0606 disait « égout 12 m » alors que le
+calcul prudent en zone AU utilise le faîtage (12 m) — l'égout est à 9 m — désormais « faîtage
+12 m ». « Sous prescriptions » est réservé aux zones bleues : la cascade dit « capacité réduite
+à la partie hors rouge » pour une parcelle rouge seule (AH0074, aucune bleue) ; la réserve bleue
+reste portée sur intersection bleue mesurée (BC1134 B2/B2u, AS0606).
+
+## LOT 4 — la preuve sur l'île
+
+Le contrôle inverse ne porte plus seulement sur les 6 926 parcelles des permis : il couvre
+**21 467 parcelles — TOUTES les 18 657 des zones où une hausse est autorisée + 3 000 U/AU
+tirées à graine fixe sur toute l'île**. Chacune rejouée sous origin/main `049dbcf7f`
+(cache-main6-ile) ET sous la branche (cache-fix6-ile) ; capacité, verdict, cause comparés.
+
+**BILAN** (`CONTROLE-INVERSE-FIX6-ILE.csv`) :
+- **6 378 hausses** — toutes en zones autorisées **sauf 2** ; **0 hausse RÈGLE hors zone**
+  (effet de la règle isolé par le recalcul ouvertures fermées + formule retirée).
+- 2 875 baisses, 7 494 inchangées, 4 720 « à vérifier ».
+- **284 parcelles chiffrées là où main refusait** — TOUTES `terrain_exigu` de main (géométrique,
+  **0 refus réglementaire**), corrigées par le repli niveau-par-niveau du LOT 2 (le refus ferme
+  n'était pas établi), toutes en zones autorisées.
+- **2 dérives de CHEMIN géométrique hors zone, documentées** : AK1159 (Le Tampon Uc, 47→75)
+  où le gabarit ABOUTIT là où il échouait dans main (status « incomplete » → ok), et AW0302
+  (Saint-André 2AUc, 20→22, +2 m² de flottant) où il bascule en repli — **effet de la règle NUL
+  dans les deux cas** (aucune ouverture ni formule appliquée) : ce ne sont pas des hausses
+  autorisées par une règle, mais des différences de précision géométrique entre les deux
+  versions. Un clamp testé (plafonner l'emprise hors zone à l'inset uniforme) a été ÉCARTÉ : il
+  faisait tomber 12 % des parcelles non autorisées sous main (sous-service gratuit).
+
+Pour chaque hausse (CSV, texte NON coupé), le RECUL RÉELLEMENT APPLIQUÉ (scénario retenu, pas
+le recul d'entrée), le scénario, les côtés posés en limite, et le recalcul AVEC/SANS la règle.
+Les **50 plus fortes hausses sont TOUTES à La Possession** (zones U, H/2 à l'égout du bâtiment
+envisagé — AN1434 UBpsfr2 20 375→27 166 (+6 791), BP0202 UA 21 695→27 119 (+5 424)…) : grandes
+unités foncières où la formule du règlement, enfin exécutée niveau par niveau, ajoute
+l'essentiel ; `sdp_sans_la_regle` = valeur de main, l'effet est entièrement porté par la formule.
+
+La règle de non-hausse est donc prouvée À L'ÉCHELLE DE L'ÎLE : aucune règle d'implantation ou de
+hauteur n'ajoute de capacité hors de la liste fermée des zones autorisées.
