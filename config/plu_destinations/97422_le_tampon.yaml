@@ -18,9 +18,9 @@ zones:
         ces:
           statut: valide
           absent: true
-          article: ARTICLE Uua9
+          article: Ua9
           page_pdf: 18
-          citation: 'ARTICLE Ud9 - EMPRISE AU SOL DES CONSTRUCTIONS : Non réglementée.'
+          citation: 'ARTICLE Ua9 - EMPRISE AU SOL DES CONSTRUCTIONS : Non réglementée.'
       hauteur:
         faitage:
           m: 25.0
@@ -303,9 +303,9 @@ zones:
         ces:
           statut: valide
           absent: true
-          article: ARTICLE Uua9
+          article: Ua9
           page_pdf: 18
-          citation: 'ARTICLE Ud9 - EMPRISE AU SOL DES CONSTRUCTIONS : Non réglementée.'
+          citation: 'ARTICLE Ua9 - EMPRISE AU SOL DES CONSTRUCTIONS : Non réglementée.'
       hauteur:
         faitage:
           m: 20.0
@@ -1375,8 +1375,8 @@ zones:
           statut: valide
       pente_toiture:
         article: Ud11.5
-        page_pdf: 63
-        citation: Les toitures doivent présenter une pente moyenne comprise entre 30 % minimum et 10 % maximum sur au moins 60 % de l’emprise de la construction. Cette règle ne concerne pas les dépendances.
+        page_pdf: 65
+        citation: Les toitures doivent présenter une pente moyenne comprise entre 30 % minimum et 100 % maximum sur au moins 60 % de l’emprise de la construction. Cette règle ne concerne pas les dépendances.
     silence: autorise
     silence_src: 'Art. Ud2.2, p. 57 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article Ud1.2 »'
     notes:

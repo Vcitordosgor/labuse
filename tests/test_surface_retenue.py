@@ -86,13 +86,14 @@ def test_non_bati_garde_la_formulation_surface_a_retenir():
 # ── Garde-fou : un seul « surface à retenir » par parcelle, TOUS les documents (C6/C9) ───────────
 @pytest.mark.reel
 @pytest.mark.parametrize("idu, valeur_attendue, source_attendue", [
-    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — le dégagement d'allée désormais DUR réduit l'esquisse (allées
-    # de 5 m au droit des places) : HT0538 passe de 888 à 450 m² (< estimation 614 → on retient l'esquisse,
-    # la plus petite), BW2635 de 2 625 à 360 m² (scénario « votre programme » 4 logements). On teste donc la
-    # CONSISTANCE (même surface partout) sur les valeurs à jour.
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — le dégagement d'allée est désormais mesuré EXACTEMENT (rectangle
+    # entier, aucune marge de 0,60 m, aucune tolérance de 1 m²) : une allée de 4,99 m échoue. AD0887 perd une
+    # place dont le dégagement ne faisait que 4,99 m (8/12 → 7/10, esquisse 595) ; BW2635 retient le scénario
+    # servi 6 logements (535, variante unique, cf. couverture cohérente). On teste la CONSISTANCE (même surface
+    # partout) sur ces valeurs à jour.
     ("97416000HT0538", 450, GRANDEUR_ESQUISSE),     # esquisse dégagée (450) < estimation (614) → esquisse
-    ("97422000AD0887", 795, GRANDEUR_SCENARIO),     # stationnement déduit → scénario (jamais 1 047 nu)
-    ("97422000BW2635", 360, GRANDEUR_ESQUISSE),     # esquisse (votre scénario 4 logts) < estimation 3 317
+    ("97422000AD0887", 595, GRANDEUR_SCENARIO),     # dégagement exact : 7 logts / 10 places → esquisse 595
+    ("97422000BW2635", 535, GRANDEUR_ESQUISSE),     # scénario servi 6 logts (535) < estimation 3 317
 ])
 def test_un_seul_surface_a_retenir_tous_documents(session_reelle, idu, valeur_attendue, source_attendue):
     """Dossier (scénario PERSISTÉ), Étude (scénario LIVE) ET Comparatif (compare()) doivent produire LA

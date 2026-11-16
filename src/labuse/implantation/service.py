@@ -1337,10 +1337,14 @@ def etudier_payload(session, entree: dict) -> dict:
         grille_note = ("Recherche sur grille simplifiée (grande assiette) — le maximum servi est un plancher, "
                        "la capacité réelle peut être légèrement supérieure.")
 
-    # ETUDE-V6 (Lot B) — verdict GLOBAL de l'étude (3 libellés mandat) : sur la 1ʳᵉ variante PRÉSENTE
-    # (votre programme en tête), sinon « impossible pour cause établie » si rien n'est faisable.
+    # ETUDE-V6 (Lot B) — verdict GLOBAL de l'étude, sur la 1ʳᵉ variante PRÉSENTE (votre programme en tête).
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — si AUCUNE variante n'est faisable alors que la ZONE EST
+    # CONSTRUCTIBLE (on est passé après le refus « hors périmètre » : la non-constructibilité réglementaire est
+    # déjà traitée là), on ne conclut PAS à une « Impossible pour cause établie » (qui dirait une interdiction
+    # du PLU) : la recherche n'a simplement trouvé aucun plan sous ces hypothèses (assiette trop étroite,
+    # reculs, stationnement). Cas des assemblages dont la part d'habitat (UB) est une bande étroite.
     verdict = next((v["verdict"] for v in variantes_pub if not v.get("absente")),
-                   "Impossible pour cause établie")
+                   "Aucun plan trouvé sous ces hypothèses")
 
     # ETUDE-V6 (Lot C) — régimes de stationnement (règle générale PLU + plafond national à confirmer),
     # et capacité SOUS le régime réduit (2ᵉ passage moteur au ratio plafonné), seulement si le plafond est

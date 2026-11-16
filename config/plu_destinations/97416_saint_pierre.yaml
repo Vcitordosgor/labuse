@@ -123,7 +123,7 @@ zones:
             seuil_sdp_m2: 300
             citation: '2 roues : 5 % de la surface de plancher pour toute construction de plus de 300 m² de surface de plancher'
           conditions:
-          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement (Ud6, p. 92) — aménagement du plan NON modélisé par le moteur, à vérifier.
       pleine_terre:
         pct:
           pct: 20.0
@@ -370,7 +370,7 @@ zones:
             tranche: hébergement (0,3 place par hébergement)
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
-          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement (Ud6, p. 92) — aménagement du plan NON modélisé par le moteur, à vérifier.
           velo:
             unite: pct_sdp
             valeur: 5
@@ -392,7 +392,7 @@ zones:
           statut: valide
       prospect:
         article: Ud3.5
-        page_pdf: 85
+        page_pdf: "85-86"
         citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
         statut: valide
     silence: autorise
@@ -631,7 +631,7 @@ zones:
             tranche: hébergement (0,3 place par hébergement)
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
-          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement (Ud6, p. 92) — aménagement du plan NON modélisé par le moteur, à vérifier.
           velo:
             unite: pct_sdp
             valeur: 5
@@ -884,7 +884,7 @@ zones:
             tranche: hébergement (0,3 place par hébergement)
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
-          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement (Ud6, p. 92) — aménagement du plan NON modélisé par le moteur, à vérifier.
           velo:
             unite: pct_sdp
             valeur: 5
@@ -1205,7 +1205,7 @@ zones:
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
-          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement (Ud6, p. 92) — aménagement du plan NON modélisé par le moteur, à vérifier.
           velo:
             unite: pct_sdp
             valeur: 5
@@ -1468,7 +1468,7 @@ zones:
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
-          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement (Ud6, p. 92) — aménagement du plan NON modélisé par le moteur, à vérifier.
           velo:
             unite: pct_sdp
             valeur: 5
@@ -1550,7 +1550,7 @@ zones:
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
-          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement (Ud6, p. 92) — aménagement du plan NON modélisé par le moteur, à vérifier.
           velo:
             unite: pct_sdp
             valeur: 5
@@ -1751,7 +1751,7 @@ zones:
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
-          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement (Ud6, p. 92) — aménagement du plan NON modélisé par le moteur, à vérifier.
           velo:
             unite: pct_sdp
             valeur: 5
@@ -1835,7 +1835,7 @@ zones:
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
-          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement (Ud6, p. 92) — aménagement du plan NON modélisé par le moteur, à vérifier.
           velo:
             unite: pct_sdp
             valeur: 5
@@ -1899,7 +1899,7 @@ zones:
             tranche: logement locatif social
           conditions:
           - 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
-          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement (Ud6, p. 92) — aménagement du plan NON modélisé par le moteur, à vérifier.
           velo:
             unite: pct_sdp
             valeur: 5
@@ -2154,7 +2154,7 @@ zones:
             seuil_sdp_m2: 300
             citation: '2 roues : 5 % de la surface de plancher pour toute construction de plus de 300 m² de surface de plancher'
           conditions:
-          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement — aménagement du plan NON modélisé par le moteur, à vérifier.
+          - Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement (Ud6, p. 92) — aménagement du plan NON modélisé par le moteur, à vérifier.
       prospect:
         article: Up3.5
         page_pdf: 85

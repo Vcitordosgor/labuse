@@ -239,7 +239,22 @@ def _zone_regle_non_validee(code: str, feuilles: list[str]) -> ZoneRules:
         sources={"zone": "règle PLU non validée (feuille propose)"})
 
 
-def _stat_from_regles(reg: dict):
+def _stat_from_regles(reg: dict, insee: str | None = None, code: str | None = None):
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — SOURCE UNIQUE de la règle de stationnement : le barème que l'Étude
+    # APPLIQUE (`BaremeStationnement`), rendu par la MÊME fonction `_regle_stationnement_courte`. Le Dossier
+    # cessait de dire « non réglementé » dès que la règle n'était pas « N places / logement » (BW2635 Uav :
+    # barème par typologie Ua12.2 ; HT0538 Ud6 : par m² de SDP) alors que l'Étude, elle, l'appliquait. On
+    # affiche donc la règle ENTIÈRE ; repli sur l'ancienne lecture `par_logement` si le barème n'est pas validé.
+    if insee and code:
+        try:
+            from ..implantation.regles import charger as _charger_b
+            from ..implantation.service import _regle_stationnement_courte
+            _b = _charger_b(insee, code).stationnement
+            _rc = _regle_stationnement_courte(_b)
+            if _rc:
+                return _rc
+        except Exception:  # noqa: BLE001 — lecture annexe, jamais bloquante pour le Dossier
+            pass
     leaf = (reg.get("stationnement") or {}).get("par_logement")
     if not isinstance(leaf, dict) or leaf.get("absent"):
         return None
@@ -345,7 +360,7 @@ def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> Zone
         recul_limites_formule=_val(reg, "retraits", "limites_separatives", "formule"),
         recul_voirie_alignement=_recul_alignement(reg, "voie"),
         recul_limites_alignement=_recul_alignement(reg, "limites_separatives"),
-        stat_logement=_stat_from_regles(reg),
+        stat_logement=_stat_from_regles(reg, _insee(commune), code),
         pleine_terre_pct=_pleine_terre_val(reg),
         pleine_terre_compose=_pleine_terre_compose(reg),
         hauteur_mode=zm.get("hauteur_mode"),

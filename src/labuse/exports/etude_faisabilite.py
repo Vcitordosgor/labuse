@@ -1055,7 +1055,10 @@ def _p7_capacite(payload: dict, retenu: dict) -> str:
     for c in sc["controles"]:
         res = c["resultat"]
         rc = "ok" if res == "Réussi" else "ko" if res == "Échoué" else "ne"
-        cite = f'<span class="cite">{esc(_cit_propre(c["citation"]))}</span>' if (res == "Réussi" and c.get("citation")) else ""
+        # ETUDE-STATIONNEMENT-FIX-4 (LOT 3) — chaque contrôle CITE sa règle, y compris « À confirmer » et
+        # « Échoué » (prospect Ud3.5, haie + voie piétonne, pente de toiture) : le lecteur voit la règle non
+        # vérifiée, pas seulement les règles réussies (avant, la citation n'apparaissait que sur « Réussi »).
+        cite = f'<span class="cite">{esc(_cit_propre(c["citation"]))}</span>' if c.get("citation") else ""
         crows.append(f'<tr><td class="k">{esc(c["nom"])}{cite}</td><td>{esc(c["regle"])}</td>'
                      f'<td>{esc(c["mesure"])}</td>'
                      f'<td class="n"><span class="res {rc}">{esc(res)}</span></td></tr>')

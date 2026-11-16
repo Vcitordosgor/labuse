@@ -74,8 +74,12 @@ class CheckGeo:
 # de pavage/jonction. Le contrôle échoue dès qu'une place est non dégagée (BW2635 : 13 places à 2,25 m).
 # haie paysagère au pourtour des aires de stationnement : on capte la largeur imposée (« ≥ 1,50 m »).
 _HAIE_RE = re.compile(r"haie[^0-9]*?(\d+(?:[.,]\d+)?)\s*m", re.IGNORECASE)
-_DEGAGEMENT_PLACE_FLOOR_M2 = 1.0
-_DEGAGEMENT_SEUIL_M2 = 1.0   # aire totale non dégagée au-delà de laquelle le plan échoue
+# ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — mesure EXACTE, sans marge cachée : on ne retranche RIEN à la largeur
+# exigée et on ne tolère que le bruit numérique du pavage (< 0,02 m²). Une allée de 4,99 m pour 5 m exigés
+# ÉCHOUE (déficit ≈ largeur de place × 0,01 m). Avant : W = exigée − 0,60 m + tolérance 1 m² (cachait un plan
+# sous le minimum). `_DEGAGEMENT_PLACE_FLOOR_M2`/`_DEGAGEMENT_SEUIL_M2` = seuls amortisseurs de bruit flottant.
+_DEGAGEMENT_PLACE_FLOOR_M2 = 0.005
+_DEGAGEMENT_SEUIL_M2 = 0.005   # aire totale non dégagée au-delà de laquelle le plan échoue (bruit flottant seul)
 _PASSAGE_MIN_M = 2.4         # largeur mini de circulation d'une voiture ; sous ce seuil l'allée s'étrangle
 _COMP_SIGNIF_M2 = 8.0        # aire mini d'un morceau d'allée pour qu'un étranglement le séparant compte
 
@@ -129,7 +133,7 @@ def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=No
             ancre = max(signif, key=lambda g: g.area)        # ni voie ni accès connus : le plus grand morceau
         reach = min(signif, key=lambda g: g.distance(ancre))  # le noyau qui touche la voie
     from shapely.geometry import Point
-    W = max(float(largeur_requise) - 0.6, 0.1)   # 0,6 m de tolérance de pavage (allée clippée ~4,9 m)
+    W = max(float(largeur_requise), 0.1)   # FIX-4 : rectangle de dégagement ENTIER, aucune marge retranchée
     manque = 0.0
     for p in places:
         pg = p if p.is_valid else p.buffer(0)
@@ -266,8 +270,15 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
     # ici en coordonnées PROJETÉES (geom_world) ; l'ancien code passait l'allée en geom_local → intersection
     # avec les places (geom_world) vide → pincement toujours 0 en production (le test unitaire, lui, était dans
     # un seul repère et passait). Sur BW2635 : 25,25 m² de pincement, 2,25 m au droit de 13 places.
-    _voie_u = unary_union(terrain.voie_edges) if getattr(terrain, "voie_edges", None) else None
-    pince = _pincement_allee(allees, places, conv.allee_largeur_m, acces, voie=_voie_u)
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — mesure EXACTE en coordonnées LOCALES (repère aligné sur l'assiette) :
+    # places, allées et accès y sont des rectangles AXÉS, sans l'erreur flottante de la rotation monde↔local
+    # (qui faisait un faux déficit de ~0,008 m sur une place et écroulait AD0887 à 0,02 m² près). La voie locale
+    # relie les bandes. Le même repère pour tous → un déficit mesuré est RÉEL (4,99 m pour 5 m exigés échoue).
+    _allees_l = [o.geom_local for o in scene.of("allee")]
+    _places_l = [o.geom_local for o in scene.of("place")]
+    _acces_l = [o.geom_local for o in scene.of("acces")]
+    _voie_l = unary_union(scene.voie_local) if getattr(scene, "voie_local", None) else None
+    pince = _pincement_allee(_allees_l, _places_l, conv.allee_largeur_m, _acces_l, voie=_voie_l)
     larg_ok = pince < _DEGAGEMENT_SEUIL_M2
     # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — contrôle DUR, y compris sur un ASSEMBLAGE : la mesure par sonde du
     # meilleur des deux côtés (nez/arrière) + désétranglement de la circulation ne crée plus de faux pincements
@@ -489,11 +500,16 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
 
     # Prospect / hauteur relative (ex. L ≥ h/2) : non chiffrable par le moteur -> Non effectué
     if regles.prospect is not None:
+        # ETUDE-STATIONNEMENT-FIX-4 (LOT 3) — chaque « non vérifié » CITE sa règle exacte : le prospect porte
+        # désormais son article et sa page (HT0538 : Ud3.5 p. 85–86), plus en « détail » seul.
+        _pr = regles.prospect
+        _pcit = (f"PLU art. {_pr.article}" if getattr(_pr, "article", None) else "")
+        _pcit += (f" · p. {_pr.page_pdf}" if getattr(_pr, "page_pdf", None) else "")
+        _pcit = (_pcit + (f" — « {_pr.citation} »" if getattr(_pr, "citation", None) else "")) or None
         out.append(ControleReg("Prospect (hauteur relative)", "non chiffrable par le moteur",
                                "hauteur bornée par la seule règle absolue", A_CONFIRMER,
-                               citation=None,
-                               detail=(regles.prospect.citation or "règle de prospect L ≥ h/2 — "
-                                       "à vérifier par l'architecte")))
+                               citation=_pcit,
+                               detail=(_pr.citation or "règle de prospect L ≥ h/2 — à vérifier par l'architecte")))
     else:
         out.append(ControleReg("Prospect (hauteur relative)", "pas de règle de prospect", "—", NON_APPLICABLE))
 
@@ -670,8 +686,9 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
             out.append(ControleReg(
                 "Stationnement — haie paysagère", f"≥ {_fr(req)} m entre l'aire de stationnement et le bâti",
                 f"{_fr(round(d, 2))} m mesuré", REUSSI if ok else ECHOUE,
-                b.citation_complete if b.validee else None,
-                detail="haie paysagère (+ voie piétonne) au pourtour des aires de stationnement — mesuré au plan"))
+                # FIX-4 (LOT 3) — cite la règle EXACTE (haie + voie piétonne, Ud6 p. 92) telle qu'au règlement.
+                cond,
+                detail="haie paysagère + voie piétonne au pourtour des aires de stationnement — mesuré au plan"))
             continue
         out.append(ControleReg("Stationnement — condition à vérifier", cond, "non modélisé",
                                A_CONFIRMER, b.citation_complete if b.validee else None,
