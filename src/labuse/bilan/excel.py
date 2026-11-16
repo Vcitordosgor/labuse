@@ -39,11 +39,13 @@ def _dec_m2(x: float) -> str:
 
 
 def _xl_m2(ref: str) -> str:
-    """CHIRURGICAL-FIX-1 (LOT Q) — SOUS-EXPRESSION Excel qui formate une surface d'une CELLULE VIVANTE,
-    même règle d'affichage que le PDF : entière si entière (« 595 »), sinon jusqu'à 2 décimales
-    (« 595,01 »), virgule française. Le message d'alerte se construit avec elle → il suit la saisie."""
-    return (f'IF({ref}=INT({ref}),TEXT({ref},"0"),'
-            f'SUBSTITUTE(TEXT({ref},"0.##"),".",","))')
+    """CHIRURGICAL-FIX-1 (LOT Q / LOT R) — SOUS-EXPRESSION Excel qui formate une surface d'une CELLULE
+    VIVANTE, même règle que le PDF : la valeur est ARRONDIE au centième (`ROUND(.,2)`, précision d'une
+    surface), puis affichée entière si entière (« 595 »), sinon à 2 décimales au plus (« 595,01 »),
+    virgule française. Le message d'alerte se construit avec elle → il suit la saisie."""
+    rref = f"ROUND({ref},2)"
+    return (f'IF({rref}=INT({rref}),TEXT({rref},"0"),'
+            f'SUBSTITUTE(TEXT({rref},"0.##"),".",","))')
 
 
 _EUR = '#,##0 €'
@@ -143,7 +145,9 @@ def classeur_bilan(
     # FORMULE à partir des cellules (plus de valeurs figées à l'export) : si on modifie la SDP ou la
     # surface à retenir SANS régénérer, le texte cité suit (`_xl_m2`, même règle d'affichage que le PDF).
     if isinstance(_sar, (int, float)):
-        wf = (f'=IF(AND({cell_sdp}>0,{cell_sdp}>{cell_sar}),'
+        # LOT R — comparaison AU CENTIÈME (ROUND(.,2)) : tient même sur une valeur collée à 3 décimales ;
+        # un écart < 0,01 m² ne déclenche pas l'alerte (sinon « 595 contre 595 »).
+        wf = (f'=IF(AND(ROUND({cell_sdp},2)>0,ROUND({cell_sdp},2)>ROUND({cell_sar},2)),'
               f'"⚠ surface de plancher ("&{_xl_m2(cell_sdp)}&" m²) dépasse la surface à retenir du '
               f'Dossier ("&{_xl_m2(cell_sar)}&" m²) — à vérifier","")')
         wc = ws.cell(r, 3, wf)
@@ -445,8 +449,9 @@ def classeur_bilan(
             # message se CONSTRUIT DANS LA FORMULE à partir des DEUX cellules (surface vendable + surface de
             # plancher) : il CITE les deux valeurs (plus « aucun chiffre ») et SUIT la saisie si on modifie
             # une cellule sans régénérer (`_xl_m2`, même règle d'affichage que le PDF).
-            wc = ws.cell(rr, 6, f'=IF(AND({cell_suv}>0,OR({cell_sdp}=0,ISBLANK({cell_sdp}),'
-                                f'{cell_suv}>{cell_sdp})),'
+            # LOT R — comparaison AU CENTIÈME (ROUND(.,2)) des deux surfaces.
+            wc = ws.cell(rr, 6, f'=IF(AND(ROUND({cell_suv},2)>0,OR(ROUND({cell_sdp},2)=0,'
+                                f'ISBLANK({cell_sdp}),ROUND({cell_suv},2)>ROUND({cell_sdp},2))),'
                                 f'"⚠ surface vendable ("&{_xl_m2(cell_suv)}&" m²) supérieure à la surface '
                                 f'de plancher ("&{_xl_m2(cell_sdp)}&" m²) — à vérifier","")')
             wc.font = Font(bold=True, color="B45309")

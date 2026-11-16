@@ -186,12 +186,12 @@ def test_m3_non_constructible_pas_de_surface_a_retenir(monkeypatch):
 
 
 def test_m3_seuil_identique_pdf_et_excel():
-    """Le seuil « SDP > surface à retenir » est le MÊME côté Python (garde-fou/PDF) et Excel. LOT O 2 :
-    comparaison SUR LES DÉCIMALES (plus d'arrondi avant comparaison, dans aucun des deux)."""
+    """Le seuil « SDP > surface à retenir » est le MÊME côté Python (garde-fou/PDF) et Excel. LOT R :
+    comparaison AU CENTIÈME de m² des deux côtés (`surface_depasse` = round(.,2) ; `ROUND(.,2)` en Excel)."""
     rep = (_SRC / "bilan" / "reperes.py").read_text()
     exc = (_SRC / "bilan" / "excel.py").read_text()
-    assert "sdp_saisie > sar_val" in rep and "round(sdp_saisie)" not in rep
-    assert "{cell_sdp}>{cell_sar}" in exc and "{round(_sar)}" not in exc   # Excel : seuil brut (décimales)
+    assert "surface_depasse(sdp_saisie, sar_val)" in rep
+    assert "ROUND({cell_sdp},2)>ROUND({cell_sar},2)" in exc
 
 
 def test_m3_bandeau_aucun_programme():

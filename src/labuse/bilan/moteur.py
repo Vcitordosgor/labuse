@@ -20,30 +20,46 @@ from typing import Any
 from .catalogue import Catalogue, Poste, charger_catalogue
 
 
-# CHIRURGICAL-FIX-1 (LOT P) — RÈGLE D'AFFICHAGE UNIQUE des surfaces d'une alerte, partagée par le PDF
-# (garde-fou, vraisemblance) et l'Excel (message cité) : autant de décimales que nécessaire pour
-# DISTINGUER les deux valeurs, AU MOINS 2 quand elles diffèrent de moins d'un m² ; virgule française,
-# zéros inutiles retirés. Ex. (595,01 ; 595) → « 595,01 » / « 595 » ; (595,02 ; 595,01) → les deux.
-def _fmt_un(x: float, d: int) -> str:
+# CHIRURGICAL-FIX-1 (LOT P / LOT R) — RÈGLE UNIQUE des surfaces, partagée par le PDF (garde-fou,
+# vraisemblance), l'Excel et le moteur. LOT R — la PRÉCISION d'une surface est le CENTIÈME de m² :
+# on COMPARE les valeurs arrondies au centième (`surface_depasse`) et on les AFFICHE à deux décimales
+# au plus (`fmt_surface_seule`), virgule française, zéros inutiles retirés. Un écart < 0,01 m² n'est
+# donc PAS un dépassement (aucune alerte) ; toute alerte affichée montre deux valeurs DISTINCTES.
+PRECISION_SURFACE_M2 = 0.01
+
+
+def _round2(x: float) -> float:
+    """Arrondi au centième au plus proche, moitié vers le HAUT — comme la fonction ROUND d'Excel (et
+    non `round()` de Python, qui arrondit au pair le plus proche : 595,005 → 595,01, pas 595,00). On
+    passe par `Decimal(str(x))` pour arrondir la valeur DÉCIMALE voulue, pas son approximation binaire."""
+    from decimal import ROUND_HALF_UP, Decimal
+    return float(Decimal(str(float(x))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
+def _fmt_un(x: float, d: int = 2) -> str:
     s = f"{float(x):.{d}f}"
     if "." in s:
         s = s.rstrip("0").rstrip(".")
     return s.replace(".", ",")
 
 
-def fmt_surfaces_paire(a: float, b: float) -> tuple[str, str]:
-    fa, fb = float(a), float(b)
-    d = 0
-    while d < 6 and f"{fa:.{d}f}" == f"{fb:.{d}f}":
-        d += 1
-    if abs(fa - fb) < 1.0:
-        d = max(d, 2)   # au moins 2 décimales quand l'écart est inférieur à 1 m²
-    return _fmt_un(fa, d), _fmt_un(fb, d)
-
-
 def fmt_surface_seule(x: float) -> str:
-    """Une surface isolée (sans paire) : jusqu'à 2 décimales, zéros inutiles retirés."""
-    return _fmt_un(x, 2)
+    """Une surface, ARRONDIE au centième puis affichée à 2 décimales au plus (« 595,01 », « 595 »)."""
+    return _fmt_un(_round2(x), 2)
+
+
+def fmt_surfaces_paire(a: float, b: float) -> tuple[str, str]:
+    """Les deux surfaces d'une alerte, chacune arrondie au centième et affichée à 2 décimales au plus.
+    Comme la comparaison (`surface_depasse`) arrondit au centième, une alerte affichée a toujours deux
+    valeurs distinctes."""
+    return fmt_surface_seule(a), fmt_surface_seule(b)
+
+
+def surface_depasse(a: float, b: float) -> bool:
+    """LOT R — `a` dépasse `b` SI leurs arrondis au CENTIÈME de m² diffèrent dans ce sens (arrondi
+    moitié-vers-le-haut, comme Excel). Un écart inférieur à 0,01 m² n'est pas un dépassement. Règle
+    unique (même seuil PDF / Excel / moteur)."""
+    return _round2(a) > _round2(b)
 
 
 # États d'un poste (doctrine 4).
@@ -514,12 +530,12 @@ class Moteur:
                     "cible": "cout_const",
                     "message": "Coût de construction inhabituel (hors 1 000–5 000 €/m² de surface vendable), à vérifier.",
                 })
-        # CHIRURGICAL-FIX-1 (LOT M 1 / LOT N 2) — COHÉRENCE surface vendable / surface de plancher : la
-        # surface vendable (habitable) ne peut PAS dépasser la surface de plancher (la SHAB est une PART
-        # de la SDP). Comparaison sur les DÉCIMALES (pas d'arrondi préalable : 595,1 > 595 alerte) ; une
-        # SUV positive avec une SDP nulle ou vide est AUSSI incohérente (plancher manquant).
+        # CHIRURGICAL-FIX-1 (LOT M 1 / LOT N 2 / LOT R) — COHÉRENCE surface vendable / surface de plancher :
+        # la surface vendable (habitable) ne peut PAS dépasser la surface de plancher. Comparaison AU
+        # CENTIÈME de m² (`surface_depasse`) : un écart < 0,01 m² n'est pas un dépassement ; une SUV
+        # positive avec une SDP nulle ou vide est AUSSI incohérente (plancher manquant).
         sdp = programme.sdp
-        if suv and suv > (sdp or 0.0):
+        if suv and surface_depasse(suv, sdp or 0.0):
             # LOT O 2 / LOT P — affiche les DEUX valeurs avec assez de décimales (règle unique).
             if sdp:
                 _suv_txt, _sdp_num = fmt_surfaces_paire(suv, sdp)
