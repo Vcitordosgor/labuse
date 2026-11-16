@@ -48,10 +48,13 @@ def test_k2d_tva_invalide_bloque():
     from labuse.bilan.moteur import EntreesBilan, Produit, Programme, SaisiePoste
     ws = classeur_bilan(EntreesBilan(programme=Programme(terrain=1000),
                                      produits=[Produit("P", 1, 55.0, 4500.0, 0.085)], postes={}), None, "t").active
-    # la formule CA HT (division par 1+TVA) dit « saisie invalide » quand la TVA sort de [0, 1].
+    # la formule CA HT par produit (division par 1+TVA) teste les bornes de TVA : « saisie invalide »
+    # quand la TVA sort de [0, 1] (on cible la cellule qui porte le test de bornes `E..<0` ET `E..>1`,
+    # pas les lignes de postes à TVA littérale que LOT N enveloppe aussi de « saisie invalide »).
     ca_ht = [c.value for row in ws.iter_rows() for c in row
-             if isinstance(c.value, str) and "saisie invalide" in c.value and "/(1+" in c.value]
-    assert ca_ht and all(">1" in f and "<0" in f for f in ca_ht)
+             if isinstance(c.value, str) and "saisie invalide" in c.value and "/(1+" in c.value
+             and ">1" in c.value]
+    assert ca_ht and all("<0" in f for f in ca_ht)
     dvs = list(ws.data_validations.dataValidation)
     assert any(d.operator == "between" and d.formula1 == "0" and d.formula2 == "1" for d in dvs)
 

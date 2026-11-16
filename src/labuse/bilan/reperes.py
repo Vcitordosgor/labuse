@@ -131,7 +131,8 @@ def sources_parcelle(db: Session, idu: str) -> dict[str, Any]:
 
 def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
                     postes_saisis: set[str] | None = None,
-                    programme_saisi: bool = True) -> dict[str, Any]:
+                    programme_saisi: bool = True,
+                    suv_saisie: float | None = None) -> dict[str, Any]:
     """CHIRURGICAL-FIX-1 (LOT K 2b / LOT L 2 / LOT M 3) — le GARDE-FOU en tête du Bilan. Un Bilan chiffre
     un programme ; s'il contredit ce que le Dossier retient, on le dit EN TÊTE, avec le motif :
       · parcelle non constructible / habitat interdit → motif de la fiche, et AUCUNE « surface à retenir »
@@ -166,6 +167,19 @@ def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
     if motif_nc:
         sar_val = None
         terrain_libere = False
+    # LOT N 3 — la capacité « bâti conservé » du Dossier (SDP résiduelle, §3) : IS0448 = 0 m² en l'état,
+    # ~85 m² en terrain libéré. Le bandeau « Aucun programme » reprend CETTE distinction (jamais un faux
+    # « aucune capacité à bâtir »).
+    cap_batie_conservee = None
+    if not motif_nc:
+        try:
+            pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+            if pid:
+                cap_batie_conservee = db.execute(text(
+                    "SELECT sdp_residuelle_m2 FROM parcel_residuel WHERE parcel_id = :p"), {"p": pid}).scalar()
+        except Exception:  # noqa: BLE001 — lecture annexe, jamais bloquante
+            cap_batie_conservee = None
+    cap_terrain_libere = sar_val if terrain_libere else None
     alertes: list[str] = []
     if motif_nc:
         alertes.append(motif_nc)
@@ -180,9 +194,42 @@ def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
         alertes.append(
             f"La surface de plancher saisie ({round(sdp_saisie)} m²) dépasse la surface à retenir du "
             f"Dossier ({round(sar_val)} m²).")
+    # LOT N 2 — COHÉRENCE surface vendable / surface de plancher, dans le garde-fou → affichée DANS LE
+    # PDF **et** dans l'Excel (bandeau), comme à l'écran. Comparaison sur les DÉCIMALES (pas d'arrondi :
+    # 595,1 > 595 alerte) ; une surface vendable positive avec une SDP nulle ou vide est aussi incohérente.
+    if (isinstance(suv_saisie, (int, float)) and suv_saisie > 0
+            and suv_saisie > (sdp_saisie if isinstance(sdp_saisie, (int, float)) else 0.0)):
+        _sdp_txt = f"{round(sdp_saisie)} m²" if isinstance(sdp_saisie, (int, float)) and sdp_saisie else "nulle / non renseignée"
+        alertes.append(
+            f"Surface vendable ({round(suv_saisie)} m²) supérieure à la surface de plancher "
+            f"({_sdp_txt}) — incohérent (le chiffre d'affaires est surestimé).")
     return {"alertes": alertes, "surface_a_retenir": sar_val, "terrain_libere": terrain_libere,
             "non_constructible": bool(motif_nc), "sdp_saisie": sdp_saisie,
-            "programme_saisi": programme_saisi}
+            "programme_saisi": programme_saisi,
+            "capacite_batie_conservee_m2": cap_batie_conservee, "capacite_terrain_libere_m2": cap_terrain_libere}
+
+
+def bandeau_sans_programme(gf: dict[str, Any]) -> tuple[str, str]:
+    """CHIRURGICAL-FIX-1 (LOT N 3) — titre + texte du bandeau d'un Bilan livré SANS programme, PARTAGÉ
+    par le PDF et l'Excel. Il reprend la DISTINCTION du Dossier (0 m² bâti conservé / ~85 m² terrain
+    libéré sur IS0448) au lieu d'un faux « aucune capacité à bâtir »."""
+    titre = "Aucun programme — parcelle écartée par LABUSE"
+    base = ("Aucun programme n'a été saisi : ce bilan ne porte que les repères de la parcelle "
+            "(terrain, taxes).")
+    cons = gf.get("capacite_batie_conservee_m2")
+    libere = gf.get("capacite_terrain_libere_m2")
+    if gf.get("non_constructible"):
+        capacite = "LABUSE n'y retient aucune capacité résidentielle"
+    elif isinstance(libere, (int, float)) and libere:
+        # le Dossier distingue le bâti conservé (SDP résiduelle, souvent 0) et le terrain libéré.
+        capacite = (f"Le Dossier distingue {round(cons) if isinstance(cons, (int, float)) else 0} m² en "
+                    f"l'état (bâti conservé) et ~{round(libere)} m² estimés en terrain libéré (démolition)")
+    elif isinstance(cons, (int, float)):
+        capacite = f"Le Dossier retient {round(cons)} m² (bâti conservé)"
+    else:
+        capacite = "LABUSE n'y retient pas de capacité à bâtir exploitable"
+    bas = f"{base} {capacite} — le résultat reste « non calculable »."
+    return titre, bas
 
 
 def _emprise_batie(db: Session, idu: str) -> float | None:

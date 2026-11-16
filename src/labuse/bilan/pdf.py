@@ -189,9 +189,9 @@ def _bandeau_garde_fou(garde_fou: dict | None) -> str:
         bas = ("Ce bilan chiffre un programme SAISI par l'utilisateur ; il ne vaut pas pour acquis que "
                "la parcelle l'autorise. Les chiffres ci-dessous découlent de cette saisie.")
     else:
-        titre = "Aucun programme — parcelle écartée par LABUSE"
-        bas = ("Aucun programme n'a été saisi : ce bilan ne porte que les repères de la parcelle (terrain, "
-               "taxes). LABUSE n'y retient aucune capacité à bâtir — le résultat reste « non calculable ».")
+        # CHIRURGICAL-FIX-1 (LOT N 3) — texte PARTAGÉ avec l'Excel, qui reprend la distinction du Dossier.
+        from .reperes import bandeau_sans_programme
+        titre, bas = bandeau_sans_programme(gf)
     return (
         '<div class="gardefou" style="border:1.5px solid #b45309;background:#fff7ed;border-radius:6px;'
         'padding:10px 12px;margin:8px 0;color:#7c2d12">'

@@ -67,7 +67,11 @@ def classeur_bilan(
     # retenir » devient une FORMULE VIVANTE (ligne 3) qui réagit quand on change la surface de plancher.
     _gf = garde_fou or {}
     _sar = _gf.get("surface_a_retenir")
-    _gf_statiques = [a for a in (_gf.get("alertes") or []) if "dépasse la surface à retenir" not in a]
+    # LOT L 2 / LOT N 2 — les alertes qui ont une FORMULE VIVANTE dans la feuille (surface à retenir,
+    # surface vendable > surface de plancher) ne sont pas répétées en texte figé dans le bandeau A2.
+    _gf_statiques = [a for a in (_gf.get("alertes") or [])
+                     if "dépasse la surface à retenir" not in a
+                     and "supérieure à la surface de plancher" not in a]
     if _gf_statiques:
         # CHIRURGICAL-FIX-1 (LOT M 3) — même libellé que le PDF : « Aucun programme » quand le Bilan est
         # livré sans programme (parcelle écartée), « Programme saisi » quand l'utilisateur en a saisi un.
@@ -75,8 +79,10 @@ def classeur_bilan(
             _txt = ("Programme saisi — non vérifié par LABUSE : " + " ; ".join(_gf_statiques)
                     + " Les chiffres ci-dessous découlent de cette saisie.")
         else:
-            _txt = ("Aucun programme — parcelle écartée par LABUSE : " + " ; ".join(_gf_statiques)
-                    + " LABUSE n'y retient aucune capacité à bâtir ; le résultat reste « non calculable ».")
+            # CHIRURGICAL-FIX-1 (LOT N 3) — même texte que le PDF (reprend la distinction du Dossier).
+            from .reperes import bandeau_sans_programme
+            _titre, _bas = bandeau_sans_programme(_gf)
+            _txt = f"{_titre} : " + (" ; ".join(_gf_statiques) + " " if _gf_statiques else "") + _bas
         c = ws.cell(2, 1, _txt)
         c.font = Font(bold=True, color="7C2D12")
         c.fill = PatternFill("solid", fgColor="FFF7ED")
@@ -405,7 +411,10 @@ def classeur_bilan(
         # surface vendable (habitable) ne peut PAS dépasser la surface de plancher. Doubler la SUV
         # (donc le CA) sans rapport avec la SDP déclenche désormais l'avertissement (réagit à la saisie).
         if lib == "Surface vendable":
-            wc = ws.cell(rr, 6, f'=IF(AND({cell_suv}>0,{cell_sdp}>0,{cell_suv}>{cell_sdp}),'
+            # LOT N 2 — alerte si surface vendable > surface de plancher (sur les DÉCIMALES, sans
+            # arrondi) OU si la surface vendable est positive alors que la SDP est nulle / vide.
+            wc = ws.cell(rr, 6, f'=IF(AND({cell_suv}>0,OR({cell_sdp}=0,ISBLANK({cell_sdp}),'
+                                f'{cell_suv}>{cell_sdp})),'
                                 f'"⚠ surface vendable > surface de plancher — à vérifier","")')
             wc.font = Font(bold=True, color="B45309")
 
@@ -444,13 +453,32 @@ def classeur_bilan(
         for coord in dict.fromkeys(tva_cells):
             dvt.add(coord)
 
-    # CHIRURGICAL-FIX-1 (LOT L 3) — la cellule de VALIDITÉ unique : « saisie invalide » dès qu'un coût
-    # (cellule de saisie) est négatif ou qu'une TVA sort de [0, 1]. Lue par résultat / marge / cash-flow
-    # / ratios — une seule source de vérité, pas un test répété par ligne.
-    _vchecks = [f"{c}<0" for c in dict.fromkeys(saisie_cells)]
-    _vchecks += [f"{t}<0" for t in dict.fromkeys(tva_cells)] + [f"{t}>1" for t in dict.fromkeys(tva_cells)]
-    ws[cell_valid] = (f'=IF(OR({",".join(_vchecks)}),"saisie invalide","")' if _vchecks else "")
+    # CHIRURGICAL-FIX-1 (LOT L 3 / LOT N 1) — la cellule de VALIDITÉ unique. RÈGLE : chaque case de saisie
+    # doit être VIDE **ou** un NOMBRE dans ses bornes. Un TEXTE (« n/a » collé dans un coût) n'est pas un
+    # nombre → invalide ; un coût < 0 ou une TVA hors [0, 1] → invalide. Dès qu'UNE case est fausse,
+    # TOUTES les cases calculées liront « saisie invalide » (cf. l'enveloppe de validité ci-dessous).
+    _checks = [f'AND(NOT(ISBLANK({c})),OR(NOT(ISNUMBER({c})),{c}<0))' for c in dict.fromkeys(saisie_cells)]
+    _checks += [f'AND(NOT(ISBLANK({t})),OR(NOT(ISNUMBER({t})),{t}<0,{t}>1))' for t in dict.fromkeys(tva_cells)]
+    ws[cell_valid] = (f'=IF(OR({",".join(_checks)}),"saisie invalide","")' if _checks else "")
     ws[cell_valid].font = Font(color="B45309")
+
+    # CHIRURGICAL-FIX-1 (LOT N 1) — ENVELOPPE DE VALIDITÉ sur TOUTES les cases calculées : chaque formule
+    # (ligne, sous-total, total, CA TTC/HT, ratio, résultat) devient `=IF(validité, "saisie invalide", …)`.
+    # Excel court-circuite le IF → quand une saisie est invalide, le calcul N'EST PAS tenté (jamais de
+    # #VALUE! ni de chiffre faux) ; sur une saisie valide, la cellule calcule normalement. On saute la
+    # cellule de validité elle-même et les ALERTES vivantes (ce ne sont pas des cases calculées).
+    _ALERTES = ("surface vendable > surface de plancher", "dépasse la surface à retenir")
+    _gate_prefixe = f'=IF({cell_valid}<>"",'
+    for row in ws.iter_rows():
+        for c in row:
+            v = c.value
+            if not (isinstance(v, str) and v.startswith("=")):
+                continue
+            if c.coordinate == cell_valid or any(a in v for a in _ALERTES):
+                continue
+            if v.startswith(_gate_prefixe):     # déjà enveloppée (ratios, synthèse via _si_valide)
+                continue
+            c.value = f'{_gate_prefixe}"saisie invalide",{v[1:]})'
 
     return wb
 
@@ -475,7 +503,8 @@ def _iferror(a, b):
 
 
 _FNS = {"IF": lambda c, a, b: a if c else b, "AND": lambda *x: all(x), "OR": lambda *x: any(x),
-        "IFERROR": _iferror, "ISTEXT": lambda x: isinstance(x, str)}
+        "IFERROR": _iferror, "ISTEXT": lambda x: isinstance(x, str), "NOT": lambda x: not x,
+        "ISNUMBER": lambda x: isinstance(x, (int, float)) and not isinstance(x, bool)}
 
 
 def _valeurs_calculees(ws) -> dict[str, object]:

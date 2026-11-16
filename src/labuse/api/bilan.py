@@ -494,7 +494,8 @@ def bilan_pdf(
     e, _pf = _entrees_servies(db, idu, corps)
     r = Moteur().calculer(e)
     _gf = _rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp, postes_saisis=set(corps.postes),
-                               programme_saisi=bool(corps.produits) or bool(corps.programme.sdp))
+                               programme_saisi=bool(corps.produits) or bool(corps.programme.sdp),
+                               suv_saisie=sum(p.suv or 0.0 for p in corps.produits))
     _refuser_si_ca_nul(r, autorise_sans_ca=bool(_gf.get("alertes")))
     # DOCS-1 — carte de situation sur la couverture du Bilan (best-effort : jamais un bloqueur).
     try:
@@ -541,7 +542,8 @@ def bilan_xlsx(
     # quand la parcelle est écartée (le classeur porte alors « non calculable » + l'avertissement).
     from ..bilan import reperes as _rep
     _gf = _rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp, postes_saisis=set(corps.postes),
-                               programme_saisi=bool(corps.produits) or bool(corps.programme.sdp))
+                               programme_saisi=bool(corps.produits) or bool(corps.programme.sdp),
+                               suv_saisie=sum(p.suv or 0.0 for p in corps.produits))
     _refuser_si_ca_nul(Moteur().calculer(e), autorise_sans_ca=bool(_gf.get("alertes")))
     octets = classeur_bilan_bytes(e, titre=f"Bilan — {idu}", garde_fou=_gf)
     return Response(

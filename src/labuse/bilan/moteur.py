@@ -487,15 +487,17 @@ class Moteur:
                     "cible": "cout_const",
                     "message": "Coût de construction inhabituel (hors 1 000–5 000 €/m² de surface vendable), à vérifier.",
                 })
-        # CHIRURGICAL-FIX-1 (LOT M 1) — COHÉRENCE surface vendable / surface de plancher : la surface
-        # vendable (habitable) ne peut PAS dépasser la surface de plancher (la SHAB est une PART de la
-        # SDP). Une SUV > SDP (ou doublée sans rapport avec la SDP) gonfle le CA → on le signale.
+        # CHIRURGICAL-FIX-1 (LOT M 1 / LOT N 2) — COHÉRENCE surface vendable / surface de plancher : la
+        # surface vendable (habitable) ne peut PAS dépasser la surface de plancher (la SHAB est une PART
+        # de la SDP). Comparaison sur les DÉCIMALES (pas d'arrondi préalable : 595,1 > 595 alerte) ; une
+        # SUV positive avec une SDP nulle ou vide est AUSSI incohérente (plancher manquant).
         sdp = programme.sdp
-        if suv and sdp and suv > sdp:
+        if suv and suv > (sdp or 0.0):
+            _sdp_txt = f"{round(sdp)} m²" if sdp else "nulle / non renseignée"
             out.append({
                 "cible": "suv_sdp",
                 "message": f"Surface vendable ({round(suv)} m²) supérieure à la surface de plancher "
-                           f"({round(sdp)} m²) — incohérent, à vérifier (le CA est surestimé).",
+                           f"({_sdp_txt}) — incohérent, à vérifier (le CA est surestimé).",
             })
         # Surface taxable très basse par rapport à la surface vendable totale
         stax = programme.surface_taxable
