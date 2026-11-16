@@ -215,6 +215,45 @@ def _entrees_servies(db: Session, idu: str, corps: "CalculIn") -> tuple[EntreesB
     return e, pf
 
 
+def _hypotheses_bilan(db: Session, idu: str, corps: "CalculIn") -> tuple[str | None, float | None]:
+    """CHIRURGICAL-FIX-1 (LOT L 4) — NOMME les hypothèses dans l'en-tête du PDF (« Chaque hypothèse
+    est nommée dans le document ») : le prix de vente (= le prix demandé des produits) et, quand la
+    surface saisie EST celle du scénario de l'Étude, « scénario de l'Étude (N lots, S m²) · prix de
+    vente = neuf VEFA <niveau> ». Rien n'est inventé : si la saisie ne correspond à aucun scénario,
+    on renvoie None et l'en-tête reste honnête (« aucune Étude reliée »)."""
+    prix = max((p.prix_ttc_m2_suv for p in corps.produits if p.prix_ttc_m2_suv), default=None)
+    sdp = corps.programme.sdp
+    if not sdp:
+        return None, prix
+    try:
+        from ..exports.etude_faisabilite import scenario_retenu
+        from ..implantation import revisions as _rev
+        from ..implantation.service import _study_id
+        cfg = {"idus": [idu], "type_projet": "collectif", "objectif": "equilibre",
+               "stationnement": "aerien", "terrain": "libere", "niveaux_sous_sol": None,
+               "programme": None, "hypotheses": None}
+        payload = _rev.charger(db, _study_id(cfg))
+        resume = (scenario_retenu(payload) or {}).get("resume") if payload else None
+    except Exception:  # noqa: BLE001 — en-tête best-effort, jamais bloquante
+        resume = None
+    if not resume or not resume.get("sdp_m2") or abs(float(resume["sdp_m2"]) - float(sdp)) > 1.0:
+        return None, prix     # la saisie n'est pas le scénario de l'Étude → en-tête honnête
+    lots = int(resume["logements"]) if resume.get("logements") else None
+    niveau = None
+    if prix:
+        try:
+            from ..ingestion.dvf_prix_neuf import resolve_prix_neuf_marche
+            pid = db.execute(text("SELECT id FROM parcels WHERE idu=:i"), {"i": idu}).scalar()
+            _, niveau, _, _ = resolve_prix_neuf_marche(db, pid) if pid else (None, None, None, None)
+        except Exception:  # noqa: BLE001
+            niveau = None
+    bout = (f"scénario de l'Étude ({lots} lots, {round(float(sdp))} m²)" if lots
+            else f"scénario de l'Étude ({round(float(sdp))} m²)")
+    if prix:
+        bout += f" · prix de vente = neuf VEFA{(' ' + niveau) if niveau else ''}"
+    return bout, prix
+
+
 def _terrain_sourcee(db: Session, idu: str) -> float | None:
     """CHIRURGICAL-FIX-1 (LOT K 2) — la surface de terrain pré-remplie = la CONTENANCE CADASTRALE de la
     parcelle (Sourcé), MÊME source pour le PDF et l'Excel. L'import de `reperes` est fait ici (il manquait
@@ -464,6 +503,9 @@ def bilan_pdf(
         _map = ""
     _prog = corps.programme.model_dump()
     _prog["terrain"] = e.programme.terrain      # la MÊME contenance que celle entrée dans le calcul
+    # CHIRURGICAL-FIX-1 (LOT L 4) — en-tête qui NOMME les hypothèses (Étude reliée + prix de vente),
+    # au lieu du « aucune Étude reliée · Prix demandé : non renseigné » figé qui contredisait le contenu.
+    _etude_reliee, _prix_demande = _hypotheses_bilan(db, idu, corps)
     octets = _pdf.construire_pdf(
         r,
         idu=idu,
@@ -473,6 +515,8 @@ def bilan_pdf(
         programme=_prog,
         calendrier=dict(corps.calendrier),
         map_html=_map,
+        etude_reliee=_etude_reliee,
+        prix_demande=_prix_demande,
         garde_fou=_gf,   # LOT K 2b / LOT L — la fiche écarte-t-elle ce programme ?
     )
     return Response(

@@ -198,6 +198,23 @@ def test_l4_export_sans_ca_autorise_seulement_si_garde_fou():
     _refuser_si_ca_nul(_R(), autorise_sans_ca=True)    # garde-fou présent → l'export est permis
 
 
+def test_l4_entete_nomme_les_hypotheses():
+    """« Chaque hypothèse est nommée dans le document » : quand l'en-tête reçoit l'Étude reliée et le
+    prix de vente, le PDF les affiche (plus le « aucune Étude reliée · non renseigné » figé). La route
+    dérive ces deux champs par `_hypotheses_bilan` et les passe au rendu."""
+    from labuse.bilan.pdf import construire_html
+    e = _fixture("AD0887")
+    html, _ = construire_html(Moteur().calculer(e), idu="97422000AD0887", jour=date(2026, 11, 16),
+                              etude_reliee="scénario de l'Étude (8 lots, 795 m²) · prix de vente = neuf VEFA commune",
+                              prix_demande=4318)
+    assert "scénario de l" in html and "Étude" in html      # apostrophe HTML-échappée
+    assert "neuf VEFA" in html and "4 318" in html
+    assert "aucune Étude reliée" not in html and "Prix demandé : non renseigné" not in html
+    b = (_SRC / "api" / "bilan.py").read_text()
+    assert "def _hypotheses_bilan(" in b
+    assert "etude_reliee=_etude_reliee" in b and "prix_demande=_prix_demande" in b
+
+
 def test_l4_programme_saisi_sur_non_constructible_est_averti():
     """Le cas « programme saisi quand même » (ce que le fichier livré ne montre PAS) : un programme posé
     sur une fiche où l'habitat est interdit sort un Bilan FRAPPÉ du garde-fou, PDF et Excel."""
