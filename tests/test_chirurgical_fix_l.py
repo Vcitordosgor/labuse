@@ -165,7 +165,8 @@ def test_l2_avertissement_sdp_est_une_formule_vivante():
                 if isinstance(c.value, str) and "dépasse la surface à retenir" in c.value
                 and "AND(" in c.value]
     assert formules, "l'avertissement SDP > surface à retenir doit être une FORMULE (pas un texte figé)"
-    assert "795" in formules[0]
+    # LOT Q — le message se construit des CELLULES (surface à retenir en I2), plus de valeur figée.
+    assert "I2" in formules[0] and "TEXT(" in formules[0]
 
 
 # ── L3 — une saisie invalide bloque TOUT, via une cellule de validité unique ─────────────────

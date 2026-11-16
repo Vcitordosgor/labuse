@@ -39,16 +39,28 @@ def _garde_fou(monkeypatch, *, sdp, sar, suv=None):
 
 
 def _excel_alertes(sdp, sar, suv):
-    """Les deux formules d'alerte de surface du classeur (texte brut, avec leurs valeurs citées)."""
+    """Les deux alertes de surface du classeur, ÉVALUÉES par le moteur de tableur indépendant
+    (`formulas`) : LOT Q — leur texte se construit DANS la formule à partir des cellules, on lit donc
+    le texte CALCULÉ (plus un gabarit figé)."""
+    from labuse.bilan.excel import classeur_bilan_bytes
+    formulas = pytest.importorskip("formulas")
+    import numpy as np
+    import tempfile
     e = EntreesBilan(programme=Programme(terrain=1703, sdp=sdp, surface_taxable=sdp),
                      produits=[Produit("Log", lots=8, suv=suv, prix_ttc_m2_suv=4318, tva=0.085)],
                      postes={"txLog": SaisiePoste(66.9, SOURCE)})
-    ws = classeur_bilan(e, garde_fou={"surface_a_retenir": sar}).active
-    sar_cell = next((c.value for row in ws.iter_rows() for c in row
-                     if isinstance(c.value, str) and "dépasse la surface à retenir" in c.value), "")
-    suv_cell = next((c.value for row in ws.iter_rows() for c in row
-                     if isinstance(c.value, str) and "supérieure à la surface de plancher" in c.value), "")
-    return sar_cell, suv_cell
+    with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+        f.write(classeur_bilan_bytes(e, garde_fou={"surface_a_retenir": sar}))
+        path = f.name
+    sol = formulas.ExcelModel().loads(path).finish().calculate()
+
+    def _txt(marqueur):
+        for _k, v in sol.items():
+            s = str(np.asarray(v.value).ravel()[0])
+            if marqueur in s:
+                return s
+        return ""
+    return _txt("dépasse la surface à retenir"), _txt("supérieure à la surface de plancher")
 
 
 # ── La règle d'affichage unique ──────────────────────────────────────────────────────────────

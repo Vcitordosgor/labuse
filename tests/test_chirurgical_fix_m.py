@@ -191,7 +191,7 @@ def test_m3_seuil_identique_pdf_et_excel():
     rep = (_SRC / "bilan" / "reperes.py").read_text()
     exc = (_SRC / "bilan" / "excel.py").read_text()
     assert "sdp_saisie > sar_val" in rep and "round(sdp_saisie)" not in rep
-    assert "{cell_sdp}>{_sar}" in exc and "{round(_sar)}" not in exc   # Excel : seuil brut (décimales)
+    assert "{cell_sdp}>{cell_sar}" in exc and "{round(_sar)}" not in exc   # Excel : seuil brut (décimales)
 
 
 def test_m3_bandeau_aucun_programme():

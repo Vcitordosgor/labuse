@@ -169,7 +169,7 @@ def test_o2_seuil_sans_arrondi_les_deux_cotes():
     exc = (_SRC / "bilan" / "excel.py").read_text()
     # aucun arrondi avant comparaison, dans aucun des deux contrôles :
     assert "sdp_saisie > sar_val" in rep and "round(sdp_saisie)" not in rep and "round(sar_val)" not in rep
-    assert "{cell_sdp}>{_sar}" in exc and "{round(_sar)}" not in exc
+    assert "{cell_sdp}>{cell_sar}" in exc and "{round(_sar)}" not in exc
 
 
 def test_o2_garde_fou_decimales_visibles(monkeypatch):
