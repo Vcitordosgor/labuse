@@ -1375,6 +1375,16 @@ def _bandeau(sec_id: str, valeurs: dict[str, Valeur]) -> str:
         if rouges:
             return (f'<div data-quoi="aleas_parcelle_liste">'
                     f'{verdict(esc(rouges[0].get("libelle") or ""), ton="warn")}</div>')
+        # CHIRURGICAL-FIX-1 (LOT K 3d) — une ZONE HUMIDE (souvent 100 % de la parcelle) est une contrainte
+        # MAJEURE même si elle n'est pas « rédhibitoire » au sens aléa : on la NOMME, avec sa part, au lieu
+        # d'un « aucun rédhibitoire » sec qui l'écrase (AD0887 : La Grande Ferme, 100 %).
+        cv = valeurs.get("contraintes_parcelle_liste")
+        humide = next((c for c in ((cv.valeur if cv else None) or [])
+                       if isinstance(c, dict)
+                       and "humide" in str((c.get("nature") or "") + (c.get("libelle") or "")).lower()), None)
+        if humide:
+            return (f'<div data-quoi="contraintes_parcelle_liste">'
+                    f'{verdict(esc(humide.get("libelle") or "Zone humide sur la parcelle"), ton="warn")}</div>')
         if av is not None:
             return f'<div data-quoi="aleas_parcelle_liste">{verdict("Aléas relevés — aucun rédhibitoire.", ton="neutral")}</div>'
         return ""
