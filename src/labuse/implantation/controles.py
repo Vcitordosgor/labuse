@@ -12,6 +12,7 @@ Deux familles :
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Optional
 
@@ -71,6 +72,8 @@ class CheckGeo:
 # ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — une place est jugée NON DÉGAGÉE si le couloir manquant devant elle
 # dépasse ce plancher (≈ allée trop courte de > 0,4 m sur la largeur de la place) ; en deçà, c'est du bruit
 # de pavage/jonction. Le contrôle échoue dès qu'une place est non dégagée (BW2635 : 13 places à 2,25 m).
+# haie paysagère au pourtour des aires de stationnement : on capte la largeur imposée (« ≥ 1,50 m »).
+_HAIE_RE = re.compile(r"haie[^0-9]*?(\d+(?:[.,]\d+)?)\s*m", re.IGNORECASE)
 _DEGAGEMENT_PLACE_FLOOR_M2 = 1.0
 _DEGAGEMENT_SEUIL_M2 = 1.0   # aire totale non dégagée au-delà de laquelle le plan échoue
 _PASSAGE_MIN_M = 2.4         # largeur mini de circulation d'une voiture ; sous ce seuil l'allée s'étrangle
@@ -490,8 +493,20 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     dans_zone = all(terrain.zone_implantation.buffer(_TOL_CONTENU).contains(b) for b in batis)
     if rv.validee and rs.validee:
         cit = " ; ".join(c for c in (rv.citation_complete, rs.citation_complete) if c)
-        out.append(ControleReg("Reculs", f"voie {rv.valeur:.0f} m · séparatives {rs.valeur:.0f} m",
-                               "bâti dans la zone d'implantation", REUSSI if dans_zone else ECHOUE, cit))
+        # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — « premier rideau » (implantation à l'alignement, ou sur les
+        # limites séparatives : Saint-Pierre Ud3.1/Ud3.2) est une règle de POSITION que ce moteur ne modélise
+        # pas : il applique un recul uniforme. « Bâti dans la zone » ne prouve donc PAS le respect du premier
+        # rideau → « Non vérifié » avec la règle citée, jamais « Reculs — Réussi ».
+        _rideau = "premier rideau" in cit.lower() or "limites séparatives et au maximum" in cit.lower()
+        if _rideau:
+            out.append(ControleReg("Reculs", f"voie {rv.valeur:.0f} m · séparatives {rs.valeur:.0f} m",
+                                   "règle de « premier rideau » (alignement / sur limites) non modélisée",
+                                   A_CONFIRMER if dans_zone else ECHOUE, cit,
+                                   detail="implantation en premier rideau (à l'alignement ou sur limites "
+                                          "séparatives) à vérifier au projet — non modélisée par ce moteur"))
+        else:
+            out.append(ControleReg("Reculs", f"voie {rv.valeur:.0f} m · séparatives {rs.valeur:.0f} m",
+                                   "bâti dans la zone d'implantation", REUSSI if dans_zone else ECHOUE, cit))
     else:
         out.append(ControleReg("Reculs", "règle non validée", "bâti dans la zone", NON_EFFECTUE))
 
@@ -591,7 +606,27 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
 
     # ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — conditions NON MODÉLISABLES du barème (ex. « dont au moins 0,5 place
     # à l'extérieur des espaces privatisés ») : affichées « à vérifier », JAMAIS comptées comme satisfaites.
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — la HAIE paysagère au pourtour des aires de stationnement EST
+    # mesurable : on confronte la distance aire de stationnement ↔ bâti à la largeur imposée (ex. Saint-Pierre
+    # Ud6 : 1,50 m). En deçà, c'est un ÉCHEC MESURÉ du plan (le pourtour ne tient pas la haie), pas un « à
+    # vérifier » (HT0538 : 1,39 m < 1,50 m). La « voie piétonne » exigée EN PLUS ne ferait que durcir le seuil.
+    _places_g = [o.geom_world for o in scene.of("place")]
+    _allees_g = [o.geom_world for o in scene.of("allee")]
+    _parking = unary_union(_places_g + _allees_g) if (_places_g or _allees_g) else None
+    _bati_g = unary_union(batis) if batis else None
     for cond in (getattr(cap, "stationnement_conditions", ()) or ()):
+        _m = _HAIE_RE.search(cond)
+        if (_m and _parking is not None and not _parking.is_empty
+                and _bati_g is not None and not _bati_g.is_empty):
+            req = float(_m.group(1).replace(",", "."))
+            d = _parking.distance(_bati_g)
+            ok = d >= req - 0.01
+            out.append(ControleReg(
+                "Stationnement — haie paysagère", f"≥ {_fr(req)} m entre l'aire de stationnement et le bâti",
+                f"{_fr(round(d, 2))} m mesuré", REUSSI if ok else ECHOUE,
+                b.citation_complete if b.validee else None,
+                detail="haie paysagère (+ voie piétonne) au pourtour des aires de stationnement — mesuré au plan"))
+            continue
         out.append(ControleReg("Stationnement — condition à vérifier", cond, "non modélisé",
                                A_CONFIRMER, b.citation_complete if b.validee else None,
                                detail="condition du barème non vérifiable par ce moteur — à confirmer au projet"))

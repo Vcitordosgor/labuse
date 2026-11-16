@@ -86,11 +86,13 @@ def test_non_bati_garde_la_formulation_surface_a_retenir():
 # ── Garde-fou : un seul « surface à retenir » par parcelle, TOUS les documents (C6/C9) ───────────
 @pytest.mark.reel
 @pytest.mark.parametrize("idu, valeur_attendue, source_attendue", [
-    ("97416000HT0538", 614, GRANDEUR_ESTIMATION),   # stationnement non ingéré → estimation (888 non retenu)
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — le dégagement d'allée désormais DUR réduit l'esquisse (allées
+    # de 5 m au droit des places) : HT0538 passe de 888 à 450 m² (< estimation 614 → on retient l'esquisse,
+    # la plus petite), BW2635 de 2 625 à 360 m² (scénario « votre programme » 4 logements). On teste donc la
+    # CONSISTANCE (même surface partout) sur les valeurs à jour.
+    ("97416000HT0538", 450, GRANDEUR_ESQUISSE),     # esquisse dégagée (450) < estimation (614) → esquisse
     ("97422000AD0887", 795, GRANDEUR_SCENARIO),     # stationnement déduit → scénario (jamais 1 047 nu)
-    # CHIRURGICAL-FIX-1 (LOT E) — BW2635 (copropriété bâtie) : Dossier et Étude retiennent 2 625 (esquisse),
-    # JAMAIS 3 317 (estimation rapide, > parcelle). Avant le fix du study_id, le Dossier retombait sur 3 317.
-    ("97422000BW2635", 2625, GRANDEUR_ESQUISSE),
+    ("97422000BW2635", 360, GRANDEUR_ESQUISSE),     # esquisse (votre scénario 4 logts) < estimation 3 317
 ])
 def test_un_seul_surface_a_retenir_tous_documents(session_reelle, idu, valeur_attendue, source_attendue):
     """Dossier (scénario PERSISTÉ), Étude (scénario LIVE) ET Comparatif (compare()) doivent produire LA

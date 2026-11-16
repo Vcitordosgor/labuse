@@ -123,7 +123,12 @@ def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition
     checks = ctrl_mod.verifier_geometrie(scene, terrain, conv, cap, regles)
     controles = ctrl_mod.controles_reglementaires(scene, terrain, conv, cap, regles)
     geo_ok = ctrl_mod.geometrie_valide(checks)
-    sans_echec = not any(c.resultat == ctrl_mod.ECHOUE for c in controles)
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — l'ÉCHEC de HAIE paysagère (aire de stationnement trop proche du
+    # bâti) est un défaut d'AMÉNAGEMENT du pourtour, pas une impossibilité d'implantation : on le MONTRE en
+    # échec mesuré (rouge) sur le scénario dessiné, sans annuler la capacité (comme le contrôle de comptage du
+    # stationnement). Le verdict global le répercute (jamais « Exploitable » avec une haie en échec).
+    _HAIE_NOM = "Stationnement — haie paysagère"
+    sans_echec = not any(c.resultat == ctrl_mod.ECHOUE and c.nom != _HAIE_NOM for c in controles)
     faisable = geo_ok and sans_echec
     # ETUDE-V6-2 (Lot 2) — faisable si l'on RETIRE le stationnement : on lève les DEUX contrôles que les
     # places consomment — « Stationnement » (comptage) ET « Perméabilité (pleine terre) » (le parking

@@ -292,7 +292,11 @@ class BaremeStationnement:
         n = len(modules)
         sdp_tot = (float(sdp_total) if sdp_total is not None
                    else sum(float(getattr(m, "surface_m2", 0.0)) for m in modules))
-        conditions = list(self.conditions)
+        # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — une condition propre aux LOTISSEMENTS d'habitat individuel
+        # (ex. Saint-Pierre Ud6 : « 0,5 place par parcelle … pour les lotissements d'habitat individuel »)
+        # ne s'applique PAS à un programme COLLECTIF : on ne l'affiche que pour un lotissement.
+        conditions = [c for c in self.conditions
+                      if not ("lotissement" in c.lower() and destination != "lotissement")]
         # Règle permanente #2 — colonne « places intégrées à la construction » : au-delà du seuil de SDP, une
         # part des places doit être BÂTIE (plein air exclu). Affichée en CONDITION (bloquante) à vérifier.
         if self.integ_pct and self.integ_seuil_m2 is not None and sdp_tot > self.integ_seuil_m2 + 1e-6:
