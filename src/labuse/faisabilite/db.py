@@ -1375,6 +1375,50 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 f"Terrain exigu confirmé (EXIGU-FIX-1) : plus grand morceau net ~{rex['net_m2']:.0f} m², "
                 f"largeur ~{rex['net_larg']:.1f} m — sous le seuil constructible (preuve géométrique).")
 
+    # MOTEUR-VERITE-FIX-6 LOT 6 — « TROP EXIGU » VEUT DIRE QUE RIEN NE TIENT. Un refus pour
+    # terrain exigu se prononce avec le scénario le PLUS FAVORABLE que le règlement permet :
+    # R+1, le retrait MINIMAL de l'article (le minimum fixe, ou la formule relative à un seul
+    # niveau). Si une emprise minimale tient dans ce scénario, le terrain n'est PAS exigu. La
+    # RÉFÉRENCE PRUDENTE (faîtage) sert à ne pas SURESTIMER un chiffre, jamais à REFUSER :
+    # Sainte-Marie UA/UAz sans façade établie se voyaient appliquer 9 m prudents → assiette vide
+    # → faux « terrain exigu » (455 cas), alors qu'au recul minimal (3 m) l'emprise tient.
+    # Ne s'applique qu'au vidage GÉOMÉTRIQUE par les reculs (jamais rouge / portion / ER-EBC).
+    if (emprise < SEUIL_EXIGU_M2
+            and str(vide_raison or "") in ("reculs", "a_verifier", "portion_reduite")):
+        # scénario FAVORABLE : inset uniforme au recul MINIMAL de l'article (clippé à la portion
+        # U/AU), R+1. Testé MÊME quand le recul minimal égale le recul servi : le vidage peut
+        # venir du gabarit PAR CÔTÉ (recul voie + découpe) qui s'effondre là où l'inset uniforme
+        # au minimum tient (La Possession UAv, Sainte-Marie UA à cheval) — ce n'est pas un terrain
+        # exigu. L'inset uniforme (jamais effondré) borne BAS le favorable réel (limite comprise).
+        _min_recul = (float(rules.recul_limites_sep_m)
+                      if isinstance(rules.recul_limites_sep_m, (int, float))
+                      else float(hyp.recul_limites_defaut_m))
+        if _min_recul is not None:
+            try:
+                _fav = dict(args); _fav["d"] = _min_recul
+                _frow = session.execute(_EMPRISE, _fav).one()
+                _ffull = float(_frow.full_area or 0.0)
+                _fuau = float(_frow.uau_area) if _frow.uau_area is not None else None
+                _emp_fav = (_ffull if _fuau is None else min(_ffull, _fuau)) * k_cont
+            except Exception:  # noqa: BLE001 — mesure indisponible : on garde le verdict exigu
+                _emp_fav = 0.0
+            if _emp_fav >= SEUIL_EXIGU_M2:
+                # pas exigu : au recul prudent l'assiette se vide, mais le scénario favorable tient.
+                # Le chiffre prudent étant nul (≈ 0), on sert « capacité à vérifier » — jamais un
+                # refus, et sans surestimer (la référence prudente ne chiffre pas de hausse).
+                from .engine import faisabilite_capacite_a_verifier
+                ctx.contraintes.libelles.append(
+                    f"Non exigu : au recul prudent ({recul:g} m) l'assiette se vide, mais le "
+                    f"scénario favorable du règlement (R+1, recul minimal {_min_recul:g} m) laisse "
+                    f"~{_emp_fav:.0f} m² d'emprise — le terrain n'est pas trop exigu.")
+                return ctx, faisabilite_capacite_a_verifier(
+                    ctx.zone,
+                    "Constructible — capacité à vérifier : le scénario favorable du règlement "
+                    f"(R+1, recul minimal {_min_recul:g} m) laisse une emprise, mais la référence "
+                    "prudente (hauteur maximale) vide l'assiette au recul servi — capacité non "
+                    "chiffrée (prudente), à confirmer. Ce n'est pas un terrain exigu.",
+                    f"Scénario favorable (recul {_min_recul:g} m) tient : pas exigu, à vérifier.")
+
     # Surface au sol servant aux plafonds CES/pleine terre : la seule portion U/AU (à cheval).
     # RESIDUEL-1 — inconditionnel (chemin unique).
     surface_assiette = ctx.surface_m2

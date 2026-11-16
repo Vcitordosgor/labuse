@@ -869,3 +869,49 @@ où le gabarit par côté est plus strict que l'inset uniforme de main ; compté
 
 La règle est posée : une garde qui exprime un doute (accès, littoral) retire le chiffre
 SEULEMENT quand aucune assiette ne peut être établie ; sinon elle ajoute une réserve.
+
+## LOT 6 — « trop exigu » veut dire que rien ne tient
+
+Ce chantier est né des faux « terrain trop exigu » ; on ne peut pas en créer. Un refus pour
+terrain exigu se prononce désormais avec le SCÉNARIO LE PLUS FAVORABLE que le règlement permet
+(R+1, retrait MINIMAL de l'article — le minimum fixe, ou la formule relative à un seul niveau).
+Si une emprise minimale tient dans ce scénario, le terrain n'est PAS exigu : le chiffre prudent
+est servi s'il est positif, sinon « constructible, capacité à vérifier », jamais un refus. La
+référence prudente (hauteur maximale) sert à ne pas SURESTIMER un chiffre, jamais à REFUSER.
+
+**Les 768 refus introduits par la branche (main chiffrait) — tous `terrain_exigu`, 0 motif
+réglementaire.** Par commune : Sainte-Marie 455, Bras-Panon 145, La Possession 88, Saint-Denis
+20, La Plaine 17, Saint-Joseph 14, Salazie 12, autres < 5. Cause unique : au recul PRUDENT
+(faîtage, ex. 9 m en Sainte-Marie UA sans façade établie) l'assiette se vide ; au recul MINIMAL
+de l'article (3 m) elle tient.
+
+Correction : avant de refuser pour reculs (vidage GÉOMÉTRIQUE seul — jamais rouge, portion U/AU
+ou ER/EBC), on teste l'emprise à l'inset au recul minimal. Si elle atteint le seuil, le verdict
+devient « constructible, capacité à vérifier » (le chiffre prudent étant nul au recul servi),
+jamais un refus. Sur un échantillon de 150 des 768 : ~77 % passent à « à vérifier », ~23 %
+restent refus — ces derniers sont des refus RÉGLEMENTAIRES (PPR rouge dominant corrigé par le
+test rouge∩PLU du LOT 2 — main sur-servait, ex. AD0982 72 % rouge) ou des terrains
+GÉNUINEMENT exigus (l'assiette se vide même au recul minimal). Les verdicts réglementaires et
+les vrais exigus sont conservés (CG0875 92 m², AC1634 habitat interdit).
+
+**Nouveau décompte sur l'île** (21 467 parcelles, vs origin/main `049dbcf7f`) :
+
+- **Hausses : 6 587** (hors zone autorisée : 2 — les dérives de chemin géométrique AW0302 +2,
+  AK1159 +28, effet de règle nul, déjà documentées) ; **0 hausse RÈGLE hors zone**.
+- **Baisses : 2 930 ; inchangées : 7 560 ; refus : 2 469 ; vraies « à vérifier » : 1 921.**
+- **REFUS INTRODUITS par la branche (main chiffrait → branche refuse) : 174** — contre **768**
+  avant LOT 6 (−594). Répartition par MÉCANISME réel :
+  - **172 PPR rouge / hors-rouge** (réglementaire) — la correction rouge ∩ PLU du LOT 2 : main
+    sur-servait une capacité sur une parcelle couverte/enclavée par le rouge ;
+  - **1 emplacement réservé** (réglementaire) ;
+  - **1 SEUL non réglementaire** : **AO0709** (Le Port Ud, main 176 m²) — l'implantation Ud est
+    « en limite séparative et/ou suivant l'alignement des constructions limitrophes » (art. Ud 5),
+    modélisée PRUDEMMENT depuis le LOT 5 (pour ne pas servir un recul 0 partout) ; le retrait
+    séparatif de 3 m vide l'assiette alors que main assumait la limite. C'est un compromis de
+    modélisation d'une zone à implantation en limite/alignement, pas un faux « terrain exigu »
+    générique.
+
+La règle est appliquée : un refus pour terrain exigu se prononce avec le scénario le plus
+favorable (R+1, recul minimal, clippé à la portion U/AU), testé même quand le gabarit par côté
+s'effondre là où l'inset uniforme tient. **Plus aucun faux « terrain trop exigu » introduit par
+la branche hors motif réglementaire, à l'exception d'AO0709 (compromis Le Port Ud).**

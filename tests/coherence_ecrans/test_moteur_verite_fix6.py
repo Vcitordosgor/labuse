@@ -105,3 +105,24 @@ def test_lot5_littoral_chiffre_sur_part_hors_bande(app_session):
     assert any("trait de côte" in a.lower() and "hors bande" in a.lower()
                for a in (f.avertissements or [])), \
         "BM0052 : chiffre littoral sans la réserve hors-bande"
+
+
+# LOT 6 — « trop exigu » veut dire que rien ne tient dans le scénario le plus favorable.
+def test_lot6_faux_exigu_devient_a_verifier(app_session):
+    """Sainte-Marie UA sans façade établie : le recul PRUDENT (9 m) vide l'assiette, mais le
+    scénario FAVORABLE (R+1, recul minimal 3 m) laisse une emprise → pas exigu. Le verdict est
+    « constructible, capacité à vérifier », jamais un refus (AD0280, main chiffrait 168 m²)."""
+    for idu in ("97418000AD0280", "97418000AT0539", "97418000AT0493"):
+        f = _res(app_session, idu)
+        assert f.constructible is True, f"{idu} : faux terrain exigu (refus) persiste"
+        assert (f.cause or "") != "terrain_exigu"
+
+
+def test_lot6_vrai_exigu_et_refus_reglementaire_restent(app_session):
+    """Un terrain où le scénario favorable (recul minimal) vide AUSSI l'assiette reste exigu ;
+    un refus réglementaire reste un refus (la référence prudente ne crée pas le refus, mais ne
+    le lève pas non plus)."""
+    f = _res(app_session, "97413000CG0875")   # 92 m², vide même au recul minimal
+    assert f.constructible is False and f.cause == "terrain_exigu"
+    f = _res(app_session, "97418000AC1634")   # habitat interdit
+    assert f.constructible is False and f.cause == "habitat_interdit"
