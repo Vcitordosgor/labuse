@@ -383,6 +383,13 @@ zones:
           page_pdf: 91
           citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 30 % minimum avec au moins 20 % de la superficie de l’unité foncière en espace planté de pleine terre,
           statut: valide
+      biotope:
+        pct:
+          pct: 30.0
+          article: Ud5.1
+          page_pdf: 91
+          citation: Pour les unités foncières de plus de 250 m², le coefficient de Biotope est de 30 % minimum avec au moins 20 % de la superficie de l’unité foncière en espace planté de pleine terre,
+          statut: valide
       prospect:
         article: Ud3.5
         page_pdf: 85

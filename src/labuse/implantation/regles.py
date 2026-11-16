@@ -570,6 +570,11 @@ class ReglesZone:
     # ETUDE-STATIONNEMENT-FIX-1 — règle de hauteur PRÈS DES LIMITES (ex. Le Tampon Ua10.3, bande de 3,60 m)
     # que le moteur ne sait pas chiffrer : existe → contrôle « Non vérifié », jamais absente.
     hauteur_bande_limite: Optional[dict] = None
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — Coefficient de Biotope (CBS) : exigence de sol DISTINCTE de la
+    # pleine terre (ex. Saint-Pierre Ud5.1 : CBS 30 % AVEC au moins 20 % de pleine terre). Le CBS est une
+    # somme PONDÉRÉE de surfaces (toitures végétalisées, dalle plantée…) que ce moteur ne calcule pas → il
+    # l'affiche en exigence SÉPARÉE « à vérifier », jamais fondue dans la pleine terre.
+    biotope: Optional[Regle] = None
 
     @property
     def hauteur_plafond(self) -> Regle:
@@ -827,6 +832,10 @@ def charger(insee: str, zone: str) -> ReglesZone:
         recul_separatives=_leaf_val(retraits.get("limites_separatives"), "min_m",
                                     "recul sur limites séparatives", "m"),
         pleine_terre=_leaf_val(pleine.get("pct"), "pct", "pleine terre (perméabilité)", "%"),
+        # exigence de sol DISTINCTE de la pleine terre plantée : CBS (Saint-Pierre) OU espace perméable
+        # global (Le Tampon). Le libellé est porté par la config (`libelle`), défaut « coefficient de biotope ».
+        biotope=_leaf_val((reg.get("biotope") or {}).get("pct"), "pct",
+                          ((reg.get("biotope") or {}).get("pct") or {}).get("libelle") or "coefficient de biotope (CBS)", "%"),
         mixite=mixite,
         stationnement=_bareme(reg.get("stationnement") or {}),
         distance_constructions=_distance_constructions(retraits),

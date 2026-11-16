@@ -425,6 +425,14 @@ zones:
           page_pdf: 25
           citation: En secteur Uav, ces seuils sont respectivement portés à 30% et 20%.
           statut: valide
+      biotope:
+        pct:
+          pct: 30.0
+          libelle: espace perméable (minimum)
+          article: Ua13.2
+          page_pdf: 25
+          citation: En secteur Uav, ces seuils sont respectivement portés à 30% et 20%.
+          statut: valide
     renvoi: Ua
     renvoi_src: 'Chapitre Ua, p. 11 : « Il existe un secteur Uav, couvrant la zone d''habitation de densité moyenne qui se situe au cœur centre-ville. » — secteur DE la zone Ua ; les articles Ua1 et Ua2 (destinations) ne comportent aucune disposition propre au secteur Uav, qui n''apparaît qu''aux articles Ua10 (hauteurs, p. 18 : « Dans le secteur Uav, ce seuil est limité à 16 mètres… ») et Ua13 (espaces libres, p. 25 : « En secteur Uav, ces seuils sont respectivement portés à 30% et 20%. »).'
   Ub:
@@ -1353,6 +1361,14 @@ zones:
       pleine_terre:
         pct:
           pct: 30.0
+          article: Ud13.2
+          page_pdf: 69
+          citation: Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 30% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre
+          statut: valide
+      biotope:
+        pct:
+          pct: 40.0
+          libelle: espace perméable (minimum)
           article: Ud13.2
           page_pdf: 69
           citation: Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace perméable, dont une partie (au minimum 30% de la superficie totale de l’unité foncière) doit être plantée intégralement en pleine terre

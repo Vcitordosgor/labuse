@@ -529,6 +529,18 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
         out.append(ControleReg("Perméabilité (pleine terre)", "règle non validée",
                                f"{cap.pleine_terre_m2:.0f} m²", NON_EFFECTUE))
 
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — COEFFICIENT DE BIOTOPE (CBS), exigence de sol DISTINCTE de la
+    # pleine terre : c'est une somme PONDÉRÉE de surfaces éco-aménageables (toiture végétalisée, dalle
+    # plantée, pleine terre…) que ce moteur ne sait pas calculer → affichée SÉPARÉMENT « à vérifier », jamais
+    # fondue dans la perméabilité (Saint-Pierre Ud5.1 : CBS 30 % AVEC au moins 20 % de pleine terre).
+    rb = getattr(regles, "biotope", None)
+    if rb is not None and rb.validee and rb.valeur is not None:
+        _nom = (rb.nom or "coefficient de biotope (CBS)").strip()
+        out.append(ControleReg(_nom[:1].upper() + _nom[1:], f"≥ {rb.valeur:.0f} % de la surface du terrain",
+                               "non chiffré par le moteur (somme pondérée / surfaces éco-aménageables)", A_CONFIRMER,
+                               rb.citation_complete,
+                               detail="exigence de sol distincte de la pleine terre plantée — à vérifier au projet"))
+
     # ETUDE-V6-2 (Lot 3, correction §2) — ESPACES VERTS (part végétalisée du terrain, hors stationnement).
     # EV = espace libre végétalisable = pleine terre + surface sur dalle plantée (en sous-sol).
     ev = getattr(regles, "espaces_verts", None)
