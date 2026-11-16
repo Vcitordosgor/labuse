@@ -69,8 +69,14 @@ def classeur_bilan(
     _sar = _gf.get("surface_a_retenir")
     _gf_statiques = [a for a in (_gf.get("alertes") or []) if "dépasse la surface à retenir" not in a]
     if _gf_statiques:
-        _txt = ("Programme saisi — non vérifié par LABUSE : " + " ; ".join(_gf_statiques)
-                + " Les chiffres ci-dessous découlent de cette saisie.")
+        # CHIRURGICAL-FIX-1 (LOT M 3) — même libellé que le PDF : « Aucun programme » quand le Bilan est
+        # livré sans programme (parcelle écartée), « Programme saisi » quand l'utilisateur en a saisi un.
+        if _gf.get("programme_saisi", True):
+            _txt = ("Programme saisi — non vérifié par LABUSE : " + " ; ".join(_gf_statiques)
+                    + " Les chiffres ci-dessous découlent de cette saisie.")
+        else:
+            _txt = ("Aucun programme — parcelle écartée par LABUSE : " + " ; ".join(_gf_statiques)
+                    + " LABUSE n'y retient aucune capacité à bâtir ; le résultat reste « non calculable ».")
         c = ws.cell(2, 1, _txt)
         c.font = Font(bold=True, color="7C2D12")
         c.fill = PatternFill("solid", fgColor="FFF7ED")
@@ -130,6 +136,7 @@ def classeur_bilan(
         c.fill = _FOND
     r += 1
     prod_ca_ttc_cells: list[str] = []
+    prod_ht_cells: list[str] = []      # LOT M 2 — cellules CA HT par produit (peuvent porter du texte)
     tva_cells: list[str] = []          # LOT K 2 — cellules de TVA (validées 0..1 à la main)
     prod_first = r
     for p in entrees.produits:
@@ -144,7 +151,13 @@ def classeur_bilan(
         # CHIRURGICAL-FIX-1 (LOT K 2d) — une TVA de vente hors [0 %, 100 %] casse le HT (TVA = −100 %
         # → division par 0 → #DIV/0!). La formule dit « saisie invalide » au lieu de propager l'erreur ;
         # la validation Excel (plus bas) refuse déjà la saisie hors bornes.
-        ws.cell(r, 7, f'=IF(OR(E{r}<0,E{r}>1),"saisie invalide",F{r}/(1+E{r}))').number_format = _EUR  # CA HT
+        # CHIRURGICAL-FIX-1 (LOT M 2) — une TVA de vente VIDE n'est PAS 0 % : un produit qui VEND
+        # (CA TTC > 0) avec une TVA vide a un CA HT « non calculable » (on ne divise pas par 1 + 0).
+        # Hors [0 %, 100 %] → « saisie invalide ». Un produit à blanc (CA TTC = 0) reste à 0.
+        ws.cell(r, 7, f'=IF(AND(ISBLANK(E{r}),F{r}>0),"non calculable",'
+                      f'IF(OR(E{r}<0,E{r}>1),"saisie invalide",'
+                      f'IF(F{r}=0,0,F{r}/(1+E{r}))))').number_format = _EUR  # CA HT
+        prod_ht_cells.append(f"G{r}")
         prod_ca_ttc_cells.append(f"F{r}")
         r += 1
     prod_last = r - 1
@@ -159,10 +172,19 @@ def classeur_bilan(
     # On écrit 0 quand il n'y a aucun produit (plage vide) au lieu d'une somme auto-référente.
     def _somme_produits(col: str):
         return f"=SUM({col}{prod_first}:{col}{prod_last})" if prod_last >= prod_first else 0
+
+    # CHIRURGICAL-FIX-1 (LOT M 2) — le CA HT total propage le « non calculable » : on ADDITIONNE les
+    # cellules (« + », PAS SUM — SUM IGNORE le texte et rendrait 0, le bug « CA HT à zéro »). Si un
+    # produit porte « non calculable », l'addition échoue → IFERROR → « non calculable » (jamais un CA
+    # HT fabriqué sur une TVA supposée nulle).
+    def _somme_ca_ht():
+        if not prod_ht_cells:
+            return 0
+        return f'=IFERROR({"+".join(prod_ht_cells)},"non calculable")'
     ws.cell(r, 2, _somme_produits("B"))
     ws.cell(r, 3, _somme_produits("C"))
     ws.cell(r, 6, _somme_produits("F")).number_format = _EUR
-    ws.cell(r, 7, _somme_produits("G")).number_format = _EUR
+    ws.cell(r, 7, _somme_ca_ht()).number_format = _EUR
     for cc in range(1, 8):
         ws.cell(r, cc).fill = _FOND_TOT
     r += 2
@@ -306,10 +328,27 @@ def classeur_bilan(
                     c.font = _GRAS
         r += 1
 
-    ligne("Dépenses totales", d=f"={dep_ht}", e=f"={dep_tva}", f=f"=D{r}+E{r}", gras=True)
+    # CHIRURGICAL-FIX-1 (LOT L 3 / LOT M 2) — UNE SEULE cellule de VALIDITÉ (`cell_valid`, remplie en
+    # fin de feuille) : « saisie invalide » dès qu'un coût est négatif ou qu'une TVA sort de [0 %, 100 %].
+    # Toutes les formules de RÉSULTAT ET les TOTAUX (dépenses, CA) la lisent + un IFERROR : l'erreur ne
+    # reste JAMAIS sur une seule ligne et ne laisse JAMAIS passer un #VALUE! (texte collé dans un coût).
+    _inv = f'{cell_valid}<>""'
+
+    def _si_valide(formule_ok: str, err: str = "non calculable") -> str:
+        if not formule_ok.startswith("="):
+            return formule_ok
+        return f'=IF({_inv},"saisie invalide",IFERROR({formule_ok[1:]},"{err}"))'
+
+    # LOT M 2 — les TOTAUX touchés sont bloqués eux aussi (pas seulement le résultat) : une dépense
+    # négative, une TVA hors bornes qui casse le CA HT, un texte dans un coût → « saisie invalide » /
+    # « non calculable », jamais un chiffre faux ou un #VALUE! visible dans la synthèse.
+    ligne("Dépenses totales", d=_si_valide(f"={dep_ht}", "saisie invalide"),
+          e=_si_valide(f"={dep_tva}", "saisie invalide"), f=_si_valide(f"=D{r}+E{r}", "saisie invalide"),
+          gras=True)
     row_dep = r - 1
-    ligne("Chiffre d'affaires", d=f"={cell_ca_ht}", e=f"={cell_ca_ttc}-{cell_ca_ht}", f=f"={cell_ca_ttc}", gras=True)
-    ligne("TVA résiduelle", f=f"=(E{row_dep + 1}) - E{row_dep}")  # (CA TTC-HT) - dépenses TVA
+    ligne("Chiffre d'affaires", d=_si_valide(f"={cell_ca_ht}"),
+          e=_si_valide(f"={cell_ca_ttc}-{cell_ca_ht}"), f=f"={cell_ca_ttc}", gras=True)
+    ligne("TVA résiduelle", f=_si_valide(f"=(E{row_dep + 1}) - E{row_dep}"))  # (CA TTC-HT) - dépenses TVA
     row_res = r
     mod_row = ligne_poste["mod"]
     # CHIRURGICAL-FIX-1 (LOT H pt1 + LOT I 1a/1b) — formule VIVANTE (pas un texte figé, qui ne se
@@ -320,14 +359,6 @@ def classeur_bilan(
     # 1b — la marge ne divise JAMAIS par un CA nul (ventes à zéro) : sinon #DIV/0!. On la laisse vide.
     _ca = f"D{row_dep + 1}"
     _marge_vide = f"OR({_cm},{_ca}=0)"
-    # CHIRURGICAL-FIX-1 (LOT L 3) — UNE SEULE cellule de VALIDITÉ (`cell_valid`, remplie en fin de
-    # feuille) : « saisie invalide » dès qu'un coût est négatif ou qu'une TVA sort de [0 %, 100 %].
-    # Toutes les formules de RÉSULTAT (résultat, marge, cash-flow, ratios) la lisent → l'erreur ne
-    # reste pas sur une seule ligne, elle bloque TOUT.
-    _inv = f'{cell_valid}<>""'
-
-    def _si_valide(formule_ok: str) -> str:
-        return f'=IF({_inv},"saisie invalide",{formule_ok[1:]})' if formule_ok.startswith("=") else formule_ok
     ligne("Résultat net", d=_si_valide(f'=IF({_cm},"{_NON_CALCULABLE}",{_ca}-D{row_dep})'), gras=True)
     ws.cell(row_res, 5, _si_valide(f'=IF({_marge_vide},"",D{row_res}/{_ca})')).number_format = _PCT
     ws.cell(row_res, 5).font = _GRAS
@@ -345,21 +376,24 @@ def classeur_bilan(
         # ces ratios /m² de SUV sont vides tant que SUV = 0.
         ("Coût const. m² de surface vendable HT",
          _si_valide(f'=IF({cell_suv}=0,"",(D{d["constr"]}+D{d["aleaC"]})/{cell_suv})'), _EUR),
-        ("Prix moyen m² de surface vendable HT", _si_valide(f'=IF({cell_suv}=0,"",{cell_ca_ht}/{cell_suv})'), _EUR),
+        # CHIRURGICAL-FIX-1 (LOT M 2) — ces 3 ratios DÉPENDENT du CA HT : si la TVA de vente est vide, le
+        # CA HT est « non calculable » (texte) → le ratio l'est aussi (ISTEXT), des DEUX côtés (PDF/Excel).
+        ("Prix moyen m² de surface vendable HT",
+         _si_valide(f'=IF({cell_suv}=0,"",IF(ISTEXT({cell_ca_ht}),"non calculable",{cell_ca_ht}/{cell_suv}))'), _EUR),
         (
-            # CHIRURGICAL-FIX-1 (LOT J 1e) — le « net promoteur TTC » applique la TVA RÉELLE de la vente
-            # (ratio CA TTC / CA HT du programme), pas la TVA DOM par défaut : un programme vendu à 0 %
-            # (logements VEFA social…) ne doit pas être regonflé de 8,5 %. Vide si pas de SUV / de CA.
+            # CHIRURGICAL-FIX-1 (LOT J 1e / LOT M 2) — le « net promoteur TTC » applique la TVA RÉELLE de
+            # la vente (ratio CA TTC / CA HT), PAS la TVA DOM forfaitaire de 8,5 % (comme le moteur/PDF) :
+            # un programme vendu à 0 % ne doit pas être regonflé. « non calculable » si la TVA est vide.
             "Net promoteur m² de surface vendable TTC",
-            _si_valide(f'=IF(OR({cell_suv}=0,{cell_ca_ht}=0),"",'
-                       f'(({cell_ca_ht}-D{d["acte"]}-D{d["pack"]}-D{d["proc"]})/{cell_suv})*({cell_ca_ttc}/{cell_ca_ht}))'),
+            _si_valide(f'=IF({cell_suv}=0,"",IF(ISTEXT({cell_ca_ht}),"non calculable",'
+                       f'(({cell_ca_ht}-D{d["acte"]}-D{d["pack"]}-D{d["proc"]})/{cell_suv})*({cell_ca_ttc}/{cell_ca_ht})))'),
             _EUR,
         ),
         ("CA TTC programme", f"={cell_ca_ttc}", _EUR),
-        # CHIRURGICAL-FIX-1 (LOT H pt1 + LOT I 1b) — même garde VIVANTE : vide tant qu'un coût requis
-        # manque (D{row_res} porte alors le texte « non calculable ») OU quand le CA HT est nul (pas de
-        # #DIV/0!), calculée dès que les deux coûts sont saisis et qu'il y a du CA.
-        ("Renta nette / CA HT", _si_valide(f'=IF(OR({_cm},{cell_ca_ht}=0),"",D{row_res}/{cell_ca_ht})'), _PCT),
+        # CHIRURGICAL-FIX-1 (LOT H pt1 + LOT I 1b + LOT M 2) — « non calculable » si CA HT inconnu (TVA
+        # vide) ; sinon vide tant qu'un coût requis manque OU que le CA HT est nul (pas de #DIV/0!).
+        ("Renta nette / CA HT",
+         _si_valide(f'=IF(ISTEXT({cell_ca_ht}),"non calculable",IF(OR({_cm},{cell_ca_ht}=0),"",D{row_res}/{cell_ca_ht}))'), _PCT),
         ("Nombre de lots", f"={cell_lots}", '#,##0'),
     ]
     ws.cell(3, 1, "Ratios & programme").font = _GRAS
@@ -367,6 +401,13 @@ def classeur_bilan(
         rr = 4 + i
         ws.cell(rr, 1, lib)
         ws.cell(rr, 5, frm).number_format = fmt
+        # CHIRURGICAL-FIX-1 (LOT M 1) — alerte VIVANTE de COHÉRENCE à côté de la surface vendable : la
+        # surface vendable (habitable) ne peut PAS dépasser la surface de plancher. Doubler la SUV
+        # (donc le CA) sans rapport avec la SDP déclenche désormais l'avertissement (réagit à la saisie).
+        if lib == "Surface vendable":
+            wc = ws.cell(rr, 6, f'=IF(AND({cell_suv}>0,{cell_sdp}>0,{cell_suv}>{cell_sdp}),'
+                                f'"⚠ surface vendable > surface de plancher — à vérifier","")')
+            wc.font = Font(bold=True, color="B45309")
 
     ws.cell(15, 1, "Calendrier prévisionnel").font = _GRAS
     for i, etape in enumerate(cat.calendrier):
@@ -423,9 +464,18 @@ def classeur_bilan(
 import re as _re
 
 _SUM_RE = _re.compile(r"SUM\(([A-Z]+)(\d+):([A-Z]+)(\d+)\)")
+_ISBLANK_RE = _re.compile(r"ISBLANK\(([A-Z]+\d+)\)")   # LOT M 2 — cellule VIDE (≠ 0)
 _REF_RE = _re.compile(r"(?<![A-Za-z_])([A-Z]{1,3})(\d+)")
 _EQ_RE = _re.compile(r"(?<![<>=!])=(?!=)")
-_FNS = {"IF": lambda c, a, b: a if c else b, "AND": lambda *x: all(x), "OR": lambda *x: any(x)}
+
+
+def _iferror(a, b):
+    """IFERROR(a, b) — `a` est déjà évalué ici ; une valeur NaN (div/0 propagée) → `b`."""
+    return b if (isinstance(a, float) and a != a) else a
+
+
+_FNS = {"IF": lambda c, a, b: a if c else b, "AND": lambda *x: all(x), "OR": lambda *x: any(x),
+        "IFERROR": _iferror, "ISTEXT": lambda x: isinstance(x, str)}
 
 
 def _valeurs_calculees(ws) -> dict[str, object]:
@@ -453,6 +503,9 @@ def _valeurs_calculees(ws) -> dict[str, object]:
         expr = _SUM_RE.sub(
             lambda m: "(" + ("+".join(f"{m.group(1)}{r}" for r in range(int(m.group(2)), int(m.group(4)) + 1)) or "0") + ")",
             v[1:])
+        # LOT M 2 — ISBLANK(ref) AVANT la substitution des références : une cellule absente de la grille
+        # (valeur None → ex. TVA non saisie) est VIDE ; une cellule présente ne l'est pas.
+        expr = _ISBLANK_RE.sub(lambda m: repr(grille.get(m.group(1)) in (None, "")), expr)
         expr = _REF_RE.sub(lambda m: repr(ev(f"{m.group(1)}{m.group(2)}")), expr)
         expr = expr.replace("<>", "!=")       # LOT L 3 — « différent de » Excel → Python (avant « = »→« == »)
         expr = _EQ_RE.sub("==", expr)

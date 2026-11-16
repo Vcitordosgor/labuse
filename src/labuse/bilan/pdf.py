@@ -174,18 +174,27 @@ def _bandeau_garde_fou(garde_fou: dict | None) -> str:
     """CHIRURGICAL-FIX-1 (LOT K 2b) — bandeau EN TÊTE quand la fiche écarte ce que le Bilan simule
     (habitat interdit / non constructible, ou SDP saisie > capacité de la fiche). Le résultat y est
     identifié comme celui d'un PROGRAMME SAISI, non vérifié par LABUSE."""
-    alertes = (garde_fou or {}).get("alertes") or []
+    gf = garde_fou or {}
+    alertes = gf.get("alertes") or []
     if not alertes:
         return ""
     lignes = "".join(f"<li>{esc(a)}</li>" for a in alertes)
+    # CHIRURGICAL-FIX-1 (LOT M 3) — un Bilan livré SANS programme (l'outil le produit de lui-même, sur
+    # une parcelle écartée) dit « Aucun programme », PAS « Programme saisi par l'utilisateur ».
+    if gf.get("programme_saisi", True):
+        titre = "Programme saisi — non vérifié par LABUSE"
+        bas = ("Ce bilan chiffre un programme SAISI par l'utilisateur ; il ne vaut pas pour acquis que "
+               "la parcelle l'autorise. Les chiffres ci-dessous découlent de cette saisie.")
+    else:
+        titre = "Aucun programme — parcelle écartée par LABUSE"
+        bas = ("Aucun programme n'a été saisi : ce bilan ne porte que les repères de la parcelle (terrain, "
+               "taxes). LABUSE n'y retient aucune capacité à bâtir — le résultat reste « non calculable ».")
     return (
         '<div class="gardefou" style="border:1.5px solid #b45309;background:#fff7ed;border-radius:6px;'
         'padding:10px 12px;margin:8px 0;color:#7c2d12">'
-        '<div style="font-weight:700;margin-bottom:3px">Programme saisi — non vérifié par LABUSE</div>'
+        f'<div style="font-weight:700;margin-bottom:3px">{esc(titre)}</div>'
         f'<ul style="margin:4px 0 0 18px;padding:0">{lignes}</ul>'
-        '<div style="margin-top:5px;font-size:10.5px">Ce bilan chiffre un programme SAISI par '
-        'l\'utilisateur ; il ne vaut pas pour acquis que la parcelle l\'autorise. Les chiffres ci-dessous '
-        'découlent de cette saisie.</div></div>'
+        f'<div style="margin-top:5px;font-size:10.5px">{esc(bas)}</div></div>'
     )
 
 
@@ -293,9 +302,13 @@ def construire_html(
         f"<tr><td>Dépenses totales</td><td class='num'>{_eur_nz(r.depenses_ht)}</td>"
         f"<td class='num'>{_eur_nz(r.depenses_tva)}</td><td class='num'>{_eur_nz(r.depenses_ttc)}</td></tr>"
     )
+    # CHIRURGICAL-FIX-1 (LOT M 2) — TVA de vente vide → le CA HORS TAXES est « non calculable » (pas
+    # « — » ni un HT = TTC). Le CA TTC, lui, reste connu (surface vendable × prix TTC).
+    _ca_ht_txt = "non calculable" if (r.ca_ht is None and r.ca_ttc) else _eur_nz(r.ca_ht)
+    _ca_tva_txt = "non calculable" if (r.ca_tva is None and r.ca_ttc) else _eur_nz(r.ca_tva)
     corps.append(
-        f"<tr><td>Chiffre d'affaires</td><td class='num'>{_eur_nz(r.ca_ht)}</td>"
-        f"<td class='num'>{_eur_nz(r.ca_tva)}</td><td class='num'>{_eur_nz(r.ca_ttc)}</td></tr>"
+        f"<tr><td>Chiffre d'affaires</td><td class='num'>{_ca_ht_txt}</td>"
+        f"<td class='num'>{_ca_tva_txt}</td><td class='num'>{_eur_nz(r.ca_ttc)}</td></tr>"
     )
     corps.append(
         f"<tr><td>TVA résiduelle</td><td></td><td></td><td class='num'>{_eur_nz(r.tva_residuelle)}</td></tr>"
