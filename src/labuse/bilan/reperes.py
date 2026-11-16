@@ -15,6 +15,8 @@ from typing import Any, Callable, TypeVar
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .moteur import fmt_surface_seule, fmt_surfaces_paire   # LOT P — règle d'affichage unique
+
 T = TypeVar("T")
 
 
@@ -196,21 +198,27 @@ def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
             alertes.append("Coût de démolition non renseigné — les dépenses sont sous-estimées.")
     # LOT M 3 — MÊME seuil que l'Excel (`SDP > round(surface_à_retenir)`), au mètre près : plus d'écart
     # d'un mètre entre le PDF (ancien `round(sar)+1`) et le tableur.
-    # LOT O 2 — comparaison SUR LES DÉCIMALES (aucun arrondi avant comparaison : 595,1 > 595 alerte des
-    # DEUX côtés), le MÊME seuil que l'Excel ; l'alerte AFFICHE assez de décimales pour voir le dépassement.
+    # LOT O 2 / LOT P — comparaison SUR LES DÉCIMALES (aucun arrondi), le MÊME seuil que l'Excel ;
+    # l'alerte affiche les DEUX valeurs avec assez de décimales pour VOIR le dépassement (règle unique
+    # `fmt_surfaces_paire` : 595,01 contre 595, pas 595 contre 595).
     if (sdp_saisie and isinstance(sdp_saisie, (int, float)) and isinstance(sar_val, (int, float))
             and sdp_saisie > sar_val):
+        _sdp, _sar_txt = fmt_surfaces_paire(sdp_saisie, sar_val)
         alertes.append(
-            f"La surface de plancher saisie ({_dec_m2(sdp_saisie)} m²) dépasse la surface à retenir du "
-            f"Dossier ({_dec_m2(sar_val)} m²).")
-    # LOT N 2 / LOT O 2 — COHÉRENCE surface vendable / surface de plancher, dans le garde-fou → affichée
-    # DANS LE PDF **et** dans l'Excel (bandeau). Comparaison sur les DÉCIMALES (pas d'arrondi) ; une
-    # surface vendable positive avec une SDP nulle ou vide est aussi incohérente. Décimales affichées.
+            f"La surface de plancher saisie ({_sdp} m²) dépasse la surface à retenir du "
+            f"Dossier ({_sar_txt} m²).")
+    # LOT N 2 / LOT O 2 / LOT P — COHÉRENCE surface vendable / surface de plancher → PDF **et** Excel.
+    # Comparaison sur les DÉCIMALES ; les DEUX valeurs affichées (règle unique) ; SDP nulle/vide aussi
+    # incohérente.
     if (isinstance(suv_saisie, (int, float)) and suv_saisie > 0
             and suv_saisie > (sdp_saisie if isinstance(sdp_saisie, (int, float)) else 0.0)):
-        _sdp_txt = f"{_dec_m2(sdp_saisie)} m²" if isinstance(sdp_saisie, (int, float)) and sdp_saisie else "nulle / non renseignée"
+        if isinstance(sdp_saisie, (int, float)) and sdp_saisie:
+            _suv, _sdp_num = fmt_surfaces_paire(suv_saisie, sdp_saisie)
+            _sdp_txt = f"{_sdp_num} m²"
+        else:
+            _suv, _sdp_txt = fmt_surface_seule(suv_saisie), "nulle / non renseignée"
         alertes.append(
-            f"Surface vendable ({_dec_m2(suv_saisie)} m²) supérieure à la surface de plancher "
+            f"Surface vendable ({_suv} m²) supérieure à la surface de plancher "
             f"({_sdp_txt}) — incohérent (le chiffre d'affaires est surestimé).")
     return {"alertes": alertes, "surface_a_retenir": sar_val, "terrain_libere": terrain_libere,
             "non_constructible": bool(motif_nc), "sdp_saisie": sdp_saisie,

@@ -19,6 +19,33 @@ from typing import Any
 
 from .catalogue import Catalogue, Poste, charger_catalogue
 
+
+# CHIRURGICAL-FIX-1 (LOT P) — RÈGLE D'AFFICHAGE UNIQUE des surfaces d'une alerte, partagée par le PDF
+# (garde-fou, vraisemblance) et l'Excel (message cité) : autant de décimales que nécessaire pour
+# DISTINGUER les deux valeurs, AU MOINS 2 quand elles diffèrent de moins d'un m² ; virgule française,
+# zéros inutiles retirés. Ex. (595,01 ; 595) → « 595,01 » / « 595 » ; (595,02 ; 595,01) → les deux.
+def _fmt_un(x: float, d: int) -> str:
+    s = f"{float(x):.{d}f}"
+    if "." in s:
+        s = s.rstrip("0").rstrip(".")
+    return s.replace(".", ",")
+
+
+def fmt_surfaces_paire(a: float, b: float) -> tuple[str, str]:
+    fa, fb = float(a), float(b)
+    d = 0
+    while d < 6 and f"{fa:.{d}f}" == f"{fb:.{d}f}":
+        d += 1
+    if abs(fa - fb) < 1.0:
+        d = max(d, 2)   # au moins 2 décimales quand l'écart est inférieur à 1 m²
+    return _fmt_un(fa, d), _fmt_un(fb, d)
+
+
+def fmt_surface_seule(x: float) -> str:
+    """Une surface isolée (sans paire) : jusqu'à 2 décimales, zéros inutiles retirés."""
+    return _fmt_un(x, 2)
+
+
 # États d'un poste (doctrine 4).
 SOURCE = "source"
 SAISI = "saisi"
@@ -493,12 +520,15 @@ class Moteur:
         # SUV positive avec une SDP nulle ou vide est AUSSI incohérente (plancher manquant).
         sdp = programme.sdp
         if suv and suv > (sdp or 0.0):
-            # LOT O 2 — affiche les décimales (595,1 contre 595, pas 595 contre 595).
-            _d = lambda x: f"{float(x):.1f}".rstrip("0").rstrip(".").replace(".", ",")  # noqa: E731
-            _sdp_txt = f"{_d(sdp)} m²" if sdp else "nulle / non renseignée"
+            # LOT O 2 / LOT P — affiche les DEUX valeurs avec assez de décimales (règle unique).
+            if sdp:
+                _suv_txt, _sdp_num = fmt_surfaces_paire(suv, sdp)
+                _sdp_txt = f"{_sdp_num} m²"
+            else:
+                _suv_txt, _sdp_txt = fmt_surface_seule(suv), "nulle / non renseignée"
             out.append({
                 "cible": "suv_sdp",
-                "message": f"Surface vendable ({_d(suv)} m²) supérieure à la surface de plancher "
+                "message": f"Surface vendable ({_suv_txt} m²) supérieure à la surface de plancher "
                            f"({_sdp_txt}) — incohérent, à vérifier (le CA est surestimé).",
             })
         # Surface taxable très basse par rapport à la surface vendable totale

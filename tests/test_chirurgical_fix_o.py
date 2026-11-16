@@ -157,7 +157,7 @@ def test_o1_alertes_surface_gatees():
     e = EntreesBilan(programme=Programme(terrain=1703, sdp=795),
                      produits=[Produit("X", suv=572, prix_ttc_m2_suv=4000, tva=0.085)])
     ws = classeur_bilan(e, garde_fou={"surface_a_retenir": 795}).active
-    for marqueur in ("surface vendable > surface de plancher", "dépasse la surface à retenir"):
+    for marqueur in ("supérieure à la surface de plancher", "dépasse la surface à retenir"):
         cells = [c.value for row in ws.iter_rows() for c in row
                  if isinstance(c.value, str) and marqueur in c.value]
         assert cells and all(v.startswith('=IF(I1<>"",') for v in cells), marqueur

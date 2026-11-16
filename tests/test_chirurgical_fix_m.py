@@ -83,7 +83,7 @@ def test_m1_excel_alerte_suv_sdp_est_vivante():
     ws = classeur_bilan(e).active
     # LOT O 1 — l'alerte est désormais ENVELOPPÉE par la validité ; on la cherche par son contenu.
     formules = [c.value for row in ws.iter_rows() for c in row
-                if isinstance(c.value, str) and "surface vendable > surface de plancher" in c.value
+                if isinstance(c.value, str) and "supérieure à la surface de plancher" in c.value
                 and "AND(" in c.value]
     assert formules, "l'alerte surface vendable > surface de plancher doit être une FORMULE vivante"
 

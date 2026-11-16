@@ -165,7 +165,7 @@ def test_n2_excel_formule_suv_sdp_gere_sdp_vide():
                      produits=[Produit("X", suv=600, prix_ttc_m2_suv=4000, tva=0.085)])
     ws = classeur_bilan(e).active
     f = [c.value for row in ws.iter_rows() for c in row
-         if isinstance(c.value, str) and "surface vendable > surface de plancher" in c.value]
+         if isinstance(c.value, str) and "supérieure à la surface de plancher" in c.value]
     assert f and "ISBLANK" in f[0] and "=0" in f[0]      # alerte aussi si SDP nulle / vide
 
 

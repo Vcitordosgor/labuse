@@ -24,7 +24,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from .catalogue import Catalogue, assiette_unite, charger_catalogue
-from .moteur import EntreesBilan
+from .moteur import EntreesBilan, fmt_surface_seule, fmt_surfaces_paire
 
 # CHIRURGICAL-FIX-1 (LOT H pt1) — même texte que le PDF (bilan/pdf.py) quand un coût requis manque :
 # le classeur ne doit PAS afficher un résultat (= CA), 100 % de marge et un cash-flow calculés par
@@ -40,7 +40,7 @@ def _dec_m2(x: float) -> str:
 
 _EUR = '#,##0 €'
 _PCT = '0.0 %'   # DOCS-1 : les taux (TVA, marge) s'affichent « 8,5 % », jamais « 0.085 » ni « 8,50 % »
-_M2 = '#,##0 "m²"'
+_M2 = '#,##0.## "m²"'   # LOT P — les surfaces montrent leurs décimales (« 595,01 m² »), entières sinon
 _LOTS = '#,##0 "lots"'
 
 
@@ -122,12 +122,16 @@ def classeur_bilan(
     cell_sdp = f"B{r}"
     ws.cell(r, 1, "Surface de plancher (m²)")
     ws.cell(r, 2, entrees.programme.sdp)
-    # CHIRURGICAL-FIX-1 (LOT L 2 / LOT O 2) — avertissement VIVANT à côté de la SDP : compare la cellule de
-    # SDP à la surface à retenir du Dossier, SUR LES DÉCIMALES (pas d'arrondi avant comparaison : 595,1 >
-    # 595 alerte), le MÊME seuil que le PDF (garde_fou). Il réagit quand on change la surface de plancher.
+    # CHIRURGICAL-FIX-1 (LOT L 2 / LOT O 2 / LOT P) — avertissement VIVANT à côté de la SDP : compare la
+    # cellule de SDP à la surface à retenir, SUR LES DÉCIMALES (pas d'arrondi : 595,01 > 595 alerte), MÊME
+    # seuil que le PDF. Il CITE LES DEUX valeurs avec assez de décimales (règle unique `fmt_surfaces_paire`).
     if isinstance(_sar, (int, float)):
+        _sdp_c, _sar_c = (fmt_surfaces_paire(entrees.programme.sdp, _sar)
+                          if isinstance(entrees.programme.sdp, (int, float)) and entrees.programme.sdp
+                          else (fmt_surface_seule(_sar), fmt_surface_seule(_sar)))
         wf = (f'=IF(AND({cell_sdp}>0,{cell_sdp}>{_sar}),'
-              f'"⚠ dépasse la surface à retenir du Dossier ({_dec_m2(_sar)} m²) — à vérifier","")')
+              f'"⚠ surface de plancher ({_sdp_c} m²) dépasse la surface à retenir du Dossier '
+              f'({_sar_c} m²) — à vérifier","")')
         wc = ws.cell(r, 3, wf)
         wc.font = Font(bold=True, color="B45309")
     r += 1
@@ -422,11 +426,20 @@ def classeur_bilan(
         # surface vendable (habitable) ne peut PAS dépasser la surface de plancher. Doubler la SUV
         # (donc le CA) sans rapport avec la SDP déclenche désormais l'avertissement (réagit à la saisie).
         if lib == "Surface vendable":
-            # LOT N 2 — alerte si surface vendable > surface de plancher (sur les DÉCIMALES, sans
-            # arrondi) OU si la surface vendable est positive alors que la SDP est nulle / vide.
+            # LOT N 2 / LOT P — alerte si surface vendable > surface de plancher (DÉCIMALES, sans arrondi)
+            # OU si la surface vendable est positive alors que la SDP est nulle / vide. Elle CITE LES DEUX
+            # valeurs (plus « aucun chiffre ») avec assez de décimales (règle unique `fmt_surfaces_paire`).
+            _suv_tot = sum(p.suv or 0.0 for p in entrees.produits)
+            if _suv_tot and isinstance(entrees.programme.sdp, (int, float)) and entrees.programme.sdp:
+                _suv_c, _sdp_c = fmt_surfaces_paire(_suv_tot, entrees.programme.sdp)
+                _msg = (f"⚠ surface vendable ({_suv_c} m²) supérieure à la surface de plancher "
+                        f"({_sdp_c} m²) — à vérifier")
+            else:
+                _suv_c = fmt_surface_seule(_suv_tot) if _suv_tot else "saisie"
+                _msg = (f"⚠ surface vendable ({_suv_c} m²) supérieure à la surface de plancher "
+                        f"(nulle / non renseignée) — à vérifier")
             wc = ws.cell(rr, 6, f'=IF(AND({cell_suv}>0,OR({cell_sdp}=0,ISBLANK({cell_sdp}),'
-                                f'{cell_suv}>{cell_sdp})),'
-                                f'"⚠ surface vendable > surface de plancher — à vérifier","")')
+                                f'{cell_suv}>{cell_sdp})),"{_msg}","")')
             wc.font = Font(bold=True, color="B45309")
 
     ws.cell(15, 1, "Calendrier prévisionnel").font = _GRAS
