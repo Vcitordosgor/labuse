@@ -615,12 +615,13 @@ _RAYON_TCSP_M = 800
 
 
 def _ratio_l15135(sous_rayon: bool, type_projet: str = "social") -> float:
-    # ETUDE-STATIONNEMENT-FIX-3 (LOT 3) — résidences universitaires et établissements personnes âgées :
-    # L151-35 les plafonne à 0,5 place/logt QUELLE QUE SOIT la distance ; le logement aidé, lui, à 1 (0,5
-    # si < 800 m d'un TCSP). L'affiché doit coller à l'appliqué (`moteur._plafond_l151`).
+    # ETUDE-STATIONNEMENT-FIX-3/4 — univ/âgées : 0,5 place/logt (règle d'usage, pas de desserte). Logement
+    # AIDÉ : 1 /logt PAR DÉFAUT ; le 0,5 < 800 m dépend de la QUALITÉ de la desserte (non connue de LABUSE)
+    # → conditionnel, affiché « possible si desserte établie », PAS appliqué d'office. L'affiché colle à
+    # l'appliqué (`moteur._plafond_l151` : cap=0,5 univ/âgées, 1 aidé ; 0,5 aidé = `conditionnel`).
     if type_projet in ("senior", "etudiante"):
         return 0.5
-    return 0.5 if sous_rayon else 1.0
+    return 1.0
 
 
 def _tcsp_sous_rayon(session, idus: list[str]) -> tuple[bool, Optional[int]]:
@@ -725,24 +726,28 @@ def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, i
     if cat:
         # L151-35 — logement aidé / senior / résidence universitaire : au plus 1 place/logt, 0,5 si < 800 m.
         ratio = _ratio_l15135(sous_rayon, type_projet)
+        # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — plafond CONDITIONNEL de 0,5 : pour un logement aidé à moins de
+        # 800 m, le 0,5 n'est possible QUE si la qualité de la desserte est établie → affiché « possible »,
+        # jamais imposé d'office (univ/âgées : 0,5 ferme, pas de condition).
+        ratio_cond = 0.5 if (type_projet == "social" and sous_rayon) else None
         plafond = {
             "categorie": cat, "reference": "L151-35", "ratio_plafond": ratio,
+            "ratio_conditionnel": ratio_cond,
             # clé historique (lue par l'écran) conservée ; le seuil est désormais 800 m (loi 2025-1129).
             "condition_tcsp_sous_500m": sous_rayon, "rayon_tcsp_m": _RAYON_TCSP_M, "distance_tcsp_m": dist,
             "eligibilite_categorie": "À confirmer", "statut": "À confirmer",
-            # le plafond L151-35 (≤ 1/logt) vise la catégorie quelle que soit la distance ; la condition
-            # TCSP < 800 m ne concerne QUE l'abaissement à 0,5 (c'est lui qu'on chiffre en « capacité réduite »).
             "applicable_si_eligible": sous_rayon,
             "reduction_sous_500m": sous_rayon,
             "citation": (
                 f"Code de l'urbanisme L151-35 : pour un(e) {cat}, il ne peut être exigé plus de {ratio:g} "
                 f"aire de stationnement par logement"
-                + (" (terrain à moins de 800 m d'un transport collectif en site propre bien desservi, loi "
-                   "2025-1129)" if sous_rayon
-                   else " ; ce plafond est abaissé à 0,5 à moins de 800 m d'un tel transport (loi 2025-1129)")
+                + (f" ; plafond de 0,5 place/logement POSSIBLE si la qualité de la desserte (transport collectif "
+                   "en site propre bien desservi, < 800 m, loi 2025-1129) est ÉTABLIE — non imposé d'office"
+                   if ratio_cond else "")
                 + " — le PLU ne s'applique que s'il est plus favorable."),
             "note": ("Le nom « " + type_projet + " » ne prouve pas l'éligibilité juridique à la catégorie "
-                     "L151-34 ; à confirmer. Le ratio affiché est le plafond LÉGAL, pas une règle du PLU."),
+                     "L151-34 ; à confirmer. Le 0,5 place/logement dépend en outre de la QUALITÉ de la desserte, "
+                     "non établie par LABUSE : il reste possible, pas imposé."),
         }
     elif type_projet == "collectif" and sous_rayon:
         # L151-36 — autres logements : au plus 1 place/logt, SEULEMENT à moins de 800 m d'un TCSP.

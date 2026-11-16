@@ -4,7 +4,7 @@ import os
 import pytest
 
 from labuse.faisabilite.surface_retenue import (GRANDEUR_ESQUISSE, GRANDEUR_ESTIMATION,
-                                                GRANDEUR_SCENARIO, surface_a_retenir)
+                                                GRANDEUR_SCENARIO, GRANDEUR_TESTEE, surface_a_retenir)
 
 
 @pytest.fixture(scope="module")
@@ -91,7 +91,8 @@ def test_non_bati_garde_la_formulation_surface_a_retenir():
     # place dont le dégagement ne faisait que 4,99 m (8/12 → 7/10, esquisse 595) ; BW2635 retient le scénario
     # servi 6 logements (535, variante unique, cf. couverture cohérente). On teste la CONSISTANCE (même surface
     # partout) sur ces valeurs à jour.
-    ("97416000HT0538", 450, GRANDEUR_ESQUISSE),     # esquisse dégagée (450) < estimation (614) → esquisse
+    # FIX-4 (LOT 1) — HT0538 : plan en échec (haie 1,4 m < 1,5 m) → « surface testée », pas « à retenir ».
+    ("97416000HT0538", 450, GRANDEUR_TESTEE),       # esquisse 450 mais contrôle haie en échec → surface testée
     ("97422000AD0887", 595, GRANDEUR_SCENARIO),     # dégagement exact : 7 logts / 10 places → esquisse 595
     ("97422000BW2635", 535, GRANDEUR_ESQUISSE),     # scénario servi 6 logts (535) < estimation 3 317
 ])

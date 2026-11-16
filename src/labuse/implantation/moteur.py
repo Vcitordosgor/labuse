@@ -128,7 +128,10 @@ def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition
     # échec mesuré (rouge) sur le scénario dessiné, sans annuler la capacité (comme le contrôle de comptage du
     # stationnement). Le verdict global le répercute (jamais « Exploitable » avec une haie en échec).
     _HAIE_NOM = "Stationnement — haie paysagère"
-    sans_echec = not any(c.resultat == ctrl_mod.ECHOUE and c.nom != _HAIE_NOM for c in controles)
+    # FIX-4 (LOT 1) — la LARGEUR DE DESSERTE (accès dessiné trop étroit) est, comme la haie, un défaut
+    # d'aménagement montré en rouge sans annuler la capacité (le scénario reste dessiné, verdict « À compléter »).
+    _ECHEC_HORS_FAIS = {_HAIE_NOM, "Largeur de desserte"}
+    sans_echec = not any(c.resultat == ctrl_mod.ECHOUE and c.nom not in _ECHEC_HORS_FAIS for c in controles)
     faisable = geo_ok and sans_echec
     # ETUDE-V6-2 (Lot 2) — faisable si l'on RETIRE le stationnement : on lève les DEUX contrôles que les
     # places consomment — « Stationnement » (comptage) ET « Perméabilité (pleine terre) » (le parking
@@ -609,28 +612,35 @@ def _plafond_l151(session, idus, type_projet, bareme):
     sous_800 = dist is not None and dist < 800
     if type_projet in _L15134_F6:
         # ETUDE-STATIONNEMENT-FIX-3 (LOT 3) — L151-35 distingue les catégories : le logement locatif AIDÉ est
-        # plafonné à 1 place/logt (0,5 si < 800 m d'un TCSP bien desservi) ; les RÉSIDENCES UNIVERSITAIRES et
-        # les établissements pour PERSONNES ÂGÉES sont plafonnés à 0,5 place/logt QUELLE QUE SOIT la distance.
-        cap = 0.5 if type_projet in ("senior", "etudiante") else (0.5 if sous_800 else 1.0)
+        # plafonné à 1 place/logt (0,5 si < 800 m d'un TCSP BIEN DESSERVI) ; les RÉSIDENCES UNIVERSITAIRES et
+        # les établissements pour PERSONNES ÂGÉES sont plafonnés à 0,5 place/logt (règle propre à ces usages).
+        # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — le 0,5 du logement AIDÉ dépend de la QUALITÉ de la desserte, que
+        # LABUSE ne connaît pas (seule la distance est mesurée) : il n'est PLUS appliqué d'office. Par défaut le
+        # plafond aidé reste à 1 /logt (base L151-35) ; le 0,5 est porté comme POSSIBLE « si la desserte le
+        # permet » (champ `conditionnel`), affiché mais non imposé. Univ/âgées : 0,5 ferme (usage, pas desserte).
+        if type_projet in ("senior", "etudiante"):
+            cap, conditionnel = 0.5, None
+        else:
+            cap = 1.0
+            conditionnel = 0.5 if sous_800 else None
         art = "L151-35"
         cat = _CAT_L15134.get(type_projet, "catégorie L151-34")
-        _motif_dist = (" (terrain à moins de 800 m d'un transport collectif bien desservi, loi 2025-1129)"
-                       if (type_projet == "social" and sous_800) else "")
+        _cond = (f" ; plafond de 0,5 place/logement POSSIBLE si la qualité de la desserte (transport collectif "
+                 f"bien desservi, < 800 m, loi 2025-1129) est ÉTABLIE — non imposé d'office"
+                 if conditionnel else "")
         cite = (f"Code de l'urbanisme L151-35 : pour une {cat}, il ne peut être exigé plus de {cap:g} "
-                f"aire de stationnement par logement" + _motif_dist
+                f"aire de stationnement par logement" + _cond
                 + " — le PLU ne s'applique que s'il est plus favorable ; éligibilité de la catégorie à confirmer.")
     elif type_projet == "collectif" and sous_800:
-        cap, art = 1.0, "L151-36"
+        # L151-36 collectif : le plafond de 1 /logt tient à la seule desserte (< 800 m bien desservie) → lui
+        # aussi CONDITIONNEL (qualité non établie par LABUSE) : non imposé d'office, affiché comme possible.
+        cap, conditionnel, art = None, 1.0, "L151-36"
         cite = ("Code de l'urbanisme L151-36 : à moins de 800 m d'un transport collectif bien desservi (loi "
                 "2025-1129 du 26/11/2025), il ne peut être exigé plus de 1 aire de stationnement par logement "
-                "— le PLU ne s'applique que s'il est plus favorable.")
+                "— plafond POSSIBLE si la qualité de la desserte est établie, non imposé d'office.")
     else:
         return None
-    # ETUDE-STATIONNEMENT-FIX-3 (LOT 3) — on renvoie TOUJOURS le ratio quand la catégorie s'applique : c'est
-    # `exiger._cap_plafond` (au niveau du PROGRAMME) qui ne « mord » que si le plafond est SOUS l'exigence
-    # RÉELLEMENT applicable au programme (ligne aidée comprise). L'ancien court-circuit comparait le plafond
-    # au FORFAIT GÉNÉRAL par logement (0,3 au Port) et sautait le plafond alors que l'aidé exige 0,8/logt.
-    return cap, art, cite
+    return cap, art, cite, conditionnel
 
 
 def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Optional[str] = None,
@@ -664,11 +674,17 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
     # (a) sur demande explicite de l'UI (`stationnement_ratio` passé) ou (b) quand il n'y a PAS de barème
     # local validé — pour pouvoir chiffrer une capacité sous régime réduit.
     _plaf = None
+    _art151, _cite151 = "L151-35 (plafond national)", None
     if stationnement_ratio is None and type_projet:
         _r151 = _plafond_l151(session, idus, type_projet, regles.stationnement)
         if _r151 is not None:
-            _ratio, _art151, _cite151 = _r151
-            _plaf = {"ratio": _ratio, "article": _art151, "citation": _cite151}
+            _ratio, _art151, _cite151, _cond151 = _r151
+            # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — on n'attache le plafond comme BORNE que s'il est APPLIQUÉ
+            # d'office (`_ratio` non None : univ/âgées 0,5, ou base aidée 1). Le plafond CONDITIONNEL à la
+            # desserte (social 0,5, collectif 1) n'est PAS imposé ; il reste affiché « possible si desserte
+            # établie » par `_stationnement_regimes`. L'exigence locale est donc gardée par défaut.
+            if _ratio is not None:
+                _plaf = {"ratio": _ratio, "article": _art151, "citation": _cite151}
     if stationnement_ratio is not None:
         # régime réduit choisi dans l'UI : on remplace le barème par le plafond par logement.
         regles = replace(regles, stationnement=BaremeStationnement(

@@ -62,6 +62,8 @@ zones:
       stationnement:
         par_logement:
           places: 1.5
+          seuil_surface_m2: 30
+          places_sous_seuil: 1
           arrondi: inferieur
           article: Ua 12.2
           page_pdf: 103
@@ -158,6 +160,8 @@ zones:
       stationnement:
         par_logement:
           places: 1.5
+          seuil_surface_m2: 30
+          places_sous_seuil: 1
           arrondi: inferieur
           article: Ub 12.2
           page_pdf: 103
@@ -267,6 +271,8 @@ zones:
       stationnement:
         par_logement:
           places: 1.5
+          seuil_surface_m2: 30
+          places_sous_seuil: 1
           arrondi: inferieur
           article: Uc 12.2
           page_pdf: 103
@@ -382,6 +388,8 @@ zones:
       stationnement:
         par_logement:
           places: 1.5
+          seuil_surface_m2: 30
+          places_sous_seuil: 1
           arrondi: inferieur
           article: Ur 12.2
           page_pdf: 103
@@ -597,6 +605,8 @@ zones:
       stationnement:
         par_logement:
           places: 1.5
+          seuil_surface_m2: 30
+          places_sous_seuil: 1
           arrondi: inferieur
           article: Ub 12.2
           page_pdf: 103
@@ -669,6 +679,8 @@ zones:
       stationnement:
         par_logement:
           places: 1.5
+          seuil_surface_m2: 30
+          places_sous_seuil: 1
           arrondi: inferieur
           article: Uc 12.2
           page_pdf: 103
@@ -797,6 +809,8 @@ zones:
       stationnement:
         par_logement:
           places: 1.5
+          seuil_surface_m2: 30
+          places_sous_seuil: 1
           arrondi: inferieur
           article: Ur 12.2
           page_pdf: 103

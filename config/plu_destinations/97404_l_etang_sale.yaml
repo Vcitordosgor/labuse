@@ -13,6 +13,12 @@ meta:
 zones:
   UA:
     regles:
+      desserte:
+        largeur_min_m: 5.0
+        seuil_logements: 7
+        article: UA 3.1.2
+        page_pdf: 23
+        citation: "Pour les opérations d'au moins sept logements, la voie de desserte doit avoir une emprise minimale de 5 mètres."
       hauteur:
         faitage:
           m: 15.0

@@ -206,7 +206,21 @@ def scenario_etude_persiste(db, idu: str) -> dict | None:
         sdp = (payload.get("capacite_maximale") or {}).get("sdp_m2")
     if sdp in (None, ""):
         return None
-    return {"sdp_m2": sdp, "stationnement_applique": not _bareme_stationnement_absent(payload)}
+    _ech, _mot = _plan_en_echec(retenu)
+    return {"sdp_m2": sdp, "stationnement_applique": not _bareme_stationnement_absent(payload),
+            "plan_en_echec": _ech, "motif_echec": _mot}
+
+
+def _plan_en_echec(scenario: dict | None) -> tuple[bool, str | None]:
+    """ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — un scénario est EN ÉCHEC si un contrôle réglementaire ÉCHOUE
+    (ex. HT0538 : haie 1,4 m < 1,5 m). Sa surface devient « surface testée », pas « surface à retenir ».
+    Renvoie (True, motif court) ou (False, None)."""
+    for c in (scenario or {}).get("controles") or []:
+        if c.get("resultat") == "Échoué":
+            nom = (c.get("nom") or "").replace("Stationnement — ", "")
+            mes = c.get("mesure")
+            return True, (f"{nom} : {mes}" if mes else nom) or "contrôle non satisfait"
+    return False, None
 
 
 # ── choix du scénario retenu ────────────────────────────────────────────────────────────────
@@ -529,6 +543,10 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     kmax = (payload.get("capacite_maximale") or {}).get("logements")
     niv_lbl = retenu.get("niveaux_label") or ""
     places = retenu.get("stationnement", {}).get("places")
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — la couverture lit SES trois nombres (logements, niveaux, places)
+    # dans LA MÊME variante que le plan principal (`retenu`), PAR CONSTRUCTION : plus de « 6 logements en R+3 »
+    # qui mélangeait le maximum (kmax) et les niveaux du plan retenu. On affiche le logement DU PLAN retenu.
+    _ret_log = (retenu.get("resume") or {}).get("logements") or kmax
     # EXPORTS-FIX-3 LOT 3 (#5a/#5b, relecture) — garde-fou d'honnêteté : si le plancher dépasse la fiche
     # ou si le barème de stationnement n'est pas servi, le verdict affiché n'est JAMAIS « exploitable ».
     _gardes = _gardes_honnete(payload, retenu)
@@ -552,13 +570,13 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         # de stationnement non servi). Le bandeau NE MET PAS en avant « meilleure capacité trouvée : N
         # logements » comme un acquis : il la donne « au mieux, à vérifier » et reste en ton d'alerte —
         # le lecteur ne doit pas retenir ce nombre comme sûr (faute HT0538 : « 10 logements » asséné).
-        txt = (f"{type_lbl.capitalize()} — capacité à vérifier : au mieux ~{kmax} logements"
+        txt = (f"{type_lbl.capitalize()} — capacité à vérifier : au mieux ~{_ret_log} logements"
                + (f" en {niv_lbl}" if niv_lbl else "") + f", stationnement {statio_lbl}."
                + " À confirmer avant de retenir ce programme (voir « À vérifier » ci-dessous).")
         vclass = "verdict warn"
     else:
         # ETUDE-FIABLE-1 (LOT C1) — programme proposé par LABUSE : la MEILLEURE CAPACITÉ TROUVÉE fait foi.
-        txt = (f"{type_lbl.capitalize()} — meilleure capacité trouvée : {kmax} logements"
+        txt = (f"{type_lbl.capitalize()} — meilleure capacité trouvée : {_ret_log} logements"
                + (f" en {niv_lbl}" if niv_lbl else "") + f", stationnement {statio_lbl}.") if kmax else (
             payload.get("message") or "Aucun scénario exploitable sur ce terrain selon nos hypothèses.")
         vclass = "verdict" if kmax else "verdict warn"
@@ -573,7 +591,8 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     _gf = payload.get("_garde_fiche") or {}
     _est_rapide = _gf.get("sdp_max_m2") or _gf.get("sdp_fiche_m2")
     _scn_sdp = (retenu.get("resume") or {}).get("sdp_m2") if kmax else None
-    _sar = surface_a_retenir(_est_rapide, _scn_sdp)
+    _ech, _mot = _plan_en_echec(retenu) if kmax else (False, None)
+    _sar = surface_a_retenir(_est_rapide, _scn_sdp, plan_en_echec=_ech, motif_echec=_mot)
     # D4 — l'écart EXPLIQUÉ avec les MÊMES chiffres que le Dossier (occupation supposée = le « 45 % »
     # du facteur B1) et une emprise RÉELLEMENT MESURÉE (emprise dessinée ÷ zone d'implantation), jamais
     # deux pourcentages recalculés depuis la surface de plancher.

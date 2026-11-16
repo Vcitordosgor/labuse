@@ -44,21 +44,25 @@ def tcsp(monkeypatch):
 
 # ── règle APPLIQUÉE (moteur._plafond_l151) ────────────────────────────────────────────────
 
-@pytest.mark.parametrize("type_projet,dist,attendu_art,attendu_ratio", [
-    ("etudiante", 7817, "L151-35", 0.5),   # FIX-3 : résidence universitaire → 0,5 QUELLE QUE SOIT la distance
-    ("etudiante", 120,  "L151-35", 0.5),   # étudiante < 800 m → 0,5
-    ("senior",    300,  "L151-35", 0.5),   # senior < 800 m → 0,5
-    ("senior",    600,  "L151-35", 0.5),   # E-056 : 600 m — AVANT (500 m) = 1/logt, APRÈS (800 m) = 0,5
-    ("social",    900,  "L151-35", 1.0),   # social hors 800 m → 1/logt
-    ("collectif", 600,  "L151-36", 1.0),   # autres logements, 600 m < 800 m → L151-36, 1/logt (aucun plafond avant)
+# FIX-4 (LOT 2) — `_plafond_l151` renvoie (cap_appliqué, article, citation, cap_conditionnel). Le plafond
+# fondé sur la DESSERTE (0,5 aidé < 800 m, 1 collectif < 800 m) n'est PLUS appliqué d'office (desserte non
+# connue) : il est CONDITIONNEL. Appliqués d'office : 0,5 univ/âgées (usage) et 1 /logt aidé (base L151-35).
+@pytest.mark.parametrize("type_projet,dist,attendu_art,cap_applique,cap_conditionnel", [
+    ("etudiante", 7817, "L151-35", 0.5, None),   # résidence universitaire → 0,5 ferme (usage, pas desserte)
+    ("etudiante", 120,  "L151-35", 0.5, None),
+    ("senior",    300,  "L151-35", 0.5, None),
+    ("social",    900,  "L151-35", 1.0, None),   # aidé hors 800 m → 1 /logt, aucun conditionnel
+    ("social",    600,  "L151-35", 1.0, 0.5),    # aidé < 800 m → appliqué 1 /logt, 0,5 POSSIBLE si desserte établie
+    ("collectif", 600,  "L151-36", None, 1.0),   # collectif < 800 m → plafond 1 CONDITIONNEL, PAS appliqué d'office
 ])
-def test_plafond_applique_par_cas(tcsp, type_projet, dist, attendu_art, attendu_ratio):
+def test_plafond_applique_par_cas(tcsp, type_projet, dist, attendu_art, cap_applique, cap_conditionnel):
     tcsp(dist)
     res = M._plafond_l151(None, ["x"], type_projet, _bareme())
-    assert res is not None, f"{type_projet}@{dist}m : un plafond devait s'appliquer"
-    cap, art, _cite = res
+    assert res is not None, f"{type_projet}@{dist}m : un plafond (appliqué ou conditionnel) devait exister"
+    cap, art, _cite, cond = res
     assert art == attendu_art
-    assert cap == attendu_ratio
+    assert cap == cap_applique, f"{type_projet}@{dist}m appliqué"
+    assert cond == cap_conditionnel, f"{type_projet}@{dist}m conditionnel"
 
 
 def test_plafond_applique_collectif_hors_800m_aucun(tcsp):
@@ -85,23 +89,26 @@ def test_plafond_ne_mord_pas_si_exigence_deja_plus_favorable():
 
 # ── règle AFFICHÉE (service._stationnement_regimes) — doit coller à l'appliquée ────────────
 
-@pytest.mark.parametrize("type_projet,dist,ref,ratio,cond", [
-    ("etudiante", 7817, "L151-35", 0.5, False),   # FIX-3 : univ → 0,5 toujours ; condition 800 m NON remplie
-    ("etudiante", 120,  "L151-35", 0.5, True),
-    ("senior",    300,  "L151-35", 0.5, True),
-    ("senior",    600,  "L151-35", 0.5, True),     # E-056 : 600 m → désormais remplie (seuil 800 m)
-    ("social",    900,  "L151-35", 1.0, False),
-    ("collectif", 600,  "L151-36", 1.0, True),
+@pytest.mark.parametrize("type_projet,dist,ref,ratio,ratio_cond,cond", [
+    ("etudiante", 7817, "L151-35", 0.5, None, False),   # univ → 0,5 ferme ; condition 800 m NON remplie
+    ("etudiante", 120,  "L151-35", 0.5, None, True),
+    ("senior",    300,  "L151-35", 0.5, None, True),
+    ("social",    900,  "L151-35", 1.0, None, False),   # aidé hors 800 m → 1 /logt, pas de 0,5 conditionnel
+    ("social",    600,  "L151-35", 1.0, 0.5,  True),    # FIX-4 : aidé < 800 m → affiché 1, 0,5 CONDITIONNEL
+    ("collectif", 600,  "L151-36", 1.0, None, True),    # collectif < 800 m → plafond possible affiché
 ])
-def test_regime_affiche_par_cas(tcsp, type_projet, dist, ref, ratio, cond):
+def test_regime_affiche_par_cas(tcsp, type_projet, dist, ref, ratio, ratio_cond, cond):
     tcsp(dist)
     pf = S._stationnement_regimes(None, ["x"], type_projet, _regles(), "97404")["plafond_national"]
     assert pf is not None, f"{type_projet}@{dist}m : un régime devait être affiché"
     assert pf["reference"] == ref
     assert pf["ratio_plafond"] == ratio
+    assert pf.get("ratio_conditionnel") == ratio_cond   # FIX-4 : 0,5 POSSIBLE (aidé < 800 m), non imposé
     assert pf["condition_tcsp_sous_500m"] is cond   # clé historique conservée (lue par l'écran)
     assert pf["rayon_tcsp_m"] == 800                # E-056 — seuil porté à 800 m (loi 2025-1129)
-    assert ref in pf["citation"] and "800 m" in pf["citation"] and "2025-1129" in pf["citation"]
+    assert ref in pf["citation"]
+    if ratio_cond:
+        assert "POSSIBLE" in pf["citation"] and "800 m" in pf["citation"] and "2025-1129" in pf["citation"]
 
 
 def test_regime_collectif_hors_800m_aucun_plafond(tcsp):
@@ -120,5 +127,15 @@ def test_affiche_egale_applique_sur_le_ratio(tcsp):
     """Garde-fou de cohérence : pour une étudiante < 800 m, le ratio AFFICHÉ == le ratio APPLIQUÉ (0,5)."""
     tcsp(120)
     pf = S._stationnement_regimes(None, ["x"], "etudiante", _regles(), "97404")["plafond_national"]
-    cap, _art, _c = M._plafond_l151(None, ["x"], "etudiante", _bareme())
+    cap, _art, _c, _cond = M._plafond_l151(None, ["x"], "etudiante", _bareme())
     assert pf["ratio_plafond"] == cap == 0.5
+
+
+def test_social_sous_800m_garde_exigence_locale(tcsp):
+    """FIX-4 (LOT 2) — un logement AIDÉ à moins de 800 m : le 0,5 n'est PAS appliqué d'office (desserte non
+    établie). Le plafond appliqué reste 1 /logt ; le 0,5 est affiché « possible »."""
+    tcsp(600)
+    cap, _art, _c, cond = M._plafond_l151(None, ["x"], "social", _bareme())
+    assert cap == 1.0 and cond == 0.5
+    pf = S._stationnement_regimes(None, ["x"], "social", _regles(), "97404")["plafond_national"]
+    assert pf["ratio_plafond"] == 1.0 and pf["ratio_conditionnel"] == 0.5

@@ -694,6 +694,36 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                                A_CONFIRMER, b.citation_complete if b.validee else None,
                                detail="condition du barème non vérifiable par ce moteur — à confirmer au projet"))
 
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — LARGEUR DE DESSERTE : au-delà d'un seuil de logements, le règlement
+    # impose une voie/accès d'au moins N mètres (L'Étang-Salé UA3.1.2 : 5 m à partir de 7 logements). On MESURE
+    # la largeur de l'accès DESSINÉ (plus petite dimension de son rectangle orienté) et on la compare. En
+    # dessous, le plan ÉCHOUE (montré en rouge ; verdict « À compléter »), avec la règle citée.
+    _dess = getattr(regles, "desserte", None)
+    if (isinstance(_dess, dict) and _dess.get("largeur_min_m")
+            and cap.logements >= int(_dess.get("seuil_logements") or 0)):
+        _acc = [o.geom_local for o in scene.of("acces")]
+        req = float(_dess["largeur_min_m"])
+        au = unary_union([g if g.is_valid else g.buffer(0) for g in _acc]) if _acc else None
+        if au is not None and not au.is_empty and au.area >= 0.1:
+            mrr = au.minimum_rotated_rectangle
+            _pts = list(zip(*mrr.exterior.coords.xy))[:4] if mrr.geom_type == "Polygon" else []
+            larg = (min(((_pts[i][0] - _pts[(i + 1) % 4][0]) ** 2 + (_pts[i][1] - _pts[(i + 1) % 4][1]) ** 2) ** 0.5
+                        for i in range(4)) if len(_pts) == 4 else 0.0)
+            ok = larg >= req - 0.05
+            _dcit = (f"PLU art. {_dess['article']}" if _dess.get("article") else "")
+            _dcit += (f" · p. {_dess['page_pdf']}" if _dess.get("page_pdf") else "")
+            _dcit = (_dcit + (f" — « {_dess['citation']} »" if _dess.get("citation") else "")) or None
+            out.append(ControleReg(
+                "Largeur de desserte", f"≥ {_fr(req)} m (opération ≥ {int(_dess['seuil_logements'])} logements)",
+                f"{_fr(round(larg, 1))} m dessiné", REUSSI if ok else ECHOUE, _dcit,
+                detail="largeur de la voie/accès desservant l'opération — mesurée sur l'accès dessiné"))
+        else:
+            out.append(ControleReg(
+                "Largeur de desserte", f"≥ {_fr(req)} m (opération ≥ {int(_dess['seuil_logements'])} logements)",
+                "aucun accès dessiné", A_CONFIRMER,
+                (f"PLU art. {_dess.get('article')}" if _dess.get("article") else None),
+                detail="desserte à vérifier — aucun accès n'a pu être dessiné"))
+
     # ETUDE-V6-2 (Lot 3) — en SOUS-SOL, l'emprise du parking enterré doit tenir sous l'EMPRISE
     # RÉGLEMENTAIRE (CES × contenance) ; c'est ce contrôle (pas le comptage) qui plafonne la capacité.
     if sous_sol:
@@ -799,6 +829,16 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                                A_CONFIRMER, detail="servitude(s) présente(s) non interprétée(s) par ce moteur — à confirmer"))
     else:
         out.append(ControleReg("ER / EBC / SUP / servitudes", "absentes du terrain", "—", NON_APPLICABLE))
+
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — INVENTAIRE ZONE HUMIDE couvrant l'assiette : signalé AVANT le verdict
+    # (via `terrain.contraintes`), À CONFIRMER et BLOQUANT pour « Exploitable » (un inventaire sur toute
+    # l'assiette peut remettre en cause l'implantation même — AD0887 : « La Grande Ferme », 100 % de l'assiette).
+    _zhp = int(terrain.contraintes.get("zone_humide_pct", 0) or 0)
+    if _zhp >= 50:
+        out.append(ControleReg("Zone humide (inventaire)", f"inventaire couvrant {_zhp} % de l'assiette",
+                               "à vérifier : l'implantation peut être remise en cause", A_CONFIRMER,
+                               detail="inventaire de zone humide (couche cartographique) non interprété par ce "
+                                      "moteur ; recouvre le bâti proposé — à confirmer avant tout projet"))
     return out
 
 
@@ -837,6 +877,7 @@ _A_CONFIRMER_BLOQUANTS = frozenset({
     "Prescriptions PPR à vérifier",
     "Stationnement", "Stationnement — condition à vérifier",
     "Admission de l'habitat",   # habitat sous condition d'un schéma d'affectation non lu (Saint-Louis UZ)
+    "Zone humide (inventaire)",   # FIX-4 — inventaire couvrant l'assiette : peut remettre en cause l'implantation
     "Hauteur près des limites",
     "Prospect (hauteur relative)", "ER / EBC / SUP / servitudes",
     "Accès (voie)",   # RECETTE-4 — accès hypothétique (aucune voie classée) → verdict non « Exploitable »

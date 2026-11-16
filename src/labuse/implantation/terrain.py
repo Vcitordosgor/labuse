@@ -311,6 +311,16 @@ def charger(session, idus: list[str], *, recul_voie_m: float, recul_separative_m
         contraintes[kind] = int(n or 0)
     contraintes["ppr_rouge"] = 1 if (ppr_rouge is not None and not ppr_rouge.is_empty) else 0
     contraintes["ppr_bleue"] = 1 if (ppr_bleue is not None and not ppr_bleue.is_empty) else 0
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — COUVERTURE par un inventaire de ZONE HUMIDE : CÂBLÉE dans le terrain
+    # (donc disponible AVANT le verdict), pour qu'une zone humide couvrant l'assiette fasse basculer l'étude en
+    # « À compléter » (AD0887 : inventaire « La Grande Ferme » sur toute l'assiette). % de l'assiette couvert.
+    _zh = session.execute(text(
+        "SELECT COALESCE(round((100*ST_Area(ST_Intersection("
+        " ST_MakeValid(ST_Union(geom_2975)), ST_GeomFromText(:g,2975)))"
+        " /NULLIF(ST_Area(ST_GeomFromText(:g,2975)),0))::numeric),0) FROM spatial_layers "
+        "WHERE kind='zone_humide' AND ST_Intersects(geom_2975, ST_GeomFromText(:g,2975))"
+    ), {"g": aw}).scalar()
+    contraintes["zone_humide_pct"] = int(_zh or 0)
 
     pente = _pente_lidar(session, parcelles) if avec_pente else None
 

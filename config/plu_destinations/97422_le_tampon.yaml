@@ -319,6 +319,11 @@ zones:
           page_pdf: 18
           citation: Dans le secteur Uav, ce seuil est limité à 16 mètres à l’égout du toit ou au sommet de l’acrotère et 20 mètres au faîtage.
           statut: valide
+          exceptions:
+          - porte: bande_limite
+            article: Ua10.3
+            page_pdf: 18
+            texte: "Dans une marge de 3,60 m de profondeur comptée parallèlement à la limite séparative, la hauteur absolue ne doit pas excéder 18 m ; dans le secteur Uav, ce seuil est limité à 13 m."
       retraits:
         voie:
           min_m: 4.0

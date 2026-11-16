@@ -96,3 +96,73 @@ def test_dossier_affiche_le_bareme_stationnement(session_reelle, idu, attendu):
     ligne = m.group(1) if m else ""
     assert "non réglementé" not in ligne, f"{idu} : Dossier dit encore « non réglementé » ({ligne!r})"
     assert attendu in ligne, f"{idu} : règle attendue {attendu!r} absente ({ligne!r})"
+
+
+# ── LOT 3 : barème « par logement » à SEUIL DE SURFACE (La Plaine : 1 place < 30 m², 1,5 au-dessus) ──
+def test_bareme_seuil_surface_la_plaine():
+    """Le moteur ne met plus 1,5 partout : 1 place sous 30 m², 1,5 au-dessus, lecture prudente à la borne
+    (30 m² pile = au-dessus). Programme JUSTE SOUS le seuil (29 m²) distinct du programme au-dessus."""
+    from types import SimpleNamespace as NS
+    from labuse.implantation import regles as R
+    b = R.charger("97406", "Ub").stationnement
+    assert b.seuil_surface_m2 == 30 and b.places_sous_seuil == 1
+    sous = [NS(pieces=1, surface_m2=29.0) for _ in range(10)]          # juste SOUS le seuil
+    mix = sous + [NS(pieces=3, surface_m2=110.0) for _ in range(10)]   # 10 sous + 10 au-dessus
+    assert b.exiger(sous, destination="collectif").places == 10        # 10 × 1 (avant : 15)
+    assert b.exiger(mix, destination="collectif").places == 25         # 10 × 1 + 10 × 1,5 (avant : 30)
+    # borne AMBIGUË à 30 m² PILE : lecture prudente retenue (au-dessus = 1,5).
+    pile = [NS(pieces=1, surface_m2=30.0) for _ in range(10)]
+    assert b.exiger(pile, destination="collectif").places == 15        # 10 × 1,5 (prudent)
+
+
+# ── LOT 1 : assemblage, TÉMOIN POSITIF (logements dessinés sur la part d'habitat, pas la part interdite) ──
+@pytest.mark.reel
+def test_assemblage_temoin_positif(session_reelle):
+    """Deux parcelles voisines : AM0004 (UE, habitat de fonction) + AM0242 (UA, habitat, 12 600 m²). Le
+    moteur retient la zone d'HABITAT (UA), clippe l'assiette sur sa part, et un plan TIENT (logements
+    dessinés uniquement là où l'habitat est admis)."""
+    from sqlalchemy import text
+    from labuse.implantation.service import etudier_payload
+    idus = ["97404000AM0004", "97404000AM0242"]
+    if session_reelle.execute(text("SELECT count(*) FROM parcels WHERE idu = ANY(:i)"),
+                              {"i": idus}).scalar() != 2:
+        pytest.skip("parcelles témoins absentes")
+    p = etudier_payload(session_reelle, {"idus": idus, "type_projet": "collectif", "objectif": "equilibre",
+                                        "stationnement": "aerien", "terrain": "libere"})
+    cap = p.get("capacite_maximale") or {}
+    assert (cap.get("logements") or 0) >= 10, "un plan doit tenir sur la part d'habitat (UA)"
+    assert p.get("verdict") != "Aucun plan trouvé sous ces hypothèses"
+
+
+# ── LOT 1 : largeur de desserte mesurée (L'Étang-Salé UA3.1.2 : 5 m à partir de 7 logements) ──
+@pytest.mark.reel
+def test_largeur_desserte_mesuree(session_reelle):
+    from sqlalchemy import text
+    from labuse.implantation.service import etudier_payload
+    from labuse.exports.etude_faisabilite import scenario_retenu
+    idus = ["97404000AW0099", "97404000AW0451", "97404000AW0624", "97404000AW0625"]
+    if session_reelle.execute(text("SELECT count(*) FROM parcels WHERE idu = ANY(:i)"),
+                              {"i": idus}).scalar() != 4:
+        pytest.skip("parcelles témoins absentes")
+    p = etudier_payload(session_reelle, {"idus": idus, "type_projet": "social", "objectif": "equilibre",
+                                        "stationnement": "aerien", "terrain": "libere",
+                                        "programme": {"mode": "saisi", "lignes": [{"type": "T2", "nombre": 23},
+                                                                                  {"type": "T3", "nombre": 6}]}})
+    dess = [c for c in (scenario_retenu(p).get("controles") or []) if c.get("nom") == "Largeur de desserte"]
+    assert dess and dess[0]["resultat"] == "Échoué", "accès 4 m < 5 m exigé → échec de desserte"
+    assert p.get("verdict") == "À compléter"
+
+
+# ── LOT 2 : zone humide couvrant l'assiette → « À compléter » (AD0887) ──
+@pytest.mark.reel
+def test_zone_humide_fait_basculer_a_completer(session_reelle):
+    from sqlalchemy import text
+    from labuse.implantation.service import etudier_payload
+    from labuse.exports.etude_faisabilite import scenario_retenu
+    if session_reelle.execute(text("SELECT count(*) FROM parcels WHERE idu='97422000AD0887'")).scalar() != 1:
+        pytest.skip("AD0887 absente")
+    p = etudier_payload(session_reelle, {"idus": ["97422000AD0887"], "type_projet": "collectif",
+                                        "objectif": "equilibre", "stationnement": "aerien", "terrain": "libere"})
+    zh = [c for c in (scenario_retenu(p).get("controles") or []) if c.get("nom") == "Zone humide (inventaire)"]
+    assert zh and zh[0]["resultat"] == "À confirmer"
+    assert p.get("verdict") == "À compléter"

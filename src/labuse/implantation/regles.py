@@ -138,6 +138,11 @@ class BaremeStationnement:
     integ_pct: Optional[float] = None
     integ_seuil_m2: Optional[float] = None
     integ_citation: Optional[str] = None
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 3) — barème « par logement » à SEUIL DE SURFACE (La Plaine-des-Palmistes
+    # Ub12.2 : 1 place sous 30 m², 1,5 au-dessus) : `flat_places` = ratio AU-DESSUS du seuil, `places_sous_seuil`
+    # = ratio en dessous. Avant, le moteur appliquait 1,5 à tous les logements (faux sous 30 m²).
+    seuil_surface_m2: Optional[float] = None
+    places_sous_seuil: Optional[float] = None
     # ETUDE-STATIONNEMENT-FIX-2 (LOT 2) — plafond NATIONAL du Code de l'urbanisme (L151-35/36). C'est un
     # PLAFOND : il ne peut que FAIRE BAISSER l'exigence locale, jamais la relever, et il s'applique MÊME
     # quand le PLU sert une ligne dédiée. {ratio, article, citation}. ratio = places/logement au plus.
@@ -295,8 +300,14 @@ class BaremeStationnement:
         # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — une condition propre aux LOTISSEMENTS d'habitat individuel
         # (ex. Saint-Pierre Ud6 : « 0,5 place par parcelle … pour les lotissements d'habitat individuel »)
         # ne s'applique PAS à un programme COLLECTIF : on ne l'affiche que pour un lotissement.
+        # ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — ne filtrer que les conditions PUREMENT de lotissement : une
+        # condition qui vise « opération/lotissement » (ex. Le Tampon Ud12.2 : « 0,5 place hors espaces
+        # privatisés pour toute opération de plus de 5 logements ») s'applique AUSSI au collectif → gardée.
+        def _pur_lotissement(c: str) -> bool:
+            cl = c.lower()
+            return "lotissement" in cl and "opération" not in cl and "operation" not in cl
         conditions = [c for c in self.conditions
-                      if not ("lotissement" in c.lower() and destination != "lotissement")]
+                      if not (_pur_lotissement(c) and destination != "lotissement")]
         # Règle permanente #2 — colonne « places intégrées à la construction » : au-delà du seuil de SDP, une
         # part des places doit être BÂTIE (plein air exclu). Affichée en CONDITION (bloquante) à vérifier.
         if self.integ_pct and self.integ_seuil_m2 is not None and sdp_tot > self.integ_seuil_m2 + 1e-6:
@@ -341,8 +352,20 @@ class BaremeStationnement:
         details: dict = {}
 
         if self.mode == "par_logement" and self.flat_places is not None:
-            tot = n * self.flat_places
-            candidats.append((self.arrondir(tot), f"{self.flat_places:g} place/logt × {n} logts"))
+            if self.seuil_surface_m2 is not None and self.places_sous_seuil is not None:
+                # SEUIL DE SURFACE (La Plaine Ub12.2) : 1 place sous 30 m², 1,5 au-dessus. On compte les deux
+                # populations de logements selon leur surface. Un logement à 30 m² PILE relève du « au-dessus »
+                # (le texte « plus de 30 m² » laisse la borne ambiguë → lecture prudente = plus exigeante).
+                n_sous = sum(1 for m in modules
+                             if float(getattr(m, "surface_m2", 0.0)) < self.seuil_surface_m2)
+                n_sur = n - n_sous
+                tot = n_sous * self.places_sous_seuil + n_sur * self.flat_places
+                candidats.append((self.arrondir(tot),
+                                  f"{self.places_sous_seuil:g} place < {self.seuil_surface_m2:g} m² · "
+                                  f"{self.flat_places:g} place ≥ {self.seuil_surface_m2:g} m² ({n_sous}+{n_sur} logts)"))
+            else:
+                tot = n * self.flat_places
+                candidats.append((self.arrondir(tot), f"{self.flat_places:g} place/logt × {n} logts"))
         elif self.mode == "par_m2_sdp" and self.m2_par_place:
             # Sens d'arrondi LU dans la règle. « tranche complète » (Saint-Pierre) = seules les tranches
             # ENTIÈRES comptent → arrondi INFÉRIEUR. Texte muet → supérieur (plus exigeant), fixé à l'ingestion.
@@ -583,6 +606,10 @@ class ReglesZone:
     # NON lu (ex. Saint-Louis UZ : tertiaire vs habitat selon le schéma) : on ne peut pas accepter la zone
     # entière → l'admission de l'habitat est « à vérifier ». Dict {article, page_pdf, citation} ou None.
     habitat_a_verifier: Optional[dict] = None
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — LARGEUR DE DESSERTE imposée à l'opération (voie/accès desservant au
+    # moins N logements, ex. L'Étang-Salé UA3.1.2 : 5 m à partir de 7 logements) : le moteur MESURE l'accès
+    # dessiné et le compare. Dict {largeur_min_m, seuil_logements, article, page_pdf, citation} ou None.
+    desserte: Optional[dict] = None
 
     @property
     def hauteur_plafond(self) -> Regle:
@@ -692,7 +719,9 @@ def _bareme(stat: dict) -> BaremeStationnement:
             visiteur_lotissement=(float(pl['visiteur_lotissement']) if isinstance(pl.get('visiteur_lotissement'),(int,float)) else None),
             velo=(pl.get('velo') if isinstance(pl.get('velo'),dict) else None),
             conditions=_parse_conditions(pl),
-            integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
+            integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic,
+            seuil_surface_m2=(float(pl['seuil_surface_m2']) if isinstance(pl.get('seuil_surface_m2'), (int, float)) else None),
+            places_sous_seuil=(float(pl['places_sous_seuil']) if isinstance(pl.get('places_sous_seuil'), (int, float)) else None))
     # 2) par_m2_sdp validé — « une place par tranche de N m² de SDP » (ENFIN supporté : tranche complète)
     if pm.get("statut") == "valide" and isinstance(pm.get("m2_par_place"), (int, float)):
         ip, isz, ic = _integ(pm)
@@ -845,6 +874,7 @@ def charger(insee: str, zone: str) -> ReglesZone:
         biotope=_leaf_val((reg.get("biotope") or {}).get("pct"), "pct",
                           ((reg.get("biotope") or {}).get("pct") or {}).get("libelle") or "coefficient de biotope (CBS)", "%"),
         pente_toiture=(reg.get("pente_toiture") if isinstance(reg.get("pente_toiture"), dict) else None),
+        desserte=(reg.get("desserte") if isinstance(reg.get("desserte"), dict) else None),
         mixite=mixite,
         stationnement=_bareme(reg.get("stationnement") or {}),
         distance_constructions=_distance_constructions(retraits),
