@@ -183,20 +183,53 @@ def _est_non_dispo(phrase: str) -> bool:
     return any(m in p for m in _MARQUEURS_NON_DISPO)
 
 
+def _raison_marge_surelevation(fiche: dict, valeurs) -> str | None:
+    """CHIRURGICAL-FIX-1 (LOT K 3c) — raison CONCRÈTE de l'absence de marge de surélévation, avec les
+    chiffres : hauteur mesurée à l'égout vs limites réglementaires (égout ET faîtage). IS0448 : 4,1 m
+    mesurés à l'égout, limite 4,5 m à l'égout mais 7 m au faîtage — la surélévation se juge au faîtage,
+    repère différent de la mesure, d'où pas de marge unique. None si on n'a pas les chiffres."""
+    eg = _v(valeurs, "hauteur_egout_mesuree_m")
+    if not isinstance(eg, (int, float)):
+        return None
+    he = hf = None
+    try:
+        from ..faisabilite.zonage import resolve_zone
+        _zc = next((z.get("zone") for z in ((fiche.get("reglement_plu") or {}).get("zones") or [])), None)
+        zr = resolve_zone(_zc, fiche.get("commune")) if _zc else None
+        he, hf = getattr(zr, "he_m", None), getattr(zr, "hf_m", None)
+    except Exception:  # noqa: BLE001
+        pass
+    if not (isinstance(he, (int, float)) and isinstance(hf, (int, float))):
+        return None
+    _f = lambda x: f"{x:g}".replace(".", ",")   # noqa: E731
+    return (f"Marge de surélévation non calculable : la hauteur est mesurée à l'égout ({_f(eg)} m, sous "
+            f"la limite d'égout de {_f(he)} m), mais la surélévation est plafonnée au faîtage ({_f(hf)} m) "
+            "— un repère différent de la mesure, d'où pas de marge au même niveau.")
+
+
 def _absence_une_raison(phrase: str, zone, *, gabarit_bloque: bool = False,
-                        bati_connu: bool = False) -> str:
+                        bati_connu: bool = False, hauteur_mesuree: bool = False) -> str:
     # EXPORTS-FIX-1 C6 / BIS point 11 — jamais « A ou B » : on tranche selon le contexte réel.
     #  · « (zone non constructible ou X) » → selon la zone (A/N → non constructible) ;
     #  · « (hauteur de règle ou bâti non déterminés) » → si le gabarit est bloqué, c'est la hauteur de
     #    règle ; CHIRURGICAL-FIX-1 (LOT I 3b) : si l'EMPRISE BÂTIE est connue (le Dossier donne p. ex.
-    #    128 m² bâtis sur IS0448), le bâti N'EST PAS « non déterminé » — c'est sa HAUTEUR qui n'est pas
-    #    mesurée (ni LiDAR à l'égout, ni faîtage BD TOPO exploitable) ; sinon on garde « bâti non déterminé ».
+    #    128 m² bâtis sur IS0448), le bâti N'EST PAS « non déterminé » ;
+    #    CHIRURGICAL-FIX-1 (LOT J pt3d) : si en plus la HAUTEUR du bâti est MESURÉE (IS0448 : 4,1 m à
+    #    l'égout, le Dossier l'affiche), on ne dit pas « hauteur du bâti non mesurée » (faux) — la marge
+    #    manque parce que la règle de hauteur de la zone n'est pas comparable à cette mesure (référence
+    #    ou valeur non résolue). Sinon seulement : « hauteur du bâti non mesurée » / « bâti non déterminé ».
     non_constructible = str(zone or "").upper() in ("A", "N")
     p = _re.sub(r"\(zone non constructible ou ([^)]+)\)",
                 lambda m: "(zone non constructible)" if non_constructible else f"({m.group(1)})",
                 str(phrase))
-    _bati = ("hauteur de règle non déterminée" if gabarit_bloque
-             else "hauteur du bâti non mesurée" if bati_connu else "bâti non déterminé")
+    if gabarit_bloque:
+        _bati = "hauteur de règle non déterminée"
+    elif hauteur_mesuree:
+        _bati = "hauteur de la zone non comparable à la hauteur mesurée du bâti"
+    elif bati_connu:
+        _bati = "hauteur du bâti non mesurée"
+    else:
+        _bati = "bâti non déterminé"
     p = _re.sub(r"\(hauteur de règle ou bâti non déterminés\)", f"({_bati})", p)
     return p
 
@@ -445,18 +478,17 @@ def _r_statut_plu(v):
     evol = v.get("evolution_sudocuh")
     gpu = v.get("horizon")
     if appro:
+        # CHIRURGICAL-FIX-1 (LOT J pt3g) — UNE SEULE date porte « version servie » (l'approbation de la
+        # version que LABUSE sert, ci-dessous) : les autres dates (évolution engagée, approbation
+        # enregistrée au GPU) sont des REPÈRES, jamais une seconde « version servie » (ambiguïté levée).
         s = f"Version du PLU servie, approuvée le {_fr_dates(appro)}"
         if evol and evol != appro:
             s += f" — dernière évolution engagée le {_fr_dates(evol)}"
         if gpu and str(gpu) != str(appro):
-            # EXPORTS-FIX-3 LOT 3 (#2, relecture) — `horizon` = date_mairie = DATE D'APPROBATION de la
-            # version servie (app._q_v2_fiche : « L'HORIZON du zonage = date d'approbation MAIRIE »),
-            # PAS une date de publication. Libellé exact : « dernière approbation le … ». Une évolution
-            # publiée depuis au GPU n'est pas confrontée ici.
-            s += (f" — version servie par LABUSE, dernière approbation le {_fr_dates(gpu)} "
-                  f"(une évolution publiée depuis au GPU n'est pas confrontée ici)")
-        else:
-            s += " (version servie par LABUSE ; une évolution publiée depuis au GPU n'est pas confrontée ici)"
+            # `horizon` = date_mairie = date d'approbation enregistrée au GPU (app._q_v2_fiche), citée ici
+            # comme repère (pas « version servie »).
+            s += f" — approbation enregistrée au GPU le {_fr_dates(gpu)}"
+        s += " (une évolution publiée depuis au GPU n'est pas confrontée ici)"
         return esc(s + ".")
     if gpu:   # à défaut (pas d'approbation Sudocuh) : la date GPU est une APPROBATION (date_mairie).
         return esc(f"PLU — version servie par LABUSE, approuvée le {_fr_dates(gpu)} "
@@ -515,7 +547,18 @@ def _r_aleas(v, val: Valeur):
         mill = a.get("millesime") or ""
         _est_edition_deal = ("édition DEAL" in mill) or ("millésime PPR" in mill)
         if _parts:
-            lib += esc(" · " + " · ".join(dict.fromkeys(_parts)) + " (commune)")
+            # CHIRURGICAL-FIX-1 (LOT J pt3f) — ce(s) plan(s) COUVRENT la parcelle (leur zonage l'intersecte).
+            lib += esc(" · " + " · ".join(dict.fromkeys(_parts)) + " (couvre la parcelle)")
+            # … les autres plans de prévention de la commune, qui NE la couvrent PAS, sont cités à part.
+            _autres = []
+            for _p in (a.get("ppr_commune_autres") or []):
+                _ap = str((_p or {}).get("approbation") or "")
+                if len(_ap) >= 10:
+                    _nom = _noms.get((_p or {}).get("document") or "PPR", (_p or {}).get("document") or "PPR")
+                    _autres.append(f"{_nom} approuvé le {_ap[8:10]}/{_ap[5:7]}/{_ap[0:4]}")
+            if _autres:
+                lib += esc(" · Autres plans dans la commune (ne couvrent pas la parcelle) : "
+                           + " · ".join(dict.fromkeys(_autres)) + ".")
         elif mill and not _est_edition_deal:
             # la date d'ÉDITION de la couche DEAL (île entière) n'est JAMAIS « la date du PPR » → omise ;
             # les autres millésimes de source restent (jj/mm/aaaa, jamais « ingéré le »).
@@ -1045,10 +1088,16 @@ def _r_comparables(v, val=None):
                  f'<td class="num">{esc(c.get("distance_m"))} m</td></tr>')
     if not rows:
         return ""
-    return ('<div data-quoi="comparables_proches" class="keep"><h3>Les 8 comparables les plus proches '
+    # CHIRURGICAL-FIX-1 (LOT J pt3e) — ce tableau est classé par RESSEMBLANCE (le poids d'Estimer), pas par
+    # distance (une vente à 321 m plus ressemblante passe devant une à 297 m) : on le NOMME ainsi. Et comme
+    # Estimer, on dit qu'il n'est PAS l'échantillon du prix médian (calculé, lui, sur tout le secteur).
+    note = ('<p class="note">Ces 8 ventes sont les plus ressemblantes (classées par ressemblance, pas par '
+            'distance) ; le prix médian indiqué plus haut est calculé sur tout le secteur, pas sur ce seul '
+            'tableau.</p>')
+    return ('<div data-quoi="comparables_proches" class="keep"><h3>Les 8 comparables les plus ressemblants '
             '(comme Estimer)</h3><table class="kv">'
             '<tr><th>Vente</th><th>Type</th><th class="num">Surface</th>'
-            '<th class="num">Prix</th><th class="num">Distance</th></tr>' + rows + '</table></div>')
+            '<th class="num">Prix</th><th class="num">Distance</th></tr>' + rows + '</table>' + note + '</div>')
 
 
 def _r_gabarit_plan_3d(brute, val=None):
@@ -1306,7 +1355,7 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
     return None
 
 
-def _bandeau(sec_id: str, valeurs: dict[str, Valeur]) -> str:
+def _bandeau(sec_id: str, valeurs: dict[str, Valeur], fiche: dict | None = None) -> str:
     """Le verdict-phrase de tête de section. Moteurs réels quand ils existent (urbanisme, potentiel,
     réseaux, risques) ; sinon une synthèse FACTUELLE déterministe (identité, terrain, bâti, fiscalité,
     marché, quartier). Rien pour §10 si la fiche ne sert pas de potentiel (pas de bandeau vide)."""
@@ -1326,6 +1375,27 @@ def _bandeau(sec_id: str, valeurs: dict[str, Valeur]) -> str:
         if rouges:
             return (f'<div data-quoi="aleas_parcelle_liste">'
                     f'{verdict(esc(rouges[0].get("libelle") or ""), ton="warn")}</div>')
+        # CHIRURGICAL-FIX-1 (LOT K 3d / LOT L 5) — une ZONE HUMIDE (souvent 100 % de la parcelle) est une
+        # contrainte MAJEURE même si elle n'est pas « rédhibitoire » au sens aléa : on la NOMME, AVEC SA
+        # PART, au lieu d'un « aucun rédhibitoire » sec qui l'écrase (AD0887 : La Grande Ferme, 100 %). On
+        # la lit sur `contraintes_parcelle_liste` si collecté, sinon sur les LIGNES de la fiche (le bloc
+        # contraintes n'est pas toujours servi au verdict).
+        cv = valeurs.get("contraintes_parcelle_liste")
+        _lib_h = None
+        humide = next((c for c in ((cv.valeur if cv else None) or [])
+                       if isinstance(c, dict)
+                       and "humide" in str((c.get("nature") or "") + (c.get("libelle") or "")).lower()), None)
+        if humide:
+            _lib_h = humide.get("libelle")
+        elif fiche:
+            for l in (fiche.get("lines") or []):
+                if (isinstance(l, dict) and l.get("result") in ("HARD_EXCLUDE", "SOFT_FLAG")
+                        and "humide" in str((l.get("layer") or "") + (l.get("libelle") or "")).lower()):
+                    _lib_h = l.get("libelle") or l.get("detail")
+                    break
+        if _lib_h:
+            return (f'<div data-quoi="contraintes_parcelle_liste">'
+                    f'{verdict(esc(_lib_h), ton="warn")}</div>')
         if av is not None:
             return f'<div data-quoi="aleas_parcelle_liste">{verdict("Aléas relevés — aucun rédhibitoire.", ton="neutral")}</div>'
         return ""
@@ -1382,6 +1452,29 @@ _COVER_TUILES = [
     ("n_hazards", "Risques", lambda v: esc("aucun aléa" if not v else f"{int(v)} aléa{'s' if v > 1 else ''}")),
     ("sdp_residuelle_m2", "SDP restante (bâti conservé)", lambda v: fmt_m2(v)),
 ]
+
+
+def _risque_principal_cover(fiche: dict, valeurs: dict[str, Valeur]) -> str | None:
+    """CHIRURGICAL-FIX-1 (LOT K 3f) — le RISQUE PRINCIPAL nommé sur la couverture (pas qu'un compteur
+    d'aléas) : un aléa rédhibitoire d'abord ; sinon une contrainte majeure (inondation TRI, zone humide,
+    littoral), avec sa part telle que le libellé la porte (BW2635 : inondation TRI extrême, 85 %)."""
+    _al = (fiche.get("aleas") or {}).get("liste") or []
+    red = next((a for a in _al if isinstance(a, dict) and a.get("redhibitoire")), None)
+    if red:
+        return red.get("libelle")
+    # contraintes majeures lues sur les LIGNES de la fiche (inondation TRI, zone humide, littoral) :
+    # le bloc `contraintes_parcelle_liste` n'est pas collecté pour la couverture.
+    _kw = ("inond", "tri ", " tri", "humide", "littoral", "submersion")
+    _hors = {"bassin_versant", "vefa_neuf", "declassement", "bati", "residuel_socle"}
+    for l in (fiche.get("lines") or []):
+        if not isinstance(l, dict) or l.get("result") not in ("HARD_EXCLUDE", "SOFT_FLAG"):
+            continue
+        if l.get("layer") in _hors:
+            continue
+        _t = str((l.get("libelle") or "") + " " + (l.get("detail") or "") + " " + (l.get("layer") or "")).lower()
+        if any(k in _t for k in _kw):
+            return l.get("libelle") or l.get("detail")
+    return _al[0].get("libelle") if _al else None
 
 
 def _sous_titre_cover(fiche: dict, valeurs: dict[str, Valeur]) -> str:
@@ -1444,8 +1537,23 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         if cid == "zone_plu_famille" and _zone_code:
             aff = esc(_zone_code)
         # EXPORTS-FIX-1 C7 — SDP en zone A/N : « 0 m² — zone A » (arbitrage Q6), jamais « — ».
-        if aff is None and cid == "sdp_residuelle_m2" and _zone_v in ("A", "N"):
-            aff = f'0 m² — zone {esc(_zone_v)}'
+        # CHIRURGICAL-FIX-1 (LOT K 3f) — un « 0 m² » de SDP s'accompagne de SON MOTIF (AM0838 :
+        # « habitat interdit en zone UE ») quand la parcelle est exclue — que la valeur soit None OU 0.
+        if cid == "sdp_residuelle_m2" and (aff is None or (v is not None and v.valeur in (0, 0.0))):
+            if _zone_v in ("A", "N"):
+                aff = f'0 m² — zone {esc(_zone_v)}'
+            else:
+                _pv = valeurs.get("potentiel_verdict")
+                _pvv = _pv.valeur if (_pv is not None and isinstance(_pv.valeur, dict)) else {}
+                if _pvv.get("cause") or _pvv.get("niveau") == "exclu":
+                    _mot = _re.sub(r"^Non retenue\s*[—–-]\s*", "", str(_pvv.get("libelle") or "")).strip(" .")
+                    if _mot:
+                        aff = f'0 m² — {esc(_mot)}'
+                # CHIRURGICAL-FIX-1 (LOT L 5) — parcelle CONSTRUCTIBLE mais SDP résiduelle nulle : ce n'est
+                # pas « 0 m² » tout court, c'est le BÂTI EXISTANT qui sature l'enveloppe (IS0448). On le dit ;
+                # le potentiel réel passe par le « terrain libéré » (démolition), au §Potentiel.
+                elif _v(valeurs, "emprise_batie_m2"):
+                    aff = '0 m² — bâti existant saturé (potentiel en terrain libéré)'
         # EXPORTS-FIX-1 C7 — aucun champ vide imprimé : une tuile sans valeur est OMISE (pas de « — »).
         if aff is None:
             continue
@@ -1461,6 +1569,7 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         toc.append(f'<li>{n}. {esc(sec["titre"])}</li>')
     toc.append(f'<li>{n + 1}. Limites et sources</li>')
     sous_titre = _sous_titre_cover(fiche, valeurs)
+    _risque_pr = _risque_principal_cover(fiche, valeurs)
     au = donnees_au or f"{jour:%d/%m/%Y}"
     return (
         '<div class="cover">'
@@ -1478,6 +1587,9 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         + (plan_html or "")
         # Les six chiffres de la fiche (le résumé).
         + f'<div class="cover-tiles">{"".join(tuiles_html)}</div>'
+        # CHIRURGICAL-FIX-1 (LOT K 3f) — le risque principal NOMMÉ (pas seulement compté dans la tuile).
+        + (f'<p class="cover-risk" style="margin:5px 0;color:#7c2d12;font-weight:600">'
+           f'Risque principal : {esc(_risque_pr)}</p>' if _risque_pr else "")
         # Le sommaire paginé.
         + f'<ul class="toc">{"".join(toc)}</ul>'
         # Le cartouche du bas : n° de rapport · généré le · données à jour au (date du run servi).
@@ -1508,7 +1620,7 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
         numero += 1
         titre = f"{numero}. {sec['titre']}" if sec.get("numerote", True) else sec["titre"]
         frags: list[str] = []
-        frags.append(_bandeau(sec["id"], valeurs))
+        frags.append(_bandeau(sec["id"], valeurs, fiche=fiche))
         # PPR-PARTIEL-FIX-1 (étape B) — sur une parcelle partiellement rouge servie 0 par prudence, le
         # §risques dit AUSSI qu'il reste du foncier hors zone rouge (MÊME chiffre que le §potentiel et la
         # fiche : source unique db.surface_hors_ppr_rouge, portée par potentiel_verdict.hors_ppr_rouge).
@@ -1692,6 +1804,9 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
             _zone = _v(valeurs, "zone_plu_famille")
             _gab_bloque = valeurs.get("gabarit_motif_blocage") is not None
             _bati_connu = bool(_v(valeurs, "emprise_batie_m2"))   # LOT I 3b — bâti mesuré ≠ « non déterminé »
+            # LOT J pt3d — hauteur du bâti RÉELLEMENT mesurée (LiDAR HD à l'égout) : l'absence de marge
+            # ne vient pas d'une mesure manquante mais d'une règle non comparable.
+            _haut_mesuree = _v(valeurs, "hauteur_egout_mesuree_m") is not None
             # EXPORTS-FIX-1-BIS point 2 — quand une SDP RÉSIDUELLE est servie (droits à bâtir non
             # consommés), aucune ligne ne doit la contredire : on retire « surface de plancher non
             # calculable (capacité nulle) » et on dit la vraie raison de la capacité (pas « capacité nulle »).
@@ -1738,8 +1853,14 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                           "revendables, distincte de la surface de plancher ESTIMÉE (la SDP ci-dessus, "
                           "hors stationnement et pleine terre). Le programme relève de l'Étude de "
                           "faisabilité.")
+                # LOT K 3c — marge de surélévation : raison CONCRÈTE avec les chiffres (mesuré à l'égout
+                # vs limites égout/faîtage), au lieu du « non comparable » générique.
+                if q == "marge_surelevation_m" and _haut_mesuree:
+                    _r_ms = _raison_marge_surelevation(fiche, valeurs)
+                    if _r_ms:
+                        ph = _r_ms
                 phc = _absence_une_raison(_absence_clair(q, ph), _zone, gabarit_bloque=_gab_bloque,
-                                          bati_connu=_bati_connu)
+                                          bati_connu=_bati_connu, hauteur_mesuree=_haut_mesuree)
                 li = f'<li data-quoi="{esc(q)}">{esc(phc)}</li>'
                 (nondispo if _est_non_dispo(phc) else verifie).append(li)
             if verifie:

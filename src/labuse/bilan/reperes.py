@@ -15,7 +15,16 @@ from typing import Any, Callable, TypeVar
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .moteur import fmt_surface_seule, fmt_surfaces_paire   # LOT P — règle d'affichage unique
+
 T = TypeVar("T")
+
+
+def _dec_m2(x: float) -> str:
+    """CHIRURGICAL-FIX-1 (LOT O 2) — surface AVEC sa décimale quand elle en a (« 595,1 »), entière sinon
+    (« 595 »), virgule française : assez de décimales pour voir le dépassement (595,1 contre 595)."""
+    s = f"{float(x):.1f}".rstrip("0").rstrip(".")
+    return s.replace(".", ",")
 
 
 def _sans_poison(db: Session, fn: Callable[[], T]) -> T | None:
@@ -127,6 +136,127 @@ def sources_parcelle(db: Session, idu: str) -> dict[str, Any]:
         "constructible_m2": constructible_m2,
         "prix_achat_dvf": _prix_achat_dvf(db, parcel_id) if parcel_id else None,
     }
+
+
+def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
+                    postes_saisis: set[str] | None = None,
+                    programme_saisi: bool = True,
+                    suv_saisie: float | None = None) -> dict[str, Any]:
+    """CHIRURGICAL-FIX-1 (LOT K 2b / LOT L 2 / LOT M 3) — le GARDE-FOU en tête du Bilan. Un Bilan chiffre
+    un programme ; s'il contredit ce que le Dossier retient, on le dit EN TÊTE, avec le motif :
+      · parcelle non constructible / habitat interdit → motif de la fiche, et AUCUNE « surface à retenir »
+        (le Dossier ne donne pas de capacité résidentielle : on ne cite JAMAIS une ancienne simulation) ;
+      · la SDP SAISIE dépasse la **surface À RETENIR du Dossier** (la règle unique `surface_a_retenir`,
+        prudente — PAS l'estimation haute « table rase ») → on compare au MÊME seuil que l'Excel ;
+      · scénario « terrain libéré » (démolition) → on le DIT en tête, et si aucun **coût de démolition**
+        n'est saisi, on le signale (le bilan sous-estime alors les dépenses).
+    `programme_saisi` = False quand le Bilan est livré SANS programme (l'outil le produit de lui-même) :
+    le bandeau dira « aucun programme », pas « programme saisi ». Renvoie
+    `{alertes, surface_a_retenir, terrain_libere, non_constructible, sdp_saisie, programme_saisi}`."""
+    src = sources_parcelle(db, idu) or {}
+    motif_nc = src.get("non_constructible_motif")
+    sar_val = None
+    terrain_libere = False
+    try:
+        from ..faisabilite.surface_retenue import estimation_rapide_m2, surface_a_retenir
+        from ..exports.etude_faisabilite import scenario_etude_persiste
+        est = estimation_rapide_m2(db, idu)
+        scn = scenario_etude_persiste(db, idu)
+        bati = bool(_emprise_batie(db, idu))
+        if est not in (None, "") or scn is not None:
+            sar = surface_a_retenir(est, scn, bati=bati, copropriete=False)
+            sar_val = sar.get("valeur_m2")
+            # « terrain libéré » = la surface retenue suppose la DÉMOLITION du bâti existant.
+            terrain_libere = bati and "terrain libéré" in (sar.get("phrase") or "").lower()
+    except Exception:  # noqa: BLE001 — surface à retenir non résolue : on garde le reste du garde-fou
+        pass
+    # LOT M 3 — habitat interdit / non constructible : le Dossier ne donne AUCUNE capacité résidentielle.
+    # On écarte toute « surface à retenir » (sinon on citait 8 125 m² d'une ancienne simulation d'AM0838)
+    # et le scénario « terrain libéré » (pas de logements à y construire) : seul le motif reste.
+    if motif_nc:
+        sar_val = None
+        terrain_libere = False
+    # LOT N 3 — la capacité « bâti conservé » du Dossier (SDP résiduelle, §3) : IS0448 = 0 m² en l'état,
+    # ~85 m² en terrain libéré. Le bandeau « Aucun programme » reprend CETTE distinction (jamais un faux
+    # « aucune capacité à bâtir »).
+    cap_batie_conservee = None
+    if not motif_nc:
+        try:
+            pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+            if pid:
+                cap_batie_conservee = db.execute(text(
+                    "SELECT sdp_residuelle_m2 FROM parcel_residuel WHERE parcel_id = :p"), {"p": pid}).scalar()
+        except Exception:  # noqa: BLE001 — lecture annexe, jamais bloquante
+            cap_batie_conservee = None
+    cap_terrain_libere = sar_val if terrain_libere else None
+    alertes: list[str] = []
+    if motif_nc:
+        alertes.append(motif_nc)
+    if terrain_libere:
+        alertes.append("Scénario « terrain libéré » : le potentiel suppose la démolition du bâti existant.")
+        if not (postes_saisis and "demol" in postes_saisis):
+            alertes.append("Coût de démolition non renseigné — les dépenses sont sous-estimées.")
+    # LOT M 3 — MÊME seuil que l'Excel (`SDP > round(surface_à_retenir)`), au mètre près : plus d'écart
+    # d'un mètre entre le PDF (ancien `round(sar)+1`) et le tableur.
+    # LOT O 2 / LOT P — comparaison SUR LES DÉCIMALES (aucun arrondi), le MÊME seuil que l'Excel ;
+    # l'alerte affiche les DEUX valeurs avec assez de décimales pour VOIR le dépassement (règle unique
+    # `fmt_surfaces_paire` : 595,01 contre 595, pas 595 contre 595).
+    if (sdp_saisie and isinstance(sdp_saisie, (int, float)) and isinstance(sar_val, (int, float))
+            and sdp_saisie > sar_val):
+        _sdp, _sar_txt = fmt_surfaces_paire(sdp_saisie, sar_val)
+        alertes.append(
+            f"La surface de plancher saisie ({_sdp} m²) dépasse la surface à retenir du "
+            f"Dossier ({_sar_txt} m²).")
+    # LOT N 2 / LOT O 2 / LOT P — COHÉRENCE surface vendable / surface de plancher → PDF **et** Excel.
+    # Comparaison sur les DÉCIMALES ; les DEUX valeurs affichées (règle unique) ; SDP nulle/vide aussi
+    # incohérente.
+    if (isinstance(suv_saisie, (int, float)) and suv_saisie > 0
+            and suv_saisie > (sdp_saisie if isinstance(sdp_saisie, (int, float)) else 0.0)):
+        if isinstance(sdp_saisie, (int, float)) and sdp_saisie:
+            _suv, _sdp_num = fmt_surfaces_paire(suv_saisie, sdp_saisie)
+            _sdp_txt = f"{_sdp_num} m²"
+        else:
+            _suv, _sdp_txt = fmt_surface_seule(suv_saisie), "nulle / non renseignée"
+        alertes.append(
+            f"Surface vendable ({_suv} m²) supérieure à la surface de plancher "
+            f"({_sdp_txt}) — incohérent (le chiffre d'affaires est surestimé).")
+    return {"alertes": alertes, "surface_a_retenir": sar_val, "terrain_libere": terrain_libere,
+            "non_constructible": bool(motif_nc), "sdp_saisie": sdp_saisie,
+            "programme_saisi": programme_saisi,
+            "capacite_batie_conservee_m2": cap_batie_conservee, "capacite_terrain_libere_m2": cap_terrain_libere}
+
+
+def bandeau_sans_programme(gf: dict[str, Any]) -> tuple[str, str]:
+    """CHIRURGICAL-FIX-1 (LOT N 3) — titre + texte du bandeau d'un Bilan livré SANS programme, PARTAGÉ
+    par le PDF et l'Excel. Il reprend la DISTINCTION du Dossier (0 m² bâti conservé / ~85 m² terrain
+    libéré sur IS0448) au lieu d'un faux « aucune capacité à bâtir »."""
+    titre = "Aucun programme — parcelle écartée par LABUSE"
+    base = ("Aucun programme n'a été saisi : ce bilan ne porte que les repères de la parcelle "
+            "(terrain, taxes).")
+    cons = gf.get("capacite_batie_conservee_m2")
+    libere = gf.get("capacite_terrain_libere_m2")
+    if gf.get("non_constructible"):
+        capacite = "LABUSE n'y retient aucune capacité résidentielle"
+    elif isinstance(libere, (int, float)) and libere:
+        # le Dossier distingue le bâti conservé (SDP résiduelle, souvent 0) et le terrain libéré.
+        capacite = (f"Le Dossier distingue {round(cons) if isinstance(cons, (int, float)) else 0} m² en "
+                    f"l'état (bâti conservé) et ~{round(libere)} m² estimés en terrain libéré (démolition)")
+    elif isinstance(cons, (int, float)):
+        capacite = f"Le Dossier retient {round(cons)} m² (bâti conservé)"
+    else:
+        capacite = "LABUSE n'y retient pas de capacité à bâtir exploitable"
+    bas = f"{base} {capacite} — le résultat reste « non calculable »."
+    return titre, bas
+
+
+def _emprise_batie(db: Session, idu: str) -> float | None:
+    """Emprise bâtie (m²) de la parcelle — pour savoir si un scénario est « terrain libéré ». Lue de
+    `p_model_bati` (BD TOPO), la même source que la fiche. Best-effort (jamais un bloqueur)."""
+    try:
+        return db.execute(text(
+            "SELECT emprise_bati_m2 FROM p_model_bati WHERE idu = :i"), {"i": idu}).scalar()
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _prix_achat_dvf(db: Session, parcel_id: int) -> dict | None:

@@ -141,7 +141,10 @@ def _tete(
         ("Prix moyen m² de surface vendable HT", _ratio("Prix moyen au m² de surface vendable HT")),
         ("Net promoteur m² de surface vendable TTC", _ratio("Net promoteur m² de surface vendable TTC")),
         ("CA TTC programme", eur0(r.ca_ttc)),
-        ("Renta nette / CA HT", _pct(r.marge_pct) if r.ca_ttc else "—"),
+        # CHIRURGICAL-FIX-1 (LOT M 2) — « non calculable » quand le CA HT est inconnu (TVA de vente vide),
+        # comme les autres ratios qui en dépendent ; « — » seulement quand il n'y a pas de CA du tout.
+        ("Renta nette / CA HT",
+         "non calculable" if (r.ca_ttc and r.ca_ht is None) else (_pct(r.marge_pct) if r.ca_ttc else "—")),
         ("Nombre de lots", str(round(pt.get("lots") or 0)) if pt.get("lots") else "—"),
     ]
     cal = calendrier or {}
@@ -170,6 +173,34 @@ def _tete(
     )
 
 
+def _bandeau_garde_fou(garde_fou: dict | None) -> str:
+    """CHIRURGICAL-FIX-1 (LOT K 2b) — bandeau EN TÊTE quand la fiche écarte ce que le Bilan simule
+    (habitat interdit / non constructible, ou SDP saisie > capacité de la fiche). Le résultat y est
+    identifié comme celui d'un PROGRAMME SAISI, non vérifié par LABUSE."""
+    gf = garde_fou or {}
+    alertes = gf.get("alertes") or []
+    if not alertes:
+        return ""
+    lignes = "".join(f"<li>{esc(a)}</li>" for a in alertes)
+    # CHIRURGICAL-FIX-1 (LOT M 3) — un Bilan livré SANS programme (l'outil le produit de lui-même, sur
+    # une parcelle écartée) dit « Aucun programme », PAS « Programme saisi par l'utilisateur ».
+    if gf.get("programme_saisi", True):
+        titre = "Programme saisi — non vérifié par LABUSE"
+        bas = ("Ce bilan chiffre un programme SAISI par l'utilisateur ; il ne vaut pas pour acquis que "
+               "la parcelle l'autorise. Les chiffres ci-dessous découlent de cette saisie.")
+    else:
+        # CHIRURGICAL-FIX-1 (LOT N 3) — texte PARTAGÉ avec l'Excel, qui reprend la distinction du Dossier.
+        from .reperes import bandeau_sans_programme
+        titre, bas = bandeau_sans_programme(gf)
+    return (
+        '<div class="gardefou" style="border:1.5px solid #b45309;background:#fff7ed;border-radius:6px;'
+        'padding:10px 12px;margin:8px 0;color:#7c2d12">'
+        f'<div style="font-weight:700;margin-bottom:3px">{esc(titre)}</div>'
+        f'<ul style="margin:4px 0 0 18px;padding:0">{lignes}</ul>'
+        f'<div style="margin-top:5px;font-size:10.5px">{esc(bas)}</div></div>'
+    )
+
+
 def construire_html(
     r: ResultatBilan,
     *,
@@ -184,14 +215,16 @@ def construire_html(
     prix_demande: float | None = None,
     donnees_au: str | None = None,
     map_html: str = "",
+    garde_fou: dict | None = None,
 ) -> tuple[str, Cartouche]:
     cat = cat or charger_catalogue()
     j = jour or today_reunion()
-    # CHIRURGICAL-FIX-1 (LOT I pt4) — le numéro porte une clé du CONTENU (CA / dépenses / résultat) :
-    # deux Bilans de SAISIES différentes le même jour reçoivent des numéros différents, un recalcul à
-    # l'identique garde le même numéro.
-    _sig = f"{r.ca_ht}|{r.depenses_ht}|{r.resultat_net}|{r.marge_pct}"
-    numero = numeros.numero_rapport("bilan", idu, j, discriminant=_sig)
+    # CHIRURGICAL-FIX-1 (LOT I pt4 / LOT J pt4) — le numéro porte une clé de TOUT le contenu rendu (pas
+    # seulement CA/dépenses/résultat : aussi le programme, chaque poste, l'adresse…). On rend d'abord le
+    # corps avec un jeton, on signe, puis on substitue le vrai numéro. Deux Bilans au contenu affiché
+    # différent le même jour reçoivent des numéros différents ; un recalcul à l'identique garde le même.
+    from ..exports.builder import _NUMERO_PLACEHOLDER, _signature_contenu
+    numero = _NUMERO_PLACEHOLDER
 
     # DOCS-COHERENCE-1 (recette Vic, G6) — en-tête COMPLET : adresse + Étude reliée + prix demandé,
     # comme à l'écran. « — » honnête quand une donnée n'est pas servie (jamais un zéro inventé).
@@ -216,6 +249,7 @@ def construire_html(
     )
 
     corps = ['<div class="bilan">', tete]
+    corps.append(_bandeau_garde_fou(garde_fou))
     corps.append(_tete(r, programme, calendrier, cat))
     if r.lignes_vides:
         # DOCS-COHERENCE-1 (G4) — plus aucune mention de l'Excel côté client.
@@ -271,9 +305,13 @@ def construire_html(
         f"<tr><td>Dépenses totales</td><td class='num'>{_eur_nz(r.depenses_ht)}</td>"
         f"<td class='num'>{_eur_nz(r.depenses_tva)}</td><td class='num'>{_eur_nz(r.depenses_ttc)}</td></tr>"
     )
+    # CHIRURGICAL-FIX-1 (LOT M 2) — TVA de vente vide → le CA HORS TAXES est « non calculable » (pas
+    # « — » ni un HT = TTC). Le CA TTC, lui, reste connu (surface vendable × prix TTC).
+    _ca_ht_txt = "non calculable" if (r.ca_ht is None and r.ca_ttc) else _eur_nz(r.ca_ht)
+    _ca_tva_txt = "non calculable" if (r.ca_tva is None and r.ca_ttc) else _eur_nz(r.ca_tva)
     corps.append(
-        f"<tr><td>Chiffre d'affaires</td><td class='num'>{_eur_nz(r.ca_ht)}</td>"
-        f"<td class='num'>{_eur_nz(r.ca_tva)}</td><td class='num'>{_eur_nz(r.ca_ttc)}</td></tr>"
+        f"<tr><td>Chiffre d'affaires</td><td class='num'>{_ca_ht_txt}</td>"
+        f"<td class='num'>{_ca_tva_txt}</td><td class='num'>{_eur_nz(r.ca_ttc)}</td></tr>"
     )
     corps.append(
         f"<tr><td>TVA résiduelle</td><td></td><td></td><td class='num'>{_eur_nz(r.tva_residuelle)}</td></tr>"
@@ -305,12 +343,16 @@ def construire_html(
     # DOCS-COHERENCE-1 (recette Vic) — pied « Données LABUSE au <date du RUN servi> » (comme les 7
     # autres documents : 21/10/2026), pas la date de génération du jour.
     au = donnees_au or f"{j:%d/%m/%Y}"
+    # LOT J pt4 — on connaît enfin le corps complet : on en tire la signature et on substitue le numéro.
+    corps_str = "".join(corps)
+    numero = numeros.numero_rapport("bilan", idu, j, discriminant=_signature_contenu(corps_str))
+    corps_str = corps_str.replace(_NUMERO_PLACEHOLDER, numero)
     cart = Cartouche(
         doc_title=f"LABUSE — Bilan" + (f" · {adresse}" if adresse else ""),
         doc_ref=f"{idu} · {numero}",
         doc_foot=FOOT_LIGNE,   # DOCS-DA-1 (V11) — pied uniforme, une ligne, sans date
     )
-    html = page_html("Bilan", cart, f"<style>{_CSS}</style>" + "".join(corps))
+    html = page_html("Bilan", cart, f"<style>{_CSS}</style>" + corps_str)
     return html, cart
 
 

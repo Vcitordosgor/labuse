@@ -19,6 +19,33 @@ from typing import Any
 
 from .catalogue import Catalogue, Poste, charger_catalogue
 
+
+# CHIRURGICAL-FIX-1 (LOT P) — RÈGLE D'AFFICHAGE UNIQUE des surfaces d'une alerte, partagée par le PDF
+# (garde-fou, vraisemblance) et l'Excel (message cité) : autant de décimales que nécessaire pour
+# DISTINGUER les deux valeurs, AU MOINS 2 quand elles diffèrent de moins d'un m² ; virgule française,
+# zéros inutiles retirés. Ex. (595,01 ; 595) → « 595,01 » / « 595 » ; (595,02 ; 595,01) → les deux.
+def _fmt_un(x: float, d: int) -> str:
+    s = f"{float(x):.{d}f}"
+    if "." in s:
+        s = s.rstrip("0").rstrip(".")
+    return s.replace(".", ",")
+
+
+def fmt_surfaces_paire(a: float, b: float) -> tuple[str, str]:
+    fa, fb = float(a), float(b)
+    d = 0
+    while d < 6 and f"{fa:.{d}f}" == f"{fb:.{d}f}":
+        d += 1
+    if abs(fa - fb) < 1.0:
+        d = max(d, 2)   # au moins 2 décimales quand l'écart est inférieur à 1 m²
+    return _fmt_un(fa, d), _fmt_un(fb, d)
+
+
+def fmt_surface_seule(x: float) -> str:
+    """Une surface isolée (sans paire) : jusqu'à 2 décimales, zéros inutiles retirés."""
+    return _fmt_un(x, 2)
+
+
 # États d'un poste (doctrine 4).
 SOURCE = "source"
 SAISI = "saisi"
@@ -261,7 +288,13 @@ class Moteur:
         # Totaux produits — EN CONTINU (BILAN-2) : une case vide vaut 0, le CA se
         # cumule dès la première saisie (`ok` reste pour dire si tout est posé).
         produits_vue = []
-        lots = suv = ca_ttc = ca_ht = 0.0
+        lots = suv = ca_ttc = 0.0
+        ca_ht_sum = 0.0
+        # CHIRURGICAL-FIX-1 (LOT M 2) — une TVA de vente VIDE n'est PAS 0 % : tant qu'elle n'est pas
+        # renseignée, le CA HORS TAXES (et tout ce qui en dépend : net promoteur, marge, résultat) est
+        # « non calculable ». On ne complète donc JAMAIS un taux manquant par 0. Le CA TTC (= surface
+        # vendable × prix TTC) reste connu — il ne dépend pas de la TVA.
+        tva_vente_absente = False
         ca: list[float] = []
         prod_ok = bool(e.produits)
         for p in e.produits:
@@ -269,13 +302,16 @@ class Moteur:
                 prod_ok = False
             p_suv = p.suv or 0.0
             p_prix = p.prix_ttc_m2_suv or 0.0
-            p_tva = p.tva or 0.0
             p_ca_ttc = p_suv * p_prix
-            p_ca_ht = p_ca_ttc / (1.0 + p_tva)
+            if p_ca_ttc > 0 and p.tva is None:
+                tva_vente_absente = True
+                p_ca_ht = None
+            else:
+                p_ca_ht = p_ca_ttc / (1.0 + (p.tva or 0.0))
+                ca_ht_sum += p_ca_ht
             lots += p.lots or 0.0
             suv += p_suv
             ca_ttc += p_ca_ttc
-            ca_ht += p_ca_ht
             ca.append(p_ca_ttc)
             produits_vue.append(
                 {
@@ -289,6 +325,8 @@ class Moteur:
                     "complet": p.complet,
                 }
             )
+        # CA HT « non calculable » (None) dès qu'une TVA de vente manque sur un produit qui vend.
+        ca_ht = None if tva_vente_absente else ca_ht_sum
         pt = {
             "ok": prod_ok,
             "lots": lots,
@@ -398,14 +436,17 @@ class Moteur:
         dep_tva = sum(b.tva for b in blocs_tot)
         dep_ttc = dep_ht + dep_tva
         ca_ht = pt["ca_ht"]
-        tva_res = (pt["ca_ttc"] - ca_ht) - dep_tva
-        res_net = ca_ht - dep_ht
-        marge = res_net / ca_ht if ca_ht else None  # % du CA HT (— si CA nul)
+        # CHIRURGICAL-FIX-1 (LOT M 2) — CA HT « non calculable » (TVA de vente vide) → tout ce qui en
+        # dépend l'est aussi : TVA résiduelle, résultat, marge, cash-flow. On ne force jamais un calcul
+        # sur une TVA absente (sinon on ferait croire à une TVA de 0 %).
+        tva_res = None if ca_ht is None else (pt["ca_ttc"] - ca_ht) - dep_tva
+        res_net = None if ca_ht is None else ca_ht - dep_ht
+        marge = res_net / ca_ht if (ca_ht and res_net is not None) else None  # % du CA HT (— si CA nul/None)
         mod = next((ln.ht for ln in lignes if ln.id == "mod"), 0.0) or 0.0
-        cash = res_net + mod
+        cash = (res_net + mod) if res_net is not None else None
         aleas_tot = sum((ln.ht or 0.0) for ln in lignes if self.cat.poste(ln.id).alea)
-        res_sa = res_net + aleas_tot
-        marge_sa = res_sa / ca_ht if ca_ht else None
+        res_sa = (res_net + aleas_tot) if res_net is not None else None
+        marge_sa = res_sa / ca_ht if (ca_ht and res_sa is not None) else None
 
         # Prix max du terrain (sens « prix ») — modèle linéaire exact, en continu
         prix_max = prix_max_m2 = None
@@ -436,7 +477,7 @@ class Moteur:
             depenses_tva=dep_tva,
             depenses_ttc=dep_ttc,
             ca_ht=pt["ca_ht"],
-            ca_tva=pt["ca_ttc"] - pt["ca_ht"],
+            ca_tva=None if pt["ca_ht"] is None else pt["ca_ttc"] - pt["ca_ht"],
             ca_ttc=pt["ca_ttc"],
             tva_residuelle=tva_res,
             resultat_net=res_net,
@@ -473,6 +514,23 @@ class Moteur:
                     "cible": "cout_const",
                     "message": "Coût de construction inhabituel (hors 1 000–5 000 €/m² de surface vendable), à vérifier.",
                 })
+        # CHIRURGICAL-FIX-1 (LOT M 1 / LOT N 2) — COHÉRENCE surface vendable / surface de plancher : la
+        # surface vendable (habitable) ne peut PAS dépasser la surface de plancher (la SHAB est une PART
+        # de la SDP). Comparaison sur les DÉCIMALES (pas d'arrondi préalable : 595,1 > 595 alerte) ; une
+        # SUV positive avec une SDP nulle ou vide est AUSSI incohérente (plancher manquant).
+        sdp = programme.sdp
+        if suv and suv > (sdp or 0.0):
+            # LOT O 2 / LOT P — affiche les DEUX valeurs avec assez de décimales (règle unique).
+            if sdp:
+                _suv_txt, _sdp_num = fmt_surfaces_paire(suv, sdp)
+                _sdp_txt = f"{_sdp_num} m²"
+            else:
+                _suv_txt, _sdp_txt = fmt_surface_seule(suv), "nulle / non renseignée"
+            out.append({
+                "cible": "suv_sdp",
+                "message": f"Surface vendable ({_suv_txt} m²) supérieure à la surface de plancher "
+                           f"({_sdp_txt}) — incohérent, à vérifier (le CA est surestimé).",
+            })
         # Surface taxable très basse par rapport à la surface vendable totale
         stax = programme.surface_taxable
         if stax is not None and suv and stax < 0.5 * suv:
@@ -530,21 +588,31 @@ class Moteur:
                 euro((constr + aleaC) / suv) if suv else "—",
             )
         )
+        # CHIRURGICAL-FIX-1 (LOT M 2) — « non calculable » (pas « — ») quand la SUV existe mais que le
+        # CA HT est inconnu (TVA de vente vide) : prix moyen HT, net promoteur et renta en dépendent.
+        _ca_ht = pt["ca_ht"]
+        _nc = suv and _ca_ht is None
         rows.append(
-            ("Prix moyen au m² de surface vendable HT", euro(pt["ca_ht"] / suv) if suv else "—")
+            ("Prix moyen au m² de surface vendable HT",
+             "non calculable" if _nc else (euro(_ca_ht / suv) if suv else "—"))
         )
-        if suv:
-            net = (pt["ca_ht"] - (ht("acte") or 0) - (ht("pack") or 0) - (ht("proc") or 0))
-            rows.append(("Net promoteur m² de surface vendable TTC", euro(net / suv * (1 + self._tva_dom()))))
+        if _nc:
+            rows.append(("Net promoteur m² de surface vendable TTC", "non calculable"))
+        elif suv and _ca_ht:
+            # net promoteur TTC = net HT /SUV × (CA TTC / CA HT), soit la TVA RÉELLE de la vente (pas la
+            # TVA DOM forfaitaire de 8,5 %) → le PDF et l'Excel donnent le MÊME net promoteur.
+            net = (_ca_ht - (ht("acte") or 0) - (ht("pack") or 0) - (ht("proc") or 0))
+            rows.append(("Net promoteur m² de surface vendable TTC",
+                         euro(net / suv * (pt["ca_ttc"] / _ca_ht))))
         else:
             rows.append(("Net promoteur m² de surface vendable TTC", "—"))
         rows.append(("CA TTC programme", euro(pt["ca_ttc"])))
         rows.append(
             (
                 "Renta nette / CA HT",
-                f"{res_net / pt['ca_ht'] * 100:.1f} %".replace(".", ",")
-                if pt["ca_ht"]
-                else "—",
+                "non calculable" if _nc else (
+                    f"{res_net / _ca_ht * 100:.1f} %".replace(".", ",")
+                    if (_ca_ht and res_net is not None) else "—")
             )
         )
         rows.append(("Nombre de lots", str(round(pt["lots"])) if pt["lots"] else "—"))

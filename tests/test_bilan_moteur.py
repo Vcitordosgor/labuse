@@ -191,7 +191,9 @@ def test_ht_tva_ttc_coherents_et_sans_objet():
 def test_vraisemblance_non_bloquante():
     """Une valeur hors bornes usuelles est SIGNALÉE (ambre), jamais corrigée ni bloquante."""
     base = EntreesBilan(
-        programme=Programme(terrain=1746, surface_taxable=2560),
+        # LOT N 2 — surface de plancher >= surface vendable (cohérent) : une surface vendable sans
+        # plancher déclencherait désormais l'alerte de cohérence suv > sdp.
+        programme=Programme(terrain=1746, surface_taxable=2560, sdp=3200),
         produits=[Produit("Libre", 46, 2560, 4800, 0.085)],
         postes={"constr": SaisiePoste(2300, SAISI)},  # coût/m² dans les bornes
     )

@@ -74,8 +74,11 @@ def libelle_client_detail(detail: str | None) -> str | None:
     # phase1.py n'émet plus ; compat des runs déjà servis) pour dire la même chose que le Dossier.
     _zr = _ZONE_ROUGE_MARG_RE.match(d.strip())
     if _zr and "vigilance forte" in d:
-        d = (f"{_zr.group(1)} — cette partie est inconstructible (exclue de l'implantation) ; "
-             "les prescriptions du règlement PPR ne s'appliquent qu'en zone bleue.")
+        # CHIRURGICAL-FIX-1 (LOT J pt3b) — on ne renvoie plus « … ne s'appliquent qu'en zone bleue »
+        # (qui laissait croire que le rouge est sans règle) : la partie rouge est EXCLUE, le RESTE
+        # relève du règlement du plan de prévention.
+        d = (f"{_zr.group(1)} — la partie en zone rouge est exclue de l'implantation ; "
+             "le reste est soumis au règlement du plan de prévention.")
     return d
 
 

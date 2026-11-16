@@ -26,7 +26,7 @@ def _grille(ws):
     return g
 
 
-_REF = re.compile(r"\b([A-G])(\d+)\b")
+_REF = re.compile(r"\b([A-I])(\d+)\b")       # LOT L 3 — I = cellule de validité (hors zone visible)
 _SUM = re.compile(r"SUM\(([A-G])(\d+):([A-G])(\d+)\)")
 
 
@@ -53,7 +53,11 @@ def _evaluateur(grille):
             return "(" + "+".join(f"{c1}{rr}" for rr in range(r1, r2 + 1)) + ")"
 
         expr = _SUM.sub(som, expr)
+        # LOT M 2 — ISBLANK(ref) AVANT la substitution : cellule absente de la grille = VIDE (≠ 0).
+        expr = re.sub(r"ISBLANK\(([A-Z]+\d+)\)",
+                      lambda m: repr(grille.get(m.group(1)) in (None, "")), expr)
         expr = _REF.sub(lambda m: repr(ev(f"{m.group(1)}{m.group(2)}")), expr)
+        expr = expr.replace("<>", "!=")       # LOT L 3 — « différent de » Excel (ex. I1<>"")
         # Excel « = » (égalité, ex. « D89=0 ») → Python « == » (hors <=, >=, ==, !=).
         expr = re.sub(r"(?<![<>=!])=(?!=)", "==", expr)
         # CHIRURGICAL-FIX-1 (LOT H pt1) — le résultat/cash/marge sont des formules VIVANTES
@@ -68,8 +72,18 @@ def _evaluateur(grille):
         def _OR(*xs):
             return any(xs)
 
-        raw = eval(expr, {"__builtins__": {}}, {"IF": _IF, "AND": _AND, "OR": _OR})  # noqa: S307 — vocabulaire contrôlé
-        val = float(raw) if isinstance(raw, (int, float, bool)) else raw
+        def _IFERROR(a, b):   # LOT M 2 — valeur déjà évaluée ; NaN (div/0 propagée) → b
+            return b if (isinstance(a, float) and a != a) else a
+
+        try:
+            raw = eval(expr, {"__builtins__": {}},  # noqa: S307 — vocabulaire contrôlé
+                       {"IF": _IF, "AND": _AND, "OR": _OR, "IFERROR": _IFERROR,
+                        "ISTEXT": lambda x: isinstance(x, str), "NOT": lambda x: not x,
+                        "ISNUMBER": lambda x: isinstance(x, (int, float)) and not isinstance(x, bool),
+                        "TRUE": True, "FALSE": False})   # LOT O 1 — littéraux booléens Excel
+            val = float(raw) if isinstance(raw, (int, float, bool)) else raw
+        except Exception:  # noqa: BLE001 — eval EAGER (vs Excel paresseux) : une branche NON prise qui
+            val = None     # mêle texte et nombre lève ; on dégrade en None (cf. _valeurs_calculees).
         cache[coord] = val
         return val
 

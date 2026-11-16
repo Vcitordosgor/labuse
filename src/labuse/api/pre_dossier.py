@@ -199,9 +199,12 @@ def _cerfa_prerempli(parcelle: dict, adresse: dict | None, cerfa_num: str = "134
     reader = PdfReader(str(chemin))
     writer = PdfWriter(clone_from=reader)
     idu = parcelle["idu"]
+    # CHIRURGICAL-FIX-1 (LOT K 3g) — le numéro de voie garde son INDICE de répétition (bis/ter/… = champ
+    # `rep`) : « 18 ter » ne perd plus son « ter » (on ne remplissait que `numero`).
+    _num_voie = " ".join(x for x in ((adresse or {}).get("numero"), (adresse or {}).get("rep")) if x)
     champs = {
         # adresse du terrain (BAN si connue)
-        "T2Q_numero": (adresse or {}).get("numero") or "",
+        "T2Q_numero": _num_voie,
         "T2V_voie": (adresse or {}).get("voie") or "",
         "T2W_lieudit": "",
         "T2L_localite": parcelle["commune"],
@@ -1219,10 +1222,15 @@ def pre_dossier_zip(idu: str, request: Request, db: Session = Depends(get_db)) -
             "message": (f"Parcelle non constructible — {_motif}. Aucun pré-dossier de permis "
                         "(ni formulaire CERFA) n'est généré : il n'y a pas de projet constructible "
                         "à instruire sur cette parcelle.")})
+    # CHIRURGICAL-FIX-1 (LOT J pt2) — UNE parcelle, UNE adresse : le CERFA (PCMI4) choisit EXACTEMENT
+    # la même ligne BAN que la fiche/le Dossier/l'Apporteur. Avant, l'ORDER BY différait (il manquait le
+    # départage par numéro de voie) → AM0838 : « 14 Rue de la Boulangerie » au CERFA vs « 4 Impasse Henri
+    # Madore » sur la fiche. On reprend l'ordre canonique de la fiche (`_BAN_ORDER`, source unique).
+    from .app import _BAN_ORDER
     adresse = db.execute(text(
-        """SELECT a.numero, a.rep, a.voie, a.code_postal FROM adresse_parcelles ap
+        f"""SELECT a.numero, a.rep, a.voie, a.code_postal FROM adresse_parcelles ap
            JOIN adresses a ON a.id_ban = ap.id_ban WHERE ap.idu = :idu
-           ORDER BY (ap.source = 'principal') DESC, a.id_ban LIMIT 1"""),
+           ORDER BY {_BAN_ORDER} LIMIT 1"""),
         {"idu": idu}).mappings().first() if db.execute(text(
             "SELECT to_regclass('adresse_parcelles') IS NOT NULL")).scalar() else None
 

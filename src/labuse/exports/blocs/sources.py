@@ -6,6 +6,8 @@ source avancée doit se voir au PDF comme en fiche. Le millésime affiché est c
 nettoyé, de la fiche (millesime_source.composer) — une source, une seule vérité écran↔PDF."""
 from __future__ import annotations
 
+import re as _re
+
 from ..lignes import val
 from ..rendu import esc, ligne_kv, note, section, table_kv
 
@@ -39,6 +41,18 @@ def corps_sources(valeurs) -> str:
     # érosion côtière, BODACC/INPI (silencieuses sur ces parcelles) ne se citent plus « pour rien ».
     from ..pieds import sources_lues
     _servies = {nom for nom, _m in sources_lues([v for v in valeurs.values()])}
+    # CHIRURGICAL-FIX-1 (LOT K 3e) — dans l'annexe, le plan LITTORAL (PPRL) s'appelle « PPR littoral »,
+    # comme au §Risques : on repère sa/ses date(s) d'approbation (via les aléas) pour relabéliser la
+    # source PPR dont le millésime correspond (AM0838 : 16/03/2017).
+    _dates_littoral: set[str] = set()
+    for _a in (val(valeurs, "aleas_parcelle_liste") or []):
+        if not isinstance(_a, dict):
+            continue
+        for _p in ((_a.get("ppr") or []) + (_a.get("ppr_commune_autres") or [])):
+            if str((_p or {}).get("document") or "").upper() in ("PPRL", "PPR LITTORAL"):
+                _ap = str((_p or {}).get("approbation") or "")
+                if len(_ap) >= 10:
+                    _dates_littoral.add(f"{_ap[8:10]}/{_ap[5:7]}/{_ap[0:4]}")
     lignes = []
     _vus: set[str] = set()
     for s in ds:
@@ -59,6 +73,10 @@ def corps_sources(valeurs) -> str:
         # montre. On sert le millésime DÉJÀ COMPOSÉ par la fiche (millesime_source.composer, notes
         # internes nettoyées) — même source, même vérité écran↔PDF. Cellule vide si pas de millésime.
         mill = s.get("millesime")
+        # LOT K 3e — le plan de 2017 (PPRL) prend son nom « PPR littoral » dans l'annexe.
+        if ("ppr" in nom.lower() and "littoral" not in nom.lower() and mill
+                and any(d in str(mill) for d in _dates_littoral)):
+            nom = _re.sub(r"\bPPR\b", "PPR littoral", nom, count=1)
         fournisseur = esc(s.get("fournisseur") or "")
         droite = f"{fournisseur} — {esc(mill)}" if mill else fournisseur
         lignes.append(ligne_kv(nom, droite, ""))

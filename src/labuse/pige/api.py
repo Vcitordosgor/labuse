@@ -2222,6 +2222,13 @@ def _regles_zone(zone: str | None, commune: str | None) -> list[dict]:
     # sentinelle interne « a_verifier » (non calibré) ne doit jamais fuiter dans le tableau (il est dit
     # dans la phrase de classement « stationnement non vérifié »).
     if isinstance(stat, str) and stat and not any(k in stat.lower() for k in ("verif", "vérif", "a_verif")):
+        # CHIRURGICAL-FIX-1 (LOT K 3a) — barème à PLUSIEURS paliers (Le Tampon : « 1 place/logt ; 1,5… ») :
+        # Estimer ne sert plus le nombre partiel, il RENVOIE à l'article, COMME le Dossier (plu_reglement).
+        if ";" in stat:
+            from ..plu_reglement import _article_court
+            _art = _article_court((zr.sources or {}).get("stationnement"))
+            stat = ("barème selon le type de logement et la taille de l'opération"
+                    + (f" — voir l'article {_art}" if _art else " — voir le règlement de la zone"))
         out.append({"cle": "Stationnement", "valeur": stat})
     return out
 

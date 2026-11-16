@@ -17,8 +17,9 @@ def test_1a_excel_condition_est_un_ou_deux_couts_requis():
     rows = _ws_rows(classeur_bilan(
         EntreesBilan(produits=[Produit("P", 1, 55.0, 4500.0, 0.0)], postes={}), titre="t"))
     f_res = str(rows["Résultat net"][0])
-    assert f_res.startswith("=IF(OR(") and "non calculable" in f_res
-    # deux cellules de coût comparées à 0 dans la condition (achat ET construction)
+    # LOT L 3 — le résultat est d'abord gardé par la cellule de validité, PUIS « non calculable » si un
+    # coût requis manque : la condition reste un OU (achat<=0 OU construction<=0), pas un ET.
+    assert "IF(OR(" in f_res and "non calculable" in f_res
     assert f_res.count("<=0") == 2
 
 
@@ -30,7 +31,8 @@ def test_1b_marge_sans_division_par_zero_si_ca_nul():
                      postes={"achat": SaisiePoste(100.0, "ratio"),
                              "constr": SaisiePoste(1500.0, "ratio")}), titre="t"))
     f_marge = str(rows["Résultat net"][1])          # colonne E de la ligne Résultat net
-    assert f_marge.startswith("=IF(OR(") and "=0" in f_marge and '""' in f_marge
+    # LOT L 3 — gardée par la validité, puis « OU CA=0 → vide » (pas de #DIV/0!).
+    assert "IF(OR(" in f_marge and "=0" in f_marge and '""' in f_marge
     f_renta = str(rows["Renta nette / CA HT"][1])
     assert "=0" in f_renta and '""' in f_renta
 
@@ -111,9 +113,10 @@ def test_3b_bati_connu_pas_bati_non_determine():
     assert "hauteur de règle non déterminée" in _absence_une_raison(ph, "U", gabarit_bloque=True, bati_connu=True)
 
 
-def test_3c_le_tampon_deux_obligations_de_sol_et_stationnement_barème():
-    """3c — Le Tampon sert les DEUX obligations de sol (pleine terre ET surface perméable) et la ligne
-    stationnement dit sa portée (barème). AD0887=Ud (30 %/40 %), BW2635=Uav (20 %/30 %)."""
+def test_3c_le_tampon_sol_combine_et_stationnement_renvoi():
+    """3c (révisé LOT J pt3a/pt3c) — Le Tampon : les deux obligations de sol tiennent en UNE phrase
+    (« X % perméable, dont au moins Y % en pleine terre »), et la ligne stationnement RENVOIE à son
+    article (barème à paliers non servi en détail). AD0887=Ud (30 %/40 %), BW2635=Uav (20 %/30 %)."""
     from labuse.faisabilite.zonage import resolve_zone
     from labuse.plu_reglement import _regles_valeurs
     attendu = {"Ud": (30.0, 40.0), "Uav": (20.0, 30.0)}
@@ -121,13 +124,16 @@ def test_3c_le_tampon_deux_obligations_de_sol_et_stationnement_barème():
         zr = resolve_zone(zc, "Le Tampon")
         assert zr.pleine_terre_pct == pt and zr.permeabilite_pct == perm
         lignes = {r["cle"]: r for r in _regles_valeurs(zr, None, 0)}
-        assert lignes["pleine_terre"]["valeur"] == f"{pt:g} %"
-        assert "surface_permeable" in lignes and lignes["surface_permeable"]["valeur"] == f"{perm:g} %"
-        assert lignes["surface_permeable"]["libelle"] == "Surface perméable min"
-        # stationnement : barème avec sa portée (1 place/logt, 1,5 au-delà de 5 lots)
+        # LOT J pt3c — UNE phrase combinée, plus de ligne « surface_permeable » séparée.
+        assert lignes["pleine_terre"]["valeur"] == f"{perm:g} % de l'unité foncière en surface perméable et {pt:g} % de l'unité foncière en pleine terre"
+        assert lignes["pleine_terre"]["libelle"] == "Surface perméable et pleine terre"
+        assert "surface_permeable" not in lignes
+        # LOT J pt3a — renvoi à l'article, jamais un nombre partiel.
         stat = lignes["stationnement"]["valeur"]
-        assert "1 place / logement" in stat and "1,5" in stat and "5 lots" in stat
-        # la capacité lit toujours 1 place/logement (le barème ne la change pas)
+        assert "barème selon le type de logement et la taille de l'opération" in stat
+        assert f"article {'Ud' if zc == 'Ud' else 'Ua'} 12.2" in stat
+        assert "1 place" not in stat
+        # la capacité lit toujours 1 place/logement (le renvoi ne la change pas)
         assert zr.places_par_logement() == 1.0
 
 
@@ -138,7 +144,8 @@ def test_3d_comparables_note_8_plus_proches_pas_la_mediane():
     from labuse.pige.estimer3 import _POOL_SQL
     html = _comparables({"comparables": [{"date": "2025-01-01", "type": "Maison", "surface_m2": 80,
                                           "prix_eur": 200000, "prix_m2": 2500, "distance_m": 100}]})
-    assert "les plus proches" in html and "médian" in html and "tout le secteur" in html
+    # LOT J pt3e — classées par RESSEMBLANCE (plus « les plus proches »), et toujours distinguées de la médiane.
+    assert "ressemblant" in html and "médian" in html and "tout le secteur" in html
     # dédoublonnage par mutation : DISTINCT ON (id_mutation, id_parcelle)
     assert "DISTINCT ON (dm.id_mutation, dm.id_parcelle)" in _POOL_SQL
 
@@ -178,16 +185,18 @@ def test_pt4_numero_deux_versions_different_et_comparatif_toutes_parcelles():
 
 
 def test_pt2_zone_rouge_exclue_de_l_implantation_pas_vigilance_forte():
-    """pt2 — la zone rouge marginale est dite INCONSTRUCTIBLE (exclue de l'implantation), prescriptions
-    réservées à la zone bleue — plus « vigilance forte ; pas d'exclusion automatique ». La normalisation
-    reformule les libellés STOCKÉS (compat des runs servis), et phase1.py l'émet nativement."""
+    """pt2 (reformulé LOT J pt3b) — la zone rouge marginale est dite EXCLUE de l'implantation, le RESTE
+    soumis au règlement du plan de prévention — plus « vigilance forte ; pas d'exclusion automatique »,
+    ni « … ne s'appliquent qu'en zone bleue ». La normalisation reformule les libellés STOCKÉS (compat
+    des runs servis), et phase1.py l'émet nativement."""
     from labuse.api.risques_arbitrage import libelle_client_detail
     ancien = ("PPR zone rouge sur 34 % de la surface — vigilance forte ; constructibilité à vérifier "
               "au règlement (pas d'exclusion automatique).")
     neuf = libelle_client_detail(ancien)
-    assert "inconstructible" in neuf and "exclue de l'implantation" in neuf
-    assert "zone bleue" in neuf
+    assert "la partie en zone rouge est exclue de l'implantation" in neuf
+    assert "le reste est soumis au règlement du plan de prévention" in neuf
     assert "vigilance forte" not in neuf and "exclusion automatique" not in neuf
+    assert "qu'en zone bleue" not in neuf           # LOT J pt3b — plus de « ne s'appliquent qu'en zone bleue »
     assert neuf.startswith("PPR zone rouge sur 34 % de la surface —")
     # un libellé déjà au nouveau format n'est pas re-réécrit
     assert libelle_client_detail(neuf) == neuf

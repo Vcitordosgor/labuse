@@ -69,6 +69,8 @@ class RatioIn(BaseModel):
     tva: float | None = None
 
     _tva_fraction = field_validator("tva")(_valider_tva)
+    # LOT J 1c — un ratio maison (coût) ne peut pas être négatif, comme toute cellule de saisie du Bilan.
+    _ratio_non_negatif = field_validator("valeur")(_valider_non_negatif)
 
 
 @router.get("/bilan-ratios")
@@ -193,6 +195,72 @@ def _entrees(corps: CalculIn) -> EntreesBilan:
         marge_cible=corps.marge_cible,
         calendrier=dict(corps.calendrier),
     )
+
+
+def _entrees_servies(db: Session, idu: str, corps: "CalculIn") -> tuple[EntreesBilan, dict]:
+    """CHIRURGICAL-FIX-1 (LOT L 1) — L'OBJET CALCULÉ UNIQUE du Bilan : mêmes saisies + MÊME
+    préremplissage pour le PDF ET l'Excel, pour qu'un seul calcul donne deux rendus identiques.
+      · la surface de terrain (cadastre) entre DANS le calcul (la ligne d'achat = terrain × €/m²,
+        au lieu d'être injectée APRÈS le calcul côté PDF → ligne d'achat vide) ;
+      · les postes SOURCÉS que le client n'a pas saisis (taxe d'aménagement, redevance d'archéologie)
+        sont préremplis des DEUX côtés (l'Excel les laissait à zéro).
+    Renvoie `(entrees, prefill)` ; le prefill porte adresse / commune / date du run servi pour l'en-tête."""
+    from ..bilan import reperes as _rep
+    pf = _rep.bilan_prefill(db, idu)
+    e = _entrees(corps)
+    if e.programme.terrain is None:
+        e.programme.terrain = _terrain_sourcee(db, idu)
+    for pid, sp in (pf.get("postes") or {}).items():
+        e.postes.setdefault(pid, sp)
+    return e, pf
+
+
+def _hypotheses_bilan(db: Session, idu: str, corps: "CalculIn") -> tuple[str | None, float | None]:
+    """CHIRURGICAL-FIX-1 (LOT L 4) — NOMME les hypothèses dans l'en-tête du PDF (« Chaque hypothèse
+    est nommée dans le document ») : le prix de vente (= le prix demandé des produits) et, quand la
+    surface saisie EST celle du scénario de l'Étude, « scénario de l'Étude (N lots, S m²) · prix de
+    vente = neuf VEFA <niveau> ». Rien n'est inventé : si la saisie ne correspond à aucun scénario,
+    on renvoie None et l'en-tête reste honnête (« aucune Étude reliée »)."""
+    prix = max((p.prix_ttc_m2_suv for p in corps.produits if p.prix_ttc_m2_suv), default=None)
+    sdp = corps.programme.sdp
+    if not sdp:
+        return None, prix
+    try:
+        from ..exports.etude_faisabilite import scenario_retenu
+        from ..implantation import revisions as _rev
+        from ..implantation.service import _study_id
+        cfg = {"idus": [idu], "type_projet": "collectif", "objectif": "equilibre",
+               "stationnement": "aerien", "terrain": "libere", "niveaux_sous_sol": None,
+               "programme": None, "hypotheses": None}
+        payload = _rev.charger(db, _study_id(cfg))
+        resume = (scenario_retenu(payload) or {}).get("resume") if payload else None
+    except Exception:  # noqa: BLE001 — en-tête best-effort, jamais bloquante
+        resume = None
+    if not resume or not resume.get("sdp_m2") or abs(float(resume["sdp_m2"]) - float(sdp)) > 1.0:
+        return None, prix     # la saisie n'est pas le scénario de l'Étude → en-tête honnête
+    lots = int(resume["logements"]) if resume.get("logements") else None
+    niveau = None
+    if prix:
+        try:
+            from ..ingestion.dvf_prix_neuf import resolve_prix_neuf_marche
+            pid = db.execute(text("SELECT id FROM parcels WHERE idu=:i"), {"i": idu}).scalar()
+            _, niveau, _, _ = resolve_prix_neuf_marche(db, pid) if pid else (None, None, None, None)
+        except Exception:  # noqa: BLE001
+            niveau = None
+    bout = (f"scénario de l'Étude ({lots} lots, {round(float(sdp))} m²)" if lots
+            else f"scénario de l'Étude ({round(float(sdp))} m²)")
+    if prix:
+        bout += f" · prix de vente = neuf VEFA{(' ' + niveau) if niveau else ''}"
+    return bout, prix
+
+
+def _terrain_sourcee(db: Session, idu: str) -> float | None:
+    """CHIRURGICAL-FIX-1 (LOT K 2) — la surface de terrain pré-remplie = la CONTENANCE CADASTRALE de la
+    parcelle (Sourcé), MÊME source pour le PDF et l'Excel. L'import de `reperes` est fait ici (il manquait
+    dans la route Excel, où un `NameError` était avalé en silence → terrain vide). L'erreur n'est PLUS
+    avalée : si la contenance ne se résout pas, ça remonte au lieu de servir discrètement un blanc."""
+    from ..bilan import reperes as _rep
+    return _rep.sources_parcelle(db, idu).get("terrain")
 
 
 def _resultat_dict(r: ResultatBilan) -> dict:
@@ -399,10 +467,13 @@ def _saisies_du_document(db: Session, idu: str, doc_id: int, request: Request) -
     return CalculIn.model_validate(data)
 
 
-def _refuser_si_ca_nul(r) -> None:
-    """DOCS-COHERENCE-1 (recette Vic, G3) — export REFUSÉ côté SERVEUR si le CA est nul (pas seulement
-    le bouton grisé à l'écran) : un Bilan sans programme ni prix de vente n'a rien à exporter."""
-    if not getattr(r, "ca_ttc", None):
+def _refuser_si_ca_nul(r, autorise_sans_ca: bool = False) -> None:
+    """DOCS-COHERENCE-1 (recette Vic, G3) — export REFUSÉ côté SERVEUR si le CA est nul : un Bilan sans
+    programme ni prix de vente n'a rien à exporter.
+    CHIRURGICAL-FIX-1 (LOT L 4) — SAUF quand la fiche a un GARDE-FOU à porter (parcelle non constructible
+    / sans capacité) : le Bilan que l'outil produit DE LUI-MÊME existe pour MONTRER cet avertissement
+    (résultat « non calculable »), il n'est pas refusé."""
+    if not getattr(r, "ca_ttc", None) and not autorise_sans_ca:
         raise HTTPException(
             422, "Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.")
 
@@ -418,27 +489,25 @@ def bilan_pdf(
     # les postes que le client n'a PAS saisis : le PDF montre le même Sourcé que l'écran. En-tête
     # complet (adresse BAN) + pied daté du run servi.
     from ..bilan import reperes as _rep
-    _pf = _rep.bilan_prefill(db, idu)
-    e = _entrees(corps)
-    for _pid, _sp in (_pf.get("postes") or {}).items():
-        if _pid not in e.postes:
-            e.postes[_pid] = _sp
+    # CHIRURGICAL-FIX-1 (LOT L 1) — objet calculé UNIQUE (terrain dans le calcul + postes sourcés),
+    # le MÊME que la route Excel : un seul calcul, deux rendus identiques.
+    e, _pf = _entrees_servies(db, idu, corps)
     r = Moteur().calculer(e)
-    _refuser_si_ca_nul(r)
+    _gf = _rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp, postes_saisis=set(corps.postes),
+                               programme_saisi=bool(corps.produits) or bool(corps.programme.sdp),
+                               suv_saisie=sum(p.suv or 0.0 for p in corps.produits))
+    _refuser_si_ca_nul(r, autorise_sans_ca=bool(_gf.get("alertes")))
     # DOCS-1 — carte de situation sur la couverture du Bilan (best-effort : jamais un bloqueur).
     try:
         from ..exports.builder import _plan_situation_html
         _map = _plan_situation_html(db, idu)
     except Exception:  # noqa: BLE001
         _map = ""
-    # DOCS-1 (décision Vic) — la ligne « Terrain » REPREND la contenance de la fiche : si le client n'a
-    # pas saisi la surface du terrain, on sert la contenance sourcée (jamais un « — » quand la fiche sait).
     _prog = corps.programme.model_dump()
-    if _prog.get("terrain") is None:
-        try:
-            _prog["terrain"] = _rep.sources_parcelle(db, idu).get("terrain")
-        except Exception:  # noqa: BLE001 — contenance non résolue : la ligne reste « — », jamais un crash
-            pass
+    _prog["terrain"] = e.programme.terrain      # la MÊME contenance que celle entrée dans le calcul
+    # CHIRURGICAL-FIX-1 (LOT L 4) — en-tête qui NOMME les hypothèses (Étude reliée + prix de vente),
+    # au lieu du « aucune Étude reliée · Prix demandé : non renseigné » figé qui contredisait le contenu.
+    _etude_reliee, _prix_demande = _hypotheses_bilan(db, idu, corps)
     octets = _pdf.construire_pdf(
         r,
         idu=idu,
@@ -448,6 +517,9 @@ def bilan_pdf(
         programme=_prog,
         calendrier=dict(corps.calendrier),
         map_html=_map,
+        etude_reliee=_etude_reliee,
+        prix_demande=_prix_demande,
+        garde_fou=_gf,   # LOT K 2b / LOT L — la fiche écarte-t-elle ce programme ?
     )
     return Response(
         content=octets,
@@ -463,9 +535,17 @@ def bilan_xlsx(
     from ..bilan.excel import classeur_bilan_bytes
 
     corps = _saisies_du_document(db, idu, doc_id, request)
-    e = _entrees(corps)
-    _refuser_si_ca_nul(Moteur().calculer(e))
-    octets = classeur_bilan_bytes(e, titre=f"Bilan — {idu}")
+    # CHIRURGICAL-FIX-1 (LOT L 1) — MÊME objet calculé que le PDF (terrain dans le calcul + postes
+    # sourcés taxe/archéologie) : le classeur recalcule les MÊMES dépenses / CA / résultat à l'euro.
+    e, _ = _entrees_servies(db, idu, corps)
+    # CHIRURGICAL-FIX-1 (LOT K 2b / LOT L 4) — même garde-fou que le PDF ; il autorise l'export sans CA
+    # quand la parcelle est écartée (le classeur porte alors « non calculable » + l'avertissement).
+    from ..bilan import reperes as _rep
+    _gf = _rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp, postes_saisis=set(corps.postes),
+                               programme_saisi=bool(corps.produits) or bool(corps.programme.sdp),
+                               suv_saisie=sum(p.suv or 0.0 for p in corps.produits))
+    _refuser_si_ca_nul(Moteur().calculer(e), autorise_sans_ca=bool(_gf.get("alertes")))
+    octets = classeur_bilan_bytes(e, titre=f"Bilan — {idu}", garde_fou=_gf)
     return Response(
         content=octets,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
