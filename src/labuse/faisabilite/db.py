@@ -1442,7 +1442,12 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # scénario par niveau (hauteur de façade supposée).
     if _f_cap is not None and "surface_plancher_m2" in (_f_cap.fourchette or {}):
         from .zone_norm import est_famille as _ef5
-        if ctx.zone and _ef5(ctx.zone, ("AU",)):
+        # MOTEUR-VERITE-FIX-6 LOT 3 — la réserve « zone AU » suit la PORTION sur laquelle le
+        # chiffre est calculé (la sous-zone servie, rules.code = _f_cap.zone), pas la zone
+        # dominante : AK0834 (A dominant, portion 1AUa) et AE0409 (N dominant, portion 1AUc)
+        # servent leur capacité sur la portion AU — la réserve d'aménagement/OAP doit suivre.
+        _zone_servie = _f_cap.zone or ctx.zone
+        if _zone_servie and _ef5(_zone_servie, ("AU",)):
             _f_cap.avertissements.append(
                 "Capacité sous réserve des conditions d'aménagement de la zone et de l'OAP "
                 "(zone AU : échéancier, desserte et organisation d'ensemble à instruire).")

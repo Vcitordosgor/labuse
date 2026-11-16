@@ -56,3 +56,36 @@ def test_lot2_repli_rouge_et_plu(app_session):
     for idu in ("97405000AW1235", "97410000BM0158", "97409000BO0383"):
         f = _res(app_session, idu)
         assert f.constructible is False, f"{idu} : repli sert encore un chiffre exclu par la cascade"
+
+
+# LOT 3 — réserves et libellés.
+def test_lot3_reserve_au_suit_la_portion(app_session):
+    """La réserve « zone AU » suit la portion servie, pas la zone dominante : AK0834 (A dominant,
+    portion 1AUa) et AE0409 (N dominant, portion 1AUc) servent sur la portion AU."""
+    for idu in ("97419000AK0834", "97419000AE0409"):
+        f = _res(app_session, idu)
+        sdp = (f.fourchette or {}).get("surface_plancher_m2")
+        if sdp is None:
+            pytest.skip(f"{idu} sans chiffre")
+        assert any("conditions d'aménagement" in a for a in (f.avertissements or [])), \
+            f"{idu} : capacité AU chiffrée sans réserve d'aménagement/OAP"
+
+
+def test_lot3_hauteur_porte_son_vrai_nom(app_session):
+    """AS0606 (La Possession AUB, zone AU) : le calcul prudent utilise le FAÎTAGE (12 m), pas
+    l'égout (9 m) — le libellé doit dire « faîtage », jamais « égout 12 m »."""
+    from labuse.gabarit.builder import build_gabarit_input
+    gb = build_gabarit_input(app_session, "97408000AS0606")
+    if gb is None:
+        pytest.skip("AS0606 sans gabarit")
+    rsf = (gb.raccordement.get("plu") or {}).get("recul_sep_formule") or ""
+    assert "égout 12" not in rsf, f"AS0606 : hauteur mal nommée — {rsf}"
+    assert "faîtage" in rsf
+
+
+def test_lot3_sous_prescriptions_seulement_si_bleue(app_session):
+    """« Sous prescriptions » ne s'écrit que si une zone bleue touche la parcelle : AH0074
+    (rouge seul, aucune bleue) ne porte pas la réserve bleue."""
+    f = _res(app_session, "97421000AH0074")
+    assert not any("prescriptions du plan de prévention" in a for a in (f.avertissements or [])), \
+        "AH0074 : réserve bleue sans zone bleue"

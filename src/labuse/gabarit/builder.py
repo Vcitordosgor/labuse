@@ -498,7 +498,8 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 # vise l'égout (lecture correcte — Saint-Joseph U5 : « égout depuis le sol après
                 # travaux », FIX-5 LOT 2 — jamais le faîtage à sa place), sinon le faîtage (le
                 # recul le plus grand plausible). Le recul reste ≥ au minimum de main.
-                if _h_ref_type == "egout" and egout is not None and not _est_au:
+                _ref_egout = (_h_ref_type == "egout" and egout is not None and not _est_au)
+                if _ref_egout:
                     _h_prud = egout
                 else:
                     # zone AU (conditions d'aménagement/OAP non vérifiables) ou référence non
@@ -508,7 +509,11 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                     _rec_p = round(max(float(recul_sep), float(_h_prud) * _frac_h), 1)
                     if _rec_p > recul_sep:
                         recul_sep = _rec_p
-                    _ref_p = "égout" if (_h_ref_type == "egout" and egout is not None) else "faîtage"
+                    # MOTEUR-VERITE-FIX-6 LOT 3 — le NOM de la référence suit la VALEUR utilisée :
+                    # en zone AU la prudence sert le faîtage même si l'article vise l'égout
+                    # (AS0606 disait « égout 12 m » alors que son égout est à 9 m et le calcul
+                    # utilise le faîtage de 12 m).
+                    _ref_p = "égout" if _ref_egout else "faîtage"
                     recul_sep_formule = (
                         f"recul séparatif = max(min, H×{_frac_h:.3g}) — référence PRUDENTE "
                         f"H = {_ref_p} {_h_prud:g} m (règle de non-hausse : scénario niveau par "

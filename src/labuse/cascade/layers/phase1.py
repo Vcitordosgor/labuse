@@ -720,13 +720,18 @@ class RisquesLayer(Layer):
                 except Exception:  # noqa: BLE001 — test indisponible : exclusion prudente conservée
                     servable = False
                 if servable:
+                    # MOTEUR-VERITE-FIX-6 LOT 3 — « sous prescriptions » est réservé aux ZONES
+                    # BLEUES (règles constructives du PPR) ; pour une partie hors rouge, on dit
+                    # « capacité RÉDUITE à cette partie », admissibilité au règlement du PPR À
+                    # VÉRIFIER (AH0074 n'a aucune zone bleue). La réserve bleue, quand elle
+                    # existe, est portée à part par la faisabilité (intersection bleue mesurée).
                     verdicts.append(soft_flag(
                         self.name,
                         f"PPR zone rouge sur {cov_pct:.0f} % de la surface — partie hors rouge "
                         "admise par le PLU et desservie (≥ 200 m² d'un seul tenant, accès voie) : "
-                        "capacité RÉDUITE, SOUS PRESCRIPTIONS du règlement du PPR "
-                        "(étude préalable / attestation le cas échéant) — pas d'exclusion "
-                        "automatique.",
+                        "capacité RÉDUITE à cette partie ; admissibilité au règlement du PPR à "
+                        "vérifier (étude préalable / attestation le cas échéant) — pas "
+                        "d'exclusion automatique.",
                         Severity.FORT, source=SRC_DEAL_PPR))
                 else:
                     verdicts.append(hard_exclude(
