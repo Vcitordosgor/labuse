@@ -428,10 +428,13 @@ def _saisies_du_document(db: Session, idu: str, doc_id: int, request: Request) -
     return CalculIn.model_validate(data)
 
 
-def _refuser_si_ca_nul(r) -> None:
-    """DOCS-COHERENCE-1 (recette Vic, G3) — export REFUSÉ côté SERVEUR si le CA est nul (pas seulement
-    le bouton grisé à l'écran) : un Bilan sans programme ni prix de vente n'a rien à exporter."""
-    if not getattr(r, "ca_ttc", None):
+def _refuser_si_ca_nul(r, autorise_sans_ca: bool = False) -> None:
+    """DOCS-COHERENCE-1 (recette Vic, G3) — export REFUSÉ côté SERVEUR si le CA est nul : un Bilan sans
+    programme ni prix de vente n'a rien à exporter.
+    CHIRURGICAL-FIX-1 (LOT L 4) — SAUF quand la fiche a un GARDE-FOU à porter (parcelle non constructible
+    / sans capacité) : le Bilan que l'outil produit DE LUI-MÊME existe pour MONTRER cet avertissement
+    (résultat « non calculable »), il n'est pas refusé."""
+    if not getattr(r, "ca_ttc", None) and not autorise_sans_ca:
         raise HTTPException(
             422, "Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.")
 
@@ -451,7 +454,8 @@ def bilan_pdf(
     # le MÊME que la route Excel : un seul calcul, deux rendus identiques.
     e, _pf = _entrees_servies(db, idu, corps)
     r = Moteur().calculer(e)
-    _refuser_si_ca_nul(r)
+    _gf = _rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp, postes_saisis=set(corps.postes))
+    _refuser_si_ca_nul(r, autorise_sans_ca=bool(_gf.get("alertes")))
     # DOCS-1 — carte de situation sur la couverture du Bilan (best-effort : jamais un bloqueur).
     try:
         from ..exports.builder import _plan_situation_html
@@ -469,8 +473,7 @@ def bilan_pdf(
         programme=_prog,
         calendrier=dict(corps.calendrier),
         map_html=_map,
-        # CHIRURGICAL-FIX-1 (LOT K 2b) — garde-fou : la fiche écarte-t-elle ce programme saisi ?
-        garde_fou=_rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp, postes_saisis=set(corps.postes)),
+        garde_fou=_gf,   # LOT K 2b / LOT L — la fiche écarte-t-elle ce programme ?
     )
     return Response(
         content=octets,
@@ -489,10 +492,11 @@ def bilan_xlsx(
     # CHIRURGICAL-FIX-1 (LOT L 1) — MÊME objet calculé que le PDF (terrain dans le calcul + postes
     # sourcés taxe/archéologie) : le classeur recalcule les MÊMES dépenses / CA / résultat à l'euro.
     e, _ = _entrees_servies(db, idu, corps)
-    _refuser_si_ca_nul(Moteur().calculer(e))
-    # CHIRURGICAL-FIX-1 (LOT K 2b) — même garde-fou que le PDF, en tête du classeur.
+    # CHIRURGICAL-FIX-1 (LOT K 2b / LOT L 4) — même garde-fou que le PDF ; il autorise l'export sans CA
+    # quand la parcelle est écartée (le classeur porte alors « non calculable » + l'avertissement).
     from ..bilan import reperes as _rep
     _gf = _rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp, postes_saisis=set(corps.postes))
+    _refuser_si_ca_nul(Moteur().calculer(e), autorise_sans_ca=bool(_gf.get("alertes")))
     octets = classeur_bilan_bytes(e, titre=f"Bilan — {idu}", garde_fou=_gf)
     return Response(
         content=octets,
