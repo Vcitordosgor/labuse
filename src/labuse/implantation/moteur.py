@@ -183,7 +183,14 @@ def _resoudre_zone(session, idus: list[str]) -> str:
             "n'est chiffrable en zone A ou N.",
             zone_dominante=zs.zone)
     cons.sort(key=lambda p: p.get("pct") or 0.0, reverse=True)
-    return cons[0]["zone"]
+    # ETUDE-STATIONNEMENT-FIX-3 (LOT 2, assemblage) — sur un assemblage de zones, on lit les règles et on
+    # implante sur la partie où l'HABITAT ORDINAIRE est admis, pas sur la plus grande part : UE/UT (habitat
+    # réservé au gardiennage/fonction) + UB → on retient UB. Sinon (aucune part n'admet un vrai programme
+    # d'habitation) on garde la part dominante (le refus « logement de fonction » est géré en aval).
+    insee = idus[0][:5]
+    from .service import _logement_fonction_seulement
+    habitat = [p for p in cons if p.get("zone") and not _logement_fonction_seulement(insee, p["zone"])]
+    return (habitat or cons)[0]["zone"]
 
 
 def _simplicite_forme(forme: str) -> int:
@@ -233,6 +240,9 @@ def _charger(session, idus, zone, conv, avec_pente):
             recul_voie_m=regles.recul_voie.valeur or 0.0,
             recul_separative_m=regles.recul_separatives.valeur or 0.0,
             inset_m=conv.inset_zone_m, avec_pente=avec_pente,
+            # assemblage : l'implantation se trace sur la part de la zone RETENUE (habitat admis), pas sur
+            # toute la famille U (sinon des logements se dessinent en UE/économique — cf. L'Étang-Salé).
+            zone_cible=zone,
         )
     finally:
         if fermer:

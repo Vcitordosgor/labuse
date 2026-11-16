@@ -166,14 +166,23 @@ def test_r3_garde_fou_force_recherche_partielle(session_reelle, monkeypatch):
     assert "Recherche partielle" in html
 
 
-def test_r4_etang_sale_compteur_27(session_reelle):
-    """R4 — L'Étang-Salé : 23 T2 + 6 T3 demandés → 27 logements tenus (23 T2 + 4 T3), pas 28."""
+def test_r4_etang_sale_compteur_22(session_reelle):
+    """R4 — L'Étang-Salé (assemblage 4 parcelles) : le COMPTEUR de logements tenus est cohérent (la somme
+    par typologie = le total) et déterministe.
+
+    ETUDE-STATIONNEMENT-FIX-3 — stationnement en SOUS-SOL. L'ancienne variante « aérien → 27 tenus » reposait
+    sur un dégagement d'allée MESURÉ À 0 (bug de repère : allée en coordonnées locales, places en projetées) :
+    le pavage cramait 27 voitures sans allée desservant chacune. Le dégagement corrigé est désormais un contrôle
+    DUR (aussi dur sur un assemblage que sur une parcelle seule) : sur cette assiette dense et irrégulière, une
+    allée aérienne de 5 m ne dessert plus qu'une poignée de voitures, donc l'aérien ne tient plus 27 logements
+    (c'est la réalité géométrique, pas une régression du compteur). On teste donc le compteur en sous-sol, où le
+    pavage des LOGEMENTS — ce que ce test vérifie — n'est pas limité par l'allée de surface."""
     from labuse.implantation.service import etudier_payload
-    cfg = {"idus": _ETANG, "type_projet": "social", "objectif": "equilibre", "stationnement": "aerien",
+    cfg = {"idus": _ETANG, "type_projet": "social", "objectif": "equilibre", "stationnement": "sous_sol",
            "programme": {"mode": "saisi", "lignes": [{"type": "T2", "nombre": 23}, {"type": "T3", "nombre": 6}]}}
     p = etudier_payload(session_reelle, cfg)
     dep = p.get("depassement") or {}
-    assert dep.get("total_tiennent") == 27, f"attendu 27, obtenu {dep.get('total_tiennent')}"
+    assert dep.get("total_tiennent") == 22, f"attendu 22, obtenu {dep.get('total_tiennent')}"
     assert dep.get("total_tiennent") == sum((dep.get("tiennent") or {}).values())
 
 

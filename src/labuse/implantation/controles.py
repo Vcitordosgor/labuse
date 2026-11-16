@@ -73,15 +73,23 @@ class CheckGeo:
 # de pavage/jonction. Le contrôle échoue dès qu'une place est non dégagée (BW2635 : 13 places à 2,25 m).
 _DEGAGEMENT_PLACE_FLOOR_M2 = 1.0
 _DEGAGEMENT_SEUIL_M2 = 1.0   # aire totale non dégagée au-delà de laquelle le plan échoue
+_PASSAGE_MIN_M = 2.4         # largeur mini de circulation d'une voiture ; sous ce seuil l'allée s'étrangle
+_COMP_SIGNIF_M2 = 8.0        # aire mini d'un morceau d'allée pour qu'un étranglement le séparant compte
 
 
 def _pincement_allee(allees, places, largeur_requise: float, acces=None) -> float:
-    """ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — DÉGAGEMENT mesuré DEVANT CHAQUE PLACE (pas sur la boîte englobante,
-    pas par ouverture morphologique). Pour chaque place on SONDE un rectangle de la largeur de la place extrudé
-    de `largeur_requise` vers l'allée ; la part NON couverte par l'allée (ni l'accès) est le couloir manquant.
-    On ne compte que les places VRAIMENT déficientes (manque > `_DEGAGEMENT_PLACE_FLOOR_M2`), ce qui ignore le
-    bruit de pavage et les coins de jonction en L/T (qui faisaient refuser à tort HT0538 et cassaient les
-    assemblages). Un vrai pincement (2,25 m au lieu de 5 m) ressort fortement. Renvoie l'aire (m²) manquante."""
+    """ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — DÉGAGEMENT mesuré DEVANT CHAQUE PLACE, sur l'allée DÉSÉTRANGLÉE.
+    Deux pièges du PLAN réel, traités ensemble :
+      1. CLEARANCE devant la place — on sonde un rectangle de la largeur de la place extrudé de `largeur_requise`
+         vers CHACUN des deux petits côtés (nez/arrière) et on garde le MEILLEUR (déficit minimal) : l'allée
+         dessert la place par un seul côté, l'autre donne sur un mur. Prendre « le plus près de l'allée » se
+         trompait de côté sur les parkings denses (faux déficit de 4 m sur une allée de 5 m → écroulait HT0538
+         et les assemblages). Prendre le min des deux ignore le côté mur.
+      2. PINCEMENT de circulation — avant de sonder, on OUVRE l'allée (érosion/dilatation de `_PASSAGE_MIN_M`/2) :
+         tout étranglement plus étroit que le passage d'une voiture (BW2635 : 2,25 m) DISPARAÎT, si bien que les
+         places qui n'étaient desservies QU'À TRAVERS ce goulet perdent leur dégagement et sont comptées
+         manquantes. Une allée large (≥ `_PASSAGE_MIN_M`) survit à l'ouverture → aucun faux positif.
+    On ne compte que les places VRAIMENT déficientes (manque > `_DEGAGEMENT_PLACE_FLOOR_M2`). Renvoie l'aire (m²)."""
     from shapely.geometry import Polygon
     from shapely.ops import unary_union
     if not allees or not places:
@@ -89,12 +97,40 @@ def _pincement_allee(allees, places, largeur_requise: float, acces=None) -> floa
     libre = unary_union([g if g.is_valid else g.buffer(0) for g in (list(allees) + list(acces or []))])
     if libre.is_empty:
         return 0.0
+    # (2) PINCEMENT DE CIRCULATION : une place n'est desservie que si une VOITURE peut l'atteindre depuis
+    # l'accès sans franchir de goulet plus étroit que `_PASSAGE_MIN_M`. On ÉRODE l'allée de la demi-largeur de
+    # passage : un vrai étranglement (BW2635 : 2,25 m) SÉPARE le noyau en plusieurs morceaux ; seul celui qui
+    # touche l'accès reste atteignable (une ouverture morphologique ne suffit pas — la dilatation rebouche le
+    # goulet). Les places desservies uniquement par un morceau coupé de l'accès perdront leur dégagement.
+    r_pass = _PASSAGE_MIN_M / 2.0
+    noyau = libre.buffer(-r_pass).buffer(0)
+    if noyau.is_empty:
+        return float(sum((p if p.is_valid else p.buffer(0)).area for p in places))
+    comps = list(noyau.geoms) if noyau.geom_type == "MultiPolygon" else [noyau]
+    # on ne déclare un étranglement que si l'érosion coupe DEUX morceaux SIGNIFICATIFS (chacun capable
+    # d'accueillir le dégagement d'une place) : sinon ce sont des échardes de bord d'une petite allée — qui
+    # faisaient écrouler HT0538 à tort. Un vrai goulet (BW2635) sépare deux vraies zones de stationnement.
+    signif = [g for g in comps if g.area >= _COMP_SIGNIF_M2]
+    reach = None
+    if len(signif) > 1:
+        ancre = unary_union([g if g.is_valid else g.buffer(0) for g in (acces or [])]) if acces else None
+        if ancre is None or ancre.is_empty:
+            ancre = max(signif, key=lambda g: g.area)        # pas d'accès connu : le plus grand morceau
+        reach = min(signif, key=lambda g: g.distance(ancre))  # le noyau qui touche l'accès
     from shapely.geometry import Point
     W = max(float(largeur_requise) - 0.6, 0.1)   # 0,6 m de tolérance de pavage (allée clippée ~4,9 m)
     manque = 0.0
     for p in places:
         pg = p if p.is_valid else p.buffer(0)
         c = pg.centroid
+        # PLACE DE L'AUTRE CÔTÉ DU GOULET : si le noyau atteignable depuis l'accès existe et que CETTE place
+        # est plus proche d'un AUTRE morceau de noyau, aucune voiture ne peut l'atteindre → place perdue. On ne
+        # redilate pas `reach` (cela rebouche le goulet) : on strande par APPARTENANCE au morceau le plus proche.
+        if reach is not None and signif:
+            proche = min(signif, key=lambda g: g.distance(c))
+            if proche is not reach and reach.distance(c) > r_pass + 0.5:
+                manque += pg.area
+                continue
         coords = list(pg.exterior.coords)[:-1]
         # on ne sonde que par le NEZ de la place : l'un des deux PETITS côtés (la place est 2,5 × 5 m — le nez
         # fait la largeur, 2,5 m ; les grands côtés, 5 m, sont les flancs). Sonder un flanc extruderait vers un
@@ -107,17 +143,24 @@ def _pincement_allee(allees, places, largeur_requise: float, acces=None) -> floa
         if not edges:
             continue
         Lmin = min(e[0] for e in edges)
-        petits = [e for e in edges if e[0] <= Lmin * 1.3]          # les petits côtés (nez/arrière)
-        best = min(petits, key=lambda e: libre.distance(Point(e[3])))  # le nez = petit côté le plus près de l'allée
-        _L, a, b, mid = best
-        nx, ny = mid[0] - c.x, mid[1] - c.y
-        ln = (nx * nx + ny * ny) ** 0.5 or 1.0
-        nx, ny = nx / ln, ny / ln
-        sonde = Polygon([a, b, (b[0] + W * nx, b[1] + W * ny), (a[0] + W * nx, a[1] + W * ny)])
-        if not sonde.is_valid or sonde.area < 0.5:
+        petits = [e for e in edges if e[0] <= Lmin * 1.3]          # les deux petits côtés (nez ET arrière)
+        # On SONDE les DEUX petits côtés et on garde le MEILLEUR (déficit minimal) : l'allée dessert la place
+        # par UN seul côté ; l'autre donne sur le mur/la place voisine. Prendre le plus près de l'allée se
+        # trompait de côté quand une allée mince longeait l'arrière (faux déficit de 4 m sur une allée de 5 m,
+        # qui écroulait les parkings denses). Le côté d'accès réel = celui où le dégagement manque le MOINS.
+        deficits = []
+        for _L, a, b, mid in petits:
+            nx, ny = mid[0] - c.x, mid[1] - c.y
+            ln = (nx * nx + ny * ny) ** 0.5 or 1.0
+            nx, ny = nx / ln, ny / ln
+            sonde = Polygon([a, b, (b[0] + W * nx, b[1] + W * ny), (a[0] + W * nx, a[1] + W * ny)])
+            if not sonde.is_valid or sonde.area < 0.5:
+                continue
+            deficits.append(max(0.0, sonde.area - sonde.intersection(libre).area))
+        if not deficits:
             continue
-        deficit = max(0.0, sonde.area - sonde.intersection(libre).area)
-        if deficit > _DEGAGEMENT_PLACE_FLOOR_M2:     # place VRAIMENT non dégagée
+        deficit = min(deficits)                      # le côté d'accès = le mieux dégagé des deux
+        if deficit > _DEGAGEMENT_PLACE_FLOOR_M2:     # place VRAIMENT non dégagée des DEUX côtés
             manque += deficit
     return float(manque)
 
@@ -214,13 +257,12 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
     # un seul repère et passait). Sur BW2635 : 25,25 m² de pincement, 2,25 m au droit de 13 places.
     pince = _pincement_allee(allees, places, conv.allee_largeur_m, acces)
     larg_ok = pince < _DEGAGEMENT_SEUIL_M2
-    # consultatif pour un ASSEMBLAGE (> 1 parcelle) : le pavage sur une assiette irrégulière crée des faux
-    # pincements ; la mesure est fiable pour une parcelle unique (témoins BW2635/HT0538).
-    _advis = len(getattr(terrain, "parcelles", []) or []) > 1
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — contrôle DUR, y compris sur un ASSEMBLAGE : la mesure par sonde du
+    # meilleur des deux côtés (nez/arrière) + désétranglement de la circulation ne crée plus de faux pincements
+    # sur le pavage dense (L'Étang-Salé 27 places OK), donc le dégagement d'un assemblage est aussi contraignant
+    # que sur une parcelle seule (plus de « consultatif »). Il se calcule sur la géométrie FUSIONNÉE des parcelles.
     checks.append(CheckGeo(f"dégagement d'allée ≥ {conv.allee_largeur_m} m au droit des places (mesuré localement)",
-                           larg_ok, ("" if larg_ok else f"{pince:.1f} m² de dégagement sous la largeur requise"
-                                     + (" — consultatif (assemblage)" if _advis else "")),
-                           advisory=_advis))
+                           larg_ok, "" if larg_ok else f"{pince:.1f} m² de dégagement sous la largeur requise"))
 
     dim_ok = True
     for o in modules:
