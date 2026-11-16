@@ -141,7 +141,10 @@ def _tete(
         ("Prix moyen m² de surface vendable HT", _ratio("Prix moyen au m² de surface vendable HT")),
         ("Net promoteur m² de surface vendable TTC", _ratio("Net promoteur m² de surface vendable TTC")),
         ("CA TTC programme", eur0(r.ca_ttc)),
-        ("Renta nette / CA HT", _pct(r.marge_pct) if r.ca_ttc else "—"),
+        # CHIRURGICAL-FIX-1 (LOT M 2) — « non calculable » quand le CA HT est inconnu (TVA de vente vide),
+        # comme les autres ratios qui en dépendent ; « — » seulement quand il n'y a pas de CA du tout.
+        ("Renta nette / CA HT",
+         "non calculable" if (r.ca_ttc and r.ca_ht is None) else (_pct(r.marge_pct) if r.ca_ttc else "—")),
         ("Nombre de lots", str(round(pt.get("lots") or 0)) if pt.get("lots") else "—"),
     ]
     cal = calendrier or {}

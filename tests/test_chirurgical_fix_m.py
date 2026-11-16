@@ -105,6 +105,17 @@ def test_m2_tva_vide_rend_tout_non_calculable():
         assert ratios[k] == "non calculable", (k, ratios[k])
 
 
+def test_m2_pdf_tete_renta_non_calculable_si_tva_vide():
+    """Le bloc « Ratios & programme » du PDF dit « non calculable » pour la renta quand la TVA de vente
+    est vide (cohérent avec le net promoteur / le prix moyen), pas « — »."""
+    from labuse.bilan.pdf import construire_html
+    html, _ = construire_html(Moteur().calculer(_entrees_tva(None)), idu="x", jour=date(2026, 11, 16))
+    import re
+    bloc = re.sub(r"<[^>]+>", " ", html)
+    m = re.search(r"Renta nette / CA HT\s+([^\s].{0,20})", bloc)
+    assert m and "non calculable" in m.group(1)
+
+
 def test_m2_net_promoteur_identique_pdf_et_excel():
     """Le PDF (moteur) n'ajoute plus 8,5 % forfaitaires : net promoteur = la TVA RÉELLE, comme l'Excel."""
     e = _entrees_tva(0.085)
