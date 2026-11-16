@@ -513,6 +513,28 @@ def faisabilite_zone_non_constructible(zone: str | None, zone_fam: str | None) -
                        _BANDEAU, calibree=True, cause=f"zone_non_constructible:{z}")
 
 
+def faisabilite_refus_reglementaire(rules: ZoneRules) -> "Faisabilite | None":
+    """MOTEUR-VERITE-FIX-6 LOT 1 — un refus réglementaire ÉTABLI (zone fermée à l'urbanisation,
+    habitat interdit) ne doit JAMAIS être effacé par une garde de taille ou « capacité à vérifier ».
+    Ce helper rend le verdict ferme SI la zone est un refus — à appeler AVANT les gardes micro-
+    parcelle / façade (il était jusqu'ici noyé en fin d'`estimate_capacity`, donc atteint trop tard :
+    AC1634 Sainte-Marie UEm 20 m² « habitat interdit » devenait « constructible, capacité à vérifier »).
+    None si la zone n'est pas un refus (le calcul continue normalement)."""
+    if not rules.constructible_neuf:
+        return Faisabilite(rules.code, rules.via_renvoi, False,
+                           f"Construction neuve non autorisée en zone {rules.code}.",
+                           [], [], [], [], {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                           _BANDEAU, calibree=rules.calibree, cause="zone_transition")
+    if rules.habitat == "interdit":
+        return Faisabilite(rules.code, rules.via_renvoi, False,
+                           "Habitat interdit au règlement — zone à vocation économique/activités "
+                           "(seules exceptions : gardiennage/logement de fonction). Aucune capacité "
+                           "logement calculée.",
+                           [], [], [], [], {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                           _BANDEAU, calibree=rules.calibree, cause="habitat_interdit")
+    return None
+
+
 def estimate_capacity(rules: ZoneRules, surface_m2: float,
                       contraintes: Contraintes | None = None,
                       hyp: Hypotheses | None = None,

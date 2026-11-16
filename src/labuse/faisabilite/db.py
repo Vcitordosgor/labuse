@@ -856,6 +856,16 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             from .engine import faisabilite_zone_non_constructible
             return ctx, faisabilite_zone_non_constructible(ctx.zone, ctx.zone_fam)
         return None
+    # MOTEUR-VERITE-FIX-6 LOT 1 — UN REFUS ÉTABLI NE S'EFFACE JAMAIS. Les refus réglementaires
+    # (zone fermée à l'urbanisation, habitat interdit) étaient émis en FIN d'`estimate_capacity`,
+    # donc APRÈS les gardes micro-parcelle / façade / PPR : une parcelle de 20 m² en zone
+    # « habitat interdit » (AC1634 Sainte-Marie UEm) ressortait « constructible, capacité à
+    # vérifier ». On tranche le refus ICI, avant toute garde de taille. (La sous-zone U/AU et le
+    # secteur d'habitat A/N restent prioritaires : ils ont déjà remplacé `rules` ou renvoyé.)
+    from .engine import faisabilite_refus_reglementaire
+    _refus = faisabilite_refus_reglementaire(rules)
+    if _refus is not None:
+        return ctx, _refus
     # PROSPECT (Ud/Uu) : hauteur PAR PARCELLE = L≥H, L = max(largeur voie desservante, 10 m).
     # Copie par-parcelle (dataclasses.replace) — la règle de zone partagée n'est JAMAIS mutée.
     if rules.hauteur_mode == 'prospect':
@@ -1295,6 +1305,12 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 f"parcelle large (~{rex['parc_larg']:.0f} m) — contraintes superposées ou portion "
                 "constructible à confirmer. Ni capacité ni « trop étroit » affirmés.")
         else:  # 'exigu' — prouvé inexploitable
+            # MOTEUR-VERITE-FIX-6 LOT 1 — un refus établi ne s'efface jamais : quand la preuve
+            # géométrique confirme ~0 m² net exploitable sur une parcelle étroite, la mention
+            # « implantation en limite sous conditions » ne la rescape PAS (CG0875 Saint-Leu, 92 m²,
+            # 0 m² d'emprise, que main refusait). On rétablit le vrai motif (reculs) → verdict ferme.
+            if vide_raison == "limite_conditions":
+                vide_raison = "reculs"
             ctx.contraintes.libelles.append(
                 f"Terrain exigu confirmé (EXIGU-FIX-1) : plus grand morceau net ~{rex['net_m2']:.0f} m², "
                 f"largeur ~{rex['net_larg']:.1f} m — sous le seuil constructible (preuve géométrique).")
