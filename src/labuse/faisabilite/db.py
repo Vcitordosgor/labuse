@@ -1019,17 +1019,17 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 f"Constructible — capacité à vérifier : micro-parcelle ({_surf_garde:.0f} m²) — "
                 "aucune capacité chiffrée seule, assemblage / projet d'ensemble à instruire.",
                 f"Micro-parcelle ({_surf_garde:.0f} m²) : pas de capacité chiffrée seule.")
-        if isinstance(_facade, (int, float)) and _facade < 3.0:
-            # FIX-5 LOT 1 — 0 m inclus : sans façade sur voie ÉTABLIE pour l'assiette calculée,
-            # aucune capacité chiffrée (AC3540 servait 174 m² avec 0 m de façade qualifiée).
+        if isinstance(_facade, (int, float)) and 0 < _facade < 3.0:
+            # FIX-4 (BK0245) — façade qualifiée mais INSUFFISANTE (< 3 m) : aucune capacité
+            # chiffrée. FIX-5 LOT 4 : la façade 0 (non établie) reste CHIFFRÉE au recul prudent
+            # faîtage (builder — jamais au-dessus de main), avec mention — le mandat interdit la
+            # HAUSSE sans façade, pas le chiffre (103 permis « à vérifier » attendus, pas 1 150).
             from .engine import faisabilite_capacite_a_verifier
-            _lib = (f"façade sur voie de {_facade:g} m" if _facade > 0
-                    else "aucune façade sur voie établie pour l'assiette calculée")
             return ctx, faisabilite_capacite_a_verifier(
                 ctx.zone,
-                f"Constructible — capacité à vérifier : {_lib} — "
+                f"Constructible — capacité à vérifier : façade sur voie de {_facade:g} m — "
                 "desserte du scénario à établir, aucune capacité chiffrée.",
-                f"Façade sur voie non établie ({_facade:g} m) : desserte à établir.")
+                f"Façade sur voie insuffisante ({_facade:g} m) : desserte à établir.")
         ppr_rouge = bool((racc.get("ppr") or {}).get("rouge"))
         # PPR-PARTIEL-A lot 2 — garde-fous : la règle (lot 1) calcule désormais l'emprise sur la
         # partie hors zone rouge, mais on ne la SERT que si cette partie est exploitable. On vérifie
@@ -1169,6 +1169,18 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             ctx.contraintes.libelles.append(
                 f"Zonage mixte : emprise constructible clippée à la portion U/AU "
                 f"(~{base:.0f} m² retenus sur ~{full_a:.0f} m² insetés).")
+            # MOTEUR-VERITE-FIX-5 LOT 4 — SAINTE-ROSE : jamais de hausse (mandat). Le REPLI
+            # clippé à la portion peut dépasser main (fin du double retrait RESIDUEL-2 —
+            # AH0200 812 → 922) : la référence n'étant pas reproductible ici, le chiffre
+            # n'est pas servi — capacité à vérifier, mention portée.
+            if (ctx.idu or "").startswith("97419"):
+                from .engine import faisabilite_capacite_a_verifier
+                return ctx, faisabilite_capacite_a_verifier(
+                    ctx.zone,
+                    "Constructible — capacité à vérifier : portion constructible servie par le "
+                    "calcul de repli (zonage mixte) — règle de non-hausse, capacité supérieure "
+                    "possible, à vérifier.",
+                    "Portion clippée au repli (Sainte-Rose) : pas de capacité chiffrée.")
 
         if er_a >= 0.5:
             for r in session.execute(_ER_DETAILS, {"pid": parcel_id, "d": recul,
@@ -1253,7 +1265,13 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # `terrain_exigu` AVEC preuve ; douteux → `assiette_a_verifier` (jamais « trop étroit »).
     # GARDE DE PÉRIMÈTRE : ce bloc ne s'exécute QUE lorsque l'emprise est déjà < seuil (donc une
     # parcelle qui n'aurait pas été `terrain_exigu` n'est jamais touchée → recalcul partiel valide).
-    if emprise < SEUIL_EXIGU_M2 and _exigu_fix_actif():
+    # MOTEUR-VERITE-FIX-5 LOT 4 — JAMAIS quand le vidage vient du PPR ROUGE (hors_rouge_* /
+    # ppr_rouge) : l'assiette nette du ré-examen IGNORE le rouge et RESSUSCITAIT une capacité
+    # sans la découpe (DB0325 25 → 59, DD0838, AH0200, AR1105 — hausses hors liste détectées
+    # par le contrôle inverse). Le vidage rouge est une RÈGLE, pas un effondrement géométrique.
+    if (emprise < SEUIL_EXIGU_M2 and _exigu_fix_actif()
+            and not str(vide_raison or "").startswith("hors_rouge")
+            and vide_raison != "ppr_rouge"):
         qargs = {"zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
                  "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"])),
                  "pkind": pkind, "er_types": er_types, "ebc_types": ebc_types,

@@ -34,26 +34,42 @@ def lire(cache: Path, idu: str) -> dict | None:
     return json.loads(p.read_text()) if p.exists() else None
 
 
+#: MOTEUR-VERITE-FIX-5 LOT 4 — un permis se compare au règlement EN VIGUEUR À SA DATE :
+#: date d'ENTRÉE EN VIGUEUR (exécutoire) quand elle diffère de l'approbation. Sainte-Marie :
+#: PLU approuvé le 26/11/2025, exécutoire le 14/01/2026 → 13 permis de la cohorte tombent
+#: entre les deux et sortent des tests.
+ENTREE_EN_VIGUEUR = {"97418": "2026-01-14"}
+
+
 def main() -> None:
     h = list(csv.DictReader(open(VT3 / "cohortes" / "H.csv", newline="")))
-    n_ok = n_non = n_averif = n_sans = 0
+    n_chiffre = n_averif_pos = n_non = n_averif = n_sans = n_avant_vigueur = 0
     exigu = set()
     t2 = []
     for p in h:
+        ev = ENTREE_EN_VIGUEUR.get(p.get("insee") or "")
+        if ev and (p.get("d_aut") or "") < ev:
+            n_avant_vigueur += 1
+            continue                      # permis antérieur au règlement rejoué : hors test
         idus = [i.strip() for i in p["idus"].split(",") if i.strip()]
         caps = [lire(CACHE, i) for i in idus]
         if any(c is None for c in caps):
             n_sans += 1
             continue
-        constr = [bool(c.get("constructible")) for c in caps]
         for c in caps:
             if str(c.get("cause") or c.get("cause_moteur") or "").startswith("terrain_exigu"):
                 exigu.add(c["idu"])
-        averif = any("capacité à vérifier" in str(c.get("verdict") or "") for c in caps)
-        if any(constr):
-            n_ok += 1
-        elif averif:
-            n_averif += 1
+        # FIX-5 LOT 4 — SÉPARER « constructible avec capacité CHIFFRÉE » de « constructible,
+        # capacité à vérifier » (la seule réponse positive est un verdict sans chiffre).
+        chiffre = any(bool(c.get("constructible")) and c.get("sdp_max_m2") is not None
+                      for c in caps)
+        constr_averif = any(bool(c.get("constructible")) and c.get("sdp_max_m2") is None
+                            for c in caps)
+        averif_txt = any("capacité à vérifier" in str(c.get("verdict") or "") for c in caps)
+        if chiffre:
+            n_chiffre += 1
+        elif constr_averif or averif_txt:
+            n_averif_pos += 1
         else:
             n_non += 1
         if p["mono"] == "t":
@@ -62,14 +78,19 @@ def main() -> None:
             emp, niv = c.get("emprise_constructible_m2"), c.get("niveaux_max")
             if emp is not None and niv and aut > 0:
                 t2.append(aut / (float(emp) * int(niv)))
-    n = n_ok + n_non + n_averif
-    print(f"H évaluables : {n} (sans cache : {n_sans})")
-    print(f"TEST 1 — constructible : {n_ok}/{n} ({100 * n_ok / n:.1f} %) ; "
-          f"« capacité à vérifier » : {n_averif} ({100 * n_averif / n:.1f} %) ; "
-          f"non : {n_non} ({100 * n_non / n:.1f} %)")
+    n = n_chiffre + n_non + n_averif_pos
+    print(f"H évaluables : {n} (sans cache : {n_sans} ; antérieurs à l'entrée en vigueur : "
+          f"{n_avant_vigueur})")
+    print(f"TEST 1 — constructible avec capacité CHIFFRÉE : {n_chiffre}/{n} "
+          f"({100 * n_chiffre / n:.1f} %) ; constructible, capacité À VÉRIFIER : {n_averif_pos} "
+          f"({100 * n_averif_pos / n:.1f} %) ; non : {n_non} ({100 * n_non / n:.1f} %)")
     dep = sum(1 for r in t2 if r > 1.10)
+    # FIX-5 LOT 4 — effet du coefficient 1,15 (surface habitable → plancher) : dépassements
+    # produits PAR LE SEUL coefficient (l'habitable brut tient dans l'enveloppe).
+    dep_coef = sum(1 for r in t2 if r > 1.10 and (r / COEF_PLANCHER) <= 1.0)
     print(f"TEST 2 — enveloppe mesurable : {len(t2)} ; dépassements >1,10 : {dep} "
-          f"({100 * dep / max(1, len(t2)):.1f} %)")
+          f"({100 * dep / max(1, len(t2)):.1f} %) — dont {dep_coef} produits par le seul "
+          f"coefficient 1,15 (habitable brut ≤ enveloppe)")
     print(f"terrain_exigu restants (parcelles des permis H) : {len(exigu)}")
 
     # cohorte rejouée complète (VT-2) : causes « au-dessus » du CSV du lot si présent

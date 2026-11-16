@@ -539,7 +539,7 @@ FOND = le reste, fermé quand le terrain est longé par PLUSIEURS voies ; sur un
 multizone chaque segment est confronté au CONTOUR RÉEL (ST_Boundary, tolérance 1 m) —
 `cadastrale=False` n'entre jamais au budget ni en limite 0 m. Rejeux du relecteur reproduits :
 AE0114 109→88 (coupe de 16,3 m fermée ; 88 = côté cadastral de 18,7 m, choix le plus favorable
-admis — son rejeu à 83 ouvrait un autre côté), AT0753 159, AE0249 177, AI1063 220, AK0021 233,
+admis — son rejeu à 83 ouvrait un autre côté), AT0753 159 (côté ouvert 32,3 m au scénario actuel — 29,4 m était son relevé), AE0249 177, AI1063 220, AK0021 233,
 AV0962 259, AR0087 277, AE0784 274, AV0584 274, AT0800 294, AV1319 174 (exacts) ; AC0460 208
 (côté le plus favorable, son rejeu 198), AE0113 444 (≤ 497). Anneaux FIX-3 inchangés (AH0293
 3313, AY0554 250, AH1368 238, AW0503 72, AS0031 315).
@@ -567,7 +567,7 @@ motivées : 97413 AUe mur coupe-feu ; 97408 AUAv classement égout FAUX, règle 
 h_reference retiré). Exécution : égout prouvé → niveau par niveau (La Possession UAv, AUBm) ;
 sinon référence PRUDENTE faîtage. Sainte-Marie UAz AS1397 : 5 321 → 241 m² (≤ 519 du
 relecteur, 13,50 m de retrait pour 27 m de façade). Saint-Denis : Ud — hauteur retenue =
-min(prospect CALCULÉ, plage basse) (AO0584 : 10 m calculés, 12 m servis avant → 822 m²) ; Udo —
+min(prospect CALCULÉ, plage basse) (AO0584 : 10 m calculés, 12 m servis avant → 822 m², puis **700 m²** au rejeu FIX-5, résiduel 0 — chiffre réactualisé) ; Udo —
 « capacité à vérifier » AUSSI par la voie calibrée (AO0742 : 865 m² sur 9 m génériques → SDP ∅ ;
 AO0778 idem, plus de « terrain exigu confirmé ») ; Uicm — plafond PROPRE Ui.10 12 m (p.57) :
 HX0075 2 279 m² et BP0869 1 966 m² (les chiffres du relecteur). Trois-Bassins Ue : FOND à 4 m
@@ -646,7 +646,8 @@ RESTENT en référence prudente (faîtage).
 **Témoins** : AS1397 (Sainte-Marie UAz) 241 → **1 352 m²** — R+3 retenu, façade envisagée
 13,5 m, recul 6,75 m (sous les 5 321 m² de main, au-dessus des 519 m² à 27 m fixes ; « un
 projet plus bas peut donner davantage », c'est désormais calculé). AV2758 (Sainte-Marie UA)
-335 → **578 m²** (optimum niveau par niveau, < main 1 814).
+335 → **578 m²** (optimum niveau par niveau — la référence MAIN de ce contrôle est 335 m²,
+cache-main5 ; les « 1 814 » cités ailleurs correspondaient à un état intermédiaire).
 
 **Mesures** (cohorte H) : Test 1 = **97,1 %** (4 642/4 781) ; Test 2 = **108** dépassements
 (2,7 % — était 118) ; terrain_exigu = **82**. **13 des 16 dépassements du LOT 3 sont sortis**
@@ -660,3 +661,98 @@ vs origin/main rejoué, seuil 0 — chacune avec ses côtés en limite, sa condi
 chiffré ; les nouvelles (AV2758 +243, AK0024 +200, AK0834 +188, Bras-Panon Ud/Ub/Uc…) portent
 la justification `facade_niveau_par_niveau` (formule du règlement exécutée, AUCUN côté posé en
 limite, effet d'ouverture 0). **HORS LISTE BLANCHE : 0** (exit 0).
+
+---
+
+# MOTEUR-VERITE-FIX-5 — dernier tour : la règle de non-hausse
+
+Décision du mandat : on arrête de prouver les hausses une par une. **Le chiffre servi ne
+dépasse JAMAIS celui de main** (origin/main `049dbcf7f` rejoué, cache-main5), **sauf cas
+approuvés** ; partout ailleurs le plus petit des deux est servi, avec « capacité supérieure
+possible, à vérifier ». Les baisses (formules enfin exécutées) et les verdicts sont conservés.
+
+## LOT 1 — la règle de non-hausse (`21a059bd0`)
+
+Hausses autorisées, et SEULEMENT celles-ci :
+- **La Plaine-des-Palmistes Ub** — un seul côté partagé, hors parcelles protégées (fermoir
+  patrimonial) ;
+- **Salazie UA** — SEULEMENT quand un seul front sur voie est établi À L'ÉCHELLE DU TERRAIN
+  ENTIER (classification pleine parcelle, emprises publiques comptées même piétonnes) et sans
+  PPR rouge dominant : AV1267 752 m² (admise) ; AV1339 1 327 → **1 044 = main** (deux
+  emprises : 52,7 m de voie + 40,7 m d'emprise publique), AH0074 586 → **301 = main** (51 %
+  de rouge) ;
+- **La Possession** — H/2 à l'égout niveau par niveau HORS zones AU : AC3589 207 et AP0762
+  1 089 (admises) ; AS0606 (AUB) 155 → **74 = main** (prudence faîtage en AU) ;
+- **Sainte-Marie UA/UAz + Bras-Panon Ub/Uc** — façade du projet niveau par niveau, le
+  scénario respectant les PLAFONDS de hauteur de l'article (n capé par l'égout et le
+  faîtage/acrotère) : AS1397 1 352, AV2758 578, AH1916 184.
+
+Jamais de hausse : **zones AU** (prudence faîtage — conditions d'aménagement/OAP non
+vérifiables) ; **sans façade sur voie établie** pour l'assiette calculée (garde étendue à
+0 m → capacité à vérifier : AC3540, AD0323, AK0834) ; **Le Port Uc** (RETIRÉ de la liste
+blanche tant que la RHI — délibération 2025-149, lot 220 AO1873/AO1876/AO1877 — et
+l'assiette du lot ne sont pas traitées : AO1877 540 → **204 = main**) ; **Sainte-Rose**
+(AK0024 5 894 = main ; 1AUa/1AUc au niveau de main).
+
+## LOT 2 — les erreurs de lecture (`948b75481`)
+
+- **Fond à règle propre** : Sainte-Rose Ua/Ub/Uc/Ud fond 3 m (art. 7.3 — AR0819), Saint-Leu
+  UE fond 4 m FIXES (CD0560), Trois-Bassins Ue déjà posé — le H/2 des latérales ne s'applique
+  jamais au fond réglé à part. Saint-Joseph U5ru/U5vi/1AU5/1AU5ru/1AU5vi : la hauteur se
+  mesure DU SOL APRÈS TRAVAUX À L'ÉGOUT (h_reference égout — AO0951/AV1150), jamais le
+  faîtage à sa place.
+- **Zone rouge partielle** : les 200 m² d'un seul tenant et l'accès se vérifient sur le
+  morceau à la fois HORS ROUGE ET ADMIS PAR LE PLU (∩ U/AU dans `_HORS_ROUGE_FRAGMENT`) —
+  AW1235 (87 m²), BM0158 (144), DB0325 (167), BO0383 (194) ne passent plus.
+- **Fronts sur voie** qualifiés sur le TERRAIN ENTIER avant le découpage par zone (AV1339).
+- **Micro-parcelles** : la garde des 40 m² s'applique AUSSI au calcul de repli — Saint-Benoît
+  AB1185 (12 m²) et AE0736 (37 m²) passent à « capacité à vérifier ».
+- **Le gabarit lit la cascade REJOUÉE** (couche risques évaluée en direct, repli sur le run
+  servi) — AH0074 et BC1134 n'affichent plus « Exclue » mais « capacité RÉDUITE, SOUS
+  PRESCRIPTIONS ».
+
+## LOT 3 — dire ce que le chiffre vaut (`3531d63c9`)
+
+Toute capacité chiffrée porte ses réserves, ÉCRITES par le moteur : zone AU (« sous réserve
+des conditions d'aménagement de la zone et de l'OAP »), zone bleue du PPR (« sous
+prescriptions du plan de prévention »), scénario par niveau (« hauteur de façade SUPPOSÉE »).
+Témoins : AD1041, BC1134, AS1397.
+
+## LOT 4 — mesures honnêtes
+
+**BILAN vs origin/main (`049dbcf7f`, cache-main5, 6 926 parcelles)** :
+**20 HAUSSES — 229 BAISSES — 6 261 INCHANGÉES — 416 « capacité à vérifier »** (l'inconnu n'est
+jamais une hausse). **HORS LISTE : 0** (CONTROLE-INVERSE-FIX5.csv, exit 0).
+
+**La liste complète des 20 hausses** (chacune avec ses reculs par côté lus dans LA
+classification du scénario servi, et le recalcul AVEC/SANS la règle — effet chiffré) :
+- **13 La Plaine-des-Palmistes Ub** (ouverture un-seul-côté mesurée, effet = 100 % de la
+  hausse) : AE0249 +79, AT0753 +58, AV1319 +41, AC0460 +34, AE0114 +32, AT0800 +25,
+  AE0113 +24, AI1063 +18, AK0021 +18, AV0962 +12, AR0087 +11, AE0784 +4, AV0584 +2 ;
+- **1 Salazie UA** : AV1267 +351 (un seul front établi sur le terrain entier, effet
+  d'ouverture = 351) ;
+- **2 La Possession égout hors AU** : AC3589 +122 (la hausse vient de la correction du recul
+  D-024 dans une zone à H/2 égout approuvée — effet-formule nul, licence = l'article),
+  AP0762 +23 ;
+- **4 façade du projet** (Sainte-Marie UA, Bras-Panon Ub/Uc) : AV2758 +243, AH1916 +84,
+  AD0387 +71, AB1202 +65 (aucun côté en limite ; le rejeu sans formule change le chiffre —
+  la formule du règlement est la cause).
+
+**Mesures honnêtes** (cohorte H, 4 768 évaluables — 13 permis de Sainte-Marie ANTÉRIEURS à
+l'entrée en vigueur du PLU rejoué (14/01/2026) sont SORTIS des tests) :
+- Test 1 : **93,5 %** constructible avec capacité CHIFFRÉE (4 459) ; **2,8 %** constructible,
+  capacité À VÉRIFIER (135) ; 3,6 % non (174) ;
+- Test 2 : **106 dépassements** > 1,10 (2,7 % de 3 926) — **dont 6 produits par le SEUL
+  coefficient 1,15** (l'habitable brut tient dans l'enveloppe) ;
+- terrain_exigu : 128 (hausse assumée : le ré-examen EXIGU-FIX-1 ne ressuscite PLUS une
+  assiette vidée par le PPR rouge — DB0325 25 → 59 était une hausse hors liste, désormais
+  « à vérifier »).
+
+**Trois fuites détectées PAR le nouveau contrôle et refermées** : (1) le ré-examen
+EXIGU-FIX-1 ignorait le rouge et ressuscitait une capacité sans la découpe (DB0325, DD0838,
+AR1105) — verrouillé sur les motifs hors_rouge/ppr_rouge ; (2) le repli clippé à la portion
+pouvait dépasser main à Sainte-Rose (AH0200 812 → 922, fin du double retrait RESIDUEL-2) —
+jamais de hausse à Sainte-Rose : capacité à vérifier ; (3) la garde « sans façade » version
+large basculait 1 403 parcelles en « à vérifier » (10× l'attendu) — resserrée : façade 0 →
+chiffre au recul PRUDENT faîtage (= main : AC3540 85, AD0323 452, AK0834 1 763), « à
+vérifier » réservé aux façades qualifiées < 3 m.

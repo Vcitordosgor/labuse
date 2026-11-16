@@ -1131,11 +1131,21 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             # scénarios niveau par niveau sont retirés (le minimum prudent reste servi).
             _fac_q = sum(float(e.geom.length) for e in lim.edges if e.type == "voie")
             if recul_formule_obj is not None and _fac_q <= 0.0:
+                # FIX-5 LOT 1 (resserré LOT 4) — sans façade établie : variantes RETIRÉES et
+                # recul porté à la référence PRUDENTE faîtage (comme main) — le chiffre reste
+                # servi, jamais au-dessus de main (AC3540 : 174 → ~85 = main), la mention reste.
                 recul_formule_obj = None
+                _frac0 = _fraction_hauteur_formule(getattr(zr, "recul_limites_formule", None))
+                _hp0 = haut if haut is not None else egout
+                if _frac0 is not None and _hp0 is not None:
+                    _rp0 = round(max(float(recul_sep or 0.0), float(_hp0) * _frac0), 1)
+                    if recul_sep is None or _rp0 > recul_sep:
+                        recul_sep = _rp0
+                        racc["plu"]["recul_sep_m"] = recul_sep
                 racc.setdefault("regles_non_integrees", []).append(
                     "scénario niveau-par-niveau retiré : aucune façade sur voie établie pour "
-                    "l'assiette calculée (règle de non-hausse) — capacité supérieure possible, "
-                    "à vérifier")
+                    "l'assiette calculée (règle de non-hausse) — référence prudente faîtage, "
+                    "capacité supérieure possible, à vérifier")
             racc["classification"] = {"provider": bdtopo_src.provider, "voie": n_voie,
                                       # MOTEUR-VERITE-FIX-4 LOT 2 — façade mesurée (garde micro-parcelle)
                                       "facade_voie_m": round(sum(
