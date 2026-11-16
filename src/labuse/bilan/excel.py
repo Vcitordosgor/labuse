@@ -62,10 +62,14 @@ def classeur_bilan(
         ws.column_dimensions[col].width = w
 
     ws.cell(1, 1, titre).font = Font(bold=True, size=14)
-    # CHIRURGICAL-FIX-1 (LOT K 2b) — bandeau garde-fou en tête (ligne 2) : MÊME contenu que le PDF.
-    _gf_alertes = (garde_fou or {}).get("alertes") or []
-    if _gf_alertes:
-        _txt = ("Programme saisi — non vérifié par LABUSE : " + " ; ".join(_gf_alertes)
+    # CHIRURGICAL-FIX-1 (LOT K 2b / LOT L 2) — bandeau garde-fou en tête. Les alertes STATIQUES (habitat
+    # interdit, terrain libéré, démolition non chiffrée) sont du texte ; l'alerte « SDP > surface à
+    # retenir » devient une FORMULE VIVANTE (ligne 3) qui réagit quand on change la surface de plancher.
+    _gf = garde_fou or {}
+    _sar = _gf.get("surface_a_retenir")
+    _gf_statiques = [a for a in (_gf.get("alertes") or []) if "dépasse la surface à retenir" not in a]
+    if _gf_statiques:
+        _txt = ("Programme saisi — non vérifié par LABUSE : " + " ; ".join(_gf_statiques)
                 + " Les chiffres ci-dessous découlent de cette saisie.")
         c = ws.cell(2, 1, _txt)
         c.font = Font(bold=True, color="7C2D12")
@@ -81,6 +85,9 @@ def classeur_bilan(
     # CHIRURGICAL-FIX-1 (LOT J 1c) — on collecte les cellules de SAISIE pour y poser une validation
     # Excel « ≥ 0 » : un coût négatif (ex. −250 000 € sur AD0887 → 128 % de marge) est refusé à la main.
     saisie_cells: list[str] = []
+    # CHIRURGICAL-FIX-1 (LOT L 3) — cellule de VALIDITÉ unique (hors zone visible), remplie en fin de
+    # feuille d'une formule sur toutes les cellules de saisie + TVA ; lue par toutes les formules de résultat.
+    cell_valid = "I1"
 
     def entete(label):
         nonlocal r
@@ -96,6 +103,13 @@ def classeur_bilan(
     cell_sdp = f"B{r}"
     ws.cell(r, 1, "Surface de plancher (m²)")
     ws.cell(r, 2, entrees.programme.sdp)
+    # CHIRURGICAL-FIX-1 (LOT L 2) — avertissement VIVANT à côté de la SDP : compare la cellule de SDP à la
+    # surface à retenir du Dossier. Il réagit quand on change la surface de plancher (pas un texte figé).
+    if isinstance(_sar, (int, float)):
+        wf = (f'=IF(AND({cell_sdp}>0,{cell_sdp}>{round(_sar)}),'
+              f'"⚠ dépasse la surface à retenir du Dossier ({round(_sar)} m²) — à vérifier","")')
+        wc = ws.cell(r, 3, wf)
+        wc.font = Font(bold=True, color="B45309")
     r += 1
     cell_stax = f"B{r}"
     ws.cell(r, 1, "Surface taxable (m²)")
@@ -306,10 +320,18 @@ def classeur_bilan(
     # 1b — la marge ne divise JAMAIS par un CA nul (ventes à zéro) : sinon #DIV/0!. On la laisse vide.
     _ca = f"D{row_dep + 1}"
     _marge_vide = f"OR({_cm},{_ca}=0)"
-    ligne("Résultat net", d=f'=IF({_cm},"{_NON_CALCULABLE}",{_ca}-D{row_dep})', gras=True)
-    ws.cell(row_res, 5, f'=IF({_marge_vide},"",D{row_res}/{_ca})').number_format = _PCT  # marge % du CA HT
+    # CHIRURGICAL-FIX-1 (LOT L 3) — UNE SEULE cellule de VALIDITÉ (`cell_valid`, remplie en fin de
+    # feuille) : « saisie invalide » dès qu'un coût est négatif ou qu'une TVA sort de [0 %, 100 %].
+    # Toutes les formules de RÉSULTAT (résultat, marge, cash-flow, ratios) la lisent → l'erreur ne
+    # reste pas sur une seule ligne, elle bloque TOUT.
+    _inv = f'{cell_valid}<>""'
+
+    def _si_valide(formule_ok: str) -> str:
+        return f'=IF({_inv},"saisie invalide",{formule_ok[1:]})' if formule_ok.startswith("=") else formule_ok
+    ligne("Résultat net", d=_si_valide(f'=IF({_cm},"{_NON_CALCULABLE}",{_ca}-D{row_dep})'), gras=True)
+    ws.cell(row_res, 5, _si_valide(f'=IF({_marge_vide},"",D{row_res}/{_ca})')).number_format = _PCT
     ws.cell(row_res, 5).font = _GRAS
-    ligne("Cash flow", d=f'=IF({_cm},"{_NON_CALCULABLE}",D{row_res}+D{mod_row})')
+    ligne("Cash flow", d=_si_valide(f'=IF({_cm},"{_NON_CALCULABLE}",D{row_res}+D{mod_row})'))
 
     # ---- Haut de feuille : ratios & programme (ordre du modèle) + calendrier ----
     # Rempli ici car il référence des cellules du corps, maintenant connues.
@@ -322,22 +344,22 @@ def classeur_bilan(
         # CHIRURGICAL-FIX-1 (LOT J 1b) — pas de #DIV/0! quand la surface vendable est nulle (0 produit) :
         # ces ratios /m² de SUV sont vides tant que SUV = 0.
         ("Coût const. m² de surface vendable HT",
-         f'=IF({cell_suv}=0,"",(D{d["constr"]}+D{d["aleaC"]})/{cell_suv})', _EUR),
-        ("Prix moyen m² de surface vendable HT", f'=IF({cell_suv}=0,"",{cell_ca_ht}/{cell_suv})', _EUR),
+         _si_valide(f'=IF({cell_suv}=0,"",(D{d["constr"]}+D{d["aleaC"]})/{cell_suv})'), _EUR),
+        ("Prix moyen m² de surface vendable HT", _si_valide(f'=IF({cell_suv}=0,"",{cell_ca_ht}/{cell_suv})'), _EUR),
         (
             # CHIRURGICAL-FIX-1 (LOT J 1e) — le « net promoteur TTC » applique la TVA RÉELLE de la vente
             # (ratio CA TTC / CA HT du programme), pas la TVA DOM par défaut : un programme vendu à 0 %
             # (logements VEFA social…) ne doit pas être regonflé de 8,5 %. Vide si pas de SUV / de CA.
             "Net promoteur m² de surface vendable TTC",
-            f'=IF(OR({cell_suv}=0,{cell_ca_ht}=0),"",'
-            f'(({cell_ca_ht}-D{d["acte"]}-D{d["pack"]}-D{d["proc"]})/{cell_suv})*({cell_ca_ttc}/{cell_ca_ht}))',
+            _si_valide(f'=IF(OR({cell_suv}=0,{cell_ca_ht}=0),"",'
+                       f'(({cell_ca_ht}-D{d["acte"]}-D{d["pack"]}-D{d["proc"]})/{cell_suv})*({cell_ca_ttc}/{cell_ca_ht}))'),
             _EUR,
         ),
         ("CA TTC programme", f"={cell_ca_ttc}", _EUR),
         # CHIRURGICAL-FIX-1 (LOT H pt1 + LOT I 1b) — même garde VIVANTE : vide tant qu'un coût requis
         # manque (D{row_res} porte alors le texte « non calculable ») OU quand le CA HT est nul (pas de
         # #DIV/0!), calculée dès que les deux coûts sont saisis et qu'il y a du CA.
-        ("Renta nette / CA HT", f'=IF(OR({_cm},{cell_ca_ht}=0),"",D{row_res}/{cell_ca_ht})', _PCT),
+        ("Renta nette / CA HT", _si_valide(f'=IF(OR({_cm},{cell_ca_ht}=0),"",D{row_res}/{cell_ca_ht})'), _PCT),
         ("Nombre de lots", f"={cell_lots}", '#,##0'),
     ]
     ws.cell(3, 1, "Ratios & programme").font = _GRAS
@@ -380,6 +402,14 @@ def classeur_bilan(
         ws.add_data_validation(dvt)
         for coord in dict.fromkeys(tva_cells):
             dvt.add(coord)
+
+    # CHIRURGICAL-FIX-1 (LOT L 3) — la cellule de VALIDITÉ unique : « saisie invalide » dès qu'un coût
+    # (cellule de saisie) est négatif ou qu'une TVA sort de [0, 1]. Lue par résultat / marge / cash-flow
+    # / ratios — une seule source de vérité, pas un test répété par ligne.
+    _vchecks = [f"{c}<0" for c in dict.fromkeys(saisie_cells)]
+    _vchecks += [f"{t}<0" for t in dict.fromkeys(tva_cells)] + [f"{t}>1" for t in dict.fromkeys(tva_cells)]
+    ws[cell_valid] = (f'=IF(OR({",".join(_vchecks)}),"saisie invalide","")' if _vchecks else "")
+    ws[cell_valid].font = Font(color="B45309")
 
     return wb
 
@@ -424,6 +454,7 @@ def _valeurs_calculees(ws) -> dict[str, object]:
             lambda m: "(" + ("+".join(f"{m.group(1)}{r}" for r in range(int(m.group(2)), int(m.group(4)) + 1)) or "0") + ")",
             v[1:])
         expr = _REF_RE.sub(lambda m: repr(ev(f"{m.group(1)}{m.group(2)}")), expr)
+        expr = expr.replace("<>", "!=")       # LOT L 3 — « différent de » Excel → Python (avant « = »→« == »)
         expr = _EQ_RE.sub("==", expr)
         try:
             raw = eval(expr, {"__builtins__": {}}, dict(_FNS))  # noqa: S307 — vocabulaire contrôlé

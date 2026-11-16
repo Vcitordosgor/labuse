@@ -197,6 +197,24 @@ def _entrees(corps: CalculIn) -> EntreesBilan:
     )
 
 
+def _entrees_servies(db: Session, idu: str, corps: "CalculIn") -> tuple[EntreesBilan, dict]:
+    """CHIRURGICAL-FIX-1 (LOT L 1) — L'OBJET CALCULÉ UNIQUE du Bilan : mêmes saisies + MÊME
+    préremplissage pour le PDF ET l'Excel, pour qu'un seul calcul donne deux rendus identiques.
+      · la surface de terrain (cadastre) entre DANS le calcul (la ligne d'achat = terrain × €/m²,
+        au lieu d'être injectée APRÈS le calcul côté PDF → ligne d'achat vide) ;
+      · les postes SOURCÉS que le client n'a pas saisis (taxe d'aménagement, redevance d'archéologie)
+        sont préremplis des DEUX côtés (l'Excel les laissait à zéro).
+    Renvoie `(entrees, prefill)` ; le prefill porte adresse / commune / date du run servi pour l'en-tête."""
+    from ..bilan import reperes as _rep
+    pf = _rep.bilan_prefill(db, idu)
+    e = _entrees(corps)
+    if e.programme.terrain is None:
+        e.programme.terrain = _terrain_sourcee(db, idu)
+    for pid, sp in (pf.get("postes") or {}).items():
+        e.postes.setdefault(pid, sp)
+    return e, pf
+
+
 def _terrain_sourcee(db: Session, idu: str) -> float | None:
     """CHIRURGICAL-FIX-1 (LOT K 2) — la surface de terrain pré-remplie = la CONTENANCE CADASTRALE de la
     parcelle (Sourcé), MÊME source pour le PDF et l'Excel. L'import de `reperes` est fait ici (il manquait
@@ -429,11 +447,9 @@ def bilan_pdf(
     # les postes que le client n'a PAS saisis : le PDF montre le même Sourcé que l'écran. En-tête
     # complet (adresse BAN) + pied daté du run servi.
     from ..bilan import reperes as _rep
-    _pf = _rep.bilan_prefill(db, idu)
-    e = _entrees(corps)
-    for _pid, _sp in (_pf.get("postes") or {}).items():
-        if _pid not in e.postes:
-            e.postes[_pid] = _sp
+    # CHIRURGICAL-FIX-1 (LOT L 1) — objet calculé UNIQUE (terrain dans le calcul + postes sourcés),
+    # le MÊME que la route Excel : un seul calcul, deux rendus identiques.
+    e, _pf = _entrees_servies(db, idu, corps)
     r = Moteur().calculer(e)
     _refuser_si_ca_nul(r)
     # DOCS-1 — carte de situation sur la couverture du Bilan (best-effort : jamais un bloqueur).
@@ -442,11 +458,8 @@ def bilan_pdf(
         _map = _plan_situation_html(db, idu)
     except Exception:  # noqa: BLE001
         _map = ""
-    # DOCS-1 (décision Vic) — la ligne « Terrain » REPREND la contenance de la fiche : si le client n'a
-    # pas saisi la surface du terrain, on sert la contenance sourcée (jamais un « — » quand la fiche sait).
     _prog = corps.programme.model_dump()
-    if _prog.get("terrain") is None:
-        _prog["terrain"] = _terrain_sourcee(db, idu)
+    _prog["terrain"] = e.programme.terrain      # la MÊME contenance que celle entrée dans le calcul
     octets = _pdf.construire_pdf(
         r,
         idu=idu,
@@ -457,7 +470,7 @@ def bilan_pdf(
         calendrier=dict(corps.calendrier),
         map_html=_map,
         # CHIRURGICAL-FIX-1 (LOT K 2b) — garde-fou : la fiche écarte-t-elle ce programme saisi ?
-        garde_fou=_rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp),
+        garde_fou=_rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp, postes_saisis=set(corps.postes)),
     )
     return Response(
         content=octets,
@@ -473,16 +486,13 @@ def bilan_xlsx(
     from ..bilan.excel import classeur_bilan_bytes
 
     corps = _saisies_du_document(db, idu, doc_id, request)
-    e = _entrees(corps)
-    # CHIRURGICAL-FIX-1 (LOT J 1e / LOT K 2) — comme le PDF, la surface du terrain pré-remplie est la
-    # CONTENANCE cadastrale de la parcelle (jamais une valeur de banc, jamais un blanc avalé) quand le
-    # client ne l'a pas saisie. MÊME source que le PDF (`_terrain_sourcee`), erreur non masquée.
-    if e.programme.terrain is None:
-        e.programme.terrain = _terrain_sourcee(db, idu)
+    # CHIRURGICAL-FIX-1 (LOT L 1) — MÊME objet calculé que le PDF (terrain dans le calcul + postes
+    # sourcés taxe/archéologie) : le classeur recalcule les MÊMES dépenses / CA / résultat à l'euro.
+    e, _ = _entrees_servies(db, idu, corps)
     _refuser_si_ca_nul(Moteur().calculer(e))
     # CHIRURGICAL-FIX-1 (LOT K 2b) — même garde-fou que le PDF, en tête du classeur.
     from ..bilan import reperes as _rep
-    _gf = _rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp)
+    _gf = _rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp, postes_saisis=set(corps.postes))
     octets = classeur_bilan_bytes(e, titre=f"Bilan — {idu}", garde_fou=_gf)
     return Response(
         content=octets,

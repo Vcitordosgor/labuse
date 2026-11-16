@@ -17,8 +17,9 @@ def test_1a_excel_condition_est_un_ou_deux_couts_requis():
     rows = _ws_rows(classeur_bilan(
         EntreesBilan(produits=[Produit("P", 1, 55.0, 4500.0, 0.0)], postes={}), titre="t"))
     f_res = str(rows["Résultat net"][0])
-    assert f_res.startswith("=IF(OR(") and "non calculable" in f_res
-    # deux cellules de coût comparées à 0 dans la condition (achat ET construction)
+    # LOT L 3 — le résultat est d'abord gardé par la cellule de validité, PUIS « non calculable » si un
+    # coût requis manque : la condition reste un OU (achat<=0 OU construction<=0), pas un ET.
+    assert "IF(OR(" in f_res and "non calculable" in f_res
     assert f_res.count("<=0") == 2
 
 
@@ -30,7 +31,8 @@ def test_1b_marge_sans_division_par_zero_si_ca_nul():
                      postes={"achat": SaisiePoste(100.0, "ratio"),
                              "constr": SaisiePoste(1500.0, "ratio")}), titre="t"))
     f_marge = str(rows["Résultat net"][1])          # colonne E de la ligne Résultat net
-    assert f_marge.startswith("=IF(OR(") and "=0" in f_marge and '""' in f_marge
+    # LOT L 3 — gardée par la validité, puis « OU CA=0 → vide » (pas de #DIV/0!).
+    assert "IF(OR(" in f_marge and "=0" in f_marge and '""' in f_marge
     f_renta = str(rows["Renta nette / CA HT"][1])
     assert "=0" in f_renta and '""' in f_renta
 

@@ -129,45 +129,58 @@ def sources_parcelle(db: Session, idu: str) -> dict[str, Any]:
     }
 
 
-def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None) -> dict[str, Any]:
-    """CHIRURGICAL-FIX-1 (LOT K 2b) — le GARDE-FOU en tête du Bilan. Un Bilan est un programme SAISI par
-    l'utilisateur ; s'il contredit ce que la fiche écarte, on le dit EN TÊTE, en clair, avec le motif :
-      · la parcelle n'admet pas le projet (habitat interdit / non constructible) → motif de la fiche ;
-      · la surface de plancher SAISIE dépasse la capacité de la fiche (SDP au sol bâti conservé /
-        table rase terrain libéré) → on compare et on le signale.
-    Le résultat reste identifié comme celui d'un PROGRAMME SAISI, NON VÉRIFIÉ par LABUSE. Renvoie
-    `{alertes:[...], capacite:{bati_conserve, terrain_libere}, non_constructible: bool}`."""
+def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
+                    postes_saisis: set[str] | None = None) -> dict[str, Any]:
+    """CHIRURGICAL-FIX-1 (LOT K 2b / LOT L 2) — le GARDE-FOU en tête du Bilan. Un Bilan est un programme
+    SAISI ; s'il contredit ce que le Dossier retient, on le dit EN TÊTE, avec le motif :
+      · parcelle non constructible / habitat interdit → motif de la fiche ;
+      · la SDP SAISIE dépasse la **surface À RETENIR du Dossier** (la règle unique `surface_a_retenir`,
+        prudente — PAS l'estimation haute « table rase ») → on compare et on le signale ;
+      · scénario « terrain libéré » (démolition) → on le DIT en tête, et si aucun **coût de démolition**
+        n'est saisi, on le signale (le bilan sous-estime alors les dépenses).
+    `postes_saisis` = les ids de postes réellement renseignés (pour vérifier la démolition). Renvoie
+    `{alertes, surface_a_retenir, terrain_libere, non_constructible, sdp_saisie}`."""
     src = sources_parcelle(db, idu) or {}
-    parcel_id = src.get("parcel_id")
     motif_nc = src.get("non_constructible_motif")
-    capacite: dict[str, float | None] = {"bati_conserve": None, "terrain_libere": None}
-    if parcel_id is not None:
-        try:
-            from ..faisabilite.potentiel import bloc_potentiel
-            bp = bloc_potentiel(db, parcel_id)
-            if bp:
-                capacite["bati_conserve"] = (bp.get("au_sol") or {}).get("sdp_residuelle_m2")
-                capacite["terrain_libere"] = (bp.get("table_rase") or {}).get("plancher_m2")
-        except Exception:  # noqa: BLE001 — capacité non résolue : on garde le reste du garde-fou
-            pass
+    sar_val = None
+    terrain_libere = False
+    try:
+        from ..faisabilite.surface_retenue import estimation_rapide_m2, surface_a_retenir
+        from ..exports.etude_faisabilite import scenario_etude_persiste
+        est = estimation_rapide_m2(db, idu)
+        scn = scenario_etude_persiste(db, idu)
+        bati = bool(_emprise_batie(db, idu))
+        if est not in (None, "") or scn is not None:
+            sar = surface_a_retenir(est, scn, bati=bati, copropriete=False)
+            sar_val = sar.get("valeur_m2")
+            # « terrain libéré » = la surface retenue suppose la DÉMOLITION du bâti existant.
+            terrain_libere = bati and "terrain libéré" in (sar.get("phrase") or "").lower()
+    except Exception:  # noqa: BLE001 — surface à retenir non résolue : on garde le reste du garde-fou
+        pass
     alertes: list[str] = []
     if motif_nc:
         alertes.append(motif_nc)
-    # SDP saisie vs capacité de la fiche (la plus haute des deux : terrain libéré ≥ bâti conservé)
-    cap_max = max([v for v in capacite.values() if isinstance(v, (int, float))], default=None)
-    if (sdp_saisie and isinstance(sdp_saisie, (int, float)) and cap_max is not None
-            and sdp_saisie > round(cap_max) + 1):  # +1 m² de tolérance d'arrondi
-        _bc = capacite["bati_conserve"]
-        _tl = capacite["terrain_libere"]
-        _det = []
-        if isinstance(_bc, (int, float)):
-            _det.append(f"{round(_bc)} m² avec le bâti conservé")
-        if isinstance(_tl, (int, float)):
-            _det.append(f"{round(_tl)} m² en terrain libéré")
+    if terrain_libere:
+        alertes.append("Scénario « terrain libéré » : le potentiel suppose la démolition du bâti existant.")
+        if not (postes_saisis and "demol" in postes_saisis):
+            alertes.append("Coût de démolition non renseigné — les dépenses sont sous-estimées.")
+    if (sdp_saisie and isinstance(sdp_saisie, (int, float)) and isinstance(sar_val, (int, float))
+            and sdp_saisie > round(sar_val) + 1):
         alertes.append(
-            f"La surface de plancher saisie ({round(sdp_saisie)} m²) dépasse la capacité estimée de la "
-            f"fiche" + (" (" + " ; ".join(_det) + ")" if _det else "") + ".")
-    return {"alertes": alertes, "capacite": capacite, "non_constructible": bool(motif_nc)}
+            f"La surface de plancher saisie ({round(sdp_saisie)} m²) dépasse la surface à retenir du "
+            f"Dossier ({round(sar_val)} m²).")
+    return {"alertes": alertes, "surface_a_retenir": sar_val, "terrain_libere": terrain_libere,
+            "non_constructible": bool(motif_nc), "sdp_saisie": sdp_saisie}
+
+
+def _emprise_batie(db: Session, idu: str) -> float | None:
+    """Emprise bâtie (m²) de la parcelle — pour savoir si un scénario est « terrain libéré ». Lue de
+    `p_model_bati` (BD TOPO), la même source que la fiche. Best-effort (jamais un bloqueur)."""
+    try:
+        return db.execute(text(
+            "SELECT emprise_bati_m2 FROM p_model_bati WHERE idu = :i"), {"i": idu}).scalar()
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _prix_achat_dvf(db: Session, parcel_id: int) -> dict | None:

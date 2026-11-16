@@ -19,8 +19,9 @@ _SRC = Path(__file__).resolve().parents[1] / "src" / "labuse"
 def test_k2a_terrain_sourcee_partage_sans_except_avale():
     b = (_SRC / "api" / "bilan.py").read_text()
     assert "def _terrain_sourcee(" in b
-    # les DEUX routes utilisent le helper ; l'ancien try/except qui masquait le NameError a disparu.
-    assert b.count("_terrain_sourcee(db, idu)") >= 2
+    # LOT L 1 — terrain (cadastre) prérempli dans l'objet calculé UNIQUE partagé PDF+Excel.
+    assert "def _entrees_servies(" in b and b.count("_entrees_servies(db, idu, corps)") >= 2
+    assert "_terrain_sourcee(db, idu)" in b
     assert "# noqa: BLE001 — contenance non résolue" not in b
 
 
@@ -47,9 +48,10 @@ def test_k2d_tva_invalide_bloque():
     from labuse.bilan.moteur import EntreesBilan, Produit, Programme, SaisiePoste
     ws = classeur_bilan(EntreesBilan(programme=Programme(terrain=1000),
                                      produits=[Produit("P", 1, 55.0, 4500.0, 0.085)], postes={}), None, "t").active
-    ht = [c.value for row in ws.iter_rows() for c in row
-          if isinstance(c.value, str) and "saisie invalide" in c.value]
-    assert ht and all(">1" in f and "<0" in f for f in ht)
+    # la formule CA HT (division par 1+TVA) dit « saisie invalide » quand la TVA sort de [0, 1].
+    ca_ht = [c.value for row in ws.iter_rows() for c in row
+             if isinstance(c.value, str) and "saisie invalide" in c.value and "/(1+" in c.value]
+    assert ca_ht and all(">1" in f and "<0" in f for f in ca_ht)
     dvs = list(ws.data_validations.dataValidation)
     assert any(d.operator == "between" and d.formula1 == "0" and d.formula2 == "1" for d in dvs)
 

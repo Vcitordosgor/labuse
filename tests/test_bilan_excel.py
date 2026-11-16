@@ -26,7 +26,7 @@ def _grille(ws):
     return g
 
 
-_REF = re.compile(r"\b([A-G])(\d+)\b")
+_REF = re.compile(r"\b([A-I])(\d+)\b")       # LOT L 3 — I = cellule de validité (hors zone visible)
 _SUM = re.compile(r"SUM\(([A-G])(\d+):([A-G])(\d+)\)")
 
 
@@ -54,6 +54,7 @@ def _evaluateur(grille):
 
         expr = _SUM.sub(som, expr)
         expr = _REF.sub(lambda m: repr(ev(f"{m.group(1)}{m.group(2)}")), expr)
+        expr = expr.replace("<>", "!=")       # LOT L 3 — « différent de » Excel (ex. I1<>"")
         # Excel « = » (égalité, ex. « D89=0 ») → Python « == » (hors <=, >=, ==, !=).
         expr = re.sub(r"(?<![<>=!])=(?!=)", "==", expr)
         # CHIRURGICAL-FIX-1 (LOT H pt1) — le résultat/cash/marge sont des formules VIVANTES
