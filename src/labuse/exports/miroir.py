@@ -1443,6 +1443,29 @@ _COVER_TUILES = [
 ]
 
 
+def _risque_principal_cover(fiche: dict, valeurs: dict[str, Valeur]) -> str | None:
+    """CHIRURGICAL-FIX-1 (LOT K 3f) — le RISQUE PRINCIPAL nommé sur la couverture (pas qu'un compteur
+    d'aléas) : un aléa rédhibitoire d'abord ; sinon une contrainte majeure (inondation TRI, zone humide,
+    littoral), avec sa part telle que le libellé la porte (BW2635 : inondation TRI extrême, 85 %)."""
+    _al = (fiche.get("aleas") or {}).get("liste") or []
+    red = next((a for a in _al if isinstance(a, dict) and a.get("redhibitoire")), None)
+    if red:
+        return red.get("libelle")
+    # contraintes majeures lues sur les LIGNES de la fiche (inondation TRI, zone humide, littoral) :
+    # le bloc `contraintes_parcelle_liste` n'est pas collecté pour la couverture.
+    _kw = ("inond", "tri ", " tri", "humide", "littoral", "submersion")
+    _hors = {"bassin_versant", "vefa_neuf", "declassement", "bati", "residuel_socle"}
+    for l in (fiche.get("lines") or []):
+        if not isinstance(l, dict) or l.get("result") not in ("HARD_EXCLUDE", "SOFT_FLAG"):
+            continue
+        if l.get("layer") in _hors:
+            continue
+        _t = str((l.get("libelle") or "") + " " + (l.get("detail") or "") + " " + (l.get("layer") or "")).lower()
+        if any(k in _t for k in _kw):
+            return l.get("libelle") or l.get("detail")
+    return _al[0].get("libelle") if _al else None
+
+
 def _sous_titre_cover(fiche: dict, valeurs: dict[str, Valeur]) -> str:
     """DOCS-DA-1 (maquette) — le sous-titre de la garde : lieu · type de bien · zone.
     « La Montagne · parcelle bâtie, maison · zone Uh ». Composé des seules valeurs servies."""
@@ -1503,8 +1526,18 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         if cid == "zone_plu_famille" and _zone_code:
             aff = esc(_zone_code)
         # EXPORTS-FIX-1 C7 — SDP en zone A/N : « 0 m² — zone A » (arbitrage Q6), jamais « — ».
-        if aff is None and cid == "sdp_residuelle_m2" and _zone_v in ("A", "N"):
-            aff = f'0 m² — zone {esc(_zone_v)}'
+        # CHIRURGICAL-FIX-1 (LOT K 3f) — un « 0 m² » de SDP s'accompagne de SON MOTIF (AM0838 :
+        # « habitat interdit en zone UE ») quand la parcelle est exclue — que la valeur soit None OU 0.
+        if cid == "sdp_residuelle_m2" and (aff is None or (v is not None and v.valeur in (0, 0.0))):
+            if _zone_v in ("A", "N"):
+                aff = f'0 m² — zone {esc(_zone_v)}'
+            else:
+                _pv = valeurs.get("potentiel_verdict")
+                _pvv = _pv.valeur if (_pv is not None and isinstance(_pv.valeur, dict)) else {}
+                if _pvv.get("cause") or _pvv.get("niveau") == "exclu":
+                    _mot = _re.sub(r"^Non retenue\s*[—–-]\s*", "", str(_pvv.get("libelle") or "")).strip(" .")
+                    if _mot:
+                        aff = f'0 m² — {esc(_mot)}'
         # EXPORTS-FIX-1 C7 — aucun champ vide imprimé : une tuile sans valeur est OMISE (pas de « — »).
         if aff is None:
             continue
@@ -1520,6 +1553,7 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         toc.append(f'<li>{n}. {esc(sec["titre"])}</li>')
     toc.append(f'<li>{n + 1}. Limites et sources</li>')
     sous_titre = _sous_titre_cover(fiche, valeurs)
+    _risque_pr = _risque_principal_cover(fiche, valeurs)
     au = donnees_au or f"{jour:%d/%m/%Y}"
     return (
         '<div class="cover">'
@@ -1537,6 +1571,9 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         + (plan_html or "")
         # Les six chiffres de la fiche (le résumé).
         + f'<div class="cover-tiles">{"".join(tuiles_html)}</div>'
+        # CHIRURGICAL-FIX-1 (LOT K 3f) — le risque principal NOMMÉ (pas seulement compté dans la tuile).
+        + (f'<p class="cover-risk" style="margin:5px 0;color:#7c2d12;font-weight:600">'
+           f'Risque principal : {esc(_risque_pr)}</p>' if _risque_pr else "")
         # Le sommaire paginé.
         + f'<ul class="toc">{"".join(toc)}</ul>'
         # Le cartouche du bas : n° de rapport · généré le · données à jour au (date du run servi).
