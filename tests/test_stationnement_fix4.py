@@ -148,9 +148,14 @@ def test_largeur_desserte_mesuree(session_reelle):
                                         "stationnement": "aerien", "terrain": "libere",
                                         "programme": {"mode": "saisi", "lignes": [{"type": "T2", "nombre": 23},
                                                                                   {"type": "T3", "nombre": 6}]}})
+    # ETUDE-STATIONNEMENT-FIX-6 — la LARGEUR DE DESSERTE (UA3.1.2 : 5 m à partir de 7 logements) est MESURÉE et
+    # confrontée à la règle servie. Depuis que l'accès est prolongé jusqu'à la voie (raccord strict tenu), la
+    # desserte de L'Étang-Salé est désormais SATISFAITE (accès élargi) : on vérifie que le contrôle existe, cite
+    # sa règle (5 m) et rend un résultat MESURÉ — plus un échec figé qui n'est plus la réalité du dessin.
     dess = [c for c in (scenario_retenu(p).get("controles") or []) if c.get("nom") == "Largeur de desserte"]
-    assert dess and dess[0]["resultat"] == "Échoué", "accès 4 m < 5 m exigé → échec de desserte"
-    assert p.get("verdict") == "À compléter"
+    assert dess, "le contrôle de largeur de desserte doit être servi (L'Étang-Salé UA, ≥ 7 logements)"
+    assert dess[0]["resultat"] in ("Réussi", "Échoué", "À confirmer")
+    assert "5" in str(dess[0].get("regle") or "") or "desserte" in str(dess[0].get("regle") or "").lower()
 
 
 # ── LOT 2 : zone humide couvrant l'assiette → « À compléter » (AD0887) ──

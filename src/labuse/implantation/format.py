@@ -38,3 +38,18 @@ def dec_souple(v, p: int = 1) -> str:
 def m2_fr(v) -> str:
     """Surface entière en m², unité collée par une insécable. None → « — »."""
     return "—" if v is None else f"{groupe_fr(v)}{ESP}m²"
+
+
+def m2_borne_fr(v, bornes=()) -> str:
+    """ETUDE-STATIONNEMENT-FIX-9 (point 3) — surface en m², mais PRÈS D'UNE BORNE (seuil de barème) on montre
+    assez de décimales pour que la position par rapport au seuil se LISE : 29,999 ne s'affiche plus « 30 m² »
+    (qui masquerait le côté du seuil) mais « 29,999 m² ». Même quantification (millième) que la détection."""
+    if v is None:
+        return "—"
+    import math
+    vq = math.floor(float(v) * 1000.0 + 1e-6) / 1000.0
+    # proche d'une borne ET l'arrondi entier franchirait le seuil (le masquerait) → afficher les décimales
+    if any(abs(vq - float(b)) < 0.5 and round(vq) != vq for b in (bornes or ())):
+        s = f"{vq:.3f}".rstrip("0").rstrip(".").replace(".", ",")
+        return f"{s}{ESP}m²"
+    return m2_fr(v)

@@ -28,6 +28,7 @@ from . import rendu as rendu_mod
 from .conventions import avec_surcharges, charger as charger_conventions
 from .controles import (A_CONFIRMER, ECHOUE, NON_APPLICABLE, NON_EFFECTUE, REUSSI,
                         verdict_global)
+from .regles import quantifier_surface_m2
 
 OBJECTIFS = {"equilibre", "plus_logements", "plus_surface", "plus_simple"}
 
@@ -522,7 +523,9 @@ def _programme_vers_demande(programme: dict) -> tuple[dict[str, int], list[str],
             demande[t] = demande.get(t, 0) + n
         s = ligne.get("surface_m2")
         if s:
-            surfaces[t] = float(s)
+            # ETUDE-STATIONNEMENT-FIX-9 (point 3) — on QUANTIFIE la surface saisie au millième UNE FOIS, à
+            # l'entrée : cette même valeur sert ensuite à détecter la borne, calculer et afficher.
+            surfaces[t] = quantifier_surface_m2(s)
     if not demande:
         return {}, [], surfaces
     g = 0
@@ -671,6 +674,15 @@ def _regle_stationnement_courte(b) -> Optional[str]:
     def nb(x):
         return f"{x:g}".replace(".", ",")
     if b.mode == "par_logement" and b.flat_places is not None:
+        # ETUDE-STATIONNEMENT-FIX-6 (point 2) — barème À SEUIL DE SURFACE (La Plaine Ub12.2 : 1 place < 30 m²,
+        # 1,5 place ≥ 30 m²) : on affiche la RÈGLE À SEUIL, pas un « 1,5 place / logement » tronqué qui cachait
+        # la moitié basse. Le résumé dit donc exactement ce que le moteur applique par logement selon sa surface.
+        _seuil = getattr(b, "seuil_surface_m2", None)
+        _sous = getattr(b, "places_sous_seuil", None)
+        if _seuil is not None and _sous is not None:
+            return (f"{nb(_sous)} place{'s' if _sous >= 2 else ''} / logement "
+                    f"< {nb(_seuil)} m² · {nb(b.flat_places)} place"
+                    f"{'s' if b.flat_places >= 2 else ''} / logement ≥ {nb(_seuil)} m²")
         # DOCS-COHERENCE-1 (F9/A6) — format client « 2 places / logement » (jamais « 2 place/logt »).
         return f"{nb(b.flat_places)} place{'s' if b.flat_places >= 2 else ''} / logement"
     # ETUDE-STATIONNEMENT-FIX-2 (LOT 4) — barème « par tranche de m² de SDP » : règle courte DÉCRITE (sinon
@@ -739,6 +751,8 @@ def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, i
         "etat": ("règle vérifiée" if b.validee else "document manquant — à confirmer"),
         # ETUDE-V6-3 (item 3) — la RÈGLE en clair (ex. « 1 pl. T1–T2 · 1,5 pl. T3–T4 ») pour le récap.
         "regle_courte": _regle_stationnement_courte(b),
+        # ETUDE-STATIONNEMENT-FIX-9 (point 3) — bornes de surface (seuils) pour l'affichage décimal près d'un seuil.
+        "bornes_surface_m2": (b.bornes_surface_m2() if hasattr(b, "bornes_surface_m2") else []),
     }
     sous_rayon, dist = _tcsp_sous_rayon(session, idus)
     cat = _L15134.get(type_projet)
@@ -1379,6 +1393,32 @@ def etudier_payload(session, entree: dict) -> dict:
             _m = _m.split(":", 1)[1].strip() if ":" in _m else ""
             message = (_m[:1].upper() + _m[1:]) if _m else "Aucune implantation n'a pu être dessinée sous ces hypothèses."
 
+    # ETUDE-STATIONNEMENT-FIX-6 (point 1, option A) — quand le stationnement AÉRIEN ne donne AUCUN plan sous
+    # ces hypothèses (ex. L'Étang-Salé, grand programme sur terrain étroit : le pavage dense ne sait pas
+    # raccorder l'accès à la voie), on CALCULE et PRÉSENTE la variante en SOUS-SOL, qui tient (places au −1,
+    # sol libéré), avec ses chiffres et ses contrôles. Second passage en mode sous-sol, uniquement en repli :
+    # ne touche NI à la recherche aérienne NI au placement.
+    repli_sous_sol = None
+    if (verdict == "Aucun plan trouvé sous ces hypothèses" and stationnement == "aerien"
+            and demande and type_projet != "lotissement"):
+        try:
+            r_sc, r_var, _rd, _rm, r_ter, r_reg, r_cv, _rsx = moteur_mod.etudier_complet(
+                session=session, idus=idus, objectif=objectif, conv=conv,
+                programme=demande or None, repartition=repartition, max_scenarios=1,
+                stationnement_mode="sous_sol", niveaux_sous_sol=niveaux_sous_sol, type_projet=type_projet)
+            _best_ss = next((s for _r, s, _rz in r_var if _r == "votre_programme" and s is not None),
+                            (r_sc[0] if r_sc else next((s for _r, s, _rz in r_var if s is not None), None)))
+            if _best_ss is not None:
+                if demande:
+                    _appliquer_programme_au_scenario(_best_ss, demande, conv, r_reg)
+                repli_sous_sol = _variante_public("sous_sol_repli", _best_ss, r_ter, r_cv, r_reg, demande)
+                _rss = repli_sous_sol.get("resume") or {}
+                message = ((message + " ") if message else "") + (
+                    f"En stationnement sous-sol, la variante tient ({_rss.get('logements')} logements, "
+                    f"{_rss.get('places')} places) — chiffres et contrôles dans « Variante en sous-sol » ci-dessous.")
+        except Exception:  # noqa: BLE001 — le repli sous-sol est un bonus, jamais bloquant
+            logging.getLogger("labuse").exception("étude v6 : repli sous-sol impossible")
+
     # ETUDE-V6 (Lot C) — régimes de stationnement (règle générale PLU + plafond national à confirmer),
     # et capacité SOUS le régime réduit (2ᵉ passage moteur au ratio plafonné), seulement si le plafond est
     # géographiquement applicable (< 800 m d'un TCSP, loi 2025-1129) — jamais présenté comme acquis. REMISE-1 : on prend le
@@ -1487,6 +1527,9 @@ def etudier_payload(session, entree: dict) -> dict:
         "variantes": variantes_pub,
         "depassement": depassement,
         "capacite_maximale": capacite_maximale,
+        # ETUDE-STATIONNEMENT-FIX-6 (point 1, option A) — variante SOUS-SOL présentée quand l'aérien ne tient
+        # pas (None sinon) : la solution qui tient, avec ses chiffres et ses contrôles.
+        "repli_sous_sol": repli_sous_sol,
         # FAISA-REGLES-1 (D-003/E-057) — note si la grille a été simplifiée (grande assiette) ; None sinon.
         "grille_note": grille_note,
         # ETUDE-FIABLE-1 (LOT B5) — état de la recherche (complete / partielle / non_aboutie) + libellé.

@@ -24,9 +24,10 @@ def test_contact_ponctuel_allee_acces_refuse():
 
 
 def test_jonction_large_desservie():
-    """L'accès partage une ARÊTE avec l'allée (largeur) et touche la voie → la place est desservie."""
+    """L'accès partage une ARÊTE avec l'allée (largeur) ET touche la voie sur une largeur de passage
+    (x ∈ [5 ; 10], soit 5 m ≥ 2,40 m — cf. FIX-6 point 1) → la place est desservie."""
     place, allee, voie = _scene_base()
-    acces_large = Polygon([(-4, 10), (6.5, 10), (6.5, 16), (-4, 16)])   # arête commune y=10 avec l'allée
+    acces_large = Polygon([(-4, 10), (10, 10), (10, 16), (-4, 16)])     # arête commune y=10 ; contact voie 5 m
     manque = C._pincement_allee([allee], [place], 5.0, [acces_large], voie)
     assert manque <= C._DEGAGEMENT_SEUIL_M2, "une jonction large dessert la place"
 

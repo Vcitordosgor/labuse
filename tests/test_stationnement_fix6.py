@@ -1,0 +1,236 @@
+"""ETUDE-STATIONNEMENT-FIX-6 — point 1 : le raccord ACCÈS–VOIE se mesure comme la jonction allée–accès,
+en LARGEUR DE CONTACT RÉELLE avec la limite de la voie, au moins la largeur de passage (2,40 m), SANS
+bande de tolérance. Un contact ponctuel, un contact de 50 cm, ou un vide de 50 cm avant la voie ne
+desservent AUCUNE place ; un contact de 2,40 m dessert."""
+from __future__ import annotations
+
+from shapely.geometry import LineString, Polygon
+from shapely.ops import unary_union
+
+import labuse.implantation.controles as C
+
+
+def _scene():
+    """Une place (nez en haut, y=5), une allée pleine au-dessus, un accès montant jusqu'à y=16. L'arête
+    commune allée–accès (x ∈ [0 ; 6,5]) est LARGE : seul le raccord accès–voie varie d'un cas à l'autre."""
+    place = Polygon([(0, 0), (2.5, 0), (2.5, 5), (0, 5)])
+    allee = Polygon([(-4, 5), (6.5, 5), (6.5, 10), (-4, 10)])
+    acces = Polygon([(0, 10), (10, 10), (10, 16), (0, 16)])       # haut (y=16) large de 10 m
+    return place, allee, acces
+
+
+def _manque(voie):
+    place, allee, acces = _scene()
+    return C._pincement_allee([allee], [place], 5.0, [acces], voie)
+
+
+def test_raccord_voie_contact_ponctuel_refuse():
+    """L'accès ne touche la voie qu'en UN POINT (x=10) → aucune voiture n'entre → place NON comptée."""
+    assert _manque(LineString([(10, 16), (20, 16)])) > C._DEGAGEMENT_SEUIL_M2
+
+
+def test_raccord_voie_contact_50cm_refuse():
+    """Contact accès–voie de 50 cm (x ∈ [9,5 ; 10]) < largeur de passage → place NON comptée."""
+    assert _manque(LineString([(9.5, 16), (20, 16)])) > C._DEGAGEMENT_SEUIL_M2
+
+
+def test_raccord_voie_vide_50cm_refuse():
+    """Un VIDE de 50 cm sépare l'accès (haut à y=16) de la voie (y=16,5) → le contrôle reste STRICT (contact
+    réel sur la voie, aucune bande de tolérance) → place NON comptée. C'est le DESSIN qui doit toucher la voie
+    (geometrie._raccorder_acces_voie prolonge l'accès jusqu'à la limite), pas le contrôle qui s'assouplit."""
+    assert _manque(LineString([(0, 16.5), (10, 16.5)])) > C._DEGAGEMENT_SEUIL_M2
+
+
+def test_raccord_voie_contact_240_desservi():
+    """Contact accès–voie de 2,40 m (x ∈ [7,6 ; 10]) = largeur de passage → la place EST desservie."""
+    assert _manque(LineString([(7.6, 16), (20, 16)])) <= C._DEGAGEMENT_SEUIL_M2
+
+
+# FIX-7 — le raccord se mesure comme le BORD DE VOIE RECOUVERT par l'accès (voie_l ∩ accès), segment D'UN SEUL
+# TENANT, au seuil EXACT de 2,40 m : AUCUNE bande de 3 cm, AUCUN arrondi. Un vide de 2 cm et un contact de
+# 2,35 m, qui passaient par la bande (acceptée dès 2,38 m), sont désormais REFUSÉS.
+def test_raccord_voie_vide_2cm_refuse():
+    """Un VIDE de 2 cm (voie à y=16,02, accès à y=16) : l'accès ne recouvre AUCUN bord de voie → NON comptée."""
+    assert _manque(LineString([(0, 16.02), (10, 16.02)])) > C._DEGAGEMENT_SEUIL_M2
+
+
+def test_raccord_voie_contact_235_refuse():
+    """Un recouvrement de 2,35 m (x ∈ [7,65 ; 10]) est SOUS le seuil EXACT de 2,40 m → NON comptée (plus
+    d'acceptation à 2,38 m par l'ancienne bande de tolérance)."""
+    assert _manque(LineString([(7.65, 16), (20, 16)])) > C._DEGAGEMENT_SEUIL_M2
+
+
+# FIX-8 (point 1) — CONNEXITÉ réelle, tronçons jointifs réunis, largeur minimale le long de l'accès.
+def test_deux_reseaux_separes_2cm_une_seule_place():
+    """Deux réseaux séparés de 2 cm : A a un raccord réel de 3 m à la voie, B ne la touche pas (s'arrête à
+    50 cm). B ne doit PAS être compté juste parce qu'il est PROCHE du raccord de A — il faut la MÊME
+    composante connexe. Seule la place de A est desservie."""
+    voie = LineString([(-5, 16), (20, 16)])
+    # réseau A (gauche) : accès mordant la voie sur 3 m
+    place_a = Polygon([(0, 0), (2.5, 0), (2.5, 5), (0, 5)])
+    allee_a = Polygon([(-4, 5), (3, 5), (3, 10), (-4, 10)])
+    acces_a = Polygon([(0, 10), (3, 10), (3, 16.1), (0, 16.1)])
+    # réseau B (droite), à 2 cm de A, accès s'arrêtant à 50 cm sous la voie (ne la touche pas)
+    place_b = Polygon([(3.52, 0), (6.02, 0), (6.02, 5), (3.52, 5)])
+    allee_b = Polygon([(3.02, 5), (6.02, 5), (6.02, 10), (3.02, 10)])
+    acces_b = Polygon([(3.02, 10), (6.02, 10), (6.02, 15.5), (3.02, 15.5)])
+    # A seul : desservi
+    assert C._pincement_allee([allee_a], [place_a], 5.0, [acces_a], voie) <= C._DEGAGEMENT_SEUIL_M2
+    # A + B : B n'est PAS desservi (manque ≈ aire d'une place), alors que A l'est
+    manque = C._pincement_allee([allee_a, allee_b], [place_a, place_b], 5.0, [acces_a, acces_b], voie)
+    assert 11.0 < manque < 14.0, f"seule la place de B doit manquer (≈ 12,5 m²), obtenu {manque:.1f}"
+
+
+def test_tronçons_jointifs_forment_240():
+    """Deux tronçons d'accès JOINTIFS, chacun recouvrant 1,20 m de voie, forment un contact CONTINU de 2,40 m
+    (réunis avant mesure, sans combler de vide) → la place est desservie."""
+    voie = LineString([(-5, 16), (20, 16)])
+    place = Polygon([(0, 0), (2.5, 0), (2.5, 5), (0, 5)])
+    allee = Polygon([(-4, 5), (2.5, 5), (2.5, 10), (-4, 10)])          # couvre la place (dégagement plein)
+    acces1 = Polygon([(0, 10), (1.2, 10), (1.2, 16.1), (0, 16.1)])     # recouvre la voie sur x ∈ [0 ; 1,2]
+    acces2 = Polygon([(1.2, 10), (2.4, 10), (2.4, 16.1), (1.2, 16.1)])  # JOINTIF, recouvre x ∈ [1,2 ; 2,4]
+    assert C._pincement_allee([allee], [place], 5.0, [acces1, acces2], voie) <= C._DEGAGEMENT_SEUIL_M2
+
+
+# FIX-9 (relecture) — la largeur de desserte (goulet) et le comptage des places reposent sur le MÊME noyau
+# roulant (`_desserte_core`) : une place comptée implique un goulet ≥ 2,40 m. On construit un plan (accès depuis
+# la voie avec un goulet de largeur w, une allée, une place) et on vérifie la largeur retenue.
+def _plan_desserte(neck_w, neck_y=(12.0, 13.0), base=6.0):
+    voie = LineString([(-5, 16), (20, 16)])
+    cx = base / 2.0
+    y0, y1 = neck_y
+    morceaux = [Polygon([(cx - neck_w / 2, y0), (cx + neck_w / 2, y0),
+                         (cx + neck_w / 2, y1), (cx - neck_w / 2, y1)])]     # le goulet
+    if y1 < 16.1:
+        morceaux.append(Polygon([(0, y1), (base, y1), (base, 16.1), (0, 16.1)]))   # haut (contact voie)
+    if y0 > 10:
+        morceaux.append(Polygon([(0, 10), (base, 10), (base, y0), (0, y0)]))       # bas (vers l'allée)
+    acces = unary_union(morceaux)
+    allee = Polygon([(-4, 5), (base, 5), (base, 10), (-4, 10)])
+    place = Polygon([(0, 0), (2.5, 0), (2.5, 5), (0, 5)])
+    return [allee], [place], 5.0, [acces], voie
+
+
+def _goulet(neck_w, **kw):
+    a, p, lr, ac, v = _plan_desserte(neck_w, **kw)
+    return C._largeur_min_desserte(a, p, lr, ac, v)
+
+
+def test_goulet_milieu_3m():
+    """Rétrécissement à 3 m au MILIEU du chemin → largeur de desserte = 3 m."""
+    assert abs(_goulet(3.0, neck_y=(12.0, 13.0)) - 3.0) <= 0.25
+
+
+def test_goulet_entree_3m():
+    """Rétrécissement à 3 m À L'ENTRÉE (contre la voie) → largeur de desserte = 3 m."""
+    assert abs(_goulet(3.0, neck_y=(15.0, 16.1)) - 3.0) <= 0.25
+
+
+def test_goulet_regulier_5m():
+    """Chemin régulier de 5 m (aucun goulet) → largeur de desserte = 5 m."""
+    assert abs(_goulet(5.0, base=5.0, neck_y=(10.0, 16.1)) - 5.0) <= 0.25
+
+
+def test_desserte_et_comptage_jamais_contradictoires():
+    """Garde-fou de la relecture : sur un même plan, une place COMPTÉE (desservie à 2,40 m par `_desserte_core`)
+    implique TOUJOURS un goulet ≥ 2,40 m. Un goulet sous 2,40 m (ici 2,0 m) ne doit compter AUCUNE place."""
+    for nw in (2.0, 2.4, 3.0, 5.0):
+        a, p, lr, ac, v = _plan_desserte(nw)
+        _manque, nb = C._desserte_core(a, p, lr, ac, v, C._PASSAGE_MIN_M)
+        goulet = C._largeur_min_desserte(a, p, lr, ac, v)
+        if nb >= 1:
+            assert goulet >= C._PASSAGE_MIN_M - 0.05, f"place comptée (goulet {nw} m) mais desserte {goulet:.2f} m < 2,40"
+        else:
+            assert goulet < C._PASSAGE_MIN_M, f"aucune place desservie (goulet {nw} m) mais desserte {goulet:.2f} m"
+
+
+# FIX-9 (point 1) — chemin praticable continu décidé SANS rattachement par distance : une liaison plus étroite
+# que la largeur de passage (qui s'évanouit à l'érosion) ne transmet aucun raccord.
+def _lien(w):
+    """Deux allées (A, raccordée à la voie par un accès de 3 m ; B, sans accès) reliées par une bande de
+    largeur w. Place sous chaque allée. Seule A doit desservir sa place si la bande est < 2,40 m."""
+    voie = LineString([(-5, 16), (25, 16)])
+    al = Polygon([(0, 5), (8, 5), (8, 10), (0, 10)])
+    ca = Polygon([(0, 10), (3, 10), (3, 16.1), (0, 16.1)])           # accès de A, mord la voie (3 m)
+    pa = Polygon([(0, 0), (2.5, 0), (2.5, 5), (0, 5)])
+    band = Polygon([(8, 7.5 - w / 2), (12, 7.5 - w / 2), (12, 7.5 + w / 2), (8, 7.5 + w / 2)])
+    ar = Polygon([(12, 5), (20, 5), (20, 10), (12, 10)])
+    pb = Polygon([(15, 0), (17.5, 0), (17.5, 5), (15, 5)])
+    return C._pincement_allee([al, band, ar], [pa, pb], 5.0, [ca], voie)
+
+
+def test_lien_etroit_10cm_une_seule_place():
+    """Liaison de 10 cm entre les deux réseaux : B ne reçoit AUCUN raccord (la bande s'évanouit à l'érosion) →
+    seule la place de A est comptée."""
+    assert 11.0 < _lien(0.10) < 14.0
+
+
+def test_lien_235_une_seule_place():
+    """Liaison de 2,35 m (< largeur de passage) : s'évanouit à l'érosion → seule la place de A est comptée."""
+    assert 11.0 < _lien(2.35) < 14.0
+
+
+def test_lien_240_deux_places():
+    """Liaison de 2,40 m (= largeur de passage) : survit à l'érosion → B est RELIÉ à A, les deux places comptées."""
+    assert _lien(2.40) <= C._DEGAGEMENT_SEUIL_M2
+
+
+
+# ── point 2 : barème / citations à seuil de surface ─────────────────────────────────────────────
+import labuse.implantation.regles as R          # noqa: E402
+from labuse.implantation.service import _regle_stationnement_courte   # noqa: E402
+
+
+class _Logt:
+    def __init__(self, surf, pieces=2):
+        self.surface_m2 = surf
+        self.pieces = pieces
+        self.libelle = None
+
+
+def _formule(insee, zone, surf, n=20):
+    b = R.charger(insee, zone).stationnement
+    e = b.exiger([_Logt(surf) for _ in range(n)], destination="collectif", sdp_total=surf * n)
+    return b, e.formule
+
+
+def test_la_plaine_ambiguite_seulement_au_seuil_exact():
+    """La Plaine Ub12.2 (1 place < 30 m², 1,5 ≥ 30 m²) : l'ambiguïté « X ou Y » n'apparaît QU'À 30 m² PILE.
+    À 29,7 m² le texte est net (sous le seuil), aucune alternative affichée."""
+    assert "AMBIGUË" not in _formule("97406", "UB", 29.7)[1]
+    assert "AMBIGUË" not in _formule("97406", "UB", 31.0)[1]
+    f30 = _formule("97406", "UB", 30.0)[1]
+    assert "AMBIGUË" in f30 and "ou" in f30 and "prudente" in f30
+
+
+def test_la_plaine_resume_court_montre_le_seuil():
+    """Le résumé court de La Plaine affiche la RÈGLE À SEUIL, pas un « 1,5 place / logement » tronqué."""
+    courte = _regle_stationnement_courte(R.charger("97406", "UB").stationnement)
+    assert courte is not None and "< 30 m²" in courte and "≥ 30 m²" in courte
+
+
+def test_bras_panon_1aud_ambiguite_a_100m2():
+    """Bras-Panon 1AUd (« ≤ 100 m² » 1 place ET « ≥ 100 m² » 1,5 place, bornes inclusives) : à 100 m² PILE,
+    les deux lectures sont données, la prudente retenue ; à 99/101 m², aucune ambiguïté."""
+    assert "AMBIGUË" not in _formule("97402", "1AUd", 99.0)[1]
+    assert "AMBIGUË" not in _formule("97402", "1AUd", 101.0)[1]
+    f100 = _formule("97402", "1AUd", 100.0)[1]
+    assert "AMBIGUË" in f100 and "ou" in f100 and "prudente" in f100
+
+
+# ── point 3 : seuil « grand bâtiment » de la distance entre constructions ────────────────────────
+def test_distance_seuil_grand_batiment():
+    """Le Tampon Ua8.2 : 3 m en général, 6 m dès qu'un bâtiment dépasse 5 logements. `_distance_requise`
+    applique le bon seuil selon le bâtiment le plus peuplé."""
+    dc = R.DistanceConstructions(validee=True, forme="fixe", min_m=3.0,
+                                 min_m_grand_batiment=6.0, seuil_logements_grand_batiment=5,
+                                 article="Ua8.2", citation="…")
+
+    class _Cap:
+        niveaux = 2
+    class _Conv:
+        hauteur_etage_m = 3.0
+    req5, lib5, _ = C._distance_requise(dc, _Cap(), _Conv(), max_logts_bati=5)
+    req6, lib6, _ = C._distance_requise(dc, _Cap(), _Conv(), max_logts_bati=6)
+    assert req5 == 3.0 and "aucun bâtiment > 5" in lib5
+    assert req6 == 6.0 and "6 logements > 5" in lib6

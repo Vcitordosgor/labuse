@@ -98,6 +98,8 @@ class Scene:
     stationnement_note: Optional[dict] = None   # {allee_unique, cotes, deux_cotes, raison}
     ppr_rouge_local: Optional[BaseGeometry] = None   # PPR interdiction (local), interdite au stationnement
     sous_sol: Optional[dict] = None   # ETUDE-V6-2 (Lot 3) — parking enterré : {places, emprise_m2, rampe_m2}
+    acces_ppr_rouge_m2: float = 0.0   # FIX-6 — aire de VOIE D'ACCÈS traversant la PPR rouge (bâti/places hors
+    #                                   zone ; l'accès peut y passer selon le règlement PPR → contrôle « à confirmer »)
 
     def ajouter(self, o: Objet) -> None:
         self.objets.append(o)
@@ -491,6 +493,134 @@ def _acces_corridor(scene: Scene, conv: Conventions, allee_g: Polygon,
             or corridor.distance(voie) > 0.6 or corridor.distance(allee_g) > 1e-6):
         return None
     return corridor
+
+
+_PASSAGE_MIN_M = 2.4     # largeur roulante minimale d'un raccord accès–voie (cf. controles._PASSAGE_MIN_M)
+_RACCORD_MARGE_M = 0.6   # marge INTERNE du couloir d'accès (= borne de `_acces_corridor`) : l'accès accoste la
+                         # voie à ≤ 0,6 m. Ce dernier demi-mètre est comblé pour que le dessin touche la voie ;
+                         # un accès arrêté PLUS LOIN est un vrai vide → non prolongé → refusé par le contrôle.
+
+
+def _contact_voie_m(g: BaseGeometry, voie_l: BaseGeometry) -> float:
+    """Longueur du bord de voie RECOUVERTE par l'accès `g`, D'UN SEUL TENANT : `voie_l ∩ g`, segment continu le
+    plus long. L'accès MORD l'emprise de la voie → la voie posée dans le polygone a une longueur réelle (0 si
+    l'accès s'arrête avant la voie ou n'y touche qu'en un point)."""
+    c = voie_l.intersection(g)
+    segs = ([c] if c.geom_type == "LineString"
+            else [s for s in getattr(c, "geoms", []) if s.geom_type == "LineString"])
+    return max((s.length for s in segs), default=0.0)
+
+
+def raccorder_acces_voie(scene: Scene, conv: Conventions) -> None:
+    """ETUDE-STATIONNEMENT-FIX-6 (point 1) — APRÈS le pavage, AVANT le contrôle : élargit la BOUCHE DE VOIE de
+    chaque accès pour que le PLAN DESSINÉ touche RÉELLEMENT la voie sur ≥ passage (le contrôle reste STRICT,
+    aucune bande de tolérance). Ne touche NI à la recherche NI à l'ordre des candidats : seule la GÉOMÉTRIE DE
+    LA JONCTION change.
+
+    L'accès posé par `_acces_corridor` accoste la voie en DIAGONALE (nearest_points) : sur une assiette où la
+    voie est oblique / sur plusieurs bandes (L'Étang-Salé), il n'y touche qu'en un COIN (contact ponctuel), même
+    quand l'extension FIX-5 a élargi l'autre jonction (allée–accès). On greffe donc, SEULEMENT si le contact
+    actuel < passage ET si l'accès est à ≤ `_RACCORD_MARGE_M` de la voie, une FENÊTRE PRISE SUR LA VOIE (de la
+    largeur de l'accès), extrudée PERPENDICULAIREMENT vers l'intérieur jusqu'à rejoindre l'accès → contact plein,
+    quelle que soit l'orientation. Le comblement reste dans l'assiette et ne chevauche ni bâti, ni places, ni
+    allées, ni autres accès (sinon le contrôle « aucun chevauchement » invaliderait le plan) ; s'il est coupé
+    avant d'atteindre un contact ≥ passage, l'accès reste inchangé → refusé par le contrôle strict."""
+    from shapely.ops import nearest_points, substring
+    from shapely.geometry import Point
+    voie = unary_union(scene.voie_local) if scene.voie_local else None
+    if voie is None or voie.is_empty:
+        return
+    voie_l = voie if voie.geom_type in ("LineString", "MultiLineString") else voie.boundary
+    if voie_l.geom_type != "LineString":   # on raccorde segment par segment (substring exige une LineString)
+        voie_l = max(list(voie_l.geoms), key=lambda s: s.length)
+    occupants = unary_union([o.geom_local for o in scene.objets
+                             if o.kind in ("batiment_emprise", "place", "allee", "noyau", "module")
+                             and o.geom_local is not None and not o.geom_local.is_empty]
+                            or [Polygon()])
+    w = conv.acces_largeur_m
+    # L'accès MORD l'emprise de la voie de quelques cm → la ligne de voie est STRICTEMENT à l'intérieur du
+    # polygone, le recouvrement `voie_l ∩ accès` est robuste (pas une arête-sur-frontière fragile). La morsure
+    # reste SOUS la tolérance du contrôle géométrique « contenu dans l'assiette » (`_TOL_CONTENU=0.05`).
+    _BITE = 0.04
+    _assiette_marge = scene.assiette_local.buffer(_BITE + 0.005)
+    cen = scene.assiette_local.representative_point()
+    for obj in scene.of("acces"):
+        g = obj.geom_local
+        if not isinstance(g, Polygon) or g.is_empty:
+            continue
+        gap = g.distance(voie_l)
+        if gap > _RACCORD_MARGE_M:
+            continue                                   # s'arrête trop loin (vrai vide) → laissé tel quel, refusé
+        if _contact_voie_m(g, voie_l) >= _PASSAGE_MIN_M:
+            continue                                   # recouvre déjà la voie ≥ 2,40 m (témoins) → rien à faire
+        vp, _ap = nearest_points(voie_l, g)
+        d0 = voie_l.project(Point(vp.x, vp.y))
+        autres = unary_union([occupants] + [a.geom_local for a in scene.of("acces")
+                                            if a is not obj and a.geom_local is not None])
+        ppr = scene.ppr_rouge_local
+        a_ppr = ppr is not None and not getattr(ppr, "is_empty", True)
+
+        def _bouche(d_lo):
+            """Bouche d'accès prise sur une FENÊTRE DE VOIE [d_lo, d_lo+w] : son côté voie SUIT la limite (même
+            tracé), MORD l'emprise de la voie de `_BITE` et s'enfonce dans l'assiette de `gap+w` jusqu'à l'accès.
+            Son intersection avec la voie vaut donc toute la largeur de la fenêtre."""
+            d_lo = max(0.0, min(max(0.0, voie_l.length - w), d_lo))
+            vseg = substring(voie_l, d_lo, d_lo + w)
+            if vseg.geom_type != "LineString" or vseg.length < w - 0.05:
+                return None
+            co = list(vseg.coords)
+            pa, pb = co[0], co[-1]
+            tx, ty = pb[0] - pa[0], pb[1] - pa[1]
+            tl = (tx * tx + ty * ty) ** 0.5
+            if tl <= 1e-9:
+                return None
+            nx, ny = -ty / tl, tx / tl                 # normale, orientée vers l'intérieur de l'assiette
+            if nx * (cen.x - pa[0]) + ny * (cen.y - pa[1]) < 0:
+                nx, ny = -nx, -ny
+            prof = gap + w
+            outer = [(x - nx * _BITE, y - ny * _BITE) for x, y in co]            # mord l'emprise de la voie
+            inner = [(x + nx * prof, y + ny * prof) for x, y in reversed(co)]    # s'enfonce vers l'accès
+            m = Polygon(outer + inner)
+            return m if (m.is_valid and m.area > 0.5) else None
+
+        # fenêtres candidates : la plus proche de l'accès D'ABORD, puis en balayant la voie de part et d'autre
+        # (portée latérale ~2·largeur), pour trouver, si besoin, un raccord sur une AUTRE portion de voie.
+        pas = max(0.5, w / 4.0)
+        offs = sorted({round(k * pas, 2) for k in range(-int(2 * w / pas), int(2 * w / pas) + 1)}, key=abs)
+        bouches = [b for b in (_bouche(d0 - w / 2.0 + off) for off in offs) if b is not None]
+
+        def _essayer(bouche, eviter_ppr: bool):
+            c = bouche.intersection(_assiette_marge)   # garde la morsure de quelques cm sur l'emprise de la voie
+            if not c.is_empty and not autres.is_empty:
+                c = c.difference(autres)               # jamais sur bâti, places, allées, autre accès
+            if eviter_ppr and a_ppr and not c.is_empty:
+                c = c.difference(ppr)                  # route l'accès HORS de la zone rouge
+            if c.is_empty or not c.intersects(g):      # doit rester RACCORDÉ à l'accès (une seule pièce)
+                return None
+            ng = _plus_grand(unary_union([g, c]).buffer(0))
+            if (isinstance(ng, Polygon) and not ng.is_empty
+                    and _contact_voie_m(ng, voie_l) >= _PASSAGE_MIN_M):
+                return ng
+            return None
+
+        # ÉTAPE 1 — raccord LÉGAL : une portion de voie recouverte ≥ 2,40 m HORS zone rouge (bâti et places
+        # toujours hors zone). On essaie d'abord la fenêtre la plus proche, puis les autres portions de voie.
+        retenu = next((r for b in bouches for r in [_essayer(b, True)] if r is not None), None)
+        if retenu is not None:
+            obj.geom_local = retenu
+            continue
+        # ÉTAPE 2 — AUCUN raccord hors zone rouge pour ce plan : la zone rouge interdit le bâti et le
+        # stationnement, mais une simple VOIE D'ACCÈS peut y être admise selon le règlement du PPR. On conserve
+        # le plan (bâti + toutes les places hors zone), l'accès traverse la zone, et on MESURE l'aire concernée
+        # pour un contrôle bloquant « à confirmer au règlement du PPR ».
+        if a_ppr:
+            retenu = next((r for b in bouches for r in [_essayer(b, False)] if r is not None), None)
+            if retenu is not None:
+                obj.geom_local = retenu
+                try:
+                    scene.acces_ppr_rouge_m2 += float(retenu.intersection(ppr).area)
+                except Exception:  # noqa: BLE001
+                    pass
 
 
 # ---------------------------------------------------------------- stationnement en SOUS-SOL (Lot 3)

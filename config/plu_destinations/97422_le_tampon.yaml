@@ -82,21 +82,23 @@ zones:
 
             Habitat collectif (autre que logements sociaux)
 
+            0,5 place par chambre et studio
+
             1 place par logement de 2 pièces
 
             1,5 place par logement de 3 pièces et plus
 
             Lotissement ou opération supérieur à 5 lots ou logements
 
-            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+            1,5 place par logement, arrondi à l’entier inférieur, dont au moins 0,5 place à l’extérieur des espaces privatisés
 
-            1 place pour 3 chambres ou logements
+            Foyer, résidence sociale (FPA, EHPAD, etc.)
 
-            1 place pour deux chambres
+            1 place pour 3 chambres ou logement
 
-            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
+            Hébergement hôtelier
 
-            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
+            1 place pour deux chambres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -328,6 +330,8 @@ zones:
         entre_constructions:
           forme: fixe
           min_m: 3.0
+          min_m_grand_batiment: 6.0
+          seuil_logements_grand_batiment: 5
           article: Ua8.2
           page_pdf: 17
           citation: "La distance séparant deux bâtiments sur une même unité foncière doit être au moins égale à 3 mètres ; dans le cas d'un bâtiment comportant plus de cinq logements, ce seuil minimal est porté à 6 mètres, hors circulations extérieures de type coursive."
@@ -367,21 +371,23 @@ zones:
 
             Habitat collectif (autre que logements sociaux)
 
+            0,5 place par chambre et studio
+
             1 place par logement de 2 pièces
 
             1,5 place par logement de 3 pièces et plus
 
             Lotissement ou opération supérieur à 5 lots ou logements
 
-            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+            1,5 place par logement, arrondi à l’entier inférieur, dont au moins 0,5 place à l’extérieur des espaces privatisés
 
-            1 place pour 3 chambres ou logements
+            Foyer, résidence sociale (FPA, EHPAD, etc.)
 
-            1 place pour deux chambres
+            1 place pour 3 chambres ou logement
 
-            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
+            Hébergement hôtelier
 
-            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
+            1 place pour deux chambres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -499,21 +505,23 @@ zones:
 
             Habitat collectif (autre que logements sociaux)
 
+            0,5 place par chambre et studio
+
             1 place par logement de 2 pièces
 
             1,5 place par logement de 3 pièces et plus
 
             Lotissement ou opération supérieur à 5 lots ou logements
 
-            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+            1,5 place par logement, arrondi à l’entier inférieur, dont au moins 0,5 place à l’extérieur des espaces privatisés
+
+            Foyer, résidence sociale (FPA, EHPAD, etc.)
 
             1 place pour 3 chambres ou logement
 
-            1 place pour deux chambres
+            Hébergement hôtelier
 
-            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
-
-            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
+            1 place pour deux chambres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -765,21 +773,23 @@ zones:
 
             Habitat collectif (autre que logements sociaux)
 
+            0,5 place par chambre et studio
+
             1 place par logement de 2 pièces
 
             1,5 place par logement de 3 pièces et plus
 
             Lotissement ou opération supérieur à 5 lots ou logements
 
-            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+            1,5 place par logement, arrondi à l’entier inférieur, dont au moins 0,5 place à l’extérieur des espaces privatisés
+
+            Foyer, résidence sociale (FPA, EHPAD, etc.)
 
             1 place pour 3 chambres ou logement
 
-            1 place pour deux chambres
+            Hébergement hôtelier
 
-            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
-
-            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
+            1 place pour deux chambres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -993,21 +1003,23 @@ zones:
 
             Habitat collectif (autre que logements sociaux)
 
+            0,5 place par chambre et studio
+
             1 place par logement de 2 pièces
 
             1,5 place par logement de 3 pièces et plus
 
             Lotissement ou opération supérieur à 5 lots ou logements
 
-            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+            1,5 place par logement, arrondi à l’entier inférieur, dont au moins 0,5 place à l’extérieur des espaces privatisés
+
+            Foyer, résidence sociale (FPA, EHPAD, etc.)
 
             1 place pour 3 chambres ou logement
 
-            1 place pour deux chambres
+            Hébergement hôtelier
 
-            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
-
-            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
+            1 place pour deux chambres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -1307,21 +1319,23 @@ zones:
 
             Habitat collectif (autre que logements sociaux)
 
+            0,5 place par chambre et studio
+
             1 place par logement de 2 pièces
 
             1,5 place par logement de 3 pièces et plus
 
             Lotissement ou opération supérieur à 5 lots ou logements
 
-            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+            1,5 place par logement, arrondi à l’entier inférieur, dont au moins 0,5 place à l’extérieur des espaces privatisés
+
+            Foyer, résidence sociale (FPA, EHPAD, etc.)
 
             1 place pour 3 chambres ou logement
 
-            1 place pour deux chambres
+            Hébergement hôtelier
 
-            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
-
-            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
+            1 place pour deux chambres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -1613,21 +1627,23 @@ zones:
 
             Habitat collectif (autre que logements sociaux)
 
+            0,5 place par chambre et studio
+
             1 place par logement de 2 pièces
 
             1,5 place par logement de 3 pièces et plus
 
             Lotissement ou opération supérieur à 5 lots ou logements
 
-            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+            1,5 place par logement, arrondi à l’entier inférieur, dont au moins 0,5 place à l’extérieur des espaces privatisés
 
-            1 place pour 3 chambres ou logements
+            Foyer, résidence sociale (FPA, EHPAD, etc.)
 
-            1 place pour deux chambres
+            1 place pour 3 chambres ou logement
 
-            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
+            Hébergement hôtelier
 
-            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
+            1 place pour deux chambres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -1731,21 +1747,23 @@ zones:
 
             Habitat collectif (autre que logements sociaux)
 
+            0,5 place par chambre et studio
+
             1 place par logement de 2 pièces
 
             1,5 place par logement de 3 pièces et plus
 
             Lotissement ou opération supérieur à 5 lots ou logements
 
-            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+            1,5 place par logement, arrondi à l’entier inférieur, dont au moins 0,5 place à l’extérieur des espaces privatisés
+
+            Foyer, résidence sociale (FPA, EHPAD, etc.)
 
             1 place pour 3 chambres ou logement
 
-            1 place pour deux chambres
+            Hébergement hôtelier
 
-            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
-
-            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
+            1 place pour deux chambres'
           base: pieces
           arrondi: superieur
           retenue: max
@@ -1849,21 +1867,23 @@ zones:
 
             Habitat collectif (autre que logements sociaux)
 
+            0,5 place par chambre et studio
+
             1 place par logement de 2 pièces
 
             1,5 place par logement de 3 pièces et plus
 
             Lotissement ou opération supérieur à 5 lots ou logements
 
-            1,5 place par logement, arrondi à l’entier inférieur dont au moins
+            1,5 place par logement, arrondi à l’entier inférieur, dont au moins 0,5 place à l’extérieur des espaces privatisés
+
+            Foyer, résidence sociale (FPA, EHPAD, etc.)
 
             1 place pour 3 chambres ou logement
 
-            1 place pour deux chambres
+            Hébergement hôtelier
 
-            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par
-
-            logement pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les'
+            1 place pour deux chambres'
           base: pieces
           arrondi: superieur
           retenue: max

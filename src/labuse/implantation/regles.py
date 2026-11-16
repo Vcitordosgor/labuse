@@ -16,6 +16,14 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 
+def quantifier_surface_m2(x: float) -> float:
+    """ETUDE-STATIONNEMENT-FIX-9 (point 3) — précision UNIQUE des surfaces : le MILLIÈME de m². On quantifie une
+    fois (ici), et cette même valeur sert à DÉTECTER la borne, CALCULER les lectures et AFFICHER — aucune
+    tolérance flottante ailleurs. Troncature au millième (avec ε anti-bruit flottant de 1 nm² pour qu'une
+    surface réellement au seuil, stockée à 29,999999999, s'y recolle ; 29,9999999 reste SOUS le seuil)."""
+    return math.floor(float(x) * 1000.0 + 1e-6) / 1000.0
+
+
 @dataclass(frozen=True)
 class Regle:
     nom: str
@@ -222,6 +230,19 @@ class BaremeStationnement:
         return self.validee and any(l.destination == destination and l.role == "base" and
                                     (l.places is not None or l.par_m2 is not None) for l in self.lignes)
 
+    def bornes_surface_m2(self) -> list[float]:
+        """ETUDE-STATIONNEMENT-FIX-9 (point 3) — les SEUILS de surface du barème (30, 100 m²…), pour que
+        l'affichage sache montrer assez de décimales près d'une borne. Quantifiés au millième (même convention)."""
+        vals = set()
+        _seuil = getattr(self, "seuil_surface_m2", None)
+        if _seuil is not None:
+            vals.add(quantifier_surface_m2(_seuil))
+        for l in getattr(self, "lignes", None) or []:
+            for s in (getattr(l, "sdp_max", None), getattr(l, "sdp_min", None)):
+                if s is not None:
+                    vals.add(quantifier_surface_m2(s))
+        return sorted(vals)
+
     def _parts_visiteurs(self, destination: str, n: int, sdp_tot: float) -> tuple[int, int]:
         """(visiteurs privés, places publiques) pour le programme. Les places PUBLIQUES (hors parcelle,
         `publique=True`) sont UNIVERSELLES : exigées pour toute destination, y compris le logement aidé
@@ -356,10 +377,16 @@ class BaremeStationnement:
                 # SEUIL DE SURFACE (La Plaine Ub12.2) : 1 place sous 30 m², 1,5 au-dessus. On compte les deux
                 # populations de logements selon leur surface. Un logement à 30 m² PILE relève du « au-dessus »
                 # (le texte « plus de 30 m² » laisse la borne ambiguë → lecture prudente = plus exigeante).
+                # ETUDE-STATIONNEMENT-FIX-9 (point 3) — une SEULE précision (le millième) pour détecter la borne,
+                # calculer et afficher : surface ET seuil QUANTIFIÉS au millième, puis comparés EXACTEMENT, aucune
+                # tolérance flottante. L'ambiguïté « X ou Y » n'existe QU'AU SEUIL EXACT (ex. 30,000 m²) : seul
+                # point où « plus de N m² » se lit ouvert OU fermé. Une surface sous le seuil (29,99 comme 29,999
+                # ou 29,9999999 m²) reste une seule lecture ; elle n'est jamais « arrondie » vers le seuil.
+                _seuil = quantifier_surface_m2(self.seuil_surface_m2)
                 n_sous = sum(1 for m in modules
-                             if float(getattr(m, "surface_m2", 0.0)) < self.seuil_surface_m2)
+                             if quantifier_surface_m2(getattr(m, "surface_m2", 0.0)) < _seuil)
                 n_pile = sum(1 for m in modules
-                             if abs(float(getattr(m, "surface_m2", 0.0)) - self.seuil_surface_m2) < 0.5)
+                             if quantifier_surface_m2(getattr(m, "surface_m2", 0.0)) == _seuil)
                 n_sur = n - n_sous
                 tot = n_sous * self.places_sous_seuil + n_sur * self.flat_places
                 _form = (f"{self.places_sous_seuil:g} place < {self.seuil_surface_m2:g} m² · "
@@ -406,8 +433,33 @@ class BaremeStationnement:
                 base_matched += 1
                 par_ligne[l.libelle or f"{l.places:g}/logt"] = par_ligne.get(l.libelle or f"{l.places:g}/logt", 0) + 1
             if lignes_base_dest and base_matched == n and base_tot > 0:
-                candidats.append((self.arrondir(base_tot), "barème par typologie : "
-                                  + " + ".join(f"{v}×{k}" for k, v in par_ligne.items())))
+                _form_base = ("barème par typologie : "
+                              + " + ".join(f"{v}×{k}" for k, v in par_ligne.items()))
+                # ETUDE-STATIONNEMENT-FIX-6 (point 2) — SEUIL DE SURFACE AMBIGU (Bras-Panon 1AUd : « ≤ 100 m² »
+                # 1 place ET « ≥ 100 m² » 1,5 place, les DEUX bornes inclusives → à 100 m² PILE le texte permet
+                # deux lectures). Comme La Plaine, on DONNE les deux résultats et celui qui est retenu (lecture
+                # prudente = la plus exigeante, déjà prise par `_ligne_base`), au lieu d'une seule valeur muette.
+                bases_amb = [l for l in self.lignes
+                             if l.role == "base" and l.destination == dest_match and l.places is not None]
+                seuils_amb = [(lo.sdp_max, min(lo.places, hi.places), max(lo.places, hi.places))
+                              for lo in bases_amb if lo.sdp_max is not None
+                              for hi in bases_amb if hi.sdp_min is not None
+                              and abs(hi.sdp_min - lo.sdp_max) < 0.05 and hi.places != lo.places]
+                n_pile, delta, S0 = 0, 0.0, None
+                for m in modules:
+                    s = quantifier_surface_m2(getattr(m, "surface_m2", 0.0))   # FIX-9 (point 3) : millième unique
+                    for (S, pl_lo, pl_hi) in seuils_amb:
+                        if s == quantifier_surface_m2(S):   # seuil EXACT quantifié (99,999 m² = une seule lecture)
+                            n_pile += 1
+                            delta += (pl_hi - pl_lo)
+                            S0 = S
+                            break
+                if n_pile:
+                    _prud = self.arrondir(base_tot)
+                    _bas = self.arrondir(base_tot - delta)
+                    _form_base += (f" — borne {S0:g} m² AMBIGUË ({n_pile} logt(s) pile) : le texte permet "
+                                   f"{_bas} ou {_prud} places ; lecture prudente {_prud} retenue")
+                candidats.append((self.arrondir(base_tot), _form_base))
                 details["par_typologie"] = par_ligne
             elif lignes_base_dest and 0 < base_matched < n:
                 # certains logements n'ont pas de ligne de base → la règle ne couvre pas TOUT le programme.
@@ -509,6 +561,11 @@ class DistanceConstructions:
     validee: bool
     forme: str                          # fixe|relative|conditionnelle|contiguite|silence|absente
     min_m: Optional[float] = None
+    # ETUDE-STATIONNEMENT-FIX-6 (point 3) — seuil RELEVÉ pour un GRAND bâtiment (Le Tampon Ua8.2 : 3 m en
+    # général, porté à 6 m « dans le cas d'un bâtiment comportant plus de cinq logements »). On applique le
+    # seuil qui correspond au bâtiment le plus peuplé du projet, pas 3 m aveuglément.
+    min_m_grand_batiment: Optional[float] = None
+    seuil_logements_grand_batiment: Optional[int] = None
     fraction_hauteur: Optional[float] = None
     base_hauteur: Optional[str] = None  # 'cumulee' (H+h) | 'plus_haut' (H du plus haut)
     avec_ouvertures_m: Optional[float] = None
@@ -792,6 +849,10 @@ def _distance_constructions(retraits: dict) -> DistanceConstructions:
         validee=bool(valide and forme in formes_ok),
         forme=forme if forme in formes_ok else "absente",
         min_m=float(leaf["min_m"]) if isinstance(leaf.get("min_m"), (int, float)) else None,
+        min_m_grand_batiment=(float(leaf["min_m_grand_batiment"])
+                              if isinstance(leaf.get("min_m_grand_batiment"), (int, float)) else None),
+        seuil_logements_grand_batiment=(int(leaf["seuil_logements_grand_batiment"])
+                                        if isinstance(leaf.get("seuil_logements_grand_batiment"), (int, float)) else None),
         fraction_hauteur=float(frac) if isinstance(frac, (int, float)) else None,
         base_hauteur=leaf.get("base_hauteur"),
         avec_ouvertures_m=float(leaf["avec_ouvertures_m"]) if isinstance(leaf.get("avec_ouvertures_m"), (int, float)) else None,

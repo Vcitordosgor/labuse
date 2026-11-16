@@ -19,7 +19,7 @@ from . import regles as regles_mod
 from . import terrain as terrain_mod
 from .conventions import Conventions, charger as charger_conventions
 from .geometrie import (Frame, Scene, poser_barre, poser_espaces_libres,
-                        poser_sous_sol, poser_stationnement, scene_depuis)
+                        poser_sous_sol, poser_stationnement, raccorder_acces_voie, scene_depuis)
 
 IDUS_ETANG_SALE = ["97404000AW0099", "97404000AW0451", "97404000AW0624", "97404000AW0625"]
 IDUS_SAINT_ANDRE = ["97409000AX0255", "97409000AX0256"]
@@ -117,6 +117,11 @@ def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition
         poser_sous_sol(scene, conv, cible=cible, niveaux=niveaux_sous_sol)
     else:
         poser_stationnement(scene, conv, cible=cible)
+        # ETUDE-STATIONNEMENT-FIX-6 (point 1) — APRÈS le pavage, AVANT le contrôle : on prolonge la bouche de
+        # chaque accès jusqu'à la limite sur voie (le dernier demi-mètre, marge interne du couloir) → le plan
+        # DESSINÉ touche réellement la voie. La recherche et l'ordre des candidats sont inchangés ; le contrôle
+        # de passage reste STRICT (contact réel ≥ passage). Un accès arrêté trop loin n'est pas prolongé → refusé.
+        raccorder_acces_voie(scene, conv)
     poser_espaces_libres(scene)
     scene.finaliser_monde()
     cap = cap_mod.calculer(scene, conv, regles, terrain, type_projet)

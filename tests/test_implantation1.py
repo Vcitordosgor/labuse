@@ -143,8 +143,12 @@ def test_aucun_stationnement_en_ppr_rouge(scenario):
     rouge = scenario.terrain.ppr_rouge
     if rouge is None or rouge.is_empty:
         return
-    for g in _w(scenario, "place") + _w(scenario, "allee") + _w(scenario, "acces"):
-        assert g.intersection(rouge).area <= _TOL_AIRE, "stationnement en PPR rouge"
+    # ETUDE-STATIONNEMENT-FIX-6 — la zone rouge interdit le bâti ET le STATIONNEMENT : places et allées
+    # restent STRICTEMENT hors zone rouge. La seule VOIE D'ACCÈS, elle, peut la traverser quand aucun point de
+    # voie n'est atteignable hors zone (admission selon le règlement du PPR) — c'est alors SIGNALÉ par le
+    # contrôle bloquant « Accès en zone rouge (PPR) » ; ce n'est pas du stationnement.
+    for g in _w(scenario, "place") + _w(scenario, "allee"):
+        assert g.intersection(rouge).area <= _TOL_AIRE, "stationnement (place/allée) en PPR rouge"
 
 
 def test_noyaux_respectent_convention(scenario):

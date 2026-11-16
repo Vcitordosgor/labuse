@@ -393,7 +393,7 @@ zones:
       prospect:
         article: Ud3.5
         page_pdf: "85-86"
-        citation: la hauteur de la construction est limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative ; prospect par rapport aux voies et emprises publiques
+        citation: "Sauf en secteur Udl, à l'alignement des voies existantes ou projetées, la hauteur H des constructions nouvelles doit être au maximum égale à l'emprise E de la voie projetée, sans pouvoir dépasser 9 m. Au-delà de l'alignement des voies existantes projetées, la hauteur des constructions nouvelles ne dépasse pas les hauteurs définies ci-dessus et en tout point la hauteur des constructions nouvelles ne dépasse pas une ligne oblique de 100 % tracée perpendiculairement à la voie projetée depuis la hauteur maximale autorisée H = E conformément au schéma B de la définition « hauteur » du lexique du titre I du présent document."
         statut: valide
     silence: autorise
     silence_src: 'art. Ud1, p. 77 : « Tous les usages et affectations des sols, types d''activités et catégories de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. Le règlement et le tableau ci-dessous illustre, de manière non exhaustive, ceux qui se trouvent ainsi "autorisés". »'

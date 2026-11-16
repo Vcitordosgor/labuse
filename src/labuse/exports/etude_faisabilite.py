@@ -118,7 +118,7 @@ table.ef-scn tr.retenu { background: var(--mint-bg); }
 # IMPLANTATION-4 (format des nombres) — LE helper UNIQUE (planche + PDF), miroir de lib/format.ts.
 # Milliers en espace INSÉCABLE (retiré par le crible de provenance `_canon`). `_grp`/`_dec`/`_m2`
 # deviennent de simples alias pour ne rien changer aux appels existants du document.
-from labuse.implantation.format import dec_souple, groupe_fr, m2_fr   # noqa: E402
+from labuse.implantation.format import dec_souple, groupe_fr, m2_borne_fr, m2_fr   # noqa: E402
 
 _grp = groupe_fr
 _dec = dec_souple
@@ -920,8 +920,11 @@ def _p5_plan_masse(payload: dict, retenu: dict, *, titre: str = None) -> str:
         # DOC-ETUDE-029 — le libellé dit ce que la valeur EST : `pleine_terre_m2` (la part pleine terre
         # perméable), pas le total des espaces libres. Plus de « Espaces libres · dont pleine terre » qui
         # laissait croire que le chiffre était l'ensemble des espaces libres.
-        f'<tr><td class="k">Pleine terre (espace libre perméable)</td><td>{_m2(sc.get("pleine_terre_m2"))}</td>'
-        f'<td class="n"><span class="chip d">Dérivé</span></td></tr>',
+        # ETUDE-STATIONNEMENT-FIX-6 (point 3) — MÊME LIBELLÉ que le contrôle « Perméabilité (pleine terre) » :
+        # le chiffre mesure la SURFACE DISPONIBLE, pas que la pleine terre sera plantée/perméable (à confirmer
+        # au projet). On ne la présente plus comme une pleine terre acquise.
+        f'<tr><td class="k">Surface disponible (pleine terre à confirmer)</td><td>{_m2(sc.get("pleine_terre_m2"))}</td>'
+        f'<td class="n"><span class="chip p">À confirmer</span></td></tr>',
     ]
     acces = sc["stationnement"].get("acces")
     if acces:
@@ -1046,9 +1049,11 @@ def _p7_capacite(payload: dict, retenu: dict) -> str:
     surf = payload["hypotheses"].get("surfaces") or {}
     # ETUDE-V6-4 (item 11) — montrer la varangue, comme à l'écran (30/56/70/80 + varangues).
     varg = payload["hypotheses"].get("varangues") or {}
+    # ETUDE-STATIONNEMENT-FIX-9 (point 3) — près d'une borne de barème, la surface montre ses décimales.
+    _bornes = (((payload.get("stationnement_regimes") or {}).get("general") or {}).get("bornes_surface_m2")) or []
     prows = []
     for x in sorted(pt):
-        vcell = f'{_m2(surf.get(x))}' + (f' <span style="color:#6b7280;font-size:var(--fs-xs)">dont {_m2(varg.get(x))} varangue</span>' if varg.get(x) else '')
+        vcell = f'{m2_borne_fr(surf.get(x), _bornes)}' + (f' <span style="color:#6b7280;font-size:var(--fs-xs)">dont {_m2(varg.get(x))} varangue</span>' if varg.get(x) else '')
         prows.append(f'<tr><td class="k">{esc(x)}</td><td class="num">{int(pt[x])}</td>'
                      f'<td class="num">{vcell}</td><td class="num">{_m2(shab.get(x))}</td>'
                      f'<td class="n"><span class="chip e">Estimé</span></td></tr>')
@@ -1203,6 +1208,11 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
     Lève ValueError si aucun scénario (le document n'a rien à montrer)."""
     retenu = scenario_retenu(payload, scenario_ref)
     if retenu is None:
+        # ETUDE-STATIONNEMENT-FIX-6 (point 1, option A) — aérien SANS plan mais variante SOUS-SOL disponible :
+        # on rend l'Étude SUR cette variante (la solution qui tient, avec ses chiffres et ses contrôles) ; le
+        # message/bandeau dit clairement que le stationnement aérien ne passe pas sous ces hypothèses.
+        retenu = payload.get("repli_sous_sol")
+    if retenu is None:
         raise ValueError(payload.get("message") or "aucun scénario : l'étude ne peut pas être rendue")
     # DOCS-1 (décision Vic) — le PLAFOND D'EMPRISE AFFICHÉ = la valeur de la fiche (CES × CONTENANCE de
     # l'acte), un fait = une valeur partout (fiche, Dossier, Gabarit, Étude). Le moteur d'implantation
@@ -1233,8 +1243,19 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
         # DOCS-1 (décision Vic) — pied RACCOURCI (l'IDU, le type et le « généré le » sont déjà en tête) :
         # le numéro de page tient sur une ligne.
         doc_foot=FOOT_LIGNE)
+    # ETUDE-STATIONNEMENT-FIX-6 (point 1, option A) — bandeau clair quand on rend le REPLI sous-sol (l'aérien
+    # ne tient pas) : le document DIT que le stationnement aérien ne passe pas, puis montre la variante sous-sol.
+    _est_repli = payload.get("repli_sous_sol") is not None and retenu is payload.get("repli_sous_sol")
+    _banniere = ""
+    if _est_repli:
+        _banniere = ('<div style="border:1.5px solid #b45309;background:#fff7ed;padding:8pt 10pt;'
+                     'border-radius:3pt;margin:0 0 10pt 0;color:#7c2d12;">'
+                     '<b>Aucun plan en stationnement aérien sous ces hypothèses.</b> '
+                     + esc(payload.get("message") or "")
+                     + ' La variante ci-dessous est en <b>stationnement sous-sol</b> — la solution qui tient.</div>')
     corps = (
         f"<style>{_STYLE}</style>"
+        + _banniere
         + _p1_synthese(payload, retenu, numero, genere_le)
         + _p2_terrain(payload, retenu)
         + _p3_regles(payload, retenu)
@@ -1416,6 +1437,7 @@ def nombres_hors_payload(payload: dict, html: str, *, genere_le: str = "") -> li
     struct = {str(i) for i in range(0, 10)}                       # pagination + petits indices de texte
     struct |= set(_nombres(genere_le)) | set(_nombres(numero_etude(payload["entrees"].get("idus") or [], genere_le)))
     struct |= set(_nombres(_numero_document(payload)))   # n° de document EF-<8> (chiffres tolérés)
+    struct |= set(_nombres(_commit_build() or ""))       # tampon « version <commit> » (structurel, pas un fait)
     struct |= {"2975", "4326"}                                     # CRS cités dans le payload moteur de toute façon
     for p in payload["terrain"].get("parcelles", []):             # refs cadastrales (AW 99…)
         struct |= set(_nombres(p.get("numero") or ""))

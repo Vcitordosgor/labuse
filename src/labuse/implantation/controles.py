@@ -84,8 +84,13 @@ _PASSAGE_MIN_M = 2.4         # largeur mini de circulation d'une voiture ; sous 
 _COMP_SIGNIF_M2 = 8.0        # aire mini d'un morceau d'allée pour qu'un étranglement le séparant compte
 
 
-def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=None) -> float:
+def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None,
+                   passage: float = _PASSAGE_MIN_M) -> tuple[float, int]:
     """ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — DÉGAGEMENT mesuré DEVANT CHAQUE PLACE, sur l'allée DÉSÉTRANGLÉE.
+    ETUDE-STATIONNEMENT-FIX-9 (relecture) — NOYAU UNIQUE : la desserte d'une place et la LARGEUR du goulet
+    reposent sur le MÊME calcul (ce noyau roulant érodé de `passage`/2). Renvoie (aire manquante, nb de places
+    desservies). `_pincement_allee` l'appelle à `passage = _PASSAGE_MIN_M` (2,40 m) ; `_largeur_min_desserte`
+    cherche le plus grand `passage` qui dessert encore une place → une place comptée ⟹ goulet ≥ 2,40 m.
     Deux pièges du PLAN réel, traités ensemble :
       1. CLEARANCE devant la place — on sonde un rectangle de la largeur de la place extrudé de `largeur_requise`
          vers CHACUN des deux petits côtés (nez/arrière) et on garde le MEILLEUR (déficit minimal) : l'allée
@@ -100,48 +105,72 @@ def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=No
     from shapely.geometry import Polygon
     from shapely.ops import unary_union
     if not allees or not places:
-        return 0.0
+        return 0.0, 0
     libre = unary_union([g if g.is_valid else g.buffer(0) for g in (list(allees) + list(acces or []))])
     if libre.is_empty:
-        return 0.0
+        return 0.0, 0
     _aire_places = float(sum((p if p.is_valid else p.buffer(0)).area for p in places))
-    r_pass = _PASSAGE_MIN_M / 2.0
-    # (2) PASSAGE ROULANT CONTINU JUSQU'À LA VOIE (ETUDE-STATIONNEMENT-FIX-5, point 1) — une place n'est
-    # desservie que si une VOITURE peut l'atteindre depuis la voie par un couloir d'une LARGEUR ≥ `_PASSAGE_MIN_M`
-    # SUR TOUT son trajet : les jonctions allée–accès et accès–voie se mesurent en LARGEUR, pas en contact. On
-    # ÉRODE le réseau (allées + accès + voie) de la demi-largeur de passage : toute jonction plus étroite (un
-    # simple POINT, un goulet) DISPARAÎT. Le réseau RÉELLEMENT roulant est la ou les composantes atteignables
-    # depuis le noyau de la VOIE ; une allée reliée par un point, ou via un accès isolé de la voie, en est exclue.
-    voie_poly = None
-    if voie is not None and not getattr(voie, "is_empty", True):
-        # la voie est une LIGNE (bord de parcelle) : on l'épaissit en bande de ROULEMENT (≥ passage) pour que
-        # son noyau survive à l'érosion et serve d'ancre atteignable (sinon rien n'est relié à la voie).
-        voie_poly = (voie.buffer(_PASSAGE_MIN_M) if voie.geom_type in ("LineString", "MultiLineString")
-                     else (voie if voie.is_valid else voie.buffer(0)))
-    circ = unary_union([libre, voie_poly]).buffer(0) if voie_poly is not None else libre
-    noyau = circ.buffer(-r_pass).buffer(0)
+    r_pass = max(passage, 1e-3) / 2.0
+    # (2) PASSAGE ROULANT CONTINU JUSQU'À LA VOIE (FIX-5/6/7, point 1) — une place n'est desservie que si une
+    # voiture l'atteint depuis la voie par un couloir ≥ `_PASSAGE_MIN_M` de large SUR TOUT son trajet. Le raccord
+    # accès–voie se mesure comme la LONGUEUR DU BORD DE VOIE RÉELLEMENT RECOUVERTE PAR L'ACCÈS, D'UN SEUL TENANT :
+    # `voie_l ∩ libre` (l'accès MORD l'emprise de la voie, cf. geometrie.raccorder_acces_voie), segment CONTINU
+    # au seuil EXACT de 2,40 m — AUCUNE bande de tolérance, AUCUN arrondi. Un vide (même 2 cm), un contact
+    # ponctuel, ou un recouvrement < 2,40 m d'un seul tenant ne desservent pas.
+    #   · noyau = là où le centre d'une voiture peut rouler (allées + accès érodés de la demi-largeur) ;
+    #   · réseau atteignable = les composantes du noyau proches d'un recouvrement de voie valide.
+    # on érode d'un CHEVEU de moins que la demi-largeur : un passage EXACTEMENT à `_PASSAGE_MIN_M` (le minimum
+    # roulant admis) laisse alors un noyau mince au lieu de s'évanouir (0,1 mm de robustesse flottante, pas une
+    # tolérance : un passage sous 2,40 m disparaît toujours).
+    noyau = libre.buffer(-(r_pass - 1e-4)).buffer(0)
     if noyau.is_empty:
-        return _aire_places
+        return _aire_places, 0
     comps = list(noyau.geoms) if noyau.geom_type == "MultiPolygon" else [noyau]
-    # composantes ATTEIGNABLES depuis la voie : celles dont le noyau touche le noyau de la voie (jonction
-    # accès–voie ≥ passage). Sans voie connue (tests unitaires), on part de la plus grande composante.
-    if voie_poly is not None and not voie_poly.is_empty:
-        vn = voie_poly.buffer(-r_pass).buffer(0)
-        reach_comps = [g for g in comps
-                       if (not vn.is_empty and g.intersects(vn)) or g.distance(voie_poly) <= 0.05]
+    reach_comps = None
+    if voie is not None and not getattr(voie, "is_empty", True):
+        from shapely.ops import linemerge, nearest_points
+        voie_l = voie if voie.geom_type in ("LineString", "MultiLineString") else voie.boundary
+        # ETUDE-STATIONNEMENT-FIX-9 (point 1) — recouvrement RÉEL mesuré sur LIBRE (c'est le DESSIN qui doit
+        # toucher la voie : aucun pontage de vide ; tronçons JOINTIFS réunis par linemerge, sans combler de vide),
+        # au seuil EXACT de 2,40 m d'un seul tenant.
+        cvt = voie_l.intersection(libre)
+        merged = linemerge(cvt) if cvt.geom_type == "MultiLineString" else cvt
+        segs = ([merged] if merged.geom_type == "LineString"
+                else [s for s in getattr(merged, "geoms", []) if s.geom_type == "LineString"])
+        recouvrements = [s for s in segs if s.length >= passage]
+        if not recouvrements:
+            return _aire_places, 0
+        # la composante ÉRODÉE qui PORTE chaque recouvrement = celle dont le noyau passe DIRECTEMENT SOUS lui
+        # (point du noyau le plus proche du milieu du recouvrement). Décision TOPOLOGIQUE sur la seule aire érodée.
+        # Le noyau doit REMONTER jusqu'au raccord : son point le plus proche est à ~ la demi-largeur de passage du
+        # bord de voie (l'érosion recule d'autant) ; s'il est PLUS LOIN, l'accès est trop étroit/érodé pour laisser
+        # passer ce passage (son noyau s'est évanoui) et aucune composante ne porte le raccord. Deux réseaux reliés
+        # par une bande étroite (effacée à l'érosion) restent des composantes séparées : la plus proche du raccord
+        # est l'accès qui le porte, jamais un réseau voisin distinct.
+        carry_idx = set()
+        for R in recouvrements:
+            pt, _ = nearest_points(noyau, R)   # point du noyau le plus proche du raccord (où qu'il l'atteigne)
+            if pt.distance(R) > r_pass + 0.1:
+                continue                      # le noyau ne remonte pas à ce raccord → passage > largeur de l'accès
+            for i, g in enumerate(comps):
+                if g.distance(pt) <= 1e-6:
+                    carry_idx.add(i)
+                    break
+        reach_comps = [comps[i] for i in carry_idx]
     else:
-        reach_comps = [max(comps, key=lambda g: g.area)] if comps else []
+        reach_comps = [max(comps, key=lambda g: g.area)] if comps else []   # tests unitaires sans voie
     if not reach_comps:
-        return _aire_places
+        return _aire_places, 0
     reach = unary_union(reach_comps)
     # l'allée/accès RÉELLEMENT desservi(e) = ce que le réseau roulant atteignable recouvre, redilaté à la
     # largeur de passage (on ne redilate QUE le réseau atteignable : un point/goulet n'est pas rebouché).
     desservi = reach.buffer(r_pass + 0.02).intersection(libre).buffer(0)
     if desservi.is_empty:
-        return _aire_places
+        return _aire_places, 0
     from shapely.geometry import Point
     W = max(float(largeur_requise), 0.1)   # FIX-4 : rectangle de dégagement ENTIER, aucune marge retranchée
     manque = 0.0
+    nb_desservies = 0
     for p in places:
         pg = p if p.is_valid else p.buffer(0)
         c = pg.centroid
@@ -183,10 +212,35 @@ def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=No
         if not desservies:
             manque += pg.area        # aucun couloir roulant jusqu'à la voie → place NON comptée
             continue
+        nb_desservies += 1           # une voiture atteint la place par un passage ≥ `passage`
         deficit = min(desservies)    # le meilleur côté RÉELLEMENT DESSERVI
         if deficit > _DEGAGEMENT_PLACE_FLOOR_M2:
             manque += deficit
-    return float(manque)
+    return float(manque), nb_desservies
+
+
+def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=None) -> float:
+    """Aire (m²) de dégagement manquante au passage réglementaire (2,40 m) — cf. `_desserte_core`."""
+    return _desserte_core(allees, places, largeur_requise, acces, voie, _PASSAGE_MIN_M)[0]
+
+
+def _largeur_min_desserte(allees, places, largeur_requise: float, acces=None, voie=None) -> float:
+    """ETUDE-STATIONNEMENT-FIX-9 (relecture) — GOULET = largeur du chemin qui dessert EFFECTIVEMENT les places
+    comptées : le plus grand passage `w` pour lequel AU MOINS UNE place reste desservie depuis la voie, calculé
+    par le MÊME `_desserte_core` (même noyau, même raccord) que le comptage. Une place comptée (desservie à
+    2,40 m) implique donc un goulet ≥ 2,40 m — les deux contrôles ne peuvent plus se contredire."""
+    if not allees or not places:
+        return 0.0
+    if _desserte_core(allees, places, largeur_requise, acces, voie, _PASSAGE_MIN_M)[1] < 1:
+        return 0.0                        # aucune place desservie → pas de chemin
+    lo, hi = _PASSAGE_MIN_M, 12.0         # on sait déjà qu'à 2,40 m une place est desservie
+    for _ in range(24):
+        w = (lo + hi) / 2.0
+        if _desserte_core(allees, places, largeur_requise, acces, voie, w)[1] >= 1:
+            lo = w
+        else:
+            hi = w
+    return lo
 
 
 def _ground_tiles(scene: Scene):
@@ -347,6 +401,7 @@ def _n_batiments(scene: Scene) -> int:
     return len(scene.of("batiment_emprise"))
 
 
+
 def _distance_min_batiments(scene: Scene) -> Optional[float]:
     """Plus petite distance MESURÉE (bord à bord) entre deux emprises bâties, en m. None si < 2."""
     batis = [o.geom_world for o in scene.of("batiment_emprise")]
@@ -355,12 +410,28 @@ def _distance_min_batiments(scene: Scene) -> Optional[float]:
     return min(batis[i].distance(batis[j]) for i in range(len(batis)) for j in range(i + 1, len(batis)))
 
 
-def _distance_requise(dc, cap: Capacite, conv: Conventions) -> tuple[float, str, str]:
+def _distance_requise(dc, cap: Capacite, conv: Conventions, max_logts_bati: int = 0) -> tuple[float, str, str]:
     """(distance requise en m, libellé de règle, mention) pour une règle de distance CHIFFRABLE.
     La hauteur retenue est celle du bâtiment proposé (niveaux × hauteur d'étage) ; `cumulee` = H+h
-    (deux volumes identiques dans le modèle → 2×h), `plus_haut` = H du plus haut (= h)."""
+    (deux volumes identiques dans le modèle → 2×h), `plus_haut` = H du plus haut (= h).
+    `max_logts_bati` = nombre de logements du bâtiment le plus peuplé (seuil « grand bâtiment »)."""
     h = cap.niveaux * conv.hauteur_etage_m
     if dc.forme == "fixe":
+        # ETUDE-STATIONNEMENT-FIX-6 (point 3) — seuil PAR BÂTIMENT : le minimum passe à `min_m_grand_batiment`
+        # dès qu'un bâtiment dépasse `seuil_logements_grand_batiment` logements (Le Tampon Ua8.2 : 3 m, porté
+        # à 6 m si > 5 logements). On DIT quel seuil s'applique et pourquoi, au lieu d'appliquer 3 m aveuglément.
+        if (dc.min_m_grand_batiment is not None and dc.seuil_logements_grand_batiment is not None
+                and max_logts_bati > dc.seuil_logements_grand_batiment):
+            return (float(dc.min_m_grand_batiment),
+                    f"≥ {dc.min_m_grand_batiment:.1f} m (bâtiment de {max_logts_bati} logements > "
+                    f"{dc.seuil_logements_grand_batiment})",
+                    f"seuil relevé à {dc.min_m_grand_batiment:.0f} m : un bâtiment compte {max_logts_bati} "
+                    f"logements (> {dc.seuil_logements_grand_batiment})")
+        if dc.min_m_grand_batiment is not None and dc.seuil_logements_grand_batiment is not None:
+            return (float(dc.min_m or 0.0),
+                    f"≥ {dc.min_m:.1f} m (aucun bâtiment > {dc.seuil_logements_grand_batiment} logements)",
+                    f"seuil de base {dc.min_m:.0f} m : le plus grand bâtiment compte {max_logts_bati} "
+                    f"logements (≤ {dc.seuil_logements_grand_batiment})")
         return float(dc.min_m or 0.0), f"≥ {dc.min_m:.1f} m (distance fixe)", ""
     if dc.forme == "relative":
         base = 2.0 * h if dc.base_hauteur == "cumulee" else h
@@ -723,21 +794,24 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     if (isinstance(_dess, dict) and _dess.get("largeur_min_m")
             and cap.logements >= int(_dess.get("seuil_logements") or 0)):
         _acc = [o.geom_local for o in scene.of("acces")]
+        _all = [o.geom_local for o in scene.of("allee")]
+        _pla = [o.geom_local for o in scene.of("place")]
         req = float(_dess["largeur_min_m"])
         au = unary_union([g if g.is_valid else g.buffer(0) for g in _acc]) if _acc else None
-        if au is not None and not au.is_empty and au.area >= 0.1:
-            mrr = au.minimum_rotated_rectangle
-            _pts = list(zip(*mrr.exterior.coords.xy))[:4] if mrr.geom_type == "Polygon" else []
-            larg = (min(((_pts[i][0] - _pts[(i + 1) % 4][0]) ** 2 + (_pts[i][1] - _pts[(i + 1) % 4][1]) ** 2) ** 0.5
-                        for i in range(4)) if len(_pts) == 4 else 0.0)
+        if au is not None and not au.is_empty and au.area >= 0.1 and _all and _pla:
+            # ETUDE-STATIONNEMENT-FIX-9 (relecture) — largeur du GOULET du chemin qui dessert EFFECTIVEMENT les
+            # places comptées, par le MÊME noyau roulant que le comptage (`_largeur_min_desserte` ⟶ `_desserte_core`).
+            # Une place comptée ⟹ goulet ≥ 2,40 m : les deux contrôles ne se contredisent plus.
+            _voie_u = unary_union(scene.voie_local) if scene.voie_local else None
+            larg = _largeur_min_desserte(_all, _pla, conv.allee_largeur_m, _acc, _voie_u)
             ok = larg >= req - 0.05
             _dcit = (f"PLU art. {_dess['article']}" if _dess.get("article") else "")
             _dcit += (f" · p. {_dess['page_pdf']}" if _dess.get("page_pdf") else "")
             _dcit = (_dcit + (f" — « {_dess['citation']} »" if _dess.get("citation") else "")) or None
             out.append(ControleReg(
                 "Largeur de desserte", f"≥ {_fr(req)} m (opération ≥ {int(_dess['seuil_logements'])} logements)",
-                f"{_fr(round(larg, 1))} m dessiné", REUSSI if ok else ECHOUE, _dcit,
-                detail="largeur de la voie/accès desservant l'opération — mesurée sur l'accès dessiné"))
+                f"{_fr(round(larg, 1))} m (goulet du chemin desservant les places)", REUSSI if ok else ECHOUE, _dcit,
+                detail="largeur du goulet du chemin qui dessert les places comptées (même passage roulant que le comptage)"))
         else:
             out.append(ControleReg(
                 "Largeur de desserte", f"≥ {_fr(req)} m (opération ≥ {int(_dess['seuil_logements'])} logements)",
@@ -790,7 +864,12 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                                detail=(f"le règlement ne fixe pas de distance entre constructions ; "
                                        f"distance de convention {cmin:.0f} m appliquée au tracé (Estimé)")))
     elif dc.est_chiffrable:
-        requis, lib, mention = _distance_requise(dc, cap, conv)
+        # ETUDE-STATIONNEMENT-FIX-6 (point 3) — nombre de logements du bâtiment le plus peuplé (modules groupés
+        # par `ref`) : porte le seuil « grand bâtiment » (Le Tampon Ua8.2, 3 m → 6 m si > 5 logements).
+        from collections import Counter
+        _par_bati = Counter(o.ref for o in scene.of("module") if o.ref)
+        max_logts_bati = max(_par_bati.values(), default=getattr(cap, "logements", 0) or 0)
+        requis, lib, mention = _distance_requise(dc, cap, conv, max_logts_bati)
         ok = dmes >= requis - 1e-6
         out.append(ControleReg("Distance entre constructions", lib, f"{dmes:.1f} m mesurés",
                                REUSSI if ok else ECHOUE, dc.citation_complete, detail=(mention or None)))
@@ -860,6 +939,22 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                                "à vérifier : l'implantation peut être remise en cause", A_CONFIRMER,
                                detail="inventaire de zone humide (couche cartographique) non interprété par ce "
                                       "moteur ; recouvre le bâti proposé — à confirmer avant tout projet"))
+
+    # ETUDE-STATIONNEMENT-FIX-6 (point 1) — la zone ROUGE du PPR interdit le bâti ET le stationnement : le plan
+    # garde donc son bâti et TOUTES ses places HORS zone rouge. Mais quand le seul accès possible à la voie
+    # TRAVERSE la zone rouge (aucun point de voie atteignable hors zone), on conserve le plan et on SIGNALE la
+    # voie d'accès concernée : son admission dépend du règlement du PPR (une voie peut y être tolérée, pas du
+    # stationnement). Contrôle À CONFIRMER et BLOQUANT (jamais « Exploitable » tant que ce n'est pas tranché).
+    _app = float(getattr(scene, "acces_ppr_rouge_m2", 0.0) or 0.0)
+    if _app > 0.5:
+        out.append(ControleReg(
+            "Accès en zone rouge (PPR)", "bâti et places hors zone rouge ; voie d'accès traversante",
+            f"aucun raccord hors zone rouge trouvé pour ce plan ; voie d'accès traversant la zone rouge "
+            f"sur {_app:.0f} m²", A_CONFIRMER,
+            detail="le bâti et toutes les places sont hors zone rouge ; aucun raccord à la voie publique hors "
+                   "zone rouge n'a été trouvé pour ce plan, la voie d'accès traverse donc la zone rouge du plan "
+                   "de prévention — son admission (voie d'accès, pas de stationnement) est À CONFIRMER au "
+                   "règlement du PPR"))
     return out
 
 
@@ -899,6 +994,7 @@ _A_CONFIRMER_BLOQUANTS = frozenset({
     "Stationnement", "Stationnement — condition à vérifier",
     "Admission de l'habitat",   # habitat sous condition d'un schéma d'affectation non lu (Saint-Louis UZ)
     "Zone humide (inventaire)",   # FIX-4 — inventaire couvrant l'assiette : peut remettre en cause l'implantation
+    "Accès en zone rouge (PPR)",  # FIX-6 — voie d'accès traversant la zone rouge : admission à confirmer au PPR
     "Hauteur près des limites",
     "Prospect (hauteur relative)", "ER / EBC / SUP / servitudes",
     "Accès (voie)",   # RECETTE-4 — accès hypothétique (aucune voie classée) → verdict non « Exploitable »
