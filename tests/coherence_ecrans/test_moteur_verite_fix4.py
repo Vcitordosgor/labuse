@@ -74,10 +74,11 @@ def test_lot2_budgets_et_fermoirs(app_session, idu, plafond):
     assert sdp <= plafond + 0.5, f"{idu} : {sdp} m² > plafond {plafond} m²"
 
 
-# LOT 2 — pas de capacité chiffrée : micro-parcelle seule (< 40 m²) et façade sur voie < 3 m.
+# LOT 2 — pas de capacité chiffrée : micro-parcelle seule (< 40 m²) reste sans chiffre.
+# MOTEUR-VERITE-FIX-6 LOT 5 — la façade < 3 m ne retire PLUS le chiffre (BK0245 : garde de
+# doute → réserve « accès à vérifier », chiffre conservé) : seule la micro-parcelle reste à ∅.
 CAS_LOT2_SANS_CHIFFRE = [
     ("97407000AO1876", "micro-parcelle"),    # 9 m² — 5 m² extrudés sur 5 niveaux avant le fix
-    ("97408000BK0245", "façade"),            # 2,9 m de façade — desserte à établir
 ]
 
 
@@ -87,6 +88,16 @@ def test_lot2_micro_parcelle_sans_capacite_chiffree(app_session, idu, motif):
     assert sdp is None, f"{idu} : {sdp} m² chiffrés sur une parcelle {motif}"
     assert f.constructible is True
     assert "capacité à vérifier" in f.verdict
+
+
+def test_lot5_facade_etroite_garde_le_chiffre(app_session):
+    """MOTEUR-VERITE-FIX-6 LOT 5 — une façade < 3 m est un DOUTE d'accès, pas une assiette nulle :
+    le chiffre prudent est conservé avec la réserve « accès à vérifier : façade mesurée à X m »
+    (BK0245 La Possession, 2,9 m)."""
+    sdp, f = _sdp(app_session, "97408000BK0245")
+    assert sdp is not None and f.constructible is True, "BK0245 : façade < 3 m efface encore le chiffre"
+    assert any("accès à vérifier" in a.lower() and "façade" in a.lower()
+               for a in (f.avertissements or [])), "BK0245 : réserve d'accès manquante"
 
 
 # LOT 3 — les formules de retrait relatif s'exécutent (erreurs déjà présentes dans MAIN) +

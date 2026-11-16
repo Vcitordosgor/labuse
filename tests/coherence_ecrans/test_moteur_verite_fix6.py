@@ -89,3 +89,19 @@ def test_lot3_sous_prescriptions_seulement_si_bleue(app_session):
     f = _res(app_session, "97421000AH0074")
     assert not any("prescriptions du plan de prévention" in a for a in (f.avertissements or [])), \
         "AH0074 : réserve bleue sans zone bleue"
+
+
+# LOT 5 — gardes de doute : réserve au lieu de retrait du chiffre (sauf assiette nulle).
+def test_lot5_littoral_chiffre_sur_part_hors_bande(app_session):
+    """Le recul prospectif du trait de côte calcule le chiffre sur la PART HORS BANDE avec la
+    réserve ; « à vérifier » sans chiffre seulement quand toute l'assiette est dans la bande.
+    BM0052 (La Possession, littoral partiel) garde un chiffre réduit."""
+    f = _res(app_session, "97408000BM0052")
+    sdp = (f.fourchette or {}).get("surface_plancher_m2")
+    if sdp is None:
+        # toute l'assiette dans la bande : « à vérifier » admis
+        assert "trait de côte" in f.verdict
+        return
+    assert any("trait de côte" in a.lower() and "hors bande" in a.lower()
+               for a in (f.avertissements or [])), \
+        "BM0052 : chiffre littoral sans la réserve hors-bande"

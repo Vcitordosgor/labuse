@@ -830,3 +830,42 @@ l'essentiel ; `sdp_sans_la_regle` = valeur de main, l'effet est entièrement por
 
 La règle de non-hausse est donc prouvée À L'ÉCHELLE DE L'ÎLE : aucune règle d'implantation ou de
 hauteur n'ajoute de capacité hors de la liste fermée des zones autorisées.
+
+## LOT 5 — une garde de doute ajoute une réserve, elle ne retire pas le chiffre
+
+La consigne était « pas de hausse sans façade sur voie établie », pas « plus de chiffre ».
+Une garde qui exprime un DOUTE (accès, littoral) ne retire la capacité chiffrée QUE lorsqu'aucune
+assiette ne peut être établie ; sinon elle ajoute une RÉSERVE.
+
+- **Façade sur voie < 3 m** (298 parcelles, dont une de 37 487 m²) : le chiffre prudent est
+  CONSERVÉ (≤ main hors des zones autorisées, par la règle de non-hausse déjà prouvée), avec la
+  réserve « Accès à vérifier : façade sur voie mesurée à X m (mesure approximative) ». La mesure
+  de façade justifie une réserve, pas la disparition du chiffre. BK0245 (2,9 m) : ∅ → chiffré
+  avec réserve.
+- **Recul prospectif du trait de côte** (37 parcelles) : le chiffre est calculé sur la part HORS
+  bande (facteur = 1 − littoral_pct), avec la réserve ; « capacité à vérifier » sans chiffre
+  SEULEMENT quand toute l'assiette (≥ 98 %) est dans la bande. 23 des 37 retrouvent un chiffre
+  réduit, 14 restent sans chiffre (entièrement en bande).
+- **Micro-parcelles < 40 m²** : INCHANGÉ (aucun chiffre — une parcelle qui ne peut rien recevoir
+  seule n'a pas d'assiette à chiffrer).
+
+**Nouveau décompte sur l'île** (21 467 parcelles, vs origin/main `049dbcf7f`) :
+
+- **Hausses : 6 587** — toutes en zones autorisées **sauf 2** (les mêmes dérives de chemin
+  géométrique AW0302 +2 et AK1159 +28, effet de la règle NUL) ; **0 hausse RÈGLE hors zone**.
+  Le +209 vs FIX-6 LOT 4 (6 378) = les façades < 3 m en zones autorisées qui servent de nouveau
+  leur chiffre niveau-par-niveau.
+- **Baisses : 2 930 ; inchangées : 7 560 ; refus : 3 482.**
+- **Vraies « à vérifier » (constructibles sans chiffre) : 908** — contre 1 305 avant LOT 5 :
+  la façade étroite et le littoral partiel rendent un chiffre + réserve.
+- **Parcelles perdant un chiffre vs main** : **22** deviennent « à vérifier » (≈ 4 700 m² de
+  main) — contre **343** avant LOT 5 : **321 récupèrent un chiffre prudent avec réserve**
+  (façade « accès à vérifier », littoral « part hors bande »), les 22 restantes n'ayant aucune
+  assiette (toute l'assiette dans la bande, ou façade sur une portion sans emprise).
+
+(À part : 768 parcelles que la branche REFUSE franchement là où main chiffrait — catégorie
+distincte des « à vérifier », produite par les corrections LOT 1-2, surtout `terrain_exigu` là
+où le gabarit par côté est plus strict que l'inset uniforme de main ; comptée dans « refus ».)
+
+La règle est posée : une garde qui exprime un doute (accès, littoral) retire le chiffre
+SEULEMENT quand aucune assiette ne peut être établie ; sinon elle ajoute une réserve.

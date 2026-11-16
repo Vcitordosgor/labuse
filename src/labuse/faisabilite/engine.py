@@ -998,20 +998,27 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         facteur = min(facteur, f)
         modul.append(f"Aléa {c.alea_ppr} (PPR) → prescriptions, capacité réduite (~×{f:g}).")
     if c.littoral_pct and c.littoral_pct > 0.005:
-        # MOTEUR-VERITE-FIX-2 LOT C (V7 resserré par la relecture) — la couche `trait_de_cote` est
-        # une PROJECTION d'érosion : ni une interdiction (le facteur 0 du stock disait
-        # « rédhibitoire » une maison ACHEVÉE, BX0750), ni une donnée qui autorise un CHIFFRE —
-        # tant que la limite littorale n'est pas QUALIFIÉE, le verdict reste constructible mais la
-        # capacité n'est PAS chiffrée (« capacité à vérifier », SDP ∅).
+        # MOTEUR-VERITE-FIX-2 LOT C puis FIX-6 LOT 5 — la couche `trait_de_cote` est une PROJECTION
+        # d'érosion (ni une interdiction — BX0750 maison achevée — ni une donnée qui autorise une
+        # hausse). Une GARDE DE DOUTE retire le chiffre SEULEMENT quand aucune assiette ne peut
+        # être établie : ici, quand TOUTE l'assiette est dans la bande. Sinon, le chiffre est
+        # calculé sur la PART HORS BANDE (facteur = 1 − littoral_pct) avec la réserve.
         pct = round(c.littoral_pct * 100)
+        hors_bande = max(0.0, 1.0 - float(c.littoral_pct))
+        if hors_bande < 0.02:   # assiette entièrement (≥ 98 %) dans la bande → aucune assiette nette
+            avert.append(f"Recul prospectif du trait de côte sur ~{pct} % de la parcelle — projection "
+                         "d'érosion (bande courte/longue), pas une interdiction réglementaire : "
+                         "constructibilité à vérifier auprès des services de l'État.")
+            return fini(True,
+                        f"Constructible — capacité à vérifier : recul prospectif du trait de côte sur "
+                        f"~{pct} % de la parcelle (toute l'assiette est dans la bande). Aucune "
+                        "capacité chiffrée tant que la limite n'est pas qualifiée.",
+                        {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
+        facteur = min(facteur, hors_bande)
         avert.append(f"Recul prospectif du trait de côte sur ~{pct} % de la parcelle — projection "
-                     "d'érosion (bande courte/longue), pas une interdiction réglementaire : "
-                     "constructibilité à vérifier auprès des services de l'État.")
-        return fini(True,
-                    f"Constructible — capacité à vérifier : recul prospectif du trait de côte sur "
-                    f"~{pct} % de la parcelle (limite littorale non qualifiée). Aucune capacité "
-                    "chiffrée tant que la limite n'est pas qualifiée.",
-                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
+                     "d'érosion (bande courte/longue), pas une interdiction : capacité calculée sur "
+                     f"la part HORS bande (~{round(hors_bande * 100)} %), limite à vérifier auprès "
+                     "des services de l'État.")
     if c.pente_pct is not None:
         if c.pente_pct >= 30:
             facteur = min(facteur, 0.4)

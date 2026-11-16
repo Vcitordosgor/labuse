@@ -995,6 +995,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     implantation_mentions: list = []   # MOTEUR-VERITE-FIX-1 (LOT 2) — rempli par le chemin gabarit
     ppr_rouge_pct = None               # MOTEUR-VERITE-FIX-1 (LOT 3, V6) — part rouge mesurée (vidage)
     niveaux_repli = None               # MOTEUR-VERITE-FIX-6 LOT 2 — niveaux du scénario niveau-par-niveau au repli
+    reserve_facade = None              # MOTEUR-VERITE-FIX-6 LOT 5 — réserve « accès à vérifier » (façade < 3 m)
     if gab is not None:
         gbuild, gres = gab
         emprise_brute = float(gres.zoneImplantationM2 or 0.0)
@@ -1031,16 +1032,16 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 "aucune capacité chiffrée seule, assemblage / projet d'ensemble à instruire.",
                 f"Micro-parcelle ({_surf_garde:.0f} m²) : pas de capacité chiffrée seule.")
         if isinstance(_facade, (int, float)) and 0 < _facade < 3.0:
-            # FIX-4 (BK0245) — façade qualifiée mais INSUFFISANTE (< 3 m) : aucune capacité
-            # chiffrée. FIX-5 LOT 4 : la façade 0 (non établie) reste CHIFFRÉE au recul prudent
-            # faîtage (builder — jamais au-dessus de main), avec mention — le mandat interdit la
-            # HAUSSE sans façade, pas le chiffre (103 permis « à vérifier » attendus, pas 1 150).
-            from .engine import faisabilite_capacite_a_verifier
-            return ctx, faisabilite_capacite_a_verifier(
-                ctx.zone,
-                f"Constructible — capacité à vérifier : façade sur voie de {_facade:g} m — "
-                "desserte du scénario à établir, aucune capacité chiffrée.",
-                f"Façade sur voie insuffisante ({_facade:g} m) : desserte à établir.")
+            # FIX-4 (BK0245) puis FIX-6 LOT 5 — façade qualifiée mais ÉTROITE (< 3 m) : une garde
+            # de DOUTE (accès) n'EFFACE PAS le chiffre quand une assiette existe — la consigne est
+            # « pas de HAUSSE sans façade établie », pas « plus de chiffre ». La mesure de façade
+            # est approximative : elle justifie une RÉSERVE, pas la disparition du chiffre (298
+            # parcelles, dont une de 37 487 m²). Le chiffre prudent (≤ main par la non-hausse) est
+            # CONSERVÉ, avec la réserve « accès à vérifier : façade sur voie mesurée à X m ».
+            reserve_facade = (
+                f"Accès à vérifier : façade sur voie mesurée à {_facade:g} m (moins de 3 m, mesure "
+                "approximative) — la desserte du scénario reste à établir ; capacité servie à titre "
+                "prudent.")
         ppr_rouge = bool((racc.get("ppr") or {}).get("rouge"))
         # PPR-PARTIEL-A lot 2 — garde-fous : la règle (lot 1) calcule désormais l'emprise sur la
         # partie hors zone rouge, mais on ne la SERT que si cette partie est exploitable. On vérifie
@@ -1468,6 +1469,8 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 "Scénario par niveau : hauteur de façade SUPPOSÉE "
                 f"({extras['niveaux_retenus']} niveau(x) — {extras.get('recul_sep_scenario') or ''})".rstrip()
                 + ".")
+        if reserve_facade:   # MOTEUR-VERITE-FIX-6 LOT 5 — façade < 3 m : réserve, chiffre conservé
+            _f_cap.avertissements.append(reserve_facade)
     return ctx, _f_cap
 
 

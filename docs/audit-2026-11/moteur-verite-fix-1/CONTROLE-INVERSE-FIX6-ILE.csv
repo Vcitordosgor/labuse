@@ -11,6 +11,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000BL0011;UA;14772;18466;3694;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+1);;14772;3694
 97408000AT0508;UB;8020;10694;2674;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+2);;8020;2674
 97408000AW0363;UBb;5268;7902;2634;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+1);;5268;2634
+97408000BM0061;UA;12129;14740;2611;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+3);;12129;2611
 97408000AV0078;UBb;5997;8549;2552;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+1);;5997;2552
 97408000AN2033;UBpsfr2;7608;10144;2536;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+2);;7608;2536
 97408000BL0169;UA;9722;12152;2430;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+3);;9722;2430
@@ -27,6 +28,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000BL0032;UA;7217;8736;1519;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+3);;7217;1519
 97408000AN1834;UApsfr2;191;1699;1508;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+2);;2549;-850
 97408000AN1216;UBpsfr2;4520;6026;1506;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+2);;4520;1506
+97408000AO0308;UA;7005;8482;1477;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+3);;8622;-140
 97408000AC3735;UBc;2896;4344;1448;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+1);;2896;1448
 97408000AO1567;UA;16881;18298;1417;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+3);;16881;1417
 97408000AW0214;UBb;2832;4248;1416;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+1);;2832;1416
@@ -224,6 +226,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC1895;UB;1138;1492;354;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+2);;1755;-263
 97408000AW0770;UBb;1006;1360;354;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+1);;1006;354
 97421000AH0453;UA;527;881;354;oui;3.0;;"latérale 32.4 m (en limite 0 m) ; fond 11.7 m (en limite 0 m) ; latérale 34.5 m (en limite 0 m)";527;354
+97408000AW0494;UBb;497;849;352;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+1);;849;0
 97408000BL0029;UA;9954;10305;351;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+3);;10305;0
 97421000AV1267;UA;401;752;351;oui;3.0;;"latérale 28.7 m (en limite 0 m) ; fond 28.6 m (en limite 0 m) ; latérale 24.2 m (en limite 0 m)";401;351
 97408000AC0175;UBc;1400;1750;350;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+1);;1750;0
@@ -296,9 +299,9 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AY0537;UBb;784;1090;306;oui;5.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+1);;784;306
 97408000BN0025;UA;1560;1866;306;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+3);;2119;-253
 97408000AO0427;UA;481;786;305;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+3);;1304;-518
-97408000AT0577;UB;1760;2065;305;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+2);;2065;0
-97408000AV1328;UB;811;1116;305;oui;3.0;recul séparatif = max(3 m, H×0.5), H = égout du bâtiment envisagé — scénario retenu par le moteur niveau par niveau (R+0…R+2);;1447;-331
-97421000AV0092;UA;496;801;305;oui;3.0;;"latérale 26.0 m (en limite 0 m) ; fond 23.9 m (en limite 0 m) ; latérale 18.6 m (en limite 0 m)";496;305
+97408000AT0577;UB;1760;2065;305;oui;;;;;
+97408000AV1328;UB;811;1116;305;oui;;;;;
+97421000AV0092;UA;496;801;305;oui;;;;;
 97408000AS0482;UB;224;528;304;oui;;;;;
 97408000AN0107;UBpsfr2;1628;1930;302;oui;;;;;
 97418000AV1336;UA;483;785;302;oui;;;;;
@@ -430,6 +433,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000BN0164;UA;163;409;246;oui;;;;;
 97408000AC1304;UBc;670;915;245;oui;;;;;
 97408000AM0680;UB;653;898;245;oui;;;;;
+97408000AR0947;UB;645;890;245;oui;;;;;
 97418000AW0329;UA;513;758;245;oui;;;;;
 97408000AC0185;UBc;1476;1720;244;oui;;;;;
 97408000AO0927;UA;50;294;244;oui;;;;;
@@ -450,8 +454,10 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT0118;UB;1748;1988;240;oui;;;;;
 97408000AT0785;UA;1903;2143;240;oui;;;;;
 97408000AW1150;UBb;112;352;240;oui;;;;;
+97408000AP1427;UA;192;431;239;oui;;;;;
 97408000AW0340;UBb;1167;1406;239;oui;;;;;
 97408000AO0926;UA;58;295;237;oui;;;;;
+97408000AR0397;UB;961;1198;237;oui;;;;;
 97408000AT1869;UB;976;1213;237;oui;;;;;
 97408000AV0527;UB;1333;1570;237;oui;;;;;
 97421000AV0326;UA;1902;2139;237;oui;;;;;
@@ -467,6 +473,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97418000AY0260;UA;149;383;234;oui;;;;;
 97421000AH0100;UA;309;543;234;oui;;;;;
 97421000AV1043;UA;624;858;234;oui;;;;;
+97408000AR1196;UB;27;260;233;oui;;;;;
 97408000BM0200;UA;58;291;233;oui;;;;;
 97418000AR0928;UA;251;484;233;oui;;;;;
 97418000AR1613;UA;297;530;233;oui;;;;;
@@ -489,6 +496,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97418000AV2056;UA;2381;2611;230;oui;;;;;
 97418000AY0240;UA;781;1011;230;oui;;;;;
 97408000AC3431;UBc;76;305;229;oui;;;;;
+97408000AR0235;UB;679;908;229;oui;;;;;
 97408000AR0304;UB;1074;1303;229;oui;;;;;
 97408000AW0123;UBb;122;351;229;oui;;;;;
 97408000BN0063;UA;409;638;229;oui;;;;;
@@ -516,6 +524,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97418000AR0565;UA;179;404;225;oui;;;;;
 97421000AH0238;UA;200;425;225;oui;;;;;
 97408000AM0314;UB;638;862;224;oui;;;;;
+97408000AP1129;UA;228;452;224;oui;;;;;
 97408000AV0508;UB;995;1219;224;oui;;;;;
 97408000AW0346;UBb;824;1048;224;oui;;;;;
 97408000BM0185;UA;152;376;224;oui;;;;;
@@ -554,6 +563,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT0595;UB;675;893;218;oui;;;;;
 97408000BO0083;UB;829;1047;218;oui;;;;;
 97402000AI0765;Ub;179;396;217;oui;;;;;
+97408000AN1524;UB;40;257;217;oui;;;;;
 97408000AV0503;UB;745;962;217;oui;;;;;
 97418000AR0758;UA;45;262;217;oui;;;;;
 97418000AR1688;UA;117;334;217;oui;;;;;
@@ -592,6 +602,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO0373;UApsfr2;1857;2069;212;oui;;;;;
 97408000BP0087;UA;184;396;212;oui;;;;;
 97418000AW0381;UA;6753;6965;212;oui;;;;;
+97408000AM0189;UB;420;631;211;oui;;;;;
 97408000AO0251;UA;270;481;211;oui;;;;;
 97408000AW0213;UBb;950;1161;211;oui;;;;;
 97408000AC0590;UB;296;506;210;oui;;;;;
@@ -610,6 +621,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AM0656;UB;708;916;208;oui;;;;;
 97408000AM0696;UB;492;700;208;oui;;;;;
 97408000AT0580;UB;753;961;208;oui;;;;;
+97408000BK0085;UB;543;751;208;oui;;;;;
 97418000AR0747;UA;53;261;208;oui;;;;;
 97418000AW0235;UA;410;618;208;oui;;;;;
 97418000AW0351;UA;247;455;208;oui;;;;;
@@ -647,6 +659,8 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AM0174;UB;160;362;202;oui;;;;;
 97408000AN1323;UB;733;935;202;oui;;;;;
 97408000AO1044;UA;83;285;202;oui;;;;;
+97408000AR0335;UB;445;647;202;oui;;;;;
+97408000AX0113;UBb;296;498;202;oui;;;;;
 97408000BO0084;UB;1125;1327;202;oui;;;;;
 97418000AR2320;UA;38;240;202;oui;;;;;
 97421000AV0886;UA;244;446;202;oui;;;;;
@@ -685,6 +699,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AM0411;UB;777;973;196;oui;;;;;
 97408000AO0128;UB;897;1093;196;oui;;;;;
 97408000AP0075;UB;736;932;196;oui;;;;;
+97408000AR0388;UB;650;846;196;oui;;;;;
 97408000BK0017;UB;504;700;196;oui;;;;;
 97408000BM0122;UA;20;216;196;oui;;;;;
 97408000BP0054;UA;113;309;196;oui;;;;;
@@ -695,6 +710,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT0596;UB;516;711;195;oui;;;;;
 97408000AT1399;UB;721;916;195;oui;;;;;
 97408000BI0299;UA;29;224;195;oui;;;;;
+97408000BK0030;UB;599;794;195;oui;;;;;
 97408000BM0201;UA;537;732;195;oui;;;;;
 97418000AW0443;UA;385;580;195;oui;;;;;
 97408000AO0642;UA;101;295;194;oui;;;;;
@@ -714,6 +730,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT1367;UB;906;1098;192;oui;;;;;
 97408000AV0598;UB;789;981;192;oui;;;;;
 97408000BO0080;UB;944;1136;192;oui;;;;;
+97418000AR1687;UA;42;234;192;oui;;;;;
 97418000AV1911;UA;314;506;192;oui;;;;;
 97418000AV2055;UA;424;616;192;oui;;;;;
 97418000AY0421;UA;90;282;192;oui;;;;;
@@ -731,6 +748,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AN0506;UApsfr2;725;915;190;oui;;;;;
 97408000AO1136;UB;1380;1570;190;oui;;;;;
 97408000AP0827;UA;364;554;190;oui;;;;;
+97408000AW0845;UBb;463;653;190;oui;;;;;
 97408000BM0136;UA;32;222;190;oui;;;;;
 97418000AT0695;UA;60;250;190;oui;;;;;
 97418000AY0327;UA;14;204;190;oui;;;;;
@@ -763,11 +781,13 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97418000AR1615;UA;610;797;187;oui;;;;;
 97418000AT1067;UA;149;336;187;oui;;;;;
 97408000AC1690;UB;810;996;186;oui;;;;;
+97408000AO1508;UB;585;771;186;oui;;;;;
 97408000AV0849;UB;577;763;186;oui;;;;;
 97408000AY0058;UBb;119;305;186;oui;;;;;
 97408000BI0183;UB;302;488;186;oui;;;;;
 97408000BN0092;UA;236;422;186;oui;;;;;
 97418000AS0573;UA;10259;10445;186;oui;;;;;
+97418000AS0575;UA;70;256;186;oui;;;;;
 97418000AW0264;UA;200;386;186;oui;;;;;
 97418000AW0640;UA;200;386;186;oui;;;;;
 97421000AM0053;UA;383;569;186;oui;;;;;
@@ -783,6 +803,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT0959;UB;364;549;185;oui;;;;;
 97408000AV0811;UB;600;785;185;oui;;;;;
 97408000BI0016;UA;102;287;185;oui;;;;;
+97408000BK0370;UB;585;770;185;oui;;;;;
 97408000BM0004;UA;203;388;185;oui;;;;;
 97408000BM0048;UA;509;694;185;oui;;;;;
 97408000BO0067;UB;416;601;185;oui;;;;;
@@ -808,6 +829,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AP1294;UB;565;748;183;oui;;;;;
 97408000AT1855;UB;650;833;183;oui;;;;;
 97408000BL0024;UA;10;193;183;oui;;;;;
+97408000BM0030;UA;111;294;183;oui;;;;;
 97408000BP0146;UA;191;374;183;oui;;;;;
 97418000AD0588;UA;124;307;183;oui;;;;;
 97418000AD0714;UA;24;207;183;oui;;;;;
@@ -815,15 +837,18 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC1025;UBc;77;259;182;oui;;;;;
 97408000AN0486;UApsfr2;600;782;182;oui;;;;;
 97408000AO1105;UApsfr2;3128;3310;182;oui;;;;;
+97408000AV0760;UB;410;592;182;oui;;;;;
 97408000BP0193;UA;288;470;182;oui;;;;;
 97418000AW0327;UA;180;362;182;oui;;;;;
 97418000AY0332;UA;76;258;182;oui;;;;;
+97402000AK1274;Ub;360;541;181;oui;;;;;
 97408000AC1149;UBc;230;411;181;oui;;;;;
 97408000AC1456;UBc;364;545;181;oui;;;;;
 97408000AC2182;UBc;144;325;181;oui;;;;;
 97408000AM1303;UB;891;1072;181;oui;;;;;
 97408000AN1254;UBpsfr2;431;612;181;oui;;;;;
 97408000AN1425;UA;28;209;181;oui;;;;;
+97408000AO0620;UBpsfr2;455;636;181;oui;;;;;
 97408000AO1025;UA;221;402;181;oui;;;;;
 97408000AO1439;UA;94;275;181;oui;;;;;
 97408000AT0495;UB;519;700;181;oui;;;;;
@@ -901,6 +926,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AK0754;Ub;534;708;174;oui;;;;;
 97408000AC0255;UB;1141;1315;174;oui;;;;;
 97408000AC2861;UB;611;785;174;oui;;;;;
+97408000AM0265;UB;537;711;174;oui;;;;;
 97408000AO1552;UA;22;196;174;oui;;;;;
 97408000AP1022;UAm;159;333;174;oui;;;;;
 97408000AT0827;UA;348;522;174;oui;;;;;
@@ -914,6 +940,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT0235;UB;758;931;173;oui;;;;;
 97408000AW0573;UBb;132;305;173;oui;;;;;
 97408000BK0165;UB;424;597;173;oui;;;;;
+97408000BK0171;UB;357;530;173;oui;;;;;
 97408000BL0297;UA;378;551;173;oui;;;;;
 97408000BM0069;UA;374;547;173;oui;;;;;
 97408000BP0048;UA;36;209;173;oui;;;;;
@@ -942,6 +969,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AM1150;UB;251;421;170;oui;;;;;
 97408000AN1383;UB;754;924;170;oui;;;;;
 97408000AT0735;UB;145;315;170;oui;;;;;
+97408000AW0397;UBb;887;1057;170;oui;;;;;
 97408000BI0063;UB;263;433;170;oui;;;;;
 97408000BI0305;UA;233;403;170;oui;;;;;
 97408000BO0077;UB;875;1045;170;oui;;;;;
@@ -1006,6 +1034,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AM0744;UB;659;824;165;oui;;;;;
 97408000AN1620;UBpsfr2;1109;1274;165;oui;;;;;
 97408000AR0387;UB;459;624;165;oui;;;;;
+97408000AR0405;UB;339;504;165;oui;;;;;
 97408000AX0391;UBb;241;406;165;oui;;;;;
 97408000BK0237;UB;520;685;165;oui;;;;;
 97408000BL0178;UA;354;519;165;oui;;;;;
@@ -1035,7 +1064,9 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT0526;UB;305;468;163;oui;;;;;
 97408000AT0873;UB;85;248;163;oui;;;;;
 97408000AT2123;UB;372;535;163;oui;;;;;
+97408000BK0352;UB;372;535;163;oui;;;;;
 97408000BK0364;UB;154;317;163;oui;;;;;
+97408000BK0367;UB;266;429;163;oui;;;;;
 97408000BN0130;UA;59;222;163;oui;;;;;
 97418000AR0319;UA;570;733;163;oui;;;;;
 97418000AV1286;UA;18;181;163;oui;;;;;
@@ -1044,7 +1075,9 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC1042;UB;419;581;162;oui;;;;;
 97408000AC1820;UBc;385;547;162;oui;;;;;
 97408000AM0204;UB;519;681;162;oui;;;;;
+97408000AM0220;UB;414;576;162;oui;;;;;
 97408000AM0494;UB;580;742;162;oui;;;;;
+97408000AN1025;UBpsfr2;295;457;162;oui;;;;;
 97408000AO0839;UA;121;283;162;oui;;;;;
 97408000AO1153;UA;24;186;162;oui;;;;;
 97408000AR0351;UB;463;625;162;oui;;;;;
@@ -1054,6 +1087,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97418000AW0326;UA;49;211;162;oui;;;;;
 97408000AB0220;UBc;318;479;161;oui;;;;;
 97408000AB0424;UBc;309;470;161;oui;;;;;
+97408000AN0469;UApsfr2;411;572;161;oui;;;;;
 97408000AN0487;UApsfr2;582;743;161;oui;;;;;
 97408000AN1462;UBpsfr2;419;580;161;oui;;;;;
 97408000AN2074;UBpsfr2;309;470;161;oui;;;;;
@@ -1061,6 +1095,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO1154;UA;55;216;161;oui;;;;;
 97408000AO1341;UB;124;285;161;oui;;;;;
 97408000AO1376;UB;376;537;161;oui;;;;;
+97408000AO1477;UA;41;202;161;oui;;;;;
 97408000AR0406;UB;379;540;161;oui;;;;;
 97408000AR0478;UB;930;1091;161;oui;;;;;
 97408000AY0446;UBb;604;765;161;oui;;;;;
@@ -1097,12 +1132,14 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000BO0024;UB;406;565;159;oui;;;;;
 97408000BP0032;UA;77;236;159;oui;;;;;
 97408000BP0043;UA;19;178;159;oui;;;;;
+97418000AT0484;UA;27;186;159;oui;;;;;
 97402000AH0361;Ub;435;593;158;oui;;;;;
 97406000AK0167;Ub;75;233;158;oui;;;;;
 97408000AC1182;UBc;439;597;158;oui;;;;;
 97408000AC1684;UB;283;441;158;oui;;;;;
 97408000AC1855;UBc;484;642;158;oui;;;;;
 97408000AM0705;UB;425;583;158;oui;;;;;
+97408000AM1162;UB;334;492;158;oui;;;;;
 97408000AN0577;UApsfr2;365;523;158;oui;;;;;
 97408000AN0690;UA;299;457;158;oui;;;;;
 97408000AN0890;UBpsfr2;138;296;158;oui;;;;;
@@ -1121,6 +1158,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AI0866;Ub;465;622;157;oui;;;;;
 97408000AC0359;UBc;1530;1687;157;oui;;;;;
 97408000AC1780;UB;912;1069;157;oui;;;;;
+97408000AC1993;UBc;259;416;157;oui;;;;;
 97408000AC2286;UB;406;563;157;oui;;;;;
 97408000AN0488;UApsfr2;425;582;157;oui;;;;;
 97408000AN1486;UBpsfr2;1138;1295;157;oui;;;;;
@@ -1141,6 +1179,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO0655;UA;230;386;156;oui;;;;;
 97408000AO1159;UB;875;1031;156;oui;;;;;
 97408000AV0563;UB;307;463;156;oui;;;;;
+97408000AW1090;UBb;105;261;156;oui;;;;;
 97408000AY0474;UBb;241;397;156;oui;;;;;
 97418000AW0376;UA;465;621;156;oui;;;;;
 97418000AY0280;UA;357;513;156;oui;;;;;
@@ -1159,12 +1198,15 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC2129;UBc;469;623;154;oui;;;;;
 97408000AO0695;UB;301;455;154;oui;;;;;
 97408000AO1369;UB;276;430;154;oui;;;;;
+97408000AT2124;UB;242;396;154;oui;;;;;
 97408000BK0184;UB;378;532;154;oui;;;;;
 97408000BK0216;UB;980;1134;154;oui;;;;;
+97408000BL0056;UA;307;461;154;oui;;;;;
 97408000BM0204;UA;126;280;154;oui;;;;;
 97421000AV0090;UA;82;236;154;oui;;;;;
 97408000AC1380;UB;1854;2007;153;oui;;;;;
 97408000AC2538;UB;561;714;153;oui;;;;;
+97408000AM0534;UB;164;317;153;oui;;;;;
 97408000AM1278;UB;600;753;153;oui;;;;;
 97408000AN0703;UBpsfr2;709;862;153;oui;;;;;
 97408000AP0913;UA;10;163;153;oui;;;;;
@@ -1183,6 +1225,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO1152;UA;109;261;152;oui;;;;;
 97408000AR0296;UB;523;675;152;oui;;;;;
 97408000AR0301;UB;278;430;152;oui;;;;;
+97408000AS0180;UB;356;508;152;oui;;;;;
 97408000AT0838;UB;651;803;152;oui;;;;;
 97408000AT2121;UB;345;497;152;oui;;;;;
 97408000BI0408;UA;34;186;152;oui;;;;;
@@ -1213,6 +1256,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AK0425;Ub;460;610;150;oui;;;;;
 97402000AK1661;Ub;208;358;150;oui;;;;;
 97408000AC0586;UB;613;763;150;oui;;;;;
+97408000AC3807;UBc;453;603;150;oui;;;;;
 97408000AM0424;UB;334;484;150;oui;;;;;
 97408000AN0892;UBpsfr2;145;295;150;oui;;;;;
 97408000AN1648;UBpsfr2;896;1046;150;oui;;;;;
@@ -1238,11 +1282,13 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AV1204;UB;44;193;149;oui;;;;;
 97408000AW0588;UBb;192;341;149;oui;;;;;
 97408000AW1083;UBb;260;409;149;oui;;;;;
+97408000AW1156;UBb;236;385;149;oui;;;;;
 97408000AX0196;UBb;304;453;149;oui;;;;;
 97408000BM0100;UA;246;395;149;oui;;;;;
 97408000BM0139;UA;190;339;149;oui;;;;;
 97408000BN0118;UA;295;444;149;oui;;;;;
 97418000AE0389;UA;25;174;149;oui;;;;;
+97418000AS0613;UA;25;174;149;oui;;;;;
 97418000AV0309;UA;40;189;149;oui;;;;;
 97421000AH0228;UA;116;265;149;oui;;;;;
 97402000AK0616;Ub;329;477;148;oui;;;;;
@@ -1258,18 +1304,22 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO0638;UA;151;299;148;oui;;;;;
 97408000AO1149;UA;16;164;148;oui;;;;;
 97408000AR0665;UB;79;227;148;oui;;;;;
+97408000AT0625;UB;343;491;148;oui;;;;;
 97408000AT2053;UB;278;426;148;oui;;;;;
 97408000AV0907;UB;118;266;148;oui;;;;;
 97408000BN0101;UA;755;903;148;oui;;;;;
 97418000AD0718;UA;1384;1532;148;oui;;;;;
+97402000AB0828;Uc;183;330;147;oui;;;;;
 97402000AH0898;Ub;231;378;147;oui;;;;;
 97402000AI0301;Ub;108;255;147;oui;;;;;
 97402000AK0751;Ub;411;558;147;oui;;;;;
 97408000AC1390;UBc;408;555;147;oui;;;;;
+97408000AC2409;UBc;501;648;147;oui;;;;;
 97408000AC2646;UB;14;161;147;oui;;;;;
 97408000AM0395;UB;756;903;147;oui;;;;;
 97408000AN0466;UApsfr2;136;283;147;oui;;;;;
 97408000AN1404;UB;inconnu;147;147;oui;;;;;
+97408000AN1638;UB;118;265;147;oui;;;;;
 97408000AO0663;UA;67;214;147;oui;;;;;
 97408000AO1116;UA;10;157;147;oui;;;;;
 97408000AP0746;UB;227;374;147;oui;;;;;
@@ -1291,6 +1341,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO1117;UA;34;180;146;oui;;;;;
 97408000AR1348;UB;358;504;146;oui;;;;;
 97408000AT1537;UB;455;601;146;oui;;;;;
+97408000AT1610;UB;339;485;146;oui;;;;;
 97408000AW0913;UBb;134;280;146;oui;;;;;
 97408000BP0088;UA;189;335;146;oui;;;;;
 97418000AR0956;UA;701;847;146;oui;;;;;
@@ -1337,6 +1388,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT0768;UB;382;525;143;oui;;;;;
 97408000AV0695;UB;507;650;143;oui;;;;;
 97408000AW1184;UBb;115;258;143;oui;;;;;
+97408000AX0110;UBb;213;356;143;oui;;;;;
 97408000AX0111;UBb;210;353;143;oui;;;;;
 97408000BK0236;UB;247;390;143;oui;;;;;
 97408000BL0079;UA;68;211;143;oui;;;;;
@@ -1345,10 +1397,13 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97418000AW0073;UA;381;524;143;oui;;;;;
 97418000AW0368;UA;1347;1490;143;oui;;;;;
 97418000AY0502;UA;129;272;143;oui;;;;;
+97408000AC1041;UB;351;493;142;oui;;;;;
 97408000AC3243;UBc;217;359;142;oui;;;;;
+97408000AM0736;UB;127;269;142;oui;;;;;
 97408000AN0929;UBpsfr2;209;351;142;oui;;;;;
 97408000AN1472;UB;286;428;142;oui;;;;;
 97408000AN1868;UBpsfr2;496;638;142;oui;;;;;
+97408000AO0843;UA;13;155;142;oui;;;;;
 97408000AO1150;UA;131;273;142;oui;;;;;
 97408000BL0008;UB;174;316;142;oui;;;;;
 97408000BN0108;UA;24;166;142;oui;;;;;
@@ -1365,6 +1420,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AM0654;UB;325;466;141;oui;;;;;
 97408000AN0765;UBpsfr2;300;441;141;oui;;;;;
 97408000AN0887;UBpsfr2;574;715;141;oui;;;;;
+97408000AN1377;UB;389;530;141;oui;;;;;
 97408000AN1874;UBpsfr2;169;310;141;oui;;;;;
 97408000AP0835;UA;1238;1379;141;oui;;;;;
 97408000AT0781;UB;585;726;141;oui;;;;;
@@ -1387,8 +1443,11 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AN0510;UApsfr2;593;733;140;oui;;;;;
 97408000AO0630;UA;89;229;140;oui;;;;;
 97408000AO0671;UA;92;232;140;oui;;;;;
+97408000AP0735;UB;287;427;140;oui;;;;;
+97408000AR1100;UB;110;250;140;oui;;;;;
 97408000AT0634;UB;289;429;140;oui;;;;;
 97408000AT1462;UB;277;417;140;oui;;;;;
+97408000AW1177;UBb;208;348;140;oui;;;;;
 97408000BI0312;UA;29;169;140;oui;;;;;
 97408000BN0099;UA;188;328;140;oui;;;;;
 97408000BN0126;UA;74;214;140;oui;;;;;
@@ -1436,6 +1495,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AY0516;UBb;137;275;138;oui;;;;;
 97408000BN0161;UA;143;281;138;oui;;;;;
 97408000BN0195;UA;71;209;138;oui;;;;;
+97408000BO0228;UB;109;247;138;oui;;;;;
 97418000AV2868;UA;13;151;138;oui;;;;;
 97418000AY0501;UA;135;273;138;oui;;;;;
 97402000AH0577;Ub;434;571;137;oui;;;;;
@@ -1445,6 +1505,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC1444;UBc;228;365;137;oui;;;;;
 97408000AC1620;UBc;206;343;137;oui;;;;;
 97408000AC2745;UB;289;426;137;oui;;;;;
+97408000AM0359;UBc;217;354;137;oui;;;;;
 97408000AN0685;UBpsfr2;463;600;137;oui;;;;;
 97408000AN0747;UBpsfr2;260;397;137;oui;;;;;
 97408000AN1015;UBpsfr2;438;575;137;oui;;;;;
@@ -1513,9 +1574,13 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000BR0084;UA;40;176;136;oui;;;;;
 97418000AW0391;UA;94;230;136;oui;;;;;
 97418000AY0758;UA;83;219;136;oui;;;;;
+97421000AH0407;UA;371;507;136;oui;;;;;
 97421000AM0401;UA;149;285;136;oui;;;;;
 97402000AH0516;Ub;89;224;135;oui;;;;;
+97402000AI1152;Ub;340;475;135;oui;;;;;
+97408000AC1950;UBc;180;315;135;oui;;;;;
 97408000AC3053;UBc;244;379;135;oui;;;;;
+97408000AN0610;UApsfr2;281;416;135;oui;;;;;
 97408000AO1392;UB;24;159;135;oui;;;;;
 97408000AS0300;UB;40;175;135;oui;;;;;
 97408000AT0773;UB;353;488;135;oui;;;;;
@@ -1523,10 +1588,12 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AX0080;UBb;324;459;135;oui;;;;;
 97408000AX0286;UBb;251;386;135;oui;;;;;
 97408000AX0289;UBb;195;330;135;oui;;;;;
+97408000BK0373;UB;320;455;135;oui;;;;;
 97408000BN0162;UA;137;272;135;oui;;;;;
 97418000AS0570;UA;52;187;135;oui;;;;;
 97418000AT0673;UA;19;154;135;oui;;;;;
 97418000AY0258;UA;215;350;135;oui;;;;;
+97402000AH1344;Ub;220;354;134;oui;;;;;
 97408000AC1051;UB;460;594;134;oui;;;;;
 97408000AC1052;UB;457;591;134;oui;;;;;
 97408000AC1454;UBc;284;418;134;oui;;;;;
@@ -1553,6 +1620,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC3702;UB;153;286;133;oui;;;;;
 97408000AN0778;UBpsfr2;626;759;133;oui;;;;;
 97408000AN1147;UBpsfr2;37;170;133;oui;;;;;
+97408000AR0407;UB;246;379;133;oui;;;;;
 97408000AR1173;UB;320;453;133;oui;;;;;
 97408000AT0566;UB;218;351;133;oui;;;;;
 97408000AT1104;UB;659;792;133;oui;;;;;
@@ -1565,6 +1633,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AH0409;Ub;104;236;132;oui;;;;;
 97408000AB0222;UBc;257;389;132;oui;;;;;
 97408000AC2451;UBc;213;345;132;oui;;;;;
+97408000AC3073;UB;97;229;132;oui;;;;;
 97408000AM0479;UB;526;658;132;oui;;;;;
 97408000AN0777;UBpsfr2;614;746;132;oui;;;;;
 97408000AN1759;UBpsfr2;31;163;132;oui;;;;;
@@ -1611,6 +1680,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AK1358;Ub;336;466;130;oui;;;;;
 97408000AC0736;UBc;411;541;130;oui;;;;;
 97408000AC1983;UB;928;1058;130;oui;;;;;
+97408000AC2720;UBc;233;363;130;oui;;;;;
 97408000AM1196;UB;288;418;130;oui;;;;;
 97408000AN0312;UBpsfr2;199;329;130;oui;;;;;
 97408000AN1000;UB;1118;1248;130;oui;;;;;
@@ -1634,6 +1704,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97418000AY0498;UA;151;281;130;oui;;;;;
 97402000AH1411;Ub;243;372;129;oui;;;;;
 97408000AB0409;UBc;155;284;129;oui;;;;;
+97408000AC1009;UBc;212;341;129;oui;;;;;
 97408000AC1154;UBc;391;520;129;oui;;;;;
 97408000AC1283;UBc;71;200;129;oui;;;;;
 97408000AC1720;UBc;411;540;129;oui;;;;;
@@ -1660,6 +1731,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000BP0086;UA;117;246;129;oui;;;;;
 97418000AY0641;UA;854;983;129;oui;;;;;
 97402000AD0160;Uc;377;505;128;oui;;;;;
+97402000AH0346;Ub;281;409;128;oui;;;;;
 97408000AC1856;UBc;236;364;128;oui;;;;;
 97408000AC2668;UBc;301;429;128;oui;;;;;
 97408000AC3598;UBc;185;313;128;oui;;;;;
@@ -1674,12 +1746,14 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AV0299;UB;996;1124;128;oui;;;;;
 97408000AV0746;UB;74;202;128;oui;;;;;
 97408000AX0185;UBb;332;460;128;oui;;;;;
+97408000AY0528;UBb;224;352;128;oui;;;;;
 97408000BI0267;UB;555;683;128;oui;;;;;
 97408000BM0227;UA;105;233;128;oui;;;;;
 97408000BO0025;UB;369;497;128;oui;;;;;
 97418000AD0769;UA;65;193;128;oui;;;;;
 97418000AY0500;UA;165;293;128;oui;;;;;
 97421000AV0919;UA;496;624;128;oui;;;;;
+97402000AH1737;Ub;290;417;127;oui;;;;;
 97402000AK0411;Ub;398;525;127;oui;;;;;
 97408000AC1247;UBc;342;469;127;oui;;;;;
 97408000AC1687;UBc;176;303;127;oui;;;;;
@@ -1695,6 +1769,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT1621;UB;212;339;127;oui;;;;;
 97408000AW1269;UBb;192;319;127;oui;;;;;
 97408000AX0428;UBb;216;343;127;oui;;;;;
+97408000AY0482;UBb;165;292;127;oui;;;;;
 97408000BI0127;UA;466;593;127;oui;;;;;
 97408000BK0427;UB;2706;2833;127;oui;;;;;
 97408000BN0084;UA;76;203;127;oui;;;;;
@@ -1748,6 +1823,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AW1175;UBb;185;310;125;oui;;;;;
 97408000AX0311;UBb;190;315;125;oui;;;;;
 97408000AY0250;UBb;322;447;125;oui;;;;;
+97408000BK0245;UB;211;336;125;oui;;;;;
 97408000BN0105;UA;180;305;125;oui;;;;;
 97408000BR0023;UA;69;194;125;oui;;;;;
 97408000BR0091;UA;116;241;125;oui;;;;;
@@ -1811,6 +1887,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AR0159;UB;85;208;123;oui;;;;;
 97408000AR0286;UB;408;531;123;oui;;;;;
 97408000AR0559;UB;97;220;123;oui;;;;;
+97408000AR0748;UB;88;211;123;oui;;;;;
 97408000AR0923;UB;284;407;123;oui;;;;;
 97408000AT0613;UB;127;250;123;oui;;;;;
 97408000AT0916;UB;184;307;123;oui;;;;;
@@ -1864,7 +1941,9 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC1926;UBc;172;293;121;oui;;;;;
 97408000AC2721;UBc;194;315;121;oui;;;;;
 97408000AC2722;UBc;198;319;121;oui;;;;;
+97408000AC3033;UBc;171;292;121;oui;;;;;
 97408000AM0311;UB;220;341;121;oui;;;;;
+97408000AN0883;UB;114;235;121;oui;;;;;
 97408000AN1852;UBpsfr2;120;241;121;oui;;;;;
 97408000AO0037;UB;164;285;121;oui;;;;;
 97408000AO0793;UB;68;189;121;oui;;;;;
@@ -1913,11 +1992,13 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT0743;UB;43;163;120;oui;;;;;
 97408000AT0766;UB;288;408;120;oui;;;;;
 97408000AT0920;UB;211;331;120;oui;;;;;
+97408000AT1507;UB;202;322;120;oui;;;;;
 97408000AT1619;UB;227;347;120;oui;;;;;
 97408000AT1733;UB;211;331;120;oui;;;;;
 97408000AT1814;UB;130;250;120;oui;;;;;
 97408000AW0179;UBb;156;276;120;oui;;;;;
 97408000AY0508;UBb;154;274;120;oui;;;;;
+97408000BI0331;UB;47;167;120;oui;;;;;
 97408000BK0170;UB;328;448;120;oui;;;;;
 97408000BM0025;UA;302;422;120;oui;;;;;
 97408000BN0111;UA;97;217;120;oui;;;;;
@@ -1953,6 +2034,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT1864;UB;397;516;119;oui;;;;;
 97408000AT2109;UB;127;246;119;oui;;;;;
 97408000AV0699;UB;181;300;119;oui;;;;;
+97408000AW1187;UBb;63;182;119;oui;;;;;
 97408000AW1223;UBb;599;718;119;oui;;;;;
 97408000AY0342;UBb;176;295;119;oui;;;;;
 97408000BK0144;UB;155;274;119;oui;;;;;
@@ -2028,6 +2110,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000BI0262;UB;347;464;117;oui;;;;;
 97408000BI0330;UB;49;166;117;oui;;;;;
 97408000BI0407;UA;87;204;117;oui;;;;;
+97408000BL0226;UA;96;213;117;oui;;;;;
 97408000BN0106;UA;62;179;117;oui;;;;;
 97408000BP0023;UA;29;146;117;oui;;;;;
 97408000BR0020;UA;62;179;117;oui;;;;;
@@ -2072,20 +2155,26 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97418000AV1598;UA;427;543;116;oui;;;;;
 97402000AD0189;Uc;290;405;115;oui;;;;;
 97402000AH0404;Ub;71;186;115;oui;;;;;
+97402000AK0481;Ub;152;267;115;oui;;;;;
 97408000AC0933;UBc;459;574;115;oui;;;;;
 97408000AC2343;UB;235;350;115;oui;;;;;
 97408000AC2471;UBc;172;287;115;oui;;;;;
 97408000AC2741;UBc;164;279;115;oui;;;;;
 97408000AM0540;UB;230;345;115;oui;;;;;
+97408000AM1092;UB;69;184;115;oui;;;;;
 97408000AM1195;UB;361;476;115;oui;;;;;
 97408000AN0606;UApsfr2;208;323;115;oui;;;;;
 97408000AN0729;UBpsfr2;524;639;115;oui;;;;;
+97408000AN1269;UB;195;310;115;oui;;;;;
+97408000AN1724;UBpsfr2;92;207;115;oui;;;;;
 97408000AN1904;UB;157;272;115;oui;;;;;
 97408000AO1155;UA;167;282;115;oui;;;;;
 97408000AP1197;UB;135;250;115;oui;;;;;
 97408000AR0805;UB;189;304;115;oui;;;;;
+97408000AR1009;UB;77;192;115;oui;;;;;
 97408000AR1168;UB;233;348;115;oui;;;;;
 97408000AS0254;UB;306;421;115;oui;;;;;
+97408000AT0485;UB;23;138;115;oui;;;;;
 97408000AT0929;UB;358;473;115;oui;;;;;
 97408000AT1409;UB;121;236;115;oui;;;;;
 97408000AT1620;UB;250;365;115;oui;;;;;
@@ -2102,6 +2191,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AH0080;Ub;530;644;114;oui;;;;;
 97402000AK0345;Ub;252;366;114;oui;;;;;
 97402000AK0418;Ub;245;359;114;oui;;;;;
+97402000AK0516;Ub;200;314;114;oui;;;;;
 97408000AC1375;UBc;322;436;114;oui;;;;;
 97408000AC1707;UBc;171;285;114;oui;;;;;
 97408000AC1757;UBc;111;225;114;oui;;;;;
@@ -2119,6 +2209,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AR1187;UB;281;395;114;oui;;;;;
 97408000AS0248;UB;345;459;114;oui;;;;;
 97408000AT1330;UB;197;311;114;oui;;;;;
+97408000AT1331;UB;185;299;114;oui;;;;;
 97408000AV1092;UB;229;343;114;oui;;;;;
 97408000AV1447;UB;400;514;114;oui;;;;;
 97408000AW0722;UBb;111;225;114;oui;;;;;
@@ -2147,6 +2238,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO1268;UB;279;392;113;oui;;;;;
 97408000AS0255;UB;269;382;113;oui;;;;;
 97408000AT0678;UB;194;307;113;oui;;;;;
+97408000AT0680;UB;78;191;113;oui;;;;;
 97408000AT0791;UB;203;316;113;oui;;;;;
 97408000AT0797;UB;212;325;113;oui;;;;;
 97408000AT0909;UB;213;326;113;oui;;;;;
@@ -2179,6 +2271,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC2693;UBc;28;140;112;oui;;;;;
 97408000AM0854;UB;290;402;112;oui;;;;;
 97408000AM1093;UB;60;172;112;oui;;;;;
+97408000AN0313;UBpsfr2;177;289;112;oui;;;;;
 97408000AN0792;UBpsfr2;137;249;112;oui;;;;;
 97408000AN2096;UBpsfr2;644;756;112;oui;;;;;
 97408000AO0303;UB;288;400;112;oui;;;;;
@@ -2186,6 +2279,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AR0297;UB;469;581;112;oui;;;;;
 97408000AR0833;UB;259;371;112;oui;;;;;
 97408000AT0364;UB;690;802;112;oui;;;;;
+97408000AT0792;UB;201;313;112;oui;;;;;
 97408000AT1115;UB;1346;1458;112;oui;;;;;
 97408000AT1326;UB;176;288;112;oui;;;;;
 97408000AV0204;UBb;455;567;112;oui;;;;;
@@ -2216,6 +2310,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO1805;UBpsfr2;70;181;111;oui;;;;;
 97408000AR0834;UB;240;351;111;oui;;;;;
 97408000AS0253;UB;237;348;111;oui;;;;;
+97408000AS0277;UB;111;222;111;oui;;;;;
 97408000AT0538;UB;459;570;111;oui;;;;;
 97408000AT0976;UB;154;265;111;oui;;;;;
 97408000AT1749;UB;903;1014;111;oui;;;;;
@@ -2244,6 +2339,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AM0725;UB;407;517;110;oui;;;;;
 97408000AM1155;UB;17;127;110;oui;;;;;
 97408000AN0682;UBpsfr2;341;451;110;oui;;;;;
+97408000AN0798;UBpsfr2;183;293;110;oui;;;;;
 97408000AN1407;UB;169;279;110;oui;;;;;
 97408000AO1127;UA;82;192;110;oui;;;;;
 97408000AP0852;UB;125;235;110;oui;;;;;
@@ -2251,6 +2347,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT0798;UB;173;283;110;oui;;;;;
 97408000AT0917;UB;205;315;110;oui;;;;;
 97408000AT1203;UB;146;256;110;oui;;;;;
+97408000AT1325;UB;116;226;110;oui;;;;;
 97408000AT1397;UB;171;281;110;oui;;;;;
 97408000AT1726;UB;116;226;110;oui;;;;;
 97408000AV0704;UB;315;425;110;oui;;;;;
@@ -2269,6 +2366,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AI0668;Ub;118;227;109;oui;;;;;
 97402000AI0748;Ub;370;479;109;oui;;;;;
 97402000AK0478;Ub;582;691;109;oui;;;;;
+97408000AB0302;UBc;92;201;109;oui;;;;;
 97408000AC0605;UBc;431;540;109;oui;;;;;
 97408000AC1619;UBc;436;545;109;oui;;;;;
 97408000AC1705;UBc;204;313;109;oui;;;;;
@@ -2312,6 +2410,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AB0360;UBc;228;336;108;oui;;;;;
 97408000AB0413;UBc;95;203;108;oui;;;;;
 97408000AC1901;UBc;126;234;108;oui;;;;;
+97408000AC2640;UB;246;354;108;oui;;;;;
 97408000AC2667;UBc;128;236;108;oui;;;;;
 97408000AC3166;UBc;1986;2094;108;oui;;;;;
 97408000AM0427;UB;346;454;108;oui;;;;;
@@ -2320,6 +2419,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AN0537;UBpsfr2;345;453;108;oui;;;;;
 97408000AN1385;UB;242;350;108;oui;;;;;
 97408000AN1390;UB;8;116;108;oui;;;;;
+97408000AO0227;UApsfr2;112;220;108;oui;;;;;
 97408000AO0650;UA;inconnu;108;108;oui;;;;;
 97408000AP0750;UB;665;773;108;oui;;;;;
 97408000AP0851;UB;137;245;108;oui;;;;;
@@ -2357,6 +2457,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC1536;UBc;422;529;107;oui;;;;;
 97408000AC2057;UBc;415;522;107;oui;;;;;
 97408000AC2273;UBc;386;493;107;oui;;;;;
+97408000AC3041;UBc;109;216;107;oui;;;;;
 97408000AH0233;UB;inconnu;107;107;oui;;;;;
 97408000AM0431;UB;285;392;107;oui;;;;;
 97408000AM0530;UB;157;264;107;oui;;;;;
@@ -2390,9 +2491,11 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AB0417;UBc;96;202;106;oui;;;;;
 97408000AC1119;UBc;579;685;106;oui;;;;;
 97408000AC2038;UBc;198;304;106;oui;;;;;
+97408000AC2629;UB;37;143;106;oui;;;;;
 97408000AC3278;UBc;490;596;106;oui;;;;;
 97408000AC3734;UBc;548;654;106;oui;;;;;
 97408000AM0611;UB;197;303;106;oui;;;;;
+97408000AM0920;UB;62;168;106;oui;;;;;
 97408000AM1017;UB;200;306;106;oui;;;;;
 97408000AM1126;UB;52;158;106;oui;;;;;
 97408000AN0740;UBpsfr2;123;229;106;oui;;;;;
@@ -2420,6 +2523,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AV1095;UB;40;146;106;oui;;;;;
 97408000AW1082;UBb;296;402;106;oui;;;;;
 97408000AW1163;UBb;518;624;106;oui;;;;;
+97408000AW1217;UBb;70;176;106;oui;;;;;
 97408000BI0014;UA;301;407;106;oui;;;;;
 97408000BI0101;UB;181;287;106;oui;;;;;
 97408000BI0259;UB;610;716;106;oui;;;;;
@@ -2489,12 +2593,14 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AM0558;UB;258;363;105;oui;;;;;
 97408000AM0559;UB;290;395;105;oui;;;;;
 97408000AM0667;UB;303;408;105;oui;;;;;
+97408000AM1314;UB;12;117;105;oui;;;;;
 97408000AM1328;UB;58;163;105;oui;;;;;
 97408000AN0605;UApsfr2;205;310;105;oui;;;;;
 97408000AN0933;UBpsfr2;371;476;105;oui;;;;;
 97408000AN1562;UBpsfr2;56;161;105;oui;;;;;
 97408000AN1932;UBpsfr2;94;199;105;oui;;;;;
 97408000AO0036;UB;117;222;105;oui;;;;;
+97408000AO0889;UB;119;224;105;oui;;;;;
 97408000AO1295;UB;260;365;105;oui;;;;;
 97408000AR0505;UB;90;195;105;oui;;;;;
 97408000AR0750;UB;173;278;105;oui;;;;;
@@ -2519,6 +2625,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97418000AY0794;UA;653;758;105;oui;;;;;
 97402000AH0668;Ub;89;193;104;oui;;;;;
 97402000AK0911;Ub;201;305;104;oui;;;;;
+97402000AK1506;Ub;162;266;104;oui;;;;;
 97402000AK1901;Ub;201;305;104;oui;;;;;
 97406000AT0274;Ub;149;253;104;oui;;;;;
 97408000AC2174;UBc;98;202;104;oui;;;;;
@@ -2536,6 +2643,8 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO1807;UBpsfr2;151;255;104;oui;;;;;
 97408000AP1296;UB;132;236;104;oui;;;;;
 97408000AR0242;UB;298;402;104;oui;;;;;
+97408000AR0664;UB;153;257;104;oui;;;;;
+97408000AR0918;UB;156;260;104;oui;;;;;
 97408000AS0119;UB;345;449;104;oui;;;;;
 97408000AS0168;UB;312;416;104;oui;;;;;
 97408000AS0173;UB;313;417;104;oui;;;;;
@@ -2562,6 +2671,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AK1725;Ub;245;348;103;oui;;;;;
 97402000AK1862;Ub;194;297;103;oui;;;;;
 97408000AC0439;UBc;146;249;103;oui;;;;;
+97408000AC3432;UBc;127;230;103;oui;;;;;
 97408000AM0772;UB;173;276;103;oui;;;;;
 97408000AM1363;UB;540;643;103;oui;;;;;
 97408000AN0935;UBpsfr2;161;264;103;oui;;;;;
@@ -2582,6 +2692,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT1593;UB;239;342;103;oui;;;;;
 97408000AT1792;UB;134;237;103;oui;;;;;
 97408000AV0604;UB;242;345;103;oui;;;;;
+97408000AW0178;UBb;127;230;103;oui;;;;;
 97408000AW0380;UBb;247;350;103;oui;;;;;
 97408000AW0685;UBb;256;359;103;oui;;;;;
 97408000AW1185;UBb;89;192;103;oui;;;;;
@@ -2618,11 +2729,13 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO1384;UB;315;417;102;oui;;;;;
 97408000AO1550;UB;98;200;102;oui;;;;;
 97408000AP1001;UA;31;133;102;oui;;;;;
+97408000AR1204;UB;152;254;102;oui;;;;;
 97408000AR1286;UB;209;311;102;oui;;;;;
 97408000AS0171;UB;287;389;102;oui;;;;;
 97408000AT0527;UB;870;972;102;oui;;;;;
 97408000AT0614;UB;211;313;102;oui;;;;;
 97408000AT1491;UB;253;355;102;oui;;;;;
+97408000AT1658;UB;51;153;102;oui;;;;;
 97408000AW0947;UBb;82;184;102;oui;;;;;
 97408000AW1288;UBb;244;346;102;oui;;;;;
 97408000AY0457;UBb;103;205;102;oui;;;;;
@@ -2642,8 +2755,10 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AB0301;UBc;69;170;101;oui;;;;;
 97408000AC2447;UBc;274;375;101;oui;;;;;
 97408000AC2603;UB;134;235;101;oui;;;;;
+97408000AM0248;UBpsfr2;246;347;101;oui;;;;;
 97408000AM0295;UB;248;349;101;oui;;;;;
 97408000AM0605;UB;162;263;101;oui;;;;;
+97408000AM0613;UB;113;214;101;oui;;;;;
 97408000AM0668;UB;320;421;101;oui;;;;;
 97408000AM0723;UB;259;360;101;oui;;;;;
 97408000AM1106;UB;60;161;101;oui;;;;;
@@ -2695,18 +2810,23 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO0876;UB;137;237;100;oui;;;;;
 97408000AO1191;UB;56;156;100;oui;;;;;
 97408000AP0197;UAm;196;296;100;oui;;;;;
+97408000AR0753;UB;120;220;100;oui;;;;;
+97408000AR0803;UB;110;210;100;oui;;;;;
 97408000AR0897;UB;136;236;100;oui;;;;;
 97408000AR0978;UB;128;228;100;oui;;;;;
+97408000AR1299;UB;29;129;100;oui;;;;;
 97408000AS0178;UB;361;461;100;oui;;;;;
 97408000AT0329;UB;640;740;100;oui;;;;;
 97408000AT0509;UB;320;420;100;oui;;;;;
 97408000AT0637;UB;205;305;100;oui;;;;;
 97408000AT0661;UB;136;236;100;oui;;;;;
+97408000AT0745;UB;74;174;100;oui;;;;;
 97408000AT0803;UB;208;308;100;oui;;;;;
 97408000AT1053;UB;241;341;100;oui;;;;;
 97408000AT1080;UB;137;237;100;oui;;;;;
 97408000AW0156;UBb;123;223;100;oui;;;;;
 97408000AW1174;UBb;45;145;100;oui;;;;;
+97408000BK0117;UB;110;210;100;oui;;;;;
 97408000BO0055;UB;657;757;100;oui;;;;;
 97408000BO0226;UB;270;370;100;oui;;;;;
 97418000AD0712;UA;144;244;100;oui;;;;;
@@ -2716,6 +2836,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97418000AV1728;UA;84;184;100;oui;;;;;
 97402000AB1088;Uc;144;243;99;oui;;;;;
 97402000AD0726;Uc;26;125;99;oui;;;;;
+97402000AI0716;Ub;109;208;99;oui;;;;;
 97402000AK0859;Ub;164;263;99;oui;;;;;
 97402000AK0865;Ub;154;253;99;oui;;;;;
 97402000AK1724;Ub;263;362;99;oui;;;;;
@@ -2730,14 +2851,19 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AM0803;UB;36;135;99;oui;;;;;
 97408000AM0805;UB;35;134;99;oui;;;;;
 97408000AM1018;UB;255;354;99;oui;;;;;
+97408000AM1289;UB;15;114;99;oui;;;;;
+97408000AO0221;UB;60;159;99;oui;;;;;
 97408000AO0640;UA;167;266;99;oui;;;;;
 97408000AO0697;UB;377;476;99;oui;;;;;
+97408000AO1175;UB;129;228;99;oui;;;;;
 97408000AO1209;UB;159;258;99;oui;;;;;
+97408000AO1215;UB;124;223;99;oui;;;;;
 97408000AO1360;UB;308;407;99;oui;;;;;
 97408000AO1469;UB;156;255;99;oui;;;;;
 97408000AO1809;UBpsfr2;45;144;99;oui;;;;;
 97408000AR0814;UB;200;299;99;oui;;;;;
 97408000AR0898;UB;137;236;99;oui;;;;;
+97408000AT1493;UB;151;250;99;oui;;;;;
 97408000AT1591;UB;245;344;99;oui;;;;;
 97408000AT1743;UB;293;392;99;oui;;;;;
 97408000AW0283;UBb;459;558;99;oui;;;;;
@@ -2754,13 +2880,16 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AK1298;Ub;197;295;98;oui;;;;;
 97402000AK1498;Ub;154;252;98;oui;;;;;
 97408000AC1848;UBc;178;276;98;oui;;;;;
+97408000AC2760;UB;119;217;98;oui;;;;;
 97408000AC3157;UBc;203;301;98;oui;;;;;
 97408000AC3758;UBc;153;251;98;oui;;;;;
+97408000AM1221;UB;100;198;98;oui;;;;;
 97408000AN0791;UBpsfr2;156;254;98;oui;;;;;
 97408000AN0919;UBpsfr2;272;370;98;oui;;;;;
 97408000AN1340;UB;175;273;98;oui;;;;;
 97408000AN1396;UB;194;292;98;oui;;;;;
 97408000AN1750;UBpsfr2;61;159;98;oui;;;;;
+97408000AN1901;UBpsfr2;158;256;98;oui;;;;;
 97408000AO0266;UApsfr2;41;139;98;oui;;;;;
 97408000AO1299;UB;247;345;98;oui;;;;;
 97408000AO1311;UB;189;287;98;oui;;;;;
@@ -2769,6 +2898,8 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AP0933;UA;88;186;98;oui;;;;;
 97408000AR0823;UB;134;232;98;oui;;;;;
 97408000AR0846;UB;191;289;98;oui;;;;;
+97408000AS0265;UB;118;216;98;oui;;;;;
+97408000AT0477;UB;14;112;98;oui;;;;;
 97408000AT0528;UB;604;702;98;oui;;;;;
 97408000AT0921;UB;253;351;98;oui;;;;;
 97408000AT1197;UB;211;309;98;oui;;;;;
@@ -2788,6 +2919,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97418000AY0491;UA;16;114;98;oui;;;;;
 97418000AY0514;UA;248;346;98;oui;;;;;
 97418000AY0774;UA;122;220;98;oui;;;;;
+97402000AB0583;Uc;130;227;97;oui;;;;;
 97402000AH0462;Ub;194;291;97;oui;;;;;
 97408000AB0307;UBc;103;200;97;oui;;;;;
 97408000AC0236;UB;297;394;97;oui;;;;;
@@ -2796,6 +2928,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC2000;UBc;123;220;97;oui;;;;;
 97408000AC2448;UBc;268;365;97;oui;;;;;
 97408000AC2571;UBc;inconnu;97;97;oui;;;;;
+97408000AC2651;UB;47;144;97;oui;;;;;
 97408000AC3169;UBc;100;197;97;oui;;;;;
 97408000AH0227;UB;197;294;97;oui;;;;;
 97408000AM0402;UBc;529;626;97;oui;;;;;
@@ -2807,6 +2940,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO0798;UB;49;146;97;oui;;;;;
 97408000AP0151;UB;637;734;97;oui;;;;;
 97408000AR0356;UB;96;193;97;oui;;;;;
+97408000AR0358;UB;87;184;97;oui;;;;;
 97408000AS0252;UB;243;340;97;oui;;;;;
 97408000AS0274;UB;215;312;97;oui;;;;;
 97408000AT0598;UB;169;266;97;oui;;;;;
@@ -2846,9 +2980,11 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AI0950;Ub;362;458;96;oui;;;;;
 97402000AI0953;Ub;334;430;96;oui;;;;;
 97402000AK0375;Ub;164;260;96;oui;;;;;
+97402000AK0477;Ub;94;190;96;oui;;;;;
 97402000AK0590;Ub;185;281;96;oui;;;;;
 97402000AK0591;Ub;196;292;96;oui;;;;;
 97402000AK1297;Ub;208;304;96;oui;;;;;
+97402000AK1980;Ub;121;217;96;oui;;;;;
 97402000AK2154;Ub;137;233;96;oui;;;;;
 97408000AB0274;UBc;131;227;96;oui;;;;;
 97408000AB0370;UBc;46;142;96;oui;;;;;
@@ -2862,6 +2998,8 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AM0595;UB;83;179;96;oui;;;;;
 97408000AM0612;UB;239;335;96;oui;;;;;
 97408000AM1087;UB;41;137;96;oui;;;;;
+97408000AM1169;UB;104;200;96;oui;;;;;
+97408000AN1305;UB;142;238;96;oui;;;;;
 97408000AO0670;UA;338;434;96;oui;;;;;
 97408000AO0698;UB;460;556;96;oui;;;;;
 97408000AO1123;UA;227;323;96;oui;;;;;
@@ -2917,6 +3055,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AS0268;UB;292;387;95;oui;;;;;
 97408000AS0275;UB;181;276;95;oui;;;;;
 97408000AT0330;UB;436;531;95;oui;;;;;
+97408000AT0978;UB;135;230;95;oui;;;;;
 97408000AT1607;UB;271;366;95;oui;;;;;
 97408000AT1648;UB;293;388;95;oui;;;;;
 97408000AT1727;UB;91;186;95;oui;;;;;
@@ -2935,6 +3074,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AH0095;Ub;160;254;94;oui;;;;;
 97402000AH0667;Ub;118;212;94;oui;;;;;
 97402000AH0964;Ub;657;751;94;oui;;;;;
+97402000AI0680;Ub;155;249;94;oui;;;;;
 97402000AK0414;Ub;249;343;94;oui;;;;;
 97408000AB0141;UBc;165;259;94;oui;;;;;
 97408000AB0371;UBc;66;160;94;oui;;;;;
@@ -2947,6 +3087,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AM0343;UB;458;552;94;oui;;;;;
 97408000AM0510;UB;81;175;94;oui;;;;;
 97408000AM0511;UB;80;174;94;oui;;;;;
+97408000AM1095;UB;70;164;94;oui;;;;;
 97408000AN0482;UApsfr2;758;852;94;oui;;;;;
 97408000AN0718;UBpsfr2;83;177;94;oui;;;;;
 97408000AN0813;UBpsfr2;158;252;94;oui;;;;;
@@ -2990,6 +3131,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC0863;UB;141;234;93;oui;;;;;
 97408000AC1841;UBc;284;377;93;oui;;;;;
 97408000AC1897;UBc;237;330;93;oui;;;;;
+97408000AC2593;UB;104;197;93;oui;;;;;
 97408000AC2631;UB;184;277;93;oui;;;;;
 97408000AC2761;UB;95;188;93;oui;;;;;
 97408000AC2853;UB;137;230;93;oui;;;;;
@@ -3042,6 +3184,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO1256;UB;195;287;92;oui;;;;;
 97408000AO1319;UB;201;293;92;oui;;;;;
 97408000AO1423;UB;234;326;92;oui;;;;;
+97408000AO1891;UBpsfr2;226;318;92;oui;;;;;
 97408000AP0145;UB;607;699;92;oui;;;;;
 97408000AR0006;UB;19;111;92;oui;;;;;
 97408000AR0007;UB;19;111;92;oui;;;;;
@@ -3066,11 +3209,13 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AD1143;Uc;125;216;91;oui;;;;;
 97402000AH0567;Ub;73;164;91;oui;;;;;
 97402000AI0676;Ub;134;225;91;oui;;;;;
+97402000AK1365;Ub;77;168;91;oui;;;;;
 97406000AD0800;Ub;61;152;91;oui;;;;;
 97406000AK0028;Ub;82;173;91;oui;;;;;
 97408000AC1189;UBc;376;467;91;oui;;;;;
 97408000AC1427;UBc;449;540;91;oui;;;;;
 97408000AC1846;UBc;207;298;91;oui;;;;;
+97408000AC1899;UBc;90;181;91;oui;;;;;
 97408000AC2787;UB;215;306;91;oui;;;;;
 97408000AC3272;UBc;217;308;91;oui;;;;;
 97408000AM0728;UB;124;215;91;oui;;;;;
@@ -3081,6 +3226,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AN0581;UApsfr2;821;912;91;oui;;;;;
 97408000AN0732;UBpsfr2;330;421;91;oui;;;;;
 97408000AN1021;UBpsfr2;241;332;91;oui;;;;;
+97408000AN1341;UB;99;190;91;oui;;;;;
 97408000AN1582;UBpsfr2;168;259;91;oui;;;;;
 97408000AN1696;UB;266;357;91;oui;;;;;
 97408000AN1838;UApsfr2;276;367;91;oui;;;;;
@@ -3088,6 +3234,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO0794;UB;146;237;91;oui;;;;;
 97408000AO0801;UB;170;261;91;oui;;;;;
 97408000AO1253;UB;174;265;91;oui;;;;;
+97408000AO1636;UB;19;110;91;oui;;;;;
 97408000AP0341;UB;257;348;91;oui;;;;;
 97408000AR0160;UB;27;118;91;oui;;;;;
 97408000AR1195;UB;155;246;91;oui;;;;;
@@ -3101,6 +3248,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT1447;UB;60;151;91;oui;;;;;
 97408000AV0899;UBb;166;257;91;oui;;;;;
 97408000AV0984;UB;266;357;91;oui;;;;;
+97408000AW0723;UBb;80;171;91;oui;;;;;
 97408000AY0236;UBb;215;306;91;oui;;;;;
 97408000BI0258;UB;860;951;91;oui;;;;;
 97408000BK0156;UB;238;329;91;oui;;;;;
@@ -3151,6 +3299,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AS0249;UB;173;263;90;oui;;;;;
 97408000AT0884;UB;172;262;90;oui;;;;;
 97408000AT1464;UB;301;391;90;oui;;;;;
+97408000AV1497;UB;27;117;90;oui;;;;;
 97408000AW0504;UBb;398;488;90;oui;;;;;
 97408000AW0681;UBb;207;297;90;oui;;;;;
 97408000AW0757;UBb;197;287;90;oui;;;;;
@@ -3210,6 +3359,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AK0593;Ub;267;355;88;oui;;;;;
 97406000AV0290;Ub;inconnu;88;88;oui;;;;;
 97408000AB0269;UBc;76;164;88;oui;;;;;
+97408000AC3538;UBc;87;175;88;oui;;;;;
 97408000AN0566;UBpsfr2;152;240;88;oui;;;;;
 97408000AN0661;UBpsfr2;335;423;88;oui;;;;;
 97408000AN0748;UBpsfr2;410;498;88;oui;;;;;
@@ -3273,6 +3423,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT0677;UB;183;270;87;oui;;;;;
 97408000AT1492;UB;206;293;87;oui;;;;;
 97408000AW1128;UBb;817;904;87;oui;;;;;
+97408000BK0246;UB;188;275;87;oui;;;;;
 97408000BN3647;UA;44;131;87;oui;;;;;
 97408000BO0625;UB;149;236;87;oui;;;;;
 97408000BP0165;UA;18;105;87;oui;;;;;
@@ -3304,6 +3455,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AH0218;UB;198;284;86;oui;;;;;
 97408000AM0342;UB;234;320;86;oui;;;;;
 97408000AM0746;UB;61;147;86;oui;;;;;
+97408000AM0899;UB;53;139;86;oui;;;;;
 97408000AN1403;UB;155;241;86;oui;;;;;
 97408000AN1643;UBpsfr2;65;151;86;oui;;;;;
 97408000AN1719;UBpsfr2;147;233;86;oui;;;;;
@@ -3360,6 +3512,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO1317;UB;150;235;85;oui;;;;;
 97408000AO1365;UB;498;583;85;oui;;;;;
 97408000AO1621;UA;121;206;85;oui;;;;;
+97408000AR0690;UB;69;154;85;oui;;;;;
 97408000AR0855;UB;231;316;85;oui;;;;;
 97408000AR1039;UB;69;154;85;oui;;;;;
 97408000AR1333;UB;70;155;85;oui;;;;;
@@ -3389,6 +3542,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AK1589;Ub;270;354;84;oui;;;;;
 97402000AK1680;Ub;131;215;84;oui;;;;;
 97402000AK1684;Ub;194;278;84;oui;;;;;
+97402000AK1821;Ub;96;180;84;oui;;;;;
 97408000AB0205;UBc;465;549;84;oui;;;;;
 97408000AB0267;UBc;77;161;84;oui;;;;;
 97408000AB0324;UBc;93;177;84;oui;;;;;
@@ -3456,6 +3610,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC3170;UBc;126;209;83;oui;;;;;
 97408000AM0729;UB;24;107;83;oui;;;;;
 97408000AM0793;UB;37;120;83;oui;;;;;
+97408000AM0963;UB;49;132;83;oui;;;;;
 97408000AM1112;UB;17;100;83;oui;;;;;
 97408000AM1210;UB;41;124;83;oui;;;;;
 97408000AN1580;UBpsfr2;222;305;83;oui;;;;;
@@ -3474,6 +3629,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AW1125;UBb;82;165;83;oui;;;;;
 97408000AW1129;UBb;287;370;83;oui;;;;;
 97408000AY0361;UBb;157;240;83;oui;;;;;
+97408000AY0561;UBb;32;115;83;oui;;;;;
 97408000BI0002;UB;384;467;83;oui;;;;;
 97408000BK0096;UB;69;152;83;oui;;;;;
 97408000BK0332;UB;23;106;83;oui;;;;;
@@ -3553,6 +3709,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AH0226;UB;166;247;81;oui;;;;;
 97408000AM0426;UB;82;163;81;oui;;;;;
 97408000AM0607;UB;108;189;81;oui;;;;;
+97408000AM0891;UB;44;125;81;oui;;;;;
 97408000AM1099;UB;83;164;81;oui;;;;;
 97408000AO0120;UB;50;131;81;oui;;;;;
 97408000AO0652;UA;71;152;81;oui;;;;;
@@ -3583,11 +3740,13 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AB0837;Uc;154;234;80;oui;;;;;
 97402000AH0427;Ub;48;128;80;oui;;;;;
 97402000AH0956;Ub;589;669;80;oui;;;;;
+97402000AH1436;Ub;109;189;80;oui;;;;;
 97402000AI0448;Ub;111;191;80;oui;;;;;
 97402000AI0456;Ub;109;189;80;oui;;;;;
 97402000AI0500;Ub;88;168;80;oui;;;;;
 97402000AI0521;Ub;105;185;80;oui;;;;;
 97402000AI0653;Ub;57;137;80;oui;;;;;
+97402000AK0644;Ub;96;176;80;oui;;;;;
 97402000AK1064;Ub;102;182;80;oui;;;;;
 97402000AK2022;Ub;240;320;80;oui;;;;;
 97402000AK2114;Ub;107;187;80;oui;;;;;
@@ -3626,6 +3785,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AI0520;Ub;108;187;79;oui;;;;;
 97402000AI0671;Ub;80;159;79;oui;;;;;
 97402000AK1903;Ub;77;156;79;oui;;;;;
+97402000AK2026;Ub;15;94;79;oui;;;;;
 97402000AK2194;Ub;17;96;79;oui;;;;;
 97406000AE0249;Ub;98;177;79;oui;;;;;
 97408000AC0858;UB;189;268;79;oui;;;;;
@@ -3661,6 +3821,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AV0347;UB;283;362;79;oui;;;;;
 97408000AV1273;UBc;138;217;79;oui;;;;;
 97408000AV1274;UBc;17;96;79;oui;;;;;
+97408000AV1329;UB;38;117;79;oui;;;;;
 97408000AW1318;UBb;42;121;79;oui;;;;;
 97408000AY0358;UBb;137;216;79;oui;;;;;
 97408000BI0094;UB;147;226;79;oui;;;;;
@@ -3689,6 +3850,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AK1308;Ub;155;233;78;oui;;;;;
 97402000AK1696;Ub;99;177;78;oui;;;;;
 97402000AK1908;Ub;142;220;78;oui;;;;;
+97402000AK1960;Ub;102;180;78;oui;;;;;
 97402000AK1984;Ub;92;170;78;oui;;;;;
 97402000AK2155;Ub;35;113;78;oui;;;;;
 97406000AK0010;Ub;397;475;78;oui;;;;;
@@ -3796,6 +3958,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AK1086;Ub;114;190;76;oui;;;;;
 97402000AK1166;Ub;106;182;76;oui;;;;;
 97402000AK1307;Ub;149;225;76;oui;;;;;
+97402000AK1479;Ub;66;142;76;oui;;;;;
 97402000AK1613;Ub;187;263;76;oui;;;;;
 97402000AK1615;Ub;114;190;76;oui;;;;;
 97402000AK1904;Ub;80;156;76;oui;;;;;
@@ -3912,6 +4075,8 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AI1155;Ub;912;986;74;oui;;;;;
 97402000AK1296;Ub;100;174;74;oui;;;;;
 97402000AK1688;Ub;90;164;74;oui;;;;;
+97402000AK1746;Ub;93;167;74;oui;;;;;
+97402000AK1747;Ub;77;151;74;oui;;;;;
 97402000AK1974;Ub;34;108;74;oui;;;;;
 97406000AV0388;Ub;72;146;74;oui;;;;;
 97408000AB0258;UBc;503;577;74;oui;;;;;
@@ -3923,6 +4088,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AH0219;UB;171;245;74;oui;;;;;
 97408000AM0626;UB;144;218;74;oui;;;;;
 97408000AM0812;UB;21;95;74;oui;;;;;
+97408000AM0858;UB;72;146;74;oui;;;;;
 97408000AM0981;UB;38;112;74;oui;;;;;
 97408000AM1120;UB;39;113;74;oui;;;;;
 97408000AN0712;UBpsfr2;547;621;74;oui;;;;;
@@ -3969,6 +4135,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AB0310;UBc;103;176;73;oui;;;;;
 97408000AB0315;UBc;48;121;73;oui;;;;;
 97408000AB0318;UBc;153;226;73;oui;;;;;
+97408000AC2966;UBc;34;107;73;oui;;;;;
 97408000AC3597;UBc;160;233;73;oui;;;;;
 97408000AM0584;UB;311;384;73;oui;;;;;
 97408000AM0591;UB;199;272;73;oui;;;;;
@@ -4067,6 +4234,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AK2244;Ub;90;161;71;oui;;;;;
 97406000AE0476;Ub;58;129;71;oui;;;;;
 97408000AC1737;UBc;95;166;71;oui;;;;;
+97408000AC2294;UBc;30;101;71;oui;;;;;
 97408000AC3236;UB;56;127;71;oui;;;;;
 97408000AC3424;UBc;48;119;71;oui;;;;;
 97408000AM0480;UB;167;238;71;oui;;;;;
@@ -4162,6 +4330,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AD0706;Uc;62;131;69;oui;;;;;
 97402000AH1423;Ub;136;205;69;oui;;;;;
 97402000AH1464;Ub;121;190;69;oui;;;;;
+97402000AH1811;Ub;68;137;69;oui;;;;;
 97402000AI0411;Ub;64;133;69;oui;;;;;
 97402000AI0452;Ub;131;200;69;oui;;;;;
 97402000AI0640;Ub;300;369;69;oui;;;;;
@@ -4222,13 +4391,16 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AI0682;Ub;102;170;68;oui;;;;;
 97402000AI0704;Ub;154;222;68;oui;;;;;
 97402000AI0705;Ub;132;200;68;oui;;;;;
+97402000AI0857;Ub;66;134;68;oui;;;;;
 97402000AI0863;Ub;50;118;68;oui;;;;;
 97402000AI0886;Ub;40;108;68;oui;;;;;
 97402000AI1148;Ub;73;141;68;oui;;;;;
 97402000AK0970;Ub;73;141;68;oui;;;;;
+97402000AK1034;Ub;62;130;68;oui;;;;;
 97402000AK1065;Ub;74;142;68;oui;;;;;
 97402000AK1066;Ub;74;142;68;oui;;;;;
 97402000AK1067;Ub;74;142;68;oui;;;;;
+97402000AK1246;Ub;72;140;68;oui;;;;;
 97408000AC1892;UBc;106;174;68;oui;;;;;
 97408000AC2578;UB;249;317;68;oui;;;;;
 97408000AC2662;UB;127;195;68;oui;;;;;
@@ -4364,6 +4536,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AR1359;UB;110;176;66;oui;;;;;
 97408000AS0245;UB;192;258;66;oui;;;;;
 97408000AT1220;UB;124;190;66;oui;;;;;
+97408000AY0368;UBb;34;100;66;oui;;;;;
 97408000BI0061;UB;485;551;66;oui;;;;;
 97408000BL0058;UA;52;118;66;oui;;;;;
 97408000BM0144;UA;260;326;66;oui;;;;;
@@ -4373,6 +4546,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AB0529;Uc;138;203;65;oui;;;;;
 97402000AB1108;Uc;96;161;65;oui;;;;;
 97402000AB1202;Uc;117;182;65;oui;;;;;
+97402000AB1219;Uc;47;112;65;oui;;;;;
 97402000AD0223;Uc;325;390;65;oui;;;;;
 97402000AD0739;Uc;19;84;65;oui;;;;;
 97402000AD0771;Uc;67;132;65;oui;;;;;
@@ -4450,6 +4624,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC2952;UBc;34;98;64;oui;;;;;
 97408000AM0321;UBc;463;527;64;oui;;;;;
 97408000AM0865;UB;53;117;64;oui;;;;;
+97408000AM1253;UB;15;79;64;oui;;;;;
 97408000AN0815;UBpsfr2;105;169;64;oui;;;;;
 97408000AO0587;UApsfr2;36;100;64;oui;;;;;
 97408000AO0879;UB;239;303;64;oui;;;;;
@@ -4502,6 +4677,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT0753;UB;434;497;63;oui;;;;;
 97408000AV0568;UB;111;174;63;oui;;;;;
 97408000AV1340;UBb;170;233;63;oui;;;;;
+97408000BK0434;UB;8;71;63;oui;;;;;
 97408000BM0228;UA;35;98;63;oui;;;;;
 97408000BP0118;UA;112;175;63;oui;;;;;
 97408000BR0111;UA;94;157;63;oui;;;;;
@@ -4509,6 +4685,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97418000AW0320;UA;526;589;63;oui;;;;;
 97402000AB0160;Uc;139;201;62;oui;;;;;
 97402000AB0185;Uc;98;160;62;oui;;;;;
+97402000AB0640;Uc;62;124;62;oui;;;;;
 97402000AB0930;Uc;427;489;62;oui;;;;;
 97402000AB1109;Uc;93;155;62;oui;;;;;
 97402000AD0579;Uc;105;167;62;oui;;;;;
@@ -4779,6 +4956,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AK1539;Ub;45;101;56;oui;;;;;
 97406000AC0332;Ub;109;165;56;oui;;;;;
 97406000AC0507;Ub;127;183;56;oui;;;;;
+97406000AD0768;Ub;87;143;56;oui;;;;;
 97406000AL0106;Ub;187;243;56;oui;;;;;
 97406000AL0593;Ub;146;202;56;oui;;;;;
 97406000AV0293;Ub;34;90;56;oui;;;;;
@@ -4881,6 +5059,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AD0474;Uc;68;121;53;oui;;;;;
 97402000AD0814;Uc;89;142;53;oui;;;;;
 97402000AH0538;Ub;81;134;53;oui;;;;;
+97402000AH0829;Ub;31;84;53;oui;;;;;
 97402000AH0896;Ub;86;139;53;oui;;;;;
 97402000AH0944;Ub;7;60;53;oui;;;;;
 97402000AH1465;Ub;187;240;53;oui;;;;;
@@ -4989,6 +5168,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AK1008;Ub;24;75;51;oui;;;;;
 97402000AK1009;Ub;29;80;51;oui;;;;;
 97406000AE0566;Ub;125;176;51;oui;;;;;
+97406000AL0589;Ub;100;151;51;oui;;;;;
 97408000AB0289;UBc;44;95;51;oui;;;;;
 97408000AB0293;UBc;61;112;51;oui;;;;;
 97408000AC1759;UBc;417;468;51;oui;;;;;
@@ -5095,10 +5275,12 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AB0186;Uc;74;122;48;oui;;;;;
 97402000AB0423;Uc;40;88;48;oui;;;;;
 97402000AB0527;Uc;37;85;48;oui;;;;;
+97402000AB0618;Uc;16;64;48;oui;;;;;
 97402000AD0595;Uc;50;98;48;oui;;;;;
 97402000AH0317;Ub;176;224;48;oui;;;;;
 97402000AH1817;Ub;78;126;48;oui;;;;;
 97402000AI0341;Ub;30;78;48;oui;;;;;
+97402000AI0369;Ub;24;72;48;oui;;;;;
 97402000AI0604;Ub;11;59;48;oui;;;;;
 97402000AI0613;Ub;12;60;48;oui;;;;;
 97402000AI0982;Ub;55;103;48;oui;;;;;
@@ -5179,11 +5361,13 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AH1831;Ub;59;105;46;oui;;;;;
 97402000AI0247;Ub;32;78;46;oui;;;;;
 97402000AI0370;Ub;33;79;46;oui;;;;;
+97402000AI0565;Ub;5;51;46;oui;;;;;
 97402000AI0569;Ub;14;60;46;oui;;;;;
 97402000AI0615;Ub;13;59;46;oui;;;;;
 97402000AI0862;Ub;67;113;46;oui;;;;;
 97402000AK0829;Ub;56;102;46;oui;;;;;
 97402000AK1160;Ub;7;53;46;oui;;;;;
+97402000AK1472;Ub;18;64;46;oui;;;;;
 97402000AK1543;Ub;75;121;46;oui;;;;;
 97402000AK2126;Ub;40;86;46;oui;;;;;
 97402000AK2168;Ub;27;73;46;oui;;;;;
@@ -5387,6 +5571,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97418000AY0480;UA;154;195;41;oui;;;;;
 97402000AB0158;Uc;123;163;40;oui;;;;;
 97402000AB0620;Uc;48;88;40;oui;;;;;
+97402000AD0014;Uc;545;585;40;oui;;;;;
 97402000AD0143;Uc;367;407;40;oui;;;;;
 97402000AI0371;Ub;686;726;40;oui;;;;;
 97402000AI0383;Ub;8;48;40;oui;;;;;
@@ -5523,6 +5708,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AN2023;UBpsfr2;inconnu;37;37;oui;;;;;
 97408000AP0843;UB;285;322;37;oui;;;;;
 97408000AV1053;UB;inconnu;37;37;oui;;;;;
+97408000AV1201;UB;218;255;37;oui;;;;;
 97408000AW0445;UBb;27;64;37;oui;;;;;
 97408000AY0384;UBb;inconnu;37;37;oui;;;;;
 97418000AR1862;UA;124;161;37;oui;;;;;
@@ -5554,6 +5740,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT1003;UB;inconnu;36;36;oui;;;;;
 97408000AX0267;UBb;inconnu;36;36;oui;;;;;
 97408000BK0435;UB;inconnu;36;36;oui;;;;;
+97408000BL0045;UA;3364;3400;36;oui;;;;;
 97418000AY0417;UA;294;330;36;oui;;;;;
 97402000AH1780;Ub;12;47;35;oui;;;;;
 97402000AI0622;Ub;37;72;35;oui;;;;;
@@ -5662,6 +5849,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97406000AE0285;Ub;206;238;32;oui;;;;;
 97406000AE0428;Ub;201;233;32;oui;;;;;
 97406000AE0474;Ub;183;215;32;oui;;;;;
+97406000AE0896;Ub;inconnu;32;32;oui;;;;;
 97406000AH0135;Ub;131;163;32;oui;;;;;
 97406000AH0449;Ub;402;434;32;oui;;;;;
 97406000AI0700;Ub;166;198;32;oui;;;;;
@@ -5702,9 +5890,11 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO0997;UBpsfr2;250;281;31;oui;;;;;
 97408000AW0033;UBb;1642;1673;31;oui;;;;;
 97408000AW0345;UBb;454;485;31;oui;;;;;
+97408000AW0615;UBb;926;957;31;oui;;;;;
 97408000AY0394;UBb;75;106;31;oui;;;;;
 97418000AY0506;UA;471;502;31;oui;;;;;
 97402000AB0558;Uc;48;78;30;oui;;;;;
+97402000AH0374;Ub;7;37;30;oui;;;;;
 97402000AH1064;Ub;33;63;30;oui;;;;;
 97402000AI1033;Ub;19;49;30;oui;;;;;
 97402000AK1462;Ub;19;49;30;oui;;;;;
@@ -5712,6 +5902,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97406000AC0458;Ub;204;234;30;oui;;;;;
 97406000AC0459;Ub;207;237;30;oui;;;;;
 97406000AC0469;Ub;190;220;30;oui;;;;;
+97406000AD0802;Ub;167;197;30;oui;;;;;
 97406000AE0625;Ub;156;186;30;oui;;;;;
 97406000AE0682;Ub;152;182;30;oui;;;;;
 97406000AH0582;Ub;325;355;30;oui;;;;;
@@ -5864,6 +6055,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AB0173;UBc;462;486;24;oui;;;;;
 97408000AC0201;UBc;576;600;24;oui;;;;;
 97408000AC3752;UBc;43;67;24;oui;;;;;
+97408000AP1023;UAm;689;713;24;oui;;;;;
 97408000AP1503;UAm;649;673;24;oui;;;;;
 97408000AP1518;UAm;486;510;24;oui;;;;;
 97408000AR1134;UB;123;147;24;oui;;;;;
@@ -5965,11 +6157,13 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AT1979;UB;101;121;20;oui;;;;;
 97408000AW0183;UBb;336;356;20;oui;;;;;
 97406000AD0622;Ub;247;266;19;oui;;;;;
+97406000AE0394;Ub;210;229;19;oui;;;;;
 97406000AH0448;Ub;260;279;19;oui;;;;;
 97406000AH0512;Ub;215;234;19;oui;;;;;
 97406000AI0955;Ub;229;248;19;oui;;;;;
 97406000AL0383;Ub;inconnu;19;19;oui;;;;;
 97406000AL0670;Ub;inconnu;19;19;oui;;;;;
+97406000AV0670;Ub;208;227;19;oui;;;;;
 97408000AC0017;UBc;127;146;19;oui;;;;;
 97408000AC2122;UBc;313;332;19;oui;;;;;
 97408000AO1572;UA;inconnu;19;19;oui;;;;;
@@ -5997,6 +6191,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AN2093;UBpsfr2;187;205;18;oui;;;;;
 97408000AO1921;UB;inconnu;18;18;oui;;;;;
 97408000AT0851;UB;inconnu;18;18;oui;;;;;
+97418000AT0538;UA;inconnu;18;18;oui;;;;;
 97402000AK1971;Ub;inconnu;17;17;oui;;;;;
 97406000AC0411;Ub;inconnu;17;17;oui;;;;;
 97406000AE0622;Ub;203;220;17;oui;;;;;
@@ -6020,6 +6215,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97402000AB0151;Uc;309;325;16;oui;;;;;
 97402000AB0700;Uc;5;21;16;oui;;;;;
 97402000AH1839;Ub;inconnu;16;16;oui;;;;;
+97406000AC0463;Ub;229;245;16;oui;;;;;
 97406000AC0629;Ub;54;70;16;oui;;;;;
 97406000AD0309;Ub;231;247;16;oui;;;;;
 97406000AD0682;Ub;inconnu;16;16;oui;;;;;
@@ -6038,6 +6234,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97406000AV0851;Ub;243;259;16;oui;;;;;
 97406000AV1134;Ub;217;233;16;oui;;;;;
 97408000AC1673;UBc;942;958;16;oui;;;;;
+97408000AC2938;UBc;inconnu;16;16;oui;;;;;
 97408000AN1783;UBpszc;163;179;16;oui;;;;;
 97408000AN1785;UBpszc;57;73;16;oui;;;;;
 97408000AO1166;UB;inconnu;16;16;oui;;;;;
@@ -6056,6 +6253,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97406000AL0266;Ub;inconnu;15;15;oui;;;;;
 97406000AL0668;Ub;6;21;15;oui;;;;;
 97406000AT0519;Ub;246;261;15;oui;;;;;
+97406000AV1145;Ub;173;188;15;oui;;;;;
 97408000AB0231;UBc;387;402;15;oui;;;;;
 97408000AC2215;UBc;inconnu;15;15;oui;;;;;
 97408000AC2672;UBc;346;361;15;oui;;;;;
@@ -6087,6 +6285,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000BM0756;UA;inconnu;14;14;oui;;;;;
 97421000AV0217;UA;inconnu;14;14;oui;;;;;
 97402000AK1401;Ub;19;32;13;oui;;;;;
+97402000AK2055;Ub;inconnu;13;13;oui;;;;;
 97406000AC0630;Ub;8;21;13;oui;;;;;
 97406000AD0584;Ub;217;230;13;oui;;;;;
 97406000AH0514;Ub;260;273;13;oui;;;;;
@@ -6147,6 +6346,8 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AO0689;UA;inconnu;11;11;oui;;;;;
 97408000AP0237;UAm;322;333;11;oui;;;;;
 97408000AP1185;UAm;15;26;11;oui;;;;;
+97408000AR0576;UB;inconnu;11;11;oui;;;;;
+97408000AR0687;UB;inconnu;11;11;oui;;;;;
 97408000AR1156;UB;inconnu;11;11;oui;;;;;
 97408000AT0244;UB;4065;4076;11;oui;;;;;
 97408000AT1437;UB;inconnu;11;11;oui;;;;;
@@ -6159,6 +6360,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97418000AR0749;UA;inconnu;11;11;oui;;;;;
 97402000AD0761;Uc;inconnu;10;10;oui;;;;;
 97402000AH1265;Ub;inconnu;10;10;oui;;;;;
+97406000AE0500;Ub;305;315;10;oui;;;;;
 97406000AE0516;Ub;262;272;10;oui;;;;;
 97406000AE0594;Ub;79;89;10;oui;;;;;
 97406000AE0673;Ub;260;270;10;oui;;;;;
@@ -6196,6 +6398,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC3330;UBc;inconnu;9;9;oui;;;;;
 97408000AC3759;UBc;inconnu;9;9;oui;;;;;
 97408000AT1856;UB;inconnu;9;9;oui;;;;;
+97408000AV1096;UB;inconnu;9;9;oui;;;;;
 97408000AW0353;UBb;286;295;9;oui;;;;;
 97408000AY0462;UBb;297;306;9;oui;;;;;
 97418000AR2329;UA;inconnu;9;9;oui;;;;;
@@ -6212,6 +6415,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97406000AT0475;Ub;251;259;8;oui;;;;;
 97406000AT0490;Ub;260;268;8;oui;;;;;
 97406000AV0418;Ub;262;270;8;oui;;;;;
+97406000AV0877;Ub;inconnu;8;8;oui;;;;;
 97406000AV1148;Ub;264;272;8;oui;;;;;
 97408000AC1666;UB;inconnu;8;8;oui;;;;;
 97408000AN2039;UBpsfr2;inconnu;8;8;oui;;;;;
@@ -6235,6 +6439,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97406000AI0843;Ub;254;261;7;oui;;;;;
 97406000AI0962;Ub;263;270;7;oui;;;;;
 97406000AL0225;Ub;263;270;7;oui;;;;;
+97406000AT0491;Ub;inconnu;7;7;oui;;;;;
 97408000AC2319;UBc;inconnu;7;7;oui;;;;;
 97408000AN1200;UBpsfr2;inconnu;7;7;oui;;;;;
 97408000AO0343;UB;inconnu;7;7;oui;;;;;
@@ -6270,6 +6475,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AP1060;UA;inconnu;6;6;oui;;;;;
 97408000AP1505;UAm;462;468;6;oui;;;;;
 97408000AR0243;UA;inconnu;6;6;oui;;;;;
+97408000AR0619;UB;inconnu;6;6;oui;;;;;
 97408000AV1276;UBc;269;275;6;oui;;;;;
 97408000AW0788;UBb;687;693;6;oui;;;;;
 97408000AY0289;UBb;inconnu;6;6;oui;;;;;
@@ -6297,6 +6503,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AP0647;UAm;210;215;5;oui;;;;;
 97408000AP0820;UA;inconnu;5;5;oui;;;;;
 97408000AP1017;UA;inconnu;5;5;oui;;;;;
+97408000AR0561;UB;inconnu;5;5;oui;;;;;
 97408000AR1135;UB;inconnu;5;5;oui;;;;;
 97408000AR1291;UB;inconnu;5;5;oui;;;;;
 97408000AW0536;UBb;384;389;5;oui;;;;;
@@ -6340,6 +6547,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97408000AC0931;UBc;560;563;3;oui;;;;;
 97408000AP0238;UAm;538;541;3;oui;;;;;
 97408000AP0337;UAm;757;760;3;oui;;;;;
+97408000AP1172;UAm;708;711;3;oui;;;;;
 97408000AV0667;UBc;971;974;3;oui;;;;;
 97408000AW0163;UBb;272;275;3;oui;;;;;
 97408000AW1167;UBb;620;623;3;oui;;;;;
@@ -6367,6 +6575,7 @@ idu;zone;sdp_main;sdp_fix6;delta;zone_autorisee;recul_reellement_applique_m;scen
 97409000AW0302;2AUc;20;22;2;NON;;;;;
 97406000AC0095;Ub;332;333;1;oui;;;;;
 97406000AE0767;Ub;319;320;1;oui;;;;;
+97406000AI0960;Ub;254;255;1;oui;;;;;
 97406000AL0067;Ub;393;394;1;oui;;;;;
 97406000AL0528;Ub;323;324;1;oui;;;;;
 97408000AC1024;UBc;29;30;1;oui;;;;;
