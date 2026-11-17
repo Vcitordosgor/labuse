@@ -1085,3 +1085,67 @@ garde FIX-5 (« aucune façade sur voie établie ») qui concentrent le sujet.
   établir, pas un simple front à qualifier.
 
 Mesure seule, aucune modification du moteur (`scripts/mesure_594_facades.py`, lecture seule).
+
+---
+
+# MOTEUR-VERITE-FIX-9 — le relecteur confirme le décompte FIX-8, reste trois points
+
+Branche `fix/moteur-verite-1` après merge d'`origin/main` (`954716fd1`, moteur inchangé). Un commit
+par lot. Chaque cas devient un test (`test_moteur_verite_fix9.py`).
+
+## LOT 1 — littoral : découper l'assiette NETTE, vraiment (commit b61815e6d)
+
+Le moteur appliquait encore à l'assiette NETTE un prorata calculé sur l'assiette BRUTE. **AO0648**
+(Saint-Benoît, ravine DANS la bande) sortait à 4 475 m² ; en découpant réellement l'assiette nette
+(après ER/EBC/PPR rouge/PEB/DPF/ravine/50 pas) on trouve **5 857 m²**. Les requêtes littorales
+soustraient toutes les contraintes AVANT la bande ; plus aucun prorata. **BL0045** n'est PAS
+préservée intégralement : ~642 m² d'assiette nette hors bande sur ~1 750 (compte-rendu FIX-8 corrigé).
+**Panne de la mesure littorale** → « capacité à vérifier » (ni chiffre ni refus) : avant, BL0308
+simulé en panne resservait 716 m².
+
+## LOT 2 — zone rouge : la perte se fonde sur l'effet mesuré sur l'ASSIETTE (commit f8de398f1)
+
+La surface rouge du terrain entier déclenchait ET tranchait. **AT2046** : 3,40 m² de rouge sur la
+parcelle, **0 m² sur l'assiette testée**, chiffre quand même retiré. Désormais on mesure le rouge
+recoupant l'ASSIETTE DU SCÉNARIO (`_ROUGE_SUR_ASSIETTE`) : rouge ∩ assiette ≈ 0 → chiffre CONSERVÉ
+avec la mention zone rouge (AT2046 garde 6 m², AM0577 171 m², AW1235 son chiffre) ; rouge ∩ assiette
+≥ seuil → contrôle hors-rouge (AD0423/BM0158/BO0383 « à vérifier » ; DR0615 refus, rouge couvrant).
+**Panne de la mesure rouge** → « capacité à vérifier » (ni chiffre ni refus).
+
+## LOT 3 — tracer le calcul qui a réellement servi (commit 9fa896b16)
+
+- Le détail par côté **n'arrondit plus** : AS1086 = **8,25 m** (pas 8,2).
+- La trace décrit **le chemin qui sert le chiffre** : BL0314, servie par le repli uniforme à 3 m,
+  n'affiche plus « fond à 8 m du gabarit ».
+- `sdp_sans_regle` distingue un rejeu **sans chiffre** (recalculé, verdict sans chiffre — AT1500)
+  d'un rejeu **absent** (non rejoué).
+- Les 296 : le discriminant refus levé / déjà incertain est le **verdict de main** (« assiette à
+  vérifier » = déjà incertain, AV0877 recevait 8 m²), pas son seul booléen.
+
+## Décompte complet sur l'île (21 467, vs `origin/main 954716fd1`)
+
+| catégorie | n |
+|---|---|
+| **hausses** | **6 032** |
+| **refus levés** (main refusait → branche chiffre) | **309** |
+| **déjà incertains chiffrés** (main « à vérifier » → branche chiffre) | **1** |
+| **baisses** | **2 987** |
+| **inchangées** | **7 818** |
+| **refus** | **666** |
+| **« à vérifier »** | **3 653** |
+| **REFUS INTRODUITS** | **1** (BO0312, emplacement réservé — réglementaire) |
+
+- **Les 296 séparés** (LOT 3) : **309 refus levés** + **1 déjà incertain** — ce dernier est bien
+  **AV0877** (main disait « assiette à vérifier », la branche sert 8 m²), le cas même du relecteur.
+- **REFUS INTRODUIT = 1**, réglementaire (BO0312, emplacement réservé épuisant l'assiette).
+- **Hausses hors zone autorisée : 3** (AW0302 +2, AK1159 +28, EW0458 None → 27) — **effet de la
+  règle = 0** au recalcul sans la règle (prudent) pour les trois : dérives de chemin géométrique,
+  pas la règle. **0 hausse RÈGLE hors zone**, invariant tenu.
+- Évolutions vs FIX-8 : la découpe littorale nette et le rouge mesuré sur l'assiette rendent leur
+  chiffre à des parcelles (AT2046, AM0577, AW1235, parcelles littorales hors bande) — « à vérifier »
+  passe de 3 710 à **3 653** ; baisses 2 954 → 2 987 (découpe littorale nette) ; refus introduits
+  inchangés (1).
+
+Le CSV `CONTROLE-INVERSE-FIX6-ILE.csv` (1,99 Mio) porte le recul **non arrondi** côté par côté
+(AS1086 8,25 m), le **chemin servant** (BL0314 repli 3 m, sans détail gabarit), et distingue un
+rejeu sans règle **« sans chiffre »** d'un rejeu **absent**. Conservé en place pour le relecteur.
