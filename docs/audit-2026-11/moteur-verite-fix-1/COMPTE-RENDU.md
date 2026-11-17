@@ -997,3 +997,89 @@ bougé, sans effet sur SDP/cause/verdict).
 Le CSV `CONTROLE-INVERSE-FIX6-ILE.csv` porte UNE ligne par parcelle des 21 467, avec la capacité
 de main et de la branche, les deux verdicts, la cause, le chemin, les niveaux, le recul appliqué,
 la portion servie, et — pour toutes les hausses — le recalcul sans la règle et son effet. Conservé.
+
+---
+
+# MOTEUR-VERITE-FIX-8 — le relecteur valide le décompte, reste sa liste fermée de trois points
+
+Branche `fix/moteur-verite-1` après merge d'`origin/main` (`954716fd1` ; le moteur de faisabilité y
+est inchangé). Un commit par lot. Chaque cas devient un test (`test_moteur_verite_fix8.py`).
+
+## LOT 1 — le littoral se calcule sur la géométrie du scénario (commit 85c1a2840)
+
+Le prorata du terrain entier (FIX-7) était faux dans les deux sens. On DÉCOUPE l'assiette du
+scénario (gabarit : zone d'implantation ; repli : inset au recul servi, clippé U/AU) par la bande
+littorale, et on recalcule sur ce qui reste. **BL0308** : l'assiette (398 m²) est entièrement dans
+la bande (intersection hors bande = 0) → « à vérifier » sans chiffre (le prorata servait 98 m²).
+**BL0040** : l'assiette entièrement hors bande → chiffre PLEIN (le prorata réduisait). Sur l'île, le
+littoral de l'assiette est tout-ou-rien : **23 parcelles gardent leur chiffre plein, 15 passent en
+« à vérifier »**. Assiette restante nulle → à vérifier ; mesure indisponible → on ne vide jamais.
+
+## LOT 2 — un refus exige une absence mesurée (commit 056fada96)
+
+- **(a) Mesure indisponible ≠ assiette vide.** En simulant l'indisponibilité de la mesure hors rouge
+  sur AT2046, on obtenait un refus « terrain exigu » et un zéro ; la porte PPR rouge distingue
+  désormais la mesure RÉUSSIE (hors-rouge ≈ 0 → refus établi) de la mesure ÉCHOUÉE → « capacité à
+  vérifier » avec le motif, jamais un refus non mesuré.
+- **(b) Contact rouge significatif.** AM0577 perdait 171 m² pour une intersection rouge de 0,003 m².
+  Seuil `SEUIL_CONTACT_ROUGE_M2 = 1 m²` (sous le plus petit contact bâti, au-dessus du bruit de
+  numérisation PPR/cadastre), appliqué aux deux chemins : en deçà le rouge est ignoré (AM0577 →
+  171 m²), au-dessus le test hors-rouge s'applique (AT2046 ~3 m² reste « à vérifier »).
+- **(c) BO0312** : le libellé de l'emplacement réservé dit qu'il ÉPUISE l'assiette APRÈS RECULS.
+
+## LOT 3 — une preuve fidèle au calcul (commit 6d9d4bf79)
+
+- **(a) Recul réellement retenu, côté par côté.** Le fichier annonçait le recul d'entrée (AO0308 :
+  3 m) alors que le gabarit retient **6 m** (AS1086 : **8,25 m**, pas 9 m). Le CSV porte
+  `recul_applique_m` = le recul retenu et `recul_par_cote` (voie 3 m · latérale 6 m · fond 6 m…).
+- **(b) Le rejeu « sans la règle » rétablit le retrait PRUDENT de référence** (fraction × faîtage,
+  ce que fait main) au lieu du recul d'entrée. **AN1411** sans-règle = **174 m² = le chiffre de
+  main** (effet de la règle = 2 124 ; géométrie = 0) ; AO0308 = 7 005 = main. Levier de contrôle
+  `gabarit.engine.RETRAIT_PRUDENT_REFERENCE` (faux en production).
+- **(c)** Les 295 chiffres là où main ne chiffrait pas sont séparés : **296 REFUS LEVÉS**, **0 déjà
+  incertain** (main ne servait jamais « à vérifier » là où la branche chiffre — tous des refus levés).
+
+## Décompte complet sur l'île (21 467, vs `origin/main 954716fd1`)
+
+| catégorie | n |
+|---|---|
+| **hausses** | **6 031** |
+| refus levés (main refusait → branche chiffre) | 296 |
+| déjà incertains chiffrés | 0 |
+| **baisses** | **2 958** |
+| **inchangées** | **7 805** |
+| **refus** | **666** |
+| **« à vérifier »** | **3 710** |
+| **REFUS INTRODUITS** | **1** (BO0312, emplacement réservé — réglementaire) |
+
+**Hausses hors zone autorisée : 2** (AW0302 +2, AK1159 +28), effet de la règle = 0 au recalcul sans
+la règle (dérive de chemin géométrique) ; **0 hausse RÈGLE hors zone**. Le CSV
+`CONTROLE-INVERSE-FIX6-ILE.csv` (1,98 Mio) porte une ligne par parcelle avec le recul côté par côté
+et l'effet de la règle (sans-règle = retrait prudent). Conservé.
+
+## LOT 4 — mesure sans rien changer (moteur inchangé)
+
+Décision actée : pas de chiffre de scénario bas pour les parcelles « à vérifier » sans façade
+établie — elles restent « à vérifier ». Mesure seule (`scripts/mesure_594_facades.py`), pour
+dimensionner un chantier ultérieur :
+
+Population « sans façade établie » (verdict « retrait uniforme minimal », le relecteur les comptait
+à 594 dans le sous-ensemble qui avait un chiffre dans main ; l'ensemble complet en compte **1 011**).
+
+**(1) Sans AUCUN front qualifié sur voie — 787 / 1 011**, par commune : Sainte-Marie **422**,
+La Possession **184**, Bras-Panon **164**, Saint-Denis 8, Saint-Joseph 3, et 1 chacune à Entre-Deux,
+Petite-Île, Le Port, La Plaine-des-Palmistes, Sainte-Rose, Salazie. Ce sont les trois communes de la
+garde FIX-5 (« aucune façade sur voie établie ») qui concentrent le sujet.
+
+**(2) En gagneraient un si un côté libre (≥ 3 m) était traité comme voie possible :**
+- **littéral** (un côté qui n'est mitoyen d'AUCUNE parcelle cadastrée, hors cours d'eau et rivage) :
+  **0 / 787**. Le cadastre réunionnais DÉCOUPE les voies en parcelles — tout front de rue est donc
+  « mitoyen » d'une parcelle (la voie-parcelle). Le critère littéral du relecteur ne distingue pas
+  un voisin bâti d'une voie : il rend 0 dans ce cadastre.
+- **utile** (un côté qui ne borde ni BÂTI ni eau/rivage — donc face à du domaine public ou à une
+  voie-parcelle non qualifiée) : **135 / 787**. Ce sont les candidats d'un chantier de qualification
+  de la desserte (reconnaître la voie-parcelle / le domaine public comme front sur voie). Les
+  **652** restants sont entourés de voisins bâtis ou bordés d'eau/rivage — desserte par servitude à
+  établir, pas un simple front à qualifier.
+
+Mesure seule, aucune modification du moteur (`scripts/mesure_594_facades.py`, lecture seule).
