@@ -972,6 +972,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
 
     # ---- Modulation réunionnaise ----
     facteur = 1.0
+    _litt_hors_bande = 1.0   # MOTEUR-VERITE-FIX-7 LOT 3 — part hors bande littorale appliquée AUSSI à la SDP
     if c.agricole_sar:
         # FIX-OPPORTUNITES (correction C — rédhibitoire en zone U) — le RPG (registre parcellaire
         # graphique) est une déclaration d'usage agricole INDICATIVE : en zone CONSTRUCTIBLE (U/AU) il
@@ -1015,10 +1016,11 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                         "capacité chiffrée tant que la limite n'est pas qualifiée.",
                         {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
         facteur = min(facteur, hors_bande)
+        _litt_hors_bande = hors_bande     # FIX-7 LOT 3 — réduit AUSSI la SDP (assiette hors bande)
         avert.append(f"Recul prospectif du trait de côte sur ~{pct} % de la parcelle — projection "
-                     "d'érosion (bande courte/longue), pas une interdiction : capacité calculée sur "
-                     f"la part HORS bande (~{round(hors_bande * 100)} %), limite à vérifier auprès "
-                     "des services de l'État.")
+                     "d'érosion (bande courte/longue), pas une interdiction : surface de plancher "
+                     f"calculée sur l'assiette HORS bande (~{round(hors_bande * 100)} %), limite à "
+                     "vérifier auprès des services de l'État.")
     if c.pente_pct is not None:
         if c.pente_pct >= 30:
             facteur = min(facteur, 0.4)
@@ -1027,6 +1029,14 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
             facteur = min(facteur, 0.7)
             modul.append(f"Pente {c.pente_pct:.0f}% → surcoût, capacité réduite (~×0,7).")
     modul.extend(c.libelles)
+
+    # MOTEUR-VERITE-FIX-7 LOT 3 — la part HORS BANDE littorale réduit AUSSI la SURFACE DE PLANCHER
+    # (c'est une assiette réduite), pas seulement le vendable / les logements. Avant, la SDP restait
+    # identique avec ou sans la bande (BL0308 : 716 m² pour ~155 m² hors bande, soit 622 m² au plus
+    # sur 4 niveaux) — le chiffre ne correspondait pas à l'assiette annoncée. La SDP est désormais
+    # calculée sur l'assiette hors bande ; le seuil de mixité (SDP) et le verdict en découlent.
+    if _litt_hors_bande < 1.0:
+        sdp = sdp * _litt_hors_bande
 
     sol_lo, sol_hi = sol_lo * facteur, sol_hi * facteur
     sol_central = sol_central * facteur            # M144 Lot 1 — le central retenu subit la MÊME modulation
