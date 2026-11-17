@@ -167,9 +167,9 @@ def test_o1_alertes_surface_gatees():
 def test_o2_seuil_sans_arrondi_les_deux_cotes():
     rep = (_SRC / "bilan" / "reperes.py").read_text()
     exc = (_SRC / "bilan" / "excel.py").read_text()
-    # aucun arrondi avant comparaison, dans aucun des deux contrôles :
-    assert "sdp_saisie > sar_val" in rep and "round(sdp_saisie)" not in rep and "round(sar_val)" not in rep
-    assert "{cell_sdp}>{cell_sar}" in exc and "{round(_sar)}" not in exc
+    # LOT R — plus d'arrondi au MÈTRE (595,1 alerte) ; comparaison AU CENTIÈME des deux côtés, même seuil :
+    assert "surface_depasse(sdp_saisie, sar_val)" in rep and "round(sdp_saisie)" not in rep
+    assert "ROUND({cell_sdp},2)>ROUND({cell_sar},2)" in exc and "{round(_sar)}" not in exc
 
 
 def test_o2_garde_fou_decimales_visibles(monkeypatch):

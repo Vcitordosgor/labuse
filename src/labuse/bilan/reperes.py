@@ -15,7 +15,7 @@ from typing import Any, Callable, TypeVar
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from .moteur import fmt_surface_seule, fmt_surfaces_paire   # LOT P — règle d'affichage unique
+from .moteur import fmt_surface_seule, fmt_surfaces_paire, surface_depasse   # LOT P/R — règle unique
 
 T = TypeVar("T")
 
@@ -198,20 +198,21 @@ def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
             alertes.append("Coût de démolition non renseigné — les dépenses sont sous-estimées.")
     # LOT M 3 — MÊME seuil que l'Excel (`SDP > round(surface_à_retenir)`), au mètre près : plus d'écart
     # d'un mètre entre le PDF (ancien `round(sar)+1`) et le tableur.
-    # LOT O 2 / LOT P — comparaison SUR LES DÉCIMALES (aucun arrondi), le MÊME seuil que l'Excel ;
-    # l'alerte affiche les DEUX valeurs avec assez de décimales pour VOIR le dépassement (règle unique
-    # `fmt_surfaces_paire` : 595,01 contre 595, pas 595 contre 595).
+    # LOT O 2 / LOT P / LOT R — comparaison AU CENTIÈME de m² (`surface_depasse`), le MÊME seuil que
+    # l'Excel ; l'alerte affiche les DEUX valeurs arrondies au centième (règle unique `fmt_surfaces_paire`).
+    # Un écart < 0,01 m² n'est pas un dépassement → pas d'alerte ; toute alerte montre deux valeurs
+    # distinctes (595,01 contre 595, jamais 595 contre 595).
     if (sdp_saisie and isinstance(sdp_saisie, (int, float)) and isinstance(sar_val, (int, float))
-            and sdp_saisie > sar_val):
+            and surface_depasse(sdp_saisie, sar_val)):
         _sdp, _sar_txt = fmt_surfaces_paire(sdp_saisie, sar_val)
         alertes.append(
             f"La surface de plancher saisie ({_sdp} m²) dépasse la surface à retenir du "
             f"Dossier ({_sar_txt} m²).")
-    # LOT N 2 / LOT O 2 / LOT P — COHÉRENCE surface vendable / surface de plancher → PDF **et** Excel.
-    # Comparaison sur les DÉCIMALES ; les DEUX valeurs affichées (règle unique) ; SDP nulle/vide aussi
+    # LOT N 2 / LOT O 2 / LOT P / LOT R — COHÉRENCE surface vendable / surface de plancher → PDF **et**
+    # Excel. Comparaison AU CENTIÈME ; les DEUX valeurs affichées (règle unique) ; SDP nulle/vide aussi
     # incohérente.
     if (isinstance(suv_saisie, (int, float)) and suv_saisie > 0
-            and suv_saisie > (sdp_saisie if isinstance(sdp_saisie, (int, float)) else 0.0)):
+            and surface_depasse(suv_saisie, sdp_saisie if isinstance(sdp_saisie, (int, float)) else 0.0)):
         if isinstance(sdp_saisie, (int, float)) and sdp_saisie:
             _suv, _sdp_num = fmt_surfaces_paire(suv_saisie, sdp_saisie)
             _sdp_txt = f"{_sdp_num} m²"
