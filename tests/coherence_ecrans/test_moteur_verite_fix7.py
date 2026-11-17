@@ -89,14 +89,15 @@ def test_lot2_ppr_rouge_trois_situations(app_session):
     # refus : le rouge couvre la partie constructible
     _ctx, f = _res(app_session, "97415000DR0615")
     assert f.constructible is False and f.cause == "terrain_exigu", "DR0615 : rouge couvrant → doit refuser"
-    # doutes → à vérifier, sans chiffre, surface hors rouge mesurée (rouge significatif)
-    for idu in ("97408000AT2046", "97418000AD0423"):
-        _ctx, f = _res(app_session, idu)
-        assert f.constructible is True, f"{idu} : refus alors que le rouge ne prive pas la partie constructible"
-        assert f.cause != "terrain_exigu", f"{idu} : cause terrain_exigu persiste"
-        assert (f.fourchette or {}).get("surface_plancher_m2") is None, f"{idu} : chiffre servi (non chiffré attendu)"
-        v = (f.verdict or "").lower()
-        assert "hors" in v and "rouge" in v, f"{idu} : surface/mention hors rouge absente — {f.verdict}"
+    # doute → à vérifier, sans chiffre : le rouge RECOUPE l'assiette (FIX-9 LOT 2) et la part hors
+    # rouge reste sous le seuil / sans accès. AD0423 (rouge dominant sur l'assiette).
+    # NB AT2046 n'est PLUS ici : FIX-9 LOT 2 a établi que son rouge (3,40 m²) ne recoupe PAS l'assiette
+    # testée (0 m²) → chiffre conservé (cf. test_moteur_verite_fix9::test_lot2_rouge_sur_assiette).
+    _ctx, f = _res(app_session, "97418000AD0423")
+    assert f.constructible is True and f.cause != "terrain_exigu"
+    assert (f.fourchette or {}).get("surface_plancher_m2") is None, "AD0423 : chiffre servi (non chiffré attendu)"
+    v = (f.verdict or "").lower()
+    assert "hors" in v and "rouge" in v, f"AD0423 : surface/mention hors rouge absente — {f.verdict}"
 
 
 # NB — le LOT 3 (FIX-7) appliquait la part hors bande à la SDP en PRORATA du terrain entier ; FIX-8

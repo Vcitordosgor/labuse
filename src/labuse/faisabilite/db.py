@@ -1155,22 +1155,42 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         # par un ER / EBC / portion U/AU minuscule (FIX-1 §6) gardent leur propre motif plus bas.
         hors_rouge_vide = None
         if ppr_rouge and emprise >= SEUIL_EXIGU_M2:
-            # MOTEUR-VERITE-FIX-8 LOT 2 — la zone rouge ne fait perdre un chiffre que si elle TOUCHE
-            # réellement l'assiette. Un contact négligeable (numérisation / limite : AM0577, 0,003 m²)
-            # ne retire aucune aire constructible — seuil de contact SIGNIFICATIF = SEUIL_EXIGU_M2
-            # (sous le plus petit module bâti : en deçà, rien n'est soustrait). Mesure indisponible →
-            # on NE VIDE PAS : on ne décide d'une perte que sur une absence MESURÉE (jamais inventée).
-            _rouge_m2 = 0.0
+            # MOTEUR-VERITE-FIX-9 LOT 2 — la perte du chiffre se fonde sur l'effet MESURÉ sur
+            # l'ASSIETTE DU SCÉNARIO (l'inset au recul servi, clippé U/AU), pas sur la surface rouge
+            # du terrain entier. AT2046 : 3,40 m² de rouge sur la parcelle, 0 m² sur l'assiette → on
+            # ne retire PAS le chiffre, on le conserve avec la mention de la zone rouge. Le contrôle
+            # hors-rouge (≥ 200 m² ∩ voie) ne se déclenche que si le rouge recoupe l'assiette.
+            # PANNE de la mesure rouge → « capacité à vérifier » (ni chiffre ni refus), jamais inventée.
+            _rouge_ass = 0.0
             try:
                 with session.begin_nested():
-                    _rrc = session.execute(_HORS_PPR_ROUGE, {"pid": parcel_id}).first()
-                _rouge_m2 = (float(_rrc.rouge_m2 or 0.0) * k_cont) if _rrc and _rrc.rouge_m2 is not None else 0.0
-            except Exception:  # noqa: BLE001 — mesure du rouge indisponible : contact non établi
-                _rouge_m2 = None
-            if _rouge_m2 is None or _rouge_m2 >= SEUIL_CONTACT_ROUGE_M2:
+                    _ra = session.execute(_ROUGE_SUR_ASSIETTE, {
+                        "pid": parcel_id, "d": args["d"],
+                        "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
+                        "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"]))}).scalar()
+                _rouge_ass = (float(_ra) * k_cont) if _ra is not None else 0.0
+            except Exception:  # noqa: BLE001 — MESURE ROUGE INDISPONIBLE (FIX-9 LOT 2)
+                _rouge_ass = None
+            if _rouge_ass is None:
+                from .engine import faisabilite_capacite_a_verifier
+                ctx.contraintes.libelles.append(
+                    "Zone rouge PPR : la mesure du recoupement avec l'assiette du scénario est "
+                    "indisponible — capacité inconnue, à instruire (ni chiffre ni refus).")
+                return ctx, faisabilite_capacite_a_verifier(
+                    ctx.zone,
+                    "Constructible — capacité à vérifier : la mesure de l'effet de la zone rouge sur "
+                    "l'assiette est indisponible — capacité non chiffrée, à instruire. Ni refus ni chiffre.",
+                    "Mesure zone rouge sur l'assiette indisponible : à vérifier.")
+            if _rouge_ass >= SEUIL_CONTACT_ROUGE_M2:
+                # le rouge recoupe l'assiette → on vérifie que la partie hors rouge reste exploitable.
                 servable, hors_rouge_vide = _hors_rouge_fragment_servable(session, parcel_id, k_cont)
                 if not servable:
                     emprise = 0.0
+            else:
+                # le rouge ne recoupe pas l'assiette du scénario : chiffre CONSERVÉ, avec la mention.
+                ctx.contraintes.libelles.append(
+                    "Parcelle au contact d'une zone rouge du PPR, HORS de l'assiette du scénario "
+                    "(l'emprise rouge reste inconstructible) — capacité conservée.")
         ctx.contraintes.libelles.append(
             "Assiette = zone d'implantation réglementaire (moteur gabarit) : reculs par côté "
             "voie/limites" + (", PPR zone rouge découpée" if ppr_rouge else "") + ".")
@@ -1402,17 +1422,30 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         # chiffre que la cascade excluait (AW1235 6 m², BM0158 111 m², BO0383 102 m²).
         hors_rouge_vide_legacy = None
         if emprise > 0:
+            # MOTEUR-VERITE-FIX-9 LOT 2 — comme le gabarit : la perte du chiffre se fonde sur le rouge
+            # recoupant l'ASSIETTE DU SCÉNARIO (inset au recul servi), pas le terrain entier. Panne →
+            # « capacité à vérifier » (ni chiffre ni refus).
+            _rouge_ass_l = 0.0
             try:
                 with session.begin_nested():
-                    _rrl = session.execute(_HORS_PPR_ROUGE, {"pid": parcel_id}).first()
-                # MOTEUR-VERITE-FIX-8 LOT 2 — contact rouge SIGNIFICATIF (≥ SEUIL_CONTACT_ROUGE_M2 de
-                # la parcelle, échelle contenance) avant d'attribuer une perte au rouge ; un contact
-                # négligeable (numérisation) ne déclenche pas le test hors-rouge.
-                _touche_rouge = (_rrl is not None
-                                 and float(_rrl.rouge_m2 or 0.0) * k_cont >= SEUIL_CONTACT_ROUGE_M2)
-            except Exception:  # noqa: BLE001 — mesure indisponible : emprise conservée (jamais une perte inventée)
-                _touche_rouge = False
-            if _touche_rouge:
+                    _ral = session.execute(_ROUGE_SUR_ASSIETTE, {
+                        "pid": parcel_id, "d": args["d"],
+                        "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
+                        "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"]))}).scalar()
+                _rouge_ass_l = (float(_ral) * k_cont) if _ral is not None else 0.0
+            except Exception:  # noqa: BLE001 — MESURE ROUGE INDISPONIBLE (FIX-9 LOT 2)
+                _rouge_ass_l = None
+            if _rouge_ass_l is None:
+                from .engine import faisabilite_capacite_a_verifier
+                ctx.contraintes.libelles.append(
+                    "Zone rouge PPR : la mesure du recoupement avec l'assiette du scénario est "
+                    "indisponible — capacité inconnue, à instruire (ni chiffre ni refus).")
+                return ctx, faisabilite_capacite_a_verifier(
+                    ctx.zone,
+                    "Constructible — capacité à vérifier : la mesure de l'effet de la zone rouge sur "
+                    "l'assiette est indisponible — capacité non chiffrée, à instruire. Ni refus ni chiffre.",
+                    "Mesure zone rouge sur l'assiette indisponible : à vérifier.")
+            if _rouge_ass_l >= SEUIL_CONTACT_ROUGE_M2:
                 servable_l, hors_rouge_vide_legacy = _hors_rouge_fragment_servable(
                     session, parcel_id, k_cont)
                 if not servable_l:
@@ -2058,6 +2091,25 @@ _HORS_PPR_ROUGE = text(
     "WHERE p.id = :pid AND sl.kind = 'ppr' AND labuse_ppr_couleur(sl.subtype, sl.attrs) <> 'bleu' "
     "  AND ST_Intersects(sl.geom_2975, p.geom_2975) GROUP BY p.geom_2975"
 )
+
+# MOTEUR-VERITE-FIX-9 LOT 2 — surface de PPR rouge recoupant réellement l'ASSIETTE DU SCÉNARIO
+# (l'inset au recul servi, clippé U/AU), pas le terrain entier. AT2046 : 3,40 m² de rouge sur la
+# parcelle mais 0 m² sur l'assiette testée → le chiffre ne doit PAS être retiré. C'est l'effet
+# MESURÉ sur l'assiette qui tranche, pas la surface rouge de la parcelle.
+_ROUGE_SUR_ASSIETTE = text("""
+WITH p AS (SELECT commune, geom_2975 AS pg, ST_Buffer(geom_2975, -:d) AS b FROM parcels WHERE id = :pid),
+uau AS (SELECT ST_Union(z.geom_2975) AS u FROM spatial_layers z, p
+        WHERE z.kind = :zkind AND z.commune = p.commune
+          AND labuse_zone_famille(z.subtype) = ANY(:uau_fams) AND ST_Intersects(z.geom_2975, p.b)),
+ass AS (SELECT CASE WHEN uau.u IS NULL THEN p.b ELSE ST_Intersection(p.b, uau.u) END AS g
+        FROM p LEFT JOIN uau ON TRUE),
+rouge AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(g.geom_2975, p.b))) AS u FROM spatial_layers g, p
+          WHERE g.kind = 'ppr' AND g.commune = p.commune
+            AND labuse_ppr_couleur(g.subtype, g.attrs) <> 'bleu' AND ST_Intersects(g.geom_2975, p.b))
+SELECT ST_Area(ST_Intersection(ass.g,
+         COALESCE((SELECT u FROM rouge), ST_GeomFromText('POLYGON EMPTY', 2975)))) AS rouge_assiette_m2
+FROM ass
+""")
 
 
 def surface_hors_ppr_rouge(session: Session, parcel_id: int, *,

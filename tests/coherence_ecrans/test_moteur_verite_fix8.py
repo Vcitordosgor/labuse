@@ -59,10 +59,13 @@ def test_lot2a_mesure_indisponible_nest_pas_un_vide(app_session, monkeypatch):
     et un zéro ; on doit désormais servir « capacité à vérifier » avec le motif, jamais un refus."""
     from sqlalchemy import text as _t
     import labuse.faisabilite.db as _db
-    monkeypatch.setattr(_db, "_HORS_ROUGE_FRAGMENT", _t("SELECT 1/0 AS m2, NULL AS wkt"))
+    # FIX-9 LOT 2 : AT2046 mesure d'abord le rouge SUR L'ASSIETTE ; une panne de cette mesure doit
+    # rendre « à vérifier » (ni chiffre ni refus), pas un refus « terrain exigu ».
+    monkeypatch.setattr(_db, "_ROUGE_SUR_ASSIETTE", _t("SELECT 1/0 AS rouge_assiette_m2"))
     _ctx, f = _res(app_session, "97408000AT2046")
     assert f.constructible is True and f.cause != "terrain_exigu", \
         "AT2046 : refus prononcé sur une mesure indisponible (absence non mesurée)"
+    assert (f.fourchette or {}).get("surface_plancher_m2") is None
     assert "indisponible" in (f.verdict or "").lower()
 
 
@@ -75,8 +78,9 @@ def test_lot2b_contact_rouge_negligeable_garde_le_chiffre(app_session):
     assert f.constructible is True, "AM0577 : chiffre perdu pour un contact rouge négligeable"
     assert (f.fourchette or {}).get("surface_plancher_m2") is not None, \
         "AM0577 : capacité non chiffrée alors que le rouge est un simple contact de bord"
-    # un rouge SIGNIFICATIF reste traité (AT2046 : ~3 m² → « à vérifier » hors rouge)
-    _ctx, f2 = _res(app_session, "97408000AT2046")
+    # un rouge qui RECOUPE l'assiette reste traité (FIX-9 LOT 2) : AD0423 → « à vérifier » hors rouge.
+    # (AT2046, dont le rouge est hors assiette, garde désormais son chiffre — cf. fix9 test_lot2.)
+    _ctx, f2 = _res(app_session, "97418000AD0423")
     assert (f2.fourchette or {}).get("surface_plancher_m2") is None and f2.constructible is True
 
 

@@ -58,3 +58,36 @@ def test_lot1_panne_mesure_littorale_ni_chiffre_ni_refus(app_session, monkeypatc
     assert f.constructible is True, "panne littorale : ne doit pas refuser"
     assert (f.fourchette or {}).get("surface_plancher_m2") is None, "panne littorale : ne doit pas chiffrer"
     assert "indisponible" in (f.verdict or "").lower()
+
+
+# ─────────────── LOT 2 — zone rouge : la perte du chiffre se fonde sur l'effet mesuré ───────────────
+@pytest.mark.reel
+def test_lot2_rouge_sur_assiette(app_session):
+    """La surface rouge du terrain entier déclenche le contrôle mais ne le tranche pas : le chiffre
+    n'est retiré que si le rouge recoupe l'ASSIETTE du scénario. AT2046 (3,40 m² de rouge sur la
+    parcelle, 0 m² sur l'assiette testée) garde son chiffre, avec la mention de la zone rouge. AD0423
+    (rouge recoupant l'assiette, part hors rouge sous le seuil) reste « à vérifier ». DR0615 (rouge
+    couvrant l'assiette) reste un refus."""
+    _ctx, f = _res(app_session, "97408000AT2046")
+    assert f.constructible is True and (f.fourchette or {}).get("surface_plancher_m2") is not None, \
+        "AT2046 : chiffre retiré alors que le rouge ne recoupe pas l'assiette testée"
+    assert any("hors de l'assiette" in a.lower() for a in (_ctx.contraintes.libelles or [])), \
+        "AT2046 : mention « zone rouge hors de l'assiette » absente"
+    _ctx, f = _res(app_session, "97418000AD0423")
+    assert f.constructible is True and (f.fourchette or {}).get("surface_plancher_m2") is None, \
+        "AD0423 : rouge recoupant l'assiette → doit rester « à vérifier »"
+    _ctx, f = _res(app_session, "97415000DR0615")
+    assert f.constructible is False and f.cause == "terrain_exigu", "DR0615 : rouge couvrant → refus"
+
+
+@pytest.mark.reel
+def test_lot2_panne_mesure_rouge_ni_chiffre_ni_refus(app_session, monkeypatch):
+    """Une panne de la mesure de la zone rouge sur l'assiette ne doit rendre NI un chiffre NI un
+    refus : capacité inconnue → « capacité à vérifier »."""
+    from sqlalchemy import text as _t
+    import labuse.faisabilite.db as _db
+    monkeypatch.setattr(_db, "_ROUGE_SUR_ASSIETTE", _t("SELECT 1/0 AS rouge_assiette_m2"))
+    _ctx, f = _res(app_session, "97408000AT2046")
+    assert f.constructible is True, "panne rouge : ne doit pas refuser"
+    assert (f.fourchette or {}).get("surface_plancher_m2") is None, "panne rouge : ne doit pas chiffrer"
+    assert "indisponible" in (f.verdict or "").lower()

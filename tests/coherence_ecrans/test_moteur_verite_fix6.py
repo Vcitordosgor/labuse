@@ -51,16 +51,19 @@ def test_lot2_repli_niveau_par_niveau(app_session):
 
 
 def test_lot2_repli_rouge_et_plu(app_session):
-    """AW1235/BM0158/BO0383 ne servent plus leur chiffre repli (la cascade l'excluait). Mais
-    FIX-7 LOT 2 : leurs parties hors rouge en U/AU (~87, 144, 194 m²) sont SOUS le seuil interne
-    de 200 m² — convention LABUSE, pas une règle. Ce n'est donc pas un refus mais « capacité à
-    vérifier », avec la surface hors rouge mesurée (le chiffre n'est pas servi : non chiffré)."""
-    for idu in ("97405000AW1235", "97410000BM0158", "97409000BO0383"):
+    """FIX-9 LOT 2 — le rouge ne retire le chiffre que s'il RECOUPE l'assiette du scénario. BM0158 et
+    BO0383 (rouge recoupant l'assiette, part hors rouge ~144, 194 m² sous le seuil 200) restent « à
+    vérifier ». AW1235, dont le rouge NE recoupe pas son assiette insétée (0 m²), garde son chiffre —
+    ce n'était jamais le rouge qui le privait. (Aucun des trois n'est refusé : le rouge ne couvre pas
+    leur partie constructible.)"""
+    for idu in ("97410000BM0158", "97409000BO0383"):
         f = _res(app_session, idu)
-        assert f.constructible is True, f"{idu} : refus alors que le rouge ne prive pas la partie constructible"
-        assert (f.fourchette or {}).get("surface_plancher_m2") is None, f"{idu} : chiffre servi malgré l'exclusion cascade"
+        assert f.constructible is True and (f.fourchette or {}).get("surface_plancher_m2") is None, \
+            f"{idu} : rouge recoupant l'assiette → « à vérifier » attendu"
         assert any("hors" in a.lower() and "rouge" in a.lower() for a in (f.avertissements or [])), \
             f"{idu} : surface hors rouge non mentionnée"
+    f = _res(app_session, "97405000AW1235")   # rouge hors assiette → chiffre conservé
+    assert f.constructible is True and f.cause != "terrain_exigu", "AW1235 : refus injustifié"
 
 
 # LOT 3 — réserves et libellés.

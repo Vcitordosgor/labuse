@@ -97,6 +97,13 @@ class _Sess:
     def execute(self, *a, **k):
         return _Res()
 
+    # FIX-9 — le moteur isole les mesures géométriques (littoral, zone rouge) dans un SAVEPOINT ;
+    # le stub expose un `begin_nested` neutre (sinon une panne de savepoint serait prise pour une
+    # panne de mesure → « à vérifier », alors que le test porte sur le hook prospect).
+    def begin_nested(self):
+        import contextlib
+        return contextlib.nullcontext()
+
 
 def _ctx():
     c = type("Ctx", (), {})()
