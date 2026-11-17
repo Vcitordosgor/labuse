@@ -67,9 +67,16 @@ def build_liste() -> None:
 
 
 def _apply_sansregle() -> None:
-    """Désactive la RÈGLE niveau-par-niveau pour mesurer son effet : ouvertures en limite fermées
-    + formule de hauteur retirée → le gabarit/repli retombe sur le retrait prudent uniforme (main)."""
+    """MOTEUR-VERITE-FIX-8 LOT 3 — rejeu « sans la règle » : on RÉTABLIT le retrait PRUDENT de
+    référence (fraction × faîtage de la zone, ce que fait main), au lieu de retirer la formule (qui
+    retombait à tort sur le minimum d'entrée, 3 m, et gardait donc la géométrie de la branche). Ainsi
+    l'écart (branche − sans règle) isole l'effet de la RÈGLE niveau-par-niveau, et (sans règle − main)
+    les changements de géométrie. On ferme aussi les ouvertures en limite, et on débranche le scénario
+    niveau-par-niveau du repli (il retombe sur le retrait prudent faîtage)."""
     import labuse.gabarit.builder as B
+    import labuse.gabarit.engine as E
+    E.RETRAIT_PRUDENT_REFERENCE = True              # gabarit → recul prudent (fraction × faîtage)
+    B.scenario_niveaux_autorise = lambda *a, **k: False   # repli → retrait prudent faîtage
     orig_dec = B.analyser_condition_implantation
 
     def _fermee(imp, lg, su):
@@ -80,7 +87,6 @@ def _apply_sansregle() -> None:
             pass
         return d
     B.analyser_condition_implantation = _fermee
-    B._fraction_hauteur_formule = lambda f: None
 
 
 def rejeu(tag: str, sansregle: bool = False, subset: str | None = None) -> None:
@@ -102,7 +108,8 @@ def rejeu(tag: str, sansregle: bool = False, subset: str | None = None) -> None:
         if idu in done:
             continue
         rec = {"idu": idu, "sdp": None, "constructible": None, "cause": None, "zone": None,
-               "verdict": None, "chemin": None, "niveaux": None, "recul": None, "portion": None}
+               "verdict": None, "chemin": None, "niveaux": None, "recul": None, "portion": None,
+               "recul_par_cote": None}
         pid = s.execute(text("select id from parcels where idu=:i"), {"i": idu}).scalar()
         if pid is not None:
             try:
@@ -114,7 +121,8 @@ def rejeu(tag: str, sansregle: bool = False, subset: str | None = None) -> None:
                            chemin=getattr(ctx, "assiette_source", None),
                            niveaux=getattr(ctx, "niveaux_servis", None) or fr.get("niveaux_max"),
                            recul=getattr(ctx, "recul_servi_m", None),
-                           portion=getattr(ctx, "portion_servie_m2", None))
+                           portion=getattr(ctx, "portion_servie_m2", None),
+                           recul_par_cote=getattr(ctx, "recul_par_cote", None))
             except Exception as e:  # noqa: BLE001
                 rec["cause"] = f"ERREUR:{str(e)[:40]}"
         (out / f"{idu}.json").write_text(json.dumps(rec))
@@ -166,14 +174,16 @@ def compare() -> None:
                 categorie = "refus_introduit"
                 refus_introduits[new.get("cause") or "?"] += 1
         elif so is None:
-            categorie = "hausse" if not constr_old else "hausse"   # chiffre là où main 0/refus → hausse
-            categorie = "chiffre_vs_refus"
+            # MOTEUR-VERITE-FIX-8 LOT 3 — chiffre là où main ne chiffrait pas : on SÉPARE le REFUS
+            # LEVÉ (main inconstructible → la branche chiffre) du verdict DÉJÀ INCERTAIN (main « à
+            # vérifier », sans chiffre, que la branche chiffre).
+            categorie = "incertain_chiffre" if constr_old else "refus_leve"
         else:
             d = float(sn) - float(so)
             categorie = "hausse" if d > 0.5 else ("baisse" if d < -0.5 else "inchangee")
         cat[categorie] += 1
-        # hausses (delta sur chiffre commun, ou chiffre vs main refus)
-        if categorie in ("hausse", "chiffre_vs_refus") and sn is not None:
+        # hausses (delta sur chiffre commun, ou chiffre vs main refus/incertain)
+        if categorie in ("hausse", "refus_leve", "incertain_chiffre") and sn is not None:
             d = round(float(sn) - float(so)) if so is not None else round(float(sn))
             if d > 0.5:
                 hausses.append((idu, zone, so, sn, d, autorisee))
@@ -199,6 +209,7 @@ def compare() -> None:
                      new.get("cause") or "", new.get("chemin") or "",
                      new.get("niveaux") if new.get("niveaux") is not None else "",
                      new.get("recul") if new.get("recul") is not None else "",
+                     new.get("recul_par_cote") or "",
                      new.get("portion") if new.get("portion") is not None else "",
                      ssr if ssr is not None else "", eff,
                      "oui" if autorisee else "NON", categorie])
@@ -206,7 +217,7 @@ def compare() -> None:
         w = csv.writer(fh, delimiter=";", quoting=csv.QUOTE_MINIMAL)
         w.writerow(["idu", "zone", "sdp_main", "sdp_branche", "verdict_main", "verdict_branche",
                     "cause_branche", "chemin_branche", "niveaux_branche", "recul_applique_m",
-                    "portion_servie_m2", "sdp_sans_regle", "effet_regle_m2",
+                    "recul_par_cote", "portion_servie_m2", "sdp_sans_regle", "effet_regle_m2",
                     "zone_autorisee", "categorie"])
         w.writerows(sorted(rows))
     # hors-zone : RÈGLE (effet > 2 m²) vs dérive de chemin géométrique (effet ~nul)
@@ -221,7 +232,8 @@ def compare() -> None:
           f"({len(autor_set)} zones autorisées + {len(liste['echantillon'])} graine fixe)")
     print(f"  CSV complet : {len([r for r in rows])} lignes → {OUT.name}")
     print("  DÉCOMPTE :")
-    for k in ("hausse", "chiffre_vs_refus", "baisse", "inchangee", "refus", "a_verifier", "refus_introduit"):
+    for k in ("hausse", "refus_leve", "incertain_chiffre", "baisse", "inchangee",
+              "refus", "a_verifier", "refus_introduit"):
         print(f"    {k:18s} : {cat.get(k, 0)}")
     print(f"  HAUSSES hors zones autorisées : {len(hors_zone)} — "
           f"dont RÈGLE {len(hz_regle)}, dérive de chemin géométrique {len(hz_geom)}")

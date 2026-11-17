@@ -97,6 +97,7 @@ class ParcelContext:
     recul_servi_m: float | None = None
     niveaux_servis: int | None = None
     portion_servie_m2: float | None = None
+    recul_par_cote: str | None = None   # FIX-8 LOT 3 — recul retenu CÔTÉ PAR CÔTÉ (gabarit)
 
     @property
     def terrain_sur_dessin(self) -> float:
@@ -1744,7 +1745,28 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # recul séparatif appliqué, niveaux servis, portion U/AU servie. Jugé sur le chemin, pas sur
     # le recul d'entrée (relecteur AN1434 : 6 m appliqués au repli, pas 3 m).
     ctx.assiette_source = assiette_source
-    ctx.recul_servi_m = round(float(recul), 2) if isinstance(recul, (int, float)) else None
+    # MOTEUR-VERITE-FIX-8 LOT 3 — recul RÉELLEMENT retenu par le gabarit, CÔTÉ PAR CÔTÉ (le scalaire
+    # d'entrée ne suffit pas : AO0308 gabarit retient 6 m, pas 3 m). Voie = recul propre du côté ;
+    # séparatives / fond = recul retenu du scénario (reculSepRetenuM). Repli : recul uniforme servi.
+    _rsep_ret = getattr(gab[1], "reculSepRetenuM", None) if gab is not None else None
+    ctx.recul_servi_m = (round(float(_rsep_ret), 2) if isinstance(_rsep_ret, (int, float))
+                         else round(float(recul), 2) if isinstance(recul, (int, float)) else None)
+    _par_cote = None
+    if gab is not None:
+        try:
+            _lbl = {"road": "voie", "side": "latérale", "rear": "fond"}
+            _acc = {}
+            for _sb in (gab[0].input.setbacks or []):
+                _ty = _lbl.get(_sb.type or "", _sb.type or "?")
+                _rv = (_rsep_ret if (_sb.ruleId == "limite-sep" and _rsep_ret is not None)
+                       else _sb.setbackM)
+                if isinstance(_rv, (int, float)):
+                    _acc.setdefault(_ty, set()).add(round(float(_rv), 1))
+            _par_cote = " · ".join(f"{k} {'/'.join(f'{v:g}' for v in sorted(vs))} m"
+                                   for k, vs in _acc.items()) or None
+        except Exception:  # noqa: BLE001 — forme inattendue : recul par côté non renseigné
+            _par_cote = None
+    ctx.recul_par_cote = _par_cote
     ctx.niveaux_servis = extras.get("niveaux_retenus") or (_f_cap.fourchette or {}).get("niveaux_max")
     ctx.portion_servie_m2 = (round(sous_zone_uau_m2 * k_cont)
                              if sous_zone_uau_m2 is not None else None)

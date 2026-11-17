@@ -574,7 +574,11 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                         fraction=_frac_h, minimumM=float(recul_sep), etageM=_etage,
                         niveauxMax=_nmax, margeM=_marge,
                         reference=_h_ref_type or "egout",
-                        formule=str(getattr(zr, "recul_limites_formule", "") or ""))
+                        formule=str(getattr(zr, "recul_limites_formule", "") or ""),
+                        # FIX-8 LOT 3 — faîtage maximal de la zone (prudent de référence, main) ;
+                        # faute de faîtage fixé, l'égout borne déjà la hauteur réglementaire.
+                        hauteurReferenceM=(float(haut) if haut is not None
+                                           else float(egout) if egout is not None else None))
                     _ref_lbl = ("hauteur totale de façade du bâtiment envisagé "
                                 f"(n × {_etage:g} m + {_marge:g} m de toiture/acrotère)"
                                 if _marge else "égout du bâtiment envisagé")

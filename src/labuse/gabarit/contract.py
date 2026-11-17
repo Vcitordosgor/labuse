@@ -64,6 +64,10 @@ class ReculSepFormule(BaseModel):
     #  = n × etageM + margeM ; 0 pour la référence égout (H = n × etageM)
     reference: str = "egout"             # 'egout' | 'hauteur_totale_facade' (pour l'affichage)
     formule: Optional[str] = None        # texte de la règle, pour l'affichage
+    # MOTEUR-VERITE-FIX-8 LOT 3 — hauteur de RÉFÉRENCE PRUDENTE (faîtage maximal de la zone) : sert
+    # au rejeu de contrôle « sans la règle » à rétablir le retrait prudent (fraction × faîtage, ce
+    # que fait main), pour séparer l'effet de la règle niveau-par-niveau des changements de géométrie.
+    hauteurReferenceM: Optional[float] = None
 
 
 class MaxFootprint(BaseModel):

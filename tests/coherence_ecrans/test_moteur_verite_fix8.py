@@ -89,3 +89,40 @@ def test_lot2c_libelle_emplacement_reserve(app_session):
     v = (f.verdict or "").lower()
     assert "après reculs" in v and "couvre la parcelle" not in v and "couvrant la parcelle" not in v, \
         f"BO0312 : libellé ER non conforme — {f.verdict}"
+
+
+# ─────────────── LOT 3 — une preuve fidèle au calcul ───────────────
+@pytest.mark.reel
+def test_lot3a_recul_reellement_retenu_cote_par_cote(app_session):
+    """Le recul exposé est celui RÉELLEMENT retenu par le gabarit, côté par côté — pas le recul
+    d'entrée. AO0308 : le gabarit retient 6 m sur les séparatives (pas 3 m) ; AS1086 : 8,25 m
+    (pas 9 m). La voie garde son propre recul."""
+    _ctx, f = _res(app_session, "97408000AO0308")
+    assert abs((_ctx.recul_servi_m or 0) - 6.0) < 0.2, f"AO0308 : recul retenu {_ctx.recul_servi_m} ≠ 6 m"
+    assert "latérale 6" in (_ctx.recul_par_cote or ""), f"AO0308 : côté par côté — {_ctx.recul_par_cote}"
+    _ctx, f = _res(app_session, "97418000AS1086")
+    assert abs((_ctx.recul_servi_m or 0) - 8.25) < 0.2, f"AS1086 : recul retenu {_ctx.recul_servi_m} ≠ 8,25 m"
+
+
+@pytest.mark.reel
+def test_lot3b_sans_regle_retablit_le_retrait_prudent(app_session):
+    """Le rejeu de contrôle « sans la règle » rétablit le retrait PRUDENT de référence (fraction ×
+    faîtage, ce que fait main), pas le recul d'entrée. Sur AN1411 (La Possession, rule niveau-par-
+    niveau), la capacité tombe au chiffre de main (~174 m²) avec le retrait prudent — ce qui isole
+    l'effet de la règle (la branche sert 2 298 m²) des changements de géométrie (nuls ici)."""
+    import labuse.gabarit.engine as _E
+    from labuse.faisabilite.db import parcel_faisabilite
+    pid = app_session.execute(text("SELECT id FROM parcels WHERE idu='97408000AN1411'")).scalar()
+    if pid is None:
+        pytest.skip("AN1411 absente")
+    _ctx, f_regle = parcel_faisabilite(app_session, pid)
+    sdp_regle = (f_regle.fourchette or {}).get("surface_plancher_m2")
+    _E.RETRAIT_PRUDENT_REFERENCE = True
+    try:
+        _ctx, f_prud = parcel_faisabilite(app_session, pid)
+    finally:
+        _E.RETRAIT_PRUDENT_REFERENCE = False
+    sdp_prud = (f_prud.fourchette or {}).get("surface_plancher_m2")
+    assert sdp_regle and sdp_prud and sdp_prud < sdp_regle, \
+        f"AN1411 : le retrait prudent ne réduit pas (règle {sdp_regle}, prudent {sdp_prud})"
+    assert sdp_prud <= 200, f"AN1411 : retrait prudent {sdp_prud} m² loin du chiffre de main (~174)"
