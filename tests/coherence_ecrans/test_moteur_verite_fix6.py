@@ -25,9 +25,10 @@ def _res(app_session, idu: str):
 
 # LOT 1 — refus réglementaires/établis : la parcelle NE DOIT PAS ressortir « constructible ».
 #   (idu, cause attendue approximative)
+# NB CG0875 (Saint-Leu UC, 92 m²) n'est PLUS un refus : la zone admet l'implantation en limite
+# (≤ 10 m), l'assiette tient à la limite — LOT 7 la requalifie « capacité à vérifier » (cf. ci-dessous).
 REFUS = [
     ("97418000AC1634", "habitat_interdit"),   # Sainte-Marie UEm, 20 m² : habitat interdit AVANT micro-garde
-    ("97413000CG0875", "terrain_exigu"),      # Saint-Leu, 92 m², 0 m² net : refus établi, pas « à vérifier »
 ]
 
 
@@ -50,12 +51,16 @@ def test_lot2_repli_niveau_par_niveau(app_session):
 
 
 def test_lot2_repli_rouge_et_plu(app_session):
-    """Le repli applique le test conjoint zone rouge ∩ PLU : la partie hors rouge doit être
-    exploitable (≥ 200 m² ∩ U/AU, accès voie). AW1235/BM0158/BO0383 servaient un chiffre que
-    la cascade excluait — ils ferment désormais."""
+    """AW1235/BM0158/BO0383 ne servent plus leur chiffre repli (la cascade l'excluait). Mais
+    FIX-7 LOT 2 : leurs parties hors rouge en U/AU (~87, 144, 194 m²) sont SOUS le seuil interne
+    de 200 m² — convention LABUSE, pas une règle. Ce n'est donc pas un refus mais « capacité à
+    vérifier », avec la surface hors rouge mesurée (le chiffre n'est pas servi : non chiffré)."""
     for idu in ("97405000AW1235", "97410000BM0158", "97409000BO0383"):
         f = _res(app_session, idu)
-        assert f.constructible is False, f"{idu} : repli sert encore un chiffre exclu par la cascade"
+        assert f.constructible is True, f"{idu} : refus alors que le rouge ne prive pas la partie constructible"
+        assert (f.fourchette or {}).get("surface_plancher_m2") is None, f"{idu} : chiffre servi malgré l'exclusion cascade"
+        assert any("hors" in a.lower() and "rouge" in a.lower() for a in (f.avertissements or [])), \
+            f"{idu} : surface hors rouge non mentionnée"
 
 
 # LOT 3 — réserves et libellés.
@@ -119,10 +124,28 @@ def test_lot6_faux_exigu_devient_a_verifier(app_session):
 
 
 def test_lot6_vrai_exigu_et_refus_reglementaire_restent(app_session):
-    """Un terrain où le scénario favorable (recul minimal) vide AUSSI l'assiette reste exigu ;
-    un refus réglementaire reste un refus (la référence prudente ne crée pas le refus, mais ne
-    le lève pas non plus)."""
-    f = _res(app_session, "97413000CG0875")   # 92 m², vide même au recul minimal
+    """Les refus qui demeurent : l'emprise rouge COUVRE la partie constructible (DR0615, Saint-Paul
+    U6c, hors rouge ≈ 0 m² — FIX-7 LOT 2, seule situation rouge qui fonde un refus), et le refus
+    réglementaire (AC1634, habitat interdit). La référence prudente ne crée ni ne lève le refus.
+    NB AD0982 (72 % rouge) n'est PLUS un refus : sa partie hors rouge n'est pas négligeable."""
+    f = _res(app_session, "97415000DR0615")   # ~100 % rouge : hors rouge négligeable → refus établi
     assert f.constructible is False and f.cause == "terrain_exigu"
     f = _res(app_session, "97418000AC1634")   # habitat interdit
     assert f.constructible is False and f.cause == "habitat_interdit"
+
+
+# LOT 7 — implantation en limite / à l'alignement : une assiette vidée par le retrait prudent mais
+# qui TIENT à la limite n'est jamais un refus ; c'est « capacité à vérifier » avec la mention limite.
+def test_lot7_implantation_en_limite_devient_a_verifier(app_session):
+    """AO0709 (Le Port Ud, 84 m²) et CG0875 (Saint-Leu UC, 92 m²) : le retrait séparatif vide
+    l'assiette, mais le règlement admet l'implantation en limite / à l'alignement et l'assiette
+    tient à la limite (recul 0). Verdict « constructible, capacité à vérifier », jamais exigu ;
+    aucune capacité chiffrée (on ne surestime pas), mention d'implantation en limite portée."""
+    for idu in ("97407000AO0709", "97413000CG0875"):
+        f = _res(app_session, idu)
+        assert f.constructible is True, f"{idu} : faux terrain exigu en zone à implantation en limite"
+        assert (f.cause or "") != "terrain_exigu"
+        assert (f.fourchette or {}).get("surface_plancher_m2") is None, \
+            f"{idu} : capacité chiffrée alors que seule l'implantation en limite tient (surestimation)"
+        assert any("limite" in a.lower() for a in (f.avertissements or [])) or "limite" in (f.verdict or "").lower(), \
+            f"{idu} : mention d'implantation en limite absente"

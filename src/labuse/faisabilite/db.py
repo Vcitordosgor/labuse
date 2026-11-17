@@ -562,13 +562,18 @@ def _assiette_gabarit(session: Session, idu: str):
     from ..gabarit.engine import compute_gabarit
     build = build_gabarit_input(session, idu)
     if build is None:
-        return None, ["parcelle/zone introuvable ou géométrie de parcelle indisponible"]
+        return None, ["parcelle/zone introuvable ou géométrie de parcelle indisponible"], {}
+    # MOTEUR-VERITE-FIX-6 LOT 7 — le RACCORDEMENT (dont les mentions d'implantation en limite /
+    # alignement) est rendu MÊME quand le gabarit ne sert pas la parcelle (repli), pour que la
+    # permission d'implantation en limite soit connue sur les deux chemins (le repli ne recalcule
+    # pas le raccordement). Sans quoi AO0709 (Le Port Ud, repli) perdait la mention.
+    racc = build.raccordement or {}
     if build.blocking:
-        return None, list(build.blocking)
+        return None, list(build.blocking), racc
     res = compute_gabarit(build.input)
     if res.status != "ok":
-        return None, [f"gabarit:{res.status}"]
-    return (build, res), []
+        return None, [f"gabarit:{res.status}"], racc
+    return (build, res), [], racc
 
 
 # RESIDUEL-2 — un repli est QUALIFIÉ (il applique provablement les règles du cas) uniquement quand
@@ -978,7 +983,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # ZONE D'IMPLANTATION du gabarit (reculs par côté, PPR rouge découpé, morceau constructible
     # si à cheval) quand le gabarit sert la parcelle ; sinon chemin legacy inchangé, et la
     # provenance est ÉCRITE (`assiette_source`) — pas de trou, pas de mensonge.
-    gab, _blocages = _assiette_gabarit(session, ctx.idu)
+    gab, _blocages, _racc_early = _assiette_gabarit(session, ctx.idu)
     # RESIDUEL-2 — provenance EXACTE : gabarit, repli QUALIFIÉ (motifs purement « limites non
     # qualifiées » → règles provablement appliquées), ou repli NON qualifié (capacité provisoire).
     if gab is not None:
@@ -992,7 +997,10 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # surface du terrain et que les proportions tiennent. Les FORMES (GeoJSON, reculs, intersections)
     # restent calculées sur le dessin ; seules leurs AIRES scalaires sont ré-échelonnées ici.
     k_cont = ctx.terrain_sur_dessin
-    implantation_mentions: list = []   # MOTEUR-VERITE-FIX-1 (LOT 2) — rempli par le chemin gabarit
+    # MOTEUR-VERITE-FIX-1 (LOT 2) / FIX-6 LOT 7 — mentions d'implantation en limite / alignement,
+    # renseignées DÈS ICI depuis le raccordement rendu par `_assiette_gabarit` (gabarit ET repli) :
+    # la permission d'implantation en limite est une propriété de ZONE, connue quel que soit le chemin.
+    implantation_mentions: list = list((_racc_early.get("implantation") or {}).get("mentions") or [])
     ppr_rouge_pct = None               # MOTEUR-VERITE-FIX-1 (LOT 3, V6) — part rouge mesurée (vidage)
     niveaux_repli = None               # MOTEUR-VERITE-FIX-6 LOT 2 — niveaux du scénario niveau-par-niveau au repli
     reserve_facade = None              # MOTEUR-VERITE-FIX-6 LOT 5 — réserve « accès à vérifier » (façade < 3 m)
@@ -1338,6 +1346,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # ppr_rouge) : l'assiette nette du ré-examen IGNORE le rouge et RESSUSCITAIT une capacité
     # sans la découpe (DB0325 25 → 59, DD0838, AH0200, AR1105 — hausses hors liste détectées
     # par le contrôle inverse). Le vidage rouge est une RÈGLE, pas un effondrement géométrique.
+    _exigu_pending = None   # libellé « exigu confirmé » différé : écrit après la porte LOT 6/7 (cf. infra)
     if (emprise < SEUIL_EXIGU_M2 and _exigu_fix_actif()
             and not str(vide_raison or "").startswith("hors_rouge")
             and vide_raison != "ppr_rouge"):
@@ -1363,16 +1372,73 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 f"Assiette à vérifier (EXIGU-FIX-1) : aucune emprise nette fiable établie sur une "
                 f"parcelle large (~{rex['parc_larg']:.0f} m) — contraintes superposées ou portion "
                 "constructible à confirmer. Ni capacité ni « trop étroit » affirmés.")
-        else:  # 'exigu' — prouvé inexploitable
-            # MOTEUR-VERITE-FIX-6 LOT 1 — un refus établi ne s'efface jamais : quand la preuve
-            # géométrique confirme ~0 m² net exploitable sur une parcelle étroite, la mention
-            # « implantation en limite sous conditions » ne la rescape PAS (CG0875 Saint-Leu, 92 m²,
-            # 0 m² d'emprise, que main refusait). On rétablit le vrai motif (reculs) → verdict ferme.
+        else:  # 'exigu' — ~0 m² net au recul servi ; le verdict n'est PAS encore ferme
+            # MOTEUR-VERITE-FIX-6 LOT 1 — on rétablit le vrai motif (reculs) pour que le refus établi
+            # ne s'efface pas par un simple libellé. Mais le caractère exigu reste SOUMIS au scénario
+            # le plus favorable (LOT 6) et à l'implantation en limite / alignement (LOT 7) : la preuve
+            # « ~0 m² net » est mesurée AU RECUL SERVI, pas à la limite. Le libellé « exigu confirmé »
+            # n'est donc écrit qu'APRÈS la porte, si elle n'a pas requalifié en « capacité à vérifier ».
             if vide_raison == "limite_conditions":
                 vide_raison = "reculs"
-            ctx.contraintes.libelles.append(
+            _exigu_pending = (
                 f"Terrain exigu confirmé (EXIGU-FIX-1) : plus grand morceau net ~{rex['net_m2']:.0f} m², "
                 f"largeur ~{rex['net_larg']:.1f} m — sous le seuil constructible (preuve géométrique).")
+
+    # MOTEUR-VERITE-FIX-7 LOT 2 — PPR ROUGE : TROIS SITUATIONS, TROIS LIBELLÉS. L'emprise rouge est
+    # inconstructible — mais c'est la SEULE qui fonde un refus, et seulement si elle couvre la partie
+    # constructible. L'absence d'accès hors rouge et le seuil interne de 200 m² (convention LABUSE,
+    # pas une règle) sont des DOUTES à instruire → « capacité à vérifier », avec la surface hors rouge
+    # MESURÉE. Le test ne refuse pas une parcelle que le rouge ne prive pas de sa partie constructible
+    # (AT2046 : 112 m² hors rouge au contact voie ; AM0577 : 425 m², accès à établir ; AD0423 : 318 m²
+    # d'un seul tenant au contact voie). Le refus ne demeure que si le hors-rouge est négligeable.
+    if (emprise < SEUIL_EXIGU_M2
+            and (str(vide_raison or "") == "ppr_rouge"
+                 or str(vide_raison or "").startswith("hors_rouge"))):
+        from .engine import faisabilite_capacite_a_verifier
+        try:
+            with session.begin_nested():
+                _frag = session.execute(_HORS_ROUGE_FRAGMENT, {"pid": parcel_id}).first()
+            _frag_m2 = (float(_frag.m2) * k_cont) if _frag and _frag.m2 is not None else 0.0
+            _frag_wkt = _frag.wkt if _frag is not None else None
+        except Exception:  # noqa: BLE001 — géométrie pathologique : hors-rouge non établi
+            _frag_m2, _frag_wkt = 0.0, None
+        if _frag_m2 >= SEUIL_EXIGU_M2:
+            # une partie constructible hors rouge subsiste : le rouge ne prive pas la parcelle.
+            _acces = None
+            try:
+                if _frag_wkt is not None:
+                    from ..gabarit.limites import classify_parcel_limits
+                    with session.begin_nested():
+                        _lim = classify_parcel_limits(session, parcel_id, sub_geom_wkt=_frag_wkt,
+                                                      emprises_publiques=True, voies_privees=True)
+                    _acces = bool(_lim and _lim.has_voie)
+            except Exception:  # noqa: BLE001 — accès indéterminé : traité comme un doute d'accès
+                _acces = None
+            if _acces is False:
+                _doute = ("l'accès hors zone rouge n'est pas établi (aucune voie au contact du "
+                          "morceau hors rouge) — à instruire")
+                _res_lbl = "hors rouge sans accès établi"
+            elif _frag_m2 < SEUIL_HORS_PPR_ROUGE_M2:
+                _doute = (f"la partie hors rouge est sous le seuil interne de "
+                          f"{SEUIL_HORS_PPR_ROUGE_M2:.0f} m² (convention LABUSE, pas une règle) — à instruire")
+                _res_lbl = "hors rouge sous le seuil interne (convention)"
+            else:
+                _doute = ("la partie hors rouge d'un seul tenant est au contact de la voie ; "
+                          "l'assiette aux retraits reste à confirmer")
+                _res_lbl = "hors rouge exploitable, assiette à confirmer"
+            ctx.contraintes.libelles.append(
+                f"PPR zone rouge : l'emprise rouge est inconstructible, mais {_doute}. Surface hors "
+                f"zone rouge mesurée : ~{_frag_m2:.0f} m² (foncier brut, hors reculs).")
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                "Constructible — capacité à vérifier : l'emprise en zone rouge PPR est inconstructible, "
+                f"mais {_doute}. Surface hors zone rouge : environ {_frag_m2:.0f} m² (foncier brut). "
+                "Capacité non chiffrée, à instruire — ce n'est pas un refus de toute la parcelle.",
+                f"PPR rouge : {_res_lbl} (~{_frag_m2:.0f} m² hors rouge), à vérifier.")
+        # hors-rouge négligeable : l'emprise rouge couvre la partie constructible → refus établi.
+        ctx.contraintes.libelles.append(
+            "PPR zone rouge : l'emprise constructible de la parcelle est couverte par la zone rouge "
+            "(partie hors rouge négligeable) — inconstructible.")
 
     # MOTEUR-VERITE-FIX-6 LOT 6 — « TROP EXIGU » VEUT DIRE QUE RIEN NE TIENT. Un refus pour
     # terrain exigu se prononce avec le scénario le PLUS FAVORABLE que le règlement permet :
@@ -1389,34 +1455,67 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         # venir du gabarit PAR CÔTÉ (recul voie + découpe) qui s'effondre là où l'inset uniforme
         # au minimum tient (La Possession UAv, Sainte-Marie UA à cheval) — ce n'est pas un terrain
         # exigu. L'inset uniforme (jamais effondré) borne BAS le favorable réel (limite comprise).
+        def _emp_at(_d):
+            """Emprise de l'inset uniforme au recul _d, clippée à la portion U/AU (échelle contenance)."""
+            try:
+                _a = dict(args); _a["d"] = _d
+                _r = session.execute(_EMPRISE, _a).one()
+                _fa = float(_r.full_area or 0.0)
+                _ua = float(_r.uau_area) if _r.uau_area is not None else None
+                return (_fa if _ua is None else min(_fa, _ua)) * k_cont
+            except Exception:  # noqa: BLE001 — mesure indisponible : on garde le verdict exigu
+                return 0.0
+
         _min_recul = (float(rules.recul_limites_sep_m)
                       if isinstance(rules.recul_limites_sep_m, (int, float))
                       else float(hyp.recul_limites_defaut_m))
-        if _min_recul is not None:
-            try:
-                _fav = dict(args); _fav["d"] = _min_recul
-                _frow = session.execute(_EMPRISE, _fav).one()
-                _ffull = float(_frow.full_area or 0.0)
-                _fuau = float(_frow.uau_area) if _frow.uau_area is not None else None
-                _emp_fav = (_ffull if _fuau is None else min(_ffull, _fuau)) * k_cont
-            except Exception:  # noqa: BLE001 — mesure indisponible : on garde le verdict exigu
-                _emp_fav = 0.0
-            if _emp_fav >= SEUIL_EXIGU_M2:
-                # pas exigu : au recul prudent l'assiette se vide, mais le scénario favorable tient.
-                # Le chiffre prudent étant nul (≈ 0), on sert « capacité à vérifier » — jamais un
-                # refus, et sans surestimer (la référence prudente ne chiffre pas de hausse).
-                from .engine import faisabilite_capacite_a_verifier
-                ctx.contraintes.libelles.append(
-                    f"Non exigu : au recul prudent ({recul:g} m) l'assiette se vide, mais le "
-                    f"scénario favorable du règlement (R+1, recul minimal {_min_recul:g} m) laisse "
-                    f"~{_emp_fav:.0f} m² d'emprise — le terrain n'est pas trop exigu.")
-                return ctx, faisabilite_capacite_a_verifier(
-                    ctx.zone,
-                    "Constructible — capacité à vérifier : le scénario favorable du règlement "
-                    f"(R+1, recul minimal {_min_recul:g} m) laisse une emprise, mais la référence "
-                    "prudente (hauteur maximale) vide l'assiette au recul servi — capacité non "
-                    "chiffrée (prudente), à confirmer. Ce n'est pas un terrain exigu.",
-                    f"Scénario favorable (recul {_min_recul:g} m) tient : pas exigu, à vérifier.")
+        from .engine import faisabilite_capacite_a_verifier
+        if _min_recul is not None and _emp_at(_min_recul) >= SEUIL_EXIGU_M2:
+            # pas exigu : au recul prudent l'assiette se vide, mais un RETRAIT UNIFORME MINIMAL (le
+            # minimum de l'article) laisse une emprise. FIX-7 LOT 2 — le motif dit CE QUI A ÉTÉ TESTÉ
+            # (retrait uniforme minimal, mesure approximative), il ne promet PAS un R+1 réglementaire.
+            # Le chiffre prudent étant nul, on sert « capacité à vérifier » — jamais un refus.
+            _emp_fav = _emp_at(_min_recul)
+            ctx.contraintes.libelles.append(
+                f"Non exigu : au recul prudent ({recul:g} m) l'assiette se vide, mais un retrait "
+                f"uniforme minimal de {_min_recul:g} m (le minimum de l'article) laisse ~{_emp_fav:.0f} m² "
+                "d'emprise (mesure approximative) — le terrain n'est pas trop exigu.")
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                f"Constructible — capacité à vérifier : au retrait uniforme minimal de {_min_recul:g} m "
+                f"(minimum de l'article) une emprise d'environ {_emp_fav:.0f} m² subsiste, mais la "
+                "référence prudente (hauteur maximale) vide l'assiette au recul servi. Capacité non "
+                "chiffrée ; assiette et scénario réglementaire à confirmer. Ce n'est pas un terrain exigu.",
+                f"Retrait minimal uniforme ({_min_recul:g} m) laisse une emprise : pas exigu, à vérifier.")
+        # MOTEUR-VERITE-FIX-6 LOT 7 — IMPLANTATION EN LIMITE / À L'ALIGNEMENT. Dans une zone où le
+        # règlement PERMET ou IMPOSE l'implantation en limite séparative ou à l'alignement, le retrait
+        # minimal n'est PAS le scénario le plus favorable : la construction peut joindre la limite
+        # (recul 0). Si l'assiette tient À LA LIMITE, le terrain n'est pas exigu — « capacité à
+        # vérifier » avec la mention d'implantation, JAMAIS un refus (AO0709 Le Port Ud 84 m²,
+        # CG0875 Saint-Leu UC 92 m² : l'assiette ne se vide que par le retrait, pas à la limite).
+        if implantation_mentions and _emp_at(0.0) >= SEUIL_EXIGU_M2:
+            # FIX-7 LOT 2 — le règlement admet l'implantation en limite / à l'alignement, MÊME SOUS
+            # CONDITIONS. Une assiette vide avec les retraits n'établit donc pas un refus. Le motif
+            # dit ce qui a été testé (assiette à la limite, retrait 0, uniforme), sans promettre que
+            # les conditions de l'article (longueur, hauteur, alignement voisin) sont réunies.
+            _emp_lim = _emp_at(0.0)
+            ctx.contraintes.libelles.append(
+                f"Non exigu : au recul prudent ({recul:g} m) l'assiette se vide, mais le règlement "
+                "admet l'implantation en limite séparative / à l'alignement (sous conditions de "
+                f"l'article) — testée à la limite (retrait 0) ~{_emp_lim:.0f} m² subsistent.")
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                "Constructible — capacité à vérifier : le règlement admet l'implantation en limite "
+                "séparative ou à l'alignement (sous conditions de l'article) ; testée à la limite une "
+                "emprise subsiste, le retrait uniforme prudent la vide. Capacité non chiffrée ; "
+                "implantation en limite et ses conditions à confirmer. Ce n'est pas un terrain exigu.",
+                "Implantation en limite / alignement admise (sous conditions) : testée à la limite, à vérifier.")
+
+    # La porte LOT 6/7 n'a pas requalifié : le terrain est exigu même au scénario le plus favorable
+    # (ni le retrait minimal ni l'implantation en limite ne laissent d'assiette). Le libellé de preuve
+    # différé est écrit ici — le refus « terrain exigu » qui suivra porte sa preuve géométrique.
+    if _exigu_pending:
+        ctx.contraintes.libelles.append(_exigu_pending)
 
     # Surface au sol servant aux plafonds CES/pleine terre : la seule portion U/AU (à cheval).
     # RESIDUEL-1 — inconditionnel (chemin unique).

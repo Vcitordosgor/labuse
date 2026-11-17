@@ -121,8 +121,8 @@ def _run_hook(monkeypatch, hauteur_mode):
     # GEOMETRIE-1 lot B — l'assiette vient du moteur gabarit quand il sert la parcelle ; ce stub
     # ne sait pas servir les requêtes du builder. Le test porte sur le hook PROSPECT, pas sur
     # l'assiette → gabarit débranché explicitement (chemin legacy, comme avant le lot B).
-    # RESIDUEL-2 — `_assiette_gabarit` renvoie désormais `(gab, blocages)` : ici (None, [motif]).
-    monkeypatch.setattr(_fdb, "_assiette_gabarit", lambda s, i: (None, ["stub: gabarit débranché"]))
+    # RESIDUEL-2 / FIX-6 LOT 7 — `_assiette_gabarit` renvoie `(gab, blocages, racc)` : ici (None, [motif], {}).
+    monkeypatch.setattr(_fdb, "_assiette_gabarit", lambda s, i: (None, ["stub: gabarit débranché"], {}))
     monkeypatch.setattr(_fdb, "parcel_context", lambda s, pid: _ctx())
     monkeypatch.setattr(_fdb, "resolve_zone", lambda z, c: ZoneRules(
         code="Ud", emprise_sol_pct=80.0, recul_limites_sep_m=4, hauteur_mode=hauteur_mode,
