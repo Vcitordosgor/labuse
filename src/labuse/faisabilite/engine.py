@@ -290,8 +290,10 @@ _ASSIETTE_VIDE_LIB = {
     "ppr_rouge": ("Majoritairement en zone rouge du PPR — la part rouge est retirée de l'assiette "
                   "et le reste ne porte aucune emprise exploitable. Non constructible en l'état.",
                   "0 m² (part rouge du PPR retirée)"),
-    "emplacement_reserve": ("Emplacement réservé couvrant la parcelle — l'emprise constructible "
-                            "résiduelle est nulle (terrain réservé à un projet public).",
+    # MOTEUR-VERITE-FIX-8 LOT 2 — le libellé dit ce qui est MESURÉ : l'emplacement réservé ÉPUISE
+    # l'assiette APRÈS RECULS (il n'est pas affirmé qu'il couvre toute la parcelle — BO0312).
+    "emplacement_reserve": ("Emplacement réservé : l'emprise constructible résiduelle APRÈS RECULS "
+                            "est épuisée par l'emplacement réservé (terrain réservé à un projet public).",
                             "0 m² (emplacement réservé)"),
     "ebc": ("Espace boisé classé couvrant la parcelle — inconstructible (Art. L113-1 CU).",
             "0 m² (espace boisé classé)"),

@@ -27,6 +27,13 @@ from .engine import Contraintes, Faisabilite, estimate_capacity
 from .zonage import resolve_zone
 from .zone_servie import FAMILLES_CONSTRUCTIBLES
 
+# MOTEUR-VERITE-FIX-8 LOT 2 — CONTACT ROUGE SIGNIFICATIF. La zone rouge ne fait perdre un chiffre
+# que si elle touche RÉELLEMENT l'assiette. En deçà de ce seuil, l'intersection rouge est un artefact
+# de numérisation : la couche PPR et le cadastre ne coïncident pas au décimètre, et un recouvrement
+# inférieur à ~1 m² au bord de parcelle ne retire aucune aire exploitable (AM0577 : 0,003 m² faisait
+# perdre 171 m²). Seuil choisi SOUS le plus petit contact bâti réel, AU-DESSUS du bruit géométrique.
+SEUIL_CONTACT_ROUGE_M2 = 1.0
+
 _CTX = text("""
 SELECT p.idu, p.commune,
        -- CONTENANCE-1 (Lot C) : la surface servant aux RATIOS (emprise CES, pleine terre, densité,
@@ -1100,9 +1107,22 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         # par un ER / EBC / portion U/AU minuscule (FIX-1 §6) gardent leur propre motif plus bas.
         hors_rouge_vide = None
         if ppr_rouge and emprise >= SEUIL_EXIGU_M2:
-            servable, hors_rouge_vide = _hors_rouge_fragment_servable(session, parcel_id, k_cont)
-            if not servable:
-                emprise = 0.0
+            # MOTEUR-VERITE-FIX-8 LOT 2 — la zone rouge ne fait perdre un chiffre que si elle TOUCHE
+            # réellement l'assiette. Un contact négligeable (numérisation / limite : AM0577, 0,003 m²)
+            # ne retire aucune aire constructible — seuil de contact SIGNIFICATIF = SEUIL_EXIGU_M2
+            # (sous le plus petit module bâti : en deçà, rien n'est soustrait). Mesure indisponible →
+            # on NE VIDE PAS : on ne décide d'une perte que sur une absence MESURÉE (jamais inventée).
+            _rouge_m2 = 0.0
+            try:
+                with session.begin_nested():
+                    _rrc = session.execute(_HORS_PPR_ROUGE, {"pid": parcel_id}).first()
+                _rouge_m2 = (float(_rrc.rouge_m2 or 0.0) * k_cont) if _rrc and _rrc.rouge_m2 is not None else 0.0
+            except Exception:  # noqa: BLE001 — mesure du rouge indisponible : contact non établi
+                _rouge_m2 = None
+            if _rouge_m2 is None or _rouge_m2 >= SEUIL_CONTACT_ROUGE_M2:
+                servable, hors_rouge_vide = _hors_rouge_fragment_servable(session, parcel_id, k_cont)
+                if not servable:
+                    emprise = 0.0
         ctx.contraintes.libelles.append(
             "Assiette = zone d'implantation réglementaire (moteur gabarit) : reculs par côté "
             "voie/limites" + (", PPR zone rouge découpée" if ppr_rouge else "") + ".")
@@ -1337,8 +1357,12 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             try:
                 with session.begin_nested():
                     _rrl = session.execute(_HORS_PPR_ROUGE, {"pid": parcel_id}).first()
-                _touche_rouge = _rrl is not None and float(_rrl.rouge_m2 or 0.0) > 0.5
-            except Exception:  # noqa: BLE001 — mesure indisponible : emprise conservée
+                # MOTEUR-VERITE-FIX-8 LOT 2 — contact rouge SIGNIFICATIF (≥ SEUIL_CONTACT_ROUGE_M2 de
+                # la parcelle, échelle contenance) avant d'attribuer une perte au rouge ; un contact
+                # négligeable (numérisation) ne déclenche pas le test hors-rouge.
+                _touche_rouge = (_rrl is not None
+                                 and float(_rrl.rouge_m2 or 0.0) * k_cont >= SEUIL_CONTACT_ROUGE_M2)
+            except Exception:  # noqa: BLE001 — mesure indisponible : emprise conservée (jamais une perte inventée)
                 _touche_rouge = False
             if _touche_rouge:
                 servable_l, hors_rouge_vide_legacy = _hors_rouge_fragment_servable(
@@ -1484,13 +1508,27 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             and (str(vide_raison or "") == "ppr_rouge"
                  or str(vide_raison or "").startswith("hors_rouge"))):
         from .engine import faisabilite_capacite_a_verifier
+        _frag_measured = True
         try:
             with session.begin_nested():
                 _frag = session.execute(_HORS_ROUGE_FRAGMENT, {"pid": parcel_id}).first()
             _frag_m2 = (float(_frag.m2) * k_cont) if _frag and _frag.m2 is not None else 0.0
             _frag_wkt = _frag.wkt if _frag is not None else None
-        except Exception:  # noqa: BLE001 — géométrie pathologique : hors-rouge non établi
-            _frag_m2, _frag_wkt = 0.0, None
+        except Exception:  # noqa: BLE001 — MESURE INDISPONIBLE (≠ assiette vide, FIX-8 LOT 2)
+            _frag_m2, _frag_wkt, _frag_measured = 0.0, None, False
+        if not _frag_measured:
+            # MOTEUR-VERITE-FIX-8 LOT 2 — une mesure indisponible n'est PAS une absence : on ne
+            # prononce pas un refus « terrain exigu » sur un zéro non mesuré (AT2046 simulé). On sert
+            # « capacité à vérifier » avec le motif — jamais un refus faute d'avoir pu mesurer.
+            ctx.contraintes.libelles.append(
+                "PPR zone rouge : la mesure de la partie hors zone rouge est indisponible (géométrie "
+                "pathologique) — capacité non établie, à instruire ; ce n'est pas un terrain exigu.")
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                "Constructible — capacité à vérifier : la part hors zone rouge n'a pas pu être mesurée "
+                "(géométrie du découpage indisponible). Absence non établie — à instruire, ce n'est "
+                "pas un refus.",
+                "PPR rouge : mesure hors rouge indisponible, à vérifier (jamais un refus non mesuré).")
         if _frag_m2 >= SEUIL_EXIGU_M2:
             # une partie constructible hors rouge subsiste : le rouge ne prive pas la parcelle.
             _acces = None

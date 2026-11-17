@@ -80,17 +80,17 @@ def test_lot2_exiguite_limite_ou_alignement_a_verifier(app_session):
 @pytest.mark.reel
 def test_lot2_ppr_rouge_trois_situations(app_session):
     """PPR rouge, trois situations, trois verdicts. Seule l'emprise rouge couvrant la partie
-    constructible fonde un refus (DR0615, hors rouge ≈ 0). Les deux autres sont des doutes →
-    « capacité à vérifier » avec la surface hors rouge mesurée :
-      · AT2046 (rouge 1,7 %, 112 m² hors rouge < seuil interne 200 — convention LABUSE) ;
-      · AM0577 (425 m² hors rouge, accès à établir) ;
-      · AD0423 (318 m² d'un seul tenant au contact voie, assiette à confirmer).
-    Le test ne refuse pas une parcelle que le rouge ne prive pas de sa partie constructible."""
+    constructible fonde un refus (DR0615, hors rouge ≈ 0). Les autres, dont le rouge touche
+    SIGNIFICATIVEMENT l'assiette, sont des doutes → « capacité à vérifier » avec la surface hors
+    rouge mesurée : AT2046 (rouge 1,7 %, sous le seuil interne 200), AD0423 (318 m² d'un seul tenant).
+    NB AM0577 (contact rouge ~0,003 m²) n'est PLUS un cas rouge — FIX-8 LOT 2 lui rend son chiffre
+    (le rouge négligeable ne prive de rien). Le test ne refuse pas une parcelle que le rouge
+    n'affecte pas."""
     # refus : le rouge couvre la partie constructible
     _ctx, f = _res(app_session, "97415000DR0615")
     assert f.constructible is False and f.cause == "terrain_exigu", "DR0615 : rouge couvrant → doit refuser"
-    # doutes → à vérifier, sans chiffre, surface hors rouge mesurée
-    for idu in ("97408000AT2046", "97406000AM0577", "97418000AD0423"):
+    # doutes → à vérifier, sans chiffre, surface hors rouge mesurée (rouge significatif)
+    for idu in ("97408000AT2046", "97418000AD0423"):
         _ctx, f = _res(app_session, idu)
         assert f.constructible is True, f"{idu} : refus alors que le rouge ne prive pas la partie constructible"
         assert f.cause != "terrain_exigu", f"{idu} : cause terrain_exigu persiste"
