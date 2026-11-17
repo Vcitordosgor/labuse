@@ -156,6 +156,7 @@ def compare() -> None:
         if new is None:
             continue
         old = MAIN.get(idu, {})
+        _in_sr = idu in SR          # FIX-9 LOT 3 — le rejeu sans règle a-t-il eu lieu pour cette parcelle ?
         sr = SR.get(idu, {})
         sn, so = new.get("sdp"), old.get("sdp")
         ssr = sr.get("sdp")
@@ -174,10 +175,12 @@ def compare() -> None:
                 categorie = "refus_introduit"
                 refus_introduits[new.get("cause") or "?"] += 1
         elif so is None:
-            # MOTEUR-VERITE-FIX-8 LOT 3 — chiffre là où main ne chiffrait pas : on SÉPARE le REFUS
-            # LEVÉ (main inconstructible → la branche chiffre) du verdict DÉJÀ INCERTAIN (main « à
-            # vérifier », sans chiffre, que la branche chiffre).
-            categorie = "incertain_chiffre" if constr_old else "refus_leve"
+            # MOTEUR-VERITE-FIX-9 LOT 3 — chiffre là où main ne chiffrait pas : on SÉPARE le REFUS
+            # LEVÉ du verdict DÉJÀ INCERTAIN dans main. Le discriminant est le VERDICT de main (pas son
+            # seul booléen `constructible`) : « assiette à vérifier » / « capacité à vérifier » = déjà
+            # incertain (AV0877 recevait 8 m²), tout autre 0 = refus levé.
+            _mv = (old.get("verdict") or "").lower()
+            categorie = "incertain_chiffre" if "vérifier" in _mv else "refus_leve"
         else:
             d = float(sn) - float(so)
             categorie = "hausse" if d > 0.5 else ("baisse" if d < -0.5 else "inchangee")
@@ -211,7 +214,9 @@ def compare() -> None:
                      new.get("recul") if new.get("recul") is not None else "",
                      new.get("recul_par_cote") or "",
                      new.get("portion") if new.get("portion") is not None else "",
-                     ssr if ssr is not None else "", eff,
+                     # FIX-9 LOT 3 — distinguer un rejeu sans règle SANS chiffre (AT1500) d'un rejeu
+                     # ABSENT : « sans chiffre » = recalculé mais verdict sans chiffre ; vide = non rejoué.
+                     (ssr if ssr is not None else ("sans chiffre" if _in_sr else "")), eff,
                      "oui" if autorisee else "NON", categorie])
     with open(OUT, "w", newline="") as fh:
         w = csv.writer(fh, delimiter=";", quoting=csv.QUOTE_MINIMAL)

@@ -91,3 +91,21 @@ def test_lot2_panne_mesure_rouge_ni_chiffre_ni_refus(app_session, monkeypatch):
     assert f.constructible is True, "panne rouge : ne doit pas refuser"
     assert (f.fourchette or {}).get("surface_plancher_m2") is None, "panne rouge : ne doit pas chiffrer"
     assert "indisponible" in (f.verdict or "").lower()
+
+
+# ─────────────── LOT 3 — tracer le calcul qui a réellement servi ───────────────
+@pytest.mark.reel
+def test_lot3_recul_non_arrondi_et_chemin_servant(app_session):
+    """Le détail par côté n'arrondit pas (AS1086 : 8,25 m, pas 8,2) ; et la trace décrit le chemin
+    qui SERT le chiffre : BL0314 est servie par le repli uniforme à 3 m — on n'affiche PAS le fond à
+    8 m du gabarit. AO0308 (gabarit) : 6 m retenu, côté par côté."""
+    _ctx, f = _res(app_session, "97418000AS1086")
+    assert "8.25" in (_ctx.recul_par_cote or ""), f"AS1086 : recul arrondi — {_ctx.recul_par_cote}"
+    assert abs((_ctx.recul_servi_m or 0) - 8.25) < 0.01
+    _ctx, f = _res(app_session, "97408000AO0308")
+    assert "latérale 6 m" in (_ctx.recul_par_cote or "")
+    # BL0314 : chiffre du repli uniforme (3 m) — pas le détail par côté du gabarit
+    _ctx, f = _res(app_session, "97408000BL0314")
+    assert _ctx.assiette_source != "gabarit", "BL0314 : servie par le repli, pas le gabarit"
+    assert _ctx.recul_par_cote is None, f"BL0314 : détail gabarit affiché à tort — {_ctx.recul_par_cote}"
+    assert abs((_ctx.recul_servi_m or 0) - 3.0) < 0.5, f"BL0314 : recul servi {_ctx.recul_servi_m} ≠ 3 m (repli)"
