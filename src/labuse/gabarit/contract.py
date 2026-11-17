@@ -229,6 +229,10 @@ class GabaritResult(BaseModel):
     zoneImplantationGeoJSON: Optional[GeoJSON] = None
     retraitsGeoJSON: Optional[GeoJSON] = None
     exclusionsGeoJSON: Optional[GeoJSON] = None
+    # MOTEUR-VERITE-FIX-10 — zone d'implantation du scénario retenu APRÈS LES RECULS mais AVANT la
+    # découpe des exclusions (dont la zone rouge PPR). Sert à mesurer le rouge sur la GÉOMÉTRIE EXACTE
+    # du scénario (per-côté), pas sur un inset uniforme qui diffère (AB0752/AB0823 Bras-Panon).
+    assietteScenarioGeoJSON: Optional[GeoJSON] = None
     # GABARIT-6 P4 — bâti EXISTANT (emprise BD TOPO + hauteur LiDAR HD), FAIT contextuel : aucun calcul
     # réglementaire n'en dépend. FeatureCollection (4326), une Feature par bâtiment, propriétés
     # { hauteur_m, h_source: 'lidar'|'bdtopo' }. None si la parcelle ne porte aucun bâti.

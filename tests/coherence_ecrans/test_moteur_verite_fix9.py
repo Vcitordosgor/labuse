@@ -86,6 +86,8 @@ def test_lot2_panne_mesure_rouge_ni_chiffre_ni_refus(app_session, monkeypatch):
     refus : capacité inconnue → « capacité à vérifier »."""
     from sqlalchemy import text as _t
     import labuse.faisabilite.db as _db
+    # FIX-10 — la mesure rouge gabarit passe par `_ROUGE_SUR_GEOM` ; on patche les deux mesures.
+    monkeypatch.setattr(_db, "_ROUGE_SUR_GEOM", _t("SELECT 1/0 AS rouge_assiette_m2"))
     monkeypatch.setattr(_db, "_ROUGE_SUR_ASSIETTE", _t("SELECT 1/0 AS rouge_assiette_m2"))
     _ctx, f = _res(app_session, "97408000AT2046")
     assert f.constructible is True, "panne rouge : ne doit pas refuser"
@@ -109,3 +111,21 @@ def test_lot3_recul_non_arrondi_et_chemin_servant(app_session):
     assert _ctx.assiette_source != "gabarit", "BL0314 : servie par le repli, pas le gabarit"
     assert _ctx.recul_par_cote is None, f"BL0314 : détail gabarit affiché à tort — {_ctx.recul_par_cote}"
     assert abs((_ctx.recul_servi_m or 0) - 3.0) < 0.5, f"BL0314 : recul servi {_ctx.recul_servi_m} ≠ 3 m (repli)"
+
+
+# ─────── FIX-10 — rouge mesuré sur la GÉOMÉTRIE EXACTE du scénario retenu (gabarit per-côté) ───────
+@pytest.mark.reel
+def test_fix10_rouge_sur_assiette_exacte_du_scenario(app_session):
+    """Sur le chemin gabarit, le rouge se mesure sur la zone d'implantation RÉELLE (per-côté), pas
+    sur un inset uniforme qui diffère. AB0752 / AB0823 (Bras-Panon) servaient 21 / 12 m² après une
+    mesure de 0 m² à l'inset uniforme 5,50 m, alors que le rouge recoupe leur assiette réelle
+    (21,04 / 17,63 m²) : ils repassent « à vérifier ». AT2046, AM0577, AW1235, EW0458 gardent leur
+    chiffre (rouge sous le seuil sur leur assiette réelle)."""
+    for idu in ("97402000AB0752", "97402000AB0823"):
+        _ctx, f = _res(app_session, idu)
+        assert f.constructible is True and (f.fourchette or {}).get("surface_plancher_m2") is None, \
+            f"{idu} : le rouge recoupe l'assiette réelle → « à vérifier » attendu, obtenu {f.verdict!r}"
+    for idu in ("97408000AT2046", "97406000AM0577", "97415000AW1235", "97416000EW0458"):
+        _ctx, f = _res(app_session, idu)
+        assert f.constructible is True and (f.fourchette or {}).get("surface_plancher_m2") is not None, \
+            f"{idu} : chiffre perdu alors que le rouge reste sous le seuil sur l'assiette réelle"

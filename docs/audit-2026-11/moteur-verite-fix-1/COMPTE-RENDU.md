@@ -1149,3 +1149,65 @@ avec la mention zone rouge (AT2046 garde 6 m², AM0577 171 m², AW1235 son chiff
 Le CSV `CONTROLE-INVERSE-FIX6-ILE.csv` (1,99 Mio) porte le recul **non arrondi** côté par côté
 (AS1086 8,25 m), le **chemin servant** (BL0314 repli 3 m, sans détail gabarit), et distingue un
 rejeu sans règle **« sans chiffre »** d'un rejeu **absent**. Conservé en place pour le relecteur.
+
+---
+
+# MOTEUR-VERITE-FIX-10 — zone rouge sur la géométrie EXACTE du scénario retenu
+
+Branche `fix/moteur-verite-1` après merge d'`origin/main` (`954716fd1`, inchangé). Un commit.
+Le relecteur confirme FIX-9 (littoral, pannes, trace, décompte, les trois hausses hors zone qu'il
+explique). Dernier point : sur le chemin gabarit, le test de zone rouge mesurait le rouge sur un
+inset UNIFORME au recul, qui peut différer de l'assiette per-côté réellement retenue — le gabarit
+découpe bien le rouge, mais le contrôle de la partie restante était contourné.
+
+**Correction.** Le moteur gabarit expose désormais `assietteScenarioGeoJSON` : la zone d'implantation
+du scénario APRÈS les reculs mais AVANT la découpe des exclusions (dont la zone rouge). Une seule
+fonction `_rouge_sur_assiette(...)` mesure le rouge sur la géométrie EXACTE du scénario retenu, dans
+les deux chemins : la zone d'implantation du gabarit (per-côté) pour l'un, l'inset au recul servi
+pour le repli. Plus d'inset uniforme sur le chemin gabarit.
+
+**Les 57 parcelles qui ont retrouvé un chiffre depuis FIX-8** (à vérifier → chiffre), rejouées avec
+le rouge mesuré sur l'assiette réelle : **11 ont ≥ 1 m² de rouge** sur leur assiette gabarit et
+**repassent « à vérifier »** (exactement les 11 du relecteur) ; les 46 autres (rouge < 1 m²) gardent
+leur chiffre.
+
+| idu | chemin | rouge sur l'assiette réelle (m²) | FIX-9 | FIX-10 |
+|---|---|---:|---:|---|
+| 97418000AD0319 | gabarit | 225,53 | 11 | à vérifier |
+| 97418000AV0339 | gabarit | 142,18 | 23 | à vérifier |
+| 97418000AV1716 | gabarit | 125,78 | 52 | à vérifier |
+| 97418000AV1985 | gabarit | 73,80 | 39 | à vérifier |
+| 97418000AV1191 | gabarit | 63,33 | 41 | à vérifier |
+| 97418000AY0725 | gabarit | 51,28 | 53 | à vérifier |
+| 97418000AV0811 | gabarit | 28,11 | 46 | à vérifier |
+| **97402000AB0752** | gabarit | **21,04** | 21 | à vérifier |
+| 97408000AP1162 | gabarit | 18,71 | 7 | à vérifier |
+| **97402000AB0823** | gabarit | **17,63** | 12 | à vérifier |
+| 97421000AV0917 | gabarit | 6,97 | 217 | à vérifier |
+
+**AB0752 et AB0823** (Bras-Panon) : 0 m² de rouge à l'inset uniforme 5,50 m, mais 21,04 et 17,63 m²
+sur leur assiette réelle → « à vérifier ». **AT2046, AM0577, AW1235, EW0458** gardent leur chiffre
+(rouge sous le seuil sur leur assiette réelle : 0,00 à 0,86 m²).
+
+## Décompte complet sur l'île (21 467, vs `origin/main 954716fd1`)
+
+| catégorie | n |
+|---|---|
+| **hausses** | **6 032** |
+| **refus levés** | **306** |
+| **déjà incertains chiffrés** (AV0877) | **1** |
+| **baisses** | **2 985** |
+| **inchangées** | **7 818** |
+| **refus** | **666** |
+| **« à vérifier »** | **3 658** |
+| **REFUS INTRODUITS** | **1** (BO0312, emplacement réservé — réglementaire) |
+
+- **REFUS INTRODUIT = 1**, réglementaire (BO0312). **Hausses hors zone : 3** (AW0302, AK1159,
+  EW0458) — **effet de la règle = 0** au recalcul prudent → **0 hausse RÈGLE hors zone**.
+- La mesure du rouge sur la géométrie EXACTE du scénario fait repasser « à vérifier » les 11
+  parcelles du tableau ci-dessus (dont AB0752/AB0823), et ne touche pas celles dont le rouge reste
+  sous le seuil sur leur assiette réelle (AT2046 6 m², AM0577 171 m², EW0458 27 m²) : « à vérifier »
+  3 653 (FIX-9) → **3 658**.
+
+Le CSV `CONTROLE-INVERSE-FIX6-ILE.csv` (1,99 Mio) est régénéré et conservé en place pour le
+relecteur (recul côté par côté non arrondi, chemin servant, rouge mesuré sur l'assiette réelle).

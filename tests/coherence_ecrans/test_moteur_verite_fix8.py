@@ -59,8 +59,10 @@ def test_lot2a_mesure_indisponible_nest_pas_un_vide(app_session, monkeypatch):
     et un zéro ; on doit désormais servir « capacité à vérifier » avec le motif, jamais un refus."""
     from sqlalchemy import text as _t
     import labuse.faisabilite.db as _db
-    # FIX-9 LOT 2 : AT2046 mesure d'abord le rouge SUR L'ASSIETTE ; une panne de cette mesure doit
-    # rendre « à vérifier » (ni chiffre ni refus), pas un refus « terrain exigu ».
+    # FIX-9 LOT 2 / FIX-10 : AT2046 (gabarit) mesure le rouge sur la géométrie exacte du scénario
+    # (`_ROUGE_SUR_GEOM`) ; une panne de la mesure rouge doit rendre « à vérifier » (ni chiffre ni
+    # refus), pas un refus « terrain exigu ». On patche les deux mesures rouge (gabarit et repli).
+    monkeypatch.setattr(_db, "_ROUGE_SUR_GEOM", _t("SELECT 1/0 AS rouge_assiette_m2"))
     monkeypatch.setattr(_db, "_ROUGE_SUR_ASSIETTE", _t("SELECT 1/0 AS rouge_assiette_m2"))
     _ctx, f = _res(app_session, "97408000AT2046")
     assert f.constructible is True and f.cause != "terrain_exigu", \

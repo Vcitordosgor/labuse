@@ -265,4 +265,7 @@ def compute_gabarit(inp: GabaritInput) -> GabaritResult:
         zoneImplantationGeoJSON=_gj(zone_m),
         retraitsGeoJSON=_gj(retrait_m),
         exclusionsGeoJSON=_gj(excl_in_parcel_m),
+        # MOTEUR-VERITE-FIX-10 — l'assiette du scénario APRÈS reculs, AVANT exclusions (dont la zone
+        # rouge) : la géométrie exacte sur laquelle mesurer le rouge réellement recoupé.
+        assietteScenarioGeoJSON=_gj(_as_polygonal(after_setbacks)),
     )

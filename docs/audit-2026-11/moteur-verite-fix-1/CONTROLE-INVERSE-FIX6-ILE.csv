@@ -307,7 +307,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97402000AB0621;Uc;;;exigu;implantation en limite;;;;;;;;;oui;a_verifier
 97402000AB0622;Uc;;;exigu;implantation en limite;;;;;;;;;oui;a_verifier
 97402000AB0623;Uc;169;124;chiffre;chiffre;;residuel_legacy_qualifie;2;3.75;;;;;oui;baisse
-97402000AB0625;Uc;204;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
+97402000AB0625;Uc;204;95;chiffre;chiffre;;gabarit;2;5.5;fond 5.5 m;;;;oui;baisse
 97402000AB0626;Uc;92;92;chiffre;chiffre;;gabarit;2;5.5;fond 5.5 m;;;;oui;inchangee
 97402000AB0628;Uc;80;134;chiffre;chiffre;;gabarit;2;3.75;voie 4 m · latérale 3.75 m · fond 3.75 m;;80;54;oui;hausse
 97402000AB0629;Uc;40;82;chiffre;chiffre;;gabarit;2;3.75;voie 4 m · latérale 3.75 m · fond 3.75 m;;40;42;oui;hausse
@@ -412,7 +412,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97402000AB0749;Uc;;;exigu;implantation en limite;;;;;;;;;oui;a_verifier
 97402000AB0750;Uc;;;exigu;à vérifier;;;;;;;;;oui;a_verifier
 97402000AB0751;Uc;;2;exigu;chiffre;;gabarit;1;3.0;voie 4 m · latérale 3 m · fond 3 m;;sans chiffre;;oui;refus_leve
-97402000AB0752;Uc;35;21;chiffre;chiffre;;gabarit;2;3.75;voie 4 m · latérale 3.75 m · fond 3.75 m;;;;oui;baisse
+97402000AB0752;Uc;35;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
 97402000AB0753;Uc;;;zone rouge;à vérifier;;;;;;;;;oui;a_verifier
 97402000AB0754;Uc;;;zone rouge;à vérifier;;;;;;;;;oui;a_verifier
 97402000AB0755;Uc;;;zone rouge;à vérifier;;;;;;;;;oui;a_verifier
@@ -455,7 +455,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97402000AB0819;Uc;402;370;chiffre;chiffre;;residuel_legacy_qualifie;2;3.75;;;;;oui;baisse
 97402000AB0821;Uc;137;195;chiffre;chiffre;;gabarit;2;3.75;voie 4 m · latérale 3.75 m · fond 3.75 m;;137;58;oui;hausse
 97402000AB0822;Uc;;;à vérifier;à vérifier;;;;;;;;;oui;a_verifier
-97402000AB0823;Uc;;12;zone rouge;chiffre;;gabarit;1;3.0;voie 4 m · latérale 3 m · fond 3 m;;sans chiffre;;oui;refus_leve
+97402000AB0823;Uc;;;zone rouge;zone rouge;;;;;;;;;oui;a_verifier
 97402000AB0825;Uc;;;zone rouge;zone rouge;terrain_exigu;gabarit;;5.5;fond 5.5 m;;;;oui;refus
 97402000AB0828;Uc;183;330;chiffre;chiffre;;gabarit;2;3.75;voie 4 m · latérale 3.75 m · fond 3.75 m;;183;147;oui;hausse
 97402000AB0834;Uc;70;148;chiffre;chiffre;;gabarit;2;3.75;voie 4 m · latérale 3.75 m · fond 3.75 m;;70;78;oui;hausse
@@ -609,7 +609,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97402000AB1178;Uc;;;exigu;implantation en limite;;;;;;;;;oui;a_verifier
 97402000AB1179;Uc;;;exigu;micro-parcelle;;;;;;;;;oui;a_verifier
 97402000AB1180;Uc;;;exigu;implantation en limite;;;;;;;;;oui;a_verifier
-97402000AB1190;Uc;191;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
+97402000AB1190;Uc;191;88;chiffre;chiffre;;gabarit;2;5.5;fond 5.5 m;;;;oui;baisse
 97402000AB1191;Uc;;;exigu;micro-parcelle;;;;;;;;;oui;a_verifier
 97402000AB1192;Uc;23;23;chiffre;chiffre;;gabarit;2;5.5;fond 5.5 m;;;;oui;inchangee
 97402000AB1193;Uc;;;exigu;implantation en limite;;;;;;;;;oui;a_verifier
@@ -7926,14 +7926,14 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97408000AM0749;UBpsfr2;197;197;chiffre;chiffre;;gabarit;3;3.0;fond 6 m;;;;oui;inchangee
 97408000AM0750;UBpsfr2;573;573;chiffre;chiffre;;gabarit;3;3.0;fond 6 m;;;;oui;inchangee
 97408000AM0752;UB;77;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
-97408000AM0753;UB;81;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
+97408000AM0753;UB;81;16;chiffre;chiffre;;gabarit;3;3.0;fond 6 m;;;;oui;baisse
 97408000AM0754;UB;20;20;chiffre;chiffre;;gabarit;3;3.0;fond 6 m;;;;oui;inchangee
 97408000AM0755;UB;23;23;chiffre;chiffre;;gabarit;3;3.0;fond 6 m;;;;oui;inchangee
 97408000AM0756;UB;19;19;chiffre;chiffre;;gabarit;3;3.0;fond 6 m;;;;oui;inchangee
 97408000AM0757;UB;26;26;chiffre;chiffre;;residuel_legacy;3;3.0;;;;;oui;inchangee
 97408000AM0758;UB;34;34;chiffre;chiffre;;residuel_legacy;3;3.0;;;;;oui;inchangee
 97408000AM0759;UB;;;exigu;implantation en limite;;;;;;;;;oui;a_verifier
-97408000AM0760;UB;83;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
+97408000AM0760;UB;83;8;chiffre;chiffre;;gabarit;3;3.0;fond 6 m;;;;oui;baisse
 97408000AM0765;UB;406;546;chiffre;chiffre;;gabarit;3;4.5;voie 3 m · latérale 4.5 m · fond 4.5 m;;406;140;oui;hausse
 97408000AM0766;UB;609;435;chiffre;chiffre;;residuel_legacy;3;4.5;;;;;oui;baisse
 97408000AM0767;UB;304;470;chiffre;chiffre;;gabarit;3;4.5;voie 3 m · latérale 4.5 m · fond 4.5 m;;304;166;oui;hausse
@@ -9747,7 +9747,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97408000AO0603;UApsfr2;9;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
 97408000AO0604;UApsfr2;38;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
 97408000AO0605;UApsfr2;84;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
-97408000AO0606;UApsfr2;112;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
+97408000AO0606;UApsfr2;112;8;chiffre;chiffre;;gabarit;3;3.0;fond 6 m;;;;oui;baisse
 97408000AO0607;UApsfr2;18;18;chiffre;chiffre;;gabarit;3;3.0;fond 6 m;;;;oui;inchangee
 97408000AO0608;UApsfr2;;;exigu;implantation en limite;;;;;;;;;oui;a_verifier
 97408000AO0609;UApsfr2;669;446;chiffre;chiffre;;residuel_legacy;2;3.0;;;;;oui;baisse
@@ -11019,7 +11019,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97408000AP1158;UAm;;;exigu;implantation en limite;;;;;;;;;oui;a_verifier
 97408000AP1159;UAm;;;exigu;implantation en limite;;;;;;;;;oui;a_verifier
 97408000AP1161;UAm;16;;chiffre;micro-parcelle;;;;;;;;;oui;a_verifier
-97408000AP1162;UAm;;7;zone rouge;chiffre;;gabarit;2;3.0;voie 0 m · latérale 3 m;;sans chiffre;;oui;refus_leve
+97408000AP1162;UAm;;;zone rouge;zone rouge;;;;;;;;;oui;a_verifier
 97408000AP1164;UAm;126;126;chiffre;chiffre;;gabarit;4;3.0;fond 6 m;;;;oui;inchangee
 97408000AP1165;UAm;;;réservé;réservé;terrain_exigu;gabarit;3;4.5;voie 0 m · latérale 4.5 m · fond 4.5 m;;;;oui;refus
 97408000AP1166;UAm;120;60;chiffre;chiffre;;gabarit;2;3.0;voie 0 m · latérale 3 m · fond 3 m;;;;oui;baisse
@@ -13862,7 +13862,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97408000AW1025;UBb;188;188;chiffre;chiffre;;gabarit;2;3.0;fond 5 m;;;;oui;inchangee
 97408000AW1026;UBb;;;zone rouge;implantation en limite;;;;;;;;;oui;a_verifier
 97408000AW1027;UBb;;;zone rouge;zone rouge;;;;;;;;;oui;a_verifier
-97408000AW1028;UBb;53;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
+97408000AW1028;UBb;53;15;chiffre;chiffre;;gabarit;2;3.0;fond 5 m;;;;oui;baisse
 97408000AW1029;UBb;;;zone rouge;zone rouge;;;;;;;;;oui;a_verifier
 97408000AW1030;UBb;315;815;chiffre;chiffre;;gabarit;2;3.0;voie 3 m · latérale 3 m · fond 3 m;;315;500;oui;hausse
 97408000AW1070;UBb;304;304;chiffre;chiffre;;residuel_legacy_qualifie;2;3.0;;;;;oui;inchangee
@@ -18544,7 +18544,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97418000AD0316;UA;438;144;chiffre;chiffre;;residuel_legacy_qualifie;2;3.75;;;;;oui;baisse
 97418000AD0317;UA;193;;chiffre;à vérifier;;;;;;;;;oui;a_verifier
 97418000AD0318;UA;274;;chiffre;à vérifier;;;;;;;;;oui;a_verifier
-97418000AD0319;UA;53;11;chiffre;chiffre;;gabarit;1;3.0;voie 3 m · latérale 3 m · fond 3 m;;;;oui;baisse
+97418000AD0319;UA;53;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
 97418000AD0320;UA;483;483;chiffre;chiffre;;gabarit;5;9.0;fond 9 m;;;;oui;inchangee
 97418000AD0327;UA;311;;chiffre;à vérifier;;;;;;;;;oui;a_verifier
 97418000AD0328;UA;1476;602;chiffre;chiffre;;residuel_legacy_qualifie;3;5.25;;;;;oui;baisse
@@ -19724,7 +19724,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97418000AV0333;UA;34;136;chiffre;chiffre;;gabarit;3;5.25;voie 3 m · latérale 5.25 m · fond 5.25 m;;34;102;oui;hausse
 97418000AV0334;UA;221;56;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m · fond 3.75 m;;;;oui;baisse
 97418000AV0337;UA;191;375;chiffre;chiffre;;gabarit;3;5.25;voie 3 m · latérale 5.25 m · fond 5.25 m;;191;184;oui;hausse
-97418000AV0339;UA;86;23;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m · fond 3.75 m;;;;oui;baisse
+97418000AV0339;UA;86;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
 97418000AV0340;UA;256;78;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m · fond 3.75 m;;;;oui;baisse
 97418000AV0341;UA;;;à vérifier;à vérifier;;;;;;;;;oui;a_verifier
 97418000AV0342;UA;;;à vérifier;à vérifier;;;;;;;;;oui;a_verifier
@@ -19748,7 +19748,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97418000AV0794;UA;502;159;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m · fond 3.75 m;;;;oui;baisse
 97418000AV0799;UA;48;86;chiffre;chiffre;;gabarit;3;5.25;voie 3 m · latérale 5.25 m;;48;38;oui;hausse
 97418000AV0810;UA;;;exigu;implantation en limite;;;;;;;;;oui;a_verifier
-97418000AV0811;UA;148;46;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m;;;;oui;baisse
+97418000AV0811;UA;148;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
 97418000AV0812;UA;82;257;chiffre;chiffre;;gabarit;3;5.25;voie 3 m · latérale 5.25 m · fond 5.25 m;;82;175;oui;hausse
 97418000AV0813;UA;265;265;chiffre;chiffre;;gabarit;5;9.0;fond 9 m;;;;oui;inchangee
 97418000AV0814;UA;198;305;chiffre;chiffre;;gabarit;3;5.25;voie 3 m · latérale 5.25 m · fond 5.25 m;;198;107;oui;hausse
@@ -19788,7 +19788,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97418000AV1139;UB;467;78;chiffre;chiffre;;gabarit;4;7.5;fond 7.5 m;;;;NON;baisse
 97418000AV1165;UB;671;187;chiffre;chiffre;;gabarit;4;7.5;fond 7.5 m;;;;NON;baisse
 97418000AV1188;UA;;;à vérifier;zone rouge;terrain_exigu;residuel_legacy_qualifie;2;3.75;;;;;oui;refus
-97418000AV1191;UA;142;41;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m;;;;oui;baisse
+97418000AV1191;UA;142;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
 97418000AV1192;UA;180;46;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m · fond 3.75 m;;;;oui;baisse
 97418000AV1193;UA;351;112;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m · fond 3.75 m;;;;oui;baisse
 97418000AV1285;UA;23;23;chiffre;chiffre;;gabarit;5;9.0;fond 9 m;;;;oui;inchangee
@@ -19835,7 +19835,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97418000AV1713;UA;381;;chiffre;à vérifier;;;;;;;;;oui;a_verifier
 97418000AV1714;UA;306;117;chiffre;chiffre;;gabarit;3;5.25;voie 3 m · latérale 5.25 m · fond 5.25 m;;;;oui;baisse
 97418000AV1715;UA;18;101;chiffre;chiffre;;gabarit;3;5.25;voie 3 m · latérale 5.25 m · fond 5.25 m;;18;83;oui;hausse
-97418000AV1716;UA;180;52;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m · fond 3.75 m;;;;oui;baisse
+97418000AV1716;UA;180;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
 97418000AV1717;UA;22;166;chiffre;chiffre;;gabarit;3;5.25;voie 3 m · latérale 5.25 m · fond 5.25 m;;22;144;oui;hausse
 97418000AV1718;UA;449;150;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m · fond 3.75 m;;;;oui;baisse
 97418000AV1719;UA;446;149;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m · fond 3.75 m;;;;oui;baisse
@@ -19876,7 +19876,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97418000AV1944;UA;;;exigu;micro-parcelle;;;;;;;;;oui;a_verifier
 97418000AV1945;UA;7981;5793;chiffre;chiffre;;residuel_legacy_qualifie;5;8.25;;;;;oui;baisse
 97418000AV1983;UB;703;263;chiffre;chiffre;;gabarit;4;7.5;voie 3 m · latérale 7.5 m · fond 7.5 m;;;;NON;baisse
-97418000AV1985;UA;131;39;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m · fond 3.75 m;;;;oui;baisse
+97418000AV1985;UA;131;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
 97418000AV1986;UA;293;;chiffre;à vérifier;;;;;;;;;oui;a_verifier
 97418000AV1987;UA;1648;1047;chiffre;chiffre;;residuel_legacy_qualifie;5;8.25;;;;;oui;baisse
 97418000AV1988;UA;2127;2287;chiffre;chiffre;;gabarit;5;8.25;voie 3 m · latérale 8.25 m · fond 8.25 m;;2127;160;oui;hausse
@@ -20462,7 +20462,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97418000AY0699;UA;42;236;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m · fond 3.75 m;;42;194;oui;hausse
 97418000AY0700;UA;604;197;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m · fond 3.75 m;;;;oui;baisse
 97418000AY0724;UA;55;130;chiffre;chiffre;;gabarit;3;5.25;voie 3 m · latérale 5.25 m · fond 5.25 m;;55;75;oui;hausse
-97418000AY0725;UA;174;53;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m · fond 3.75 m;;;;oui;baisse
+97418000AY0725;UA;174;;chiffre;zone rouge;;;;;;;;;oui;a_verifier
 97418000AY0736;UA;551;180;chiffre;chiffre;;residuel_legacy_qualifie;2;3.75;;;;;oui;baisse
 97418000AY0738;UA;764;262;chiffre;chiffre;;residuel_legacy_qualifie;3;5.25;;;;;oui;baisse
 97418000AY0739;UA;341;116;chiffre;chiffre;;gabarit;2;3.75;voie 3 m · latérale 3.75 m · fond 3.75 m;;;;oui;baisse
@@ -21087,7 +21087,7 @@ idu;zone;sdp_main;sdp_branche;verdict_main;verdict_branche;cause_branche;chemin_
 97421000AV0886;UA;244;446;chiffre;chiffre;;gabarit;4;3.0;voie 3 m · latérale 0 m · fond 0/3 m;;244;202;oui;hausse
 97421000AV0901;UA;302;526;chiffre;chiffre;;gabarit;4;3.0;voie 3 m · latérale 0 m · fond 0/3 m;;302;224;oui;hausse
 97421000AV0902;UA;580;580;chiffre;chiffre;;gabarit;4;3.0;fond 3 m;;;;oui;inchangee
-97421000AV0917;UA;;217;zone rouge;chiffre;;gabarit;4;3.0;voie 3 m · latérale 0 m · fond 0 m;;40;177;oui;refus_leve
+97421000AV0917;UA;;;zone rouge;zone rouge;;;;;;;;;oui;a_verifier
 97421000AV0919;UA;496;624;chiffre;chiffre;;gabarit;4;3.0;voie 3 m · latérale 0 m · fond 3 m;;496;128;oui;hausse
 97421000AV0926;UB;618;618;chiffre;chiffre;;gabarit;4;3.0;voie 3 m · latérale 3 m · fond 3 m;;;;NON;inchangee
 97421000AV1015;UA;672;672;chiffre;chiffre;;residuel_legacy;4;3.0;;;;;oui;inchangee

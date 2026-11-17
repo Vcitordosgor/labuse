@@ -1161,13 +1161,20 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             # ne retire PAS le chiffre, on le conserve avec la mention de la zone rouge. Le contrôle
             # hors-rouge (≥ 200 m² ∩ voie) ne se déclenche que si le rouge recoupe l'assiette.
             # PANNE de la mesure rouge → « capacité à vérifier » (ni chiffre ni refus), jamais inventée.
+            # MOTEUR-VERITE-FIX-10 — on mesure le rouge sur la GÉOMÉTRIE EXACTE du scénario retenu par
+            # le gabarit (zone d'implantation per-côté, AVANT la découpe rouge), pas sur un inset
+            # uniforme qui diffère (AB0752 : 0 m² à l'inset 5,50 m, 21,04 m² sur l'assiette réelle).
             _rouge_ass = 0.0
+            _assiette_gj = getattr(gres, "assietteScenarioGeoJSON", None)
             try:
                 with session.begin_nested():
-                    _ra = session.execute(_ROUGE_SUR_ASSIETTE, {
-                        "pid": parcel_id, "d": args["d"],
-                        "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
-                        "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"]))}).scalar()
+                    if _assiette_gj is not None:
+                        _ra = _rouge_sur_assiette(session, parcel_id, assiette_gj=_assiette_gj)
+                    else:
+                        _ra = _rouge_sur_assiette(
+                            session, parcel_id, recul=args["d"],
+                            zkind=zonage.get("spatial_kind", "plu_gpu_zone"),
+                            uau_fams=list(zonage.get("positive_prefixes", ["U", "AU"])))
                 _rouge_ass = (float(_ra) * k_cont) if _ra is not None else 0.0
             except Exception:  # noqa: BLE001 — MESURE ROUGE INDISPONIBLE (FIX-9 LOT 2)
                 _rouge_ass = None
@@ -1427,11 +1434,13 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             # « capacité à vérifier » (ni chiffre ni refus).
             _rouge_ass_l = 0.0
             try:
+                # FIX-10 — repli : l'assiette du scénario est l'inset au recul servi (uniforme), que
+                # la fonction partagée mesure directement. Même mesure que le gabarit, une fonction.
                 with session.begin_nested():
-                    _ral = session.execute(_ROUGE_SUR_ASSIETTE, {
-                        "pid": parcel_id, "d": args["d"],
-                        "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
-                        "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"]))}).scalar()
+                    _ral = _rouge_sur_assiette(
+                        session, parcel_id, recul=args["d"],
+                        zkind=zonage.get("spatial_kind", "plu_gpu_zone"),
+                        uau_fams=list(zonage.get("positive_prefixes", ["U", "AU"])))
                 _rouge_ass_l = (float(_ral) * k_cont) if _ral is not None else 0.0
             except Exception:  # noqa: BLE001 — MESURE ROUGE INDISPONIBLE (FIX-9 LOT 2)
                 _rouge_ass_l = None
@@ -2114,6 +2123,36 @@ SELECT ST_Area(ST_Intersection(ass.g,
          COALESCE((SELECT u FROM rouge), ST_GeomFromText('POLYGON EMPTY', 2975)))) AS rouge_assiette_m2
 FROM ass
 """)
+
+# MOTEUR-VERITE-FIX-10 — rouge recoupant une ASSIETTE DONNÉE (GeoJSON 4326) : la zone d'implantation
+# EXACTE du scénario gabarit, avant sa découpe par la zone rouge. Le `_ROUGE_SUR_ASSIETTE` ci-dessus
+# mesure sur l'inset UNIFORME au recul — correct pour le repli, mais FAUX pour le gabarit dont
+# l'assiette est per-côté (AB0752 : 0 m² à l'inset 5,50 m, 21,04 m² sur l'assiette réelle).
+_ROUGE_SUR_GEOM = text("""
+WITH a AS (SELECT ST_MakeValid(ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326), 2975)) AS g),
+p AS (SELECT commune FROM parcels WHERE id = :pid),
+rouge AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, a.g))) AS u
+          FROM spatial_layers sl, p, a
+          WHERE sl.kind = 'ppr' AND sl.commune = p.commune
+            AND labuse_ppr_couleur(sl.subtype, sl.attrs) <> 'bleu' AND ST_Intersects(sl.geom_2975, a.g))
+SELECT ST_Area(ST_Intersection(a.g,
+         COALESCE((SELECT u FROM rouge), ST_GeomFromText('POLYGON EMPTY', 2975)))) AS rouge_assiette_m2
+FROM a
+""")
+
+
+def _rouge_sur_assiette(session: Session, parcel_id: int, *, assiette_gj=None, recul=None,
+                        zkind: str | None = None, uau_fams=None):
+    """MOTEUR-VERITE-FIX-10 — surface de PPR rouge recoupant l'ASSIETTE DU SCÉNARIO RETENU, mesurée
+    sur sa géométrie EXACTE avant sa découpe par le rouge. UNE seule fonction, qui reçoit l'assiette :
+    la zone d'implantation du gabarit (`assiette_gj`, GeoJSON 4326) pour l'un, le recul servi (inset
+    ∩ U/AU, via `recul`) pour le repli. Jamais un inset uniforme qui diffère de l'assiette retenue
+    (AB0752/AB0823 Bras-Panon). Rend le m² (dessin), ou lève si la mesure échoue (panne → à vérifier,
+    gérée par l'appelant). L'appelant isole dans un SAVEPOINT."""
+    if assiette_gj is not None:
+        return session.execute(_ROUGE_SUR_GEOM, {"gj": json.dumps(assiette_gj), "pid": parcel_id}).scalar()
+    return session.execute(_ROUGE_SUR_ASSIETTE, {
+        "pid": parcel_id, "d": recul, "zkind": zkind, "uau_fams": uau_fams}).scalar()
 
 
 def surface_hors_ppr_rouge(session: Session, parcel_id: int, *,
