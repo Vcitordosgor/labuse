@@ -915,3 +915,85 @@ La règle est appliquée : un refus pour terrain exigu se prononce avec le scén
 favorable (R+1, recul minimal, clippé à la portion U/AU), testé même quand le gabarit par côté
 s'effondre là où l'inset uniforme tient. **Plus aucun faux « terrain trop exigu » introduit par
 la branche hors motif réglementaire, à l'exception d'AO0709 (compromis Le Port Ud).**
+
+---
+
+# MOTEUR-VERITE-FIX-7 — le relecteur refuse d278c9202 (liste fermée de trois points)
+
+Branche `fix/moteur-verite-1` après merge d'`origin/main` (`9a8b953e5`). Un commit par lot.
+Le relecteur confirme le reste (ouvertures en limite Plaine/Salazie, formules Sainte-Marie/
+Bras-Panon, réserves, refus établis sans chiffre positif). Chaque cas de son rapport devient
+un test (`tests/coherence_ecrans/test_moteur_verite_fix7.py`).
+
+## LOT 1 — le repli respecte les mêmes plafonds que le gabarit (commit b89cc8b00)
+
+Le repli choisissait ses niveaux depuis le FAÎTAGE (hf_m d'abord), dépassant le plafond à
+l'égout ; le gabarit, lui, part de l'égout. Une seule fonction `niveaux_max_plafond(egout,
+faitage, etage, niveaux_max_zone, h_reference)` borne désormais les niveaux dans LES DEUX
+chemins (nombre de niveaux de l'article s'il existe, sinon égout, sinon faîtage ; puis cap
+égout + faîtage − marge pour la hauteur totale de façade). Le calcul inline du gabarit appelle
+cette fonction, à comportement identique (61 cohérences réelles inchangées).
+Effet : AC1866 (UBc) 3 niveaux → 2 (684 m²) ; AN1434 27 166 → 20 375 ; AW0571 11 132 → 7 421 —
+les chiffres de main. Les 11 des 20 plus fortes hausses hors plafond rentrent dans le rang.
+
+## LOT 2 — un refus se fonde sur une assiette réellement testée (commit 0d12e08b5)
+
+**Exiguïté.** Dans une zone admettant la limite ou l'alignement (même sous conditions), une
+assiette vide avec les retraits n'établit pas un refus → « capacité à vérifier ». Le motif dit
+ce qui a été testé (retrait uniforme minimal, ou implantation à la limite) et ne promet plus un
+R+1 réglementaire. Le raccordement (mentions d'implantation) est rendu sur les deux chemins.
+Cas : AO0709 (Ud5), CG0875 (UC7).
+
+**PPR rouge — trois situations, trois libellés.** L'emprise rouge est inconstructible, mais
+elle ne fonde un refus QUE si elle couvre la partie constructible (hors rouge négligeable).
+L'absence d'accès hors rouge et le seuil interne de 200 m² (convention LABUSE, pas une règle)
+sont des DOUTES → « capacité à vérifier » avec la surface hors rouge mesurée. Corrigés :
+AT2046 (112 m² hors rouge, sous le seuil), AM0577 (425 m², accès à établir), AD0423 (318 m²
+d'un seul tenant au contact voie). Seul DR0615 (hors rouge ≈ 0) reste un refus.
+
+## LOT 3 — la SDP littorale correspond à l'assiette annoncée (commit cd7024a62)
+
+La modulation hors bande n'était appliquée qu'au vendable, jamais à la surface de plancher
+(BL0308 : 716 m² inchangés pour ~155 m² hors bande). La part hors bande réduit désormais AUSSI
+la SDP (assiette hors bande) : BL0308 → 98 m² (≤ 622, la borne) ; BL0040 (~3 % bande) garde
+1 860 m². Toute l'assiette dans la bande → « capacité à vérifier » sans chiffre.
+
+## LOT 4 — le fichier du relecteur + le décompte
+
+`CONTROLE-INVERSE-FIX6-ILE.csv` : UNE ligne par parcelle des 21 467 — capacité de main et de la
+branche, verdict de chacun, cause, chemin (gabarit/repli), niveaux, recul RÉELLEMENT appliqué
+(le scénario retenu, pas le recul d'entrée : AN1434 = 4,5 m sur 3 niveaux), portion servie, plus
+le recalcul SANS la règle pour TOUTES les hausses (effet de la règle). Baseline = `origin/main`
+(`9a8b953e5` ; le moteur de faisabilité y est identique à `049dbcf7f` — seuls bilan/marché ont
+bougé, sans effet sur SDP/cause/verdict).
+
+**Décompte complet sur l'île** (21 467 parcelles, vs `origin/main 9a8b953e5`) :
+
+| catégorie | n |
+|---|---|
+| **hausses** (chiffre branche > main) | **6 031** |
+| chiffre là où main refusait/vide | 295 |
+| **baisses** (dont plafonds LOT 1, littoral LOT 3) | **2 954** |
+| **inchangées** | **7 797** |
+| **refus** (main refusait aussi) | **666** |
+| **« à vérifier »** | **3 723** |
+| **REFUS INTRODUITS** (main chiffrait → branche refuse) | **1** |
+
+- **REFUS INTRODUIT — 1 seul, réglementaire** : **BO0312** (La Possession UAv, main 16 m²) —
+  un **emplacement réservé couvre la parcelle** (emprise résiduelle nulle) ; main servait 16 m²
+  en ignorant l'ER. La branche refuse à juste titre (motif réglementaire, pas un faux exigu).
+  Contre **174** avant FIX-7 : la trilogie PPR rouge et l'exiguïté limite/alignement du LOT 2 ont
+  requalifié les 172 refus rouge et AO0709 en « capacité à vérifier ».
+- **HAUSSES HORS ZONE AUTORISÉE — 2, qualifiées** : AW0302 (2AUc, 20 → 22, +2) et AK1159
+  (Uc, 47 → 75, +28). Le recalcul SANS la règle donne le MÊME chiffre (effet de la règle = 0) :
+  la règle niveau-par-niveau n'en est pas responsable — ce sont des dérives de CHEMIN géométrique
+  (le gabarit aboutit là où le chemin de main différait), pas des hausses autorisées par une règle.
+  **0 hausse RÈGLE hors zone** (invariant tenu).
+- Les plus fortes hausses sont toutes dans les zones autorisées de **La Possession** (gabarit,
+  scénario H/2 à l'égout, niveaux bornés au plafond), chemin confirmé dans le CSV (colonne
+  `chemin_branche`), recul réellement appliqué et `effet_regle_m2` NÉGATIF (la formule H/2 est
+  conservatrice : sans elle, le chiffre serait plus haut encore).
+
+Le CSV `CONTROLE-INVERSE-FIX6-ILE.csv` porte UNE ligne par parcelle des 21 467, avec la capacité
+de main et de la branche, les deux verdicts, la cause, le chemin, les niveaux, le recul appliqué,
+la portion servie, et — pour toutes les hausses — le recalcul sans la règle et son effet. Conservé.

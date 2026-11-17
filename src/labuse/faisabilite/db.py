@@ -84,6 +84,12 @@ class ParcelContext:
     # envisagée : {m2, pct, sous_zone} de la portion U/AU RÉELLE mesurée. Renseigné par
     # parcel_faisabilite pour la garde d'aire réelle (transparence + tests). None sinon.
     uau_reelle: dict | None = None
+    # MOTEUR-VERITE-FIX-7 LOT 4 — chemin RÉELLEMENT servant pour le contrôle inverse : le recul
+    # séparatif effectivement appliqué (scénario retenu, pas le recul d'entrée du gabarit), le nombre
+    # de niveaux servis et la portion U/AU servie (m²). Lecture seule (CSV du contrôle). None sinon.
+    recul_servi_m: float | None = None
+    niveaux_servis: int | None = None
+    portion_servie_m2: float | None = None
 
     @property
     def terrain_sur_dessin(self) -> float:
@@ -1613,6 +1619,14 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 + ".")
         if reserve_facade:   # MOTEUR-VERITE-FIX-6 LOT 5 — façade < 3 m : réserve, chiffre conservé
             _f_cap.avertissements.append(reserve_facade)
+    # MOTEUR-VERITE-FIX-7 LOT 4 — trace du chemin réellement servant (CSV du contrôle inverse) :
+    # recul séparatif appliqué, niveaux servis, portion U/AU servie. Jugé sur le chemin, pas sur
+    # le recul d'entrée (relecteur AN1434 : 6 m appliqués au repli, pas 3 m).
+    ctx.assiette_source = assiette_source
+    ctx.recul_servi_m = round(float(recul), 2) if isinstance(recul, (int, float)) else None
+    ctx.niveaux_servis = extras.get("niveaux_retenus") or (_f_cap.fourchette or {}).get("niveaux_max")
+    ctx.portion_servie_m2 = (round(sous_zone_uau_m2 * k_cont)
+                             if sous_zone_uau_m2 is not None else None)
     return ctx, _f_cap
 
 
