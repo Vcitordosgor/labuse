@@ -1011,9 +1011,11 @@ Le prorata du terrain entier (FIX-7) était faux dans les deux sens. On DÉCOUPE
 scénario (gabarit : zone d'implantation ; repli : inset au recul servi, clippé U/AU) par la bande
 littorale, et on recalcule sur ce qui reste. **BL0308** : l'assiette (398 m²) est entièrement dans
 la bande (intersection hors bande = 0) → « à vérifier » sans chiffre (le prorata servait 98 m²).
-**BL0040** : l'assiette entièrement hors bande → chiffre PLEIN (le prorata réduisait). Sur l'île, le
-littoral de l'assiette est tout-ou-rien : **23 parcelles gardent leur chiffre plein, 15 passent en
-« à vérifier »**. Assiette restante nulle → à vérifier ; mesure indisponible → on ne vide jamais.
+**BL0040** : l'assiette entièrement hors bande → chiffre PLEIN (le prorata réduisait).
+**[CORRIGÉ EN FIX-9 LOT 1]** La formule de FIX-8 appliquait encore un prorata (fraction calculée sur
+l'assiette BRUTE, appliquée à l'emprise nette) ; elle ne découpait pas réellement l'assiette nette.
+Les parcelles littorales ne sont donc PAS « toutes préservées intégralement » : BL0045 garde ~642 m²
+d'assiette nette hors bande sur ~1 750. Voir la section FIX-9 LOT 1 pour la découpe réelle.
 
 ## LOT 2 — un refus exige une absence mesurée (commit 056fada96)
 
