@@ -125,7 +125,7 @@ def test_fix10_rouge_sur_assiette_exacte_du_scenario(app_session):
         _ctx, f = _res(app_session, idu)
         assert f.constructible is True and (f.fourchette or {}).get("surface_plancher_m2") is None, \
             f"{idu} : le rouge recoupe l'assiette réelle → « à vérifier » attendu, obtenu {f.verdict!r}"
-    for idu in ("97408000AT2046", "97406000AM0577", "97415000AW1235", "97416000EW0458"):
+    for idu in ("97408000AT2046", "97406000AM0577", "97405000AW1235", "97416000EW0458"):
         _ctx, f = _res(app_session, idu)
         assert f.constructible is True and (f.fourchette or {}).get("surface_plancher_m2") is not None, \
             f"{idu} : chiffre perdu alors que le rouge reste sous le seuil sur l'assiette réelle"
