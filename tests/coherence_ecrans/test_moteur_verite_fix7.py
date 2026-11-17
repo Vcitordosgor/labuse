@@ -99,22 +99,6 @@ def test_lot2_ppr_rouge_trois_situations(app_session):
         assert "hors" in v and "rouge" in v, f"{idu} : surface/mention hors rouge absente — {f.verdict}"
 
 
-# ─────────────── LOT 3 — SDP littorale calculée sur l'assiette hors bande ───────────────
-@pytest.mark.reel
-def test_lot3_sdp_littorale_sur_assiette_hors_bande(app_session):
-    """La modulation hors bande s'applique désormais AUSSI à la surface de plancher, pas seulement
-    au vendable. BL0308 (La Possession UA, ~86 % dans la bande) servait 716 m² inchangés ; la SDP
-    doit tomber SOUS la capacité hors bande (~155 m² hors bande × 4 niveaux = 622 m² au plus). Une
-    parcelle à peine touchée (BL0040, ~3 %) garde quasi toute sa SDP. La réserve dit que la SDP est
-    calculée sur l'assiette hors bande."""
-    _ctx, f = _res(app_session, "97408000BL0308")
-    sdp = (f.fourchette or {}).get("surface_plancher_m2")
-    assert sdp is not None, "BL0308 : chiffre retiré (l'assiette hors bande ~14 % est établie)"
-    assert sdp <= 622, f"BL0308 : SDP {sdp} m² dépasse la capacité hors bande (~622 m² au plus)"
-    assert sdp < 716, f"BL0308 : SDP {sdp} m² non réduite (était 716 m²)"
-    assert any("trait de côte" in a.lower() and "plancher" in a.lower() and "hors bande" in a.lower()
-               for a in (f.avertissements or [])), "BL0308 : réserve SDP hors bande absente"
-    # non-régression : parcelle à peine dans la bande garde l'essentiel de sa SDP
-    _ctx, f2 = _res(app_session, "97408000BL0040")
-    sdp2 = (f2.fourchette or {}).get("surface_plancher_m2")
-    assert sdp2 is not None and sdp2 > 1500, f"BL0040 (~3 % bande) : SDP {sdp2} trop réduite"
+# NB — le LOT 3 (FIX-7) appliquait la part hors bande à la SDP en PRORATA du terrain entier ; FIX-8
+# LOT 1 l'a remplacé par un découpage de l'assiette du scénario par la bande (prorata faux dans les
+# deux sens). La preuve littorale est désormais dans test_moteur_verite_fix8::test_lot1_littoral_sur_geometrie.

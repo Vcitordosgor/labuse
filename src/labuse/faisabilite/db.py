@@ -162,6 +162,40 @@ SELECT ST_Area(p.b) AS full_area,
 FROM p LEFT JOIN uau ON TRUE LEFT JOIN er ON TRUE LEFT JOIN ebc ON TRUE
 """)
 
+# MOTEUR-VERITE-FIX-8 LOT 1 — le littoral se calcule sur la GÉOMÉTRIE DU SCÉNARIO, pas en prorata
+# du terrain entier (faux dans les deux sens). On DÉCOUPE l'assiette du scénario par la bande
+# littorale (trait_de_cote, bande courte/longue) et on mesure ce qui RESTE hors bande. Deux formes
+# d'assiette : celle du gabarit (zone d'implantation, GeoJSON 4326) et celle du repli (inset
+# uniforme au recul servi, clippé U/AU).
+_LITTORAL_SUR_GJ = text("""
+WITH a AS (SELECT ST_MakeValid(ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326), 2975)) AS g),
+p AS (SELECT commune, geom_2975 AS pg FROM parcels WHERE id = :pid),
+band AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(t.geom_2975, p.pg))) AS u
+         FROM spatial_layers t, p
+         WHERE t.commune = p.commune AND t.kind = 'trait_de_cote'
+           AND t.subtype IN ('bande_courte','bande_longue') AND ST_Intersects(t.geom_2975, p.pg))
+SELECT ST_Area(a.g) AS assiette_m2,
+       ST_Area(ST_Difference(a.g,
+         COALESCE((SELECT u FROM band), ST_GeomFromText('POLYGON EMPTY', 2975)))) AS hors_bande_m2
+FROM a
+""")
+
+_LITTORAL_SUR_INSET = text("""
+WITH p AS (SELECT commune, geom_2975 AS pg, ST_Buffer(geom_2975, -:d) AS b FROM parcels WHERE id = :pid),
+uau AS (SELECT ST_Union(z.geom_2975) AS u FROM spatial_layers z, p
+        WHERE z.kind = :zkind AND z.commune = p.commune
+          AND labuse_zone_famille(z.subtype) = ANY(:uau_fams) AND ST_Intersects(z.geom_2975, p.pg)),
+band AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(t.geom_2975, p.pg))) AS u FROM spatial_layers t, p
+         WHERE t.commune = p.commune AND t.kind = 'trait_de_cote'
+           AND t.subtype IN ('bande_courte','bande_longue') AND ST_Intersects(t.geom_2975, p.pg)),
+ass AS (SELECT CASE WHEN uau.u IS NULL THEN p.b ELSE ST_Intersection(p.b, uau.u) END AS g
+        FROM p LEFT JOIN uau ON TRUE)
+SELECT ST_Area(ass.g) AS assiette_m2,
+       ST_Area(ST_Difference(ass.g,
+         COALESCE((SELECT u FROM band), ST_GeomFromText('POLYGON EMPTY', 2975)))) AS hors_bande_m2
+FROM ass
+""")
+
 _ER_DETAILS = text("""
 SELECT coalesce(e.attrs->>'txt', e.name)     AS txt,
        coalesce(e.attrs->>'libelle', e.name) AS libelle,
@@ -1010,6 +1044,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     ppr_rouge_pct = None               # MOTEUR-VERITE-FIX-1 (LOT 3, V6) — part rouge mesurée (vidage)
     niveaux_repli = None               # MOTEUR-VERITE-FIX-6 LOT 2 — niveaux du scénario niveau-par-niveau au repli
     reserve_facade = None              # MOTEUR-VERITE-FIX-6 LOT 5 — réserve « accès à vérifier » (façade < 3 m)
+    gj = None                          # MOTEUR-VERITE-FIX-8 LOT 1 — assiette gabarit (GeoJSON), pour le littoral
     if gab is not None:
         gbuild, gres = gab
         emprise_brute = float(gres.zoneImplantationM2 or 0.0)
@@ -1338,6 +1373,54 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # la capacité sur le vrai morceau.
     if sous_zone_uau_m2 is not None:
         emprise = min(emprise, sous_zone_uau_m2 * k_cont)
+
+    # ── MOTEUR-VERITE-FIX-8 LOT 1 — LITTORAL SUR LA GÉOMÉTRIE DU SCÉNARIO ─────────────────────────
+    # On découpe l'assiette du scénario (gabarit : zone d'implantation ; repli : inset au recul servi)
+    # par la bande littorale et on recalcule sur CE QUI RESTE hors bande. Le prorata du terrain entier
+    # (FIX-7 LOT 3) était faux dans les deux sens : BL0308 (assiette ∩ hors-bande = 0, prorata servait
+    # 98) et BL0040 (assiette ENTIÈREMENT hors bande, prorata réduisait quand même). Assiette restante
+    # nulle → « capacité à vérifier » sans chiffre. Mesure indisponible → on ne vide JAMAIS (LOT 2).
+    if (ctx.contraintes.littoral_pct and ctx.contraintes.littoral_pct > 0.005
+            and emprise >= SEUIL_EXIGU_M2):
+        _frac_hb = None
+        try:
+            with session.begin_nested():
+                if gab is not None and gj:
+                    _lr = session.execute(_LITTORAL_SUR_GJ,
+                                          {"gj": json.dumps(gj), "pid": parcel_id}).one()
+                else:
+                    _lr = session.execute(_LITTORAL_SUR_INSET,
+                                          {"pid": parcel_id, "d": args["d"],
+                                           "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
+                                           "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"]))}).one()
+            _ass_m2 = float(_lr.assiette_m2) if _lr.assiette_m2 is not None else 0.0
+            _hb_m2 = float(_lr.hors_bande_m2) if _lr.hors_bande_m2 is not None else 0.0
+            _frac_hb = (_hb_m2 / _ass_m2) if _ass_m2 > 0 else 1.0
+        except Exception:  # noqa: BLE001 — mesure indisponible : on NE VIDE PAS (FIX-8 LOT 2)
+            _frac_hb = None
+        _litt_pct = round(ctx.contraintes.littoral_pct * 100)
+        ctx.contraintes.littoral_pct = 0.0   # traité ICI (géométrie) → l'engine ne refait pas de prorata
+        if _frac_hb is None:
+            ctx.contraintes.libelles.append(
+                "Recul prospectif du trait de côte : mesure de l'assiette hors bande indisponible — "
+                "capacité servie à titre indicatif, limite à vérifier auprès des services de l'État.")
+        else:
+            _emp_hb = emprise * _frac_hb
+            if _emp_hb < SEUIL_EXIGU_M2:
+                from .engine import faisabilite_capacite_a_verifier
+                return ctx, faisabilite_capacite_a_verifier(
+                    ctx.zone,
+                    f"Constructible — capacité à vérifier : le recul prospectif du trait de côte "
+                    f"(~{_litt_pct} % de la parcelle) laisse l'assiette du scénario ENTIÈREMENT dans "
+                    "la bande d'érosion — aucune assiette nette hors bande. Capacité non chiffrée tant "
+                    "que la limite n'est pas qualifiée (services de l'État).",
+                    "Assiette du scénario entièrement dans la bande d'érosion : à vérifier.")
+            if _frac_hb < 0.999:
+                ctx.contraintes.libelles.append(
+                    f"Recul prospectif du trait de côte : surface de plancher calculée sur l'assiette "
+                    f"du scénario HORS bande (~{_emp_hb:.0f} m² sur {emprise:.0f} m² d'assiette), "
+                    "limite à vérifier auprès des services de l'État.")
+                emprise = _emp_hb
 
     # ── EXIGU-FIX-1 — ré-examen géométrique AVANT de conclure « terrain exigu » ──────────────────
     # Les deux chemins (gabarit, legacy) ont fixé `emprise` et `vide_raison`. Si l'emprise tombe sous

@@ -97,19 +97,17 @@ def test_lot3_sous_prescriptions_seulement_si_bleue(app_session):
 
 
 # LOT 5 — gardes de doute : réserve au lieu de retrait du chiffre (sauf assiette nulle).
-def test_lot5_littoral_chiffre_sur_part_hors_bande(app_session):
-    """Le recul prospectif du trait de côte calcule le chiffre sur la PART HORS BANDE avec la
-    réserve ; « à vérifier » sans chiffre seulement quand toute l'assiette est dans la bande.
-    BM0052 (La Possession, littoral partiel) garde un chiffre réduit."""
+# NB FIX-8 LOT 1 calcule le littoral sur la GÉOMÉTRIE du scénario (assiette découpée par la bande) :
+# BM0052, dont l'assiette du scénario est ENTIÈREMENT hors bande, garde donc son chiffre PLEIN sans
+# réserve (la bande touche la parcelle mais pas l'assiette). Le cas « assiette dans la bande → à
+# vérifier » est couvert par test_moteur_verite_fix8::test_lot1_littoral_sur_geometrie (BL0308).
+def test_lot5_littoral_assiette_hors_bande_garde_le_chiffre(app_session):
+    """BM0052 (La Possession) : la bande littorale touche la parcelle, mais l'assiette du scénario
+    est entièrement hors bande → le chiffre est servi, non vidé par le recul prospectif."""
     f = _res(app_session, "97408000BM0052")
-    sdp = (f.fourchette or {}).get("surface_plancher_m2")
-    if sdp is None:
-        # toute l'assiette dans la bande : « à vérifier » admis
-        assert "trait de côte" in f.verdict
-        return
-    assert any("trait de côte" in a.lower() and "hors bande" in a.lower()
-               for a in (f.avertissements or [])), \
-        "BM0052 : chiffre littoral sans la réserve hors-bande"
+    assert f.constructible is True
+    assert (f.fourchette or {}).get("surface_plancher_m2") is not None, \
+        "BM0052 : chiffre vidé alors que l'assiette du scénario est hors bande"
 
 
 # LOT 6 — « trop exigu » veut dire que rien ne tient dans le scénario le plus favorable.
