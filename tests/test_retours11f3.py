@@ -96,12 +96,13 @@ def test_m13_compare_row_colonnes_ajoutees():
 
 
 def test_m13_compare_row_particulier_et_absences_sans_zero_invente():
-    """Sans PM → particulier ; sans faisabilité/secteur → None (jamais un « 0 »)."""
+    """Sans PM → « non déterminé » (CHIRURGICAL-FIX-1 LOT H pt4 : le Comparatif dit comme le Dossier,
+    plus « particulier » par défaut) ; sans faisabilité/secteur → None (jamais un « 0 »)."""
     from labuse.api.app import _compare_row
     qv2 = {"idu": "97411000AT0710", "commune": "Saint-Denis", "surface_m2": None,
            "score_v2": {}, "etage0": True, "proprietaire_moral": None, "lines": []}
     row = _compare_row(qv2, None)
-    assert row["proprietaire"] == "particulier"
+    assert row["proprietaire"] == "non_determine"
     assert row["bati_existant_pct"] is None                # surface absente → None, pas 0
     assert row["prix_secteur_bati_m2"] is None
     assert "logements_possibles" not in row   # FIX-ORFEVRE-1 — champ retiré (voir l'Étude de faisabilité)

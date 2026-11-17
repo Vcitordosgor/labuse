@@ -27,6 +27,13 @@ from .engine import Contraintes, Faisabilite, estimate_capacity
 from .zonage import resolve_zone
 from .zone_servie import FAMILLES_CONSTRUCTIBLES
 
+# MOTEUR-VERITE-FIX-8 LOT 2 — CONTACT ROUGE SIGNIFICATIF. La zone rouge ne fait perdre un chiffre
+# que si elle touche RÉELLEMENT l'assiette. En deçà de ce seuil, l'intersection rouge est un artefact
+# de numérisation : la couche PPR et le cadastre ne coïncident pas au décimètre, et un recouvrement
+# inférieur à ~1 m² au bord de parcelle ne retire aucune aire exploitable (AM0577 : 0,003 m² faisait
+# perdre 171 m²). Seuil choisi SOUS le plus petit contact bâti réel, AU-DESSUS du bruit géométrique.
+SEUIL_CONTACT_ROUGE_M2 = 1.0
+
 _CTX = text("""
 SELECT p.idu, p.commune,
        -- CONTENANCE-1 (Lot C) : la surface servant aux RATIOS (emprise CES, pleine terre, densité,
@@ -84,6 +91,13 @@ class ParcelContext:
     # envisagée : {m2, pct, sous_zone} de la portion U/AU RÉELLE mesurée. Renseigné par
     # parcel_faisabilite pour la garde d'aire réelle (transparence + tests). None sinon.
     uau_reelle: dict | None = None
+    # MOTEUR-VERITE-FIX-7 LOT 4 — chemin RÉELLEMENT servant pour le contrôle inverse : le recul
+    # séparatif effectivement appliqué (scénario retenu, pas le recul d'entrée du gabarit), le nombre
+    # de niveaux servis et la portion U/AU servie (m²). Lecture seule (CSV du contrôle). None sinon.
+    recul_servi_m: float | None = None
+    niveaux_servis: int | None = None
+    portion_servie_m2: float | None = None
+    recul_par_cote: str | None = None   # FIX-8 LOT 3 — recul retenu CÔTÉ PAR CÔTÉ (gabarit)
 
     @property
     def terrain_sur_dessin(self) -> float:
@@ -155,6 +169,87 @@ SELECT ST_Area(p.b) AS full_area,
        END AS greve_area
 FROM p LEFT JOIN uau ON TRUE LEFT JOIN er ON TRUE LEFT JOIN ebc ON TRUE
 """)
+
+# MOTEUR-VERITE-FIX-8 LOT 1 — le littoral se calcule sur la GÉOMÉTRIE DU SCÉNARIO, pas en prorata
+# du terrain entier (faux dans les deux sens). On DÉCOUPE l'assiette du scénario par la bande
+# littorale (trait_de_cote, bande courte/longue) et on mesure ce qui RESTE hors bande. Deux formes
+# d'assiette : celle du gabarit (zone d'implantation, GeoJSON 4326) et celle du repli (inset
+# uniforme au recul servi, clippé U/AU).
+#: Contraintes « certaines » à soustraire de l'assiette (PPR rouge, PEB A/B, marchepied DPF, ravine,
+#: 50 pas) — MÊME définition que `_GREVE_SUR_ASSIETTE` / `_GREVE_LEGACY_UNION`. Factorisé pour que le
+#: découpage littoral porte sur l'ASSIETTE NETTE (FIX-9 LOT 1), pas sur l'assiette brute en prorata.
+_CERT_UNION_SQL = """
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, {clip})) AS geom FROM spatial_layers g, p
+      WHERE g.kind = 'ppr' AND g.commune = p.commune
+        AND labuse_ppr_couleur(g.subtype, g.attrs) <> 'bleu' AND ST_Intersects(g.geom_2975, {clip})
+  UNION ALL
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, {clip})) FROM spatial_layers g, p
+      WHERE g.kind = 'peb' AND lower(g.subtype) = ANY(:peb_ab) AND ST_Intersects(g.geom_2975, {clip})
+  UNION ALL
+    SELECT ST_Buffer(ST_MakeValid(g.geom_2975), :dpf_m) FROM spatial_layers g, p
+      WHERE g.kind = 'dpf' AND g.commune = p.commune AND ST_DWithin(g.geom_2975, {clip}, :dpf_m)
+  UNION ALL
+    SELECT ST_Buffer(ST_MakeValid(g.geom_2975), :rav_m) FROM spatial_layers g, p
+      WHERE g.kind = 'ravine' AND g.commune = p.commune AND ST_DWithin(g.geom_2975, {clip}, :rav_m)
+  UNION ALL
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, {clip})) FROM spatial_layers g, p
+      WHERE g.kind = 'cinquante_pas' AND g.commune = p.commune AND ST_Intersects(g.geom_2975, {clip})
+"""
+
+# MOTEUR-VERITE-FIX-9 LOT 1 — on découpe l'ASSIETTE NETTE (après TOUTES les contraintes : ER, EBC,
+# PPR rouge, PEB, DPF, ravine, 50 pas) par la bande, et on mesure ce qui reste. Plus de prorata de
+# l'assiette brute (AO0648 : 4 475 m² en prorata → 5 857 m² en découpe réelle). `assiette_m2` = aire
+# nette ; `hors_bande_m2` = aire nette HORS bande ; le rapport, appliqué à l'emprise (elle-même nette),
+# donne la découpe réelle. `band IS NULL` quand la mesure du trait de côte est indisponible.
+_LITTORAL_SUR_GJ = text(("""
+WITH a AS (SELECT ST_MakeValid(ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326), 2975)) AS g),
+p AS (SELECT commune, geom_2975 AS pg, (SELECT g FROM a) AS b FROM parcels WHERE id = :pid),
+er AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(e.geom_2975, p.b))) AS u FROM spatial_layers e, p
+       WHERE e.kind = :pkind AND e.commune = p.commune AND e.subtype = ANY(:er_types)
+         AND ST_Intersects(e.geom_2975, p.b)),
+ebc AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(e.geom_2975, p.b))) AS u FROM spatial_layers e, p
+        WHERE e.kind = :pkind AND e.commune = p.commune AND e.subtype = ANY(:ebc_types)
+          AND ST_Intersects(e.geom_2975, p.b)),
+cert AS (SELECT ST_Union(geom) AS u FROM (""" + _CERT_UNION_SQL.format(clip="p.b") + """) s),
+band AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(t.geom_2975, p.pg))) AS u FROM spatial_layers t, p
+         WHERE t.commune = p.commune AND t.kind = 'trait_de_cote'
+           AND t.subtype IN ('bande_courte','bande_longue') AND ST_Intersects(t.geom_2975, p.pg)),
+net AS (SELECT ST_Difference(a.g, ST_Union(ST_Union(
+          COALESCE((SELECT u FROM er),  ST_GeomFromText('GEOMETRYCOLLECTION EMPTY',2975)),
+          COALESCE((SELECT u FROM ebc), ST_GeomFromText('GEOMETRYCOLLECTION EMPTY',2975))),
+          COALESCE((SELECT u FROM cert),ST_GeomFromText('GEOMETRYCOLLECTION EMPTY',2975)))) AS g FROM a)
+SELECT ST_Area(net.g) AS assiette_m2,
+       ST_Area(ST_Difference(net.g,
+         COALESCE((SELECT u FROM band), ST_GeomFromText('POLYGON EMPTY',2975)))) AS hors_bande_m2
+FROM net
+"""))
+
+_LITTORAL_SUR_INSET = text(("""
+WITH p AS (SELECT commune, geom_2975 AS pg, ST_Buffer(geom_2975, -:d) AS b FROM parcels WHERE id = :pid),
+uau AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(z.geom_2975, p.b))) AS u FROM spatial_layers z, p
+        WHERE z.kind = :zkind AND z.commune = p.commune
+          AND labuse_zone_famille(z.subtype) = ANY(:uau_fams) AND ST_Intersects(z.geom_2975, p.b)),
+ass AS (SELECT CASE WHEN uau.u IS NULL THEN p.b ELSE ST_Intersection(p.b, uau.u) END AS g
+        FROM p LEFT JOIN uau ON TRUE),
+er AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(e.geom_2975, p.b))) AS u FROM spatial_layers e, p
+       WHERE e.kind = :pkind AND e.commune = p.commune AND e.subtype = ANY(:er_types)
+         AND ST_Intersects(e.geom_2975, p.b)),
+ebc AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(e.geom_2975, p.b))) AS u FROM spatial_layers e, p
+        WHERE e.kind = :pkind AND e.commune = p.commune AND e.subtype = ANY(:ebc_types)
+          AND ST_Intersects(e.geom_2975, p.b)),
+cert AS (SELECT ST_Union(geom) AS u FROM (""" + _CERT_UNION_SQL.format(clip="p.b") + """) s),
+band AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(t.geom_2975, p.pg))) AS u FROM spatial_layers t, p
+         WHERE t.commune = p.commune AND t.kind = 'trait_de_cote'
+           AND t.subtype IN ('bande_courte','bande_longue') AND ST_Intersects(t.geom_2975, p.pg)),
+net AS (SELECT ST_Difference(ass.g, ST_Union(ST_Union(
+          COALESCE((SELECT u FROM er),  ST_GeomFromText('GEOMETRYCOLLECTION EMPTY',2975)),
+          COALESCE((SELECT u FROM ebc), ST_GeomFromText('GEOMETRYCOLLECTION EMPTY',2975))),
+          COALESCE((SELECT u FROM cert),ST_GeomFromText('GEOMETRYCOLLECTION EMPTY',2975)))) AS g FROM ass)
+SELECT ST_Area(net.g) AS assiette_m2,
+       ST_Area(ST_Difference(net.g,
+         COALESCE((SELECT u FROM band), ST_GeomFromText('POLYGON EMPTY',2975)))) AS hors_bande_m2
+FROM net
+"""))
 
 _ER_DETAILS = text("""
 SELECT coalesce(e.attrs->>'txt', e.name)     AS txt,
@@ -562,13 +657,18 @@ def _assiette_gabarit(session: Session, idu: str):
     from ..gabarit.engine import compute_gabarit
     build = build_gabarit_input(session, idu)
     if build is None:
-        return None, ["parcelle/zone introuvable ou géométrie de parcelle indisponible"]
+        return None, ["parcelle/zone introuvable ou géométrie de parcelle indisponible"], {}
+    # MOTEUR-VERITE-FIX-6 LOT 7 — le RACCORDEMENT (dont les mentions d'implantation en limite /
+    # alignement) est rendu MÊME quand le gabarit ne sert pas la parcelle (repli), pour que la
+    # permission d'implantation en limite soit connue sur les deux chemins (le repli ne recalcule
+    # pas le raccordement). Sans quoi AO0709 (Le Port Ud, repli) perdait la mention.
+    racc = build.raccordement or {}
     if build.blocking:
-        return None, list(build.blocking)
+        return None, list(build.blocking), racc
     res = compute_gabarit(build.input)
     if res.status != "ok":
-        return None, [f"gabarit:{res.status}"]
-    return (build, res), []
+        return None, [f"gabarit:{res.status}"], racc
+    return (build, res), [], racc
 
 
 # RESIDUEL-2 — un repli est QUALIFIÉ (il applique provablement les règles du cas) uniquement quand
@@ -593,6 +693,53 @@ def _repli_qualifiable(blocages: list[str]) -> bool:
     jamais une voie privée au recul deviné)."""
     return bool(blocages) and all(
         b.startswith(_MOTIF_LEGACY_BENIN) and "voie privée" not in b for b in blocages)
+
+
+_EXPLOITANT_RX = re.compile(r"exploit|agricult|logement de fonction|gardiennage", re.I)
+
+
+def secteur_habitat_plafonne(commune: str | None, zone: str | None) -> dict | None:
+    """MOTEUR-VERITE-FIX-1 LOT 4 (V3) — la zone est-elle un SECTEUR D'HABITAT d'une zone A/N où le
+    règlement ADMET l'habitat neuf plafonné (Aba, Arh, Nrh, Nba…) ? Lit la calibration DÉJÀ posée
+    (`sous_destinations.logement`, statut sous_condition + seuil_m2 en SURFACE DE PLANCHER) et
+    ÉCARTE les logements d'exploitant/de fonction (exception légale réservée à l'agriculteur —
+    l'ouvrir à tout acheteur créerait une capacité A/N fantôme sur toute l'île). Rend
+    {seuil_m2, article, page_pdf, citation, condition} ou None."""
+    if not commune or not zone:
+        return None
+    from ..plu import destinations as D
+    doc = D._doc(commune)
+    if not doc:
+        return None
+    _, entry = D._zone_entry(doc, zone)
+    log = ((entry or {}).get("sous_destinations") or {}).get("logement") or {}
+    if log.get("statut") != "sous_condition":
+        return None
+    seuil = log.get("seuil_m2")
+    if not isinstance(seuil, (int, float)) or seuil <= 0:
+        return None
+    if str(log.get("seuil_type") or "") != "surface_plancher":
+        return None
+    texte = f"{log.get('condition') or ''} {log.get('citation') or ''}"
+    if _EXPLOITANT_RX.search(texte):
+        return None
+    # GARDE DU NEUF — la plupart des feuilles A/N « sous_condition » ne couvrent QUE l'extension/
+    # l'amélioration de bâtiments EXISTANTS (mesuré : 52 des 60 feuilles à seuil) : les ouvrir au
+    # neuf créerait une capacité A/N sans règle. On n'ouvre que si l'ADMISSION du neuf est écrite.
+    # La garde juge le VERBATIM (citation) — le commentaire `condition` peut récapituler une règle
+    # d'extension VOISINE (Le Tampon Aba) sans retirer l'admission du neuf écrite au règlement.
+    t = (str(log.get("citation") or "") or str(log.get("condition") or "")).lower()
+    if "admis" not in t:
+        return None
+    _marqueurs_existant = re.search(
+        r"non prévue|exclu|existant|extension|amélioration|aménagement|réhabilit|reconstruction"
+        r"|strictement nécessaire|mise aux normes", t)
+    if _marqueurs_existant and not re.search(r"constructions? nouvelles?[^.]{0,250}admis", t):
+        return None
+    return {"seuil_m2": float(seuil), "article": log.get("article"),
+            "page_pdf": log.get("page_pdf"),
+            "citation": log.get("citation") or log.get("condition"),
+            "condition": log.get("condition")}
 
 
 def _sous_zone_constructible(ctx: ParcelContext):
@@ -767,6 +914,39 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             # sinon : éclat U/AU < 50 m² OU RUBAN (vide après érosion de 3 m) → `rules` reste la zone
             # dominante (A/N) non constructible ; estimate_capacity rendra « non constructible en zone
             # <dominante> » (jamais un chiffre sur une portion non bâtissable).
+    # MOTEUR-VERITE-FIX-1 LOT 4 (V3) — SECTEUR D'HABITAT d'une zone A/N : avant de fermer (« zone
+    # non constructible » / hors PLU), on lit la calibration des destinations. Si l'habitat NEUF y
+    # est admis sous conditions avec un PLAFOND de surface de plancher (Aba, Arh, Nrh… — jamais le
+    # logement d'exploitant, écarté par mot-clé), le verdict est « constructible sous conditions,
+    # plafonné à X m² » avec la citation. La portion U/AU réelle (alt) garde la priorité ci-dessus.
+    if (ctx.zone_fam in ("A", "N")
+            and (rules is None or not rules.constructible_neuf or rules.habitat == "interdit")):
+        _sect = secteur_habitat_plafonne(ctx.commune, ctx.zone)
+        if _sect is not None:
+            # MOTEUR-VERITE-FIX-4 LOT 4 — le contrôle du PLAN DE PRÉVENTION s'applique TOUJOURS,
+            # y compris dans les secteurs d'habitat A/N : cette branche retournait AVANT le
+            # contrôle PPR (AL0165, 100 % en R2, sortait « constructible sous conditions » —
+            # la cascade l'excluait, la faisabilité non). Rouge DOMINANT (≥ 50 %) sans reste
+            # exploitable → verdict ferme ; sinon le verdict « capacité à vérifier » PORTE le PPR.
+            _rpct = None
+            try:
+                with session.begin_nested():
+                    _rr0 = session.execute(_HORS_PPR_ROUGE, {"pid": parcel_id}).first()
+                if _rr0 is not None and _rr0.parcelle_m2 and float(_rr0.parcelle_m2) > 0:
+                    _rpct = round(100.0 * float(_rr0.rouge_m2 or 0.0) / float(_rr0.parcelle_m2))
+            except Exception:  # noqa: BLE001 — mesure indisponible : verdict secteur conservé
+                _rpct = None
+            from .engine import faisabilite_ppr_rouge_secteur, faisabilite_secteur_habitat
+            if _rpct is not None and _rpct >= 50:
+                _servable, _ = _hors_rouge_fragment_servable(session, parcel_id)
+                if not _servable:
+                    return ctx, faisabilite_ppr_rouge_secteur(ctx.zone, _rpct)
+            _avert_ppr = (f"PPR zone rouge sur ~{_rpct} % de la parcelle — la partie en zone "
+                          "rouge est inconstructible (L562-1), le reste sous prescriptions du "
+                          "règlement du PPR." if _rpct else None)
+            return ctx, faisabilite_secteur_habitat(ctx.zone, ctx.zone_fam, _sect,
+                                                     surface_m2=ctx.surface_m2,
+                                                     avert_ppr=_avert_ppr)
     if rules is None:
         # EXPORTS-FIX-3 LOT 1 — une sous-zone U/AU a été ÉCARTÉE par la garde d'aire réelle, mais la
         # zone dominante (A/N) n'est pas calibrée au PLU de la commune (resolve_zone → None). La
@@ -776,14 +956,34 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             from .engine import faisabilite_zone_non_constructible
             return ctx, faisabilite_zone_non_constructible(ctx.zone, ctx.zone_fam)
         return None
+    # MOTEUR-VERITE-FIX-6 LOT 1 — UN REFUS ÉTABLI NE S'EFFACE JAMAIS. Les refus réglementaires
+    # (zone fermée à l'urbanisation, habitat interdit) étaient émis en FIN d'`estimate_capacity`,
+    # donc APRÈS les gardes micro-parcelle / façade / PPR : une parcelle de 20 m² en zone
+    # « habitat interdit » (AC1634 Sainte-Marie UEm) ressortait « constructible, capacité à
+    # vérifier ». On tranche le refus ICI, avant toute garde de taille. (La sous-zone U/AU et le
+    # secteur d'habitat A/N restent prioritaires : ils ont déjà remplacé `rules` ou renvoyé.)
+    from .engine import faisabilite_refus_reglementaire
+    _refus = faisabilite_refus_reglementaire(rules)
+    if _refus is not None:
+        return ctx, _refus
     # PROSPECT (Ud/Uu) : hauteur PAR PARCELLE = L≥H, L = max(largeur voie desservante, 10 m).
     # Copie par-parcelle (dataclasses.replace) — la règle de zone partagée n'est JAMAIS mutée.
     if rules.hauteur_mode == 'prospect':
         largeur, src = _facade_largeur(session, parcel_id, ctx.commune)
         L = _prospect_hauteur(largeur)
-        rules = replace(rules, hf_m=L, calibree=True,
+        # MOTEUR-VERITE-FIX-4 LOT 3 — le prospect CALCULÉ PAR PARCELLE plafonne toute plage de
+        # hauteur par secteur : la hauteur retenue = min(prospect, borne basse de la plage).
+        # Avant, la branche « hauteur_plage » du moteur passait DEVANT le prospect (Saint-Denis
+        # Ud AO0584 : prospect 10 m calculé, 12 m servis — relecture FIX-4).
+        _pl = (rules.hauteur_plage or {}).get("plage_m") or {}
+        _h_eff, _note_pl = L, ""
+        if isinstance(_pl.get("min"), (int, float)):
+            _h_eff = min(L, float(_pl["min"]))
+            _note_pl = f" ; plafonnée par min(prospect, plage basse {_pl['min']:g} m)"
+        rules = replace(rules, hf_m=_h_eff, hauteur_plage=None, calibree=True,
                         notes=[*rules.notes,
-                               f"Hauteur prospect L≥H = {L:.0f} m (largeur chaussée BD TOPO : {src})"])
+                               f"Hauteur prospect L≥H = {_h_eff:.0f} m (largeur chaussée BD "
+                               f"TOPO : {src}{_note_pl})"])
 
     # DONNEES-FIX-1 point 4 — les exceptions PLU `modifie_calcul=true` entrent au moteur par le même
     # système (zonage). Une majoration conditionnée à la surface (terrain ≥ seuil) relève la hauteur ;
@@ -794,6 +994,28 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     rules, ctx.regles_non_modelisees = appliquer_exceptions_calcul(
         rules, ctx.commune, ctx.zone, ctx.surface_m2)
 
+    # MOTEUR-VERITE-FIX-4 LOT 2 — CES réduit dans des périmètres REPÉRÉS (prescriptions GPU),
+    # MESURÉ par parcelle : Le Port Uc 7 « 60 % … OAP Mascareignes » (la décision « deja_couvert »
+    # laissait 80 % partout — relecture FIX-4). La réduction ne fait que BAISSER, jamais relever.
+    for _per in (getattr(rules, "ces_perimetres", None) or []):
+        try:
+            _hit = session.execute(text(
+                "SELECT 1 FROM spatial_layers pr, parcels p WHERE p.id = :pid "
+                "AND pr.kind = 'plu_gpu_prescription' AND pr.commune = p.commune "
+                "AND pr.subtype = ANY(:subs) AND pr.attrs->>'libelle' ~* :rx "
+                "AND ST_Intersects(pr.geom_2975, p.geom_2975) LIMIT 1"),
+                {"pid": parcel_id, "subs": list(_per.get("subtypes") or []),
+                 "rx": str(_per.get("libelle_regex") or "")}).scalar()
+        except Exception:  # noqa: BLE001 — couche indisponible : CES de zone conservé
+            _hit = None
+        if _hit and isinstance(_per.get("pct"), (int, float)):
+            _cur = rules.emprise_sol_pct
+            if not isinstance(_cur, (int, float)) or float(_per["pct"]) < float(_cur):
+                rules = replace(rules, emprise_sol_pct=float(_per["pct"]))
+                ctx.contraintes.libelles.append(
+                    f"CES réduit à {_per['pct']:g} % — parcelle dans le périmètre "
+                    f"« {_per.get('libelle_regex')} » ({_per.get('source') or 'règlement'}).")
+
     hyp = Hypotheses.charger(ctx.commune)   # M-N P1-13 : hypothèses de la commune
     # FAISABILITE-1 (lot D) — surcharges d'hypothèses (édition « et si… » de l'utilisateur, jamais
     # persistées en base : portées par le projet côté front). Seules les hypothèses Estimé/Dérivé
@@ -801,9 +1023,31 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     if hyp_overrides:
         from .engine import appliquer_overrides_hypotheses
         appliquer_overrides_hypotheses(hyp, hyp_overrides)
+    # MOTEUR-VERITE-FIX-5 LOT 2 — la garde MICRO-PARCELLE s'applique AUSSI au calcul de REPLI
+    # (le test de taille vivait dans le seul chemin gabarit : AB1185 12 m² / AE0736 37 m² à
+    # Saint-Benoît gardaient une capacité). Point commun des chemins : ici.
+    if ctx.surface_m2 and float(ctx.surface_m2) < 40.0:
+        from .engine import faisabilite_capacite_a_verifier
+        return ctx, faisabilite_capacite_a_verifier(
+            ctx.zone,
+            f"Constructible — capacité à vérifier : micro-parcelle ({float(ctx.surface_m2):.0f} m²)"
+            " — aucune capacité chiffrée seule, assemblage / projet d'ensemble à instruire.",
+            f"Micro-parcelle ({float(ctx.surface_m2):.0f} m²) : pas de capacité chiffrée seule.")
+
     recul = (float(rules.recul_limites_sep_m)
              if isinstance(rules.recul_limites_sep_m, (int, float))
              else hyp.recul_limites_defaut_m)
+    # MOTEUR-VERITE-FIX-4 LOT 3 (contrôle inverse) — le REPLI « contour inseté » applique la MÊME
+    # référence PRUDENTE que le builder : formule de retrait relatif à référence NON-égout
+    # (hauteur totale de façade…) → recul = max(min, faîtage × fraction). Sans quoi, quand le
+    # gabarit (recul prudent) vide l'assiette, le repli retombait sur le MINIMUM et servait PLUS
+    # que main (Sainte-Rose Ua/Ub, AR0291 134→158 m² d'emprise — hausse hors liste blanche).
+    # L'ancienne borne-haute D-50 reste valable pour l'égout (scénario niveau par niveau).
+    from ..gabarit.builder import _fraction_hauteur_formule as _ffh
+    _frac_db = _ffh(getattr(rules, "recul_limites_formule", None))
+    if (_frac_db is not None and getattr(rules, "h_reference", None) != "egout"
+            and isinstance(rules.hf_m, (int, float))):
+        recul = max(recul, round(float(rules.hf_m) * _frac_db, 1))
     # CHASSE-DONNEES-FIX-1 (suite 1, D-50) — recul limites séparatives EN FORMULE « H/2, minimum X » :
     # on NE couple PAS mécaniquement recul=H/2 au moteur. Mesuré (BW2262 503→131, AL1115 313→exigu,
     # AV1095 376→55) : inseter H/2 sur TOUTES les limites effondre la SDP de 74-85 %, car la géométrie
@@ -834,7 +1078,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # ZONE D'IMPLANTATION du gabarit (reculs par côté, PPR rouge découpé, morceau constructible
     # si à cheval) quand le gabarit sert la parcelle ; sinon chemin legacy inchangé, et la
     # provenance est ÉCRITE (`assiette_source`) — pas de trou, pas de mensonge.
-    gab, _blocages = _assiette_gabarit(session, ctx.idu)
+    gab, _blocages, _racc_early = _assiette_gabarit(session, ctx.idu)
     # RESIDUEL-2 — provenance EXACTE : gabarit, repli QUALIFIÉ (motifs purement « limites non
     # qualifiées » → règles provablement appliquées), ou repli NON qualifié (capacité provisoire).
     if gab is not None:
@@ -848,6 +1092,14 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # surface du terrain et que les proportions tiennent. Les FORMES (GeoJSON, reculs, intersections)
     # restent calculées sur le dessin ; seules leurs AIRES scalaires sont ré-échelonnées ici.
     k_cont = ctx.terrain_sur_dessin
+    # MOTEUR-VERITE-FIX-1 (LOT 2) / FIX-6 LOT 7 — mentions d'implantation en limite / alignement,
+    # renseignées DÈS ICI depuis le raccordement rendu par `_assiette_gabarit` (gabarit ET repli) :
+    # la permission d'implantation en limite est une propriété de ZONE, connue quel que soit le chemin.
+    implantation_mentions: list = list((_racc_early.get("implantation") or {}).get("mentions") or [])
+    ppr_rouge_pct = None               # MOTEUR-VERITE-FIX-1 (LOT 3, V6) — part rouge mesurée (vidage)
+    niveaux_repli = None               # MOTEUR-VERITE-FIX-6 LOT 2 — niveaux du scénario niveau-par-niveau au repli
+    reserve_facade = None              # MOTEUR-VERITE-FIX-6 LOT 5 — réserve « accès à vérifier » (façade < 3 m)
+    gj = None                          # MOTEUR-VERITE-FIX-8 LOT 1 — assiette gabarit (GeoJSON), pour le littoral
     if gab is not None:
         gbuild, gres = gab
         emprise_brute = float(gres.zoneImplantationM2 or 0.0)
@@ -870,6 +1122,30 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         er_a *= k_cont; ebc_a *= k_cont; greve_cert *= k_cont; greve_tot *= k_cont
         emprise = max(0.0, emprise_brute - greve_tot)
         racc = gbuild.raccordement or {}
+        # MOTEUR-VERITE-FIX-4 LOT 2 — garde MICRO-PARCELLE : une parcelle SEULE de moins de
+        # 40 m² (AO1876 : 9 m², 5 m² extrudés sur 5 niveaux), ou sans façade suffisante sur
+        # voie (< 3 m — BK0245 : 2,9 m), ne porte AUCUNE capacité chiffrée : la desserte et
+        # l'assemblage du scénario restent à établir (capacité à vérifier, SDP ∅).
+        _surf_garde = float(ctx.surface_m2 or 0.0)
+        _facade = (racc.get("classification") or {}).get("facade_voie_m")
+        if _surf_garde and _surf_garde < 40.0:
+            from .engine import faisabilite_capacite_a_verifier
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                f"Constructible — capacité à vérifier : micro-parcelle ({_surf_garde:.0f} m²) — "
+                "aucune capacité chiffrée seule, assemblage / projet d'ensemble à instruire.",
+                f"Micro-parcelle ({_surf_garde:.0f} m²) : pas de capacité chiffrée seule.")
+        if isinstance(_facade, (int, float)) and 0 < _facade < 3.0:
+            # FIX-4 (BK0245) puis FIX-6 LOT 5 — façade qualifiée mais ÉTROITE (< 3 m) : une garde
+            # de DOUTE (accès) n'EFFACE PAS le chiffre quand une assiette existe — la consigne est
+            # « pas de HAUSSE sans façade établie », pas « plus de chiffre ». La mesure de façade
+            # est approximative : elle justifie une RÉSERVE, pas la disparition du chiffre (298
+            # parcelles, dont une de 37 487 m²). Le chiffre prudent (≤ main par la non-hausse) est
+            # CONSERVÉ, avec la réserve « accès à vérifier : façade sur voie mesurée à X m ».
+            reserve_facade = (
+                f"Accès à vérifier : façade sur voie mesurée à {_facade:g} m (moins de 3 m, mesure "
+                "approximative) — la desserte du scénario reste à établir ; capacité servie à titre "
+                "prudent.")
         ppr_rouge = bool((racc.get("ppr") or {}).get("rouge"))
         # PPR-PARTIEL-A lot 2 — garde-fous : la règle (lot 1) calcule désormais l'emprise sur la
         # partie hors zone rouge, mais on ne la SERT que si cette partie est exploitable. On vérifie
@@ -879,12 +1155,100 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         # par un ER / EBC / portion U/AU minuscule (FIX-1 §6) gardent leur propre motif plus bas.
         hors_rouge_vide = None
         if ppr_rouge and emprise >= SEUIL_EXIGU_M2:
-            servable, hors_rouge_vide = _hors_rouge_fragment_servable(session, parcel_id, k_cont)
-            if not servable:
-                emprise = 0.0
+            # MOTEUR-VERITE-FIX-9 LOT 2 — la perte du chiffre se fonde sur l'effet MESURÉ sur
+            # l'ASSIETTE DU SCÉNARIO (l'inset au recul servi, clippé U/AU), pas sur la surface rouge
+            # du terrain entier. AT2046 : 3,40 m² de rouge sur la parcelle, 0 m² sur l'assiette → on
+            # ne retire PAS le chiffre, on le conserve avec la mention de la zone rouge. Le contrôle
+            # hors-rouge (≥ 200 m² ∩ voie) ne se déclenche que si le rouge recoupe l'assiette.
+            # PANNE de la mesure rouge → « capacité à vérifier » (ni chiffre ni refus), jamais inventée.
+            # MOTEUR-VERITE-FIX-10 — on mesure le rouge sur la GÉOMÉTRIE EXACTE du scénario retenu par
+            # le gabarit (zone d'implantation per-côté, AVANT la découpe rouge), pas sur un inset
+            # uniforme qui diffère (AB0752 : 0 m² à l'inset 5,50 m, 21,04 m² sur l'assiette réelle).
+            _rouge_ass = 0.0
+            _assiette_gj = getattr(gres, "assietteScenarioGeoJSON", None)
+            try:
+                with session.begin_nested():
+                    if _assiette_gj is not None:
+                        _ra = _rouge_sur_assiette(session, parcel_id, assiette_gj=_assiette_gj)
+                    else:
+                        _ra = _rouge_sur_assiette(
+                            session, parcel_id, recul=args["d"],
+                            zkind=zonage.get("spatial_kind", "plu_gpu_zone"),
+                            uau_fams=list(zonage.get("positive_prefixes", ["U", "AU"])))
+                _rouge_ass = (float(_ra) * k_cont) if _ra is not None else 0.0
+            except Exception:  # noqa: BLE001 — MESURE ROUGE INDISPONIBLE (FIX-9 LOT 2)
+                _rouge_ass = None
+            if _rouge_ass is None:
+                from .engine import faisabilite_capacite_a_verifier
+                ctx.contraintes.libelles.append(
+                    "Zone rouge PPR : la mesure du recoupement avec l'assiette du scénario est "
+                    "indisponible — capacité inconnue, à instruire (ni chiffre ni refus).")
+                return ctx, faisabilite_capacite_a_verifier(
+                    ctx.zone,
+                    "Constructible — capacité à vérifier : la mesure de l'effet de la zone rouge sur "
+                    "l'assiette est indisponible — capacité non chiffrée, à instruire. Ni refus ni chiffre.",
+                    "Mesure zone rouge sur l'assiette indisponible : à vérifier.")
+            if _rouge_ass >= SEUIL_CONTACT_ROUGE_M2:
+                # le rouge recoupe l'assiette → on vérifie que la partie hors rouge reste exploitable.
+                servable, hors_rouge_vide = _hors_rouge_fragment_servable(session, parcel_id, k_cont)
+                if not servable:
+                    emprise = 0.0
+            else:
+                # le rouge ne recoupe pas l'assiette du scénario : chiffre CONSERVÉ, avec la mention.
+                ctx.contraintes.libelles.append(
+                    "Parcelle au contact d'une zone rouge du PPR, HORS de l'assiette du scénario "
+                    "(l'emprise rouge reste inconstructible) — capacité conservée.")
         ctx.contraintes.libelles.append(
             "Assiette = zone d'implantation réglementaire (moteur gabarit) : reculs par côté "
             "voie/limites" + (", PPR zone rouge découpée" if ppr_rouge else "") + ".")
+        # MOTEUR-VERITE-FIX-2 LOT C — PPR rouge PARTIEL : des fragments d'assiette SÉPARÉS par le
+        # rouge ne s'additionnent pas (on ne bâtit pas un projet sur des morceaux disjoints) — seule
+        # la part du PLUS GRAND TENANT est retenue (AD0863 et consorts, relecture indépendante).
+        if ppr_rouge and emprise > 0:
+            try:
+                from shapely.geometry import shape as _shape
+                _g = _shape(gres.zoneImplantationGeoJSON) if gres.zoneImplantationGeoJSON else None
+                if _g is not None and _g.geom_type == "MultiPolygon" and len(_g.geoms) > 1:
+                    _amax = max(p.area for p in _g.geoms)
+                    _atot = sum(p.area for p in _g.geoms)
+                    if _atot > 0 and _amax < _atot:
+                        emprise = emprise * (_amax / _atot)
+                        ctx.contraintes.libelles.append(
+                            "Assiette fragmentée par la zone rouge du PPR : seul le plus grand "
+                            f"tenant est retenu (~{round(100 * _amax / _atot)} % de l'assiette hors rouge).")
+            except Exception:  # noqa: BLE001 — géométrie pathologique : on garde l'assiette totale
+                pass
+        # MOTEUR-VERITE-FIX-2 LOT C puis FIX-3 LOT 2 — SUP AC2 (sites) : la SUP seule ne distingue
+        # pas site INSCRIT (avis ABF) de site CLASSÉ (AUTORISATION SPÉCIALE, art. L341-10) — mais la
+        # couche DEAL (spatial_layers kind='ens', subtypes site_classe/site_inscrit, périmètres sans
+        # commune) le dit : on la croise pour SERVIR LE BON RÉGIME (CY1293, relecture indépendante).
+        # Couche muette ou indisponible → libellé prudent inchangé. Jamais « aucune SUP ».
+        if any("AC2" in str(a) for a in (racc.get("alertes") or [])):
+            from .engine import faisabilite_capacite_a_verifier
+            _sites: set[str] = set()
+            try:
+                _sites = {r[0] for r in session.execute(text(
+                    "SELECT DISTINCT e.subtype FROM spatial_layers e, parcels p "
+                    "WHERE p.id = :pid AND e.kind = 'ens' "
+                    "AND e.subtype IN ('site_classe','site_inscrit') "
+                    "AND ST_Intersects(e.geom_2975, p.geom_2975)"), {"pid": parcel_id}) if r[0]}
+            except Exception:  # noqa: BLE001 — couche indisponible : on reste sur le libellé prudent
+                _sites = set()
+            if "site_classe" in _sites:
+                regime = ("site CLASSÉ (couche DEAL) : autorisation spéciale requise "
+                          "(art. L341-10 du code de l'environnement)")
+            elif "site_inscrit" in _sites:
+                regime = "site INSCRIT (couche DEAL) : avis de l'architecte des Bâtiments de France"
+            else:
+                regime = ("régime inscrit/classé non déterminé par la donnée : autorisation "
+                          "spéciale ou avis ABF, à instruire")
+            ctx.contraintes.libelles.append(f"Site protégé (SUP AC2) — {regime}.")
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                f"Constructible — capacité à vérifier : site protégé (SUP AC2), {regime}. "
+                "Aucune capacité chiffrée sans instruction.",
+                f"Site protégé AC2 — {regime} ; capacité non chiffrée.")
+
         servie_sur = (racc.get("multizone") or {}).get("servie_sur")
         if servie_sur:
             ctx.contraintes.libelles.append(
@@ -911,12 +1275,28 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 "DPF, ravine, 50 pas) soustraits de l'assiette. Le PPR rouge est déjà découpé "
                 "de l'assiette (jamais compté deux fois).")
         greve_a = greve_tot          # déduction NETTE réellement retranchée (extras)
+        # MOTEUR-VERITE-FIX-1 (LOT 2) — mentions d'implantation en limite (conditions non modélisées).
+        implantation_mentions = list((racc.get("implantation") or {}).get("mentions") or [])
+        # MOTEUR-VERITE-FIX-1 (LOT 3, V6) — le PPR rouge n'est accusé du vidage QUE s'il est DOMINANT
+        # (≥ 50 % de la parcelle, mesuré). Une touche rouge de 9 % sur une assiette vidée par les ER et
+        # les reculs disait « Parcelle couverte par le PPR en zone rouge » (faux : la part rouge est
+        # DÉJÀ découpée, le reste est mangé par d'autres contraintes) — VERITE-TERRAIN-3, AD0863.
+        ppr_rouge_pct = None
+        if ppr_rouge and emprise < SEUIL_EXIGU_M2:
+            try:
+                with session.begin_nested():
+                    _rr = session.execute(_HORS_PPR_ROUGE, {"pid": parcel_id}).first()
+                if _rr is not None and _rr.parcelle_m2 and float(_rr.parcelle_m2) > 0:
+                    ppr_rouge_pct = round(100.0 * float(_rr.rouge_m2 or 0.0) / float(_rr.parcelle_m2))
+            except Exception:  # noqa: BLE001 — géométrie pathologique : attribution par défaut
+                ppr_rouge_pct = None
+        _rouge_dominant = ppr_rouge_pct is not None and ppr_rouge_pct >= 50
         # RECETTE-1 A1 — raison réelle du vidage (message « trop exigu » ciblé, pas « reculs » partout).
         vide_raison = None
         if emprise < SEUIL_EXIGU_M2:
             if hors_rouge_vide:
                 vide_raison = hors_rouge_vide     # garde-fou PPR-PARTIEL-A : partie hors rouge inexploitable
-            elif ppr_rouge:
+            elif ppr_rouge and _rouge_dominant:
                 vide_raison = "ppr_rouge"
             elif emprise_brute >= SEUIL_EXIGU_M2 and greve_tot >= 0.9 * emprise_brute:
                 vide_raison = ("emplacement_reserve" if er_a >= max(ebc_a, greve_cert)
@@ -925,7 +1305,50 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 vide_raison = "portion_reduite"
             else:
                 vide_raison = "reculs"
+        # MOTEUR-VERITE-FIX-1 (LOT 2) — vidée par les RETRAITS alors que le règlement admet la
+        # limite sous conditions non modélisées → « constructible, capacité à vérifier » (engine),
+        # jamais un faux « terrain trop exigu ».
+        if vide_raison == "reculs" and implantation_mentions:
+            vide_raison = "limite_conditions"
     else:
+        # MOTEUR-VERITE-FIX-6 LOT 2 — UN SEUL JEU DE RÈGLES : le REPLI applique le MÊME retrait
+        # relatif NIVEAU PAR NIVEAU que le gabarit pour les zones AUTORISÉES (retrait du bâtiment
+        # ENVISAGÉ), au lieu d'un retrait uniforme au faîtage qui vide l'assiette à tort (AD0173
+        # Sainte-Marie UA : 9 m uniformes → 0 « trop exigu » ; R+1 à 3,75 m conserve ~114 m²).
+        # Hors zones autorisées, le retrait prudent faîtage est conservé (règle de non-hausse).
+        _frac_rp = _ffh(getattr(rules, "recul_limites_formule", None))
+        _href_rp = getattr(rules, "h_reference", None)
+        from ..gabarit.builder import (recul_scenario_niveaux as _rsn,
+                                        scenario_niveaux_autorise as _sna,
+                                        niveaux_max_plafond as _nmp,
+                                        MARGE_FACADE_TOITURE_M as _MARGE)
+        from .zone_norm import est_famille as _ef_rp
+        _insee_rp = (ctx.idu or "")[:5]
+        _est_au_rp = bool(ctx.zone and _ef_rp(ctx.zone, ("AU",)))
+        if (_frac_rp is not None and _sna(_insee_rp, ctx.zone or "", _href_rp, _est_au_rp)
+                and isinstance(rules.recul_limites_sep_m, (int, float))):
+            _etg = float(hyp.etage_m)
+            _mrg = _MARGE if _href_rp == "hauteur_totale_facade" else 0.0
+            # MOTEUR-VERITE-FIX-7 LOT 1 — niveaux bornés par les MÊMES plafonds que le gabarit
+            # (égout d'abord, puis faîtage, par secteur via he_m/hf_m résolus), par la MÊME
+            # fonction. Avant, le repli partait du faîtage et dépassait le plafond à l'égout
+            # (AC1866 La Possession UBc : 3 niveaux = 9 m à l'égout pour 7 m admis → retombe à 2).
+            _nmx = _nmp(rules.he_m, rules.hf_m, _etg,
+                        getattr(rules, "niveaux_max", None), _href_rp) or 1
+
+            def _emprise_base(_rec):
+                _a = dict(args); _a["d"] = _rec
+                _r = session.execute(_EMPRISE, _a).one()
+                _fa = float(_r.full_area or 0.0)
+                _ua = float(_r.uau_area) if _r.uau_area is not None else None
+                return _fa if _ua is None else min(_fa, _ua)
+
+            recul, niveaux_repli = _rsn(_frac_rp, float(rules.recul_limites_sep_m), _etg,
+                                        _nmx, _mrg, _emprise_base)
+            args = dict(args); args["d"] = recul
+            ctx.contraintes.libelles.append(
+                f"Repli : retrait relatif niveau par niveau (R+{niveaux_repli - 1}, recul "
+                f"{recul:g} m) — même règle que le gabarit (zone autorisée).")
         row = session.execute(_EMPRISE, args).one()
         # C3 : aires géométriques (inset reculs, portion U/AU, ER/EBC) → échelle contenance.
         full_a = float(row.full_area or 0.0) * k_cont
@@ -940,6 +1363,18 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             ctx.contraintes.libelles.append(
                 f"Zonage mixte : emprise constructible clippée à la portion U/AU "
                 f"(~{base:.0f} m² retenus sur ~{full_a:.0f} m² insetés).")
+            # MOTEUR-VERITE-FIX-5 LOT 4 — SAINTE-ROSE : jamais de hausse (mandat). Le REPLI
+            # clippé à la portion peut dépasser main (fin du double retrait RESIDUEL-2 —
+            # AH0200 812 → 922) : la référence n'étant pas reproductible ici, le chiffre
+            # n'est pas servi — capacité à vérifier, mention portée.
+            if (ctx.idu or "").startswith("97419"):
+                from .engine import faisabilite_capacite_a_verifier
+                return ctx, faisabilite_capacite_a_verifier(
+                    ctx.zone,
+                    "Constructible — capacité à vérifier : portion constructible servie par le "
+                    "calcul de repli (zonage mixte) — règle de non-hausse, capacité supérieure "
+                    "possible, à vérifier.",
+                    "Portion clippée au repli (Sainte-Rose) : pas de capacité chiffrée.")
 
         if er_a >= 0.5:
             for r in session.execute(_ER_DETAILS, {"pid": parcel_id, "d": recul,
@@ -988,10 +1423,48 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 f"Assiette clippée : {greve_cert:.0f} m² de contraintes géométriques certaines "
                 "(PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) soustraits de l'emprise — "
                 "union globale avec ER/EBC, aucun chevauchement compté deux fois.")
+        # MOTEUR-VERITE-FIX-6 LOT 2 — TEST CONJOINT ZONE ROUGE ET PLU, aussi au REPLI : la partie
+        # hors rouge doit être exploitable (≥ 200 m² d'un seul tenant, ∩ U/AU, accès voie) — sinon
+        # l'emprise est ramenée à 0. Le chemin gabarit faisait déjà ce test ; le repli servait un
+        # chiffre que la cascade excluait (AW1235 6 m², BM0158 111 m², BO0383 102 m²).
+        hors_rouge_vide_legacy = None
+        if emprise > 0:
+            # MOTEUR-VERITE-FIX-9 LOT 2 — comme le gabarit : la perte du chiffre se fonde sur le rouge
+            # recoupant l'ASSIETTE DU SCÉNARIO (inset au recul servi), pas le terrain entier. Panne →
+            # « capacité à vérifier » (ni chiffre ni refus).
+            _rouge_ass_l = 0.0
+            try:
+                # FIX-10 — repli : l'assiette du scénario est l'inset au recul servi (uniforme), que
+                # la fonction partagée mesure directement. Même mesure que le gabarit, une fonction.
+                with session.begin_nested():
+                    _ral = _rouge_sur_assiette(
+                        session, parcel_id, recul=args["d"],
+                        zkind=zonage.get("spatial_kind", "plu_gpu_zone"),
+                        uau_fams=list(zonage.get("positive_prefixes", ["U", "AU"])))
+                _rouge_ass_l = (float(_ral) * k_cont) if _ral is not None else 0.0
+            except Exception:  # noqa: BLE001 — MESURE ROUGE INDISPONIBLE (FIX-9 LOT 2)
+                _rouge_ass_l = None
+            if _rouge_ass_l is None:
+                from .engine import faisabilite_capacite_a_verifier
+                ctx.contraintes.libelles.append(
+                    "Zone rouge PPR : la mesure du recoupement avec l'assiette du scénario est "
+                    "indisponible — capacité inconnue, à instruire (ni chiffre ni refus).")
+                return ctx, faisabilite_capacite_a_verifier(
+                    ctx.zone,
+                    "Constructible — capacité à vérifier : la mesure de l'effet de la zone rouge sur "
+                    "l'assiette est indisponible — capacité non chiffrée, à instruire. Ni refus ni chiffre.",
+                    "Mesure zone rouge sur l'assiette indisponible : à vérifier.")
+            if _rouge_ass_l >= SEUIL_CONTACT_ROUGE_M2:
+                servable_l, hors_rouge_vide_legacy = _hors_rouge_fragment_servable(
+                    session, parcel_id, k_cont)
+                if not servable_l:
+                    emprise = 0.0
         # RECETTE-1 A1 — raison réelle du vidage (chemin legacy).
         vide_raison = None
         if emprise < SEUIL_EXIGU_M2:
-            if full_a < SEUIL_EXIGU_M2:
+            if hors_rouge_vide_legacy:
+                vide_raison = hors_rouge_vide_legacy   # FIX-6 LOT 2 — partie hors rouge inexploitable
+            elif full_a < SEUIL_EXIGU_M2:
                 vide_raison = "reculs"            # parcelle réellement étroite (inset vide)
             elif base < SEUIL_EXIGU_M2:
                 vide_raison = "portion_reduite"   # portion U/AU résiduelle minuscule
@@ -1015,6 +1488,67 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     if sous_zone_uau_m2 is not None:
         emprise = min(emprise, sous_zone_uau_m2 * k_cont)
 
+    # ── MOTEUR-VERITE-FIX-9 LOT 1 — LITTORAL : ON DÉCOUPE L'ASSIETTE NETTE, VRAIMENT ──────────────
+    # La bande découpe l'assiette NETTE (gabarit : zone d'implantation ; repli : inset au recul servi)
+    # APRÈS toutes les autres contraintes (ER/EBC/PPR rouge/PEB/DPF/ravine/50 pas), et le scénario est
+    # recalculé dessus — plus aucun prorata de l'assiette BRUTE (AO0648 : 4 475 m² en prorata →
+    # 5 857 m² en découpe réelle). Assiette nette hors bande nulle → « capacité à vérifier » sans
+    # chiffre. MESURE LITTORALE INDISPONIBLE → chiffre INCONNU, « capacité à vérifier » (ni chiffre
+    # ni refus) — on ne ressert JAMAIS l'assiette entière sur une panne (BL0308 simulé).
+    if (ctx.contraintes.littoral_pct and ctx.contraintes.littoral_pct > 0.005
+            and emprise >= SEUIL_EXIGU_M2):
+        from .engine import faisabilite_capacite_a_verifier
+        _litt_pct = round(ctx.contraintes.littoral_pct * 100)
+        ctx.contraintes.littoral_pct = 0.0   # traité ICI (géométrie) → l'engine ne refait pas de prorata
+        _cert_params = {
+            "pkind": pkind, "er_types": er_types, "ebc_types": ebc_types,
+            "peb_ab": [str(z).lower() for z in _layer_params("peb").get("hard_zones", ["a", "b"])],
+            "dpf_m": float(_layer_params("dpf").get("marchepied_m", 3.25)),
+            "rav_m": float(_layer_params("ravine").get("buffer_m", 10))}
+        _frac_hb = None
+        try:
+            with session.begin_nested():
+                if gab is not None and gj:
+                    _lr = session.execute(_LITTORAL_SUR_GJ,
+                                          {"gj": json.dumps(gj), "pid": parcel_id, **_cert_params}).one()
+                else:
+                    _lr = session.execute(_LITTORAL_SUR_INSET,
+                                          {"pid": parcel_id, "d": args["d"],
+                                           "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
+                                           "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"])),
+                                           **_cert_params}).one()
+            _ass_m2 = float(_lr.assiette_m2) if _lr.assiette_m2 is not None else 0.0
+            _hb_m2 = float(_lr.hors_bande_m2) if _lr.hors_bande_m2 is not None else 0.0
+            _frac_hb = (_hb_m2 / _ass_m2) if _ass_m2 > 0 else 1.0
+        except Exception:  # noqa: BLE001 — MESURE LITTORALE INDISPONIBLE (FIX-9 LOT 1)
+            _frac_hb = None
+        if _frac_hb is None:
+            # panne de la mesure littorale : le chiffre est INCONNU → à vérifier (ni chiffre ni refus).
+            ctx.contraintes.libelles.append(
+                "Recul prospectif du trait de côte : la mesure de l'assiette nette hors bande n'a pas "
+                "pu être établie (géométrie indisponible) — capacité inconnue, à instruire.")
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                "Constructible — capacité à vérifier : la mesure du recul prospectif du trait de côte "
+                "est indisponible — capacité non chiffrée tant que la limite n'est pas qualifiée "
+                "(services de l'État). Ce n'est ni un refus ni un chiffre.",
+                "Mesure littorale indisponible : à vérifier (ni chiffre ni refus).")
+        _emp_hb = emprise * _frac_hb
+        if _emp_hb < SEUIL_EXIGU_M2:
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                f"Constructible — capacité à vérifier : le recul prospectif du trait de côte "
+                f"(~{_litt_pct} % de la parcelle) laisse l'assiette NETTE du scénario entièrement dans "
+                "la bande d'érosion — aucune assiette hors bande. Capacité non chiffrée tant que la "
+                "limite n'est pas qualifiée (services de l'État).",
+                "Assiette nette du scénario entièrement dans la bande d'érosion : à vérifier.")
+        if _frac_hb < 0.999:
+            ctx.contraintes.libelles.append(
+                f"Recul prospectif du trait de côte : surface de plancher calculée sur l'assiette "
+                f"NETTE hors bande (~{_emp_hb:.0f} m² sur {emprise:.0f} m² d'assiette nette), "
+                "limite à vérifier auprès des services de l'État.")
+            emprise = _emp_hb
+
     # ── EXIGU-FIX-1 — ré-examen géométrique AVANT de conclure « terrain exigu » ──────────────────
     # Les deux chemins (gabarit, legacy) ont fixé `emprise` et `vide_raison`. Si l'emprise tombe sous
     # le seuil, le code d'origine classait la parcelle `terrain_exigu` (« trop étroit ») — à tort sur
@@ -1024,7 +1558,14 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # `terrain_exigu` AVEC preuve ; douteux → `assiette_a_verifier` (jamais « trop étroit »).
     # GARDE DE PÉRIMÈTRE : ce bloc ne s'exécute QUE lorsque l'emprise est déjà < seuil (donc une
     # parcelle qui n'aurait pas été `terrain_exigu` n'est jamais touchée → recalcul partiel valide).
-    if emprise < SEUIL_EXIGU_M2 and _exigu_fix_actif():
+    # MOTEUR-VERITE-FIX-5 LOT 4 — JAMAIS quand le vidage vient du PPR ROUGE (hors_rouge_* /
+    # ppr_rouge) : l'assiette nette du ré-examen IGNORE le rouge et RESSUSCITAIT une capacité
+    # sans la découpe (DB0325 25 → 59, DD0838, AH0200, AR1105 — hausses hors liste détectées
+    # par le contrôle inverse). Le vidage rouge est une RÈGLE, pas un effondrement géométrique.
+    _exigu_pending = None   # libellé « exigu confirmé » différé : écrit après la porte LOT 6/7 (cf. infra)
+    if (emprise < SEUIL_EXIGU_M2 and _exigu_fix_actif()
+            and not str(vide_raison or "").startswith("hors_rouge")
+            and vide_raison != "ppr_rouge"):
         qargs = {"zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
                  "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"])),
                  "pkind": pkind, "er_types": er_types, "ebc_types": ebc_types,
@@ -1047,10 +1588,164 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 f"Assiette à vérifier (EXIGU-FIX-1) : aucune emprise nette fiable établie sur une "
                 f"parcelle large (~{rex['parc_larg']:.0f} m) — contraintes superposées ou portion "
                 "constructible à confirmer. Ni capacité ni « trop étroit » affirmés.")
-        else:  # 'exigu' — prouvé inexploitable
-            ctx.contraintes.libelles.append(
+        else:  # 'exigu' — ~0 m² net au recul servi ; le verdict n'est PAS encore ferme
+            # MOTEUR-VERITE-FIX-6 LOT 1 — on rétablit le vrai motif (reculs) pour que le refus établi
+            # ne s'efface pas par un simple libellé. Mais le caractère exigu reste SOUMIS au scénario
+            # le plus favorable (LOT 6) et à l'implantation en limite / alignement (LOT 7) : la preuve
+            # « ~0 m² net » est mesurée AU RECUL SERVI, pas à la limite. Le libellé « exigu confirmé »
+            # n'est donc écrit qu'APRÈS la porte, si elle n'a pas requalifié en « capacité à vérifier ».
+            if vide_raison == "limite_conditions":
+                vide_raison = "reculs"
+            _exigu_pending = (
                 f"Terrain exigu confirmé (EXIGU-FIX-1) : plus grand morceau net ~{rex['net_m2']:.0f} m², "
                 f"largeur ~{rex['net_larg']:.1f} m — sous le seuil constructible (preuve géométrique).")
+
+    # MOTEUR-VERITE-FIX-7 LOT 2 — PPR ROUGE : TROIS SITUATIONS, TROIS LIBELLÉS. L'emprise rouge est
+    # inconstructible — mais c'est la SEULE qui fonde un refus, et seulement si elle couvre la partie
+    # constructible. L'absence d'accès hors rouge et le seuil interne de 200 m² (convention LABUSE,
+    # pas une règle) sont des DOUTES à instruire → « capacité à vérifier », avec la surface hors rouge
+    # MESURÉE. Le test ne refuse pas une parcelle que le rouge ne prive pas de sa partie constructible
+    # (AT2046 : 112 m² hors rouge au contact voie ; AM0577 : 425 m², accès à établir ; AD0423 : 318 m²
+    # d'un seul tenant au contact voie). Le refus ne demeure que si le hors-rouge est négligeable.
+    if (emprise < SEUIL_EXIGU_M2
+            and (str(vide_raison or "") == "ppr_rouge"
+                 or str(vide_raison or "").startswith("hors_rouge"))):
+        from .engine import faisabilite_capacite_a_verifier
+        _frag_measured = True
+        try:
+            with session.begin_nested():
+                _frag = session.execute(_HORS_ROUGE_FRAGMENT, {"pid": parcel_id}).first()
+            _frag_m2 = (float(_frag.m2) * k_cont) if _frag and _frag.m2 is not None else 0.0
+            _frag_wkt = _frag.wkt if _frag is not None else None
+        except Exception:  # noqa: BLE001 — MESURE INDISPONIBLE (≠ assiette vide, FIX-8 LOT 2)
+            _frag_m2, _frag_wkt, _frag_measured = 0.0, None, False
+        if not _frag_measured:
+            # MOTEUR-VERITE-FIX-8 LOT 2 — une mesure indisponible n'est PAS une absence : on ne
+            # prononce pas un refus « terrain exigu » sur un zéro non mesuré (AT2046 simulé). On sert
+            # « capacité à vérifier » avec le motif — jamais un refus faute d'avoir pu mesurer.
+            ctx.contraintes.libelles.append(
+                "PPR zone rouge : la mesure de la partie hors zone rouge est indisponible (géométrie "
+                "pathologique) — capacité non établie, à instruire ; ce n'est pas un terrain exigu.")
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                "Constructible — capacité à vérifier : la part hors zone rouge n'a pas pu être mesurée "
+                "(géométrie du découpage indisponible). Absence non établie — à instruire, ce n'est "
+                "pas un refus.",
+                "PPR rouge : mesure hors rouge indisponible, à vérifier (jamais un refus non mesuré).")
+        if _frag_m2 >= SEUIL_EXIGU_M2:
+            # une partie constructible hors rouge subsiste : le rouge ne prive pas la parcelle.
+            _acces = None
+            try:
+                if _frag_wkt is not None:
+                    from ..gabarit.limites import classify_parcel_limits
+                    with session.begin_nested():
+                        _lim = classify_parcel_limits(session, parcel_id, sub_geom_wkt=_frag_wkt,
+                                                      emprises_publiques=True, voies_privees=True)
+                    _acces = bool(_lim and _lim.has_voie)
+            except Exception:  # noqa: BLE001 — accès indéterminé : traité comme un doute d'accès
+                _acces = None
+            if _acces is False:
+                _doute = ("l'accès hors zone rouge n'est pas établi (aucune voie au contact du "
+                          "morceau hors rouge) — à instruire")
+                _res_lbl = "hors rouge sans accès établi"
+            elif _frag_m2 < SEUIL_HORS_PPR_ROUGE_M2:
+                _doute = (f"la partie hors rouge est sous le seuil interne de "
+                          f"{SEUIL_HORS_PPR_ROUGE_M2:.0f} m² (convention LABUSE, pas une règle) — à instruire")
+                _res_lbl = "hors rouge sous le seuil interne (convention)"
+            else:
+                _doute = ("la partie hors rouge d'un seul tenant est au contact de la voie ; "
+                          "l'assiette aux retraits reste à confirmer")
+                _res_lbl = "hors rouge exploitable, assiette à confirmer"
+            ctx.contraintes.libelles.append(
+                f"PPR zone rouge : l'emprise rouge est inconstructible, mais {_doute}. Surface hors "
+                f"zone rouge mesurée : ~{_frag_m2:.0f} m² (foncier brut, hors reculs).")
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                "Constructible — capacité à vérifier : l'emprise en zone rouge PPR est inconstructible, "
+                f"mais {_doute}. Surface hors zone rouge : environ {_frag_m2:.0f} m² (foncier brut). "
+                "Capacité non chiffrée, à instruire — ce n'est pas un refus de toute la parcelle.",
+                f"PPR rouge : {_res_lbl} (~{_frag_m2:.0f} m² hors rouge), à vérifier.")
+        # hors-rouge négligeable : l'emprise rouge couvre la partie constructible → refus établi.
+        ctx.contraintes.libelles.append(
+            "PPR zone rouge : l'emprise constructible de la parcelle est couverte par la zone rouge "
+            "(partie hors rouge négligeable) — inconstructible.")
+
+    # MOTEUR-VERITE-FIX-6 LOT 6 — « TROP EXIGU » VEUT DIRE QUE RIEN NE TIENT. Un refus pour
+    # terrain exigu se prononce avec le scénario le PLUS FAVORABLE que le règlement permet :
+    # R+1, le retrait MINIMAL de l'article (le minimum fixe, ou la formule relative à un seul
+    # niveau). Si une emprise minimale tient dans ce scénario, le terrain n'est PAS exigu. La
+    # RÉFÉRENCE PRUDENTE (faîtage) sert à ne pas SURESTIMER un chiffre, jamais à REFUSER :
+    # Sainte-Marie UA/UAz sans façade établie se voyaient appliquer 9 m prudents → assiette vide
+    # → faux « terrain exigu » (455 cas), alors qu'au recul minimal (3 m) l'emprise tient.
+    # Ne s'applique qu'au vidage GÉOMÉTRIQUE par les reculs (jamais rouge / portion / ER-EBC).
+    if (emprise < SEUIL_EXIGU_M2
+            and str(vide_raison or "") in ("reculs", "a_verifier", "portion_reduite")):
+        # scénario FAVORABLE : inset uniforme au recul MINIMAL de l'article (clippé à la portion
+        # U/AU), R+1. Testé MÊME quand le recul minimal égale le recul servi : le vidage peut
+        # venir du gabarit PAR CÔTÉ (recul voie + découpe) qui s'effondre là où l'inset uniforme
+        # au minimum tient (La Possession UAv, Sainte-Marie UA à cheval) — ce n'est pas un terrain
+        # exigu. L'inset uniforme (jamais effondré) borne BAS le favorable réel (limite comprise).
+        def _emp_at(_d):
+            """Emprise de l'inset uniforme au recul _d, clippée à la portion U/AU (échelle contenance)."""
+            try:
+                _a = dict(args); _a["d"] = _d
+                _r = session.execute(_EMPRISE, _a).one()
+                _fa = float(_r.full_area or 0.0)
+                _ua = float(_r.uau_area) if _r.uau_area is not None else None
+                return (_fa if _ua is None else min(_fa, _ua)) * k_cont
+            except Exception:  # noqa: BLE001 — mesure indisponible : on garde le verdict exigu
+                return 0.0
+
+        _min_recul = (float(rules.recul_limites_sep_m)
+                      if isinstance(rules.recul_limites_sep_m, (int, float))
+                      else float(hyp.recul_limites_defaut_m))
+        from .engine import faisabilite_capacite_a_verifier
+        if _min_recul is not None and _emp_at(_min_recul) >= SEUIL_EXIGU_M2:
+            # pas exigu : au recul prudent l'assiette se vide, mais un RETRAIT UNIFORME MINIMAL (le
+            # minimum de l'article) laisse une emprise. FIX-7 LOT 2 — le motif dit CE QUI A ÉTÉ TESTÉ
+            # (retrait uniforme minimal, mesure approximative), il ne promet PAS un R+1 réglementaire.
+            # Le chiffre prudent étant nul, on sert « capacité à vérifier » — jamais un refus.
+            _emp_fav = _emp_at(_min_recul)
+            ctx.contraintes.libelles.append(
+                f"Non exigu : au recul prudent ({recul:g} m) l'assiette se vide, mais un retrait "
+                f"uniforme minimal de {_min_recul:g} m (le minimum de l'article) laisse ~{_emp_fav:.0f} m² "
+                "d'emprise (mesure approximative) — le terrain n'est pas trop exigu.")
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                f"Constructible — capacité à vérifier : au retrait uniforme minimal de {_min_recul:g} m "
+                f"(minimum de l'article) une emprise d'environ {_emp_fav:.0f} m² subsiste, mais la "
+                "référence prudente (hauteur maximale) vide l'assiette au recul servi. Capacité non "
+                "chiffrée ; assiette et scénario réglementaire à confirmer. Ce n'est pas un terrain exigu.",
+                f"Retrait minimal uniforme ({_min_recul:g} m) laisse une emprise : pas exigu, à vérifier.")
+        # MOTEUR-VERITE-FIX-6 LOT 7 — IMPLANTATION EN LIMITE / À L'ALIGNEMENT. Dans une zone où le
+        # règlement PERMET ou IMPOSE l'implantation en limite séparative ou à l'alignement, le retrait
+        # minimal n'est PAS le scénario le plus favorable : la construction peut joindre la limite
+        # (recul 0). Si l'assiette tient À LA LIMITE, le terrain n'est pas exigu — « capacité à
+        # vérifier » avec la mention d'implantation, JAMAIS un refus (AO0709 Le Port Ud 84 m²,
+        # CG0875 Saint-Leu UC 92 m² : l'assiette ne se vide que par le retrait, pas à la limite).
+        if implantation_mentions and _emp_at(0.0) >= SEUIL_EXIGU_M2:
+            # FIX-7 LOT 2 — le règlement admet l'implantation en limite / à l'alignement, MÊME SOUS
+            # CONDITIONS. Une assiette vide avec les retraits n'établit donc pas un refus. Le motif
+            # dit ce qui a été testé (assiette à la limite, retrait 0, uniforme), sans promettre que
+            # les conditions de l'article (longueur, hauteur, alignement voisin) sont réunies.
+            _emp_lim = _emp_at(0.0)
+            ctx.contraintes.libelles.append(
+                f"Non exigu : au recul prudent ({recul:g} m) l'assiette se vide, mais le règlement "
+                "admet l'implantation en limite séparative / à l'alignement (sous conditions de "
+                f"l'article) — testée à la limite (retrait 0) ~{_emp_lim:.0f} m² subsistent.")
+            return ctx, faisabilite_capacite_a_verifier(
+                ctx.zone,
+                "Constructible — capacité à vérifier : le règlement admet l'implantation en limite "
+                "séparative ou à l'alignement (sous conditions de l'article) ; testée à la limite une "
+                "emprise subsiste, le retrait uniforme prudent la vide. Capacité non chiffrée ; "
+                "implantation en limite et ses conditions à confirmer. Ce n'est pas un terrain exigu.",
+                "Implantation en limite / alignement admise (sous conditions) : testée à la limite, à vérifier.")
+
+    # La porte LOT 6/7 n'a pas requalifié : le terrain est exigu même au scénario le plus favorable
+    # (ni le retrait minimal ni l'implantation en limite ne laissent d'assiette). Le libellé de preuve
+    # différé est écrit ici — le refus « terrain exigu » qui suivra porte sa preuve géométrique.
+    if _exigu_pending:
+        ctx.contraintes.libelles.append(_exigu_pending)
 
     # Surface au sol servant aux plafonds CES/pleine terre : la seule portion U/AU (à cheval).
     # RESIDUEL-1 — inconditionnel (chemin unique).
@@ -1094,9 +1789,94 @@ def parcel_faisabilite(session: Session, parcel_id: int,
               "total_deduit_m2": greve_a,
               "mixite": bool(eco.get("mixite")),
               "assiette_source": assiette_source,
-              "assiette_vide": vide_raison}   # RECETTE-1 A1 — raison du vidage (message ciblé)
-    return ctx, estimate_capacity(rules, surface_assiette, ctx.contraintes, hyp=hyp,
-                                  emprise_geo=(emprise, recul), extras=extras)
+              "assiette_vide": vide_raison,   # RECETTE-1 A1 — raison du vidage (message ciblé)
+              "implantation_mentions": implantation_mentions,   # LOT 2 — mentions limite/conditions
+              "ppr_rouge_pct": ppr_rouge_pct}   # LOT 3 (V6) — part rouge mesurée (message du vidage)
+    # MOTEUR-VERITE-FIX-1 (LOT 1) — recul séparatif en formule H/n : le moteur gabarit a RETENU le
+    # scénario (niveaux, recul) qui maximise le plancher, H = égout du bâtiment envisagé. L'assiette
+    # ci-dessus est déjà celle du scénario ; on lie AUSSI le nombre de niveaux de la capacité (sinon
+    # l'engine recompterait les niveaux pleins de la zone sur une assiette insétée pour moins haut).
+    if gab is not None:
+        _gres = gab[1]
+        if getattr(_gres, "niveauxRetenus", None):
+            extras["niveaux_retenus"] = int(_gres.niveauxRetenus)
+            extras["recul_sep_scenario"] = _gres.reculSepScenario
+    elif niveaux_repli is not None:
+        # MOTEUR-VERITE-FIX-6 LOT 2 — le repli niveau-par-niveau lie AUSSI ses niveaux (sinon
+        # l'engine recompterait R+full de la zone sur une assiette insétée pour moins haut).
+        extras["niveaux_retenus"] = int(niveaux_repli)
+        extras["recul_sep_scenario"] = (
+            f"recul séparatif niveau par niveau (repli, R+{niveaux_repli - 1}, {recul:g} m) — "
+            "hauteur de façade du bâtiment envisagé")
+    _f_cap = estimate_capacity(rules, surface_assiette, ctx.contraintes, hyp=hyp,
+                               emprise_geo=(emprise, recul), extras=extras)
+    # MOTEUR-VERITE-FIX-5 LOT 3 — toute capacité CHIFFRÉE porte ses RÉSERVES, écrites par le
+    # moteur : zone AU (conditions d'aménagement/OAP), zone bleue du PPR (prescriptions),
+    # scénario par niveau (hauteur de façade supposée).
+    if _f_cap is not None and "surface_plancher_m2" in (_f_cap.fourchette or {}):
+        from .zone_norm import est_famille as _ef5
+        # MOTEUR-VERITE-FIX-6 LOT 3 — la réserve « zone AU » suit la PORTION sur laquelle le
+        # chiffre est calculé (la sous-zone servie, rules.code = _f_cap.zone), pas la zone
+        # dominante : AK0834 (A dominant, portion 1AUa) et AE0409 (N dominant, portion 1AUc)
+        # servent leur capacité sur la portion AU — la réserve d'aménagement/OAP doit suivre.
+        _zone_servie = _f_cap.zone or ctx.zone
+        if _zone_servie and _ef5(_zone_servie, ("AU",)):
+            _f_cap.avertissements.append(
+                "Capacité sous réserve des conditions d'aménagement de la zone et de l'OAP "
+                "(zone AU : échéancier, desserte et organisation d'ensemble à instruire).")
+        try:
+            _bleu = session.execute(text(
+                "SELECT 1 FROM spatial_layers sl, parcels p WHERE p.id = :pid "
+                "AND sl.kind = 'ppr' AND labuse_ppr_couleur(sl.subtype, sl.attrs) = 'bleu' "
+                "AND ST_Intersects(sl.geom_2975, p.geom_2975) LIMIT 1"),
+                {"pid": parcel_id}).scalar()
+        except Exception:  # noqa: BLE001 — couche indisponible : pas de réserve inventée
+            _bleu = None
+        if _bleu:
+            _f_cap.avertissements.append(
+                "Capacité sous prescriptions du plan de prévention (zone bleue : règles "
+                "constructives du règlement du PPR à respecter).")
+        if extras.get("niveaux_retenus"):
+            _f_cap.avertissements.append(
+                "Scénario par niveau : hauteur de façade SUPPOSÉE "
+                f"({extras['niveaux_retenus']} niveau(x) — {extras.get('recul_sep_scenario') or ''})".rstrip()
+                + ".")
+        if reserve_facade:   # MOTEUR-VERITE-FIX-6 LOT 5 — façade < 3 m : réserve, chiffre conservé
+            _f_cap.avertissements.append(reserve_facade)
+    # MOTEUR-VERITE-FIX-7 LOT 4 — trace du chemin réellement servant (CSV du contrôle inverse) :
+    # recul séparatif appliqué, niveaux servis, portion U/AU servie. Jugé sur le chemin, pas sur
+    # le recul d'entrée (relecteur AN1434 : 6 m appliqués au repli, pas 3 m).
+    ctx.assiette_source = assiette_source
+    # MOTEUR-VERITE-FIX-8/9 LOT 3 — la trace décrit LE CHEMIN QUI SERT LE CHIFFRE, sans arrondir.
+    # Le recul retenu PAR CÔTÉ n'est affiché QUE si le gabarit sert réellement l'assiette (AO0308 :
+    # 6 m, AS1086 : 8,25 m — pas 8,2). Si le chiffre vient du REPLI uniforme ou d'un regain résiduel
+    # (BL0314 : repli à 3 m, pas le fond à 8 m du gabarit), on affiche le recul uniforme servi, sans
+    # détail par côté. (FIX-9 LOT 3 : 8,25 m exact, et chemin servant.)
+    _sert_gabarit = (assiette_source == "gabarit")
+    _rsep_ret = (getattr(gab[1], "reculSepRetenuM", None)
+                 if (gab is not None and _sert_gabarit) else None)
+    ctx.recul_servi_m = (round(float(_rsep_ret), 2) if isinstance(_rsep_ret, (int, float))
+                         else round(float(recul), 2) if isinstance(recul, (int, float)) else None)
+    _par_cote = None
+    if gab is not None and _sert_gabarit:
+        try:
+            _lbl = {"road": "voie", "side": "latérale", "rear": "fond"}
+            _acc = {}
+            for _sb in (gab[0].input.setbacks or []):
+                _ty = _lbl.get(_sb.type or "", _sb.type or "?")
+                _rv = (_rsep_ret if (_sb.ruleId == "limite-sep" and _rsep_ret is not None)
+                       else _sb.setbackM)
+                if isinstance(_rv, (int, float)):
+                    _acc.setdefault(_ty, set()).add(round(float(_rv), 2))
+            _par_cote = " · ".join(f"{k} {'/'.join(f'{v:g}' for v in sorted(vs))} m"
+                                   for k, vs in _acc.items()) or None
+        except Exception:  # noqa: BLE001 — forme inattendue : recul par côté non renseigné
+            _par_cote = None
+    ctx.recul_par_cote = _par_cote
+    ctx.niveaux_servis = extras.get("niveaux_retenus") or (_f_cap.fourchette or {}).get("niveaux_max")
+    ctx.portion_servie_m2 = (round(sous_zone_uau_m2 * k_cont)
+                             if sous_zone_uau_m2 is not None else None)
+    return ctx, _f_cap
 
 
 # 3.D — Empreintes pour le gabarit 3D : parcelle + emprise insetée du recul, RECENTRÉES sur le
@@ -1325,6 +2105,55 @@ _HORS_PPR_ROUGE = text(
     "  AND ST_Intersects(sl.geom_2975, p.geom_2975) GROUP BY p.geom_2975"
 )
 
+# MOTEUR-VERITE-FIX-9 LOT 2 — surface de PPR rouge recoupant réellement l'ASSIETTE DU SCÉNARIO
+# (l'inset au recul servi, clippé U/AU), pas le terrain entier. AT2046 : 3,40 m² de rouge sur la
+# parcelle mais 0 m² sur l'assiette testée → le chiffre ne doit PAS être retiré. C'est l'effet
+# MESURÉ sur l'assiette qui tranche, pas la surface rouge de la parcelle.
+_ROUGE_SUR_ASSIETTE = text("""
+WITH p AS (SELECT commune, geom_2975 AS pg, ST_Buffer(geom_2975, -:d) AS b FROM parcels WHERE id = :pid),
+uau AS (SELECT ST_Union(z.geom_2975) AS u FROM spatial_layers z, p
+        WHERE z.kind = :zkind AND z.commune = p.commune
+          AND labuse_zone_famille(z.subtype) = ANY(:uau_fams) AND ST_Intersects(z.geom_2975, p.b)),
+ass AS (SELECT CASE WHEN uau.u IS NULL THEN p.b ELSE ST_Intersection(p.b, uau.u) END AS g
+        FROM p LEFT JOIN uau ON TRUE),
+rouge AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(g.geom_2975, p.b))) AS u FROM spatial_layers g, p
+          WHERE g.kind = 'ppr' AND g.commune = p.commune
+            AND labuse_ppr_couleur(g.subtype, g.attrs) <> 'bleu' AND ST_Intersects(g.geom_2975, p.b))
+SELECT ST_Area(ST_Intersection(ass.g,
+         COALESCE((SELECT u FROM rouge), ST_GeomFromText('POLYGON EMPTY', 2975)))) AS rouge_assiette_m2
+FROM ass
+""")
+
+# MOTEUR-VERITE-FIX-10 — rouge recoupant une ASSIETTE DONNÉE (GeoJSON 4326) : la zone d'implantation
+# EXACTE du scénario gabarit, avant sa découpe par la zone rouge. Le `_ROUGE_SUR_ASSIETTE` ci-dessus
+# mesure sur l'inset UNIFORME au recul — correct pour le repli, mais FAUX pour le gabarit dont
+# l'assiette est per-côté (AB0752 : 0 m² à l'inset 5,50 m, 21,04 m² sur l'assiette réelle).
+_ROUGE_SUR_GEOM = text("""
+WITH a AS (SELECT ST_MakeValid(ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326), 2975)) AS g),
+p AS (SELECT commune FROM parcels WHERE id = :pid),
+rouge AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, a.g))) AS u
+          FROM spatial_layers sl, p, a
+          WHERE sl.kind = 'ppr' AND sl.commune = p.commune
+            AND labuse_ppr_couleur(sl.subtype, sl.attrs) <> 'bleu' AND ST_Intersects(sl.geom_2975, a.g))
+SELECT ST_Area(ST_Intersection(a.g,
+         COALESCE((SELECT u FROM rouge), ST_GeomFromText('POLYGON EMPTY', 2975)))) AS rouge_assiette_m2
+FROM a
+""")
+
+
+def _rouge_sur_assiette(session: Session, parcel_id: int, *, assiette_gj=None, recul=None,
+                        zkind: str | None = None, uau_fams=None):
+    """MOTEUR-VERITE-FIX-10 — surface de PPR rouge recoupant l'ASSIETTE DU SCÉNARIO RETENU, mesurée
+    sur sa géométrie EXACTE avant sa découpe par le rouge. UNE seule fonction, qui reçoit l'assiette :
+    la zone d'implantation du gabarit (`assiette_gj`, GeoJSON 4326) pour l'un, le recul servi (inset
+    ∩ U/AU, via `recul`) pour le repli. Jamais un inset uniforme qui diffère de l'assiette retenue
+    (AB0752/AB0823 Bras-Panon). Rend le m² (dessin), ou lève si la mesure échoue (panne → à vérifier,
+    gérée par l'appelant). L'appelant isole dans un SAVEPOINT."""
+    if assiette_gj is not None:
+        return session.execute(_ROUGE_SUR_GEOM, {"gj": json.dumps(assiette_gj), "pid": parcel_id}).scalar()
+    return session.execute(_ROUGE_SUR_ASSIETTE, {
+        "pid": parcel_id, "d": recul, "zkind": zkind, "uau_fams": uau_fams}).scalar()
+
 
 def surface_hors_ppr_rouge(session: Session, parcel_id: int, *,
                            faisa: tuple | None = None) -> dict | None:
@@ -1440,13 +2269,24 @@ def verdict_ppr_partiel(session: Session, parcel_id: int) -> dict | None:
 # enclavée derrière le rouge reste à 0. L'emprise max PLU s'applique déjà à la portion hors rouge via
 # le gabarit (pm1 n'est plus re-soustraite ; le rouge seul est découpé, builder.py:348-365).
 # Le plus grand fragment hors rouge = parcelle − union(INTERDICTION) (PPR superposés déjà unionnés).
+# MOTEUR-VERITE-FIX-5 LOT 2 — les 200 m² d'un seul tenant et l'accès se vérifient sur le
+# morceau à la fois HORS ROUGE **ET ADMIS PAR LE PLU** (∩ zones U/AU) : la cascade vérifiait
+# « il existe du U/AU quelque part » puis mesurait le plus grand morceau hors rouge sur la
+# parcelle ENTIÈRE (AW1235 87 m², BM0158 144 m², DB0325 167 m², BO0383 194 m² passaient).
 _HORS_ROUGE_FRAGMENT = text(
     "WITH rouge AS ("
     "  SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))) AS g "
     "  FROM spatial_layers sl, parcels p WHERE p.id = :pid AND sl.kind='ppr' "
     "  AND labuse_ppr_couleur(sl.subtype, sl.attrs) <> 'bleu' AND ST_Intersects(sl.geom_2975, p.geom_2975)), "
-    "hr AS (SELECT ST_Difference(p.geom_2975, COALESCE((SELECT g FROM rouge), "
-    "       ST_GeomFromText('POLYGON EMPTY', 2975))) AS g FROM parcels p WHERE p.id = :pid), "
+    "uau AS ("
+    "  SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(z.geom_2975, p.geom_2975))) AS g "
+    "  FROM spatial_layers z, parcels p WHERE p.id = :pid AND z.kind = 'plu_gpu_zone' "
+    "  AND labuse_zone_famille(z.subtype) IN ('U','AU') AND ST_Intersects(z.geom_2975, p.geom_2975)), "
+    "hr AS (SELECT ST_Intersection("
+    "       ST_Difference(p.geom_2975, COALESCE((SELECT g FROM rouge), "
+    "         ST_GeomFromText('POLYGON EMPTY', 2975))), "
+    "       COALESCE((SELECT g FROM uau), p.geom_2975)) AS g "
+    "       FROM parcels p WHERE p.id = :pid), "
     "dump AS (SELECT (ST_Dump(ST_CollectionExtract(ST_MakeValid(g), 3))).geom AS part FROM hr) "
     "SELECT ST_AsText(part) AS wkt, ST_Area(part) AS m2 "
     "FROM dump ORDER BY ST_Area(part) DESC LIMIT 1"

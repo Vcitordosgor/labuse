@@ -1783,6 +1783,23 @@ export function Fiche({ idu }: { idu: string }) {
                     </Vigilance>
                   </div>
                 )}
+                {/* PLU-VEILLE-FIX-1 — le document d'urbanisme a changé au Géoportail et les règles ne
+                    sont pas encore recalibrées/validées : on PRÉVIENT le client (bandeau ambre), et
+                    les parcelles de la commune sont « À vérifier » dans l'Analyse le temps de la mise
+                    à jour. Servi tant que la commune est en cours de mise à jour (desync). */}
+                {f.plu_modifie && (() => {
+                  const pm = f.plu_modifie!
+                  const titre = pm.niveau === 'prescriptions' ? 'Prescriptions du PLU'
+                    : pm.niveau === 'informations' ? 'Informations du PLU' : 'PLU modifié'
+                  return (
+                    <div data-plu-modifie={pm.niveau || 'desync'}>
+                      <Vigilance title={<><span aria-hidden className="mr-1">🔄</span>{titre}</>}>
+                        {pm.message}
+                        {pm.nouveau ? ` Nouveau document : ${pm.nouveau}.` : ''}
+                      </Vigilance>
+                    </div>
+                  )
+                })()}
                 {/* FICHE-FIX-4 (Lot F) — PLU en une Ligne : « approuvé le JJ/MM/AAAA » + badge document
                     (opposable / procédure). Le détail (fait foi, procédure en cours, action) derrière le « i ». */}
                 {f.plu_fraicheur?.libelle && (() => {

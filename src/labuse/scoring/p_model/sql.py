@@ -93,14 +93,24 @@ def build_mutations(session: Session) -> None:
     _exec(session, f"""
         DROP TABLE IF EXISTS p_model_mut_l2;
         CREATE TABLE p_model_mut_l2 AS
-        WITH par AS (
+        -- CHIRURGICAL-FIX-1 (LOT J, complément dvf) — `dvf_mutations_parcelle` REPUBLIE/DUPLIQUE la
+        -- même ligne (jusqu'à 327 copies d'un couple). `sum(surface_reelle_bati)` BRUT comptait chaque
+        -- bâti autant de fois qu'il est répété (mesuré : 980/31543 couples faussés, jusqu'à ×57 →
+        -- pm2_bati = valeur/s_bati déflaté d'autant). On somme sur les lignes DÉDOUBLONNÉES (contenu
+        -- distinct) : un lot physique compte une fois. `max(surface_terrain)`/`max(valeur)` ne sont pas
+        -- touchés par les doublons (max de copies = la copie).
+        WITH ded AS (
+            SELECT DISTINCT id_mutation, id_parcelle, date_mutation, valeur_fonciere,
+                   type_local, surface_reelle_bati, surface_terrain
+            FROM dvf_mutations_parcelle
+            WHERE nature_mutation IN {L2_NATURES}
+        ), par AS (
             SELECT id_mutation, id_parcelle AS idu,
                    min(date_mutation) AS date_mutation,
                    max(valeur_fonciere) AS valeur,
                    max(coalesce(surface_terrain, 0)) AS s_terrain,
                    sum(coalesce(surface_reelle_bati, 0)) AS s_bati
-            FROM dvf_mutations_parcelle
-            WHERE nature_mutation IN {L2_NATURES}
+            FROM ded
             GROUP BY 1, 2
         ), mut AS (
             SELECT id_mutation,

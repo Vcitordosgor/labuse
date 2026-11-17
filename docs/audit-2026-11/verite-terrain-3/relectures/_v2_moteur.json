@@ -1,0 +1,156 @@
+{
+ "97409000BI0220": {
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "UB"
+ },
+ "97413000AC0847": {
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "UD"
+ },
+ "97416000DS0780": {
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "Ud"
+ },
+ "97409000BI0198": {
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "UB"
+ },
+ "97422000BS1568": {
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "Ub"
+ },
+ "97413000CN0467": {
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "UB"
+ },
+ "97413000CN0304": {
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "UB"
+ },
+ "97419000AL1149": {
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "Ua"
+ },
+ "97413000CN0587": {
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "UD"
+ },
+ "97412000BT0712": {
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "U3"
+ },
+ "97408000AR1343": {
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "UB"
+ },
+ "97408000AR1356": {
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "UB"
+ },
+ "97409000BN0418": {
+  "constructible": false,
+  "verdict": "Construction neuve non autorisée en zone Aba.",
+  "cause": "zone_transition",
+  "exigu_raison": null,
+  "zone": "Aba"
+ },
+ "97410000AK0001": {
+  "constructible": false,
+  "verdict": "Construction neuve non autorisée en zone N.",
+  "cause": "zone_transition",
+  "exigu_raison": null,
+  "zone": "N"
+ },
+ "97410000CL0965": {
+  "constructible": false,
+  "verdict": "Construction neuve non autorisée en zone Ns34.",
+  "cause": "zone_transition",
+  "exigu_raison": null,
+  "zone": "Ns34"
+ },
+ "97421000AT0111": {
+  "constructible": false,
+  "verdict": "Construction neuve non autorisée en zone Aba.",
+  "cause": "zone_transition",
+  "exigu_raison": null,
+  "zone": "Aba"
+ },
+ "97409000AV1228": {
+  "constructible": false,
+  "verdict": "Construction neuve non autorisée en zone A.",
+  "cause": "zone_transition",
+  "exigu_raison": null,
+  "zone": "A"
+ },
+ "97420000BH2087": {
+  "constructible": false,
+  "verdict": "Construction neuve non autorisée en zone A.",
+  "cause": "zone_transition",
+  "exigu_raison": null,
+  "zone": "A"
+ },
+ "97421000AB0010": {
+  "constructible": false,
+  "verdict": "Construction neuve non autorisée en zone Aba.",
+  "cause": "zone_transition",
+  "exigu_raison": null,
+  "zone": "Aba"
+ },
+ "97410000BN0445": {
+  "constructible": false,
+  "verdict": "Construction neuve non autorisée en zone Ns46.",
+  "cause": "zone_transition",
+  "exigu_raison": null,
+  "zone": "Ns46"
+ },
+ "97410000AC0670": {
+  "constructible": false,
+  "verdict": "Construction neuve non autorisée en zone Ns21.",
+  "cause": "zone_transition",
+  "exigu_raison": null,
+  "zone": "Ns21"
+ },
+ "97416000HX0656": {
+  "constructible": false,
+  "verdict": "Construction neuve non autorisée en zone Us.",
+  "cause": "zone_transition",
+  "exigu_raison": null,
+  "zone": "Us"
+ }
+}

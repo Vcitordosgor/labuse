@@ -66,7 +66,7 @@ def _destinations(z: dict, zone_fam: str | None = None) -> str:
     if d.get("sous_conditions"):
         _sc = list(d["sous_conditions"])
         if fam in ("A", "N"):
-            _sc = [_LOGEMENT_AN if str(i).strip().lower() == "logement" else i for i in _sc]
+            _sc = [_LOGEMENT_AN if str(i).strip().lower().startswith("logement") else i for i in _sc]
         lignes.append(ligne_kv("Sous conditions", esc(" · ".join(_sc)), chip_span("s", "sourcé")))
     if d.get("interdites"):
         lignes.append(ligne_kv("Interdites", esc(" · ".join(d["interdites"])), chip_span("s", "sourcé")))

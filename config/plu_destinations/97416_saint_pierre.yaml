@@ -43,6 +43,22 @@ zones:
           min_m: 0
           forme: alignement
         limites_separatives:
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ucv3.2'
+            page_pdf: 63
+            citation: 'Les constructions nouvelles doivent être implantées sur au moins une limite séparative et au moins une limite séparative de l’unité foncière restera libre de toute construction :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Les constructions nouvelles en premier rideau, doivent respecter les dispositions suivantes : 1. Lorsque sur une seule des unités foncières contiguës au terrain d’assiette du projet il existe un bâtiment implanté en mitoyenneté, la nouvelle construction doit être implantée sur cette limite séparative latérale. Cependant, elle peut être implantée en mitoyenneté ou en retrait de l’autre limite séparative latérale. 2. Lorsque sur les deux unités foncières contiguës au terrain d’assiette du projet il existe des bâtiments implantés en mitoyenneté, la nouvelle construction doit être implantée sur au moins une des deux limites séparatives latérales. 3. Lorsque sur les deux unités foncières contiguës au terrain d’assiette du projet il n’existe aucun bâtiment implanté en mitoyenneté, la nouvelle construction doit être implantée sur au moins une limite latérale. Les constructions nouvelles en second rideau peuvent être implantées sur les deux limites séparatives sur une seule ou en retrait. Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 80% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des nouvelles constructions n’excède pas 9 m. Dans le cas d’une limite parcellaire de l’unité foncière sur voie inférieure à 20 m, la hauteur maximale en limite séparative n’excède pas 12 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative au-delà de cette bande de 3 m de profondeur, la règle générale s’applique, conformément au schéma A’ et A’’ de la définition « hauteur » du lexique du titre I du présent document. (Ucv5, Dispositions particulières, p.66)'
+            condition_modelable: 'une_seule_limite + lineaire_max_pct:80 + non'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ucv3.2'
+            page_pdf: 63
+            citation: 'Les constructions nouvelles doivent être implantées sur au moins une limite séparative et au moins une limite séparative de l’unité foncière restera libre de toute construction :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 80% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des nouvelles constructions n’excède pas 9 m. Dans le cas d’une limite parcellaire de l’unité foncière sur voie inférieure à 20 m, la hauteur maximale en limite séparative n’excède pas 12 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative au-delà de cette bande de 3 m de profondeur, la règle générale s’applique, conformément au schéma A’ et A’’ de la définition « hauteur » du lexique du titre I du présent document. (Ucv5, Dispositions particulières, p.66)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:9 m sur bande de 3 m'
           min_m: 3.0
           article: Ucv3.2
           page_pdf: 63
@@ -286,6 +302,22 @@ zones:
           citation: Les constructions nouvelles en premier rideau doivent être implantées à l’alignement ou avec un recul minimal de 3 m.
           statut: valide
         limites_separatives:
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud3.2'
+            page_pdf: 82
+            citation: 'Les constructions nouvelles doivent être implantées sur au moins une limite séparative et au moins une limite séparative de l’unité foncière restera libre de toute construction :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Les constructions nouvelles en premier rideau, hormis dans le secteur de l’Orientation d’Aménagement et de Programmation spécifique de la ZAC Océan Indien défini au présent Eco-PLU et dans la ZAC Cap Austral, doivent respecter les dispositions suivantes : 1. Lorsque sur une seule des unités foncières contiguës au terrain d’assiette du projet il existe un bâtiment implanté en mitoyenneté, la nouvelle construction doit être implantée sur cette limite séparative latérale. Cependant, elle peut être implantée en mitoyenneté ou en retrait de l’autre limite séparative latérale. 2. Lorsque sur les deux unités foncières contiguës au terrain d’assiette du projet il existe des bâtiments implantés en mitoyenneté, la nouvelle construction doit être implantée sur au moins une des deux limites séparatives latérales. 3. Lorsque sur les deux unités foncières contiguës au terrain d’assiette du projet il n’existe aucun bâtiment implanté en mitoyenneté, la nouvelle construction doit être implantée sur au moins une limite latérale. Les constructions nouvelles en second rideau peuvent être implantées sur les deux limites séparatives sur une seule ou en retrait. Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 80% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 9 m sauf en Udl où la hauteur est limitée à 6 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle s’applique, conformément au schéma A’ de la définition « hauteur » du lexique du titre I du présent document. (Ud5, Dispositions particulières, p.85-86)'
+            condition_modelable: 'une_seule_limite + lineaire_max_pct:80 + non'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud3.2'
+            page_pdf: 82
+            citation: 'Les constructions nouvelles doivent être implantées sur au moins une limite séparative et au moins une limite séparative de l’unité foncière restera libre de toute construction :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 80% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 9 m sauf en Udl où la hauteur est limitée à 6 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle s’applique, conformément au schéma A’ de la définition « hauteur » du lexique du titre I du présent document. (Ud5, Dispositions particulières, p.85-86)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:9 m sur bande de 3 m'
           min_m: 3.0
           article: Ud3.2
           page_pdf: 82
@@ -547,6 +579,22 @@ zones:
           citation: Les constructions nouvelles en premier rideau doivent être implantées à l’alignement ou avec un recul minimal de 3 m.
           statut: valide
         limites_separatives:
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud3.2'
+            page_pdf: 82
+            citation: 'Les constructions nouvelles doivent être implantées sur au moins une limite séparative et au moins une limite séparative de l’unité foncière restera libre de toute construction :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Les constructions nouvelles en premier rideau, hormis dans le secteur de l’Orientation d’Aménagement et de Programmation spécifique de la ZAC Océan Indien défini au présent Eco-PLU et dans la ZAC Cap Austral, doivent respecter les dispositions suivantes : 1. Lorsque sur une seule des unités foncières contiguës au terrain d’assiette du projet il existe un bâtiment implanté en mitoyenneté, la nouvelle construction doit être implantée sur cette limite séparative latérale. Cependant, elle peut être implantée en mitoyenneté ou en retrait de l’autre limite séparative latérale. 2. Lorsque sur les deux unités foncières contiguës au terrain d’assiette du projet il existe des bâtiments implantés en mitoyenneté, la nouvelle construction doit être implantée sur au moins une des deux limites séparatives latérales. 3. Lorsque sur les deux unités foncières contiguës au terrain d’assiette du projet il n’existe aucun bâtiment implanté en mitoyenneté, la nouvelle construction doit être implantée sur au moins une limite latérale. Les constructions nouvelles en second rideau peuvent être implantées sur les deux limites séparatives sur une seule ou en retrait. Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 80% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 9 m sauf en Udl où la hauteur est limitée à 6 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle s’applique, conformément au schéma A’ de la définition « hauteur » du lexique du titre I du présent document. (Ud5, Dispositions particulières, p.85-86)'
+            condition_modelable: 'une_seule_limite + lineaire_max_pct:80 + non'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud3.2'
+            page_pdf: 82
+            citation: 'Les constructions nouvelles doivent être implantées sur au moins une limite séparative et au moins une limite séparative de l’unité foncière restera libre de toute construction :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 80% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 9 m sauf en Udl où la hauteur est limitée à 6 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle s’applique, conformément au schéma A’ de la définition « hauteur » du lexique du titre I du présent document. (Ud5, Dispositions particulières, p.85-86)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:6 m sur bande de 3 m'
           min_m: 3.0
           article: Ud3.2
           page_pdf: 82
@@ -800,6 +848,22 @@ zones:
           citation: Les constructions nouvelles en premier rideau doivent être implantées à l’alignement ou avec un recul minimal de 3 m.
           statut: valide
         limites_separatives:
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud3.2'
+            page_pdf: 82
+            citation: 'Les constructions nouvelles doivent être implantées sur au moins une limite séparative et au moins une limite séparative de l’unité foncière restera libre de toute construction :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Les constructions nouvelles en premier rideau, hormis dans le secteur de l’Orientation d’Aménagement et de Programmation spécifique de la ZAC Océan Indien défini au présent Eco-PLU et dans la ZAC Cap Austral, doivent respecter les dispositions suivantes : 1. Lorsque sur une seule des unités foncières contiguës au terrain d’assiette du projet il existe un bâtiment implanté en mitoyenneté, la nouvelle construction doit être implantée sur cette limite séparative latérale. Cependant, elle peut être implantée en mitoyenneté ou en retrait de l’autre limite séparative latérale. 2. Lorsque sur les deux unités foncières contiguës au terrain d’assiette du projet il existe des bâtiments implantés en mitoyenneté, la nouvelle construction doit être implantée sur au moins une des deux limites séparatives latérales. 3. Lorsque sur les deux unités foncières contiguës au terrain d’assiette du projet il n’existe aucun bâtiment implanté en mitoyenneté, la nouvelle construction doit être implantée sur au moins une limite latérale. Les constructions nouvelles en second rideau peuvent être implantées sur les deux limites séparatives sur une seule ou en retrait. En secteur UdBO : Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 65 % du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 9 m sauf en Udl où la hauteur est limitée à 6 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle s’applique, conformément au schéma A’ de la définition « hauteur » du lexique du titre I du présent document. (Ud5, Dispositions particulières, p.85-86)'
+            condition_modelable: 'une_seule_limite + lineaire_max_pct:65 + non'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ud3.2'
+            page_pdf: 82
+            citation: 'Les constructions nouvelles doivent être implantées sur au moins une limite séparative et au moins une limite séparative de l’unité foncière restera libre de toute construction :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'En secteur UdBO : Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 65 % du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 9 m sauf en Udl où la hauteur est limitée à 6 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle s’applique, conformément au schéma A’ de la définition « hauteur » du lexique du titre I du présent document. (Ud5, Dispositions particulières, p.85-86)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:9 m sur bande de 3 m'
           min_m: 3.0
           article: Ud3.2
           page_pdf: 82
@@ -1057,6 +1121,22 @@ zones:
           raison: attribution douteuse (citation sous secteur None)
           absent: true
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Ud3'
+            page_pdf: 81
+            citation: 'En zone AUdma : non règlementé pour l’ensemble de l’article'
+            condition_texte: 'Article Ud3 explicitement non réglementé en AUdma (zone régie par les OAP, R151-8) — le moteur garde le retrait actuel.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Ud3'
+            page_pdf: 81
+            citation: 'En zone AUdma : non règlementé pour l’ensemble de l’article'
+            condition_texte: 'Article Ud3 explicitement non réglementé en AUdma (zone régie par les OAP, R151-8) — le moteur garde le retrait actuel.'
+            condition_modelable: 'non'
           article: Ud3
           page_pdf: 80
           citation: 'En zone AUdma : non règlementé pour l’ensemble de l’article'
@@ -1118,6 +1198,22 @@ zones:
           citation: Les constructions nouvelles (sauf clôtures) doivent être implantées à 3 m minimum de l’emprise des voies routières et à 1 m minimum pour les constructions d’une hauteur inférieure ou égale à 3 m à l’égout du toit ou au sommet de l’acrotère et de 5 m maximum au faîtage.
           statut: valide
         limites_separatives:
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ug3.2'
+            page_pdf: 101
+            citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 70% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excèdera pas 6 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique, conformément au schéma A de la définition « hauteur » du lexique du titre I du présent document. (Ug5, Dispositions particulières, p.103)'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:70 + non'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ug3.2'
+            page_pdf: 101
+            citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 70% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excèdera pas 6 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique, conformément au schéma A de la définition « hauteur » du lexique du titre I du présent document. (Ug5, Dispositions particulières, p.103)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:6 m sur bande de 3 m'
           min_m: 3.0
           article: Ug3.2
           page_pdf: 101
@@ -1381,6 +1477,22 @@ zones:
           citation: Les constructions nouvelles (sauf clôtures) doivent être implantées à 3 m minimum de l’emprise des voies routières et à 1 m minimum pour les constructions d’une hauteur inférieure ou égale à 3 m à l’égout du toit ou au sommet de l’acrotère et de 5 m maximum au faîtage.
           statut: valide
         limites_separatives:
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ug3.2'
+            page_pdf: 101
+            citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 70% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excèdera pas 6 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique, conformément au schéma A de la définition « hauteur » du lexique du titre I du présent document. (Ug5, Dispositions particulières, p.103)'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:70 + non'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Ug3.2'
+            page_pdf: 101
+            citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 70% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excèdera pas 6 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique, conformément au schéma A de la définition « hauteur » du lexique du titre I du présent document. (Ug5, Dispositions particulières, p.103)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:6 m sur bande de 3 m'
           min_m: 3.0
           article: Ug3.2
           page_pdf: 101
@@ -1531,6 +1643,24 @@ zones:
           citation: Les constructions nouvelles doivent être implantées à 4 m minimum de l’emprise des voies.
           statut: valide
         limites_separatives:
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uf3.2'
+            page_pdf: 117
+            citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uf3.2'
+            page_pdf: 117
+            citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
           min_m: 3.0
           article: Uf3.2
           page_pdf: 117
@@ -1732,6 +1862,24 @@ zones:
           citation: Les constructions nouvelles doivent être implantées à 4 m minimum de l’emprise des voies.
           statut: valide
         limites_separatives:
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uf3.2'
+            page_pdf: 117
+            citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uf3.2'
+            page_pdf: 117
+            citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
           min_m: 3.0
           article: Uf3.2
           page_pdf: 117
@@ -1816,6 +1964,24 @@ zones:
           citation: Les constructions nouvelles doivent être implantées à 4 m minimum de l’emprise des voies.
           statut: valide
         limites_separatives:
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uf3.2'
+            page_pdf: 117
+            citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uf3.2'
+            page_pdf: 117
+            citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
           min_m: 3.0
           article: Uf3.2
           page_pdf: 117
@@ -1880,6 +2046,24 @@ zones:
           citation: Les constructions nouvelles doivent être implantées à 4 m minimum de l’emprise des voies.
           statut: valide
         limites_separatives:
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uf3.2'
+            page_pdf: 117
+            citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Uf3.2'
+            page_pdf: 117
+            citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 3 mètres.'
+            condition_texte: 'Sur les limites séparatives, l’implantation des constructions devra se faire au maximum sur 60% du linéaire de chacune des limites. Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative. Au-delà de cette bande de 3 m de profondeur, la règle générale s’applique conformément au schéma C de la définition « hauteur » du lexique du titre I du présent document. (Uf5, Dispositions particulières, p.119)'
+            condition_modelable: 'deux_limites_max + lineaire_max_pct:60 + non'
+            note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 5 (F08) : règle réelle (Uf3.2 p.117-118) = 2 limites AU MAXIMUM (latérales OU fond), 60% du linéaire de CHACUNE, et au-delà de 4 m de hauteur en mitoyenneté des PROFONDEURS (15 m habitation +5 m varangues / 20 m autres) et DÉCROCHÉS (6 m collectif / 3 m individuel) imposés — non modélisés (jeton non) : fermé. L''ancien encodage du fond (bande de 3 m plafonnée à 4 m) était faux.'
           min_m: 3.0
           article: Uf3.2
           page_pdf: 117
@@ -2099,6 +2283,22 @@ zones:
           min_m: 0
           forme: alignement
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Up3.2'
+            page_pdf: 146
+            citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 1,9 m.'
+            condition_texte: 'Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excèdera pas 4 m de hauteur au droit de cette limite séparative. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 1,90 m comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété. Au-delà de cette bande de 1,90 m de profondeur, la règle générale s’applique, conformément au schéma D de la définition « hauteur » du lexique du titre I du présent document. (Up5, Dispositions particulières, p.148)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:4 m sur bande de 1,9 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Up3.2'
+            page_pdf: 146
+            citation: 'Les constructions nouvelles doivent être implantées :  Soit en limites séparatives et au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de parcelle,  Soit en retrait de 1,9 m.'
+            condition_texte: 'Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n’excèdera pas 4 m de hauteur au droit de cette limite séparative. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 1,90 m comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété. Au-delà de cette bande de 1,90 m de profondeur, la règle générale s’applique, conformément au schéma D de la définition « hauteur » du lexique du titre I du présent document. (Up5, Dispositions particulières, p.148)'
+            condition_modelable: 'deux_limites_max + hauteur_bande:4 m sur bande de 1,9 m'
           min_m: 1.9
           article: Up3.2
           page_pdf: 146

@@ -34,6 +34,20 @@ zones:
           citation: 'Les constructions peuvent être implantées à l''alignement ou en recul de la voie, avec une distance ... au moins égale à : en zone UA : 2 mètres'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (5.3)'
+            page_pdf: 13
+            citation: 'En zone UA, les constructions peuvent être implantées en limite de fond de terrain, si elles s’implantent en retrait ou sur une seule limite séparative latérale. En cas de retrait, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'En zone UA, les constructions peuvent être implantées en limite de fond de terrain, si elles s’implantent en retrait ou sur une seule limite séparative latérale. (U5.3)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'Article U5 (5.2)'
+            page_pdf: 13
+            citation: 'En zones UA et UB, la construction peut être implantée sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres. Les constructions doivent être implantées à une distance minimale de 10 mètres par rapport aux cours d’eau.'
           min_m: 3.0
           article: U5.2
           page_pdf: 13
@@ -169,6 +183,18 @@ zones:
           citation: 'au moins égale à : ... en zones UB et UC : 4 mètres'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Article U5 (5.3)'
+            page_pdf: 13
+            citation: 'En zones UB et UC, les constructions doivent être implantées en retrait de la limite de fond de terrain. En cas de retrait de la construction, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'Article U5 (5.2)'
+            page_pdf: 13
+            citation: 'En zones UA et UB, la construction peut être implantée sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres. Les constructions doivent être implantées à une distance minimale de 10 mètres par rapport aux cours d’eau.'
           min_m: 3.0
           article: U5.2
           page_pdf: 13
@@ -299,6 +325,20 @@ zones:
           citation: 'au moins égale à : ... en zones UB et UC : 4 mètres'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Article U5 (5.3)'
+            page_pdf: 13
+            citation: 'En zones UB et UC, les constructions doivent être implantées en retrait de la limite de fond de terrain. En cas de retrait de la construction, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (5.2)'
+            page_pdf: 13
+            citation: 'En zone UC, la construction peut être implantée en retrait ou sur une seule limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
+            condition_texte: 'En zone UC, la construction peut être implantée en retrait ou sur une seule limite séparative latérale. (jamais sur les deux latérales)'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: U5.2
           page_pdf: 13
@@ -504,6 +544,20 @@ zones:
           citation: 'au moins égale à : en zone UA : 2 mètres'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (5.3)'
+            page_pdf: 13
+            citation: 'En zone UA, les constructions peuvent être implantées en limite de fond de terrain, si elles s’implantent en retrait ou sur une seule limite séparative latérale. En cas de retrait, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'En zone UA, les constructions peuvent être implantées en limite de fond de terrain, si elles s’implantent en retrait ou sur une seule limite séparative latérale. (U5.3)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'Article U5 (5.2)'
+            page_pdf: 13
+            citation: 'En zones UA et UB, la construction peut être implantée sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres. Les constructions doivent être implantées à une distance minimale de 10 mètres par rapport aux cours d’eau.'
           min_m: 3.0
           article: U5.2
           page_pdf: 13
@@ -624,6 +678,20 @@ zones:
           citation: 'au moins égale à : ... en zones UB et UC : 4 mètres'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Article U5 (5.3)'
+            page_pdf: 13
+            citation: 'En zones UB et UC, les constructions doivent être implantées en retrait de la limite de fond de terrain. En cas de retrait de la construction, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article U5 (5.2)'
+            page_pdf: 13
+            citation: 'En zone UC, la construction peut être implantée en retrait ou sur une seule limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
+            condition_texte: 'En zone UC, la construction peut être implantée en retrait ou sur une seule limite séparative latérale. (jamais sur les deux latérales)'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: U5.2
           page_pdf: 13
@@ -736,6 +804,7 @@ zones:
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 5 m
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 4
           article: UE5.2
           page_pdf: 22
@@ -862,6 +931,20 @@ zones:
           citation: 'au moins égale à : en zone UA : 2 mètres'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article AUindicée 5 (renvoi U5.3, régime UA)'
+            page_pdf: 30
+            citation: 'En zone UA, les constructions peuvent être implantées en limite de fond de terrain, si elles s’implantent en retrait ou sur une seule limite séparative latérale. En cas de retrait, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'En zone UA, les constructions peuvent être implantées en limite de fond de terrain, si elles s’implantent en retrait ou sur une seule limite séparative latérale. (U5.3)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'Article AUindicée 5 (renvoi U5.2, régime UA)'
+            page_pdf: 30
+            citation: 'En zones UA et UB, la construction peut être implantée sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres. Les constructions doivent être implantées à une distance minimale de 10 mètres par rapport aux cours d’eau.'
           min_m: 3.0
           article: U5.2
           page_pdf: 13
@@ -989,6 +1072,18 @@ zones:
           citation: 'au moins égale à : ... en zones UB et UC : 4 mètres'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Article AUindicée 5 (renvoi U5.3, régime UB)'
+            page_pdf: 30
+            citation: 'En zones UB et UC, les constructions doivent être implantées en retrait de la limite de fond de terrain. En cas de retrait de la construction, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'Article AUindicée 5 (renvoi U5.2, régime UB)'
+            page_pdf: 30
+            citation: 'En zones UA et UB, la construction peut être implantée sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres. Les constructions doivent être implantées à une distance minimale de 10 mètres par rapport aux cours d’eau.'
           min_m: 3.0
           article: U5.2
           page_pdf: 13
@@ -1077,6 +1172,20 @@ zones:
           citation: 'au moins égale à : ... en zones UB et UC : 4 mètres'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Article AUindicée 5 (renvoi U5.3, régime UC)'
+            page_pdf: 30
+            citation: 'En zones UB et UC, les constructions doivent être implantées en retrait de la limite de fond de terrain. En cas de retrait de la construction, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article AUindicée 5 (renvoi U5.2, régime UC)'
+            page_pdf: 30
+            citation: 'En zone UC, la construction peut être implantée en retrait ou sur une seule limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
+            condition_texte: 'En zone UC, la construction peut être implantée en retrait ou sur une seule limite séparative latérale. (jamais sur les deux latérales)'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: U5.2
           page_pdf: 13
@@ -1168,6 +1277,7 @@ zones:
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 5 m
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 4
           article: UE5.2
           page_pdf: 22

@@ -36,7 +36,8 @@ def test_lisezmoi_collectif_renvoie_au_13409():
 
 def test_pcmi4_reprend_les_servitudes_et_sources():
     # les libellés + sources publiques nommées sont dans le code de la notice
-    assert "Risque naturel (PPR)" in SRC and "DEAL Réunion" in SRC
+    # LOT I pt2 — le libellé distingue désormais le rouge du bleu (« Risque naturel (PPR — zone … ) »).
+    assert "Risque naturel (PPR" in SRC and "DEAL Réunion" in SRC
     assert "Bruit" in SRC and "Cerema" in SRC
     assert "architecte des Bâtiments de" in SRC and "Mérimée" in SRC
     assert "Adresse du terrain" in SRC and "Base Adresse Nationale" in SRC

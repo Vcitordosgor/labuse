@@ -1,0 +1,35 @@
+{
+  "old_file": "data/plu_reglements/97408_reglement_20251217.pdf",
+  "new_file": "data/plu_reglements/97408_reglement_20260625.pdf",
+  "old_md5": "8b3bd9de4c9a3d23f91307c31c457007",
+  "new_md5": "8b3bd9de4c9a3d23f91307c31c457007",
+  "byte_identical": true,
+  "old_pages": 164,
+  "new_pages": 164,
+  "changed_pages": [],
+  "chiffre_changes": [],
+  "zones_created_removed_renamed": [],
+  "note_old_url_404": "GPU URL for 20251217 returned HTTP 404 (hash superseded); OLD PDF recovered from local cache /Users/openclaw/Desktop/labuse/data/plu_reglements/97408_reglement_20251217.pdf (downloaded 20/09, cover already bears 'Modification simplifiée n°2 approuvée le 17 décembre 2025'). Freshly re-downloaded NEW (20260625) is byte-identical to this cached OLD.",
+  "labuse_db_extract": {
+    "idurba": "97408_PLU_20251217",
+    "rows": 156,
+    "zones": [
+      "A",
+      "AUBM",
+      "AUST",
+      "N",
+      "UA",
+      "UB",
+      "UE",
+      "UEM",
+      "UT"
+    ],
+    "page_range": [
+      3,
+      100
+    ],
+    "status": "remains valid for NEW version — règlement text unchanged"
+  },
+  "zoning_map": "Graphical zonage confirmed geometrically identical (per task premise); règlement PDF text also identical — no change anywhere.",
+  "verdict": "The La Possession (97408) règlement PDF is BYTE-IDENTICAL between the OLD GPU document (20251217) and the NEW in-vigueur document (20260625): same MD5 8b3bd9de4c9a3d23f91307c31c457007, 164 pages each, 0 differing pages at both normalized and raw text levels. The 'modification simplifiée n°2' (application d'un jugement du TA, published at GPU 29/10/2026) did NOT change the written règlement: not a single chiffré rule moved — no hauteur (faîtage/égout, R+n), no emprise au sol (CES %), no retrait/recul, and no zone was created, renamed or deleted. The modif restored/confirmed the document's legal status following the TA judgment without editing the normative text. Consequently there is nothing to recalibrate from the règlement itself: the existing LABUSE extract (idurba 97408_PLU_20251217, 156 rows, zones A/AUBM/AUST/N/UA/UB/UE/UEM/UT) applies unchanged to the new millésime. The only action needed is to re-point the idurba label to 97408_PLU_20260625; the chiffré values are unchanged."
+}

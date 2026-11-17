@@ -59,7 +59,9 @@ const causeCourt = (c?: string | null): string | null => {
 
 // RETOURS-29 (Comparatif v2, maquette 15-comparatif-v2) — SEULES les lignes que l'API sert, dans l'ordre
 // de la maquette. AUCUN classement LABUSE, AUCUNE puce de vente, AUCUN prix de marché (hors maquette).
-const PROPRIO: Record<string, string> = { morale: 'personne morale', public: 'public', particulier: 'particulier', succession: 'succession', indivision: 'indivision' }
+// CHIRURGICAL-FIX-1 (LOT H pt4) — « non déterminé » quand LABUSE n'a pas identifié le propriétaire
+// (ni personne morale) : même libellé que le Dossier et la fiche. Plus de « particulier » affirmé à tort.
+const PROPRIO: Record<string, string> = { morale: 'personne morale', public: 'public', particulier: 'particulier', succession: 'succession', indivision: 'indivision', non_determine: 'non déterminé' }
 const ROWS: Row[] = [
   // TERRAIN
   { label: 'Surface', prov: 'source', bar: true, best: 'hi', num: (r) => r.surface_m2 ?? null,

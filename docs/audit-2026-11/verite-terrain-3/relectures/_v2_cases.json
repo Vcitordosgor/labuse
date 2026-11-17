@@ -1,0 +1,412 @@
+{
+ "97440921A0264": {
+  "groupe": "terrain_exigu",
+  "commune": "Saint-André",
+  "insee": "97409",
+  "zones_csv": "UB (U)",
+  "date": "2022-05-16",
+  "type": "PC",
+  "sdp_plancher": "252",
+  "logements": "5",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (terrain_exigu) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97409000BI0220": {
+    "zone": "UB",
+    "cause": "terrain_exigu",
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "exigu? ": "terrain_exigu"
+   }
+  }
+ },
+ "97441313A0168": {
+  "groupe": "terrain_exigu",
+  "commune": "Saint-Leu",
+  "insee": "97413",
+  "zones_csv": "UD (U)",
+  "date": "2013-09-25",
+  "type": "PC",
+  "sdp_plancher": "130",
+  "logements": "1",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (terrain_exigu) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97413000AC0847": {
+    "zone": "UD",
+    "cause": "terrain_exigu",
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "exigu? ": "terrain_exigu"
+   }
+  }
+ },
+ "97441626E0410": {
+  "groupe": "terrain_exigu",
+  "commune": "Saint-Pierre",
+  "insee": "97416",
+  "zones_csv": "Ud (U)",
+  "date": "2026-07-03",
+  "type": "DP",
+  "sdp_plancher": "179",
+  "logements": "2",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (terrain_exigu) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97416000DS0780": {
+    "zone": "Ud",
+    "cause": "terrain_exigu",
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "exigu? ": "terrain_exigu"
+   }
+  }
+ },
+ "97440922A0157": {
+  "groupe": "terrain_exigu",
+  "commune": "Saint-André",
+  "insee": "97409",
+  "zones_csv": "UB (U)",
+  "date": "2023-02-02",
+  "type": "PC",
+  "sdp_plancher": "169",
+  "logements": "1",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (terrain_exigu) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97409000BI0198": {
+    "zone": "UB",
+    "cause": "terrain_exigu",
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "exigu? ": "terrain_exigu"
+   }
+  }
+ },
+ "97442224A0459": {
+  "groupe": "terrain_exigu",
+  "commune": "Le Tampon",
+  "insee": "97422",
+  "zones_csv": "?|Ub (U)",
+  "date": "2025-05-27",
+  "type": "PC",
+  "sdp_plancher": "135",
+  "logements": "1",
+  "note": "réunion de 2 parcelle(s) ; 1/2 parcelle(s) non servie(s) (disparue/redécoupée) ; 1 parcelle(s) non constructible(s) chez LABUSE (terrain_exigu) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97422000BS0575": {
+    "zone": null,
+    "cause": "parcelle absente du cadastre servi (disparue/redécoupée)",
+    "verdict": null,
+    "exigu? ": null
+   },
+   "97422000BS1568": {
+    "zone": "Ub",
+    "cause": "terrain_exigu",
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "exigu? ": "terrain_exigu"
+   }
+  }
+ },
+ "97441323A0068": {
+  "groupe": "terrain_exigu",
+  "commune": "Saint-Leu",
+  "insee": "97413",
+  "zones_csv": "UB (U)",
+  "date": "2023-10-24",
+  "type": "PC",
+  "sdp_plancher": "68",
+  "logements": "1",
+  "note": "réunion de 2 parcelle(s) ; 2 parcelle(s) non constructible(s) chez LABUSE (terrain_exigu) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97413000CN0467": {
+    "zone": "UB",
+    "cause": "terrain_exigu",
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "exigu? ": "terrain_exigu"
+   },
+   "97413000CN0304": {
+    "zone": "UB",
+    "cause": "terrain_exigu",
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "exigu? ": "terrain_exigu"
+   }
+  }
+ },
+ "9744192100030": {
+  "groupe": "terrain_exigu",
+  "commune": "Sainte-Rose",
+  "insee": "97419",
+  "zones_csv": "Ua (U)",
+  "date": "2021-08-17",
+  "type": "PC",
+  "sdp_plancher": "70",
+  "logements": "1",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (terrain_exigu) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97419000AL1149": {
+    "zone": "Ua",
+    "cause": "terrain_exigu",
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "exigu? ": "terrain_exigu"
+   }
+  }
+ },
+ "97441313A0195": {
+  "groupe": "terrain_exigu",
+  "commune": "Saint-Leu",
+  "insee": "97413",
+  "zones_csv": "?|UD (U)",
+  "date": "2013-09-30",
+  "type": "PC",
+  "sdp_plancher": "169",
+  "logements": "1",
+  "note": "réunion de 2 parcelle(s) ; 1/2 parcelle(s) non servie(s) (disparue/redécoupée) ; 1 parcelle(s) non constructible(s) chez LABUSE (terrain_exigu) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97413000CN0182": {
+    "zone": null,
+    "cause": "parcelle absente du cadastre servi (disparue/redécoupée)",
+    "verdict": null,
+    "exigu? ": null
+   },
+   "97413000CN0587": {
+    "zone": "UD",
+    "cause": "terrain_exigu",
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "exigu? ": "terrain_exigu"
+   }
+  }
+ },
+ "9744122500222": {
+  "groupe": "terrain_exigu",
+  "commune": "Saint-Joseph",
+  "insee": "97412",
+  "zones_csv": "U3 (U)",
+  "date": "2026-02-24",
+  "type": "PC",
+  "sdp_plancher": "74",
+  "logements": "1",
+  "note": "réunion de 2 parcelle(s) ; 1 parcelle(s) non constructible(s) chez LABUSE (terrain_exigu) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97412000BT0712": {
+    "zone": "U3",
+    "cause": "terrain_exigu",
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "exigu? ": "terrain_exigu"
+   },
+   "97412000BT0711": {
+    "zone": "U3",
+    "cause": null,
+    "verdict": "R+2 · estimation ~294 m² de plancher",
+    "exigu? ": null
+   }
+  }
+ },
+ "9744082600041": {
+  "groupe": "terrain_exigu",
+  "commune": "La Possession",
+  "insee": "97408",
+  "zones_csv": "UB (U)",
+  "date": "2026-06-26",
+  "type": "PC",
+  "sdp_plancher": "115",
+  "logements": "1",
+  "note": "réunion de 2 parcelle(s) ; 2 parcelle(s) non constructible(s) chez LABUSE (terrain_exigu) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97408000AR1343": {
+    "zone": "UB",
+    "cause": "terrain_exigu",
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "exigu? ": "terrain_exigu"
+   },
+   "97408000AR1356": {
+    "zone": "UB",
+    "cause": "terrain_exigu",
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "exigu? ": "terrain_exigu"
+   }
+  }
+ },
+ "97440919A0280": {
+  "groupe": "zone_non_constructible",
+  "commune": "Saint-André",
+  "insee": "97409",
+  "zones_csv": "Aba (A)",
+  "date": "2020-06-25",
+  "type": "PC",
+  "sdp_plancher": "138",
+  "logements": "1",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (zone_non_constructible:Aba) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97409000BN0418": {
+    "zone": "Aba",
+    "cause": "zone_non_constructible:Aba",
+    "verdict": "Construction neuve non autorisée en zone Aba.",
+    "exigu? ": "zone_transition"
+   }
+  }
+ },
+ "97441026A0024": {
+  "groupe": "zone_non_constructible",
+  "commune": "Saint-Benoît",
+  "insee": "97410",
+  "zones_csv": "N (N)",
+  "date": "2026-05-06",
+  "type": "PC",
+  "sdp_plancher": "89",
+  "logements": "1",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (zone_non_constructible:N) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97410000AK0001": {
+    "zone": "N",
+    "cause": "zone_non_constructible:N",
+    "verdict": "Construction neuve non autorisée en zone N.",
+    "exigu? ": "zone_transition"
+   }
+  }
+ },
+ "97441021A0281": {
+  "groupe": "zone_non_constructible",
+  "commune": "Saint-Benoît",
+  "insee": "97410",
+  "zones_csv": "Ns34 (N)",
+  "date": "2022-05-23",
+  "type": "PC",
+  "sdp_plancher": "138",
+  "logements": "1",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (zone_non_constructible:Ns34) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97410000CL0965": {
+    "zone": "Ns34",
+    "cause": "zone_non_constructible:Ns34",
+    "verdict": "Construction neuve non autorisée en zone Ns34.",
+    "exigu? ": "zone_transition"
+   }
+  }
+ },
+ "97442124A0056": {
+  "groupe": "zone_non_constructible",
+  "commune": "Salazie",
+  "insee": "97421",
+  "zones_csv": "Aba (A)",
+  "date": "2025-04-30",
+  "type": "PC",
+  "sdp_plancher": "91",
+  "logements": "1",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (zone_non_constructible:Aba) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97421000AT0111": {
+    "zone": "Aba",
+    "cause": "zone_non_constructible:Aba",
+    "verdict": "Construction neuve non autorisée en zone Aba.",
+    "exigu? ": "zone_transition"
+   }
+  }
+ },
+ "97440921A0058": {
+  "groupe": "zone_non_constructible",
+  "commune": "Saint-André",
+  "insee": "97409",
+  "zones_csv": "A (A)",
+  "date": "2021-05-10",
+  "type": "PC",
+  "sdp_plancher": "156",
+  "logements": "1",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (zone_non_constructible:A) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97409000AV1228": {
+    "zone": "A",
+    "cause": "zone_non_constructible:A",
+    "verdict": "Construction neuve non autorisée en zone A.",
+    "exigu? ": "zone_transition"
+   }
+  }
+ },
+ "97442025A0093": {
+  "groupe": "zone_non_constructible",
+  "commune": "Sainte-Suzanne",
+  "insee": "97420",
+  "zones_csv": "A (A)",
+  "date": "2026-04-28",
+  "type": "PC",
+  "sdp_plancher": "243",
+  "logements": "2",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (zone_non_constructible:A) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97420000BH2087": {
+    "zone": "A",
+    "cause": "zone_non_constructible:A",
+    "verdict": "Construction neuve non autorisée en zone A.",
+    "exigu? ": "zone_transition"
+   }
+  }
+ },
+ "97442123A0022": {
+  "groupe": "zone_non_constructible",
+  "commune": "Salazie",
+  "insee": "97421",
+  "zones_csv": "Aba (A)",
+  "date": "2023-07-21",
+  "type": "PC",
+  "sdp_plancher": "75",
+  "logements": "1",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (zone_non_constructible:Aba) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97421000AB0010": {
+    "zone": "Aba",
+    "cause": "zone_non_constructible:Aba",
+    "verdict": "Construction neuve non autorisée en zone Aba.",
+    "exigu? ": "zone_transition"
+   }
+  }
+ },
+ "97441021A0312": {
+  "groupe": "zone_non_constructible",
+  "commune": "Saint-Benoît",
+  "insee": "97410",
+  "zones_csv": "Ns46 (N)",
+  "date": "2022-05-05",
+  "type": "PC",
+  "sdp_plancher": "87",
+  "logements": "1",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (zone_non_constructible:Ns46) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97410000BN0445": {
+    "zone": "Ns46",
+    "cause": "zone_non_constructible:Ns46",
+    "verdict": "Construction neuve non autorisée en zone Ns46.",
+    "exigu? ": "zone_transition"
+   }
+  }
+ },
+ "97441021A0214": {
+  "groupe": "zone_non_constructible",
+  "commune": "Saint-Benoît",
+  "insee": "97410",
+  "zones_csv": "Ns21 (N)",
+  "date": "2021-12-15",
+  "type": "PC",
+  "sdp_plancher": "114",
+  "logements": "1",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (zone_non_constructible:Ns21) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97410000AC0670": {
+    "zone": "Ns21",
+    "cause": "zone_non_constructible:Ns21",
+    "verdict": "Construction neuve non autorisée en zone Ns21.",
+    "exigu? ": "zone_transition"
+   }
+  }
+ },
+ "97441623A0473": {
+  "groupe": "zone_non_constructible",
+  "commune": "Saint-Pierre",
+  "insee": "97416",
+  "zones_csv": "Us (U)",
+  "date": "2024-07-05",
+  "type": "PC",
+  "sdp_plancher": "116",
+  "logements": "2",
+  "note": "1 parcelle(s) non constructible(s) chez LABUSE (zone_non_constructible:Us) ; LABUSE classe la (les) parcelle(s) non constructible(s) alors qu'un permis logements y a été autorisé",
+  "parcelles": {
+   "97416000HX0656": {
+    "zone": "Us",
+    "cause": "zone_non_constructible:Us",
+    "verdict": "Construction neuve non autorisée en zone Us.",
+    "exigu? ": "zone_transition"
+   }
+  }
+ }
+}

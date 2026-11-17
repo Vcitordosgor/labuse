@@ -696,15 +696,57 @@ class RisquesLayer(Layer):
             cov_pct = red_cov * 100
             red_m2 = round((parcel.surface_m2 or 0) * red_cov)
             if cov_pct >= excl_pct:
-                verdicts.append(hard_exclude(
-                    self.name,
-                    f"Exclue : PPR zone rouge (inconstructible) — {cov_pct:.0f} % de la surface.",
-                    kind="exclue", source=SRC_DEAL_PPR))
+                # MOTEUR-VERITE-FIX-3 LOT 3 puis FIX-4 LOT 4 — RÉCONCILIATION cascade ↔ capacité
+                # (BC1134). L'allègement n'est accordé QUE si : (a) le PLU ADMET la construction
+                # sur la partie hors rouge (famille U/AU, ou portion U/AU réelle d'une parcelle
+                # mixte — AC0249 Saint-Benoît : 71 % rouge, zone Acor FERMÉE, la cascade disait
+                # « exploitable » pendant que la faisabilité fermait) ; ET (b) le plus grand
+                # tenant hors rouge est ≥ 200 m² d'un seul tenant ET touche une voie (MÊME test
+                # que le moteur). Formulation : « capacité réduite, sous prescriptions » —
+                # jamais une promesse (étude/attestation du règlement du PPR le cas échéant).
+                servable = False
+                try:
+                    from ...faisabilite.db import (_hors_rouge_fragment_servable, _uau_reelle,
+                                                   _uau_portion_reelle)
+                    _zf = ctx.session.execute(text(
+                        "SELECT zp.zone_fam FROM parcel_zone_plu zp JOIN parcels p ON p.idu = zp.idu "
+                        "WHERE p.id = :pid"), {"pid": parcel.id}).scalar()
+                    _plu_admet = str(_zf or "").upper() in ("U", "AU")
+                    if not _plu_admet:
+                        _m2, _pct, _er = _uau_reelle(ctx.session, parcel.id)
+                        _plu_admet = _uau_portion_reelle(_m2, _er)
+                    if _plu_admet:
+                        servable, _ = _hors_rouge_fragment_servable(ctx.session, parcel.id)
+                except Exception:  # noqa: BLE001 — test indisponible : exclusion prudente conservée
+                    servable = False
+                if servable:
+                    # MOTEUR-VERITE-FIX-6 LOT 3 — « sous prescriptions » est réservé aux ZONES
+                    # BLEUES (règles constructives du PPR) ; pour une partie hors rouge, on dit
+                    # « capacité RÉDUITE à cette partie », admissibilité au règlement du PPR À
+                    # VÉRIFIER (AH0074 n'a aucune zone bleue). La réserve bleue, quand elle
+                    # existe, est portée à part par la faisabilité (intersection bleue mesurée).
+                    verdicts.append(soft_flag(
+                        self.name,
+                        f"PPR zone rouge sur {cov_pct:.0f} % de la surface — partie hors rouge "
+                        "admise par le PLU et desservie (≥ 200 m² d'un seul tenant, accès voie) : "
+                        "capacité RÉDUITE à cette partie ; admissibilité au règlement du PPR à "
+                        "vérifier (étude préalable / attestation le cas échéant) — pas "
+                        "d'exclusion automatique.",
+                        Severity.FORT, source=SRC_DEAL_PPR))
+                else:
+                    verdicts.append(hard_exclude(
+                        self.name,
+                        f"Exclue : PPR zone rouge (inconstructible) — {cov_pct:.0f} % de la surface.",
+                        kind="exclue", source=SRC_DEAL_PPR))
             elif cov_pct >= marg_pct:
+                # CHIRURGICAL-FIX-1 (LOT I pt2 / LOT J pt3b) — la PARTIE en zone rouge est inconstructible :
+                # on le dit (exclue de l'implantation, comme le Dossier et le Gabarit qui la retranchent),
+                # plutôt que « vigilance forte ; pas d'exclusion automatique ». La parcelle n'est pas rejetée
+                # (< 50 %) : on construit sur le RESTE, qui est soumis au règlement du plan de prévention.
                 verdicts.append(soft_flag(
                     self.name,
-                    f"PPR zone rouge sur {cov_pct:.0f} % de la surface — vigilance forte ; "
-                    "constructibilité à vérifier au règlement (pas d'exclusion automatique).",
+                    f"PPR zone rouge sur {cov_pct:.0f} % de la surface — la partie en zone rouge est exclue "
+                    "de l'implantation ; le reste est soumis au règlement du plan de prévention.",
                     Severity.FORT, source=SRC_DEAL_PPR))
             else:
                 verdicts.append(soft_flag(

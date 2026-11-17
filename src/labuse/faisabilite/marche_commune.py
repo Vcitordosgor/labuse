@@ -426,15 +426,22 @@ def _median_bati_commune(db: Session, commune: str, frag: str | None, *,
 
 def _median_terrain_commune(db: Session, commune: str, *, mois: int = 12) -> tuple[int | None, int]:
     """Médiane €/m² du TERRAIN NU de la commune (dvf_mutations_parcelle, ventes sans bâti), fenêtre
-    glissante `mois`. Dédoublonnage par mutation (une mutation = une vente). n = nombre de ventes."""
+    glissante `mois`. Dédoublonnage par COUPLE (mutation, parcelle). n = nombre de ventes.
+
+    CHIRURGICAL-FIX-1 (LOT J, complément dvf) — `dvf_mutations_parcelle` republie/duplique la même
+    ligne (jusqu'à 327 copies d'un couple) : un `sum(surface_terrain)` BRUT groupé par mutation comptait
+    le terrain d'un couple autant de fois qu'il est répété → `st` gonflé, `vf/st` (€/m²) sous-estimé
+    (mesuré : 19/24 communes voyaient leur médiane bouger, jusqu'à 27,5 €/m²). On prend UNE surface de
+    terrain par couple (`max … OVER (PARTITION BY mutation, parcelle)` + `DISTINCT`) avant de sommer."""
     row = db.execute(text(
         "WITH mx AS (SELECT max(date_mutation) d FROM dvf_mutations WHERE lower(commune)=lower(:c)), "
-        "t AS (SELECT dm.id_mutation, max(dm.valeur_fonciere) vf, sum(dm.surface_terrain) st "
-        "      FROM dvf_mutations_parcelle dm JOIN parcels p ON p.idu = dm.id_parcelle, mx "
-        "      WHERE lower(p.commune)=lower(:c) AND dm.nature_mutation ILIKE 'vente%' "
-        "        AND COALESCE(dm.surface_reelle_bati,0)=0 AND dm.surface_terrain>0 "
-        "        AND dm.date_mutation > mx.d - make_interval(months => :mois) AND dm.date_mutation <= mx.d "
-        "      GROUP BY dm.id_mutation) "
+        "par AS (SELECT DISTINCT dm.id_mutation, dm.id_parcelle, dm.valeur_fonciere vf, "
+        "          max(dm.surface_terrain) OVER (PARTITION BY dm.id_mutation, dm.id_parcelle) terr_p "
+        "        FROM dvf_mutations_parcelle dm JOIN parcels p ON p.idu = dm.id_parcelle, mx "
+        "        WHERE lower(p.commune)=lower(:c) AND dm.nature_mutation ILIKE 'vente%' "
+        "          AND COALESCE(dm.surface_reelle_bati,0)=0 AND dm.surface_terrain>0 "
+        "          AND dm.date_mutation > mx.d - make_interval(months => :mois) AND dm.date_mutation <= mx.d), "
+        "t AS (SELECT id_mutation, max(vf) vf, sum(terr_p) st FROM par GROUP BY id_mutation) "
         "SELECT round(percentile_cont(0.5) WITHIN GROUP (ORDER BY vf/NULLIF(st,0)))::int, count(*) "
         "FROM t WHERE vf/NULLIF(st,0) BETWEEN 50 AND 4000"), {"c": commune, "mois": mois}).first()
     return (row[0] if row else None), (int(row[1]) if row and row[1] else 0)

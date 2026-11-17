@@ -166,6 +166,15 @@ def rejouer_nuit(db) -> dict:
     from . import etats_sources
     db.execute(_t(_DDL_SNAPSHOT))
     etats = etats_sources.lister_etats(db)
+    # PLU-MAJ-2 LOT 1 — LE PLU ENTRE DANS LE CONTRÔLE DE MILLÉSIME : chaque commune en décalage
+    # (desync → en_retard) ou en vigilance de statut (annulation partielle / republication →
+    # a_verifier) ressort comme une source, au même titre que DVF/SITADEL/RP. Best-effort : si la
+    # veille PLU n'a jamais tourné, on n'ajoute rien (jamais de faux retard).
+    try:
+        from . import controle_plu
+        etats = etats + controle_plu.lignes_controle_millesime(db)
+    except Exception:  # noqa: BLE001 — la veille PLU ne doit jamais casser le contrôle de fraîcheur
+        pass
     db.execute(_t("DELETE FROM fraicheur_controle_nuit"))
     for e in etats:
         db.execute(_t(

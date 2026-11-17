@@ -35,8 +35,8 @@ def test_calibrage_couvre_les_81_exceptions():
     # D-49 Sainte-Rose ≥2 500 m², +1 non_modelisee D-48 gradation U2 Saint-Joseph).
     assert dec["applique"] == 8
     assert dec["hors_sdp"] == 9
-    assert dec["deja_couvert"] == 21
-    assert dec["non_modelisee"] == 48
+    assert dec["deja_couvert"] == 20  # MOTEUR-VERITE-FIX-4 LOT 2 : entrée 17 (Le Port Uc 7, CES 60 % par périmètres) requalifiée non_modelisee
+    assert dec["non_modelisee"] == 49
     # toute décision `applique` porte un effet exploitable ; toute non_modelisee porte article/page
     for e in entries.values():
         if e["decision"] == "applique":

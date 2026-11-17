@@ -251,11 +251,12 @@
       "page_pdf": "55",
       "texte_md5": "ad5b2674d7",
       "texte": "L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité foncière. Dans les secteurs ou périmètres suivants, l'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière : OAP Mascareignes ; Uca ; ZAC « Rivière des Galets ».",
-      "decision": "deja_couvert",
+      "decision": "non_modelisee",
       "effet": [
         "Uca"
       ],
-      "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+      "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone",
+      "note_fix4": "MOTEUR-VERITE-FIX-4 LOT 2 : « deja_couvert » ne couvrait que Uca (feuille propre) — OAP Mascareignes et ZAC Rivière des Galets restaient servis à 80 %. L'OAP est MESURÉE (perimetres_mesures de la feuille ces) ; la ZAC n'est pas localisée par la donnée → règle non modélisée PORTÉE (avertissement, verbatim)."
     },
     "18": {
       "insee": "97407",

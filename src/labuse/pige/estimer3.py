@@ -124,7 +124,12 @@ _POOL_SQL = """
 WITH subj AS (SELECT geom_2975 g FROM parcels WHERE idu = :idu),
 muc AS (SELECT id_mutation, count(DISTINCT id_parcelle) np FROM dvf_mutations_parcelle
         WHERE code_commune = :insee GROUP BY 1)
-SELECT dm.id_mutation AS mid, dm.id_parcelle AS idu, dm.type_local,
+-- CHIRURGICAL-FIX-1 (LOT I 3d) — UNE ligne par (mutation, parcelle) : le LEFT JOIN sur
+-- dvf_mutation_detail multiplie sinon la vente par son nombre de lignes de détail (jusqu'à 162×
+-- pour CH0360) → doublons de comparables. DISTINCT ON dédoublonne par l'identifiant de mutation
+-- (+ parcelle), en gardant le détail le plus complet (nombre de pièces max).
+SELECT DISTINCT ON (dm.id_mutation, dm.id_parcelle)
+       dm.id_mutation AS mid, dm.id_parcelle AS idu, dm.type_local,
        round(dm.surface_reelle_bati)::int AS surface_m2,
        round(COALESCE(dm.surface_terrain, 0))::int AS terrain_m2,
        round(dm.valeur_fonciere)::int AS prix_eur,
@@ -145,6 +150,7 @@ WHERE dm.code_commune = :insee
   AND dm.surface_reelle_bati >= 20 AND dm.valeur_fonciere > 0
   AND dm.id_parcelle <> :idu
   AND dm.valeur_fonciere / dm.surface_reelle_bati BETWEEN :lo AND :hi
+ORDER BY dm.id_mutation, dm.id_parcelle, dd.nombre_pieces DESC NULLS LAST
 """
 
 _POOL_CACHE: dict[str, tuple[float, list[dict]]] = {}
@@ -351,11 +357,22 @@ def _mois_annee(d) -> str | None:
     return f"{d[5:7]}/{d[0:4]}"   # « YYYY-MM-DD » → « MM/YYYY »
 
 
+def _jour_mois_annee(d) -> str | None:
+    """CHIRURGICAL-FIX-1 (LOT K 3h) — date d'une vente AVEC le jour (« JJ/MM/AAAA ») quand la source le
+    porte (acte DVF précis au jour) ; un format déjà réduit à « MM/YYYY » (comparables terrain) reste tel
+    quel (le jour n'y est pas exposé)."""
+    if not isinstance(d, str) or len(d) < 7:
+        return None
+    if d[2] == "/":          # déjà « MM/YYYY » — pas de jour disponible
+        return d[:7]
+    return f"{d[8:10]}/{d[5:7]}/{d[0:4]}" if len(d) >= 10 else f"{d[5:7]}/{d[0:4]}"
+
+
 def _vente_retenue(c: dict, ecartee: bool) -> dict:
     """Une vente RETENUE servie (date, surface, terrain, prix, distance) + son identifiant (mutation),
     que l'utilisateur peut décocher pour l'écarter (l'API renvoie le même id dans `ecartees`)."""
     return {"id": c["mid"],
-            "date": _mois_annee(c.get("date")),
+            "date": _jour_mois_annee(c.get("date")),   # LOT K 3h — avec le jour quand la source le porte
             "surface_m2": c.get("surface_m2"), "terrain_m2": c.get("terrain_m2"),
             "prix_eur": c.get("prix_eur"), "distance_m": c.get("distance_m"),
             "pieces": c.get("pieces"), "piscine": bool(c.get("pool")),

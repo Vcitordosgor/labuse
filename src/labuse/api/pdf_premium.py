@@ -689,6 +689,17 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                 lignes.append(entete)
         _section(pdf, "RÈGLEMENT PLU PAR ZONE", lignes, source=rp.get("disclaimer"))
 
+    # PLU-VEILLE-FIX-1 — le bandeau « PLU modifié — règles en cours de mise à jour », SERVI AVANT le
+    # reste de l'urbanisme : le document d'urbanisme a changé au Géoportail et les règles ne sont pas
+    # encore recalibrées/validées → les chiffres restent à confirmer.
+    pm = fiche.get("plu_modifie")
+    if pm:
+        _section(pdf, "PLU MODIFIÉ — MISE À JOUR EN COURS",
+                 [pm.get("message"),
+                  (f"Nouveau document : {pm['nouveau']}" if pm.get("nouveau") else None),
+                  "Les règles chiffrées sont en cours de recalibrage : les capacités de cette "
+                  "commune sont « à vérifier » le temps de la mise à jour."])
+
     pf = fiche.get("plu_fraicheur")
     if pf:
         _section(pdf, "FRAÎCHEUR DU ZONAGE (GPU vs mairie)",
@@ -956,6 +967,8 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     copros = fiche.get("coproprietes") or []
     if copros:
         lignes = []
+        # CHIRURGICAL-FIX-1 (LOT H pt5) — « proche_20m » = copropriété À PROXIMITÉ (≤ 20 m), pas sur la
+        # parcelle : BW2635 (au 2 rue d'Allemagne) listait les copros des 4 et 6 comme les siennes.
         for c in copros[:6]:
             nom = c.get("nom_usage") or c.get("numero_immatriculation") or "copropriété"
             lots = f"{c['nb_lots_total']} lots" if c.get("nb_lots_total") is not None else ""
@@ -971,8 +984,11 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             sir = f" (SIRET {c['syndic_siret']})" if c.get("syndic_siret") else ""
             syn = (f" · syndic {c.get('syndic_type') or ''} {c.get('syndic_nom') or ''}{sir}".rstrip()
                    if c.get("syndic_type") or c.get("syndic_nom") else "")
-            lignes.append(f"{nom} — {lots}{hab}{stat}{per}{rs}{coop}{syn}".strip(" —"))
-        _section(pdf, "COPROPRIÉTÉ(S) RATTACHÉE(S)", lignes,
+            prox = " · à proximité (≤ 20 m, pas sur la parcelle)" if c.get("rattachement") == "proche_20m" else ""
+            lignes.append(f"{nom} — {lots}{hab}{stat}{per}{rs}{coop}{syn}{prox}".strip(" —"))
+        _toutes_proches = all(c.get("rattachement") == "proche_20m" for c in copros[:6])
+        _titre_copro = "COPROPRIÉTÉ(S) À PROXIMITÉ" if _toutes_proches else "COPROPRIÉTÉ(S) RATTACHÉE(S)"
+        _section(pdf, _titre_copro, lignes,
                  source="Source : RNIC (registre national des copropriétés) — information.")
 
     ren = fiche.get("renouvellement")

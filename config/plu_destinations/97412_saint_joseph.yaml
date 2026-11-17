@@ -60,6 +60,22 @@ zones:
           min_m: 0
           forme: alignement
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 19
+            citation: 'Sur la limite de fond de propriété, seule l’implantation des annexes et des dépendances est admise dès lors que ces bâtiments sont regroupés en un seul point et qu’ils ne sont pas intégrés au corps du bâtiment principal.'
+            condition_texte: 'Exception non modélisée : seules les annexes et dépendances sont admises sur la limite de fond (regroupées en un seul point, non intégrées au corps du bâtiment principal).'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 19
+            citation: 'Dans le cas contraire, les constructions peuvent être implantées soit en retrait soit sur une seule limite latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au minimum égale à 3 mètres.'
+            condition_texte: 'Dans le cas contraire [linéaire contigu à la voie >= 12 mètres], les constructions peuvent être implantées soit en retrait soit sur une seule limite latérale.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: U1 7.2
           page_pdf: 19
@@ -233,6 +249,22 @@ zones:
             au point le plus proche de la voie, doit être au minimum égale à 3 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U2 7.2'
+            page_pdf: 33
+            citation: 'Les constructions peuvent être implantées sur les deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U2 7.2'
+            page_pdf: 33
+            citation: 'Les constructions peuvent être implantées sur les deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
           min_m: 3
           article: U2 7.2
           page_pdf: 33
@@ -373,6 +405,22 @@ zones:
             au point le plus proche de la voie, doit être au minimum égale à 3 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U2 7.2'
+            page_pdf: 33
+            citation: 'Les constructions peuvent être implantées sur les deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U2 7.2'
+            page_pdf: 33
+            citation: 'Les constructions peuvent être implantées sur les deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
           min_m: 3
           article: U2 7.2
           page_pdf: 33
@@ -519,6 +567,22 @@ zones:
             au point le plus proche de la voie, doit être au minimum égale à 3 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U3 7.2'
+            page_pdf: 49
+            citation: 'Les constructions peuvent être implantées sur les deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U3 7.2'
+            page_pdf: 49
+            citation: 'Les constructions peuvent être implantées sur les deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
           min_m: 3
           article: U3 7.2
           page_pdf: 49
@@ -662,6 +726,22 @@ zones:
             la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U3 7.2'
+            page_pdf: 49
+            citation: 'Les constructions peuvent être implantées sur les deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U3 7.2'
+            page_pdf: 49
+            citation: 'Les constructions peuvent être implantées sur les deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
           min_m: 3
           article: U3 7.2
           page_pdf: 49
@@ -786,6 +866,22 @@ zones:
             la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U3 7.2'
+            page_pdf: 49
+            citation: 'Les constructions peuvent être implantées sur les deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U3 7.2'
+            page_pdf: 49
+            citation: 'Les constructions peuvent être implantées sur les deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
           min_m: 3
           article: U3 7.2
           page_pdf: 49
@@ -930,6 +1026,22 @@ zones:
             au point le plus proche de la voie, doit être au minimum égale à 2 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4 7.2'
+            page_pdf: 63
+            citation: '- sur une seule limite séparative, si le terrain d’assiette est supérieur à 400 m². En cas de retrait de la construction, la distance (D) comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 1,9 mètre.'
+            condition_texte: 'sur une seule limite séparative, si le terrain d’assiette est supérieur à 400 m²'
+            condition_modelable: 'bascule_surface:400 m²'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4 7.2'
+            page_pdf: 63
+            citation: '- sur une seule limite séparative, si le terrain d’assiette est supérieur à 400 m². En cas de retrait de la construction, la distance (D) comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 1,9 mètre.'
+            condition_texte: 'sur une seule limite séparative, si le terrain d’assiette est supérieur à 400 m²'
+            condition_modelable: 'bascule_surface:400 m²'
           min_m: 1.9
           article: U4 7.2
           page_pdf: 63
@@ -1088,6 +1200,22 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 78
+            citation: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait.'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 78
+            citation: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3
           article: U5 7.2
           page_pdf: 78
@@ -1232,6 +1360,22 @@ zones:
             mètres.'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 78
+            citation: 'Dans les secteurs U5cv et U5cvd, les constructions peuvent être implantées sur deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 78
+            citation: 'Dans les secteurs U5cv et U5cvd, les constructions peuvent être implantées sur deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
           min_m: 3
           article: U5 7.2
           page_pdf: 78
@@ -1364,6 +1508,22 @@ zones:
             mètres.'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 78
+            citation: 'Dans les secteurs U5cv et U5cvd, les constructions peuvent être implantées sur deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 78
+            citation: 'Dans les secteurs U5cv et U5cvd, les constructions peuvent être implantées sur deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
           min_m: 3.0
           formule: H/2, minimum 3 m (ou sur limites)
           article: U5 7.2
@@ -1490,6 +1650,22 @@ zones:
             porte: "destination"
             modifie_calcul: true
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 78
+            citation: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait.'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 78
+            citation: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3
           article: U5 7.2
           page_pdf: 78
@@ -1633,6 +1809,26 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : U5 7.2 mesure la hauteur DU SOL APRÈS TRAVAUX À L''ÉGOUT — référence égout, jamais le faîtage à sa place (AO0951/AV1150, relecture).'
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 78
+            citation: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait.'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 78
+            citation: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: U5 7.2
           page_pdf: 78
@@ -1757,6 +1953,26 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : U5 7.2 mesure la hauteur DU SOL APRÈS TRAVAUX À L''ÉGOUT — référence égout, jamais le faîtage à sa place (AO0951/AV1150, relecture).'
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 78
+            citation: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait.'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 78
+            citation: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: U5 7.2
           page_pdf: 78
@@ -2208,6 +2424,24 @@ zones:
             de la voie, doit être au minimum égale à 3 mètres.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi U3 7.2)'
+            page_pdf: 109
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. / U3 7.2 (p.49) : « Les constructions peuvent être implantées sur les deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres. »'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi U3 7.2)'
+            page_pdf: 109
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. / U3 7.2 (p.49) : « Les constructions peuvent être implantées sur les deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres. »'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
           min_m: 3
           article: U3 7.2
           page_pdf: 49
@@ -2312,6 +2546,24 @@ zones:
             la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi U3 7.2)'
+            page_pdf: 109
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. / U3 7.2 (p.49) : « Les constructions peuvent être implantées sur les deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres. »'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi U3 7.2)'
+            page_pdf: 109
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. / U3 7.2 (p.49) : « Les constructions peuvent être implantées sur les deux limites séparatives, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres. »'
+            condition_texte: 'mitoyenneté à privilégier ; rupture de la contiguïté tous les 15 m ; hauteur par bande (art. 10.3) — conditions non modélisées (FIX-2 LOT C, relecture)'
+            condition_modelable: 'non'
           min_m: 3
           article: U3 7.2
           page_pdf: 49
@@ -2417,6 +2669,26 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : U5 7.2 mesure la hauteur DU SOL APRÈS TRAVAUX À L''ÉGOUT — référence égout, jamais le faîtage à sa place (AO0951/AV1150, relecture).'
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi U5 7.2)'
+            page_pdf: 109
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. / U5 7.2 (p.78) : « Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres. »'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. (règle U5 7.2 applicable par renvoi)'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi U5 7.2)'
+            page_pdf: 109
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. / U5 7.2 (p.78) : « Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres. »'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. (règle U5 7.2 applicable par renvoi)'
+            condition_modelable: 'une_seule_limite'
           min_m: 3
           article: U5 7.2
           page_pdf: 78
@@ -2513,6 +2785,26 @@ zones:
           citation: au point le plus proche de la voie, au moins égale à 4 mètres
           statut: valide
         limites_separatives:
+          h_reference: egout
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : U5 7.2 mesure la hauteur DU SOL APRÈS TRAVAUX À L''ÉGOUT — référence égout, jamais le faîtage à sa place (AO0951/AV1150, relecture).'
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi U5 7.2)'
+            page_pdf: 109
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. / U5 7.2 (p.78) : « Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres. »'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. (règle U5 7.2 applicable par renvoi)'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi U5 7.2)'
+            page_pdf: 109
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. / U5 7.2 (p.78) : « Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres. »'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. (règle U5 7.2 applicable par renvoi)'
+            condition_modelable: 'une_seule_limite'
           min_m: 3
           article: U5 7.2
           page_pdf: 78
@@ -2615,6 +2907,26 @@ zones:
           citation: au point le plus proche de la voie, au moins égale à 4 mètres
           statut: valide
         limites_separatives:
+          h_reference: egout
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : U5 7.2 mesure la hauteur DU SOL APRÈS TRAVAUX À L''ÉGOUT — référence égout, jamais le faîtage à sa place (AO0951/AV1150, relecture).'
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi U5 7.2)'
+            page_pdf: 109
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. / U5 7.2 (p.78) : « Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres. »'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. (règle U5 7.2 applicable par renvoi)'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi U5 7.2)'
+            page_pdf: 109
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. / U5 7.2 (p.78) : « Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres. »'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite séparative ou en retrait. (règle U5 7.2 applicable par renvoi)'
+            condition_modelable: 'une_seule_limite'
           min_m: 3
           article: U5 7.2
           page_pdf: 78
@@ -2728,6 +3040,8 @@ zones:
           citation: au point le plus proche de la voie, au moins égale à 4 mètres
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           min_m: 3
           article: U6 7.2
           page_pdf: 92
@@ -2783,6 +3097,8 @@ zones:
           citation: au point le plus proche de la voie, au moins égale à 4 mètres
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
           min_m: 3
           article: U6 7.2
           page_pdf: 92

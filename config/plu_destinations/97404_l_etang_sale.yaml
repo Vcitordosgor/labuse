@@ -54,6 +54,22 @@ zones:
           citation: Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article UA 2.2 (2.2.1)'
+            page_pdf: 17
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas : 15,00m pour les habitations ; 20,00m en rez-de-chaussée pour les commerces et bureaux (15,00m à l''étage). [...] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3,00m.'
+            condition_texte: 'joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas 15,00 m pour les habitations (20,00 m en RDC commerces et bureaux, 15,00 m à l''étage)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article UA 2.2 (2.2.1)'
+            page_pdf: 17
+            citation: 'Les constructions peuvent joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas : 15,00m pour les habitations ; 20,00m en rez-de-chaussée pour les commerces et bureaux (15,00m à l''étage). [...] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3,00m.'
+            condition_texte: 'joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas 15,00 m pour les habitations (20,00 m en RDC commerces et bureaux, 15,00 m à l''étage)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3.0
           article: UA 2.2
           page_pdf: 17
@@ -248,6 +264,22 @@ zones:
           citation: Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article UB 2.2 (2.2.1)'
+            page_pdf: 27
+            citation: 'A l''exception du secteur UBv, les constructions peuvent joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas : 15,00m pour les habitations ; 20,00m en rez-de-chaussée pour les commerces et bureaux (15,00m à l''étage). [...] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3 mètres.'
+            condition_texte: 'A l''exception du secteur UBv, joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas 15,00 m pour les habitations (20,00 m en RDC commerces et bureaux, 15,00 m à l''étage)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article UB 2.2 (2.2.1)'
+            page_pdf: 27
+            citation: 'A l''exception du secteur UBv, les constructions peuvent joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas : 15,00m pour les habitations ; 20,00m en rez-de-chaussée pour les commerces et bureaux (15,00m à l''étage). [...] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3 mètres.'
+            condition_texte: 'A l''exception du secteur UBv, joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas 15,00 m pour les habitations (20,00 m en RDC commerces et bureaux, 15,00 m à l''étage)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3.0
           article: UB 2.2
           page_pdf: 27
@@ -354,6 +386,22 @@ zones:
           citation: Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article UB 2.2 (2.2.1, règle 5 secteur UBv)'
+            page_pdf: 28
+            citation: 'En secteur UBv, les constructions peuvent être implantées sur une seule limite séparative. La mitoyenneté est possible sur une profondeur de 8,00 m maximum. Cette mitoyenneté ne peut excéder une hauteur de 3,00 m à l''égout, 4,50 m au faîtage et ce sur une largeur minimum de 3,00 m. [règle 3 :] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3 mètres.'
+            condition_texte: 'sur une seule limite séparative ; mitoyenneté possible sur une profondeur de 8,00 m maximum, sans excéder une hauteur de 3,00 m à l''égout, 4,50 m au faîtage et ce sur une largeur minimum de 3,00 m'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article UB 2.2 (2.2.1, règle 5 secteur UBv)'
+            page_pdf: 28
+            citation: 'En secteur UBv, les constructions peuvent être implantées sur une seule limite séparative. La mitoyenneté est possible sur une profondeur de 8,00 m maximum. Cette mitoyenneté ne peut excéder une hauteur de 3,00 m à l''égout, 4,50 m au faîtage et ce sur une largeur minimum de 3,00 m. [règle 3 :] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3 mètres.'
+            condition_texte: 'sur une seule limite séparative ; mitoyenneté possible sur une profondeur de 8,00 m maximum, sans excéder une hauteur de 3,00 m à l''égout, 4,50 m au faîtage et ce sur une largeur minimum de 3,00 m'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: UB 2.2
           page_pdf: 27
@@ -413,6 +461,22 @@ zones:
           citation: Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article UC 2.2 (2.2.1)'
+            page_pdf: 37
+            citation: 'Les constructions peuvent joindre une limite séparative, à condition que la longueur de la construction en limite n''excède pas 10,00 mètres. Si la façade sur rue de la parcelle est inférieure ou égale à 15,00 mètres, la construction peut être implantée sur les deux limites séparatives latérales, à condition que la profondeur de la construction en limite n''excède pas 10,00 mètres. [...] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3 mètres.'
+            condition_texte: 'joindre une limite séparative à condition que la longueur de la construction en limite n''excède pas 10,00 mètres (l''extension aux deux limites, si façade sur rue <= 15 m, est réservée aux limites latérales)'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article UC 2.2 (2.2.1)'
+            page_pdf: 37
+            citation: 'Les constructions peuvent joindre une limite séparative, à condition que la longueur de la construction en limite n''excède pas 10,00 mètres. Si la façade sur rue de la parcelle est inférieure ou égale à 15,00 mètres, la construction peut être implantée sur les deux limites séparatives latérales, à condition que la profondeur de la construction en limite n''excède pas 10,00 mètres. [...] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3 mètres.'
+            condition_texte: 'joindre une limite séparative à condition que la longueur de la construction en limite n''excède pas 10,00 mètres ; si la façade sur rue de la parcelle est inférieure ou égale à 15,00 mètres, implantation possible sur les deux limites séparatives latérales (profondeur en limite <= 10,00 m)'
+            condition_modelable: 'largeur_terrain_max:15 m'
           min_m: 3.0
           article: UC 2.2
           page_pdf: 37
@@ -508,6 +572,22 @@ zones:
           citation: Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article UD 2.2 (2.2.1)'
+            page_pdf: 46
+            citation: 'Les constructions peuvent joindre une limite séparative, à condition que la longueur de la construction en limite n''excède pas 10,00 mètres. Si la façade sur rue de la parcelle est inférieure ou égale à 15,00 mètres, la construction peut être implantée sur les deux limites séparatives latérales, à condition que la profondeur de la construction en limite n''excède pas 10,00 mètres. [...] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3 mètres.'
+            condition_texte: 'joindre une limite séparative à condition que la longueur de la construction en limite n''excède pas 10,00 mètres (l''extension aux deux limites, si façade sur rue <= 15 m, est réservée aux limites latérales)'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article UD 2.2 (2.2.1)'
+            page_pdf: 46
+            citation: 'Les constructions peuvent joindre une limite séparative, à condition que la longueur de la construction en limite n''excède pas 10,00 mètres. Si la façade sur rue de la parcelle est inférieure ou égale à 15,00 mètres, la construction peut être implantée sur les deux limites séparatives latérales, à condition que la profondeur de la construction en limite n''excède pas 10,00 mètres. [...] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3 mètres.'
+            condition_texte: 'joindre une limite séparative à condition que la longueur de la construction en limite n''excède pas 10,00 mètres ; si la façade sur rue de la parcelle est inférieure ou égale à 15,00 mètres, implantation possible sur les deux limites séparatives latérales (profondeur en limite <= 10,00 m)'
+            condition_modelable: 'largeur_terrain_max:15 m'
           min_m: 3.0
           article: UD 2.2
           page_pdf: 46
@@ -782,6 +862,22 @@ zones:
           citation: Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article AU 2.2 (2.2.1, Zones AUa AUb)'
+            page_pdf: 78
+            citation: 'Zones AUa, AUb — Les constructions peuvent joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas : 15,00m pour les habitations ; 20,00m en rez-de-chaussée pour les commerces et bureaux (15,00m à l''étage). [...] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3,00 mètres.'
+            condition_texte: 'joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas 15,00 m pour les habitations (20,00 m en RDC commerces et bureaux, 15,00 m à l''étage)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article AU 2.2 (2.2.1, Zones AUa AUb)'
+            page_pdf: 78
+            citation: 'Zones AUa, AUb — Les constructions peuvent joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas : 15,00m pour les habitations ; 20,00m en rez-de-chaussée pour les commerces et bureaux (15,00m à l''étage). [...] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3,00 mètres.'
+            condition_texte: 'joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas 15,00 m pour les habitations (20,00 m en RDC commerces et bureaux, 15,00 m à l''étage)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3.0
           article: AU 2.2
           page_pdf: 78
@@ -875,6 +971,22 @@ zones:
           citation: Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article AU 2.2 (2.2.1, Zones AUa AUb)'
+            page_pdf: 78
+            citation: 'Zones AUa, AUb — Les constructions peuvent joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas : 15,00m pour les habitations ; 20,00m en rez-de-chaussée pour les commerces et bureaux (15,00m à l''étage). [...] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3,00 mètres.'
+            condition_texte: 'joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas 15,00 m pour les habitations (20,00 m en RDC commerces et bureaux, 15,00 m à l''étage)'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article AU 2.2 (2.2.1, Zones AUa AUb)'
+            page_pdf: 78
+            citation: 'Zones AUa, AUb — Les constructions peuvent joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas : 15,00m pour les habitations ; 20,00m en rez-de-chaussée pour les commerces et bureaux (15,00m à l''étage). [...] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3,00 mètres.'
+            condition_texte: 'joindre une ou deux limites séparatives à condition que les profondeurs, éventuellement cumulées s''il y a plusieurs bâtiments, le long de chaque limite n''excèdent pas 15,00 m pour les habitations (20,00 m en RDC commerces et bureaux, 15,00 m à l''étage)'
+            condition_modelable: 'deux_limites_max'
           min_m: 3.0
           article: AU 2.2
           page_pdf: 78
@@ -968,6 +1080,22 @@ zones:
           citation: Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article AU 2.2 (2.2.1, Zone AUc)'
+            page_pdf: 78
+            citation: 'Zone AUc — Les constructions peuvent joindre une limite séparative, à condition que la longueur de la construction en limite n''excède pas 10,00 mètres. Si la largeur sur rue de la parcelle est inférieure ou égale à 15,00 mètres, la construction peut être implantée sur les deux limites séparatives latérales, à condition que la profondeur de la construction en limite n''excède pas 10,00 mètres. [...] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3,00 mètres.'
+            condition_texte: 'joindre une limite séparative à condition que la longueur de la construction en limite n''excède pas 10,00 mètres (l''extension aux deux limites, si largeur sur rue <= 15 m, est réservée aux limites latérales)'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'Article AU 2.2 (2.2.1, Zone AUc)'
+            page_pdf: 78
+            citation: 'Zone AUc — Les constructions peuvent joindre une limite séparative, à condition que la longueur de la construction en limite n''excède pas 10,00 mètres. Si la largeur sur rue de la parcelle est inférieure ou égale à 15,00 mètres, la construction peut être implantée sur les deux limites séparatives latérales, à condition que la profondeur de la construction en limite n''excède pas 10,00 mètres. [...] Si une construction est implantée en retrait des limites séparatives d''une unité foncière, la marge d''isolement minimale doit être de 3,00 mètres.'
+            condition_texte: 'joindre une limite séparative à condition que la longueur de la construction en limite n''excède pas 10,00 mètres ; si la largeur sur rue de la parcelle est inférieure ou égale à 15,00 mètres, implantation possible sur les deux limites séparatives latérales (profondeur en limite <= 10,00 m)'
+            condition_modelable: 'largeur_terrain_max:15 m'
           min_m: 3.0
           article: AU 2.2
           page_pdf: 78

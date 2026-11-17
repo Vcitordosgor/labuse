@@ -5325,6 +5325,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # KELFONCIER-FIX-1 (Lot A) — statut d'ouverture de la zone AU (§4 Urbanisme + cause §10).
         "au_ouverture": _au_ouverture_block(db, idu),
         "plu_fraicheur": _plu_fraicheur(idu),   # M32 §2 : fraîcheur GPU-vs-mairie du zonage
+        "plu_modifie": _plu_modifie(db, idu),   # PLU-VEILLE-FIX-1 : bandeau « PLU modifié — règles en cours »
         "radar_procedure": _radar_proc(idu, (score_v2 or {}).get("tier")),   # M41 — radar procédures PLU
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
         "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
@@ -5828,6 +5829,21 @@ def _ppr_reference_commune(db: Session, insee: str) -> list[dict] | None:
     return [{"document": r["document"], "approbation": r["approbation"]} for r in rows] or None
 
 
+def _ppr_documents_couvrant(db: Session, idu: str) -> set[str]:
+    """CHIRURGICAL-FIX-1 (LOT J pt3f) — les documents PPR qui COUVRENT réellement la parcelle (leur zonage
+    l'intersecte), à distinguer de ceux qui EXISTENT seulement dans la commune (AM0838 : seul le PPR 2016
+    la touche ; le PPRL 2017 existe dans la commune mais ne la couvre pas). Repli : set vide (jamais un crash)."""
+    try:
+        rows = db.execute(text(
+            "WITH p AS (SELECT geom_2975 g FROM parcels WHERE idu = :idu) "
+            "SELECT DISTINCT sl.attrs->>'document' AS document FROM spatial_layers sl CROSS JOIN p "
+            "WHERE sl.kind = 'ppr' AND sl.geom_2975 IS NOT NULL AND ST_Intersects(sl.geom_2975, p.g) "
+            "AND sl.attrs->>'document' IS NOT NULL"), {"idu": idu}).scalars().all()
+        return {r for r in rows if r}
+    except Exception:  # noqa: BLE001
+        return set()
+
+
 def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict | None:
     """PIEGES-RISQUES-2 (Lot C) — la LISTE des aléas de la fiche §Pièges & risques lit désormais la MÊME
     fonction que l'outil (`servitudes.aleas_parcelle`, couches `spatial_layers` EN DIRECT) au lieu de la
@@ -5841,6 +5857,13 @@ def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict
     if not al:
         return None
     ppr_ref = _ppr_reference_commune(db, idu[:5])
+    # CHIRURGICAL-FIX-1 (LOT J pt3f) — on distingue le plan qui COUVRE la parcelle (son zonage l'intersecte)
+    # de celui qui EXISTE seulement dans la commune. On N'adosse à l'aléa PPR que le(s) document(s) couvrant(s)
+    # (AM0838 : le PPR 2016, pas le PPRL 2017) ; les autres plans de la commune sont listés à part.
+    _couvrants = _ppr_documents_couvrant(db, idu)
+    ppr_couvre = ([p for p in ppr_ref if p["document"] in _couvrants] or ppr_ref) if ppr_ref else None
+    ppr_commune_autres = ([p for p in ppr_ref if p["document"] not in _couvrants]
+                          if (ppr_ref and _couvrants) else None) or None
     items: list[dict] = []
     for a in al:
         is_ppr = a["nature"].startswith("PPR")
@@ -5853,7 +5876,7 @@ def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict
             "redhibitoire": a["redhibitoire"],
             "source": a["source"],
             "millesime": a["millesime"],
-            "ppr": ppr_ref if is_ppr else None,
+            "ppr": ppr_couvre if is_ppr else None,
         })
     items.sort(key=lambda a: (not a["redhibitoire"],
                               -_ALEA_NIVEAU_RANG.get((a["niveau"] or "").lower(), 0)))
@@ -5872,7 +5895,9 @@ def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict
     # reste servi pour la liste ; la tuile « Aléas » affiche `n_hazards` pour ne plus diverger d'Estimer.
     from ..pige.api import distinct_hazards as _distinct_hazards
     return {"n": len(items), "n_hazards": len(_distinct_hazards(items)),
-            "liste": items, "synthese": synthese}
+            "liste": items, "synthese": synthese,
+            # LOT J pt3f — plans de prévention présents dans la commune mais qui NE COUVRENT PAS la parcelle.
+            "ppr_commune_autres": ppr_commune_autres}
 
 
 def _dpe_connu_block(db: Session, idu: str) -> dict | None:
@@ -6499,6 +6524,30 @@ def _icd_block(s2) -> dict | None:
 
 
 _PLU_FRAICHEUR_CACHE: dict = {}
+
+
+def _plu_modifie(db, idu: str) -> dict | None:
+    """PLU-VEILLE-FIX-1 — le bandeau CLIENT « PLU modifié le jj/mm/aaaa — règles en cours de mise à
+    jour », servi sur la fiche ET dans les documents TANT que la commune est en cours de mise à jour
+    (une couche d'urbanisme en retard sur le Géoportail, ou règles pas encore recalibrées/validées).
+    None quand la commune est à jour. Jamais un 500 : une veille absente = pas de bandeau."""
+    insee = (idu or "")[:5]
+    if not insee:
+        return None
+    try:
+        from .. import controle_plu
+        e = controle_plu.lire_etat(db, insee)
+    except Exception:  # noqa: BLE001 — la fiche ne tombe jamais pour un défaut de veille
+        return None
+    if not e or e.get("etat") != "desync":
+        return None
+    # Bandeau PROPORTIONNEL (décision Vic) : le message et le fait que les parcelles passent
+    # « À vérifier » dépendent de la couche en décalage (fort / prescriptions / informations).
+    return {"date": e.get("date_modif_fr"), "niveau": e.get("niveau"),
+            "ancien": e.get("ancien"), "nouveau": e.get("nouveau"),
+            "couches": e.get("couches_en_retard") or [],
+            "avec_a_verifier": bool(e.get("avec_a_verifier")),
+            "message": e.get("message") or "PLU mis à jour — intégration en cours."}
 
 
 def _plu_fraicheur(idu: str) -> dict | None:
@@ -9085,6 +9134,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         # M40 — source qui fait foi (GPU-vs-mairie) : présent aussi sur le payload par défaut et les
         # exports (md/html), pas seulement la fiche premium. Jamais un zonage servi sans mention.
         "plu_fraicheur": _plu_fraicheur(idu),
+        "plu_modifie": _plu_modifie(db, idu),   # PLU-VEILLE-FIX-1 : bandeau « PLU modifié — règles en cours »
         "radar_procedure": _radar_proc(idu, verdict_block["tier"]),   # M41 — radar procédures PLU
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
         "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
@@ -9272,13 +9322,20 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
             proprietaire = {"Succession": "succession", "Indivision": "indivision"}.get(
                 tete_denomination(pm.get("denomination")), "morale")
     else:
-        proprietaire = "particulier"
+        # CHIRURGICAL-FIX-1 (LOT H pt4) — sans personne morale, le propriétaire est « non déterminé »
+        # (comme le Dossier et la fiche « Propriétaire non identifié »), PAS « particulier » : LABUSE
+        # n'a pas le nom, on n'affirme pas qu'il s'agit d'un particulier. Même valeur partout.
+        proprietaire = "non_determine"
     # bâti existant % = emprise bâtie (BD TOPO/CoSIA) ÷ surface terrain — jamais un « 0 » inventé.
-    # NU-3-J#8 — MÊME dénominateur que la fiche : la surface de TERRAIN servie (contenance|dessin),
-    # pas la surface de dessin brute — sinon le taux divergeait de la fiche de ±1 à 4 points.
+    # NU-3-J#8 — MÊME dénominateur que la fiche : la surface de TERRAIN servie (contenance|dessin).
+    # CHIRURGICAL-FIX-1 (LOT H pt4) — et MÊME NUMÉRATEUR que la fiche : l'emprise bâtie SERVIE
+    # (le_bien.emprise_batie_m2, BD TOPO), PAS res["emprise_batie_m2"] (résiduel) qui divergeait
+    # (IS0448 : résiduel 259 → 27 % alors que la fiche sert 128 → 13 %). Repli résiduel si le_bien absent.
     surf = qv2.get("surface_terrain_m2") or qv2.get("surface_m2") or 0
-    bati_pct = (round(100 * res["emprise_batie_m2"] / surf)
-                if res.get("disponible") and res.get("emprise_batie_m2") is not None and surf else None)
+    _emprise = (qv2.get("le_bien") or {}).get("emprise_batie_m2")   # emprise SERVIE par la fiche (= 128 pour IS0448)
+    if _emprise is None and res.get("disponible"):
+        _emprise = res.get("emprise_batie_m2")
+    bati_pct = (round(100 * _emprise / surf) if _emprise is not None and surf else None)
     # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — logements_min/logements_possibles NE SONT PLUS SERVIS :
     # aucun nombre de logements de l'ancien calcul de capacité (fourchette estimate_capacity,
     # SDP ÷ logement moyen) dans Comparer — la ligne (écran ET PDF) renvoie à l'Étude de faisabilité

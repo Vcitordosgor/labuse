@@ -149,7 +149,12 @@ def _c_prix_achat(db, idu, f):
 
 @extracteur("coproprietes_liste")
 def _c_copro(db, idu, f):
-    return _nz(f.get("coproprietes"))
+    # CHIRURGICAL-FIX-1 (LOT H pt5) — le Dossier n'affirme « Bâti en copropriété » que pour une copro
+    # SUR la parcelle (rattachement cadastre/géocode). Les copros « proche_20m » sont des voisines
+    # (BW2635 au 2 rue d'Allemagne listait les 4 et 6) : elles vivent dans la fiche « à proximité »,
+    # pas dans l'identité du bien.
+    sur_parcelle = [c for c in (f.get("coproprietes") or []) if c.get("rattachement") != "proche_20m"]
+    return _nz(sur_parcelle)
 
 
 @extracteur("filiation_parcelle")
@@ -495,7 +500,12 @@ def _c_potentiel(db, idu, f):
         # fiche servie (aucune nouvelle donnée de registre).
         lb = f.get("le_bien") or {}
         bati = bool((lb.get("nb_batiments") or 0) or (lb.get("emprise_batie_m2") or 0))
-        copro = bool((f.get("score_v2") or {}).get("copro") or f.get("coproprietes"))
+        # CHIRURGICAL-FIX-1 (LOT I 3a) — « démolition peu réaliste en copropriété » ne vaut que si la
+        # parcelle EST en copropriété : on ne compte QUE les copros SUR la parcelle (rattachement
+        # cadastre/géocode), pas les voisines « proche_20m ». BW2635 (au 2 rue d'Allemagne) n'a que les
+        # copros des 4 et 6 en voisinage → plus de « peu réaliste en copropriété ». `score_v2.copro`
+        # n'est pas fiable (il était vrai sur ces voisines), on ne s'y fie plus.
+        copro = any(c.get("rattachement") != "proche_20m" for c in (f.get("coproprietes") or []))
         if est not in (None, "") or scn is not None:
             pt = {**pt, "surface_a_retenir": surface_a_retenir(est, scn, bati=bati, copropriete=copro)}
     return _nz(pt)
@@ -604,7 +614,39 @@ def _c_marge_surel(db, idu, f):
 
 @extracteur("aleas_parcelle_liste")
 def _c_aleas(db, idu, f):
-    return _nz((f.get("aleas") or {}).get("liste"))
+    bloc = f.get("aleas") or {}
+    liste = bloc.get("liste")
+    # CHIRURGICAL-FIX-1 (LOT J pt3f) — on porte les plans de prévention de la commune qui NE COUVRENT PAS
+    # la parcelle sur le premier aléa PPR, pour que le Dossier les cite à part (« existe dans la commune,
+    # ne couvre pas la parcelle ») sans les confondre avec le plan qui couvre réellement.
+    autres = bloc.get("ppr_commune_autres")
+    if liste and autres:
+        marque = False
+        out = []
+        for x in liste:
+            if not marque and str(x.get("nature") or "").startswith("PPR"):
+                out.append({**x, "ppr_commune_autres": autres})
+                marque = True
+            else:
+                out.append(x)
+        liste = out
+    return _nz(liste)
+
+
+@extracteur("contraintes_parcelle_liste")
+def _c_contraintes_parcelle(db, idu, f):
+    # CHIRURGICAL-FIX-1 (LOT H pt2) — LA MÊME liste d'alertes que la fiche §Risques-et-environnement et
+    # le Comparatif : TOUTES les lignes SOFT_FLAG / HARD_EXCLUDE (aléas, zone humide, inondation TRI,
+    # bruit, SUP…), hors bassin versant (contexte, pas une alerte). L'Apporteur, pièce qui circule
+    # seule, lit ce champ pour ne masquer aucune alerte (zone humide AD0887, inondation extrême BW2635).
+    # Hors ALERTE : contexte de marché (VEFA), motifs de SCORING (déclassement, bâti, SDP résiduelle)
+    # et bassin versant (hydrographie) — ce ne sont pas des « contraintes qui gênent le projet ».
+    _hors_alerte = {"bassin_versant", "vefa_neuf", "declassement", "bati", "residuel_socle"}
+    out = [{"libelle": l.get("libelle") or l.get("detail") or "", "nature": l.get("layer")}
+           for l in (f.get("lines") or [])
+           if isinstance(l, dict) and l.get("result") in ("HARD_EXCLUDE", "SOFT_FLAG")
+           and l.get("layer") not in _hors_alerte]
+    return _nz(out)
 
 
 @extracteur("n_vigilances")

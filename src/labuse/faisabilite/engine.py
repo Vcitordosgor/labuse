@@ -284,10 +284,16 @@ def _rng(lo: float, hi: float) -> tuple[int, int]:
 # RECETTE-1 A1 — verdict d'assiette vide, par RAISON réelle (plus de « compte tenu des reculs »
 # générique). Même fourchette (0) dans tous les cas : ce qui change, c'est QUI vide l'assiette.
 _ASSIETTE_VIDE_LIB = {
-    "ppr_rouge": ("Parcelle couverte par le PPR en zone rouge (inconstructible) — aucune emprise "
-                  "constructible, non constructible en l'état.", "0 m² (PPR zone rouge)"),
-    "emplacement_reserve": ("Emplacement réservé couvrant la parcelle — l'emprise constructible "
-                            "résiduelle est nulle (terrain réservé à un projet public).",
+    # MOTEUR-VERITE-FIX-1 (LOT 3, V6) — cette raison n'est posée QUE si le rouge est DOMINANT
+    # (≥ 50 % mesuré, cf. db.py) : seule la part rouge est retirée, le message le dit — plus
+    # jamais « couverte par le PPR » sur une touche de 9 % (le % mesuré est ajouté au verdict).
+    "ppr_rouge": ("Majoritairement en zone rouge du PPR — la part rouge est retirée de l'assiette "
+                  "et le reste ne porte aucune emprise exploitable. Non constructible en l'état.",
+                  "0 m² (part rouge du PPR retirée)"),
+    # MOTEUR-VERITE-FIX-8 LOT 2 — le libellé dit ce qui est MESURÉ : l'emplacement réservé ÉPUISE
+    # l'assiette APRÈS RECULS (il n'est pas affirmé qu'il couvre toute la parcelle — BO0312).
+    "emplacement_reserve": ("Emplacement réservé : l'emprise constructible résiduelle APRÈS RECULS "
+                            "est épuisée par l'emplacement réservé (terrain réservé à un projet public).",
                             "0 m² (emplacement réservé)"),
     "ebc": ("Espace boisé classé couvrant la parcelle — inconstructible (Art. L113-1 CU).",
             "0 m² (espace boisé classé)"),
@@ -380,6 +386,12 @@ def cause_libelle(cause: str | None, exigu_raison: str | None = None) -> str | N
     if head == "capacite_nulle":
         return "Non retenue — capacité constructible nulle au règlement."
     # ── causes d'IGNORANCE (« Analyse incomplète ») ──
+    # MOTEUR-VERITE-FIX-3 LOT 3 — verdict constructible mais capacité NON chiffrable (SDP ∅ :
+    # site protégé AC2, plafond d'habitat A/N, hauteur propre par rue, littoral prospectif) :
+    # l'inconnu RESTE inconnu à travers le résiduel et le score, jamais un 0.
+    if head == "capacite_a_verifier":
+        return ("Analyse incomplète — capacité à vérifier (constructible, aucune capacité "
+                "chiffrée sans instruction).")
     if head == "regle_plu_non_validee":
         return f"Analyse incomplète — règle PLU de la zone {zone} non validée." if zone else \
             "Analyse incomplète — règle PLU non validée."
@@ -412,6 +424,84 @@ def faisabilite_surface_incertaine(zone: str | None) -> "Faisabilite":
                        _BANDEAU, calibree=True, cause="surface_incertaine")
 
 
+def faisabilite_ppr_rouge_secteur(zone: str | None, pct: int) -> "Faisabilite":
+    """MOTEUR-VERITE-FIX-4 LOT 4 — secteur d'habitat A/N sous PPR ROUGE dominant SANS reste
+    exploitable : le contrôle du plan de prévention s'applique TOUJOURS, le plafond d'habitat
+    du secteur ne rouvre rien dans la zone rouge (AL0165, 100 % R2, relecture FIX-4)."""
+    return Faisabilite(zone or "?", None, False,
+                       f"Non constructible — PPR zone rouge (inconstructible, L562-1) sur "
+                       f"~{pct} % de la parcelle ; le plafond d'habitat du secteur ne "
+                       "s'applique pas dans la zone rouge.",
+                       [], [], [], [], {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                       _BANDEAU, calibree=True, cause="redhibitoire")
+
+
+def faisabilite_secteur_habitat(zone: str | None, zone_fam: str | None, sect: dict,
+                                surface_m2: float | None = None,
+                                avert_ppr: str | None = None) -> "Faisabilite":
+    """MOTEUR-VERITE-FIX-1 LOT 4 / FIX-2 LOT B — SECTEUR D'HABITAT d'une zone agricole/naturelle
+    (Aba, Arh, Nrh, Nba…) : le règlement ADMET l'habitat NEUF plafonné (règle calibrée, citée).
+
+    FIX-2 LOT B (relecture indépendante) — le plafond est un PLAFOND, pas une capacité : aucune
+    enveloppe (reculs, hauteur) n'est calibrée sur ces secteurs, la capacité ne peut donc pas
+    être ÉTABLIE → le verdict reste « constructible sous conditions, plafonné à X m² » mais la
+    fourchette ne porte AUCUN chiffre (SDP ∅, « capacité à vérifier »). Le plafond est servi à
+    part (`plafond_secteur_m2`, informatif) : « par unité foncière » quand le texte dit « limite
+    totale » (un permis multi-parcelles n'additionne rien — SDP ∅ ne se somme pas) ; à
+    Saint-Louis (Arh), « 50 m² PAR TRANCHE de 600 m² de terrain » → plafond = 50 × tranches
+    COMPLÈTES, et « tranche incomplète : à vérifier » si le terrain n'atteint pas 600 m²."""
+    z = zone or (zone_fam or "?")
+    plafond = float(sect["seuil_m2"])
+    src = f"{sect.get('article') or 'règlement de zone'}" + (
+        f" (p. {sect['page_pdf']})" if sect.get("page_pdf") else "")
+    cit = str(sect.get("citation") or "")
+    par_tranche = re.search(r"par\s+tranche\s+de\s+(\d+(?:[.,]\d+)?)\s*m", cit, re.I)
+    plafond_txt = f"{plafond:g} m² de surface de plancher"
+    plafond_servi: float | None = plafond
+    if par_tranche:
+        tranche = float(par_tranche.group(1).replace(",", "."))
+        plafond_txt = f"{plafond:g} m² par tranche de {tranche:g} m² de terrain"
+        if surface_m2 and surface_m2 >= tranche:
+            n_tr = int(surface_m2 // tranche)
+            plafond_servi = plafond * n_tr
+            plafond_txt += f" ({n_tr} tranche(s) complète(s) → plafond {plafond_servi:g} m²)"
+        else:
+            plafond_servi = None
+            plafond_txt += " — tranche incomplète : à vérifier"
+    elif re.search(r"limite\s+totale", cit, re.I):
+        plafond_txt += " (limite TOTALE — par unité foncière, jamais sommée entre parcelles)"
+    steps = [Step("Habitat admis — plafond du secteur",
+                  f"construction d'habitation admise sous conditions, {plafond_txt}",
+                  (f"plafond {plafond_servi:g} m²" if plafond_servi else "à vérifier"),
+                  src, prov="sourcee"),
+             Step("Capacité", "aucune enveloppe calibrée sur ce secteur (reculs/hauteur) — la "
+                  "capacité ne peut pas être établie ici", "à vérifier", src, prov="estimee")]
+    hypo = []
+    if cit:
+        hypo.append(f"Règle du secteur ({src}) : {cit[:300]}")
+    avert = ["Conditions du règlement non modélisées (intégration au site, desserte, sols "
+             "naturels…) et enveloppe non calibrée : capacité à vérifier — le plafond du "
+             "règlement n'est PAS une capacité."]
+    if avert_ppr:
+        avert.append(avert_ppr)   # MOTEUR-VERITE-FIX-4 LOT 4 — PPR rouge partiel : prescriptions
+    fourch = {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0),
+              # FIX-2 LOT B — PLAFOND informatif, jamais une SDP (clé distincte, non sommable).
+              "plafond_secteur_m2": plafond_servi}
+    return Faisabilite(
+        z, None, True,
+        f"Constructible sous conditions — habitat admis en secteur {z}, plafonné à "
+        f"{plafond_txt} ({src}) — capacité à vérifier.",
+        steps, hypo, avert, [], fourch, _BANDEAU, calibree=True, cause=None)
+
+
+def faisabilite_capacite_a_verifier(zone: str | None, verdict: str, avert: str) -> "Faisabilite":
+    """MOTEUR-VERITE-FIX-2 — verdict CONSTRUCTIBLE sans capacité chiffrée (« capacité à
+    vérifier ») : SUP AC2 (site inscrit/classé non distingué par la donnée), etc."""
+    return Faisabilite(zone or "?", None, True, verdict, [], [], [avert], [],
+                       {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                       _BANDEAU, calibree=True, cause=None)
+
+
 def faisabilite_zone_non_constructible(zone: str | None, zone_fam: str | None) -> "Faisabilite":
     """EXPORTS-FIX-3 LOT 1 — zone dominante de famille A/N dont le CODE n'est pas calibré au PLU de la
     commune (`resolve_zone` → None) ET dont la seule portion U/AU est infime (écartée par la garde
@@ -423,6 +513,28 @@ def faisabilite_zone_non_constructible(zone: str | None, zone_fam: str | None) -
                        f"Construction neuve non autorisée en zone {z}.",
                        [], [], [], [], {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
                        _BANDEAU, calibree=True, cause=f"zone_non_constructible:{z}")
+
+
+def faisabilite_refus_reglementaire(rules: ZoneRules) -> "Faisabilite | None":
+    """MOTEUR-VERITE-FIX-6 LOT 1 — un refus réglementaire ÉTABLI (zone fermée à l'urbanisation,
+    habitat interdit) ne doit JAMAIS être effacé par une garde de taille ou « capacité à vérifier ».
+    Ce helper rend le verdict ferme SI la zone est un refus — à appeler AVANT les gardes micro-
+    parcelle / façade (il était jusqu'ici noyé en fin d'`estimate_capacity`, donc atteint trop tard :
+    AC1634 Sainte-Marie UEm 20 m² « habitat interdit » devenait « constructible, capacité à vérifier »).
+    None si la zone n'est pas un refus (le calcul continue normalement)."""
+    if not rules.constructible_neuf:
+        return Faisabilite(rules.code, rules.via_renvoi, False,
+                           f"Construction neuve non autorisée en zone {rules.code}.",
+                           [], [], [], [], {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                           _BANDEAU, calibree=rules.calibree, cause="zone_transition")
+    if rules.habitat == "interdit":
+        return Faisabilite(rules.code, rules.via_renvoi, False,
+                           "Habitat interdit au règlement — zone à vocation économique/activités "
+                           "(seules exceptions : gardiennage/logement de fonction). Aucune capacité "
+                           "logement calculée.",
+                           [], [], [], [], {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                           _BANDEAU, calibree=rules.calibree, cause="habitat_interdit")
+    return None
 
 
 def estimate_capacity(rules: ZoneRules, surface_m2: float,
@@ -456,6 +568,15 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         return Faisabilite(rules.code, rules.via_renvoi, constructible, verdict,
                            steps, hypotheses, avert, modul, fourchette, _BANDEAU,
                            calibree=rules.calibree, cause=cause, exigu_raison=exigu_raison)
+
+    # MOTEUR-VERITE-FIX-3 LOT 2 — la zone a une RÈGLE PROPRE validée non réductible à un nombre
+    # (ex. Saint-Denis Udo : prospect général écarté, plafonds de hauteur par rue) : le repli ne
+    # sert JAMAIS une valeur générique à sa place. Verdict constructible, capacité à vérifier
+    # (SDP ∅ — aucune clé `surface_plancher_m2`, le chiffre ne peut pas être établi).
+    if rules.capacite_a_verifier:
+        avert.append(f"Capacité à vérifier : {rules.capacite_a_verifier}")
+        return fini(True, f"Constructible — capacité à vérifier : {rules.capacite_a_verifier}",
+                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
 
     # PLU-CALIBRAGE-6 — GARDE : une règle SDP encore `propose` (non validée) rend la capacité NON
     # CALCULABLE, jamais une valeur par défaut. On sort AVANT tout calcul (donc avant les reculs
@@ -551,6 +672,23 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
             # superposées / portion U/AU incohérente / géométrie non réparable). On NE dit PLUS « terrain
             # trop étroit » (cause CERTAINE) sur un cas douteux : cause d'IGNORANCE « assiette à vérifier »
             # → bande NC / « À vérifier » (jamais un verdict ferme sans preuve géométrique).
+            # MOTEUR-VERITE-FIX-1 (LOT 2) — l'assiette avec RETRAIT se vide, mais le règlement admet
+            # l'implantation EN LIMITE sous des conditions non modélisées : le verdict est
+            # « constructible, capacité à vérifier », JAMAIS « terrain trop exigu » (le vrai gabarit
+            # en limite peut être substantiel — permis réels à l'appui, VERITE-TERRAIN-3 V1).
+            if raison == "limite_conditions":
+                steps.append(Step(_step1_label, _step1_formule,
+                                  "0 m² avec retrait — implantation en limite à étudier",
+                                  _step1_source if _asrc == "gabarit" else f"{rl_src}",
+                                  prov=_step1_prov))
+                avert.append("Implantation en limite séparative possible sous conditions du "
+                             "règlement (non modélisées) : capacité supérieure possible, à vérifier.")
+                return fini(True,
+                            "Constructible — capacité à vérifier : le règlement admet l'implantation "
+                            "en limite séparative sous conditions ; avec le retrait appliqué, "
+                            "l'assiette se vide. La capacité ne peut pas être affirmée sans étude "
+                            "de l'implantation en limite.",
+                            {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
             if raison == "a_verifier":
                 steps.append(Step(_step1_label, _step1_formule, "à vérifier (assiette non établie)",
                                   _step1_source if _asrc == "gabarit" else f"{rl_src}",
@@ -562,6 +700,11 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                             {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
                             cause="assiette_a_verifier")
             verdict, step_val = _verdict_assiette_vide(raison, recul_used)
+            # LOT 3 (V6) — le % rouge MESURÉ entre dans le verdict quand le rouge est la raison.
+            if raison == "ppr_rouge" and extras.get("ppr_rouge_pct"):
+                verdict = (f"En zone rouge du PPR sur ~{extras['ppr_rouge_pct']} % de la parcelle — "
+                           "la part rouge est retirée de l'assiette et le reste ne porte aucune "
+                           "emprise exploitable. Non constructible en l'état.")
             steps.append(Step(_step1_label, _step1_formule, step_val,
                               _step1_source if _asrc == "gabarit" else f"{rl_src}",
                               prov=_step1_prov))
@@ -570,6 +713,11 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                         cause="terrain_exigu", exigu_raison=raison)
         steps.append(Step(_step1_label, _step1_formule,
                           f"~{emprise:.0f} m²", _step1_source, prov=_step1_prov))
+        # MOTEUR-VERITE-FIX-1 (LOT 2) — le règlement admet l'implantation en limite sous des
+        # conditions NON modélisées : la capacité servie (avec retrait) est une borne basse — dit.
+        for _m in (extras.get("implantation_mentions") or []):
+            avert.append(f"Implantation en limite séparative possible sous conditions "
+                         f"(« {_m[:160]} ») : capacité supérieure possible, à vérifier.")
         # FAISABILITE-1 (lot D) — ligne « Espaces inconstructibles déduits » (ER/EBC/greve certaine
         # déjà soustraits de l'emprise en amont, cf. db.py) : dit CE QUI a été retiré, sourcé PLU.
         _dedu = round(float(extras.get("total_deduit_m2", 0)))
@@ -660,7 +808,21 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
 
     # ---- Niveaux (hé prioritaire) ----
     he_src = rules.sources.get("hauteur", "Art. 10")
-    if rules.niveaux_max is not None:
+    _n_retenu = extras.get("niveaux_retenus")
+    if _n_retenu:
+        # MOTEUR-VERITE-FIX-1 (LOT 1) — recul séparatif en formule H/n : le moteur gabarit a évalué
+        # chaque nombre de niveaux admis (H = égout du bâtiment envisagé) et retenu le scénario au
+        # plancher maximal. L'assiette transmise est CELLE de ce scénario : la capacité compte les
+        # MÊMES niveaux (jamais les niveaux pleins de la zone sur une assiette insétée pour moins
+        # haut). `niveauxMax` du scénario est dérivé de la même échelle que ci-dessous — jamais plus.
+        niveaux = int(_n_retenu)
+        steps.append(Step("Niveaux constructibles",
+                          (extras.get("recul_sep_scenario")
+                           or "recul séparatif lié à la hauteur (formule du règlement)"),
+                          f"R+{max(0, niveaux - 1)}", he_src, prov="sourcee"))
+        hypotheses.append("Recul séparatif en formule (H/n) : scénario niveaux×recul retenu au "
+                          "plancher maximal, H = égout du bâtiment envisagé.")
+    elif rules.niveaux_max is not None:
         # PLU-CALIBRAGE-2 : R+n LU au règlement (feuille `niveaux` validée) — la valeur est
         # utilisée telle quelle, jamais dérivée d'une hauteur (l'étape passe SOURCÉ).
         niveaux = int(rules.niveaux_max) + 1
@@ -812,6 +974,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
 
     # ---- Modulation réunionnaise ----
     facteur = 1.0
+    _litt_hors_bande = 1.0   # MOTEUR-VERITE-FIX-7 LOT 3 — part hors bande littorale appliquée AUSSI à la SDP
     if c.agricole_sar:
         # FIX-OPPORTUNITES (correction C — rédhibitoire en zone U) — le RPG (registre parcellaire
         # graphique) est une déclaration d'usage agricole INDICATIVE : en zone CONSTRUCTIBLE (U/AU) il
@@ -838,14 +1001,28 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         facteur = min(facteur, f)
         modul.append(f"Aléa {c.alea_ppr} (PPR) → prescriptions, capacité réduite (~×{f:g}).")
     if c.littoral_pct and c.littoral_pct > 0.005:
-        # PPR-UNIQUE-1 (E-006) — seule la PART réellement dans la bande littorale est retirée
-        # (plus d'annulation de toute la parcelle par un simple contact de 12 %). Le facteur est
-        # plafonné à la part HORS bande ; la parcelle entièrement dans la bande reste inconstructible.
-        f = max(0.0, 1.0 - c.littoral_pct)
-        facteur = min(facteur, f)
+        # MOTEUR-VERITE-FIX-2 LOT C puis FIX-6 LOT 5 — la couche `trait_de_cote` est une PROJECTION
+        # d'érosion (ni une interdiction — BX0750 maison achevée — ni une donnée qui autorise une
+        # hausse). Une GARDE DE DOUTE retire le chiffre SEULEMENT quand aucune assiette ne peut
+        # être établie : ici, quand TOUTE l'assiette est dans la bande. Sinon, le chiffre est
+        # calculé sur la PART HORS BANDE (facteur = 1 − littoral_pct) avec la réserve.
         pct = round(c.littoral_pct * 100)
-        modul.append(f"Trait de côte / bande littorale sur ~{pct} % de la parcelle → seule la part "
-                     f"dans la bande est retirée (capacité ~×{f:.2f}).")
+        hors_bande = max(0.0, 1.0 - float(c.littoral_pct))
+        if hors_bande < 0.02:   # assiette entièrement (≥ 98 %) dans la bande → aucune assiette nette
+            avert.append(f"Recul prospectif du trait de côte sur ~{pct} % de la parcelle — projection "
+                         "d'érosion (bande courte/longue), pas une interdiction réglementaire : "
+                         "constructibilité à vérifier auprès des services de l'État.")
+            return fini(True,
+                        f"Constructible — capacité à vérifier : recul prospectif du trait de côte sur "
+                        f"~{pct} % de la parcelle (toute l'assiette est dans la bande). Aucune "
+                        "capacité chiffrée tant que la limite n'est pas qualifiée.",
+                        {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
+        facteur = min(facteur, hors_bande)
+        _litt_hors_bande = hors_bande     # FIX-7 LOT 3 — réduit AUSSI la SDP (assiette hors bande)
+        avert.append(f"Recul prospectif du trait de côte sur ~{pct} % de la parcelle — projection "
+                     "d'érosion (bande courte/longue), pas une interdiction : surface de plancher "
+                     f"calculée sur l'assiette HORS bande (~{round(hors_bande * 100)} %), limite à "
+                     "vérifier auprès des services de l'État.")
     if c.pente_pct is not None:
         if c.pente_pct >= 30:
             facteur = min(facteur, 0.4)
@@ -854,6 +1031,14 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
             facteur = min(facteur, 0.7)
             modul.append(f"Pente {c.pente_pct:.0f}% → surcoût, capacité réduite (~×0,7).")
     modul.extend(c.libelles)
+
+    # MOTEUR-VERITE-FIX-7 LOT 3 — la part HORS BANDE littorale réduit AUSSI la SURFACE DE PLANCHER
+    # (c'est une assiette réduite), pas seulement le vendable / les logements. Avant, la SDP restait
+    # identique avec ou sans la bande (BL0308 : 716 m² pour ~155 m² hors bande, soit 622 m² au plus
+    # sur 4 niveaux) — le chiffre ne correspondait pas à l'assiette annoncée. La SDP est désormais
+    # calculée sur l'assiette hors bande ; le seuil de mixité (SDP) et le verdict en découlent.
+    if _litt_hors_bande < 1.0:
+        sdp = sdp * _litt_hors_bande
 
     sol_lo, sol_hi = sol_lo * facteur, sol_hi * facteur
     sol_central = sol_central * facteur            # M144 Lot 1 — le central retenu subit la MÊME modulation

@@ -36,6 +36,20 @@ zones:
           statut: propose
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'en zone U1a — Au-delà d''une distance de 10 m mesurée par rapport à l''emprise de la voie, les constructions pourront s''implanter en respectant un retrait minimum de 3 m. [lecture prudente : « d''une limite séparative à l''autre » vise les latérales, le fond relève de la règle au-delà de la bande — voir NOTES cas 2]'
+          implantation_laterales:
+            mode: limite_imposee
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'en zone U1a — Dans une bande de 10 m mesurée par rapport à l''emprise de la voie, les rez-de-chaussée de constructions devront être édifiés d''une limite séparative à l''autre. Pour les étages, en cas de retrait, un recul de 3 m minimum est obligatoire. Au-delà d''une distance de 10 m mesurée par rapport à l''emprise de la voie, les constructions pourront s''implanter en respectant un retrait minimum de 3 m.'
+            condition_texte: 'Dans une bande de 10 m mesurée par rapport à l''emprise de la voie, les rez-de-chaussée de constructions devront être édifiés d''une limite séparative à l''autre. Pour les étages, en cas de retrait, un recul de 3 m minimum est obligatoire.'
+            condition_modelable: 'profondeur_bande:10 m (depuis la voie — RDC d''une limite séparative à l''autre)'
           min_m: 3.0
           article: '7.2'
           page_pdf: 21
@@ -162,6 +176,22 @@ zones:
           statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'en zone U1b — Chaque construction pourra s''implanter sur une limite séparative sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Chaque construction pourra s''implanter sur une limite séparative sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:9 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'en zone U1b — Chaque construction pourra s''implanter sur une limite séparative sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Chaque construction pourra s''implanter sur une limite séparative sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:9 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 21
@@ -253,6 +283,22 @@ zones:
           statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'en zone U1c — Chaque construction pourra s''implanter sur deux limites séparatives sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Chaque construction pourra s''implanter sur deux limites séparatives sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m.'
+            condition_modelable: 'deux_limites_max + hauteur_bande:9 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'en zone U1c — Chaque construction pourra s''implanter sur deux limites séparatives sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Chaque construction pourra s''implanter sur deux limites séparatives sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m.'
+            condition_modelable: 'deux_limites_max + hauteur_bande:9 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 21
@@ -344,6 +390,22 @@ zones:
           statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'U1d, U1f, U1g et U1pso — Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:9 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'U1d, U1f, U1g et U1pso — Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:9 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 21
@@ -436,6 +498,22 @@ zones:
           statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'U1d, U1f, U1g et U1pso — Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:9 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'U1d, U1f, U1g et U1pso — Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:9 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 21
@@ -527,6 +605,22 @@ zones:
           statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'U1d, U1f, U1g et U1pso — Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:9 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'U1d, U1f, U1g et U1pso — Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:9 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 21
@@ -618,6 +712,22 @@ zones:
           statut: valide
           note: 'PLU-CALIBRAGE-8 (oct.) Lot C : forme alignement = implantation possible À L''ALIGNEMENT (recul 0 explicite, Art. 6 Cas général). Le « retrait <= 6 m » est un PLAFOND permissif (maximum), pas un minimum — non modélisé (ne réduit pas l''enveloppe). Citation relue au règlement en vigueur (md5 0aee72989399..., p.19).'
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'en zone U1pru — Chaque construction pourra s''implanter sur une limite séparative sans limitation de longueur. En cas de retrait, celui-ci ne pourra excéder 5 mètres'
+            condition_texte: 'Chaque construction pourra s''implanter sur une limite séparative sans limitation de longueur.'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'en zone U1pru — Chaque construction pourra s''implanter sur une limite séparative sans limitation de longueur. En cas de retrait, celui-ci ne pourra excéder 5 mètres'
+            condition_texte: 'Chaque construction pourra s''implanter sur une limite séparative sans limitation de longueur.'
+            condition_modelable: 'une_seule_limite'
           forme: alignement
           article: '7'
           page_pdf: 21
@@ -666,6 +776,22 @@ zones:
           statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'U1d, U1f, U1g et U1pso — Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:9 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1 7.2'
+            page_pdf: 20
+            citation: 'U1d, U1f, U1g et U1pso — Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Les constructions pourront s''implanter sur une seule limite séparative. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:9 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 21
@@ -804,6 +930,22 @@ zones:
           statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1e/U1l 7.2'
+            page_pdf: 42
+            citation: 'Les constructions peuvent être implantées sur les limites séparatives ou en retrait. Toutefois, les constructions doivent obligatoirement être implantées en retrait de toute limite séparative jouant le rôle d''une limite avec une autre zone urbaine ou une zone à urbaniser [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 5 m minimum.'
+            condition_texte: 'Toutefois, les constructions doivent obligatoirement être implantées en retrait de toute limite séparative jouant le rôle d''une limite avec une autre zone urbaine ou une zone à urbaniser'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U1e/U1l 7.2'
+            page_pdf: 42
+            citation: 'Les constructions peuvent être implantées sur les limites séparatives ou en retrait. Toutefois, les constructions doivent obligatoirement être implantées en retrait de toute limite séparative jouant le rôle d''une limite avec une autre zone urbaine ou une zone à urbaniser [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 5 m minimum.'
+            condition_texte: 'Toutefois, les constructions doivent obligatoirement être implantées en retrait de toute limite séparative jouant le rôle d''une limite avec une autre zone urbaine ou une zone à urbaniser'
+            condition_modelable: 'non'
           min_m: 5.0
           article: '7.2'
           page_pdf: 43
@@ -883,6 +1025,25 @@ zones:
         page_pdf: 39
         citation: « les ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques »
   AU1b:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U1 7.2'
+            page_pdf: 20
+            citation: '« Se reporter au règlement de la zone U1 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.53 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U1b) : en zone U1b — Chaque construction pourra s''implanter sur une limite séparative sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Chaque construction pourra s''implanter sur une limite séparative sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:9 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U1 7.2'
+            page_pdf: 20
+            citation: '« Se reporter au règlement de la zone U1 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.53 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U1b) : en zone U1b — Chaque construction pourra s''implanter sur une limite séparative sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Chaque construction pourra s''implanter sur une limite séparative sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:9 m sur bande de 3 m'
     renvoi: U1b
     renvoi_src: 'Chapitre ZONES AU1, p. 53 : « il convient de se reporter en fonction de l''indice de la zone AU considérée au règlement des zones urbaines correspondantes à savoir U1a pour AU1a, U1b pour AU1b, U1c pour AU1c... etc » ; Art. 1 et 2 : « Se reporter au règlement de la zone U1 ayant le même indice ». S''ajoute la condition générale AU1 Art. 2, § 2.2 (1), p. 53 : « Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
   AU1e:
@@ -892,6 +1053,25 @@ zones:
     renvoi: U1e
     renvoi_src: 'Chapitre ZONE AU1e, p. 55 : « Il existe un secteur AU1ec couvrant le pôle d''activités Henri Cornu […] il convient de se reporter au règlement de la zone U1e et de la zone U1ec » (U1ec non servie ; au chapitre U1e/U1l, la seule disposition propre à U1ec aux articles 1-2 est l''exigence d''« approche urbanistique et architecturale soignée », Art. 2, § 2.2 (5), p. 39, sans effet sur les destinations).'
   AU1lec:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U1e/U1l 7.2 (En zone U1lec)'
+            page_pdf: 42
+            citation: '« Se reporter au règlement de la zone U1lec » (Art. 1.1/2.1 du chapitre AU, p.57 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U1lec) : En zone U1lec — Chaque construction pourra s''implanter sur deux limites séparatives. En cas de retrait, un recul de 6 mètres minimum est obligatoire.'
+            condition_texte: 'Chaque construction pourra s''implanter sur deux limites séparatives.'
+            condition_modelable: 'deux_limites_max'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U1e/U1l 7.2 (En zone U1lec)'
+            page_pdf: 42
+            citation: '« Se reporter au règlement de la zone U1lec » (Art. 1.1/2.1 du chapitre AU, p.57 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U1lec) : En zone U1lec — Chaque construction pourra s''implanter sur deux limites séparatives. En cas de retrait, un recul de 6 mètres minimum est obligatoire.'
+            condition_texte: 'Chaque construction pourra s''implanter sur deux limites séparatives.'
+            condition_modelable: 'deux_limites_max'
     silence: autorise
     silence_src: 'Via renvoi p. 57 (« Se reporter au règlement de la zone U1lec. ») vers le chapitre U1e/U1l : Art. 1, § 1.2 "Sont interdits — en zone U1l" = liste fermée de 7 postes, p. 38.'
     sous_destinations:
@@ -987,6 +1167,22 @@ zones:
           citation: Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U2 7.2'
+            page_pdf: 71
+            citation: 'en zone U2a — Les constructions devront s''implanter sur une limite séparative. En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative. [obligation de joindre AU MOINS une limite — voir NOTES cas 3]'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U2 7.2'
+            page_pdf: 71
+            citation: 'en zone U2a — Les constructions devront s''implanter sur une limite séparative. En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative. [obligation de joindre AU MOINS une limite — voir NOTES cas 3]'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: '7.2'
           page_pdf: 72
@@ -1099,6 +1295,22 @@ zones:
           statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U2 7.2'
+            page_pdf: 71
+            citation: 'en zone U2b — Chaque construction pourra s''implanter sur une limite séparative, sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Chaque construction pourra s''implanter sur une limite séparative, sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:9 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U2 7.2'
+            page_pdf: 71
+            citation: 'en zone U2b — Chaque construction pourra s''implanter sur une limite séparative, sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë. En cas de retrait, un recul de 3 mètres minimum est obligatoire.'
+            condition_texte: 'Chaque construction pourra s''implanter sur une limite séparative, sur une longueur maximale de 18 m. Dans une bande de 3 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 9 m. Le choix de la limite séparative portera sur celle qui accueille déjà une construction riveraine contiguë.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:9 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 72
@@ -1205,6 +1417,22 @@ zones:
           statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U2 7.2'
+            page_pdf: 71
+            citation: 'en zones U2c et U2h — Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m. En cas de retrait, un recul de 4 mètres minimum est obligatoire. En outre, les constructions respecteront un recul minimal de 4 m par rapport à la limite du Domaine Public Maritime (DPM).'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 4 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U2 7.2'
+            page_pdf: 71
+            citation: 'en zones U2c et U2h — Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m. En cas de retrait, un recul de 4 mètres minimum est obligatoire. En outre, les constructions respecteront un recul minimal de 4 m par rapport à la limite du Domaine Public Maritime (DPM).'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 4 m'
           min_m: 4
           article: '7.2'
           page_pdf: 72
@@ -1312,6 +1540,18 @@ zones:
           statut: valide
           raison: valeur non numérique ('a_verifier')
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'U2 7.2'
+            page_pdf: 71
+            citation: 'en zone U2d — Un recul de 4 mètres minimum est obligatoire. En outre, les constructions respecteront un recul minimal de 4 m par rapport à la limite du Domaine Public Maritime (DPM).'
+          implantation_laterales:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'U2 7.2'
+            page_pdf: 71
+            citation: 'en zone U2d — Un recul de 4 mètres minimum est obligatoire. En outre, les constructions respecteront un recul minimal de 4 m par rapport à la limite du Domaine Public Maritime (DPM).'
           min_m: 4
           article: '7.2'
           page_pdf: 72
@@ -1408,6 +1648,22 @@ zones:
           citation: Les constructions devront s’implanter en retrait de 4 m minimum de la voie ou de l'emprise publique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U2 7.2'
+            page_pdf: 71
+            citation: 'en zones U2c et U2h — Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m. En cas de retrait, un recul de 4 mètres minimum est obligatoire. En outre, les constructions respecteront un recul minimal de 4 m par rapport à la limite du Domaine Public Maritime (DPM).'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 4 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U2 7.2'
+            page_pdf: 71
+            citation: 'en zones U2c et U2h — Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m. En cas de retrait, un recul de 4 mètres minimum est obligatoire. En outre, les constructions respecteront un recul minimal de 4 m par rapport à la limite du Domaine Public Maritime (DPM).'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 4 m'
           min_m: 4
           article: '7.2'
           page_pdf: 72
@@ -1566,10 +1822,48 @@ zones:
         page_pdf: 89
         citation: « Les équipements publics d'intérêt collectif ainsi que les constructions, ouvrages et travaux liés aux différents réseaux, à la voirie, au stationnement, à la production et à la distribution d'énergie […] dès lors qu'ils s'insèrent dans le milieu environnant. »
   AU2c:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U2 7.2'
+            page_pdf: 71
+            citation: '« Se reporter au règlement de la zone U2 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.101 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U2c) : en zones U2c et U2h — Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m. En cas de retrait, un recul de 4 mètres minimum est obligatoire. En outre, les constructions respecteront un recul minimal de 4 m par rapport à la limite du Domaine Public Maritime (DPM).'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 4 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U2 7.2'
+            page_pdf: 71
+            citation: '« Se reporter au règlement de la zone U2 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.101 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U2c) : en zones U2c et U2h — Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m. En cas de retrait, un recul de 4 mètres minimum est obligatoire. En outre, les constructions respecteront un recul minimal de 4 m par rapport à la limite du Domaine Public Maritime (DPM).'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 4 m'
     renvoi: U2c
     renvoi_src: 'chapitre Zones AU2, p. 101 : « il convient de se reporter en fonction de l''indice de la zone AU considérée au règlement des zones urbaines correspondantes à savoir U2a pour AU2a, U2b pour AU2b, U2c pour AU2c... etc » ; Art. 1.2 et 2.2 : « Se reporter au règlement de la zone U2 ayant le même indice »'
     note: 'AU2, Art. 2.2, p. 101 — condition supplémentaire préalable à toute construction : « 1. Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
   AU2h:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U2 7.2'
+            page_pdf: 71
+            citation: '« Se reporter au règlement de la zone U2 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.101 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U2h) : en zones U2c et U2h — Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m. En cas de retrait, un recul de 4 mètres minimum est obligatoire. En outre, les constructions respecteront un recul minimal de 4 m par rapport à la limite du Domaine Public Maritime (DPM).'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 4 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U2 7.2'
+            page_pdf: 71
+            citation: '« Se reporter au règlement de la zone U2 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.101 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U2h) : en zones U2c et U2h — Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m. En cas de retrait, un recul de 4 mètres minimum est obligatoire. En outre, les constructions respecteront un recul minimal de 4 m par rapport à la limite du Domaine Public Maritime (DPM).'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 4 m'
     renvoi: U2h
     renvoi_src: 'chapitre Zones AU2, p. 101 : « il convient de se reporter en fonction de l''indice de la zone AU considérée au règlement des zones urbaines correspondantes à savoir U2a pour AU2a, U2b pour AU2b, U2c pour AU2c... etc » ; Art. 1.2 et 2.2 : « Se reporter au règlement de la zone U2 ayant le même indice »'
     note: 'AU2, Art. 2.2, p. 101 — condition supplémentaire préalable à toute construction : « 1. Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
@@ -1597,6 +1891,22 @@ zones:
           min_m: 0
           forme: alignement
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U3 7.2'
+            page_pdf: 111
+            citation: 'en zone U3a — Les constructions devront s''implanter sur une limite séparative ou en retrait minimum de3 m. [sic, espace manquant dans le texte extrait]'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative ou en retrait minimum de 3 m. [« une » limite — doute 2 vs 3 tranché vers 3, voir NOTES cas 4]'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U3 7.2'
+            page_pdf: 111
+            citation: 'en zone U3a — Les constructions devront s''implanter sur une limite séparative ou en retrait minimum de3 m. [sic, espace manquant dans le texte extrait]'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative ou en retrait minimum de 3 m. [« une » limite — doute 2 vs 3 tranché vers 3, voir NOTES cas 4]'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: '7.2'
           page_pdf: 112
@@ -1699,6 +2009,22 @@ zones:
           citation: Les constructions devront être implantées en retrait de 3 m minimum de la voie ou de l'emprise publique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U3 7.2'
+            page_pdf: 111
+            citation: 'en zone U3b et U3c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U3 7.2'
+            page_pdf: 111
+            citation: 'en zone U3b et U3c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 112
@@ -1775,6 +2101,22 @@ zones:
           citation: Les constructions devront être implantées en retrait de 4 m minimum de la voie ou de l'emprise publique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U3 7.2'
+            page_pdf: 111
+            citation: 'en zone U3b et U3c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U3 7.2'
+            page_pdf: 111
+            citation: 'en zone U3b et U3c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 112
@@ -1859,6 +2201,18 @@ zones:
           citation: Les constructions devront être implantées en retrait de 4 m minimum de la voie ou de l'emprise publique
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Usdu 7.2'
+            page_pdf: 131
+            citation: 'Les constructions doivent être implantées en retrait de toutes les limites séparatives. Le recul mesuré horizontalement et perpendiculairement de tout point de la façade de la construction [...] au point le plus proche de la limite séparative est de 4 m minimum [règle identique aux 4 livrets : p.131, 192, 238, 298]'
+          implantation_laterales:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'Usdu 7.2'
+            page_pdf: 131
+            citation: 'Les constructions doivent être implantées en retrait de toutes les limites séparatives. Le recul mesuré horizontalement et perpendiculairement de tout point de la façade de la construction [...] au point le plus proche de la limite séparative est de 4 m minimum [règle identique aux 4 livrets : p.131, 192, 238, 298]'
           min_m: 4.0
           article: '7.2'
           page_pdf: 132
@@ -2034,18 +2388,94 @@ zones:
         page_pdf: 146
         citation: « Les constructions et installations à usage d'activités (industrie, artisanat, entrepôt, bureaux.) […] dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5% de la superficie de la zone d'implantation. »
   AU3a:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U3 7.2'
+            page_pdf: 111
+            citation: '« Se reporter au règlement de la zone U3 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.158 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U3a) : en zone U3a — Les constructions devront s''implanter sur une limite séparative ou en retrait minimum de3 m. [sic, espace manquant dans le texte extrait]'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative ou en retrait minimum de 3 m. [« une » limite — doute 2 vs 3 tranché vers 3, voir NOTES cas 4]'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U3 7.2'
+            page_pdf: 111
+            citation: '« Se reporter au règlement de la zone U3 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.158 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U3a) : en zone U3a — Les constructions devront s''implanter sur une limite séparative ou en retrait minimum de3 m. [sic, espace manquant dans le texte extrait]'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative ou en retrait minimum de 3 m. [« une » limite — doute 2 vs 3 tranché vers 3, voir NOTES cas 4]'
+            condition_modelable: 'une_seule_limite'
     renvoi: U3a
     renvoi_src: 'Zones AU3, p. 158 : « il convient de se reporter en fonction de l''indice de la zone AU considérée au règlement des zones urbaines correspondantes à savoir U3a pour AU3a, U3b pour AU3b, U3c pour AU3c... etc » ; Art. 1.2 et 2.2 : « Se reporter au règlement de la zone U3 ayant le même indice »'
     note: 'Condition supplémentaire propre aux AU3 (Art. 2.2-1, p. 158) : « Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
   AU3b:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U3 7.2'
+            page_pdf: 111
+            citation: '« Se reporter au règlement de la zone U3 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.158 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U3b) : en zone U3b et U3c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U3 7.2'
+            page_pdf: 111
+            citation: '« Se reporter au règlement de la zone U3 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.158 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U3b) : en zone U3b et U3c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
     renvoi: U3b
     renvoi_src: 'Zones AU3, p. 158 : « se reporter […] au règlement des zones urbaines correspondantes à savoir U3a pour AU3a, U3b pour AU3b, U3c pour AU3c... etc »'
     note: 'Condition supplémentaire propre aux AU3 (Art. 2.2-1, p. 158) : « Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
   AU3c:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U3 7.2'
+            page_pdf: 111
+            citation: '« Se reporter au règlement de la zone U3 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.158 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U3c) : en zone U3b et U3c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U3 7.2'
+            page_pdf: 111
+            citation: '« Se reporter au règlement de la zone U3 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.158 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U3c) : en zone U3b et U3c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
     renvoi: U3c
     renvoi_src: 'Zones AU3, p. 158 : « se reporter […] au règlement des zones urbaines correspondantes à savoir U3a pour AU3a, U3b pour AU3b, U3c pour AU3c... etc »'
     note: 'Condition supplémentaire propre aux AU3 (Art. 2.2-1, p. 158) : « Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
   AU3h:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U3 7.2'
+            page_pdf: 111
+            citation: '« Se reporter au règlement de la zone U3 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.158 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U3h) : en zones U3h — Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m. En cas de retrait, un recul de 4 mètres minimum est obligatoire.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 4 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U3 7.2'
+            page_pdf: 111
+            citation: '« Se reporter au règlement de la zone U3 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.158 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U3h) : en zones U3h — Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m. En cas de retrait, un recul de 4 mètres minimum est obligatoire.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative, sur une longueur maximale de 10 m. Dans une bande de 4 mètres à compter de la limite séparative, la hauteur maximale autorisée sera de 6 m.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 4 m'
     silence: interdit
     silence_src: 'Zones AU3, Art. 1.2, p. 158 : « Se reporter au règlement de la zone U3 ayant le même indice » → zone U3h, Art. 1.2, p. 106 : « Toutes les occupations et utilisations du sol à l''exception de l''hébergement hôtelier et touristique, des activités touristiques et de loisirs, et d''une extension d''une construction à usage d''habitation existante dans la limite de 30 m². »'
     note: 'S''ajoute la condition AU3 (Art. 2.2-1, p. 158) : « Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). » Les « activités touristiques et de loisirs » (exception U3h) ne sont pas mappées : terme générique sans équivalent univoque parmi les sous-destinations.'
@@ -2102,6 +2532,22 @@ zones:
           min_m: 0
           forme: alignement
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4 7.2'
+            page_pdf: 173
+            citation: 'en zone U4a — Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. [obligation de joindre AU MOINS une limite — voir NOTES cas 3]'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4 7.2'
+            page_pdf: 173
+            citation: 'en zone U4a — Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. [obligation de joindre AU MOINS une limite — voir NOTES cas 3]'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: '7.2'
           page_pdf: 173
@@ -2207,6 +2653,22 @@ zones:
             porte: destination
             modifie_calcul: true
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4 7.2'
+            page_pdf: 173
+            citation: 'en zones U4b et U4c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4 7.2'
+            page_pdf: 173
+            citation: 'en zones U4b et U4c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 173
@@ -2285,6 +2747,22 @@ zones:
           citation: en zone U4c Les constructions devront être implantées en retrait de 4 m minimum de la voie ou de l'emprise publique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4 7.2'
+            page_pdf: 173
+            citation: 'en zones U4b et U4c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U4 7.2'
+            page_pdf: 173
+            citation: 'en zones U4b et U4c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 173
@@ -2341,10 +2819,48 @@ zones:
     renvoi: U4a
     renvoi_src: 'chapitre unique « ZONES U4a, U4b, U4c » (p. 167) : les articles 1 « Occupations et utilisations du sol interdites » et 2 « Occupations et utilisations du sol soumises à des conditions particulières » (p. 167-169) sont communs aux trois zones et ne distinguent pas de règle propre à U4c ; la zone mère U4 nue n''étant pas servie, l''entrée complète est portée par U4a.'
   AU4b:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U4 7.2'
+            page_pdf: 173
+            citation: '« Se reporter au règlement de la zone U4 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.206 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U4b) : en zones U4b et U4c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U4 7.2'
+            page_pdf: 173
+            citation: '« Se reporter au règlement de la zone U4 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.206 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U4b) : en zones U4b et U4c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
     renvoi: U4b
     renvoi_src: 'caractère de la zone AU4, p. 206 : « il convient de se reporter en fonction de l''indice de la zone AU considérée au règlement des zones urbaines correspondantes à savoir U4a pour AU4a, U4b pour AU4b, U4c pour AU4c... etc » ; art. 1.1, 1.2 et 2.1 (p. 206) : « Se reporter au règlement de la zone U4 ayant le même indice ».'
     note: 'condition supplémentaire propre à AU4 — Art. 2.2 (p. 206) : « Les constructions peuvent être autorisées sous réserve de respecter les dispositions suivantes par ordre d''importance : 1. Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). 2. Se reporter au règlement de la zone U ayant le même indice. » — s''ajoute aux règles U4b pour toute construction.'
   AU4c:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U4 7.2'
+            page_pdf: 173
+            citation: '« Se reporter au règlement de la zone U4 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.206 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U4c) : en zones U4b et U4c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U4 7.2'
+            page_pdf: 173
+            citation: '« Se reporter au règlement de la zone U4 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.206 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U4c) : en zones U4b et U4c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
     renvoi: U4c
     renvoi_src: 'caractère de la zone AU4, p. 206 : « il convient de se reporter en fonction de l''indice de la zone AU considérée au règlement des zones urbaines correspondantes à savoir U4a pour AU4a, U4b pour AU4b, U4c pour AU4c... etc » ; art. 1.1, 1.2 et 2.1 (p. 206) : « Se reporter au règlement de la zone U4 ayant le même indice ».'
     note: 'condition supplémentaire propre à AU4 — Art. 2.2 (p. 206) : « Les constructions peuvent être autorisées sous réserve de respecter les dispositions suivantes par ordre d''importance : 1. Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). 2. Se reporter au règlement de la zone U ayant le même indice. » — s''ajoute aux règles U4c pour toute construction.'
@@ -2372,6 +2888,22 @@ zones:
           min_m: 0
           forme: alignement
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 219
+            citation: 'en zone U5a — Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. [obligation de joindre AU MOINS une limite — voir NOTES cas 3]'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 219
+            citation: 'en zone U5a — Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. [obligation de joindre AU MOINS une limite — voir NOTES cas 3]'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: '7.2'
           page_pdf: 219
@@ -2480,6 +3012,22 @@ zones:
           citation: en zone U5b Les constructions devront être implantées en retrait de 3 m minimum de la voie ou de l'emprise publique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 219
+            citation: 'en zone U5b et U5c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 219
+            citation: 'en zone U5b et U5c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 219
@@ -2556,6 +3104,22 @@ zones:
           citation: en zone U5c Les constructions devront être implantées en retrait de 4 m minimum de la voie ou de l'emprise publique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 219
+            citation: 'en zone U5b et U5c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U5 7.2'
+            page_pdf: 219
+            citation: 'en zone U5b et U5c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 219
@@ -2610,6 +3174,25 @@ zones:
     renvoi: U5a
     renvoi_src: 'chapitre unique « ZONES U5a, U5b, U5c », p. 213 : les articles 1 (« Occupations et utilisations du sol interdites ») et 2 (« soumises à des conditions particulières ») sont communs aux trois zones, sans aucune règle propre à U5c.'
   AU5a:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U5 7.2'
+            page_pdf: 219
+            citation: '« Se reporter au règlement de la zone U5ayant le même indice [sic] » (Art. 1.1/2.1 du chapitre AU, p.252 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U5a) : en zone U5a — Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. [obligation de joindre AU MOINS une limite — voir NOTES cas 3]'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U5 7.2'
+            page_pdf: 219
+            citation: '« Se reporter au règlement de la zone U5ayant le même indice [sic] » (Art. 1.1/2.1 du chapitre AU, p.252 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U5a) : en zone U5a — Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. [obligation de joindre AU MOINS une limite — voir NOTES cas 3]'
+            condition_modelable: 'une_seule_limite'
     renvoi: U5a
     renvoi_src: 'Zone AU5, p. 252 : « il convient de se reporter en fonction de l''indice de la zone AU considérée au règlement des zones urbaines correspondantes à savoir U5a pour AU5a, U5b pour AU5b, U5c pour AU5c... » ; Art. 1.1/1.2 et 2.1, p. 252 : « Se reporter au règlement de la zone U5 ayant le même indice. »'
     condition_generale:
@@ -2618,6 +3201,25 @@ zones:
       page_pdf: 252
       citation: '« Les constructions peuvent être autorisées sous réserve de respecter les dispositions suivantes par ordre d''importance : 1. Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). 2. Se reporter au règlement de la zone U5 ayant le même indice. »'
   AU5b:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U5 7.2'
+            page_pdf: 219
+            citation: '« Se reporter au règlement de la zone U5ayant le même indice [sic] » (Art. 1.1/2.1 du chapitre AU, p.252 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U5b) : en zone U5b et U5c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U5 7.2'
+            page_pdf: 219
+            citation: '« Se reporter au règlement de la zone U5ayant le même indice [sic] » (Art. 1.1/2.1 du chapitre AU, p.252 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U5b) : en zone U5b et U5c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
     renvoi: U5b
     renvoi_src: 'Zone AU5, p. 252 : « il convient de se reporter en fonction de l''indice de la zone AU considérée au règlement des zones urbaines correspondantes à savoir U5a pour AU5a, U5b pour AU5b, U5c pour AU5c... »'
     condition_generale:
@@ -2626,6 +3228,25 @@ zones:
       page_pdf: 252
       citation: « 1. Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »
   AU5c:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U5 7.2'
+            page_pdf: 219
+            citation: '« Se reporter au règlement de la zone U5ayant le même indice [sic] » (Art. 1.1/2.1 du chapitre AU, p.252 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U5c) : en zone U5b et U5c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U5 7.2'
+            page_pdf: 219
+            citation: '« Se reporter au règlement de la zone U5ayant le même indice [sic] » (Art. 1.1/2.1 du chapitre AU, p.252 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U5c) : en zone U5b et U5c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
     renvoi: U5c
     renvoi_src: 'Zone AU5, p. 252 : « il convient de se reporter en fonction de l''indice de la zone AU considérée au règlement des zones urbaines correspondantes à savoir U5a pour AU5a, U5b pour AU5b, U5c pour AU5c... »'
     condition_generale:
@@ -2786,6 +3407,22 @@ zones:
           min_m: 0
           forme: alignement
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U6 7.2'
+            page_pdf: 279
+            citation: 'en zone U6a — Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. [obligation de joindre AU MOINS une limite — voir NOTES cas 3]'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U6 7.2'
+            page_pdf: 279
+            citation: 'en zone U6a — Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. [obligation de joindre AU MOINS une limite — voir NOTES cas 3]'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: '7.2'
           page_pdf: 279
@@ -2894,6 +3531,22 @@ zones:
           citation: en zone U6b Les constructions devront être implantées en retrait de 3 m minimum de la voie ou de l'emprise publique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U6 7.2'
+            page_pdf: 279
+            citation: 'en zone U6b et U6c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande 3 m. [sic] [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U6 7.2'
+            page_pdf: 279
+            citation: 'en zone U6b et U6c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande 3 m. [sic] [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 279
@@ -2970,6 +3623,22 @@ zones:
           citation: en zone U6c Les constructions devront être implantées en retrait de 4 m minimum de la voie ou de l'emprise publique.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U6 7.2'
+            page_pdf: 279
+            citation: 'en zone U6b et U6c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande 3 m. [sic] [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'U6 7.2'
+            page_pdf: 279
+            citation: 'en zone U6b et U6c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande 3 m. [sic] [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
           min_m: 3.0
           article: '7.2'
           page_pdf: 279
@@ -3024,14 +3693,71 @@ zones:
     renvoi: U6a
     renvoi_src: chapitre unique « ZONES U6a, U6b, U6c » (p. 273) ; les articles 1 (« 1.2 - Sont interdits », p. 273) et 2 (« 2.2 - Sont admis sous condition », p. 274) ne distinguent pas les sous-zones U6a/U6b/U6c
   AU6a:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U6 7.2'
+            page_pdf: 279
+            citation: '« Se reporter au règlement de la zone U6 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.312 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U6a) : en zone U6a — Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. [obligation de joindre AU MOINS une limite — voir NOTES cas 3]'
+            condition_modelable: 'une_seule_limite'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U6 7.2'
+            page_pdf: 279
+            citation: '« Se reporter au règlement de la zone U6 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.312 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U6a) : en zone U6a — Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. En cas de retrait, elles respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions devront s''implanter sur une limite séparative sur une longueur maximale de 12 m. [obligation de joindre AU MOINS une limite — voir NOTES cas 3]'
+            condition_modelable: 'une_seule_limite'
     renvoi: U6a
     renvoi_src: 'Zones AU6, caractère et Art. 1/2 (p. 312) : « il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes à savoir U6a pour AU6a, U6b pour AU6b et U6c pour AU6c » ; Art. 1.2 et 2.2 : « Se reporter au règlement de la zone U6 ayant le même indice »'
     note: 'condition supplémentaire propre à AU6 (Zones AU6, Art. 2.2, p. 312), applicable à toute construction : « Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
   AU6b:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U6 7.2'
+            page_pdf: 279
+            citation: '« Se reporter au règlement de la zone U6 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.312 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U6b) : en zone U6b et U6c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande 3 m. [sic] [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U6 7.2'
+            page_pdf: 279
+            citation: '« Se reporter au règlement de la zone U6 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.312 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U6b) : en zone U6b et U6c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande 3 m. [sic] [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
     renvoi: U6b
     renvoi_src: 'Zones AU6, caractère et Art. 1/2 (p. 312) : « U6b pour AU6b » ; Art. 1.2 et 2.2 : « Se reporter au règlement de la zone U6 ayant le même indice »'
     note: 'condition supplémentaire propre à AU6 (Zones AU6, Art. 2.2, p. 312), applicable à toute construction : « Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
   AU6c:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U6 7.2'
+            page_pdf: 279
+            citation: '« Se reporter au règlement de la zone U6 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.312 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U6c) : en zone U6b et U6c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande 3 m. [sic] [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'renvoi vers U6 7.2'
+            page_pdf: 279
+            citation: '« Se reporter au règlement de la zone U6 ayant le même indice » (Art. 1.1/2.1 du chapitre AU, p.312 en base — renvoi global attesté par zones_au_renvoi du YAML gold, voir NOTES cas 7). Règle appliquée (U6c) : en zone U6b et U6c — Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande 3 m. [sic] [...] En cas de retrait, les constructions respecteront un recul minimal de 3 m.'
+            condition_texte: 'Les constructions pourront s''implanter sur une limite séparative sur une longueur maximale de 10 m. En cas de construction en limite séparative, la hauteur maximale autorisée sera de 6 m sur une bande de 3 m. Cette disposition ne s''applique pas aux constructions ou maisons individuelles faisant l''objet d''une aide publique et celles situées à l''intérieur d''opérations faisant l''objet d''une procédure de résorption d''habitat insalubre.'
+            condition_modelable: 'une_seule_limite + hauteur_bande:6 m sur bande de 3 m'
     renvoi: U6c
     renvoi_src: 'Zones AU6, caractère et Art. 1/2 (p. 312) : « U6c pour AU6c » ; Art. 1.2 et 2.2 : « Se reporter au règlement de la zone U6 ayant le même indice »'
     note: 'condition supplémentaire propre à AU6 (Zones AU6, Art. 2.2, p. 312), applicable à toute construction : « Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'

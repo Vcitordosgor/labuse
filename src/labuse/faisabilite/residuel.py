@@ -173,6 +173,16 @@ def compute_residuel(session: Session, parcel_id: int,
                 "cause": cause, "sdp_ecrite": sdp}
 
     fr = f.fourchette
+    # MOTEUR-VERITE-FIX-3 LOT 3 — « capacité à vérifier » N'EST PAS un zéro : une faisabilité
+    # constructible SANS clé `surface_plancher_m2` (SDP ∅ — AC2 site protégé, plafond d'habitat
+    # A/N, hauteur propre non chiffrable, littoral prospectif) dit « le chiffre ne peut pas être
+    # établi », jamais « capacité nulle ». SDP écrite NULL + cause d'IGNORANCE (le gate et le
+    # score servent « Analyse incomplète », pas « rien à bâtir »). Témoins AS0256, CY1293.
+    if "surface_plancher_m2" not in fr:
+        return {"disponible": False,
+                "raison": "Capacité à vérifier — aucune capacité chiffrée sans instruction "
+                          "(le résiduel reste inconnu, pas nul).",
+                "cause": "capacite_a_verifier", "sdp_ecrite": None}
     emprise_max = float(fr.get("emprise_constructible_m2") or 0.0)
     sdp_max = float(fr.get("surface_plancher_m2") or 0.0)
     if emprise_max <= 0 or sdp_max <= 0:

@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session
 from ..faisabilite.zonage import resolve_zone
 from ..faisabilite.zone_servie import zone_dominante
 from ..plu.destinations import regles_zone
-from ._geom import geojson_from_shape, to_wgs
+from ._geom import geojson_from_shape, shape_from_geojson, to_metric, to_wgs
 from .contract import (
     ApplicableRule,
     Exclusion,
@@ -33,6 +33,7 @@ from .contract import (
     MaxFootprint,
     MaxHeight,
     ParcelInput,
+    ReculSepFormule,
     RegulatorySource,
     Setback,
 )
@@ -56,6 +57,86 @@ def _num(x) -> Optional[float]:
     return float(x) if isinstance(x, (int, float)) else None
 
 
+#: MOTEUR-VERITE-FIX-5 LOT 1 — RÈGLE DE NON-HAUSSE : le chiffre servi ne dépasse JAMAIS celui
+#: de main, sauf cas APPROUVÉS (liste fermée du mandat). Les scénarios « hauteur de façade du
+#: projet » (niveau par niveau) ne sont admis QUE sur ces zones, à condition que la hauteur de
+#: façade du scénario respecte les plafonds de l'article (égout / acrotère / faîtage).
+FACADE_NIVEAU_AUTORISEES = {("97418", "UA"), ("97418", "UAz"), ("97402", "Ub"), ("97402", "Uc")}
+#: Scénario H/2 à l'ÉGOUT (niveau par niveau) : admis UNIQUEMENT à La Possession, HORS zones AU
+#: (conditions d'aménagement et OAP non vérifiables — AS0606 non, AC3589/AP0762 oui).
+EGOUT_NIVEAU_COMMUNES = {"97408"}
+
+#: MOTEUR-VERITE-FIX-4 LOT 6 — marge au-dessus du DERNIER PLANCHER quand la référence du
+#: retrait relatif est la hauteur TOTALE de façade : acrotère (~1,2-1,5 m) ou égout de toiture.
+#: FIXÉE à 1,5 m et ÉCRITE dans le scénario servi (H envisagé = n × étage + 1,5 m).
+MARGE_FACADE_TOITURE_M = 1.5
+
+
+def scenario_niveaux_autorise(insee: str, zone: str, h_reference, est_au: bool) -> bool:
+    """MOTEUR-VERITE-FIX-6 LOT 2 — le scénario niveau-par-niveau (retrait relatif exécuté sur le
+    bâtiment ENVISAGÉ) est-il autorisé pour (commune, zone) ? MÊME liste fermée que le gabarit
+    (règle de non-hausse) — exposé pour que le REPLI applique les MÊMES règles que le gabarit."""
+    if h_reference == "egout":
+        return insee in EGOUT_NIVEAU_COMMUNES and not est_au
+    if h_reference == "hauteur_totale_facade":
+        return (insee, zone) in FACADE_NIVEAU_AUTORISEES and not est_au
+    return False
+
+
+def recul_scenario_niveaux(frac: float, minimum_m: float, etage_m: float, niveaux_max: int,
+                           marge_m: float, aire_fn) -> tuple[float, int]:
+    """MOTEUR-VERITE-FIX-6 LOT 2 — recul du scénario niveau-par-niveau, calculé par la MÊME
+    logique que compute_gabarit : pour chaque n (1..niveauxMax), recul_n = max(min, frac × H(n))
+    avec H(n) = n × étage (+ marge toiture/acrotère quand la référence est la hauteur totale de
+    façade) ; on retient le n qui MAXIMISE le plancher (aire(recul_n) × n). `aire_fn(recul)` rend
+    l'emprise au recul donné (uniforme, côté legacy ; ou la zone d'implantation, côté gabarit).
+    Rend (recul_retenu, niveaux_retenus). Sert à aligner le REPLI sur le gabarit (AD0173)."""
+    best = None   # (plancher, -recul, n, recul)
+    for n in range(1, max(1, int(niveaux_max)) + 1):
+        h_n = n * float(etage_m) + float(marge_m or 0.0)
+        rec_n = round(max(float(minimum_m), float(frac) * h_n), 2)
+        aire_n = float(aire_fn(rec_n) or 0.0)
+        cand = (aire_n * n, -rec_n, n, rec_n)
+        if best is None or (cand[0], cand[1]) > (best[0], best[1]):
+            best = cand
+    return (best[3], best[2]) if best else (float(minimum_m), 1)
+
+
+def niveaux_max_plafond(egout, faitage, etage_m: float, niveaux_max_zone=None,
+                        h_reference=None) -> Optional[int]:
+    """MOTEUR-VERITE-FIX-7 LOT 1 — NOMBRE DE NIVEAUX maximal admis par les plafonds de HAUTEUR
+    de la zone (égout, faîtage, et par secteur via les valeurs déjà résolues he_m/hf_m). MÊME
+    fonction pour le gabarit ET le repli : un bâtiment de n niveaux a un égout n × étage et un
+    faîtage n × étage + marge ; ces deux hauteurs doivent rester SOUS les plafonds de l'article.
+
+    Priorité de la base (comme le gabarit) : nombre de niveaux explicite de l'article s'il existe,
+    sinon le plafond à l'égout, sinon le faîtage. Puis, quand la référence du retrait est la
+    hauteur TOTALE de façade (marge toiture/acrotère), on cape aussi par l'égout et par le faîtage
+    moins la marge. `egout`/`faitage`/`niveaux_max_zone` valant None quand l'article ne les fixe pas.
+
+    AVANT FIX-7 le repli choisissait ses niveaux depuis le FAÎTAGE (hf_m d'abord), dépassant le
+    plafond à l'égout (AC1866 La Possession UBc : 3 niveaux = 9 m à l'égout pour 7 m admis). Le
+    gabarit, lui, part de l'égout. Les deux chemins partagent désormais CETTE borne."""
+    etage = float(etage_m)
+    _eg = float(egout) if isinstance(egout, (int, float)) else None
+    _ft = float(faitage) if isinstance(faitage, (int, float)) else None
+    if isinstance(niveaux_max_zone, int):
+        nmax = int(niveaux_max_zone) + 1
+    elif _eg is not None:
+        nmax = max(1, int(_eg // etage))
+    elif _ft is not None:
+        nmax = max(1, int((_ft - etage) // etage))
+    else:
+        return None
+    marge = MARGE_FACADE_TOITURE_M if h_reference == "hauteur_totale_facade" else 0.0
+    if marge:
+        if _eg is not None:
+            nmax = min(nmax, max(1, int(_eg // etage)))
+        if _ft is not None:
+            nmax = min(nmax, max(1, int((_ft - marge) // etage)))
+    return max(1, nmax)
+
+
 def _fraction_hauteur_formule(formule: Optional[str]) -> Optional[float]:
     """FAISA-REGLES-1 (D-024) — lit la FRACTION DE HAUTEUR d'une formule de recul séparatif (« L ≥ h/2 »,
     « au tiers de la différence d'altitude h : h/3 »…) : rend 0,5 pour h/2, 1/3 pour h/3, None si la
@@ -63,8 +144,154 @@ def _fraction_hauteur_formule(formule: Optional[str]) -> Optional[float]:
     plancher sourcé s'applique seul)."""
     if not formule:
         return None
-    m = re.search(r"\bh\s*/\s*([234])\b", str(formule).lower())
+    s = str(formule).lower()
+    # MOTEUR-VERITE-FIX-4 LOT 3 — « L = H » (recul égal à la hauteur, Saint-Leu UF/UP) : fraction 1.
+    if re.search(r"\bl\s*=\s*h\b", s):
+        return 1.0
+    m = re.search(r"\bh\s*/\s*([234])\b", s)
     return (1.0 / int(m.group(1))) if m else None
+
+
+# ── MOTEUR-VERITE-FIX-2 LOT A — implantation en limite : décision PURE et STRICTE ──────────────
+# RÈGLE (gravée par tests/test_moteur_verite_fix2.py) : une capacité ne peut DÉPASSER le niveau
+# prudent que si TOUTES les conditions de l'article qui l'ouvre sont APPLIQUÉES par le moteur.
+# Un seul jeton non modélisé, mal formé ou disjonctif → l'ouverture FERME (retrait prudent),
+# la mention « capacité supérieure possible, à vérifier » reste ; le verdict reste constructible.
+
+_JETON_FLAGS = ("une_seule_limite", "deux_limites_max")
+_JETON_NUMS = ("largeur_terrain_max", "surface_terrain_max", "bascule_surface",
+               "profondeur_bande", "lineaire_max_pct")
+#: forme STRICTE d'un jeton numérique : « nom:12 », « nom:12,5 m », « nom:400 m² » — RIEN d'autre.
+#: (FIX-2 LOT A : « largeur_terrain_max:14 m (≤ 14 m : deux limites…) » était lu 141 414 m — la
+#: concaténation de tous les chiffres — et ouvrait deux limites à toute largeur.)
+_JETON_NUM_RX = re.compile(r"^(?P<nom>[a-z_]+)\s*:\s*(?P<val>\d+(?:[.,]\d+)?)\s*(?:m²|m2|m)?\s*$")
+
+
+def jeton_num_strict(tok: str):
+    """(nom, valeur) si le jeton est de forme stricte, sinon None (→ FERME l'ouverture)."""
+    m = _JETON_NUM_RX.match(tok.strip())
+    if not m or m.group("nom") not in _JETON_NUMS:
+        return None
+    return m.group("nom"), float(m.group("val").replace(",", "."))
+
+
+#: MOTEUR-VERITE-FIX-3 LOT 1 — LISTE BLANCHE. Tout est fermé par défaut : une ouverture
+#: chiffrée n'existe que si la feuille porte la déclaration explicite ET l'état de CHACUNE des
+#: huit conditions possibles de l'article (absente_du_texte = l'article ne la pose pas ;
+#: mesuree = le moteur la mesure sur la parcelle). Sans cela : retrait prudent, verdict
+#: « constructible, capacité supérieure possible, à vérifier ». Le relecteur contrôle la liste
+#: EN ENTIER (docs/audit-2026-11/moteur-verite-fix-1/LISTE-BLANCHE.md).
+DECLARATION_LISTE_BLANCHE = "toutes les conditions de l'article sont appliquées"
+CONDITIONS_LISTE_BLANCHE = (
+    "nombre_de_limites", "lineaire_ou_profondeur_en_limite", "bande_depuis_voie",
+    "hauteur_en_limite", "angle", "patio", "rupture_mitoyennete", "affectation_graphique")
+
+
+def liste_blanche_ok(imp: Optional[dict]) -> bool:
+    """La feuille porte-t-elle une déclaration de liste blanche COMPLÈTE ?"""
+    lb = (imp or {}).get("liste_blanche") or {}
+    if str(lb.get("declaration") or "").strip() != DECLARATION_LISTE_BLANCHE:
+        return False
+    conds = lb.get("conditions") or {}
+    return all(str(conds.get(k) or "") in ("absente_du_texte", "mesuree")
+               for k in CONDITIONS_LISTE_BLANCHE)
+
+
+def analyser_condition_implantation(imp: Optional[dict], largeur_m, surface_m2) -> dict:
+    """Décision d'implantation d'UN côté — {ouvre: bool, zero: 'toutes'|n|0, bande_m,
+    lineaire_pct, detail, mention}. `largeur_m` : largeur mesurée du terrain (ou None),
+    `surface_m2` : surface cadastrale (ou None). PURE (aucune géométrie ici).
+
+    FIX-2 LOT A : TOUT ou RIEN — si un jeton de `condition_modelable` n'est pas STRICTEMENT
+    modélisé (flag exact ou numérique bien formé), le côté N'OUVRE PAS (zero 0) et porte la
+    mention. Fini l'« ouverture + mention » qui chiffrait sans appliquer la condition."""
+    d = {"ouvre": False, "zero": 0, "bande_m": None, "lineaire_pct": None,
+         "detail": None, "mention": None}
+    if imp is None or imp.get("mode") in (None, "retrait_obligatoire"):
+        if imp is not None and imp.get("mode") == "retrait_obligatoire" and imp.get("condition_texte"):
+            d["mention"] = str(imp["condition_texte"]).strip()[:200]
+        return d
+    mode = imp["mode"]
+    art = (imp.get("article") or "").strip()
+    cm = (imp.get("condition_modelable") or "").strip()
+    cond_txt = (imp.get("condition_texte") or "conditions du règlement").strip()
+    # FIX-3 LOT 1 — LISTE BLANCHE : sans déclaration complète, AUCUNE ouverture chiffrée
+    # (même « limite_ou_retrait sans condition » : une condition peut vivre dans le seul texte).
+    if not liste_blanche_ok(imp):
+        d["mention"] = cond_txt[:200]
+        return d
+    if mode in ("limite_ou_retrait", "limite_imposee") and not cm:
+        lib = ("implantation en limite admise sans condition" if mode == "limite_ou_retrait"
+               else "implantation en limite imposée par le règlement")
+        d.update(ouvre=True, zero="toutes", detail=(f"{lib} — {art}" if art else lib))
+        return d
+    jetons = [t.strip() for t in cm.split("+") if t.strip()]
+    details = []
+    porte_largeur = False
+    porte_fermee = False
+    a_porte = any(t.strip().startswith("largeur_terrain_max:") for t in jetons)
+    for tok in jetons:
+        if tok in _JETON_FLAGS:
+            n = 1 if tok == "une_seule_limite" else 2
+            d["zero"] = "toutes" if d["zero"] == "toutes" else max(d["zero"] or 0, n)
+            details.append("en limite sur une seule limite" if n == 1 else "en limite sur deux limites au plus")
+            continue
+        js = jeton_num_strict(tok)
+        if js is None:
+            # jeton inconnu, « non », disjonctif (« OU ») ou MAL FORMÉ → l'ouverture FERME.
+            d.update(ouvre=False, zero=0, bande_m=None, lineaire_pct=None,
+                     detail=None, mention=cond_txt[:200])
+            return d
+        nom, val = js
+        if nom == "largeur_terrain_max":
+            # FIX-3 LOT 2 — la largeur est une PORTE mesurée SUR LA VOIE : remplie, elle ACTIVE
+            # les jetons de nombre de limites ; non remplie, le côté FERME (règle appliquée,
+            # pas une mention) — Sainte-Rose Ud ouvrait « toutes » sous le seuil et une au-delà.
+            # En mode imposé, « au moins une » reste imposée au-delà du seuil.
+            if largeur_m is None:
+                d.update(ouvre=False, zero=0, bande_m=None, lineaire_pct=None, detail=None,
+                         mention=(cond_txt[:160] + " (largeur sur voie non mesurable)"))
+                return d
+            if largeur_m <= val:
+                porte_largeur = True
+                details.append(f"largeur sur voie {largeur_m:g} m ≤ {val:g} m")
+            elif mode == "limite_imposee":
+                porte_largeur = True
+                d["zero"] = "toutes" if d["zero"] == "toutes" else max(d["zero"] or 0, 1)
+                details.append(f"largeur {largeur_m:g} m > {val:g} m — au moins une limite imposée")
+            else:
+                porte_fermee = True
+        elif nom == "surface_terrain_max":
+            if surface_m2 and float(surface_m2) <= val:
+                d["zero"] = "toutes"
+                details.append(f"surface du terrain {float(surface_m2):g} m² ≤ {val:g} m²")
+        elif nom == "bascule_surface":
+            if not surface_m2:
+                d.update(ouvre=False, zero=0, bande_m=None, lineaire_pct=None, detail=None,
+                         mention=(cond_txt[:160] + " (surface non connue)"))
+                return d
+            n = 2 if float(surface_m2) <= val else 1
+            d["zero"] = "toutes" if d["zero"] == "toutes" else max(d["zero"] or 0, n)
+            details.append(f"{n} limite(s) admise(s) (surface {float(surface_m2):g} m² "
+                           f"{'≤' if n == 2 else '>'} {val:g} m²)")
+        elif nom == "profondeur_bande":
+            d["bande_m"] = val
+            details.append(f"dans une bande de {val:g} m depuis la voie")
+        elif nom == "lineaire_max_pct":
+            d["lineaire_pct"] = val
+            details.append(f"sur au plus {val:g} % du linéaire")
+    if porte_fermee:
+        # porte de largeur évaluée NON remplie → le côté ferme, règle appliquée (pas de mention)
+        return {"ouvre": False, "zero": 0, "bande_m": None, "lineaire_pct": None,
+                "detail": None, "mention": None}
+    if a_porte and porte_largeur and not d["zero"]:
+        d["zero"] = "toutes"          # porte seule, sans jeton de nombre : le texte n'en fixe pas
+    if d["bande_m"] and not d["zero"]:
+        d["zero"] = "toutes"
+    d["ouvre"] = bool(d["zero"])
+    if details and d["ouvre"]:
+        d["detail"] = ("; ".join(details) + (f" — {art}" if art else ""))[:220]
+    return d
 
 
 def _bdtopo_millesime(session: Session) -> str:
@@ -209,6 +436,9 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     max_footprint: Optional[MaxFootprint] = None
     max_height: Optional[MaxHeight] = None
     recul_voie = recul_sep = None
+    recul_formule_obj: Optional[ReculSepFormule] = None   # MOTEUR-VERITE-FIX-1 (LOT 1)
+    imp_lat: Optional[dict] = None                        # MOTEUR-VERITE-FIX-1 (LOT 2)
+    imp_fond: Optional[dict] = None
     plu_zone_src: Optional[RegulatorySource] = None
 
     # --- zone dominante + multi-zones (découpage) ----------------------------
@@ -270,22 +500,91 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 recul_voie = 0.0   # alignement = recul 0 explicite, sourcé
             if recul_sep is None and getattr(zr, "recul_limites_alignement", False):
                 recul_sep = 0.0
-            # FAISA-REGLES-1 (D-024) — recul séparatif « L ≥ h/2 (min N m) » appliqué EN ENTIER : si la
-            # formule du règlement lie le recul à la hauteur (h/2, h/3…), le recul retenu = max(minimum,
-            # h × fraction), h = FAÎTAGE de la zone (hauteur prudente) — jamais réduit au seul plancher
-            # (NU-D-024 : min 4 m appliqué seul sur-estimait la zone d'implantation de ~15 %). Si la hauteur
-            # n'est pas validée, la formule reste « non intégrée » (on ne devine pas h).
+            # MOTEUR-VERITE-FIX-1 (LOT 1) — recul séparatif « L ≥ H/n (min X m) » : H est la hauteur
+            # à l'ÉGOUT du bâtiment ENVISAGÉ, pas le faîtage maximal de la zone (la régression D-024
+            # du 31/10 insétait h×frac au faîtage sur toutes les limites : 19 permis réels couverts en
+            # octobre ne l'étaient plus — VERITE-TERRAIN-3, erreur V1 étage 2, témoin AO1919
+            # 564 m² → 73 m²). Le builder transmet désormais la FORMULE au moteur (reculSepFormule) ;
+            # engine.compute_gabarit évalue chaque nombre de niveaux admis (égout envisagé = n × étage)
+            # et RETIENT le scénario au plancher maximal. Les setbacks d'entrée portent le MINIMUM
+            # sourcé ; sans hauteur validée, la formule reste « non intégrée » (on ne devine pas H).
             recul_sep_formule = None
+            recul_formule_obj = None
             _frac_h = _fraction_hauteur_formule(getattr(zr, "recul_limites_formule", None))
-            if _frac_h is not None and recul_sep is not None:
-                _h_ref = haut if haut is not None else egout
-                if _h_ref is not None:
-                    _rec_h = round(_h_ref * _frac_h, 1)
-                    if _rec_h > recul_sep:
-                        recul_sep_formule = (
-                            f"recul séparatif = max({recul_sep:g} m, h×{_frac_h:.3g} = {_rec_h:g} m) "
-                            f"= {_rec_h:g} m (h = faîtage {_h_ref:g} m)")
-                        recul_sep = _rec_h
+            _h_ref_type = getattr(zr, "h_reference", None)
+            # MOTEUR-VERITE-FIX-5 LOT 1 — règle de NON-HAUSSE : les scénarios niveau par
+            # niveau (source de hausse vs main) ne sont admis que sur la liste fermée :
+            # égout → La Possession hors AU ; façade → Sainte-Marie UA/UAz + Bras-Panon Ub/Uc
+            # (plafonds de hauteur respectés). Partout ailleurs : référence PRUDENTE (capacité
+            # ≤ main), mention « capacité supérieure possible, à vérifier ».
+            from ..faisabilite.zonage import _insee as _insee_commune
+            from ..faisabilite.zone_norm import est_famille as _est_fam
+            _insee_c = _insee_commune(commune) or ""
+            _est_au = bool(work_zone) and _est_fam(work_zone, ("AU",))
+            _scenario_ok = False
+            if _h_ref_type == "egout":
+                _scenario_ok = _insee_c in EGOUT_NIVEAU_COMMUNES and not _est_au
+            elif _h_ref_type == "hauteur_totale_facade":
+                _scenario_ok = ((_insee_c, work_zone) in FACADE_NIVEAU_AUTORISEES
+                                and not _est_au)
+            if (_frac_h is not None and recul_sep is not None and recul_sep > 0
+                    and not _scenario_ok):
+                # Référence PRUDENTE (jamais de hausse) : l'ÉGOUT de la zone quand le texte
+                # vise l'égout (lecture correcte — Saint-Joseph U5 : « égout depuis le sol après
+                # travaux », FIX-5 LOT 2 — jamais le faîtage à sa place), sinon le faîtage (le
+                # recul le plus grand plausible). Le recul reste ≥ au minimum de main.
+                _ref_egout = (_h_ref_type == "egout" and egout is not None and not _est_au)
+                if _ref_egout:
+                    _h_prud = egout
+                else:
+                    # zone AU (conditions d'aménagement/OAP non vérifiables) ou référence non
+                    # égout : prudence MAXIMALE = faîtage (jamais une hausse vs main — AS0606).
+                    _h_prud = haut if haut is not None else egout
+                if _h_prud is not None:
+                    _rec_p = round(max(float(recul_sep), float(_h_prud) * _frac_h), 1)
+                    if _rec_p > recul_sep:
+                        recul_sep = _rec_p
+                    # MOTEUR-VERITE-FIX-6 LOT 3 — le NOM de la référence suit la VALEUR utilisée :
+                    # en zone AU la prudence sert le faîtage même si l'article vise l'égout
+                    # (AS0606 disait « égout 12 m » alors que son égout est à 9 m et le calcul
+                    # utilise le faîtage de 12 m).
+                    _ref_p = "égout" if _ref_egout else "faîtage"
+                    recul_sep_formule = (
+                        f"recul séparatif = max(min, H×{_frac_h:.3g}) — référence PRUDENTE "
+                        f"H = {_ref_p} {_h_prud:g} m (règle de non-hausse : scénario niveau par "
+                        f"niveau réservé à la liste approuvée) → {recul_sep:g} m")
+                    racc.setdefault("regles_non_integrees", []).append(
+                        "retrait relatif : scénario niveau-par-niveau non admis ici (règle de "
+                        "non-hausse) — référence prudente, capacité supérieure possible, à vérifier")
+                else:
+                    racc.setdefault("regles_non_integrees", []).append(
+                        "recul séparatif lié à la hauteur non chiffrable : hauteur de zone non validée")
+            elif _frac_h is not None and recul_sep is not None and recul_sep > 0:
+                from ..faisabilite.engine import Hypotheses
+                _etage = float(Hypotheses.charger(commune).etage_m)
+                # MOTEUR-VERITE-FIX-7 LOT 1 — niveaux bornés par les plafonds de hauteur via la
+                # MÊME fonction que le repli (égout d'abord, puis faîtage). Comportement identique
+                # au calcul inline antérieur (AS1397, FIX-4 LOT 6 ; plafonds FIX-5 LOT 1).
+                _marge = (MARGE_FACADE_TOITURE_M
+                          if _h_ref_type == "hauteur_totale_facade" else 0.0)
+                _nmax = niveaux_max_plafond(egout, haut, _etage,
+                                            getattr(zr, "niveaux_max", None), _h_ref_type)
+                if _nmax is not None:
+                    recul_formule_obj = ReculSepFormule(
+                        fraction=_frac_h, minimumM=float(recul_sep), etageM=_etage,
+                        niveauxMax=_nmax, margeM=_marge,
+                        reference=_h_ref_type or "egout",
+                        formule=str(getattr(zr, "recul_limites_formule", "") or ""),
+                        # FIX-8 LOT 3 — faîtage maximal de la zone (prudent de référence, main) ;
+                        # faute de faîtage fixé, l'égout borne déjà la hauteur réglementaire.
+                        hauteurReferenceM=(float(haut) if haut is not None
+                                           else float(egout) if egout is not None else None))
+                    _ref_lbl = ("hauteur totale de façade du bâtiment envisagé "
+                                f"(n × {_etage:g} m + {_marge:g} m de toiture/acrotère)"
+                                if _marge else "égout du bâtiment envisagé")
+                    recul_sep_formule = (
+                        f"recul séparatif = max({recul_sep:g} m, H×{_frac_h:.3g}), H = {_ref_lbl}"
+                        f" — scénario retenu par le moteur niveau par niveau (R+0…R+{_nmax - 1})")
                 else:
                     racc.setdefault("regles_non_integrees", []).append(
                         "recul séparatif lié à la hauteur (ex. h/2) non chiffrable : hauteur de zone non validée")
@@ -293,6 +592,9 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                            "recul_voie_m": recul_voie, "recul_sep_m": recul_sep, "source": plu_zone_src.document}
             if recul_sep_formule:
                 racc["plu"]["recul_sep_formule"] = recul_sep_formule
+            # MOTEUR-VERITE-FIX-1 (LOT 2) — modes d'implantation par côté (calibrés, validés-only).
+            imp_lat = getattr(zr, "implantation_laterales", None)
+            imp_fond = getattr(zr, "implantation_fond", None)
             silence_total = (not regles_zone(commune, work_zone) and not via_renvoi
                              and emp is None and haut is None and recul_voie is None and recul_sep is None)
             if silence_total:
@@ -413,10 +715,37 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     # `dryrun_cascade_results` du run épinglé, dédupliqué + arbitré), comme le reste de l'app, et NON
     # plus dans la table figée `cascade_results` (rail legacy mort). La part ROUGE exclue, elle, reste
     # déterminée EN DIRECT par la géométrie/classification unique `labuse_ppr_couleur` (ci-dessous).
-    from ..api.served_cascade import served_cascade_lines
-    _risques = [l for l in served_cascade_lines(session, idu) if l.get("layer_name") == "risques"]
-    _risques.sort(key=lambda l: l.get("result") == "HARD_EXCLUDE", reverse=True)
-    ppr = _risques[0] if _risques else None
+    # MOTEUR-VERITE-FIX-5 LOT 2 — le gabarit lit le verdict de la cascade REJOUÉE (couche
+    # risques évaluée en direct), pas le classement ÉPINGLÉ : AH0074 et BC1134 affichaient
+    # « Exclue » (run servi) pendant que la cascade fraîche disait « capacité réduite, sous
+    # prescriptions ». Repli sur le run servi si le rejeu échoue.
+    ppr = None
+    try:
+        from ..cascade.context import EvalContext as _EvalCtx, ParcelRef as _PRef
+        from ..cascade.engine import REGISTRY as _REG, _layers_for_phase as _lfp
+        _cctx = _EvalCtx(session)
+        _lc = next((l for l in _lfp(_cctx.rules, 1) if l["name"] == "risques"), None)
+        if _lc is not None:
+            _srow = session.execute(text(
+                "SELECT commune, COALESCE(contenance_m2, ST_Area(geom_2975)) FROM parcels "
+                "WHERE id = :pid"), {"pid": pid}).first()
+            _vs = _REG["risques"].evaluate(
+                _PRef(id=pid, idu=idu, commune=_srow[0] if _srow else None,
+                      surface_m2=float(_srow[1]) if _srow and _srow[1] else None),
+                _cctx, _lc.get("params") or {})
+            _vs = list(_vs) if isinstance(_vs, (list, tuple)) else [_vs]
+            _vs = [v for v in _vs if v is not None]
+            _vs.sort(key=lambda v: v.is_hard_exclude(), reverse=True)
+            if _vs:
+                ppr = {"result": getattr(_vs[0].result, "value", str(_vs[0].result)),
+                       "detail": _vs[0].detail}
+    except Exception:  # noqa: BLE001 — rejeu indisponible : repli sur le run servi
+        ppr = None
+    if ppr is None:
+        from ..api.served_cascade import served_cascade_lines
+        _risques = [l for l in served_cascade_lines(session, idu) if l.get("layer_name") == "risques"]
+        _risques.sort(key=lambda l: l.get("result") == "HARD_EXCLUDE", reverse=True)
+        ppr = _risques[0] if _risques else None
     ppr_src = RegulatorySource(document="PPR — zonage réglementaire", provider=PPR_PROVIDER)
     exclusions: list[Exclusion] = []
     # PPR-UNIQUE-1 — la part ROUGE exclue est déterminée EN DIRECT par la classification UNIQUE
@@ -486,11 +815,16 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     # zone rouge », plus HARD_EXCLUDE) — une seule géométrie, deux lecteurs, plus d'incohérence. Les
     # garde-fous (tenant / surface / accès voie / emprise) décident si ce > 0 est servi ou ramené à 0
     # AVEC MOTIF (jamais un 0 muet). Les autres SUP (ac1..el10, pm2/pm3) restent des exclusions réelles.
+    # MOTEUR-VERITE-FIX-1 (LOT 3, V8) — la SUP `ac2` (sites inscrits/classés) est un régime d'AVIS
+    # de l'architecte des Bâtiments de France, PAS une interdiction de construire : elle retirait
+    # 83 % d'une parcelle réelle (97413000CY1293, « LA POINTE AU SEL ») alors qu'on y construit sous
+    # avis. Elle sort de la déduction ; une ALERTE la signale (règle vérifiée, surface intacte).
     sup_gj = session.execute(text(
         "SELECT ST_AsGeoJSON(ST_CollectionExtract(ST_Transform(ST_Intersection("
         "  ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))), p.geom_2975), 4326), 3)) "
         "FROM spatial_layers sl, parcels p WHERE p.id = :pid AND sl.kind = 'sup' "
         "AND sl.subtype <> 'pm1' "          # enveloppe PPR : JAMAIS re-soustraite (rouge seul déjà déduit)
+        "AND sl.subtype <> 'ac2' "          # LOT 3 (V8) : avis ABF, jamais une surface retirée
         "AND sl.commune = p.commune "
         "AND ST_Intersects(sl.geom_2975, p.geom_2975) GROUP BY p.geom_2975"
     ), {"pid": pid}).first()
@@ -499,6 +833,19 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         exclusions.append(Exclusion(id="sup", ruleId="SUP", type="sup",
                                     label="Servitude d'utilité publique déduite",
                                     geometry=json.loads(sup_gj[0]), source=sup_src))
+    _ac2 = session.execute(text(
+        "SELECT COALESCE(sl.attrs->>'libelle', sl.name) FROM spatial_layers sl, parcels p "
+        "WHERE p.id = :pid AND sl.kind = 'sup' AND sl.subtype = 'ac2' AND sl.commune = p.commune "
+        "AND ST_Intersects(sl.geom_2975, p.geom_2975) LIMIT 1"), {"pid": pid}).first()
+    _ac2 = _ac2[0] if (_ac2 and _ac2[0]) else None     # (None,) des bases de test = absente
+    if _ac2:
+        applicable.append(ApplicableRule(
+            id="sup-ac2", label="Site protégé (AC2)", category="exclusion",
+            integrationStatus="integrated",
+            detail=(f"Servitude AC2 « {str(_ac2).strip()} » : avis de l'architecte des "
+                    "Bâtiments de France requis — aucune surface retirée (régime d'avis, pas une "
+                    "interdiction)."), source=sup_src))
+        racc.setdefault("alertes", []).append("AC2 — avis ABF requis (aucune surface retirée)")
     # RECETTE-OUTILS-2 (R17) — les SUP sont TOUJOURS contrôlées (la requête ci-dessus tranche présence
     # vs absence) : une absence VÉRIFIÉE est « intégrée » (vérifiée), pas « non modélisée ». Avant, le
     # PDF/outil marquait les SUP « non modélisées » tout en écrivant « Aucune SUP sur la parcelle » —
@@ -507,7 +854,8 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         id="SUP", label="Servitudes d'utilité publique", category="exclusion",
         integrationStatus="integrated",
         detail=("assiette SUP déduite de la zone d'implantation" if _sup_present
-                else "Aucune SUP sur la parcelle"), source=sup_src))
+                else ("SUP présente : AC2 (site protégé — autorisation spéciale/avis ABF, aucune "
+                      "surface déduite)" if _ac2 else "Aucune SUP sur la parcelle")), source=sup_src))
 
     # --- citation PLU retraits.voie : couvre-t-elle « voies ET emprises publiques » / voies privées ?
     emprises_publiques = voies_privees = False
@@ -557,12 +905,242 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 return "limite-voie-privee"
             return "limite-voie"
 
+        # MOTEUR-VERITE-FIX-1 (LOT 2) — IMPLANTATION PAR CÔTÉ. Quand le règlement admet (ou impose)
+        # la construction EN LIMITE séparative, le retrait n'est plus appliqué sur ces arêtes :
+        #   · limite_ou_retrait / limite_imposee sans condition → recul 0 sur toutes les arêtes du côté ;
+        #   · condition MODÉLISABLE : largeur_terrain_max:X (largeur = petit côté du rectangle englobant
+        #     minimal, mesurée) → 0 si remplie, retrait sinon (condition évaluée, pas de mention) ;
+        #     une_seule_limite / deux_limites_max → recul 0 sur la (les) arête(s) latérale(s) la (les)
+        #     plus longue(s) — le choix qui maximise le plancher, admis par la règle ;
+        #   · condition NON modélisable → retrait appliqué + MENTION « implantation en limite possible
+        #     sous conditions : capacité supérieure possible, à vérifier » (jamais un faux "exigu").
+        # Les arêtes posées en limite portent le ruleId `limite-sep-limite` (recul 0 sourcé) : la
+        # formule H/n du LOT 1 ne re-insète QUE les arêtes `limite-sep` restantes.
+        def _largeur_terrain_m():
+            # MOTEUR-VERITE-FIX-3 LOT 2 — la « largeur sur voie » des règlements se mesure SUR LA
+            # VOIE (somme des arêtes classées voie), jamais sur le petit côté du rectangle
+            # englobant (doublon FIX-2 retiré). Pas d'arête voie qualifiée → None (condition non
+            # évaluable → l'ouverture FERME, mention).
+            try:
+                _l = sum(float(e.geom.length) for e in lim.edges if e.type == "voie")
+                return round(_l, 1) if _l > 0 else None
+            except Exception:  # noqa: BLE001
+                return None
+
+        # MOTEUR-VERITE-FIX-2 LOT A — décision PURE (analyser_condition_implantation) : tout jeton
+        # non strictement modélisé FERME l'ouverture (chiffre prudent + mention, verdict conservé).
+        _larg = None
+        if any("largeur_terrain_max" in str((i or {}).get("condition_modelable") or "")
+               for i in (imp_lat, imp_fond)):
+            _larg = _largeur_terrain_m()
+        dec_lat = analyser_condition_implantation(imp_lat, _larg, surface)
+        dec_fond = analyser_condition_implantation(imp_fond, _larg, surface)
+
+        # MOTEUR-VERITE-FIX-5 LOT 1/LOT 2 — FRONTS SUR VOIE qualifiés sur le TERRAIN ENTIER
+        # (avant tout découpage par zone, emprises publiques comptées même ouvertes aux seuls
+        # piétons — AV1339 : 52,7 m de voie BD TOPO ET 40,7 m d'emprise publique). Sert : la
+        # porte Salazie « un seul front établi », et la règle du fond multi-voies.
+        _fronts_cache: list = []
+
+        def _fronts_terrain_entier():
+            if _fronts_cache:
+                return _fronts_cache[0]
+            try:
+                lf = classify_parcel_limits(session, pid, emprises_publiques=True,
+                                            voies_privees=voies_privees)
+                fronts = [e for e in lf.edges if e.type == "voie" and e.length_m >= 2.0]
+            except Exception:  # noqa: BLE001 — classification indisponible : fronts inconnus
+                fronts = None
+            _fronts_cache.append(fronts)
+            return fronts
+
+        # MOTEUR-VERITE-FIX-4 LOT 2 — fermoir par PRESCRIPTION GPU mesurée : une feuille peut
+        # déclarer `ferme_si_prescription` (bâtiment patrimonial protégé — Plaine Ub 7.2 ;
+        # périmètre RHI / linéaire commercial — Le Port Uc) : si la parcelle intersecte la
+        # prescription, l'ouverture FERME (règle APPLIQUÉE, motif porté — pas une mention).
+        # Couche non vérifiable → prudence : fermé.
+        _presc_appliques: list[str] = []
+
+        def _prescription_ferme(imp) -> Optional[str]:
+            for r in (imp or {}).get("ferme_si_prescription") or []:
+                try:
+                    hit = session.execute(text(
+                        "SELECT 1 FROM spatial_layers pr, parcels p WHERE p.id = :pid "
+                        "AND pr.kind = 'plu_gpu_prescription' AND pr.commune = p.commune "
+                        "AND pr.subtype = ANY(:subs) AND pr.attrs->>'libelle' ~* :rx "
+                        "AND ST_Intersects(pr.geom_2975, p.geom_2975) LIMIT 1"),
+                        {"pid": pid, "subs": list(r.get("subtypes") or []),
+                         "rx": str(r.get("libelle_regex") or "")}).scalar()
+                except Exception:  # noqa: BLE001 — non vérifiable : prudence, fermé
+                    hit = True
+                if hit:
+                    return str(r.get("motif") or
+                               "prescription du PLU : implantation en limite non appliquée")
+            return None
+
+        for _dec, _imp in ((dec_lat, imp_lat), (dec_fond, imp_fond)):
+            if _dec["ouvre"]:
+                _mp = _prescription_ferme(_imp)
+                if _mp and _mp not in _presc_appliques:
+                    _dec.update(ouvre=False, zero=0, bande_m=None, lineaire_pct=None,
+                                detail=None, mention=None)
+                    _presc_appliques.append(_mp)
+                elif _mp:
+                    _dec.update(ouvre=False, zero=0, bande_m=None, lineaire_pct=None,
+                                detail=None, mention=None)
+
+        # MOTEUR-VERITE-FIX-5 LOT 1 — porte SALAZIE UA : l'ouverture n'est admise que si UN
+        # SEUL front sur voie est établi À L'ÉCHELLE DU TERRAIN ENTIER (art. U 7.1 : le fond se
+        # définit au terrain d'assiette ; AV1267 oui — AV1339 deux emprises, AH0074 51 % rouge :
+        # non). PPR rouge dominant → pas d'ouverture (prudence, prescriptions à instruire).
+        if (dec_lat["ouvre"] or dec_fond["ouvre"]):
+            from ..faisabilite.zonage import _insee as _ins_sal
+            if (_ins_sal(commune) or "") == "97421":
+                _fronts = _fronts_terrain_entier()
+                _rouge_dom = False
+                try:
+                    from ..faisabilite.db import _HORS_PPR_ROUGE
+                    _rr_s = session.execute(_HORS_PPR_ROUGE, {"pid": pid}).first()
+                    if _rr_s is not None and _rr_s.parcelle_m2 and float(_rr_s.parcelle_m2) > 0:
+                        _rouge_dom = (float(_rr_s.rouge_m2 or 0.0)
+                                      / float(_rr_s.parcelle_m2)) >= 0.5
+                except Exception:  # noqa: BLE001 — mesure indisponible : prudence
+                    _rouge_dom = True
+                if _fronts is None or len(_fronts) != 1 or _rouge_dom:
+                    for _d in (dec_lat, dec_fond):
+                        _d.update(ouvre=False, zero=0, bande_m=None, lineaire_pct=None,
+                                  detail=None, mention=None)
+                    racc.setdefault("implantation", {}).setdefault("mentions", []).append(
+                        "ouverture non admise (règle de non-hausse) : front sur voie non unique "
+                        "à l'échelle du terrain entier, ou PPR rouge dominant — implantation en "
+                        "limite non appliquée, capacité supérieure possible, à vérifier")
+
+        _mentions = [m for m in (dec_lat["mention"], dec_fond["mention"]) if m]
+        if _mentions or dec_lat["detail"] or dec_fond["detail"] or _presc_appliques:
+            racc["implantation"] = {"laterales": imp_lat, "fond": imp_fond,
+                                    "appliques": [d for d in (dec_lat["detail"], dec_fond["detail"]) if d]
+                                    + _presc_appliques,
+                                    "mentions": _mentions}
+
         def _setbacks_for(edges, include_voie):
-            for i, e in enumerate(edges):
-                if e.type in ("side", "rear"):
+            # FIX-2 LOT A — le fond ne passe à 0 que si SON texte l'admet expressément (feuille
+            # fond ouvrante) ; et quand latérales et fond s'ouvrent par le MÊME article indistinct
+            # avec un PLAFOND n de limites, le budget n s'applique AU TOTAL (n arêtes les plus
+            # longues parmi latérales + fond), jamais n latérales PLUS tout le fond.
+            from shapely.ops import unary_union as _uu, substring as _substr
+            voie_geoms = [e.geom for e in edges if e.type == "voie"]
+            def _band(bm):
+                if not bm or not voie_geoms:
+                    return None               # pas de voie mesurable → prudence : pas de limite
+                return _uu([g.buffer(bm) for g in voie_geoms])
+            side_edges = [e for e in edges if e.type == "side"]
+            rear_edges = [e for e in edges if e.type == "rear"]
+            fond_expres = dec_fond["ouvre"]
+            meme_article = (fond_expres and dec_lat["ouvre"]
+                            and (imp_lat or {}).get("article") == (imp_fond or {}).get("article"))
+            # MOTEUR-VERITE-FIX-4 LOT 1 — seuls les CÔTÉS CADASTRAUX entrent au budget et peuvent
+            # être posés en limite : jamais une coupe interne de zonage ni une ligne hors du
+            # contour (AE0114, AV1339, AH0074) ; jamais un anneau (garde FIX-3). Le FOND n'est pas
+            # posé en limite quand le terrain est longé par PLUSIEURS voies : la définition du
+            # fond relève alors de l'article (non modélisée) — mention, à vérifier.
+            def _cote_qualifie(e):
+                return getattr(e, "cadastrale", True) and not getattr(e.geom, "is_ring", False)
+            elig_side = [e for e in side_edges if _cote_qualifie(e)]
+            elig_rear = [e for e in rear_edges if _cote_qualifie(e)]
+            n_voies_distinctes = sum(1 for e in edges if e.type == "voie")
+            if mz_sub_geom_wkt is not None:
+                # FIX-5 LOT 2 — les fronts se qualifient sur le TERRAIN ENTIER avant le
+                # découpage par zone : le morceau peut ne plus voir qu'un front (AV1339).
+                _f_full = _fronts_terrain_entier()
+                if _f_full is not None:
+                    n_voies_distinctes = max(n_voies_distinctes, len(_f_full))
+            if n_voies_distinctes >= 2 and elig_rear and (
+                    fond_expres or (dec_lat["ouvre"] and meme_article)):
+                elig_rear = []
+                racc.setdefault("implantation", {}).setdefault("mentions", []).append(
+                    "terrain longé par plusieurs voies : la définition du fond relève de "
+                    "l'article — fond non posé en limite, à vérifier")
+            if (dec_lat["ouvre"] or fond_expres) and any(
+                    not getattr(e, "cadastrale", True) for e in side_edges + rear_edges):
+                racc.setdefault("implantation", {}).setdefault("mentions", []).append(
+                    "coupe interne / ligne hors du contour cadastral : implantation en limite "
+                    "non appliquée sur ces lignes (retrait conservé), à vérifier")
+            zero_ids = set()
+            if dec_lat["ouvre"] and dec_lat["zero"] == "toutes":
+                zero_ids |= {id(e) for e in elig_side}
+            if fond_expres and dec_fond["zero"] == "toutes" and not (
+                    meme_article and isinstance(dec_lat["zero"], int)):
+                zero_ids |= {id(e) for e in elig_rear}
+            if dec_lat["ouvre"] and isinstance(dec_lat["zero"], int) and dec_lat["zero"] > 0:
+                bassin = elig_side + (elig_rear if meme_article else [])
+                tri = sorted(bassin, key=lambda e: -float(e.geom.length))
+                zero_ids |= {id(e) for e in tri[:dec_lat["zero"]]}
+            if (fond_expres and isinstance(dec_fond["zero"], int) and dec_fond["zero"] > 0
+                    and not meme_article):
+                tri = sorted(elig_rear, key=lambda e: -float(e.geom.length))
+                zero_ids |= {id(e) for e in tri[:dec_fond["zero"]]}
+
+            def _emettre(i, e, dec, en_limite):
+                # FIX-3 LOT 2 — un CONTOUR FERMÉ (anneau : parcelle enclavée dont tout le périmètre
+                # est classé en une seule « arête ») n'est JAMAIS posé en limite : le mettre à 0
+                # ouvrait tout le périmètre (Sainte-Suzanne AH0293, L'Étang-Salé AY0554,
+                # Saint-Paul AH1368, Le Tampon AW0503 — relecture FIX-3).
+                if en_limite and getattr(e.geom, "is_ring", False):
+                    en_limite = False
+                    racc.setdefault("implantation", {}).setdefault("mentions", []).append(
+                        "contour fermé non qualifié (une seule arête sur tout le périmètre) : "
+                        "implantation en limite non appliquée — à vérifier")
+                if not en_limite:
+                    # MOTEUR-VERITE-FIX-4 LOT 3 — FOND à retrait FIXE propre (Trois-Bassins Ue 7.3
+                    # « 4 m ») : ruleId distinct, la formule H/2 (variantes) ne patche que
+                    # « limite-sep » — le fond garde sa valeur, jamais re-calculé.
+                    _fond_fixe = getattr(zr, "recul_fond_m", None)
+                    if e.type == "rear" and isinstance(_fond_fixe, (int, float)):
+                        setbacks.append(Setback(id=f"lim-{i}", ruleId="limite-sep-fond",
+                                                type=e.type,
+                                                geometry=geojson_from_shape(to_wgs(e.geom)),
+                                                setbackM=float(_fond_fixe), source=bdtopo_src))
+                        return
                     setbacks.append(Setback(id=f"lim-{i}", ruleId="limite-sep", type=e.type,
                                             geometry=geojson_from_shape(to_wgs(e.geom)),
                                             setbackM=recul_sep, source=bdtopo_src))
+                    return
+                g_lim, g_ret = e.geom, None
+                band = _band(dec["bande_m"])
+                if dec["bande_m"]:
+                    if band is None:
+                        g_lim, g_ret = None, e.geom       # bande non mesurable → tout en retrait
+                    else:
+                        g_lim = e.geom.intersection(band)
+                        g_ret = e.geom.difference(band)
+                if g_lim is not None and not g_lim.is_empty and dec["lineaire_pct"]:
+                    frac = max(0.0, min(1.0, dec["lineaire_pct"] / 100.0))
+                    parts_lim, parts_ret = [], []
+                    geoms = ([g_lim] if g_lim.geom_type == "LineString"
+                             else [g for g in getattr(g_lim, "geoms", []) if g.geom_type == "LineString"])
+                    for g in geoms:
+                        parts_lim.append(_substr(g, 0.0, frac, normalized=True))
+                        parts_ret.append(_substr(g, frac, 1.0, normalized=True))
+                    g_lim = _uu([p for p in parts_lim if not p.is_empty]) if parts_lim else None
+                    extra = _uu([p for p in parts_ret if not p.is_empty]) if parts_ret else None
+                    g_ret = _uu([x for x in (g_ret, extra) if x is not None and not x.is_empty]) \
+                        if (g_ret is not None or extra is not None) else None
+                _ret_rid, _ret_val = "limite-sep", recul_sep
+                if e.type == "rear" and isinstance(getattr(zr, "recul_fond_m", None), (int, float)):
+                    _ret_rid, _ret_val = "limite-sep-fond", float(zr.recul_fond_m)
+                for j, (g, rid, dd) in enumerate(((g_lim, "limite-sep-limite", 0.0),
+                                                  (g_ret, _ret_rid, _ret_val))):
+                    if g is None or g.is_empty or g.length < 0.05:
+                        continue
+                    setbacks.append(Setback(id=f"lim-{i}-{j}", ruleId=rid, type=e.type,
+                                            geometry=geojson_from_shape(to_wgs(g)),
+                                            setbackM=dd, source=bdtopo_src))
+
+            for i, e in enumerate(edges):
+                if e.type == "side":
+                    _emettre(i, e, dec_lat, id(e) in zero_ids)
+                elif e.type == "rear":
+                    _emettre(i, e, dec_fond if fond_expres else dec_lat, id(e) in zero_ids)
                 elif include_voie and e.type == "voie":
                     setbacks.append(Setback(id=f"lim-{i}", ruleId=_ruleid_for(e), type="road",
                                             geometry=geojson_from_shape(to_wgs(e.geom)),
@@ -574,6 +1152,15 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 applicable.append(ApplicableRule(id="limite-sep", label="Limites séparatives",
                     category="setback", integrationStatus="integrated",
                     detail=f"Recul séparatif {recul_sep:g} m — PLU {commune} {work_zone} (validé)", source=bdtopo_src))
+            # MOTEUR-VERITE-FIX-1 (LOT 2) — arêtes posées EN LIMITE (recul 0 sourcé au règlement).
+            if ((dec_lat["ouvre"] and any(e.type == "side" for e in edges))
+                    or (dec_fond["ouvre"] and any(e.type == "rear" for e in edges))):
+                _det = " ; ".join(d for d in (dec_lat["detail"], dec_fond["detail"]) if d)
+                applicable.append(ApplicableRule(
+                    id="limite-sep-limite", label="Limites séparatives — en limite",
+                    category="setback", integrationStatus="integrated",
+                    detail=f"Recul 0 m — {_det} — PLU {commune} {work_zone} (validé)",
+                    source=bdtopo_src))
             if include_voie and any(e.type == "voie" and e.source_kind == "bdtopo" for e in edges):
                 applicable.append(ApplicableRule(id="limite-voie", label="Recul voie", category="setback",
                     integrationStatus="integrated",
@@ -596,7 +1183,32 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         else:
             n_voie = sum(1 for e in lim.edges if e.type == "voie")
             n_sep = sum(1 for e in lim.edges if e.type in ("side", "rear"))
-            racc["classification"] = {"provider": bdtopo_src.provider, "voie": n_voie, "side":
+            # MOTEUR-VERITE-FIX-5 LOT 1 — JAMAIS de hausse sans façade sur voie ÉTABLIE pour
+            # l'assiette calculée (AC3540 : 0 m de façade qualifiée ; AD0323, AK0834) : les
+            # scénarios niveau par niveau sont retirés (le minimum prudent reste servi).
+            _fac_q = sum(float(e.geom.length) for e in lim.edges if e.type == "voie")
+            if recul_formule_obj is not None and _fac_q <= 0.0:
+                # FIX-5 LOT 1 (resserré LOT 4) — sans façade établie : variantes RETIRÉES et
+                # recul porté à la référence PRUDENTE faîtage (comme main) — le chiffre reste
+                # servi, jamais au-dessus de main (AC3540 : 174 → ~85 = main), la mention reste.
+                recul_formule_obj = None
+                _frac0 = _fraction_hauteur_formule(getattr(zr, "recul_limites_formule", None))
+                _hp0 = haut if haut is not None else egout
+                if _frac0 is not None and _hp0 is not None:
+                    _rp0 = round(max(float(recul_sep or 0.0), float(_hp0) * _frac0), 1)
+                    if recul_sep is None or _rp0 > recul_sep:
+                        recul_sep = _rp0
+                        racc["plu"]["recul_sep_m"] = recul_sep
+                racc.setdefault("regles_non_integrees", []).append(
+                    "scénario niveau-par-niveau retiré : aucune façade sur voie établie pour "
+                    "l'assiette calculée (règle de non-hausse) — référence prudente faîtage, "
+                    "capacité supérieure possible, à vérifier")
+            racc["classification"] = {"provider": bdtopo_src.provider, "voie": n_voie,
+                                      # MOTEUR-VERITE-FIX-4 LOT 2 — façade mesurée (garde micro-parcelle)
+                                      "facade_voie_m": round(sum(
+                                          float(e.geom.length) for e in lim.edges
+                                          if e.type == "voie"), 1),
+                                      "side":
                                       sum(1 for e in lim.edges if e.type == "side"),
                                       "rear": sum(1 for e in lim.edges if e.type == "rear"),
                                       "emprise_publique": sum(1 for e in lim.edges
@@ -655,6 +1267,7 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         parcel=ParcelInput(id=idu, geometry=geom, areaM2=round(surface, 1) if surface else None,
                            source=cadastre_src),
         setbacks=setbacks,
+        reculSepFormule=recul_formule_obj,
         maxFootprint=max_footprint,
         maxHeight=max_height,
         exclusions=exclusions,

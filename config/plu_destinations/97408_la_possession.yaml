@@ -1,15 +1,24 @@
 meta:
   insee: '97408'
   commune: La Possession
-  document: 97408_reglement_20251217.pdf
-  document_gpu: 97408_PLU_20251217
-  gpu_doc_id: 3fa1dbaa347af47ed5b743696ea098f6
-  url: https://data.geopf.fr/annexes/gpu/documents/DU_97408/3fa1dbaa347af47ed5b743696ea098f6/97408_reglement_20251217.pdf
+  document: 97408_reglement_20260625.pdf
+  document_gpu: 97408_PLU_20260625
+  gpu_doc_id: 77244f114938a3230afb98948d9498bc
+  url: https://data.geopf.fr/annexes/gpu/documents/DU_97408/77244f114938a3230afb98948d9498bc/97408_reglement_20260625.pdf
   md5: 8b3bd9de4c9a3d23f91307c31c457007
-  millesime: '2025-12-17'
+  millesime: '2026-06-25'
   pages_total: 164
   lu_le: '2026-09-03'
-  structure: 'Ancien format : zones U avec clause « sont admises toutes les occupations non citées à l''article 1.2 » (silence = autorisé) sauf UBpszc et UT/UTfr2 fermées (silence = interdit) ; AU indicée = renvoi ÉCRIT (DG art. 3 2°, p. 7) vers la zone urbaine d''indice ; AUst fermée ; A/N/Npnr/Nr/Nli fermées ; Ni1/Ni2 (Mafate) plafonds par destination en EMPRISE AU SOL par concession (N9). AUEm : chapitre annoncé par les DG mais absent de la pièce écrite → non_lu (dit tel quel).'
+  # [PLU-MAJ-2] modif. simplifiée n°2 (application d'un jugement du TA), idurba 97408_PLU_20260625.
+  # Le règlement 20260625 est OCTET-POUR-OCTET IDENTIQUE au 20251217 (même md5 8b3bd9de…, 164 pages,
+  # 0 page différente — vérifié). AUCUNE règle chiffrée ne change : le calibrage ci-dessous reste
+  # valide, seul l'identifiant du document est re-pointé. Ancien document 97408_reglement_20251217.pdf
+  # (hash GPU 3fa1dbaa… désormais 404) conservé dans data/plu_reglements/ et archivé (plu_layer_archive).
+  structure: 'Ancien format : zones U avec clause « sont admises toutes les occupations non citées à l''article
+    1.2 » (silence = autorisé) sauf UBpszc et UT/UTfr2 fermées (silence = interdit) ; AU indicée = renvoi ÉCRIT
+    (DG art. 3 2°, p. 7) vers la zone urbaine d''indice ; AUst fermée ; A/N/Npnr/Nr/Nli fermées ; Ni1/Ni2 (Mafate)
+    plafonds par destination en EMPRISE AU SOL par concession (N9). AUEm : chapitre annoncé par les DG mais absent
+    de la pièce écrite → non_lu (dit tel quel).'
 zones:
   UA:
     regles:
@@ -37,6 +46,23 @@ zones:
           citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à 3 mètres (voir illustrations explicatives dans les annexes du règlement).
           statut: valide
         limites_separatives:
+          h_reference: egout
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UA 7.2'
+            page_pdf: 15
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UA 7.2'
+            page_pdf: 15
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
           min_m: 3
           article: UA 7
           page_pdf: 15
@@ -190,6 +216,7 @@ zones:
           citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à 3 mètres (voir illustrations explicatives dans les annexes du règlement).
           statut: valide
         limites_separatives:
+          h_reference: egout
           min_m: 3
           article: UA 7
           page_pdf: 15
@@ -257,6 +284,23 @@ zones:
           min_m: 0
           forme: alignement
         limites_separatives:
+          h_reference: egout
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UA 7.2'
+            page_pdf: 15
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UA 7.2'
+            page_pdf: 15
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
           min_m: 3
           article: UA 7
           page_pdf: 15
@@ -401,6 +445,23 @@ zones:
           citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à 3 mètres (voir illustrations explicatives dans les annexes du règlement).
           statut: valide
         limites_separatives:
+          h_reference: egout
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UA 7.2'
+            page_pdf: 15
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UA 7.2'
+            page_pdf: 15
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
           min_m: 3
           article: UA 7
           page_pdf: 15
@@ -552,6 +613,25 @@ zones:
           citation: Dans le secteur UAv, les constructions peuvent être implantées à l’alignement ou en recul de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          h_reference: egout
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UA 7.2'
+            page_pdf: 15
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UA 7.2'
+            page_pdf: 15
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
           min_m: 3.0
           article: UA 7
           page_pdf: 15
@@ -632,6 +712,23 @@ zones:
           citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
           min_m: 3
           article: UB 7
           page_pdf: 30
@@ -775,6 +872,23 @@ zones:
           citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
           min_m: 3
           article: UB 7
           page_pdf: 30
@@ -900,6 +1014,23 @@ zones:
           citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
           min_m: 3
           article: UB 7
           page_pdf: 30
@@ -1025,6 +1156,23 @@ zones:
           citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
           min_m: 3
           article: UB 7
           page_pdf: 30
@@ -1162,6 +1310,23 @@ zones:
           citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
           min_m: 3
           article: UB 7
           page_pdf: 30
@@ -1289,6 +1454,23 @@ zones:
           citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
           min_m: 3
           article: UB 7
           page_pdf: 30
@@ -1577,6 +1759,23 @@ zones:
           citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UEm 7.2'
+            page_pdf: 50
+            citation: 'Les constructions doivent être implantées en retrait des limites séparatives avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. La mitoyenneté peut être admise sous réserve que la construction n’excède pas 20 mètres de linéaire au total cumulé sur la limite séparative et de la construction d’un mur coupe-feu.'
+            condition_texte: 'La mitoyenneté peut être admise sous réserve que la construction n’excède pas 20 mètres de linéaire au total cumulé sur la limite séparative et de la construction d’un mur coupe-feu.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UEm 7.2'
+            page_pdf: 50
+            citation: 'Les constructions doivent être implantées en retrait des limites séparatives avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. La mitoyenneté peut être admise sous réserve que la construction n’excède pas 20 mètres de linéaire au total cumulé sur la limite séparative et de la construction d’un mur coupe-feu.'
+            condition_texte: 'La mitoyenneté peut être admise sous réserve que la construction n’excède pas 20 mètres de linéaire au total cumulé sur la limite séparative et de la construction d’un mur coupe-feu.'
+            condition_modelable: 'non'
           min_m: 3
           article: UEm 7
           page_pdf: 50
@@ -1877,6 +2076,25 @@ zones:
           citation: Les constructions peuvent être implantées à l’alingement ou en recul de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie au moins égale à 4 mètres.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          h_reference: egout
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUBm 7.2'
+            page_pdf: 74
+            citation: 'Les constructions peuvent être implantées sur une ou deux limites séparatives. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur une ou deux limites séparatives. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue, sans clause d’angle)'
+            condition_modelable: 'deux_limites_max+non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUBm 7.2'
+            page_pdf: 74
+            citation: 'Les constructions peuvent être implantées sur une ou deux limites séparatives. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: '« Les constructions peuvent être implantées sur une ou deux limites séparatives. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue, sans clause d’angle)'
+            condition_modelable: 'deux_limites_max+non'
           min_m: 3.0
           article: AUBm 7
           page_pdf: 74
@@ -2022,6 +2240,23 @@ zones:
           citation: Dans le secteur UAv, les constructions peuvent être implantées à l’alignement ou en recul de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : classement égout RETIRÉ (relecture) — la règle PROPRE p.68 prescrit 3 m ; seuls les îlots 10C, 8D et 5B permettent la limite sous condition de profondeur 10 m (non modélisés). Aucun scénario H/2 ici.'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (disposition propre AUAv)'
+            page_pdf: 68
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. Dans la zone AUAv, les constructions doivent être en retrait de 3 mètres minimum des différentes limites séparatives, à l’exception des îlots 10C, 8D et 5B dans lesquels les constructions peuvent être implantées sur les limites séparatives à condition que la profondeur de la construction n’excède pas 10 mètres.'
+            condition_texte: 'limite admise seulement dans les îlots opérationnels 10C, 8D et 5B « à condition que la profondeur de la construction n’excède pas 10 mètres » (l’îlot relève du plan de l’opération Cœur de Ville, non attribuable depuis la seule zone)'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (disposition propre AUAv)'
+            page_pdf: 68
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. Dans la zone AUAv, les constructions doivent être en retrait de 3 mètres minimum des différentes limites séparatives, à l’exception des îlots 10C, 8D et 5B dans lesquels les constructions peuvent être implantées sur les limites séparatives à condition que la profondeur de la construction n’excède pas 10 mètres.'
+            condition_texte: 'limite admise seulement dans les îlots opérationnels 10C, 8D et 5B « à condition que la profondeur de la construction n’excède pas 10 mètres » (l’îlot relève du plan de l’opération Cœur de Ville, non attribuable depuis la seule zone)'
+            condition_modelable: 'non'
           min_m: 3.0
           article: UA 7
           page_pdf: 15
@@ -2080,6 +2315,23 @@ zones:
           citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.68) → UB 7.2'
+            page_pdf: 30
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. [UB 7.2 p.30 : Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.]'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.68) → UB 7.2'
+            page_pdf: 30
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. [UB 7.2 p.30 : Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.]'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
           min_m: 3
           article: UB 7
           page_pdf: 30
@@ -2182,6 +2434,23 @@ zones:
           citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.68) → UB 7.2'
+            page_pdf: 30
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. [UB 7.2 p.30 : Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.]'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.68) → UB 7.2'
+            page_pdf: 30
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. [UB 7.2 p.30 : Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.]'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
           min_m: 3
           article: UB 7
           page_pdf: 30
@@ -2296,6 +2565,23 @@ zones:
           citation: Les constructions doivent être implantées à l’alignement ou en recul de la voie. En cas de recul, la distance comptée horizontalement de tout point de la façade au point le plus proche de la voie doit être au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.68) → UB 7.2'
+            page_pdf: 30
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. [UB 7.2 p.30 : Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.]'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.68) → UB 7.2'
+            page_pdf: 30
+            citation: 'Se reporter au règlement de la zone U indiquée en indice ainsi qu’aux orientations d’aménagement et de programmation. [UB 7.2 p.30 : Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur à l’égout du toit de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.]'
+            condition_texte: '« Les constructions peuvent être implantées sur deux limites séparatives, sur une seule ou en retrait. Les constructions ne peuvent excéder 18 mètres de linéaire au total cumulé sur la limite séparative. L’implantation sur l’angle de deux limites séparatives contiguës est interdite et un espace libre égal ou supérieur à 5 mètres doit être réalisé entre la construction et l’angle des deux limites séparatives. » (deux limites au plus + plafond de linéaire 18 m en valeur absolue + angle interdit avec espace libre 5 m)'
+            condition_modelable: 'deux_limites_max+non'
           min_m: 3
           article: UB 7
           page_pdf: 30
@@ -2432,6 +2718,23 @@ zones:
           citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UEm 7.2 (calibrage, chapitre AUEm absent)'
+            page_pdf: 50
+            citation: '[YAML / chapitre AUEm absent de la pièce écrite — régime calibré sur UEm 7] Les constructions doivent être implantées en retrait des limites séparatives avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. La mitoyenneté peut être admise sous réserve que la construction n’excède pas 20 mètres de linéaire au total cumulé sur la limite séparative et de la construction d’un mur coupe-feu.'
+            condition_texte: 'La mitoyenneté peut être admise sous réserve que la construction n’excède pas 20 mètres de linéaire au total cumulé sur la limite séparative et de la construction d’un mur coupe-feu.'
+            condition_modelable: 'non'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UEm 7.2 (calibrage, chapitre AUEm absent)'
+            page_pdf: 50
+            citation: '[YAML / chapitre AUEm absent de la pièce écrite — régime calibré sur UEm 7] Les constructions doivent être implantées en retrait des limites séparatives avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. La mitoyenneté peut être admise sous réserve que la construction n’excède pas 20 mètres de linéaire au total cumulé sur la limite séparative et de la construction d’un mur coupe-feu.'
+            condition_texte: 'La mitoyenneté peut être admise sous réserve que la construction n’excède pas 20 mètres de linéaire au total cumulé sur la limite séparative et de la construction d’un mur coupe-feu.'
+            condition_modelable: 'non'
           min_m: 3
           article: UEm 7
           page_pdf: 50

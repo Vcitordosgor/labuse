@@ -65,6 +65,27 @@ zones:
             à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
+          fond_min_m: 3.0
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : le FOND a sa règle propre (art. 7.3, retrait 3 m) — le H/2 des latérales ne s''y applique jamais (AR0819, relecture).'
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UA 7 (7.3)'
+            page_pdf: 13
+            citation: 'Les constructions d’une hauteur maximale de 4 mètres peuvent être implantées en limites de fond de propriété sur une profondeur maximale de 3 mètres. En cas de retrait des limites de fond de propriété, les constructions doivent être implantées avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 3 mètres.'
+            condition_texte: 'limite de fond admise pour les constructions de hauteur ≤ 4 m, sur une profondeur ≤ 3 m'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UA 7 (7.2)'
+            page_pdf: 13
+            citation: 'Les constructions peuvent être implantées en retrait ou : - sur les deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure ou égale à 14 mètres, - sur une seule limite séparative latérale pour les terrain dont la largeur sur voie est supérieure à 14 mètres. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Lorsqu’une construction est implantée en limite séparative latérale, sa profondeur sur ladite limite ne peut excéder : - 15 mètres lorsqu’il s’agit d’une construction à usage d’habitation, - 20 mètres pour les constructions d’un autre usage.'
+            condition_texte: 'deux limites si largeur sur voie ≤ 14 m ; une seule limite si largeur > 14 m ; profondeur max sur la limite : 15 m (habitation) / 20 m (autre usage)'
+            condition_modelable: 'largeur_terrain_max:14 m (≤ 14 m : deux limites ; > 14 m : une_seule_limite)'
           min_m: 3.0
           article: UA 7
           page_pdf: 13
@@ -221,6 +242,27 @@ zones:
             à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
+          fond_min_m: 3.0
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : le FOND a sa règle propre (art. 7.3, retrait 3 m) — le H/2 des latérales ne s''y applique jamais (AR0819, relecture).'
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UB 7 (7.3)'
+            page_pdf: 22
+            citation: 'Les constructions d’une hauteur maximale de 4 mètres peuvent être implantées en limites de fond de propriété sur une profondeur maximale de 3 mètres. En cas de retrait des limites de fond de propriété, les constructions doivent être implantées avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 3 mètres.'
+            condition_texte: 'limite de fond admise pour les constructions de hauteur ≤ 4 m, sur une profondeur ≤ 3 m'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UB 7 (7.2)'
+            page_pdf: 22
+            citation: 'Les constructions peuvent être implantées en retrait ou : - sur les deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure ou égale à 14 mètres, - sur une seule limite séparative latérale pour les terrain dont la largeur sur voie est supérieure à 14 mètres. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Lorsqu’une construction est implantée en limite séparative latérale, sa profondeur sur ladite limite ne peut excéder : - 15 mètres lorsqu’il s’agit d’une construction à usage d’habitation, - 20 mètres pour les constructions d’un autre usage.'
+            condition_texte: 'deux limites si largeur sur voie ≤ 14 m ; une seule limite si largeur > 14 m ; profondeur max sur la limite : 15 m (habitation) / 20 m (autre usage)'
+            condition_modelable: 'largeur_terrain_max:14 m (≤ 14 m : deux limites ; > 14 m : une_seule_limite)'
           min_m: 3.0
           article: UB 7
           page_pdf: 22
@@ -370,6 +412,27 @@ zones:
             à 4 mètres. Le long de la RN2 et de la RD57, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
+          fond_min_m: 3.0
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : le FOND a sa règle propre (art. 7.3, retrait 3 m) — le H/2 des latérales ne s''y applique jamais (AR0819, relecture).'
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UC 7 (7.3)'
+            page_pdf: 31
+            citation: 'Les constructions d’une hauteur maximale de 4 mètres peuvent être implantées en limites de fond de propriété sur une profondeur maximale de 3 mètres. En cas de retrait des limites de fond de propriété, les constructions doivent être implantées avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 3 mètres.'
+            condition_texte: 'limite de fond admise pour les constructions de hauteur ≤ 4 m, sur une profondeur ≤ 3 m'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UC 7 (7.2)'
+            page_pdf: 31
+            citation: 'Les constructions peuvent être implantées en retrait ou : - sur les deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure ou égale à 12 mètres, - sur une seule limite séparative latérale pour les terrain dont la largeur sur voie est supérieure à 12 mètres. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Lorsqu’une construction est implantée en limite séparative latérale, sa profondeur sur ladite limite ne peut excéder : - 15 mètres lorsqu’il s’agit d’une construction à usage d’habitation, - 18 mètres pour les constructions d’un autre usage.'
+            condition_texte: 'deux limites si largeur sur voie ≤ 12 m ; une seule limite si largeur > 12 m ; profondeur max sur la limite : 15 m (habitation) / 18 m (autre usage)'
+            condition_modelable: 'largeur_terrain_max:12 m (≤ 12 m : deux limites ; > 12 m : une_seule_limite)'
           min_m: 3.0
           article: UC 7
           page_pdf: 31
@@ -515,6 +578,27 @@ zones:
             à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
+          fond_min_m: 3.0
+          note_fix5: 'MOTEUR-VERITE-FIX-5 LOT 2 : le FOND a sa règle propre (art. 7.3, retrait 3 m) — le H/2 des latérales ne s''y applique jamais (AR0819, relecture).'
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UD 7 (7.3)'
+            page_pdf: 40
+            citation: 'Les constructions d’une hauteur maximale de 4 mètres peuvent être implantées en limites de fond de propriété sur une profondeur maximale de 3 mètres. En cas de retrait des limites de fond de propriété, les constructions doivent être implantées avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 3 mètres.'
+            condition_texte: 'limite de fond admise pour les constructions de hauteur ≤ 4 m, sur une profondeur ≤ 3 m'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UD 7 (7.2)'
+            page_pdf: 40
+            citation: 'Les constructions doivent être implantées en retrait ou sur une limite séparative latérale pour les terrains dont la largeur sur voie est inférieure ou égale à 14 mètres. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'une seule limite, et seulement si largeur sur voie ≤ 14 m ; largeur > 14 m : retrait (lecture prudente, texte silencieux)'
+            condition_modelable: 'largeur_terrain_max:14 m + une_seule_limite'
           min_m: 3.0
           article: UD 7
           page_pdf: 40
@@ -633,6 +717,7 @@ zones:
             à 4 mètres. Le long de la RN2, cette distance de recul est portée à 7 mètres minimum.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 5
           article: UE 7
           page_pdf: 49
@@ -829,6 +914,23 @@ zones:
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
           note: "PLU-VERIF-1 : page corrigée 55→13 (art. UA 6)."
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UA 7 (7.3), renvoi ARTICLE AUINDICEE 7 p.55'
+            page_pdf: 13
+            citation: 'Les constructions d’une hauteur maximale de 4 mètres peuvent être implantées en limites de fond de propriété sur une profondeur maximale de 3 mètres. En cas de retrait des limites de fond de propriété, les constructions doivent être implantées avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 3 mètres.'
+            condition_texte: 'limite de fond admise pour les constructions de hauteur ≤ 4 m, sur une profondeur ≤ 3 m'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UA 7 (7.2), renvoi ARTICLE AUINDICEE 7 p.55'
+            page_pdf: 13
+            citation: 'Les constructions peuvent être implantées en retrait ou : - sur les deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure ou égale à 14 mètres, - sur une seule limite séparative latérale pour les terrain dont la largeur sur voie est supérieure à 14 mètres. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Lorsqu’une construction est implantée en limite séparative latérale, sa profondeur sur ladite limite ne peut excéder : - 15 mètres lorsqu’il s’agit d’une construction à usage d’habitation, - 20 mètres pour les constructions d’un autre usage.'
+            condition_texte: 'deux limites si largeur sur voie ≤ 14 m ; une seule limite si largeur > 14 m ; profondeur max sur la limite : 15 m (habitation) / 20 m (autre usage)'
+            condition_modelable: 'largeur_terrain_max:14 m (≤ 14 m : deux limites ; > 14 m : une_seule_limite)'
           min_m: 3
           article: UA 7
           page_pdf: 13
@@ -934,6 +1036,23 @@ zones:
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
           note: "PLU-VERIF-1 : page corrigée 55→31 (art. UC 6)."
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UC 7 (7.3), renvoi ARTICLE AUINDICEE 7 p.55'
+            page_pdf: 31
+            citation: 'Les constructions d’une hauteur maximale de 4 mètres peuvent être implantées en limites de fond de propriété sur une profondeur maximale de 3 mètres. En cas de retrait des limites de fond de propriété, les constructions doivent être implantées avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 3 mètres.'
+            condition_texte: 'limite de fond admise pour les constructions de hauteur ≤ 4 m, sur une profondeur ≤ 3 m'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UC 7 (7.2), renvoi ARTICLE AUINDICEE 7 p.55'
+            page_pdf: 31
+            citation: 'Les constructions peuvent être implantées en retrait ou : - sur les deux limites séparatives latérales pour les terrains dont la largeur sur voie est inférieure ou égale à 12 mètres, - sur une seule limite séparative latérale pour les terrain dont la largeur sur voie est supérieure à 12 mètres. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Lorsqu’une construction est implantée en limite séparative latérale, sa profondeur sur ladite limite ne peut excéder : - 15 mètres lorsqu’il s’agit d’une construction à usage d’habitation, - 18 mètres pour les constructions d’un autre usage.'
+            condition_texte: 'deux limites si largeur sur voie ≤ 12 m ; une seule limite si largeur > 12 m ; profondeur max sur la limite : 15 m (habitation) / 18 m (autre usage)'
+            condition_modelable: 'largeur_terrain_max:12 m (≤ 12 m : deux limites ; > 12 m : une_seule_limite)'
           min_m: 3
           article: UC 7
           page_pdf: 31
@@ -1036,6 +1155,7 @@ zones:
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
           note: "PLU-VERIF-1 : page corrigée 55→49 (art. UE 6)."
         limites_separatives:
+          h_reference: hauteur_totale_facade
           min_m: 5
           article: UE 7
           page_pdf: 49
