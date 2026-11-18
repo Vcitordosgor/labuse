@@ -288,6 +288,45 @@ def test_fix13_deux_voies_une_seule_porte_un_raccord():
     assert nb == 0 and abs(g - 2.0) <= 0.25, f"deux voies : nb={nb}, goulet={g:.2f} (attendu 0, 2 m)"
 
 
+# FIX-14 — la MARGE DE 5 cm est supprimée. Sur une assiette concave, une poche derrière la voie (ici le réseau
+# roulant MONTE jusqu'à la voie — recouvrement — mais l'ACCÈS ne la chevauche pas ; l'ancien code remplissait
+# l'encoche côté projet et la gardait comme départ dès qu'elle était à ≤ 5 cm du recouvrement). Désormais la
+# bande se construit d'un seul côté (extérieur) et SEULES les composantes que l'ACCÈS chevauche vraiment sont des
+# départs : la poche n'est JAMAIS retenue, qu'elle soit à 4 cm ou à 5,1 cm. Reste le seul chemin réel (neck 2 m).
+def _plan_poche(d, rot=0):
+    """Accès réel étranglé à 2 m (goulet 2 m) + une poche de bypass derrière la voie, à `d` du recouvrement."""
+    from shapely.affinity import rotate
+    voie = LineString([(-5, 16), (35, 16)])
+    bouche = Polygon([(22, 15.8), (28, 15.8), (28, 16.1), (22, 16.1)])        # accès mord la voie (6 m)
+    neck = Polygon([(24, 12.9), (26, 12.9), (26, 15.9), (24, 15.9)])          # neck 2 m → chemin réel
+    acc = unary_union([bouche, neck])
+    wide = Polygon([(20, 2), (30, 2), (30, 13), (20, 13)])                    # allée large (dégagement place)
+    lip = Polygon([(4, 15.9), (14, 15.9), (14, 16), (4, 16)])                 # réseau montant à la voie (x∈[4,14])
+    conn = Polygon([(4, 2), (30, 2), (30, 5), (4, 5)])                        # connecteur bas (poche → allée large)
+    allee = unary_union([wide, lip, conn])
+    place = Polygon([(24, 2), (26.5, 2), (26.5, 7), (24, 7)])
+    base = Polygon([(-5, -4), (35, -4), (35, 16), (-5, 16)])
+    encoche = Polygon([(4, 5), (14, 5), (14, 16 - d), (4, 16 - d)])           # vide derrière la voie, bande `d`
+    ass = base.difference(encoche)
+    gs = [voie, acc, allee, place, ass]
+    if rot:
+        gs = [rotate(g, rot, origin=(15, 8)) for g in gs]
+    voie, acc, allee, place, ass = gs
+    nb = C._desserte_core([allee], [place], 5.0, [acc], voie, C._PASSAGE_MIN_M, ass)[1]
+    g = C._largeur_min_desserte([allee], [place], 5.0, [acc], voie, ass)
+    return nb, g
+
+
+def test_fix14_poche_derriere_voie_jamais_depart():
+    """La poche derrière la voie n'est JAMAIS un départ — à 4 cm comme à 5,1 cm (plus de marge de 5 cm), aux
+    quatre orientations. Il reste le seul chemin réel (accès étranglé à 2 m) → 0 place, goulet ≈ 2 m partout."""
+    for rot in (0, 90, 180, 270):
+        for d in (0.04, 0.051):
+            nb, g = _plan_poche(d, rot)
+            assert nb == 0 and abs(g - 2.0) <= 0.25, \
+                f"poche rot {rot}° d={d} : nb={nb}, goulet={g:.2f} (attendu 0 place, 2 m)"
+
+
 # FIX-11 (défaut 1) — le côté de la bande de voie est donné par l'ASSIETTE, jamais par les aires roulantes :
 # une aire roulante isolée de l'AUTRE CÔTÉ de la voie ne retourne plus la bande (verdict stable, toute rotation).
 def _plan_def1(nw, rot_deg=0, avec_aire_opposee=True):

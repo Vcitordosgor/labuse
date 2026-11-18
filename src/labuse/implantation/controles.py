@@ -84,6 +84,21 @@ _PASSAGE_MIN_M = 2.4         # largeur mini de circulation d'une voiture ; sous 
 _COMP_SIGNIF_M2 = 8.0        # aire mini d'un morceau d'allée pour qu'un étranglement le séparant compte
 
 
+def _longueur_mrr(geom) -> float:
+    """Plus grand côté du rectangle englobant minimal — pour une lanière fine (la morsure de l'accès sur la
+    voie), c'est sa LONGUEUR le long du recouvrement. Robuste à l'orientation ; 0 sur une géométrie vide."""
+    if geom is None or getattr(geom, "is_empty", True):
+        return 0.0
+    try:
+        mrr = geom.minimum_rotated_rectangle
+        xy = list(getattr(mrr, "exterior", mrr).coords)
+    except Exception:
+        return 0.0
+    cotes = [((xy[i][0] - xy[i + 1][0]) ** 2 + (xy[i][1] - xy[i + 1][1]) ** 2) ** 0.5
+             for i in range(len(xy) - 1)]
+    return max(cotes) if cotes else 0.0
+
+
 def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None,
                    passage: float = _PASSAGE_MIN_M, assiette=None) -> tuple[float, int]:
     """ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — DÉGAGEMENT mesuré DEVANT CHAQUE PLACE, sur l'allée DÉSÉTRANGLÉE.
@@ -128,6 +143,7 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
         import math as _math
         from shapely.ops import linemerge
         from shapely.geometry import Polygon as _Poly
+        from shapely.geometry import Point
         voie_l = voie if voie.geom_type in ("LineString", "MultiLineString") else voie.boundary
         # recouvrement RÉEL mesuré sur LIBRE (c'est le DESSIN qui touche la voie : aucun pontage de vide ;
         # tronçons JOINTIFS réunis par linemerge, sans combler de vide), au seuil EXACT, d'un seul tenant.
@@ -138,15 +154,22 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
         recouvrements = [s for s in segs if s.length >= passage]
         if not recouvrements:
             return _aire_places, 0
-        # ETUDE-STATIONNEMENT-FIX-10/11/12 — ATTEIGNABILITÉ PUREMENT TOPOLOGIQUE, aucun rattachement par proximité.
-        # On AJOUTE à l'aire roulante une BANDE DE VOIE le long du recouvrement (profonde pour contenir le disque)
-        # → voie + réseau = UNE seule surface ; on l'érode de la demi-largeur ; la composante du noyau qui CONTIENT
-        # le noyau de la bande de voie est le SEUL ensemble atteignable.
-        # FIX-12 (défaut) : le côté de la bande n'est PLUS choisi par un centre (assiette.centroid tombait du
-        # mauvais côté sur une assiette CONCAVE). On construit la bande des DEUX côtés du recouvrement, puis on lui
-        # RETIRE l'assiette du projet : ce qui reste est à l'EXTÉRIEUR par construction, quelle que soit la forme
-        # du terrain. Si rien ne reste (le raccord n'est pas en bord d'assiette), le raccord n'est pas établi.
+        # ETUDE-STATIONNEMENT-FIX-10/11/12/13/14 — ATTEIGNABILITÉ PUREMENT TOPOLOGIQUE, aucune sélection par
+        # proximité ni distance. On AJOUTE à l'aire roulante une BANDE DE VOIE le long du recouvrement (profonde
+        # pour contenir le disque) → voie + réseau = UNE seule surface ; on l'érode de la demi-largeur ; la
+        # composante du noyau qui CONTIENT le noyau de la bande de voie est le SEUL ensemble atteignable.
+        # FIX-14 (défaut de la marge de 5 cm : une poche extérieure à 4 cm du recouvrement, SANS contact avec la
+        # voie, était retenue comme départ). PLUS DE MARGE. La bande se construit :
+        #   1. d'UN SEUL CÔTÉ, à partir du SEGMENT DE RECOUVREMENT lui-même, par extrusion vers l'EXTÉRIEUR — le
+        #      côté opposé à l'accès (l'accès arrive TOUJOURS du projet ; aucun centre, aucun test sur l'assiette) ;
+        #   2. on retire l'assiette, pour qu'aucune aire artificielle ne soit DANS le projet ;
+        #   3. on ne garde que les composantes que l'ACCÈS CHEVAUCHE RÉELLEMENT : intersection de SURFACE non nulle
+        #      avec le polygone d'accès (il mord de ~4 cm sur la voie), sur une longueur ≥ la largeur de passage le
+        #      long du recouvrement. Pas de buffer de tolérance, pas de distance. Le décalage flottant (~1,18 mm
+        #      sur AD0887) est absorbé par ce CHEVAUCHEMENT RÉEL de l'accès sur la voie, pas par une marge.
+        # Si rien ne reste, le raccord n'est pas établi.
         D = 12.0                                               # profondeur route (contient tout disque cherché)
+        acces_poly = unary_union([g if g.is_valid else g.buffer(0) for g in (acces or [])])
         bands = []
         for R in recouvrements:
             (ax, ay), (bx, by) = R.coords[0], R.coords[-1]
@@ -154,28 +177,37 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
             if dl <= 1e-9:
                 continue
             nx, ny = -(by - ay) / dl, (bx - ax) / dl           # normale à la voie
-            bands.append(_Poly([(ax + nx * D, ay + ny * D), (bx + nx * D, by + ny * D),     # bande des DEUX côtés
-                                (bx - nx * D, by - ny * D), (ax - nx * D, ay - ny * D)]))
+            mx, my = (ax + bx) / 2.0, (ay + by) / 2.0          # milieu du recouvrement
+            # côté EXTÉRIEUR = celui qui est OPPOSÉ à l'accès à cet endroit. L'accès (⊂ libre) arrive du projet ;
+            # on échantillonne à 0,3 m du milieu (bien au-delà des ~4 cm de morsure de l'accès sur la voie) : le
+            # côté qui porte le réseau roulant est le projet, on extrude vers l'AUTRE. Aucun centre, aucune assiette.
+            s = -1.0 if libre.intersects(Point(mx + nx * 0.3, my + ny * 0.3)) else 1.0
+            bands.append(_Poly([(ax, ay), (bx, by),
+                                (bx + s * nx * D, by + s * ny * D), (ax + s * nx * D, ay + s * ny * D)]))
         if not bands:
             return _aire_places, 0
         band = unary_union(bands).buffer(0)
         assiette_eff = (assiette if (assiette is not None and not getattr(assiette, "is_empty", True))
                         else libre.convex_hull)   # à défaut d'assiette fournie (tests), l'emprise convexe du réseau
-        band = band.difference(assiette_eff).buffer(0)         # ne garde que l'EXTÉRIEUR de l'assiette (la route)
-        # FIX-13 : sur un terrain MOINS PROFOND que la bande, la soustraction laisse aussi un morceau DERRIÈRE
-        # le terrain, qui ne touche aucune voie. On ne garde comme DÉPARTS que les morceaux qui LONGENT le
-        # recouvrement lui-même (le bord de voie réellement recouvert par l'accès) ; tout autre morceau est écarté.
-        rec_union = unary_union(recouvrements).buffer(0.05)    # 5 cm : robustesse flottante du contact bande↔
-        #   recouvrement (la soustraction booléenne + une rotation laissent un micro-jeu entre l'arête du morceau
-        #   de bande et la ligne de recouvrement — issue d'un AUTRE calcul). Le morceau arrière est à AU MOINS
-        #   (profondeur de la bande − profondeur du terrain) du recouvrement, soit des mètres : 5 cm ne le
-        #   rattrape jamais. Ce n'est pas une distance tolérée vers un passage, juste « quel morceau longe le
-        #   bord de voie réellement recouvert ».
+        band = band.difference(assiette_eff).buffer(0)         # aucune aire artificielle DANS le projet
+        # ne garde que les composantes que l'ACCÈS CHEVAUCHE VRAIMENT le long du recouvrement, sur une longueur
+        # ≥ passage. Dans le DESSIN réel l'accès MORD ~4 cm sur la voie → l'intersection est une lanière de SURFACE
+        # (c'est elle qui absorbe le décalage flottant ~1,18 mm d'AD0887, sans marge). Dans les scènes synthétiques
+        # où l'accès affleure juste la voie, l'intersection dégénère en l'ARÊTE commune (le recouvrement) — même
+        # longueur. Dans les DEUX cas on mesure l'étendue le long du recouvrement (plus grand côté du MRR). Une
+        # POCHE sans contact réel avec l'accès a une intersection VIDE → écartée. Aucun buffer, aucune distance.
         morceaux = (list(band.geoms) if band.geom_type == "MultiPolygon"
                     else ([band] if not band.is_empty else []))
-        band = unary_union([pc for pc in morceaux if pc.intersects(rec_union)]).buffer(0)
+        kept = []
+        for pc in morceaux:
+            inter = pc.intersection(acces_poly)
+            if inter.is_empty:
+                continue
+            if _longueur_mrr(inter) + 1e-9 >= passage:
+                kept.append(pc)
+        band = unary_union(kept).buffer(0) if kept else band.difference(band)   # vide si rien de chevauché
         if band.is_empty:
-            return _aire_places, 0      # aucun morceau ne longe le raccord → raccord NON établi
+            return _aire_places, 0      # aucun morceau chevauché par l'accès → raccord NON établi
         surface = unary_union([libre, band]).buffer(0)
         seed = band.buffer(-_er).buffer(0)                     # noyau de la bande de voie = graine d'atteignabilité
         noyau = surface.buffer(-_er).buffer(0)
