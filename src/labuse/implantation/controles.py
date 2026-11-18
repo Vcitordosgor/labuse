@@ -162,8 +162,20 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
         assiette_eff = (assiette if (assiette is not None and not getattr(assiette, "is_empty", True))
                         else libre.convex_hull)   # à défaut d'assiette fournie (tests), l'emprise convexe du réseau
         band = band.difference(assiette_eff).buffer(0)         # ne garde que l'EXTÉRIEUR de l'assiette (la route)
+        # FIX-13 : sur un terrain MOINS PROFOND que la bande, la soustraction laisse aussi un morceau DERRIÈRE
+        # le terrain, qui ne touche aucune voie. On ne garde comme DÉPARTS que les morceaux qui LONGENT le
+        # recouvrement lui-même (le bord de voie réellement recouvert par l'accès) ; tout autre morceau est écarté.
+        rec_union = unary_union(recouvrements).buffer(0.05)    # 5 cm : robustesse flottante du contact bande↔
+        #   recouvrement (la soustraction booléenne + une rotation laissent un micro-jeu entre l'arête du morceau
+        #   de bande et la ligne de recouvrement — issue d'un AUTRE calcul). Le morceau arrière est à AU MOINS
+        #   (profondeur de la bande − profondeur du terrain) du recouvrement, soit des mètres : 5 cm ne le
+        #   rattrape jamais. Ce n'est pas une distance tolérée vers un passage, juste « quel morceau longe le
+        #   bord de voie réellement recouvert ».
+        morceaux = (list(band.geoms) if band.geom_type == "MultiPolygon"
+                    else ([band] if not band.is_empty else []))
+        band = unary_union([pc for pc in morceaux if pc.intersects(rec_union)]).buffer(0)
         if band.is_empty:
-            return _aire_places, 0      # le raccord n'est pas en bord d'assiette → raccord NON établi
+            return _aire_places, 0      # aucun morceau ne longe le raccord → raccord NON établi
         surface = unary_union([libre, band]).buffer(0)
         seed = band.buffer(-_er).buffer(0)                     # noyau de la bande de voie = graine d'atteignabilité
         noyau = surface.buffer(-_er).buffer(0)

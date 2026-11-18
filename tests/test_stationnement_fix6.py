@@ -19,9 +19,14 @@ def _scene():
     return place, allee, acces
 
 
+# Assiette du projet (bord supérieur sur la voie, y = 16) : les plans synthétiques sont tous SOUS la voie. Le
+# contrôle réel reçoit toujours `scene.assiette_local` ; les tests la fournissent de même (FIX-12/13).
+_ASS = Polygon([(-40, -40), (60, -40), (60, 16), (-40, 16)])
+
+
 def _manque(voie):
     place, allee, acces = _scene()
-    return C._pincement_allee([allee], [place], 5.0, [acces], voie)
+    return C._pincement_allee([allee], [place], 5.0, [acces], voie, assiette=_ASS)
 
 
 def test_raccord_voie_contact_ponctuel_refuse():
@@ -75,9 +80,9 @@ def test_deux_reseaux_separes_2cm_une_seule_place():
     allee_b = Polygon([(3.02, 5), (6.02, 5), (6.02, 10), (3.02, 10)])
     acces_b = Polygon([(3.02, 10), (6.02, 10), (6.02, 15.5), (3.02, 15.5)])
     # A seul : desservi
-    assert C._pincement_allee([allee_a], [place_a], 5.0, [acces_a], voie) <= C._DEGAGEMENT_SEUIL_M2
+    assert C._pincement_allee([allee_a], [place_a], 5.0, [acces_a], voie, assiette=_ASS) <= C._DEGAGEMENT_SEUIL_M2
     # A + B : B n'est PAS desservi (manque ≈ aire d'une place), alors que A l'est
-    manque = C._pincement_allee([allee_a, allee_b], [place_a, place_b], 5.0, [acces_a, acces_b], voie)
+    manque = C._pincement_allee([allee_a, allee_b], [place_a, place_b], 5.0, [acces_a, acces_b], voie, assiette=_ASS)
     assert 11.0 < manque < 14.0, f"seule la place de B doit manquer (≈ 12,5 m²), obtenu {manque:.1f}"
 
 
@@ -89,7 +94,7 @@ def test_tronçons_jointifs_forment_240():
     allee = Polygon([(-4, 5), (2.5, 5), (2.5, 10), (-4, 10)])          # couvre la place (dégagement plein)
     acces1 = Polygon([(0, 10), (1.2, 10), (1.2, 16.1), (0, 16.1)])     # recouvre la voie sur x ∈ [0 ; 1,2]
     acces2 = Polygon([(1.2, 10), (2.4, 10), (2.4, 16.1), (1.2, 16.1)])  # JOINTIF, recouvre x ∈ [1,2 ; 2,4]
-    assert C._pincement_allee([allee], [place], 5.0, [acces1, acces2], voie) <= C._DEGAGEMENT_SEUIL_M2
+    assert C._pincement_allee([allee], [place], 5.0, [acces1, acces2], voie, assiette=_ASS) <= C._DEGAGEMENT_SEUIL_M2
 
 
 # FIX-9 (relecture) — la largeur de desserte (goulet) et le comptage des places reposent sur le MÊME noyau
@@ -113,7 +118,7 @@ def _plan_desserte(neck_w, neck_y=(12.0, 13.0), base=6.0):
 
 def _goulet(neck_w, **kw):
     a, p, lr, ac, v = _plan_desserte(neck_w, **kw)
-    return C._largeur_min_desserte(a, p, lr, ac, v)
+    return C._largeur_min_desserte(a, p, lr, ac, v, _ASS)
 
 
 def test_goulet_milieu_3m():
@@ -136,8 +141,8 @@ def test_desserte_et_comptage_jamais_contradictoires():
     implique TOUJOURS un goulet ≥ 2,40 m. Un goulet sous 2,40 m (ici 2,0 m) ne doit compter AUCUNE place."""
     for nw in (2.0, 2.4, 3.0, 5.0):
         a, p, lr, ac, v = _plan_desserte(nw)
-        _manque, nb = C._desserte_core(a, p, lr, ac, v, C._PASSAGE_MIN_M)
-        goulet = C._largeur_min_desserte(a, p, lr, ac, v)
+        _manque, nb = C._desserte_core(a, p, lr, ac, v, C._PASSAGE_MIN_M, _ASS)
+        goulet = C._largeur_min_desserte(a, p, lr, ac, v, _ASS)
         if nb >= 1:
             assert goulet >= C._PASSAGE_MIN_M - 0.05, f"place comptée (goulet {nw} m) mais desserte {goulet:.2f} m < 2,40"
         else:
@@ -165,15 +170,15 @@ def test_contre_exemple_relecteur_passage_court_2m():
     """Le contre-exemple du relecteur : bouche 6 m, puis à 20 cm de la voie un passage de 2 m sur 10 cm, puis
     6 m. AUCUNE place comptée (2 m < 2,40 m) et goulet annoncé = 2 m (plus le 5,208 m du rattachement faux)."""
     a, p, lr, ac, v = _plan_etranglement(2.0, 15.7, 15.8)
-    assert C._desserte_core(a, p, lr, ac, v, C._PASSAGE_MIN_M)[1] == 0
-    assert abs(C._largeur_min_desserte(a, p, lr, ac, v) - 2.0) <= 0.2
+    assert C._desserte_core(a, p, lr, ac, v, C._PASSAGE_MIN_M, _ASS)[1] == 0
+    assert abs(C._largeur_min_desserte(a, p, lr, ac, v, _ASS) - 2.0) <= 0.2
 
 
 def test_meme_etranglement_240_place_comptee():
     """Le même étranglement court porté à 2,40 m : une place EST comptée, goulet 2,40 m."""
     a, p, lr, ac, v = _plan_etranglement(2.40, 15.7, 15.8)
-    assert C._desserte_core(a, p, lr, ac, v, C._PASSAGE_MIN_M)[1] == 1
-    assert abs(C._largeur_min_desserte(a, p, lr, ac, v) - 2.40) <= 0.2
+    assert C._desserte_core(a, p, lr, ac, v, C._PASSAGE_MIN_M, _ASS)[1] == 1
+    assert abs(C._largeur_min_desserte(a, p, lr, ac, v, _ASS) - 2.40) <= 0.2
 
 
 def test_etranglement_3m_entree_milieu_avant_stationnement():
@@ -181,7 +186,7 @@ def test_etranglement_3m_entree_milieu_avant_stationnement():
     avant le stationnement) : le disque ne le franchit jamais par un coin."""
     for (y0, y1) in ((15.7, 15.8), (12.8, 12.9), (10.1, 10.2)):
         a, p, lr, ac, v = _plan_etranglement(3.0, y0, y1)
-        g = C._largeur_min_desserte(a, p, lr, ac, v)
+        g = C._largeur_min_desserte(a, p, lr, ac, v, _ASS)
         assert abs(g - 3.0) <= 0.25, f"étranglement 3 m @y[{y0};{y1}] → goulet {g:.2f} m (attendu 3)"
 
 
@@ -245,6 +250,42 @@ def test_fix12_bande_toujours_hors_assiette():
             band = _bande_moins_assiette(R, ass)
             inter = band.intersection(ass).area
             assert inter < 1e-6, f"{nom} t={t} : bande ∩ assiette = {inter:.4g} m² (attendu 0)"
+
+
+def test_fix13_terrain_moins_profond_que_la_bande():
+    """Terrain 11×9 (moins profond que la bande de 12 m), voie UNIQUEMENT devant, bouche 6 m, étranglement 2 m :
+    le morceau de bande DERRIÈRE le terrain (qui ne touche aucune voie) n'est plus pris comme départ → la place
+    n'est plus atteignable « par l'arrière ». ZÉRO place, goulet ≈ 2 m, à plusieurs orientations."""
+    from shapely.affinity import rotate
+    for rot in (0, 45, 90, 180):
+        ass = Polygon([(0, 0), (11, 0), (11, 9), (0, 9)])
+        voie = LineString([(-2, 9), (13, 9)])
+        acc = unary_union([Polygon([(2.5, 8.9), (8.5, 8.9), (8.5, 9.1), (2.5, 9.1)]),            # bouche 6 m
+                           Polygon([(4, 8.8), (6, 8.8), (6, 8.9), (4, 8.9)])])                     # étranglement 2 m
+        allee = Polygon([(0, 0), (11, 0), (11, 8.8), (0, 8.8)])        # rejoint le FOND du terrain (y = 0)
+        place = Polygon([(0, 0), (2.5, 0), (2.5, 5), (0, 5)])
+        gs = [ass, voie, acc, allee, place]
+        if rot:
+            gs = [rotate(g, rot, origin=(5.5, 4.5)) for g in gs]
+        ass, voie, acc, allee, place = gs
+        _m, nb = C._desserte_core([allee], [place], 5.0, [acc], voie, C._PASSAGE_MIN_M, ass)
+        g = C._largeur_min_desserte([allee], [place], 5.0, [acc], voie, ass)
+        assert nb == 0 and abs(g - 2.0) <= 0.25, f"11×9 rot {rot}° : nb={nb}, goulet={g:.2f} (attendu 0, 2 m)"
+
+
+def test_fix13_deux_voies_une_seule_porte_un_raccord():
+    """Terrain bordé par DEUX voies (devant y=9 ET derrière y=0), mais seule celle de DEVANT porte un accès
+    (raccord). La voie arrière ne borde aucune aire roulante → aucun recouvrement, aucun départ : la place reste
+    desservie par le seul chemin réel (devant, étranglé à 2 m) → 0 place, goulet ≈ 2 m."""
+    ass = Polygon([(0, 0), (11, 0), (11, 9), (0, 9)])
+    voie = unary_union([LineString([(-2, 9), (13, 9)]), LineString([(-2, 0), (13, 0)])])
+    acc = unary_union([Polygon([(2.5, 8.9), (8.5, 8.9), (8.5, 9.1), (2.5, 9.1)]),
+                       Polygon([(4, 8.8), (6, 8.8), (6, 8.9), (4, 8.9)])])
+    allee = Polygon([(0, 3), (11, 3), (11, 8.8), (0, 8.8)])           # NE touche PAS la voie arrière (y=0)
+    place = Polygon([(0, 0), (2.5, 0), (2.5, 3), (0, 3)])
+    _m, nb = C._desserte_core([allee], [place], 5.0, [acc], voie, C._PASSAGE_MIN_M, ass)
+    g = C._largeur_min_desserte([allee], [place], 5.0, [acc], voie, ass)
+    assert nb == 0 and abs(g - 2.0) <= 0.25, f"deux voies : nb={nb}, goulet={g:.2f} (attendu 0, 2 m)"
 
 
 # FIX-11 (défaut 1) — le côté de la bande de voie est donné par l'ASSIETTE, jamais par les aires roulantes :
@@ -324,7 +365,7 @@ def _lien(w):
     band = Polygon([(8, 7.5 - w / 2), (12, 7.5 - w / 2), (12, 7.5 + w / 2), (8, 7.5 + w / 2)])
     ar = Polygon([(12, 5), (20, 5), (20, 10), (12, 10)])
     pb = Polygon([(15, 0), (17.5, 0), (17.5, 5), (15, 5)])
-    return C._pincement_allee([al, band, ar], [pa, pb], 5.0, [ca], voie)
+    return C._pincement_allee([al, band, ar], [pa, pb], 5.0, [ca], voie, assiette=_ASS)
 
 
 def test_lien_etroit_10cm_une_seule_place():
