@@ -327,6 +327,37 @@ def test_fix14_poche_derriere_voie_jamais_depart():
                 f"poche rot {rot}° d={d} : nb={nb}, goulet={g:.2f} (attendu 0 place, 2 m)"
 
 
+# FIX-15 — le CÔTÉ de la bande vient du CONTOUR de l'assiette (sens de parcours), plus d'un point de test à
+# 30 cm. Contre-exemple du relecteur : sur une assiette concave, le point à 30 cm tombait dans l'encoche (hors
+# accès) → mauvais côté → la poche restante touchait l'accès LATÉRALEMENT et était retenue (1 place, 3,96 m).
+# Désormais : 0 place, goulet ≈ 2 m (le seul chemin réel est l'accès étranglé à 2 m), à 4 cm comme à 5,1 cm.
+def _plan_fix15(d, rot=0):
+    from shapely.affinity import rotate
+    from shapely.geometry import box
+    assiette = box(0, 0, 11, 10).difference(box(2, d, 12, 4))
+    acces = unary_union([box(0, -.04, 6, d), box(0, d, 2, 4)])
+    allee = box(0, 4, 5, 9)
+    place = box(5, 5, 10, 7.5)
+    voie = LineString([(0, 0), (6, 0)])
+    gs = [assiette, acces, allee, place, voie]
+    if rot:
+        gs = [rotate(g, rot, origin=(5, 5)) for g in gs]
+    assiette, acces, allee, place, voie = gs
+    nb = C._desserte_core([allee], [place], 5.0, [acces], voie, C._PASSAGE_MIN_M, assiette)[1]
+    g = C._largeur_min_desserte([allee], [place], 5.0, [acces], voie, assiette)
+    return nb, g
+
+
+def test_fix15_cote_bande_par_le_contour_pas_point_de_test():
+    """Contre-exemple du relecteur, repris tel quel, aux orientations 0/90/180/270 et à d = 0,04 puis 0,051 :
+    le côté de la bande vient du contour de l'assiette → la poche n'est plus retenue → 0 place, goulet ≈ 2 m."""
+    for rot in (0, 90, 180, 270):
+        for d in (0.04, 0.051):
+            nb, g = _plan_fix15(d, rot)
+            assert nb == 0 and abs(g - 2.0) <= 0.25, \
+                f"FIX-15 rot {rot}° d={d} : nb={nb}, goulet={g:.2f} (attendu 0 place, 2 m)"
+
+
 # FIX-11 (défaut 1) — le côté de la bande de voie est donné par l'ASSIETTE, jamais par les aires roulantes :
 # une aire roulante isolée de l'AUTRE CÔTÉ de la voie ne retourne plus la bande (verdict stable, toute rotation).
 def _plan_def1(nw, rot_deg=0, avec_aire_opposee=True):
