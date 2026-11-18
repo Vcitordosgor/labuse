@@ -185,6 +185,68 @@ def test_etranglement_3m_entree_milieu_avant_stationnement():
         assert abs(g - 3.0) <= 0.25, f"étranglement 3 m @y[{y0};{y1}] → goulet {g:.2f} m (attendu 3)"
 
 
+# FIX-12 — le côté de la bande n'est PLUS choisi par un centre (assiette.centroid tombe du mauvais côté sur une
+# assiette CONCAVE). On construit la bande des DEUX côtés du recouvrement puis on lui RETIRE l'assiette : ce qui
+# reste est à l'extérieur par construction, quelle que soit la forme du terrain.
+def _bande_moins_assiette(R, assiette, D=12.0):
+    """Reconstruit la bande du contrôle : bande des deux côtés du recouvrement R, moins l'assiette."""
+    import math
+    (ax, ay), (bx, by) = R.coords[0], R.coords[-1]
+    dl = math.hypot(bx - ax, by - ay)
+    nx, ny = -(by - ay) / dl, (bx - ax) / dl
+    plein = Polygon([(ax + nx * D, ay + ny * D), (bx + nx * D, by + ny * D),
+                     (bx - nx * D, by - ny * D), (ax - nx * D, ay - ny * D)])
+    return plein.difference(assiette).buffer(0)
+
+
+def _plan_C(nw=2.0, rot=0):
+    """Assiette en C (ouverte à droite ; son centroïde tombe DANS l'encoche, HORS de l'assiette). Voie verticale
+    sur le bord intérieur, accès dans la colonne gauche avec un étranglement `nw`, allée et place dedans."""
+    from shapely.affinity import rotate
+    ass = Polygon([(0, 0), (40, 0), (40, 12), (14, 12), (14, 28), (40, 28), (40, 40), (0, 40)])
+    voie = LineString([(14, 16), (14, 24)])
+    acc = unary_union([Polygon([(8, 16), (14.1, 16), (14.1, 24), (8, 24)]),                 # bouche (mord la voie)
+                       Polygon([(7, 20 - nw / 2), (8, 20 - nw / 2), (8, 20 + nw / 2), (7, 20 + nw / 2)]),  # neck
+                       Polygon([(0, 16), (7, 16), (7, 24), (0, 24)])])                        # corps
+    allee = Polygon([(0, 8), (7, 8), (7, 16), (0, 16)])
+    place = Polygon([(0, 2), (5, 2), (5, 8), (0, 8)])
+    gs = [ass, voie, acc, allee, place]
+    if rot:
+        gs = [rotate(g, rot, origin=(20, 20)) for g in gs]
+    ass, voie, acc, allee, place = gs
+    return [allee], [place], 5.0, [acc], voie, ass
+
+
+def test_fix12_assiette_concave_C_aucune_place():
+    """Assiette en C (centroïde HORS de l'assiette) : la bande ne part plus dans le projet → l'étranglement de
+    2 m n'est pas contourné. ZÉRO place, goulet ≈ 2 m, aux rotations 0°, 90°, 153°, 180°."""
+    for rot in (0, 90, 153, 180):
+        a, p, lr, ac, v, ass = _plan_C(2.0, rot)
+        _manque, nb = C._desserte_core(a, p, lr, ac, v, C._PASSAGE_MIN_M, ass)
+        g = C._largeur_min_desserte(a, p, lr, ac, v, ass)
+        assert nb == 0 and abs(g - 2.0) <= 0.2, f"C rot {rot}° : nb={nb}, goulet={g:.2f} (attendu 0 place, 2 m)"
+
+
+def test_fix12_bande_toujours_hors_assiette():
+    """La bande artificielle n'intersecte JAMAIS l'assiette (C, L, U, angle rentrant), à toute rotation."""
+    from shapely.affinity import rotate
+    formes = {
+        "C": Polygon([(0, 0), (40, 0), (40, 12), (14, 12), (14, 28), (40, 28), (40, 40), (0, 40)]),
+        "L": Polygon([(0, 0), (30, 0), (30, 10), (10, 10), (10, 30), (0, 30)]),
+        "U": Polygon([(0, 0), (30, 0), (30, 30), (22, 30), (22, 8), (8, 8), (8, 30), (0, 30)]),
+    }
+    for nom, ass in formes.items():
+        # un recouvrement sur CHAQUE arête du bord (y compris les angles rentrants)
+        bord = ass.exterior
+        for t in (0.05, 0.2, 0.37, 0.55, 0.73, 0.9):
+            p0 = bord.interpolate(t, normalized=True)
+            p1 = bord.interpolate(min(t + 0.03, 1.0), normalized=True)
+            R = LineString([(p0.x, p0.y), (p1.x, p1.y)])
+            band = _bande_moins_assiette(R, ass)
+            inter = band.intersection(ass).area
+            assert inter < 1e-6, f"{nom} t={t} : bande ∩ assiette = {inter:.4g} m² (attendu 0)"
+
+
 # FIX-11 (défaut 1) — le côté de la bande de voie est donné par l'ASSIETTE, jamais par les aires roulantes :
 # une aire roulante isolée de l'AUTRE CÔTÉ de la voie ne retourne plus la bande (verdict stable, toute rotation).
 def _plan_def1(nw, rot_deg=0, avec_aire_opposee=True):

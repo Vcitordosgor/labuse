@@ -138,15 +138,15 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
         recouvrements = [s for s in segs if s.length >= passage]
         if not recouvrements:
             return _aire_places, 0
-        # ETUDE-STATIONNEMENT-FIX-10/11 — ATTEIGNABILITÉ PUREMENT TOPOLOGIQUE, aucun rattachement par proximité.
-        # On AJOUTE à l'aire roulante une BANDE DE VOIE le long du recouvrement (dans la route, assez profonde
-        # pour contenir le disque de passage) → voie + réseau = UNE seule surface. On l'érode de la demi-largeur :
-        # la composante du noyau qui CONTIENT le noyau de la bande de voie est le SEUL ensemble atteignable.
-        # FIX-11 (défaut 1) : le côté de la bande est donné par l'ASSIETTE du projet (la bande part vers son
-        # EXTÉRIEUR), JAMAIS par les aires roulantes — une aire isolée de l'autre côté de la voie retournait la
-        # bande dans l'accès et contournait le goulet.
-        ref = (assiette.centroid if (assiette is not None and not getattr(assiette, "is_empty", True))
-               else libre.centroid)
+        # ETUDE-STATIONNEMENT-FIX-10/11/12 — ATTEIGNABILITÉ PUREMENT TOPOLOGIQUE, aucun rattachement par proximité.
+        # On AJOUTE à l'aire roulante une BANDE DE VOIE le long du recouvrement (profonde pour contenir le disque)
+        # → voie + réseau = UNE seule surface ; on l'érode de la demi-largeur ; la composante du noyau qui CONTIENT
+        # le noyau de la bande de voie est le SEUL ensemble atteignable.
+        # FIX-12 (défaut) : le côté de la bande n'est PLUS choisi par un centre (assiette.centroid tombait du
+        # mauvais côté sur une assiette CONCAVE). On construit la bande des DEUX côtés du recouvrement, puis on lui
+        # RETIRE l'assiette du projet : ce qui reste est à l'EXTÉRIEUR par construction, quelle que soit la forme
+        # du terrain. Si rien ne reste (le raccord n'est pas en bord d'assiette), le raccord n'est pas établi.
+        D = 12.0                                               # profondeur route (contient tout disque cherché)
         bands = []
         for R in recouvrements:
             (ax, ay), (bx, by) = R.coords[0], R.coords[-1]
@@ -154,14 +154,16 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
             if dl <= 1e-9:
                 continue
             nx, ny = -(by - ay) / dl, (bx - ax) / dl           # normale à la voie
-            mid = R.interpolate(0.5, normalized=True)
-            if (ref.x - mid.x) * nx + (ref.y - mid.y) * ny > 0:
-                nx, ny = -nx, -ny                              # orientée vers l'EXTÉRIEUR de l'assiette (la route)
-            D = 12.0                                           # profondeur route, contient tout disque cherché
-            bands.append(_Poly([(ax, ay), (bx, by), (bx + nx * D, by + ny * D), (ax + nx * D, ay + ny * D)]))
+            bands.append(_Poly([(ax + nx * D, ay + ny * D), (bx + nx * D, by + ny * D),     # bande des DEUX côtés
+                                (bx - nx * D, by - ny * D), (ax - nx * D, ay - ny * D)]))
         if not bands:
             return _aire_places, 0
         band = unary_union(bands).buffer(0)
+        assiette_eff = (assiette if (assiette is not None and not getattr(assiette, "is_empty", True))
+                        else libre.convex_hull)   # à défaut d'assiette fournie (tests), l'emprise convexe du réseau
+        band = band.difference(assiette_eff).buffer(0)         # ne garde que l'EXTÉRIEUR de l'assiette (la route)
+        if band.is_empty:
+            return _aire_places, 0      # le raccord n'est pas en bord d'assiette → raccord NON établi
         surface = unary_union([libre, band]).buffer(0)
         seed = band.buffer(-_er).buffer(0)                     # noyau de la bande de voie = graine d'atteignabilité
         noyau = surface.buffer(-_er).buffer(0)
