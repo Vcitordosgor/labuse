@@ -85,7 +85,7 @@ _COMP_SIGNIF_M2 = 8.0        # aire mini d'un morceau d'allée pour qu'un étran
 
 
 def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None,
-                   passage: float = _PASSAGE_MIN_M) -> tuple[float, int]:
+                   passage: float = _PASSAGE_MIN_M, assiette=None) -> tuple[float, int]:
     """ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — DÉGAGEMENT mesuré DEVANT CHAQUE PLACE, sur l'allée DÉSÉTRANGLÉE.
     ETUDE-STATIONNEMENT-FIX-9 (relecture) — NOYAU UNIQUE : la desserte d'une place et la LARGEUR du goulet
     reposent sur le MÊME calcul (ce noyau roulant érodé de `passage`/2). Renvoie (aire manquante, nb de places
@@ -138,11 +138,15 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
         recouvrements = [s for s in segs if s.length >= passage]
         if not recouvrements:
             return _aire_places, 0
-        # ETUDE-STATIONNEMENT-FIX-10 — ATTEIGNABILITÉ PUREMENT TOPOLOGIQUE, aucun rattachement par proximité.
+        # ETUDE-STATIONNEMENT-FIX-10/11 — ATTEIGNABILITÉ PUREMENT TOPOLOGIQUE, aucun rattachement par proximité.
         # On AJOUTE à l'aire roulante une BANDE DE VOIE le long du recouvrement (dans la route, assez profonde
         # pour contenir le disque de passage) → voie + réseau = UNE seule surface. On l'érode de la demi-largeur :
-        # la composante du noyau qui CONTIENT le noyau de la bande de voie est le SEUL ensemble atteignable depuis
-        # la voie. Rien d'autre (un noyau après un étranglement < passage est une AUTRE composante → non atteint).
+        # la composante du noyau qui CONTIENT le noyau de la bande de voie est le SEUL ensemble atteignable.
+        # FIX-11 (défaut 1) : le côté de la bande est donné par l'ASSIETTE du projet (la bande part vers son
+        # EXTÉRIEUR), JAMAIS par les aires roulantes — une aire isolée de l'autre côté de la voie retournait la
+        # bande dans l'accès et contournait le goulet.
+        ref = (assiette.centroid if (assiette is not None and not getattr(assiette, "is_empty", True))
+               else libre.centroid)
         bands = []
         for R in recouvrements:
             (ax, ay), (bx, by) = R.coords[0], R.coords[-1]
@@ -151,8 +155,8 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
                 continue
             nx, ny = -(by - ay) / dl, (bx - ax) / dl           # normale à la voie
             mid = R.interpolate(0.5, normalized=True)
-            if (libre.centroid.x - mid.x) * nx + (libre.centroid.y - mid.y) * ny > 0:
-                nx, ny = -nx, -ny                              # orientée vers la ROUTE (hors réseau)
+            if (ref.x - mid.x) * nx + (ref.y - mid.y) * ny > 0:
+                nx, ny = -nx, -ny                              # orientée vers l'EXTÉRIEUR de l'assiette (la route)
             D = 12.0                                           # profondeur route, contient tout disque cherché
             bands.append(_Poly([(ax, ay), (bx, by), (bx + nx * D, by + ny * D), (ax + nx * D, ay + ny * D)]))
         if not bands:
@@ -174,15 +178,13 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
     if not reach_comps:
         return _aire_places, 0
     reach = unary_union(reach_comps)
-    # une place est atteignable si son bord d'accès touche la DILATATION (demi-largeur de passage) de cette
-    # composante, ramenée à l'aire roulante réelle (la bande de voie synthétique est retirée par ∩ libre). On
-    # dilate à haute résolution et par jointure DROITE (`join_style=2`, mitre) : la redilatation recouvre alors
-    # EXACTEMENT l'aire roulante atteignable jusqu'aux coins (le disque y passe), sans l'arrondi d'angle qui
-    # découvrait à tort une place en bord d'allée. Ce n'est PAS une distance tolérée (la dilatation est la
-    # demi-largeur de passage mandatée) : au-delà d'un étranglement < passage, la composante ne s'y étend pas.
-    desservi = reach.buffer(r_pass, quad_segs=32, join_style=2).intersection(libre).buffer(0)
-    if desservi.is_empty:
+    if reach.is_empty:
         return _aire_places, 0
+    # FIX-11 (défaut 2) — PLUS DE REDILATATION pour décider l'atteignabilité (un disque qui bute sur un
+    # étranglement « dépassait » quand même par l'ouverture dilatée). On teste la POSITION DU VÉHICULE : pour
+    # chaque place, un point d'approche DEVANT son bord d'accès, à la demi-largeur du passage testé, côté allée ;
+    # la place est atteignable si ce point appartient à la composante du noyau érodé atteignable (`reach`). Aucune
+    # dilatation : au-delà d'un goulet < passage le point tombe dans une AUTRE composante → non atteignable.
     from shapely.geometry import Point
     W = max(float(largeur_requise), 0.1)   # FIX-4 : rectangle de dégagement ENTIER, aucune marge retranchée
     manque = 0.0
@@ -218,11 +220,11 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
             # (a) dégagement EXACT : la part du rectangle NON couverte par la surface libre (allée + accès).
             clear = sonde.intersection(libre)
             deficit = max(0.0, sonde.area - clear.area)
-            # (b) DESSERTE (FIX-10) : la PLACE doit TOUCHER la dilatation du réseau atteignable depuis la voie
-            # (`desservi`) — AUCUNE distance tolérée, et PAS le rectangle de dégagement de 5 m (trop profond, il
-            # franchirait un étranglement court et compterait une place au-delà). On teste la place elle-même :
-            # au-delà d'un goulet < passage, `desservi` ne la touche pas → place NON comptée.
-            desservie = (not clear.is_empty) and pg.intersects(desservi)
+            # (b) DESSERTE (FIX-11) : POSITION du véhicule, pas la zone balayée. Point d'approche DEVANT le nez,
+            # à la demi-largeur du passage, côté allée (`(nx,ny)` pointe du centre de la place vers ce petit
+            # côté). Atteignable SSI ce point est DANS `reach` (noyau érodé atteignable) — aucune dilatation.
+            approche = Point(mid[0] + r_pass * nx, mid[1] + r_pass * ny)
+            desservie = (not clear.is_empty) and reach.intersects(approche)
             options.append((deficit, desservie))
         if not options:
             continue
@@ -237,12 +239,12 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
     return float(manque), nb_desservies
 
 
-def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=None) -> float:
+def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=None, assiette=None) -> float:
     """Aire (m²) de dégagement manquante au passage réglementaire (2,40 m) — cf. `_desserte_core`."""
-    return _desserte_core(allees, places, largeur_requise, acces, voie, _PASSAGE_MIN_M)[0]
+    return _desserte_core(allees, places, largeur_requise, acces, voie, _PASSAGE_MIN_M, assiette)[0]
 
 
-def _largeur_min_desserte(allees, places, largeur_requise: float, acces=None, voie=None) -> float:
+def _largeur_min_desserte(allees, places, largeur_requise: float, acces=None, voie=None, assiette=None) -> float:
     """ETUDE-STATIONNEMENT-FIX-9/10 (relecture) — GOULET = le plus grand passage `w` pour lequel AU MOINS UNE
     place reste atteignable depuis la voie, avec EXACTEMENT la même construction que le comptage (`_desserte_core`
     : bande de voie ajoutée à l'aire roulante, érosion, composante contenant la graine). On cherche sur TOUT
@@ -253,7 +255,7 @@ def _largeur_min_desserte(allees, places, largeur_requise: float, acces=None, vo
     lo, hi = 0.0, 12.0
     for _ in range(26):
         w = (lo + hi) / 2.0
-        if _desserte_core(allees, places, largeur_requise, acces, voie, w)[1] >= 1:
+        if _desserte_core(allees, places, largeur_requise, acces, voie, w, assiette)[1] >= 1:
             lo = w
         else:
             hi = w
@@ -358,7 +360,8 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
     _places_l = [o.geom_local for o in scene.of("place")]
     _acces_l = [o.geom_local for o in scene.of("acces")]
     _voie_l = unary_union(scene.voie_local) if getattr(scene, "voie_local", None) else None
-    pince = _pincement_allee(_allees_l, _places_l, conv.allee_largeur_m, _acces_l, voie=_voie_l)
+    pince = _pincement_allee(_allees_l, _places_l, conv.allee_largeur_m, _acces_l, voie=_voie_l,
+                             assiette=getattr(scene, "assiette_local", None))
     larg_ok = pince < _DEGAGEMENT_SEUIL_M2
     # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — contrôle DUR, y compris sur un ASSEMBLAGE : la mesure par sonde du
     # meilleur des deux côtés (nez/arrière) + désétranglement de la circulation ne crée plus de faux pincements
@@ -820,7 +823,8 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
             # places comptées, par le MÊME noyau roulant que le comptage (`_largeur_min_desserte` ⟶ `_desserte_core`).
             # Une place comptée ⟹ goulet ≥ 2,40 m : les deux contrôles ne se contredisent plus.
             _voie_u = unary_union(scene.voie_local) if scene.voie_local else None
-            larg = _largeur_min_desserte(_all, _pla, conv.allee_largeur_m, _acc, _voie_u)
+            larg = _largeur_min_desserte(_all, _pla, conv.allee_largeur_m, _acc, _voie_u,
+                                         assiette=getattr(scene, "assiette_local", None))
             ok = larg >= req - 0.05
             _dcit = (f"PLU art. {_dess['article']}" if _dess.get("article") else "")
             _dcit += (f" · p. {_dess['page_pdf']}" if _dess.get("page_pdf") else "")

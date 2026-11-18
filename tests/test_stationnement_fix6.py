@@ -185,6 +185,71 @@ def test_etranglement_3m_entree_milieu_avant_stationnement():
         assert abs(g - 3.0) <= 0.25, f"étranglement 3 m @y[{y0};{y1}] → goulet {g:.2f} m (attendu 3)"
 
 
+# FIX-11 (défaut 1) — le côté de la bande de voie est donné par l'ASSIETTE, jamais par les aires roulantes :
+# une aire roulante isolée de l'AUTRE CÔTÉ de la voie ne retourne plus la bande (verdict stable, toute rotation).
+def _plan_def1(nw, rot_deg=0, avec_aire_opposee=True):
+    from shapely.affinity import rotate
+    voie = LineString([(-5, 16), (20, 16)])
+    acc = unary_union([Polygon([(0, 15.8), (6, 15.8), (6, 16.1), (0, 16.1)]),                # bouche 6 m
+                       Polygon([(3 - nw / 2, 15.7), (3 + nw / 2, 15.7),
+                                (3 + nw / 2, 15.8), (3 - nw / 2, 15.8)]),                      # étranglement nw
+                       Polygon([(0, 10), (6, 10), (6, 15.7), (0, 15.7)])])                     # corps 6 m
+    allee = Polygon([(-2, 5), (8, 5), (8, 10), (-2, 10)])
+    place = Polygon([(0, 0), (2.5, 0), (2.5, 5), (0, 5)])
+    assiette = Polygon([(-5, 0), (10, 0), (10, 16), (-5, 16)])                                 # parcelle SOUS la voie
+    aires = [allee] + ([Polygon([(10, 17), (16, 17), (16, 22), (10, 22)])] if avec_aire_opposee else [])
+    geoms = [voie, acc, place, assiette] + aires
+    if rot_deg:
+        geoms = [rotate(g, rot_deg, origin=(2.5, 8)) for g in geoms]
+    voie, acc, place, assiette = geoms[:4]
+    aires = geoms[4:]
+    nb = C._desserte_core(aires, [place], 5.0, [acc], voie, C._PASSAGE_MIN_M, assiette)[1]
+    g = C._largeur_min_desserte(aires, [place], 5.0, [acc], voie, assiette)
+    return nb, g
+
+
+def test_defaut1_bande_cote_assiette_invariante_rotation():
+    """Étranglement 2 m + une aire roulante isolée de l'autre côté de la voie : la bande reste du côté voie
+    (donnée par l'assiette), le passage de 2 m n'est PAS contourné → 0 place, goulet 2 m, à toute rotation."""
+    for rot in (0, 90, 153, 180):
+        nb, g = _plan_def1(2.0, rot, avec_aire_opposee=True)
+        assert nb == 0 and abs(g - 2.0) <= 0.2, f"rot {rot}° : nb={nb}, goulet={g:.2f} (attendu 0 place, 2 m)"
+    # le verdict ne dépend QUE du chemin réel : l'aire opposée ne change rien.
+    assert _plan_def1(2.0, 0, avec_aire_opposee=False)[0] == 0
+
+
+# FIX-11 (défaut 2) — plus de redilatation : on teste la POSITION du véhicule (point d'approche devant le nez,
+# à la demi-largeur, dans le noyau atteignable), pas la zone balayée.
+def _plan_def2(nw, avant_allee, passage=5.0):
+    voie = LineString([(-5, 16), (20, 16)])
+    allee = Polygon([(-2, 5), (8, 5), (8, 10), (-2, 10)])
+    place = Polygon([(0, 0), (2.5, 0), (2.5, 5), (0, 5)])
+    assiette = Polygon([(-5, 0), (10, 0), (10, 16), (-5, 16)])
+    y0 = 10 + avant_allee
+    y1 = y0 + 0.1                                                      # étranglement COURT (10 cm)
+    acc = unary_union([Polygon([(0, y1), (6, y1), (6, 16.1), (0, 16.1)]),
+                       Polygon([(3 - nw / 2, y0), (3 + nw / 2, y0), (3 + nw / 2, y1), (3 - nw / 2, y1)]),
+                       Polygon([(0, 10), (6, 10), (6, y0), (0, y0)])])
+    nb_passage = C._desserte_core([allee], [place], 5.0, [acc], voie, passage, assiette)[1]
+    goulet = C._largeur_min_desserte([allee], [place], 5.0, [acc], voie, assiette)
+    return nb_passage, goulet
+
+
+def test_defaut2_disque_ne_depasse_plus_par_l_ouverture():
+    """Accès 6 m, étranglement court de 4,70 m placé 10 cm / 50 cm / 2 m avant l'allée : le passage testé à 5 m
+    est REFUSÉ (le disque ne « dépasse » plus par l'ouverture) et le goulet vaut 4,70 m, où que soit l'étranglement."""
+    for avant in (0.1, 0.5, 2.0):
+        nb5, goulet = _plan_def2(4.70, avant, passage=5.0)
+        assert nb5 == 0, f"étranglement 4,70 m @{avant} m : passage 5 m accepté à tort (nb={nb5})"
+        assert abs(goulet - 4.70) <= 0.2, f"étranglement 4,70 m @{avant} m : goulet {goulet:.3f} (attendu 4,70)"
+
+
+def test_defaut2_etranglement_exactement_a_la_largeur_testee_passe():
+    """Un étranglement EXACTEMENT à la largeur testée (5 m) laisse passer : le véhicule tient pile."""
+    nb5, _ = _plan_def2(5.0, 0.5, passage=5.0)
+    assert nb5 == 1
+
+
 # FIX-9 (point 1) — chemin praticable continu décidé SANS rattachement par distance : une liaison plus étroite
 # que la largeur de passage (qui s'évanouit à l'érosion) ne transmet aucun raccord.
 def _lien(w):
