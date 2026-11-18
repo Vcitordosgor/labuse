@@ -77,9 +77,11 @@ def test_assemblage_sans_plan_dit_aucun_plan_trouve(session_reelle):
 # ── LOT 2 : le Dossier affiche la MÊME règle de stationnement que l'Étude (jamais « non réglementé ») ──
 @pytest.mark.reel
 @pytest.mark.parametrize("idu, attendu", [
-    ("97422000BW2635", "pl."),                            # barème par typologie (Ua12.2)
-    ("97416000HT0538", "1 place / 75 m"),                 # barème par m² de SDP (Ud6)
-    ("97422000AD0887", "pl."),                            # barème par typologie (Ud12.2)
+    # MERGE moteur-verite (chirurgical LOT J pt3a) — un barème PAR TYPOLOGIE (plusieurs paliers) n'est pas servi
+    # en détail au Dossier : la ligne RENVOIE à l'article (plus de nombre partiel). On vérifie donc le renvoi.
+    ("97422000BW2635", "selon le type de logement"),      # barème par typologie (Ua12.2) → renvoi
+    ("97416000HT0538", "1 place / 75 m"),                 # barème par m² de SDP (Ud6) → servi tel quel
+    ("97422000AD0887", "selon le type de logement"),      # barème par typologie (Ud12.2) → renvoi
 ])
 def test_dossier_affiche_le_bareme_stationnement(session_reelle, idu, attendu):
     import re

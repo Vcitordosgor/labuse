@@ -144,6 +144,47 @@ def test_desserte_et_comptage_jamais_contradictoires():
             assert goulet < C._PASSAGE_MIN_M, f"aucune place desservie (goulet {nw} m) mais desserte {goulet:.2f} m"
 
 
+# FIX-10 — atteignabilité PUREMENT TOPOLOGIQUE (bande de voie ajoutée à l'aire roulante, érodée, composante qui
+# contient la graine), AUCUN rattachement par proximité. Un étranglement COURT après la voie ne doit plus être
+# franchi par le disque de passage, où qu'il soit sur le trajet.
+def _plan_etranglement(nw, y0, y1):
+    """Bouche 6 m à la voie, étranglement `nw` sur [y0 ; y1] (court), accès de nouveau 6 m jusqu'au
+    stationnement. Renvoie (allees, places, largeur, acces, voie)."""
+    voie = LineString([(-5, 16), (15, 16)])
+    allee = Polygon([(-2, 5), (8, 5), (8, 10), (-2, 10)])
+    place = Polygon([(0, 0), (2.5, 0), (2.5, 5), (0, 5)])
+    parts = [Polygon([(3 - nw / 2, y0), (3 + nw / 2, y0), (3 + nw / 2, y1), (3 - nw / 2, y1)])]
+    if y1 < 16.1:
+        parts.append(Polygon([(0, y1), (6, y1), (6, 16.1), (0, 16.1)]))
+    if y0 > 10:
+        parts.append(Polygon([(0, 10), (6, 10), (6, y0), (0, y0)]))
+    return [allee], [place], 5.0, [unary_union(parts)], voie
+
+
+def test_contre_exemple_relecteur_passage_court_2m():
+    """Le contre-exemple du relecteur : bouche 6 m, puis à 20 cm de la voie un passage de 2 m sur 10 cm, puis
+    6 m. AUCUNE place comptée (2 m < 2,40 m) et goulet annoncé = 2 m (plus le 5,208 m du rattachement faux)."""
+    a, p, lr, ac, v = _plan_etranglement(2.0, 15.7, 15.8)
+    assert C._desserte_core(a, p, lr, ac, v, C._PASSAGE_MIN_M)[1] == 0
+    assert abs(C._largeur_min_desserte(a, p, lr, ac, v) - 2.0) <= 0.2
+
+
+def test_meme_etranglement_240_place_comptee():
+    """Le même étranglement court porté à 2,40 m : une place EST comptée, goulet 2,40 m."""
+    a, p, lr, ac, v = _plan_etranglement(2.40, 15.7, 15.8)
+    assert C._desserte_core(a, p, lr, ac, v, C._PASSAGE_MIN_M)[1] == 1
+    assert abs(C._largeur_min_desserte(a, p, lr, ac, v) - 2.40) <= 0.2
+
+
+def test_etranglement_3m_entree_milieu_avant_stationnement():
+    """Un étranglement COURT de 3 m donne un goulet de 3 m où qu'il soit sur le trajet (entrée, milieu, juste
+    avant le stationnement) : le disque ne le franchit jamais par un coin."""
+    for (y0, y1) in ((15.7, 15.8), (12.8, 12.9), (10.1, 10.2)):
+        a, p, lr, ac, v = _plan_etranglement(3.0, y0, y1)
+        g = C._largeur_min_desserte(a, p, lr, ac, v)
+        assert abs(g - 3.0) <= 0.25, f"étranglement 3 m @y[{y0};{y1}] → goulet {g:.2f} m (attendu 3)"
+
+
 # FIX-9 (point 1) — chemin praticable continu décidé SANS rattachement par distance : une liaison plus étroite
 # que la largeur de passage (qui s'évanouit à l'érosion) ne transmet aucun raccord.
 def _lien(w):
