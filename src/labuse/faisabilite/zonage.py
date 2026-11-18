@@ -126,6 +126,17 @@ class ZoneRules:
         m = re.search(r"(\d+(?:[.,]\d+)?)\s*places?\s*/?\s*(?:par\s*)?logement", s, re.I)
         if m:
             return float(m.group(1).replace(",", "."))
+        # ETUDE-STATIONNEMENT (merge moteur-verite) — barème PAR TYPOLOGIE (Le Tampon : 0,5 ≤T1 · 1 T2 · 1,5 T3+)
+        # : le ratio de BASE (logement standard = T2 collectif) n'est pas lisible dans le texte détaillé. On le
+        # lit sur le barème lui-même (`places_pour`), comme la capacité. Sans base lisible → NON_MODELISABLE.
+        try:
+            from ..implantation.regles import charger as _charger_b
+            _b = _charger_b(_insee(self.bassin), self.code).stationnement
+            _r = _b.places_pour(pieces=2, sdp_m2=50.0, destination="collectif")
+            if isinstance(_r, (int, float)):
+                return float(_r)
+        except Exception:  # noqa: BLE001 — lecture annexe, jamais bloquante
+            pass
         return NON_MODELISABLE          # texte présent mais aucune forme « X place/logement » lisible
 
 
@@ -872,6 +883,13 @@ def _calibrage_overlay(code: str, commune: str | None):
         src["stationnement"] = _src_validee(st)
     elif st and st.get("absent"):
         src["stationnement"] = _src_absente(st)
+    # ETUDE-STATIONNEMENT (merge moteur-verite) — barème PAR TYPOLOGIE (Le Tampon Ua/Ud 12.2, et secteurs qui le
+    # renvoient) : pas de feuille `par_logement`, l'article/source vient de `par_typologie`. Sans quoi la ligne
+    # du Dossier renverrait « au règlement de la zone » au lieu de l'article précis (Ud 12.2).
+    if "stationnement" not in src:
+        stt = _feuille("stationnement", "par_typologie")
+        if stt and not stt.get("absent") and stt.get("article"):
+            src["stationnement"] = _src_validee(stt)
 
     if not champs and not src:
         return None

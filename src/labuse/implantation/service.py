@@ -724,7 +724,11 @@ def _regle_stationnement_courte(b) -> Optional[str]:
             parts.append(f"{nb(lg.places)} pl. {lab}")
     if not parts:
         return None
-    rule = " · ".join(parts)
+    # ETUDE-STATIONNEMENT (merge moteur-verite / chirurgical LOT J pt3a) — paliers SÉPARÉS PAR « ; » : c'est
+    # ce séparateur qui signale au Dossier un barème MULTI-PALIERS (par type de logement ET taille d'opération),
+    # qui RENVOIE alors à l'article au lieu d'afficher un nombre partiel. Le barème à SEUIL de surface (La Plaine)
+    # reste séparé par « · » (sa branche dédiée) et garde donc son détail — les deux lectures ne se mélangent pas.
+    rule = "; ".join(parts)
     # ETUDE-STATIONNEMENT-FIX-5 (point 2) — la règle SERVIE au Dossier doit être ENTIÈRE, comme l'Étude :
     # l'ARRONDI (inférieur) et la clause des PLACES HORS ESPACES PRIVATISÉS en font partie (Le Tampon Ud12.2).
     if getattr(b, "arrondi", None) == "inferieur":

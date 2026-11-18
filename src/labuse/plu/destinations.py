@@ -676,8 +676,20 @@ def _zone_regles_brut(doc: dict, zone: str) -> dict:
     if hit is None:
         return {}
     v = zones[hit]
-    if isinstance(v, dict) and v.get("regles"):
-        return v["regles"]
+    own = v.get("regles") if isinstance(v, dict) else None
+    if own and isinstance(v, dict) and v.get("renvoi") and "stationnement" not in own:
+        # ETUDE-STATIONNEMENT (merge moteur-verite) — un secteur porte ses règles de VOLUMÉTRIE propres MAIS
+        # renvoie le STATIONNEMENT à la zone mère (« se reporter au règlement de la zone mère »). On complète
+        # uniquement cette clé ABSENTE par celle de la cible du renvoi (sinon le barème renvoyé disparaît). On
+        # ne tire RIEN d'autre de la mère (mixité, pleine terre… restent propres au secteur : « sans objet »
+        # si absents) pour ne pas changer le reste du moteur.
+        cible = norm.get(_norm_zone(v["renvoi"]))
+        _stat = ((zones[cible].get("regles") or {}).get("stationnement")
+                 if cible is not None and cible != hit and isinstance(zones[cible], dict) else None)
+        if _stat is not None:
+            return {**own, "stationnement": _stat}
+    if own:
+        return own
     seen = {hit}
     while isinstance(v, dict) and v.get("renvoi") and not v.get("regles"):
         cible = norm.get(_norm_zone(v["renvoi"]))
