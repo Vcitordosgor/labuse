@@ -596,3 +596,101 @@ def test_distance_seuil_grand_batiment():
     req6, lib6, _ = C._distance_requise(dc, _Cap(), _Conv(), max_logts_bati=6)
     assert req5 == 3.0 and "aucun bâtiment > 5" in lib5
     assert req6 == 6.0 and "6 logements > 5" in lib6
+
+
+# ── ETUDE-STATIONNEMENT-FIX-19 — les trois défauts du relecteur indépendant (relecture-stationnement-1.md),
+#    chacun « place valable refusée » (faux négatif). Chaque cas Shapely du rapport devient un test. ─────────
+from shapely.geometry import box as _box  # noqa: E402
+from shapely.affinity import rotate as _rotate  # noqa: E402
+
+
+def _rect(x0, y0, x1, y1):
+    return _box(x0, y0, x1, y1)
+
+
+def test_fix19_A_recouvrement_coude_voie_plusieurs_segments():
+    """Défaut A — accès dans un angle du terrain / voie à plusieurs segments : `voie ∩ libre` est une ligne
+    COUDÉE. Ne garder que les deux extrémités donnait une corde oblique fausse → place refusée. Désormais
+    chaque TRONÇON DROIT ≥ passage est une ouverture : la place est desservie, voie droite OU coudée."""
+    assiette = _rect(0, 0, 40, 40)
+    acces = [_rect(-1, -1, 5, 6)]        # accès dans l'angle (0,0), mord la voie
+    allee = [_rect(2, 5, 35, 10)]        # allée 5 m
+    place = [_rect(10, 10, 12.5, 15)]    # nez sur l'allée
+    voie_droite = LineString([(40, 0), (0, 0)])
+    voie_coudee = LineString([(40, 0), (0, 0), (0, 40)])   # bord bas PUIS bord gauche
+    assert C._desserte_core(allee, place, 5.0, acces, voie_droite, 2.4, assiette) == (0.0, 1)
+    manque, nb = C._desserte_core(allee, place, 5.0, acces, voie_coudee, 2.4, assiette)
+    assert nb == 1 and manque < 1e-6, f"voie coudée : place refusée à tort (manque={manque}, nb={nb})"
+
+
+def test_fix19_A_troncons_droits_decoupe_la_polyligne():
+    """Le découpage en tronçons droits sépare un recouvrement coudé en deux segments (un par bord)."""
+    runs = C._troncons_droits(LineString([(5, 0), (0, 0), (0, 6)]))
+    assert len(runs) == 2
+    longs = sorted(((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5 for (ax, ay), (bx, by) in runs)
+    assert abs(longs[0] - 5.0) < 1e-9 and abs(longs[1] - 6.0) < 1e-9
+    # une ligne droite (même à trois points colinéaires) reste UN seul tronçon
+    assert len(C._troncons_droits(LineString([(0, 0), (3, 0), (7, 0)]))) == 1
+
+
+def test_fix19_B_rotation_quelconque_pas_de_scission():
+    """Défaut B — pavés strictement jointifs (se touchent sans se chevaucher) : après rotation quelconque
+    `unary_union` rendait un MultiPolygon, l'érosion scindait le réseau, la place refusée (67/180 angles à
+    5 m). Nettoyée au mm (grille fine + fermeture 1 mm), la place est desservie à TOUTE rotation."""
+    assiette = _rect(0, 0, 40, 40)
+    voie = LineString([(0, 0), (40, 0)])
+    acces = [_rect(10, -1, 15, 5)]       # accès 5 m ; bord haut y=5 JOUXTE l'allée
+    allee = [_rect(5, 5, 35, 10)]
+    place = [_rect(11, 10, 13.5, 15)]
+    refus = []
+    for ang in range(0, 180):
+        Rf = lambda g, a=ang: _rotate(g, a, origin=(0, 0))
+        nb = C._desserte_core([Rf(g) for g in allee], [Rf(g) for g in place], 5.0,
+                              [Rf(g) for g in acces], Rf(voie), 2.4, Rf(assiette))[1]
+        if nb < 1:
+            refus.append(ang)
+    assert refus == [], f"place refusée à {len(refus)} angles (ex. {refus[:8]}) — accès 5 m ≫ 2,40 m"
+
+
+def test_fix19_C_bruit_sub_micronique_ne_scinde_pas_a_l_erosion():
+    """Défaut C — un biseau de coordonnées de l'ordre de 1e-12 à la jonction accès↔allée (union pourtant
+    en UN polygone) faisait scinder `buffer(-_er)` et refuser la place. Nettoyée au mm avant l'érosion, la
+    place est desservie pour tout bruit sub-millimétrique (accès 4 m, étroit mais > 2,40 m)."""
+    assiette = _rect(0, 0, 40, 40)
+    voie = LineString([(0, 0), (40, 0)])
+    allee = [_rect(5, 5, 35, 10)]
+    place = [_rect(11, 10, 13.5, 15)]
+    for eps in (0.0, 1e-12, 1e-9, 1e-6):
+        acces = [Polygon([(10, -1), (14, -1), (14, 5 + eps), (10, 5 - eps)])]
+        manque, nb = C._desserte_core(allee, place, 5.0, acces, voie, 2.4, assiette)
+        assert nb == 1 and manque < 1e-6, f"eps={eps} : place refusée à tort (manque={manque}, nb={nb})"
+
+
+def test_fix19_BC_la_fermeture_ne_ponte_jamais_un_vrai_vide():
+    """La fermeture d'un millimètre (défauts B & C) NE RELIE PAS deux réseaux SÉPARÉS DE 2 cm : une place du
+    réseau lointain, sans accès propre, reste REFUSÉE (contre-exemple du relecteur, à conserver)."""
+    assiette = _rect(0, 0, 40, 40)
+    voie = LineString([(0, 0), (40, 0)])
+    acces = [_rect(10, -1, 15, 5)]
+    proche = _rect(5, 5, 35, 10)
+    lointain = _rect(5, 10.02, 35, 15)       # 2 cm de vide franc
+    place = [_rect(11, 15, 13.5, 20)]         # nez sur le réseau LOINTAIN
+    manque, nb = C._desserte_core([proche, lointain], place, 5.0, acces, voie, 2.4, assiette)
+    assert nb == 0 and manque > 1.0, f"2 cm de vide pontés à tort (manque={manque}, nb={nb})"
+
+
+def test_fix19_goulet_lecture_tranchee_le_plus_large():
+    """Réserve du relecteur sur `_largeur_min_desserte` : on TRANCHE pour la lecture « ≥ 1 place » = le passage le
+    plus LARGE menant à une place. Sur un plan à DEUX réseaux disjoints d'accès 6 m et 3 m (une place chacun, les
+    deux comptées à 2,40 m), le goulet rendu vaut ~6 m (le réseau le plus large). La lecture « plus serrée »
+    (garder toutes les places) n'a de sens qu'à plusieurs accès — absent du modèle LABUSE — et ferait suivre au
+    goulet des écarts de comptage de l'ordre de la résolution que l'oracle ne reproduit pas (cf. docstring)."""
+    assiette = _rect(0, 0, 60, 40)
+    voie = LineString([(0, 0), (60, 0)])
+    acces = [_rect(5, -1, 11, 5), _rect(40, -1, 43, 5)]           # 6 m à gauche, 3 m à droite
+    allee = [_rect(2, 5, 20, 13), _rect(35, 5, 55, 13)]           # DEUX allées séparées (vide x∈[20;35])
+    place = [_rect(6, 13, 8.5, 18), _rect(45, 13, 47.5, 18)]      # une place sur chaque allée
+    nb = C._desserte_core(allee, place, 5.0, acces, voie, 2.4, assiette)[1]
+    assert nb == 2, f"les deux places doivent être desservies à 2,40 m (nb={nb})"
+    goulet = C._largeur_min_desserte(allee, place, 5.0, acces, voie, assiette)
+    assert goulet >= 5.5, f"goulet = {goulet:.3f} m : lecture « ≥ 1 place » = le réseau LE PLUS LARGE (~6 m)"

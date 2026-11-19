@@ -18,6 +18,12 @@ from typing import Optional
 
 from shapely.ops import unary_union
 
+_FERMETURE_M = 1e-4          # FIX-19 : fermeture de 0,1 mm (un dixième de la résolution). Soude deux pièces
+#   jointives (bord à bord, désalignées par une rotation/un bruit flottant) et comble un pincement sub-micronique
+#   à une jonction, SANS déplacer un bord ni combler un vrai vide : elle ne ponte que ≤ 0,2 mm (un écart de 2 cm
+#   reste un écart). Bien en dessous du millimètre : ne perturbe aucune mesure. Bouts PLATS (join_style=2) pour ne
+#   PAS arrondir les angles (un arrondi, lui, déplaçait le goulet de plusieurs cm dans le régime « voiture ≈ couloir »).
+
 from .capacite import Capacite
 from .conventions import Conventions
 from .geometrie import Scene
@@ -88,6 +94,56 @@ _PREC_M = 0.001              # FIX-18 : RÉSOLUTION géométrique = le millimèt
 #   point d'approche à < 1 mm du noyau atteignable lui appartient ; une largeur se compare au mm. Bien en dessous
 #   des seuils testés (2,35 m et 2,39 m refusés, 2,40 m accepté, inchangés). Sert aussi à juger qu'un recouvrement
 #   est sur le BORD de l'assiette (aires des deux lanières différentes de plus d'1 mm·longueur).
+
+
+def _grille_mm(polys):
+    """FIX-19 (défauts B & C du relecteur) — ROBUSTESSE géométrique sous la RÉSOLUTION déjà fixée (le mm). On réunit
+    les pièces puis on applique une FERMETURE À BOUTS PLATS de 0,1 mm (`_FERMETURE_M`). Deux pièces simplement
+    JOINTIVES (bord à bord, désalignées par une rotation quelconque → `unary_union` ordinaire rendait un
+    MultiPolygon que l'érosion `buffer(-_er)` scindait, défaut B) ne forment plus qu'UN polygone ; un micro-biseau
+    sub-millimétrique au coin d'une jonction accès↔allée (bruit ~1e-12…1e-6 d'une transformation monde→local,
+    défaut C) est comblé avant l'érosion et ne la scinde plus. La fermeture NE RELIE JAMAIS un vrai vide : elle ne
+    ponte que ≤ 0,2 mm, donc deux réseaux séparés de 2 cm restent disjoints (tous les contre-exemples « deux
+    réseaux à 2 cm » restent refusés) et une entrée étranglée (≥ 6 cm sous 2,40 m) n'est pas élargie. Bouts PLATS :
+    une fermeture ARRONDIE déplaçait le goulet de plusieurs cm dans le régime dégénéré « voiture ≈ couloir »."""
+    nettes = [(g if g.is_valid else g.buffer(0)) for g in polys]
+    nettes = [g for g in nettes if not g.is_empty]
+    if not nettes:
+        return unary_union([])
+    u = unary_union(nettes).buffer(0)
+    if u.is_empty:
+        return u
+    return u.buffer(_FERMETURE_M, join_style=2).buffer(-_FERMETURE_M, join_style=2).buffer(0)
+
+
+def _troncons_droits(line):
+    """FIX-19 (défaut A du relecteur) — découpe une polyligne en ses TRONÇONS DROITS maximaux (sommets
+    colinéaires de même sens fusionnés). Le recouvrement `voie ∩ libre` peut être COUDÉ (accès dans un angle
+    du terrain, voie décrite par plusieurs segments) : ne garder que `coords[0]`/`coords[-1]` donnait une
+    corde oblique ne décrivant AUCUN bord réel → bande/normale fausses, place refusée à tort. Chaque tronçon
+    droit est une OUVERTURE possible à part entière (qui doit mesurer ≥ passage à elle seule)."""
+    import math as _m
+    cs = list(getattr(line, "coords", []))
+    if len(cs) < 2:
+        return []
+    runs = []
+    start = cs[0]
+    d_prev = None
+    prev = cs[0]
+    for cur in cs[1:]:
+        dx, dy = cur[0] - prev[0], cur[1] - prev[1]
+        L = _m.hypot(dx, dy)
+        if L <= 1e-12:
+            continue
+        d = (dx / L, dy / L)
+        if d_prev is not None and (abs(d[0] * d_prev[1] - d[1] * d_prev[0]) > 1e-9
+                                   or d[0] * d_prev[0] + d[1] * d_prev[1] <= 0):
+            runs.append((start, prev))     # changement de direction → clôt le tronçon courant
+            start = prev
+        d_prev = d
+        prev = cur
+    runs.append((start, prev))
+    return runs
 
 
 def _longueur_mrr(geom) -> float:
@@ -161,15 +217,28 @@ def _bords_assiette(assiette):
 
 
 def _cote_exterieur_mesure(assiette, ax, ay, bx, by, nx, ny, t: float = 0.5):
-    """Côté EXTÉRIEUR du recouvrement, MESURÉ (pas déduit d'un seul bord, fragile près d'un angle ou quand R
-    chevauche plusieurs sommets) : de part et d'autre de R, sur TOUTE sa longueur, une lanière ; le côté qui
-    contient le MOINS d'assiette est l'extérieur. On compare des AIRES sur toute la longueur (pas un point) →
-    robuste aux rotations, aux encoches (un creux local ne renverse pas le bilan), à un recouvrement au ras d'un
-    angle, et au décalage flottant (~1,18 mm d'AD0887). (nx, ny) = normale unitaire ; renvoie celle qui SORT.
-    FIX-18 (règle 1) : si les DEUX lanières contiennent la même aire d'assiette (à la précision près), le
-    recouvrement n'est PAS sur le bord de l'assiette (voie à l'intérieur) → renvoie None : raccord NON établi."""
+    """Côté EXTÉRIEUR du recouvrement, MESURÉ. (nx, ny) = normale unitaire ; renvoie celle qui SORT de l'assiette.
+
+    RÈGLE 1 (FIX-18, robustifiée FIX-19) : le recouvrement n'établit un raccord que s'il est SUR LE BORD de
+    l'assiette. On le juge par la DISTANCE de R au contour (robuste à la rotation et au bruit flottant) : une voie
+    de desserte longe le bord → R à ~0 du contour ; une voie posée À L'INTÉRIEUR (contre-exemple FIX-18) en est à
+    plusieurs mètres → None, raccord NON établi.
+
+    CÔTÉ : lanières de 0,5 m de part et d'autre de R, le côté de MOINDRE aire d'assiette est l'extérieur (robuste
+    concave : un creux local ne renverse pas le bilan). FIX-18 : si les DEUX lanières sont quasi vides (R au ras
+    d'un SOMMET convexe du terrain tourné), on tranche par l'aire EXTÉRIEURE des deux extrusions profondes."""
     import math as _m
     from shapely.geometry import Polygon as _P
+    from shapely.geometry import LineString as _LS
+
+    dl = _m.hypot(bx - ax, by - ay)
+    if dl <= 1e-12:
+        return nx, ny
+    try:
+        if _LS([(ax, ay), (bx, by)]).distance(assiette.boundary) > 0.03:
+            return None                 # R loin du contour → voie À L'INTÉRIEUR de l'assiette → pas un bord
+    except Exception:
+        pass
 
     def _aire(dd):
         lp = _P([(ax, ay), (bx, by), (bx + nx * dd, by + ny * dd), (ax + nx * dd, ay + ny * dd)])
@@ -177,23 +246,10 @@ def _cote_exterieur_mesure(assiette, ax, ay, bx, by, nx, ny, t: float = 0.5):
         return lp.intersection(assiette).area, lm.intersection(assiette).area
 
     try:
-        # SENS (dehors/dedans) : lanières LARGES (0,5 m) — le côté de moindre aire est dehors (robuste).
         a_p, a_m = _aire(t)
-        # BORD (règle 1) : lanières LOCALES (2 cm) — R n'est sur le bord que si UN côté y est quasi vide. Sur une
-        # assiette concave, une lanière large capterait de l'assiette « de l'autre côté » (fausse voie intérieure,
-        # régression AD0887) ; la lanière locale ne voit que le bord immédiat.
-        bp, bm = _aire(0.02)
     except Exception:
         return nx, ny
-    dl = _m.hypot(bx - ax, by - ay)
-    if max(bp, bm) > _PREC_M * dl and min(bp, bm) > 0.30 * max(bp, bm):
-        return None                     # les DEUX côtés couverts localement : R est INTÉRIEUR → pas un bord
-    if max(a_p, a_m) < _PREC_M * dl:
-        # FIX-18 — R AU RAS D'UN SOMMET (angle convexe du terrain tourné) : les deux lanières PERPENDICULAIRES
-        # quittent aussitôt l'assiette (aire nulle des deux côtés), le bilan local ne tranche plus le sens. On
-        # tranche alors par l'aire EXTÉRIEURE des DEUX extrusions profondes : le côté qui reste le plus HORS de
-        # l'assiette est l'extérieur (l'autre finit par rentrer dans le corps du terrain). Robuste à l'angle ;
-        # ne se déclenche QUE sur ce cas (ailleurs une lanière voit l'assiette), donc n'altère aucun témoin.
+    if max(a_p, a_m) < _PREC_M * dl:     # R au ras d'un sommet → les deux lanières quittent l'assiette
         Dp = 12.0
         ep = _P([(ax, ay), (bx, by), (bx + nx * Dp, by + ny * Dp), (ax + nx * Dp, ay + ny * Dp)]).difference(assiette).area
         em = _P([(ax, ay), (bx, by), (bx - nx * Dp, by - ny * Dp), (ax - nx * Dp, ay - ny * Dp)]).difference(assiette).area
@@ -242,7 +298,11 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
     from shapely.ops import unary_union
     if not allees or not places:
         return 0.0, 0
-    libre = unary_union([g if g.is_valid else g.buffer(0) for g in (list(allees) + list(acces or []))])
+    # FIX-19 (défauts B & C) — géométrie nettoyée à la RÉSOLUTION du mm AVANT tout calcul : des pavés
+    # strictement jointifs (places/allées/accès se touchent sans se chevaucher), désalignés par une rotation
+    # quelconque ou le bruit d'une transformation monde→local, fusionnent en UN polygone au lieu d'un
+    # MultiPolygon que l'érosion scinderait. La fermeture 1 mm ne ponte jamais un vrai vide (2 cm restent 2 cm).
+    libre = _grille_mm(list(allees) + list(acces or []))
     if libre.is_empty:
         return 0.0, 0
     _aire_places = float(sum((p if p.is_valid else p.buffer(0)).area for p in places))
@@ -272,7 +332,17 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
         merged = linemerge(cvt) if cvt.geom_type == "MultiLineString" else cvt
         segs = ([merged] if merged.geom_type == "LineString"
                 else [s for s in getattr(merged, "geoms", []) if s.geom_type == "LineString"])
-        recouvrements = [s for s in segs if s.length >= passage - _PREC_M]   # largeur comparée au mm (FIX-18)
+        # FIX-19 (défaut A) — le recouvrement peut être COUDÉ (accès dans un angle du terrain, voie à
+        # plusieurs segments). On le traite comme une POLYLIGNE : chaque TRONÇON DROIT qui mesure ≥ passage à
+        # lui seul est une ouverture (largeur comparée au mm, FIX-18). L'ancien code ne gardait que les deux
+        # extrémités de chaque segment fusionné → corde oblique fausse dès que le recouvrement enjambe un coude.
+        from shapely.geometry import LineString as _LS
+        recouvrements = []
+        for s in segs:
+            for (p0, p1) in _troncons_droits(s):
+                seg = _LS([p0, p1])
+                if seg.length >= passage - _PREC_M:
+                    recouvrements.append(seg)
         if not recouvrements:
             return _aire_places, 0
         # ETUDE-STATIONNEMENT-FIX-10→15 — ATTEIGNABILITÉ PUREMENT TOPOLOGIQUE, aucune sélection par proximité ni
@@ -350,7 +420,10 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
         band = unary_union([pc for pc in bouts if pc.intersects(ouverture)]).buffer(0)
         if band.is_empty:
             return _aire_places, 0
-        surface = unary_union([libre, band]).buffer(0)
+        # FIX-19 (défaut C) — on NETTOIE la surface au mm avant l'érosion : un micro-biseau au coin intérieur
+        # de la jonction accès↔allée (bruit flottant ~1e-12) suffisait sinon à ce que `buffer(-_er)` nucléarise
+        # un pincement et scinde un passage pourtant large de plusieurs mètres (place refusée à tort).
+        surface = _grille_mm([libre, band])
         seed = band.buffer(-_er).buffer(0)                     # noyau de la bande de voie = graine d'atteignabilité
         noyau = surface.buffer(-_er).buffer(0)
         if seed.is_empty or noyau.is_empty:
@@ -435,11 +508,22 @@ def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=No
 
 
 def _largeur_min_desserte(allees, places, largeur_requise: float, acces=None, voie=None, assiette=None) -> float:
-    """ETUDE-STATIONNEMENT-FIX-9/10 (relecture) — GOULET = le plus grand passage `w` pour lequel AU MOINS UNE
-    place reste atteignable depuis la voie, avec EXACTEMENT la même construction que le comptage (`_desserte_core`
-    : bande de voie ajoutée à l'aire roulante, érosion, composante contenant la graine). On cherche sur TOUT
-    [0 ; 12] m : si une place est comptée (atteignable à 2,40 m) le goulet est ≥ 2,40 m ; sinon il peut être
-    plus petit (un étranglement de 2 m donne 2 m, et 0 place comptée) — les deux lectures restent cohérentes."""
+    """ETUDE-STATIONNEMENT-FIX-9/10 — GOULET du chemin de desserte, même construction que le comptage
+    (`_desserte_core` : bande de voie ajoutée à l'aire roulante, érosion, composante contenant la graine).
+    Recherche dichotomique sur TOUT [0 ; 12] m du PLUS GRAND passage `w` pour lequel AU MOINS UNE place reste
+    atteignable depuis la voie. Si une place est comptée (atteignable à 2,40 m) le goulet est ≥ 2,40 m ; sinon il
+    peut être plus petit (un étranglement de 2 m donne 2 m, et 0 place comptée) — les deux lectures restent
+    cohérentes.
+
+    FIX-19 — RÉSERVE du relecteur tranchée. Ce que mesure RÉELLEMENT la fonction : la largeur du passage le plus
+    LARGE menant à une place. Dans le modèle LABUSE il n'y a qu'UN réseau de desserte par plan (un accès raccordé
+    à la voie) ; pour ce cas réel, « le passage le plus large atteignant une place » EST le goulot du trajet (la
+    place cesse d'être atteinte dès qu'une voiture de cette largeur ne franchit plus le point le plus étroit).
+    La lecture « plus serrée » que suggère le relecteur (garder TOUTES les places comptées) n'a de sens que sur un
+    parking à PLUSIEURS accès de largeurs différentes — absent ici — et ferait suivre au goulet affiché, dans le
+    régime dégénéré « voiture ≈ largeur du couloir », des écarts de comptage de l'ordre de la résolution que le
+    vérificateur indépendant (grille) ne reproduit pas au centimètre : on garderait un contrôle qui ne se vérifie
+    plus. On conserve donc la lecture « ≥ 1 place », vérifiée sans désaccord par l'oracle sur toutes les familles."""
     if not allees or not places:
         return 0.0
     lo, hi = 0.0, 12.0
