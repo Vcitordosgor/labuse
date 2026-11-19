@@ -400,6 +400,47 @@ def test_fix16_allee_longe_la_voie_sans_acces_aucune_place():
     assert nb == 0, f"allée longeant la voie sans accès : nb={nb} (attendu 0)"
 
 
+# FIX-18 (règle 1) — si le recouvrement n'est PAS sur le bord de l'assiette (voie à l'intérieur : les deux
+# lanières contiennent la même surface d'assiette, à la précision près), le raccord n'est pas établi.
+def test_fix18_voie_interieure_a_l_assiette_pas_de_raccord():
+    from shapely.geometry import box
+    from shapely.affinity import rotate
+    for rot in (0, 90, 180, 270):
+        ass = box(0, 0, 20, 20)
+        voie = LineString([(5, 10), (11, 10)])                 # voie À L'INTÉRIEUR de l'assiette
+        acc = box(5, 9.9, 11, 12)                              # accès touchant la voie (6 m) mais intérieur
+        allee = box(5, 12, 15, 15)
+        place = box(6, 15, 8.5, 20)
+        gs = [ass, voie, acc, allee, place]
+        if rot:
+            gs = [rotate(g, rot, origin=(10, 10)) for g in gs]
+        ass, voie, acc, allee, place = gs
+        nb = C._desserte_core([allee], [place], 5.0, [acc], voie, C._PASSAGE_MIN_M, ass)[1]
+        assert nb == 0, f"voie intérieure rot {rot}° : nb={nb} (attendu 0, recouvrement hors bord)"
+
+
+# FIX-18 (règle 2) — RÉSOLUTION au millimètre : 2,40 m accepté, 2,39 m et 2,35 m refusés (inchangés), à tous angles.
+def test_fix18_largeur_ouverture_au_millimetre():
+    from shapely.geometry import box
+    from shapely.affinity import rotate
+
+    def nb_ouverture(ow, rot):
+        ass = box(0, 0, 12, 12)
+        acc = box(6 - ow / 2, -0.04, 6 + ow / 2, 5.2)
+        allee = box(1, 5, 11, 8)
+        place = box(5.5, 8, 8, 13)
+        voie = LineString([(0, 0), (12, 0)])
+        gs = [ass, acc, allee, place, voie]
+        if rot:
+            gs = [rotate(g, rot, origin=(6, 6)) for g in gs]
+        return C._desserte_core([gs[2]], [gs[3]], 5.0, [gs[1]], gs[4], C._PASSAGE_MIN_M, gs[0])[1]
+
+    for rot in (0, 37, 90, 180, 270):
+        assert nb_ouverture(2.40, rot) == 1, f"2,40 m rot {rot}° doit PASSER"
+        assert nb_ouverture(2.39, rot) == 0, f"2,39 m rot {rot}° doit être REFUSÉ"
+        assert nb_ouverture(2.35, rot) == 0, f"2,35 m rot {rot}° doit être REFUSÉ"
+
+
 # FIX-11 (défaut 1) — le côté de la bande de voie est donné par l'ASSIETTE, jamais par les aires roulantes :
 # une aire roulante isolée de l'AUTRE CÔTÉ de la voie ne retourne plus la bande (verdict stable, toute rotation).
 def _plan_def1(nw, rot_deg=0, avec_aire_opposee=True):

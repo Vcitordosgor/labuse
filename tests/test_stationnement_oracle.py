@@ -34,6 +34,32 @@ CELL = 0.01   # maille fine (≤ 2 cm demandés) : 1 cm pour rasteriser sans bia
 # ───────────────────────── ORACLE (aucun code commun avec le contrôle) ─────────────────────────
 _MARGE = 4.0     # profondeur de la ROUTE extérieure autour de la parcelle (≥ demi-passage cherché)
 _WALL = 0.03     # épaisseur du MUR (contour de l'assiette) rasterisé — bloque le disque hors de l'ouverture
+_PREC = 0.001    # FIX-18 : résolution géométrique (le millimètre), identique au contrôle
+
+
+def _ouverture_sur_bord(ouverture, assiette):
+    """Règle 1 (FIX-18), par les moyens de l'oracle : l'ouverture (contact accès–voie) est-elle sur le BORD de
+    l'assiette ? De part et d'autre de chaque tronçon, une lanière LOCALE (2 cm) ; un tronçon est « sur le bord »
+    si un côté y est quasi vide d'assiette. Si TOUS les tronçons ont les deux côtés couverts (voie INTÉRIEURE à
+    l'assiette), renvoie False → raccord non établi."""
+    segs = list(ouverture.geoms) if ouverture.geom_type == "MultiLineString" else [ouverture]
+    for s in segs:
+        if s.geom_type != "LineString":
+            continue
+        cs = list(s.coords)
+        for i in range(len(cs) - 1):
+            (x0, y0), (x1, y1) = cs[i], cs[i + 1]
+            ex, ey = x1 - x0, y1 - y0
+            ln = math.hypot(ex, ey)
+            if ln < 1e-9:
+                continue
+            nx, ny = -ey / ln, ex / ln
+            lp = Polygon([(x0, y0), (x1, y1), (x1 + nx * 0.02, y1 + ny * 0.02), (x0 + nx * 0.02, y0 + ny * 0.02)])
+            lm = Polygon([(x0, y0), (x1, y1), (x1 - nx * 0.02, y1 - ny * 0.02), (x0 - nx * 0.02, y0 - ny * 0.02)])
+            ap, am = lp.intersection(assiette).area, lm.intersection(assiette).area
+            if not (max(ap, am) > _PREC * ln and min(ap, am) > 0.30 * max(ap, am)):
+                return True              # un côté quasi vide → tronçon sur le bord → raccord possible
+    return False                         # tous les tronçons intérieurs → voie dans l'assiette → pas de raccord
 
 
 def _grille(allees, places, acces, voie, assiette):
@@ -49,6 +75,8 @@ def _grille(allees, places, acces, voie, assiette):
     voie_l = voie if voie.geom_type in ("LineString", "MultiLineString") else voie.boundary
     ouverture = voie_l.intersection(acces_poly)          # OUVERTURE = là où l'accès perce le mur du contour
     if ouverture.is_empty:
+        return None
+    if not _ouverture_sur_bord(ouverture, assiette):     # règle 1 : voie à l'intérieur → pas de raccord
         return None
     mur = assiette.boundary.buffer(_WALL).difference(ouverture.buffer(_WALL * 3.0, cap_style=2))   # ouverture à BOUTS PLATS
     route = voie_l.buffer(_MARGE).difference(assiette).difference(mur).buffer(0)      # la rue, au-delà de la voie
@@ -104,7 +132,7 @@ def oracle_nb(grille, places, passage):
         # (le disque de rayon r tient, bord inclus) — supprime les faux positifs sub-millimétriques de la maille
         # au ras du bord érodé (le contrôle, exact, tranche au même endroit).
         p = Point(px, py)
-        return espace.contains(p) and espace.boundary.distance(p) >= r - 1e-4
+        return espace.contains(p) and espace.boundary.distance(p) >= r - _PREC   # mm près (règle 2)
 
     nb = 0
     for pl in places:
@@ -191,8 +219,22 @@ def _ce_C16():
     return [allee], [place], [acces], voie, assiette
 
 
+def _ce_voie_interieure():
+    """Règle 1 (FIX-18) : la voie (et son contact accès) est À L'INTÉRIEUR de l'assiette (pas sur le bord) →
+    plan invalide, raccord NON établi, 0 place. Le générateur ne produit plus ce cas ; il est testé ici."""
+    assiette = box(0, 0, 20, 20)
+    voie = LineString([(5, 10), (11, 10)])            # voie dans l'assiette (pas sur le bord)
+    acces = box(5, 9.9, 11, 12)                       # accès touchant la voie (6 m) mais à l'intérieur
+    allee = box(5, 12, 15, 15)
+    place = box(6, 15, 8.5, 20)
+    return [allee], [place], [acces], voie, assiette
+
+
 def contre_exemples():
     cas = []
+    al, pl, ac, v, a = _ce_voie_interieure()
+    for rot in (0, 37, 90, 180, 270):
+        cas.append((f"voie_interieure_r{rot}", _rot(al, pl, ac, v, a, rot, origin=(10, 10))))
     for rot in (0, 90, 180, 270):
         for d in (0.04, 0.051):
             for nom, fn in (("fix15", _ce_fix15), ("fix14", _ce_fix14)):
@@ -285,6 +327,13 @@ def _gen(rng):
         return None
     deg = rng.uniform(0, 360)          # ROTATIONS QUELCONQUES
     al, pl, ac, v, a = _rot(allees, places, [acc], voie, ass, deg, origin=(W / 2, H / 2))
+    # FIX-18 : le générateur NE PRODUIT PAS de voie à l'intérieur de l'assiette (plan invalide) — ce cas est
+    # couvert à part par `contre_exemples` (règle 1). On jette le plan si le recouvrement n'est pas sur le bord.
+    rec = v.intersection(unary_union(ac))
+    if not rec.is_empty and rec.length > 0:
+        mp = rec.interpolate(0.5, normalized=True)
+        if a.contains(mp) and a.boundary.distance(mp) > 0.05:
+            return None
     return (family, al, pl, ac, v, a)
 
 

@@ -84,6 +84,10 @@ _PASSAGE_MIN_M = 2.4         # largeur mini de circulation d'une voiture ; sous 
 _COMP_SIGNIF_M2 = 8.0        # aire mini d'un morceau d'allée pour qu'un étranglement le séparant compte
 _MUR_EP = 0.05               # FIX-16 : épaisseur de la paroi « contour de l'assiette » coupée dans la bande
 #   extérieure (ouverte au seul recouvrement) — fine, sépare la bande de l'aire roulante aux bords FERMÉS
+_PREC_M = 0.001              # FIX-18 : RÉSOLUTION géométrique = le millimètre (PAS une marge de proximité). Un
+#   point d'approche à < 1 mm du noyau atteignable lui appartient ; une largeur se compare au mm. Bien en dessous
+#   des seuils testés (2,35 m et 2,39 m refusés, 2,40 m accepté, inchangés). Sert aussi à juger qu'un recouvrement
+#   est sur le BORD de l'assiette (aires des deux lanières différentes de plus d'1 mm·longueur).
 
 
 def _longueur_mrr(geom) -> float:
@@ -161,15 +165,39 @@ def _cote_exterieur_mesure(assiette, ax, ay, bx, by, nx, ny, t: float = 0.5):
     chevauche plusieurs sommets) : de part et d'autre de R, sur TOUTE sa longueur, une lanière ; le côté qui
     contient le MOINS d'assiette est l'extérieur. On compare des AIRES sur toute la longueur (pas un point) →
     robuste aux rotations, aux encoches (un creux local ne renverse pas le bilan), à un recouvrement au ras d'un
-    angle, et au décalage flottant (~1,18 mm d'AD0887). (nx, ny) = normale unitaire ; renvoie celle qui SORT."""
+    angle, et au décalage flottant (~1,18 mm d'AD0887). (nx, ny) = normale unitaire ; renvoie celle qui SORT.
+    FIX-18 (règle 1) : si les DEUX lanières contiennent la même aire d'assiette (à la précision près), le
+    recouvrement n'est PAS sur le bord de l'assiette (voie à l'intérieur) → renvoie None : raccord NON établi."""
+    import math as _m
     from shapely.geometry import Polygon as _P
-    lane_p = _P([(ax, ay), (bx, by), (bx + nx * t, by + ny * t), (ax + nx * t, ay + ny * t)])
-    lane_m = _P([(ax, ay), (bx, by), (bx - nx * t, by - ny * t), (ax - nx * t, ay - ny * t)])
+
+    def _aire(dd):
+        lp = _P([(ax, ay), (bx, by), (bx + nx * dd, by + ny * dd), (ax + nx * dd, ay + ny * dd)])
+        lm = _P([(ax, ay), (bx, by), (bx - nx * dd, by - ny * dd), (ax - nx * dd, ay - ny * dd)])
+        return lp.intersection(assiette).area, lm.intersection(assiette).area
+
     try:
-        a_p = lane_p.intersection(assiette).area
-        a_m = lane_m.intersection(assiette).area
+        # SENS (dehors/dedans) : lanières LARGES (0,5 m) — le côté de moindre aire est dehors (robuste).
+        a_p, a_m = _aire(t)
+        # BORD (règle 1) : lanières LOCALES (2 cm) — R n'est sur le bord que si UN côté y est quasi vide. Sur une
+        # assiette concave, une lanière large capterait de l'assiette « de l'autre côté » (fausse voie intérieure,
+        # régression AD0887) ; la lanière locale ne voit que le bord immédiat.
+        bp, bm = _aire(0.02)
     except Exception:
         return nx, ny
+    dl = _m.hypot(bx - ax, by - ay)
+    if max(bp, bm) > _PREC_M * dl and min(bp, bm) > 0.30 * max(bp, bm):
+        return None                     # les DEUX côtés couverts localement : R est INTÉRIEUR → pas un bord
+    if max(a_p, a_m) < _PREC_M * dl:
+        # FIX-18 — R AU RAS D'UN SOMMET (angle convexe du terrain tourné) : les deux lanières PERPENDICULAIRES
+        # quittent aussitôt l'assiette (aire nulle des deux côtés), le bilan local ne tranche plus le sens. On
+        # tranche alors par l'aire EXTÉRIEURE des DEUX extrusions profondes : le côté qui reste le plus HORS de
+        # l'assiette est l'extérieur (l'autre finit par rentrer dans le corps du terrain). Robuste à l'angle ;
+        # ne se déclenche QUE sur ce cas (ailleurs une lanière voit l'assiette), donc n'altère aucun témoin.
+        Dp = 12.0
+        ep = _P([(ax, ay), (bx, by), (bx + nx * Dp, by + ny * Dp), (ax + nx * Dp, ay + ny * Dp)]).difference(assiette).area
+        em = _P([(ax, ay), (bx, by), (bx - nx * Dp, by - ny * Dp), (ax - nx * Dp, ay - ny * Dp)]).difference(assiette).area
+        return (nx, ny) if ep >= em else (-nx, -ny)
     return (nx, ny) if a_p <= a_m else (-nx, -ny)
 
 
@@ -244,7 +272,7 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
         merged = linemerge(cvt) if cvt.geom_type == "MultiLineString" else cvt
         segs = ([merged] if merged.geom_type == "LineString"
                 else [s for s in getattr(merged, "geoms", []) if s.geom_type == "LineString"])
-        recouvrements = [s for s in segs if s.length >= passage]
+        recouvrements = [s for s in segs if s.length >= passage - _PREC_M]   # largeur comparée au mm (FIX-18)
         if not recouvrements:
             return _aire_places, 0
         # ETUDE-STATIONNEMENT-FIX-10→15 — ATTEIGNABILITÉ PUREMENT TOPOLOGIQUE, aucune sélection par proximité ni
@@ -276,15 +304,15 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
             if dl <= 1e-9:
                 continue
             tx, ty = (bx - ax) / dl, (by - ay) / dl            # tangente du recouvrement
-            # FIX-17 : le côté extérieur est MESURÉ (lanières fines de part et d'autre de R, sur toute sa
-            # longueur ; le côté qui contient le MOINS d'assiette est le dehors), pas déduit d'un seul bord.
-            nx, ny = _cote_exterieur_mesure(assiette_eff, ax, ay, bx, by, -ty, tx)
+            # FIX-17 : le côté extérieur est MESURÉ (lanières de part et d'autre de R, le MOINS d'assiette = dehors).
+            # FIX-18 (règle 1) : None = recouvrement NON sur le bord (voie intérieure) → ce recouvrement n'établit
+            # aucun raccord, on le SAUTE.
+            cote = _cote_exterieur_mesure(assiette_eff, ax, ay, bx, by, -ty, tx)
+            if cote is None:
+                continue
+            nx, ny = cote
             poly = _Poly([(ax, ay), (bx, by), (bx + nx * D, by + ny * D), (ax + nx * D, ay + ny * D)])
             band_r = poly.difference(assiette_eff).buffer(0)   # aucune aire artificielle DANS le projet
-            if band_r.is_empty:            # la normale pointait vers le dedans (recouvrement ambigu, assiette des
-                nx, ny = -nx, -ny          # deux côtés) → la bande extrudée est dans l'assiette : on sort par l'autre
-                poly = _Poly([(ax, ay), (bx, by), (bx + nx * D, by + ny * D), (ax + nx * D, ay + ny * D)])
-                band_r = poly.difference(assiette_eff).buffer(0)
             comps = (list(band_r.geoms) if band_r.geom_type == "MultiPolygon"
                      else ([band_r] if not band_r.is_empty else []))
             for pc in comps:
@@ -296,7 +324,7 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
                 inter = pc.intersection(acces_poly)
                 if inter.is_empty:
                     continue
-                if _etendue_le_long(inter, ax, ay, tx, ty) + 1e-9 >= passage:   # … LE LONG du recouvrement
+                if _etendue_le_long(inter, ax, ay, tx, ty) + _PREC_M >= passage:   # … LE LONG de R, au mm près
                     kept.append(pc)
         if not kept:
             return _aire_places, 0      # aucune composante chevauchée par l'accès le long du recouvrement
@@ -383,8 +411,10 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
             # (b) DESSERTE (FIX-11) : POSITION du véhicule, pas la zone balayée. Point d'approche DEVANT le nez,
             # à la demi-largeur du passage, côté allée (`(nx,ny)` pointe du centre de la place vers ce petit
             # côté). Atteignable SSI ce point est DANS `reach` (noyau érodé atteignable) — aucune dilatation.
+            # FIX-18 (règle 2) : à la RÉSOLUTION géométrique (1 mm). Un point d'approche à moins d'1 mm du noyau
+            # lui appartient (pas une marge de proximité : la précision de la mesure).
             approche = Point(mid[0] + r_pass * nx, mid[1] + r_pass * ny)
-            desservie = (not clear.is_empty) and reach.intersects(approche)
+            desservie = (not clear.is_empty) and reach.distance(approche) <= _PREC_M
             options.append((deficit, desservie))
         if not options:
             continue
