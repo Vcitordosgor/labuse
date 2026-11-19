@@ -358,6 +358,48 @@ def test_fix15_cote_bande_par_le_contour_pas_point_de_test():
                 f"FIX-15 rot {rot}° d={d} : nb={nb}, goulet={g:.2f} (attendu 0 place, 2 m)"
 
 
+# FIX-16 — le CONTOUR de l'assiette est un MUR, ouvert seulement au droit du recouvrement. Dans une assiette en
+# C, la bande extérieure traverse l'encoche et rejoignait l'aire roulante par un AUTRE bord (faux raccord,
+# goulet 6 m). Contre-exemple du relecteur repris tel quel.
+def _plan_C16(rot=0):
+    from shapely.affinity import rotate
+    from shapely.geometry import box
+    assiette = box(0, -20, 20, 20).difference(box(5, -5, 21, 5))
+    acces = unary_union([box(6, 4.96, 12, 5.1), box(8, 5.1, 10, 10),
+                         box(1, 6, 10, 8), box(1, -8, 3, 8), box(1, -8, 8, -6)])
+    allee = box(5, -10, 15, -5)
+    place = box(7, -15, 9.5, -10)
+    voie = LineString([(6, 5), (12, 5)])
+    gs = [assiette, acces, allee, place, voie]
+    if rot:
+        gs = [rotate(g, rot, origin=(10, 0)) for g in gs]
+    assiette, acces, allee, place, voie = gs
+    nb = C._desserte_core([allee], [place], 5.0, [acces], voie, C._PASSAGE_MIN_M, assiette)[1]
+    g = C._largeur_min_desserte([allee], [place], 5.0, [acces], voie, assiette)
+    return nb, g
+
+
+def test_fix16_bande_ne_traverse_pas_l_encoche_assiette_C():
+    """Contre-exemple du relecteur (assiette en C), aux orientations 0/90/180/270 ET à 30° : la bande extérieure
+    ne franchit plus l'encoche pour rejoindre l'aire roulante par un autre bord → le vrai passage de 2 m n'est
+    plus contourné → 0 place, goulet ≈ 2 m."""
+    for rot in (0, 90, 180, 270, 30):
+        nb, g = _plan_C16(rot)
+        assert nb == 0 and abs(g - 2.0) <= 0.3, f"C16 rot {rot}° : nb={nb}, goulet={g:.2f} (attendu 0 place, 2 m)"
+
+
+def test_fix16_allee_longe_la_voie_sans_acces_aucune_place():
+    """Une allée LONGE la voie mais AUCUN accès ne la raccorde : le réseau roulant touche la voie, mais sans
+    morsure d'accès le long du recouvrement → raccord NON établi → aucune place comptée."""
+    voie = LineString([(0, 16), (20, 16)])
+    allee = Polygon([(0, 11), (20, 11), (20, 16), (0, 16)])        # longe la voie (y = 16) mais n'est pas un accès
+    place = Polygon([(2, 6), (4.5, 6), (4.5, 11), (2, 11)])
+    acces = Polygon([(8, 11), (12, 11), (12, 13), (8, 13)])        # accès INTÉRIEUR, ne touche PAS la voie
+    ass = Polygon([(-2, -2), (22, -2), (22, 16), (-2, 16)])
+    nb = C._desserte_core([allee], [place], 5.0, [acces], voie, C._PASSAGE_MIN_M, ass)[1]
+    assert nb == 0, f"allée longeant la voie sans accès : nb={nb} (attendu 0)"
+
+
 # FIX-11 (défaut 1) — le côté de la bande de voie est donné par l'ASSIETTE, jamais par les aires roulantes :
 # une aire roulante isolée de l'AUTRE CÔTÉ de la voie ne retourne plus la bande (verdict stable, toute rotation).
 def _plan_def1(nw, rot_deg=0, avec_aire_opposee=True):

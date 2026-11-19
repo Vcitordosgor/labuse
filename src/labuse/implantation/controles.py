@@ -82,6 +82,8 @@ _DEGAGEMENT_PLACE_FLOOR_M2 = 0.005
 _DEGAGEMENT_SEUIL_M2 = 0.005   # aire totale non dégagée au-delà de laquelle le plan échoue (bruit flottant seul)
 _PASSAGE_MIN_M = 2.4         # largeur mini de circulation d'une voiture ; sous ce seuil l'allée s'étrangle
 _COMP_SIGNIF_M2 = 8.0        # aire mini d'un morceau d'allée pour qu'un étranglement le séparant compte
+_MUR_EP = 0.05               # FIX-16 : épaisseur de la paroi « contour de l'assiette » coupée dans la bande
+#   extérieure (ouverte au seul recouvrement) — fine, sépare la bande de l'aire roulante aux bords FERMÉS
 
 
 def _longueur_mrr(geom) -> float:
@@ -286,6 +288,20 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
         if not kept:
             return _aire_places, 0      # aucune composante chevauchée par l'accès le long du recouvrement
         band = unary_union(kept).buffer(0)
+        if band.is_empty:
+            return _aire_places, 0
+        # FIX-16 : le CONTOUR de l'assiette est un MUR, ouvert UNIQUEMENT au droit du recouvrement. Sans lui, la
+        # bande extérieure, en longeant une encoche (assiette en C/U), rejoint l'aire roulante par un AUTRE bord
+        # du terrain → faux raccord qui contourne le vrai passage. On RETIRE DE LA BANDE une fine paroi le long
+        # du contour, SAUF sur le recouvrement : la bande ne touche alors l'aire roulante QU'À l'ouverture réelle
+        # (on ne coupe PAS `libre` — la circulation INTÉRIEURE le long d'un bord reste intacte). On ne garde
+        # ensuite que la portion de bande encore reliée au recouvrement.
+        rec_union = unary_union(recouvrements)
+        mur = assiette_eff.boundary.buffer(_MUR_EP).difference(rec_union.buffer(_MUR_EP * 3.0))
+        band = band.difference(mur).buffer(0)
+        bouts = (list(band.geoms) if band.geom_type == "MultiPolygon"
+                 else ([band] if not band.is_empty else []))
+        band = unary_union([pc for pc in bouts if pc.intersects(rec_union.buffer(_MUR_EP * 3.0))]).buffer(0)
         if band.is_empty:
             return _aire_places, 0
         surface = unary_union([libre, band]).buffer(0)
