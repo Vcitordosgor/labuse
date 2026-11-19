@@ -156,6 +156,23 @@ def _bords_assiette(assiette):
     return bords
 
 
+def _cote_exterieur_mesure(assiette, ax, ay, bx, by, nx, ny, t: float = 0.5):
+    """Côté EXTÉRIEUR du recouvrement, MESURÉ (pas déduit d'un seul bord, fragile près d'un angle ou quand R
+    chevauche plusieurs sommets) : de part et d'autre de R, sur TOUTE sa longueur, une lanière ; le côté qui
+    contient le MOINS d'assiette est l'extérieur. On compare des AIRES sur toute la longueur (pas un point) →
+    robuste aux rotations, aux encoches (un creux local ne renverse pas le bilan), à un recouvrement au ras d'un
+    angle, et au décalage flottant (~1,18 mm d'AD0887). (nx, ny) = normale unitaire ; renvoie celle qui SORT."""
+    from shapely.geometry import Polygon as _P
+    lane_p = _P([(ax, ay), (bx, by), (bx + nx * t, by + ny * t), (ax + nx * t, ay + ny * t)])
+    lane_m = _P([(ax, ay), (bx, by), (bx - nx * t, by - ny * t), (ax - nx * t, ay - ny * t)])
+    try:
+        a_p = lane_p.intersection(assiette).area
+        a_m = lane_m.intersection(assiette).area
+    except Exception:
+        return nx, ny
+    return (nx, ny) if a_p <= a_m else (-nx, -ny)
+
+
 def _cote_exterieur(bords, mx: float, my: float, tx: float, ty: float):
     """Normale extérieure unitaire du bord d'assiette qui PORTE le recouvrement : le bord le plus proche du
     milieu (mx, my) de R qui lui est ~parallèle ET le recouvre en projection. La normale vient du SENS DE
@@ -252,7 +269,6 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
         acces_poly = unary_union([g if g.is_valid else g.buffer(0) for g in (acces or [])])
         assiette_eff = (assiette if (assiette is not None and not getattr(assiette, "is_empty", True))
                         else libre.convex_hull)   # à défaut d'assiette fournie (tests), l'emprise convexe du réseau
-        bords = _bords_assiette(assiette_eff)
         kept = []
         for R in recouvrements:
             (ax, ay), (bx, by) = R.coords[0], R.coords[-1]
@@ -260,18 +276,15 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
             if dl <= 1e-9:
                 continue
             tx, ty = (bx - ax) / dl, (by - ay) / dl            # tangente du recouvrement
-            mx, my = (ax + bx) / 2.0, (ay + by) / 2.0
-            cote = _cote_exterieur(bords, mx, my, tx, ty)      # côté extérieur DONNÉ PAR LE CONTOUR (sens de parcours)
-            if cote is not None:
-                nx, ny = cote
-            else:
-                # repli (le recouvrement ne longe aucun bord d'assiette identifiable) : normale perpendiculaire
-                # orientée hors de l'assiette par un micro-décalage (0,1 mm, local au bord — pas un point lointain).
-                nx, ny = -ty, tx
-                if assiette_eff.contains(Point(mx + nx * 1e-4, my + ny * 1e-4)):
-                    nx, ny = -nx, -ny
+            # FIX-17 : le côté extérieur est MESURÉ (lanières fines de part et d'autre de R, sur toute sa
+            # longueur ; le côté qui contient le MOINS d'assiette est le dehors), pas déduit d'un seul bord.
+            nx, ny = _cote_exterieur_mesure(assiette_eff, ax, ay, bx, by, -ty, tx)
             poly = _Poly([(ax, ay), (bx, by), (bx + nx * D, by + ny * D), (ax + nx * D, ay + ny * D)])
             band_r = poly.difference(assiette_eff).buffer(0)   # aucune aire artificielle DANS le projet
+            if band_r.is_empty:            # la normale pointait vers le dedans (recouvrement ambigu, assiette des
+                nx, ny = -nx, -ny          # deux côtés) → la bande extrudée est dans l'assiette : on sort par l'autre
+                poly = _Poly([(ax, ay), (bx, by), (bx + nx * D, by + ny * D), (ax + nx * D, ay + ny * D)])
+                band_r = poly.difference(assiette_eff).buffer(0)
             comps = (list(band_r.geoms) if band_r.geom_type == "MultiPolygon"
                      else ([band_r] if not band_r.is_empty else []))
             for pc in comps:
@@ -297,11 +310,16 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
         # (on ne coupe PAS `libre` — la circulation INTÉRIEURE le long d'un bord reste intacte). On ne garde
         # ensuite que la portion de bande encore reliée au recouvrement.
         rec_union = unary_union(recouvrements)
-        mur = assiette_eff.boundary.buffer(_MUR_EP).difference(rec_union.buffer(_MUR_EP * 3.0))
+        # FIX-17 : l'OUVERTURE dans le mur = le recouvrement avec des BOUTS PLATS (cap_style=2), arrêtés EXACTEMENT
+        # à ses extrémités → l'ouverture mesure exactement la longueur du recouvrement. Avec des bouts ARRONDIS,
+        # chaque extrémité débordait de ~5 cm au-delà de R et pouvait percer le mur près d'un angle (faux raccord
+        # concave) ; inversement, sur un accès pile à 2,40 m, l'arrondi grignotait le passage.
+        ouverture = rec_union.buffer(_MUR_EP * 3.0, cap_style=2)
+        mur = assiette_eff.boundary.buffer(_MUR_EP).difference(ouverture)
         band = band.difference(mur).buffer(0)
         bouts = (list(band.geoms) if band.geom_type == "MultiPolygon"
                  else ([band] if not band.is_empty else []))
-        band = unary_union([pc for pc in bouts if pc.intersects(rec_union.buffer(_MUR_EP * 3.0))]).buffer(0)
+        band = unary_union([pc for pc in bouts if pc.intersects(ouverture)]).buffer(0)
         if band.is_empty:
             return _aire_places, 0
         surface = unary_union([libre, band]).buffer(0)

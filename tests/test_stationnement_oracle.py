@@ -50,7 +50,7 @@ def _grille(allees, places, acces, voie, assiette):
     ouverture = voie_l.intersection(acces_poly)          # OUVERTURE = là où l'accès perce le mur du contour
     if ouverture.is_empty:
         return None
-    mur = assiette.boundary.buffer(_WALL).difference(ouverture.buffer(_WALL * 3.0))   # contour percé à l'ouverture
+    mur = assiette.boundary.buffer(_WALL).difference(ouverture.buffer(_WALL * 3.0, cap_style=2))   # ouverture à BOUTS PLATS
     route = voie_l.buffer(_MARGE).difference(assiette).difference(mur).buffer(0)      # la rue, au-delà de la voie
     if route.is_empty:
         return None
@@ -65,7 +65,7 @@ def _grille(allees, places, acces, voie, assiette):
     inside = contains(espace, X, Y)
     dist = ndimage.distance_transform_edt(inside) * CELL
     road_mask = contains(route, X, Y)                    # départ = la route (au-delà de la voie), hors mur
-    return dict(dist=dist, road=road_mask, minx=minx, miny=miny, nxc=nxc, nyc=nyc)
+    return dict(dist=dist, road=road_mask, minx=minx, miny=miny, nxc=nxc, nyc=nyc, espace=espace)
 
 
 def oracle_nb(grille, places, passage):
@@ -93,11 +93,18 @@ def oracle_nb(grille, places, passage):
     # (ses cellules, trop étroites, sont exclues) → le goulet n'est pas gonflé par la dilatation.
     reached = ndimage.binary_dilation(reached, iterations=1) & (dist >= r - CELL)
     minx, miny, nxc, nyc = grille["minx"], grille["miny"], grille["nxc"], grille["nyc"]
+    espace = grille["espace"]
 
     def cell_reached(px, py):
         j = int((px - minx) / CELL)
         i = int((py - miny) / CELL)
-        return 0 <= i < nyc and 0 <= j < nxc and reached[i, j]
+        if not (0 <= i < nyc and 0 <= j < nxc and reached[i, j]):
+            return False
+        # la cellule est atteinte (connexité) ; on confirme le CONTACT EXACT du disque au point d'approche
+        # (le disque de rayon r tient, bord inclus) — supprime les faux positifs sub-millimétriques de la maille
+        # au ras du bord érodé (le contrôle, exact, tranche au même endroit).
+        p = Point(px, py)
+        return espace.contains(p) and espace.boundary.distance(p) >= r - 1e-4
 
     nb = 0
     for pl in places:
@@ -209,39 +216,52 @@ def _rot(allees, places, acces, voie, assiette, deg, origin=(5, 5)):
 
 # ───────────────────────── générateur aléatoire (graine fixe) ─────────────────────────
 def _gen(rng):
-    """Un plan varié et PROPRE : accès en corridor profond de largeur uniforme (franc ≥ 2,60 m OU étranglé
-    ≤ 2,34 m — marge claire de 2,40 m), allée principale, places en stalles affleurantes (nez sur le bord),
-    rotation QUELCONQUE. Le flux aléatoire reste sur des assiettes rectangulaires (enveloppe de robustesse du
-    dispositif de bande) ; les assiettes CONCAVES en C/U le long desquelles court une allée — le cas qui piège
-    la bande — sont couvertes par le contre-exemple C16, joué à DOUZE orientations quelconques, et par
-    fix13/fix14/fix15/11×9 (poches, encoches). Voir la note du module."""
+    """Un plan varié : assiette RECTANGLE ou CONCAVE (C, U, L, poche), accès en corridor profond de largeur
+    uniforme (franc ≥ 2,60 m OU étranglé ≤ 2,34 m — marge claire de 2,40 m), allée principale, option allée qui
+    LONGE l'encoche (reliée au réseau réel, PAS atteignable par l'encoche = le mur), places en stalles
+    affleurantes, rotation QUELCONQUE. Renvoie (famille, allees, places, acces, voie, assiette) ou None."""
     W = rng.uniform(12, 16)
     H = rng.uniform(11, 14)
     ass = box(0, 0, W, H)
     ya = 5.0
     main = box(0.5, ya, W - 0.5, ya + 3.0)                       # allée principale (desservie par l'accès)
-    # POCHE CONCAVE : une encoche dans l'assiette qui NE touche NI le corridor d'entrée NI l'allée (elle n'offre
-    # donc PAS d'entrée) — l'assiette reste concave sans ambiguïté de desserte. (La vraie encoche en C/U le long
-    # de laquelle court une allée — le cas qui piège la bande — est couverte par le contre-exemple C16, joué à
-    # douze orientations quelconques ci-dessus ; la reproduire dans le flux aléatoire bute sur une limite de
-    # robustesse du dispositif de bande sur certaines géométries concaves tournées, hors-sujet du mur FIX-16.)
+    family = "rectangle"
     longe = None
+    roll = rng.random()
+    if roll < 0.24:                                              # C : encoche ouverte à droite + allée qui la longe
+        family = "C"
+        ey0 = rng.uniform(ya + 2.6, H - 3.0)
+        eh = rng.uniform(2.2, max(2.3, H - ey0 - 0.6))
+        ex0 = rng.uniform(5.0, W - 2.0)
+        ass = ass.difference(box(ex0, ey0, W + 1.0, ey0 + eh))
+        longe = box(0.5, ey0 - 2.4, ex0, ey0)                    # longe l'encoche, REJOINT `main` par la gauche
+    elif roll < 0.42:                                            # U : deux encoches + allée qui longe entre elles
+        family = "U"
+        ey0 = rng.uniform(ya + 3.8, H - 2.2)
+        ex0 = rng.uniform(5.0, W - 2.0)
+        ass = ass.difference(box(ex0, ey0, W + 1.0, ey0 + 1.4)).difference(box(ex0, ey0 - 3.2, W + 1.0, ey0 - 1.8))
+        longe = box(0.5, ey0 - 1.8, ex0, ey0)
+    elif roll < 0.58:                                            # L : encoche d'angle (haut-gauche ou haut-droit)
+        family = "L"
+        if rng.random() < 0.5:
+            ass = ass.difference(box(-1.0, ya + 3.6, rng.uniform(3.0, W / 2.0), H + 1.0))
+        else:
+            ass = ass.difference(box(rng.uniform(W / 2.0, W - 3.0), ya + 3.6, W + 1.0, H + 1.0))
+    elif roll < 0.74:                                            # poche : encoche depuis un bord, concave
+        family = "poche"
+        px0 = rng.uniform(1.0, W - 4.0)
+        ass = ass.difference(box(px0, ya + 3.6, px0 + rng.uniform(1.5, 3.5), H + 1.0))
     if ass.is_empty or ass.geom_type != "Polygon":
         return None
     voie = LineString([(0, 0), (W, 0)])
     # accès : corridor d'entrée de LARGEUR UNIFORME (bouche = corridor), profond, montant droit à l'allée. Largeur
     # `ebw` franche (≥ 2,60 m, desservi) ou étranglée (≤ 2,34 m, non desservi) — marge CLAIRE autour de 2,40 m
-    # (maille 1 cm + rotation quelconque ≈ ±1,5 cm). Corridor uniforme → pas de jonction mince bande↔aire roulante.
+    # (maille 1 cm + rotation quelconque ≈ ±1,5 cm d'erreur de rasterisation).
     ebw = rng.choice([rng.uniform(2.6, 5.0), rng.uniform(1.6, 2.34)])
-    bx0 = rng.uniform(0, max(0.1, W - ebw))
-    colx = bx0 + ebw / 2.0
+    bx0 = rng.uniform(0.8, max(0.9, W - ebw - 0.8))              # l'accès n'est pas collé au bord latéral (sinon,
+    colx = bx0 + ebw / 2.0                                        #   après rotation, le recouvrement rase un angle)
     acc = box(colx - ebw / 2.0, -0.04, colx + ebw / 2.0, ya + 0.3)
-    allees = [main]
-    if longe is not None:
-        allees.append(longe)
-    # NB : les étranglements INTERNES qui coupent l'aire roulante (places derrière un goulet < 2,40 m) sont
-    # couverts par les contre-exemples (C16 : neck 2 m ; fix14/fix15) ; ici on garde l'aire roulante CONNEXE
-    # pour que la desserte soit tranchée par la seule entrée (franche ou étranglée) et par l'encoche (mur).
+    allees = [main] + ([longe] if longe is not None else [])
     # places 2,5 × 5, NON chevauchantes, en STALLE PERPENDICULAIRE : le NEZ affleure le bord de l'allée, la stalle
     # s'étend DEHORS (pas de chevauchement partiel ambigu) → l'approche tombe franchement dans l'allée.
     places = []
@@ -263,9 +283,9 @@ def _gen(rng):
             break
     if not places:
         return None
-    deg = rng.uniform(0, 360)          # ROTATIONS QUELCONQUES (maille 1 cm : erreur de rasterisation ≈ 1,5 cm,
-    #                                    absorbée par les marges ≥ 6 cm des étranglements)
-    return _rot(allees, places, [acc], voie, ass, deg, origin=(W / 2, H / 2))
+    deg = rng.uniform(0, 360)          # ROTATIONS QUELCONQUES
+    al, pl, ac, v, a = _rot(allees, places, [acc], voie, ass, deg, origin=(W / 2, H / 2))
+    return (family, al, pl, ac, v, a)
 
 
 # ───────────────────────── comparaison oracle ↔ contrôle ─────────────────────────
@@ -292,21 +312,29 @@ def test_oracle_contre_exemples_du_relecteur():
 
 @pytest.mark.local
 def test_oracle_vs_controle_300_plans():
+    """≥ 300 plans tirés à graine fixe, PAR FAMILLE DE FORMES (rectangle, C, U, L, poche), rotations quelconques,
+    largeurs d'entrée proches de 2,40 m. Zéro désaccord dans les deux sens (ni place comptée à tort, ni place
+    valable refusée). Un désaccord → on donne la géométrie du plan fautif et on échoue (sans réduire le périmètre)."""
     import random
     rng = random.Random(20261118)
     n, desacc = 0, []
-    while n < 320:
+    par_famille = {}
+    while n < 340:
         plan = _gen(rng)
         if plan is None:
             continue
-        allees, places, acces, voie, assiette = plan
+        family, allees, places, acces, voie, assiette = plan
         if not places:
             continue
         n += 1
+        par_famille[family] = par_famille.get(family, 0) + 1
         try:
-            m = _compare(f"plan#{n}", allees, places, acces, voie, assiette)
+            m = _compare(f"plan#{n}[{family}]", allees, places, acces, voie, assiette)
         except Exception as e:  # noqa: BLE001
-            m = f"[plan#{n}] exception : {type(e).__name__} {e}"
+            m = f"[plan#{n}[{family}]] exception : {type(e).__name__} {e}"
         if m:
-            desacc.append(m)
-    assert not desacc, f"{len(desacc)}/{n} désaccords oracle↔contrôle :\n" + "\n".join(desacc[:40])
+            wkt = (f"\n  assiette={assiette.wkt}\n  acces={unary_union(acces).wkt}"
+                   f"\n  allees={unary_union(allees).wkt}\n  places={unary_union(places).wkt}\n  voie={voie.wkt}")
+            desacc.append(m + wkt)
+    print("plans par famille :", par_famille)
+    assert not desacc, f"{len(desacc)}/{n} désaccords oracle↔contrôle (par famille {par_famille}) :\n" + "\n".join(desacc[:4])
