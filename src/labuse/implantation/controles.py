@@ -276,6 +276,129 @@ def _cote_exterieur(bords, mx: float, my: float, tx: float, ty: float):
     return best[1], best[2]
 
 
+def _reach_depuis_voie(libre, acces, voie, passage, assiette):
+    """NOYAU ROULANT atteignable depuis la voie à `passage` donné (demi-largeur `passage`/2). Construction FIX-10→19
+    (bande de voie le long du recouvrement, mur de contour, érosion, composante contenant la graine de bande).
+    Extrait de `_desserte_core` pour être partagé par le COMPTAGE (une place est desservie si son approche ∈ reach)
+    ET la LARGEUR DE DESSERTE (FIX-19, au niveau des allées). Renvoie le polygone `reach` (vide si pas de raccord)."""
+    import math as _math
+    from shapely.ops import linemerge, unary_union
+    from shapely.geometry import Polygon as _Poly
+    from shapely.geometry import LineString as _LS
+    vide = _Poly()
+    r_pass = max(passage, 1e-3) / 2.0
+    _er = r_pass - 1e-4
+    if voie is not None and not getattr(voie, "is_empty", True):
+        voie_l = voie if voie.geom_type in ("LineString", "MultiLineString") else voie.boundary
+        cvt = voie_l.intersection(libre)
+        merged = linemerge(cvt) if cvt.geom_type == "MultiLineString" else cvt
+        segs = ([merged] if merged.geom_type == "LineString"
+                else [s for s in getattr(merged, "geoms", []) if s.geom_type == "LineString"])
+        recouvrements = []
+        for s in segs:                                          # FIX-19 (A) : recouvrement coudé → tronçons droits
+            for (p0, p1) in _troncons_droits(s):
+                seg = _LS([p0, p1])
+                if seg.length >= passage - _PREC_M:
+                    recouvrements.append(seg)
+        if not recouvrements:
+            return vide
+        D = 12.0
+        acces_poly = unary_union([g if g.is_valid else g.buffer(0) for g in (acces or [])])
+        assiette_eff = (assiette if (assiette is not None and not getattr(assiette, "is_empty", True))
+                        else libre.convex_hull)
+        kept = []
+        for R in recouvrements:
+            (ax, ay), (bx, by) = R.coords[0], R.coords[-1]
+            dl = _math.hypot(bx - ax, by - ay)
+            if dl <= 1e-9:
+                continue
+            tx, ty = (bx - ax) / dl, (by - ay) / dl
+            cote = _cote_exterieur_mesure(assiette_eff, ax, ay, bx, by, -ty, tx)
+            if cote is None:                                    # recouvrement NON sur le bord (voie intérieure)
+                continue
+            nx, ny = cote
+            poly = _Poly([(ax, ay), (bx, by), (bx + nx * D, by + ny * D), (ax + nx * D, ay + ny * D)])
+            band_r = poly.difference(assiette_eff).buffer(0)
+            comps = (list(band_r.geoms) if band_r.geom_type == "MultiPolygon"
+                     else ([band_r] if not band_r.is_empty else []))
+            for pc in comps:
+                inter = pc.intersection(acces_poly)             # chevauchement RÉEL de l'accès LE LONG de R (sans proximité)
+                if inter.is_empty:
+                    continue
+                if _etendue_le_long(inter, ax, ay, tx, ty) + _PREC_M >= passage:
+                    kept.append(pc)
+        if not kept:
+            return vide
+        band = unary_union(kept).buffer(0)
+        if band.is_empty:
+            return vide
+        rec_union = unary_union(recouvrements)                  # FIX-16 : mur de contour ouvert au seul recouvrement
+        ouverture = rec_union.buffer(_MUR_EP * 3.0, cap_style=2)
+        mur = assiette_eff.boundary.buffer(_MUR_EP).difference(ouverture)
+        band = band.difference(mur).buffer(0)
+        bouts = (list(band.geoms) if band.geom_type == "MultiPolygon"
+                 else ([band] if not band.is_empty else []))
+        band = unary_union([pc for pc in bouts if pc.intersects(ouverture)]).buffer(0)
+        if band.is_empty:
+            return vide
+        surface = _grille_mm([libre, band])                     # FIX-19 (C) : nettoyée au mm avant l'érosion
+        seed = band.buffer(-_er).buffer(0)
+        noyau = surface.buffer(-_er).buffer(0)
+        if seed.is_empty or noyau.is_empty:
+            return vide
+        comps = list(noyau.geoms) if noyau.geom_type == "MultiPolygon" else [noyau]
+        reach_comps = [c for c in comps if c.intersects(seed)]
+    else:
+        noyau = libre.buffer(-_er).buffer(0)                    # tests unitaires sans voie
+        if noyau.is_empty:
+            return vide
+        comps = list(noyau.geoms) if noyau.geom_type == "MultiPolygon" else [noyau]
+        reach_comps = [max(comps, key=lambda g: g.area)] if comps else []
+    if not reach_comps:
+        return vide
+    return unary_union(reach_comps)
+
+
+def _sonder_place(pg, largeur_requise, libre, reach, r_pass):
+    """Une place : est-elle DESSERVIE (point d'approche devant le nez, à la demi-largeur, ∈ `reach` au mm près) et
+    quel est son DÉFICIT de dégagement (part du rectangle de largeur requise non couverte par `libre`) ? Extrait de
+    `_desserte_core`. Renvoie (état, valeur) : état None = place à ignorer (nez indéfini) ; False = NON desservie
+    (valeur = aire de la place) ; True = desservie (valeur = déficit minimal du côté réellement desservi)."""
+    from shapely.geometry import Polygon as _P
+    from shapely.geometry import Point as _Pt
+    W = max(float(largeur_requise), 0.1)
+    c = pg.centroid
+    coords = list(pg.exterior.coords)[:-1]
+    edges = []
+    for i in range(len(coords)):
+        a, b = coords[i], coords[(i + 1) % len(coords)]
+        L = ((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5
+        edges.append((L, a, b, ((a[0] + b[0]) / 2.0, (a[1] + b[1]) / 2.0)))
+    if not edges:
+        return None, 0.0
+    Lmin = min(e[0] for e in edges)
+    petits = [e for e in edges if e[0] <= Lmin * 1.3]           # les DEUX petits côtés (nez ET arrière)
+    options = []
+    for _L, a, b, mid in petits:
+        nx, ny = mid[0] - c.x, mid[1] - c.y
+        ln = (nx * nx + ny * ny) ** 0.5 or 1.0
+        nx, ny = nx / ln, ny / ln
+        sonde = _P([a, b, (b[0] + W * nx, b[1] + W * ny), (a[0] + W * nx, a[1] + W * ny)])
+        if not sonde.is_valid or sonde.area < 0.5:
+            continue
+        clear = sonde.intersection(libre)
+        deficit = max(0.0, sonde.area - clear.area)
+        approche = _Pt(mid[0] + r_pass * nx, mid[1] + r_pass * ny)
+        desservie = (not clear.is_empty) and reach.distance(approche) <= _PREC_M
+        options.append((deficit, desservie))
+    if not options:
+        return None, 0.0
+    desservies = [d for d, sv in options if sv]
+    if not desservies:
+        return False, pg.area
+    return True, min(desservies)
+
+
 def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None,
                    passage: float = _PASSAGE_MIN_M, assiette=None) -> tuple[float, int]:
     """ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — DÉGAGEMENT mesuré DEVANT CHAQUE PLACE, sur l'allée DÉSÉTRANGLÉE.
@@ -294,211 +417,35 @@ def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None
          places qui n'étaient desservies QU'À TRAVERS ce goulet perdent leur dégagement et sont comptées
          manquantes. Une allée large (≥ `_PASSAGE_MIN_M`) survit à l'ouverture → aucun faux positif.
     On ne compte que les places VRAIMENT déficientes (manque > `_DEGAGEMENT_PLACE_FLOOR_M2`). Renvoie l'aire (m²)."""
-    from shapely.geometry import Polygon
-    from shapely.ops import unary_union
     if not allees or not places:
         return 0.0, 0
-    # FIX-19 (défauts B & C) — géométrie nettoyée à la RÉSOLUTION du mm AVANT tout calcul : des pavés
-    # strictement jointifs (places/allées/accès se touchent sans se chevaucher), désalignés par une rotation
-    # quelconque ou le bruit d'une transformation monde→local, fusionnent en UN polygone au lieu d'un
-    # MultiPolygon que l'érosion scinderait. La fermeture 1 mm ne ponte jamais un vrai vide (2 cm restent 2 cm).
+    # FIX-19 (défauts B & C) — géométrie nettoyée à la RÉSOLUTION du mm AVANT tout calcul : des pavés strictement
+    # jointifs (places/allées/accès se touchent sans se chevaucher), désalignés par une rotation quelconque ou le
+    # bruit d'une transformation monde→local, fusionnent en UN polygone au lieu d'un MultiPolygon que l'érosion
+    # scinderait ; la fermeture 1 mm ne ponte jamais un vrai vide (2 cm restent 2 cm).
     libre = _grille_mm(list(allees) + list(acces or []))
     if libre.is_empty:
         return 0.0, 0
     _aire_places = float(sum((p if p.is_valid else p.buffer(0)).area for p in places))
     r_pass = max(passage, 1e-3) / 2.0
-    # (2) PASSAGE ROULANT CONTINU JUSQU'À LA VOIE (FIX-5/6/7, point 1) — une place n'est desservie que si une
-    # voiture l'atteint depuis la voie par un couloir ≥ `_PASSAGE_MIN_M` de large SUR TOUT son trajet. Le raccord
-    # accès–voie se mesure comme la LONGUEUR DU BORD DE VOIE RÉELLEMENT RECOUVERTE PAR L'ACCÈS, D'UN SEUL TENANT :
-    # `voie_l ∩ libre` (l'accès MORD l'emprise de la voie, cf. geometrie.raccorder_acces_voie), segment CONTINU
-    # au seuil EXACT de 2,40 m — AUCUNE bande de tolérance, AUCUN arrondi. Un vide (même 2 cm), un contact
-    # ponctuel, ou un recouvrement < 2,40 m d'un seul tenant ne desservent pas.
-    #   · noyau = là où le centre d'une voiture peut rouler (allées + accès érodés de la demi-largeur) ;
-    #   · réseau atteignable = les composantes du noyau proches d'un recouvrement de voie valide.
-    # on érode d'un CHEVEU de moins que la demi-largeur : un passage EXACTEMENT à `_PASSAGE_MIN_M` (le minimum
-    # roulant admis) laisse alors un noyau mince au lieu de s'évanouir (0,1 mm de robustesse flottante, pas une
-    # tolérance : un passage sous 2,40 m disparaît toujours).
-    _er = r_pass - 1e-4   # érosion : un CHEVEU de moins que la demi-largeur (un passage EXACT ne s'évanouit pas)
-    reach_comps = None
-    if voie is not None and not getattr(voie, "is_empty", True):
-        import math as _math
-        from shapely.ops import linemerge
-        from shapely.geometry import Polygon as _Poly
-        from shapely.geometry import Point
-        voie_l = voie if voie.geom_type in ("LineString", "MultiLineString") else voie.boundary
-        # recouvrement RÉEL mesuré sur LIBRE (c'est le DESSIN qui touche la voie : aucun pontage de vide ;
-        # tronçons JOINTIFS réunis par linemerge, sans combler de vide), au seuil EXACT, d'un seul tenant.
-        cvt = voie_l.intersection(libre)
-        merged = linemerge(cvt) if cvt.geom_type == "MultiLineString" else cvt
-        segs = ([merged] if merged.geom_type == "LineString"
-                else [s for s in getattr(merged, "geoms", []) if s.geom_type == "LineString"])
-        # FIX-19 (défaut A) — le recouvrement peut être COUDÉ (accès dans un angle du terrain, voie à
-        # plusieurs segments). On le traite comme une POLYLIGNE : chaque TRONÇON DROIT qui mesure ≥ passage à
-        # lui seul est une ouverture (largeur comparée au mm, FIX-18). L'ancien code ne gardait que les deux
-        # extrémités de chaque segment fusionné → corde oblique fausse dès que le recouvrement enjambe un coude.
-        from shapely.geometry import LineString as _LS
-        recouvrements = []
-        for s in segs:
-            for (p0, p1) in _troncons_droits(s):
-                seg = _LS([p0, p1])
-                if seg.length >= passage - _PREC_M:
-                    recouvrements.append(seg)
-        if not recouvrements:
-            return _aire_places, 0
-        # ETUDE-STATIONNEMENT-FIX-10→15 — ATTEIGNABILITÉ PUREMENT TOPOLOGIQUE, aucune sélection par proximité ni
-        # distance. On AJOUTE à l'aire roulante une BANDE DE VOIE le long du recouvrement (profonde pour contenir
-        # le disque) → voie + réseau = UNE seule surface ; on l'érode de la demi-largeur ; la composante du noyau
-        # qui CONTIENT le noyau de la bande de voie est le SEUL ensemble atteignable.
-        # FIX-15 (défaut : le côté de la bande venait d'un POINT DE TEST à 30 cm, qui tombait dans une encoche
-        # d'assiette concave → mauvais côté → une poche subsistait après soustraction et touchait l'accès
-        # LATÉRALEMENT, ce qui suffisait à la retenir). CORRECTION :
-        #   1. le côté EXTÉRIEUR vient du CONTOUR de l'assiette, PAS d'un point de test : le bord d'assiette qui
-        #      porte le recouvrement (le plus proche, ~parallèle, le recouvrant en projection) donne, par son SENS
-        #      DE PARCOURS, la normale extérieure (= (dy, -dx)). Exact même sur une assiette concave ; ne dépend ni
-        #      d'un centre, ni des aires roulantes, ni d'un point de test ;
-        #   2. la bande est extrudée de ce côté, on lui retire l'assiette, et on ne garde que la composante
-        #      ADJACENTE AU RECOUVREMENT lui-même ;
-        #   3. le raccord est établi si l'ACCÈS chevauche réellement cette composante LE LONG DU RECOUVREMENT, sur
-        #      ≥ la largeur de passage (étendue projetée sur la tangente de R). Une poche qui touche l'accès
-        #      AILLEURS (latéralement) n'est JAMAIS un départ. Le décalage flottant (~1,18 mm sur AD0887) est
-        #      absorbé par le CHEVAUCHEMENT RÉEL de l'accès sur la voie (0,155 m²), pas par une marge.
-        # Si rien ne reste, le raccord n'est pas établi.
-        D = 12.0                                               # profondeur route (contient tout disque cherché)
-        acces_poly = unary_union([g if g.is_valid else g.buffer(0) for g in (acces or [])])
-        assiette_eff = (assiette if (assiette is not None and not getattr(assiette, "is_empty", True))
-                        else libre.convex_hull)   # à défaut d'assiette fournie (tests), l'emprise convexe du réseau
-        kept = []
-        for R in recouvrements:
-            (ax, ay), (bx, by) = R.coords[0], R.coords[-1]
-            dl = _math.hypot(bx - ax, by - ay)
-            if dl <= 1e-9:
-                continue
-            tx, ty = (bx - ax) / dl, (by - ay) / dl            # tangente du recouvrement
-            # FIX-17 : le côté extérieur est MESURÉ (lanières de part et d'autre de R, le MOINS d'assiette = dehors).
-            # FIX-18 (règle 1) : None = recouvrement NON sur le bord (voie intérieure) → ce recouvrement n'établit
-            # aucun raccord, on le SAUTE.
-            cote = _cote_exterieur_mesure(assiette_eff, ax, ay, bx, by, -ty, tx)
-            if cote is None:
-                continue
-            nx, ny = cote
-            poly = _Poly([(ax, ay), (bx, by), (bx + nx * D, by + ny * D), (ax + nx * D, ay + ny * D)])
-            band_r = poly.difference(assiette_eff).buffer(0)   # aucune aire artificielle DANS le projet
-            comps = (list(band_r.geoms) if band_r.geom_type == "MultiPolygon"
-                     else ([band_r] if not band_r.is_empty else []))
-            for pc in comps:
-                # l'ADJACENCE au recouvrement ne vient PAS d'une distance (le décalage flottant ~1,18 mm d'AD0887
-                # la casserait — le relecteur l'interdit « sans proximité ») mais du CHEVAUCHEMENT RÉEL de l'accès :
-                # l'accès MORD la voie EN R (recouvrement = voie ∩ libre, libre ⊇ accès), donc une composante que
-                # l'accès chevauche LE LONG de R sur ≥ passage est, par construction, le départ au bord même du
-                # recouvrement. Une poche qui ne touche l'accès qu'AILLEURS n'y projette pas ≥ passage → écartée.
-                inter = pc.intersection(acces_poly)
-                if inter.is_empty:
-                    continue
-                if _etendue_le_long(inter, ax, ay, tx, ty) + _PREC_M >= passage:   # … LE LONG de R, au mm près
-                    kept.append(pc)
-        if not kept:
-            return _aire_places, 0      # aucune composante chevauchée par l'accès le long du recouvrement
-        band = unary_union(kept).buffer(0)
-        if band.is_empty:
-            return _aire_places, 0
-        # FIX-16 : le CONTOUR de l'assiette est un MUR, ouvert UNIQUEMENT au droit du recouvrement. Sans lui, la
-        # bande extérieure, en longeant une encoche (assiette en C/U), rejoint l'aire roulante par un AUTRE bord
-        # du terrain → faux raccord qui contourne le vrai passage. On RETIRE DE LA BANDE une fine paroi le long
-        # du contour, SAUF sur le recouvrement : la bande ne touche alors l'aire roulante QU'À l'ouverture réelle
-        # (on ne coupe PAS `libre` — la circulation INTÉRIEURE le long d'un bord reste intacte). On ne garde
-        # ensuite que la portion de bande encore reliée au recouvrement.
-        rec_union = unary_union(recouvrements)
-        # FIX-17 : l'OUVERTURE dans le mur = le recouvrement avec des BOUTS PLATS (cap_style=2), arrêtés EXACTEMENT
-        # à ses extrémités → l'ouverture mesure exactement la longueur du recouvrement. Avec des bouts ARRONDIS,
-        # chaque extrémité débordait de ~5 cm au-delà de R et pouvait percer le mur près d'un angle (faux raccord
-        # concave) ; inversement, sur un accès pile à 2,40 m, l'arrondi grignotait le passage.
-        ouverture = rec_union.buffer(_MUR_EP * 3.0, cap_style=2)
-        mur = assiette_eff.boundary.buffer(_MUR_EP).difference(ouverture)
-        band = band.difference(mur).buffer(0)
-        bouts = (list(band.geoms) if band.geom_type == "MultiPolygon"
-                 else ([band] if not band.is_empty else []))
-        band = unary_union([pc for pc in bouts if pc.intersects(ouverture)]).buffer(0)
-        if band.is_empty:
-            return _aire_places, 0
-        # FIX-19 (défaut C) — on NETTOIE la surface au mm avant l'érosion : un micro-biseau au coin intérieur
-        # de la jonction accès↔allée (bruit flottant ~1e-12) suffisait sinon à ce que `buffer(-_er)` nucléarise
-        # un pincement et scinde un passage pourtant large de plusieurs mètres (place refusée à tort).
-        surface = _grille_mm([libre, band])
-        seed = band.buffer(-_er).buffer(0)                     # noyau de la bande de voie = graine d'atteignabilité
-        noyau = surface.buffer(-_er).buffer(0)
-        if seed.is_empty or noyau.is_empty:
-            return _aire_places, 0
-        comps = list(noyau.geoms) if noyau.geom_type == "MultiPolygon" else [noyau]
-        reach_comps = [c for c in comps if c.intersects(seed)]   # la composante CONTENANT la graine, UNIQUEMENT
-    else:
-        noyau = libre.buffer(-_er).buffer(0)                   # tests unitaires sans voie
-        if noyau.is_empty:
-            return _aire_places, 0
-        comps = list(noyau.geoms) if noyau.geom_type == "MultiPolygon" else [noyau]
-        reach_comps = [max(comps, key=lambda g: g.area)] if comps else []
-    if not reach_comps:
-        return _aire_places, 0
-    reach = unary_union(reach_comps)
+    # NOYAU ROULANT atteignable depuis la voie (FIX-10→19, cf. `_reach_depuis_voie`) : une place est desservie si
+    # son point d'approche, devant le nez à la demi-largeur, appartient à ce noyau (`_sonder_place`).
+    reach = _reach_depuis_voie(libre, acces, voie, passage, assiette)
     if reach.is_empty:
         return _aire_places, 0
-    # FIX-11 (défaut 2) — PLUS DE REDILATATION pour décider l'atteignabilité (un disque qui bute sur un
-    # étranglement « dépassait » quand même par l'ouverture dilatée). On teste la POSITION DU VÉHICULE : pour
-    # chaque place, un point d'approche DEVANT son bord d'accès, à la demi-largeur du passage testé, côté allée ;
-    # la place est atteignable si ce point appartient à la composante du noyau érodé atteignable (`reach`). Aucune
-    # dilatation : au-delà d'un goulet < passage le point tombe dans une AUTRE composante → non atteignable.
-    from shapely.geometry import Point
-    W = max(float(largeur_requise), 0.1)   # FIX-4 : rectangle de dégagement ENTIER, aucune marge retranchée
     manque = 0.0
     nb_desservies = 0
     for p in places:
         pg = p if p.is_valid else p.buffer(0)
-        c = pg.centroid
-        coords = list(pg.exterior.coords)[:-1]
-        # on ne sonde que par le NEZ de la place : l'un des deux PETITS côtés (la place est 2,5 × 5 m — le nez
-        # fait la largeur, 2,5 m ; les grands côtés, 5 m, sont les flancs). Sonder un flanc extruderait vers un
-        # mur et créerait un faux déficit (ce qui cassait les assemblages malgré une allée large de 5 m).
-        edges = []
-        for i in range(len(coords)):
-            a, b = coords[i], coords[(i + 1) % len(coords)]
-            L = ((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5
-            edges.append((L, a, b, ((a[0] + b[0]) / 2.0, (a[1] + b[1]) / 2.0)))
-        if not edges:
+        etat, val = _sonder_place(pg, largeur_requise, libre, reach, r_pass)
+        if etat is None:
             continue
-        Lmin = min(e[0] for e in edges)
-        petits = [e for e in edges if e[0] <= Lmin * 1.3]          # les deux petits côtés (nez ET arrière)
-        # On SONDE les DEUX petits côtés et on garde le MEILLEUR (déficit minimal) : l'allée dessert la place
-        # par UN seul côté ; l'autre donne sur le mur/la place voisine. Prendre le plus près de l'allée se
-        # trompait de côté quand une allée mince longeait l'arrière (faux déficit de 4 m sur une allée de 5 m,
-        # qui écroulait les parkings denses). Le côté d'accès réel = celui où le dégagement manque le MOINS.
-        options = []   # (déficit de dégagement EXACT contre `libre`, desservie jusqu'à la voie ?)
-        for _L, a, b, mid in petits:
-            nx, ny = mid[0] - c.x, mid[1] - c.y
-            ln = (nx * nx + ny * ny) ** 0.5 or 1.0
-            nx, ny = nx / ln, ny / ln
-            sonde = Polygon([a, b, (b[0] + W * nx, b[1] + W * ny), (a[0] + W * nx, a[1] + W * ny)])
-            if not sonde.is_valid or sonde.area < 0.5:
-                continue
-            # (a) dégagement EXACT : la part du rectangle NON couverte par la surface libre (allée + accès).
-            clear = sonde.intersection(libre)
-            deficit = max(0.0, sonde.area - clear.area)
-            # (b) DESSERTE (FIX-11) : POSITION du véhicule, pas la zone balayée. Point d'approche DEVANT le nez,
-            # à la demi-largeur du passage, côté allée (`(nx,ny)` pointe du centre de la place vers ce petit
-            # côté). Atteignable SSI ce point est DANS `reach` (noyau érodé atteignable) — aucune dilatation.
-            # FIX-18 (règle 2) : à la RÉSOLUTION géométrique (1 mm). Un point d'approche à moins d'1 mm du noyau
-            # lui appartient (pas une marge de proximité : la précision de la mesure).
-            approche = Point(mid[0] + r_pass * nx, mid[1] + r_pass * ny)
-            desservie = (not clear.is_empty) and reach.distance(approche) <= _PREC_M
-            options.append((deficit, desservie))
-        if not options:
-            continue
-        desservies = [d for d, sv in options if sv]
-        if not desservies:
-            manque += pg.area        # aucun couloir roulant jusqu'à la voie → place NON comptée
+        if etat is False:
+            manque += val            # aucun couloir roulant jusqu'à la voie → place NON comptée
             continue
         nb_desservies += 1           # une voiture atteint la place par un passage ≥ `passage`
-        deficit = min(desservies)    # le meilleur côté RÉELLEMENT DESSERVI
-        if deficit > _DEGAGEMENT_PLACE_FLOOR_M2:
-            manque += deficit
+        if val > _DEGAGEMENT_PLACE_FLOOR_M2:
+            manque += val
     return float(manque), nb_desservies
 
 
@@ -507,29 +454,69 @@ def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=No
     return _desserte_core(allees, places, largeur_requise, acces, voie, _PASSAGE_MIN_M, assiette)[0]
 
 
-def _largeur_min_desserte(allees, places, largeur_requise: float, acces=None, voie=None, assiette=None) -> float:
-    """ETUDE-STATIONNEMENT-FIX-9/10 — GOULET du chemin de desserte, même construction que le comptage
-    (`_desserte_core` : bande de voie ajoutée à l'aire roulante, érosion, composante contenant la graine).
-    Recherche dichotomique sur TOUT [0 ; 12] m du PLUS GRAND passage `w` pour lequel AU MOINS UNE place reste
-    atteignable depuis la voie. Si une place est comptée (atteignable à 2,40 m) le goulet est ≥ 2,40 m ; sinon il
-    peut être plus petit (un étranglement de 2 m donne 2 m, et 0 place comptée) — les deux lectures restent
-    cohérentes.
+def _allees_desservant_places(allees, places, largeur_requise, libre, reach, r_pass):
+    """FIX-19 — l'ensemble des ALLÉES qui desservent AU MOINS UNE place comptée (approche ∈ `reach`). L'allée qui
+    « porte » une place est celle dont elle est le plus proche (le nez de la stalle affleure son bord). On raisonne
+    au niveau des allées, pas des places une à une (évite le bruit de résolution de l'approche)."""
+    served = []
+    for p in places:
+        pg = p if p.is_valid else p.buffer(0)
+        etat, _val = _sonder_place(pg, largeur_requise, libre, reach, r_pass)
+        if etat is not True:
+            continue
+        home = min(range(len(allees)), key=lambda i: allees[i].distance(pg))
+        if home not in served:
+            served.append(home)
+    return served
 
-    FIX-19 — RÉSERVE du relecteur tranchée. Ce que mesure RÉELLEMENT la fonction : la largeur du passage le plus
-    LARGE menant à une place. Dans le modèle LABUSE il n'y a qu'UN réseau de desserte par plan (un accès raccordé
-    à la voie) ; pour ce cas réel, « le passage le plus large atteignant une place » EST le goulot du trajet (la
-    place cesse d'être atteinte dès qu'une voiture de cette largeur ne franchit plus le point le plus étroit).
-    La lecture « plus serrée » que suggère le relecteur (garder TOUTES les places comptées) n'a de sens que sur un
-    parking à PLUSIEURS accès de largeurs différentes — absent ici — et ferait suivre au goulet affiché, dans le
-    régime dégénéré « voiture ≈ largeur du couloir », des écarts de comptage de l'ordre de la résolution que le
-    vérificateur indépendant (grille) ne reproduit pas au centimètre : on garderait un contrôle qui ne se vérifie
-    plus. On conserve donc la lecture « ≥ 1 place », vérifiée sans désaccord par l'oracle sur toutes les familles."""
+
+def _largeur_min_desserte(allees, places, largeur_requise: float, acces=None, voie=None, assiette=None) -> float:
+    """LARGEUR DE DESSERTE DE L'OPÉRATION (FIX-19, définition du relecteur). La règle de desserte (p.ex. 5 m à
+    partir de 7 logements) porte sur la desserte de l'OPÉRATION, pas d'une place isolée. Définition retenue : le
+    PLUS GRAND passage `w` pour lequel CHAQUE ALLÉE qui dessert au moins une place COMPTÉE (à 2,40 m) reste ATTEINTE
+    depuis la voie. On raisonne au niveau des allées (pas des places une à une) pour éviter le bruit de résolution.
+
+    Contre-exemple du relecteur (testé) : bouche 6 m, une place juste derrière l'entrée, puis rétrécissement à 3 m
+    avant une allée de 12 places → 13 places comptées à 2,40 m, mais desserte = 3 m (l'allée des 12 n'est atteinte
+    qu'à 3 m) → ÉCHEC pour une exigence de 5 m. L'ancienne lecture « ≥ 1 place » annonçait 6 m (« réussi » à tort).
+
+    Le goulet AFFICHÉ et le contrôle de la règle utilisent CETTE valeur ; l'oracle la mesure par ses propres moyens.
+    Si aucune place n'est comptée à 2,40 m (étranglement d'entrée < 2,40 m), on rend le plus grand passage qui
+    dessert encore ≥ 1 place — l'étranglement réel, cohérent avec « 0 place comptée »."""
     if not allees or not places:
         return 0.0
+    libre0 = _grille_mm(list(allees) + list(acces or []))
+    reach0 = _reach_depuis_voie(libre0, acces, voie, _PASSAGE_MIN_M, assiette) if not libre0.is_empty else libre0
+    served = (_allees_desservant_places(allees, places, largeur_requise, libre0, reach0, _PASSAGE_MIN_M / 2.0)
+              if not getattr(reach0, "is_empty", True) else [])
+
+    if not served:
+        # aucune place comptée à 2,40 m → on cherche l'ÉTRANGLEMENT (plus grand passage desservant ≥ 1 place).
+        lo, hi = 0.0, 12.0
+        for _ in range(26):
+            w = (lo + hi) / 2.0
+            if _desserte_core(allees, places, largeur_requise, acces, voie, w, assiette)[1] >= 1:
+                lo = w
+            else:
+                hi = w
+        return lo
+
+    allees_served = [allees[i] for i in served]
+
+    def _toutes_atteintes(w):
+        libre = _grille_mm(list(allees) + list(acces or []))
+        if libre.is_empty:
+            return False
+        reach = _reach_depuis_voie(libre, acces, voie, w, assiette)
+        if reach.is_empty:
+            return False
+        # une allée est ATTEINTE à `w` si le noyau roulant atteignable (érodé de w/2) la traverse encore.
+        return all(reach.intersects(a) for a in allees_served)
+
     lo, hi = 0.0, 12.0
     for _ in range(26):
         w = (lo + hi) / 2.0
-        if _desserte_core(allees, places, largeur_requise, acces, voie, w, assiette)[1] >= 1:
+        if _toutes_atteintes(w):
             lo = w
         else:
             hi = w

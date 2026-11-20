@@ -78,81 +78,109 @@ def _grille(allees, places, acces, voie, assiette):
     inside = contains(espace, X, Y)
     dist = ndimage.distance_transform_edt(inside) * CELL
     road_mask = contains(route, X, Y)                    # départ = la route (au-delà de la voie), hors mur
-    return dict(dist=dist, road=road_mask, minx=minx, miny=miny, nxc=nxc, nyc=nyc, espace=espace)
+    return dict(dist=dist, road=road_mask, minx=minx, miny=miny, nxc=nxc, nyc=nyc, espace=espace, X=X, Y=Y)
 
 
-def oracle_nb(grille, places, passage):
-    """Nombre de places qu'un disque de rayon `passage/2`, parti de la route par un parcours de proche en
-    proche à travers les cellules libres, peut atteindre par le NEZ (l'un des deux petits côtés)."""
+def _reached_mask(grille, passage):
+    """Zone ATTEINTE par un disque de rayon `passage/2` parti de la route, de proche en proche (8-voisins) à travers
+    les cellules où le disque TIENT (dist ≥ demi-passage). Dilatée d'UNE cellule MAIS gardée là où le disque tient
+    PRESQUE (dist ≥ r − 1 maille) → inclut l'approche au ras du bord sans franchir un étranglement. None si rien."""
     if grille is None:
-        return 0
+        return None
     r = passage / 2.0
     dist, road = grille["dist"], grille["road"]
-    # CONNECTIVITÉ (franchissement des étranglements) : SANS cheveu → goulet exact. Le disque tient là où la
-    # distance au bord ≥ demi-passage.
     free = dist >= r
     seed = free & road
     if not seed.any():
-        return 0
+        return None
     lbl, _ = ndimage.label(free, structure=np.ones((3, 3)))
     reached_labels = set(np.unique(lbl[seed])) - {0}
     if not reached_labels:
-        return 0
+        return None
     reached = np.isin(lbl, list(reached_labels))
-    # Le point d'approche est, par nature, À la demi-largeur du bord de l'allée (voiture nez contre la place) —
-    # donc SUR le bord de la zone atteinte. Le contrôle l'inclut (ensemble fermé). Sur la maille on dilate la
-    # zone atteinte d'UNE cellule MAIS en la gardant dans les cellules où le disque TIENT PRESQUE (dist ≥ demi-
-    # passage − 1 maille) : on inclut ainsi l'approche au ras du bord SANS pouvoir franchir un étranglement
-    # (ses cellules, trop étroites, sont exclues) → le goulet n'est pas gonflé par la dilatation.
-    reached = ndimage.binary_dilation(reached, iterations=1) & (dist >= r - CELL)
-    minx, miny, nxc, nyc = grille["minx"], grille["miny"], grille["nxc"], grille["nyc"]
-    espace = grille["espace"]
-
-    def cell_reached(px, py):
-        j = int((px - minx) / CELL)
-        i = int((py - miny) / CELL)
-        if not (0 <= i < nyc and 0 <= j < nxc and reached[i, j]):
-            return False
-        # la cellule est atteinte (connexité) ; on confirme le CONTACT EXACT du disque au point d'approche
-        # (le disque de rayon r tient, bord inclus) — supprime les faux positifs sub-millimétriques de la maille
-        # au ras du bord érodé (le contrôle, exact, tranche au même endroit).
-        p = Point(px, py)
-        return espace.contains(p) and espace.boundary.distance(p) >= r - _PREC   # mm près (règle 2)
-
-    nb = 0
-    for pl in places:
-        c = pl.centroid
-        coords = list(pl.exterior.coords)[:-1]
-        edges = []
-        for k in range(len(coords)):
-            a, b = coords[k], coords[(k + 1) % len(coords)]
-            ln = math.hypot(b[0] - a[0], b[1] - a[1])
-            edges.append((ln, ((a[0] + b[0]) / 2.0, (a[1] + b[1]) / 2.0)))
-        lmin = min(e[0] for e in edges)
-        petits = [e for e in edges if e[0] <= lmin * 1.3]
-        ok = False
-        for _ln, mid in petits:
-            nx, ny = mid[0] - c.x, mid[1] - c.y
-            ll = math.hypot(nx, ny) or 1.0
-            nx, ny = nx / ll, ny / ll
-            if cell_reached(mid[0] + r * nx, mid[1] + r * ny):
-                ok = True
-                break
-        if ok:
-            nb += 1
-    return nb
+    return ndimage.binary_dilation(reached, iterations=1) & (dist >= r - CELL)
 
 
-def oracle_goulet(grille, places, hi=12.0):
-    """Plus grand passage pour lequel l'oracle atteint ≥ 1 place (recherche binaire, résolution ~1 cm). Le
-    plancher bas (3 cm) est au-dessus de la maille (2 cm) mais permet de retrouver un goulet d'étranglement
-    de quelques centimètres — pour comparer au contrôle même quand aucune place n'est atteignable à 2,40 m."""
-    if grille is None or oracle_nb(grille, places, 0.03) < 1:
+def _cell_reached(grille, reached, r, px, py):
+    minx, miny, nxc, nyc, espace = grille["minx"], grille["miny"], grille["nxc"], grille["nyc"], grille["espace"]
+    j = int((px - minx) / CELL)
+    i = int((py - miny) / CELL)
+    if not (0 <= i < nyc and 0 <= j < nxc and reached[i, j]):
+        return False
+    p = Point(px, py)
+    return espace.contains(p) and espace.boundary.distance(p) >= r - _PREC   # contact exact du disque (mm près)
+
+
+def _place_desservie_oracle(grille, reached, r, pl):
+    """La place est desservie si le point d'approche devant l'un de ses petits côtés (nez, à la demi-largeur) est
+    dans la zone atteinte (contact exact du disque)."""
+    c = pl.centroid
+    coords = list(pl.exterior.coords)[:-1]
+    edges = []
+    for k in range(len(coords)):
+        a, b = coords[k], coords[(k + 1) % len(coords)]
+        ln = math.hypot(b[0] - a[0], b[1] - a[1])
+        edges.append((ln, ((a[0] + b[0]) / 2.0, (a[1] + b[1]) / 2.0)))
+    lmin = min(e[0] for e in edges)
+    petits = [e for e in edges if e[0] <= lmin * 1.3]
+    for _ln, mid in petits:
+        nx, ny = mid[0] - c.x, mid[1] - c.y
+        ll = math.hypot(nx, ny) or 1.0
+        nx, ny = nx / ll, ny / ll
+        if _cell_reached(grille, reached, r, mid[0] + r * nx, mid[1] + r * ny):
+            return True
+    return False
+
+
+def oracle_nb(grille, places, passage):
+    """Nombre de places qu'un disque de rayon `passage/2`, parti de la route, peut atteindre par le NEZ."""
+    reached = _reached_mask(grille, passage)
+    if reached is None:
+        return 0
+    r = passage / 2.0
+    return sum(1 for pl in places if _place_desservie_oracle(grille, reached, r, pl))
+
+
+def _allee_atteinte_oracle(grille, reached, allee):
+    """Une allée est ATTEINTE si au moins une de ses cellules appartient à la zone atteinte (le noyau roulant la
+    traverse)."""
+    if reached is None:
+        return False
+    inside = contains(allee, grille["X"], grille["Y"])
+    return bool((inside & reached).any())
+
+
+def oracle_desserte(grille, allees, places, hi=12.0):
+    """LARGEUR DE DESSERTE DE L'OPÉRATION par les moyens de l'oracle (FIX-19, même définition que le contrôle) :
+    le plus grand passage pour lequel CHAQUE ALLÉE desservant au moins une place COMPTÉE (à 2,40 m) reste ATTEINTE
+    depuis la route. On raisonne au niveau des allées (pas des places). Si aucune place n'est comptée, on rend
+    l'étranglement (plus grand passage desservant ≥ 1 place)."""
+    if grille is None:
         return 0.0
+    reached0 = _reached_mask(grille, PASSAGE)
+    served = set()
+    if reached0 is not None:
+        r0 = PASSAGE / 2.0
+        for pl in places:
+            if _place_desservie_oracle(grille, reached0, r0, pl):
+                served.add(min(range(len(allees)), key=lambda i: allees[i].distance(pl)))
+    if not served:                                       # aucune place comptée → étranglement (≥ 1 place)
+        if oracle_nb(grille, places, 0.03) < 1:
+            return 0.0
+        lo = 0.03
+        while hi - lo > 0.01:
+            mid = (lo + hi) / 2.0
+            if oracle_nb(grille, places, mid) >= 1:
+                lo = mid
+            else:
+                hi = mid
+        return lo
+    allees_served = [allees[i] for i in served]
     lo = 0.03
     while hi - lo > 0.01:
         mid = (lo + hi) / 2.0
-        if oracle_nb(grille, places, mid) >= 1:
+        reached = _reached_mask(grille, mid)
+        if reached is not None and all(_allee_atteinte_oracle(grille, reached, a) for a in allees_served):
             lo = mid
         else:
             hi = mid
@@ -402,10 +430,10 @@ def _compare(nom, allees, places, acces, voie, assiette):
         gravite = "danger" if ctrl_nb > ora_nb else "sûr"
         return gravite, f"[{nom}] nb : contrôle={ctrl_nb} oracle={ora_nb}"
     ctrl_g = C._largeur_min_desserte(allees, places, 2.5, acces, voie, assiette)
-    ora_g = oracle_goulet(gril, places)
+    ora_g = oracle_desserte(gril, allees, places)         # FIX-19 : LARGEUR DE DESSERTE au niveau des allées
     if abs(ctrl_g - ora_g) <= 0.05:
         return None
-    # FIX-19 — le GOULET se compare au cm, SAUF là où la grille 1 cm de l'oracle sous-résout elle-même le virage :
+    # FIX-19 — la DESSERTE se compare au cm, SAUF là où la grille 1 cm de l'oracle sous-résout elle-même le virage :
     # sur un recouvrement COUDÉ (défaut A), le flot de proche en proche refuse une voiture qui tient pourtant
     # géométriquement (vérifié : il refuse 2,9 m dans un couloir de 3,46 m que le contrôle ANALYTIQUE accepte, à
     # raison). Tant que (a) le VERDICT réglementaire ne change pas (les deux goulets du même côté de 2,40 m) ET

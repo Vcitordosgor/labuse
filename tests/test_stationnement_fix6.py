@@ -679,18 +679,40 @@ def test_fix19_BC_la_fermeture_ne_ponte_jamais_un_vrai_vide():
     assert nb == 0 and manque > 1.0, f"2 cm de vide pontés à tort (manque={manque}, nb={nb})"
 
 
-def test_fix19_goulet_lecture_tranchee_le_plus_large():
-    """Réserve du relecteur sur `_largeur_min_desserte` : on TRANCHE pour la lecture « ≥ 1 place » = le passage le
-    plus LARGE menant à une place. Sur un plan à DEUX réseaux disjoints d'accès 6 m et 3 m (une place chacun, les
-    deux comptées à 2,40 m), le goulet rendu vaut ~6 m (le réseau le plus large). La lecture « plus serrée »
-    (garder toutes les places) n'a de sens qu'à plusieurs accès — absent du modèle LABUSE — et ferait suivre au
-    goulet des écarts de comptage de l'ordre de la résolution que l'oracle ne reproduit pas (cf. docstring)."""
-    assiette = _rect(0, 0, 60, 40)
-    voie = LineString([(0, 0), (60, 0)])
-    acces = [_rect(5, -1, 11, 5), _rect(40, -1, 43, 5)]           # 6 m à gauche, 3 m à droite
-    allee = [_rect(2, 5, 20, 13), _rect(35, 5, 55, 13)]           # DEUX allées séparées (vide x∈[20;35])
-    place = [_rect(6, 13, 8.5, 18), _rect(45, 13, 47.5, 18)]      # une place sur chaque allée
-    nb = C._desserte_core(allee, place, 5.0, acces, voie, 2.4, assiette)[1]
-    assert nb == 2, f"les deux places doivent être desservies à 2,40 m (nb={nb})"
-    goulet = C._largeur_min_desserte(allee, place, 5.0, acces, voie, assiette)
-    assert goulet >= 5.5, f"goulet = {goulet:.3f} m : lecture « ≥ 1 place » = le réseau LE PLUS LARGE (~6 m)"
+def test_fix19_desserte_operation_contre_exemple_relecteur():
+    """Contre-exemple du relecteur sur `_largeur_min_desserte` : une bouche de 6 m, UNE place juste derrière
+    l'entrée (canal large), puis un RÉTRÉCISSEMENT à 3 m avant une allée qui dessert DOUZE autres places. Attendu :
+    13 places comptées (toutes atteignables à 2,40 m) et une DESSERTE de 3 m (l'allée des 12 n'est atteinte qu'à
+    3 m) → en ÉCHEC pour une exigence de 5 m. La desserte se mesure au niveau des ALLÉES desservant les places
+    comptées, pas de la place la mieux desservie — l'ancienne lecture « ≥ 1 place » annonçait ~7,5 m (réussi à tort)."""
+    assiette = _rect(-1, 0, 55, 22)
+    voie = LineString([(-1, 0), (55, 0)])
+    acces = [_rect(0, -0.5, 8, 2)]                                # bouche 8 m
+    canal = _rect(0, 2, 8, 12)                                    # canal d'entrée large (sert la place 13)
+    retrecissement = _rect(8, 4, 11, 7)                           # 3 m
+    allee_arriere = _rect(11, 2, 50, 8)                           # sert les 12 places
+    allees = [canal, retrecissement, allee_arriere]
+    places = [_rect(2.5, 12, 5, 17)] + [_rect(12 + 3 * i, 8, 12 + 3 * i + 2.5, 13) for i in range(12)]
+    nb = C._desserte_core(allees, places, 2.5, acces, voie, 2.4, assiette)[1]
+    assert nb == 13, f"les 13 places doivent être comptées à 2,40 m (nb={nb})"
+    desserte = C._largeur_min_desserte(allees, places, 2.5, acces, voie, assiette)
+    assert 2.8 <= desserte <= 3.2, f"desserte = {desserte:.3f} m : doit valoir le rétrécissement 3 m (échec pour 5 m)"
+    assert desserte < 5.0 - 0.05, "une exigence de 5 m doit ÉCHOUER sur cette desserte"
+
+
+def test_fix19_desserte_deux_allees_dont_une_derriere_un_retrecissement():
+    """Deux allées, chacune desservant des places comptées ; l'une est derrière un rétrécissement de 3 m. La
+    desserte de l'opération = la plus SERRÉE des deux (3 m), pas la plus large."""
+    assiette = _rect(-1, 0, 40, 20)
+    voie = LineString([(-1, 0), (40, 0)])
+    acces = [_rect(0, -0.5, 8, 2)]
+    tronc = _rect(0, 2, 8, 9)                                     # tronc commun large (depuis la voie)
+    allee_large = _rect(0, 9, 14, 12)                             # allée atteinte largement
+    retro = _rect(8, 7, 11, 9)                                    # rétrécissement 3 m vers l'allée serrée
+    allee_serree = _rect(11, 9, 34, 12)                           # allée atteinte seulement à 3 m
+    allees = [tronc, allee_large, retro, allee_serree]
+    places = [_rect(2, 12, 4.5, 17), _rect(14, 12, 16.5, 17), _rect(24, 12, 26.5, 17)]
+    nb = C._desserte_core(allees, places, 2.5, acces, voie, 2.4, assiette)[1]
+    assert nb == 3, f"les 3 places doivent être comptées (nb={nb})"
+    desserte = C._largeur_min_desserte(allees, places, 2.5, acces, voie, assiette)
+    assert 2.8 <= desserte <= 3.2, f"desserte = {desserte:.3f} m : la plus serrée des allées servantes (3 m)"
