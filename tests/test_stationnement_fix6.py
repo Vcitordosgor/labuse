@@ -780,3 +780,23 @@ def test_fix20_plan_regulier_5m_reussit():
     d = C._largeur_min_desserte(allee, place, 5.0, acces, voie, assiette)
     assert 4.95 <= d <= 5.1, f"plan régulier : desserte = {d:.3f} m (doit valoir 5,0 m)"
     assert d >= 5.0 - 0.05, "une exigence de 5 m doit RÉUSSIR"
+
+
+def test_fix20_desserte_angle_ouverture_large_couloir_etroit():
+    """ETUDE-STATIONNEMENT-FIX-20 (relecture 2, correctif de SUR-ESTIMATION dans un angle). Accès en BLOC d'angle
+    avec une OUVERTURE LARGE sur un bord (ici 7 m sur le bord gauche d'une voie coudée) mais un COULOIR ÉTROIT
+    (3 m) vers la place. L'érosion de l'UNION (aire roulante ∪ bande de voie) laissait la bande combler
+    l'étranglement PRÈS DE L'OUVERTURE et le noyau franchir un couloir plus étroit que `w` → desserte annoncée à
+    la largeur de l'ouverture (~7 m) alors que la place n'est atteinte qu'à 3 m. Correctif : chaque tronçon est
+    une ouverture séparée (sa propre bande, mur fermé à l'angle) ET le disque doit TENIR dans un VRAI couloir
+    (aire roulante érodée OU bande, traversée de l'ouverture seule permise par la gorge) → desserte = 3 m.
+    Le comptage à 2,40 m est INCHANGÉ (la place reste desservie)."""
+    assiette = _rect(0, 0, 50, 40)
+    voie = LineString([(50, 0), (0, 0), (0, 40)])        # coudée : bord bas PUIS bord gauche
+    acces = [_rect(-1, -1, 3, 7)]                         # bloc d'angle : ouverture gauche 7 m, bas 3 m
+    allee = [_rect(3, 3, 35, 6)]                          # couloir 3 m vers la place
+    place = [_rect(28, 6, 30.5, 11)]                      # nez sur le couloir, au fond
+    assert C._desserte_core(allee, place, 5.0, acces, voie, 2.4, assiette)[1] == 1, "place comptée à 2,40 m"
+    d = C._largeur_min_desserte(allee, place, 5.0, acces, voie, assiette)
+    assert 2.9 <= d <= 3.1, f"desserte = {d:.3f} m : doit valoir le couloir 3 m, PAS l'ouverture large (~7 m)"
+    assert d < 5.0 - 0.05, "une exigence de 5 m doit ÉCHOUER (la place n'est desservie qu'à 3 m)"

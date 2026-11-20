@@ -306,7 +306,14 @@ def _reach_depuis_voie(libre, acces, voie, passage, assiette):
         acces_poly = unary_union([g if g.is_valid else g.buffer(0) for g in (acces or [])])
         assiette_eff = (assiette if (assiette is not None and not getattr(assiette, "is_empty", True))
                         else libre.convex_hull)
-        kept = []
+        contour = assiette_eff.boundary.buffer(_MUR_EP)
+        # FIX-20 — CHAQUE TRONÇON DROIT du recouvrement est une OUVERTURE SÉPARÉE : sa propre bande (bornée à son
+        # aplomb = l'extrusion perpendiculaire de ce seul tronçon), son propre percement du mur de contour (le mur
+        # reste FERMÉ partout ailleurs, DONC à l'angle entre deux tronçons), son propre noyau atteignable. On réunit
+        # seulement les NOYAUX à la fin. Ainsi la bande extérieure d'un tronçon ne peut ni enjamber l'angle ni
+        # rejoindre celle de l'autre par l'extérieur (sinon, aux grands passages, elle sur-estimait la desserte en
+        # pénétrant le projet par l'angle). Un recouvrement DROIT (un seul tronçon) est inchangé.
+        reach_comps = []
         for R in recouvrements:
             (ax, ay), (bx, by) = R.coords[0], R.coords[-1]
             dl = _math.hypot(bx - ax, by - ay)
@@ -321,33 +328,42 @@ def _reach_depuis_voie(libre, acces, voie, passage, assiette):
             band_r = poly.difference(assiette_eff).buffer(0)
             comps = (list(band_r.geoms) if band_r.geom_type == "MultiPolygon"
                      else ([band_r] if not band_r.is_empty else []))
+            kept = []
             for pc in comps:
-                inter = pc.intersection(acces_poly)             # chevauchement RÉEL de l'accès LE LONG de R (sans proximité)
+                inter = pc.intersection(acces_poly)             # chevauchement RÉEL de l'accès LE LONG de R
                 if inter.is_empty:
                     continue
                 if _etendue_le_long(inter, ax, ay, tx, ty) + _PREC_M >= passage:
                     kept.append(pc)
-        if not kept:
-            return vide
-        band = unary_union(kept).buffer(0)
-        if band.is_empty:
-            return vide
-        rec_union = unary_union(recouvrements)                  # FIX-16 : mur de contour ouvert au seul recouvrement
-        ouverture = rec_union.buffer(_MUR_EP * 3.0, cap_style=2)
-        mur = assiette_eff.boundary.buffer(_MUR_EP).difference(ouverture)
-        band = band.difference(mur).buffer(0)
-        bouts = (list(band.geoms) if band.geom_type == "MultiPolygon"
-                 else ([band] if not band.is_empty else []))
-        band = unary_union([pc for pc in bouts if pc.intersects(ouverture)]).buffer(0)
-        if band.is_empty:
-            return vide
-        surface = _grille_mm([libre, band])                     # FIX-19 (C) : nettoyée au mm avant l'érosion
-        seed = band.buffer(-_er).buffer(0)
-        noyau = surface.buffer(-_er).buffer(0)
-        if seed.is_empty or noyau.is_empty:
-            return vide
-        comps = list(noyau.geoms) if noyau.geom_type == "MultiPolygon" else [noyau]
-        reach_comps = [c for c in comps if c.intersects(seed)]
+            if not kept:
+                continue
+            band = unary_union(kept).buffer(0)
+            ouverture = R.buffer(_MUR_EP * 3.0, cap_style=2)    # le mur n'est percé QUE sur CE tronçon (bouts plats)
+            band = band.difference(contour.difference(ouverture)).buffer(0)
+            bouts = (list(band.geoms) if band.geom_type == "MultiPolygon"
+                     else ([band] if not band.is_empty else []))
+            band = unary_union([pc for pc in bouts if pc.intersects(ouverture)]).buffer(0)
+            if band.is_empty:
+                continue
+            surface = _grille_mm([libre, band])                 # FIX-19 (C) : nettoyée au mm avant l'érosion
+            seed = band.buffer(-_er).buffer(0)
+            noyau = surface.buffer(-_er).buffer(0)
+            if seed.is_empty or noyau.is_empty:
+                continue
+            comps_n = list(noyau.geoms) if noyau.geom_type == "MultiPolygon" else [noyau]
+            brut = unary_union([c for c in comps_n if c.intersects(seed)]).buffer(0)
+            if brut.is_empty:
+                continue
+            # FIX-20 — le disque doit TENIR dans un VRAI couloir : l'aire roulante érodée (`libre` ⊖ r), OU la bande
+            # de voie, la TRAVERSÉE de l'ouverture étant seule permise par une GORGE (le recouvrement dilaté de la
+            # demi-largeur). Sans cette borne, l'érosion de l'UNION (libre ∪ bande) élargissait un étranglement
+            # SITUÉ PRÈS DE L'OUVERTURE (la bande comble la gorge) → le noyau franchissait un couloir plus étroit
+            # que `w` → desserte sur-estimée dans un angle. Ailleurs qu'à l'ouverture, on exige la largeur de `libre`.
+            gorge = R.buffer(r_pass + _MUR_EP * 2.0)
+            admissible = unary_union([libre.buffer(-_er), band, gorge]).buffer(0)
+            coeur = brut.intersection(admissible).buffer(0)
+            pcs = list(coeur.geoms) if coeur.geom_type == "MultiPolygon" else ([coeur] if not coeur.is_empty else [])
+            reach_comps.extend(c for c in pcs if c.intersects(seed))
     else:
         noyau = libre.buffer(-_er).buffer(0)                    # tests unitaires sans voie
         if noyau.is_empty:
@@ -389,7 +405,13 @@ def _sonder_place(pg, largeur_requise, libre, reach, r_pass):
         clear = sonde.intersection(libre)
         deficit = max(0.0, sonde.area - clear.area)
         approche = _Pt(mid[0] + r_pass * nx, mid[1] + r_pass * ny)
-        desservie = (not clear.is_empty) and reach.distance(approche) <= _PREC_M
+        # FIX-20 — une place est desservie SSI son point d'approche (1) appartient au noyau atteignable `reach`
+        # (connecté à la voie, au mm près) ET (2) le DISQUE DE RAYON r_pass TIENT RÉELLEMENT à l'approche, dans
+        # l'AIRE ROULANTE : approche ≥ r_pass − 1 mm du bord de `libre`. Sans (2), aux grands passages l'approche
+        # pouvait n'être qu'à 1 mm d'un bord de la BANDE extérieure (la voiture ne tient pas dans le couloir réel) →
+        # desserte sur-estimée dans un angle (c'est la garde que l'oracle applique par `boundary.distance ≥ r`).
+        tient = libre.buffer(-(r_pass - _PREC_M)).distance(approche) <= _PREC_M
+        desservie = (not clear.is_empty) and tient and reach.distance(approche) <= _PREC_M
         options.append((deficit, desservie))
     if not options:
         return None, 0.0

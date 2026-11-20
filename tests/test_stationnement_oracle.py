@@ -291,21 +291,21 @@ def _jitter(geoms, rng, amp=1e-9):
 
 
 def _gen_coin(rng):
-    """FIX-19 (défaut A) / FIX-20 — accès dans un ANGLE du terrain, voie décrite par PLUSIEURS SEGMENTS (bord bas
-    PUIS bord gauche) : le recouvrement `voie ∩ accès` est une ligne COUDÉE (l'ancien contrôle ne gardait que ses
-    deux extrémités → corde oblique fausse → place refusée ; corrigé par `_troncons_droits`). Accès en BLOC d'angle
-    (comme le cas-témoin du relecteur `rect(-1,-1,5,6)`, randomisé), allée large recouvrant le bloc, place au fond.
-    FIX-20 : on revient au BLOC (la variante « corridor en L » de FIX-19 laissait, à grande érosion, la bande
-    extérieure ENJAMBER l'angle et sur-estimer la desserte d'une place sur ~1/55 plans tournés)."""
+    """FIX-19 (défaut A) — accès dans un ANGLE du terrain, voie décrite par PLUSIEURS SEGMENTS (bord bas PUIS bord
+    gauche) : le recouvrement `voie ∩ accès` est une ligne COUDÉE (le contrôle ne gardait que ses deux extrémités →
+    corde oblique fausse → place refusée). L'accès est un CORRIDOR en L qui épouse l'angle (0,0) et monte à l'allée ;
+    chaque tronçon droit du recouvrement est une ouverture SÉPARÉE (FIX-20 : sa propre bande bornée à son aplomb, le
+    mur restant fermé à l'angle — sinon la bande extérieure enjambe l'angle et sur-estime la desserte aux grands w)."""
     W = rng.uniform(16, 22)
     H = rng.uniform(16, 22)
     ass = box(0, 0, W, H)
-    bw = rng.uniform(4.0, 6.0)                           # bloc d'angle large/franc
-    bh = rng.uniform(5.0, 7.0)
-    acc = box(-1.0, -1.0, bw, bh)                        # accès dans l'angle (0,0), mord les deux bords
-    allee = box(2.0, 5.0, W - 2.0, 10.0)                # allée 5 m, recouvre le bloc
-    px = rng.uniform(max(bw + 0.5, 3.0), W - 5.5)
-    place = box(px, 10.0, px + 2.5, 15.0)               # nez sur l'allée, au fond
+    ya = 5.0
+    ew = rng.uniform(2.9, 3.6)                           # corridor FRANC de largeur uniforme
+    # corridor en L collé à l'angle (0,0) : il mord le bord bas (x∈[0,ew]) ET le bord gauche (y∈[0,ya+0.3])
+    acc = unary_union([box(-0.5, -0.04, ew, ya + 0.3), box(-0.04, -0.5, ew, ya + 0.3)])
+    allee = box(0.5, ya, W - 0.5, ya + 3.0)             # allée 3 m, recouvre le haut du corridor
+    px = rng.uniform(ew + 0.8, W - 3.5)
+    place = box(px, ya + 3.0, px + 2.5, ya + 8.0)       # nez sur l'allée (à l'opposé de l'angle)
     voie = LineString([(W, 0), (0, 0), (0, H)])         # COUDÉE : bord bas puis bord gauche
     deg = rng.uniform(0, 360)
     al, pl, ac, v, a = _rot([allee], [place], [acc], voie, ass, deg, origin=(W / 2, H / 2))
