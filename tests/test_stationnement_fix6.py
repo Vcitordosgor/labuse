@@ -716,3 +716,67 @@ def test_fix19_desserte_deux_allees_dont_une_derriere_un_retrecissement():
     assert nb == 3, f"les 3 places doivent être comptées (nb={nb})"
     desserte = C._largeur_min_desserte(allees, places, 2.5, acces, voie, assiette)
     assert 2.8 <= desserte <= 3.2, f"desserte = {desserte:.3f} m : la plus serrée des allées servantes (3 m)"
+
+
+# ── ETUDE-STATIONNEMENT-FIX-20 — deux sur-estimations de la largeur de desserte (relecture-stationnement-2.md).
+#    La largeur de desserte = MINIMUM sur les places comptées du plus grand passage où la place reste desservie
+#    (même sonde que le comptage), SANS rattachement place→allée. ───────────────────────────────────────────────
+def test_fix20_allee_plus_etroite_que_acces():
+    """Défaut 1(a) du relecteur : une allée de 2,5 m pendue à une bouche d'accès de 6 m, place au fond. La jonction
+    large allée↔accès faisait déclarer l'allée « atteinte » jusqu'à 5 m (`reach.intersects(allée)`). Le vrai passage
+    vers la place au fond est 2,5 m (la largeur de l'allée). Variante accès 6 m / allée 5 m → 5,0 m."""
+    assiette = _rect(0, 0, 60, 40)
+    voie = LineString([(0, 0), (60, 0)])
+    acces = [_rect(5, -1, 11, 6)]                         # bouche 6 m
+    allee = [_rect(5, 5, 50, 7.5)]                        # allée 2,5 m, longue
+    place = [_rect(40, 7.5, 42.5, 12.5)]                  # au fond, loin de l'accès
+    assert C._desserte_core(allee, place, 5.0, acces, voie, 2.4, assiette)[1] == 1
+    d = C._largeur_min_desserte(allee, place, 5.0, acces, voie, assiette)
+    assert 2.4 <= d <= 2.6, f"desserte = {d:.3f} m : doit valoir l'allée 2,5 m, PAS la bouche 6 m"
+    # variante allée 5 m / accès 6 m → 5,0 m
+    d5 = C._largeur_min_desserte([_rect(5, 5, 50, 10)], [_rect(40, 10, 42.5, 15)], 5.0, acces, voie, assiette)
+    assert 4.9 <= d5 <= 5.1, f"variante : desserte = {d5:.3f} m (allée 5 m)"
+
+
+def test_fix20_pincement_au_milieu_dune_meme_allee():
+    """Défaut 1(b) : un étranglement de 3 m AU MILIEU d'une allée d'UN SEUL polygone (large ailleurs). FIX-19 ne le
+    voyait QUE si le pincement était un polygone séparé ; dans un polygone unique, `reach.intersects(allée)` restait
+    vrai à 6 m. La mesure par place rend 3,0 m (le pincement), que le pincement soit séparé ou fusionné."""
+    assiette = _rect(0, 0, 60, 40)
+    voie = LineString([(0, 0), (60, 0)])
+    acces = [_rect(5, -1, 11, 6)]
+    place = [_rect(40, 11, 42.5, 16)]
+    allee_fusion = [Polygon([(5, 5), (50, 5), (50, 11), (30, 11), (30, 8), (20, 8), (20, 11), (5, 11)])]
+    d = C._largeur_min_desserte(allee_fusion, place, 5.0, acces, voie, assiette)
+    assert 2.9 <= d <= 3.1, f"pincement fusionné : desserte = {d:.3f} m (doit valoir le pincement 3 m)"
+    # pincement en polygone séparé : même résultat
+    sep = [_rect(5, 5, 20, 11), Polygon([(20, 5), (30, 5), (30, 8), (20, 8)]), _rect(30, 5, 50, 11)]
+    dsep = C._largeur_min_desserte(sep, place, 5.0, acces, voie, assiette)
+    assert 2.9 <= dsep <= 3.1, f"pincement séparé : desserte = {dsep:.3f} m"
+
+
+def test_fix20_place_accrochee_directement_a_l_acces():
+    """Défaut 2 : une place dont le nez touche l'ACCÈS (pas une allée) était rattachée à une allée arbitraire ; son
+    vrai trajet (par l'accès de 2,4 m) n'entrait jamais dans la recherche. Deux places comptées, mais la desserte de
+    l'opération ≤ 2,4 m (la place sur l'accès n'est atteinte qu'à 2,4 m)."""
+    assiette = _rect(0, 0, 70, 40)
+    voie = LineString([(0, 0), (70, 0)])
+    acces = [_rect(5, -1, 11, 6), _rect(55, -1, 57.4, 6)]     # un réseau large + un accès de 2,4 m
+    allee = [_rect(5, 5, 40, 11)]
+    places = [_rect(30, 11, 32.5, 16), _rect(55, 6, 57.4, 11)]  # place1 sur l'allée large, place2 sur l'accès 2,4 m
+    assert C._desserte_core(allee, places, 5.0, acces, voie, 2.4, assiette)[1] == 2
+    d = C._largeur_min_desserte(allee, places, 5.0, acces, voie, assiette)
+    assert d <= 2.5, f"desserte = {d:.3f} m : la place sur l'accès 2,4 m borne l'opération (≤ 2,4 m)"
+
+
+def test_fix20_plan_regulier_5m_reussit():
+    """Un plan régulier (accès et allée de 5 m) donne 5,0 m et RÉUSSIT une exigence de 5 m."""
+    assiette = _rect(0, 0, 60, 40)
+    voie = LineString([(0, 0), (60, 0)])
+    acces = [_rect(5, -0.5, 10, 5.3)]                    # accès 5 m
+    allee = [_rect(2, 5, 40, 10)]                        # allée 5 m
+    place = [_rect(12, 10, 14.5, 15), _rect(20, 10, 22.5, 15)]
+    assert C._desserte_core(allee, place, 5.0, acces, voie, 2.4, assiette)[1] == 2
+    d = C._largeur_min_desserte(allee, place, 5.0, acces, voie, assiette)
+    assert 4.95 <= d <= 5.1, f"plan régulier : desserte = {d:.3f} m (doit valoir 5,0 m)"
+    assert d >= 5.0 - 0.05, "une exigence de 5 m doit RÉUSSIR"

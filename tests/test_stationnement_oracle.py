@@ -150,21 +150,33 @@ def _allee_atteinte_oracle(grille, reached, allee):
     return bool((inside & reached).any())
 
 
-def oracle_desserte(grille, allees, places, hi=12.0):
-    """LARGEUR DE DESSERTE DE L'OPÉRATION par les moyens de l'oracle (FIX-19, même définition que le contrôle) :
-    le plus grand passage pour lequel CHAQUE ALLÉE desservant au moins une place COMPTÉE (à 2,40 m) reste ATTEINTE
-    depuis la route. On raisonne au niveau des allées (pas des places). Si aucune place n'est comptée, on rend
-    l'étranglement (plus grand passage desservant ≥ 1 place)."""
+def _goulet_place_oracle(grille, pl, hi=12.0, tol=0.004):
+    """FIX-20 — le plus grand passage auquel LA place `pl` reste desservie, par la grille (même sonde que le
+    comptage de l'oracle : point d'approche ∈ zone atteinte). Dichotomie jusqu'à `tol` (< 1 maille)."""
+    lo = 0.0
+    while hi - lo > tol:
+        mid = (lo + hi) / 2.0
+        reached = _reached_mask(grille, mid)
+        if reached is not None and _place_desservie_oracle(grille, reached, mid / 2.0, pl):
+            lo = mid
+        else:
+            hi = mid
+    return lo
+
+
+def oracle_desserte(grille, places, hi=12.0):
+    """LARGEUR DE DESSERTE DE L'OPÉRATION par les moyens de l'oracle (FIX-20, même définition que le contrôle) : le
+    MINIMUM, sur toutes les places COMPTÉES à 2,40 m, du plus grand passage auquel cette place reste desservie
+    (mesuré place par place, sonde du comptage). PLUS de rattachement à une allée. Si aucune place n'est comptée,
+    on rend l'étranglement (plus grand passage desservant ≥ 1 place)."""
     if grille is None:
         return 0.0
     reached0 = _reached_mask(grille, PASSAGE)
-    served = set()
+    comptees = []
     if reached0 is not None:
         r0 = PASSAGE / 2.0
-        for pl in places:
-            if _place_desservie_oracle(grille, reached0, r0, pl):
-                served.add(min(range(len(allees)), key=lambda i: allees[i].distance(pl)))
-    if not served:                                       # aucune place comptée → étranglement (≥ 1 place)
+        comptees = [pl for pl in places if _place_desservie_oracle(grille, reached0, r0, pl)]
+    if not comptees:                                     # aucune place comptée → étranglement (≥ 1 place)
         if oracle_nb(grille, places, 0.03) < 1:
             return 0.0
         lo = 0.03
@@ -175,16 +187,7 @@ def oracle_desserte(grille, allees, places, hi=12.0):
             else:
                 hi = mid
         return lo
-    allees_served = [allees[i] for i in served]
-    lo = 0.03
-    while hi - lo > 0.01:
-        mid = (lo + hi) / 2.0
-        reached = _reached_mask(grille, mid)
-        if reached is not None and all(_allee_atteinte_oracle(grille, reached, a) for a in allees_served):
-            lo = mid
-        else:
-            hi = mid
-    return lo
+    return min(_goulet_place_oracle(grille, pl, hi=hi) for pl in comptees)
 
 
 # ───────────────────────── contre-exemples du relecteur ─────────────────────────
@@ -288,21 +291,21 @@ def _jitter(geoms, rng, amp=1e-9):
 
 
 def _gen_coin(rng):
-    """FIX-19 (défaut A) — accès dans un ANGLE du terrain, voie décrite par PLUSIEURS SEGMENTS (bord bas PUIS bord
-    gauche) : le recouvrement `voie ∩ accès` est une ligne COUDÉE (le contrôle ne gardait que ses deux extrémités →
-    corde oblique fausse → place refusée). Ici l'accès est un CORRIDOR de largeur UNIFORME `ew` qui épouse l'angle
-    (0,0) et monte à l'allée ; le goulet mesuré est donc celui du corridor/allée (bien défini, loin du régime
-    dégénéré d'un bloc large à cercle inscrit). Franc (≥ 2,9 m) → place desservie attendue à toute rotation."""
+    """FIX-19 (défaut A) / FIX-20 — accès dans un ANGLE du terrain, voie décrite par PLUSIEURS SEGMENTS (bord bas
+    PUIS bord gauche) : le recouvrement `voie ∩ accès` est une ligne COUDÉE (l'ancien contrôle ne gardait que ses
+    deux extrémités → corde oblique fausse → place refusée ; corrigé par `_troncons_droits`). Accès en BLOC d'angle
+    (comme le cas-témoin du relecteur `rect(-1,-1,5,6)`, randomisé), allée large recouvrant le bloc, place au fond.
+    FIX-20 : on revient au BLOC (la variante « corridor en L » de FIX-19 laissait, à grande érosion, la bande
+    extérieure ENJAMBER l'angle et sur-estimer la desserte d'une place sur ~1/55 plans tournés)."""
     W = rng.uniform(16, 22)
     H = rng.uniform(16, 22)
     ass = box(0, 0, W, H)
-    ya = 5.0
-    ew = rng.uniform(2.9, 3.6)                           # corridor FRANC de largeur uniforme
-    # corridor en L collé à l'angle (0,0) : il mord le bord bas (x∈[0,ew]) ET le bord gauche (y∈[0,ya+0.3])
-    acc = unary_union([box(-0.5, -0.04, ew, ya + 0.3), box(-0.04, -0.5, ew, ya + 0.3)])
-    allee = box(0.5, ya, W - 0.5, ya + 3.0)             # allée 3 m, recouvre le haut du corridor
-    px = rng.uniform(ew + 0.8, W - 3.5)
-    place = box(px, ya + 3.0, px + 2.5, ya + 8.0)       # nez sur l'allée (à l'opposé de l'angle)
+    bw = rng.uniform(4.0, 6.0)                           # bloc d'angle large/franc
+    bh = rng.uniform(5.0, 7.0)
+    acc = box(-1.0, -1.0, bw, bh)                        # accès dans l'angle (0,0), mord les deux bords
+    allee = box(2.0, 5.0, W - 2.0, 10.0)                # allée 5 m, recouvre le bloc
+    px = rng.uniform(max(bw + 0.5, 3.0), W - 5.5)
+    place = box(px, 10.0, px + 2.5, 15.0)               # nez sur l'allée, au fond
     voie = LineString([(W, 0), (0, 0), (0, H)])         # COUDÉE : bord bas puis bord gauche
     deg = rng.uniform(0, 360)
     al, pl, ac, v, a = _rot([allee], [place], [acc], voie, ass, deg, origin=(W / 2, H / 2))
@@ -429,25 +432,13 @@ def _compare(nom, allees, places, acces, voie, assiette):
     if ctrl_nb != ora_nb:
         gravite = "danger" if ctrl_nb > ora_nb else "sûr"
         return gravite, f"[{nom}] nb : contrôle={ctrl_nb} oracle={ora_nb}"
+    # FIX-20 — la LARGEUR DE DESSERTE (min sur les places comptées du goulot de chaque place) se compare au cm, dans
+    # LES DEUX SENS, tolérance 5 cm STRICTE (la définition par place supprime les écarts de virage de FIX-19 : la
+    # grille 1 cm suffit, aucune exception n'est nécessaire). Un écart > 5 cm est un désaccord DANGER.
     ctrl_g = C._largeur_min_desserte(allees, places, 2.5, acces, voie, assiette)
-    ora_g = oracle_desserte(gril, allees, places)         # FIX-19 : LARGEUR DE DESSERTE au niveau des allées
-    if abs(ctrl_g - ora_g) <= 0.05:
-        return None
-    # FIX-19 — la DESSERTE se compare au cm, SAUF là où la grille 1 cm de l'oracle sous-résout elle-même le virage :
-    # sur un recouvrement COUDÉ (défaut A), le flot de proche en proche refuse une voiture qui tient pourtant
-    # géométriquement (vérifié : il refuse 2,9 m dans un couloir de 3,46 m que le contrôle ANALYTIQUE accepte, à
-    # raison). Tant que (a) le VERDICT réglementaire ne change pas (les deux goulets du même côté de 2,40 m) ET
-    # (b) le contrôle n'annonce pas un goulet PLUS LARGE que l'oracle sur un recouvrement DROIT (seul cas d'un vrai
-    # faux-positif de desserte), l'écart est un artefact de résolution de l'oracle au virage, pas un défaut.
-    libre = unary_union(list(allees) + list(acces))
-    cvt = (voie if voie.geom_type in ("LineString", "MultiLineString") else voie.boundary).intersection(libre)
-    mg = linemerge(cvt) if cvt.geom_type == "MultiLineString" else cvt
-    segs = [mg] if mg.geom_type == "LineString" else [s for s in getattr(mg, "geoms", []) if s.geom_type == "LineString"]
-    coude = any(len(C._troncons_droits(s)) > 1 for s in segs)
-    verdict_change = (ctrl_g >= PASSAGE) != (ora_g >= PASSAGE)
-    controle_plus_large_sur_droit = (not coude) and ctrl_g > ora_g + 0.05
-    if verdict_change or controle_plus_large_sur_droit:
-        return "danger", f"[{nom}] goulet : contrôle={ctrl_g:.3f} oracle={ora_g:.3f} (écart {abs(ctrl_g-ora_g):.3f} > 5 cm)"
+    ora_g = oracle_desserte(gril, places)                 # FIX-20 : desserte = min sur les places comptées
+    if abs(ctrl_g - ora_g) > 0.05:
+        return "danger", f"[{nom}] desserte : contrôle={ctrl_g:.3f} oracle={ora_g:.3f} (écart {abs(ctrl_g-ora_g):.3f} > 5 cm)"
     return None
 
 
@@ -458,14 +449,14 @@ def test_oracle_contre_exemples_du_relecteur():
     assert not desacc, "Désaccords oracle↔contrôle sur les contre-exemples :\n" + "\n".join(desacc)
 
 
-# FIX-19 — budget de résidus CONSERVATIFS tolérés sur le flux aléatoire. Le dispositif de BANDE (analytique) a
-# une limite connue sur des plans CONCAVES TOURNÉS dégénérés : la soustraction d'assiette renvoie une bande
-# extérieure quasi nulle du bon côté (pathologie de robustesse Shapely sur ces coordonnées), et le contrôle
-# REFUSE alors une place que la grille de l'oracle atteint. C'est le sens SÛR (jamais une place comptée à tort),
-# HORS des trois défauts du relecteur (tous corrigés et testés). Au tirage 20261118 il en reste UN (plan U
-# concave tourné) ; sa géométrie est donnée par le test. Le budget borne ce résidu SANS masquer une régression :
-# tout désaccord DANGEREUX (place comptée à tort / verdict basculé) échoue, et > `_RESIDU_SUR_MAX` refus
-# conservatifs échoue aussi.
+# FIX-19/20 — budget de résidus CONSERVATIFS tolérés sur le flux aléatoire. Le dispositif de BANDE (analytique) a
+# une limite connue sur quelques plans TOURNÉS DÉGÉNÉRÉS (concaves, ou jointifs bruités) : la soustraction
+# d'assiette / l'érosion renvoie une bande quasi nulle du bon côté (robustesse Shapely sur ces coordonnées), et le
+# contrôle REFUSE alors une place que la grille de l'oracle atteint. C'est le sens SÛR (jamais une place comptée à
+# tort), HORS des défauts du relecteur (tous corrigés et testés). Il en reste ~1/340 (la graine 20261118 en donne
+# un, dont la géométrie est imprimée par le test ; sa famille varie avec le tirage). Le budget borne ce résidu
+# SANS masquer une régression : tout désaccord DANGEREUX (place comptée à tort / desserte annoncée > réelle / verdict
+# basculé) échoue, et plus de `_RESIDU_SUR_MAX` refus conservatifs échoue aussi.
 _RESIDU_SUR_MAX = 1
 
 

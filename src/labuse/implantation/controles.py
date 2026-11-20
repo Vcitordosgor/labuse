@@ -454,44 +454,47 @@ def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=No
     return _desserte_core(allees, places, largeur_requise, acces, voie, _PASSAGE_MIN_M, assiette)[0]
 
 
-def _allees_desservant_places(allees, places, largeur_requise, libre, reach, r_pass):
-    """FIX-19 — l'ensemble des ALLÉES qui desservent AU MOINS UNE place comptée (approche ∈ `reach`). L'allée qui
-    « porte » une place est celle dont elle est le plus proche (le nez de la stalle affleure son bord). On raisonne
-    au niveau des allées, pas des places une à une (évite le bruit de résolution de l'approche)."""
-    served = []
-    for p in places:
-        pg = p if p.is_valid else p.buffer(0)
-        etat, _val = _sonder_place(pg, largeur_requise, libre, reach, r_pass)
-        if etat is not True:
-            continue
-        home = min(range(len(allees)), key=lambda i: allees[i].distance(pg))
-        if home not in served:
-            served.append(home)
-    return served
+def _goulet_place(pg, largeur_requise, libre, acces, voie, assiette):
+    """FIX-20 — le plus grand passage `w` auquel LA place `pg` reste DESSERVIE, mesuré avec EXACTEMENT la sonde du
+    comptage (`_sonder_place` sur le noyau atteignable à `w`). Dichotomie sur [0 ; 12] m. C'est le goulot du trajet
+    réel de cette place (son couloir le plus étroit depuis la voie), sans AUCUN rattachement à une allée."""
+    lo, hi = 0.0, 12.0
+    for _ in range(26):
+        w = (lo + hi) / 2.0
+        reach = _reach_depuis_voie(libre, acces, voie, w, assiette)
+        if (not reach.is_empty) and _sonder_place(pg, largeur_requise, libre, reach, w / 2.0)[0] is True:
+            lo = w
+        else:
+            hi = w
+    return lo
 
 
 def _largeur_min_desserte(allees, places, largeur_requise: float, acces=None, voie=None, assiette=None) -> float:
-    """LARGEUR DE DESSERTE DE L'OPÉRATION (FIX-19, définition du relecteur). La règle de desserte (p.ex. 5 m à
-    partir de 7 logements) porte sur la desserte de l'OPÉRATION, pas d'une place isolée. Définition retenue : le
-    PLUS GRAND passage `w` pour lequel CHAQUE ALLÉE qui dessert au moins une place COMPTÉE (à 2,40 m) reste ATTEINTE
-    depuis la voie. On raisonne au niveau des allées (pas des places une à une) pour éviter le bruit de résolution.
+    """LARGEUR DE DESSERTE DE L'OPÉRATION (FIX-20, définition du relecteur). La règle (p.ex. 5 m dès 7 logements)
+    porte sur la desserte de l'OPÉRATION. Définition : le MINIMUM, sur TOUTES les places COMPTÉES à 2,40 m, du plus
+    grand passage auquel cette place reste desservie — mesuré avec EXACTEMENT la sonde du comptage (`_sonder_place`,
+    prouvée juste). PLUS AUCUN rattachement d'une place à une allée.
 
-    Contre-exemple du relecteur (testé) : bouche 6 m, une place juste derrière l'entrée, puis rétrécissement à 3 m
-    avant une allée de 12 places → 13 places comptées à 2,40 m, mais desserte = 3 m (l'allée des 12 n'est atteinte
-    qu'à 3 m) → ÉCHEC pour une exigence de 5 m. L'ancienne lecture « ≥ 1 place » annonçait 6 m (« réussi » à tort).
+    Corrige deux sur-estimations de FIX-19 (relecture 2) : (1) `reach.intersects(allée)` déclarait TOUTE l'allée
+    atteinte dès qu'un bout l'était (une allée de 2,5 m pendue à un accès de 6 m annonçait 5 m ; un pincement de 3 m
+    DANS une allée d'un seul tenant annonçait 6 m) ; (2) une place accrochée directement à l'accès était rattachée à
+    une allée arbitraire, son vrai trajet (par l'accès) jamais contraint (6 m annoncés pour 2,4 m réels). Le goulot
+    par place, mesuré avec la sonde du comptage, ne connaît ni l'un ni l'autre piège.
 
-    Le goulet AFFICHÉ et le contrôle de la règle utilisent CETTE valeur ; l'oracle la mesure par ses propres moyens.
-    Si aucune place n'est comptée à 2,40 m (étranglement d'entrée < 2,40 m), on rend le plus grand passage qui
-    dessert encore ≥ 1 place — l'étranglement réel, cohérent avec « 0 place comptée »."""
+    Le goulet AFFICHÉ et le contrôle de la règle utilisent CETTE valeur ; l'oracle la mesure place par place par ses
+    propres moyens (grille affinée au besoin). Si AUCUNE place n'est comptée à 2,40 m, on rend le plus grand passage
+    desservant encore ≥ 1 place (l'étranglement, cohérent avec « 0 place comptée »)."""
     if not allees or not places:
         return 0.0
-    libre0 = _grille_mm(list(allees) + list(acces or []))
-    reach0 = _reach_depuis_voie(libre0, acces, voie, _PASSAGE_MIN_M, assiette) if not libre0.is_empty else libre0
-    served = (_allees_desservant_places(allees, places, largeur_requise, libre0, reach0, _PASSAGE_MIN_M / 2.0)
-              if not getattr(reach0, "is_empty", True) else [])
-
-    if not served:
-        # aucune place comptée à 2,40 m → on cherche l'ÉTRANGLEMENT (plus grand passage desservant ≥ 1 place).
+    libre = _grille_mm(list(allees) + list(acces or []))
+    if libre.is_empty:
+        return 0.0
+    reach0 = _reach_depuis_voie(libre, acces, voie, _PASSAGE_MIN_M, assiette)
+    pgs = [p if p.is_valid else p.buffer(0) for p in places]
+    comptees = ([pg for pg in pgs if _sonder_place(pg, largeur_requise, libre, reach0, _PASSAGE_MIN_M / 2.0)[0] is True]
+                if not reach0.is_empty else [])
+    if not comptees:
+        # aucune place comptée à 2,40 m → ÉTRANGLEMENT (plus grand passage desservant ≥ 1 place quelconque).
         lo, hi = 0.0, 12.0
         for _ in range(26):
             w = (lo + hi) / 2.0
@@ -500,27 +503,7 @@ def _largeur_min_desserte(allees, places, largeur_requise: float, acces=None, vo
             else:
                 hi = w
         return lo
-
-    allees_served = [allees[i] for i in served]
-
-    def _toutes_atteintes(w):
-        libre = _grille_mm(list(allees) + list(acces or []))
-        if libre.is_empty:
-            return False
-        reach = _reach_depuis_voie(libre, acces, voie, w, assiette)
-        if reach.is_empty:
-            return False
-        # une allée est ATTEINTE à `w` si le noyau roulant atteignable (érodé de w/2) la traverse encore.
-        return all(reach.intersects(a) for a in allees_served)
-
-    lo, hi = 0.0, 12.0
-    for _ in range(26):
-        w = (lo + hi) / 2.0
-        if _toutes_atteintes(w):
-            lo = w
-        else:
-            hi = w
-    return lo
+    return min(_goulet_place(pg, largeur_requise, libre, acces, voie, assiette) for pg in comptees)
 
 
 def _ground_tiles(scene: Scene):
