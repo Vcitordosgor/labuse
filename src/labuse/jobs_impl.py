@@ -1828,8 +1828,15 @@ def ingest_ban(ctx: JobContext) -> None:
 
 
 def ingest_dvf(ctx: JobContext) -> None:
-    """DVF — détecte une nouvelle livraison Etalab (Last-Modified) et recharge. Hebdomadaire."""
+    """DVF — détecte une nouvelle livraison Etalab (Last-Modified) et recharge. Hebdomadaire.
+
+    MINI-CORRECTIONS-1 (pt 5) — la tâche ENCHAÎNE d'elle-même la reconstruction de la table dérivée
+    du marché (`dvf-marche` → `dvf_secteur_medianes`, dédup du couple (id_mutation, id_parcelle) via
+    le CTE DISTINCT, recalcul idempotent TRUNCATE + INSERT) : le PRIX DES TERRAINS NUS suit les ventes
+    fraîchement rechargées dans la MÊME tâche hebdomadaire, sans dépendre du job BODACC du lendemain.
+    `refresh-dvf` rafraîchit déjà l'horizon de fraîcheur (persist_millesime, lu sur les ventes servies)."""
     _ingest_via_cli(ctx, "refresh-dvf")
+    _ingest_via_cli(ctx, "dvf-marche")
 
 
 def abuse_scan(ctx: JobContext) -> None:

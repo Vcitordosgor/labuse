@@ -108,10 +108,22 @@ export function Omnibox() {
   // Entrée SANS suggestion sélectionnée retombe sur la recherche COMMUNE puis IDU (onEnterRaw).
 
   // atterrissage à partir d'une suggestion d'adresse choisie
+  // MINI-CORRECTIONS-1 (pt 4) — choisir une proposition de la liste doit TOUJOURS aboutir à une parcelle :
+  //  1. l'idu rattaché à l'adresse (atterrissage direct sur la parcelle de l'adresse) ;
+  //  2. sinon la parcelle QUI CONTIENT le point géocodé (parcelAt, distance 0) ;
+  //  3. sinon la parcelle la PLUS PROCHE, avec sa distance indiquée (parcelAt la sert désormais —
+  //     point BAN sur voirie/hors cadastre). On n'affiche plus « aucune adresse/aucune parcelle »
+  //     tant que la base n'est pas vide (cas où idu ET parcelle la plus proche sont absents).
   const onPickAddress = async (sel: AddressSelection) => {
     if (sel.idu) { setView('cartes'); select(sel.idu); return }
     const at = await parcelAt(sel.lon, sel.lat).catch(() => null)
-    if (at?.idu) { setView('cartes'); select(at.idu); return }
+    if (at?.idu) {
+      setView('cartes'); select(at.idu)
+      if (at.distance_m != null && at.distance_m > 0) {
+        setToast(`« ${sel.label} » — pas de parcelle exactement à ce point ; ouverture de la plus proche (${Math.round(at.distance_m)} m).`)
+      }
+      return
+    }
     setToast(`« ${sel.label} » localisée, mais aucune parcelle en base à ce point.`)
   }
 

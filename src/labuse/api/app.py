@@ -2963,12 +2963,31 @@ def commune_acquisitions_pm(commune: str,
 @app.get("/parcels/at")
 def parcel_at(lon: float, lat: float, db: Session = Depends(get_db)) -> dict:
     """Résolution point → parcelle (C7, décision produit Vic : clic UNIVERSEL — n'importe
-    quelle parcelle de la trame cadastrale ouvre sa fiche, promue ou écartée)."""
+    quelle parcelle de la trame cadastrale ouvre sa fiche, promue ou écartée).
+
+    MINI-CORRECTIONS-1 (pt 4) — ne rend JAMAIS « rien » quand un point tombe HORS de toute parcelle
+    (point BAN posé sur la voirie / le trottoir, adresse hors cadastre) : à défaut d'une parcelle
+    CONTENANTE, on renvoie la parcelle la PLUS PROCHE avec sa distance en mètres. Ainsi la barre
+    d'adresse atterrit toujours sur une parcelle (la bonne, ou la plus proche en l'annonçant) — plus
+    de « aucune adresse » après un choix dans la liste des suggestions. `distance_m` : 0 si contenante,
+    > 0 pour la plus proche, None seulement si la base est vide."""
+    pt = "ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)"
     row = db.execute(text(
-        """SELECT p.idu FROM parcels p
-           WHERE ST_Contains(p.geom, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326))
-           LIMIT 1"""), {"lon": lon, "lat": lat}).first()
-    return {"idu": row[0] if row else None}
+        f"""SELECT p.idu FROM parcels p
+            WHERE ST_Contains(p.geom, {pt})
+            LIMIT 1"""), {"lon": lon, "lat": lat}).first()
+    if row:
+        return {"idu": row[0], "distance_m": 0.0}
+    # Pas de parcelle contenante → la PLUS PROCHE (KNN index GiST via l'opérateur `<->`), distance
+    # mesurée en mètres sur la géographie (geography) pour un chiffre honnête quelle que soit la latitude.
+    near = db.execute(text(
+        f"""SELECT p.idu, ST_Distance(p.geom::geography, {pt}::geography) AS d
+            FROM parcels p
+            ORDER BY p.geom <-> {pt}
+            LIMIT 1"""), {"lon": lon, "lat": lat}).first()
+    if near:
+        return {"idu": near[0], "distance_m": round(float(near[1]), 1)}
+    return {"idu": None, "distance_m": None}
 
 
 @app.get("/parcels/{idu}/geojson")
