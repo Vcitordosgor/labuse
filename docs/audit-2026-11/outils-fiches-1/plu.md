@@ -1,5 +1,20 @@
 # PLU
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On choisit une commune et on tape un mot (« hauteur », « clôture »…).
+> 2. L'outil fouille le règlement d'urbanisme de la commune, recopié mot à mot.
+> 3. Il ne calcule rien : il retrouve les articles qui parlent du sujet.
+> 4. Il rend le texte exact de chaque article, sa page dans le PDF officiel et le lien.
+> 5. À utiliser pour citer la règle opposable, pas pour en déduire un chiffre.
+
+**Captures — l'outil en action**
+
+![PLU — PLU de Saint-Denis (millésime 2026-08-05), recherche « hauteur » — 25 extraits affichés sur 54 : articles « Hauteur maximale des constructions » avec références, pages et liens PDF.](img/plu.png)
+*PLU de Saint-Denis (millésime 2026-08-05), recherche « hauteur » — 25 extraits affichés sur 54 : articles « Hauteur maximale des constructions » avec références, pages et liens PDF.*
+
+<!-- CCM -->
+
 Clé interne : `plu` (num O13) · composant : `frontend/src/components/outils/Plu.tsx` → `frontend/src/components/outils/PluAnnuaire.tsx` · endpoint(s) : `GET /modules/plu-annuaire/communes`, `GET /modules/plu-annuaire/search`, `GET /modules/plu-annuaire/pack/{insee}`
 
 > Audit lecture seule. Chemins relatifs à `/Users/openclaw/Desktop/labuse-fiches`, lignes réellement ouvertes. Chiffres « rejoués » = sorties `curl`/`psql` copiées telles quelles (backend `:7300`).

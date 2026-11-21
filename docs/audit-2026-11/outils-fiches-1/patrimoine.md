@@ -1,5 +1,23 @@
 # Scan patrimoine
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On cherche une société (nom ou numéro) ou on part d'une parcelle.
+> 2. L'outil réunit toutes les parcelles détenues par cette société et ses permis.
+> 3. Il les compte, les cartographie et estime grossièrement la valeur du foncier détenu.
+> 4. Il rend deux volets : « ce qu'il possède » et « ce qu'il construit ».
+> 5. Ne couvre que les sociétés (pas les particuliers) ; la valeur est un ordre de grandeur.
+
+**Captures — l'outil en action**
+
+![Scan patrimoine — Scan patrimoine — CBO TERRITORIA (SIREN 452038805), onglet Possession : 1 833 parcelles · 2 571,82 ha, 210 blocs contigus, liste par commune.](img/patrimoine-possede.png)
+*Scan patrimoine — CBO TERRITORIA (SIREN 452038805), onglet Possession : 1 833 parcelles · 2 571,82 ha, 210 blocs contigus, liste par commune.*
+
+![Scan patrimoine — CBO TERRITORIA, onglet Construction (21) : 21 opérations · 247 logements · 112 permis depuis 2021 ; 9 programmes publiés listés (Humilia, Bengali, Dioselines…).](img/patrimoine-construit.png)
+*CBO TERRITORIA, onglet Construction (21) : 21 opérations · 247 logements · 112 permis depuis 2021 ; 9 programmes publiés listés (Humilia, Bengali, Dioselines…).*
+
+<!-- CCM -->
+
 Clé interne : `patrimoine` (num M02) · composant : `frontend/src/components/outils/ScanPatrimoine.tsx` · endpoints : `/modules/patrimoine`, `/modules/patrimoine/search` (back `src/labuse/api/modules.py`) ; onglet « Construction » : `/outils/veille-promoteurs`, `/outils/veille-promoteurs/{siren}/frise`, `/outils/veille-promoteurs/{siren}/acquisitions` (back `src/labuse/api/veille_promoteurs.py`).
 
 L'outil a DEUX chemins (deux onglets, propriétaire partagé) :

@@ -1,5 +1,23 @@
 # Comparer des parcelles
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On choisit jusqu'à trois parcelles.
+> 2. L'outil reprend les informations déjà établies pour chacune (surface, zone, bâti, contraintes…).
+> 3. Il ne refait pas les calculs : il met les mêmes valeurs en colonnes.
+> 4. Il rend un tableau de comparaison, ligne par ligne, et un PDF identique à l'écran.
+> 5. Quelques lignes (droits à bâtir, charge foncière) restent des estimations.
+
+**Captures — l'outil en action**
+
+![Comparer des parcelles — Panneau Comparer avec 3 parcelles chargées (BZ1065, AK0804, DH0076) et bouton « Comparer (3/3) ».](img/comparer-panneau.png)
+*Panneau Comparer avec 3 parcelles chargées (BZ1065, AK0804, DH0076) et bouton « Comparer (3/3) ».*
+
+![Comparer des parcelles — Tableau comparatif overlay des 3 parcelles : surfaces 1 567 / 27 862 / 19 513 m², hauteurs R+0 / R+3 / R+4, planchers possibles, charge foncière, risques et contraintes.](img/comparer-tableau.png)
+*Tableau comparatif overlay des 3 parcelles : surfaces 1 567 / 27 862 / 19 513 m², hauteurs R+0 / R+3 / R+4, planchers possibles, charge foncière, risques et contraintes.*
+
+<!-- CCM -->
+
 Clé interne : `comparer` (num A8) · composant : `frontend/src/components/compare/ComparePanel.tsx` (panneau `CompareModule` l.160, tableau `ComparePanel` l.214) · endpoint(s) : `GET /compare?idus=…` (`src/labuse/api/app.py:9498`) pour l'écran, `GET /comparatif.pdf?idus=…` (`src/labuse/api/documents.py:224`) pour l'export.
 
 ---

@@ -1,5 +1,20 @@
 # Étude de zone
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On ouvre une parcelle (ou une adresse) et un rayon (0,5 à 5 km).
+> 2. L'outil trace un cercle et y compte habitants, entreprises, ventes, permis et équipements.
+> 3. Il additionne et moyenne les données publiques tombant dans le cercle.
+> 4. Il rend un profil de quartier (population, marché, commerces).
+> 5. C'est un cercle à vol d'oiseau, pas un temps de trajet ; les emplois sont une fourchette.
+
+**Captures — l'outil en action**
+
+![Étude de zone — BZ1065 (Saint-Denis), rayon 1 km — zone lue : 3 604 habitants, 1 283 ménages, niveau de vie 30 813 €/an, structure d'âge ; cercle de la zone centré sur la parcelle.](img/etude-zone.png)
+*BZ1065 (Saint-Denis), rayon 1 km — zone lue : 3 604 habitants, 1 283 ménages, niveau de vie 30 813 €/an, structure d'âge ; cercle de la zone centré sur la parcelle.*
+
+<!-- CCM -->
+
 Clé interne : `etude-zone` (num M27) · composant : `frontend/src/components/outils/EtudeZone.tsx` · endpoint(s) : `POST /outils/etude-zone` (lecture principale), `POST /outils/etude-zone/entreprises` (liste des entreprises à la demande), `GET /etude-zone.pdf` (export), `GET /moteurs/config` (liste des rayons).
 
 > Note de méthode : le brief annonce un backend sur `http://127.0.0.1:7300`. Ce port ne répondait pas pendant l'audit (`curl` → code 000, aucun process). Les sorties « rejouées » ci-dessous ont été obtenues sur l'instance LABUSE réellement en marche, `http://127.0.0.1:9810` (même code, même base Postgres `labuse` locale). Les requêtes `psql` (table `data_sources`) et la lecture du code (zone.py, app.py) complètent.

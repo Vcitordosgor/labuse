@@ -1,5 +1,23 @@
 # Permis
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On choisit une commune (ou une parcelle) et, au besoin, un filtre.
+> 2. L'outil lit les permis de construire déclarés à l'État.
+> 3. Il les compte, les place sur la carte et repère les « dormants » (anciens, jamais achevés, terrain nu).
+> 4. Il rend la liste des permis et leur position ; aucune valeur foncière n'est calculée.
+> 5. « Récent » et « dormant » sont des règles de dates, pas des faits publiés.
+
+**Captures — l'outil en action**
+
+![Permis — Radar permis de Saint-André — 2 693 permis en base, filtre Récent (34) ; liste des permis (PC/PA, dates, logements) et points verts sur la carte.](img/permis-radar.png)
+*Radar permis de Saint-André — 2 693 permis en base, filtre Récent (34) ; liste des permis (PC/PA, dates, logements) et points verts sur la carte.*
+
+![Permis — Permis dormants de Saint-André — filtre « Dormant — 1 115 », liste de permis sans DAACT (badges rouges) et points rouges sur la carte.](img/permis-dormants.png)
+*Permis dormants de Saint-André — filtre « Dormant — 1 115 », liste de permis sans DAACT (badges rouges) et points rouges sur la carte.*
+
+<!-- CCM -->
+
 Clé interne : `permis` (num M03) · alias caché `promesses` (num M04, même outil, filtre « Dormant » pré-activé) · composant : `frontend/src/components/outils/ModulePanel.tsx` (`function M03`, l. 532) + lib `frontend/src/lib/permisEtats.ts` · endpoints : `/modules/permis`, `/modules/permis/{permit_id}`, `/modules/parcelle-permis`, `/modules/promesses` (backend `src/labuse/api/modules.py`).
 
 > Note de recette : le backend `:7300` a répondu aux premiers appels (comptes + 3 parcelles témoins, repris tels quels ci-dessous) puis s'est arrêté pendant mes essais sur la liste `/modules/promesses` (requête lourde). Les chiffres « Dormant » qui n'ont pas pu être servis par l'API ont été reconstitués en SQL direct (`psql`) et signalés comme tels.

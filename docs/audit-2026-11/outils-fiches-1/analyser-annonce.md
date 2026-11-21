@@ -1,5 +1,20 @@
 # Estimer un bien
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On donne une adresse (→ parcelle) ou un lien d'annonce.
+> 2. L'outil retrouve les ventes comparables du secteur et les traits du bien.
+> 3. Il en déduit un prix au m², une fourchette et une fiabilité ; pour un lien, l'écart au marché.
+> 4. Il rend une estimation indicative et les ventes qui la fondent.
+> 5. Le « prix estimé » est en fait la médiane du secteur ; prudence sur les grands terrains.
+
+**Captures — l'outil en action**
+
+![Estimer un bien — Estimer un bien sur DH0076 (Saint-Paul, U2b) — prix estimé 6 275 €/m² (5 508–7 168), fiabilité Élevée sur 79 ventes comparables ; lecture foncière 21 425 000 €.](img/analyser-annonce.png)
+*Estimer un bien sur DH0076 (Saint-Paul, U2b) — prix estimé 6 275 €/m² (5 508–7 168), fiabilité Élevée sur 79 ventes comparables ; lecture foncière 21 425 000 €.*
+
+<!-- CCM -->
+
 Clé interne : `analyser-annonce` (num N1) · composant : `frontend/src/components/outils/AnalyserAnnonce.tsx` · endpoints : `POST /radar/annonce/analyser` (chemin lien), `GET /radar/annonce/estimation/{idu}` (chemin adresse), `GET /radar/annonce/classement/{idu}`, `GET /radar/annonce/rapport/{idu}`, PDF `/analyse-annonce/{idu}.pdf` (adresse) et `/analyse-annonce.pdf?url=…` (lien).
 
 > Note de nommage : le mémoire du mandat parlait de `pige/estimer3.py` ; ce fichier **n'existe pas** dans ce worktree. Le cœur de l'estimation vit dans `src/labuse/pige/api.py` (`estimation_annonce`, l. 1902) et `src/labuse/marche_service.py` (`comparateur_bien`, l. 406 ; `comparateur_terrain`, l. 580). `src/labuse/estimation_prix.py` ne contient que des helpers de **mise en forme** (fourchettes, arrondis, €/m² FR), pas le calcul.
