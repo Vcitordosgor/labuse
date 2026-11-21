@@ -1,0 +1,96 @@
+{
+ "insee": "97412",
+ "commune": "Saint-Joseph",
+ "regles": [
+  {
+   "id": "97412-R1",
+   "article": "U1 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "U1"
+   ],
+   "pages": [
+    24,
+    25,
+    26
+   ]
+  },
+  {
+   "id": "97412-R2",
+   "article": "U2 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "U2",
+    "U2a",
+    "2AU2"
+   ],
+   "pages": [
+    38,
+    39,
+    40
+   ]
+  },
+  {
+   "id": "97412-R3",
+   "article": "U3 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "U3",
+    "U3a",
+    "U3ar",
+    "1AU3",
+    "1AU3a",
+    "2AU3",
+    "2AU3a",
+    "3AU3",
+    "3AU3a"
+   ],
+   "pages": [
+    54,
+    55,
+    56
+   ]
+  },
+  {
+   "id": "97412-R4",
+   "article": "U4 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "U4"
+   ],
+   "pages": [
+    68,
+    69,
+    70
+   ]
+  },
+  {
+   "id": "97412-R5",
+   "article": "U5 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "U5",
+    "U5cv",
+    "U5cvd",
+    "U5ma",
+    "U5ru",
+    "U5vi",
+    "1AU5",
+    "1AU5ru",
+    "1AU5vi",
+    "2AU5",
+    "2AU5cvd",
+    "2AU5ma",
+    "2AU5ru",
+    "2AU5vi",
+    "3AU5",
+    "3AU5ma"
+   ],
+   "pages": [
+    83,
+    84,
+    85
+   ]
+  }
+ ]
+}

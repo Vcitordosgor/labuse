@@ -346,7 +346,7 @@ def _legende() -> str:
         ("#F5C6B8", "#111", "", "Bâtiment proposé"),
         ("#fff", "#111", "", "Place de stationnement 2,50 × 5,00"),
         ("#E5E7EB", "#111", "", "Allée, accès"),
-        ("#CDE8C6", "#CDE8C6", "", "Espaces libres, pleine terre"),
+        ("#CDE8C6", "#CDE8C6", "", "Surface disponible (pleine terre à confirmer)"),
         ("#D9D9D9", "#111", "", "Bâti voisin (BD TOPO)"),
         ("none", "#6B7280", "5 3", "Bâti existant (supposé démoli)"),
         ("url(#ppr)", "#DC2626", "", "PPR zone rouge (retirée)"),
@@ -372,7 +372,7 @@ def _tableau(terrain, cap) -> str:
         ("Emprise bâtie", f"{m2_fr(emp)}{pct}"),
         (f"SDP du scénario (R+{max(0, getattr(cap, 'niveaux', 1) - 1)})", m2_fr(cap.sdp_m2)),
         ("Stationnement + allée", m2_fr(cap.surface_stationnement_m2)),
-        ("Pleine terre", m2_fr(pt)),
+        ("Surface disponible (pleine terre à confirmer)", m2_fr(pt)),
         ("Places dessinées / imposées", f"{cap.places} / {cap.places_imposees if cap.places_imposees is not None else '—'}"),
         ("Logements", f"{cap.logements} · " + " · ".join(f"{t} ×{n}" for t, n in cap.par_type.items()) if cap.par_type else str(cap.logements)),
     ]

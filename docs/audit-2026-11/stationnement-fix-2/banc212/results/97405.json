@@ -1,0 +1,113 @@
+{
+ "insee": "97405",
+ "regles": [
+  {
+   "rule_id": "97405-R1",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 20
+    },
+    "aide_20T3_1400": {
+     "total": 20
+    },
+    "mixte_10x110_10x30": {
+     "total": 20
+    }
+   }
+  },
+  {
+   "rule_id": "97405-R2",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 20
+    },
+    "aide_20T3_1400": {
+     "total": 20
+    },
+    "mixte_10x110_10x30": {
+     "total": 20
+    }
+   }
+  },
+  {
+   "rule_id": "97405-R3",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 20
+    },
+    "aide_20T3_1400": {
+     "total": 20
+    },
+    "mixte_10x110_10x30": {
+     "total": 20
+    }
+   }
+  },
+  {
+   "rule_id": "97405-R4",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 20
+    },
+    "aide_20T3_1400": {
+     "total": 20
+    },
+    "mixte_10x110_10x30": {
+     "total": 20
+    }
+   }
+  },
+  {
+   "rule_id": "97405-R5",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 20
+    },
+    "aide_20T3_1400": {
+     "total": 20
+    },
+    "mixte_10x110_10x30": {
+     "total": 20
+    }
+   }
+  },
+  {
+   "rule_id": "97405-R6",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 20
+    },
+    "aide_20T3_1400": {
+     "total": 20
+    },
+    "mixte_10x110_10x30": {
+     "total": 20
+    }
+   }
+  }
+ ]
+}

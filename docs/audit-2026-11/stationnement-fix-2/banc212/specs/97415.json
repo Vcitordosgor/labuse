@@ -1,0 +1,126 @@
+{
+ "insee": "97415",
+ "commune": "Saint-Paul",
+ "regles": [
+  {
+   "id": "97415-R1",
+   "article": "12.2",
+   "mode": "par_logement",
+   "zones": [
+    "U1a",
+    "U1b",
+    "U1c",
+    "U1d",
+    "U1f",
+    "U1g",
+    "AU1b"
+   ],
+   "pages": [
+    29,
+    30,
+    31
+   ]
+  },
+  {
+   "id": "97415-R2",
+   "article": "12.2",
+   "mode": "par_logement",
+   "zones": [
+    "U2a",
+    "U2b",
+    "U2c",
+    "U2d",
+    "AU2c"
+   ],
+   "pages": [
+    80,
+    81,
+    82
+   ]
+  },
+  {
+   "id": "97415-R3",
+   "article": "12.2",
+   "mode": "par_logement",
+   "zones": [
+    "U3a",
+    "U3b",
+    "U3c",
+    "AU3a",
+    "AU3b",
+    "AU3c"
+   ],
+   "pages": [
+    119,
+    120,
+    121
+   ]
+  },
+  {
+   "id": "97415-R4",
+   "article": "12.2",
+   "mode": "par_logement",
+   "zones": [
+    "Usdu"
+   ],
+   "pages": [
+    138,
+    139,
+    140
+   ]
+  },
+  {
+   "id": "97415-R5",
+   "article": "12.2",
+   "mode": "par_logement",
+   "zones": [
+    "U4a",
+    "U4b",
+    "U4c",
+    "AU4b",
+    "AU4c"
+   ],
+   "pages": [
+    181,
+    182,
+    183
+   ]
+  },
+  {
+   "id": "97415-R6",
+   "article": "12.2",
+   "mode": "par_logement",
+   "zones": [
+    "U5a",
+    "U5b",
+    "U5c",
+    "AU5a",
+    "AU5b",
+    "AU5c"
+   ],
+   "pages": [
+    227,
+    228,
+    229
+   ]
+  },
+  {
+   "id": "97415-R7",
+   "article": "12.2",
+   "mode": "par_logement",
+   "zones": [
+    "U6a",
+    "U6b",
+    "U6c",
+    "AU6a",
+    "AU6b",
+    "AU6c"
+   ],
+   "pages": [
+    287,
+    288,
+    289
+   ]
+  }
+ ]
+}

@@ -1,0 +1,21 @@
+{
+ "insee": "97409",
+ "commune": "Saint-André",
+ "regles": [
+  {
+   "id": "97409-R1",
+   "article": "UC 12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "UC",
+    "AUc",
+    "2AUc"
+   ],
+   "pages": [
+    19,
+    20,
+    21
+   ]
+  }
+ ]
+}

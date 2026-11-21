@@ -61,17 +61,35 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UB.12
           page_pdf: 31
-          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
-            ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'pour les constructions à usage d’habitation : 1 place de stationnement par logement ;
+
+            -
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            stationnement n’est demandée ; pour toute opération de logements collectifs (financés ou non
+
+            financés par un prêt aidé de l’Etat), 20 % de l’espace dédié au stationnement aérien devront être
+
+            -'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%."
-            article: "UB.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%.'
+            article: UB.12
             page_pdf: 31
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -191,16 +209,35 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UC.12
           page_pdf: 40
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%."
-            article: "UC.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%.'
+            article: UC.12
             page_pdf: 40
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -312,16 +349,35 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UC.12
           page_pdf: 40
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%."
-            article: "UC.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%.'
+            article: UC.12
             page_pdf: 40
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -438,17 +494,35 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UD.12
           page_pdf: 50
-          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
-            ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'a) pour les constructions à usage d’habitation : 1 place de stationnement par logement ;
+
+            -
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            stationnement n’est demandée ;
+
+            Pour toute opération de logements collectifs (financés ou non financés par un prêt aidé de l’Etat), 20 %
+
+            -'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "UD.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;'
+            article: UD.12
             page_pdf: 50
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -563,17 +637,35 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UD.12
           page_pdf: 50
-          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
-            ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'a) pour les constructions à usage d’habitation : 1 place de stationnement par logement ;
+
+            -
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            stationnement n’est demandée ;
+
+            Pour toute opération de logements collectifs (financés ou non financés par un prêt aidé de l’Etat), 20 %
+
+            -'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "UD.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;'
+            article: UD.12
             page_pdf: 50
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -1090,17 +1182,33 @@ zones:
           forme: alignement
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UZ.12
           page_pdf: 85
-          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
-            ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'pour les constructions à usage d’habitation : 1 place de stationnement par logement ;
+
+            -
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            stationnement n’est demandée ;
+
+            -'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "UZ.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;'
+            article: UZ.12
             page_pdf: 85
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -1223,16 +1331,39 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: 1AU.12
           page_pdf: 96
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            e) pour les salles de spectacles et de réunions : 1 place de stationnement pour 20 m² de
+
+            f) pour les établissements d’enseignement : 1,5 place de stationnement par classe du premier
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "1AU.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;'
+            article: 1AU.12
             page_pdf: 96
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -1347,16 +1478,39 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: 1AU.12
           page_pdf: 96
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            e) pour les salles de spectacles et de réunions : 1 place de stationnement pour 20 m² de
+
+            f) pour les établissements d’enseignement : 1,5 place de stationnement par classe du premier
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "1AU.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;'
+            article: 1AU.12
             page_pdf: 96
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -1486,16 +1640,39 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: 1AUZ.12
           page_pdf: 106
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            e) pour les salles de spectacles et de réunions : 1 place de stationnement pour 20 m² de
+
+            f) pour les établissements d’enseignement : 1,5 place de stationnement par classe du premier
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "1AUZ.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;'
+            article: 1AUZ.12
             page_pdf: 106
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:

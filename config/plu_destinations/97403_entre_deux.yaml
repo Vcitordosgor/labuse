@@ -18,16 +18,14 @@ zones:
           m: 11.0
           article: U7.2
           page_pdf: 21
-          citation: 'En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : ...
-            - 11 mètres au faitage.'
+          citation: 'En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : ... - 11 mètres au faitage.'
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
         egout:
           m: 7.0
           article: U7.2
           page_pdf: 21
-          citation: 'En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : - 7
-            mètres à l''égout du toit ou au sommet de l''acrotère ;'
+          citation: 'En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : - 7 mètres à l''égout du toit ou au sommet de l''acrotère ;'
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
       emprise_sol:
@@ -42,9 +40,7 @@ zones:
           min_m: 4.0
           article: U3.2
           page_pdf: 19
-          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
-            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
-            voie, au moins égale à 4 mètres.
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.
           statut: valide
         limites_separatives:
           implantation_fond:
@@ -66,29 +62,66 @@ zones:
           min_m: 3.0
           article: U4.2
           page_pdf: 20
-          citation: En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement
-            de tout point de la façade au point le plus proche de la limite séparative, doit au moins être
-            égale à 3 mètres.
+          citation: En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite séparative, doit au moins être égale à 3 mètres.
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U12
           page_pdf: 27
-          citation: Autres logements — 2 places par logement
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '- 4 logements dans le cas d’immeubles de logements collectifs,
+
+            - 5 lots dans l’espace collectif d’un lotissement.
+
+            - Pour les opérations d''habitat collectif de plus de 5 logements, il sera d’une surface minimale de 5 m² par logement.
+
+            minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            Logements locatifs financés avec un prêt
+
+            1 place maximum par logement
+
+            1 place visiteur par tranche de 10
+
+            logements
+
+            Autres logements
+
+            2 places par logement
+
+            1 place visiteur par tranche de 5 logements
+
+            1 place de stationnement pour deux chambres / 1 place de stationnement pour 10 m²
+
+            - pour les constructions à destination d’habitation comportant au moins deux logements : un emplacement minimum
+
+            par logement,
+
+            - pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de
+
+            primaires, dix emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de'
+          visiteurs:
+            par_logements: 5
+            places: 1
+            arrondi: superieur
+            citation: 1 place visiteur par tranche de 5 logements ou 5 lots (muet → supérieur)
+          social:
+            places: 1
+            tranche: prêt aidé (1 place max)
+          visiteurs_social:
+            places: 1
+            par_logements: 10
       pleine_terre:
         pct:
           pct: 40.0
           article: U11.1
           page_pdf: 26
-          citation: Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace
-            vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.
+          citation: Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.
           statut: valide
     silence: interdit
-    silence_src: 'tableau U1.2 « Sont interdits, admis ou soumis à conditions » (p. 17) : chaque sous-destination
-      porte un symbole explicite (autorisée / sous condition / interdite) ; les sous-destinations non figurées au
-      tableau (lieux de culte, cuisine dédiée à la vente en ligne) ne sont pas visées'
+    silence_src: 'tableau U1.2 « Sont interdits, admis ou soumis à conditions » (p. 17) : chaque sous-destination porte un symbole explicite (autorisée / sous condition / interdite) ; les sous-destinations non figurées au tableau (lieux de culte, cuisine dédiée à la vente en ligne) ne sont pas visées'
     sous_destinations:
       logement:
         statut: autorise
@@ -206,24 +239,20 @@ zones:
           m: 13.0
           article: U7.2
           page_pdf: 21
-          citation: 'En zones Ub et Ue, la hauteur maximale des constructions est fixée à : ... - 13 mètres
-            au faitage.'
+          citation: 'En zones Ub et Ue, la hauteur maximale des constructions est fixée à : ... - 13 mètres au faitage.'
           statut: valide
         egout:
           m: 9.0
           article: U7.2
           page_pdf: 21
-          citation: 'En zones Ub et Ue, la hauteur maximale des constructions est fixée à : - 9 mètres à l''égout
-            du toit ou au sommet de l''acrotère ;'
+          citation: 'En zones Ub et Ue, la hauteur maximale des constructions est fixée à : - 9 mètres à l''égout du toit ou au sommet de l''acrotère ;'
           statut: valide
       retraits:
         voie:
           min_m: 4.0
           article: U3.2
           page_pdf: 19
-          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
-            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
-            voie, au moins égale à 4 mètres.
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.
           statut: valide
         limites_separatives:
           implantation_fond:
@@ -245,30 +274,66 @@ zones:
           min_m: 3.0
           article: U4.2
           page_pdf: 20
-          citation: En zone Ub, les constructions peuvent être implantées sur une seule limite séparative
-            ou en retrait. ... En cas de retrait de la construction, la distance comptée horizontalement et
-            perpendiculairement de tout point de la façade au point le plus proche de la limite séparative,
-            doit au moins être égale à 3 mètres.
+          citation: En zone Ub, les constructions peuvent être implantées sur une seule limite séparative ou en retrait. ... En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite séparative, doit au moins être égale à 3 mètres.
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U12
           page_pdf: 27
-          citation: Autres logements — 2 places par logement
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '- 4 logements dans le cas d’immeubles de logements collectifs,
+
+            - 5 lots dans l’espace collectif d’un lotissement.
+
+            - Pour les opérations d''habitat collectif de plus de 5 logements, il sera d’une surface minimale de 5 m² par logement.
+
+            minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            Logements locatifs financés avec un prêt
+
+            1 place maximum par logement
+
+            1 place visiteur par tranche de 10
+
+            logements
+
+            Autres logements
+
+            2 places par logement
+
+            1 place visiteur par tranche de 5 logements
+
+            1 place de stationnement pour deux chambres / 1 place de stationnement pour 10 m²
+
+            - pour les constructions à destination d’habitation comportant au moins deux logements : un emplacement minimum
+
+            par logement,
+
+            - pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de
+
+            primaires, dix emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de'
+          visiteurs:
+            par_logements: 5
+            places: 1
+            arrondi: superieur
+            citation: 1 place visiteur par tranche de 5 logements ou 5 lots (muet → supérieur)
+          social:
+            places: 1
+            tranche: prêt aidé (1 place max)
+          visiteurs_social:
+            places: 1
+            par_logements: 10
       pleine_terre:
         pct:
           pct: 40.0
           article: U11.1
           page_pdf: 26
-          citation: Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace
-            vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.
+          citation: Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.
           statut: valide
     silence: interdit
-    silence_src: 'tableau U1.2 « Sont interdits, admis ou soumis à conditions » (p. 17) : chaque sous-destination
-      porte un symbole explicite (autorisée / sous condition / interdite) ; les sous-destinations non figurées au
-      tableau (lieux de culte, cuisine dédiée à la vente en ligne) ne sont pas visées'
+    silence_src: 'tableau U1.2 « Sont interdits, admis ou soumis à conditions » (p. 17) : chaque sous-destination porte un symbole explicite (autorisée / sous condition / interdite) ; les sous-destinations non figurées au tableau (lieux de culte, cuisine dédiée à la vente en ligne) ne sont pas visées'
     sous_destinations:
       logement:
         statut: autorise
@@ -383,24 +448,20 @@ zones:
           m: 11.0
           article: U7.2
           page_pdf: 21
-          citation: 'En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : ...
-            - 11 mètres au faitage.'
+          citation: 'En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : ... - 11 mètres au faitage.'
           statut: valide
         egout:
           m: 7.0
           article: U7.2
           page_pdf: 21
-          citation: 'En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : - 7
-            mètres à l''égout du toit ou au sommet de l''acrotère ;'
+          citation: 'En zone Ua et en secteur Ub1, la hauteur maximale des constructions est fixée à : - 7 mètres à l''égout du toit ou au sommet de l''acrotère ;'
           statut: valide
       retraits:
         voie:
           min_m: 4.0
           article: U3.2
           page_pdf: 19
-          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
-            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
-            voie, au moins égale à 4 mètres.
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.
           statut: valide
         limites_separatives:
           implantation_fond:
@@ -422,31 +483,66 @@ zones:
           min_m: 3.0
           article: U4.2
           page_pdf: 20
-          citation: En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement
-            de tout point de la façade au point le plus proche de la limite séparative, doit au moins être
-            égale à 3 mètres.
+          citation: En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite séparative, doit au moins être égale à 3 mètres.
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U12
           page_pdf: 27
-          citation: Autres logements — 2 places par logement
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '- 4 logements dans le cas d’immeubles de logements collectifs,
+
+            - 5 lots dans l’espace collectif d’un lotissement.
+
+            - Pour les opérations d''habitat collectif de plus de 5 logements, il sera d’une surface minimale de 5 m² par logement.
+
+            minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            Logements locatifs financés avec un prêt
+
+            1 place maximum par logement
+
+            1 place visiteur par tranche de 10
+
+            logements
+
+            Autres logements
+
+            2 places par logement
+
+            1 place visiteur par tranche de 5 logements
+
+            1 place de stationnement pour deux chambres / 1 place de stationnement pour 10 m²
+
+            - pour les constructions à destination d’habitation comportant au moins deux logements : un emplacement minimum
+
+            par logement,
+
+            - pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de
+
+            primaires, dix emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de'
+          visiteurs:
+            par_logements: 5
+            places: 1
+            arrondi: superieur
+            citation: 1 place visiteur par tranche de 5 logements ou 5 lots (muet → supérieur)
+          social:
+            places: 1
+            tranche: prêt aidé (1 place max)
+          visiteurs_social:
+            places: 1
+            par_logements: 10
       pleine_terre:
         pct:
           pct: 40.0
           article: U11.1
           page_pdf: 26
-          citation: Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace
-            vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.
+          citation: Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.
           statut: valide
     renvoi: Ub
-    renvoi_src: 'Dispositions générales, 2., p. 5 : « Dès lors que la zone comprend un ou plusieurs secteurs, la
-      règle générale de la zone s''applique à chacun d''eux sauf lorsqu''une disposition particulière est prévue
-      pour l''un de ces secteurs. » ; chapeau p. 16 : « Il existe deux secteurs (Ub1 et Ub2) dans lesquels les hauteurs
-      des constructions sont limitées » — aucune disposition particulière de destination pour Ub1 (la seule règle
-      propre est la hauteur, art. U7.2 p. 21).'
+    renvoi_src: 'Dispositions générales, 2., p. 5 : « Dès lors que la zone comprend un ou plusieurs secteurs, la règle générale de la zone s''applique à chacun d''eux sauf lorsqu''une disposition particulière est prévue pour l''un de ces secteurs. » ; chapeau p. 16 : « Il existe deux secteurs (Ub1 et Ub2) dans lesquels les hauteurs des constructions sont limitées » — aucune disposition particulière de destination pour Ub1 (la seule règle propre est la hauteur, art. U7.2 p. 21).'
   Ub2:
     regles:
       hauteur:
@@ -454,24 +550,20 @@ zones:
           m: 7.0
           article: U7.2
           page_pdf: 21
-          citation: 'En secteur Ub2, la hauteur maximale des constructions est fixée à : ... - 7 mètres au
-            faitage.'
+          citation: 'En secteur Ub2, la hauteur maximale des constructions est fixée à : ... - 7 mètres au faitage.'
           statut: valide
         egout:
           m: 4.5
           article: U7.2
           page_pdf: 21
-          citation: 'En secteur Ub2, la hauteur maximale des constructions est fixée à : - 4,50 mètres à l''égout
-            du toit ou au sommet de l''acrotère ;'
+          citation: 'En secteur Ub2, la hauteur maximale des constructions est fixée à : - 4,50 mètres à l''égout du toit ou au sommet de l''acrotère ;'
           statut: valide
       retraits:
         voie:
           min_m: 4.0
           article: U3.2
           page_pdf: 19
-          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée
-            horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
-            voie, au moins égale à 4 mètres.
+          citation: Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres.
           statut: valide
         limites_separatives:
           implantation_fond:
@@ -493,35 +585,69 @@ zones:
           min_m: 3.0
           article: U4.2
           page_pdf: 20
-          citation: En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement
-            de tout point de la façade au point le plus proche de la limite séparative, doit au moins être
-            égale à 3 mètres.
+          citation: En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite séparative, doit au moins être égale à 3 mètres.
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U12
           page_pdf: 27
-          citation: Autres logements — 2 places par logement
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '- 4 logements dans le cas d’immeubles de logements collectifs,
+
+            - 5 lots dans l’espace collectif d’un lotissement.
+
+            - Pour les opérations d''habitat collectif de plus de 5 logements, il sera d’une surface minimale de 5 m² par logement.
+
+            minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            Logements locatifs financés avec un prêt
+
+            1 place maximum par logement
+
+            1 place visiteur par tranche de 10
+
+            logements
+
+            Autres logements
+
+            2 places par logement
+
+            1 place visiteur par tranche de 5 logements
+
+            1 place de stationnement pour deux chambres / 1 place de stationnement pour 10 m²
+
+            - pour les constructions à destination d’habitation comportant au moins deux logements : un emplacement minimum
+
+            par logement,
+
+            - pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de
+
+            primaires, dix emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de'
+          visiteurs:
+            par_logements: 5
+            places: 1
+            arrondi: superieur
+            citation: 1 place visiteur par tranche de 5 logements ou 5 lots (muet → supérieur)
+          social:
+            places: 1
+            tranche: prêt aidé (1 place max)
+          visiteurs_social:
+            places: 1
+            par_logements: 10
       pleine_terre:
         pct:
           pct: 40.0
           article: U11.1
           page_pdf: 26
-          citation: Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace
-            vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.
+          citation: Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.
           statut: valide
     renvoi: Ub
-    renvoi_src: 'Dispositions générales, 2., p. 5 : « Dès lors que la zone comprend un ou plusieurs secteurs, la
-      règle générale de la zone s''applique à chacun d''eux sauf lorsqu''une disposition particulière est prévue
-      pour l''un de ces secteurs. » ; chapeau p. 16 — aucune disposition particulière de destination pour Ub2 (seule
-      règle propre : hauteurs, art. U7.2 p. 21).'
+    renvoi_src: 'Dispositions générales, 2., p. 5 : « Dès lors que la zone comprend un ou plusieurs secteurs, la règle générale de la zone s''applique à chacun d''eux sauf lorsqu''une disposition particulière est prévue pour l''un de ces secteurs. » ; chapeau p. 16 — aucune disposition particulière de destination pour Ub2 (seule règle propre : hauteurs, art. U7.2 p. 21).'
   Ue:
     silence: interdit
-    silence_src: 'tableau U1.2 « Sont interdits, admis ou soumis à conditions » (p. 17) : chaque sous-destination
-      porte un symbole explicite (autorisée / sous condition / interdite) ; les sous-destinations non figurées au
-      tableau (lieux de culte, cuisine dédiée à la vente en ligne) ne sont pas visées'
+    silence_src: 'tableau U1.2 « Sont interdits, admis ou soumis à conditions » (p. 17) : chaque sous-destination porte un symbole explicite (autorisée / sous condition / interdite) ; les sous-destinations non figurées au tableau (lieux de culte, cuisine dédiée à la vente en ligne) ne sont pas visées'
     sous_destinations:
       logement:
         statut: interdit
@@ -538,15 +664,13 @@ zones:
         article: zone Ue, art. 1.2 (tableau)
         page_pdf: 17
         citation: tableau U1.2, ligne « artisanat_commerce_detail », colonne Ue (symbole sous condition)
-        condition: symbole « autorisée sous condition » au tableau U1.2 (p. 17) ; la liste des conditions p. 17
-          ne vise explicitement que la zone Ua — condition particulière Ue à vérifier au règlement
+        condition: symbole « autorisée sous condition » au tableau U1.2 (p. 17) ; la liste des conditions p. 17 ne vise explicitement que la zone Ua — condition particulière Ue à vérifier au règlement
       restauration:
         statut: sous_condition
         article: zone Ue, art. 1.2 (tableau)
         page_pdf: 17
         citation: tableau U1.2, ligne « restauration », colonne Ue (symbole sous condition)
-        condition: symbole « autorisée sous condition » au tableau U1.2 (p. 17) ; la liste des conditions p. 17
-          ne vise explicitement que la zone Ua — condition particulière Ue à vérifier au règlement
+        condition: symbole « autorisée sous condition » au tableau U1.2 (p. 17) ; la liste des conditions p. 17 ne vise explicitement que la zone Ua — condition particulière Ue à vérifier au règlement
       commerce_gros:
         statut: interdit
         article: zone Ue, art. 1.2 (tableau)
@@ -576,8 +700,7 @@ zones:
         statut: interdit
         article: zone Ue, art. 1.2 (tableau)
         page_pdf: 17
-        citation: tableau U1.2, ligne « Locaux et bureaux accueillant du public des administrations publiques ou
-          de leurs délégataires », colonne Ue (symbole interdite)
+        citation: tableau U1.2, ligne « Locaux et bureaux accueillant du public des administrations publiques ou de leurs délégataires », colonne Ue (symbole interdite)
       locaux_techniques_administrations:
         statut: autorise
         article: zone Ue, art. 1.2 (tableau)
@@ -627,8 +750,7 @@ zones:
         statut: sous_condition
         article: zone Ue, art. 1.2 (tableau)
         page_pdf: 17
-        condition: symbole « autorisée sous condition » au tableau U1.2 (p. 17) ; la liste des conditions p. 17
-          ne vise explicitement que la zone Ua — condition particulière Ue à vérifier au règlement
+        condition: symbole « autorisée sous condition » au tableau U1.2 (p. 17) ; la liste des conditions p. 17 ne vise explicitement que la zone Ua — condition particulière Ue à vérifier au règlement
         citation: tableau U1.2, ligne « Bureau », colonne Ue (symbole sous condition)
       centre_congres_exposition:
         statut: interdit
@@ -643,20 +765,18 @@ zones:
           m: 13.0
           article: U7.2
           page_pdf: 21
-          citation: "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : \n- 9 mètres à\
-            \ l’égout du toit ou au sommet de l’acrotère ; \n- 13 mètres au faitage."
+          citation: "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : \n- 9 mètres à l’égout du toit ou au sommet de l’acrotère ; \n- 13 mètres au faitage."
           statut: valide
           raison: citation INTROUVABLE à la re-lecture du PDF
-          note: "PLU-VERIF-1 : page corrigée 29→21 (art. U7.2 (via renvoi AU7 : AUb -> zone Ub))."
+          note: 'PLU-VERIF-1 : page corrigée 29→21 (art. U7.2 (via renvoi AU7 : AUb -> zone Ub)).'
         egout:
           m: 9.0
           article: U7.2
           page_pdf: 21
-          citation: "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : \n- 9 mètres à\
-            \ l’égout du toit ou au sommet de l’acrotère ; \n- 13 mètres au faitage."
+          citation: "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : \n- 9 mètres à l’égout du toit ou au sommet de l’acrotère ; \n- 13 mètres au faitage."
           statut: valide
           raison: citation INTROUVABLE à la re-lecture du PDF
-          note: "PLU-VERIF-1 : page corrigée 29→21 (art. U7.2 (via renvoi AU7 : AUb -> zone Ub))."
+          note: 'PLU-VERIF-1 : page corrigée 29→21 (art. U7.2 (via renvoi AU7 : AUb -> zone Ub)).'
       retraits:
         voie:
           min_m: 4.0
@@ -690,41 +810,70 @@ zones:
           raison: citation INTROUVABLE à la re-lecture du PDF
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: U12
           page_pdf: 27
-          citation: Autres logements — 2 places par logement
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: '- 4 logements dans le cas d’immeubles de logements collectifs,
+
+            - 5 lots dans l’espace collectif d’un lotissement.
+
+            - Pour les opérations d''habitat collectif de plus de 5 logements, il sera d’une surface minimale de 5 m² par logement.
+
+            minimale d’une place de stationnement est de 25 m², y compris les dégagements (aire de manœuvre).
+
+            Logements locatifs financés avec un prêt
+
+            1 place maximum par logement
+
+            1 place visiteur par tranche de 10
+
+            logements
+
+            Autres logements
+
+            2 places par logement
+
+            1 place visiteur par tranche de 5 logements
+
+            1 place de stationnement pour deux chambres / 1 place de stationnement pour 10 m²
+
+            - pour les constructions à destination d’habitation comportant au moins deux logements : un emplacement minimum
+
+            par logement,
+
+            - pour les constructions à destination d’activités : un emplacement minimum par tranche de 100 m² de surface de
+
+            primaires, dix emplacements par classe pour les collèges ou lycée, sept emplacements par tranche de 100 m² de'
+          visiteurs:
+            par_logements: 5
+            places: 1
+            arrondi: superieur
+            citation: 1 place visiteur par tranche de 5 logements ou 5 lots (muet → supérieur)
+          social:
+            places: 1
+            tranche: prêt aidé (1 place max)
+          visiteurs_social:
+            places: 1
+            par_logements: 10
       pleine_terre:
         pct:
           pct: 40.0
           article: U11.1
           page_pdf: 26
-          citation: Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace
-            vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.
+          citation: Au minimum 40% de la superficie totale de l'unité foncière doit être traité en espace vert et perméable, comprenant des plantations et devant recevoir un traitement paysager.
           statut: valide
     renvoi: Ub
-    renvoi_src: 'Art. AU1.2, p. 29 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux Orientations
-      d''Aménagement et de Programmation lorsqu''elles existent. » (également Dispositions générales p. 6 et chapeau
-      du titre IV, p. 29).'
-    note: 'Conditions cumulatives écrites, art. AU1.2, p. 29 : « Sont admises toutes les occupations et utilisations
-      du sol prévues au règlement de la zone U indiquée en indice dès lors qu''elles respectent : 1. Disposer des
-      infrastructures suffisantes pour desservir le projet (voirie, réseaux, sécurité incendie...). 2. Respecter
-      la clause de densité de 20 logements par hectare minimum [...] Pour les projets ne résultant pas de la destination
-      d''habitation, l''équivalent logement est établi sur la base de 80 m² de surface de plancher. » Le renvoi
-      aboutit à Ub, dont le tableau U1.2 est illisible dans cette source (cf. Ub).'
+    renvoi_src: 'Art. AU1.2, p. 29 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux Orientations d''Aménagement et de Programmation lorsqu''elles existent. » (également Dispositions générales p. 6 et chapeau du titre IV, p. 29).'
+    note: 'Conditions cumulatives écrites, art. AU1.2, p. 29 : « Sont admises toutes les occupations et utilisations du sol prévues au règlement de la zone U indiquée en indice dès lors qu''elles respectent : 1. Disposer des infrastructures suffisantes pour desservir le projet (voirie, réseaux, sécurité incendie...). 2. Respecter la clause de densité de 20 logements par hectare minimum [...] Pour les projets ne résultant pas de la destination d''habitation, l''équivalent logement est établi sur la base de 80 m² de surface de plancher. » Le renvoi aboutit à Ub, dont le tableau U1.2 est illisible dans cette source (cf. Ub).'
   AUe:
     renvoi: Ue
-    renvoi_src: 'Art. AU1.2, p. 29 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux Orientations
-      d''Aménagement et de Programmation lorsqu''elles existent. » (également Dispositions générales p. 6 et chapeau
-      du titre IV, p. 29).'
-    note: Mêmes conditions cumulatives AU1.2, p. 29 (infrastructures suffisantes ; densité 20 logements/ha minimum,
-      équivalent logement 80 m² de surface de plancher pour les projets non habitation). La cible Ue n'est pas un
-      code servi ; son entrée figure ci-dessus. Tableau U1.2 (colonne Ue) illisible dans cette source.
+    renvoi_src: 'Art. AU1.2, p. 29 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux Orientations d''Aménagement et de Programmation lorsqu''elles existent. » (également Dispositions générales p. 6 et chapeau du titre IV, p. 29).'
+    note: Mêmes conditions cumulatives AU1.2, p. 29 (infrastructures suffisantes ; densité 20 logements/ha minimum, équivalent logement 80 m² de surface de plancher pour les projets non habitation). La cible Ue n'est pas un code servi ; son entrée figure ci-dessus. Tableau U1.2 (colonne Ue) illisible dans cette source.
   AUst:
     silence: interdit
-    silence_src: 'zone AU « stricte » (gelée) : ouverture à l''urbanisation subordonnée à une modification ou révision
-      du PLU ; aucune occupation nouvelle admise en l''état'
+    silence_src: 'zone AU « stricte » (gelée) : ouverture à l''urbanisation subordonnée à une modification ou révision du PLU ; aucune occupation nouvelle admise en l''état'
     sous_destinations: {}
     note: zone à urbaniser gelée — aucune destination admise avant ouverture (modification/révision).
   A:
@@ -733,60 +882,34 @@ zones:
         entre_constructions:
           forme: silence
           absent: true
-          article: 'Article A5'
+          article: Article A5
           page_pdf: 36
-          citation: 'Sans objet.'
+          citation: Sans objet.
           statut: valide
     silence: interdit
-    silence_src: 'Art. A1.2, p. 32 : « A l''exception de ceux visés à l''article A2.2., sont interdits toutes les
-      constructions et tous les ouvrages et travaux. » (liste fermée d''admissions : tout ce qui n''est pas visé
-      à A2.2 est interdit).'
-    note: 'Le tableau A2.2 (p. 33, colonne « Zone A ») a perdu ses symboles à l''extraction, mais les admissions
-      sont intégralement portées par les conditions rédigées 1 à 11 (p. 34-35), lisibles — les statuts ci-dessous
-      en découlent, pas du tableau. Non mappés (douteux ou hors sous-destinations R151-28) : cond. 5, p. 34 (« constructions
-      à usage agritouristique ou destinées à la vente [...] sur le terrain d''assiette d''une exploitation existante
-      [...] en priorité dans l''enveloppe des bâtiments existants ou bien accolés à ceux-ci dans la limite de 100
-      m² de surface de plancher ») ; cond. 11, p. 35 (reconstruction à l''identique après sinistre). exploitation_forestiere
-      n''est visée par aucune condition d''A2.2 → interdite par le jeu du silence (A1.2). Rappel A2.1, p. 32 : avis
-      favorable CDPENAF préalable.'
+    silence_src: 'Art. A1.2, p. 32 : « A l''exception de ceux visés à l''article A2.2., sont interdits toutes les constructions et tous les ouvrages et travaux. » (liste fermée d''admissions : tout ce qui n''est pas visé à A2.2 est interdit).'
+    note: 'Le tableau A2.2 (p. 33, colonne « Zone A ») a perdu ses symboles à l''extraction, mais les admissions sont intégralement portées par les conditions rédigées 1 à 11 (p. 34-35), lisibles — les statuts ci-dessous en découlent, pas du tableau. Non mappés (douteux ou hors sous-destinations R151-28) : cond. 5, p. 34 (« constructions à usage agritouristique ou destinées à la vente [...] sur le terrain d''assiette d''une exploitation existante [...] en priorité dans l''enveloppe des bâtiments existants ou bien accolés à ceux-ci dans la limite de 100 m² de surface de plancher ») ; cond. 11, p. 35 (reconstruction à l''identique après sinistre). exploitation_forestiere n''est visée par aucune condition d''A2.2 → interdite par le jeu du silence (A1.2). Rappel A2.1, p. 32 : avis favorable CDPENAF préalable.'
     sous_destinations:
       exploitation_agricole:
         statut: sous_condition
-        condition: bâtiments techniques agricoles et annexes, ouvrages et travaux nécessaires aux besoins d'une
-          exploitation agricole, justifiés (superficie, nature de l'activité, matériel, bâtiments existants), implantation
-          adaptée au site ; mesures éviter/réduire/compenser ; activités et constructions agricoles et d'élevage
-          insérées dans le milieu environnant ; réhabilitation/extension des bâtiments existants pour mise aux normes
+        condition: bâtiments techniques agricoles et annexes, ouvrages et travaux nécessaires aux besoins d'une exploitation agricole, justifiés (superficie, nature de l'activité, matériel, bâtiments existants), implantation adaptée au site ; mesures éviter/réduire/compenser ; activités et constructions agricoles et d'élevage insérées dans le milieu environnant ; réhabilitation/extension des bâtiments existants pour mise aux normes
         article: A2.2, conditions 1 à 4
         page_pdf: 34
-        citation: « Les bâtiments techniques agricoles et leurs annexes ainsi que les ouvrages et travaux nécessaires
-          aux besoins d'une exploitation agricole. Ils doivent être justifiés au regard de la superficie de l'exploitation,
-          de la nature de l'activité, du matériel utilisé et des bâtiments existants sur l'exploitation. »
+        citation: « Les bâtiments techniques agricoles et leurs annexes ainsi que les ouvrages et travaux nécessaires aux besoins d'une exploitation agricole. Ils doivent être justifiés au regard de la superficie de l'exploitation, de la nature de l'activité, du matériel utilisé et des bâtiments existants sur l'exploitation. »
       logement:
         statut: sous_condition
-        condition: 'extension/amélioration des habitations existantes régulièrement édifiées : ≤ +30% de la surface
-          de plancher existante à l''approbation du PLU, ≤ 60 m², total final ≤ 110 m² de surface de plancher (cond.
-          6) ; habitation d''un exploitant agricole ≤ 110 m² de surface de plancher, liée et nécessaire à l''exploitation
-          (présence permanente et rapprochée justifiée) (cond. 7)'
+        condition: 'extension/amélioration des habitations existantes régulièrement édifiées : ≤ +30% de la surface de plancher existante à l''approbation du PLU, ≤ 60 m², total final ≤ 110 m² de surface de plancher (cond. 6) ; habitation d''un exploitant agricole ≤ 110 m² de surface de plancher, liée et nécessaire à l''exploitation (présence permanente et rapprochée justifiée) (cond. 7)'
         seuil_m2: 110
         seuil_type: surface_plancher
         article: A2.2, conditions 6 et 7
         page_pdf: 34
-        citation: « ...sans que les constructions existantes et leur extension n'excèdent une surface totale finale
-          de 110 m² de surface de plancher » ; « La construction à usage d'habitation d'un exploitant agricole dans
-          la limite maximum de 110 m² de surface de plancher... »
+        citation: « ...sans que les constructions existantes et leur extension n'excèdent une surface totale finale de 110 m² de surface de plancher » ; « La construction à usage d'habitation d'un exploitant agricole dans la limite maximum de 110 m² de surface de plancher... »
       locaux_bureaux_administrations: &id001
         statut: sous_condition
-        condition: équipements collectifs ou services publics non incompatibles avec l'exercice d'une activité agricole,
-          pastorale ou forestière sur l'unité foncière, sans atteinte aux espaces naturels et paysages, mesures
-          éviter/réduire/compenser (cond. 9) ; réseaux, voirie, stationnement, sécurité, production et distribution
-          d'énergie dont EnR, ouvrages techniques d'infrastructure des services publics (cond. 10)
+        condition: équipements collectifs ou services publics non incompatibles avec l'exercice d'une activité agricole, pastorale ou forestière sur l'unité foncière, sans atteinte aux espaces naturels et paysages, mesures éviter/réduire/compenser (cond. 9) ; réseaux, voirie, stationnement, sécurité, production et distribution d'énergie dont EnR, ouvrages techniques d'infrastructure des services publics (cond. 10)
         article: A2.2, conditions 9 et 10
         page_pdf: 34
-        citation: « Les constructions et installations nécessaires à des équipements collectifs ou à des services
-          publics, dès lors qu'elles ne sont pas incompatibles avec l'exercice d'une activité agricole... » — terme
-          générique couvrant la destination « équipements d'intérêt collectif et services publics » telle que définie
-          p. 9-10 par le règlement lui-même (« autres équipements recevant du public » recouvre notamment les lieux
-          de culte, p. 10) ; citation commune aux sous-destinations de cette destination.
+        citation: « Les constructions et installations nécessaires à des équipements collectifs ou à des services publics, dès lors qu'elles ne sont pas incompatibles avec l'exercice d'une activité agricole... » — terme générique couvrant la destination « équipements d'intérêt collectif et services publics » telle que définie p. 9-10 par le règlement lui-même (« autres équipements recevant du public » recouvre notamment les lieux de culte, p. 10) ; citation commune aux sous-destinations de cette destination.
       locaux_techniques_administrations: *id001
       enseignement_sante_action_sociale: *id001
       salles_art_spectacles: *id001
@@ -795,71 +918,44 @@ zones:
       autres_equipements_public: *id001
   Aba:
     renvoi: A
-    renvoi_src: 'Dispositions générales, 2., p. 5 : « Dès lors que la zone comprend un ou plusieurs secteurs, la
-      règle générale de la zone s''applique à chacun d''eux sauf lorsqu''une disposition particulière est prévue
-      pour l''un de ces secteurs. » ; le secteur Aba est présenté au chapeau du titre V, p. 32 (STECAL L.151-13).'
+    renvoi_src: 'Dispositions générales, 2., p. 5 : « Dès lors que la zone comprend un ou plusieurs secteurs, la règle générale de la zone s''applique à chacun d''eux sauf lorsqu''une disposition particulière est prévue pour l''un de ces secteurs. » ; le secteur Aba est présenté au chapeau du titre V, p. 32 (STECAL L.151-13).'
     sous_destinations:
       logement:
         statut: sous_condition
-        condition: 'en plus des possibilités de la zone A : constructions NOUVELLES à usage d''habitation admises
-          dans la limite totale de 100 m² de surface de plancher OU d''emprise au sol par unité foncière, intégration
-          au milieu environnant, sans atteinte à la préservation des sols naturels, agricoles et forestiers'
+        condition: 'en plus des possibilités de la zone A : constructions NOUVELLES à usage d''habitation admises dans la limite totale de 100 m² de surface de plancher OU d''emprise au sol par unité foncière, intégration au milieu environnant, sans atteinte à la préservation des sols naturels, agricoles et forestiers'
         seuil_m2: 100
         seuil_type: surface_plancher
         article: A2.2, condition 8
         page_pdf: 34
-        citation: '« Dans le secteur Aba, les constructions nouvelles à usage d''habitation sont admises dans la
-          limite totale de 100 m² de surface plancher ou d''emprise au sol par unité foncière dès lors qu''elles
-          s''intègrent dans le milieu environnant sans le dénaturer... » — le texte porte un DOUBLE plafond (surface
-          de plancher OU emprise au sol) : seuil_type unique impossible, les deux bornes de 100 m² s''appliquent.'
+        citation: '« Dans le secteur Aba, les constructions nouvelles à usage d''habitation sont admises dans la limite totale de 100 m² de surface plancher ou d''emprise au sol par unité foncière dès lors qu''elles s''intègrent dans le milieu environnant sans le dénaturer... » — le texte porte un DOUBLE plafond (surface de plancher OU emprise au sol) : seuil_type unique impossible, les deux bornes de 100 m² s''appliquent.'
   N:
     regles:
       retraits:
         entre_constructions:
           forme: silence
           absent: true
-          article: 'Article N5'
+          article: Article N5
           page_pdf: 42
-          citation: 'Sans objet.'
+          citation: Sans objet.
           statut: valide
     silence: interdit
-    silence_src: 'Art. N1.2, p. 40 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les
-      constructions, ouvrages et travaux. » (liste fermée d''admissions : tout ce qui n''est pas visé à N2.2 est
-      interdit).'
-    note: 'Admissions intégralement portées par les conditions rédigées N2.2, 1 à 11, p. 41 (pas de tableau en zone
-      N). Non mappés (douteux ou hors sous-destinations R151-28) : cond. 2 (constructions liées à l''entretien et
-      la gestion des sites — abris pour le matériel, local technique — sauf secteur Nr) ; cond. 4 (aménagements
-      légers touristiques et de loisirs ouverts au public, sans hébergement) ; cond. 6 (gestion des risques naturels)
-      ; cond. 11 (reconstruction à l''identique après sinistre). Rappel N2.1, p. 40-41 : avis favorable CDPENAF
-      préalable.'
+    silence_src: 'Art. N1.2, p. 40 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les constructions, ouvrages et travaux. » (liste fermée d''admissions : tout ce qui n''est pas visé à N2.2 est interdit).'
+    note: 'Admissions intégralement portées par les conditions rédigées N2.2, 1 à 11, p. 41 (pas de tableau en zone N). Non mappés (douteux ou hors sous-destinations R151-28) : cond. 2 (constructions liées à l''entretien et la gestion des sites — abris pour le matériel, local technique — sauf secteur Nr) ; cond. 4 (aménagements légers touristiques et de loisirs ouverts au public, sans hébergement) ; cond. 6 (gestion des risques naturels) ; cond. 11 (reconstruction à l''identique après sinistre). Rappel N2.1, p. 40-41 : avis favorable CDPENAF préalable.'
     sous_destinations:
       logement:
         statut: sous_condition
-        condition: 'extension des bâtiments d''habitation existants régulièrement édifiés (sauf secteurs Npnr et
-          Nr) : ≤ +30% de la surface de plancher existante à l''approbation du PLU, ≤ 60 m², sans excéder une surface
-          totale finale de 150 m² de surface de plancher'
+        condition: 'extension des bâtiments d''habitation existants régulièrement édifiés (sauf secteurs Npnr et Nr) : ≤ +30% de la surface de plancher existante à l''approbation du PLU, ≤ 60 m², sans excéder une surface totale finale de 150 m² de surface de plancher'
         seuil_m2: 150
         seuil_type: surface_plancher
         article: N2.2, condition 3
         page_pdf: 41
-        citation: « A l'exception des secteurs Npnr et Nr, l'extension des bâtiments d'habitation existants sont
-          admis sous réserve de ne pas augmenter la surface de plancher existante à la date d'approbation du plan
-          local d'urbanisme de plus de 30%, dans la limite de 60m² et sans pouvoir excéder une surface totale finale
-          de 150 m² de surface de plancher. »
+        citation: « A l'exception des secteurs Npnr et Nr, l'extension des bâtiments d'habitation existants sont admis sous réserve de ne pas augmenter la surface de plancher existante à la date d'approbation du plan local d'urbanisme de plus de 30%, dans la limite de 60m² et sans pouvoir excéder une surface totale finale de 150 m² de surface de plancher. »
       locaux_bureaux_administrations: &id002
         statut: sous_condition
-        condition: équipements collectifs ou services publics (sauf secteur Npnr), sans atteinte à la sauvegarde
-          des espaces naturels et des paysages, mesures éviter/réduire/compenser (cond. 7 ; dans le secteur Nr,
-          seules celles liées à une ressource d'alimentation en eau potable) ; réseaux, voirie, stationnement, sécurité,
-          production et distribution d'énergie dont EnR, ouvrages techniques d'infrastructure des services publics
-          (cond. 8)
+        condition: équipements collectifs ou services publics (sauf secteur Npnr), sans atteinte à la sauvegarde des espaces naturels et des paysages, mesures éviter/réduire/compenser (cond. 7 ; dans le secteur Nr, seules celles liées à une ressource d'alimentation en eau potable) ; réseaux, voirie, stationnement, sécurité, production et distribution d'énergie dont EnR, ouvrages techniques d'infrastructure des services publics (cond. 8)
         article: N2.2, conditions 7 et 8
         page_pdf: 41
-        citation: « A l'exception du secteur Npnr, les constructions et installations nécessaires à des équipements
-          collectifs ou à des services publics, dès lors qu'elles ne portent pas atteinte à la sauvegarde des espaces
-          naturels et des paysages... » — terme générique couvrant la destination « équipements d'intérêt collectif
-          et services publics » telle que définie p. 9-10 (« autres équipements recevant du public » recouvre notamment
-          les lieux de culte, p. 10) ; citation commune.
+        citation: « A l'exception du secteur Npnr, les constructions et installations nécessaires à des équipements collectifs ou à des services publics, dès lors qu'elles ne portent pas atteinte à la sauvegarde des espaces naturels et des paysages... » — terme générique couvrant la destination « équipements d'intérêt collectif et services publics » telle que définie p. 9-10 (« autres équipements recevant du public » recouvre notamment les lieux de culte, p. 10) ; citation commune.
       locaux_techniques_administrations: *id002
       enseignement_sante_action_sociale: *id002
       salles_art_spectacles: *id002
@@ -868,55 +964,34 @@ zones:
       autres_equipements_public: *id002
   Nci:
     renvoi: N
-    renvoi_src: Dispositions générales, 2., p. 5 (la règle générale de la zone s'applique à chacun de ses secteurs
-      sauf disposition particulière) ; « le secteur Nci couvrant le site du cimetière » (p. 6 et p. 40).
-    note: 'Disposition particulière écrite, art. N2.2 cond. 9, p. 41 : « En secteur Nci, les constructions, ouvrages
-      et travaux liés à la gestion des cimetières, comprenant notamment les crématoriums et funérariums » sont admis
-      sous condition. Mappage à une sous-destination R151-28 douteux (gestion de cimetière/crématorium/funérarium
-      ne recouvre pleinement aucun slug) → relayé en note, non mappé.'
+    renvoi_src: Dispositions générales, 2., p. 5 (la règle générale de la zone s'applique à chacun de ses secteurs sauf disposition particulière) ; « le secteur Nci couvrant le site du cimetière » (p. 6 et p. 40).
+    note: 'Disposition particulière écrite, art. N2.2 cond. 9, p. 41 : « En secteur Nci, les constructions, ouvrages et travaux liés à la gestion des cimetières, comprenant notamment les crématoriums et funérariums » sont admis sous condition. Mappage à une sous-destination R151-28 douteux (gestion de cimetière/crématorium/funérarium ne recouvre pleinement aucun slug) → relayé en note, non mappé.'
   Npnr:
     silence: interdit
-    silence_src: 'Art. N1.2, p. 40 (règle générale de la zone applicable au secteur, Dispositions générales 2.,
-      p. 5), verrouillé par l''art. N2.2 cond. 1, p. 41 : « Dans le secteur Npnr, SEULS les travaux, constructions
-      et installations notamment indispensables à l''approvisionnement en eau et en énergie, les constructions légères
-      à usage touristique... ayant reçus une autorisation spéciale de l''établissement public du Parc National de
-      la Réunion délivrée après avis de son Conseil Scientifique, conformément à l''article L.331-4 du code de l''Environnement,
-      peuvent être admis. »'
-    note: 'Seule ouverture : autorisation spéciale du Parc national (cond. 1, p. 41 — « constructions légères à
-      usage touristique... » : mappage douteux, non mappé). Le secteur est expressément EXCLU de la cond. 3 (extension
-      des habitations) et de la cond. 7 (équipements collectifs/services publics), p. 41.'
+    silence_src: 'Art. N1.2, p. 40 (règle générale de la zone applicable au secteur, Dispositions générales 2., p. 5), verrouillé par l''art. N2.2 cond. 1, p. 41 : « Dans le secteur Npnr, SEULS les travaux, constructions et installations notamment indispensables à l''approvisionnement en eau et en énergie, les constructions légères à usage touristique... ayant reçus une autorisation spéciale de l''établissement public du Parc National de la Réunion délivrée après avis de son Conseil Scientifique, conformément à l''article L.331-4 du code de l''Environnement, peuvent être admis. »'
+    note: 'Seule ouverture : autorisation spéciale du Parc national (cond. 1, p. 41 — « constructions légères à usage touristique... » : mappage douteux, non mappé). Le secteur est expressément EXCLU de la cond. 3 (extension des habitations) et de la cond. 7 (équipements collectifs/services publics), p. 41.'
     sous_destinations:
       logement:
         statut: interdit
         article: N1.2 et N2.2, condition 3
         page_pdf: 41
-        citation: 'cond. 3 : « A l''exception des secteurs Npnr et Nr, l''extension des bâtiments d''habitation
-          existants sont admis... » — Npnr exclu ; l''interdit général de l''art. N1.2 (p. 40) demeure.'
+        citation: 'cond. 3 : « A l''exception des secteurs Npnr et Nr, l''extension des bâtiments d''habitation existants sont admis... » — Npnr exclu ; l''interdit général de l''art. N1.2 (p. 40) demeure.'
   Nr:
     silence: interdit
-    silence_src: 'Art. N1.2, p. 40 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les
-      constructions, ouvrages et travaux. » (règle générale de la zone applicable au secteur, Dispositions générales
-      2., p. 5).'
-    note: Le secteur Nr est expressément EXCLU de la cond. 2 (entretien/gestion des sites) et de la cond. 3 (extension
-      des habitations), p. 41.
+    silence_src: 'Art. N1.2, p. 40 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les constructions, ouvrages et travaux. » (règle générale de la zone applicable au secteur, Dispositions générales 2., p. 5).'
+    note: Le secteur Nr est expressément EXCLU de la cond. 2 (entretien/gestion des sites) et de la cond. 3 (extension des habitations), p. 41.
     sous_destinations:
       logement:
         statut: interdit
         article: N1.2 et N2.2, condition 3
         page_pdf: 41
-        citation: 'cond. 3 : « A l''exception des secteurs Npnr et Nr, l''extension des bâtiments d''habitation
-          existants sont admis... » — Nr exclu ; l''interdit général de l''art. N1.2 (p. 40) demeure.'
+        citation: 'cond. 3 : « A l''exception des secteurs Npnr et Nr, l''extension des bâtiments d''habitation existants sont admis... » — Nr exclu ; l''interdit général de l''art. N1.2 (p. 40) demeure.'
       locaux_bureaux_administrations: &id003
         statut: sous_condition
-        condition: uniquement les constructions et installations nécessaires à des équipements collectifs ou services
-          publics liées à l'exploitation ou la valorisation d'une ressource d'alimentation en eau potable
+        condition: uniquement les constructions et installations nécessaires à des équipements collectifs ou services publics liées à l'exploitation ou la valorisation d'une ressource d'alimentation en eau potable
         article: N2.2, condition 7
         page_pdf: 41
-        citation: « Dans le secteur Nr, seules les constructions et installations nécessaires à des équipements
-          collectifs ou à des services publics liées à l'exploitation ou la valorisation d'une ressource d'alimentation
-          en eau potable sont autorisées. » — terme générique couvrant la destination « équipements d'intérêt collectif
-          et services publics » (déf. p. 9-10, lieux de culte inclus dans « autres équipements recevant du public
-          », p. 10) ; citation commune.
+        citation: « Dans le secteur Nr, seules les constructions et installations nécessaires à des équipements collectifs ou à des services publics liées à l'exploitation ou la valorisation d'une ressource d'alimentation en eau potable sont autorisées. » — terme générique couvrant la destination « équipements d'intérêt collectif et services publics » (déf. p. 9-10, lieux de culte inclus dans « autres équipements recevant du public », p. 10) ; citation commune.
       locaux_techniques_administrations: *id003
       enseignement_sante_action_sociale: *id003
       salles_art_spectacles: *id003
@@ -925,54 +1000,33 @@ zones:
       autres_equipements_public: *id003
   Nstep:
     renvoi: N
-    renvoi_src: Dispositions générales, 2., p. 5 (la règle générale de la zone s'applique à chacun de ses secteurs
-      sauf disposition particulière) ; « le secteur Nstep couvrant la station d'épuration » (p. 6 et p. 40).
+    renvoi_src: Dispositions générales, 2., p. 5 (la règle générale de la zone s'applique à chacun de ses secteurs sauf disposition particulière) ; « le secteur Nstep couvrant la station d'épuration » (p. 6 et p. 40).
     sous_destinations:
       locaux_techniques_administrations:
         statut: sous_condition
-        condition: 'en plus des possibilités de la zone N : installations et équipements nécessaires à l''exploitation
-          et au fonctionnement de la station de traitement des eaux usées'
+        condition: 'en plus des possibilités de la zone N : installations et équipements nécessaires à l''exploitation et au fonctionnement de la station de traitement des eaux usées'
         article: N2.2, condition 10
         page_pdf: 41
-        citation: « En secteur Nstep, les installations et équipements nécessaires à l'exploitation et au fonctionnement
-          de la station de traitement des eaux usées. » — rattaché à la sous-destination « locaux techniques et
-          industriels des administrations publiques ou assimilés », définie p. 10 comme comprenant « les constructions
-          techniques nécessaires au fonctionnement des services publics » et « conçues spécialement pour le fonctionnement
-          de réseaux ou de services urbains ».
+        citation: « En secteur Nstep, les installations et équipements nécessaires à l'exploitation et au fonctionnement de la station de traitement des eaux usées. » — rattaché à la sous-destination « locaux techniques et industriels des administrations publiques ou assimilés », définie p. 10 comme comprenant « les constructions techniques nécessaires au fonctionnement des services publics » et « conçues spécialement pour le fonctionnement de réseaux ou de services urbains ».
   Nt:
     renvoi: N
-    renvoi_src: 'Dispositions générales, 2., p. 5 (la règle générale de la zone s''applique à chacun de ses secteurs
-      sauf disposition particulière) ; « le secteur Nt, où les constructions à vocation touristique et/ou de loisirs
-      peuvent être autorisées » (p. 6 ; chapeau p. 40 : STECAL L.151-13).'
-    note: 'La cond. 5 (p. 41) vise aussi « les constructions destinées à la pratique de sports, de loisirs et du
-      tourisme » au sens large : mappage vers equipements_sportifs douteux (la sous-destination R151-28, déf. p.
-      10, vise les équipements d''INTÉRÊT COLLECTIF, alors que Nt vise des constructions touristiques/de loisirs
-      marchandes) → non mappé au-delà des slugs ci-dessous. Plafonds communs à toutes les constructions de la cond.
-      5 : 100 m² de surface de plancher par bâtiment, sans excéder 300 m² par unité foncière.'
+    renvoi_src: 'Dispositions générales, 2., p. 5 (la règle générale de la zone s''applique à chacun de ses secteurs sauf disposition particulière) ; « le secteur Nt, où les constructions à vocation touristique et/ou de loisirs peuvent être autorisées » (p. 6 ; chapeau p. 40 : STECAL L.151-13).'
+    note: 'La cond. 5 (p. 41) vise aussi « les constructions destinées à la pratique de sports, de loisirs et du tourisme » au sens large : mappage vers equipements_sportifs douteux (la sous-destination R151-28, déf. p. 10, vise les équipements d''INTÉRÊT COLLECTIF, alors que Nt vise des constructions touristiques/de loisirs marchandes) → non mappé au-delà des slugs ci-dessous. Plafonds communs à toutes les constructions de la cond. 5 : 100 m² de surface de plancher par bâtiment, sans excéder 300 m² par unité foncière.'
     sous_destinations:
       hotels: &id004
         statut: sous_condition
-        condition: 'en plus des possibilités de la zone N : constructions destinées à la pratique de sports, de
-          loisirs et du tourisme, DONT l''hébergement touristique ; intégration dans l''environnement sans le dénaturer,
-          sans atteinte à la préservation des sols naturels, agricoles et forestiers ; surface de plancher totale
-          admise de 100 m² par bâtiment sans pouvoir excéder 300 m² par unité foncière'
+        condition: 'en plus des possibilités de la zone N : constructions destinées à la pratique de sports, de loisirs et du tourisme, DONT l''hébergement touristique ; intégration dans l''environnement sans le dénaturer, sans atteinte à la préservation des sols naturels, agricoles et forestiers ; surface de plancher totale admise de 100 m² par bâtiment sans pouvoir excéder 300 m² par unité foncière'
         seuil_m2: 100
         seuil_type: surface_plancher
         article: N2.2, condition 5
         page_pdf: 41
-        citation: « Dans le secteur Nt, les constructions destinées à la pratique de sports, de loisirs et du tourisme,
-          dont l'hébergement touristique [...] La surface de plancher totale admise est de 100 m² par bâtiment sans
-          pouvoir excéder 300 m² par unité foncière. » — « hébergement touristique » mappé sur hotels + autres_hebergements_touristiques
-          (ligne unique de la nomenclature antérieure, citation commune).
+        citation: « Dans le secteur Nt, les constructions destinées à la pratique de sports, de loisirs et du tourisme, dont l'hébergement touristique [...] La surface de plancher totale admise est de 100 m² par bâtiment sans pouvoir excéder 300 m² par unité foncière. » — « hébergement touristique » mappé sur hotels + autres_hebergements_touristiques (ligne unique de la nomenclature antérieure, citation commune).
       autres_hebergements_touristiques: *id004
       restauration:
         statut: sous_condition
-        condition: uniquement comme construction strictement liée et nécessaire au fonctionnement des constructions
-          de sports/loisirs/tourisme du secteur ; mêmes plafonds (100 m² de surface de plancher par bâtiment, 300
-          m² par unité foncière)
+        condition: uniquement comme construction strictement liée et nécessaire au fonctionnement des constructions de sports/loisirs/tourisme du secteur ; mêmes plafonds (100 m² de surface de plancher par bâtiment, 300 m² par unité foncière)
         seuil_m2: 100
         seuil_type: surface_plancher
         article: N2.2, condition 5
         page_pdf: 41
-        citation: « ...ainsi que les constructions strictement liées et nécessaires à leur fonctionnement (accueil,
-          sanitaires, gardiennage, restauration...). »
+        citation: « ...ainsi que les constructions strictement liées et nécessaires à leur fonctionnement (accueil, sanitaires, gardiennage, restauration...). »

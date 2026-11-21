@@ -1,0 +1,23 @@
+{
+ "insee": "97410",
+ "commune": "Saint-Benoît",
+ "regles": [
+  {
+   "id": "97410-R1",
+   "article": "U 12",
+   "mode": "par_logement",
+   "zones": [
+    "Ua",
+    "Ub",
+    "Ue",
+    "Up",
+    "Ut"
+   ],
+   "pages": [
+    16,
+    17,
+    18
+   ]
+  }
+ ]
+}

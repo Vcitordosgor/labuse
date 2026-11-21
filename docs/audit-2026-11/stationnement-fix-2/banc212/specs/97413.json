@@ -1,0 +1,97 @@
+{
+ "insee": "97413",
+ "commune": "Saint-Leu",
+ "regles": [
+  {
+   "id": "97413-R1",
+   "article": "UA 12 renvoi Art. 11 dispositions générales",
+   "mode": "par_typologie",
+   "zones": [
+    "UA"
+   ],
+   "pages": [
+    12,
+    13,
+    14
+   ]
+  },
+  {
+   "id": "97413-R2",
+   "article": "UB 12 renvoi Art. 11 dispositions générales",
+   "mode": "par_typologie",
+   "zones": [
+    "UB"
+   ],
+   "pages": [
+    12,
+    13,
+    14
+   ]
+  },
+  {
+   "id": "97413-R3",
+   "article": "UC 12 renvoi Art. 11 dispositions générales",
+   "mode": "par_typologie",
+   "zones": [
+    "UC"
+   ],
+   "pages": [
+    12,
+    13,
+    14
+   ]
+  },
+  {
+   "id": "97413-R4",
+   "article": "UD 12 renvoi Art. 11 dispositions générales",
+   "mode": "par_typologie",
+   "zones": [
+    "UD"
+   ],
+   "pages": [
+    12,
+    13,
+    14
+   ]
+  },
+  {
+   "id": "97413-R5",
+   "article": "UE 12 renvoi Art. 11 dispositions générales",
+   "mode": "par_typologie",
+   "zones": [
+    "UE"
+   ],
+   "pages": [
+    12,
+    13,
+    14
+   ]
+  },
+  {
+   "id": "97413-R6",
+   "article": "UF 12 renvoi Art. 11 dispositions générales",
+   "mode": "par_typologie",
+   "zones": [
+    "UF"
+   ],
+   "pages": [
+    12,
+    13,
+    14
+   ]
+  },
+  {
+   "id": "97413-R7",
+   "article": "UP 12 renvoi Art. 11 dispositions générales",
+   "mode": "par_typologie",
+   "zones": [
+    "UP"
+   ],
+   "pages": [
+    12,
+    13,
+    14
+   ]
+  }
+ ]
+}

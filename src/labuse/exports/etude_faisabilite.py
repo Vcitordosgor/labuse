@@ -21,6 +21,38 @@ from typing import Any, Optional
 from .rendu import FOOT_LIGNE, Cartouche, esc, page_html
 
 
+def _commit_build() -> Optional[str]:
+    """ETUDE-STATIONNEMENT-FIX-2 (LOT 4) — le commit QUI A PRODUIT le document, pour que chaque PDF porte
+    sa version de calcul. Priorité à la variable d'env `LABUSE_BUILD_COMMIT` (posée au déploiement) ; à
+    défaut, le HEAD du dépôt (régénérations locales) ; None si rien n'est lisible (prod sans git ni env).
+
+    FIX-20c — le HEAD seul MENT quand on régénère AVANT de committer : l'arbre de travail porte alors le code
+    qui produit le document, mais `git rev-parse HEAD` renvoie le commit PRÉCÉDENT (c'est ainsi que les PDF de
+    FIX-20b ont porté bdfae41a9 au lieu de b9439bc7b). On SIGNALE donc les modifs non commises des fichiers
+    SUIVIS par un suffixe « +modifs » : un document ne prétend jamais porter un commit propre qu'on n'a pas.
+    Un PDF propre (sans suffixe) → régénéré APRÈS commit, arbre propre = le commit qui l'a réellement produit."""
+    import os
+    sha = os.environ.get("LABUSE_BUILD_COMMIT")
+    if sha:
+        return sha.strip()[:12]
+    try:
+        import subprocess
+        cwd = os.path.dirname(__file__)
+        head = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"], capture_output=True, text=True,
+                              timeout=2, cwd=cwd)
+        if head.returncode != 0 or not head.stdout.strip():
+            return None
+        short = head.stdout.strip()
+        dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], capture_output=True,
+                               text=True, timeout=2, cwd=cwd)
+        if dirty.returncode == 0 and dirty.stdout.strip():   # modifs non commises (fichiers suivis)
+            return short + "+modifs"
+        return short
+    except Exception:  # noqa: BLE001 — stamp best-effort, jamais bloquant
+        pass
+    return None
+
+
 def _donnees_labuse_au_etude(genere_le: str) -> str:
     """DOCS-COHERENCE-1 (A10) — pied unique « Données LABUSE au JJ/MM/AAAA » = date de la DONNÉE
     servie (run servi, `served_manifest.json promoted_at`), identique aux 7 autres documents ;
@@ -99,7 +131,7 @@ table.ef-scn tr.retenu { background: var(--mint-bg); }
 # IMPLANTATION-4 (format des nombres) — LE helper UNIQUE (planche + PDF), miroir de lib/format.ts.
 # Milliers en espace INSÉCABLE (retiré par le crible de provenance `_canon`). `_grp`/`_dec`/`_m2`
 # deviennent de simples alias pour ne rien changer aux appels existants du document.
-from labuse.implantation.format import dec_souple, groupe_fr, m2_fr   # noqa: E402
+from labuse.implantation.format import dec_souple, groupe_fr, m2_borne_fr, m2_fr   # noqa: E402
 
 _grp = groupe_fr
 _dec = dec_souple
@@ -146,6 +178,13 @@ def _bareme_stationnement_absent(payload: dict) -> bool:
     de places n'est PAS calculé (un « 0 » afficherait « 0 place exigée », faux : c'est NON vérifié).
     Détection extraite de `_gardes_honnete` (b) pour l'afficher « stationnement non vérifié » partout."""
     reg = (payload.get("stationnement_regimes") or {}).get("general") or {}
+    # ETUDE-STATIONNEMENT-FIX-2 (LOT 4) — SOURCE UNIQUE de « le barème existe-t-il » : le drapeau `validee`
+    # (le MÊME que celui qui déclenche l'affichage de la citation validée plus loin dans le document). On ne
+    # re-dérive plus l'absence depuis ratio/regle_courte : un barème « par m² de SDP » ou « par typologie »
+    # n'a pas de ratio par logement et était déclaré ABSENT tout en montrant sa citation validée en page
+    # suivante (HT0538/Ud : 1 place / 75 m²). Repli sur l'ancienne heuristique pour les payloads sans `validee`.
+    if "validee" in reg:
+        return not bool(reg.get("validee"))
     _art = _art_label(reg.get("article"))
     return (reg.get("ratio_par_logement") is None and not reg.get("regle_courte")
             and not str(_art or "").upper().startswith("L151"))
@@ -180,7 +219,21 @@ def scenario_etude_persiste(db, idu: str) -> dict | None:
         sdp = (payload.get("capacite_maximale") or {}).get("sdp_m2")
     if sdp in (None, ""):
         return None
-    return {"sdp_m2": sdp, "stationnement_applique": not _bareme_stationnement_absent(payload)}
+    _ech, _mot = _plan_en_echec(retenu)
+    return {"sdp_m2": sdp, "stationnement_applique": not _bareme_stationnement_absent(payload),
+            "plan_en_echec": _ech, "motif_echec": _mot}
+
+
+def _plan_en_echec(scenario: dict | None) -> tuple[bool, str | None]:
+    """ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — un scénario est EN ÉCHEC si un contrôle réglementaire ÉCHOUE
+    (ex. HT0538 : haie 1,4 m < 1,5 m). Sa surface devient « surface testée », pas « surface à retenir ».
+    Renvoie (True, motif court) ou (False, None)."""
+    for c in (scenario or {}).get("controles") or []:
+        if c.get("resultat") == "Échoué":
+            nom = (c.get("nom") or "").replace("Stationnement — ", "")
+            mes = c.get("mesure")
+            return True, (f"{nom} : {mes}" if mes else nom) or "contrôle non satisfait"
+    return False, None
 
 
 # ── choix du scénario retenu ────────────────────────────────────────────────────────────────
@@ -291,7 +344,9 @@ def _stationnement_3lignes(payload: dict, retenu: dict) -> str:
     _is_loi = str(_art).upper().startswith("L151")
     # EXPORTS-FIX-3 LOT 3 (#5b, relecture) — barème indisponible : JAMAIS « 0 place selon la règle du PLU »
     # ni « exige un barème par typologie ». On le dit en clair : stationnement non vérifié.
-    _bareme_absent = _rp is None and not g.get("regle_courte") and not _is_loi
+    # FIX-2 (LOT 4) — MÊME source unique que le garde-fou (`_bareme_stationnement_absent`, drapeau `validee`)
+    # pour que les deux ne se contredisent plus (HT0538 : « absent » ici, « validé » page suivante).
+    _bareme_absent = _bareme_stationnement_absent(payload)
     if _bareme_absent:
         # CAPACITE-1 (C4) — ne pas laisser croire que le stationnement n'est pas réglementé : la RÈGLE
         # EXISTE au PLU, elle n'est simplement pas ingérée par LABUSE (donc non déduite ici).
@@ -501,6 +556,10 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     kmax = (payload.get("capacite_maximale") or {}).get("logements")
     niv_lbl = retenu.get("niveaux_label") or ""
     places = retenu.get("stationnement", {}).get("places")
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — la couverture lit SES trois nombres (logements, niveaux, places)
+    # dans LA MÊME variante que le plan principal (`retenu`), PAR CONSTRUCTION : plus de « 6 logements en R+3 »
+    # qui mélangeait le maximum (kmax) et les niveaux du plan retenu. On affiche le logement DU PLAN retenu.
+    _ret_log = (retenu.get("resume") or {}).get("logements") or kmax
     # EXPORTS-FIX-3 LOT 3 (#5a/#5b, relecture) — garde-fou d'honnêteté : si le plancher dépasse la fiche
     # ou si le barème de stationnement n'est pas servi, le verdict affiché n'est JAMAIS « exploitable ».
     _gardes = _gardes_honnete(payload, retenu)
@@ -524,13 +583,13 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         # de stationnement non servi). Le bandeau NE MET PAS en avant « meilleure capacité trouvée : N
         # logements » comme un acquis : il la donne « au mieux, à vérifier » et reste en ton d'alerte —
         # le lecteur ne doit pas retenir ce nombre comme sûr (faute HT0538 : « 10 logements » asséné).
-        txt = (f"{type_lbl.capitalize()} — capacité à vérifier : au mieux ~{kmax} logements"
+        txt = (f"{type_lbl.capitalize()} — capacité à vérifier : au mieux ~{_ret_log} logements"
                + (f" en {niv_lbl}" if niv_lbl else "") + f", stationnement {statio_lbl}."
                + " À confirmer avant de retenir ce programme (voir « À vérifier » ci-dessous).")
         vclass = "verdict warn"
     else:
         # ETUDE-FIABLE-1 (LOT C1) — programme proposé par LABUSE : la MEILLEURE CAPACITÉ TROUVÉE fait foi.
-        txt = (f"{type_lbl.capitalize()} — meilleure capacité trouvée : {kmax} logements"
+        txt = (f"{type_lbl.capitalize()} — meilleure capacité trouvée : {_ret_log} logements"
                + (f" en {niv_lbl}" if niv_lbl else "") + f", stationnement {statio_lbl}.") if kmax else (
             payload.get("message") or "Aucun scénario exploitable sur ce terrain selon nos hypothèses.")
         vclass = "verdict" if kmax else "verdict warn"
@@ -545,7 +604,8 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     _gf = payload.get("_garde_fiche") or {}
     _est_rapide = _gf.get("sdp_max_m2") or _gf.get("sdp_fiche_m2")
     _scn_sdp = (retenu.get("resume") or {}).get("sdp_m2") if kmax else None
-    _sar = surface_a_retenir(_est_rapide, _scn_sdp)
+    _ech, _mot = _plan_en_echec(retenu) if kmax else (False, None)
+    _sar = surface_a_retenir(_est_rapide, _scn_sdp, plan_en_echec=_ech, motif_echec=_mot)
     # D4 — l'écart EXPLIQUÉ avec les MÊMES chiffres que le Dossier (occupation supposée = le « 45 % »
     # du facteur B1) et une emprise RÉELLEMENT MESURÉE (emprise dessinée ÷ zone d'implantation), jamais
     # deux pourcentages recalculés depuis la surface de plancher.
@@ -579,6 +639,7 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
          esc((haut['nom'][:1].upper() + haut['nom'][1:]) if haut and haut.get('nom') else "Hauteur")),
         (aides_txt, "Logements aidés imposés"),
         (str(places_imp) if places_imp is not None else "—", "Places imposées"),
+        (str(cc.get("a_confirmer", 0)), "Contrôles à confirmer"),
         (str(cc["non_effectue"]), "Contrôles non effectués"),
     ]
     tiles_html = "".join('<div class="tile"><div class="v">%s</div><div class="l">%s</div></div>'
@@ -587,8 +648,20 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     # en premier, le MAXIMUM DU TERRAIN ensuite. Deux lignes lisibles par le client.
     cmax = payload.get("capacite_maximale") or {}
     # EXPORTS-FIX-3 LOT 3 (#5a/#5b) — statut AFFICHÉ rétrogradé à « À vérifier » dès qu'un garde-fou tombe.
-    _statut_aff = "À vérifier" if _gardes else _statut_court(retenu["statut_etude"])
-    stc = "cp" if _gardes else _statut_classe(retenu["statut_etude"])
+    # ETUDE-STATIONNEMENT-FIX-3 (LOT 1 #3) — le statut affiché est celui du CALCUL COURANT : le VERDICT GLOBAL
+    # du scénario (`verdict`, qui déclasse « Exploitable » dès qu'un contrôle À CONFIRMER bloquant tombe), et
+    # non le `statut_etude` (aveugle aux À confirmer). Les 3 témoins passent de « Exploitable » à « À compléter ».
+    _vg = str(retenu.get("verdict") or "")
+    if _gardes:
+        _statut_aff, stc = "À vérifier", "cp"
+    elif _vg.startswith("Exploitable"):
+        _statut_aff, stc = "Exploitable", "ok"
+    elif _vg.startswith("Impossible"):
+        _statut_aff, stc = "Impossible", "no"
+    elif _vg:
+        _statut_aff, stc = "À compléter", "cp"      # « À compléter » (À confirmer bloquant, échec, etc.)
+    else:                                            # repli : ancien statut de scénario
+        _statut_aff, stc = _statut_court(retenu["statut_etude"]), _statut_classe(retenu["statut_etude"])
     # CAPACITE-1 (B4) — colonne « Places » : quand le barème n'est pas servi, « 0 » ment (ce n'est pas
     # « 0 place exigée » mais NON calculé) → « stationnement non vérifié », partout dans le tableau (`_stat_nv`).
     def _places_cell(v) -> str:
@@ -649,7 +722,8 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
            if (payload.get("recherche") or {}).get("etat") in ("partielle", "non_aboutie") else '')
         + '<div class="ef-status">'
         f'<div><b>Contrôles automatisés de votre projet</b>'
-        f'{cc["reussi"]} réussis · {cc["echoue"]} échoués · {cc["non_effectue"]} non effectués</div>'
+        f'{cc["reussi"]} réussis · {cc["echoue"]} échoués · {cc.get("a_confirmer", 0)} à confirmer · '
+        f'{cc["non_effectue"]} non effectués</div>'
         f'<div><b>Statut de l\'étude</b>{esc(_statut_aff)} — '
         'à faire confirmer par un architecte</div></div>'
         # EXPORTS-FIX-3 LOT 3 (#5a/#5b) — garde-fou d'honnêteté : raisons AFFICHÉES pour lesquelles ce
@@ -996,9 +1070,11 @@ def _p7_capacite(payload: dict, retenu: dict) -> str:
     surf = payload["hypotheses"].get("surfaces") or {}
     # ETUDE-V6-4 (item 11) — montrer la varangue, comme à l'écran (30/56/70/80 + varangues).
     varg = payload["hypotheses"].get("varangues") or {}
+    # ETUDE-STATIONNEMENT-FIX-9 (point 3) — près d'une borne de barème, la surface montre ses décimales.
+    _bornes = (((payload.get("stationnement_regimes") or {}).get("general") or {}).get("bornes_surface_m2")) or []
     prows = []
     for x in sorted(pt):
-        vcell = f'{_m2(surf.get(x))}' + (f' <span style="color:#6b7280;font-size:var(--fs-xs)">dont {_m2(varg.get(x))} varangue</span>' if varg.get(x) else '')
+        vcell = f'{m2_borne_fr(surf.get(x), _bornes)}' + (f' <span style="color:#6b7280;font-size:var(--fs-xs)">dont {_m2(varg.get(x))} varangue</span>' if varg.get(x) else '')
         prows.append(f'<tr><td class="k">{esc(x)}</td><td class="num">{int(pt[x])}</td>'
                      f'<td class="num">{vcell}</td><td class="num">{_m2(shab.get(x))}</td>'
                      f'<td class="n"><span class="chip e">Estimé</span></td></tr>')
@@ -1024,7 +1100,10 @@ def _p7_capacite(payload: dict, retenu: dict) -> str:
     for c in sc["controles"]:
         res = c["resultat"]
         rc = "ok" if res == "Réussi" else "ko" if res == "Échoué" else "ne"
-        cite = f'<span class="cite">{esc(_cit_propre(c["citation"]))}</span>' if (res == "Réussi" and c.get("citation")) else ""
+        # ETUDE-STATIONNEMENT-FIX-4 (LOT 3) — chaque contrôle CITE sa règle, y compris « À confirmer » et
+        # « Échoué » (prospect Ud3.5, haie + voie piétonne, pente de toiture) : le lecteur voit la règle non
+        # vérifiée, pas seulement les règles réussies (avant, la citation n'apparaissait que sur « Réussi »).
+        cite = f'<span class="cite">{esc(_cit_propre(c["citation"]))}</span>' if c.get("citation") else ""
         crows.append(f'<tr><td class="k">{esc(c["nom"])}{cite}</td><td>{esc(c["regle"])}</td>'
                      f'<td>{esc(c["mesure"])}</td>'
                      f'<td class="n"><span class="res {rc}">{esc(res)}</span></td></tr>')
@@ -1075,7 +1154,9 @@ def _p8_hypotheses(payload: dict, retenu: dict, numero: str) -> str:
         ("Cadastre DGFiP · PPR, servitudes (GPU, Géorisques)", "données publiques"),
         ("LiDAR HD IGN · BD TOPO", "terrain naturel, limites"),
         # ETUDE-V6-4 (item 12) — plus de nom technique (livrable IMPLANTATION-2, version conventions).
-        ("Moteur d'implantation LABUSE", f"hypothèses « {esc(m.get('etiquette') or 'Estimé')} », modifiables dans l'outil"),
+        ("Moteur d'implantation LABUSE",
+         f"hypothèses « {esc(m.get('etiquette') or 'Estimé')} », modifiables dans l'outil"
+         + (f" · version {esc(_commit_build())}" if _commit_build() else "")),
     ]
     src_html = "".join(f'<tr><td class="k">{esc(a)}</td><td>{esc(b)}</td></tr>' for a, b in sources)
     return (
@@ -1148,6 +1229,11 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
     Lève ValueError si aucun scénario (le document n'a rien à montrer)."""
     retenu = scenario_retenu(payload, scenario_ref)
     if retenu is None:
+        # ETUDE-STATIONNEMENT-FIX-6 (point 1, option A) — aérien SANS plan mais variante SOUS-SOL disponible :
+        # on rend l'Étude SUR cette variante (la solution qui tient, avec ses chiffres et ses contrôles) ; le
+        # message/bandeau dit clairement que le stationnement aérien ne passe pas sous ces hypothèses.
+        retenu = payload.get("repli_sous_sol")
+    if retenu is None:
         raise ValueError(payload.get("message") or "aucun scénario : l'étude ne peut pas être rendue")
     # DOCS-1 (décision Vic) — le PLAFOND D'EMPRISE AFFICHÉ = la valeur de la fiche (CES × CONTENANCE de
     # l'acte), un fait = une valeur partout (fiche, Dossier, Gabarit, Étude). Le moteur d'implantation
@@ -1178,8 +1264,19 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
         # DOCS-1 (décision Vic) — pied RACCOURCI (l'IDU, le type et le « généré le » sont déjà en tête) :
         # le numéro de page tient sur une ligne.
         doc_foot=FOOT_LIGNE)
+    # ETUDE-STATIONNEMENT-FIX-6 (point 1, option A) — bandeau clair quand on rend le REPLI sous-sol (l'aérien
+    # ne tient pas) : le document DIT que le stationnement aérien ne passe pas, puis montre la variante sous-sol.
+    _est_repli = payload.get("repli_sous_sol") is not None and retenu is payload.get("repli_sous_sol")
+    _banniere = ""
+    if _est_repli:
+        _banniere = ('<div style="border:1.5px solid #b45309;background:#fff7ed;padding:8pt 10pt;'
+                     'border-radius:3pt;margin:0 0 10pt 0;color:#7c2d12;">'
+                     '<b>Aucun plan en stationnement aérien sous ces hypothèses.</b> '
+                     + esc(payload.get("message") or "")
+                     + ' La variante ci-dessous est en <b>stationnement sous-sol</b> — la solution qui tient.</div>')
     corps = (
         f"<style>{_STYLE}</style>"
+        + _banniere
         + _p1_synthese(payload, retenu, numero, genere_le)
         + _p2_terrain(payload, retenu)
         + _p3_regles(payload, retenu)
@@ -1361,6 +1458,7 @@ def nombres_hors_payload(payload: dict, html: str, *, genere_le: str = "") -> li
     struct = {str(i) for i in range(0, 10)}                       # pagination + petits indices de texte
     struct |= set(_nombres(genere_le)) | set(_nombres(numero_etude(payload["entrees"].get("idus") or [], genere_le)))
     struct |= set(_nombres(_numero_document(payload)))   # n° de document EF-<8> (chiffres tolérés)
+    struct |= set(_nombres(_commit_build() or ""))       # tampon « version <commit> » (structurel, pas un fait)
     struct |= {"2975", "4326"}                                     # CRS cités dans le payload moteur de toute façon
     for p in payload["terrain"].get("parcelles", []):             # refs cadastrales (AW 99…)
         struct |= set(_nombres(p.get("numero") or ""))

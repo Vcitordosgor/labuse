@@ -12,10 +12,17 @@ Deux familles :
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Optional
 
 from shapely.ops import unary_union
+
+_FERMETURE_M = 1e-4          # FIX-19 : fermeture de 0,1 mm (un dixième de la résolution). Soude deux pièces
+#   jointives (bord à bord, désalignées par une rotation/un bruit flottant) et comble un pincement sub-micronique
+#   à une jonction, SANS déplacer un bord ni combler un vrai vide : elle ne ponte que ≤ 0,2 mm (un écart de 2 cm
+#   reste un écart). Bien en dessous du millimètre : ne perturbe aucune mesure. Bouts PLATS (join_style=2) pour ne
+#   PAS arrondir les angles (un arrondi, lui, déplaçait le goulet de plusieurs cm dans le régime « voiture ≈ couloir »).
 
 from .capacite import Capacite
 from .conventions import Conventions
@@ -62,6 +69,463 @@ class CheckGeo:
     nom: str
     ok: bool
     detail: str = ""
+    # ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — un check « consultatif » est AFFICHÉ mais n'invalide PAS la
+    # géométrie (n'entre pas dans `geometrie_valide`). Utilisé pour le dégagement sur les ASSEMBLAGES
+    # multi-parcelles, où le pavage irrégulier rend la mesure peu fiable (faux pincements).
+    advisory: bool = False
+
+
+# ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — une place est jugée NON DÉGAGÉE si le couloir manquant devant elle
+# dépasse ce plancher (≈ allée trop courte de > 0,4 m sur la largeur de la place) ; en deçà, c'est du bruit
+# de pavage/jonction. Le contrôle échoue dès qu'une place est non dégagée (BW2635 : 13 places à 2,25 m).
+# haie paysagère au pourtour des aires de stationnement : on capte la largeur imposée (« ≥ 1,50 m »).
+_HAIE_RE = re.compile(r"haie[^0-9]*?(\d+(?:[.,]\d+)?)\s*m", re.IGNORECASE)
+# ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — mesure EXACTE, sans marge cachée : on ne retranche RIEN à la largeur
+# exigée et on ne tolère que le bruit numérique du pavage (< 0,02 m²). Une allée de 4,99 m pour 5 m exigés
+# ÉCHOUE (déficit ≈ largeur de place × 0,01 m). Avant : W = exigée − 0,60 m + tolérance 1 m² (cachait un plan
+# sous le minimum). `_DEGAGEMENT_PLACE_FLOOR_M2`/`_DEGAGEMENT_SEUIL_M2` = seuls amortisseurs de bruit flottant.
+_DEGAGEMENT_PLACE_FLOOR_M2 = 0.005
+_DEGAGEMENT_SEUIL_M2 = 0.005   # aire totale non dégagée au-delà de laquelle le plan échoue (bruit flottant seul)
+_PASSAGE_MIN_M = 2.4         # largeur mini de circulation d'une voiture ; sous ce seuil l'allée s'étrangle
+_COMP_SIGNIF_M2 = 8.0        # aire mini d'un morceau d'allée pour qu'un étranglement le séparant compte
+_MUR_EP = 0.05               # FIX-16 : épaisseur de la paroi « contour de l'assiette » coupée dans la bande
+#   extérieure (ouverte au seul recouvrement) — fine, sépare la bande de l'aire roulante aux bords FERMÉS
+_PREC_M = 0.001              # FIX-18 : RÉSOLUTION géométrique = le millimètre (PAS une marge de proximité). Un
+#   point d'approche à < 1 mm du noyau atteignable lui appartient ; une largeur se compare au mm. Bien en dessous
+#   des seuils testés (2,35 m et 2,39 m refusés, 2,40 m accepté, inchangés). Sert aussi à juger qu'un recouvrement
+#   est sur le BORD de l'assiette (aires des deux lanières différentes de plus d'1 mm·longueur).
+
+
+def _grille_mm(polys):
+    """FIX-19 (défauts B & C du relecteur) — ROBUSTESSE géométrique sous la RÉSOLUTION déjà fixée (le mm). On réunit
+    les pièces puis on applique une FERMETURE À BOUTS PLATS de 0,1 mm (`_FERMETURE_M`). Deux pièces simplement
+    JOINTIVES (bord à bord, désalignées par une rotation quelconque → `unary_union` ordinaire rendait un
+    MultiPolygon que l'érosion `buffer(-_er)` scindait, défaut B) ne forment plus qu'UN polygone ; un micro-biseau
+    sub-millimétrique au coin d'une jonction accès↔allée (bruit ~1e-12…1e-6 d'une transformation monde→local,
+    défaut C) est comblé avant l'érosion et ne la scinde plus. La fermeture NE RELIE JAMAIS un vrai vide : elle ne
+    ponte que ≤ 0,2 mm, donc deux réseaux séparés de 2 cm restent disjoints (tous les contre-exemples « deux
+    réseaux à 2 cm » restent refusés) et une entrée étranglée (≥ 6 cm sous 2,40 m) n'est pas élargie. Bouts PLATS :
+    une fermeture ARRONDIE déplaçait le goulet de plusieurs cm dans le régime dégénéré « voiture ≈ couloir »."""
+    nettes = [(g if g.is_valid else g.buffer(0)) for g in polys]
+    nettes = [g for g in nettes if not g.is_empty]
+    if not nettes:
+        return unary_union([])
+    u = unary_union(nettes).buffer(0)
+    if u.is_empty:
+        return u
+    return u.buffer(_FERMETURE_M, join_style=2).buffer(-_FERMETURE_M, join_style=2).buffer(0)
+
+
+def _troncons_droits(line):
+    """FIX-19 (défaut A du relecteur) — découpe une polyligne en ses TRONÇONS DROITS maximaux (sommets
+    colinéaires de même sens fusionnés). Le recouvrement `voie ∩ libre` peut être COUDÉ (accès dans un angle
+    du terrain, voie décrite par plusieurs segments) : ne garder que `coords[0]`/`coords[-1]` donnait une
+    corde oblique ne décrivant AUCUN bord réel → bande/normale fausses, place refusée à tort. Chaque tronçon
+    droit est une OUVERTURE possible à part entière (qui doit mesurer ≥ passage à elle seule)."""
+    import math as _m
+    cs = list(getattr(line, "coords", []))
+    if len(cs) < 2:
+        return []
+    runs = []
+    start = cs[0]
+    d_prev = None
+    prev = cs[0]
+    for cur in cs[1:]:
+        dx, dy = cur[0] - prev[0], cur[1] - prev[1]
+        L = _m.hypot(dx, dy)
+        if L <= 1e-12:
+            continue
+        d = (dx / L, dy / L)
+        if d_prev is not None and (abs(d[0] * d_prev[1] - d[1] * d_prev[0]) > 1e-9
+                                   or d[0] * d_prev[0] + d[1] * d_prev[1] <= 0):
+            runs.append((start, prev))     # changement de direction → clôt le tronçon courant
+            start = prev
+        d_prev = d
+        prev = cur
+    runs.append((start, prev))
+    return runs
+
+
+def _longueur_mrr(geom) -> float:
+    """Plus grand côté du rectangle englobant minimal — pour une lanière fine (la morsure de l'accès sur la
+    voie), c'est sa LONGUEUR le long du recouvrement. Robuste à l'orientation ; 0 sur une géométrie vide."""
+    if geom is None or getattr(geom, "is_empty", True):
+        return 0.0
+    try:
+        mrr = geom.minimum_rotated_rectangle
+        xy = list(getattr(mrr, "exterior", mrr).coords)
+    except Exception:
+        return 0.0
+    cotes = [((xy[i][0] - xy[i + 1][0]) ** 2 + (xy[i][1] - xy[i + 1][1]) ** 2) ** 0.5
+             for i in range(len(xy) - 1)]
+    return max(cotes) if cotes else 0.0
+
+
+def _coords_xy(geom):
+    """Toutes les coordonnées (x, y) d'une géométrie quelconque (Polygon/Multi/Line/Collection)."""
+    if geom is None or getattr(geom, "is_empty", True):
+        return []
+    gt = geom.geom_type
+    if gt == "Polygon":
+        return list(geom.exterior.coords)
+    if gt in ("MultiPolygon", "GeometryCollection", "MultiLineString", "MultiPoint"):
+        out = []
+        for g in geom.geoms:
+            out += _coords_xy(g)
+        return out
+    if gt in ("LineString", "LinearRing"):
+        return list(geom.coords)
+    if gt == "Point":
+        return [(geom.x, geom.y)]
+    return []
+
+
+def _etendue_le_long(geom, ox: float, oy: float, tx: float, ty: float) -> float:
+    """Étendue de `geom` PROJETÉE sur l'axe tangent (tx, ty) issu de (ox, oy) — la longueur « le long du
+    recouvrement ». Un contact latéral (perpendiculaire à R) y projette une étendue courte → écarté."""
+    pts = _coords_xy(geom)
+    if not pts:
+        return 0.0
+    proj = [(x - ox) * tx + (y - oy) * ty for x, y in pts]
+    return max(proj) - min(proj)
+
+
+def _bords_assiette(assiette):
+    """Segments du contour de l'assiette ORIENTÉE (intérieur à gauche, via shapely.orient sign=+1) : chaque
+    bord est (px, py, ux, uy, longueur) avec (ux, uy) le sens de parcours. La NORMALE EXTÉRIEURE d'un bord
+    (vers le dehors du terrain) est alors (uy, -ux) — déduite du SENS DE PARCOURS, sans aucun point de test."""
+    import math as _math
+    from shapely.geometry.polygon import orient
+    if assiette is None or getattr(assiette, "is_empty", True) or not hasattr(assiette, "exterior"):
+        return []
+    try:
+        ao = orient(assiette, 1.0)
+    except Exception:
+        ao = assiette
+    rings = [ao.exterior] + list(ao.interiors)
+    bords = []
+    for ring in rings:
+        cs = list(ring.coords)
+        for i in range(len(cs) - 1):
+            (px, py), (qx, qy) = cs[i], cs[i + 1]
+            ex, ey = qx - px, qy - py
+            el = _math.hypot(ex, ey)
+            if el <= 1e-9:
+                continue
+            bords.append((px, py, ex / el, ey / el, el))
+    return bords
+
+
+def _cote_exterieur_mesure(assiette, ax, ay, bx, by, nx, ny, t: float = 0.5):
+    """Côté EXTÉRIEUR du recouvrement, MESURÉ. (nx, ny) = normale unitaire ; renvoie celle qui SORT de l'assiette.
+
+    RÈGLE 1 (FIX-18, robustifiée FIX-19) : le recouvrement n'établit un raccord que s'il est SUR LE BORD de
+    l'assiette. On le juge par la DISTANCE de R au contour (robuste à la rotation et au bruit flottant) : une voie
+    de desserte longe le bord → R à ~0 du contour ; une voie posée À L'INTÉRIEUR (contre-exemple FIX-18) en est à
+    plusieurs mètres → None, raccord NON établi.
+
+    CÔTÉ : lanières de 0,5 m de part et d'autre de R, le côté de MOINDRE aire d'assiette est l'extérieur (robuste
+    concave : un creux local ne renverse pas le bilan). FIX-18 : si les DEUX lanières sont quasi vides (R au ras
+    d'un SOMMET convexe du terrain tourné), on tranche par l'aire EXTÉRIEURE des deux extrusions profondes."""
+    import math as _m
+    from shapely.geometry import Polygon as _P
+    from shapely.geometry import LineString as _LS
+
+    dl = _m.hypot(bx - ax, by - ay)
+    if dl <= 1e-12:
+        return nx, ny
+    try:
+        if _LS([(ax, ay), (bx, by)]).distance(assiette.boundary) > 0.03:
+            return None                 # R loin du contour → voie À L'INTÉRIEUR de l'assiette → pas un bord
+    except Exception:
+        pass
+
+    def _aire(dd):
+        lp = _P([(ax, ay), (bx, by), (bx + nx * dd, by + ny * dd), (ax + nx * dd, ay + ny * dd)])
+        lm = _P([(ax, ay), (bx, by), (bx - nx * dd, by - ny * dd), (ax - nx * dd, ay - ny * dd)])
+        return lp.intersection(assiette).area, lm.intersection(assiette).area
+
+    try:
+        a_p, a_m = _aire(t)
+    except Exception:
+        return nx, ny
+    if max(a_p, a_m) < _PREC_M * dl:     # R au ras d'un sommet → les deux lanières quittent l'assiette
+        Dp = 12.0
+        ep = _P([(ax, ay), (bx, by), (bx + nx * Dp, by + ny * Dp), (ax + nx * Dp, ay + ny * Dp)]).difference(assiette).area
+        em = _P([(ax, ay), (bx, by), (bx - nx * Dp, by - ny * Dp), (ax - nx * Dp, ay - ny * Dp)]).difference(assiette).area
+        return (nx, ny) if ep >= em else (-nx, -ny)
+    return (nx, ny) if a_p <= a_m else (-nx, -ny)
+
+
+def _cote_exterieur(bords, mx: float, my: float, tx: float, ty: float):
+    """Normale extérieure unitaire du bord d'assiette qui PORTE le recouvrement : le bord le plus proche du
+    milieu (mx, my) de R qui lui est ~parallèle ET le recouvre en projection. La normale vient du SENS DE
+    PARCOURS du contour (= (uy, -ux)), exacte même sur une assiette concave. None si aucun bord ne convient."""
+    best = None
+    for (px, py, ux, uy, el) in bords:
+        if abs(ux * tx + uy * ty) < 0.94:          # > ~20° d'écart → pas le bord qui porte la voie
+            continue
+        t = (mx - px) * ux + (my - py) * uy          # projection du milieu de R sur le bord
+        if t < -0.05 or t > el + 0.05:               # le bord doit RECOUVRIR R en projection
+            continue
+        dist = abs((mx - px) * (-uy) + (my - py) * ux)   # distance du milieu de R à la droite du bord
+        if best is None or dist < best[0]:
+            best = (dist, uy, -ux)                   # normale extérieure = (dy, -dx) du sens de parcours
+    if best is None:
+        return None
+    return best[1], best[2]
+
+
+def _reach_depuis_voie(libre, acces, voie, passage, assiette):
+    """NOYAU ROULANT atteignable depuis la voie à `passage` donné (demi-largeur `passage`/2). Construction FIX-10→19
+    (bande de voie le long du recouvrement, mur de contour, érosion, composante contenant la graine de bande).
+    Extrait de `_desserte_core` pour être partagé par le COMPTAGE (une place est desservie si son approche ∈ reach)
+    ET la LARGEUR DE DESSERTE (FIX-19, au niveau des allées). Renvoie le polygone `reach` (vide si pas de raccord)."""
+    import math as _math
+    from shapely.ops import linemerge, unary_union
+    from shapely.geometry import Polygon as _Poly
+    from shapely.geometry import LineString as _LS
+    vide = _Poly()
+    r_pass = max(passage, 1e-3) / 2.0
+    _er = r_pass - 1e-4
+    if voie is not None and not getattr(voie, "is_empty", True):
+        voie_l = voie if voie.geom_type in ("LineString", "MultiLineString") else voie.boundary
+        cvt = voie_l.intersection(libre)
+        merged = linemerge(cvt) if cvt.geom_type == "MultiLineString" else cvt
+        segs = ([merged] if merged.geom_type == "LineString"
+                else [s for s in getattr(merged, "geoms", []) if s.geom_type == "LineString"])
+        recouvrements = []
+        for s in segs:                                          # FIX-19 (A) : recouvrement coudé → tronçons droits
+            for (p0, p1) in _troncons_droits(s):
+                seg = _LS([p0, p1])
+                if seg.length >= passage - _PREC_M:
+                    recouvrements.append(seg)
+        if not recouvrements:
+            return vide
+        D = 12.0
+        acces_poly = unary_union([g if g.is_valid else g.buffer(0) for g in (acces or [])])
+        assiette_eff = (assiette if (assiette is not None and not getattr(assiette, "is_empty", True))
+                        else libre.convex_hull)
+        contour = assiette_eff.boundary.buffer(_MUR_EP)
+        # FIX-20 — CHAQUE TRONÇON DROIT du recouvrement est une OUVERTURE SÉPARÉE : sa propre bande (bornée à son
+        # aplomb = l'extrusion perpendiculaire de ce seul tronçon), son propre percement du mur de contour (le mur
+        # reste FERMÉ partout ailleurs, DONC à l'angle entre deux tronçons), son propre noyau atteignable. On réunit
+        # seulement les NOYAUX à la fin. Ainsi la bande extérieure d'un tronçon ne peut ni enjamber l'angle ni
+        # rejoindre celle de l'autre par l'extérieur (sinon, aux grands passages, elle sur-estimait la desserte en
+        # pénétrant le projet par l'angle). Un recouvrement DROIT (un seul tronçon) est inchangé.
+        reach_comps = []
+        for R in recouvrements:
+            (ax, ay), (bx, by) = R.coords[0], R.coords[-1]
+            dl = _math.hypot(bx - ax, by - ay)
+            if dl <= 1e-9:
+                continue
+            tx, ty = (bx - ax) / dl, (by - ay) / dl
+            cote = _cote_exterieur_mesure(assiette_eff, ax, ay, bx, by, -ty, tx)
+            if cote is None:                                    # recouvrement NON sur le bord (voie intérieure)
+                continue
+            nx, ny = cote
+            poly = _Poly([(ax, ay), (bx, by), (bx + nx * D, by + ny * D), (ax + nx * D, ay + ny * D)])
+            band_r = poly.difference(assiette_eff).buffer(0)
+            comps = (list(band_r.geoms) if band_r.geom_type == "MultiPolygon"
+                     else ([band_r] if not band_r.is_empty else []))
+            kept = []
+            for pc in comps:
+                inter = pc.intersection(acces_poly)             # chevauchement RÉEL de l'accès LE LONG de R
+                if inter.is_empty:
+                    continue
+                if _etendue_le_long(inter, ax, ay, tx, ty) + _PREC_M >= passage:
+                    kept.append(pc)
+            if not kept:
+                continue
+            band = unary_union(kept).buffer(0)
+            ouverture = R.buffer(_MUR_EP * 3.0, cap_style=2)    # le mur n'est percé QUE sur CE tronçon (bouts plats)
+            band = band.difference(contour.difference(ouverture)).buffer(0)
+            bouts = (list(band.geoms) if band.geom_type == "MultiPolygon"
+                     else ([band] if not band.is_empty else []))
+            band = unary_union([pc for pc in bouts if pc.intersects(ouverture)]).buffer(0)
+            if band.is_empty:
+                continue
+            surface = _grille_mm([libre, band])                 # FIX-19 (C) : nettoyée au mm avant l'érosion
+            seed = band.buffer(-_er).buffer(0)
+            noyau = surface.buffer(-_er).buffer(0)
+            if seed.is_empty or noyau.is_empty:
+                continue
+            comps_n = list(noyau.geoms) if noyau.geom_type == "MultiPolygon" else [noyau]
+            brut = unary_union([c for c in comps_n if c.intersects(seed)]).buffer(0)
+            if brut.is_empty:
+                continue
+            # FIX-20 — le disque doit TENIR dans un VRAI couloir : l'aire roulante érodée (`libre` ⊖ r), OU la bande
+            # de voie, la TRAVERSÉE de l'ouverture étant seule permise par une GORGE (le recouvrement dilaté de la
+            # demi-largeur). Sans cette borne, l'érosion de l'UNION (libre ∪ bande) élargissait un étranglement
+            # SITUÉ PRÈS DE L'OUVERTURE (la bande comble la gorge) → le noyau franchissait un couloir plus étroit
+            # que `w` → desserte sur-estimée dans un angle. Ailleurs qu'à l'ouverture, on exige la largeur de `libre`.
+            gorge = R.buffer(r_pass + _MUR_EP * 2.0)
+            admissible = unary_union([libre.buffer(-_er), band, gorge]).buffer(0)
+            coeur = brut.intersection(admissible).buffer(0)
+            pcs = list(coeur.geoms) if coeur.geom_type == "MultiPolygon" else ([coeur] if not coeur.is_empty else [])
+            reach_comps.extend(c for c in pcs if c.intersects(seed))
+    else:
+        noyau = libre.buffer(-_er).buffer(0)                    # tests unitaires sans voie
+        if noyau.is_empty:
+            return vide
+        comps = list(noyau.geoms) if noyau.geom_type == "MultiPolygon" else [noyau]
+        reach_comps = [max(comps, key=lambda g: g.area)] if comps else []
+    if not reach_comps:
+        return vide
+    return unary_union(reach_comps)
+
+
+def _sonder_place(pg, largeur_requise, libre, reach, r_pass):
+    """Une place : est-elle DESSERVIE (point d'approche devant le nez, à la demi-largeur, ∈ `reach` au mm près) et
+    quel est son DÉFICIT de dégagement (part du rectangle de largeur requise non couverte par `libre`) ? Extrait de
+    `_desserte_core`. Renvoie (état, valeur) : état None = place à ignorer (nez indéfini) ; False = NON desservie
+    (valeur = aire de la place) ; True = desservie (valeur = déficit minimal du côté réellement desservi)."""
+    from shapely.geometry import Polygon as _P
+    from shapely.geometry import Point as _Pt
+    W = max(float(largeur_requise), 0.1)
+    c = pg.centroid
+    coords = list(pg.exterior.coords)[:-1]
+    edges = []
+    for i in range(len(coords)):
+        a, b = coords[i], coords[(i + 1) % len(coords)]
+        L = ((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5
+        edges.append((L, a, b, ((a[0] + b[0]) / 2.0, (a[1] + b[1]) / 2.0)))
+    if not edges:
+        return None, 0.0
+    Lmin = min(e[0] for e in edges)
+    petits = [e for e in edges if e[0] <= Lmin * 1.3]           # les DEUX petits côtés (nez ET arrière)
+    options = []
+    for _L, a, b, mid in petits:
+        nx, ny = mid[0] - c.x, mid[1] - c.y
+        ln = (nx * nx + ny * ny) ** 0.5 or 1.0
+        nx, ny = nx / ln, ny / ln
+        sonde = _P([a, b, (b[0] + W * nx, b[1] + W * ny), (a[0] + W * nx, a[1] + W * ny)])
+        if not sonde.is_valid or sonde.area < 0.5:
+            continue
+        clear = sonde.intersection(libre)
+        deficit = max(0.0, sonde.area - clear.area)
+        approche = _Pt(mid[0] + r_pass * nx, mid[1] + r_pass * ny)
+        # FIX-20 — une place est desservie SSI son point d'approche (1) appartient au noyau atteignable `reach`
+        # (connecté à la voie, au mm près) ET (2) le DISQUE DE RAYON r_pass TIENT RÉELLEMENT à l'approche, dans
+        # l'AIRE ROULANTE : approche ≥ r_pass − 1 mm du bord de `libre`. Sans (2), aux grands passages l'approche
+        # pouvait n'être qu'à 1 mm d'un bord de la BANDE extérieure (la voiture ne tient pas dans le couloir réel) →
+        # desserte sur-estimée dans un angle (c'est la garde que l'oracle applique par `boundary.distance ≥ r`).
+        tient = libre.buffer(-(r_pass - _PREC_M)).distance(approche) <= _PREC_M
+        desservie = (not clear.is_empty) and tient and reach.distance(approche) <= _PREC_M
+        options.append((deficit, desservie))
+    if not options:
+        return None, 0.0
+    desservies = [d for d, sv in options if sv]
+    if not desservies:
+        return False, pg.area
+    return True, min(desservies)
+
+
+def _desserte_core(allees, places, largeur_requise: float, acces=None, voie=None,
+                   passage: float = _PASSAGE_MIN_M, assiette=None) -> tuple[float, int]:
+    """ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — DÉGAGEMENT mesuré DEVANT CHAQUE PLACE, sur l'allée DÉSÉTRANGLÉE.
+    ETUDE-STATIONNEMENT-FIX-9 (relecture) — NOYAU UNIQUE : la desserte d'une place et la LARGEUR du goulet
+    reposent sur le MÊME calcul (ce noyau roulant érodé de `passage`/2). Renvoie (aire manquante, nb de places
+    desservies). `_pincement_allee` l'appelle à `passage = _PASSAGE_MIN_M` (2,40 m) ; `_largeur_min_desserte`
+    cherche le plus grand `passage` qui dessert encore une place → une place comptée ⟹ goulet ≥ 2,40 m.
+    Deux pièges du PLAN réel, traités ensemble :
+      1. CLEARANCE devant la place — on sonde un rectangle de la largeur de la place extrudé de `largeur_requise`
+         vers CHACUN des deux petits côtés (nez/arrière) et on garde le MEILLEUR (déficit minimal) : l'allée
+         dessert la place par un seul côté, l'autre donne sur un mur. Prendre « le plus près de l'allée » se
+         trompait de côté sur les parkings denses (faux déficit de 4 m sur une allée de 5 m → écroulait HT0538
+         et les assemblages). Prendre le min des deux ignore le côté mur.
+      2. PINCEMENT de circulation — avant de sonder, on OUVRE l'allée (érosion/dilatation de `_PASSAGE_MIN_M`/2) :
+         tout étranglement plus étroit que le passage d'une voiture (BW2635 : 2,25 m) DISPARAÎT, si bien que les
+         places qui n'étaient desservies QU'À TRAVERS ce goulet perdent leur dégagement et sont comptées
+         manquantes. Une allée large (≥ `_PASSAGE_MIN_M`) survit à l'ouverture → aucun faux positif.
+    On ne compte que les places VRAIMENT déficientes (manque > `_DEGAGEMENT_PLACE_FLOOR_M2`). Renvoie l'aire (m²)."""
+    if not allees or not places:
+        return 0.0, 0
+    # FIX-19 (défauts B & C) — géométrie nettoyée à la RÉSOLUTION du mm AVANT tout calcul : des pavés strictement
+    # jointifs (places/allées/accès se touchent sans se chevaucher), désalignés par une rotation quelconque ou le
+    # bruit d'une transformation monde→local, fusionnent en UN polygone au lieu d'un MultiPolygon que l'érosion
+    # scinderait ; la fermeture 1 mm ne ponte jamais un vrai vide (2 cm restent 2 cm).
+    libre = _grille_mm(list(allees) + list(acces or []))
+    if libre.is_empty:
+        return 0.0, 0
+    _aire_places = float(sum((p if p.is_valid else p.buffer(0)).area for p in places))
+    r_pass = max(passage, 1e-3) / 2.0
+    # NOYAU ROULANT atteignable depuis la voie (FIX-10→19, cf. `_reach_depuis_voie`) : une place est desservie si
+    # son point d'approche, devant le nez à la demi-largeur, appartient à ce noyau (`_sonder_place`).
+    reach = _reach_depuis_voie(libre, acces, voie, passage, assiette)
+    if reach.is_empty:
+        return _aire_places, 0
+    manque = 0.0
+    nb_desservies = 0
+    for p in places:
+        pg = p if p.is_valid else p.buffer(0)
+        etat, val = _sonder_place(pg, largeur_requise, libre, reach, r_pass)
+        if etat is None:
+            continue
+        if etat is False:
+            manque += val            # aucun couloir roulant jusqu'à la voie → place NON comptée
+            continue
+        nb_desservies += 1           # une voiture atteint la place par un passage ≥ `passage`
+        if val > _DEGAGEMENT_PLACE_FLOOR_M2:
+            manque += val
+    return float(manque), nb_desservies
+
+
+def _pincement_allee(allees, places, largeur_requise: float, acces=None, voie=None, assiette=None) -> float:
+    """Aire (m²) de dégagement manquante au passage réglementaire (2,40 m) — cf. `_desserte_core`."""
+    return _desserte_core(allees, places, largeur_requise, acces, voie, _PASSAGE_MIN_M, assiette)[0]
+
+
+def _goulet_place(pg, largeur_requise, libre, acces, voie, assiette):
+    """FIX-20 — le plus grand passage `w` auquel LA place `pg` reste DESSERVIE, mesuré avec EXACTEMENT la sonde du
+    comptage (`_sonder_place` sur le noyau atteignable à `w`). Dichotomie sur [0 ; 12] m. C'est le goulot du trajet
+    réel de cette place (son couloir le plus étroit depuis la voie), sans AUCUN rattachement à une allée."""
+    lo, hi = 0.0, 12.0
+    for _ in range(26):
+        w = (lo + hi) / 2.0
+        reach = _reach_depuis_voie(libre, acces, voie, w, assiette)
+        if (not reach.is_empty) and _sonder_place(pg, largeur_requise, libre, reach, w / 2.0)[0] is True:
+            lo = w
+        else:
+            hi = w
+    return lo
+
+
+def _largeur_min_desserte(allees, places, largeur_requise: float, acces=None, voie=None, assiette=None) -> float:
+    """LARGEUR DE DESSERTE DE L'OPÉRATION (FIX-20, définition du relecteur). La règle (p.ex. 5 m dès 7 logements)
+    porte sur la desserte de l'OPÉRATION. Définition : le MINIMUM, sur TOUTES les places COMPTÉES à 2,40 m, du plus
+    grand passage auquel cette place reste desservie — mesuré avec EXACTEMENT la sonde du comptage (`_sonder_place`,
+    prouvée juste). PLUS AUCUN rattachement d'une place à une allée.
+
+    Corrige deux sur-estimations de FIX-19 (relecture 2) : (1) `reach.intersects(allée)` déclarait TOUTE l'allée
+    atteinte dès qu'un bout l'était (une allée de 2,5 m pendue à un accès de 6 m annonçait 5 m ; un pincement de 3 m
+    DANS une allée d'un seul tenant annonçait 6 m) ; (2) une place accrochée directement à l'accès était rattachée à
+    une allée arbitraire, son vrai trajet (par l'accès) jamais contraint (6 m annoncés pour 2,4 m réels). Le goulot
+    par place, mesuré avec la sonde du comptage, ne connaît ni l'un ni l'autre piège.
+
+    Le goulet AFFICHÉ et le contrôle de la règle utilisent CETTE valeur ; l'oracle la mesure place par place par ses
+    propres moyens (grille affinée au besoin). Si AUCUNE place n'est comptée à 2,40 m, on rend le plus grand passage
+    desservant encore ≥ 1 place (l'étranglement, cohérent avec « 0 place comptée »)."""
+    if not allees or not places:
+        return 0.0
+    libre = _grille_mm(list(allees) + list(acces or []))
+    if libre.is_empty:
+        return 0.0
+    reach0 = _reach_depuis_voie(libre, acces, voie, _PASSAGE_MIN_M, assiette)
+    pgs = [p if p.is_valid else p.buffer(0) for p in places]
+    comptees = ([pg for pg in pgs if _sonder_place(pg, largeur_requise, libre, reach0, _PASSAGE_MIN_M / 2.0)[0] is True]
+                if not reach0.is_empty else [])
+    if not comptees:
+        # aucune place comptée à 2,40 m → ÉTRANGLEMENT (plus grand passage desservant ≥ 1 place quelconque).
+        lo, hi = 0.0, 12.0
+        for _ in range(26):
+            w = (lo + hi) / 2.0
+            if _desserte_core(allees, places, largeur_requise, acces, voie, w, assiette)[1] >= 1:
+                lo = w
+            else:
+                hi = w
+        return lo
+    return min(_goulet_place(pg, largeur_requise, libre, acces, voie, assiette) for pg in comptees)
 
 
 def _ground_tiles(scene: Scene):
@@ -147,10 +611,30 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
         checks.append(CheckGeo("allée sans tronçon mort (coupée au droit des places)",
                                mort.area < 1.0, f"{mort.area:.1f} m² morts"))
 
-    larg_ok = all(min(o.geom_local.bounds[2] - o.geom_local.bounds[0],
-                      o.geom_local.bounds[3] - o.geom_local.bounds[1]) >= conv.allee_largeur_m - 0.05
-                  for o in scene.of("allee"))
-    checks.append(CheckGeo(f"largeur d'allée ≥ {conv.allee_largeur_m} m", larg_ok))
+    # ETUDE-STATIONNEMENT-FIX-2 (LOT 3) — largeur du DÉGAGEMENT devant les places mesurée LOCALEMENT, pas sur
+    # la boîte englobante : une allée clippée à un bord oblique peut pincer à 2,25 m au droit des places tout en
+    # ayant une boîte de 5 m (cas BW2635 : 13 places à 2,25 m « validées » à tort). On mesure le pincement réel.
+    # ETUDE-STATIONNEMENT-FIX-3 (LOT 1) — les DEUX géométries DANS LE MÊME REPÈRE : `allees` et `places` sont
+    # ici en coordonnées PROJETÉES (geom_world) ; l'ancien code passait l'allée en geom_local → intersection
+    # avec les places (geom_world) vide → pincement toujours 0 en production (le test unitaire, lui, était dans
+    # un seul repère et passait). Sur BW2635 : 25,25 m² de pincement, 2,25 m au droit de 13 places.
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — mesure EXACTE en coordonnées LOCALES (repère aligné sur l'assiette) :
+    # places, allées et accès y sont des rectangles AXÉS, sans l'erreur flottante de la rotation monde↔local
+    # (qui faisait un faux déficit de ~0,008 m sur une place et écroulait AD0887 à 0,02 m² près). La voie locale
+    # relie les bandes. Le même repère pour tous → un déficit mesuré est RÉEL (4,99 m pour 5 m exigés échoue).
+    _allees_l = [o.geom_local for o in scene.of("allee")]
+    _places_l = [o.geom_local for o in scene.of("place")]
+    _acces_l = [o.geom_local for o in scene.of("acces")]
+    _voie_l = unary_union(scene.voie_local) if getattr(scene, "voie_local", None) else None
+    pince = _pincement_allee(_allees_l, _places_l, conv.allee_largeur_m, _acces_l, voie=_voie_l,
+                             assiette=getattr(scene, "assiette_local", None))
+    larg_ok = pince < _DEGAGEMENT_SEUIL_M2
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — contrôle DUR, y compris sur un ASSEMBLAGE : la mesure par sonde du
+    # meilleur des deux côtés (nez/arrière) + désétranglement de la circulation ne crée plus de faux pincements
+    # sur le pavage dense (L'Étang-Salé 27 places OK), donc le dégagement d'un assemblage est aussi contraignant
+    # que sur une parcelle seule (plus de « consultatif »). Il se calcule sur la géométrie FUSIONNÉE des parcelles.
+    checks.append(CheckGeo(f"dégagement d'allée ≥ {conv.allee_largeur_m} m au droit des places (mesuré localement)",
+                           larg_ok, "" if larg_ok else f"{pince:.1f} m² de dégagement sous la largeur requise"))
 
     dim_ok = True
     for o in modules:
@@ -184,7 +668,8 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
 
 
 def geometrie_valide(checks: list[CheckGeo]) -> bool:
-    return all(c.ok for c in checks)
+    # les checks CONSULTATIFS (ex. dégagement sur assemblage) sont affichés mais n'invalident pas le candidat.
+    return all(c.ok for c in checks if not getattr(c, "advisory", False))
 
 
 # --------------------------------------------------------------- réglementaires (4 états)
@@ -202,6 +687,7 @@ def _n_batiments(scene: Scene) -> int:
     return len(scene.of("batiment_emprise"))
 
 
+
 def _distance_min_batiments(scene: Scene) -> Optional[float]:
     """Plus petite distance MESURÉE (bord à bord) entre deux emprises bâties, en m. None si < 2."""
     batis = [o.geom_world for o in scene.of("batiment_emprise")]
@@ -210,12 +696,28 @@ def _distance_min_batiments(scene: Scene) -> Optional[float]:
     return min(batis[i].distance(batis[j]) for i in range(len(batis)) for j in range(i + 1, len(batis)))
 
 
-def _distance_requise(dc, cap: Capacite, conv: Conventions) -> tuple[float, str, str]:
+def _distance_requise(dc, cap: Capacite, conv: Conventions, max_logts_bati: int = 0) -> tuple[float, str, str]:
     """(distance requise en m, libellé de règle, mention) pour une règle de distance CHIFFRABLE.
     La hauteur retenue est celle du bâtiment proposé (niveaux × hauteur d'étage) ; `cumulee` = H+h
-    (deux volumes identiques dans le modèle → 2×h), `plus_haut` = H du plus haut (= h)."""
+    (deux volumes identiques dans le modèle → 2×h), `plus_haut` = H du plus haut (= h).
+    `max_logts_bati` = nombre de logements du bâtiment le plus peuplé (seuil « grand bâtiment »)."""
     h = cap.niveaux * conv.hauteur_etage_m
     if dc.forme == "fixe":
+        # ETUDE-STATIONNEMENT-FIX-6 (point 3) — seuil PAR BÂTIMENT : le minimum passe à `min_m_grand_batiment`
+        # dès qu'un bâtiment dépasse `seuil_logements_grand_batiment` logements (Le Tampon Ua8.2 : 3 m, porté
+        # à 6 m si > 5 logements). On DIT quel seuil s'applique et pourquoi, au lieu d'appliquer 3 m aveuglément.
+        if (dc.min_m_grand_batiment is not None and dc.seuil_logements_grand_batiment is not None
+                and max_logts_bati > dc.seuil_logements_grand_batiment):
+            return (float(dc.min_m_grand_batiment),
+                    f"≥ {dc.min_m_grand_batiment:.1f} m (bâtiment de {max_logts_bati} logements > "
+                    f"{dc.seuil_logements_grand_batiment})",
+                    f"seuil relevé à {dc.min_m_grand_batiment:.0f} m : un bâtiment compte {max_logts_bati} "
+                    f"logements (> {dc.seuil_logements_grand_batiment})")
+        if dc.min_m_grand_batiment is not None and dc.seuil_logements_grand_batiment is not None:
+            return (float(dc.min_m or 0.0),
+                    f"≥ {dc.min_m:.1f} m (aucun bâtiment > {dc.seuil_logements_grand_batiment} logements)",
+                    f"seuil de base {dc.min_m:.0f} m : le plus grand bâtiment compte {max_logts_bati} "
+                    f"logements (≤ {dc.seuil_logements_grand_batiment})")
         return float(dc.min_m or 0.0), f"≥ {dc.min_m:.1f} m (distance fixe)", ""
     if dc.forme == "relative":
         base = 2.0 * h if dc.base_hauteur == "cumulee" else h
@@ -277,6 +779,12 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
         out.append(ControleReg("Emprise au sol", f"≤ {plafond:.0f} m² ({r.valeur:.0f} % de la surface du terrain)",
                                f"{cap.emprise_sol_m2:.0f} m²", REUSSI if ok else ECHOUE,
                                r.citation_complete, f"écart {plafond - cap.emprise_sol_m2:+.0f} m²"))
+    elif getattr(r, "absent", False):
+        # ETUDE-STATIONNEMENT-FIX-1 (LOT 5) — le PLU NE RÉGLEMENTE PAS l'emprise (silence prouvé, cité) :
+        # « Non réglementé » (sans objet), pas « Non effectué » (qui laisserait croire à une lacune LABUSE).
+        out.append(ControleReg("Emprise au sol", "non réglementé (silence prouvé)", f"{cap.emprise_sol_m2:.0f} m²",
+                               NON_APPLICABLE, r.citation_complete,
+                               detail="le règlement ne fixe pas d'emprise au sol dans cette zone"))
     else:
         out.append(ControleReg("Emprise au sol", "règle non validée", f"{cap.emprise_sol_m2:.0f} m²", NON_EFFECTUE))
 
@@ -344,13 +852,30 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                         f"{he.valeur:.0f} m partout. LABUSE le suppose (R+{cap.niveaux - 1} conservé) ; à CONFIRMER par "
                         f"l'architecte (partie aval possiblement R+{max(0, cap.niveaux - 2)}).")))
 
+    # ETUDE-STATIONNEMENT-FIX-1 — hauteur PRÈS DES LIMITES (ex. Ua10.3, bande de 3,60 m) : la règle EXISTE
+    # mais le moteur ne sait pas la chiffrer → « Non vérifié », jamais traitée comme absente.
+    bande = getattr(regles, "hauteur_bande_limite", None)
+    if bande:
+        _art = bande.get("article")
+        _cit = (f"PLU art. {_art}" if _art else "") + (f" · p. {bande['page_pdf']}" if bande.get("page_pdf") else "")
+        _cit = (_cit + (f" — « {bande['citation']} »" if bande.get("citation") else "")) or None
+        out.append(ControleReg("Hauteur près des limites", "règle existante, non chiffrable par le moteur",
+                               "à vérifier", A_CONFIRMER, _cit,
+                               detail="une hauteur réduite s'applique dans une bande le long des limites "
+                                      "séparatives (règle de gabarit) — non modélisée ici, à vérifier au projet"))
+
     # Prospect / hauteur relative (ex. L ≥ h/2) : non chiffrable par le moteur -> Non effectué
     if regles.prospect is not None:
+        # ETUDE-STATIONNEMENT-FIX-4 (LOT 3) — chaque « non vérifié » CITE sa règle exacte : le prospect porte
+        # désormais son article et sa page (HT0538 : Ud3.5 p. 85–86), plus en « détail » seul.
+        _pr = regles.prospect
+        _pcit = (f"PLU art. {_pr.article}" if getattr(_pr, "article", None) else "")
+        _pcit += (f" · p. {_pr.page_pdf}" if getattr(_pr, "page_pdf", None) else "")
+        _pcit = (_pcit + (f" — « {_pr.citation} »" if getattr(_pr, "citation", None) else "")) or None
         out.append(ControleReg("Prospect (hauteur relative)", "non chiffrable par le moteur",
                                "hauteur bornée par la seule règle absolue", A_CONFIRMER,
-                               citation=None,
-                               detail=(regles.prospect.citation or "règle de prospect L ≥ h/2 — "
-                                       "à vérifier par l'architecte")))
+                               citation=_pcit,
+                               detail=(_pr.citation or "règle de prospect L ≥ h/2 — à vérifier par l'architecte")))
     else:
         out.append(ControleReg("Prospect (hauteur relative)", "pas de règle de prospect", "—", NON_APPLICABLE))
 
@@ -359,8 +884,20 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     dans_zone = all(terrain.zone_implantation.buffer(_TOL_CONTENU).contains(b) for b in batis)
     if rv.validee and rs.validee:
         cit = " ; ".join(c for c in (rv.citation_complete, rs.citation_complete) if c)
-        out.append(ControleReg("Reculs", f"voie {rv.valeur:.0f} m · séparatives {rs.valeur:.0f} m",
-                               "bâti dans la zone d'implantation", REUSSI if dans_zone else ECHOUE, cit))
+        # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — « premier rideau » (implantation à l'alignement, ou sur les
+        # limites séparatives : Saint-Pierre Ud3.1/Ud3.2) est une règle de POSITION que ce moteur ne modélise
+        # pas : il applique un recul uniforme. « Bâti dans la zone » ne prouve donc PAS le respect du premier
+        # rideau → « Non vérifié » avec la règle citée, jamais « Reculs — Réussi ».
+        _rideau = "premier rideau" in cit.lower() or "limites séparatives et au maximum" in cit.lower()
+        if _rideau:
+            out.append(ControleReg("Reculs", f"voie {rv.valeur:.0f} m · séparatives {rs.valeur:.0f} m",
+                                   "règle de « premier rideau » (alignement / sur limites) non modélisée",
+                                   A_CONFIRMER if dans_zone else ECHOUE, cit,
+                                   detail="implantation en premier rideau (à l'alignement ou sur limites "
+                                          "séparatives) à vérifier au projet — non modélisée par ce moteur"))
+        else:
+            out.append(ControleReg("Reculs", f"voie {rv.valeur:.0f} m · séparatives {rs.valeur:.0f} m",
+                                   "bâti dans la zone d'implantation", REUSSI if dans_zone else ECHOUE, cit))
     else:
         out.append(ControleReg("Reculs", "règle non validée", "bâti dans la zone", NON_EFFECTUE))
 
@@ -375,13 +912,62 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     r = regles.pleine_terre
     if r.validee and r.valeur is not None:
         requis = contenance * r.valeur / 100.0
-        ok = cap.pleine_terre_m2 >= requis - 1e-6
-        out.append(ControleReg("Perméabilité (pleine terre)", f"≥ {requis:.0f} m² ({r.valeur:.0f} % de la surface du terrain)",
-                               f"{cap.pleine_terre_m2:.0f} m²", REUSSI if ok else ECHOUE,
-                               r.citation_complete, f"écart {cap.pleine_terre_m2 - requis:+.0f} m²"))
+        assez = cap.pleine_terre_m2 >= requis - 1e-6
+        # ETUDE-STATIONNEMENT-FIX-5 (point 4) — « Réussi » est réservé à ce qui est MESURÉ. La surface libre
+        # mesurée montre la PLACE DISPONIBLE, pas que la pleine terre sera plantée et perméable : si la place
+        # suffit, on dit « surface disponible : X pour Y exigés ; caractère planté et perméable à confirmer »
+        # (À confirmer), jamais « Réussi ». Si la place manque, c'est un ÉCHEC franc.
+        if assez:
+            out.append(ControleReg(
+                "Perméabilité (pleine terre)", f"≥ {requis:.0f} m² ({r.valeur:.0f} % de la surface du terrain)",
+                f"surface disponible {cap.pleine_terre_m2:.0f} m²", A_CONFIRMER, r.citation_complete,
+                detail="la surface libre mesurée suffit ; le caractère PLANTÉ et PERMÉABLE de la pleine terre "
+                       "reste à confirmer au projet (ce contrôle ne mesure que la place disponible)"))
+        else:
+            out.append(ControleReg(
+                "Perméabilité (pleine terre)", f"≥ {requis:.0f} m² ({r.valeur:.0f} % de la surface du terrain)",
+                f"surface disponible {cap.pleine_terre_m2:.0f} m²", ECHOUE, r.citation_complete,
+                f"écart {cap.pleine_terre_m2 - requis:+.0f} m² (place insuffisante)"))
     else:
         out.append(ControleReg("Perméabilité (pleine terre)", "règle non validée",
                                f"{cap.pleine_terre_m2:.0f} m²", NON_EFFECTUE))
+
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — COEFFICIENT DE BIOTOPE (CBS), exigence de sol DISTINCTE de la
+    # pleine terre : c'est une somme PONDÉRÉE de surfaces éco-aménageables (toiture végétalisée, dalle
+    # plantée, pleine terre…) que ce moteur ne sait pas calculer → affichée SÉPARÉMENT « à vérifier », jamais
+    # fondue dans la perméabilité (Saint-Pierre Ud5.1 : CBS 30 % AVEC au moins 20 % de pleine terre).
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — ADMISSION DE L'HABITAT sous condition d'un schéma d'affectation en
+    # annexe NON lu (ex. Saint-Louis UZ) : on N'ACCEPTE PAS la zone entière → « à vérifier » (bloquant pour un
+    # verdict « Exploitable »), avec la règle citée. L'étude est servie, mais son admission même reste à établir.
+    hav = getattr(regles, "habitat_a_verifier", None)
+    if isinstance(hav, dict) and (hav.get("citation") or hav.get("article")):
+        _cit = hav.get("citation")
+        if hav.get("article"):
+            _cit = f"{hav['article']}" + (f" · p. {hav['page_pdf']}" if hav.get("page_pdf") else "") + (f" — {_cit}" if _cit else "")
+        out.append(ControleReg("Admission de l'habitat", "soumise à un schéma d'affectation (annexe)",
+                               "à vérifier : l'habitat n'est pas admis sur toute la zone", A_CONFIRMER, _cit,
+                               detail="l'admission de l'habitat dépend du schéma d'affectation en annexe, non "
+                                      "lu par le moteur — à vérifier avant tout projet de logements"))
+
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — PENTE DE TOITURE (ex. Le Tampon Ud11.5) : le moteur ne dessine pas
+    # la toiture → règle de POSITION/forme non modélisée, affichée « Non vérifié » avec la règle citée (comme le
+    # premier rideau), jamais passée sous silence.
+    pt = getattr(regles, "pente_toiture", None)
+    if isinstance(pt, dict) and (pt.get("citation") or pt.get("article")):
+        _cit = pt.get("citation")
+        if pt.get("article"):
+            _cit = f"{pt['article']}" + (f" · p. {pt['page_pdf']}" if pt.get("page_pdf") else "") + (f" — {_cit}" if _cit else "")
+        out.append(ControleReg("Pente de toiture", "règle de pente non modélisée",
+                               "non vérifié (toiture non dessinée par le moteur)", A_CONFIRMER, _cit,
+                               detail="pente de toiture imposée par le PLU — à vérifier au projet d'architecte"))
+
+    rb = getattr(regles, "biotope", None)
+    if rb is not None and rb.validee and rb.valeur is not None:
+        _nom = (rb.nom or "coefficient de biotope (CBS)").strip()
+        out.append(ControleReg(_nom[:1].upper() + _nom[1:], f"≥ {rb.valeur:.0f} % de la surface du terrain",
+                               "non chiffré par le moteur (somme pondérée / surfaces éco-aménageables)", A_CONFIRMER,
+                               rb.citation_complete,
+                               detail="exigence de sol distincte de la pleine terre plantée — à vérifier au projet"))
 
     # ETUDE-V6-2 (Lot 3, correction §2) — ESPACES VERTS (part végétalisée du terrain, hors stationnement).
     # EV = espace libre végétalisable = pleine terre + surface sur dalle plantée (en sous-sol).
@@ -422,14 +1008,103 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     # la capacité en retirant la contrainte — l'inverse de la prudence voulue).
     if b.validee and cap.places_imposees is not None:
         ok = cap.places >= cap.places_imposees
-        out.append(ControleReg("Stationnement", f"≥ {cap.places_imposees} places (barème validé)",
+        # ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — l'exigence expose la formule RETENUE (la plus exigeante) et la
+        # part visiteur ; le détail porte la lecture écartée, pour que le document dise POURQUOI ce nombre.
+        vis = getattr(cap, "places_imposees_visiteurs", 0) or 0
+        res = getattr(cap, "places_imposees_residents", None)
+        attendu = f"≥ {cap.places_imposees} places (barème validé)"
+        if vis:
+            attendu += f" — dont {res} résident + {vis} visiteur"
+        det = [f"écart {cap.places - cap.places_imposees:+d}"]
+        if getattr(cap, "stationnement_formule", None):
+            det.append("formule retenue : " + cap.stationnement_formule)
+        for f in getattr(cap, "stationnement_formules_ecartees", ()) or ():
+            det.append("lecture écartée : " + f)
+        out.append(ControleReg("Stationnement", attendu,
                                f"{cap.places} {place_mot}", REUSSI if ok else ECHOUE,
-                               b.citation_complete, f"écart {cap.places - cap.places_imposees:+d}"))
+                               b.citation_complete, " · ".join(det)))
+    elif b.validee and cap.places_imposees is None:
+        # ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — barème VALIDÉ mais ne couvrant pas le programme dessiné (forme
+        # non modélisable ou typologie non prévue) : « Non vérifié », jamais « Réussi ». On n'invente rien.
+        out.append(ControleReg("Stationnement", "règle ne couvrant pas le programme dessiné",
+                               f"{cap.places} {place_mot}", A_CONFIRMER, b.citation_complete,
+                               detail="le barème validé ne s'applique pas au programme tel que dessiné — "
+                                      "nombre de places non vérifié ici (à confirmer au règlement)"))
     else:
         # ETUDE-V6 — barème manquant = ambiguïté (exigence non chiffrée) → À confirmer, pas « Non effectué ».
         # CAPACITE-1 (C4) — la règle EXISTE au PLU, elle n'est pas ingérée par LABUSE (jamais « non réglementé »).
         out.append(ControleReg("Stationnement", "règle existante, non ingérée par LABUSE", f"{cap.places} {place_mot}",
                                A_CONFIRMER, detail="règle de stationnement existante au PLU mais non ingérée par LABUSE — à vérifier au règlement"))
+
+    # ETUDE-STATIONNEMENT-FIX-2 — places PUBLIQUES (hors parcelle) : exigées, à réaliser sur le domaine
+    # public, PAS dessinées sur le terrain → affichées À PART, jamais ajoutées aux places à dessiner.
+    _pub = getattr(cap, "places_publiques_imposees", 0) or 0
+    if _pub:
+        out.append(ControleReg("Stationnement public (hors parcelle)", f"{_pub} places sur le domaine public",
+                               "non dessinées sur le terrain", A_CONFIRMER, b.citation_complete if b.validee else None,
+                               detail="places publiques exigées par le règlement, à réaliser hors de la parcelle — à confirmer"))
+
+    # ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — conditions NON MODÉLISABLES du barème (ex. « dont au moins 0,5 place
+    # à l'extérieur des espaces privatisés ») : affichées « à vérifier », JAMAIS comptées comme satisfaites.
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — la HAIE paysagère au pourtour des aires de stationnement EST
+    # mesurable : on confronte la distance aire de stationnement ↔ bâti à la largeur imposée (ex. Saint-Pierre
+    # Ud6 : 1,50 m). En deçà, c'est un ÉCHEC MESURÉ du plan (le pourtour ne tient pas la haie), pas un « à
+    # vérifier » (HT0538 : 1,39 m < 1,50 m). La « voie piétonne » exigée EN PLUS ne ferait que durcir le seuil.
+    _places_g = [o.geom_world for o in scene.of("place")]
+    _allees_g = [o.geom_world for o in scene.of("allee")]
+    _parking = unary_union(_places_g + _allees_g) if (_places_g or _allees_g) else None
+    _bati_g = unary_union(batis) if batis else None
+    for cond in (getattr(cap, "stationnement_conditions", ()) or ()):
+        _m = _HAIE_RE.search(cond)
+        if (_m and _parking is not None and not _parking.is_empty
+                and _bati_g is not None and not _bati_g.is_empty):
+            req = float(_m.group(1).replace(",", "."))
+            d = _parking.distance(_bati_g)
+            ok = d >= req - 0.01
+            out.append(ControleReg(
+                "Stationnement — haie paysagère", f"≥ {_fr(req)} m entre l'aire de stationnement et le bâti",
+                f"{_fr(round(d, 2))} m mesuré", REUSSI if ok else ECHOUE,
+                # FIX-4 (LOT 3) — cite la règle EXACTE (haie + voie piétonne, Ud6 p. 92) telle qu'au règlement.
+                cond,
+                detail="haie paysagère + voie piétonne au pourtour des aires de stationnement — mesuré au plan"))
+            continue
+        out.append(ControleReg("Stationnement — condition à vérifier", cond, "non modélisé",
+                               A_CONFIRMER, b.citation_complete if b.validee else None,
+                               detail="condition du barème non vérifiable par ce moteur — à confirmer au projet"))
+
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — LARGEUR DE DESSERTE : au-delà d'un seuil de logements, le règlement
+    # impose une voie/accès d'au moins N mètres (L'Étang-Salé UA3.1.2 : 5 m à partir de 7 logements). On MESURE
+    # la largeur de l'accès DESSINÉ (plus petite dimension de son rectangle orienté) et on la compare. En
+    # dessous, le plan ÉCHOUE (montré en rouge ; verdict « À compléter »), avec la règle citée.
+    _dess = getattr(regles, "desserte", None)
+    if (isinstance(_dess, dict) and _dess.get("largeur_min_m")
+            and cap.logements >= int(_dess.get("seuil_logements") or 0)):
+        _acc = [o.geom_local for o in scene.of("acces")]
+        _all = [o.geom_local for o in scene.of("allee")]
+        _pla = [o.geom_local for o in scene.of("place")]
+        req = float(_dess["largeur_min_m"])
+        au = unary_union([g if g.is_valid else g.buffer(0) for g in _acc]) if _acc else None
+        if au is not None and not au.is_empty and au.area >= 0.1 and _all and _pla:
+            # ETUDE-STATIONNEMENT-FIX-9 (relecture) — largeur du GOULET du chemin qui dessert EFFECTIVEMENT les
+            # places comptées, par le MÊME noyau roulant que le comptage (`_largeur_min_desserte` ⟶ `_desserte_core`).
+            # Une place comptée ⟹ goulet ≥ 2,40 m : les deux contrôles ne se contredisent plus.
+            _voie_u = unary_union(scene.voie_local) if scene.voie_local else None
+            larg = _largeur_min_desserte(_all, _pla, conv.allee_largeur_m, _acc, _voie_u,
+                                         assiette=getattr(scene, "assiette_local", None))
+            ok = larg >= req - 0.05
+            _dcit = (f"PLU art. {_dess['article']}" if _dess.get("article") else "")
+            _dcit += (f" · p. {_dess['page_pdf']}" if _dess.get("page_pdf") else "")
+            _dcit = (_dcit + (f" — « {_dess['citation']} »" if _dess.get("citation") else "")) or None
+            out.append(ControleReg(
+                "Largeur de desserte", f"≥ {_fr(req)} m (opération ≥ {int(_dess['seuil_logements'])} logements)",
+                f"{_fr(round(larg, 1))} m (goulet du chemin desservant les places)", REUSSI if ok else ECHOUE, _dcit,
+                detail="largeur du goulet du chemin qui dessert les places comptées (même passage roulant que le comptage)"))
+        else:
+            out.append(ControleReg(
+                "Largeur de desserte", f"≥ {_fr(req)} m (opération ≥ {int(_dess['seuil_logements'])} logements)",
+                "aucun accès dessiné", A_CONFIRMER,
+                (f"PLU art. {_dess.get('article')}" if _dess.get("article") else None),
+                detail="desserte à vérifier — aucun accès n'a pu être dessiné"))
 
     # ETUDE-V6-2 (Lot 3) — en SOUS-SOL, l'emprise du parking enterré doit tenir sous l'EMPRISE
     # RÉGLEMENTAIRE (CES × contenance) ; c'est ce contrôle (pas le comptage) qui plafonne la capacité.
@@ -476,7 +1151,12 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                                detail=(f"le règlement ne fixe pas de distance entre constructions ; "
                                        f"distance de convention {cmin:.0f} m appliquée au tracé (Estimé)")))
     elif dc.est_chiffrable:
-        requis, lib, mention = _distance_requise(dc, cap, conv)
+        # ETUDE-STATIONNEMENT-FIX-6 (point 3) — nombre de logements du bâtiment le plus peuplé (modules groupés
+        # par `ref`) : porte le seuil « grand bâtiment » (Le Tampon Ua8.2, 3 m → 6 m si > 5 logements).
+        from collections import Counter
+        _par_bati = Counter(o.ref for o in scene.of("module") if o.ref)
+        max_logts_bati = max(_par_bati.values(), default=getattr(cap, "logements", 0) or 0)
+        requis, lib, mention = _distance_requise(dc, cap, conv, max_logts_bati)
         ok = dmes >= requis - 1e-6
         out.append(ControleReg("Distance entre constructions", lib, f"{dmes:.1f} m mesurés",
                                REUSSI if ok else ECHOUE, dc.citation_complete, detail=(mention or None)))
@@ -485,7 +1165,21 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                                f"{nb_bati} bâtiments · {dmes:.1f} m mesurés", NON_EFFECTUE,
                                detail="distance inter-bâtiments non calibrée sur cette zone — à vérifier"))
 
-    out.append(ControleReg("Locaux vélos · déchets", "non modélisés", "—", NON_EFFECTUE))
+    # ETUDE-STATIONNEMENT-FIX-2 (reliquat #5) — stationnement VÉLO CHIFFRÉ quand le PLU le fixe (le moteur ne
+    # le dessine pas → « à prévoir : X », jamais « non modélisé »). Sinon « Non vérifié » (pas « sans règle »).
+    _par_pieces = [conv.modules[o.type_logement].pieces for o in scene.of("module")
+                   if o.type_logement in conv.modules]
+    _velo = (regles.stationnement.velo_requis(cap.logements, cap.sdp_m2, _par_pieces)
+             if regles.stationnement.validee else None)
+    if _velo is not None:
+        _cit = (regles.stationnement.velo or {}).get("citation")
+        out.append(ControleReg("Stationnement vélo", f"{_velo[1]} (servi au PLU)", f"à prévoir : {_velo[0]}",
+                               A_CONFIRMER, _cit,
+                               detail="exigence vélo chiffrée ; emplacement à confirmer (non dessiné par le moteur)"))
+    else:
+        out.append(ControleReg("Stationnement vélo", "norme non servie pour cette zone", "—", A_CONFIRMER,
+                               detail="à vérifier au règlement (local vélos) — non modélisé"))
+    out.append(ControleReg("Local déchets", "non modélisé", "—", NON_EFFECTUE))
 
     # PPR rouge (interdiction) : déduite de l'implantation, mais l'interdiction reste à CONFIRMER au
     # règlement (on la retire par prudence, ce n'est pas une preuve de constructibilité du reste).
@@ -522,6 +1216,32 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                                A_CONFIRMER, detail="servitude(s) présente(s) non interprétée(s) par ce moteur — à confirmer"))
     else:
         out.append(ControleReg("ER / EBC / SUP / servitudes", "absentes du terrain", "—", NON_APPLICABLE))
+
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — INVENTAIRE ZONE HUMIDE couvrant l'assiette : signalé AVANT le verdict
+    # (via `terrain.contraintes`), À CONFIRMER et BLOQUANT pour « Exploitable » (un inventaire sur toute
+    # l'assiette peut remettre en cause l'implantation même — AD0887 : « La Grande Ferme », 100 % de l'assiette).
+    _zhp = int(terrain.contraintes.get("zone_humide_pct", 0) or 0)
+    if _zhp >= 50:
+        out.append(ControleReg("Zone humide (inventaire)", f"inventaire couvrant {_zhp} % de l'assiette",
+                               "à vérifier : l'implantation peut être remise en cause", A_CONFIRMER,
+                               detail="inventaire de zone humide (couche cartographique) non interprété par ce "
+                                      "moteur ; recouvre le bâti proposé — à confirmer avant tout projet"))
+
+    # ETUDE-STATIONNEMENT-FIX-6 (point 1) — la zone ROUGE du PPR interdit le bâti ET le stationnement : le plan
+    # garde donc son bâti et TOUTES ses places HORS zone rouge. Mais quand le seul accès possible à la voie
+    # TRAVERSE la zone rouge (aucun point de voie atteignable hors zone), on conserve le plan et on SIGNALE la
+    # voie d'accès concernée : son admission dépend du règlement du PPR (une voie peut y être tolérée, pas du
+    # stationnement). Contrôle À CONFIRMER et BLOQUANT (jamais « Exploitable » tant que ce n'est pas tranché).
+    _app = float(getattr(scene, "acces_ppr_rouge_m2", 0.0) or 0.0)
+    if _app > 0.5:
+        out.append(ControleReg(
+            "Accès en zone rouge (PPR)", "bâti et places hors zone rouge ; voie d'accès traversante",
+            f"aucun raccord hors zone rouge trouvé pour ce plan ; voie d'accès traversant la zone rouge "
+            f"sur {_app:.0f} m²", A_CONFIRMER,
+            detail="le bâti et toutes les places sont hors zone rouge ; aucun raccord à la voie publique hors "
+                   "zone rouge n'a été trouvé pour ce plan, la voie d'accès traverse donc la zone rouge du plan "
+                   "de prévention — son admission (voie d'accès, pas de stationnement) est À CONFIRMER au "
+                   "règlement du PPR"))
     return out
 
 
@@ -558,7 +1278,12 @@ _A_CONFIRMER_BLOQUANTS = frozenset({
     # ETUDE-FIABLE-1 (LOT C5) — PPR bleu touchant bâtiment/accès/sous-sol : bloque « Exploitable » (comme
     # l'ancien contrôle « PPR zone bleue » qui, lorsqu'il touchait le bâti, rendait l'étude non exploitable).
     "Prescriptions PPR à vérifier",
-    "Stationnement", "Prospect (hauteur relative)", "ER / EBC / SUP / servitudes",
+    "Stationnement", "Stationnement — condition à vérifier",
+    "Admission de l'habitat",   # habitat sous condition d'un schéma d'affectation non lu (Saint-Louis UZ)
+    "Zone humide (inventaire)",   # FIX-4 — inventaire couvrant l'assiette : peut remettre en cause l'implantation
+    "Accès en zone rouge (PPR)",  # FIX-6 — voie d'accès traversant la zone rouge : admission à confirmer au PPR
+    "Hauteur près des limites",
+    "Prospect (hauteur relative)", "ER / EBC / SUP / servitudes",
     "Accès (voie)",   # RECETTE-4 — accès hypothétique (aucune voie classée) → verdict non « Exploitable »
 })
 

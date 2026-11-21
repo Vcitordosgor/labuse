@@ -1,0 +1,32 @@
+{
+ "insee": "97418",
+ "commune": "Sainte-Marie",
+ "regles": [
+  {
+   "id": "97418-R1",
+   "article": "U13 - 13.2",
+   "mode": "par_typologie",
+   "zones": [
+    "UA",
+    "UAb",
+    "UAz",
+    "UB",
+    "UC",
+    "UC1",
+    "UC2",
+    "UD",
+    "UD1",
+    "1AUb",
+    "1AUc",
+    "2AUa",
+    "2AUb",
+    "2AUc"
+   ],
+   "pages": [
+    25,
+    26,
+    27
+   ]
+  }
+ ]
+}

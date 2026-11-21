@@ -28,6 +28,7 @@ from . import rendu as rendu_mod
 from .conventions import avec_surcharges, charger as charger_conventions
 from .controles import (A_CONFIRMER, ECHOUE, NON_APPLICABLE, NON_EFFECTUE, REUSSI,
                         verdict_global)
+from .regles import quantifier_surface_m2
 
 OBJECTIFS = {"equilibre", "plus_logements", "plus_surface", "plus_simple"}
 
@@ -390,7 +391,8 @@ def _appliquer_programme_au_scenario(scenario, demande: dict, conv, regles) -> b
     scene.objets = [o for o in scene.objets if o.kind != "espace_libre"]
     poser_espaces_libres(scene)
     scene.finaliser_monde()
-    newcap = cap_mod.calculer(scene, conv, regles, scenario.terrain)
+    newcap = cap_mod.calculer(scene, conv, regles, scenario.terrain,
+                              getattr(scenario.capacite, "type_projet", "collectif"))
     scenario.capacite = newcap
     scenario.checks_geo = ctrl_mod.verifier_geometrie(scene, scenario.terrain, conv, newcap, regles)
     scenario.controles = ctrl_mod.controles_reglementaires(scene, scenario.terrain, conv, newcap, regles)
@@ -521,7 +523,9 @@ def _programme_vers_demande(programme: dict) -> tuple[dict[str, int], list[str],
             demande[t] = demande.get(t, 0) + n
         s = ligne.get("surface_m2")
         if s:
-            surfaces[t] = float(s)
+            # ETUDE-STATIONNEMENT-FIX-9 (point 3) — on QUANTIFIE la surface saisie au millième UNE FOIS, à
+            # l'entrée : cette même valeur sert ensuite à détecter la borne, calculer et afficher.
+            surfaces[t] = quantifier_surface_m2(s)
     if not demande:
         return {}, [], surfaces
     g = 0
@@ -613,8 +617,14 @@ _L15134 = {
 _RAYON_TCSP_M = 800
 
 
-def _ratio_l15135(sous_rayon: bool) -> float:
-    return 0.5 if sous_rayon else 1.0
+def _ratio_l15135(sous_rayon: bool, type_projet: str = "social") -> float:
+    # ETUDE-STATIONNEMENT-FIX-3/4 — univ/âgées : 0,5 place/logt (règle d'usage, pas de desserte). Logement
+    # AIDÉ : 1 /logt PAR DÉFAUT ; le 0,5 < 800 m dépend de la QUALITÉ de la desserte (non connue de LABUSE)
+    # → conditionnel, affiché « possible si desserte établie », PAS appliqué d'office. L'affiché colle à
+    # l'appliqué (`moteur._plafond_l151` : cap=0,5 univ/âgées, 1 aidé ; 0,5 aidé = `conditionnel`).
+    if type_projet in ("senior", "etudiante"):
+        return 0.5
+    return 1.0
 
 
 def _tcsp_sous_rayon(session, idus: list[str]) -> tuple[bool, Optional[int]]:
@@ -664,11 +674,38 @@ def _regle_stationnement_courte(b) -> Optional[str]:
     def nb(x):
         return f"{x:g}".replace(".", ",")
     if b.mode == "par_logement" and b.flat_places is not None:
+        # ETUDE-STATIONNEMENT-FIX-6 (point 2) — barème À SEUIL DE SURFACE (La Plaine Ub12.2 : 1 place < 30 m²,
+        # 1,5 place ≥ 30 m²) : on affiche la RÈGLE À SEUIL, pas un « 1,5 place / logement » tronqué qui cachait
+        # la moitié basse. Le résumé dit donc exactement ce que le moteur applique par logement selon sa surface.
+        _seuil = getattr(b, "seuil_surface_m2", None)
+        _sous = getattr(b, "places_sous_seuil", None)
+        if _seuil is not None and _sous is not None:
+            return (f"{nb(_sous)} place{'s' if _sous >= 2 else ''} / logement "
+                    f"< {nb(_seuil)} m² · {nb(b.flat_places)} place"
+                    f"{'s' if b.flat_places >= 2 else ''} / logement ≥ {nb(_seuil)} m²")
         # DOCS-COHERENCE-1 (F9/A6) — format client « 2 places / logement » (jamais « 2 place/logt »).
         return f"{nb(b.flat_places)} place{'s' if b.flat_places >= 2 else ''} / logement"
+    # ETUDE-STATIONNEMENT-FIX-2 (LOT 4) — barème « par tranche de m² de SDP » : règle courte DÉCRITE (sinon
+    # None → l'Étude le déclarait « non vérifié » tout en affichant sa citation validée — HT0538/Ud6).
+    if b.mode == "par_m2_sdp" and b.m2_par_place:
+        return f"1 place / {nb(b.m2_par_place)} m² de surface de plancher"
+    # ETUDE-STATIONNEMENT-FIX-2 (reliquat #6) — forme COMPLÈTE : par type de logement ET par taille d'opération,
+    # pour que le Dossier lise la MÊME règle que l'Étude (Le Tampon : « 0,5 pl. ≤T1 · 1 pl. T2 · 1,5 pl. T3+ ·
+    # 1,5 pl./logt si opération > 5 logts », JAMAIS un « 1 place / logement » tronqué). Les lignes d'OPÉRATION
+    # portent leur condition de seuil ; les lignes de base, leur tranche de pièces (Tn = n pièces principales).
     parts = []
     for lg in b.lignes:
         if lg.destination and lg.destination != "collectif":
+            continue
+        _pm = getattr(lg, "par_m2", None)   # ligne « 1 place / N m² de SDP » : places est None (FIX-5 : NE PLUS
+        #                                     la formater comme un par-logement → crash AH0853/Trois-Bassins)
+        if lg.role == "operation":
+            seuil = f" si opération > {lg.logements_min - 1} logts" if lg.logements_min else " (opération)"
+            _arr = " (arrondi à l'entier inférieur)" if getattr(lg, "arrondi", None) == "inferieur" else ""
+            if _pm:
+                parts.append(f"1 pl./{nb(_pm)} m²{seuil}{_arr}")
+            elif lg.places is not None:
+                parts.append(f"{nb(lg.places)} pl./logt{seuil}{_arr}")
             continue
         pmin, pmax = lg.pieces_min, lg.pieces_max
         if pmin and pmax and pmin != pmax:
@@ -681,8 +718,26 @@ def _regle_stationnement_courte(b) -> Optional[str]:
             lab = f"≤T{pmax}"
         else:
             lab = "logt"
-        parts.append(f"{nb(lg.places)} pl. {lab}")
-    return " · ".join(parts) if parts else None
+        if _pm:
+            parts.append(f"1 pl./{nb(_pm)} m² ({lab})")
+        elif lg.places is not None:
+            parts.append(f"{nb(lg.places)} pl. {lab}")
+    if not parts:
+        return None
+    # ETUDE-STATIONNEMENT (merge moteur-verite / chirurgical LOT J pt3a) — paliers SÉPARÉS PAR « ; » : c'est
+    # ce séparateur qui signale au Dossier un barème MULTI-PALIERS (par type de logement ET taille d'opération),
+    # qui RENVOIE alors à l'article au lieu d'afficher un nombre partiel. Le barème à SEUIL de surface (La Plaine)
+    # reste séparé par « · » (sa branche dédiée) et garde donc son détail — les deux lectures ne se mélangent pas.
+    rule = "; ".join(parts)
+    # ETUDE-STATIONNEMENT-FIX-5 (point 2) — la règle SERVIE au Dossier doit être ENTIÈRE, comme l'Étude :
+    # l'ARRONDI (inférieur) et la clause des PLACES HORS ESPACES PRIVATISÉS en font partie (Le Tampon Ud12.2).
+    if getattr(b, "arrondi", None) == "inferieur":
+        rule += " (arrondi à l'entier inférieur)"
+    for c in (getattr(b, "conditions", ()) or ()):
+        if "privatis" in c.lower():
+            rule += " · " + c
+            break
+    return rule
 
 
 def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, insee: str) -> dict:
@@ -700,31 +755,37 @@ def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, i
         "etat": ("règle vérifiée" if b.validee else "document manquant — à confirmer"),
         # ETUDE-V6-3 (item 3) — la RÈGLE en clair (ex. « 1 pl. T1–T2 · 1,5 pl. T3–T4 ») pour le récap.
         "regle_courte": _regle_stationnement_courte(b),
+        # ETUDE-STATIONNEMENT-FIX-9 (point 3) — bornes de surface (seuils) pour l'affichage décimal près d'un seuil.
+        "bornes_surface_m2": (b.bornes_surface_m2() if hasattr(b, "bornes_surface_m2") else []),
     }
     sous_rayon, dist = _tcsp_sous_rayon(session, idus)
     cat = _L15134.get(type_projet)
     plafond = None
     if cat:
         # L151-35 — logement aidé / senior / résidence universitaire : au plus 1 place/logt, 0,5 si < 800 m.
-        ratio = _ratio_l15135(sous_rayon)
+        ratio = _ratio_l15135(sous_rayon, type_projet)
+        # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — plafond CONDITIONNEL de 0,5 : pour un logement aidé à moins de
+        # 800 m, le 0,5 n'est possible QUE si la qualité de la desserte est établie → affiché « possible »,
+        # jamais imposé d'office (univ/âgées : 0,5 ferme, pas de condition).
+        ratio_cond = 0.5 if (type_projet == "social" and sous_rayon) else None
         plafond = {
             "categorie": cat, "reference": "L151-35", "ratio_plafond": ratio,
+            "ratio_conditionnel": ratio_cond,
             # clé historique (lue par l'écran) conservée ; le seuil est désormais 800 m (loi 2025-1129).
             "condition_tcsp_sous_500m": sous_rayon, "rayon_tcsp_m": _RAYON_TCSP_M, "distance_tcsp_m": dist,
             "eligibilite_categorie": "À confirmer", "statut": "À confirmer",
-            # le plafond L151-35 (≤ 1/logt) vise la catégorie quelle que soit la distance ; la condition
-            # TCSP < 800 m ne concerne QUE l'abaissement à 0,5 (c'est lui qu'on chiffre en « capacité réduite »).
             "applicable_si_eligible": sous_rayon,
             "reduction_sous_500m": sous_rayon,
             "citation": (
                 f"Code de l'urbanisme L151-35 : pour un(e) {cat}, il ne peut être exigé plus de {ratio:g} "
                 f"aire de stationnement par logement"
-                + (" (terrain à moins de 800 m d'un transport collectif en site propre bien desservi, loi "
-                   "2025-1129)" if sous_rayon
-                   else " ; ce plafond est abaissé à 0,5 à moins de 800 m d'un tel transport (loi 2025-1129)")
+                + (f" ; plafond de 0,5 place/logement POSSIBLE si la qualité de la desserte (transport collectif "
+                   "en site propre bien desservi, < 800 m, loi 2025-1129) est ÉTABLIE — non imposé d'office"
+                   if ratio_cond else "")
                 + " — le PLU ne s'applique que s'il est plus favorable."),
             "note": ("Le nom « " + type_projet + " » ne prouve pas l'éligibilité juridique à la catégorie "
-                     "L151-34 ; à confirmer. Le ratio affiché est le plafond LÉGAL, pas une règle du PLU."),
+                     "L151-34 ; à confirmer. Le 0,5 place/logement dépend en outre de la QUALITÉ de la desserte, "
+                     "non établie par LABUSE : il reste possible, pas imposé."),
         }
     elif type_projet == "collectif" and sous_rayon:
         # L151-36 — autres logements : au plus 1 place/logt, SEULEMENT à moins de 800 m d'un TCSP.
@@ -915,6 +976,106 @@ def _lotissement_payload(session, idus: list[str], entree: dict) -> dict:
 
 
 # ------------------------------------------------------------------ FAISA-REGLES-1 (E-055, D-004)
+def _refus_constructibilite(session, idus: list[str]):
+    """ETUDE-STATIONNEMENT-FIX-1 — verdict partagé `potentiel_batir` : si AUCUNE parcelle de l'assiette n'est
+    constructible, renvoie (zone_lib, motif) pour un REFUS immédiat de l'Étude ; sinon None (on étudie).
+    Lit le même verdict que les autres documents — jamais un re-calcul divergent."""
+    from labuse.faisabilite.potentiel_batir import potentiel_batir_batch
+    fermer = False
+    if session is None:
+        from labuse.db import session_scope
+        _cm = session_scope(); session = _cm.__enter__(); fermer = True
+    try:
+        verdicts = potentiel_batir_batch(session, idus)
+    finally:
+        if fermer:
+            _cm.__exit__(None, None, None)
+    construct = [(i, v) for i, v in verdicts.items() if v.get("constructible")]
+    if construct:
+        # ETUDE-STATIONNEMENT-FIX-1 — « habitat secondaire » : si le logement n'est permis dans la zone que
+        # comme LOGEMENT DE FONCTION (employés, gardiennage, personnel…), ce n'est PAS un programme
+        # d'habitation chiffrable → l'Étude refuse avec ce motif (au lieu de dessiner un immeuble de logements).
+        # FIX-2 (LOT 2) — ne refuser QUE si TOUTES les parcelles constructibles sont en logement de fonction :
+        # une seule parcelle « fonction » ne doit pas condamner un projet multi-parcelles dont d'autres
+        # parcelles portent un vrai programme d'habitation.
+        non_fonction = [(idu, v) for idu, v in construct
+                        if not (v.get("zone_lib") and _logement_fonction_seulement(idu[:5], v.get("zone_lib")))]
+        if non_fonction:
+            return None   # au moins une parcelle porte un vrai programme d'habitation → on étudie
+        zone = construct[0][1].get("zone_lib")
+        return (zone, "Logement de fonction uniquement (employés / gardiennage) — pas un programme "
+                      "d'habitation chiffrable dans cette zone")
+    # toutes fermées : motif de celle qui porte le plus de contexte (zone connue), sinon la première
+    principal = max(verdicts.values(), key=lambda v: (v.get("zone_lib") is not None, v.get("sdp_restante_m2") or 0))
+    return (principal.get("zone_lib"), principal.get("motif") or "Parcelle non constructible")
+
+
+_FONCTION_MARQ = ("de fonction", "gardien", "surveillance", "personnel", "employé", "usagers des équipement",
+                  "fonctionnement", "nécessaires à la direction", "indispensable au fonctionnement")
+# FIX-2 (LOT 2) — marques d'une VRAIE ouverture de l'habitation ordinaire (≠ logement de fonction). Si l'une
+# figure, la zone n'est PAS « fonction seulement » : Saint-Louis UZ (« maximum 1 logement individuel » dans les
+# espaces d'habitat) et Saint-Paul U1a (quota de logements locatifs sociaux) ouvrent un programme d'habitation.
+_HABITAT_OUVERT = ("logement individuel", "logements individuels", "logement collectif", "logements collectifs",
+                   "locatifs sociaux", "logements aidés", "logement aidé", "accession", "mixité sociale",
+                   "llts", "lls", "pls", "habitat dominant", "dominantes en habitat")
+
+
+def _zone_doc(insee: str, zone: str, _prof: int = 0):
+    """Résout la définition d'une zone en SUIVANT les renvois (une sous-zone ex. Uac/1AUe hérite du barème ET
+    des restrictions de sa zone parente ex. Ua/Ue). Renvoie (zv, zone_effective) ou (None, None)."""
+    from labuse.plu import destinations as D
+    doc = D._doc(insee) or {}
+    zones = doc.get("zones") or {}
+    zv = zones.get(zone)
+    if not isinstance(zv, dict):
+        norm = {str(k).lower(): k for k in zones}
+        hit = norm.get(str(zone).lower())
+        zv = zones.get(hit) if hit else None
+        zone = hit or zone
+    if not isinstance(zv, dict):
+        return None, None
+    # renvoi vers une zone parente : hériter si la zone elle-même n'exprime pas le logement.
+    ren = zv.get("renvoi") or zv.get("parent") or zv.get("ref_zone")
+    if ren and _prof < 4 and not (zv.get("sous_destinations") or {}).get("logement"):
+        parent, pz = _zone_doc(insee, ren, _prof + 1)
+        if isinstance(parent, dict):
+            return parent, pz
+    return zv, zone
+
+
+def _logement_fonction_seulement(insee: str, zone: str) -> bool:
+    """Le logement n'est admis dans la zone QUE comme logement de fonction (pas un programme d'habitation) :
+    sous-destination `logement` sous condition, condition citant fonction/gardiennage/surveillance/direction,
+    ET aucune ouverture de l'habitation ordinaire. Suit les renvois vers la zone parente (Uac→Ua, 1AUe→Ue)."""
+    zv, _z = _zone_doc(insee, zone)
+    if not isinstance(zv, dict):
+        return False
+    lg = (zv.get("sous_destinations") or {}).get("logement")
+    if not isinstance(lg, dict) or lg.get("statut") != "sous_condition":
+        return False
+    txt = f"{lg.get('condition') or ''} {lg.get('citation') or ''}".lower()
+    if any(m in txt for m in _HABITAT_OUVERT):
+        return False   # la zone ouvre un VRAI programme d'habitation (social, individuel, habitat dominant)
+    return any(m in txt for m in _FONCTION_MARQ)
+
+
+def _habitat_sous_schema(insee: str, zone: str) -> Optional[dict]:
+    """ETUDE-STATIONNEMENT-FIX-3 (reliquat) — l'habitat est admis SOUS CONDITION d'un schéma d'affectation en
+    ANNEXE non lu (ex. Saint-Louis UZ : selon le schéma, l'espace est « activités tertiaires » — logement de
+    gardiennage seulement — ou « affectations dominantes en habitat ») : on ne peut pas statuer sur l'admission
+    de la zone entière → « à vérifier ». Renvoie {article, page_pdf, citation} ou None. Suit les renvois."""
+    zv, _z = _zone_doc(insee, zone)
+    if not isinstance(zv, dict):
+        return None
+    lg = (zv.get("sous_destinations") or {}).get("logement")
+    if not isinstance(lg, dict) or lg.get("statut") != "sous_condition":
+        return None
+    txt = f"{lg.get('condition') or ''} {lg.get('citation') or ''}".lower()
+    if any(m in txt for m in ("schéma", "schema", "annexe")):
+        return {"article": lg.get("article"), "page_pdf": lg.get("page_pdf"), "citation": lg.get("citation")}
+    return None
+
+
 def _payload_hors_perimetre(session, idus: list[str], entree: dict, exc) -> dict:
     """Payload de REFUS quand la zone ne permet pas de chiffrer un programme : RNU (aucune zone PLU
     opposable, E-055) ou zone A/N non constructible (D-004). Aucun logement chiffré ; le motif est DIT.
@@ -1017,6 +1178,17 @@ def etudier_payload(session, entree: dict) -> dict:
     # scénarios d'implantation. Même borne de temps (la route 30 s enveloppe cet appel) et même message.
     if type_projet == "lotissement":
         return _lotissement_payload(session, idus, entree)
+
+    # ETUDE-STATIONNEMENT-FIX-1 — l'Étude lit le MÊME verdict de constructibilité que tous les autres
+    # documents (`potentiel_batir`, un seul verdict partout) et REFUSE immédiatement, avec le motif, SANS
+    # lancer le solveur, pour toute parcelle NON CONSTRUCTIBLE quelle qu'en soit la cause (habitat interdit,
+    # zone rouge du PPR, zone fermée, A/N…). Évite le « au mieux ~N logements » après 108 s sur une parcelle
+    # que le Dossier/Gabarit/pré-dossier refusent déjà (audit écrans 97404000AM0838, zone UE habitat interdit).
+    _ferme = _refus_constructibilite(session, idus)
+    if _ferme is not None:
+        return _payload_hors_perimetre(session, idus, entree,
+                                       moteur_mod.EtudeHorsPerimetre("non_constructible", _ferme[1],
+                                                                     zone_dominante=_ferme[0]))
 
     # hypothèses modifiables → conventions surchargées
     hyp = entree.get("hypotheses") or {}
@@ -1208,10 +1380,48 @@ def etudier_payload(session, entree: dict) -> dict:
         grille_note = ("Recherche sur grille simplifiée (grande assiette) — le maximum servi est un plancher, "
                        "la capacité réelle peut être légèrement supérieure.")
 
-    # ETUDE-V6 (Lot B) — verdict GLOBAL de l'étude (3 libellés mandat) : sur la 1ʳᵉ variante PRÉSENTE
-    # (votre programme en tête), sinon « impossible pour cause établie » si rien n'est faisable.
+    # ETUDE-V6 (Lot B) — verdict GLOBAL de l'étude, sur la 1ʳᵉ variante PRÉSENTE (votre programme en tête).
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — si AUCUNE variante n'est faisable alors que la ZONE EST
+    # CONSTRUCTIBLE (on est passé après le refus « hors périmètre » : la non-constructibilité réglementaire est
+    # déjà traitée là), on ne conclut PAS à une « Impossible pour cause établie » (qui dirait une interdiction
+    # du PLU) : la recherche n'a simplement trouvé aucun plan sous ces hypothèses (assiette trop étroite,
+    # reculs, stationnement). Cas des assemblages dont la part d'habitat (UB) est une bande étroite.
     verdict = next((v["verdict"] for v in variantes_pub if not v.get("absente")),
-                   "Impossible pour cause établie")
+                   "Aucun plan trouvé sous ces hypothèses")
+    # ETUDE-STATIONNEMENT-FIX-5 (point 3) — UN SEUL message, cohérent avec le titre : quand le verdict est
+    # « Aucun plan trouvé sous ces hypothèses », le message ne doit PLUS commencer par « simulation impossible »
+    # (le titre et le texte se contredisaient). On ne garde que la RAISON, capitalisée.
+    if verdict == "Aucun plan trouvé sous ces hypothèses" and isinstance(message, str):
+        _m = message.strip()
+        if _m.lower().startswith("simulation impossible"):
+            _m = _m.split(":", 1)[1].strip() if ":" in _m else ""
+            message = (_m[:1].upper() + _m[1:]) if _m else "Aucune implantation n'a pu être dessinée sous ces hypothèses."
+
+    # ETUDE-STATIONNEMENT-FIX-6 (point 1, option A) — quand le stationnement AÉRIEN ne donne AUCUN plan sous
+    # ces hypothèses (ex. L'Étang-Salé, grand programme sur terrain étroit : le pavage dense ne sait pas
+    # raccorder l'accès à la voie), on CALCULE et PRÉSENTE la variante en SOUS-SOL, qui tient (places au −1,
+    # sol libéré), avec ses chiffres et ses contrôles. Second passage en mode sous-sol, uniquement en repli :
+    # ne touche NI à la recherche aérienne NI au placement.
+    repli_sous_sol = None
+    if (verdict == "Aucun plan trouvé sous ces hypothèses" and stationnement == "aerien"
+            and demande and type_projet != "lotissement"):
+        try:
+            r_sc, r_var, _rd, _rm, r_ter, r_reg, r_cv, _rsx = moteur_mod.etudier_complet(
+                session=session, idus=idus, objectif=objectif, conv=conv,
+                programme=demande or None, repartition=repartition, max_scenarios=1,
+                stationnement_mode="sous_sol", niveaux_sous_sol=niveaux_sous_sol, type_projet=type_projet)
+            _best_ss = next((s for _r, s, _rz in r_var if _r == "votre_programme" and s is not None),
+                            (r_sc[0] if r_sc else next((s for _r, s, _rz in r_var if s is not None), None)))
+            if _best_ss is not None:
+                if demande:
+                    _appliquer_programme_au_scenario(_best_ss, demande, conv, r_reg)
+                repli_sous_sol = _variante_public("sous_sol_repli", _best_ss, r_ter, r_cv, r_reg, demande)
+                _rss = repli_sous_sol.get("resume") or {}
+                message = ((message + " ") if message else "") + (
+                    f"En stationnement sous-sol, la variante tient ({_rss.get('logements')} logements, "
+                    f"{_rss.get('places')} places) — chiffres et contrôles dans « Variante en sous-sol » ci-dessous.")
+        except Exception:  # noqa: BLE001 — le repli sous-sol est un bonus, jamais bloquant
+            logging.getLogger("labuse").exception("étude v6 : repli sous-sol impossible")
 
     # ETUDE-V6 (Lot C) — régimes de stationnement (règle générale PLU + plafond national à confirmer),
     # et capacité SOUS le régime réduit (2ᵉ passage moteur au ratio plafonné), seulement si le plafond est
@@ -1321,6 +1531,9 @@ def etudier_payload(session, entree: dict) -> dict:
         "variantes": variantes_pub,
         "depassement": depassement,
         "capacite_maximale": capacite_maximale,
+        # ETUDE-STATIONNEMENT-FIX-6 (point 1, option A) — variante SOUS-SOL présentée quand l'aérien ne tient
+        # pas (None sinon) : la solution qui tient, avec ses chiffres et ses contrôles.
+        "repli_sous_sol": repli_sous_sol,
         # FAISA-REGLES-1 (D-003/E-057) — note si la grille a été simplifiée (grande assiette) ; None sinon.
         "grille_note": grille_note,
         # ETUDE-FIABLE-1 (LOT B5) — état de la recherche (complete / partielle / non_aboutie) + libellé.

@@ -82,16 +82,131 @@ zones:
             la marge d'isolement minimale doit être de 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2
+        par_typologie:
+          statut: valide
           article: UA 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
-          citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement. [Art.11]
-            HABITAT COLLECTIF - chambre individuelle 0,5 place par chambre, - studio et 2 pièces 1 place par
-            logement, - 3 et 5 pièces 1,5 place par logement, - 6 pièces et plus 2 places par logement. HABITAT
-            INDIVIDUEL 2 places par logement
-          statut: valide
-          raison: citation non retrouvée (recouvrement 44%)
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          citation: 'Les constructions neuves à usage d’habitation collective ou d’activités, les opérations grou-
+
+            pées, auront l’obligation d’avoir un local d’une superficie suffisante pour recevoir les divers
+
+            conteneurs liés à la collecte sélective des ordures ménagères.
+
+            Un emplacement sur l’unité foncière, situé en limite de propriété sera prévu et aménagé afin
+
+            de permettre le stationnement des différents containers en vue de leur collecte sans qu’ils
+
+            1 Arrêté du 6 mai 1996 modifié par l''arrêté du 3 décembre 1996 après avis du Conseil supérieur d''hygiène
+
+            publique de France, de la mission interministérielle de l''eau et du Comité national de l''eau (CGCT, art. R.
+
+            2224-22 partiel)(¨ Arr. 1er, 6 mai 1996, art. 1er, al. 1er
+
+            2 Circ. N° 97-49, 22 mai 1997, , ann. 3, § 1.1, al. 1er)., ann. 1, § 7.2 partiel
+
+            PLU DE SAINT-LEU • REGLEMENT ECRIT ACTUALISE • DUTEILH-PERRAU URBANISME ET ENVIRONNEMENT
+
+            13
+
+            ARTICLE 10 - ALIGNEMENT
+
+            Définition :
+
+            à créer, ou à toute limite s’y substituant et figurant aux documents graphiques (largeurs de
+
+            plates-formes, emplacements réservés, espaces publics …).
+
+            ARTICLE 11 - NORMES DE STATIONNEMENT
+
+            La règle applicable aux constructions ou établissements non prévus ci-dessous est celle
+
+            auxquels ces établissements sont le plus directement assimilables. Conformément à l’article
+
+            R.111-4 du code de l’urbanisme, il ne peut être exigé la réalisation de plus d’une aire de
+
+            stationnement par logement lors de la construction de logements locatifs financés avec un
+
+            prêt aidé par l’Etat.
+
+            L’obligation de réaliser des aires de stationnement n’est pas applicable aux travaux de
+
+            transformation ou d’amélioration de bâtiments affectés à des logements locatifs financés
+
+            avec un prêt aidé par l’Etat, y compris dans le cas où ces travaux s’accompagnent de la
+
+            création de surfaces hors œuvre nette dans la limite d’un plafond de 50 % de la surface hors
+
+            œuvre nette existant avant le commencement des travaux.
+
+            Les règles suivantes s’appliquent à l’ensemble des zones
+
+            DESIGNATION DE LA CONSTRUCTION
+
+            AIRES DE STATIONNEMENT A PREVOIR
+
+            HABITAT COLLECTIF
+
+            - chambre individuelle
+
+            - studio et 2 pièces
+
+            - 3 et 5 pièces
+
+            - 6 pièces et plus
+
+            0,5 place par chambre,
+
+            1 place par logement,
+
+            1,5 place par logement,
+
+            2 places par logement.
+
+            HABITAT INDIVIDUEL
+
+            2 places par logement
+
+            LOTISSEMENT
+
+            à usage d’habitation et groupe d’habitations
+
+            2 places par logement dont 1 au moins sur lot
+
+            LOTISSEMENT
+
+            à usage d’activités
+
+            1 place par lot à prévoir sur voirie
+
+            FOYER DE PERSONNES AGEES
+
+            1 place pour 10 logements
+
+            ACTIVITES'
+          detail:
+          - destination: collectif
+            pieces_max: 2
+            places: 1
+            tranche: studio et 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            pieces_max: 5
+            places: 1.5
+            tranche: 3 et 5 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 6
+            places: 2
+            tranche: 6 pièces et plus
+            role: base
+          - destination: individuel
+            places: 2
+            tranche: habitat individuel
+            role: base
       mixite:
         seuil_m2: 600
         seuil_type: surface_plancher_shon
@@ -461,14 +576,131 @@ zones:
             la marge d'isolement minimale doit être de 3,00m.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2
+        par_typologie:
+          statut: valide
           article: UB 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
-          citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
-          statut: valide
-          raison: citation non retrouvée (recouvrement 33%)
-          note: "PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales))."
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          citation: 'Les constructions neuves à usage d’habitation collective ou d’activités, les opérations grou-
+
+            pées, auront l’obligation d’avoir un local d’une superficie suffisante pour recevoir les divers
+
+            conteneurs liés à la collecte sélective des ordures ménagères.
+
+            Un emplacement sur l’unité foncière, situé en limite de propriété sera prévu et aménagé afin
+
+            de permettre le stationnement des différents containers en vue de leur collecte sans qu’ils
+
+            1 Arrêté du 6 mai 1996 modifié par l''arrêté du 3 décembre 1996 après avis du Conseil supérieur d''hygiène
+
+            publique de France, de la mission interministérielle de l''eau et du Comité national de l''eau (CGCT, art. R.
+
+            2224-22 partiel)(¨ Arr. 1er, 6 mai 1996, art. 1er, al. 1er
+
+            2 Circ. N° 97-49, 22 mai 1997, , ann. 3, § 1.1, al. 1er)., ann. 1, § 7.2 partiel
+
+            PLU DE SAINT-LEU • REGLEMENT ECRIT ACTUALISE • DUTEILH-PERRAU URBANISME ET ENVIRONNEMENT
+
+            13
+
+            ARTICLE 10 - ALIGNEMENT
+
+            Définition :
+
+            à créer, ou à toute limite s’y substituant et figurant aux documents graphiques (largeurs de
+
+            plates-formes, emplacements réservés, espaces publics …).
+
+            ARTICLE 11 - NORMES DE STATIONNEMENT
+
+            La règle applicable aux constructions ou établissements non prévus ci-dessous est celle
+
+            auxquels ces établissements sont le plus directement assimilables. Conformément à l’article
+
+            R.111-4 du code de l’urbanisme, il ne peut être exigé la réalisation de plus d’une aire de
+
+            stationnement par logement lors de la construction de logements locatifs financés avec un
+
+            prêt aidé par l’Etat.
+
+            L’obligation de réaliser des aires de stationnement n’est pas applicable aux travaux de
+
+            transformation ou d’amélioration de bâtiments affectés à des logements locatifs financés
+
+            avec un prêt aidé par l’Etat, y compris dans le cas où ces travaux s’accompagnent de la
+
+            création de surfaces hors œuvre nette dans la limite d’un plafond de 50 % de la surface hors
+
+            œuvre nette existant avant le commencement des travaux.
+
+            Les règles suivantes s’appliquent à l’ensemble des zones
+
+            DESIGNATION DE LA CONSTRUCTION
+
+            AIRES DE STATIONNEMENT A PREVOIR
+
+            HABITAT COLLECTIF
+
+            - chambre individuelle
+
+            - studio et 2 pièces
+
+            - 3 et 5 pièces
+
+            - 6 pièces et plus
+
+            0,5 place par chambre,
+
+            1 place par logement,
+
+            1,5 place par logement,
+
+            2 places par logement.
+
+            HABITAT INDIVIDUEL
+
+            2 places par logement
+
+            LOTISSEMENT
+
+            à usage d’habitation et groupe d’habitations
+
+            2 places par logement dont 1 au moins sur lot
+
+            LOTISSEMENT
+
+            à usage d’activités
+
+            1 place par lot à prévoir sur voirie
+
+            FOYER DE PERSONNES AGEES
+
+            1 place pour 10 logements
+
+            ACTIVITES'
+          detail:
+          - destination: collectif
+            pieces_max: 2
+            places: 1
+            tranche: studio et 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            pieces_max: 5
+            places: 1.5
+            tranche: 3 et 5 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 6
+            places: 2
+            tranche: 6 pièces et plus
+            role: base
+          - destination: individuel
+            places: 2
+            tranche: habitat individuel
+            role: base
       pleine_terre:
         pct:
           pct: 30.0
@@ -602,14 +834,131 @@ zones:
             la marge d'isolement minimale doit être de 3,00m.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2
+        par_typologie:
+          statut: valide
           article: UC 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
-          citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
-          statut: valide
-          raison: citation non retrouvée (recouvrement 33%)
-          note: "PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales))."
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          citation: 'Les constructions neuves à usage d’habitation collective ou d’activités, les opérations grou-
+
+            pées, auront l’obligation d’avoir un local d’une superficie suffisante pour recevoir les divers
+
+            conteneurs liés à la collecte sélective des ordures ménagères.
+
+            Un emplacement sur l’unité foncière, situé en limite de propriété sera prévu et aménagé afin
+
+            de permettre le stationnement des différents containers en vue de leur collecte sans qu’ils
+
+            1 Arrêté du 6 mai 1996 modifié par l''arrêté du 3 décembre 1996 après avis du Conseil supérieur d''hygiène
+
+            publique de France, de la mission interministérielle de l''eau et du Comité national de l''eau (CGCT, art. R.
+
+            2224-22 partiel)(¨ Arr. 1er, 6 mai 1996, art. 1er, al. 1er
+
+            2 Circ. N° 97-49, 22 mai 1997, , ann. 3, § 1.1, al. 1er)., ann. 1, § 7.2 partiel
+
+            PLU DE SAINT-LEU • REGLEMENT ECRIT ACTUALISE • DUTEILH-PERRAU URBANISME ET ENVIRONNEMENT
+
+            13
+
+            ARTICLE 10 - ALIGNEMENT
+
+            Définition :
+
+            à créer, ou à toute limite s’y substituant et figurant aux documents graphiques (largeurs de
+
+            plates-formes, emplacements réservés, espaces publics …).
+
+            ARTICLE 11 - NORMES DE STATIONNEMENT
+
+            La règle applicable aux constructions ou établissements non prévus ci-dessous est celle
+
+            auxquels ces établissements sont le plus directement assimilables. Conformément à l’article
+
+            R.111-4 du code de l’urbanisme, il ne peut être exigé la réalisation de plus d’une aire de
+
+            stationnement par logement lors de la construction de logements locatifs financés avec un
+
+            prêt aidé par l’Etat.
+
+            L’obligation de réaliser des aires de stationnement n’est pas applicable aux travaux de
+
+            transformation ou d’amélioration de bâtiments affectés à des logements locatifs financés
+
+            avec un prêt aidé par l’Etat, y compris dans le cas où ces travaux s’accompagnent de la
+
+            création de surfaces hors œuvre nette dans la limite d’un plafond de 50 % de la surface hors
+
+            œuvre nette existant avant le commencement des travaux.
+
+            Les règles suivantes s’appliquent à l’ensemble des zones
+
+            DESIGNATION DE LA CONSTRUCTION
+
+            AIRES DE STATIONNEMENT A PREVOIR
+
+            HABITAT COLLECTIF
+
+            - chambre individuelle
+
+            - studio et 2 pièces
+
+            - 3 et 5 pièces
+
+            - 6 pièces et plus
+
+            0,5 place par chambre,
+
+            1 place par logement,
+
+            1,5 place par logement,
+
+            2 places par logement.
+
+            HABITAT INDIVIDUEL
+
+            2 places par logement
+
+            LOTISSEMENT
+
+            à usage d’habitation et groupe d’habitations
+
+            2 places par logement dont 1 au moins sur lot
+
+            LOTISSEMENT
+
+            à usage d’activités
+
+            1 place par lot à prévoir sur voirie
+
+            FOYER DE PERSONNES AGEES
+
+            1 place pour 10 logements
+
+            ACTIVITES'
+          detail:
+          - destination: collectif
+            pieces_max: 2
+            places: 1
+            tranche: studio et 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            pieces_max: 5
+            places: 1.5
+            tranche: 3 et 5 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 6
+            places: 2
+            tranche: 6 pièces et plus
+            role: base
+          - destination: individuel
+            places: 2
+            tranche: habitat individuel
+            role: base
       pleine_terre:
         pct:
           pct: 30.0
@@ -937,14 +1286,131 @@ zones:
             la marge d'isolement minimale doit être de 3,00m.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2
+        par_typologie:
+          statut: valide
           article: UD 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
-          citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
-          statut: valide
-          raison: citation non retrouvée (recouvrement 33%)
-          note: "PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales))."
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          citation: 'Les constructions neuves à usage d’habitation collective ou d’activités, les opérations grou-
+
+            pées, auront l’obligation d’avoir un local d’une superficie suffisante pour recevoir les divers
+
+            conteneurs liés à la collecte sélective des ordures ménagères.
+
+            Un emplacement sur l’unité foncière, situé en limite de propriété sera prévu et aménagé afin
+
+            de permettre le stationnement des différents containers en vue de leur collecte sans qu’ils
+
+            1 Arrêté du 6 mai 1996 modifié par l''arrêté du 3 décembre 1996 après avis du Conseil supérieur d''hygiène
+
+            publique de France, de la mission interministérielle de l''eau et du Comité national de l''eau (CGCT, art. R.
+
+            2224-22 partiel)(¨ Arr. 1er, 6 mai 1996, art. 1er, al. 1er
+
+            2 Circ. N° 97-49, 22 mai 1997, , ann. 3, § 1.1, al. 1er)., ann. 1, § 7.2 partiel
+
+            PLU DE SAINT-LEU • REGLEMENT ECRIT ACTUALISE • DUTEILH-PERRAU URBANISME ET ENVIRONNEMENT
+
+            13
+
+            ARTICLE 10 - ALIGNEMENT
+
+            Définition :
+
+            à créer, ou à toute limite s’y substituant et figurant aux documents graphiques (largeurs de
+
+            plates-formes, emplacements réservés, espaces publics …).
+
+            ARTICLE 11 - NORMES DE STATIONNEMENT
+
+            La règle applicable aux constructions ou établissements non prévus ci-dessous est celle
+
+            auxquels ces établissements sont le plus directement assimilables. Conformément à l’article
+
+            R.111-4 du code de l’urbanisme, il ne peut être exigé la réalisation de plus d’une aire de
+
+            stationnement par logement lors de la construction de logements locatifs financés avec un
+
+            prêt aidé par l’Etat.
+
+            L’obligation de réaliser des aires de stationnement n’est pas applicable aux travaux de
+
+            transformation ou d’amélioration de bâtiments affectés à des logements locatifs financés
+
+            avec un prêt aidé par l’Etat, y compris dans le cas où ces travaux s’accompagnent de la
+
+            création de surfaces hors œuvre nette dans la limite d’un plafond de 50 % de la surface hors
+
+            œuvre nette existant avant le commencement des travaux.
+
+            Les règles suivantes s’appliquent à l’ensemble des zones
+
+            DESIGNATION DE LA CONSTRUCTION
+
+            AIRES DE STATIONNEMENT A PREVOIR
+
+            HABITAT COLLECTIF
+
+            - chambre individuelle
+
+            - studio et 2 pièces
+
+            - 3 et 5 pièces
+
+            - 6 pièces et plus
+
+            0,5 place par chambre,
+
+            1 place par logement,
+
+            1,5 place par logement,
+
+            2 places par logement.
+
+            HABITAT INDIVIDUEL
+
+            2 places par logement
+
+            LOTISSEMENT
+
+            à usage d’habitation et groupe d’habitations
+
+            2 places par logement dont 1 au moins sur lot
+
+            LOTISSEMENT
+
+            à usage d’activités
+
+            1 place par lot à prévoir sur voirie
+
+            FOYER DE PERSONNES AGEES
+
+            1 place pour 10 logements
+
+            ACTIVITES'
+          detail:
+          - destination: collectif
+            pieces_max: 2
+            places: 1
+            tranche: studio et 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            pieces_max: 5
+            places: 1.5
+            tranche: 3 et 5 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 6
+            places: 2
+            tranche: 6 pièces et plus
+            role: base
+          - destination: individuel
+            places: 2
+            tranche: habitat individuel
+            role: base
       pleine_terre:
         pct:
           pct: 40.0
@@ -1257,14 +1723,131 @@ zones:
             de 4,00m.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2
+        par_typologie:
+          statut: valide
           article: UE 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
-          citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
-          statut: valide
-          raison: citation non retrouvée (recouvrement 33%)
-          note: "PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales))."
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          citation: 'Les constructions neuves à usage d’habitation collective ou d’activités, les opérations grou-
+
+            pées, auront l’obligation d’avoir un local d’une superficie suffisante pour recevoir les divers
+
+            conteneurs liés à la collecte sélective des ordures ménagères.
+
+            Un emplacement sur l’unité foncière, situé en limite de propriété sera prévu et aménagé afin
+
+            de permettre le stationnement des différents containers en vue de leur collecte sans qu’ils
+
+            1 Arrêté du 6 mai 1996 modifié par l''arrêté du 3 décembre 1996 après avis du Conseil supérieur d''hygiène
+
+            publique de France, de la mission interministérielle de l''eau et du Comité national de l''eau (CGCT, art. R.
+
+            2224-22 partiel)(¨ Arr. 1er, 6 mai 1996, art. 1er, al. 1er
+
+            2 Circ. N° 97-49, 22 mai 1997, , ann. 3, § 1.1, al. 1er)., ann. 1, § 7.2 partiel
+
+            PLU DE SAINT-LEU • REGLEMENT ECRIT ACTUALISE • DUTEILH-PERRAU URBANISME ET ENVIRONNEMENT
+
+            13
+
+            ARTICLE 10 - ALIGNEMENT
+
+            Définition :
+
+            à créer, ou à toute limite s’y substituant et figurant aux documents graphiques (largeurs de
+
+            plates-formes, emplacements réservés, espaces publics …).
+
+            ARTICLE 11 - NORMES DE STATIONNEMENT
+
+            La règle applicable aux constructions ou établissements non prévus ci-dessous est celle
+
+            auxquels ces établissements sont le plus directement assimilables. Conformément à l’article
+
+            R.111-4 du code de l’urbanisme, il ne peut être exigé la réalisation de plus d’une aire de
+
+            stationnement par logement lors de la construction de logements locatifs financés avec un
+
+            prêt aidé par l’Etat.
+
+            L’obligation de réaliser des aires de stationnement n’est pas applicable aux travaux de
+
+            transformation ou d’amélioration de bâtiments affectés à des logements locatifs financés
+
+            avec un prêt aidé par l’Etat, y compris dans le cas où ces travaux s’accompagnent de la
+
+            création de surfaces hors œuvre nette dans la limite d’un plafond de 50 % de la surface hors
+
+            œuvre nette existant avant le commencement des travaux.
+
+            Les règles suivantes s’appliquent à l’ensemble des zones
+
+            DESIGNATION DE LA CONSTRUCTION
+
+            AIRES DE STATIONNEMENT A PREVOIR
+
+            HABITAT COLLECTIF
+
+            - chambre individuelle
+
+            - studio et 2 pièces
+
+            - 3 et 5 pièces
+
+            - 6 pièces et plus
+
+            0,5 place par chambre,
+
+            1 place par logement,
+
+            1,5 place par logement,
+
+            2 places par logement.
+
+            HABITAT INDIVIDUEL
+
+            2 places par logement
+
+            LOTISSEMENT
+
+            à usage d’habitation et groupe d’habitations
+
+            2 places par logement dont 1 au moins sur lot
+
+            LOTISSEMENT
+
+            à usage d’activités
+
+            1 place par lot à prévoir sur voirie
+
+            FOYER DE PERSONNES AGEES
+
+            1 place pour 10 logements
+
+            ACTIVITES'
+          detail:
+          - destination: collectif
+            pieces_max: 2
+            places: 1
+            tranche: studio et 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            pieces_max: 5
+            places: 1.5
+            tranche: 3 et 5 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 6
+            places: 2
+            tranche: 6 pièces et plus
+            role: base
+          - destination: individuel
+            places: 2
+            tranche: habitat individuel
+            role: base
       pleine_terre:
         pct:
           pct: 30.0
@@ -1355,14 +1938,131 @@ zones:
             construction (L=H), avec un minimum de 4,00m.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2
+        par_typologie:
+          statut: valide
           article: UF 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
-          citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
-          statut: valide
-          raison: citation non retrouvée (recouvrement 33%)
-          note: "PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales))."
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          citation: 'Les constructions neuves à usage d’habitation collective ou d’activités, les opérations grou-
+
+            pées, auront l’obligation d’avoir un local d’une superficie suffisante pour recevoir les divers
+
+            conteneurs liés à la collecte sélective des ordures ménagères.
+
+            Un emplacement sur l’unité foncière, situé en limite de propriété sera prévu et aménagé afin
+
+            de permettre le stationnement des différents containers en vue de leur collecte sans qu’ils
+
+            1 Arrêté du 6 mai 1996 modifié par l''arrêté du 3 décembre 1996 après avis du Conseil supérieur d''hygiène
+
+            publique de France, de la mission interministérielle de l''eau et du Comité national de l''eau (CGCT, art. R.
+
+            2224-22 partiel)(¨ Arr. 1er, 6 mai 1996, art. 1er, al. 1er
+
+            2 Circ. N° 97-49, 22 mai 1997, , ann. 3, § 1.1, al. 1er)., ann. 1, § 7.2 partiel
+
+            PLU DE SAINT-LEU • REGLEMENT ECRIT ACTUALISE • DUTEILH-PERRAU URBANISME ET ENVIRONNEMENT
+
+            13
+
+            ARTICLE 10 - ALIGNEMENT
+
+            Définition :
+
+            à créer, ou à toute limite s’y substituant et figurant aux documents graphiques (largeurs de
+
+            plates-formes, emplacements réservés, espaces publics …).
+
+            ARTICLE 11 - NORMES DE STATIONNEMENT
+
+            La règle applicable aux constructions ou établissements non prévus ci-dessous est celle
+
+            auxquels ces établissements sont le plus directement assimilables. Conformément à l’article
+
+            R.111-4 du code de l’urbanisme, il ne peut être exigé la réalisation de plus d’une aire de
+
+            stationnement par logement lors de la construction de logements locatifs financés avec un
+
+            prêt aidé par l’Etat.
+
+            L’obligation de réaliser des aires de stationnement n’est pas applicable aux travaux de
+
+            transformation ou d’amélioration de bâtiments affectés à des logements locatifs financés
+
+            avec un prêt aidé par l’Etat, y compris dans le cas où ces travaux s’accompagnent de la
+
+            création de surfaces hors œuvre nette dans la limite d’un plafond de 50 % de la surface hors
+
+            œuvre nette existant avant le commencement des travaux.
+
+            Les règles suivantes s’appliquent à l’ensemble des zones
+
+            DESIGNATION DE LA CONSTRUCTION
+
+            AIRES DE STATIONNEMENT A PREVOIR
+
+            HABITAT COLLECTIF
+
+            - chambre individuelle
+
+            - studio et 2 pièces
+
+            - 3 et 5 pièces
+
+            - 6 pièces et plus
+
+            0,5 place par chambre,
+
+            1 place par logement,
+
+            1,5 place par logement,
+
+            2 places par logement.
+
+            HABITAT INDIVIDUEL
+
+            2 places par logement
+
+            LOTISSEMENT
+
+            à usage d’habitation et groupe d’habitations
+
+            2 places par logement dont 1 au moins sur lot
+
+            LOTISSEMENT
+
+            à usage d’activités
+
+            1 place par lot à prévoir sur voirie
+
+            FOYER DE PERSONNES AGEES
+
+            1 place pour 10 logements
+
+            ACTIVITES'
+          detail:
+          - destination: collectif
+            pieces_max: 2
+            places: 1
+            tranche: studio et 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            pieces_max: 5
+            places: 1.5
+            tranche: 3 et 5 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 6
+            places: 2
+            tranche: 6 pièces et plus
+            role: base
+          - destination: individuel
+            places: 2
+            tranche: habitat individuel
+            role: base
       pleine_terre:
         pct:
           pct: 30.0
@@ -1462,14 +2162,131 @@ zones:
             construction (L=H), avec un minimum de 4,00m.
           statut: valide
       stationnement:
-        par_logement:
-          places: 2
+        par_typologie:
+          statut: valide
           article: UP 12 renvoi Art. 11 dispositions générales
           page_pdf: 13
-          citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
-          statut: valide
-          raison: citation non retrouvée (recouvrement 33%)
-          note: "PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales))."
+          base: pieces
+          arrondi: superieur
+          retenue: max
+          citation: 'Les constructions neuves à usage d’habitation collective ou d’activités, les opérations grou-
+
+            pées, auront l’obligation d’avoir un local d’une superficie suffisante pour recevoir les divers
+
+            conteneurs liés à la collecte sélective des ordures ménagères.
+
+            Un emplacement sur l’unité foncière, situé en limite de propriété sera prévu et aménagé afin
+
+            de permettre le stationnement des différents containers en vue de leur collecte sans qu’ils
+
+            1 Arrêté du 6 mai 1996 modifié par l''arrêté du 3 décembre 1996 après avis du Conseil supérieur d''hygiène
+
+            publique de France, de la mission interministérielle de l''eau et du Comité national de l''eau (CGCT, art. R.
+
+            2224-22 partiel)(¨ Arr. 1er, 6 mai 1996, art. 1er, al. 1er
+
+            2 Circ. N° 97-49, 22 mai 1997, , ann. 3, § 1.1, al. 1er)., ann. 1, § 7.2 partiel
+
+            PLU DE SAINT-LEU • REGLEMENT ECRIT ACTUALISE • DUTEILH-PERRAU URBANISME ET ENVIRONNEMENT
+
+            13
+
+            ARTICLE 10 - ALIGNEMENT
+
+            Définition :
+
+            à créer, ou à toute limite s’y substituant et figurant aux documents graphiques (largeurs de
+
+            plates-formes, emplacements réservés, espaces publics …).
+
+            ARTICLE 11 - NORMES DE STATIONNEMENT
+
+            La règle applicable aux constructions ou établissements non prévus ci-dessous est celle
+
+            auxquels ces établissements sont le plus directement assimilables. Conformément à l’article
+
+            R.111-4 du code de l’urbanisme, il ne peut être exigé la réalisation de plus d’une aire de
+
+            stationnement par logement lors de la construction de logements locatifs financés avec un
+
+            prêt aidé par l’Etat.
+
+            L’obligation de réaliser des aires de stationnement n’est pas applicable aux travaux de
+
+            transformation ou d’amélioration de bâtiments affectés à des logements locatifs financés
+
+            avec un prêt aidé par l’Etat, y compris dans le cas où ces travaux s’accompagnent de la
+
+            création de surfaces hors œuvre nette dans la limite d’un plafond de 50 % de la surface hors
+
+            œuvre nette existant avant le commencement des travaux.
+
+            Les règles suivantes s’appliquent à l’ensemble des zones
+
+            DESIGNATION DE LA CONSTRUCTION
+
+            AIRES DE STATIONNEMENT A PREVOIR
+
+            HABITAT COLLECTIF
+
+            - chambre individuelle
+
+            - studio et 2 pièces
+
+            - 3 et 5 pièces
+
+            - 6 pièces et plus
+
+            0,5 place par chambre,
+
+            1 place par logement,
+
+            1,5 place par logement,
+
+            2 places par logement.
+
+            HABITAT INDIVIDUEL
+
+            2 places par logement
+
+            LOTISSEMENT
+
+            à usage d’habitation et groupe d’habitations
+
+            2 places par logement dont 1 au moins sur lot
+
+            LOTISSEMENT
+
+            à usage d’activités
+
+            1 place par lot à prévoir sur voirie
+
+            FOYER DE PERSONNES AGEES
+
+            1 place pour 10 logements
+
+            ACTIVITES'
+          detail:
+          - destination: collectif
+            pieces_max: 2
+            places: 1
+            tranche: studio et 2 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 3
+            pieces_max: 5
+            places: 1.5
+            tranche: 3 et 5 pièces
+            role: base
+          - destination: collectif
+            pieces_min: 6
+            places: 2
+            tranche: 6 pièces et plus
+            role: base
+          - destination: individuel
+            places: 2
+            tranche: habitat individuel
+            role: base
     silence: interdit
     silence_src: 'Art. UP1, p. 73 : « Sont interdites toutes les occupations ou utilisations non mentionnées à l''article
       UP2 » — clause explicite « seules sont admises » inversée : le silence vaut interdiction.'

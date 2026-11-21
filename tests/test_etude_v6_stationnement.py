@@ -41,8 +41,12 @@ def test_senior_regle_generale_plus_plafond_a_confirmer(session_reelle):
     from labuse.implantation.service import stationnement_payload
     out = stationnement_payload(session_reelle, _SD, "senior")
     g = out["regimes"]["general"]
-    # règle générale OPPOSABLE du PLU : 1 place/logt, article + millésime, appliquée
-    assert g["applique"] is True and g["ratio_par_logement"] == 1.0
+    # règle générale OPPOSABLE du PLU, appliquée, avec article + millésime. ETUDE-STATIONNEMENT-FIX-2
+    # (banc 212) : Saint-Denis a été remodelé en TIERS DE SURFACE PAR LOGEMENT (1 place < 100 m² / 1,5 place
+    # ≥ 100 m²), lu sur l'image — ce n'est plus un forfait 1/logt. Le régime général est donc par typologie :
+    # pas de ratio unique par logement, mais la règle est bien servie (validée) et appliquée.
+    assert g["applique"] is True and g["validee"] is True
+    assert g["ratio_par_logement"] is None and g["regle_courte"]
     assert g["article"] and g["millesime"]
     # plafond national L151-35 : SOUS CONDITION — éligibilité à confirmer, jamais la règle du PLU
     pf = out["regimes"]["plafond_national"]

@@ -77,11 +77,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UA 12.2
           page_pdf: 23
-          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 15.0
@@ -192,11 +232,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UA 12.2
           page_pdf: 23
-          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UA]'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
     renvoi: UA
     renvoi_src: 'caractère de la zone UA, p. 12 : « Il existe le secteur UA1 correspondant au centre historique
       de Saint-Louis dont la morphologie et les fonctions urbaines doivent être préservées. » — secteur de la zone
@@ -266,11 +346,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UB 12.2
           page_pdf: 37
-          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 20.0
@@ -402,11 +522,51 @@ zones:
             modifie_calcul: true
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -522,11 +682,51 @@ zones:
           formule: H1/2, minimum 3,00 m
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UC]'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -598,11 +798,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UC]'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -679,11 +919,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UD 12.2
           page_pdf: 66
-          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 30.0
@@ -822,11 +1102,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UD 12.2
           page_pdf: 66
-          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UD]'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 35.0
@@ -1121,12 +1441,17 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: UZ 12
           page_pdf: 103
-          citation: 'Pour les constructions à usage d''habitation : 1,5 place de stationnement par logement,
-            arrondi à l''entier supérieur (...). Pour le logement social : 1 place par logement.'
-          statut: valide
+          places: 1.5
+          arrondi: superieur
+          citation: '1. Pour les constructions à usage d’habitation : 1,5 place de stationnement par logement, arrondi à l’entier
+
+            supérieur pour l’ensemble de l’opération. Pour le logement social : 1 place par logement.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
       pleine_terre:
         pct:
           pct: 25.0
@@ -1276,14 +1601,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UA 12.2
           page_pdf: 23
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UA : Habitations — Pour les autres constructions : 2 places de stationnement
-            par logement'
-          statut: valide
-          raison: citation non retrouvée autour de p.23 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 15.0
@@ -1431,14 +1793,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UC : Habitations — Pour les autres constructions : 2 places de stationnement
-            par logement'
-          statut: valide
-          raison: citation non retrouvée autour de p.52 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -1565,14 +1964,51 @@ zones:
           formule: H1/2, minimum 3,00 m
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UC1 : Pour les autres constructions : 2 places de stationnement par logement
-            [règle UC]'
-          statut: valide
-          raison: citation non retrouvée autour de p.52 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -1651,14 +2087,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UC2 : Pour les autres constructions : 2 places de stationnement par logement
-            [règle UC]'
-          statut: valide
-          raison: citation non retrouvée autour de p.52 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -1738,14 +2211,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UD 12.2
           page_pdf: 66
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UD : Habitations — Pour les autres constructions : 2 places de stationnement
-            par logement'
-          statut: valide
-          raison: citation non retrouvée autour de p.66 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 30.0
@@ -1826,14 +2336,51 @@ zones:
           raison: citation non retrouvée autour de p.60 (recouvrement 47%)
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UD 12.2
           page_pdf: 66
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UD1 : Pour les autres constructions : 2 places de stationnement par logement
-            [règle UD]'
-          statut: valide
-          raison: citation non retrouvée autour de p.66 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 35.0

@@ -4,7 +4,7 @@ import os
 import pytest
 
 from labuse.faisabilite.surface_retenue import (GRANDEUR_ESQUISSE, GRANDEUR_ESTIMATION,
-                                                GRANDEUR_SCENARIO, surface_a_retenir)
+                                                GRANDEUR_SCENARIO, GRANDEUR_TESTEE, surface_a_retenir)
 
 
 @pytest.fixture(scope="module")
@@ -86,11 +86,15 @@ def test_non_bati_garde_la_formulation_surface_a_retenir():
 # ── Garde-fou : un seul « surface à retenir » par parcelle, TOUS les documents (C6/C9) ───────────
 @pytest.mark.reel
 @pytest.mark.parametrize("idu, valeur_attendue, source_attendue", [
-    ("97416000HT0538", 614, GRANDEUR_ESTIMATION),   # stationnement non ingéré → estimation (888 non retenu)
-    ("97422000AD0887", 795, GRANDEUR_SCENARIO),     # stationnement déduit → scénario (jamais 1 047 nu)
-    # CHIRURGICAL-FIX-1 (LOT E) — BW2635 (copropriété bâtie) : Dossier et Étude retiennent 2 625 (esquisse),
-    # JAMAIS 3 317 (estimation rapide, > parcelle). Avant le fix du study_id, le Dossier retombait sur 3 317.
-    ("97422000BW2635", 2625, GRANDEUR_ESQUISSE),
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — le dégagement d'allée est désormais mesuré EXACTEMENT (rectangle
+    # entier, aucune marge de 0,60 m, aucune tolérance de 1 m²) : une allée de 4,99 m échoue. AD0887 perd une
+    # place dont le dégagement ne faisait que 4,99 m (8/12 → 7/10, esquisse 595) ; BW2635 retient le scénario
+    # servi 6 logements (535, variante unique, cf. couverture cohérente). On teste la CONSISTANCE (même surface
+    # partout) sur ces valeurs à jour.
+    # FIX-4 (LOT 1) — HT0538 : plan en échec (haie 1,4 m < 1,5 m) → « surface testée », pas « à retenir ».
+    ("97416000HT0538", 450, GRANDEUR_TESTEE),       # esquisse 450 mais contrôle haie en échec → surface testée
+    ("97422000AD0887", 555, GRANDEUR_SCENARIO),     # desserte roulante continue : 6 logts / 9 places → esquisse 555
+    ("97422000BW2635", 535, GRANDEUR_ESQUISSE),     # scénario servi 6 logts (535) < estimation 3 317
 ])
 def test_un_seul_surface_a_retenir_tous_documents(session_reelle, idu, valeur_attendue, source_attendue):
     """Dossier (scénario PERSISTÉ), Étude (scénario LIVE) ET Comparatif (compare()) doivent produire LA
@@ -186,6 +190,20 @@ def test_alertes_fiche_dans_les_builders_de_contraintes(session_reelle):
             if not _present(eff, txt_analyse):
                 manques.append((idu, "Analyse", eff[:40]))
     assert not manques, f"alertes de la fiche absentes d'un document : {manques[:12]}"
+
+
+@pytest.mark.reel
+def test_alertes_temoins_dans_l_etude(session_reelle):
+    """ETUDE-STATIONNEMENT-FIX-2 (reliquat #1) — « mêmes alertes partout » étendu à l'Étude sur les TÉMOINS :
+    la zone humide d'AD0887 (Le Tampon) et l'inondation de HT0538 (Saint-Pierre), lues en direct par la fiche
+    (`alertes_fiche`), DOIVENT figurer dans les contraintes signalées de l'Étude (`_attach_contraintes_signalees`,
+    la source du §2 de l'Étude de faisabilité)."""
+    from labuse.api.modules import _attach_contraintes_signalees
+    for idu, attendu in (("97422000AD0887", "zone humide"), ("97416000HT0538", "inond")):
+        payload = {"terrain": {}}
+        _attach_contraintes_signalees(session_reelle, payload, [idu])
+        signalees = " ".join(payload["terrain"].get("contraintes_signalees") or []).lower()
+        assert attendu in signalees, f"{idu} : « {attendu} » absente de l'Étude (contraintes : {signalees[:200]})"
 
 
 @pytest.mark.reel

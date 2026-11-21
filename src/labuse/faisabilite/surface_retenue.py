@@ -16,6 +16,9 @@ from __future__ import annotations
 
 GRANDEUR_ESTIMATION = "estimation rapide"
 GRANDEUR_ESQUISSE = "esquisse d'implantation"
+#: ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — esquisse dont un contrôle DUR échoue : son chiffre reste connu mais
+#: n'est PLUS « surface à retenir » (on ne retient pas un plan qui ne passe pas) — c'est une « surface testée ».
+GRANDEUR_TESTEE = "surface testée (plan en échec)"
 #: compat : d'anciens appels importent GRANDEUR_SCENARIO — c'est l'esquisse d'implantation.
 GRANDEUR_SCENARIO = GRANDEUR_ESQUISSE
 
@@ -59,7 +62,7 @@ def _amorce(bati: bool, copropriete: bool) -> str:
 
 
 def surface_a_retenir(estimation_rapide_m2, esquisse=None, *, bati: bool = False,
-                      copropriete: bool = False) -> dict:
+                      copropriete: bool = False, plan_en_echec=None, motif_echec=None) -> dict:
     """`esquisse` = la SDP de l'esquisse d'implantation (float), ou un dict {"sdp_m2": …} (compat), ou
     None quand aucune Étude n'a été dessinée.
 
@@ -78,6 +81,12 @@ def surface_a_retenir(estimation_rapide_m2, esquisse=None, *, bati: bool = False
     est = round(float(estimation_rapide_m2)) if estimation_rapide_m2 not in (None, "") else None
     esq = None
     if isinstance(esquisse, dict):
+        # l'état « plan en échec » voyage avec l'esquisse persistée (Dossier/Comparatif) ; les paramètres
+        # explicites priment (Étude live). SOURCE UNIQUE pour les trois documents.
+        if plan_en_echec is None:
+            plan_en_echec = esquisse.get("plan_en_echec")
+        if motif_echec is None:
+            motif_echec = esquisse.get("motif_echec")
         esquisse = esquisse.get("sdp_m2")
     if esquisse not in (None, ""):
         esq = round(float(esquisse))
@@ -93,6 +102,16 @@ def surface_a_retenir(estimation_rapide_m2, esquisse=None, *, bati: bool = False
     if esq is None:                                   # aucune esquisse → estimation rapide
         return _out(est, GRANDEUR_ESTIMATION, f"{amorce}{_m2(est)} ({GRANDEUR_ESTIMATION}).")
     if est is None or esq < est:                      # esquisse retenue (la plus petite / prudente)
+        # ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — un PLAN EN ÉCHEC (un contrôle dur du scénario échoue, ex. la
+        # haie de HT0538) ne « retient » pas sa surface : elle devient une « surface TESTÉE, plan en échec :
+        # <motif> », avec le même libellé dans l'Étude, le Dossier et le Comparatif.
+        if plan_en_echec:
+            _mot = (motif_echec or "un contrôle du plan n'est pas satisfait")
+            amo = "Surface testée (plan en échec) : " if not bati else amorce
+            phrase = f"{amo}{_m2(esq)} (plan en échec : {_mot})."
+            if est is not None:
+                phrase += f" L'estimation rapide donnait {_m2(est)}, hors stationnement."
+            return _out(esq, GRANDEUR_TESTEE, phrase)
         phrase = (f"{amorce}{_m2(esq)} ({GRANDEUR_ESQUISSE}, stationnement à vérifier : "
                   "la surface réelle peut être inférieure).")
         if est is not None:

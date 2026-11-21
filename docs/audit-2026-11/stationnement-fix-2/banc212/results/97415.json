@@ -1,0 +1,131 @@
+{
+ "insee": "97415",
+ "regles": [
+  {
+   "rule_id": "97415-R1",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 24
+    },
+    "aide_20T3_1400": {
+     "total": 22
+    },
+    "mixte_10x110_10x30": {
+     "total": 24
+    }
+   }
+  },
+  {
+   "rule_id": "97415-R2",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 34
+    },
+    "aide_20T3_1400": {
+     "total": 22
+    },
+    "mixte_10x110_10x30": {
+     "total": 34
+    }
+   }
+  },
+  {
+   "rule_id": "97415-R3",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 34
+    },
+    "aide_20T3_1400": {
+     "total": 22
+    },
+    "mixte_10x110_10x30": {
+     "total": 34
+    }
+   }
+  },
+  {
+   "rule_id": "97415-R4",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 2
+    },
+    "collectif_20T3_1400": {
+     "total": 40
+    },
+    "aide_20T3_1400": {
+     "total": 20
+    },
+    "mixte_10x110_10x30": {
+     "total": 40
+    }
+   }
+  },
+  {
+   "rule_id": "97415-R5",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 34
+    },
+    "aide_20T3_1400": {
+     "total": 22
+    },
+    "mixte_10x110_10x30": {
+     "total": 34
+    }
+   }
+  },
+  {
+   "rule_id": "97415-R6",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 34
+    },
+    "aide_20T3_1400": {
+     "total": 22
+    },
+    "mixte_10x110_10x30": {
+     "total": 34
+    }
+   }
+  },
+  {
+   "rule_id": "97415-R7",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 34
+    },
+    "aide_20T3_1400": {
+     "total": 22
+    },
+    "mixte_10x110_10x30": {
+     "total": 34
+    }
+   }
+  }
+ ]
+}

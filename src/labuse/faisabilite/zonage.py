@@ -126,6 +126,17 @@ class ZoneRules:
         m = re.search(r"(\d+(?:[.,]\d+)?)\s*places?\s*/?\s*(?:par\s*)?logement", s, re.I)
         if m:
             return float(m.group(1).replace(",", "."))
+        # ETUDE-STATIONNEMENT (merge moteur-verite) — barème PAR TYPOLOGIE (Le Tampon : 0,5 ≤T1 · 1 T2 · 1,5 T3+)
+        # : le ratio de BASE (logement standard = T2 collectif) n'est pas lisible dans le texte détaillé. On le
+        # lit sur le barème lui-même (`places_pour`), comme la capacité. Sans base lisible → NON_MODELISABLE.
+        try:
+            from ..implantation.regles import charger as _charger_b
+            _b = _charger_b(_insee(self.bassin), self.code).stationnement
+            _r = _b.places_pour(pieces=2, sdp_m2=50.0, destination="collectif")
+            if isinstance(_r, (int, float)):
+                return float(_r)
+        except Exception:  # noqa: BLE001 — lecture annexe, jamais bloquante
+            pass
         return NON_MODELISABLE          # texte présent mais aucune forme « X place/logement » lisible
 
 
@@ -345,7 +356,22 @@ def _zone_regle_non_validee(code: str, feuilles: list[str]) -> ZoneRules:
         sources={"zone": "règle PLU non validée (feuille propose)"})
 
 
-def _stat_from_regles(reg: dict):
+def _stat_from_regles(reg: dict, insee: str | None = None, code: str | None = None):
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — SOURCE UNIQUE de la règle de stationnement : le barème que l'Étude
+    # APPLIQUE (`BaremeStationnement`), rendu par la MÊME fonction `_regle_stationnement_courte`. Le Dossier
+    # cessait de dire « non réglementé » dès que la règle n'était pas « N places / logement » (BW2635 Uav :
+    # barème par typologie Ua12.2 ; HT0538 Ud6 : par m² de SDP) alors que l'Étude, elle, l'appliquait. On
+    # affiche donc la règle ENTIÈRE ; repli sur l'ancienne lecture `par_logement` si le barème n'est pas validé.
+    if insee and code:
+        try:
+            from ..implantation.regles import charger as _charger_b
+            from ..implantation.service import _regle_stationnement_courte
+            _b = _charger_b(insee, code).stationnement
+            _rc = _regle_stationnement_courte(_b)
+            if _rc:
+                return _rc
+        except Exception:  # noqa: BLE001 — lecture annexe, jamais bloquante pour le Dossier
+            pass
     leaf = (reg.get("stationnement") or {}).get("par_logement")
     if not isinstance(leaf, dict) or leaf.get("absent"):
         return None
@@ -492,7 +518,8 @@ def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> Zone
         implantation_fond=_implantation_leaf(reg, "implantation_fond"),
         h_reference=(((reg.get("retraits") or {}).get("limites_separatives") or {})
                      .get("h_reference") or None),
-        stat_logement=_stat_from_regles(reg),
+        # ETUDE-STATIONNEMENT (FIX-6) — barème lu par insee+zone (régimes par commune) : on garde insee/code.
+        stat_logement=_stat_from_regles(reg, _insee(commune), code),
         pleine_terre_pct=_pleine_terre_val(reg),
         pleine_terre_compose=_pleine_terre_compose(reg),
         pleine_terre_nature=_pleine_terre_nature(reg),
@@ -856,6 +883,13 @@ def _calibrage_overlay(code: str, commune: str | None):
         src["stationnement"] = _src_validee(st)
     elif st and st.get("absent"):
         src["stationnement"] = _src_absente(st)
+    # ETUDE-STATIONNEMENT (merge moteur-verite) — barème PAR TYPOLOGIE (Le Tampon Ua/Ud 12.2, et secteurs qui le
+    # renvoient) : pas de feuille `par_logement`, l'article/source vient de `par_typologie`. Sans quoi la ligne
+    # du Dossier renverrait « au règlement de la zone » au lieu de l'article précis (Ud 12.2).
+    if "stationnement" not in src:
+        stt = _feuille("stationnement", "par_typologie")
+        if stt and not stt.get("absent") and stt.get("article"):
+            src["stationnement"] = _src_validee(stt)
 
     if not champs and not src:
         return None

@@ -1,0 +1,61 @@
+{
+ "insee": "97406",
+ "commune": "La Plaine-des-Palmistes",
+ "regles": [
+  {
+   "id": "97406-R1",
+   "article": "Ua 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "Ua"
+   ],
+   "pages": [
+    102,
+    103,
+    104
+   ]
+  },
+  {
+   "id": "97406-R2",
+   "article": "Ub 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "Ub",
+    "AUb"
+   ],
+   "pages": [
+    102,
+    103,
+    104
+   ]
+  },
+  {
+   "id": "97406-R3",
+   "article": "Uc 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "Uc",
+    "AUc"
+   ],
+   "pages": [
+    102,
+    103,
+    104
+   ]
+  },
+  {
+   "id": "97406-R4",
+   "article": "Ur 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "Ur",
+    "AUr"
+   ],
+   "pages": [
+    102,
+    103,
+    104
+   ]
+  }
+ ]
+}

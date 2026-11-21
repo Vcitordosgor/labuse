@@ -166,15 +166,25 @@ def test_r3_garde_fou_force_recherche_partielle(session_reelle, monkeypatch):
     assert "Recherche partielle" in html
 
 
-def test_r4_etang_sale_compteur_27(session_reelle):
-    """R4 — L'Étang-Salé : 23 T2 + 6 T3 demandés → 27 logements tenus (23 T2 + 4 T3), pas 28."""
+def test_r4_etang_sale_compteur_coherent(session_reelle):
+    """R4 — L'Étang-Salé (assemblage 4 parcelles), demande 23 T2 + 6 T3 : quand la demande NE TIENT PAS
+    entièrement, le COMPTEUR de logements tenus est COHÉRENT — le total = la somme par typologie (le bug
+    historique affichait 28 au total pour 27 réellement tenus). C'est cet invariant, pas un nombre magique,
+    qui garde le compteur honnête.
+
+    ETUDE-STATIONNEMENT-FIX-3 — le dégagement d'allée aérien est désormais un contrôle DUR (allées de 5 m au
+    droit des places) : sur cette assiette dense, l'aérien ne tient plus les 27 logements que l'ancien
+    dégagement mesuré à 0 laissait passer (voitures cramées sans allée). Le nombre exact tenu dépend donc du
+    pavage (artefact), mais la COHÉRENCE du compteur, elle, doit tenir."""
     from labuse.implantation.service import etudier_payload
     cfg = {"idus": _ETANG, "type_projet": "social", "objectif": "equilibre", "stationnement": "aerien",
            "programme": {"mode": "saisi", "lignes": [{"type": "T2", "nombre": 23}, {"type": "T3", "nombre": 6}]}}
     p = etudier_payload(session_reelle, cfg)
     dep = p.get("depassement") or {}
-    assert dep.get("total_tiennent") == 27, f"attendu 27, obtenu {dep.get('total_tiennent')}"
-    assert dep.get("total_tiennent") == sum((dep.get("tiennent") or {}).values())
+    tiennent = dep.get("tiennent") or {}
+    assert dep.get("total_tiennent") is not None, "la demande ne tient pas entièrement → un compteur est attendu"
+    assert dep.get("total_tiennent") == sum(tiennent.values()), (
+        f"compteur incohérent : total {dep.get('total_tiennent')} ≠ somme {sum(tiennent.values())}")
 
 
 def test_point5_etude_revisions_est_table_client_jamais_poussee():

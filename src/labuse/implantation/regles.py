@@ -16,6 +16,14 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 
+def quantifier_surface_m2(x: float) -> float:
+    """ETUDE-STATIONNEMENT-FIX-9 (point 3) — précision UNIQUE des surfaces : le MILLIÈME de m². On quantifie une
+    fois (ici), et cette même valeur sert à DÉTECTER la borne, CALCULER les lectures et AFFICHER — aucune
+    tolérance flottante ailleurs. Troncature au millième (avec ε anti-bruit flottant de 1 nm² pour qu'une
+    surface réellement au seuil, stockée à 29,999999999, s'y recolle ; 29,9999999 reste SOUS le seuil)."""
+    return math.floor(float(x) * 1000.0 + 1e-6) / 1000.0
+
+
 @dataclass(frozen=True)
 class Regle:
     nom: str
@@ -25,6 +33,7 @@ class Regle:
     article: Optional[str] = None
     page_pdf: Optional[int] = None
     citation: Optional[str] = None
+    absent: bool = False   # ETUDE-STATIONNEMENT-FIX-1 (LOT 5) — silence PROUVÉ : le PLU ne réglemente pas (cité)
 
     @property
     def citation_complete(self) -> Optional[str]:
@@ -39,21 +48,83 @@ class Regle:
         return f"{tete} — « {self.citation} »" if self.citation else (tete or None)
 
 
+# ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — projet dessiné → destination lue dans le barème. Le moteur
+# dessine du collectif ; le TYPE DE PROJET choisi (collectif/social/senior/étudiant) sélectionne la
+# ligne du règlement. Le lotissement reste traité à part (division).
+DESTINATION_PAR_PROJET: dict[str, str] = {
+    "collectif": "collectif",
+    "social": "social",
+    "senior": "senior",
+    "etudiante": "etudiant",
+    "lotissement": "individuel",
+}
+
+
 @dataclass(frozen=True)
 class LigneBareme:
-    places: float
+    # ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — une ligne porte SOIT un ratio par logement (`places`), SOIT une
+    # formule « une place par tranche de N m² de surface de plancher » (`par_m2`). `role` distingue la règle
+    # de base (par logement/typologie), une règle d'OPÉRATION (déclenchée au-delà de `logements_min`), et une
+    # formule ALTERNATIVE dont on retient la PLUS EXIGEANTE (`retenue=max`). `arrondi` facultatif par ligne.
+    places: Optional[float] = None
+    par_m2: Optional[float] = None
     pieces_min: Optional[int] = None
     pieces_max: Optional[int] = None
     sdp_min: Optional[float] = None
     sdp_max: Optional[float] = None
+    # ETUDE-STATIONNEMENT-FIX-2 (banc 212) — l'INCLUSIVITÉ du seuil de surface suit le règlement : par défaut
+    # la tranche est [sdp_min, sdp_max[ ( ≥min et <max, cas « < 100 m² » Saint-Denis). `sdp_max_inclusif`=True
+    # rend la borne haute INCLUSIVE (« ≤ 50 m² » La Possession : 50 m² est DANS la tranche basse, pas la haute).
+    sdp_max_inclusif: bool = False
+    logements_min: Optional[int] = None
     destination: str = "collectif"
+    role: str = "base"                  # 'base' | 'operation' | 'alt'
+    arrondi: Optional[str] = None
     libelle: str = ""
+    # ETUDE-STATIONNEMENT-FIX-2 (banc 212) — terme ADDITIF au m² (ex. Le Port aidé : 0,2/logt + 8 places/1000 m²).
+    m2_places: Optional[float] = None   # s'AJOUTE à `places` : m2_places places par tranche de m2_tranche m²
+    m2_tranche: Optional[float] = None
+
+
+@dataclass(frozen=True)
+class Visiteurs:
+    """Places visiteurs : `places` par tranche de `par_logements` logements OU de `par_m2_sdp` m² de SDP
+    (tranche complète)."""
+    places: float
+    par_logements: Optional[int] = None
+    par_m2_sdp: Optional[float] = None
+    logements_min: Optional[int] = None    # part visiteur due seulement AU-DELÀ de N logements (ex. Saint-Benoît)
+    publique: bool = False                 # places PUBLIQUES (hors parcelle) — comptées À PART, pas dans le total à dessiner
+    exclut_social: bool = False            # FIX-2 : places publiques rattachées au logement PRIVÉ seul (pas l'aidé) — ex. Sainte-Suzanne
+    arrondi: str = "superieur"
+    article: Optional[str] = None
+    page_pdf: Optional[int] = None
+    citation: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class ExigenceStationnement:
+    """ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — résultat du barème pour le PROGRAMME dessiné : nb de places
+    exigé (résident + visiteur), la formule RETENUE, les candidats écartés, et les conditions NON
+    MODÉLISABLES (ex. « ≥ 0,5 place à l'extérieur ») à afficher « à vérifier » — jamais comptées comme
+    satisfaites. `couvert` = tous les logements ont trouvé une ligne (sinon la règle ne couvre pas le
+    programme → le contrôle reste « Non vérifié »)."""
+    places: int
+    places_residents: int
+    places_visiteurs: int
+    base: str
+    formule: str
+    formules_ecartees: tuple[str, ...]
+    conditions: tuple[str, ...]
+    couvert: bool
+    details: dict
+    places_publiques: int = 0   # places PUBLIQUES (hors parcelle) — exigées mais NON dessinées sur le terrain
 
 
 @dataclass(frozen=True)
 class BaremeStationnement:
     validee: bool
-    mode: str                 # 'par_logement' | 'par_typologie' | 'absent'
+    mode: str                 # 'par_logement' | 'par_typologie' | 'par_m2_sdp' | 'absent'
     base: Optional[str]       # 'pieces' | 'surface_plancher' | None
     arrondi: str              # 'inferieur' | 'superieur'
     flat_places: Optional[float]
@@ -61,13 +132,82 @@ class BaremeStationnement:
     article: Optional[str]
     page_pdf: Optional[int]
     citation: Optional[str]
+    # ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — formes enrichies (toutes facultatives, rétro-compatibles).
+    m2_par_place: Optional[float] = None          # mode 'par_m2_sdp' : 1 place / N m² de SDP (tranche complète)
+    retenue: str = "max"                          # entre formules concurrentes : 'max' (la plus exigeante)
+    visiteurs: Optional[Visiteurs] = None
+    # ETUDE-STATIONNEMENT-FIX-2 (LOT 1, banc 212) — visiteur PROPRE au logement aidé (souvent 1/10, distinct
+    # du visiteur ordinaire 1/5). Appliqué à la destination « social » à la place du visiteur général.
+    visiteurs_social: Optional[Visiteurs] = None
+    conditions: tuple[str, ...] = ()              # exigences non modélisables, à afficher « à vérifier »
+    # ETUDE-STATIONNEMENT-FIX-1 (LOT 3, règle permanente #2) — colonne « places intégrées à la construction » :
+    # au-delà d'un seuil de SDP, une part des places doit être BÂTIE (plein air exclu). Le moteur ne force pas
+    # le sous-sol : il l'affiche en CONDITION bloquante à vérifier dès que l'opération dépasse le seuil.
+    integ_pct: Optional[float] = None
+    integ_seuil_m2: Optional[float] = None
+    integ_citation: Optional[str] = None
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 3) — barème « par logement » à SEUIL DE SURFACE (La Plaine-des-Palmistes
+    # Ub12.2 : 1 place sous 30 m², 1,5 au-dessus) : `flat_places` = ratio AU-DESSUS du seuil, `places_sous_seuil`
+    # = ratio en dessous. Avant, le moteur appliquait 1,5 à tous les logements (faux sous 30 m²).
+    seuil_surface_m2: Optional[float] = None
+    places_sous_seuil: Optional[float] = None
+    # ETUDE-STATIONNEMENT-FIX-2 (LOT 2) — plafond NATIONAL du Code de l'urbanisme (L151-35/36). C'est un
+    # PLAFOND : il ne peut que FAIRE BAISSER l'exigence locale, jamais la relever, et il s'applique MÊME
+    # quand le PLU sert une ligne dédiée. {ratio, article, citation}. ratio = places/logement au plus.
+    plafond_national: Optional[dict] = None
+    # ETUDE-STATIONNEMENT-FIX-2 (reliquat #4) — place visiteur PAR LOT sur voie, EXIGÉE par le règlement pour
+    # les lotissements (ex. « 0,5 place supplémentaire sur voie par lot » > 5 lots). None = le PLU n'en fixe
+    # pas (le lotissement affiche alors une convention « Estimé », jamais un chiffre présenté comme la règle).
+    visiteur_lotissement: Optional[float] = None
+    # ETUDE-STATIONNEMENT-FIX-2 (reliquat #5) — norme de stationnement VÉLO, CHIFFRÉE quand le PLU la fixe.
+    # {unite: 'm2_par_logement'|'pct_sdp'|'emplacements_par_logements', valeur, seuil_sdp_m2?, citation}.
+    velo: Optional[dict] = None
+
+    def velo_requis(self, logements: int, sdp_m2: float,
+                    par_pieces: "Optional[list[int]]" = None) -> Optional[tuple[str, str]]:
+        """(quantité, libellé) du stationnement vélo exigé, ou None si le PLU n'en fixe pas. Ne dessine rien
+        (le moteur ne place pas les vélos) : chiffre l'exigence pour l'afficher « à prévoir », jamais « non
+        modélisé ». `par_pieces` = liste des pièces de chaque logement (pour les normes par TYPOLOGIE)."""
+        def _fr(x):  # format français, garde la demie (22,5 ≠ 22)
+            return (f"{x:.2f}".rstrip("0").rstrip(".")).replace(".", ",")
+        v = self.velo
+        if not isinstance(v, dict):
+            return None
+        unite = v.get("unite")
+        if v.get("seuil_sdp_m2") and sdp_m2 < float(v["seuil_sdp_m2"]) - 1e-6:
+            return None   # seuil de déclenchement non atteint (ex. Saint-Pierre > 300 m²)
+        # ETUDE-STATIONNEMENT-FIX-3 (LOT 4) — norme PAR TYPOLOGIE (Le Tampon 12.4 : 0,75 m²/logt ≤ 2 pièces,
+        # 1,5 m²/logt au-delà, minimum 3 m²).
+        if unite == "m2_typologie":
+            petit = float(v.get("petit_m2", 0.75)); grand = float(v.get("grand_m2", 1.5))
+            seuil = int(v.get("seuil_pieces", 2)); mini = float(v.get("min_m2", 0.0))
+            pcs = par_pieces if par_pieces else [3] * logements   # défaut prudent (grand) si typologie inconnue
+            tot = sum(petit if (p or 0) <= seuil else grand for p in pcs)
+            tot = max(tot, mini)
+            return (f"{_fr(tot)} m²", f"{petit:g} m²/logt ≤ {seuil} pièces, {grand:g} m²/logt au-delà (min {mini:g} m²)")
+        if not isinstance(v.get("valeur"), (int, float)):
+            return None
+        val = float(v["valeur"])
+        if unite == "m2_par_logement":
+            return (f"{_fr(val * logements)} m²", f"{val:g} m² par logement")
+        if unite == "pct_sdp":
+            return (f"{_fr(val / 100.0 * sdp_m2)} m²", f"{val:g} % de la surface de plancher")
+        if unite == "emplacements_par_logements" and val > 0:
+            return (f"{math.ceil(logements / val - 1e-9):g} emplacements", f"1 emplacement / {val:g} logements")
+        return None
 
     def places_pour(self, *, pieces: int, sdp_m2: float, destination: str = "collectif") -> Optional[float]:
+        """Ratio par logement pour un logement (aperçu/jauge). Ne renvoie que la part RÉSIDENT par logement
+        (les parts d'opération/visiteur se lisent au niveau du programme via `exiger`)."""
         if not self.validee:
             return None
         if self.mode == "par_logement":
             return self.flat_places
+        if self.mode == "par_m2_sdp" and self.m2_par_place:
+            return sdp_m2 / self.m2_par_place
         for l in self.lignes:
+            if l.role != "base" or l.places is None:
+                continue
             if l.destination != destination:
                 continue
             if l.pieces_min is not None and pieces < l.pieces_min:
@@ -76,13 +216,299 @@ class BaremeStationnement:
                 continue
             if l.sdp_min is not None and sdp_m2 < l.sdp_min:
                 continue
-            if l.sdp_max is not None and sdp_m2 >= l.sdp_max:
+            if l.sdp_max is not None and (sdp_m2 > l.sdp_max if l.sdp_max_inclusif else sdp_m2 >= l.sdp_max):
                 continue
             return l.places
         return None
 
-    def arrondir(self, total: float) -> int:
-        return int(math.floor(total + 1e-9)) if self.arrondi == "inferieur" else int(math.ceil(total - 1e-9))
+    def arrondir(self, total: float, sens: Optional[str] = None) -> int:
+        s = sens or self.arrondi
+        return int(math.floor(total + 1e-9)) if s == "inferieur" else int(math.ceil(total - 1e-9))
+
+    def has_destination(self, destination: str) -> bool:
+        """Vrai si le barème sert une ligne DÉDIÉE à cette destination (social/senior/étudiant)."""
+        return self.validee and any(l.destination == destination and l.role == "base" and
+                                    (l.places is not None or l.par_m2 is not None) for l in self.lignes)
+
+    def bornes_surface_m2(self) -> list[float]:
+        """ETUDE-STATIONNEMENT-FIX-9 (point 3) — les SEUILS de surface du barème (30, 100 m²…), pour que
+        l'affichage sache montrer assez de décimales près d'une borne. Quantifiés au millième (même convention)."""
+        vals = set()
+        _seuil = getattr(self, "seuil_surface_m2", None)
+        if _seuil is not None:
+            vals.add(quantifier_surface_m2(_seuil))
+        for l in getattr(self, "lignes", None) or []:
+            for s in (getattr(l, "sdp_max", None), getattr(l, "sdp_min", None)):
+                if s is not None:
+                    vals.add(quantifier_surface_m2(s))
+        return sorted(vals)
+
+    def _parts_visiteurs(self, destination: str, n: int, sdp_tot: float) -> tuple[int, int]:
+        """(visiteurs privés, places publiques) pour le programme. Les places PUBLIQUES (hors parcelle,
+        `publique=True`) sont UNIVERSELLES : exigées pour toute destination, y compris le logement aidé
+        (ex. Saint-Louis « opération > 10 logts : +0,5 place publique/logt »). Le visiteur PRIVÉ est propre
+        à la destination : `visiteurs_social` pour l'aidé, `visiteurs` (s'il n'est pas public) sinon."""
+        vis = pub = 0
+        if self.visiteurs is not None:
+            gv, gp = self._visiteurs_de(self.visiteurs, n, sdp_tot)
+            if not (destination == "social" and self.visiteurs.exclut_social):
+                pub += gp                                   # public (universel sauf `exclut_social` pour l'aidé)
+            if destination != "social" and not self.visiteurs.publique:
+                vis += gv                                   # visiteur privé ordinaire (logement non-aidé)
+        if destination == "social" and self.visiteurs_social is not None:
+            sv, sp = self._visiteurs_de(self.visiteurs_social, n, sdp_tot)
+            vis += sv
+            pub += sp
+        return vis, pub
+
+    @staticmethod
+    def _visiteurs_de(vz: "Optional[Visiteurs]", n: int, sdp_tot: float) -> tuple[int, int]:
+        """Compte (visiteurs privés, places publiques) pour une config de visiteurs. 0,0 si None/seuil non
+        atteint. `par_logements` : 1 tranche par N logements ; `par_m2_sdp` : 1 tranche par N m²."""
+        if vz is None or (vz.logements_min is not None and n < vz.logements_min):
+            return 0, 0
+        v = 0.0
+        if vz.par_logements:
+            v = math.ceil(n / vz.par_logements - 1e-9) * vz.places
+        elif vz.par_m2_sdp:
+            v = math.ceil(sdp_tot / vz.par_m2_sdp - 1e-9) * vz.places
+        v = int(math.floor(v + 1e-9) if vz.arrondi == "inferieur" else math.ceil(v - 1e-9))
+        return (0, v) if vz.publique else (v, 0)
+
+    def _cap_plafond(self, residents: int, n: int, formule: str, ecartees: tuple) -> tuple[int, str, tuple]:
+        """ETUDE-STATIONNEMENT-FIX-2 (LOT 2) — borne l'exigence RÉSIDENT par le plafond national (ne la
+        relève jamais, s'applique même sur une ligne dédiée). Renvoie (residents, formule, écartées)."""
+        if not (self.plafond_national and n > 0):
+            return residents, formule, ecartees
+        ratio = float(self.plafond_national.get("ratio", 0.0))
+        cap = int(math.floor(n * ratio + 1e-9))
+        if cap >= residents:
+            return residents, formule, ecartees
+        art = self.plafond_national.get("article", "L151-35")
+        return cap, (f"plafond national {art} : au plus {ratio:g} place/logt × {n} → {cap} "
+                     f"(borne l'exigence locale {residents})"), ecartees + (f"barème local = {residents}",)
+
+    # ------------------------------------------------------------------ exigence au niveau du PROGRAMME
+    def _ligne_base(self, pieces: int, sdp_m2: float, destination: str) -> Optional[LigneBareme]:
+        for l in self.lignes:
+            if l.role != "base" or l.places is None or l.destination != destination:
+                continue
+            if l.pieces_min is not None and pieces < l.pieces_min:
+                continue
+            if l.pieces_max is not None and pieces > l.pieces_max:
+                continue
+            if l.sdp_min is not None and sdp_m2 < l.sdp_min:
+                continue
+            if l.sdp_max is not None and (sdp_m2 > l.sdp_max if l.sdp_max_inclusif else sdp_m2 >= l.sdp_max):
+                continue
+            return l
+        return None
+
+    def exiger(self, modules, *, destination: str = "collectif",
+               sdp_total: Optional[float] = None) -> Optional[ExigenceStationnement]:
+        """Places exigées par le barème pour le PROGRAMME `modules` (chacun porte `.pieces` et
+        `.surface_m2`). Applique la règle du type de projet (`destination`), retient la formule la PLUS
+        EXIGEANTE entre lectures concurrentes, ajoute les visiteurs, et remonte les conditions non
+        modélisables. None si le barème n'est pas validé.
+
+        `sdp_total` (facultatif) = SURFACE DE PLANCHER réelle du programme (modules + noyaux) pour les
+        formules « par tranche de m² » ; sans lui, on somme les surfaces des logements (approximation)."""
+        if not self.validee:
+            return None
+        n = len(modules)
+        sdp_tot = (float(sdp_total) if sdp_total is not None
+                   else sum(float(getattr(m, "surface_m2", 0.0)) for m in modules))
+        # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — une condition propre aux LOTISSEMENTS d'habitat individuel
+        # (ex. Saint-Pierre Ud6 : « 0,5 place par parcelle … pour les lotissements d'habitat individuel »)
+        # ne s'applique PAS à un programme COLLECTIF : on ne l'affiche que pour un lotissement.
+        # ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — ne filtrer que les conditions PUREMENT de lotissement : une
+        # condition qui vise « opération/lotissement » (ex. Le Tampon Ud12.2 : « 0,5 place hors espaces
+        # privatisés pour toute opération de plus de 5 logements ») s'applique AUSSI au collectif → gardée.
+        def _pur_lotissement(c: str) -> bool:
+            cl = c.lower()
+            return "lotissement" in cl and "opération" not in cl and "operation" not in cl
+        conditions = [c for c in self.conditions
+                      if not (_pur_lotissement(c) and destination != "lotissement")]
+        # Règle permanente #2 — colonne « places intégrées à la construction » : au-delà du seuil de SDP, une
+        # part des places doit être BÂTIE (plein air exclu). Affichée en CONDITION (bloquante) à vérifier.
+        if self.integ_pct and self.integ_seuil_m2 is not None and sdp_tot > self.integ_seuil_m2 + 1e-6:
+            conditions.append(
+                f"{self.integ_pct:g} % des places doivent être intégrées à la construction (opération > "
+                f"{self.integ_seuil_m2:g} m² de surface de plancher) : stationnement en plein air exclu "
+                f"au-delà du seuil — à vérifier" + (f" ({self.integ_citation})" if self.integ_citation else ""))
+        conditions = tuple(conditions)
+        if n == 0:
+            return ExigenceStationnement(0, 0, 0, self.mode, "aucun logement", (), conditions, True, {})
+
+        # Règle permanente #4 — destination SPÉCIALE (social/senior/étudiant) : une ligne dédiée, si elle
+        # existe, GOUVERNE (remplace la règle générale). Sans ligne → la règle générale s'applique (collectif).
+        if destination != "collectif":
+            sp = next((l for l in self.lignes if l.role == "base" and l.destination == destination
+                       and (l.places is not None or l.par_m2 is not None)), None)
+            if sp is not None:
+                # ligne dédiée : arrondi de la LIGNE, sinon celui du barème (qui reflète l'en-tête du tableau,
+                # ex. Trois-Bassins « arrondi à l'entier inférieur ») — jamais « supérieur » par défaut.
+                if sp.par_m2 is not None:
+                    tot = self.arrondir(sdp_tot / sp.par_m2, sp.arrondi)
+                    formule = f"{destination} : 1 place / {sp.par_m2:g} m² SDP · {sdp_tot:.0f} m²"
+                else:
+                    # part par logement + part ADDITIVE au m² (ex. Le Port : 0,2/logt + 8 places/1000 m²).
+                    raw = n * (sp.places or 0.0)
+                    _m2 = ""
+                    if sp.m2_places and sp.m2_tranche:
+                        raw += (sdp_tot / sp.m2_tranche) * sp.m2_places
+                        _m2 = f" + {sp.m2_places:g} places/{sp.m2_tranche:g} m²"
+                    tot = self.arrondir(raw, sp.arrondi)
+                    formule = f"{destination} : {sp.places:g} place/logt × {n} logts{_m2}"
+                tot, formule, ecartees = self._cap_plafond(int(tot), n, formule, ())
+                svis, spub = self._parts_visiteurs(destination, n, sdp_tot)
+                det = {"destination": destination}
+                if svis: det["visiteurs"] = svis
+                if spub: det["publiques"] = spub
+                return ExigenceStationnement(int(tot) + svis, int(tot), svis, self.mode, formule, ecartees,
+                                             conditions, True, det, places_publiques=spub)
+
+        candidats: list[tuple[float, str]] = []      # (places résident, libellé de formule)
+        couvert = True
+        details: dict = {}
+
+        if self.mode == "par_logement" and self.flat_places is not None:
+            if self.seuil_surface_m2 is not None and self.places_sous_seuil is not None:
+                # SEUIL DE SURFACE (La Plaine Ub12.2) : 1 place sous 30 m², 1,5 au-dessus. On compte les deux
+                # populations de logements selon leur surface. Un logement à 30 m² PILE relève du « au-dessus »
+                # (le texte « plus de 30 m² » laisse la borne ambiguë → lecture prudente = plus exigeante).
+                # ETUDE-STATIONNEMENT-FIX-9 (point 3) — une SEULE précision (le millième) pour détecter la borne,
+                # calculer et afficher : surface ET seuil QUANTIFIÉS au millième, puis comparés EXACTEMENT, aucune
+                # tolérance flottante. L'ambiguïté « X ou Y » n'existe QU'AU SEUIL EXACT (ex. 30,000 m²) : seul
+                # point où « plus de N m² » se lit ouvert OU fermé. Une surface sous le seuil (29,99 comme 29,999
+                # ou 29,9999999 m²) reste une seule lecture ; elle n'est jamais « arrondie » vers le seuil.
+                _seuil = quantifier_surface_m2(self.seuil_surface_m2)
+                n_sous = sum(1 for m in modules
+                             if quantifier_surface_m2(getattr(m, "surface_m2", 0.0)) < _seuil)
+                n_pile = sum(1 for m in modules
+                             if quantifier_surface_m2(getattr(m, "surface_m2", 0.0)) == _seuil)
+                n_sur = n - n_sous
+                tot = n_sous * self.places_sous_seuil + n_sur * self.flat_places
+                _form = (f"{self.places_sous_seuil:g} place < {self.seuil_surface_m2:g} m² · "
+                         f"{self.flat_places:g} place ≥ {self.seuil_surface_m2:g} m² ({n_sous}+{n_sur} logts)")
+                if n_pile:
+                    # ETUDE-STATIONNEMENT-FIX-5 (point 2) — BORNE AMBIGUË : des logements sont PILE au seuil et
+                    # le texte (« plus de N m² ») permet DEUX lectures. On DONNE les deux résultats et celui qui
+                    # est retenu (lecture prudente = la plus exigeante), au lieu de présenter une seule valeur.
+                    _prud = self.arrondir(tot)
+                    _bas = self.arrondir(tot - n_pile * (self.flat_places - self.places_sous_seuil))
+                    _form += (f" — borne {self.seuil_surface_m2:g} m² AMBIGUË ({n_pile} logt(s) pile) : le texte "
+                              f"permet {_bas} ou {_prud} places ; lecture prudente {_prud} retenue")
+                candidats.append((self.arrondir(tot), _form))
+            else:
+                tot = n * self.flat_places
+                candidats.append((self.arrondir(tot), f"{self.flat_places:g} place/logt × {n} logts"))
+        elif self.mode == "par_m2_sdp" and self.m2_par_place:
+            # Sens d'arrondi LU dans la règle. « tranche complète » (Saint-Pierre) = seules les tranches
+            # ENTIÈRES comptent → arrondi INFÉRIEUR. Texte muet → supérieur (plus exigeant), fixé à l'ingestion.
+            tot = self.arrondir(sdp_tot / self.m2_par_place)
+            arr = "inférieur" if self.arrondi == "inferieur" else "supérieur"
+            candidats.append((tot, f"1 place / {self.m2_par_place:g} m² · SDP {sdp_tot:.0f} m² (arrondi {arr})"))
+        elif self.mode == "par_typologie":
+            # (a) règle de BASE, logement par logement (par pièces ou surface). N'est une LECTURE valable que
+            # si TOUS les logements trouvent une ligne de base pour la destination (sinon elle ne couvre pas
+            # le programme). Une zone qui n'exprime le collectif QUE par des formules d'opération (ex. Les
+            # Avirons : max(1,25/logt, 1/35 m²)) n'a pas de ligne de base : la couverture vient alors des alt.
+            # FIX-2 — une maison seule (destination « individuel ») dans une zone SANS ligne individuelle
+            # dédiée relève de la norme résidentielle GÉNÉRALE (les tranches « collectif » s'appliquent à tout
+            # logement). On retombe alors sur « collectif » pour l'appariement des lignes de base.
+            dest_match = destination
+            if destination != "collectif" and not any(l.role == "base" and l.destination == destination
+                                                       for l in self.lignes):
+                dest_match = "collectif"
+            lignes_base_dest = [l for l in self.lignes if l.role == "base" and l.destination == dest_match]
+            base_tot = 0.0
+            base_matched = 0
+            par_ligne: dict[str, int] = {}
+            for m in modules:
+                l = self._ligne_base(int(getattr(m, "pieces", 0)), float(getattr(m, "surface_m2", 0.0)), dest_match)
+                if l is None:
+                    continue
+                base_tot += l.places
+                base_matched += 1
+                par_ligne[l.libelle or f"{l.places:g}/logt"] = par_ligne.get(l.libelle or f"{l.places:g}/logt", 0) + 1
+            if lignes_base_dest and base_matched == n and base_tot > 0:
+                _form_base = ("barème par typologie : "
+                              + " + ".join(f"{v}×{k}" for k, v in par_ligne.items()))
+                # ETUDE-STATIONNEMENT-FIX-6 (point 2) — SEUIL DE SURFACE AMBIGU (Bras-Panon 1AUd : « ≤ 100 m² »
+                # 1 place ET « ≥ 100 m² » 1,5 place, les DEUX bornes inclusives → à 100 m² PILE le texte permet
+                # deux lectures). Comme La Plaine, on DONNE les deux résultats et celui qui est retenu (lecture
+                # prudente = la plus exigeante, déjà prise par `_ligne_base`), au lieu d'une seule valeur muette.
+                bases_amb = [l for l in self.lignes
+                             if l.role == "base" and l.destination == dest_match and l.places is not None]
+                seuils_amb = [(lo.sdp_max, min(lo.places, hi.places), max(lo.places, hi.places))
+                              for lo in bases_amb if lo.sdp_max is not None
+                              for hi in bases_amb if hi.sdp_min is not None
+                              and abs(hi.sdp_min - lo.sdp_max) < 0.05 and hi.places != lo.places]
+                n_pile, delta, S0 = 0, 0.0, None
+                for m in modules:
+                    s = quantifier_surface_m2(getattr(m, "surface_m2", 0.0))   # FIX-9 (point 3) : millième unique
+                    for (S, pl_lo, pl_hi) in seuils_amb:
+                        if s == quantifier_surface_m2(S):   # seuil EXACT quantifié (99,999 m² = une seule lecture)
+                            n_pile += 1
+                            delta += (pl_hi - pl_lo)
+                            S0 = S
+                            break
+                if n_pile:
+                    _prud = self.arrondir(base_tot)
+                    _bas = self.arrondir(base_tot - delta)
+                    _form_base += (f" — borne {S0:g} m² AMBIGUË ({n_pile} logt(s) pile) : le texte permet "
+                                   f"{_bas} ou {_prud} places ; lecture prudente {_prud} retenue")
+                candidats.append((self.arrondir(base_tot), _form_base))
+                details["par_typologie"] = par_ligne
+            elif lignes_base_dest and 0 < base_matched < n:
+                # certains logements n'ont pas de ligne de base → la règle ne couvre pas TOUT le programme.
+                couvert = False
+            # (b) formules d'OPÉRATION et ALTERNATIVES (déclenchées selon logements_min), retenue = la plus exigeante
+            for l in self.lignes:
+                if l.role not in ("operation", "alt"):
+                    continue
+                if l.destination != dest_match:
+                    continue
+                if l.logements_min is not None and n < l.logements_min:
+                    continue
+                if l.par_m2 is not None:
+                    # formule alternative « 1 place / N m² » : arrondi de la ligne sinon SUPÉRIEUR (plus exigeant).
+                    v = self.arrondir(sdp_tot / l.par_m2, l.arrondi or "superieur")
+                    arr = "inférieur" if (l.arrondi or "superieur") == "inferieur" else "supérieur"
+                    candidats.append((v, f"1 place / {l.par_m2:g} m² SDP · {sdp_tot:.0f} m² (arrondi {arr})"))
+                elif l.places is not None:
+                    v = self.arrondir(n * l.places, l.arrondi)
+                    seuil = f" (opération > {l.logements_min - 1} logts)" if l.logements_min else ""
+                    candidats.append((v, f"{l.places:g} place/logt × {n} logts{seuil}, arrondi {l.arrondi or self.arrondi}"))
+
+        if not candidats:
+            # barème validé mais aucune ligne ne couvre le programme dessiné → on ne force pas « Réussi ».
+            return ExigenceStationnement(0, 0, 0, self.mode, "règle ne couvrant pas le programme",
+                                         (), conditions, False, details)
+
+        # la PLUS EXIGEANTE des lectures concurrentes (mandat : « on applique la plus exigeante et on l'écrit »)
+        if self.retenue == "max":
+            residents, formule = max(candidats, key=lambda c: c[0])
+        else:
+            residents, formule = candidats[0]
+        ecartees = tuple(f"{lib} = {int(v)}" for v, lib in candidats if (v, lib) != (residents, formule))
+
+        # visiteurs / places publiques (parts additionnelles). Les places PUBLIQUES (hors parcelle) sont
+        # exigées mais NON dessinées sur le terrain → comptées à part (reviewer : Saint-Louis).
+        # visiteurs privés (par destination) + places publiques (universelles).
+        vis, pub = self._parts_visiteurs(destination, n, sdp_tot)
+        if vis:
+            details["visiteurs"] = vis
+        if pub:
+            details["publiques"] = pub
+
+        residents = int(residents)
+        residents, formule, ecartees = self._cap_plafond(residents, n, formule, ecartees)
+        return ExigenceStationnement(
+            places=residents + vis, places_residents=residents, places_visiteurs=vis,
+            base=self.mode, formule=formule, formules_ecartees=ecartees,
+            conditions=conditions, couvert=couvert, details=details, places_publiques=pub)
 
     @property
     def citation_complete(self) -> Optional[str]:
@@ -135,6 +561,11 @@ class DistanceConstructions:
     validee: bool
     forme: str                          # fixe|relative|conditionnelle|contiguite|silence|absente
     min_m: Optional[float] = None
+    # ETUDE-STATIONNEMENT-FIX-6 (point 3) — seuil RELEVÉ pour un GRAND bâtiment (Le Tampon Ua8.2 : 3 m en
+    # général, porté à 6 m « dans le cas d'un bâtiment comportant plus de cinq logements »). On applique le
+    # seuil qui correspond au bâtiment le plus peuplé du projet, pas 3 m aveuglément.
+    min_m_grand_batiment: Optional[float] = None
+    seuil_logements_grand_batiment: Optional[int] = None
     fraction_hauteur: Optional[float] = None
     base_hauteur: Optional[str] = None  # 'cumulee' (H+h) | 'plus_haut' (H du plus haut)
     avec_ouvertures_m: Optional[float] = None
@@ -226,6 +657,26 @@ class ReglesZone:
     prospect: Optional[Regle] = None   # règle de hauteur RELATIVE non chiffrable (ex. L ≥ h/2)
     espaces_verts: "EspacesVerts" = field(default_factory=lambda: EspacesVerts(validee=False))
     marge_plantee: "MargePlantee" = field(default_factory=lambda: MargePlantee(validee=False))
+    # ETUDE-STATIONNEMENT-FIX-1 — règle de hauteur PRÈS DES LIMITES (ex. Le Tampon Ua10.3, bande de 3,60 m)
+    # que le moteur ne sait pas chiffrer : existe → contrôle « Non vérifié », jamais absente.
+    hauteur_bande_limite: Optional[dict] = None
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — Coefficient de Biotope (CBS) : exigence de sol DISTINCTE de la
+    # pleine terre (ex. Saint-Pierre Ud5.1 : CBS 30 % AVEC au moins 20 % de pleine terre). Le CBS est une
+    # somme PONDÉRÉE de surfaces (toitures végétalisées, dalle plantée…) que ce moteur ne calcule pas → il
+    # l'affiche en exigence SÉPARÉE « à vérifier », jamais fondue dans la pleine terre.
+    biotope: Optional[Regle] = None
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — règle de PENTE DE TOITURE (ex. Le Tampon Ud11.5 : pente moyenne
+    # bornée sur ≥ 60 % de l'emprise) que le moteur ne modélise pas (il ne dessine pas la toiture) → affichée
+    # « Non vérifié » avec la règle citée, comme le premier rideau. Dict {article, page_pdf, citation} ou None.
+    pente_toiture: Optional[dict] = None
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — habitat admis SOUS CONDITION d'un schéma d'affectation en annexe
+    # NON lu (ex. Saint-Louis UZ : tertiaire vs habitat selon le schéma) : on ne peut pas accepter la zone
+    # entière → l'admission de l'habitat est « à vérifier ». Dict {article, page_pdf, citation} ou None.
+    habitat_a_verifier: Optional[dict] = None
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 1) — LARGEUR DE DESSERTE imposée à l'opération (voie/accès desservant au
+    # moins N logements, ex. L'Étang-Salé UA3.1.2 : 5 m à partir de 7 logements) : le moteur MESURE l'accès
+    # dessiné et le compare. Dict {largeur_min_m, seuil_logements, article, page_pdf, citation} ou None.
+    desserte: Optional[dict] = None
 
     @property
     def hauteur_plafond(self) -> Regle:
@@ -245,9 +696,11 @@ def _leaf_val(leaf: Optional[dict], key: str, nom: str, unite: str) -> Regle:
     if not isinstance(leaf, dict):
         return Regle(nom=nom, valeur=None, unite=unite, validee=False)
     valide = leaf.get("statut") == "valide" and not leaf.get("absent")
+    # silence PROUVÉ : statut valide + absent:true + citation → la règle est « Non réglementée » (pas « Non effectué »)
+    absent = bool(leaf.get("statut") == "valide" and leaf.get("absent") and str(leaf.get("citation") or "").strip())
     v = leaf.get(key)
     return Regle(
-        nom=nom,
+        nom=nom, absent=absent,
         valeur=float(v) if (valide and isinstance(v, (int, float))) else None,
         unite=unite,
         validee=bool(valide and isinstance(v, (int, float))),
@@ -255,31 +708,130 @@ def _leaf_val(leaf: Optional[dict], key: str, nom: str, unite: str) -> Regle:
     )
 
 
+def _norm_arrondi(v, defaut: str = "superieur") -> str:
+    s = str(v or "").strip().lower()
+    return s if s in ("inferieur", "superieur") else defaut
+
+
+def _parse_visiteurs(form: dict, key: str = "visiteurs") -> Optional[Visiteurs]:
+    """ETUDE-STATIONNEMENT-FIX-1 (LOT 1) — feuille `visiteurs` : places par tranche de logements OU de m².
+    `key` permet de lire aussi `visiteurs_social` (visiteur propre au logement aidé, FIX-2)."""
+    v = form.get(key)
+    if not isinstance(v, dict) or not isinstance(v.get("places"), (int, float)):
+        return None
+    return Visiteurs(
+        places=float(v["places"]),
+        par_logements=v.get("par_logements"), par_m2_sdp=v.get("par_m2_sdp"),
+        logements_min=v.get("logements_min"), publique=bool(v.get("publique")),
+        exclut_social=bool(v.get("exclut_social")),
+        arrondi=_norm_arrondi(v.get("arrondi")),
+        article=v.get("article"), page_pdf=v.get("page_pdf"), citation=v.get("citation"))
+
+
+def _parse_conditions(form: dict) -> tuple[str, ...]:
+    c = form.get("conditions")
+    if isinstance(c, str):
+        return (c,)
+    if isinstance(c, (list, tuple)):
+        return tuple(str(x) for x in c if str(x).strip())
+    return ()
+
+
+_DEST_SPECIALES = {"social": "logement social", "senior": "résidence senior / personnes âgées",
+                   "etudiant": "résidence étudiante / universitaire"}
+
+
+def _lignes_destinations(form: dict) -> list[LigneBareme]:
+    """Lignes des destinations spéciales (`social`/`senior`/`etudiant: {places: X}` OU `{par_m2: Y}`),
+    lues quand le projet est de ce type (règle permanente #4). Sans ligne → destination « Non vérifié »."""
+    out = []
+    for cle, lib in _DEST_SPECIALES.items():
+        s = form.get(cle)
+        if not isinstance(s, dict):
+            continue
+        if isinstance(s.get("places"), (int, float)):
+            out.append(LigneBareme(places=float(s["places"]), destination=cle, role="base",
+                                   arrondi=_norm_arrondi(s.get("arrondi"), None) if s.get("arrondi") else None,
+                                   m2_places=float(s["m2_places"]) if isinstance(s.get("m2_places"), (int, float)) else None,
+                                   m2_tranche=float(s["m2_tranche"]) if isinstance(s.get("m2_tranche"), (int, float)) else None,
+                                   libelle=s.get("tranche") or lib))
+        elif isinstance(s.get("par_m2"), (int, float)):
+            out.append(LigneBareme(par_m2=float(s["par_m2"]), destination=cle, role="base",
+                                   arrondi=_norm_arrondi(s.get("arrondi"), None) if s.get("arrondi") else None,
+                                   libelle=s.get("tranche") or lib))
+    return out
+
+
+def _integ(form: dict) -> tuple:
+    """Colonne « places intégrées à la construction » (règle permanente #2)."""
+    pi = form.get("places_integrees")
+    if not isinstance(pi, dict) or not isinstance(pi.get("pct"), (int, float)):
+        return (None, None, None)
+    return (float(pi["pct"]), float(pi["seuil_m2"]) if isinstance(pi.get("seuil_m2"), (int, float)) else 0.0,
+            pi.get("citation"))
+
+
 def _bareme(stat: dict) -> BaremeStationnement:
     pl = stat.get("par_logement") or {}
     pt = stat.get("par_typologie") or {}
-    # 1) par_logement scalaire validé
+    pm = stat.get("par_m2_sdp") or {}
+    # 1) par_logement scalaire validé — arrondi désormais LU dans la règle (défaut supérieur)
     if pl.get("statut") == "valide" and isinstance(pl.get("places"), (int, float)):
+        ip, isz, ic = _integ(pl)
         return BaremeStationnement(
-            validee=True, mode="par_logement", base=None, arrondi="superieur",
-            flat_places=float(pl["places"]), lignes=(),
-            article=pl.get("article"), page_pdf=pl.get("page_pdf"), citation=pl.get("citation"))
-    # 2) par_typologie validé (pièces OU surface de plancher)
+            validee=True, mode="par_logement", base=None, arrondi=_norm_arrondi(pl.get("arrondi")),
+            flat_places=float(pl["places"]), lignes=tuple(_lignes_destinations(pl)),
+            article=pl.get("article"), page_pdf=pl.get("page_pdf"), citation=pl.get("citation"),
+            visiteurs=_parse_visiteurs(pl), visiteurs_social=_parse_visiteurs(pl, 'visiteurs_social'),
+            visiteur_lotissement=(float(pl['visiteur_lotissement']) if isinstance(pl.get('visiteur_lotissement'),(int,float)) else None),
+            velo=(pl.get('velo') if isinstance(pl.get('velo'),dict) else None),
+            conditions=_parse_conditions(pl),
+            integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic,
+            seuil_surface_m2=(float(pl['seuil_surface_m2']) if isinstance(pl.get('seuil_surface_m2'), (int, float)) else None),
+            places_sous_seuil=(float(pl['places_sous_seuil']) if isinstance(pl.get('places_sous_seuil'), (int, float)) else None))
+    # 2) par_m2_sdp validé — « une place par tranche de N m² de SDP » (ENFIN supporté : tranche complète)
+    if pm.get("statut") == "valide" and isinstance(pm.get("m2_par_place"), (int, float)):
+        ip, isz, ic = _integ(pm)
+        return BaremeStationnement(
+            validee=True, mode="par_m2_sdp", base="surface_plancher", arrondi=_norm_arrondi(pm.get("arrondi")),
+            flat_places=None, lignes=tuple(_lignes_destinations(pm)), m2_par_place=float(pm["m2_par_place"]),
+            article=pm.get("article"), page_pdf=pm.get("page_pdf"), citation=pm.get("citation"),
+            visiteurs=_parse_visiteurs(pm), visiteurs_social=_parse_visiteurs(pm, 'visiteurs_social'),
+            visiteur_lotissement=(float(pm['visiteur_lotissement']) if isinstance(pm.get('visiteur_lotissement'),(int,float)) else None),
+            velo=(pm.get('velo') if isinstance(pm.get('velo'),dict) else None),
+            conditions=_parse_conditions(pm),
+            integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
+    # 3) par_typologie validé (pièces OU surface OU formules d'opération/alternatives)
     if pt.get("statut") == "valide" and pt.get("detail"):
         lignes = []
         for d in pt["detail"]:
-            if not isinstance(d, dict) or d.get("places") is None:
+            if not isinstance(d, dict):
+                continue
+            if d.get("places") is None and d.get("par_m2") is None:
                 continue
             lignes.append(LigneBareme(
-                places=float(d["places"]),
+                places=float(d["places"]) if d.get("places") is not None else None,
+                par_m2=float(d["par_m2"]) if d.get("par_m2") is not None else None,
                 pieces_min=d.get("pieces_min"), pieces_max=d.get("pieces_max"),
                 sdp_min=d.get("sdp_min"), sdp_max=d.get("sdp_max"),
-                destination=d.get("destination") or "collectif", libelle=d.get("tranche") or d.get("typologie") or ""))
+                sdp_max_inclusif=bool(d.get("sdp_max_inclusif")),
+                logements_min=d.get("logements_min"),
+                destination=d.get("destination") or "collectif",
+                role=d.get("role") or "base", arrondi=_norm_arrondi(d.get("arrondi"), None) if d.get("arrondi") else None,
+                libelle=d.get("tranche") or d.get("typologie") or ""))
+        lignes.extend(_lignes_destinations(pt))
         if lignes:
+            ip, isz, ic = _integ(pt)
             return BaremeStationnement(
                 validee=True, mode="par_typologie", base=pt.get("base") or "pieces",
-                arrondi=pt.get("arrondi") or "superieur", flat_places=None, lignes=tuple(lignes),
-                article=pt.get("article"), page_pdf=pt.get("page_pdf"), citation=pt.get("citation"))
+                arrondi=_norm_arrondi(pt.get("arrondi")), flat_places=None, lignes=tuple(lignes),
+                article=pt.get("article"), page_pdf=pt.get("page_pdf"), citation=pt.get("citation"),
+                retenue=(pt.get("retenue") or "max"),
+                visiteurs=_parse_visiteurs(pt), visiteurs_social=_parse_visiteurs(pt, 'visiteurs_social'),
+            visiteur_lotissement=(float(pt['visiteur_lotissement']) if isinstance(pt.get('visiteur_lotissement'),(int,float)) else None),
+            velo=(pt.get('velo') if isinstance(pt.get('velo'),dict) else None),
+                conditions=_parse_conditions(pt),
+                integ_pct=ip, integ_seuil_m2=isz, integ_citation=ic)
     return BaremeStationnement(False, "absent", None, "superieur", None, (), None, None, None)
 
 
@@ -297,6 +849,10 @@ def _distance_constructions(retraits: dict) -> DistanceConstructions:
         validee=bool(valide and forme in formes_ok),
         forme=forme if forme in formes_ok else "absente",
         min_m=float(leaf["min_m"]) if isinstance(leaf.get("min_m"), (int, float)) else None,
+        min_m_grand_batiment=(float(leaf["min_m_grand_batiment"])
+                              if isinstance(leaf.get("min_m_grand_batiment"), (int, float)) else None),
+        seuil_logements_grand_batiment=(int(leaf["seuil_logements_grand_batiment"])
+                                        if isinstance(leaf.get("seuil_logements_grand_batiment"), (int, float)) else None),
         fraction_hauteur=float(frac) if isinstance(frac, (int, float)) else None,
         base_hauteur=leaf.get("base_hauteur"),
         avec_ouvertures_m=float(leaf["avec_ouvertures_m"]) if isinstance(leaf.get("avec_ouvertures_m"), (int, float)) else None,
@@ -310,6 +866,14 @@ def _detect_prospect(reg: dict) -> Optional[Regle]:
     moteur ne sait pas chiffrer. Détectée dans les formules/citations de reculs ou de hauteur.
     PLU-CALIBRAGE-10 : la feuille `entre_constructions` est EXCLUE — sa forme relative (L ≥ h/2
     entre deux bâtiments de la même propriété) est désormais chiffrée par le contrôle dédié."""
+    # ETUDE-STATIONNEMENT-FIX-3 (LOT 2) — feuille `prospect` EXPLICITE (ex. Saint-Pierre Ud3.5 : prospect sur
+    # voie + gabarit près des limites) : le moteur ne la chiffre pas → contrôle « Non vérifié » avec la règle
+    # citée, jamais « pas de règle de prospect ».
+    pe = reg.get("prospect")
+    if isinstance(pe, dict) and (pe.get("citation") or pe.get("formule")):
+        return Regle(nom="prospect (hauteur relative)", valeur=None, unite="", validee=False,
+                     article=pe.get("article"), page_pdf=pe.get("page_pdf"),
+                     citation=pe.get("citation") or pe.get("formule"))
     marqueurs = ("h/2", "h / 2", "différence d'altitude", "l ≥ h", "l > h", "l>h", "≥ h/")
     for grp in ("retraits", "hauteur"):
         for cle, leaf in (reg.get(grp) or {}).items():
@@ -355,8 +919,20 @@ def charger(insee: str, zone: str) -> ReglesZone:
         quota_pct=float(mix["quota_pct"]) if (mix_valide and mix.get("quota_pct") is not None) else None,
         article=mix.get("article"), page_pdf=mix.get("page_pdf"), citation=mix.get("citation"))
 
+    # règle de hauteur près des limites (bande_limite) portée en exception d'une feuille de hauteur.
+    hauteur_bande = None
+    for _leaf in (hauteur.get("faitage"), hauteur.get("egout"), hauteur.get("niveaux")):
+        for _e in ((_leaf or {}).get("exceptions") or []):
+            if isinstance(_e, dict) and _e.get("porte") == "bande_limite":
+                hauteur_bande = {"article": _e.get("article"), "page_pdf": _e.get("page_pdf"),
+                                 "citation": _e.get("texte") or _e.get("citation")}
+                break
+        if hauteur_bande:
+            break
+
     return ReglesZone(
         insee=insee, zone=zone,
+        hauteur_bande_limite=hauteur_bande,
         hauteur_egout=_leaf_val(hauteur.get("egout"), "m", "hauteur à l'égout", "m"),
         hauteur_faitage=_leaf_val(hauteur.get("faitage"), "m", "hauteur au faîtage", "m"),
         emprise_ces=_leaf_val(emprise.get("ces"), "pct", "emprise au sol (CES)", "%"),
@@ -364,6 +940,12 @@ def charger(insee: str, zone: str) -> ReglesZone:
         recul_separatives=_leaf_val(retraits.get("limites_separatives"), "min_m",
                                     "recul sur limites séparatives", "m"),
         pleine_terre=_leaf_val(pleine.get("pct"), "pct", "pleine terre (perméabilité)", "%"),
+        # exigence de sol DISTINCTE de la pleine terre plantée : CBS (Saint-Pierre) OU espace perméable
+        # global (Le Tampon). Le libellé est porté par la config (`libelle`), défaut « coefficient de biotope ».
+        biotope=_leaf_val((reg.get("biotope") or {}).get("pct"), "pct",
+                          ((reg.get("biotope") or {}).get("pct") or {}).get("libelle") or "coefficient de biotope (CBS)", "%"),
+        pente_toiture=(reg.get("pente_toiture") if isinstance(reg.get("pente_toiture"), dict) else None),
+        desserte=(reg.get("desserte") if isinstance(reg.get("desserte"), dict) else None),
         mixite=mixite,
         stationnement=_bareme(reg.get("stationnement") or {}),
         distance_constructions=_distance_constructions(retraits),

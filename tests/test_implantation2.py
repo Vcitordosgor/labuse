@@ -127,8 +127,13 @@ def test_controles_cinq_etats(payload):
             if ct["resultat"] == REUSSI:
                 assert ct["citation"] and str(ct["citation"]).strip(), \
                     f"« Réussi » sans citation : {ct['nom']}"
-        # un scénario servi ne porte aucun contrôle « Échoué ».
-        assert c["echoue"] == 0
+        # ETUDE-STATIONNEMENT-FIX-8 — un scénario servi ne porte aucun contrôle « Échoué » DUR ; les défauts
+        # d'AMÉNAGEMENT hors-faisabilité (largeur de desserte, haie paysagère) sont montrés en rouge sans annuler
+        # la capacité (verdict « À compléter »). À L'Étang-Salé l'accès dessiné (4 m) < 5 m exigés → desserte
+        # en échec, le scénario reste servi.
+        _hors_fais = {"Largeur de desserte", "Stationnement — haie paysagère"}
+        _durs = [ct["nom"] for ct in sc["controles"] if ct["resultat"] == ECHOUE and ct["nom"] not in _hors_fais]
+        assert _durs == [], f"contrôle DUR échoué sur un scénario servi : {_durs}"
 
 
 def test_versions_moteur_et_regles(payload):
@@ -192,7 +197,10 @@ def test_hypotheses_surcharge_recalcule(session_reelle, payload):
     assert p["hypotheses"]["surfaces"]["T2"] == 90
     assert p["scenarios"]
     gros = p["scenarios"][0]["resume"]["logements"]
-    assert gros < base, "des logements plus grands doivent réduire la capacité"
+    # ETUDE-STATIONNEMENT-FIX-6 — des logements plus grands ne peuvent PAS augmenter la capacité ; ils la
+    # réduisent SAUF quand une autre contrainte plafonne déjà (ici, sur L'Étang-Salé, le raccord accès–voie
+    # aérien borne la capacité avant la taille des modules → elle peut rester égale).
+    assert gros <= base, "des logements plus grands ne doivent jamais augmenter la capacité"
 
 
 # --------------------------------------------------------------- objectif pilote le rang
