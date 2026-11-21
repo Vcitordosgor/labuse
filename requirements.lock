@@ -88,6 +88,8 @@ duckdb==1.5.5
     # via
     #   -c /tmp/pf0/constraints.txt
     #   labuse (pyproject.toml)
+et-xmlfile==2.0.0
+    # via openpyxl  (MISE-EN-LIGNE-3)
 fastapi==0.136.3
     # via
     #   -c /tmp/pf0/constraints.txt
@@ -165,6 +167,8 @@ opencv-python-headless==5.0.0.93
     # via
     #   -c /tmp/pf0/constraints.txt
     #   labuse (pyproject.toml)
+openpyxl==3.1.5
+    # via labuse (pyproject.toml)  (MISE-EN-LIGNE-3 — Bilan Excel servi ; était [ml]/[ci] seulement)
 packaging==26.2
     # via
     #   -c /tmp/pf0/constraints.txt

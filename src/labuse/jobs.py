@@ -1010,7 +1010,9 @@ def selftest() -> tuple[bool, list[str]]:
       2. chaque job du registre résout son callable (`jobs_impl.<nom_>`) ;
       3. TOUT import `scripts.*` fait paresseusement dans jobs_impl est réellement importable (la
          racine du dépôt sur sys.path → attrape « No module named 'scripts' », générique et durable) ;
-      4. les FICHIERS que `verite-permanente` LIT (les 6 harnais NU-5) sont présents (livrés).
+      4. les FICHIERS que `verite-permanente` LIT (les 6 harnais NU-5) sont présents (livrés) ;
+      5. MISE-EN-LIGNE-3 — chaque MODULE TIERS SERVI (labuse.deps_servies) s'importe : un paquet
+         absent du venv (la panne openpyxl : 500 au clic d'un client) REFUSE le déploiement.
     Renvoie (ok, problèmes)."""
     import importlib
     import re
@@ -1054,4 +1056,9 @@ def selftest() -> tuple[bool, list[str]]:
                 problemes.append(f"verite-permanente lot {h['lot']} : fichier non livré {script}")
     except Exception as e:  # noqa: BLE001
         problemes.append(f"verite-permanente : runner non chargeable : {e!r}")
+    # 5. modules tiers SERVIS (MISE-EN-LIGNE-3) — un paquet absent du venv doit bloquer ICI,
+    #    pas rendre un 500 au premier clic d'un client (la panne openpyxl du Bilan Excel).
+    from .deps_servies import manquants
+    for m in manquants():
+        problemes.append(f"module tiers servi absent du venv : {m} (à installer au déploiement)")
     return (not problemes), problemes

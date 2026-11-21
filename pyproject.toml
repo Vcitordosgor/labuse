@@ -18,6 +18,9 @@ license = { text = "Proprietary" }
 # ont mordu faute d'être déclarées → le serveur importait grâce à une présence transitive fragile).
 dependencies = [
   "opencv-python-headless>=4.10",   # détection ortho (module Ortho) — dépendance implicite déclarée (M7 J+2)
+  "openpyxl>=3.1",                  # MISE-EN-LIGNE-3 — Bilan Excel SERVI (bilan/excel.py) : n'était que
+                                    # dans [ml]/[ci] → jamais en prod → 500 au clic ; désormais de série,
+                                    # et le selftest du déploiement importe tous les tiers servis (deps_servies)
   "SQLAlchemy>=2.0",
   "GeoAlchemy2>=0.14",
   "psycopg[binary]>=3.1",
@@ -85,7 +88,7 @@ dev = ["pytest>=8.0", "ruff>=0.5", "freezegun>=1.5", "CairoSVG>=2.7"]  # freezeg
 # CI-1 (Lot 3) — sous-ensemble ml « léger » que la sélection CI (unitaires + base de test) importe
 # vraiment (pandas/sklearn via scoring p_model/p_v2 ; openpyxl via Bilan xlsx) SANS torch ni
 # segmentation-models (ML lourd, jamais en CI — cf. [ml]). Installé en CI : `pip install -e .[dev,ci]`.
-ci = ["pandas>=2.0", "scikit-learn>=1.4", "joblib>=1.3", "openpyxl>=3.1"]
+ci = ["pandas>=2.0", "scikit-learn>=1.4", "joblib>=1.3"]  # MISE-EN-LIGNE-3 : openpyxl passé en série
 
 [project.scripts]
 labuse = "labuse.cli:app"
