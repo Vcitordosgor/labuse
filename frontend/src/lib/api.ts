@@ -675,8 +675,13 @@ export const getEstimation3 = (idu: string, body?: { surface_hab?: number | null
   j<Estimer3Rapport>(`/radar/annonce/estimation3/${encodeURIComponent(idu)}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}),
   })
+// MINI-CORRECTIONS-1 (pt 4) — point → parcelle qui ne rend JAMAIS « rien » : si aucune parcelle ne
+// CONTIENT le point (point BAN sur voirie/trottoir, hors cadastre), le back renvoie la parcelle la PLUS
+// PROCHE avec sa distance en mètres. `distance_m` = 0 pour une parcelle contenante, > 0 pour la plus
+// proche, null seulement si la base est vide. L'appelant (barre d'adresse) atterrit alors sur la plus
+// proche et indique la distance — plus de « aucune adresse » à la suite d'un choix dans la liste.
 export const parcelAt = (lon: number, lat: number) =>
-  j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
+  j<{ idu: string | null; distance_m: number | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
 export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =>
   j<{ idu: string; commune: string; surface_m2: number | null;
       surface_terrain_m2?: number | null; surface_source?: 'cadastre' | 'plan' | null;

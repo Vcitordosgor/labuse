@@ -20,7 +20,11 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
-import { ParcelInput } from '../ParcelInput'
+// MINI-CORRECTIONS-1 (pt 3) — l'étape « Définir la zone » affiche la parcelle choisie avec LE composant
+// de référence des autres outils (EntreeParcelle : adresse entière + « IDU · zone · surface » + ✕),
+// au lieu du champ ParcelInput brut qui ne montrait que le libellé de la suggestion (« BZ 1065 — Saint-Denis »).
+// EntreeParcelle encapsule lui-même ParcelInput (SOCLE) pour la saisie adresse/IDU/référence.
+import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'
 import { ListPaginationFooter, usePagination } from '../ListPagination'
 import { docEtudeZoneUrl, etudeZone, etudeZoneEntreprises, getMoteursConfig, parcelAt, type EtudeZoneInput } from '../../lib/api'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
@@ -63,6 +67,11 @@ export function EtudeZone() {
   const setTool = useApp((s) => s.setTool)          // RECETTE-1 H8.2 — gardé pour purger tout dessin résiduel
   const setZone = useApp((s) => s.setZone)          // (le chemin polygone est retiré ; reset/cleanup l'effacent)
   const setFlyTo = useApp((s) => s.setFlyTo)
+  // MINI-CORRECTIONS-1 (pt 3) — EntreeParcelle pilote l'état (source/picked) comme dans les autres outils ;
+  // le clic carte (selectedIdu) est adopté ici, et la ✕ réinitialise la zone (même geste que Gabarit/Pièges).
+  const selectedIdu = useApp((s) => s.selectedIdu)
+  const select = useApp((s) => s.select)
+  const focusParcelle = useApp((s) => s.focusParcelle)
 
   // RETOURS-12 O13.1 — DEUX PORTES à l'ouverture (le MOTEUR reste unique — seules l'entrée et la sortie
   // changent) : « chalandise » (implantation d'une activité : l'activité NAF + la sous-destination PLU
@@ -76,6 +85,8 @@ export function EtudeZone() {
   // On part toujours du superset (le sélecteur d'activité et le bloc concurrents, OPTIONNELS, restent
   // disponibles ; sans activité choisie, c'est la lecture « zone seule »).
   const [cible, setCible] = useState<{ idu: string; label: string } | null>(null)
+  // MINI-CORRECTIONS-1 (pt 3) — quelle entrée a désigné la parcelle (adresse/IDU OU clic carte) : grise l'autre.
+  const [source, setSource] = useState<SourceParcelle>(null)
   const [rayonKm, setRayonKm] = useState(1)
   // RECETTE-OUTILS-1 (point 29 / T6) — « Exporter en PDF » : MÊME document que la carte Docs « Étude de
   // zone » (même générateur /etude-zone.pdf), via useOuvrirDocument (blob + erreurs FR + état d'attente).
@@ -98,6 +109,16 @@ export function EtudeZone() {
     setEtudeZonePrefill(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // MINI-CORRECTIONS-1 (pt 3) — adoption du CLIC CARTE : une parcelle désignée sur la carte (selectedIdu)
+  // devient la cible de la zone (source 'carte', grise le champ) ; refermer sa fiche vide la zone. Même
+  // idiome partagé que Gabarit/Pièges (EntreeParcelle) — plus de champ ParcelInput brut au libellé nu.
+  useEffect(() => {
+    if (selectedIdu && selectedIdu !== cible?.idu) { setCible({ idu: selectedIdu, label: iduCourt(selectedIdu) }); setSource('carte') }
+    else if (selectedIdu == null && source === 'carte') { setCible(null); setSource(null) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIdu])
+  const resetCible = () => { if (selectedIdu) select(null); setCible(null); setSource(null) }
 
   // RECETTE-OUTILS-1 (point 26) — l'état NAF (recherche d'activité + parcours par familles) servait
   // uniquement la section 3 « Une activité (facultatif) », retirée : il est supprimé.
@@ -185,8 +206,11 @@ export function EtudeZone() {
           (+ / −). Plus de segmenté point/polygone, plus de « temps de trajet ». */}
       {/* RETOURS-25 (pt 5) — sous-titre « une parcelle + un rayon en km » et la ligne « Parcelle : … » retirés. */}
       <StepHead n={1} titre="Définir la zone" />
-      <ParcelInput dataAttr="zone-point" placeholder="Adresse, IDU ou référence (BW0917)"
-        withCarte onPick={(idu) => setCible({ idu, label: iduCourt(idu) })} />
+      {/* MINI-CORRECTIONS-1 (pt 3) — MÊME affichage de la parcelle sélectionnée que les autres outils :
+          EntreeParcelle (adresse entière + « IDU · zone · surface » + ✕). Le clic carte est capté par
+          l'effet selectedIdu ci-dessus (d'où withCarte géré par le même idiome que Gabarit/Pièges). */}
+      <EntreeParcelle source={source} picked={cible?.idu ?? null} onChanger={resetCible}
+        onPick={(idu, src) => { setSource(src); setCible({ idu, label: iduCourt(idu) }); focusParcelle(idu) }} />
       {/* RECETTE-1 H8.3 — AMPLEUR : rayon en km réglable par + / − (cercle exact tracé sur la carte). */}
       {/* CHASSE-DONNEES-FIX-1 (E-77) — rayons SERVIS (discrets), plus un stepper 0,5-10 proposant des
           rayons que le back ne calcule pas en cercle. */}
