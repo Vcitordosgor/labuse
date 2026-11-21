@@ -41,7 +41,10 @@ def _commit_build() -> Optional[str]:
         head = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"], capture_output=True, text=True,
                               timeout=2, cwd=cwd)
         if head.returncode != 0 or not head.stdout.strip():
-            return None
+            # MISE-EN-LIGNE-1 — prod = rsync SANS .git : repli sur le marqueur de déploiement
+            # (config/deploiement.json, écrit par deploy_app.sh à chaque mise en ligne).
+            from ..build_rev import deploiement_sha
+            return deploiement_sha()
         short = head.stdout.strip()
         dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], capture_output=True,
                                text=True, timeout=2, cwd=cwd)
@@ -50,7 +53,8 @@ def _commit_build() -> Optional[str]:
         return short
     except Exception:  # noqa: BLE001 — stamp best-effort, jamais bloquant
         pass
-    return None
+    from ..build_rev import deploiement_sha
+    return deploiement_sha()
 
 
 def _donnees_labuse_au_etude(genere_le: str) -> str:

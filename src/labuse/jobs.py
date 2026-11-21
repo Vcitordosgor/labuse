@@ -830,7 +830,13 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "0 copropriété ni parcelle entièrement rouge en palier actionnable, écart de paliers sous seuil) "
               "— sinon il NE PROMEUT PAS et alerte par mail. Premier run = q_v21. Deps de calcul au venv prod "
               "tracées (deploy/requirements-calcul.txt). Cf. labuse.autonomie.controler_run.",
-       test="tests/test_autonomie_registre.py::test_calcul_nuit_au_registre"),
+       test="tests/test_autonomie_registre.py::test_calcul_nuit_au_registre",
+       # MISE-EN-LIGNE-1 — le gel manuel du 13/11 (commentaire posé à la main dans /etc/cron.d/labuse)
+       # serait PERDU à la régénération du crontab au déploiement : il est désormais DÉCLARÉ ici
+       # (CRON-PROD-1). Dégel = retirer ce motif (décision Vic, après le premier classement q_v25
+       # basculé et une nuit calme).
+       gel="gelé 13/11/2026 (Vic) — dégel après la bascule du nouveau classement (risque OOM + "
+           "abstention du banc de cohérence, cf. reports/DEPLOY-GROUPE-3.md §J)"),
     # restore-test — RÉTABLI (AUTONOMIE-1) : contrôle de restauration MENSUEL, résultat ENREGISTRÉ et
     # VISIBLE (marqueur .restore-test.json lu par la vigie + le Tableau de bord). Lisibilité côté serveur
     # toujours ; restauration réelle dans une BASE À PART quand LABUSE_RESTORE_TEST_REEL=1 + disque OK.

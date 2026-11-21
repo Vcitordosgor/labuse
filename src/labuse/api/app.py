@@ -7501,8 +7501,15 @@ def _derive_fiche_code_rev() -> str:
             capture_output=True, text=True, timeout=2)
         if sha.returncode == 0 and sha.stdout.strip():
             return "git:" + sha.stdout.strip()
-    except Exception:  # noqa: BLE001 — pas de git (wheel) : repli constante (limite connue)
+    except Exception:  # noqa: BLE001 — pas de git (wheel) : repli marqueur puis constante
         pass
+    # MISE-EN-LIGNE-1 — prod = rsync sans .git : le marqueur de déploiement fait foi
+    # (config/deploiement.json, écrit par deploy_app.sh). La constante ne reste que pour
+    # un arbre sans git NI marqueur (wheel nue).
+    from ..build_rev import deploiement_sha
+    sha_deploy = deploiement_sha()
+    if sha_deploy:
+        return "deploy:" + sha_deploy
     return _FICHE_CODE_REV_FALLBACK
 
 

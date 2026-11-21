@@ -131,8 +131,10 @@ def test_usine_endpoint():
     # RADAR-FIX-2 (Lot C) — ne restent gelés que les DEUX jobs de notification (radar-cloche + digest),
     # derrière l'interrupteur LABUSE_RADAR_NOTIFS. Les trois jobs de cycle (donnée) sont dégelés.
     # MENAGE-1 (geste 10) — + purge-runs, gelé au registre (à valider avant dégel de l'automatisation).
+    # MISE-EN-LIGNE-1 — + calcul-nuit, gel du 13/11 (Vic) déclaré au registre (dégel après la
+    # bascule du nouveau classement — retirer d'ici quand le motif saute du registre).
     geles = {g["nom"] for g in j["geles"]}
-    assert geles == {"radar-cloche", "digest", "purge-runs"}, geles
+    assert geles == {"radar-cloche", "digest", "purge-runs", "calcul-nuit"}, geles
 
 
 @pytest.mark.db

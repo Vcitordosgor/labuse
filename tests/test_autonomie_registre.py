@@ -9,7 +9,11 @@ def _job(nom):
 
 def test_calcul_nuit_au_registre():
     j = _job("calcul-nuit")
-    assert j.planifie and not j.gel
+    # MISE-EN-LIGNE-1 — le gel du 13/11 (décision Vic) est DÉCLARÉ au registre (CRON-PROD-1) :
+    # il survit à la régénération du crontab au déploiement. Dégel = retirer le motif (et remettre
+    # `not j.gel` ici). Le job reste planifié (le crontab l'émet commenté, la vigie le classe
+    # « gelé » sans le compter en panne).
+    assert j.planifie and j.gel and "13/11/2026" in j.gel
     assert j.heure_reunion == "02:00"           # dans la fenêtre 01h-05h
     assert j.timeout_s >= 4 * 3600              # budget couvrant la fenêtre de nuit
     assert prochaine(j.cron_utc) is not None    # cron parseable

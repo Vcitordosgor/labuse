@@ -1699,35 +1699,44 @@ def ingest_inpi_rne_cmd(
     commune: str = typer.Option(None, help="INSEE pour restreindre (défaut = île entière 974)."),
     throttle: float = typer.Option(0.5, help="Pause (s) entre requêtes SIREN (poli, anti-ban)."),
     chunk: int = typer.Option(100, help="Commit + log de progression tous les N SIREN (reprise)."),
-    resume: bool = typer.Option(True, help="Sauter les SIREN déjà présents dans pm_dirigeants."),
+    resume: bool = typer.Option(True, help="Relecture roulante : sauter les SIREN lus il y a moins "
+                                           "de --fraicheur-jours ; --no-resume relit tout."),
+    fraicheur_jours: int = typer.Option(None, "--fraicheur-jours",
+                                        help="Fenêtre de la relecture roulante (défaut : 90 j)."),
 ) -> None:
     """Ingère les dirigeants RNE (Vague A3) des personnes morales foncières — signal âge dirigeant.
 
-    SIREN-based (comme BODACC), depth-0. RÉSUMABLE (saute les déjà faits) et CHUNKÉ (commit +
-    progression par lot) → un arrêt ne reperd rien. Identifiants en env INPI_API_* (jamais en dur).
-    ⚠ Appels réseau + écriture : l'île entière ≈ 9 579 SIREN (~1 h 45). Ne touche PAS au score
-    (# TODO étage 2)."""
+    SIREN-based (comme BODACC), depth-0. RELECTURE ROULANTE (MISE-EN-LIGNE-1, décision Vic
+    FRAICHEUR-PROD-3 §7) : les JAMAIS lus d'abord, puis les lus depuis plus de --fraicheur-jours
+    (90 j), le plus ancien en tête — le quota quotidien sert toujours les plus périmés, et un
+    arrêt au quota est RÉSUMABLE sans perte (commit par lot). Les dirigeants que le RNE ne renvoie
+    plus passent actif=false (jamais sur une réponse vide). Identifiants en env INPI_API_*.
+    ⚠ Appels réseau + écriture : l'île entière ≈ 9 614 SIREN (~2 h plein, mesuré 15/11). Ne touche
+    PAS au score (# TODO étage 2)."""
     import time
 
     from .connectors.inpi_rne import InpiRneConnector, QuotaExceededError
-    from .ingestion.inpi_rne import eligible_sirens, ingest_inpi_rne
+    from .ingestion.inpi_rne import (RELECTURE_JOURS, eligible_sirens, ingest_inpi_rne,
+                                     sirens_a_relire)
 
     insee = commune if (commune and commune.isdigit()) else None
+    fenetre = RELECTURE_JOURS if fraicheur_jours is None else int(fraicheur_jours)
     conn = InpiRneConnector(throttle_s=throttle)
     with session_scope() as s:
         sirens = eligible_sirens(s, insee)
-        done: set[str] = set()
         if resume:
-            done = {r[0] for r in s.execute(text("SELECT DISTINCT siren FROM pm_dirigeants")).all()}
-        todo = [x for x in sirens if x not in done]
+            todo, n_recents = sirens_a_relire(s, sirens, fraicheur_jours=fenetre)
+        else:
+            todo, n_recents = list(sirens), 0
         scope = f"INSEE {insee}" if insee else "île entière (974)"
-        typer.echo(f"INPI RNE — {scope} : {len(sirens)} éligibles, {len(done)} déjà faits, "
-                   f"{len(todo)} à traiter.")
+        typer.echo(f"INPI RNE — {scope} : {len(sirens)} éligibles, {n_recents} relus il y a moins "
+                   f"de {fenetre} j (sautés), {len(todo)} à traiter (jamais lus, puis plus anciens "
+                   f"d'abord).")
         if not todo:
             typer.echo("✓ Rien à faire.")
             return
         t0 = time.time()
-        tot_d = tot_h = 0
+        tot_d = tot_h = tot_p = 0
         done_global = 0
         try:
             for k in range(0, len(todo), chunk):
@@ -1736,15 +1745,19 @@ def ingest_inpi_rne_cmd(
                 s.commit()   # lot committé → reprise possible ; conso mémoire plate
                 tot_d += res["dirigeants"]
                 tot_h += res["sirens_with_dirigeant"]
+                tot_p += res.get("dirigeants_partis", 0)
                 done_global = min(k + chunk, len(todo))
-                typer.echo(f"  … {done_global}/{len(todo)} — +{res['dirigeants']} dirigeants "
+                typer.echo(f"  … {done_global}/{len(todo)} — +{res['dirigeants']} dirigeants, "
+                           f"{res.get('dirigeants_partis', 0)} partis désactivés "
                            f"(cumul {tot_d}, sirens_hit {tot_h}, {time.time() - t0:.0f}s)")
         except QuotaExceededError as exc:
             typer.echo(f"✗ QUOTA INPI ÉPUISÉ après {done_global}/{len(todo)} SIREN "
-                       f"({tot_d} dirigeants écrits). Résumable : relancer plus tard (quota quotidien). "
-                       f"Détail : {exc}")
+                       f"({tot_d} dirigeants écrits, {tot_p} partis désactivés — les lots commités "
+                       f"restent acquis). Résumable : la relecture roulante reprendra demain par "
+                       f"les plus anciens. Détail : {exc}")
             raise typer.Exit(1) from exc
-    typer.echo(f"✓ INPI RNE : {tot_d} dirigeants, {tot_h} SIREN avec dirigeant.")
+    typer.echo(f"✓ INPI RNE : {tot_d} dirigeants, {tot_h} SIREN avec dirigeant, "
+               f"{tot_p} partis désactivés.")
 
 
 @app.command("ingest-inpi-gigogne")

@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import json
 from collections import Counter
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
-from sqlalchemy import text
+from sqlalchemy import bindparam, text
 from sqlalchemy.orm import Session
 
 from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — jour Réunion, pas le fuseau du process
@@ -47,6 +47,53 @@ def eligible_sirens(session: Session, insee: str | None = None) -> list[str]:
         params["pref"] = f"{insee}%"
     sql += " ORDER BY siren"
     return [r[0] for r in session.execute(text(sql), params).all()]
+
+
+#: MISE-EN-LIGNE-1 (décision Vic, FRAICHEUR-PROD-3 §7) — fenêtre de la relecture ROULANTE : une
+#: société déjà couverte est relue dès que sa dernière lecture a plus de N jours. Avant : la tâche
+#: mensuelle sautait TOUT siren déjà présent → un gérant parti/changé restait figé au stock initial.
+RELECTURE_JOURS = 90
+
+
+def sirens_a_relire(session: Session, sirens: list[str],
+                    fraicheur_jours: int = RELECTURE_JOURS,
+                    now: datetime | None = None) -> tuple[list[str], int]:
+    """Relecture ROULANTE : ordonne les SIREN éligibles à traiter, saute les lus récemment.
+
+    Rend `(todo, n_recents)` : `todo` = les JAMAIS lus d'abord, puis les lus il y a
+    ≥ `fraicheur_jours` (le plus ancien d'abord — c'est lui que le quota doit servir en premier) ;
+    `n_recents` = combien ont été sautés (dernière lecture < fenêtre). Le plafond du quota est géré
+    par l'appelant (QuotaExceededError = arrêt franc, résumable) : trier du plus ancien au plus
+    récent garantit qu'un arrêt au quota laisse les mieux servis pour demain."""
+    now = now or datetime.now(timezone.utc)
+    lu = {r[0]: r[1] for r in session.execute(text(
+        "SELECT siren, max(ingested_at) FROM pm_dirigeants GROUP BY siren")).all()}
+    seuil = now - timedelta(days=fraicheur_jours)
+    jamais = [s for s in sirens if s not in lu or lu[s] is None]
+    vus = [s for s in sirens if s in lu and lu[s] is not None]
+    a_relire = sorted((s for s in vus if lu[s] < seuil), key=lambda s: lu[s])
+    return jamais + a_relire, len(vus) - len(a_relire)
+
+
+#: MISE-EN-LIGNE-1 — retrait des dirigeants PARTIS : quand le RNE rend la société avec ≥ 1
+#: représentant identifiable, toute ligne de ce siren absente de la réponse passe `actif = false`
+#: (le départ est dit, la ligne reste pour l'historique). Si la réponse ne rend AUCUN représentant
+#: identifiable, on ne désactive RIEN (« jamais remplacer du réel par du vide » — diffusibilité,
+#: parsing partiel). Mesuré FRAICHEUR-PROD-3 §7 : 268 lignes orphelines sur 173 sociétés.
+_DESACTIVER_PARTIS = text(
+    "UPDATE pm_dirigeants SET actif = false "
+    "WHERE siren = :siren AND coalesce(actif, true) "
+    "  AND representant_id IS NOT NULL AND representant_id NOT IN :rids"
+).bindparams(bindparam("rids", expanding=True))
+
+
+def _desactiver_partis(session: Session, company: dict) -> int:
+    """Passe `actif=false` aux dirigeants du siren que le RNE ne renvoie plus. 0 si réponse vide."""
+    rids = [d["representant_id"] for d in company.get("dirigeants", []) if d.get("representant_id")]
+    if not rids:
+        return 0
+    res = session.execute(_DESACTIVER_PARTIS, {"siren": company["siren"], "rids": rids})
+    return res.rowcount or 0
 
 
 _UPSERT = text(
@@ -89,16 +136,20 @@ def ingest_inpi_rne(session: Session, sirens: list[str],
     """
     connector = connector or InpiRneConnector()
     n_diri = 0
+    n_partis = 0
     sirens_hit: set[str] = set()
     for company in connector.fetch_companies(sirens, throttle_s=throttle_s):
         added = _store_dirigeants(session, company)
+        # MISE-EN-LIGNE-1 — même passage : les dirigeants que le RNE ne renvoie plus sont
+        # désactivés (après l'upsert, donc les présents sont déjà à jour quand on compare).
+        n_partis += _desactiver_partis(session, company)
         if added:
             n_diri += added
             sirens_hit.add(company["siren"])
     _touch_source(session)
     session.flush()
     return {"sirens_queried": len({s for s in sirens}), "dirigeants": n_diri,
-            "sirens_with_dirigeant": len(sirens_hit)}
+            "sirens_with_dirigeant": len(sirens_hit), "dirigeants_partis": n_partis}
 
 
 def sample_report(session: Session, insee: str, today: date | None = None,
