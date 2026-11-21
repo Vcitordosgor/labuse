@@ -46,7 +46,24 @@ preparer() {
   echo "✓ preparé ($D → $HOST:$SD)"
 }
 
+EMPREINTES_SQL="SELECT commune, kind, count(*), md5(string_agg(md5(ST_AsBinary(geom)), '|' ORDER BY md5(ST_AsBinary(geom)))) FROM spatial_layers WHERE kind IN ('plu_gpu_zone','plu_gpu_prescription') AND commune IN ('La Possession','Saint-Denis') GROUP BY 1,2 ORDER BY 1,2"
+
 a_blanc() {
+  # Précision Vic (21/11) : des comptes identiques ne prouvent pas des géométries identiques.
+  # On compare l'EMPREINTE GÉOMÉTRIQUE (md5 agrégé, ordre canonique) des zones ET prescriptions
+  # des deux communes, Mac (document en vigueur) vs prod. Identiques → marqueur du jour, exigé
+  # par `appliquer`. Divergentes → pas de marqueur : `appliquer` refuse ; seul recours assumé :
+  # `appliquer --zones-seules` (et le dire dans le rapport).
+  echo "── EMPREINTES géométriques zones+prescriptions (Mac vs prod) ──"
+  psql -d labuse -At -F'§' -c "$EMPREINTES_SQL" > /tmp/ml5_empr_mac.txt
+  ssh "$HOST" "sudo -u postgres psql -d labuse -At -F'§' -c \"SET statement_timeout='120s'\" -c \"$EMPREINTES_SQL\"" | grep -v '^SET$' > /tmp/ml5_empr_prod.txt
+  if diff /tmp/ml5_empr_mac.txt /tmp/ml5_empr_prod.txt; then
+    date +%Y%m%d > /tmp/ml5_empreintes_ok
+    echo "✓ empreintes IDENTIQUES — marqueur /tmp/ml5_empreintes_ok posé ($(cat /tmp/ml5_empreintes_ok))"
+  else
+    rm -f /tmp/ml5_empreintes_ok
+    echo "✗ DIVERGENCE d'empreinte — appliquer refusera (repli : --zones-seules, à dire au rapport)"
+  fi
   echo "── A-BLANC : comptes attendus vs trouvés (prod, 0 écriture) ──"
   ssh "$HOST" "sudo -u postgres psql -d labuse -At -F'§' <<'SQLEOF'
 SET statement_timeout='60s';
@@ -66,6 +83,14 @@ SQLEOF" | grep -v "^SET$" || true
 }
 
 appliquer() {
+  # Garde (précision Vic 21/11) : l'application PLEINE exige le marqueur d'empreintes DU JOUR
+  # (posé par a-blanc après comparaison géométrique Mac=prod). `--zones-seules` n'existe
+  # volontairement pas encore : si les empreintes divergent un jour, on s'arrête et on le dit.
+  if [ "$(cat /tmp/ml5_empreintes_ok 2>/dev/null)" != "$(date +%Y%m%d)" ]; then
+    echo "✗ REFUS : pas de marqueur d'empreintes du jour (lancer a-blanc d'abord ; s'il a dit" >&2
+    echo "  DIVERGENCE, ne pas appliquer — ré-étiqueter seulement les zones est un geste à part, à rapporter)." >&2
+    exit 3
+  fi
   echo "── SAUVEGARDE des lignes touchées → $BK ──"
   ssh "$HOST" "sudo mkdir -p $BK && sudo chown postgres $BK
     sudo -u postgres psql -d labuse -c \"\\copy (SELECT * FROM plu_reglement_extrait WHERE insee IN ('97411','97408')) TO '$BK/reglement_avant.copy'\" \
