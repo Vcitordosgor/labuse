@@ -16,7 +16,7 @@ fix/moteur-verite-1 ; tête main `23a7551ba` du 21/11).
 | 1 | **Purge des runs morts** (liste figée MENAGE-PROD-1, ~14,7 Go — le disque est à 81 %, la chaîne en consommera ~8) | ~1 h (VACUUM compris) | aucune (hors 13 h 30–14 h) | comptes q_v20/q_v19_sources/q_v18 inchangés (433 229 / ~21 M) ; `readyz` 200 | sauvegarde du jour (relue, 6,2 Go) |
 | 2 | **Déploiement** (rsync → venv → selftest jobs → build front → crontab → restart) | ~10 min dont **coupure 1–2 min** (restart → readyz stable) | **1–2 min** | `/readyz` 200 stable ; selftest jobs vert ; crontab vérifié ; tampon PDF = sha du déploiement | filets `app-avant-*`/`venv-avant-*` (cp -al) + redeploy de l'ancien commit |
 | 2b | *(si Vic dit oui)* **Mot de passe base changé** pendant la coupure | +5 min dans la coupure | inclus | l'app redémarre et `readyz` 200 avec le nouveau mot de passe | remettre l'ancien hash (gardé le temps du geste) |
-| 3 | **Données : PLU** — réingérer sur le Mac le zonage GPU de Saint-Denis (PLU du 05/08/2026) et La Possession (25/06/2026), puis pousser le fond Mac→prod (`deploy_donnees.sh`, qui corrige aussi spatial_layers ±1) | ~1–2 h (ingestion + push + contrôles comptages) | aucune | `parite` : FOND tout « = » ; une fiche Saint-Denis affiche le zonage du PLU 20260805 | re-pousser le fond précédent (dump avant push, prévu par sync-run) |
+| 3 | **Données : PLU** — rien à réingérer (§ correction PLU ci-dessous : le Mac EST au document en vigueur, 0 parcelle ne change de zone) ; pousser le fond Mac→prod (`deploy_donnees.sh`) pour re-pointer l'idurba de La Possession + corriger spatial_layers ±1, et porter le règlement 20260805/20260625 en prod | ~1 h (push + comptages) | aucune | `parite` : FOND tout « = » ; prod sert l'idurba `97408_PLU_20260625` et le règlement 20260805 | re-pousser le fond précédent (dump avant push, prévu par sync-run) |
 | 4 | **Données : ventes** — `labuse jobs run ingest-dvf` (= refresh-dvf + dvf-marche, désormais enchaînés) | ~5–10 min | aucune | `donnees_jusqu_au = 30/06/2026` partout ; l'incident `fraicheur-retard:DVF` se referme à 07 h 50 | sans objet (idempotent) |
 | 5 | **Nouveau classement q_v25** — chaîne complète sur le serveur, de jour, sous surveillance : résiduel île (4 shards, ~23 h cumulées → 2 jours à 2 shards) → cascade (~3 h) → score (22 min) → scénarios (27 min) | **~2 jours** étalés | aucune (le site sert q_v20 pendant tout le calcul) | chaque étape : comptes 433 229 + disque ≥ 3 Go | arrêter la chaîne ; q_v20 n'est jamais touché |
 | 6 | **Modèle de probabilité** — dataset reconstruit sans doublon (déjà corrigé dans le code), ré-entraînement recette q_v15, banc K0 | ~1 h (parallèle à l'étape 5) | aucune | K0 (test 2025) ≥ artefact actuel → on prend ; sinon **on garde l'actuel et on le dit** | garder l'artefact gelé actuel |
@@ -272,3 +272,36 @@ fichiers contre l'historique git (pas de `.git` en prod). `labuse parite` exécu
 commandes du LOT 4 sont vérifiées une à une dans la CLI de la branche (pas de commande déduite).
 Code ajouté dans ce mandat : INPI roulant + partis, gel registre, `build_rev` — testés
 (`pytest` ciblé vert) ; la suite complète est rejouée par le hook au push.
+
+---
+
+## Correction PLU (21/11, lecture seule) — la contradiction avec PLU-MAJ-2 est levée
+
+J'écrivais au LOT 3 que « le zonage de Saint-Denis et de La Possession reste à réingérer des deux
+côtés ». **C'est faux — PLU-MAJ-2 avait raison.** Mon indice (signature `parcel_zone_plu_version`
+identique Mac = prod) ne prouvait pas un zonage ancien : les deux documents en vigueur ne changent
+**aucune géométrie** (Saint-Denis : modification à zonage constant ; La Possession : application
+d'un jugement du TA, différence symétrique 0 m² sur 118 km², règlement octet-pour-octet identique
+— PLU-MAJ-2 LOT 3/4), donc la table dérivée parcelle→zone est identique quel que soit l'idurba
+source. La preuve, relevée ce jour :
+
+| | Saint-Denis (97411) | La Possession (97408) |
+|---|---|---|
+| **GPU, 21/11** (API document.production) | `97411_PLU_20260805` — APPROVED, téléversé 24/08/2026 | `97408_PLU_20260625` — APPROVED, téléversé 21/10/2026 |
+| **Mac — zonage servi** (`spatial_layers`, kind `plu_gpu_zone`) | **`97411_PLU_20260805`** (259 zones) | **`97408_PLU_20260625`** (246 zones) |
+| **Prod — zonage servi** (même requête) | **`97411_PLU_20260805`** (259 zones — les zones d'octobre avaient déjà pris le document en vigueur) | `97408_PLU_20251217` (246 zones — **étiquette** ancienne, géométrie identique) |
+| **Parcelles qui changeraient de zone à la réingestion** | **0 / 38 557** (empreinte md5 de (idu→zone) identique Mac = prod) | **0 / 13 450** (idem ; PLU-MAJ-2 : 0 m² de diff) |
+
+**Conséquences** :
+1. **Rien n'est remis en cause dans le calibrage ni les témoins de Saint-Denis** : le zonage du
+   Mac est bien celui du document du 05/08/2026, le texte en base et le PDF conservé sont
+   octet-pour-octet le pack officiel GPU de cet idurba, et les règles calibrées pointent juste
+   (sondage PLU-MAJ-2, 10/10 avec images). Les témoins dionysiens restent valables tels quels.
+2. **Le travail prod est plus petit que ce que disait le LOT 3** : aucune réingestion de zonage
+   nulle part. Il reste à **re-pointer l'étiquette** de La Possession (idurba des couches) et à
+   porter en prod le **texte du règlement** des deux communes (`plu_reglement_extrait` prod :
+   97411 encore au `20260423`, 97408 au `20251217` — le Mac a les bons) + l'archive datée
+   (`plu_layer_archive`). Point d'attention pour le geste : `plu_reglement_extrait` et
+   `plu_layer_archive` ne sont pas dans la liste de fond de `flux_sens.py` — vérifier que
+   `sync-run.sh` les embarque, sinon les ajouter explicitement au push.
+3. L'étape 3 de la page 1 est corrigée en ce sens (durée ramenée à ~1 h).
