@@ -1,0 +1,77 @@
+{
+ "insee": "97416",
+ "commune": "Saint-Pierre",
+ "regles": [
+  {
+   "id": "97416-R1",
+   "article": "Ucv6",
+   "mode": "par_m2_sdp",
+   "zones": [
+    "Ucv"
+   ],
+   "pages": [
+    71,
+    72,
+    73
+   ]
+  },
+  {
+   "id": "97416-R2",
+   "article": "Ud6",
+   "mode": "par_m2_sdp",
+   "zones": [
+    "Ud",
+    "Udl",
+    "UdBO"
+   ],
+   "pages": [
+    92,
+    93,
+    94
+   ]
+  },
+  {
+   "id": "97416-R3",
+   "article": "Ug6",
+   "mode": "par_logement",
+   "zones": [
+    "Ug",
+    "AUg"
+   ],
+   "pages": [
+    108,
+    109,
+    110
+   ]
+  },
+  {
+   "id": "97416-R4",
+   "article": "Uf6",
+   "mode": "par_logement",
+   "zones": [
+    "Uf",
+    "UfCA",
+    "AUf",
+    "AUfGB"
+   ],
+   "pages": [
+    108,
+    109,
+    110
+   ]
+  },
+  {
+   "id": "97416-R5",
+   "article": "Up6",
+   "mode": "par_logement",
+   "zones": [
+    "Up"
+   ],
+   "pages": [
+    152,
+    153,
+    154
+   ]
+  }
+ ]
+}

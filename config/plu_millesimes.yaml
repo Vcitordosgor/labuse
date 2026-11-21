@@ -22,7 +22,8 @@ communes:
   "97406": {commune: "La Plaine-des-Palmistes", idurba: "97406_PLU_20230527", date_mairie: "2023-05-27", statut: a_jour}
   "97407": {commune: "Le Port", idurba: "97407_PLU_20241209", date_mairie: "2024-12-09", statut: annule_partiel,
             note: "annulation limitée au secteur Uppp/Up2 (concession portuaire) — TA 1900330 + CAA 22BX01470 ; zones AU/N/U résidentielles intactes"}
-  "97408": {commune: "La Possession", idurba: "97408_PLU_20251217", date_mairie: "2025-12-17", statut: a_jour}
+  "97408": {commune: "La Possession", idurba: "97408_PLU_20260625", date_mairie: "2026-06-25", statut: a_jour,
+            note: "[PLU-MAJ-2] modification simplifiée n°2 approuvée 25/06/2026 (application d'un jugement du TA), publiée au GPU le 29/10/2026 — idurba 97408_PLU_20260625. Remplace 97408_PLU_20251217 (archivée dans plu_layer_archive). Règles chiffrées à recalibrer sur le nouveau règlement — cf. docs/audit-2026-11/plu-maj-2/."}
   "97409": {commune: "Saint-André", idurba: "97409_20190228", date_mairie: "2019-02-28", statut: opposabilite_en_attente,
             note: "PLU 2019 opposable, SERVI et présent au GPU (idurba 97409_20190228, 142 zones ingérées — vérifié M40) : il fait foi à ce jour. Révision en cours, NON approuvée → non opposable, non servie. [M40 : la mention M32 « aucun document GPU » était fausse sur pièces.]"}
   "97410": {commune: "Saint-Benoît", idurba: "97410_PLU_20200206", date_mairie: "2020-02-06", statut: a_jour,

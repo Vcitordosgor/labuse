@@ -39,6 +39,38 @@ CODE_PAR_MOTIF = {
 }
 
 
+# OUTILS-LOT-4 (pt 5) — le pli nomme la personne morale AVEC sa forme juridique (« SARL MOUTOUSSAMY
+# EMILE », pas « MOUTOUSSAMY EMILE » qui se lit comme une personne physique). On ne préfixe QUE les
+# formes COMMERCIALES, où « FORME DÉNOMINATION » est le nom légal usuel ; les entités publiques /
+# institutionnelles (COMMUNE DE…, DÉPARTEMENT…, SOCIÉTÉ IMMOBILIÈRE…) se nomment déjà en entier dans la
+# dénomination — on ne leur colle pas leur code (« COM », « DEPT », « SEM »). Garde anti-doublon si la
+# dénomination porte déjà la forme (« SCI DESTINO »).
+_FORMES_COMMERCIALES = {
+    "SARL", "SA", "SAS", "SASU", "EURL", "SCI", "SNC", "SCA", "SCEA", "EARL", "GFA",
+    "SC", "SCM", "SICA", "GIE", "SLRL", "SELARL", "SELAS", "SCP", "SCOP",
+}
+
+
+def _nom_affiche(forme: str | None, denomination: str | None) -> str:
+    """Nom du destinataire PM, préfixé de sa forme juridique quand elle est commerciale et absente."""
+    nom = (denomination or "").strip()
+    f = (forme or "").strip().upper()
+    if not nom or f not in _FORMES_COMMERCIALES:
+        return nom
+    if nom.upper() == f or nom.upper().startswith(f + " "):
+        return nom          # déjà préfixée (« SCI DESTINO ») → pas de doublon
+    return f"{f} {nom}"
+
+
+def _est_personne_physique(payload) -> bool:
+    """Catégorie juridique INSEE 1000 = entrepreneur individuel (personne physique).
+
+    Traité comme un particulier (jamais nominatif). Lu dans `nature_juridique` du payload SIRENE."""
+    if not isinstance(payload, dict):
+        return False
+    return str(payload.get("nature_juridique") or "").strip() == "1000"
+
+
 def _siege_adresse(payload) -> str | None:
     """Adresse du siège social depuis le payload SIRENE (owner_enrichment). None si absente.
 
@@ -63,7 +95,7 @@ def resoudre_destinataire(db, idu: str) -> dict:
     row = db.execute(text("""
         SELECT p.idu, p.section, p.numero, p.commune, p.surface_m2,
                (fb.idu IS NOT NULL) AS batie,
-               pm.denomination, pm.siren
+               pm.denomination, pm.siren, pm.forme_juridique
         FROM parcels p
         LEFT JOIN parcel_filtre_bati fb ON fb.idu = p.idu
         LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
@@ -82,20 +114,28 @@ def resoudre_destinataire(db, idu: str) -> dict:
             "adresse_envoi": None, "mention": None, "bloque": True, "motif": None, "code": None}
 
     est_pm = bool(row["denomination"])
+    payload = None
+    if est_pm and row["siren"]:
+        payload = db.execute(text(
+            "SELECT payload FROM owner_enrichment WHERE siren = :s ORDER BY fetched_at DESC LIMIT 1"),
+            {"s": row["siren"]}).scalar()
+    # OUTILS-P1-1 LOT3d (pt 2) — un ENTREPRENEUR INDIVIDUEL / personne physique (catégorie juridique
+    # INSEE 1000) n'est PAS une personne morale : pli NON nominatif (« À l'occupant »), jamais son nom
+    # ni son adresse déclarée — même inscrit au fichier des personnes morales du DGFiP. 0 cas mesuré
+    # aujourd'hui (aucun propriétaire en 1000), garde défensive si un EI y apparaissait.
+    if est_pm and _est_personne_physique(payload):
+        est_pm = False
     if est_pm:
-        siege = None
-        if row["siren"]:
-            payload = db.execute(text(
-                "SELECT payload FROM owner_enrichment WHERE siren = :s ORDER BY fetched_at DESC LIMIT 1"),
-                {"s": row["siren"]}).scalar()
-            siege = _siege_adresse(payload)
+        # OUTILS-LOT-4 (pt 5) — nom AVEC forme juridique (« SARL MOUTOUSSAMY EMILE ») à l'écran ET sur le pli.
+        nom_pm = _nom_affiche(row["forme_juridique"], row["denomination"])
+        siege = _siege_adresse(payload) if payload else None
         if siege:
-            res = {**base, "type": "siege", "destinataire": f"{row['denomination']} — {MENTION_SIEGE}",
+            res = {**base, "type": "siege", "destinataire": f"{nom_pm} — {MENTION_SIEGE}",
                    "adresse_envoi": siege, "mention": MENTION_SIEGE, "bloque": False}
         elif ban:
             # E-03 — PM connue sans siège enrichi : adressée à SON NOM, à l'adresse du bien (BAN),
             # jamais « À l'occupant » (la dénomination est connue et nommée par le Dossier).
-            res = {**base, "type": "siege", "destinataire": row["denomination"],
+            res = {**base, "type": "siege", "destinataire": nom_pm,
                    "adresse_envoi": ban, "mention": MENTION_PM_BIEN, "bloque": False}
         else:
             return _bloque(base, MOTIF_PM_SANS_CANAL)

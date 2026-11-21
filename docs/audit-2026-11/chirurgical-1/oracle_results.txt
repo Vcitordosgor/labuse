@@ -1,0 +1,285 @@
+SET
+SET
+CREATE TABLE
+INSERT 0 38
+=== 1. SURFACE (ST_Area geom_2975) vs surface_m2 vs contenance_m2 ===
+      idu       |         commune         | surface_sql_m2 | surface_stockee_m2 | contenance_cadastre_m2 | ecart_m2 
+----------------+-------------------------+----------------+--------------------+------------------------+----------
+ 97401000AS0869 | Les Avirons             |         1764.4 |             1764.4 |                   1778 |      0.0
+ 97401000AS1256 | Les Avirons             |          971.5 |              971.5 |                    962 |      0.0
+ 97402000AH1301 | Bras-Panon              |          128.3 |              128.3 |                    119 |      0.0
+ 97403000AR1517 | Entre-Deux              |          734.3 |              734.3 |                    733 |      0.0
+ 97404000AM0838 | L'Étang-Salé            |        20798.0 |            20798.0 |                  20336 |      0.0
+ 97404000AP0024 | L'Étang-Salé            |          640.4 |              640.4 |                    642 |      0.0
+ 97404000AY0153 | L'Étang-Salé            |          256.1 |              256.1 |                    262 |      0.0
+ 97405000AZ0993 | Petite-Île              |           10.9 |               10.9 |                     11 |      0.0
+ 97406000AM0811 | La Plaine-des-Palmistes |          932.1 |              932.1 |                    928 |      0.0
+ 97407000AI0933 | Le Port                 |           68.1 |               68.1 |                     75 |      0.0
+ 97408000AV0078 | La Possession           |        20376.0 |            20376.0 |                  20300 |      0.0
+ 97408000BO0279 | La Possession           |           19.0 |               19.0 |                     19 |      0.0
+ 97409000AR0736 | Saint-André             |          851.8 |              851.8 |                    807 |      0.0
+ 97410000BK0251 | Saint-Benoît            |          269.5 |              269.5 |                    243 |      0.0
+ 97411000BC0287 | Saint-Denis             |          223.6 |              223.6 |                    221 |      0.0
+ 97411000IS0448 | Saint-Denis             |          818.1 |              818.1 |                    959 |      0.0
+ 97412000BV0308 | Saint-Joseph            |          548.8 |              548.8 |                    542 |      0.0
+ 97412000CL0200 | Saint-Joseph            |         1892.0 |             1892.0 |                   2000 |      0.0
+ 97412000CV0446 | Saint-Joseph            |          566.7 |              566.7 |                    551 |      0.0
+ 97413000CN0764 | Saint-Leu               |          263.7 |              263.7 |                    275 |      0.0
+ 97414000CH0839 | Saint-Louis             |          673.4 |              673.4 |                    691 |      0.0
+ 97414000CO0153 | Saint-Louis             |         6669.8 |             6669.8 |                   6860 |      0.0
+ 97415000DE0669 | Saint-Paul              |           16.6 |               16.6 |                     16 |      0.0
+ 97415000HP0177 | Saint-Paul              |          506.3 |              506.3 |                    512 |      0.0
+ 97416000CY0658 | Saint-Pierre            |         1444.6 |             1444.6 |                   1460 |      0.0
+ 97416000DT0356 | Saint-Pierre            |          521.0 |              521.0 |                    537 |      0.0
+ 97416000HT0538 | Saint-Pierre            |          508.7 |              508.7 |                    510 |      0.0
+ 97417000AO0050 | Saint-Philippe          |         1548.9 |             1548.9 |                   1540 |      0.0
+ 97418000AV1861 | Sainte-Marie            |          293.3 |              293.3 |                    287 |      0.0
+ 97419000AL0062 | Sainte-Rose             |          866.5 |              866.5 |                    806 |      0.0
+ 97420000BH2056 | Sainte-Suzanne          |          231.7 |              231.7 |                    232 |      0.0
+ 97421000BC0100 | Salazie                 |         1156.9 |             1156.9 |                   1162 |      0.0
+ 97421000BN0260 | Salazie                 |         3353.4 |             3353.4 |                   3335 |      0.0
+ 97422000AD0887 | Le Tampon               |         1698.6 |             1698.6 |                   1703 |      0.0
+ 97422000BR1212 | Le Tampon               |          898.9 |              898.9 |                   1028 |      0.0
+ 97422000BW2635 | Le Tampon               |         2001.8 |             2001.8 |                   2003 |      0.0
+ 97423000AC0275 | Les Trois-Bassins       |          419.9 |              419.9 |                    357 |      0.0
+ 97424000AO1198 | Cilaos                  |            0.7 |                0.7 |                      1 |      0.0
+
+=== 2. PARTS DE ZONE par famille (intersection plu_gpu_zone) ===
+      idu       | fam | part_pct 
+----------------+-----+----------
+ 97401000AS0869 | U   |    100.0
+ 97401000AS1256 | U   |    100.0
+ 97402000AH1301 | U   |    100.0
+ 97403000AR1517 | U   |    100.0
+ 97404000AM0838 | U   |    100.0
+ 97404000AP0024 | U   |    100.0
+ 97404000AY0153 | U   |    100.0
+ 97405000AZ0993 | U   |    100.0
+ 97406000AM0811 | U   |    100.0
+ 97407000AI0933 | U   |    100.0
+ 97408000AV0078 | U   |     64.8
+ 97408000AV0078 | A   |     26.6
+ 97408000AV0078 | N   |      8.6
+ 97408000BO0279 | U   |    100.0
+ 97409000AR0736 | U   |    100.0
+ 97410000BK0251 | U   |    100.0
+ 97411000BC0287 | U   |    100.0
+ 97411000IS0448 | U   |     65.6
+ 97411000IS0448 | N   |     34.4
+ 97412000BV0308 | U   |    100.0
+ 97412000CL0200 | A   |    100.0
+ 97412000CV0446 | U   |    100.0
+ 97413000CN0764 | U   |    100.0
+ 97414000CH0839 | U   |    100.0
+ 97414000CO0153 | A   |     81.3
+ 97414000CO0153 | N   |     18.7
+ 97415000DE0669 | U   |    100.0
+ 97415000HP0177 | U   |    100.0
+ 97416000CY0658 | A   |    100.0
+ 97416000DT0356 | U   |    100.0
+ 97416000HT0538 | U   |    100.0
+ 97418000AV1861 | U   |    100.0
+ 97419000AL0062 | U   |    100.0
+ 97420000BH2056 | U   |    100.0
+ 97421000BC0100 | U   |    100.0
+ 97421000BN0260 | A   |     77.1
+ 97421000BN0260 | N   |     22.9
+ 97422000AD0887 | U   |    100.0
+ 97422000BR1212 | U   |    100.0
+ 97422000BW2635 | U   |    100.0
+ 97423000AC0275 | U   |    100.0
+
+=== 3. PART ALÉA par niveau (georisque_alea, fraction de la parcelle) ===
+      idu       |      risque       | niveau | part_pct 
+----------------+-------------------+--------+----------
+ 97401000AS0869 | mouvement_terrain | moyen  |    100.0
+ 97401000AS1256 | mouvement_terrain | faible |    100.0
+ 97402000AH1301 | mouvement_terrain | faible |    100.0
+ 97403000AR1517 | mouvement_terrain | faible |     49.2
+ 97403000AR1517 | mouvement_terrain | moyen  |     50.8
+ 97404000AM0838 | inondation        | fort   |     43.4
+ 97404000AM0838 | inondation        | moyen  |     56.3
+ 97404000AM0838 | mouvement_terrain | faible |     56.6
+ 97404000AM0838 | mouvement_terrain | moyen  |     43.4
+ 97404000AY0153 | inondation        | fort   |     40.5
+ 97404000AY0153 | inondation        | moyen  |     59.5
+ 97404000AY0153 | mouvement_terrain | faible |    100.0
+ 97405000AZ0993 | mouvement_terrain | faible |    100.0
+ 97406000AM0811 | inondation        | moyen  |      0.9
+ 97406000AM0811 | mouvement_terrain | faible |     62.4
+ 97406000AM0811 | mouvement_terrain | fort   |     11.2
+ 97406000AM0811 | mouvement_terrain | moyen  |     26.4
+ 97408000AV0078 | mouvement_terrain | faible |     59.3
+ 97408000AV0078 | mouvement_terrain | fort   |     55.5
+ 97408000AV0078 | mouvement_terrain | moyen  |     14.8
+ 97408000BO0279 | mouvement_terrain | faible |    100.0
+ 97409000AR0736 | inondation        | moyen  |    100.0
+ 97409000AR0736 | mouvement_terrain | faible |    100.0
+ 97410000BK0251 | mouvement_terrain | faible |    100.0
+ 97411000BC0287 | inondation        | moyen  |      1.8
+ 97411000IS0448 | inondation        | fort   |      4.6
+ 97412000BV0308 | mouvement_terrain | faible |    100.0
+ 97412000CL0200 | mouvement_terrain | faible |    100.0
+ 97412000CV0446 | mouvement_terrain | faible |    100.0
+ 97413000CN0764 | mouvement_terrain | faible |    100.0
+ 97414000CH0839 | inondation        | faible |    100.0
+ 97414000CH0839 | mouvement_terrain | faible |    100.0
+ 97414000CO0153 | inondation        | fort   |     18.7
+ 97414000CO0153 | mouvement_terrain | faible |     70.3
+ 97414000CO0153 | mouvement_terrain | fort   |     18.7
+ 97414000CO0153 | mouvement_terrain | moyen  |     10.9
+ 97415000DE0669 | mouvement_terrain | faible |    100.0
+ 97415000HP0177 | mouvement_terrain | faible |    100.0
+ 97416000CY0658 | mouvement_terrain | faible |    100.0
+ 97416000DT0356 | mouvement_terrain | faible |    100.0
+ 97416000HT0538 | mouvement_terrain | faible |    100.0
+ 97417000AO0050 | inondation        | faible |     17.7
+ 97417000AO0050 | inondation        | fort   |     82.3
+ 97417000AO0050 | mouvement_terrain | fort   |     82.4
+ 97417000AO0050 | mouvement_terrain | moyen  |     17.6
+ 97418000AV1861 | mouvement_terrain | faible |    100.0
+ 97419000AL0062 | mouvement_terrain | faible |    100.0
+ 97420000BH2056 | mouvement_terrain | faible |    100.0
+ 97421000BC0100 | mouvement_terrain | faible |    100.0
+ 97421000BN0260 | inondation        | fort   |      7.6
+ 97421000BN0260 | mouvement_terrain | fort   |     55.5
+ 97421000BN0260 | mouvement_terrain | moyen  |     44.5
+ 97422000AD0887 | mouvement_terrain | faible |    100.0
+ 97422000BR1212 | mouvement_terrain | faible |    100.0
+ 97422000BW2635 | mouvement_terrain | faible |    100.0
+ 97423000AC0275 | mouvement_terrain | faible |    100.0
+
+=== 3bis. PART PPR INTERDICTION (zone rouge réglementaire) ===
+=== 4. EMPRISE BÂTIE (intersection batiment) ===
+      idu       | n_batiments | emprise_m2 | emprise_pct 
+----------------+-------------+------------+-------------
+ 97401000AS0869 |           3 |       31.0 |         1.8
+ 97401000AS1256 |           3 |     1050.2 |       108.1
+ 97402000AH1301 |           2 |       72.5 |        56.5
+ 97403000AR1517 |           1 |       22.7 |         3.1
+ 97404000AM0838 |          14 |     1252.0 |         6.0
+ 97404000AP0024 |           5 |      292.2 |        45.6
+ 97404000AY0153 |           2 |       69.8 |        27.3
+ 97405000AZ0993 |           2 |        6.0 |        54.8
+ 97406000AM0811 |           3 |      357.0 |        38.3
+ 97407000AI0933 |           0 |        0.0 |         0.0
+ 97408000AV0078 |          42 |     5276.3 |        25.9
+ 97408000BO0279 |           0 |        0.0 |         0.0
+ 97409000AR0736 |           3 |      150.4 |        17.7
+ 97410000BK0251 |           2 |      177.4 |        65.8
+ 97411000BC0287 |           4 |        4.7 |         2.1
+ 97411000IS0448 |           4 |      255.6 |        31.2
+ 97412000BV0308 |           1 |      449.3 |        81.9
+ 97412000CL0200 |           1 |       33.9 |         1.8
+ 97412000CV0446 |           0 |        0.0 |         0.0
+ 97413000CN0764 |           2 |      249.7 |        94.7
+ 97414000CH0839 |           3 |      468.2 |        69.5
+ 97414000CO0153 |           1 |       93.5 |         1.4
+ 97415000DE0669 |           0 |        0.0 |         0.0
+ 97415000HP0177 |           1 |      127.0 |        25.1
+ 97416000CY0658 |           1 |      188.8 |        13.1
+ 97416000DT0356 |           4 |      167.8 |        32.2
+ 97416000HT0538 |           0 |        0.0 |         0.0
+ 97417000AO0050 |           0 |        0.0 |         0.0
+ 97418000AV1861 |           2 |      143.0 |        48.8
+ 97419000AL0062 |           1 |      127.1 |        14.7
+ 97420000BH2056 |           0 |        0.0 |         0.0
+ 97421000BC0100 |           6 |      195.0 |        16.9
+ 97421000BN0260 |           0 |        0.0 |         0.0
+ 97422000AD0887 |           4 |      689.5 |        40.6
+ 97422000BR1212 |           4 |      206.2 |        22.9
+ 97422000BW2635 |           6 |     1964.4 |        98.1
+ 97423000AC0275 |           6 |      143.9 |        34.3
+ 97424000AO1198 |           0 |        0.0 |         0.0
+
+=== 5a. DERNIÈRE VENTE de la parcelle (dvf_mutations_parcelle) ===
+      idu       | derniere_vente | derniere_valeur | n_mutations_parcelle 
+----------------+----------------+-----------------+----------------------
+ 97401000AS1256 | 2025-10-30     |          204000 |                    7
+ 97405000AZ0993 | 2021-11-17     |          170000 |                    1
+ 97407000AI0933 | 2024-10-21     |          295000 |                    1
+ 97408000BO0279 | 2023-12-29     |         4107718 |                    1
+
+=== 5b. MARCHÉ SECTEUR terrain : recompute brut vs servi (dvf_secteur_medianes) ===
+  secteur   | n_recompute | prix_m2_terrain_recompute | n_servi | prix_m2_servi |                  fenetre                   
+------------+-------------+---------------------------+---------+---------------+--------------------------------------------
+ 97401000AS |          48 |                      1029 |      14 |           293 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97402000AH |          26 |                       406 |      13 |           208 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97403000AR |          42 |                       133 |      21 |           181 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97404000AM |          66 |                       294 |      28 |           236 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97404000AP |             |                           |         |               | 
+ 97404000AY |          15 |                      3022 |       3 |           459 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97405000AZ |          24 |                       743 |       9 |           327 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97406000AM |          34 |                       121 |      30 |           129 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97407000AI |          21 |                       785 |       8 |           296 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97408000AV |          47 |                       401 |      32 |           391 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97408000BO |          74 |                      1742 |      29 |           473 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97409000AR |          67 |                       302 |      39 |           258 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97410000BK |          29 |                       197 |      12 |           191 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97411000BC |           9 |                       535 |       5 |           455 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97411000IS |          12 |                       876 |       2 |           500 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97412000BV |          18 |                       487 |       5 |           271 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97412000CL |           8 |                         5 |       3 |            56 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97412000CV |          30 |                       215 |      15 |           234 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97413000CN |          48 |                       222 |      22 |           120 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97414000CH |          58 |                       127 |      34 |           136 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97414000CO |          27 |                         7 |      15 |           140 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97415000DE |          29 |                      1517 |      14 |          1072 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97415000HP |          36 |                         0 |       9 |           264 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97416000CY |          15 |                       743 |       8 |           351 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97416000DT |          21 |                      1316 |       9 |           568 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97416000HT |           6 |                       669 |       3 |           354 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97417000AO |          29 |                       209 |      12 |            88 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97418000AV |          54 |                       472 |      16 |           220 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97419000AL |          49 |                       144 |      31 |           139 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97420000BH |          99 |                        95 |      46 |            84 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97421000BC |          13 |                       154 |       6 |           182 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97421000BN |          12 |                         6 |       5 |           101 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97422000AD |          40 |                       151 |      20 |           171 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97422000BR |          51 |                       265 |      29 |           202 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97422000BW |          70 |                       876 |      18 |           376 | 2021-2025 (millésimes géo-DVF disponibles)
+ 97423000AC |          44 |                       186 |         |               | 
+ 97424000AO |          17 |                        84 |      12 |            89 | 2021-2025 (millésimes géo-DVF disponibles)
+
+=== 6. PENTE moyenne pondérée (slope_pct) ===
+      idu       | pente_moy_pct 
+----------------+---------------
+ 97401000AS0869 |          29.6
+ 97401000AS1256 |          20.8
+ 97402000AH1301 |           3.6
+ 97403000AR1517 |          17.7
+ 97404000AM0838 |           1.0
+ 97404000AP0024 |           5.3
+ 97404000AY0153 |           3.4
+ 97405000AZ0993 |          19.3
+ 97406000AM0811 |           7.3
+ 97407000AI0933 |           2.7
+ 97408000AV0078 |          65.3
+ 97408000BO0279 |          12.1
+ 97409000AR0736 |           3.6
+ 97410000BK0251 |           8.9
+ 97411000BC0287 |           5.0
+ 97411000IS0448 |          31.7
+ 97412000BV0308 |           8.3
+ 97412000CL0200 |          31.5
+ 97412000CV0446 |          14.4
+ 97413000CN0764 |          30.2
+ 97414000CH0839 |          15.9
+ 97414000CO0153 |          24.3
+ 97415000DE0669 |          19.0
+ 97415000HP0177 |          12.4
+ 97416000CY0658 |           6.3
+ 97416000DT0356 |           4.0
+ 97416000HT0538 |           4.5
+ 97417000AO0050 |           9.0
+ 97418000AV1861 |          16.1
+ 97419000AL0062 |          20.3
+ 97420000BH2056 |           3.6
+ 97421000BC0100 |          11.0
+ 97421000BN0260 |          30.4
+ 97422000AD0887 |           6.4
+ 97422000BR1212 |          24.1
+ 97422000BW2635 |          11.1
+ 97423000AC0275 |          15.3
+ 97424000AO1198 |          24.5
+

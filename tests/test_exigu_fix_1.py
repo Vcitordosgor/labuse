@@ -161,7 +161,12 @@ APP_URL = (os.environ.get("LABUSE_REEL_DATABASE_URL")
 # témoin → (surface approx, attendu avec le fix)
 TEMOINS_REGAIN = ["97418000AY0416", "97411000DK0447", "97415000CW0252"]
 TEMOIN_EXIGU = "97419000AN0398"           # 57 % rouge + 11 % U/AU : morceau net ~5 m², largeur ~0,6 m
-TEMOIN_AVERIFIER = "97403000AL0258"       # 11 ha, large, aucune assiette nette fiable
+# EXPORTS-FIX-3 LOT 1 — l'ancien témoin 97403000AL0258 (11 ha, zone Npnr, U/AU = éclat 0 m²) est
+# désormais lu « zone naturelle non constructible » (verdict ferme et correct) et non plus « à
+# vérifier » : son doute venait de la sous-zone U/AU fantôme, supprimée par la garde d'aire réelle.
+# On repointe le témoin « à vérifier » sur une parcelle large dont l'ambiguïté géométrique SUBSISTE
+# (portion U/AU réelle mais aucune assiette nette fiable).
+TEMOIN_AVERIFIER = "97415000BN1169"       # 1,9 ha, large (~103 m), aucune assiette nette fiable
 
 
 def _session():

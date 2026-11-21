@@ -1,0 +1,40 @@
+insee;zone;decision;formule;motif
+97402;Uba;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97408;UAv;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97408;AUBm;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97408;AUAv;exclue;;règle PROPRE 3 m (p.68) — renvoi faux, h_reference retiré à part
+97411;Udo;injectee;H/2, minimum 4 m;citation à retrait relatif, formule absente
+97411;Udop;injectee;H/2, minimum 4 m;citation à retrait relatif, formule absente
+97411;Udp;injectee;H/2, minimum 4 m;citation à retrait relatif, formule absente
+97411;AUj;injectee;H/2, minimum 4 m;citation à retrait relatif, formule absente
+97411;AUm;injectee;H/2, minimum 4 m;citation à retrait relatif, formule absente
+97411;AUh;injectee;H/2, minimum 4 m;citation à retrait relatif, formule absente
+97412;U5ru;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97412;U5vi;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97412;1AU3;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97412;1AU3a;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97412;1AU5;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97412;1AU5ru;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97412;1AU5vi;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97412;1AU6;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97412;1AU6c;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97413;UE;injectee;H/2, minimum 4 m;citation à retrait relatif, formule absente
+97413;UF;injectee;L = H, minimum 4 m;citation à retrait relatif, formule absente
+97413;UP;injectee;L = H, minimum 4 m;citation à retrait relatif, formule absente
+97413;AUe;exclue;;citation « mur coupe-feu » : pas un retrait relatif
+97414;UZ;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97418;UAb;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97418;UAz;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97418;UB;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97418;UC;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97418;UC1;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97418;UC2;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97418;UD;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97418;UD1;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97418;1AUb;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97418;1AUc;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97418;1AUep;injectee;H/2, minimum 4 m;citation à retrait relatif, formule absente
+97419;Ua;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97419;Ub;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97419;Uc;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente
+97419;Ud;injectee;H/2, minimum 3 m;citation à retrait relatif, formule absente

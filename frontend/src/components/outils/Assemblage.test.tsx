@@ -79,19 +79,46 @@ describe('ASSEMBLAGE (H5) — étapes, contiguïté, isolées, plus de Courrier'
     expect(document.querySelector('[data-asm-charge]')).toBeFalsy()
   })
 
-  it('RETOURS-28 : tuile « Bâti conservé : X m² » + dessous « Reconstruction : Y m² » ; « · terrain libéré » retiré des lignes', async () => {
+  it('OUTILS-P1-1 (pt 2) : trois lectures « Existant » / « Si conservé » / « Après démolition · ±Δ » ; « · terrain libéré » retiré des lignes', async () => {
     renderM16(); await verifier('[data-asm-charge]')
     const sdpKpi = document.querySelector('[data-asm-kpi="sdp"]') as HTMLElement
-    // chiffre de tête = bâti conservé (11 065), comme la fiche ; libellé « Bâti conservé : »
+    // lecture 1 — l'existant (1 735) ancre les trois lectures
+    expect(document.querySelector('[data-asm-sdp-existant]')?.textContent).toContain('Existant')
+    expect(document.querySelector('[data-asm-sdp-existant]')?.textContent).toContain('735')
+    // lecture 2 — « Si conservé » : +11 065 m² estimés (résiduel au-dessus de l'existant)
+    expect(document.querySelector('[data-asm-sdp-conserve]')?.textContent).toContain('Si conservé')
     expect(document.querySelector('[data-asm-sdp-conserve]')?.textContent).toContain('065')
-    expect(sdpKpi.textContent).toContain('Bâti conservé')
-    // la table rase est servie DESSOUS, nommée « Reconstruction »
+    // lecture 3 — « Après démolition » : 12 800 m² estimés + écart SIGNÉ vs existant (+11 065)
     const libere = document.querySelector('[data-asm-sdp-libere]') as HTMLElement
     expect(libere).toBeTruthy()
-    expect(libere.textContent).toContain('Reconstruction')
+    expect(libere.textContent).toContain('Après démolition')
     expect(libere.textContent).toContain('800')          // 12 800
+    expect(document.querySelector('[data-asm-sdp-ecart]')?.textContent).toContain('par rapport à l\'existant')
+    expect(sdpKpi.textContent).not.toContain('Bâti conservé')   // plus de « Reconstruction » SOUS « Bâti conservé »
     // RETOURS-28 : le « (terrain libéré …) » répété par parcelle a disparu
     expect(document.body.textContent).not.toContain('(terrain libéré')
+  })
+
+  it('OUTILS-LOT-4 (pt 7) : « fiabilité » écrit en entier dans le Bilan (plus de « fiab. »)', async () => {
+    renderM16(); await verifier('[data-asm-charge]')
+    const bilan = document.querySelector('[data-asm-bilan]')?.textContent ?? ''
+    expect(bilan).toContain('fiabilité moyenne')
+    expect(bilan).not.toContain('fiab.')
+  })
+
+  it('OUTILS-LOT-4 (pt 6) : note « * SDP bâti conservé estimée » seulement quand un astérisque est posé (conservé > 0)', async () => {
+    current = { ...STUDY_OK, sdp_conserve_estimation: true, sdp_bati_conserve_m2: 11065 }
+    renderM16(); await verifier('[data-asm-charge]')
+    expect(document.querySelector('[data-asm-sdp-conserve]')?.textContent).toContain('*')
+    expect(document.querySelector('[data-asm-sdp-estimation]')).toBeTruthy()
+  })
+
+  it('OUTILS-LOT-4 (pt 6) : « aucun ajout estimé » (conservé = 0) → ni astérisque ni note orpheline', async () => {
+    current = { ...STUDY_OK, sdp_conserve_estimation: true, sdp_bati_conserve_m2: 0 }
+    renderM16(); await verifier('[data-asm-charge]')
+    expect(document.querySelector('[data-asm-sdp-conserve]')?.textContent).toContain('aucun ajout estimé')
+    expect(document.querySelector('[data-asm-sdp-conserve]')?.textContent).not.toContain('*')
+    expect(document.querySelector('[data-asm-sdp-estimation]')).toBeFalsy()
   })
 
   it('plus de bouton « Préparer les courriers » dans l\'Assemblage (H5)', async () => {

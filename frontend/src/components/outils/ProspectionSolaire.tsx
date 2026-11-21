@@ -14,7 +14,7 @@
  * = lecture seule de données gelées).
  */
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getPiscinesAgregat, getPiscinesListe, getPiscinesParcelles, getSolaireFiche,
   type SolaireFiche } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
@@ -29,6 +29,8 @@ import { ErrorState } from '../States'
 // (parcel_solar.source_millesime). Un seul millésime par écran, jamais deux dates contradictoires.
 const MOIS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
 const num = (v: number | null | undefined, unit = '') => (v == null ? '—' : `${fmtInt(v)}${unit}`)
+// OUTILS-LOT-4 (pt 1) — tout décimal à l'écran avec une VIRGULE (jamais un point) : « 8,3° », pas « 8.3° ».
+const dec = (v: number | string) => String(v).replace('.', ',')
 
 export function ProspectionSolaire() {
   const [mode, setMode] = useState<'piscines' | 'ensoleillement' | null>(null)
@@ -40,8 +42,14 @@ export function ProspectionSolaire() {
   useEffect(() => {
     if (solairePrefill) { setPrefillIdu(solairePrefill); setMode('ensoleillement'); setSolairePrefill(null) }
   }, [solairePrefill, setSolairePrefill])
-  if (mode === 'piscines') return <ModePiscines onBack={() => setMode(null)} />
-  if (mode === 'ensoleillement') return <ModeEnsoleillement onBack={() => setMode(null)} prefillIdu={prefillIdu} />
+  // OUTILS-P0-1 (#1) — le RETOUR est STABILISÉ (`useCallback`, `setMode` est stable). Avant, il était
+  // recréé à chaque rendu : chaque mode l'écrit dans `outilSousRetour` (store) via un effet dont `onBack`
+  // est une dépendance ; comme le panneau hôte (ModulePanel) se ré-abonnait au store entier, l'écriture
+  // déclenchait un rendu → nouveau `onBack` → l'effet enfant réécrivait → « Maximum update depth exceeded ».
+  // Un retour d'identité stable casse la boucle même si l'hôte re-rend à chaque écriture du store.
+  const back = useCallback(() => setMode(null), [])
+  if (mode === 'piscines') return <ModePiscines onBack={back} />
+  if (mode === 'ensoleillement') return <ModeEnsoleillement onBack={back} prefillIdu={prefillIdu} />
   return <EntreeSolaire onChoose={setMode} />
 }
 
@@ -356,27 +364,33 @@ function FicheSoleil({ f }: { f: SolaireFiche }) {
     <div data-solaire-fiche className="rounded-lg border px-3 py-2.5" style={{ borderColor: `${TOKENS.mint}55` }}>
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono text-[11px] text-txt">{f.idu}</span>
-        <span className="text-[10px] text-txt-dim">{f.commune}{f.classement ? ` · ${f.classement}` : ''}</span>
+        {/* OUTILS-LOT-4 (pt 2) — le CLASSEMENT LABUSE (« Écartée »…) est retiré : la prospection solaire
+            ne porte aucune analyse/verdict LABUSE, seulement des faits (potentiel, toiture, orientation). */}
+        <span className="text-[10px] text-txt-dim">{f.commune}</span>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-1.5">
         <KPI k="Potentiel" v={num(f.productible)} u="kWh/kWc/an" prov="Estimé" />
-        <KPI k="Toiture (emprise)" v={num(f.toit_m2, ' m²')} prov="Sourcé" />
+        {/* CHIRURGICAL-FIX-1 (Solaire) — on NOMME la grandeur : « Surface de toiture » (proxy pans de
+            toit, p_model_bati BD TOPO/CoSIA), DISTINCTE de l'« emprise au sol » de la fiche. La
+            toiture (débords, pente) dépasse normalement l'emprise au sol — ce ne sont pas le même m². */}
+        <KPI k="Surface de toiture" v={num(f.toit_m2, ' m²')} prov="Sourcé" />
         {/* A6 — puissance installable + production annuelle SERVIES par le back ; ratio kWc/m² écrit ci-dessous. */}
         <KPI k="Puissance installable" v={kwc == null ? '—' : String(kwc).replace('.', ',')} u="kWc" prov="Estimé" />
         <KPI k="Production annuelle" v={num(prodAn)} u="kWh/an" prov="Estimé" />
         {/* orientation = azimut DU BÂTI (Estimé), pas une orientation « optimale » (non calculée) ;
             l'inclinaison optimale n'est pas servie par la V1 → non affichée (jamais inventée). */}
-        <KPI k="Orientation du bâti" v={f.azimut == null ? '—' : `${f.azimut}°`} prov="Estimé" />
+        <KPI k="Orientation du bâti" v={f.azimut == null ? '—' : `${dec(f.azimut)}°`} prov="Estimé" />
         {/* RETOURS-14 S11 — nature du toit DANS la grille des faits (visible sans clic), servie
             seulement au-dessus du seuil de confiance (LiDAR) ; « non déterminée (LiDAR) » sinon. */}
         <KPI k="Nature du toit" v={f.toiture ? f.toiture.libelle_court : '—'} prov="Estimé" />
-        <KPI k="Pente du terrain" v={f.pente == null ? '—' : `${f.pente}°`} prov="Sourcé" />
+        <KPI k="Pente du terrain" v={f.pente == null ? '—' : `${dec(f.pente)}°`} prov="Sourcé" />
         <KPI k="Pente du toit (médiane)" v={f.toiture?.pente_mediane_deg == null ? '—' : `${String(f.toiture.pente_mediane_deg).replace('.', ',')}°`} prov="Sourcé" />
       </div>
       {/* A6 — l'hypothèse de dimensionnement (ratio kWc/m²) est ÉCRITE à côté du résultat, servie de la config. */}
       {kwcParM2 != null && kwc != null && (
         <p data-solaire-kwc-hyp className="mt-1 text-[9px] leading-snug text-txt-dim">
-          Puissance installable = emprise toit × {String(kwcParM2).replace('.', ',')} kWc/m² (hypothèse) ; production annuelle = puissance × potentiel PVGIS.
+          Puissance installable = surface de toiture × {String(kwcParM2).replace('.', ',')} kWc/m² (hypothèse) ; production annuelle = puissance × potentiel PVGIS.
+          La surface de toiture (pans de toit modélisés) diffère de l'emprise au sol de la fiche : elle la dépasse normalement (débords, pente).
         </p>
       )}
       {/* RETOURS-25 (pt 9) — ligne « Nature du toit : {statut} — {méthode} » RETIRÉE (doublon de la tuile
@@ -392,7 +406,7 @@ function FicheSoleil({ f }: { f: SolaireFiche }) {
           <p className="mt-1 text-[9px] leading-snug text-txt-dim">
             {/* RETOURS-25 (pt 9) — phrase « La lecture LiDAR … se vérifie sur cette photo » retirée (filler).
                 On garde la légende de la rosace et la levée d'ambiguïté « pente du terrain ≠ pente du toit ». */}
-            Photo aérienne (ortho IGN) — rosace alignée sur l'orientation du bâti{f.azimut != null ? ` (${f.azimut}°, Estimé)` : ' (orientation non estimée)'}.
+            Photo aérienne (ortho IGN) — rosace alignée sur l'orientation du bâti{f.azimut != null ? ` (${dec(f.azimut)}°, Estimé)` : ' (orientation non estimée)'}.
             « Pente du terrain » ci-dessus = pente moyenne du sol (RGE ALTI), pas la pente du toit.
           </p>
         </div>

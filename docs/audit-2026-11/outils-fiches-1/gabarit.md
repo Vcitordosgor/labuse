@@ -1,5 +1,20 @@
 # Gabarit réglementaire
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On ouvre une parcelle.
+> 2. L'outil lit la règle de la zone (emprise, hauteur, reculs) et les contraintes.
+> 3. Il retire reculs, servitudes et bâti pour dessiner l'enveloppe constructible.
+> 4. Il rend un schéma (2D/3D) et les règles appliquées, sourcées.
+> 5. Les chiffres de règle viennent d'un recueil tenu à la main ; le bâti n'est pas comparé à l'enveloppe.
+
+**Captures — l'outil en action**
+
+![Gabarit réglementaire — AK0804 (Saint-André) — enveloppe constructible verte drapée sur le contour, reculs rouges ; panneau zone UB, emprise « Non réglementée », hauteur max 14 m, surface parcelle 27 862 m².](img/gabarit.png)
+*AK0804 (Saint-André) — enveloppe constructible verte drapée sur le contour, reculs rouges ; panneau zone UB, emprise « Non réglementée », hauteur max 14 m, surface parcelle 27 862 m².*
+
+<!-- CCM -->
+
 Clé interne : `gabarit` (num M24) · composant : `frontend/src/components/outils/Gabarit.tsx` · endpoint(s) : `GET /outils/gabarit/{idu}` (écran) · `GET /gabarit/{idu}.pdf` (export PDF)
 
 ---

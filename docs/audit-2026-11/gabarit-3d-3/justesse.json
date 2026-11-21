@@ -1,0 +1,91 @@
+{
+  "parcelles": [
+    {
+      "idu": "97411000BZ1065",
+      "n": 359,
+      "maille": 0.5,
+      "palier_max_m": 1.5,
+      "ecart_median_m": 0.012,
+      "ecart_p90_m": 0.065,
+      "n_ecart": 359
+    },
+    {
+      "idu": "97415000CM1658",
+      "n": 69,
+      "maille": 0.5,
+      "palier_max_m": 1.0,
+      "ecart_median_m": 0.014,
+      "ecart_p90_m": 0.056,
+      "n_ecart": 69
+    },
+    {
+      "idu": "97415000CY0196",
+      "n": 195,
+      "maille": 0.5,
+      "palier_max_m": 1.5,
+      "ecart_median_m": 0.009,
+      "ecart_p90_m": 0.045,
+      "n_ecart": 195
+    },
+    {
+      "idu": "97413000CA0057",
+      "n": 1578,
+      "maille": 0.5,
+      "palier_max_m": 1.5,
+      "ecart_median_m": 0.014,
+      "ecart_p90_m": 0.06,
+      "n_ecart": 1578
+    },
+    {
+      "idu": "97415000AW2362",
+      "n": 129,
+      "maille": 0.5,
+      "palier_max_m": 1.5
+    },
+    {
+      "idu": "97420000AW0095",
+      "n": 33,
+      "maille": 0.5,
+      "palier_max_m": 1.5
+    },
+    {
+      "idu": "97416000CW1762",
+      "n": 119,
+      "maille": 0.5,
+      "palier_max_m": 2.5
+    },
+    {
+      "idu": "97414000HI0401",
+      "n": 1324,
+      "maille": 0.5,
+      "palier_max_m": 2.0
+    },
+    {
+      "idu": "97411000HE0412",
+      "n": 96,
+      "maille": 0.5,
+      "palier_max_m": 1.5
+    },
+    {
+      "idu": "97415000DX0049",
+      "n": 171,
+      "maille": 0.5,
+      "palier_max_m": 1.0
+    },
+    {
+      "idu": "97415000EX0029",
+      "n": 86,
+      "maille": 0.5,
+      "palier_max_m": 2.5
+    },
+    {
+      "idu": "97415000BV0816",
+      "n": 81,
+      "maille": 0.5,
+      "palier_max_m": 3.0
+    }
+  ],
+  "palier_max_global_m": 3.0,
+  "ecart_median_global_m": 0.013,
+  "n_justesse": 4
+}

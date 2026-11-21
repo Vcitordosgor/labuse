@@ -3,9 +3,33 @@ de zonage.py, pour prouver les blocages honnêtes (propose, multi-zone) et le r�
 """
 from __future__ import annotations
 
+import inspect
 from types import SimpleNamespace
 
+import pytest
+
 from labuse.gabarit import builder as B
+
+
+def _fake_served(session, idu, run=None):
+    """GABARIT-3D-3 (LOT 3) — ligne de risques du RUN SERVI, simulée depuis le `_ppr` de la session
+    factice (le builder ne lit plus `cascade_results`)."""
+    ppr = getattr(session, "_ppr", None)
+    return [{"layer_name": "risques", "result": ppr["result"], "detail": ppr.get("detail")}] if ppr else []
+
+
+@pytest.fixture(autouse=True)
+def _served_run(monkeypatch):
+    monkeypatch.setattr("labuse.api.served_cascade.served_cascade_lines", _fake_served)
+
+
+def test_gabarit_builder_ne_lit_pas_cascade_results():
+    """LOT 3 — plus aucune REQUÊTE sur la table legacy `cascade_results` dans le Gabarit (run servi).
+    On interdit le motif SQL de lecture (`FROM cascade_results` / `cascade_results WHERE`), pas la simple
+    mention en commentaire qui explique la migration."""
+    src = inspect.getsource(B).lower()
+    assert "from cascade_results" not in src and "cascade_results where" not in src, \
+        "builder.py requête encore `cascade_results` (rail legacy) — doit lire le verdict du run servi"
 
 _GEOJSON = ('{"type":"Polygon","coordinates":[[[55.29,-21.03],[55.2905,-21.03],'
             '[55.2905,-21.0305],[55.29,-21.0305],[55.29,-21.03]]]}')
@@ -32,8 +56,6 @@ class FakeSession:
 
     def execute(self, stmt, params=None):
         sql = str(stmt)
-        if "cascade_results" in sql:
-            return _Res(self._ppr)
         if "data_sources" in sql:
             return _Res(("BD TOPO test v3",))          # _bdtopo_millesime
         if "labuse_ppr_couleur" in sql:                  # PPR-UNIQUE-1 — classification unique

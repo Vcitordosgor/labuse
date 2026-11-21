@@ -128,8 +128,13 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
         </div>
         <div>
           <div className="tnum text-[13px] font-medium text-mint">{fmtM2(it.sdp_residuelle_m2)}</div>
-          <div className="text-[9px] uppercase tracking-wide text-txt-dim">plancher restant <Estime />
-            {it.sdp_couverture < it.n_parcelles && <span className="normal-case"> · sur {it.sdp_couverture}/{it.n_parcelles}</span>}
+          <div className="text-[9px] uppercase tracking-wide text-txt-dim">plancher restant <Estime /></div>
+          {/* OUTILS-P1-1 (pt 4) — couverture ET méthode d'agrégation EN CLAIR, à côté de la valeur :
+              « estimé sur 5 des 9 parcelles (somme par parcelle) » (ou « sur les N parcelles » si complet). */}
+          <div data-bloc-couverture className="mt-0.5 text-[9px] normal-case leading-snug text-txt-dim">
+            {it.sdp_couverture < it.n_parcelles
+              ? <>estimé sur {it.sdp_couverture} des {it.n_parcelles} parcelles (somme par parcelle)</>
+              : <>estimé sur les {it.n_parcelles} parcelles (somme par parcelle)</>}
           </div>
         </div>
       </div>
@@ -242,10 +247,13 @@ export function Blocs() {
           Aucun bloc de deux parcelles ou plus
           {commune ? <> à <b className="text-txt">{commune}</b></> : ' sur l’île'}
           {surfMin ? ` (surface ≥ ${fmtInt(surfMin)} m²)` : ''}{sdpMin ? ` (résiduel ≥ ${fmtInt(sdpMin)} m²)` : ''}
-          {nMin > 2 ? ` (≥ ${nMin} parcelles)` : ''}.{/* RETOURS-25 (pt 11) — date « au … » retirée. */}
+          {nMin > 2 ? ` (≥ ${nMin} parcelles)` : ''}.
+          {/* OUTILS-P1-1 (pt 4) — l'unité comptée est le BLOC (« blocs publics »), pas « propriétaires publics ». */}
           {!inclurePublics && meta.n_publics > 0 && (
-            <> {fmtInt(meta.n_publics)} propriétaire{meta.n_publics > 1 ? 's' : ''} public{meta.n_publics > 1 ? 's' : ''} écarté{meta.n_publics > 1 ? 's' : ''} (cochez « inclure les propriétaires publics » pour les voir).</>
+            <> {fmtInt(meta.n_publics)} bloc{meta.n_publics > 1 ? 's' : ''} public{meta.n_publics > 1 ? 's' : ''} écarté{meta.n_publics > 1 ? 's' : ''} (cochez « Inclure les propriétaires publics » ci-dessus pour les voir).</>
           )}
+          {/* OUTILS-P1-1 (pt 4) — millésime de propriété affiché même à l'état vide. */}
+          {meta.millesime && <> Propriété (fichiers PM DGFiP) {meta.millesime}.</>}
         </p>
       )}
       {meta && total > 0 && (
@@ -257,6 +265,8 @@ export function Blocs() {
             {!inclurePublics && meta.n_publics > 0 && (
               <span data-blocs-ecartes className="text-txt-dim"> · {fmtInt(meta.n_publics)} bloc{meta.n_publics > 1 ? 's' : ''} public{meta.n_publics > 1 ? 's' : ''} masqué{meta.n_publics > 1 ? 's' : ''}</span>
             )}
+            {/* OUTILS-P1-1 (pt 4) — millésime de la donnée de propriété (fichiers PM DGFiP) affiché. */}
+            {meta.millesime && <span data-blocs-millesime className="text-txt-dim"> · propriété (DGFiP) {meta.millesime}</span>}
           </div>
 
           {/* OUTILS-S1 (Lot D) — plus de « Tout sélectionner » ni de case par bloc : la sélection multiple

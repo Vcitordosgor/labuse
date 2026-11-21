@@ -53,6 +53,19 @@ zones:
             à 2 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UA 7.3'
+            page_pdf: 17
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'UA 7.2'
+            page_pdf: 17
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
           min_m: 3
           article: UA 7.2-7.3
           page_pdf: 17
@@ -63,14 +76,46 @@ zones:
           raison: valeur 5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UA 12.2
           page_pdf: 22
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Autres logements
+
+            1 place maximum par logement aidé
+
+            1 place par logement d’une surface de plancher ≤ 100 m²
+
+            1,5 places par logement d’une surface de plancher ≥ 100 m²
+
+            1 place de stationnement pour 3 chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par logement
+
+            pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les autres cas, avec une'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -214,6 +259,19 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UB 7.3'
+            page_pdf: 30
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
           min_m: 3
           article: UB 7.2-7.3
           page_pdf: 30
@@ -224,14 +282,46 @@ zones:
           raison: attribution douteuse (citation sous secteur None)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UB 12.2
           page_pdf: 35
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Autres logements
+
+            1 place maximum par logement aidé
+
+            1 place par logement d’une surface de plancher ≤ 100 m²
+
+            1,5 places par logement d’une surface de plancher ≥ 100 m²
+
+            1 place de stationnement pour 3 chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par logement
+
+            pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les autres cas, avec une'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -358,6 +448,23 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UB 7.3'
+            page_pdf: 30
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2 (secteur Uba)'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En secteur Uba, les constructions peuvent être implantées sur une seule limite latérale ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'En secteur Uba, les constructions peuvent être implantées sur une seule limite latérale ou en retrait.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3
           article: UB 7.2
           page_pdf: 30
@@ -366,14 +473,46 @@ zones:
             de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.
           statut: valide
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UB 12.2
           page_pdf: 35
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Autres logements
+
+            1 place maximum par logement aidé
+
+            1 place par logement d’une surface de plancher ≤ 100 m²
+
+            1,5 places par logement d’une surface de plancher ≥ 100 m²
+
+            1 place de stationnement pour 3 chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par logement
+
+            pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les autres cas, avec une'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -432,6 +571,21 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UC 7.3'
+            page_pdf: 44
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UC 7.2'
+            page_pdf: 44
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale, sur une profondeur maximale de 20 mètres à partir du recul imposé. Pour les terrains dont la largeur est inférieure à 14 mètres, les constructions peuvent être implantées sur les deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale, sur une profondeur maximale de 20 mètres à partir du recul imposé. Pour les terrains dont la largeur est inférieure à 14 mètres, les constructions peuvent être implantées sur les deux limites séparatives.'
+            condition_modelable: 'une_seule_limite+profondeur_bande:20 m (deux limites si largeur_terrain_max:14 m)'
           min_m: 3
           article: UC 7.2-7.3
           page_pdf: 44
@@ -442,14 +596,46 @@ zones:
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UC 12.2
           page_pdf: 49
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Autres logements
+
+            1 place maximum par logement aidé
+
+            1 place par logement d’une surface de plancher ≤ 100 m²
+
+            1,5 places par logement d’une surface de plancher ≥ 100 m²
+
+            1 place de stationnement pour 3 chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par logement
+
+            pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les autres cas, avec une'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -545,6 +731,21 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UD 7.3'
+            page_pdf: 57
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UD 7.2'
+            page_pdf: 57
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale, sur une profondeur maximale de 20 mètres à partir du recul imposé. Pour les terrains dont la largeur est inférieure à 14 mètres, les constructions peuvent être implantées sur les deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale, sur une profondeur maximale de 20 mètres à partir du recul imposé. Pour les terrains dont la largeur est inférieure à 14 mètres, les constructions peuvent être implantées sur les deux limites séparatives.'
+            condition_modelable: 'une_seule_limite+profondeur_bande:20 m (deux limites si largeur_terrain_max:14 m)'
           min_m: 3
           article: UD 7.2-7.3
           page_pdf: 57
@@ -555,14 +756,46 @@ zones:
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UD 12.2
           page_pdf: 62
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Autres logements
+
+            1 place maximum par logement aidé
+
+            1 place par logement d’une surface de plancher ≤ 100 m²
+
+            1,5 places par logement d’une surface de plancher ≥ 100 m²
+
+            1 place de stationnement pour 3 chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par logement
+
+            pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les autres cas, avec une'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 40.0
@@ -652,6 +885,21 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UD 7.3 (secteur Udu sans règle propre)'
+            page_pdf: 57
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UD 7.2 (secteur Udu sans règle propre)'
+            page_pdf: 57
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale, sur une profondeur maximale de 20 mètres à partir du recul imposé. Pour les terrains dont la largeur est inférieure à 14 mètres, les constructions peuvent être implantées sur les deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale, sur une profondeur maximale de 20 mètres à partir du recul imposé. Pour les terrains dont la largeur est inférieure à 14 mètres, les constructions peuvent être implantées sur les deux limites séparatives.'
+            condition_modelable: 'une_seule_limite+profondeur_bande:20 m (deux limites si largeur_terrain_max:14 m)'
           min_m: 3
           article: UD 7.2-7.3
           page_pdf: 57
@@ -768,6 +1016,20 @@ zones:
             à 5 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UE 7.3'
+            page_pdf: 69
+            citation: 'Les constructions doivent être implantées en retrait des limites de fond de propriété avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 5 mètres.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UE 7.2'
+            page_pdf: 69
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d’habitat. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 5 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d’habitat.'
+            condition_modelable: 'une_seule_limite+non'
           min_m: 5.0
           article: UE 7.2-7.3
           page_pdf: 69
@@ -914,6 +1176,19 @@ zones:
             à 2 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UA 7.3'
+            page_pdf: 17
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UA 7.2'
+            page_pdf: 17
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
           min_m: 3
           article: UA 7.2-7.3
           page_pdf: 17
@@ -924,14 +1199,46 @@ zones:
           raison: valeur 5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UA 12.2
           page_pdf: 22
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Autres logements
+
+            1 place maximum par logement aidé
+
+            1 place par logement d’une surface de plancher ≤ 100 m²
+
+            1,5 places par logement d’une surface de plancher ≥ 100 m²
+
+            1 place de stationnement pour 3 chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par logement
+
+            pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les autres cas, avec une'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -1007,6 +1314,19 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UB 7.3'
+            page_pdf: 30
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
           min_m: 3
           article: UB 7.2-7.3
           page_pdf: 30
@@ -1017,14 +1337,46 @@ zones:
           raison: attribution douteuse (citation sous secteur None)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UB 12.2
           page_pdf: 35
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Autres logements
+
+            1 place maximum par logement aidé
+
+            1 place par logement d’une surface de plancher ≤ 100 m²
+
+            1,5 places par logement d’une surface de plancher ≥ 100 m²
+
+            1 place de stationnement pour 3 chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par logement
+
+            pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les autres cas, avec une'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -1073,6 +1425,21 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UC 7.3'
+            page_pdf: 44
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UC 7.2'
+            page_pdf: 44
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale, sur une profondeur maximale de 20 mètres à partir du recul imposé. Pour les terrains dont la largeur est inférieure à 14 mètres, les constructions peuvent être implantées sur les deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale, sur une profondeur maximale de 20 mètres à partir du recul imposé. Pour les terrains dont la largeur est inférieure à 14 mètres, les constructions peuvent être implantées sur les deux limites séparatives.'
+            condition_modelable: 'une_seule_limite+profondeur_bande:20 m (deux limites si largeur_terrain_max:14 m)'
           min_m: 3
           article: UC 7.2-7.3
           page_pdf: 44
@@ -1083,14 +1450,46 @@ zones:
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UC 12.2
           page_pdf: 49
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Autres logements
+
+            1 place maximum par logement aidé
+
+            1 place par logement d’une surface de plancher ≤ 100 m²
+
+            1,5 places par logement d’une surface de plancher ≥ 100 m²
+
+            1 place de stationnement pour 3 chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par logement
+
+            pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les autres cas, avec une'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 30.0
@@ -1139,6 +1538,21 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UD 7.3'
+            page_pdf: 57
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UD 7.2'
+            page_pdf: 57
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale, sur une profondeur maximale de 20 mètres à partir du recul imposé. Pour les terrains dont la largeur est inférieure à 14 mètres, les constructions peuvent être implantées sur les deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale, sur une profondeur maximale de 20 mètres à partir du recul imposé. Pour les terrains dont la largeur est inférieure à 14 mètres, les constructions peuvent être implantées sur les deux limites séparatives.'
+            condition_modelable: 'une_seule_limite+profondeur_bande:20 m (deux limites si largeur_terrain_max:14 m)'
           min_m: 3
           article: UD 7.2-7.3
           page_pdf: 57
@@ -1149,14 +1563,46 @@ zones:
           raison: valeur 3.5 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 3 m
       stationnement:
-        par_logement:
-          places: 1.0
+        par_typologie:
+          statut: valide
           article: UD 12.2
           page_pdf: 62
-          citation: 'Autres logements : 1 place par logement d’une surface de plancher ≤ 100 m² ; 1,5 places
-            par logement d’une surface de plancher ≥ 100 m² (Logements aidés : 1 place maximum par logement
-            aidé)'
-          statut: valide
+          base: surface_plancher
+          arrondi: superieur
+          retenue: max
+          citation: 'Autres logements
+
+            1 place maximum par logement aidé
+
+            1 place par logement d’une surface de plancher ≤ 100 m²
+
+            1,5 places par logement d’une surface de plancher ≥ 100 m²
+
+            1 place de stationnement pour 3 chambres
+
+            pour les constructions à destination d''habitation, l''espace possède une superficie de 0,75 m² par logement
+
+            pour les logements jusqu''à deux pièces principales et 1,5 m² par logement dans les autres cas, avec une'
+          detail:
+          - destination: collectif
+            sdp_max: 100
+            places: 1
+            tranche: autre logt ≤ 100 m²
+            role: base
+          - destination: collectif
+            sdp_min: 100
+            places: 1.5
+            tranche: autre logt ≥ 100 m²
+            role: base
+          social:
+            places: 1
+            tranche: logement aidé (1 place max)
+          senior:
+            places: 0.3333
+            tranche: foyer/résidence (1 pour 3)
+          etudiant:
+            places: 0.3333
+            tranche: résidence (1 pour 3)
       pleine_terre:
         pct:
           pct: 40.0
@@ -1205,6 +1651,20 @@ zones:
             à 5 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UE 7.3'
+            page_pdf: 69
+            citation: 'Les constructions doivent être implantées en retrait des limites de fond de propriété avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 5 mètres.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UE 7.2'
+            page_pdf: 69
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d’habitat. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 5 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d’habitat.'
+            condition_modelable: 'une_seule_limite+non'
           min_m: 5.0
           article: UE 7.2-7.3
           page_pdf: 69
@@ -1259,6 +1719,19 @@ zones:
             à 2 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UA 7.3'
+            page_pdf: 17
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UA 7.2'
+            page_pdf: 17
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
           min_m: 3
           article: UA 7.2-7.3
           page_pdf: 17
@@ -1394,6 +1867,19 @@ zones:
             à 2 mètres.
           statut: valide
         limites_separatives:
+          h_reference: hauteur_totale_facade
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UA 7.3'
+            page_pdf: 17
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UA 7.2'
+            page_pdf: 17
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
           min_m: 3
           article: UA 7.2-7.3
           page_pdf: 17
@@ -1451,21 +1937,83 @@ zones:
         page_pdf: 78
         citation: « … loisirs et sports… »
   2AUa:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UA 7.3'
+            page_pdf: 17
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UA 7.2'
+            page_pdf: 17
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
     renvoi: Ua
     renvoi_src: Art. AUindicée 1.2, page_pdf 77 ; Art. AUindicée 2.2, page_pdf 78.
     note: 'Art. AUindicée 2.2 (3.), page_pdf 78 : « Pour les zones 2AUindicée, leur ouverture à l''urbanisation
       ne pourra intervenir qu''une fois l''aménagement de l''ensemble des zones 1AUindicée du pôle urbain de référence
       fixé par le SAR … soit entrepris. » + densité 30 logements/ha (AUa) et assainissement collectif (5.).'
   2AUb:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UB 7.3'
+            page_pdf: 30
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UB 7.2'
+            page_pdf: 30
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
     renvoi: Ub
     renvoi_src: Art. AUindicée 1.2, page_pdf 77 ; Art. AUindicée 2.2, page_pdf 78.
     note: Ouverture conditionnée (2AU, AUindicée 2.2.3, page_pdf 78) ; densité 30 logements/ha (AUb) ; assainissement
       collectif (5.).
   2AUc:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UC 7.3'
+            page_pdf: 44
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UC 7.2'
+            page_pdf: 44
+            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale, sur une profondeur maximale de 20 mètres à partir du recul imposé. Pour les terrains dont la largeur est inférieure à 14 mètres, les constructions peuvent être implantées sur les deux limites séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale, sur une profondeur maximale de 20 mètres à partir du recul imposé. Pour les terrains dont la largeur est inférieure à 14 mètres, les constructions peuvent être implantées sur les deux limites séparatives.'
+            condition_modelable: 'une_seule_limite+profondeur_bande:20 m (deux limites si largeur_terrain_max:14 m)'
     renvoi: Uc
     renvoi_src: Art. AUindicée 1.2, page_pdf 77 ; Art. AUindicée 2.2, page_pdf 78.
     note: Ouverture conditionnée (2AU, AUindicée 2.2.3, page_pdf 78) ; densité 20 logements/ha (AUc).
   2AUec:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UA 7.3'
+            page_pdf: 17
+            citation: 'Les constructions doivent être implantées en retrait de la limite de fond de terrain, avec une distance comptée horizontalement de tout point de la façade au point le plus proche de la limite séparative, au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres. Les constructions annexes peuvent être implantées en limite de fond de terrain.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AUindicée 7 (renvoi p.79) → UA 7.2'
+            page_pdf: 17
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres.'
     silence: interdit
     silence_src: 'Art. AUindicée 2.2 (7.), page_pdf 78 : « En zone AUec, sont uniquement admises… » (même régime
       que 1AUec — la clause vise « zone AUec » sans distinction 1/2).'
@@ -1479,6 +2027,19 @@ zones:
   AUst:
     regles:
       retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUST 7 (« limites séparatives » sans distinction = les deux côtés)'
+            page_pdf: 83
+            citation: 'Les constructions correspondant aux travaux d’aménagement et d’extension mineure pour mise aux normes sanitaires et d’habitabilité doivent être implantées à 3 mètres minimum des limites séparatives.'
+          implantation_laterales:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUST 7 (« limites séparatives » sans distinction = les deux côtés)'
+            page_pdf: 83
+            citation: 'Les constructions correspondant aux travaux d’aménagement et d’extension mineure pour mise aux normes sanitaires et d’habitabilité doivent être implantées à 3 mètres minimum des limites séparatives.'
         entre_constructions:
           forme: silence
           absent: true

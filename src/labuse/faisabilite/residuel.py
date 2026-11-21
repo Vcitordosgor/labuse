@@ -173,6 +173,16 @@ def compute_residuel(session: Session, parcel_id: int,
                 "cause": cause, "sdp_ecrite": sdp}
 
     fr = f.fourchette
+    # MOTEUR-VERITE-FIX-3 LOT 3 — « capacité à vérifier » N'EST PAS un zéro : une faisabilité
+    # constructible SANS clé `surface_plancher_m2` (SDP ∅ — AC2 site protégé, plafond d'habitat
+    # A/N, hauteur propre non chiffrable, littoral prospectif) dit « le chiffre ne peut pas être
+    # établi », jamais « capacité nulle ». SDP écrite NULL + cause d'IGNORANCE (le gate et le
+    # score servent « Analyse incomplète », pas « rien à bâtir »). Témoins AS0256, CY1293.
+    if "surface_plancher_m2" not in fr:
+        return {"disponible": False,
+                "raison": "Capacité à vérifier — aucune capacité chiffrée sans instruction "
+                          "(le résiduel reste inconnu, pas nul).",
+                "cause": "capacite_a_verifier", "sdp_ecrite": None}
     emprise_max = float(fr.get("emprise_constructible_m2") or 0.0)
     sdp_max = float(fr.get("surface_plancher_m2") or 0.0)
     if emprise_max <= 0 or sdp_max <= 0:
@@ -407,7 +417,13 @@ def fmt_pct_consomme(pct: float | int | None) -> str | None:
 # le plafond d'emprise actuel (c'est une vérité, pas un bug de division). Mais AUCUN lecteur n'affiche
 # jamais un pourcentage brut au-delà de 100 % — une SEULE fonction de rendu (miroir TS `fmtTauxEmprise`
 # dans format.ts) que lisent fiche, Comparatif, Dossier, carte, filtres et Copilote.
-TAUX_EMPRISE_SATURE = "Saturé : le bâti existant dépasse déjà le plafond d'emprise du PLU actuel"
+# EXPORTS-FIX-3 LOT 3g — ce taux est l'OCCUPATION DU GABARIT (emprise bâtie ÷ emprise CONSTRUCTIBLE
+# après reculs), PAS le taux d'emprise au sol ÷ terrain. RÉVISION (revue) : au-delà de 100 %, ne pas
+# dire « occupe TOUTE l'emprise » — c'est trop absolu (le Gabarit peut laisser quelques m² ; ex. DK0208
+# ~13 m²) et ce n'est pas l'emprise qui est le verrou mais les DROITS À BÂTIR : la surface de plancher
+# autorisée est déjà consommée par le bâti existant. On nomme donc la vraie saturation (SDP/densité).
+TAUX_EMPRISE_SATURE = ("Saturé : la surface de plancher autorisée est déjà consommée par le bâti "
+                       "existant")
 
 
 def fmt_taux_emprise(taux: float | int | None) -> str | None:

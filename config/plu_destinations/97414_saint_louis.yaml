@@ -56,6 +56,20 @@ zones:
             une distance (...) au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UA 7.3'
+            page_pdf: 17
+            citation: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété. [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'UA 7.2'
+            page_pdf: 17
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
           min_m: 3.0
           article: UA 7.2
           page_pdf: 17
@@ -63,11 +77,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UA 12.2
           page_pdf: 23
-          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 15.0
@@ -157,6 +211,20 @@ zones:
             égale à 3 mètres. [règle UA]
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UA 7.3'
+            page_pdf: 17
+            citation: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété. [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum. [secteur UA1 : aucune règle propre à l’article UA 7, règle UA]'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'UA 7.2'
+            page_pdf: 17
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres. [secteur UA1 : aucune règle propre à l’article UA 7, règle UA]'
           min_m: 3.0
           article: UA 7.2
           page_pdf: 17
@@ -164,11 +232,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UA 12.2
           page_pdf: 23
-          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UA]'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
     renvoi: UA
     renvoi_src: 'caractère de la zone UA, p. 12 : « Il existe le secteur UA1 correspondant au centre historique
       de Saint-Louis dont la morphologie et les fonctions urbaines doivent être préservées. » — secteur de la zone
@@ -215,6 +323,22 @@ zones:
             une distance (...) au moins égale à 3 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 31
+            citation: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite . La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété. [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite .'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UB 7.2'
+            page_pdf: 31
+            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres. L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite .'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite .'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
           min_m: 3.0
           article: UB 7.2
           page_pdf: 31
@@ -222,11 +346,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UB 12.2
           page_pdf: 37
-          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 20.0
@@ -329,6 +493,22 @@ zones:
             au moins égale à 4 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UC 7.3'
+            page_pdf: 45
+            citation: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UC 7.2'
+            page_pdf: 45
+            citation: 'Les constructions peuvent être implantées sur une seule limite latérale. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite latérale.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: UC 7.2
           page_pdf: 46
@@ -342,11 +522,51 @@ zones:
             modifie_calcul: true
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -438,6 +658,19 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          h_reference: egout
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UC 7.3'
+            page_pdf: 45
+            citation: 'Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum à la moitié de la hauteur à l’égout du toit (ou au faîtage en l’absence d’égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2 (H1 étant la hauteur à l’égout) ou en l’absence de façade présentant un égout de toit : L = H2/2 (H2 étant la hauteur au faîtage). [répété à l’identique au 7.3 pour les limites de fond]'
+          implantation_laterales:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'UC 7.2'
+            page_pdf: 45
+            citation: 'Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum à la moitié de la hauteur à l’égout du toit (ou au faîtage en l’absence d’égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2 (H1 étant la hauteur à l’égout) ou en l’absence de façade présentant un égout de toit : L = H2/2 (H2 étant la hauteur au faîtage).'
           min_m: 3.0
           article: UC 7.2/7.3
           page_pdf: 46
@@ -449,11 +682,51 @@ zones:
           formule: H1/2, minimum 3,00 m
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UC]'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -500,6 +773,22 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UC 7.3'
+            page_pdf: 45
+            citation: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum. [secteur UC2 : aucune règle propre à l’article UC 7, règle UC]'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UC 7.2'
+            page_pdf: 45
+            citation: 'Les constructions peuvent être implantées sur une seule limite latérale. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres. [secteur UC2 : aucune règle propre à l’article UC 7, règle UC]'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite latérale.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: UC 7.2
           page_pdf: 46
@@ -509,11 +798,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UC]'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -567,6 +896,22 @@ zones:
             à 4 mètres.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UD 7.3'
+            page_pdf: 60
+            citation: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative , est de 3 mètres minimum.'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UD 7.2'
+            page_pdf: 60
+            citation: 'Les constructions peuvent être implantées sur une seule limite latérale. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite latérale.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: UD 7.2
           page_pdf: 60
@@ -574,11 +919,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UD 12.2
           page_pdf: 66
-          citation: 'Habitations — Pour les autres constructions : 2 places de stationnement par logement'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 30.0
@@ -694,6 +1079,22 @@ zones:
             [règle UD]
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UD 7.3'
+            page_pdf: 60
+            citation: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative , est de 3 mètres minimum. [secteur UD1 : aucune règle propre à l’article UD 7, règle UD]'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UD 7.2'
+            page_pdf: 60
+            citation: 'Les constructions peuvent être implantées sur une seule limite latérale. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres. [secteur UD1 : aucune règle propre à l’article UD 7, règle UD]'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite latérale.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: UD 7.2
           page_pdf: 59
@@ -701,11 +1102,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UD 12.2
           page_pdf: 66
-          citation: 'Pour les autres constructions : 2 places de stationnement par logement [règle UD]'
-          statut: valide
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 35.0
@@ -975,6 +1416,22 @@ zones:
           statut: valide
       retraits:
         limites_separatives:
+          formule: 'H/2, minimum 3 m'
+          note_fix4: 'MOTEUR-VERITE-FIX-4 LOT 3 : citation à retrait relatif SANS formule résolue (le moteur gardait le minimum) — formule injectée, exécutée à l''égout prouvé ou en référence prudente faîtage.'
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'UZ 7.3'
+            page_pdf: 96
+            citation: 'les constructions doivent respecter une marge d’isolement égale à la moitié de la hauteur de la construction sans être inférieure à 3 mètres, non compris les débords de toiture [...] Toutefois, pour les affectations repérées en habitat individuel au document graphique, les constructions dont la largeur du terrain est inférieure à 12 mètres peuvent s’étendre dans cette marge d’isolement jusqu’en limite du fond de propriété ou jusqu’à 1 mètre de la limite à condition que ne soit ouvert aucun percement sur la façade arrière et dans le respect de l’article UZ 10.3.'
+            condition_texte: 'Toutefois, pour les affectations repérées en habitat individuel au document graphique, les constructions dont la largeur du terrain est inférieure à 12 mètres peuvent s’étendre dans cette marge d’isolement jusqu’en limite du fond de propriété ou jusqu’à 1 mètre de la limite à condition que ne soit ouvert aucun percement sur la façade arrière et dans le respect de l’article UZ 10.3.'
+            condition_modelable: 'largeur_terrain_max:12 m'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'UZ 7.2'
+            page_pdf: 96
+            citation: 'les constructions peuvent joindre les deux limites séparatives qui touchent la voie, si la construction n’est pas implantée sur une ou sur les deux limites séparatives, la marge d’isolement est égale à la moitié de la hauteur de la construction sans être inférieure à 3 mètres, non compris les débords de toiture [idem pour les 3 affectations collectif/individuel/tertiaire ; habitat individuel : marge réductible à 1 m si largeur du terrain < 12 m et aucun percement en façade latérale]'
           min_m: 3.0
           article: UZ 7.2
           page_pdf: 97
@@ -984,12 +1441,17 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.5
+          statut: valide
           article: UZ 12
           page_pdf: 103
-          citation: 'Pour les constructions à usage d''habitation : 1,5 place de stationnement par logement,
-            arrondi à l''entier supérieur (...). Pour le logement social : 1 place par logement.'
-          statut: valide
+          places: 1.5
+          arrondi: superieur
+          citation: '1. Pour les constructions à usage d’habitation : 1,5 place de stationnement par logement, arrondi à l’entier
+
+            supérieur pour l’ensemble de l’opération. Pour le logement social : 1 place par logement.'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
       pleine_terre:
         pct:
           pct: 25.0
@@ -1116,6 +1578,20 @@ zones:
             retrait de la voie, avec une distance (...) au moins égale à 3 mètres.'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UA 7.3'
+            page_pdf: 17
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété. [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AUindicée => UA 7.2'
+            page_pdf: 17
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
           min_m: 3.0
           article: UA 7.2
           page_pdf: 17
@@ -1125,14 +1601,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UA 12.2
           page_pdf: 23
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UA : Habitations — Pour les autres constructions : 2 places de stationnement
-            par logement'
-          statut: valide
-          raison: citation non retrouvée autour de p.23 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 15.0
@@ -1150,6 +1663,23 @@ zones:
     note: 'Conditions AU 2.2 (p. 108) : infrastructures suffisantes (voirie, réseaux, sécurité incendie) et respect
       des OAP lorsqu''elles existent.'
   1AUa oap1:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UA 7.3'
+            page_pdf: 17
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété. [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AUindicée => UA 7.2'
+            page_pdf: 17
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
     renvoi: UA
     renvoi_src: 'Art. AUindicée 1.2, p. 108 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent » (indice a = zone UA).'
@@ -1164,6 +1694,23 @@ zones:
       rapportant à l''OAP2 » (logements sociaux 0,8 place/logement ; équipements accueillant du public 1,5 place/10
       personnes ; mutualisation possible p. 110-111).'
   1AUa oap3:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UA 7.3'
+            page_pdf: 17
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres comptée horizontalement et perpendiculairement de tout point de la limite de fond de propriété. [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'AUindicée => UA 7.2'
+            page_pdf: 17
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
     renvoi: UA
     renvoi_src: 'Art. AUindicée 1.2, p. 108 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       OAP lorsqu''elles existent » (indice a = zone UA).'
@@ -1221,6 +1768,22 @@ zones:
             avec une distance (...) au moins égale à 4 mètres.'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UC 7.3'
+            page_pdf: 45
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UC 7.2'
+            page_pdf: 45
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => Les constructions peuvent être implantées sur une seule limite latérale. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite latérale.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: UC 7.2
           page_pdf: 46
@@ -1230,14 +1793,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UC : Habitations — Pour les autres constructions : 2 places de stationnement
-            par logement'
-          statut: valide
-          raison: citation non retrouvée autour de p.52 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -1252,11 +1852,49 @@ zones:
       c = zone UC).'
     note: 'Conditions AU 2.2 (p. 108) : infrastructures + respect OAP.'
   1AUc oap4:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UC 7.3'
+            page_pdf: 45
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UC 7.2'
+            page_pdf: 45
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => Les constructions peuvent être implantées sur une seule limite latérale. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite latérale.'
+            condition_modelable: 'une_seule_limite'
     renvoi: UC
     renvoi_src: 'Art. AUindicée 1.2, p. 108 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       OAP lorsqu''elles existent » (indice c = zone UC).'
     note: 'Conditions AU 2.2 (p. 108) : infrastructures + respect OAP (OAP n°4 non lue ici).'
   1AUc oap5:
+    regles:
+      retraits:
+        limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UC 7.3'
+            page_pdf: 45
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UC 7.2'
+            page_pdf: 45
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => Les constructions peuvent être implantées sur une seule limite latérale. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite latérale.'
+            condition_modelable: 'une_seule_limite'
     renvoi: UC
     renvoi_src: 'Art. AUindicée 1.2, p. 108 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       OAP lorsqu''elles existent » (indice c = zone UC).'
@@ -1301,6 +1939,19 @@ zones:
             (...) au moins égale à 4 mètres.'
           statut: valide
         limites_separatives:
+          h_reference: egout
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée => UC 7.3'
+            page_pdf: 45
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum à la moitié de la hauteur à l’égout du toit (ou au faîtage en l’absence d’égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2 (H1 étant la hauteur à l’égout) ou en l’absence de façade présentant un égout de toit : L = H2/2 (H2 étant la hauteur au faîtage).'
+          implantation_laterales:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'AUindicée => UC 7.2'
+            page_pdf: 45
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum à la moitié de la hauteur à l’égout du toit (ou au faîtage en l’absence d’égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2 (H1 étant la hauteur à l’égout) ou en l’absence de façade présentant un égout de toit : L = H2/2 (H2 étant la hauteur au faîtage).'
           min_m: 3.0
           article: UC 7.2/7.3
           page_pdf: 46
@@ -1313,14 +1964,51 @@ zones:
           formule: H1/2, minimum 3,00 m
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UC1 : Pour les autres constructions : 2 places de stationnement par logement
-            [règle UC]'
-          statut: valide
-          raison: citation non retrouvée autour de p.52 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -1374,6 +2062,22 @@ zones:
             (...) au moins égale à 4 mètres.'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UC 7.3'
+            page_pdf: 45
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum. [règle UC, secteur UC2 sans règle propre]'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite séparative.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UC 7.2'
+            page_pdf: 45
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => Les constructions peuvent être implantées sur une seule limite latérale. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres. [règle UC, secteur UC2 sans règle propre]'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite latérale.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: UC 7.2
           page_pdf: 46
@@ -1383,14 +2087,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UC 12.2
           page_pdf: 52
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UC2 : Pour les autres constructions : 2 places de stationnement par logement
-            [règle UC]'
-          statut: valide
-          raison: citation non retrouvée autour de p.52 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 25.0
@@ -1445,6 +2186,22 @@ zones:
             (...) au moins égale à 4 mètres.'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UD 7.3'
+            page_pdf: 60
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative , est de 3 mètres minimum.'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UD 7.2'
+            page_pdf: 60
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => Les constructions peuvent être implantées sur une seule limite latérale. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite latérale.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: UD 7.2
           page_pdf: 60
@@ -1454,14 +2211,51 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UD 12.2
           page_pdf: 66
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UD : Habitations — Pour les autres constructions : 2 places de stationnement
-            par logement'
-          statut: valide
-          raison: citation non retrouvée autour de p.66 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 30.0
@@ -1517,6 +2311,22 @@ zones:
             égale à 4 mètres. [règle UD]'
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UD 7.3'
+            page_pdf: 60
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle à 100% sur une profondeur de 3 mètres [...] En cas de retrait, la distance mesurée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative , est de 3 mètres minimum.'
+            condition_texte: 'L’implantation en limite est possible dès lors que la nouvelle construction n’excède pas 4 mètres de hauteur absolue au droit de cette limite.'
+            condition_modelable: 'hauteur_bande:4 m sur bande de 3 m'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'AUindicée => UD 7.2'
+            page_pdf: 60
+            citation: '1AUindicée (renvoi p.106 : « Pour appliquer le présent règlement, il convient de se reporter en fonction de l’indice de la zone AU considérée au règlement des zones urbaines correspondantes ») => Les constructions peuvent être implantées sur une seule limite latérale. En cas de retrait de la construction, la distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
+            condition_texte: 'Les constructions peuvent être implantées sur une seule limite latérale.'
+            condition_modelable: 'une_seule_limite'
           min_m: 3.0
           article: UD 7.2
           page_pdf: 60
@@ -1526,14 +2336,51 @@ zones:
           raison: citation non retrouvée autour de p.60 (recouvrement 47%)
       stationnement:
         par_logement:
-          places: 2.0
+          statut: valide
           article: UD 12.2
           page_pdf: 66
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UD1 : Pour les autres constructions : 2 places de stationnement par logement
-            [règle UD]'
-          statut: valide
-          raison: citation non retrouvée autour de p.66 (recouvrement 41%)
+          places: 2.0
+          arrondi: superieur
+          citation: 'etc.). A titre indicatif, la superficie minimale d’une place de stationnement est de 25 m², y compris les
+
+            Habitations
+
+            Pour les logements sociaux
+
+            1 place de stationnement par logement
+
+            2 places de stationnement par logement
+
+            Pour les opérations de plus de 10 logements
+
+            1 place de stationnement pour deux chambres
+
+            1 place par tranche de 3 logements.
+
+            1 place visiteur par tranche de 5 logements.
+
+            1 place par tranche de 80 m² de service.
+
+            emplacement par logement,
+
+            pour les constructions à destination d’activités, un emplacement par tranche de 100 m² de surface
+
+            emplacements par tranche de 100 m² de surface de plancher pour les autres établissements,'
+          social:
+            places: 1
+            tranche: logement social (1/logt)
+          senior:
+            places: 0.3333
+            tranche: résidence personnes âgées (1 pour 3)
+          visiteurs:
+            places: 0.5
+            par_logements: 1
+            logements_min: 11
+            arrondi: superieur
+            publique: true
+            citation: 'Opérations de plus de 10 logements : 0,5 place de stationnement public par logement.'
+          conditions:
+          - les 0,5 place/logt au-delà de 10 logements sont PUBLIQUES (hors parcelle), comptées à part
       pleine_terre:
         pct:
           pct: 35.0

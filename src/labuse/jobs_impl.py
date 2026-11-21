@@ -1828,8 +1828,15 @@ def ingest_ban(ctx: JobContext) -> None:
 
 
 def ingest_dvf(ctx: JobContext) -> None:
-    """DVF — détecte une nouvelle livraison Etalab (Last-Modified) et recharge. Hebdomadaire."""
+    """DVF — détecte une nouvelle livraison Etalab (Last-Modified) et recharge. Hebdomadaire.
+
+    MINI-CORRECTIONS-1 (pt 5) — la tâche ENCHAÎNE d'elle-même la reconstruction de la table dérivée
+    du marché (`dvf-marche` → `dvf_secteur_medianes`, dédup du couple (id_mutation, id_parcelle) via
+    le CTE DISTINCT, recalcul idempotent TRUNCATE + INSERT) : le PRIX DES TERRAINS NUS suit les ventes
+    fraîchement rechargées dans la MÊME tâche hebdomadaire, sans dépendre du job BODACC du lendemain.
+    `refresh-dvf` rafraîchit déjà l'horizon de fraîcheur (persist_millesime, lu sur les ventes servies)."""
     _ingest_via_cli(ctx, "refresh-dvf")
+    _ingest_via_cli(ctx, "dvf-marche")
 
 
 def abuse_scan(ctx: JobContext) -> None:
@@ -1913,6 +1920,76 @@ def fraicheur_nuit(ctx: JobContext) -> None:
     ctx.compte(total=r["total"], retards=len(r["retards"]), a_verifier=len(r["a_verifier"]),
                incidents_resolus=resolus,
                noms_en_retard=sorted(noms_retard))
+
+
+def plu_veille_nuit(ctx: JobContext) -> None:
+    """PLU-VEILLE-FIX-1 — LA VEILLE PLU/GPU. Chaque nuit, pour les 24 communes, on compare
+    l'IDENTIFIANT du document d'urbanisme servi par le Géoportail à celui RÉELLEMENT ingéré, couche
+    par couche (zonage, prescriptions, informations/DPU, règles chiffrées). Tout remplacement est
+    vu le jour même, 1→1 compris (on compare l'idurba, pas le compte `totalFeatures`).
+
+    Une commune en `desync` (une couche en retard / règles à recalibrer) :
+      · passe ses parcelles « À vérifier » dans l'Analyse LABUSE (overlay restaurable) ;
+      · remonte chez JOHN (axe « reglementaire ») et à la page DONNÉES (incident ops + instantané) avec
+        la commune, l'ancien/le nouveau document et la liste des gestes ; RAPPEL si rien fait sous 7 j ;
+    Une commune rentrée dans l'ordre RÉSOUT son incident et restaure ses parcelles.
+    En plus : rappel TRIMESTRIEL de relecture des PROCÉDURES en cours (comme les sources manuelles)."""
+    from . import controle_plu, ops_alertes, veille_plu
+    from .john import veille as john_veille
+
+    # publié = Géoportail en direct (le signal qui voit le 1→1) ; repli catalogue si injoignable.
+    gpu = controle_plu.fetch_gpu_ile()
+    r = controle_plu.rejouer_nuit(ctx.db, gpu_par_insee=gpu)
+    desync = r["desync"]
+
+    # Analyse LABUSE : signal client PROPORTIONNEL (décision Vic) — fort = toute la commune,
+    # prescriptions = seules les parcelles portant une prescription, informations = bandeau seul.
+    ov = controle_plu.rafraichir_signal_client(ctx.db)
+
+    rappels7 = 0
+    for e in desync:
+        cle = f"plu-modifie:{e['insee']}"
+        detail = (f"Le document d'urbanisme de {e['commune']} a changé au Géoportail "
+                  f"({e['ancien'] or '—'} → {e['nouveau']}). Couches en retard : "
+                  f"{', '.join(e['couches_en_retard']) or '—'}.\nGestes :\n- "
+                  + "\n- ".join(e["gestes"]))
+        ops_alertes.signaler(ctx.db, cle, f"PLU modifié — {e['commune']} ({e['nouveau']})",
+                             detail, lien="/donnees")
+        john_veille.signaler_plu_modifie(ctx.db, e["commune"], e["insee"], e["ancien"],
+                                         e["nouveau"], e.get("date_modif_fr"), e["gestes"])
+        # RAPPEL 7 jours — rien fait depuis une semaine : un incident distinct, plus pressant.
+        age = ops_alertes.age_incident_jours(ctx.db, cle)
+        if age is not None and age >= 7:
+            ops_alertes.signaler(
+                ctx.db, f"plu-modifie-rappel:{e['insee']}",
+                f"PLU modifié — {e['commune']} : rien fait depuis 7 jours",
+                f"La mise à jour du PLU de {e['commune']} ({e['nouveau']}) attend depuis "
+                f"{int(age)} jours. {detail}", lien="/donnees")
+            rappels7 += 1
+
+    # résolution des communes RENTRÉES DANS L'ORDRE (plus en desync ce soir).
+    insees_desync = {e["insee"] for e in desync}
+    resolus = 0
+    for i in ops_alertes.incidents_ouverts(ctx.db):
+        if i["cle"].startswith("plu-modifie:") and i["cle"].split(":", 1)[1] not in insees_desync:
+            ops_alertes.resoudre(ctx.db, i["cle"])
+            ops_alertes.resoudre(ctx.db, "plu-modifie-rappel:" + i["cle"].split(":", 1)[1])
+            resolus += 1
+
+    # Rappel TRIMESTRIEL de relecture des procédures en cours (révision/modification/enquête).
+    procedures = 0
+    for p in veille_plu.a_reverifier():
+        john_veille.signaler_plu_modifie(
+            ctx.db, p.get("commune") or p.get("insee"), p.get("insee"),
+            None, f"procédure à revérifier ({p.get('age_jours', '?')} j)", None,
+            [f"Relire la procédure d'urbanisme en cours — {p.get('motif') or 'cadence dépassée'}"
+             + (f" ; {p['source_url']}" if p.get("source_url") else "") + "."])
+        procedures += 1
+
+    ctx.compte(total=r["total"], a_jour=r["a_jour"], desync=len(desync),
+               overlay_lignes=ov["lignes"], rappels_7j=rappels7, incidents_resolus=resolus,
+               procedures_a_relire=procedures,
+               communes_desync=[e["commune"] for e in desync])
 
 
 def _cout_agent_source_eur(db) -> float:

@@ -63,7 +63,38 @@ class Settings(BaseSettings):
     # puis SIGKILL — plus jamais de thread fantôme qui affame les autres requêtes) et le client reçoit le
     # message honnête « étude trop lourde, relancez ». Réglable en prod par LABUSE_ETUDE_TIMEOUT_S ; une
     # valeur basse (recette) force un dépassement pour prouver la mise à mort.
-    etude_timeout_s: float = 60.0
+    # ETUDE-PLAFOND-1 (décision Vic) — on LAISSE le calcul finir, quitte à attendre : la prod (VPS) est
+    # ~1,7× plus lente que le Mac (3,25 s vs 1,91 s sur la même boucle), donc Saint-André à N=150 (30,4 s
+    # froid sur le Mac) y prendrait 50–75 s, AU BORD ou AU-DESSUS de l'ancien plafond de 60 s. Borne portée
+    # à 120 s pour que la grille N=150 ABOUTISSE partout (le résultat ne baisse pas) au lieu d'être tuée.
+    # Toute la chaîne AVAL est relevée en conséquence (front fetch 150 s, Caddy/nginx read_timeout 150 s —
+    # cf. docs/deploiement/etude-v6-2-timeouts.md) ; le keep-alive uvicorn (75 s) borne les connexions
+    # INACTIVES, pas une requête en vol → inchangé.
+    etude_timeout_s: float = 120.0
+    # ETUDE-FIABLE-1 (LOT A) — DÉTERMINISME de la recherche d'implantation. Le RÉSULTAT ne dépend plus de
+    # la vitesse de la machine : la grille examine un NOMBRE FIXE de candidats (constante de config), dans
+    # le même ordre partout → mêmes candidats, même meilleur, même chiffre. Le budget en SECONDES n'arbitre
+    # plus le résultat ; il reste un GARDE-FOU (filet) qui, s'il coupe avant d'avoir examiné les N candidats
+    # prévus, marque la recherche « partielle » (honnête) au lieu de rendre un chiffre non reproductible.
+    #   · etude_grille_max_candidats : nombre de candidats examinés (plafond déterministe). La grille pleine
+    #     vaut au plus 3 formes × 6 niveaux × 15 fractions = 270 (144 en grille grossière > 5000 m²).
+    #   · etude_grille_garde_fou_s : filet de sécurité temps, SOUS etude_timeout_s (120 s). S'il coupe → partielle.
+    # Valeur retenue = 150 (ETUDE-FIABLE-1 LOT A2/A3, décision Vic) : le résultat est IDENTIQUE de N=150 à
+    # 270 (le meilleur candidat tombe dans les 150 premiers → capmax 28/18/12), et 150 laisse PLUS de marge
+    # sous le filet de 45 s que 200 (Saint-André ~42,9 s à N=200 était trop près du filet). Durées à N=150
+    # (Mac 8 c, mesure propre) reportées dans reports/ETUDE-FIABLE-1.md (tableau A3). La grille complète (270)
+    # dépasse 60 s sur Saint-André (67,8 s → tuée) : on ne l'utilise pas. Le filet 45 s reste SOUS la borne
+    # API (60 s) avec marge pour planches/enrichissements.
+    # ETUDE-FIABLE-1 (R2) — le filet était à 45 s, mais la grille N=150 de Saint-André prend ~49 s À FROID
+    # (cache vide) : le filet la coupait → « partielle » non reproductible (R2 rouge sur un Mac lent/chargé).
+    # Le filet ne doit JAMAIS couper le N retenu sur les témoins.
+    # ETUDE-PLAFOND-1 — N=150 GARDÉ (le résultat ne baisse pas). La prod ~1,7× plus lente que le Mac → le
+    # filet est porté de 57 à 100 s pour laisser la grille N=150 ABOUTIR sur le serveur (Saint-André y
+    # grimpe à 50–75 s à froid), au lieu de rendre « partielle ». 100 s reste SOUS la borne dure (120 s),
+    # donc « partielle » est toujours signalée AVANT la mise à mort du processus (marge de 20 s pour les
+    # enrichissements + l'enregistrement de la révision).
+    etude_grille_max_candidats: int = 150      # LABUSE_ETUDE_GRILLE_MAX_CANDIDATS (déterministe)
+    etude_grille_garde_fou_s: float = 100.0    # LABUSE_ETUDE_GRILLE_GARDE_FOU_S (filet, pas le résultat)
     # FIX-NU3-3 (K-CHG-01/02/03, décision Vic) — SOUS CHARGE, deux goulots CPU/RAM écrasaient « fiche &
     # carte < 1 s » à 25 users (weasyprint à 26 s, 26 processus d'étude, swap saturé). On les met en FILE :
     #   · `pdf_rendu_max` : nb de rendus PDF (weasyprint) simultanés — les suivants ATTENDENT (deux à la fois) ;
@@ -132,6 +163,11 @@ class Settings(BaseSettings):
 
     config_dir: str = "config"
     http_timeout_s: float = 20.0
+
+    # GABARIT-3D-1 (pilote) — fond d'altitudes LiDAR HD 1 m local (COG Float32, EPSG:2975, REUN89),
+    # lu par la scène 3D du Gabarit. Construit par scripts/gabarit_3d_fond.py ; hors-git (data/*).
+    # Absent → la scène se dégrade (terrain en lacune), jamais une erreur. LABUSE_MNT1M_COG_PATH.
+    mnt1m_cog_path: str = "data/mnt1m/fond_1m.tif"
 
     # RADAR (pige) — répertoire PRIVÉ des captures : hors racine publique, jamais servi par le web,
     # inclus au backup (mandat RADAR V0 §2). Surchargé par LABUSE_PIGE_CAPTURES_DIR en dev/tests.
@@ -478,6 +514,12 @@ class Settings(BaseSettings):
     @property
     def config_path(self) -> Path:
         p = Path(self.config_dir)
+        return p if p.is_absolute() else _repo_root() / p
+
+    @property
+    def mnt1m_cog_file(self) -> Path:
+        """Chemin résolu du fond d'altitudes 1 m (GABARIT-3D-1)."""
+        p = Path(self.mnt1m_cog_path)
         return p if p.is_absolute() else _repo_root() / p
 
 

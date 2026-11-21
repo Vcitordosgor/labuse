@@ -1,0 +1,66 @@
+{
+ "insee": "97402",
+ "commune": "Bras-Panon",
+ "regles": [
+  {
+   "id": "97402-R1",
+   "article": "UA 12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "Ua",
+    "1AUa",
+    "2AUa"
+   ],
+   "pages": [
+    21,
+    22,
+    23
+   ]
+  },
+  {
+   "id": "97402-R2",
+   "article": "UB 12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "Ub",
+    "Uba",
+    "1AUb",
+    "2AUb"
+   ],
+   "pages": [
+    34,
+    35,
+    36
+   ]
+  },
+  {
+   "id": "97402-R3",
+   "article": "UC 12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "Uc",
+    "1AUc",
+    "2AUc"
+   ],
+   "pages": [
+    48,
+    49,
+    50
+   ]
+  },
+  {
+   "id": "97402-R4",
+   "article": "UD 12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "Ud",
+    "1AUd"
+   ],
+   "pages": [
+    61,
+    62,
+    63
+   ]
+  }
+ ]
+}

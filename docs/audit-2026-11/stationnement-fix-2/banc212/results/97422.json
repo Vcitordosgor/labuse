@@ -1,0 +1,77 @@
+{
+ "insee": "97422",
+ "regles": [
+  {
+   "rule_id": "97422-R1",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 30
+    },
+    "aide_20T3_1400": {
+     "total": 20
+    },
+    "mixte_10x110_10x30": {
+     "total": 30
+    }
+   }
+  },
+  {
+   "rule_id": "97422-R2",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 30
+    },
+    "aide_20T3_1400": {
+     "total": 20
+    },
+    "mixte_10x110_10x30": {
+     "total": 30
+    }
+   }
+  },
+  {
+   "rule_id": "97422-R3",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 30
+    },
+    "aide_20T3_1400": {
+     "total": 20
+    },
+    "mixte_10x110_10x30": {
+     "total": 30
+    }
+   }
+  },
+  {
+   "rule_id": "97422-R4",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 30
+    },
+    "aide_20T3_1400": {
+     "total": 20
+    },
+    "mixte_10x110_10x30": {
+     "total": 30
+    }
+   }
+  }
+ ]
+}

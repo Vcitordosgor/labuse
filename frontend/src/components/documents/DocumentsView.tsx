@@ -375,6 +375,7 @@ function etudeInitDe(r: DocGenereRow): RequestInit | null {
 
 function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
   const setToast = useApp((s) => s.setToast)
+  const ouvrirEtude = useApp((s) => s.ouvrirEtude)   // ETUDE-FIABLE-1 (LOT B2) — rouvrir l'ÉCRAN sur la révision
   // DOCS-FIX-1 (P3/P4) — ouverture propre (fetch + blob) ; l'erreur part au toast produit (« une
   // action ne tombe jamais dans le vide ») plutôt que d'ouvrir un onglet blanc puis du JSON brut.
   const { ouvrir: ouvrirDoc, enCours } = useOuvrirDocument(setToast)
@@ -387,7 +388,13 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
   }
   const nomPdf = () => nomRow(r.doc_type === 'pre-dossier' ? 'zip' : 'pdf')
   const ouvrir = () => {
-    if (r.doc_type === 'etude-faisabilite') { const i = etudeInitDe(r); if (i) void ouvrirDoc(ETUDE_PDF_URL, String(r.id), i, nomPdf()); return }
+    // ETUDE-FIABLE-1 (LOT B2) — ROUVRIR une étude = afficher sa RÉVISION à l'écran (sans recalcul : l'écran
+    // relit la révision via la config archivée). Repli PDF si la config n'est pas archivée (anciens docs).
+    if (r.doc_type === 'etude-faisabilite') {
+      const cfg = (r.hypotheses as { config?: EtudePdfIn } | null)?.config
+      if (cfg?.idus?.length) { ouvrirEtude(cfg.idus, cfg as unknown as Record<string, unknown>); return }
+      const i = etudeInitDe(r); if (i) void ouvrirDoc(ETUDE_PDF_URL, String(r.id), i, nomPdf()); return
+    }
     const u = urlDocument(r); if (u) void ouvrirDoc(u, String(r.id), undefined, nomPdf())
   }
   const regenerer = async () => {

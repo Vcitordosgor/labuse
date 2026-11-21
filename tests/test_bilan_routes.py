@@ -128,12 +128,18 @@ def test_modele_sert_structure_et_source(client_parc):
 
 def test_calcul_en_continu_moitie_rempli(client_parc):
     """BILAN-2 : un bilan à moitié rempli CALCULE (case vide = 0) ; les lignes vides
-    sont seulement comptées (``lignes_vides``), jamais bloquantes."""
+    sont seulement comptées (``lignes_vides``), jamais bloquantes.
+    CHIRURGICAL-FIX-1 (LOT I 1a) — les DEUX coûts majeurs (achat terrain ET construction)
+    sont requis : avec eux saisis, le reste vide = 0 et le résultat se calcule ; sans l'un
+    d'eux, le résultat est « non calculable » (cf. test dédié ci-dessous)."""
     c, idu = client_parc
     corps = {
         "programme": {"terrain": 1746},
         "produits": [{"libelle": "Libre", "lots": 46, "suv": 2560, "prix_ttc_m2_suv": 4800, "tva": 0.085}],
-        "postes": {"achat": {"valeur": 1000, "etat": "saisi", "tva": 0.0}},
+        "postes": {
+            "achat": {"valeur": 1000, "etat": "saisi", "tva": 0.0},
+            "constr": {"valeur": 2293, "etat": "saisi"},   # coût majeur requis (LOT I 1a)
+        },
         "mode": "marge",
     }
     r = c.post(f"/bilan/{idu}/calcul", json=corps)
@@ -143,3 +149,20 @@ def test_calcul_en_continu_moitie_rempli(client_parc):
     assert j["lignes_vides"] > 0 and j["manquants"]
     assert j["resultat_net"] is not None and j["marge_pct"] is not None  # calcule quand même
     assert j["ca_ht"] and j["ca_ht"] > 0
+
+
+def test_calcul_non_calculable_sans_cout_majeur(client_parc):
+    """CHIRURGICAL-FIX-1 (LOT I 1a) — un coût majeur manquant (ici la construction) rend le
+    résultat « non calculable » : on ne sert PAS une marge de ~60 % tirée du seul achat."""
+    c, idu = client_parc
+    corps = {
+        "programme": {"terrain": 1746},
+        "produits": [{"libelle": "Libre", "lots": 46, "suv": 2560, "prix_ttc_m2_suv": 4800, "tva": 0.085}],
+        "postes": {"achat": {"valeur": 1000, "etat": "saisi", "tva": 0.0}},  # construction absente
+        "mode": "marge",
+    }
+    r = c.post(f"/bilan/{idu}/calcul", json=corps)
+    assert r.status_code == 200, r.text
+    j = r.json()
+    assert j["resultat_net"] is None and j["marge_pct"] is None   # non calculable
+    assert j["ca_ht"] and j["ca_ht"] > 0                          # le CA, lui, reste connu

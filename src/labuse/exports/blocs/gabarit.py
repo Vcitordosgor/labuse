@@ -133,6 +133,40 @@ def _regles(rules, *, appliquees: bool) -> str:
     return f'<div class="{cls}">{"".join(out)}</div>' if out else ""
 
 
+def _bloc_coupes_pilote(scene: dict) -> str:
+    """GABARIT-3D-1 (pilote) — plan-clé + deux coupes du terrain réel depuis la scène (SVG serveur)."""
+    try:
+        from ...gabarit.coupe_svg import coupe_svg, plan_cle_svg
+    except Exception:  # noqa: BLE001 — la section pilote ne doit jamais bloquer un document
+        return ""
+    if not scene.get("disponible") or not scene.get("coupes"):
+        return ""
+    # PDF = thème CLAIR ; barre graphique SEULE (pas de ratio chiffré — A2).
+    sid = scene.get("scene_id"); adr = scene.get("adresse"); idu = scene.get("idu")
+    plan = plan_cle_svg(scene, theme="clair") or ""
+    # COUPE DÉTAILLÉE explicite (detail=True) : l'aperçu est devenu le rendu par défaut (A4) ;
+    # le PDF porte toutes les cotes/annotations des deux coupes, en parité avec « Agrandir » à l'écran.
+    figures = [coupe_svg(c, theme="clair", adresse=adr, idu=idu, detail=True) for c in scene["coupes"]]
+    figures = [f for f in figures if f]
+    if not figures:
+        return ""
+    # identifiant de scène porté par le DOCUMENT (parité écran/PDF), pas par la coupe (C10).
+    corps = ('<div class="coupes3d" style="page-break-before:always">'
+             f'<h3>Terrain réel — coupes (pilote 3D)</h3>'
+             f'<p class="src" style="font-size:8px">Scène {esc(str(sid or ""))} — servie pour cet identifiant.</p>')
+    # plan-clé À CÔTÉ de la première coupe (B8) : rangée flex
+    corps += (f'<div style="display:flex;gap:8px;align-items:flex-start">'
+              f'<div class="plan2d" style="flex:1 1 auto">{figures[0]}</div>'
+              f'<div class="plan2d" style="flex:0 0 auto">{plan}</div></div>')
+    for fig in figures[1:]:
+        corps += f'<div class="plan2d" style="margin-top:8px">{fig}</div>'
+    corps += ('</div>' + note(
+        "Cotes indicatives issues du MNT LiDAR HD IGN à 1 m (REUN89). Échelle horizontale = verticale "
+        "(aucune exagération). Une coupe s'interrompt au droit d'une lacune. Aucun plafond de hauteur "
+        "n'est dessiné. Précision locale à établir."))
+    return corps
+
+
 def rendu(valeurs, ctx=None) -> str:
     gr = (ctx or {}).get("gabarit") if isinstance(ctx, dict) else ctx
     corps = ""
@@ -210,6 +244,12 @@ def rendu(valeurs, ctx=None) -> str:
         corps += ('<div class="vue3d" style="page-break-before:always">'
                   '<h3>Vue 3D du gabarit</h3>'
                   f'<div class="plan3d">{svg3d}</div></div>')
+    # GABARIT-3D-1 (pilote) — l'export reprend la SCÈNE (terrain réel) : plan-clé + deux coupes
+    # vectorielles (SVG serveur, sans réseau ni GPU). GATÉ sur ctx['scene3d'] : absent dans le
+    # document par défaut → PDF inchangé pour tous (interrupteur réservé au pilote admin).
+    scene3d = (ctx or {}).get("scene3d") if isinstance(ctx, dict) else None
+    if scene3d:
+        corps += _bloc_coupes_pilote(scene3d)
     corps += note("Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Une étude par un "
                   "professionnel peut modifier ces valeurs.")
     # DOCS-DA-1 (V10) — plus de ligne « Sources : » sous la section (comme le Dossier) ; les sources

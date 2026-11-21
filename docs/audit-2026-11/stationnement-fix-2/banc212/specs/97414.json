@@ -1,0 +1,92 @@
+{
+ "insee": "97414",
+ "commune": "Saint-Louis",
+ "regles": [
+  {
+   "id": "97414-R1",
+   "article": "UA 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "UA",
+    "UA1",
+    "1AUa",
+    "1AUa oap1",
+    "1AUa oap2",
+    "1AUa oap3"
+   ],
+   "pages": [
+    22,
+    23,
+    24
+   ]
+  },
+  {
+   "id": "97414-R2",
+   "article": "UB 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "UB",
+    "1AUb1",
+    "1AUb2",
+    "2AUb1",
+    "2AUb2"
+   ],
+   "pages": [
+    36,
+    37,
+    38
+   ]
+  },
+  {
+   "id": "97414-R3",
+   "article": "UC 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "UC",
+    "UC1",
+    "UC2",
+    "1AUc",
+    "1AUc oap4",
+    "1AUc oap5",
+    "1AUc1",
+    "1AUc2"
+   ],
+   "pages": [
+    51,
+    52,
+    53
+   ]
+  },
+  {
+   "id": "97414-R4",
+   "article": "UD 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "UD",
+    "UD1",
+    "1AUd",
+    "1AUd1",
+    "2AUd",
+    "2AUd1"
+   ],
+   "pages": [
+    65,
+    66,
+    67
+   ]
+  },
+  {
+   "id": "97414-R5",
+   "article": "UZ 12",
+   "mode": "par_logement",
+   "zones": [
+    "UZ"
+   ],
+   "pages": [
+    102,
+    103,
+    104
+   ]
+  }
+ ]
+}

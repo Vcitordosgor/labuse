@@ -15,7 +15,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { ParcelInput } from '../ParcelInput'
 import { getParcelApercu } from '../../lib/api'
-import { iduCourt, fmtM2 } from '../../lib/format'
+import { iduCourt, fmtM2, adresseInsecable } from '../../lib/format'
 
 export type SourceParcelle = 'adresse' | 'carte' | null
 
@@ -64,7 +64,7 @@ export function EntreeParcelle({ source, onPick, placeholder, titre, picked, adr
               <div data-entree-chargement className="flex h-[29px] items-center text-[11px] text-txt-dim">Chargement de la parcelle…</div>
             ) : (
               <>
-                <div className="break-words text-[12px] font-semibold leading-snug text-txt-hi">{adrPleine ?? idCourt}</div>
+                <div className="break-words text-[12px] font-semibold leading-snug text-txt-hi">{adrPleine ? adresseInsecable(adrPleine) : idCourt}</div>
                 <div data-entree-meta className="mt-0.5 break-words font-mono text-[10px] text-txt-dim">
                   {adrPleine ? meta : [zone, surf != null ? fmtM2(surf) : null].filter(Boolean).join(' · ')}
                 </div>

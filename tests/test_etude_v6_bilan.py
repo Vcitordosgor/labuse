@@ -61,8 +61,15 @@ def test_hypotheses_modifiables_recalcul(session_reelle):
     assert a["study_id"] != b["study_id"]                         # recalcul → nouvel identifiant
     assert b["hypotheses"]["surfaces"]["T2"] == 62.0             # surface éditée servie
     assert b["hypotheses"]["profondeur_m"] == 12.0 and b["hypotheses"]["coef_plancher_habitable"] == 0.82
-    # un module plus grand → la variante « votre programme » tient MOINS de logements (sanity)
-    assert b["variantes"][0]["resume"]["logements"] <= a["variantes"][0]["resume"]["logements"]
+    # un module plus grand → PAS PLUS de logements (sanity). ETUDE-STATIONNEMENT-FIX-8 — on lit la capacité
+    # max (robuste même si, sous les hypothèses éditées — bâti plus profond, modules plus grands —, la variante
+    # « votre programme » ne tient aucun plan aérien : le raccord strict/connexe peut ne rien dessiner).
+    def _logts(p):
+        cm = (p.get("capacite_maximale") or {}).get("logements")
+        if cm is not None:
+            return cm
+        return p["variantes"][0]["resume"]["logements"] if p.get("variantes") else 0
+    assert _logts(b) <= _logts(a)
 
 
 @pytest.mark.reel

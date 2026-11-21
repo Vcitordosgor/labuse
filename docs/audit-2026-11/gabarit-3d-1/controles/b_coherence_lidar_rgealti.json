@@ -1,0 +1,31 @@
+{
+  "points": [
+    {
+      "type": "plate (≈plat)",
+      "cog_lidar_m": 5.58,
+      "rge_alti_service_m": 5.19,
+      "ecart_m": 0.39
+    },
+    {
+      "type": "alt760 (pente douce)",
+      "cog_lidar_m": 594.92,
+      "rge_alti_service_m": 594.85,
+      "ecart_m": 0.07
+    },
+    {
+      "type": "bz1065 (talus)",
+      "cog_lidar_m": 400.97,
+      "rge_alti_service_m": 401.09,
+      "ecart_m": -0.12
+    },
+    {
+      "type": "cotier (falaise)",
+      "cog_lidar_m": 42.23,
+      "rge_alti_service_m": 41.87,
+      "ecart_m": 0.36
+    }
+  ],
+  "ecart_abs_max_m": 0.39,
+  "ecart_abs_moyen_m": 0.23,
+  "derive": "Le service RGE ALTI de La Réunion (ign_rge_alti_wld) rend des cotes quasi identiques au LiDAR HD MNT (écarts décimétriques, toutes pentes) : il en DÉRIVE. La couche RGE ALTI historique 5 m s'écarte de plusieurs mètres (σ≈5 m)."
+}

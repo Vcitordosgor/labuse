@@ -34,6 +34,21 @@ SOURCES_FOND_MAC: dict[str, list[str]] = {
     "couches": ["spatial_layers", "parcel_couche_intersection"],
 }
 
+# ETUDE-FIABLE-1 (LOT B, point 5) — TABLES À DONNÉES CLIENT (générées EN PROD par l'utilisateur). La PROD
+# FAIT FOI : le Mac NE LES POUSSE JAMAIS (ni sources-maj-1, ni sync-run) → un envoi de données depuis le
+# Mac ne peut PAS les écraser. Ce sont les tables cloisonnées par compte (api/tenant SCOPED_TABLES) PLUS
+# les caches adressés par contenu qui portent un livrable client. `etude_revisions` en fait partie : elle
+# stocke le payload d'une étude affichée à un client (relu par le PDF et la réouverture, LOT B). Toute
+# NOUVELLE table à données client doit être ajoutée ICI (parité + garde de synchronisation la lisent).
+CLIENT_PROD: list[str] = [
+    # cloisonnées par compte (miroir de api/tenant.SCOPED_TABLES) :
+    "projets", "pipeline_entries", "saved_searches", "saved_filters", "signalements",
+    "event_log", "watched_parcels", "watch_zones", "alertes", "courrier_demandes",
+    "documents_generes", "bilan_ratios",
+    # caches/livrables adressés par contenu (non cloisonnés mais à données client) :
+    "etude_revisions",
+]
+
 
 def tables_quotidiennes() -> list[str]:
     """Liste à plat des tables des flux quotidiens (prod fait foi)."""
@@ -43,3 +58,8 @@ def tables_quotidiennes() -> list[str]:
 def tables_fond() -> list[str]:
     """Liste à plat des tables de fond (Mac fait foi)."""
     return [t for tables in SOURCES_FOND_MAC.values() for t in tables]
+
+
+def tables_client() -> list[str]:
+    """Tables à données CLIENT (prod fait foi, le Mac ne les pousse jamais)."""
+    return list(CLIENT_PROD)

@@ -1,0 +1,31 @@
+{
+  "resolution": [
+    {
+      "temoin": "bz1065",
+      "axe": "A (pente dominante)",
+      "longueur_m": 48.8,
+      "ecart_1m_vs_50cm_median_m": 0.01,
+      "ecart_1m_vs_50cm_p95_m": 0.038,
+      "ecart_1m_vs_50cm_max_m": 0.041
+    },
+    {
+      "temoin": "cotier",
+      "axe": "A (pente dominante)",
+      "longueur_m": 109.2,
+      "ecart_1m_vs_50cm_median_m": 0.101,
+      "ecart_1m_vs_50cm_p95_m": 1.801,
+      "ecart_1m_vs_50cm_max_m": 3.222
+    }
+  ],
+  "georeferencement": {
+    "point_2975": [
+      336637,
+      7689754
+    ],
+    "valeur_fenetre_A_m": 401.018,
+    "valeur_fenetre_decalee_m": 401.07,
+    "ecart_m": 0.052,
+    "note": "L'altitude en un point est INVARIANTE par le cadrage de la fenêtre WMS (écart ~0) : les fenêtres sont bien géoréférencées sur la grille native (origine = BBOX au pixel près). Le WMS tague EPSG:32740 mais la grille est en coordonnées 2975 → ré-étiquetée."
+  },
+  "correction_0_92m": "CORRECTION (lecture du rapport précédent) : le « 0,92 m » annoncé était l'ÉTENDUE pic-à-pic des quatre sous-pixels 0,50 m DANS un pixel 1 m en talus (p95) — une dispersion interne, PAS l'écart que le 1 m introduit sur une coupe. Mesuré ci-dessus LE LONG DES MÊMES AXES, l'écart réel de cote entre 1 m et 0,50 m est décimétrique (médiane ~0.01 m, p95 ~0.038 m sur BZ1065). Le 1 m lisse les micro-ruptures ; il conserve la forme et les cotes utiles du talus."
+}

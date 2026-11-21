@@ -1,5 +1,20 @@
 # Remonter le temps
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On ouvre une parcelle.
+> 2. L'outil va chercher les photos aériennes anciennes (1950 → aujourd'hui) et les faits datés.
+> 3. Il ne calcule rien : il aligne les millésimes.
+> 4. Il rend un comparateur de photos (avant/après) et l'historique de la parcelle.
+> 5. Aujourd'hui, seul le comparateur de photos est affiché dans l'application.
+
+**Captures — l'outil en action**
+
+![Remonter le temps — Remonter le temps sur DH0076 — comparateur d'orthophotos : 1950-1965 (N&B) vs Actuelle (Ortho Express 2025) avec la poignée de glissement au centre de la carte.](img/temps.png)
+*Remonter le temps sur DH0076 — comparateur d'orthophotos : 1950-1965 (N&B) vs Actuelle (Ortho Express 2025) avec la poignée de glissement au centre de la carte.*
+
+<!-- CCM -->
+
 Clé interne : `temps` (num M08) · composant : `frontend/src/components/outils/ModulePanel.tsx` (bandeau gauche `M08`, l.1258) + `frontend/src/components/outils/TimeMachine.tsx` (vue carte) · endpoint(s) : `/moteurs/histoire/{idu}`, `/moteurs/parcellaire-epoque/{idu}`, tuiles `/map/tiles/ortho/{couche}/{z}/{x}/{y}`, `/map/tiles/carte-ancienne/{couche}/{z}/{x}/{y}`, `/map/tiles/ortho-express/{z}/{x}/{y}` (legacy).
 
 L'outil a DEUX chemins. Une remarque essentielle d'entrée : seul le chemin (B) est réellement branché dans l'application servie aujourd'hui. Le chemin (A) existe en code et son endpoint répond, mais aucun composant vivant ne l'affiche (voir rubrique 6 et 10).

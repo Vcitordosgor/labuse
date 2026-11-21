@@ -241,8 +241,12 @@ def _g_zone_limites(terrain, vue) -> str:
         b.append(_poly(p.geom_2975, vue, fill="none", stroke="#DC2626", stroke_width="1",
                        stroke_dasharray="3 3"))
         c = p.geom_2975.representative_point(); X, Y = vue.px(wminx, c.y)
-        b.append(_txt(X - 6, Y + 3, f"AW {p.numero}" if p.numero and p.numero.isdigit() else (p.numero or ""),
-                      size=10, anchor="end", fill="#B91C1C", weight="600"))
+        # EXPORTS-FIX-3 LOT 3 (#5d, relecture) — la SECTION vient de l'IDU (chars 8:10), comme le cartouche
+        # (_refs_courts) : « AW » était codé en dur → le plan étiquetait « AW 538 » pour HT0538 pendant que
+        # le cartouche disait « HT 538 ». Une seule source : la vraie section de la parcelle.
+        _sec = p.idu[8:10] if p.idu and len(p.idu) >= 12 else ""
+        _lab = (f"{_sec} {p.numero}".strip() if p.numero and p.numero.isdigit() else (p.numero or ""))
+        b.append(_txt(X - 6, Y + 3, _lab, size=10, anchor="end", fill="#B91C1C", weight="600"))
     # contour EXTÉRIEUR de l'assiette, plus épais
     b.append(_poly(terrain.assiette, vue, fill="none", stroke="#DC2626", stroke_width="2",
                    stroke_dasharray="8 4"))
@@ -342,7 +346,7 @@ def _legende() -> str:
         ("#F5C6B8", "#111", "", "Bâtiment proposé"),
         ("#fff", "#111", "", "Place de stationnement 2,50 × 5,00"),
         ("#E5E7EB", "#111", "", "Allée, accès"),
-        ("#CDE8C6", "#CDE8C6", "", "Espaces libres, pleine terre"),
+        ("#CDE8C6", "#CDE8C6", "", "Surface disponible (pleine terre à confirmer)"),
         ("#D9D9D9", "#111", "", "Bâti voisin (BD TOPO)"),
         ("none", "#6B7280", "5 3", "Bâti existant (supposé démoli)"),
         ("url(#ppr)", "#DC2626", "", "PPR zone rouge (retirée)"),
@@ -368,7 +372,7 @@ def _tableau(terrain, cap) -> str:
         ("Emprise bâtie", f"{m2_fr(emp)}{pct}"),
         (f"SDP du scénario (R+{max(0, getattr(cap, 'niveaux', 1) - 1)})", m2_fr(cap.sdp_m2)),
         ("Stationnement + allée", m2_fr(cap.surface_stationnement_m2)),
-        ("Pleine terre", m2_fr(pt)),
+        ("Surface disponible (pleine terre à confirmer)", m2_fr(pt)),
         ("Places dessinées / imposées", f"{cap.places} / {cap.places_imposees if cap.places_imposees is not None else '—'}"),
         ("Logements", f"{cap.logements} · " + " · ".join(f"{t} ×{n}" for t, n in cap.par_type.items()) if cap.par_type else str(cap.logements)),
     ]

@@ -213,10 +213,10 @@
      Dossier (bloc potentiel_transformation, point unique). Vendable « non calculable » quand la
      capacité bâti-conservé est nulle — jamais un « scénario table rase » de 118 m² qui divergeait. #}
   {% if c.faisa.sdp_max_m2 is not none %}
-  <div class="cartouche"><div class="titre">SDP maximale réglementaire, terrain</div>
+  <div class="cartouche"><div class="titre">Surface de plancher estimée, terrain libéré</div>
     <div class="valeur">{{ c.faisa.sdp_max_m2 }} <small>m²</small></div></div>
   {% elif c.faisa.renvoi_etude %}
-  <div class="cartouche"><div class="titre">SDP maximale réglementaire, terrain</div>
+  <div class="cartouche"><div class="titre">Surface de plancher estimée, terrain libéré</div>
     <div class="valeur"><small>voir l'Étude de faisabilité (zone rouge retirée)</small></div></div>
   {% endif %}
   <div class="cartouche"><div class="titre">Surface vendable</div>

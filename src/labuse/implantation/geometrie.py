@@ -98,6 +98,8 @@ class Scene:
     stationnement_note: Optional[dict] = None   # {allee_unique, cotes, deux_cotes, raison}
     ppr_rouge_local: Optional[BaseGeometry] = None   # PPR interdiction (local), interdite au stationnement
     sous_sol: Optional[dict] = None   # ETUDE-V6-2 (Lot 3) — parking enterré : {places, emprise_m2, rampe_m2}
+    acces_ppr_rouge_m2: float = 0.0   # FIX-6 — aire de VOIE D'ACCÈS traversant la PPR rouge (bâti/places hors
+    #                                   zone ; l'accès peut y passer selon le règlement PPR → contrôle « à confirmer »)
 
     def ajouter(self, o: Objet) -> None:
         self.objets.append(o)
@@ -312,34 +314,36 @@ def poser_barre(scene: Scene, conv: Conventions, *, x_start: float, x_end: float
 
 
 # ---------------------------------------------------------------- stationnement aérien
-def poser_stationnement(scene: Scene, conv: Conventions, *, cible: int) -> int:
-    """UNE allée unique, places des DEUX côtés quand la largeur le permet (sinon un seul côté, le
-    `stationnement_note` dit pourquoi). Chaque place touche l'allée (aire ∩ = 0). Un accès relie
-    l'allée à la voie. Renvoie le nb de places dessinées (≤ cible). Allée posée seulement si ≥ 1 place
-    la dessert ET qu'elle est reliée à l'accès (sinon aucune allée, pas de cul-de-sac)."""
-    if cible <= 0:
-        return 0
-    batis = [o.geom_local for o in scene.of("batiment_emprise")]
-    bati = unary_union(batis) if batis else None
-    free = scene.assiette_local.difference(bati) if bati is not None else scene.assiette_local
-    # aucune allée ni place en PPR rouge (interdiction) : hypothèse prudente
-    if scene.ppr_rouge_local is not None and not scene.ppr_rouge_local.is_empty:
-        free = free.difference(scene.ppr_rouge_local)
-    free = _valide(free)
-    ax0, ay0, ax1, ay1 = scene.assiette_local.bounds
-    pl, pw, aw, cw = (conv.place_longueur_m, conv.place_largeur_m,
-                      conv.allee_largeur_m, conv.acces_largeur_m)
+_MAX_BANDES_PARKING = 8   # garde-fou : au plus 8 bandes d'allée (une grande assiette en porte quelques-unes)
+_OUVERTURE_BANDE_M = 1.2  # ouverture de la bande d'allée : retire les étranglements plus fins que ~2,4 m
+                          # (bâti en travers d'une assiette étroite) ; un amincissement plus large reste et
+                          # c'est le dégagement DUR qui tranche (on n'escamote pas un vrai défaut de largeur).
+
+
+def _poser_une_bande(scene: Scene, conv: Conventions, free: BaseGeometry, bati: Optional[BaseGeometry],
+                     reseau: Optional[BaseGeometry], cible: int, bounds):
+    """Pose UNE bande d'allée (places des deux côtés si la largeur le permet) dans l'espace `free`, reliée
+    par un accès à `reseau` (voie ∪ allées déjà posées). Renvoie (nb, allée, accès, places, cotes) ou None."""
+    ax0, ay0, ax1, ay1 = bounds
+    pl, pw, aw = conv.place_longueur_m, conv.place_largeur_m, conv.allee_largeur_m
 
     def dans_libre(p: Polygon) -> bool:
         return free.covers(p.buffer(-1e-9))
 
-    # choisit la bande d'allée (centre yc, le long de x) maximisant les places des deux côtés
     best = None
     yc = ay0 + aw / 2.0
     while yc + aw / 2.0 <= ay1 + 1e-9:
         allee_g = free.intersection(rect(ax0, yc - aw / 2.0, ax1, yc + aw / 2.0))
         allee_g = _plus_grand(allee_g) if not allee_g.is_empty else allee_g
         yc += 0.5
+        if allee_g.is_empty or not isinstance(allee_g, Polygon):
+            continue
+        # NE GARDER QUE LA PORTION RÉELLEMENT LARGE : là où le bâti étrangle la bande (assiette étroite,
+        # bâti en travers), une OUVERTURE (érosion/dilatation de presque la demi-largeur d'allée) retire les
+        # tronçons trop minces → la bande se pose où elle est PLEINE (ex. au-delà du bâti), pas en travers de
+        # lui avec une allée de 1 m que le dégagement dur rejetterait ensuite. Clé du pavage multi-bandes.
+        ouvert = allee_g.buffer(-_OUVERTURE_BANDE_M).buffer(_OUVERTURE_BANDE_M)
+        allee_g = _plus_grand(ouvert) if not ouvert.is_empty else allee_g
         if allee_g.is_empty or not isinstance(allee_g, Polygon):
             continue
         mnx, mny, mxx, mxy = allee_g.bounds
@@ -361,15 +365,11 @@ def poser_stationnement(scene: Scene, conv: Conventions, *, cible: int) -> int:
         if best is None or key > best[0]:
             best = (key, allee_g, cands)
     if best is None:
-        return 0
+        return None
     _, allee_g, cands = best
-
-    # toutes les places candidates, ordre déterministe (côté puis x)
     tries = sorted(cands, key=lambda pc: (round(pc[0].bounds[1], 2), round(pc[0].bounds[0], 2)))
 
     def _trim_allee(places_pc, acces=None):
-        """Allée COUPÉE au droit de la dernière place desservie (+ la jonction d'accès) : aucun
-        tronçon d'allée sans place ni accès en bout."""
         xs = [p.bounds[0] for p, _ in places_pc] + [p.bounds[2] for p, _ in places_pc]
         xmin, xmax = min(xs), max(xs)
         if acces is not None:
@@ -379,63 +379,110 @@ def poser_stationnement(scene: Scene, conv: Conventions, *, cible: int) -> int:
         t = allee_g.intersection(rect(xmin, ay0 - 1, xmax, ay1 + 1))
         return _plus_grand(t) if not t.is_empty else t
 
-    # 1) allée + accès provisoires (sur les `cible` premières) pour filtrer les places
     allee0 = _trim_allee(tries[:cible])
     if allee0.is_empty or not isinstance(allee0, Polygon):
-        return 0
-    acces0 = _acces_corridor(scene, conv, allee0, bati)
+        return None
+    acces0 = _acces_corridor(scene, conv, allee0, bati, cibles=reseau)
     if acces0 is None:
-        return 0
-    # 2) places retenues = celles hors accès (backfill au-delà de cible), jusqu'à cible
+        return None
     retenues = [pc for pc in tries if pc[0].intersection(acces0).area <= 1e-6][:cible]
     if not retenues:
-        return 0
-    # 3) allée finale coupée au droit des places retenues (+ jonction d'accès)
+        return None
     allee_final = _trim_allee(retenues, acces0)
     if allee_final.is_empty or not isinstance(allee_final, Polygon):
-        return 0
-    # 4) accès reconstruit CONTRE l'allée finale puis soustrait d'elle -> 0 chevauchement garanti
-    acces_g = _acces_corridor(scene, conv, allee_final, bati)
+        return None
+    acces_g = _acces_corridor(scene, conv, allee_final, bati, cibles=reseau)
     if acces_g is None:
-        return 0
+        return None
     acces_g = _plus_grand(acces_g.difference(allee_final))
     if (acces_g.is_empty or not isinstance(acces_g, Polygon) or acces_g.area < 0.5
             or acces_g.distance(allee_final) > 1e-6):
-        return 0
+        return None
     retenues = [pc for pc in retenues if pc[0].intersection(acces_g).area <= 1e-6]
     if not retenues:
+        return None
+    places = [p for p, _ in retenues]
+    cotes = {side for _, side in retenues}
+    return len(retenues), allee_final, acces_g, places, cotes
+
+
+def poser_stationnement(scene: Scene, conv: Conventions, *, cible: int) -> int:
+    """PLUSIEURS bandes d'allée (une grande assiette en porte plusieurs) : chaque bande est desservie par
+    un accès relié à la VOIE ou au réseau de parking déjà posé, et chaque place touche son allée (aire ∩ =
+    0). On pose la meilleure bande, on la retire du libre, on l'ajoute au réseau atteignable, et on
+    recommence jusqu'à `cible` ou plus de place. Le dégagement d'allée reste vérifié EN DUR en aval : ce
+    pavage multi-bandes lui donne de vraies allées (plus d'écroulement 27→2 sur une grande assiette).
+    Renvoie le nb de places dessinées (≤ cible)."""
+    if cible <= 0:
         return 0
-    scene.ajouter(Objet("allee", allee_final))
-    scene.ajouter(Objet("acces", acces_g))
-    cotes = set()
-    for (p, side) in retenues:
-        scene.ajouter(Objet("place", p))
-        cotes.add(side)
-    deux = len(cotes) == 2
+    batis = [o.geom_local for o in scene.of("batiment_emprise")]
+    bati = unary_union(batis) if batis else None
+    free = scene.assiette_local.difference(bati) if bati is not None else scene.assiette_local
+    # aucune allée ni place en PPR rouge (interdiction) : hypothèse prudente
+    if scene.ppr_rouge_local is not None and not scene.ppr_rouge_local.is_empty:
+        free = free.difference(scene.ppr_rouge_local)
+    free = _valide(free)
+    bounds = scene.assiette_local.bounds
+    # réseau de circulation atteignable : la voie, puis chaque allée/accès posé.
+    reseau = unary_union(scene.voie_local) if scene.voie_local else None
+    total, n_bandes = 0, 0
+    cotes_all: set = set()
+    while total < cible and n_bandes < _MAX_BANDES_PARKING:
+        res = _poser_une_bande(scene, conv, free, bati, reseau, cible - total, bounds)
+        if res is None:
+            break
+        nb, allee_final, acces_g, places, cotes = res
+        scene.ajouter(Objet("allee", allee_final))
+        scene.ajouter(Objet("acces", acces_g))
+        for p in places:
+            scene.ajouter(Objet("place", p))
+        total += nb
+        n_bandes += 1
+        cotes_all |= cotes
+        # la bande (allée + accès + places) sort du libre ; allée + accès entrent dans le réseau.
+        occupe = unary_union([allee_final, acces_g] + places)
+        free = _valide(free.difference(occupe.buffer(0.05)))
+        voie_allee = unary_union([allee_final, acces_g])
+        reseau = voie_allee if reseau is None else unary_union([reseau, voie_allee])
+        if free.is_empty:
+            break
+    if total == 0:
+        return 0
+    deux = len(cotes_all) == 2
     scene.stationnement_note = {
-        "allee_unique": True, "cotes": sorted(cotes), "deux_cotes": deux,
-        "raison": ("places des deux côtés de l'allée unique" if deux else
-                   "places d'un seul côté : la largeur libre perpendiculaire à l'allée n'autorise pas "
-                   "une seconde rangée (il faut allée 5 m + 2 × 5 m de places = 15 m)"),
+        "allee_unique": n_bandes <= 1, "bandes": n_bandes, "cotes": sorted(cotes_all), "deux_cotes": deux,
+        "raison": (f"{n_bandes} bandes d'allée desservant les places (grande assiette)" if n_bandes > 1 else
+                   ("places des deux côtés de l'allée unique" if deux else
+                    "places d'un seul côté : la largeur libre perpendiculaire à l'allée n'autorise pas "
+                    "une seconde rangée (il faut allée 5 m + 2 × 5 m de places = 15 m)")),
     }
-    return len(retenues)
+    return total
 
 
 def _acces_corridor(scene: Scene, conv: Conventions, allee_g: Polygon,
-                    bati: Optional[BaseGeometry]) -> Optional[Polygon]:
-    """Corridor (acces_largeur) reliant la limite voie à l'allée. None si rien ne les relie."""
+                    bati: Optional[BaseGeometry], cibles: Optional[BaseGeometry] = None) -> Optional[Polygon]:
+    """Corridor (acces_largeur) reliant l'allée à sa cible de circulation — la limite voie par défaut, OU
+    `cibles` (ex. voie ∪ allées déjà posées) pour qu'une 2ᵉ bande se raccorde au réseau existant. None si
+    rien ne les relie."""
     from shapely.ops import nearest_points
-    if not scene.voie_local:
+    voie = cibles if (cibles is not None and not cibles.is_empty) else (
+        unary_union(scene.voie_local) if scene.voie_local else None)
+    if voie is None or voie.is_empty:
         return None
-    voie = unary_union(scene.voie_local)
     vp, ap = nearest_points(voie, allee_g)
     seg = LineString([vp, ap])
+    # ETUDE-STATIONNEMENT-FIX-5 (point 1) — l'accès doit RECOUPER l'allée (et la voie) sur une LARGEUR
+    # ROULANTE, pas la toucher en un coin. On PROLONGE le point d'accostage DANS l'allée (d'`acces_largeur`) :
+    # le corridor franchit alors la limite de l'allée sur toute sa largeur → jonction allée–accès large, pas
+    # ponctuelle (cause des faux « 9/10/6 places » reliées par un seul point).
     if seg.length < 0.1:
         corridor = vp.buffer(conv.acces_largeur_m / 2.0, cap_style=3)
     else:
-        corridor = seg.buffer(conv.acces_largeur_m / 2.0, cap_style=2)
+        dx, dy = (ap.x - vp.x) / seg.length, (ap.y - vp.y) / seg.length
+        ap2 = (ap.x + dx * conv.acces_largeur_m, ap.y + dy * conv.acces_largeur_m)
+        corridor = LineString([vp, ap2]).buffer(conv.acces_largeur_m / 2.0, cap_style=2)
     corridor = scene.assiette_local.intersection(corridor)
-    # l'accès TOUCHE l'allée (partage d'arête) mais ne la recouvre pas, évite le bâti et la PPR rouge
+    # l'accès TOUCHE l'allée (sur une arête désormais) mais ne la recouvre pas, évite le bâti et la PPR rouge
     corridor = corridor.difference(allee_g)
     if bati is not None and not corridor.is_empty:
         corridor = corridor.difference(bati)
@@ -446,6 +493,134 @@ def _acces_corridor(scene: Scene, conv: Conventions, allee_g: Polygon,
             or corridor.distance(voie) > 0.6 or corridor.distance(allee_g) > 1e-6):
         return None
     return corridor
+
+
+_PASSAGE_MIN_M = 2.4     # largeur roulante minimale d'un raccord accès–voie (cf. controles._PASSAGE_MIN_M)
+_RACCORD_MARGE_M = 0.6   # marge INTERNE du couloir d'accès (= borne de `_acces_corridor`) : l'accès accoste la
+                         # voie à ≤ 0,6 m. Ce dernier demi-mètre est comblé pour que le dessin touche la voie ;
+                         # un accès arrêté PLUS LOIN est un vrai vide → non prolongé → refusé par le contrôle.
+
+
+def _contact_voie_m(g: BaseGeometry, voie_l: BaseGeometry) -> float:
+    """Longueur du bord de voie RECOUVERTE par l'accès `g`, D'UN SEUL TENANT : `voie_l ∩ g`, segment continu le
+    plus long. L'accès MORD l'emprise de la voie → la voie posée dans le polygone a une longueur réelle (0 si
+    l'accès s'arrête avant la voie ou n'y touche qu'en un point)."""
+    c = voie_l.intersection(g)
+    segs = ([c] if c.geom_type == "LineString"
+            else [s for s in getattr(c, "geoms", []) if s.geom_type == "LineString"])
+    return max((s.length for s in segs), default=0.0)
+
+
+def raccorder_acces_voie(scene: Scene, conv: Conventions) -> None:
+    """ETUDE-STATIONNEMENT-FIX-6 (point 1) — APRÈS le pavage, AVANT le contrôle : élargit la BOUCHE DE VOIE de
+    chaque accès pour que le PLAN DESSINÉ touche RÉELLEMENT la voie sur ≥ passage (le contrôle reste STRICT,
+    aucune bande de tolérance). Ne touche NI à la recherche NI à l'ordre des candidats : seule la GÉOMÉTRIE DE
+    LA JONCTION change.
+
+    L'accès posé par `_acces_corridor` accoste la voie en DIAGONALE (nearest_points) : sur une assiette où la
+    voie est oblique / sur plusieurs bandes (L'Étang-Salé), il n'y touche qu'en un COIN (contact ponctuel), même
+    quand l'extension FIX-5 a élargi l'autre jonction (allée–accès). On greffe donc, SEULEMENT si le contact
+    actuel < passage ET si l'accès est à ≤ `_RACCORD_MARGE_M` de la voie, une FENÊTRE PRISE SUR LA VOIE (de la
+    largeur de l'accès), extrudée PERPENDICULAIREMENT vers l'intérieur jusqu'à rejoindre l'accès → contact plein,
+    quelle que soit l'orientation. Le comblement reste dans l'assiette et ne chevauche ni bâti, ni places, ni
+    allées, ni autres accès (sinon le contrôle « aucun chevauchement » invaliderait le plan) ; s'il est coupé
+    avant d'atteindre un contact ≥ passage, l'accès reste inchangé → refusé par le contrôle strict."""
+    from shapely.ops import nearest_points, substring
+    from shapely.geometry import Point
+    voie = unary_union(scene.voie_local) if scene.voie_local else None
+    if voie is None or voie.is_empty:
+        return
+    voie_l = voie if voie.geom_type in ("LineString", "MultiLineString") else voie.boundary
+    if voie_l.geom_type != "LineString":   # on raccorde segment par segment (substring exige une LineString)
+        voie_l = max(list(voie_l.geoms), key=lambda s: s.length)
+    occupants = unary_union([o.geom_local for o in scene.objets
+                             if o.kind in ("batiment_emprise", "place", "allee", "noyau", "module")
+                             and o.geom_local is not None and not o.geom_local.is_empty]
+                            or [Polygon()])
+    w = conv.acces_largeur_m
+    # L'accès MORD l'emprise de la voie de quelques cm → la ligne de voie est STRICTEMENT à l'intérieur du
+    # polygone, le recouvrement `voie_l ∩ accès` est robuste (pas une arête-sur-frontière fragile). La morsure
+    # reste SOUS la tolérance du contrôle géométrique « contenu dans l'assiette » (`_TOL_CONTENU=0.05`).
+    _BITE = 0.04
+    _assiette_marge = scene.assiette_local.buffer(_BITE + 0.005)
+    cen = scene.assiette_local.representative_point()
+    for obj in scene.of("acces"):
+        g = obj.geom_local
+        if not isinstance(g, Polygon) or g.is_empty:
+            continue
+        gap = g.distance(voie_l)
+        if gap > _RACCORD_MARGE_M:
+            continue                                   # s'arrête trop loin (vrai vide) → laissé tel quel, refusé
+        if _contact_voie_m(g, voie_l) >= _PASSAGE_MIN_M:
+            continue                                   # recouvre déjà la voie ≥ 2,40 m (témoins) → rien à faire
+        vp, _ap = nearest_points(voie_l, g)
+        d0 = voie_l.project(Point(vp.x, vp.y))
+        autres = unary_union([occupants] + [a.geom_local for a in scene.of("acces")
+                                            if a is not obj and a.geom_local is not None])
+        ppr = scene.ppr_rouge_local
+        a_ppr = ppr is not None and not getattr(ppr, "is_empty", True)
+
+        def _bouche(d_lo):
+            """Bouche d'accès prise sur une FENÊTRE DE VOIE [d_lo, d_lo+w] : son côté voie SUIT la limite (même
+            tracé), MORD l'emprise de la voie de `_BITE` et s'enfonce dans l'assiette de `gap+w` jusqu'à l'accès.
+            Son intersection avec la voie vaut donc toute la largeur de la fenêtre."""
+            d_lo = max(0.0, min(max(0.0, voie_l.length - w), d_lo))
+            vseg = substring(voie_l, d_lo, d_lo + w)
+            if vseg.geom_type != "LineString" or vseg.length < w - 0.05:
+                return None
+            co = list(vseg.coords)
+            pa, pb = co[0], co[-1]
+            tx, ty = pb[0] - pa[0], pb[1] - pa[1]
+            tl = (tx * tx + ty * ty) ** 0.5
+            if tl <= 1e-9:
+                return None
+            nx, ny = -ty / tl, tx / tl                 # normale, orientée vers l'intérieur de l'assiette
+            if nx * (cen.x - pa[0]) + ny * (cen.y - pa[1]) < 0:
+                nx, ny = -nx, -ny
+            prof = gap + w
+            outer = [(x - nx * _BITE, y - ny * _BITE) for x, y in co]            # mord l'emprise de la voie
+            inner = [(x + nx * prof, y + ny * prof) for x, y in reversed(co)]    # s'enfonce vers l'accès
+            m = Polygon(outer + inner)
+            return m if (m.is_valid and m.area > 0.5) else None
+
+        # fenêtres candidates : la plus proche de l'accès D'ABORD, puis en balayant la voie de part et d'autre
+        # (portée latérale ~2·largeur), pour trouver, si besoin, un raccord sur une AUTRE portion de voie.
+        pas = max(0.5, w / 4.0)
+        offs = sorted({round(k * pas, 2) for k in range(-int(2 * w / pas), int(2 * w / pas) + 1)}, key=abs)
+        bouches = [b for b in (_bouche(d0 - w / 2.0 + off) for off in offs) if b is not None]
+
+        def _essayer(bouche, eviter_ppr: bool):
+            c = bouche.intersection(_assiette_marge)   # garde la morsure de quelques cm sur l'emprise de la voie
+            if not c.is_empty and not autres.is_empty:
+                c = c.difference(autres)               # jamais sur bâti, places, allées, autre accès
+            if eviter_ppr and a_ppr and not c.is_empty:
+                c = c.difference(ppr)                  # route l'accès HORS de la zone rouge
+            if c.is_empty or not c.intersects(g):      # doit rester RACCORDÉ à l'accès (une seule pièce)
+                return None
+            ng = _plus_grand(unary_union([g, c]).buffer(0))
+            if (isinstance(ng, Polygon) and not ng.is_empty
+                    and _contact_voie_m(ng, voie_l) >= _PASSAGE_MIN_M):
+                return ng
+            return None
+
+        # ÉTAPE 1 — raccord LÉGAL : une portion de voie recouverte ≥ 2,40 m HORS zone rouge (bâti et places
+        # toujours hors zone). On essaie d'abord la fenêtre la plus proche, puis les autres portions de voie.
+        retenu = next((r for b in bouches for r in [_essayer(b, True)] if r is not None), None)
+        if retenu is not None:
+            obj.geom_local = retenu
+            continue
+        # ÉTAPE 2 — AUCUN raccord hors zone rouge pour ce plan : la zone rouge interdit le bâti et le
+        # stationnement, mais une simple VOIE D'ACCÈS peut y être admise selon le règlement du PPR. On conserve
+        # le plan (bâti + toutes les places hors zone), l'accès traverse la zone, et on MESURE l'aire concernée
+        # pour un contrôle bloquant « à confirmer au règlement du PPR ».
+        if a_ppr:
+            retenu = next((r for b in bouches for r in [_essayer(b, False)] if r is not None), None)
+            if retenu is not None:
+                obj.geom_local = retenu
+                try:
+                    scene.acces_ppr_rouge_m2 += float(retenu.intersection(ppr).area)
+                except Exception:  # noqa: BLE001
+                    pass
 
 
 # ---------------------------------------------------------------- stationnement en SOUS-SOL (Lot 3)

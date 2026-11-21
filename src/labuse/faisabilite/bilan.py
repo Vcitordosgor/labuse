@@ -332,11 +332,18 @@ def _surface_terrain_sujet(db: Session, parcel_id: int) -> tuple[float | None, f
     """Attributs INTRINSÈQUES du bien sujet pour pondérer la ressemblance : sa dernière surface bâtie
     DVF (m²) et sa surface de terrain (contenance/dessin). Déterministes par parcelle → fiche et Estimer
     pondèrent à l'identique. (None, None) si rien."""
+    # CHIRURGICAL-FIX-1 (LOT J, complément dvf) — `dvf_mutations_parcelle` republie la MÊME ligne de
+    # vente sur plusieurs millésimes (et la duplique) : jusqu'à 327 lignes pour un couple (mutation,
+    # parcelle). Un `sum(surface_reelle_bati)` BRUT comptait chaque bâti autant de fois qu'il est répété
+    # (mesuré : 1431/16929 parcelles faussées, jusqu'à ×209). On somme donc sur les lignes DÉDOUBLONNÉES
+    # (contenu distinct : un lot physique compte une fois, ses copies ne comptent plus).
     row = db.execute(text(
-        "SELECT (SELECT sum(surface_reelle_bati) FROM dvf_mutations_parcelle "
-        "          WHERE id_parcelle = p.idu AND type_local IN ('Maison','Appartement') "
-        "            AND date_mutation = (SELECT max(date_mutation) FROM dvf_mutations_parcelle "
-        "              WHERE id_parcelle = p.idu AND nature_mutation IN ('Vente','Vente terrain à bâtir'))) AS surf, "
+        "SELECT (SELECT sum(sb) FROM ("
+        "          SELECT DISTINCT id_mutation, type_local, surface_reelle_bati AS sb, surface_terrain, valeur_fonciere "
+        "            FROM dvf_mutations_parcelle "
+        "           WHERE id_parcelle = p.idu AND type_local IN ('Maison','Appartement') "
+        "             AND date_mutation = (SELECT max(date_mutation) FROM dvf_mutations_parcelle "
+        "               WHERE id_parcelle = p.idu AND nature_mutation IN ('Vente','Vente terrain à bâtir'))) d) AS surf, "
         "  COALESCE(p.contenance_m2, p.surface_m2) AS terr "
         "FROM parcels p WHERE p.id = :pid"), {"pid": parcel_id}).mappings().first()
     if not row:

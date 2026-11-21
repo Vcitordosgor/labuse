@@ -149,7 +149,12 @@ def _c_prix_achat(db, idu, f):
 
 @extracteur("coproprietes_liste")
 def _c_copro(db, idu, f):
-    return _nz(f.get("coproprietes"))
+    # CHIRURGICAL-FIX-1 (LOT H pt5) — le Dossier n'affirme « Bâti en copropriété » que pour une copro
+    # SUR la parcelle (rattachement cadastre/géocode). Les copros « proche_20m » sont des voisines
+    # (BW2635 au 2 rue d'Allemagne listait les 4 et 6) : elles vivent dans la fiche « à proximité »,
+    # pas dans l'identité du bien.
+    sur_parcelle = [c for c in (f.get("coproprietes") or []) if c.get("rattachement") != "proche_20m"]
+    return _nz(sur_parcelle)
 
 
 @extracteur("filiation_parcelle")
@@ -209,7 +214,22 @@ def _c_ebc(db, idu, f):
 @extracteur("dpu_perimetre")
 def _c_dpu(db, idu, f):
     d = (f.get("dispositifs") or {}).get("dpu")
-    return d if isinstance(d, dict) and d.get("etat") == "servi" else None
+    if isinstance(d, dict) and d.get("etat") == "servi":
+        return d
+    # EXPORTS-FIX-3 LOT 3 (#1) — « Hors périmètre publié » (texte d'absence) AFFIRME que le périmètre
+    # DPU a été contrôlé et que la parcelle est dehors. C'est FAUX quand la commune n'a AUCUN périmètre
+    # DPU ingéré : on sert alors un fait « non vérifié » (jamais « rien à signaler »). Présence testée
+    # PAR COMMUNE (spatial_layers.commune = nom de commune), comme la garde cascade `kind_present_commune`.
+    try:
+        from sqlalchemy import text as _text
+        commune = f.get("commune")
+        if commune and not db.execute(_text(
+                "SELECT EXISTS(SELECT 1 FROM spatial_layers WHERE kind='dpu' AND commune=:c)"),
+                {"c": commune}).scalar():
+            return {"etat": "non_ingere", "commune": commune}
+    except Exception:  # noqa: BLE001 — jamais une 500 sur la fiche ; repli sur l'absence standard
+        pass
+    return None
 
 
 @extracteur("peb_zone")
@@ -466,7 +486,29 @@ def _c_piscine(db, idu, f):
 
 @extracteur("potentiel_verdict")
 def _c_potentiel(db, idu, f):
-    return _nz(f.get("potentiel_transformation"))
+    pt = f.get("potentiel_transformation")
+    # CAPACITE-1 (LOT C) — « surface à retenir » (RÈGLE UNIQUE) injectée DANS le verdict du potentiel,
+    # sans nouvelle donnée de registre : estimation rapide (table rase LIVE) vs scénario d'implantation
+    # PERSISTÉ (Étude). Le §3 du Dossier et l'Étude lisent la même règle → un seul chiffre par parcelle.
+    if isinstance(pt, dict) and not pt.get("cause"):
+        from ..faisabilite.surface_retenue import estimation_rapide_m2, surface_a_retenir
+        from .etude_faisabilite import scenario_etude_persiste
+        est = estimation_rapide_m2(db, idu)
+        scn = scenario_etude_persiste(db, idu)
+        # CHIRURGICAL-FIX-1 (LOT E) — parcelle BÂTIE (l'estimation/esquisse = terrain libéré/démolition,
+        # à distinguer de la SDP « bâti conservé ») et COPROPRIÉTÉ (démolition peu réaliste), lus sur la
+        # fiche servie (aucune nouvelle donnée de registre).
+        lb = f.get("le_bien") or {}
+        bati = bool((lb.get("nb_batiments") or 0) or (lb.get("emprise_batie_m2") or 0))
+        # CHIRURGICAL-FIX-1 (LOT I 3a) — « démolition peu réaliste en copropriété » ne vaut que si la
+        # parcelle EST en copropriété : on ne compte QUE les copros SUR la parcelle (rattachement
+        # cadastre/géocode), pas les voisines « proche_20m ». BW2635 (au 2 rue d'Allemagne) n'a que les
+        # copros des 4 et 6 en voisinage → plus de « peu réaliste en copropriété ». `score_v2.copro`
+        # n'est pas fiable (il était vrai sur ces voisines), on ne s'y fie plus.
+        copro = any(c.get("rattachement") != "proche_20m" for c in (f.get("coproprietes") or []))
+        if est not in (None, "") or scn is not None:
+            pt = {**pt, "surface_a_retenir": surface_a_retenir(est, scn, bati=bati, copropriete=copro)}
+    return _nz(pt)
 
 
 @extracteur("sdp_residuelle_m2")
@@ -572,7 +614,39 @@ def _c_marge_surel(db, idu, f):
 
 @extracteur("aleas_parcelle_liste")
 def _c_aleas(db, idu, f):
-    return _nz((f.get("aleas") or {}).get("liste"))
+    bloc = f.get("aleas") or {}
+    liste = bloc.get("liste")
+    # CHIRURGICAL-FIX-1 (LOT J pt3f) — on porte les plans de prévention de la commune qui NE COUVRENT PAS
+    # la parcelle sur le premier aléa PPR, pour que le Dossier les cite à part (« existe dans la commune,
+    # ne couvre pas la parcelle ») sans les confondre avec le plan qui couvre réellement.
+    autres = bloc.get("ppr_commune_autres")
+    if liste and autres:
+        marque = False
+        out = []
+        for x in liste:
+            if not marque and str(x.get("nature") or "").startswith("PPR"):
+                out.append({**x, "ppr_commune_autres": autres})
+                marque = True
+            else:
+                out.append(x)
+        liste = out
+    return _nz(liste)
+
+
+@extracteur("contraintes_parcelle_liste")
+def _c_contraintes_parcelle(db, idu, f):
+    # CHIRURGICAL-FIX-1 (LOT H pt2) — LA MÊME liste d'alertes que la fiche §Risques-et-environnement et
+    # le Comparatif : TOUTES les lignes SOFT_FLAG / HARD_EXCLUDE (aléas, zone humide, inondation TRI,
+    # bruit, SUP…), hors bassin versant (contexte, pas une alerte). L'Apporteur, pièce qui circule
+    # seule, lit ce champ pour ne masquer aucune alerte (zone humide AD0887, inondation extrême BW2635).
+    # Hors ALERTE : contexte de marché (VEFA), motifs de SCORING (déclassement, bâti, SDP résiduelle)
+    # et bassin versant (hydrographie) — ce ne sont pas des « contraintes qui gênent le projet ».
+    _hors_alerte = {"bassin_versant", "vefa_neuf", "declassement", "bati", "residuel_socle"}
+    out = [{"libelle": l.get("libelle") or l.get("detail") or "", "nature": l.get("layer")}
+           for l in (f.get("lines") or [])
+           if isinstance(l, dict) and l.get("result") in ("HARD_EXCLUDE", "SOFT_FLAG")
+           and l.get("layer") not in _hors_alerte]
+    return _nz(out)
 
 
 @extracteur("n_vigilances")
@@ -604,6 +678,17 @@ def _c_casias(db, idu, f):
 def _c_endiguement(db, idu, f):
     ligne = next((l for l in (f.get("lines") or [])
                   if isinstance(l, dict) and l.get("layer") == "endiguement"
+                  and l.get("result") not in (None, "PASS")), None)
+    return ligne.get("detail") if ligne else None
+
+
+@extracteur("tri_zone_inondable")
+def _c_tri(db, idu, f):
+    # EXPORTS-FIX-3 LOT 3 (#e/#6) — un risque présent sur la fiche (zone inondable TRI, directive
+    # inondation) figure dans le Dossier : il passe par la cascade (`fiche.lines`, layer='tri_zone'),
+    # pas par aleas.liste — le Dossier l'OMETTAIT (HT0538 : inondation extrême 100 %).
+    ligne = next((l for l in (f.get("lines") or [])
+                  if isinstance(l, dict) and l.get("layer") == "tri_zone"
                   and l.get("result") not in (None, "PASS")), None)
     return ligne.get("detail") if ligne else None
 
@@ -1028,6 +1113,18 @@ def _c_comparables(db, idu, f):
         from ..pige.api import rapport_parcelle
         rap = rapport_parcelle(db, idu, f)
         comps = ((rap or {}).get("estimation") or {}).get("comparables")
+        # CHIRURGICAL-FIX-1 (LOT F, E11) — la table des comparables doit montrer la MÊME population que
+        # le chiffre de tête du §8 (le médian servi, `prix_ancien`, qui est du BÂTI) : on ne liste pas
+        # des ventes de TERRAIN sous une médiane de bâti (cas d'un terrain nu, où ESTIMER-3 compare à des
+        # ventes de terrain). On retient les comparables dont le type correspond à la famille du médian ;
+        # si aucun ne correspond (bien nu), pas de table (le repère « Terrain nu — secteur » reste au §8).
+        pa_type = str((f.get("prix_ancien") or {}).get("type_prix") or "").lower()
+        if comps and pa_type:
+            median_bati = any(k in pa_type for k in ("maison", "appartement", "mixte", "bâti", "bati"))
+
+            def _est_terrain(c):
+                return "terrain" in str(c.get("type") or "").lower()
+            comps = [c for c in comps if (_est_terrain(c) != median_bati)]
         out = comps[:8] if comps else None
     except Exception as exc:  # noqa: BLE001 — best-effort, jamais un bloqueur du Dossier
         log.warning("comparables (Estimer) non servis (%s) : %s", idu, exc)

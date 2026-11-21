@@ -37,6 +37,8 @@ _NIVEAU_LABEL = {
 _ALEA_RE = re.compile(r"^Aléa\s+(?P<type>.+?)\s+—\s+niveau\s+(?P<niveau>[^.\s]+)", re.IGNORECASE)
 #: identifiant technique de servitude entre parenthèses : « PM1 (PM1_PPR_i_mvt_..._ass) » → « PM1 ».
 _SUP_ID_RE = re.compile(r"\s*\([A-Z0-9]+_[A-Za-z0-9_]+\)")
+#: LOT I pt2 — tête d'un libellé de zone rouge marginale (« PPR zone rouge sur N % de la surface »).
+_ZONE_ROUGE_MARG_RE = re.compile(r"^(PPR zone rouge sur [\d.,]+ % de la surface)\s*—")
 
 
 def libelle_client_detail(detail: str | None) -> str | None:
@@ -66,6 +68,41 @@ def libelle_client_detail(detail: str | None) -> str | None:
     # Depuis la graduation PPR (M-I), une part rouge marginale n'est plus une CONTRADICTION (elle ne
     # coexiste plus avec une exclusion) mais un verdict à part entière ; on la NOMME proprement.
     d = d.replace("intersection marginale", "recouvrement marginal")
+    # CHIRURGICAL-FIX-1 (LOT I pt2) — zone rouge marginale (< 50 %) : la PARTIE rouge est
+    # inconstructible (exclue de l'implantation), les prescriptions relèvent de la zone bleue. On
+    # reformule le libellé STOCKÉ « — vigilance forte ; … pas d'exclusion automatique » (que
+    # phase1.py n'émet plus ; compat des runs déjà servis) pour dire la même chose que le Dossier.
+    _zr = _ZONE_ROUGE_MARG_RE.match(d.strip())
+    if _zr and "vigilance forte" in d:
+        # CHIRURGICAL-FIX-1 (LOT J pt3b) — on ne renvoie plus « … ne s'appliquent qu'en zone bleue »
+        # (qui laissait croire que le rouge est sans règle) : la partie rouge est EXCLUE, le RESTE
+        # relève du règlement du plan de prévention.
+        d = (f"{_zr.group(1)} — la partie en zone rouge est exclue de l'implantation ; "
+             "le reste est soumis au règlement du plan de prévention.")
+    return d
+
+
+def ajuster_clause_affichage(detail: str | None, non_constructible: bool) -> str | None:
+    """CAPACITE-1 (B5) — ajustements d'AFFICHAGE communs aux documents texte (Markdown/HTML) ET au
+    Comparatif, pour que TOUS servent les MÊMES libellés que les PDF (point unique, jamais deux
+    fenêtres ni deux formules pour un même fait). Le run servi n'est PAS recalculé ; on n'ajuste que
+    le texte, de façon ciblée :
+      1. marché du logement neuf (VEFA) : la fenêtre est « 5 ans » (comme le Dossier §marché), jamais
+         « 36 mois » — le texte figé d'anciens runs servait 36 mois pour les MÊMES ventes ;
+      2. parcelle NON CONSTRUCTIBLE : on retire la seule clause rassurante « (pas d'exclusion
+         automatique) » du PPR partiel (elle rassurerait à tort quand le verdict est non constructible),
+         en GARDANT la zone rouge X % et la « vigilance forte ».
+    Renvoie le détail ajusté (jamais None pour une entrée non vide)."""
+    if not detail:
+        return detail
+    d = detail
+    if "logement neuf (vefa)" in d.lower():
+        d = d.replace("36 mois", "5 ans")
+    if non_constructible and "exclusion automatique" in d.lower():
+        segs = [s.strip() for s in d.split(";") if "exclusion automatique" not in s.lower()]
+        d = "; ".join(s for s in segs if s).rstrip(" ;·—-")
+        if d and d[-1] not in ".!?":
+            d += "."
     return d
 
 

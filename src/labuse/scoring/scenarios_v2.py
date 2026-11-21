@@ -150,6 +150,12 @@ class ScenarioRecord:
     # PUBLIC (groupe DGFiP public) garde sa bande et porte un DRAPEAU. Le Signal n'est jamais touché.
     public_facility: str | None = None         # catégorie d'équipement public (None = aucun / privé)
     public_land: bool = False                  # propriétaire public (État/collectivité/EP)
+    # PLU-VEILLE-FIX-1 — le PLU de la commune a été modifié au Géoportail et les règles chiffrées ne
+    # sont pas encore recalibrées/validées : les scénarios FONCIERS (pas le Signal) passent « À
+    # vérifier » tant que dure la mise à jour. On ne touche ni « Hors de ce projet » (fait dur,
+    # indépendant des chiffres du PLU) ni « À différer » (horizon AU) ni « Préétude ».
+    plu_recalibrage: bool = False
+    plu_modifie_le: str | None = None          # « jj/mm/aaaa » de la modification, pour la vigilance
 
 
 @dataclass
@@ -382,7 +388,19 @@ def evaluate(record, options=None) -> ScenarioResult:
                     else res_.quantities["project_total"])
         return res_.quantities["additional"]
 
+    # PLU-VEILLE-FIX-1 — statuts fonciers « chiffrés » qui dépendent des règles du PLU : s'il est en
+    # cours de recalibrage, ils ne sont pas servis tels quels (on sert « À vérifier »). Les statuts
+    # DURS (hors projet, à différer, préétude) ne dépendent pas des chiffres → inchangés.
+    _PLU_SENSIBLE = ("ESTIMATED", "COMPUTE_PENDING", "NO_MARGIN", "TO_VERIFY")
+
     def finish(status, code=None, label=None):
+        if (rec.plu_recalibrage and opts["mode"] == "potential" and status in _PLU_SENSIBLE):
+            # bande calculée conservée en PROVISOIRE (consultable), comme pour une inconnue (D4).
+            if res.band and not res.band_provisional:
+                res.band_provisional = res.band
+            res.band = None
+            vig(f"PLU modifié le {rec.plu_modifie_le or '…'} — règles en cours de mise à jour.")
+            status, code, label = "TO_VERIFY", "PLU_MODIFIE_RECALIBRAGE", None
         res.status = status
         res.label = label or LABELS.get(status, status)
         res.tone = ("green" if status == "ESTIMATED" else "blue" if status == "PRESTUDY"

@@ -1698,85 +1698,10 @@ def projet_export_pdf(pid: int, request: Request, db: Session = Depends(get_db))
 
 
 @router.get("/{pid}/export.csv")
-def projet_export_csv(pid: int, request: Request, db: Session = Depends(get_db)):
-    """M140 Lot B — la LISTE COMPLÈTE des retenues du cadrage, STREAMÉE : jamais stockée, jamais
-    tout en mémoire (curseur serveur). Colonnes de DONNÉE du PDF, ordre GÉOGRAPHIQUE, **aucun
-    rang/score** (doctrine M133 B.6 sur le flux aussi). SEC-IDOR : borné au compte. La 1re ligne
-    porte les DEUX dates comme le PDF (cadrage figé le X · valeurs au Y (run N) · export généré le Z).
-    Le curseur vit dans une connexion PROPRE au générateur (la session `Depends` est fermée quand
-    le stream se consomme — piège FastAPI classique)."""
-    import csv
-    import io
-
-    from fastapi.responses import StreamingResponse
-
-    from ..db import engine
-    from .app import _ETAGE0_SQL, _ETAT_BIEN_SQL, MIN_DISPLAY_SURFACE_M2, _ban_lateral, _ban_ready, _score_v2_run_id
-    p = _projet_or_404(db, pid, current_compte(request))    # SEC-IDOR : export borné au compte
-    cadrage = p.filtres or {}
-    fc = _cadrage_to_filtre(cadrage)
-    where, params = fc.where()
-    base = "" if ("f_tiers" in params or "s2.tier" in where or _ETAGE0_SQL in where) \
-        else f"AND NOT {_ETAGE0_SQL}"
-    ban_ok = _ban_ready(db)
-    ban_sel = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
-               else ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune")
-    ban_join = _ban_lateral("p.idu") if ban_ok else ""
-    sql = text(
-        f"""SELECT p.idu, p.commune, substr(p.idu, 9, 2) AS section, substr(p.idu, 11) AS numero,
-                   round(COALESCE(p.contenance_m2, p.surface_m2)) AS surface_m2, {_ETAT_BIEN_SQL} AS etat_bien,  -- FIX-1 Lot 1 : surface terrain
-                   round(rb.sdp_residuelle_m2) AS sdp_residuelle_m2, rb.cause AS sdp_indispo,
-                   (d.status IN ('exclue', 'faux_positif_probable')) AS etage0 {ban_sel}
-            FROM parcels p
-            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-            JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
-            LEFT JOIN parcel_residuel rb ON rb.parcel_id = p.id
-            {ban_join}
-            WHERE (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf) {base} {where}
-            ORDER BY p.commune, section,
-                     NULLIF(regexp_replace(substr(p.idu, 11), '\\D', '', 'g'), '')::int NULLS LAST, p.idu""")
-    prm = {"run": runs.cascade(), "v2run": _score_v2_run_id(db), "minsurf": MIN_DISPLAY_SURFACE_M2, **params}
-    vr = _residuel_run_servi(db) or {}
-    figee = p.derniere_execution_at.date().isoformat() if p.derniere_execution_at else "non figé"
-    # RETOURS-7 Z12.2 — libellé lisible (date) servi au client ; l'identifiant technique du run reste
-    # au dashboard, plus dans les documents client.
-    val = f"valeurs au {vr['date']}" if vr.get("date") else "valeurs : run résiduel indisponible"
-    genere = datetime.now(timezone.utc).date().isoformat()
-    cols = ["idu", "commune", "section", "numero", "surface_m2", "adresse", "code_postal",
-            "ville", "etat_bien", "sdp_residuelle_m2", "sdp_indispo", "etage0"]
-
-    def rows_iter():
-        buf = io.StringIO()
-        w = csv.writer(buf, delimiter=";", lineterminator="\r\n")
-        # FIX-C6 (GB-057) — l'en-tête ne dit plus « cadrage figé le non figé » : le libellé suit
-        # l'état RÉEL du cadrage (figé à une date, ou explicitement non figé).
-        entete = f"# cadrage figé le {figee}" if figee != "non figé" else "# cadrage NON figé (jamais exécuté)"
-        # FIX-C6 (GB-056) — BOM UTF-8 en tête (comme l'export parcelles utf-8-sig) : sans lui
-        # Excel FR casse les accents. Cohérence inter-exports.
-        buf.write("\ufeff")  # BOM UTF-8
-        w.writerow([f"{entete} · {val} · export généré le {genere} "
-                    "· ordre géographique · aucune sélection ni classement interne"])
-        w.writerow(cols)
-        yield buf.getvalue()
-        buf.seek(0)
-        buf.truncate(0)
-        # connexion PROPRE au stream (la session Depends est déjà fermée à ce stade)
-        with engine().connect() as conn:
-            res = conn.execution_options(stream_results=True, max_row_buffer=1000).execute(sql, prm)
-            n = 0
-            for r in res.mappings():
-                w.writerow([r["idu"], r["commune"], r["section"], r["numero"], r["surface_m2"],
-                            r["ban_voie"], r["ban_cp"], r["ban_commune"], r["etat_bien"],
-                            r["sdp_residuelle_m2"], r["sdp_indispo"], "oui" if r["etage0"] else "non"])
-                n += 1
-                if n % 1000 == 0:
-                    yield buf.getvalue()
-                    buf.seek(0)
-                    buf.truncate(0)
-            if buf.tell():
-                yield buf.getvalue()
-
-    slug = "".join(c if c.isalnum() else "-" for c in (p.nom or "projet")).strip("-").lower()[:48]
-    return StreamingResponse(rows_iter(), media_type="text/csv; charset=utf-8",
-                             headers={"Content-Disposition":
-                                      f'attachment; filename="projet-{pid}-{slug or "projet"}-retenues.csv"'})
+def projet_export_csv(pid: int):
+    """CHIRURGICAL-FIX-1 (E114, décision Vic) — l'export CSV du projet est RETIRÉ : aucun bouton ne
+    l'ouvrait (helper `projetCsvUrl` du front sans appelant), c'était une sortie morte. Comme l'export
+    PDF projet (410 ci-dessus), la route répond proprement 410 au lieu de 404. Le détail d'un projet
+    se consulte à l'écran ; un export par parcelle passe par les documents (Dossier, Bilan)."""
+    raise HTTPException(410, detail="L'export CSV du projet est retiré ; le détail du cadrage se "
+                        "consulte à l'écran (colonnes À trier / Retenues / Écartées).")

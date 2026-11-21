@@ -66,10 +66,39 @@ class ZoneRules:
     emprise_plage: dict | None = None         # idem emprise au sol
     regle_non_validee: str | None = None      # PLU-CALIBRAGE-6 : liste des feuilles SDP `propose`
     #  (règle PLU non validée) qui BRANCHERAIENT la SDP → capacité non calculable, jamais un défaut
+    ces_perimetres: list | None = None        # MOTEUR-VERITE-FIX-4 LOT 2 : CES réduit dans des
+    #  périmètres REPÉRÉS (prescriptions GPU mesurées par parcelle — ex. Le Port Uc, OAP
+    #  Mascareignes 60 %) ; [{libelle_regex, subtypes, pct, source}]
+    recul_fond_m: float | None = None         # MOTEUR-VERITE-FIX-4 LOT 3 : retrait FIXE propre au
+    #  FOND (ex. Trois-Bassins Ue 7.3 « 4 m ») — la formule H/2 ne s'applique alors qu'aux
+    #  latérales, jamais re-calculée sur le fond
+    capacite_a_verifier: str | None = None    # MOTEUR-VERITE-FIX-3 LOT 2 : la zone a une RÈGLE
+    #  PROPRE validée mais non réductible à un nombre (ex. Saint-Denis Udo, hauteur par rue) —
+    #  le repli ne sert JAMAIS une valeur générique à sa place : verdict constructible, SDP ∅
     recul_voirie_alignement: bool = False     # PLU-CALIBRAGE-7 forme 1 : recul 0 = « à l'alignement »
     recul_limites_alignement: bool = False    #  (idem « en limite séparative ») — 0 EXPLICITE, ≠ absent
+    # MOTEUR-VERITE-FIX-1 (LOT 2) — mode d'IMPLANTATION par rapport aux limites séparatives, lu au
+    # règlement et calibré SÉPARÉMENT pour les limites latérales et le fond de parcelle :
+    #   {mode: retrait_obligatoire | limite_ou_retrait | limite_sous_conditions | limite_imposee,
+    #    condition_texte?, condition_modelable? («largeur_terrain_max:X» | «une_seule_limite» |
+    #    «deux_limites_max» | «hauteur_bande:…» | «non»), citation?, article?, page_pdf?}.
+    # None = non calibré → le retrait (min_m / formule) s'applique comme aujourd'hui.
+    implantation_laterales: dict | None = None
+    implantation_fond: dict | None = None
+    # MOTEUR-VERITE-FIX-3 LOT 1 — référence de hauteur du retrait relatif, LUE À L'ARTICLE :
+    # 'egout' (seul cas où le scénario niveau-par-niveau à l'égout s'applique),
+    # 'hauteur_totale_facade', 'altitude_point_a_point'. None/au-delà → référence PRUDENTE
+    # (faîtage de la zone).
+    h_reference: str | None = None
     pleine_terre_compose: dict | None = None  # PLU-CALIBRAGE-7 forme 2 : {espaces_verts_pct, part_pct}
     #  pleine_terre_pct = espaces_verts_pct × part_pct / 100 (calculé, JAMAIS stocké — les 2 chiffres sourcés)
+    permeabilite_pct: float | None = None     # CHIRURGICAL-FIX-1 (LOT I 3c) — 2e obligation de sol : la
+    #  SURFACE PERMÉABLE (enveloppe), DISTINCTE de la pleine terre (le noyau). Ex. Le Tampon Ud : « 40 %
+    #  perméable, dont 30 % pleine terre » → permeabilite_pct=40 ET pleine_terre_pct=30 (les deux servies).
+    pleine_terre_nature: str | None = None    # CHIRURGICAL-FIX-1 (LOT H pt8) — vraie nature de la règle
+    #  « 2.6 » selon sa CITATION : 'permeable' | 'pleine_terre' | 'biotope' | 'espace_vert'. Le champ
+    #  pleine_terre_pct agrège des règles DISTINCTES ; le document nomme celle qui est citée (jamais
+    #  « pleine terre » pour une règle de perméabilité — AM0838/UE L'Étang-Salé : « 25 % … perméable »).
     # FICHE-FIX-2 P4 / PLU-CALIBRAGE-9 — clause de mixité sociale de la zone (LLS), lue des `regles`
     #  calibrées : {seuil_m2|seuil_logements, quota_pct, quota_base?, produits?, portee, article,
     #  page_pdf, citation, statut}. None si la zone n'en porte pas. `statut` = 'valide' → branchée
@@ -97,6 +126,17 @@ class ZoneRules:
         m = re.search(r"(\d+(?:[.,]\d+)?)\s*places?\s*/?\s*(?:par\s*)?logement", s, re.I)
         if m:
             return float(m.group(1).replace(",", "."))
+        # ETUDE-STATIONNEMENT (merge moteur-verite) — barème PAR TYPOLOGIE (Le Tampon : 0,5 ≤T1 · 1 T2 · 1,5 T3+)
+        # : le ratio de BASE (logement standard = T2 collectif) n'est pas lisible dans le texte détaillé. On le
+        # lit sur le barème lui-même (`places_pour`), comme la capacité. Sans base lisible → NON_MODELISABLE.
+        try:
+            from ..implantation.regles import charger as _charger_b
+            _b = _charger_b(_insee(self.bassin), self.code).stationnement
+            _r = _b.places_pour(pieces=2, sdp_m2=50.0, destination="collectif")
+            if isinstance(_r, (int, float)):
+                return float(_r)
+        except Exception:  # noqa: BLE001 — lecture annexe, jamais bloquante
+            pass
         return NON_MODELISABLE          # texte présent mais aucune forme « X place/logement » lisible
 
 
@@ -191,6 +231,20 @@ def _regles_sdp_non_validees(reg: dict) -> list[str]:
 
 
 # ── PLU-CALIBRAGE-7 — lecture des deux formes de règle ajoutées au schéma ─────────────────────────
+def _implantation_leaf(reg: dict, cle: str) -> dict | None:
+    """MOTEUR-VERITE-FIX-1 (LOT 2) — mode d'implantation par côté, VALIDÉ seulement.
+    Feuille `retraits.limites_separatives.<implantation_laterales|implantation_fond>` :
+    {mode, condition_texte?, condition_modelable?, citation?, article?, page_pdf?, statut}.
+    `statut` ≠ valide ou mode inconnu → None (le retrait min_m/formule s'applique seul)."""
+    leaf = ((reg.get("retraits") or {}).get("limites_separatives") or {}).get(cle)
+    if not isinstance(leaf, dict) or leaf.get("statut") != "valide":
+        return None
+    if leaf.get("mode") not in ("retrait_obligatoire", "limite_ou_retrait",
+                                "limite_sous_conditions", "limite_imposee"):
+        return None
+    return dict(leaf)
+
+
 def _recul_alignement(reg: dict, feuille: str) -> bool:
     """Forme 1 : la feuille recul (`retraits.<feuille>`) est-elle VALIDÉE en « forme: alignement »
     (recul 0 explicite — « à l'alignement » / « en limite séparative ») ? ≠ absent."""
@@ -213,6 +267,69 @@ def _pleine_terre_val(reg: dict):
     if isinstance(ev, (int, float)) and isinstance(part, (int, float)):
         return round(float(ev) * float(part) / 100.0, 2)      # forme 2 : le moteur calcule
     return None
+
+
+_LIBELLE_ESPACES_LIBRES = {
+    "permeable": "Surface perméable",
+    "biotope": "Coefficient de biotope",
+    "espace_vert": "Espaces verts",
+    "pleine_terre": "Pleine terre",
+}
+
+
+def libelle_espaces_libres(nature: str | None, defaut: str = "Pleine terre") -> str:
+    """CHIRURGICAL-FIX-1 (LOT H pt8) — nom de base de la règle d'espaces libres (art. 2.6) selon sa
+    nature citée : surface perméable ≠ pleine terre ≠ biotope ≠ espaces verts. Le suffixe (« min » /
+    « minimale ») est ajouté par l'appelant. Défaut « Pleine terre » (rétro-compatibilité)."""
+    return _LIBELLE_ESPACES_LIBRES.get(nature or "", defaut)
+
+
+def _pleine_terre_nature(reg: dict) -> str | None:
+    """CHIRURGICAL-FIX-1 (LOT H pt8) — nature RÉELLE de la règle d'« espaces libres / art. 2.6 » lue de
+    sa CITATION sourcée : surface perméable, pleine terre, coefficient de biotope ou espace vert. Le
+    champ `pleine_terre_pct` agrège ces règles distinctes ; le libellé du document doit nommer celle
+    qui est citée (« pleine terre » prioritaire si la citation la nomme explicitement)."""
+    leaf = (reg.get("pleine_terre") or {}).get("pct")
+    if not isinstance(leaf, dict):
+        return None
+    cit = (leaf.get("citation") or "").lower()
+    if not cit:
+        return None
+    if "pleine terre" in cit:
+        return "pleine_terre"
+    if "biotope" in cit:
+        return "biotope"
+    if "perméab" in cit or "permeab" in cit:
+        return "permeable"
+    if "espace" in cit and "vert" in cit:
+        return "espace_vert"
+    return None
+
+
+def _permeabilite_pct(reg: dict):
+    """CHIRURGICAL-FIX-1 (LOT I 3c) — 2e obligation de sol : la SURFACE PERMÉABLE (enveloppe), quand la
+    citation en porte DEUX (« X % perméable, dont Y % pleine terre » — Le Tampon Ud 40/30, Ua 20/15…),
+    ou un renvoi « respectivement X % et Y % » (Uav 30/20). `pleine_terre_pct` garde le NOYAU (Y) ; on
+    sert ici l'ENVELOPPE (X), seulement si elle est DISTINCTE (sinon une seule obligation, déjà nommée)."""
+    import re as _re
+    leaf = (reg.get("pleine_terre") or {}).get("pct")
+    if not isinstance(leaf, dict):
+        return None
+    cit = leaf.get("citation") or ""
+    noyau = leaf.get("pct") if isinstance(leaf.get("pct"), (int, float)) else None
+    # forme 1 : « X % … perméable » (enveloppe explicite ; `[^%]*?` s'arrête au 1er « perméable »,
+    # AVANT le « dont Y % … pleine terre » — on capte bien l'enveloppe X, pas le noyau Y).
+    m = _re.search(r"(\d+(?:[.,]\d+)?)\s*%[^%]*?perm[ée]able", cit)
+    perm = None
+    if m:
+        perm = float(m.group(1).replace(",", "."))
+    else:  # forme 2 : renvoi « respectivement X % et Y % » (X = perméable, Y = pleine terre)
+        m = _re.search(r"respectivement.*?(\d+(?:[.,]\d+)?)\s*%\s*et\s*(\d+(?:[.,]\d+)?)\s*%", cit)
+        if m:
+            perm = float(m.group(1).replace(",", "."))
+    if perm is None or (noyau is not None and abs(perm - float(noyau)) < 1e-6):
+        return None            # pas de 2e obligation distincte (une seule règle, déjà nommée)
+    return perm
 
 
 def _pleine_terre_compose(reg: dict) -> dict | None:
@@ -239,7 +356,22 @@ def _zone_regle_non_validee(code: str, feuilles: list[str]) -> ZoneRules:
         sources={"zone": "règle PLU non validée (feuille propose)"})
 
 
-def _stat_from_regles(reg: dict):
+def _stat_from_regles(reg: dict, insee: str | None = None, code: str | None = None):
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — SOURCE UNIQUE de la règle de stationnement : le barème que l'Étude
+    # APPLIQUE (`BaremeStationnement`), rendu par la MÊME fonction `_regle_stationnement_courte`. Le Dossier
+    # cessait de dire « non réglementé » dès que la règle n'était pas « N places / logement » (BW2635 Uav :
+    # barème par typologie Ua12.2 ; HT0538 Ud6 : par m² de SDP) alors que l'Étude, elle, l'appliquait. On
+    # affiche donc la règle ENTIÈRE ; repli sur l'ancienne lecture `par_logement` si le barème n'est pas validé.
+    if insee and code:
+        try:
+            from ..implantation.regles import charger as _charger_b
+            from ..implantation.service import _regle_stationnement_courte
+            _b = _charger_b(insee, code).stationnement
+            _rc = _regle_stationnement_courte(_b)
+            if _rc:
+                return _rc
+        except Exception:  # noqa: BLE001 — lecture annexe, jamais bloquante pour le Dossier
+            pass
     leaf = (reg.get("stationnement") or {}).get("par_logement")
     if not isinstance(leaf, dict) or leaf.get("absent"):
         return None
@@ -329,12 +461,47 @@ def _exceptions_from_regles(commune: str | None, code: str) -> dict[str, list[di
     return out
 
 
+def _hauteur_regle_sans_valeur(reg: dict | None) -> dict | None:
+    """MOTEUR-VERITE-FIX-4 LOT 3 — feuille hauteur VALIDÉE avec citation mais SANS valeur
+    numérique ni plage ni R+n (ex. Saint-Denis Udo : plafonds par rue nommée, Ud.10 p.44) :
+    la zone a une règle propre non chiffrable — AUCUNE hauteur générique à sa place."""
+    if not reg:
+        return None
+    h = reg.get("hauteur") or {}
+    for feuille, cle in (("egout", "m"), ("faitage", "m")):
+        leaf = h.get(feuille)
+        if (isinstance(leaf, dict) and leaf.get("statut") == "valide" and not leaf.get("absent")
+                and not leaf.get("plage") and leaf.get(cle) is None
+                and (leaf.get("citation") or "").strip()):
+            return leaf
+    return None
+
+
 def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> ZoneRules:
     """ZoneRules d'une zone CALIBRÉE : valeurs des regles + métadonnée de zone (plu_zonage)."""
     from ..plu import destinations as D
     reg = D.regles_zone(_insee(commune) or "", code)
     zm = (zmeta.get("zones") or {}).get(code, {})
+    # MOTEUR-VERITE-FIX-4 LOT 3 — une zone CALIBRÉE dont la hauteur est une règle propre SANS
+    # valeur (Udo : plafonds par rue) ne reçoit AUCUNE hauteur par défaut : capacité à vérifier
+    # (le repli générique le faisait déjà — la voie calibrée servait 9 m, AO0742 865 m²).
+    _cav = None
+    _he0, _hf0 = _val(reg, "hauteur", "egout", "m"), _val(reg, "hauteur", "faitage", "m")
+    _niv0 = _val(reg, "hauteur", "niveaux", "r_plus")
+    if (not isinstance(_he0, (int, float)) and not isinstance(_hf0, (int, float))
+            and not isinstance(_niv0, (int, float)) and zm.get("hauteur_mode") != "prospect"):
+        _lh = _hauteur_regle_sans_valeur(reg)
+        if _lh is not None:
+            _cav = (f"hauteur en zone {code} réglée en propre ({_lh.get('article') or '?'}, "
+                    f"p. {_lh.get('page_pdf') or '?'}) mais non réductible à un nombre par "
+                    "parcelle — aucune hauteur générique appliquée à sa place.")
+    _fond = _val(reg, "retraits", "limites_separatives", "fond_min_m")
+    _ces_leaf = ((reg.get("emprise_sol") or {}).get("ces")) if reg else None
+    _ces_per = (_ces_leaf or {}).get("perimetres_mesures") if isinstance(_ces_leaf, dict) else None
     return ZoneRules(
+        capacite_a_verifier=_cav,
+        ces_perimetres=_ces_per if isinstance(_ces_per, list) and _ces_per else None,
+        recul_fond_m=_fond if isinstance(_fond, (int, float)) else None,
         code=code, bassin=zm.get("bassin"), mixite=_mixite_leaf(reg),
         exceptions=_exceptions_from_regles(commune, code),
         he_m=_val(reg, "hauteur", "egout", "m"),
@@ -345,9 +512,18 @@ def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> Zone
         recul_limites_formule=_val(reg, "retraits", "limites_separatives", "formule"),
         recul_voirie_alignement=_recul_alignement(reg, "voie"),
         recul_limites_alignement=_recul_alignement(reg, "limites_separatives"),
-        stat_logement=_stat_from_regles(reg),
+        # MOTEUR-VERITE-FIX-1 (LOT 2) — mode d'implantation par côté, calibré sous la MÊME feuille
+        # VALIDÉE que le retrait (les dicts passent tels quels ; None = non calibré → retrait).
+        implantation_laterales=_implantation_leaf(reg, "implantation_laterales"),
+        implantation_fond=_implantation_leaf(reg, "implantation_fond"),
+        h_reference=(((reg.get("retraits") or {}).get("limites_separatives") or {})
+                     .get("h_reference") or None),
+        # ETUDE-STATIONNEMENT (FIX-6) — barème lu par insee+zone (régimes par commune) : on garde insee/code.
+        stat_logement=_stat_from_regles(reg, _insee(commune), code),
         pleine_terre_pct=_pleine_terre_val(reg),
         pleine_terre_compose=_pleine_terre_compose(reg),
+        pleine_terre_nature=_pleine_terre_nature(reg),
+        permeabilite_pct=_permeabilite_pct(reg),
         hauteur_mode=zm.get("hauteur_mode"),
         habitat=zm.get("habitat"),
         constructible_neuf=zm.get("constructible_neuf", True),
@@ -413,7 +589,7 @@ def _resolve_zone_base(code: str, commune: str | None = None) -> ZoneRules | Non
                     r, he_m=float(HE_DEFAUT_GENERIQUE_M), hauteur_estimee=True,
                     notes=[*(r.notes or []), _NOTE_HAUTEUR_GRAPHIQUE],
                     sources={**(r.sources or {}), "hauteur": "hauteur estimée (table graphique par secteur, non chiffrable en valeur unique)"})
-            return _zone_generique(lib)
+            return _zone_generique(lib, commune)
 
         # 1) correspondance directe (normalisée)
         hit = norm.get(normalize_key(code))
@@ -456,9 +632,9 @@ def _resolve_zone_base(code: str, commune: str | None = None) -> ZoneRules | Non
                 return r
 
         # 4) code hors zonage : strict → None ; progressif → estimation
-        return None if strict else _zone_generique(code)
+        return None if strict else _zone_generique(code, commune)
 
-    return _zone_generique(code)                    # commune SANS calibrage → capacité ESTIMÉE générique
+    return _zone_generique(code, commune)           # commune SANS calibrage → capacité ESTIMÉE générique
 
 
 def resolve_zone(code: str, commune: str | None = None) -> ZoneRules | None:
@@ -684,17 +860,36 @@ def _calibrage_overlay(code: str, commune: str | None):
             _cmp = _pleine_terre_compose(reg)
             if _cmp:
                 champs["pleine_terre_compose"] = _cmp
+            _nat = _pleine_terre_nature(reg)       # CHIRURGICAL-FIX-1 (LOT H pt8) — nom de la règle citée
+            if _nat:
+                champs["pleine_terre_nature"] = _nat
+            _perm = _permeabilite_pct(reg)         # CHIRURGICAL-FIX-1 (LOT I 3c) — 2e obligation de sol
+            if _perm is not None:
+                champs["permeabilite_pct"] = _perm
     elif pt and pt.get("absent"):
         src["pleine_terre"] = _src_absente(pt)
 
     # stationnement (par logement)
     st = _feuille("stationnement", "par_logement")
-    if st and not st.get("absent") and isinstance(st.get("places"), (int, float)):
+    # CHIRURGICAL-FIX-1 (LOT I 3c) — un BARÈME chiffré (feuille `bareme`) DIT SA PORTÉE (Le Tampon :
+    # « 1 place / logement ; 1,5 au-delà de 5 lots/logements ») : on le sert tel quel, comme la lecture
+    # de base `_stat_from_regles`, au lieu de réduire au seul « 1 place / logement ».
+    if st and not st.get("absent") and isinstance(st.get("bareme"), str) and st["bareme"].strip():
+        champs["stat_logement"] = st["bareme"].strip()
+        src["stationnement"] = _src_validee(st)
+    elif st and not st.get("absent") and isinstance(st.get("places"), (int, float)):
         p = st["places"]; p = int(p) if float(p).is_integer() else p
         champs["stat_logement"] = f"{p} place / logement" if p == 1 else f"{p} places / logement"
         src["stationnement"] = _src_validee(st)
     elif st and st.get("absent"):
         src["stationnement"] = _src_absente(st)
+    # ETUDE-STATIONNEMENT (merge moteur-verite) — barème PAR TYPOLOGIE (Le Tampon Ua/Ud 12.2, et secteurs qui le
+    # renvoient) : pas de feuille `par_logement`, l'article/source vient de `par_typologie`. Sans quoi la ligne
+    # du Dossier renverrait « au règlement de la zone » au lieu de l'article précis (Ud 12.2).
+    if "stationnement" not in src:
+        stt = _feuille("stationnement", "par_typologie")
+        if stt and not stt.get("absent") and stt.get("article"):
+            src["stationnement"] = _src_validee(stt)
 
     if not champs and not src:
         return None
@@ -827,7 +1022,7 @@ def _positive_prefixes() -> tuple[str, ...]:
     return ("U", "AU")
 
 
-def _zone_generique(code: str) -> ZoneRules:
+def _zone_generique(code: str, commune: str | None = None) -> ZoneRules:
     """Règles ESTIMÉES pour une zone hors calibrage (calibree=False) : préfixe U/AU →
     constructible (hé générique prudent) ; N/A → non constructible."""
     from .zone_norm import est_famille
@@ -839,11 +1034,50 @@ def _zone_generique(code: str) -> ZoneRules:
                          notes=[note], sources={"zone": "estimation générique"})
     from .engine import HE_DEFAUT_GENERIQUE_M
     he = float(HE_DEFAUT_GENERIQUE_M)
-    # le libellé de SOURCE reste mot pour mot celui de l'ancien système (comparé par le
-    # traducteur) — seule la note, non comparée, dit la nouvelle voie de calibrage.
-    return ZoneRules(code=code, calibree=False, he_m=he, notes=[note],
-                     sources={"hauteur": "estimation générique (PLU non outillé)",
-                              "zone": "estimation générique"})
+    # MOTEUR-VERITE-FIX-2 LOT C puis FIX-3 LOT 2 — le REPLI générique lit TOUTES les valeurs
+    # calibrées de la zone quand elles existent (feuilles validées des destinations), au lieu
+    # des défauts : Saint-Denis Uicm porte « 5 m minimum » ET un CES de 40 % (Ui.9) en propre,
+    # le repli servait 3 m et le CES générique ; même chose pour la hauteur (Udo a sa propre
+    # règle). La zone n'est pas « calibrée » pour autant (calibree=False, avertissement servi).
+    _reg = None
+    if commune:
+        from ..plu import destinations as _D
+        _reg = _D.regles_zone(_insee(commune) or "", code) or None
+
+    def _num(rub: str, feuille: str, cle: str):
+        v = _val(_reg, rub, feuille, cle) if _reg else None
+        return float(v) if isinstance(v, (int, float)) else None
+
+    _he = _num("hauteur", "egout", "m")
+    _hf = _num("hauteur", "faitage", "m")
+
+    def _regle_sans_valeur(rub: str, feuille: str, cle: str) -> dict | None:
+        """Feuille VALIDÉE avec citation mais SANS valeur numérique : la zone a une règle propre
+        non réductible à un nombre — le générique ne doit pas la remplacer."""
+        leaf = ((_reg.get(rub) or {}).get(feuille)) if _reg else None
+        if (isinstance(leaf, dict) and leaf.get("statut") == "valide" and not leaf.get("absent")
+                and not leaf.get("plage") and leaf.get(cle) is None
+                and (leaf.get("citation") or "").strip()):
+            return leaf
+        return None
+
+    _cav = None
+    if _he is None and _hf is None:
+        _lh = _regle_sans_valeur("hauteur", "egout", "m") or _regle_sans_valeur("hauteur", "faitage", "m")
+        if _lh is not None:
+            _cav = (f"hauteur en zone {code} réglée en propre ({_lh.get('article') or '?'}, "
+                    f"p. {_lh.get('page_pdf') or '?'}) mais non réductible à un nombre par "
+                    "parcelle — aucune hauteur générique appliquée à sa place.")
+    src_h = ("règle propre de la zone (feuille validée lue par le repli)"
+             if (_he is not None or _hf is not None)
+             else "estimation générique (PLU non outillé)")
+    return ZoneRules(code=code, calibree=False, notes=[note],
+                     he_m=_he if _he is not None else he, hf_m=_hf,
+                     emprise_sol_pct=_num("emprise_sol", "ces", "pct"),
+                     recul_voirie_m=_num("retraits", "voie", "min_m"),
+                     recul_limites_sep_m=_num("retraits", "limites_separatives", "min_m"),
+                     capacite_a_verifier=_cav,
+                     sources={"hauteur": src_h, "zone": "estimation générique"})
 
 
 def hypotheses_faisabilite(commune: str | None = None) -> dict:

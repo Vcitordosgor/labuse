@@ -1,0 +1,25 @@
+{
+ "insee": "97421",
+ "commune": "Salazie",
+ "regles": [
+  {
+   "id": "97421-R1",
+   "article": "U 12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "UA",
+    "UA1",
+    "UB",
+    "UC",
+    "AUa1",
+    "AUb",
+    "AUc"
+   ],
+   "pages": [
+    17,
+    18,
+    19
+   ]
+  }
+ ]
+}

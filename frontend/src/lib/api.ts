@@ -625,6 +625,17 @@ export interface Estimer3Estimation {
   radius_m?: number | null; commune_fallback?: boolean; periode?: number[] | null
   methode_prix: 'semblable' | 'secteur' | 'repli_secteur'
   repli_secteur?: boolean; repli_note?: string | null
+  // OUTILS-P0-2 (P2) — terrain nu sans total à bâtir : hors gamme (surface > p90 des ventes de
+  // référence) ou non constructible. La raison est servie ; le repère au m² et les ventes restent.
+  terrain_sans_total_raison?: string | null
+  terrain_hors_gamme?: boolean; terrain_non_constructible?: boolean
+  surface_gamme?: { min_m2: number; max_m2: number; mediane_m2: number; p90_m2: number; n: number } | null
+  // OUTILS-P0-2 (recette) — immeuble à plusieurs logements : champ surface vide + indication « immeuble ».
+  multi_logement?: boolean
+  immeuble_derniere_vente?: string | null
+  // OUTILS-P0-2 (recette) — les bandes sous leur vrai nom : deux (« 1 fois sur 2 » / « 3 fois sur 4 »)
+  // si mesurées distinctes, une seule (« Fourchette estimée ») si le banc n'en donne qu'une.
+  fourchettes?: { nom: string; basse: number; haute: number }[]
 }
 export interface Estimer3Vente {
   id: string; date: string | null
@@ -665,8 +676,13 @@ export const getEstimation3 = (idu: string, body?: { surface_hab?: number | null
   j<Estimer3Rapport>(`/radar/annonce/estimation3/${encodeURIComponent(idu)}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}),
   })
+// MINI-CORRECTIONS-1 (pt 4) — point → parcelle qui ne rend JAMAIS « rien » : si aucune parcelle ne
+// CONTIENT le point (point BAN sur voirie/trottoir, hors cadastre), le back renvoie la parcelle la PLUS
+// PROCHE avec sa distance en mètres. `distance_m` = 0 pour une parcelle contenante, > 0 pour la plus
+// proche, null seulement si la base est vide. L'appelant (barre d'adresse) atterrit alors sur la plus
+// proche et indique la distance — plus de « aucune adresse » à la suite d'un choix dans la liste.
 export const parcelAt = (lon: number, lat: number) =>
-  j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
+  j<{ idu: string | null; distance_m: number | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
 export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =>
   j<{ idu: string; commune: string; surface_m2: number | null;
       surface_terrain_m2?: number | null; surface_source?: 'cadastre' | 'plan' | null;
@@ -997,6 +1013,34 @@ export interface GabFeatureCollection {
 }
 export const getGabarit = (idu: string) =>
   j<GabaritResult>(`/outils/gabarit/${encodeURIComponent(idu)}`)
+
+// GABARIT-3D-1 (pilote, admin) — scène 3D servie (maillage, contours, bâti, coupes, métadonnées).
+// Lue par la visionneuse Three.js ; le PDF lit la MÊME scène côté serveur.
+export interface GabMesh { vertices: number[][]; triangles: number[][]; pas_m: number }
+export interface GabPoly { ext: number[][]; trous: number[][][] }
+export interface GabSceneBati { empreinte: GabPoly[]; pied_m: number | null; hauteur_m: number | null; attribution: string | null }
+export interface GabScene {
+  idu: string; scene_id: string; disponible: boolean; adresse?: string | null
+  etat: { gabarit: string; terrain_couverture: number; fond_disponible: boolean; coupes: Array<{ axe: string; disponible: boolean }> }
+  origine_2975: number[]
+  contour_cadastral: GabPoly[]; contour_gabarit: GabPoly[]; zone_implantation: GabPoly[]
+  reculs: GabPoly[]; exclusions: GabPoly[]; batiments: GabSceneBati[]
+  terrain: { faces_parcelle?: GabMesh; faces_voisinage?: GabMesh; couverture_parcelle?: number; cadre?: number[]
+    maille_3d_m?: number; cotes_3d?: { haut: number[]; bas: number[] } | null }
+  coupes: Array<Record<string, unknown>>
+  axes_plan: Record<string, { label: string; p0: number[]; p1: number[]; sens: number[] }>
+  meta: Record<string, unknown>; message?: string | null
+}
+export const getGabaritScene = (idu: string) =>
+  j<GabScene>(`/outils/gabarit/scene/${encodeURIComponent(idu)}`)
+// sid = identifiant de scène TRANSMIS par la visionneuse (parité : même version terrain/plan/coupe/PDF).
+export const gabCoupeSvgUrl = (idu: string, axe: string, theme = 'sombre', sid?: string, detail = false, w?: number, h?: number, header = true) =>
+  `/outils/gabarit/scene/${encodeURIComponent(idu)}/coupe/${axe}.svg?theme=${theme}${sid ? `&sid=${sid}` : ''}${detail ? '&detail=1' : ''}${w ? `&w=${w}` : ''}${h ? `&h=${h}` : ''}${header ? '' : '&header=0'}`
+export const gabPlanSvgUrl = (idu: string, theme = 'sombre', sid?: string, w?: number, h?: number) =>
+  `/outils/gabarit/scene/${encodeURIComponent(idu)}/plan.svg?theme=${theme}${sid ? `&sid=${sid}` : ''}${w ? `&w=${w}` : ''}${h ? `&h=${h}` : ''}`
+// PHOTO aérienne (étape 3) : orthophoto IGN proxyée par le serveur, mise en cache par identifiant de scène.
+export const gabOrthoUrl = (idu: string, sid?: string) =>
+  `/outils/gabarit/scene/${encodeURIComponent(idu)}/ortho${sid ? `?sid=${sid}` : ''}`
 
 // SECTEUR-1 (S1) — outil « Mon secteur » : prix du secteur autour d'une parcelle (médiane locale par
 // type + tendance 12 mois + annonces Radar dans le rayon). Chaque chiffre porte son n/millésime.
@@ -1405,6 +1449,9 @@ export const getPiscinesListe = (f: PiscinesFiltres) =>
 // propriétaire est une PM nommée par construction (SIREN confirmé exigé par le critère).
 export interface SuccessionItem {
   idu: string; commune: string; surface_m2: number | null; zone: string | null
+  // OUTILS-P1-1 LOT3b (pt 4) — parcelle À CHEVAL (dominante A/N) : composition bizone au format fiche
+  // (« A 65 % · Ua 35 % »), ou null quand la dominante résume la parcelle.
+  zone_parts_libelle?: string | null
   sdp_residuelle_m2: number | null   // Estimé — moteur de la fiche (p_model_ext_dataset)
   dirigeant_age: number | null; dirigeant_nom: string | null; sci_dormante: boolean
   // DONNEES-1 lot 2.3 — dernier dépôt de comptes BODACC du propriétaire PM (null = aucun publié).
@@ -1413,6 +1460,7 @@ export interface SuccessionItem {
 }
 export interface SuccessionsResp {
   total: number; n: number; items: SuccessionItem[]
+  n_age_ecarte: number     // OUTILS-P1-1 (pt 1) — parcelles sorties de la liste (âge dirigeant ≥ 100 ans)
   maj: string | null       // date du calcul Score V — le millésime du signal
   rne_sync: string | null  // date amont RNE (âges dirigeants)
   source: string; avertissement: string
@@ -1546,9 +1594,17 @@ export const docEtudeZoneUrl = (idu: string, rayonKm: number, sousDestination?: 
 // ANNONCE-3 — « Analyse d'annonce » : adresse → rapport parcelle (/analyse-annonce/{idu}.pdf) ou lien
 // d'annonce → rapport commune (/analyse-annonce.pdf?url=…). Mêmes routes que le bouton « Exporter en PDF »
 // de l'outil : le PDF sorti de l'outil et celui sorti de Docs sont identiques.
-export const docAnalyseAnnonceUrl = (idu: string, surfaceHab?: number | null) =>
-  `/analyse-annonce/${encodeURIComponent(idu)}.pdf`
-  + (surfaceHab != null && surfaceHab > 0 ? `?surface_hab=${surfaceHab}` : '')
+// OUTILS-P0-2 (P1) — le PDF reprend le scénario EXACT de l'écran : surface + pièces saisies, ventes
+// décochées (ecartees). Avant, seule la surface voyageait → le document divergeait de l'écran.
+export const docAnalyseAnnonceUrl = (idu: string, surfaceHab?: number | null,
+                                     opts?: { pieces?: number | null; ecartees?: string[] }) => {
+  const qs = new URLSearchParams()
+  if (surfaceHab != null && surfaceHab > 0) qs.set('surface_hab', String(surfaceHab))
+  if (opts?.pieces != null && opts.pieces > 0) qs.set('pieces', String(opts.pieces))
+  for (const id of opts?.ecartees ?? []) qs.append('ecartees', id)
+  const s = qs.toString()
+  return `/analyse-annonce/${encodeURIComponent(idu)}.pdf` + (s ? `?${s}` : '')
+}
 export const docAnalyseAnnonceLienUrl = (url: string) => `/analyse-annonce.pdf?url=${encodeURIComponent(url)}`
 
 // DOCS-1 (Lot B) — la bibliothèque « Mes documents » (recette d'un document, jamais le PDF).
@@ -1625,6 +1681,9 @@ export interface CompareRow {
   sdp_max_m2?: number | null; taux_emprise_pct?: number | null; sdp_residuelle_m2?: number | null; sous_densite?: boolean | null
   // COMPARER-2 §1 — CES PLU réelle (validée dans plu_destinations) ; null = zone sans CES → « non réglementée »
   emprise_ces_pct?: number | null; emprise_ces_source?: string | null
+  // OUTILS-P1-1 (pt 3) — 'plafond' (CES chiffré) · 'sans_plafond' (règle identifiée, pas de plafond) ·
+  // 'non_renseigne' (aucune règle d'emprise identifiée pour la zone).
+  emprise_ces_etat?: 'plafond' | 'sans_plafond' | 'non_renseigne' | null
   charge_fonciere_m2?: number | null
   // COMPARER-2 §4 / SOURCES-FIX-2 lot B — Classement LABUSE du RUN SERVI (même source que l'Analyse et la fiche) : bande + Signal
   bande?: string | null; signal_niveau?: string | null
@@ -1757,8 +1816,8 @@ export const getSourcesCalibrages = () => j<Record<string, SourceCalibrage[]>>('
 export const modPatrimoineSearch = (q: string) => j<{ siren: string; nom: string; n: number }[]>(`/modules/patrimoine/search?q=${encodeURIComponent(q)}`)
 // RETOURS-11 (T4) — liste PAGINÉE (limit/offset) : l'endpoint sert déjà des pages (géom calculée pour la
 // page seulement) ; le front tranche par 200 via « Voir plus » (jamais de dump). Défauts = 1re page 200.
-export const modPatrimoine = (siren: string, limit = 200, offset = 0) =>
-  j<Record<string, unknown>>(`/modules/patrimoine?siren=${siren}&limit=${limit}&offset=${offset}`)
+export const modPatrimoine = (siren: string, limit = 200, offset = 0, blocsLimit?: number) =>
+  j<Record<string, unknown>>(`/modules/patrimoine?siren=${siren}&limit=${limit}&offset=${offset}${blocsLimit != null ? `&blocs_limit=${blocsLimit}` : ''}`)
 // GB-017/018 — export CSV du portefeuille d'une PM (raison sociale entière ; notice si plafond serveur).
 export const modPatrimoineCsvUrl = (siren: string) => `/modules/patrimoine?siren=${encodeURIComponent(siren)}&fmt=csv`
 const cq = () => (commune() ? `commune=${encodeURIComponent(commune()!)}` : '')
@@ -2553,6 +2612,16 @@ export interface EtudePayload {
   facteur_limitant?: string | null
   // ETUDE-V6-4 (item 10) — en sous-sol, pourquoi la hauteur plafonne (une phrase), écran = PDF.
   facteur_limitant_detail?: string | null
+  // ETUDE-FIABLE-1 (LOT B5) — état de la recherche déterministe (complete / partielle / non_aboutie).
+  // `note` : texte prêt à afficher (null si complète — rien à signaler), identique à l'écran et au PDF.
+  recherche?: {
+    etat: 'complete' | 'partielle' | 'non_aboutie'
+    candidats_prevus: number; candidats_examines: number
+    grille_simplifiee: boolean; garde_fou_temps: boolean
+    logements_dessines: number | null; note: string | null
+  }
+  // ETUDE-FIABLE-1 (LOT C2) — parcelle bâtie : l'étude suppose le terrain libéré (bâti existant démoli).
+  terrain_suppose_libere?: boolean
   confrontation?: {
     demande_logements: number; capacite_maximale_logements: number
     tient: boolean; reserve_logements: number
@@ -2684,16 +2753,24 @@ export interface EtudeIn {
   programme?: { mode: 'propose' | 'saisi'; lignes?: Array<{ type: string; nombre: number; surface_m2?: number }> } | null
   hypotheses?: { profondeur_m?: number; coef_plancher_habitable?: number; surfaces?: Record<string, number>; varangues?: Record<string, number>; lot_cible_m2?: number; voirie_largeur_m?: number } | null
 }
-// ETUDE-V6-2 (Lot 3) — l'étude est bornée à 60 s côté serveur ; le fetch front abandonne au-delà
-// (aligné sur Caddy), simple garde-fou réseau : en pratique le serveur répond AVANT (résultat ou
-// message « Étude trop lourde »). Au-delà, l'abort remonte une erreur plutôt qu'un onglet figé.
-// CORRECTIFS-2 (Lot 2) — porté à 90 s pour laisser passer l'EXPORT PDF (rendu APRÈS la borne de
-// calcul) sur une assiette lourde ; sinon le navigateur abandonnait avant le proxy (désormais 90 s).
-export const ETUDE_FETCH_TIMEOUT_MS = 90_000
+// ETUDE-V6-2 (Lot 3) — l'étude est bornée côté serveur ; le fetch front abandonne au-delà (aligné sur
+// Caddy), simple garde-fou réseau : en pratique le serveur répond AVANT (résultat ou message « Étude
+// trop lourde »). Au-delà, l'abort remonte une erreur plutôt qu'un onglet figé.
+// ETUDE-PLAFOND-1 — la borne serveur passe de 60 à 120 s (prod ~1,7× plus lente, cf. config.py) : ce
+// garde-fou front est relevé à 150 s pour rester STRICTEMENT AU-DESSUS de la borne (sinon le navigateur
+// abandonnerait avant que le serveur ait rendu son 503 honnête). Aligné avec Caddy/nginx (150 s).
+export const ETUDE_FETCH_TIMEOUT_MS = 150_000
 export const postEtude = (body: EtudeIn) =>
   j<EtudePayload>('/modules/etude', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     signal: AbortSignal.timeout(ETUDE_FETCH_TIMEOUT_MS),
+  })
+
+// ETUDE-FIABLE-1 (LOT B2) — ROUVRIR une étude : relit la révision ENREGISTRÉE pour cette configuration,
+// SANS recalcul (le moteur n'est pas appelé ; le serveur empreinte le study_id). 404 si aucune révision.
+export const getEtudeRevisionParConfig = (body: EtudeIn) =>
+  j<EtudePayload>('/modules/etude/revision-par-config', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
   })
 
 // ETUDE-ASYNC-1 — message d'erreur d'une étude, TOUJOURS propre (jamais un code HTTP, jamais le message
@@ -2805,7 +2882,8 @@ export const createProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?
 export interface ApercuTop { idu: string; commune: string; statut: string | null; pourquoi: string[] }  // M139 bricole : q_score retiré (toujours None, non rendu)
 export interface Apercu { nom: string; n: number; total: number; cap: number; sdp_besoin_m2: number | null; source: string; top: ApercuTop[] }
 // PROJETS-CRM-FIX-1 (lot 2) — `projetPdfUrl` supprimé : /projets/{id}/export.pdf est retiré (410,
-// remplacé par le document « Financier »). Plus aucun bouton n'y renvoie (export.csv reste, projetCsvUrl).
+// remplacé par le document « Financier »). CHIRURGICAL-FIX-1 (E114) — `projetCsvUrl` supprimé aussi
+// (sortie morte sans appelant) : /projets/{id}/export.csv répond désormais 410.
 export const patchProjet = (id: number, body: { nom?: string; statut?: string; cadrage?: Cadrage; identite?: Identite }) =>
   j<{ ok: boolean; projet: Projet }>(`/projets/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 // M120 — rejouer À LA DEMANDE : rend le diff (entrées / sorties / tris conservés).
@@ -2863,8 +2941,9 @@ export interface CarteDecision {
 // côté serveur avec le cadrage du projet (une seule requête, aucun moteur parallèle).
 export const getParcoursEtat = (id: number, offset = 0, limit = 60, tier?: string | null, sf?: Cadrage | null) =>
   j<ParcoursEtat>(`/projets/${id}/parcelles?offset=${offset}&limit=${limit}${tier ? `&tier=${tier}` : ''}${sf && Object.keys(sf).length ? `&sf=${encodeURIComponent(JSON.stringify(sf))}` : ''}`)
-// M140 Lot B — export CSV de la liste COMPLÈTE des retenues (streamé, non stocké, zéro rang/score).
-export const projetCsvUrl = (id: number) => `/projets/${id}/export.csv`
+// CHIRURGICAL-FIX-1 (E114, décision Vic) — `projetCsvUrl` SUPPRIMÉ : il n'avait AUCUN appelant (aucun
+// bouton d'export sur l'écran Projet), une sortie morte. L'endpoint back répond désormais 410 (comme
+// l'export PDF projet). Le détail du cadrage se consulte à l'écran ; l'export par parcelle = documents.
 export const getCarteDecision = (id: number, idu: string) => j<CarteDecision>(`/projets/${id}/carte/${idu}`)
 export const setStatutParcelle = (id: number, idu: string, statut: StatutParcelle) =>
   j<{ ok: boolean; idu: string; statut: StatutParcelle; counts: ParcoursCounts }>(
@@ -3411,7 +3490,7 @@ export interface BilanModele {
     idu: string; parcel_id: number | null; commune: string | null
     terrain: number | null; zonage: string | null
     zonage_parts: { zone: string; fam: string; pct: number }[]
-    non_constructible_pct: number; constructible_m2: number | null
+    non_constructible_pct: number; non_constructible_motif?: string | null; constructible_m2: number | null
     prix_achat_dvf: { valeur: number; date: string; label: string } | null
   }
   reperes_publics: Record<string, { valeur: number; n?: number; label: string; source: string; parkings?: number | null; logements?: number[] | null }>

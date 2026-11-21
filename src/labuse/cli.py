@@ -316,6 +316,8 @@ def parite_cmd(
         help="N'imprime QUE les tables des flux quotidiens (une par ligne) — pour les scripts."),
     tables_fond: bool = typer.Option(False, "--tables-fond",
         help="N'imprime QUE les tables de fond (une par ligne)."),
+    tables_client: bool = typer.Option(False, "--tables-client",
+        help="N'imprime QUE les tables à données client (prod fait foi, jamais poussées) — pour les scripts."),
 ) -> None:
     """Parité des données Mac⟷prod PAR SENS (décision flux 13/10 + SOLIDITE-1 Lot 4.3). Les COMPTAGES
     locaux et prod (SSH), classés par sens (flux_sens) :
@@ -328,6 +330,7 @@ def parite_cmd(
     from sqlalchemy import text as _text
     from .db import session_scope
     from .flux_sens import FLUX_QUOTIDIEN_PROD, SOURCES_FOND_MAC, tables_quotidiennes
+    from .flux_sens import tables_client as _tc
     from .flux_sens import tables_fond as _tf
 
     if tables_quotidien:
@@ -336,6 +339,10 @@ def parite_cmd(
         return
     if tables_fond:
         for t in _tf():
+            typer.echo(t)
+        return
+    if tables_client:
+        for t in _tc():
             typer.echo(t)
         return
 
@@ -369,6 +376,10 @@ def parite_cmd(
         _compter([t for tables in SOURCES_FOND_MAC.values() for t in tables], foi="mac")
         typer.echo("\nQUOTIDIEN — la prod fait foi (le Mac récupère) · écart informatif :")
         _compter(tables_quotidiennes(), foi="prod")
+        # ETUDE-FIABLE-1 (point 5) — CLIENT : données générées en prod (étude, documents, CRM…). La prod
+        # fait foi ; le Mac NE LES POUSSE JAMAIS → un envoi de données ne peut pas les écraser. Informatif.
+        typer.echo("\nCLIENT — la prod fait foi (le Mac ne pousse JAMAIS, jamais écrasées) · informatif :")
+        _compter(_tc(), foi="prod")
         if communes:
             typer.echo("\nPARCELLES PAR COMMUNE (local ⟷ prod) :")
             loc_c = dict(db.execute(_text(

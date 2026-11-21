@@ -172,6 +172,21 @@ export function PluAnnuaire() {
       {/* ── ÉTAPE 2 — RECHERCHE : la barre + le verbatim sourcé ── */}
       {insee && servable && mode === 'recherche' && (
         <>
+          {/* OUTILS-P1-1 (pt 9) — AU-DESSUS de la recherche : l'ÉDITION du document (règlement + millésime
+              + identifiant GPU) et son ÉTAT D'INDEXATION (combien d'extraits indexés pour la recherche).
+              La recherche porte sur ce qui est indexé — on le dit, le règlement intégral reste en PDF. */}
+          <div data-plu-doc-etat className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] leading-snug">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="font-medium text-txt">{cur?.document ?? 'Règlement PLU'}</span>
+              {cur?.millesime && <span className="text-txt-dim">édition {fmtDateNum(cur.millesime) ?? cur.millesime}</span>}
+              {cur?.idurba && <span className="font-mono text-[9.5px] text-txt-dim">{cur.idurba}</span>}
+            </div>
+            <div className="mt-0.5 text-txt-mut">
+              {(cur?.extraits ?? 0) > 0
+                ? <>Indexé pour la recherche : <b className="text-txt">{cur!.extraits}</b> extrait{(cur!.extraits) > 1 ? 's' : ''} d’articles{cur?.pagination_ambigue ? ' · pagination à vérifier sur certains articles' : ''}.</>
+                : <>Document non indexé pour la recherche verbatim — ouvrez le règlement intégral.</>}
+            </div>
+          </div>
           <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
             {/* RETOURS-15 C1 (P1) — le bouton « ← Voies » est retiré de l'annuaire (demande Vic). */}
             <p className="text-[10.5px] leading-snug text-txt-mut">
@@ -210,7 +225,21 @@ export function PluAnnuaire() {
             </div>
           )}
 
-          {d && !d.message && (
+          {/* OUTILS-P1-1 (pt 9) — recherche VIDE sur un document (partiellement) indexé : on le DIT
+              honnêtement (« Aucun extrait trouvé dans les documents indexés ») et on offre d'ouvrir le
+              règlement intégral — le reste du règlement, non indexé, peut contenir d'autres passages. */}
+          {d && !d.message && d.resultats.length === 0 && (
+            <div data-plu-aucun className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11px] leading-snug text-txt-mut">
+              <p>Aucun extrait trouvé dans les documents indexés{zone ? <> pour la zone <span className="font-mono text-mint">{zone}</span></> : null}.</p>
+              <p className="mt-1 text-[10px] text-txt-dim">La recherche porte sur les articles indexés par LABUSE ; le règlement complet peut contenir d’autres passages.</p>
+              {cur?.source_url && (
+                <a data-plu-ouvrir-reglement href={cur.source_url} target="_blank" rel="noreferrer"
+                  className="mt-1.5 inline-block text-[11px] font-medium text-mint hover:underline">Ouvrir le règlement ↗</a>
+              )}
+            </div>
+          )}
+
+          {d && !d.message && d.resultats.length > 0 && (
             <div data-plu-results className="flex flex-col gap-2">
               <div className="text-[11px] text-txt-mut">
                 {/* OUT-PLU-008 — « N affichés sur M » quand la page est plafonnée (jamais le compte

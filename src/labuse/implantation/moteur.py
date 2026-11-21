@@ -19,7 +19,7 @@ from . import regles as regles_mod
 from . import terrain as terrain_mod
 from .conventions import Conventions, charger as charger_conventions
 from .geometrie import (Frame, Scene, poser_barre, poser_espaces_libres,
-                        poser_sous_sol, poser_stationnement, scene_depuis)
+                        poser_sous_sol, poser_stationnement, raccorder_acces_voie, scene_depuis)
 
 IDUS_ETANG_SALE = ["97404000AW0099", "97404000AW0451", "97404000AW0624", "97404000AW0625"]
 IDUS_SAINT_ANDRE = ["97409000AX0255", "97409000AX0256"]
@@ -95,7 +95,7 @@ def _construire(forme: str, scene: Scene, conv: Conventions, *, niveaux: int, fr
 
 
 def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition=None,
-             stationnement_mode="aerien", niveaux_sous_sol=1):
+             stationnement_mode="aerien", niveaux_sous_sol=1, type_projet="collectif"):
     # hauteur : nb de niveaux borné par la hauteur réglementaire. FAISA-REGLES-1 (E-059) — on compare la
     # hauteur RÉELLE du projet (rez + étages, toiture comptée si la règle se mesure au faîtage), pas le seul
     # niveaux × étage.
@@ -109,7 +109,7 @@ def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition
     if n_mod <= 0:
         motif = "forme L écartée (largeur zone insuffisante)" if forme == "L" else "aucun module implantable"
         return None, Candidat(forme, niveaux, fraction, False, "—", 0, 0.0, 0, None, motif)
-    cap0 = cap_mod.calculer(scene, conv, regles, terrain)
+    cap0 = cap_mod.calculer(scene, conv, regles, terrain, type_projet)
     cible = cap0.places_imposees or 0
     # ETUDE-V6-2 (Lot 3) — sous-sol : places au niveau −1 (le sol reste libre → plus de logements) ;
     # aérien par défaut (places + allée + accès au sol).
@@ -117,13 +117,26 @@ def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition
         poser_sous_sol(scene, conv, cible=cible, niveaux=niveaux_sous_sol)
     else:
         poser_stationnement(scene, conv, cible=cible)
+        # ETUDE-STATIONNEMENT-FIX-6 (point 1) — APRÈS le pavage, AVANT le contrôle : on prolonge la bouche de
+        # chaque accès jusqu'à la limite sur voie (le dernier demi-mètre, marge interne du couloir) → le plan
+        # DESSINÉ touche réellement la voie. La recherche et l'ordre des candidats sont inchangés ; le contrôle
+        # de passage reste STRICT (contact réel ≥ passage). Un accès arrêté trop loin n'est pas prolongé → refusé.
+        raccorder_acces_voie(scene, conv)
     poser_espaces_libres(scene)
     scene.finaliser_monde()
-    cap = cap_mod.calculer(scene, conv, regles, terrain)
+    cap = cap_mod.calculer(scene, conv, regles, terrain, type_projet)
     checks = ctrl_mod.verifier_geometrie(scene, terrain, conv, cap, regles)
     controles = ctrl_mod.controles_reglementaires(scene, terrain, conv, cap, regles)
     geo_ok = ctrl_mod.geometrie_valide(checks)
-    sans_echec = not any(c.resultat == ctrl_mod.ECHOUE for c in controles)
+    # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — l'ÉCHEC de HAIE paysagère (aire de stationnement trop proche du
+    # bâti) est un défaut d'AMÉNAGEMENT du pourtour, pas une impossibilité d'implantation : on le MONTRE en
+    # échec mesuré (rouge) sur le scénario dessiné, sans annuler la capacité (comme le contrôle de comptage du
+    # stationnement). Le verdict global le répercute (jamais « Exploitable » avec une haie en échec).
+    _HAIE_NOM = "Stationnement — haie paysagère"
+    # FIX-4 (LOT 1) — la LARGEUR DE DESSERTE (accès dessiné trop étroit) est, comme la haie, un défaut
+    # d'aménagement montré en rouge sans annuler la capacité (le scénario reste dessiné, verdict « À compléter »).
+    _ECHEC_HORS_FAIS = {_HAIE_NOM, "Largeur de desserte"}
+    sans_echec = not any(c.resultat == ctrl_mod.ECHOUE and c.nom not in _ECHEC_HORS_FAIS for c in controles)
     faisable = geo_ok and sans_echec
     # ETUDE-V6-2 (Lot 2) — faisable si l'on RETIRE le stationnement : on lève les DEUX contrôles que les
     # places consomment — « Stationnement » (comptage) ET « Perméabilité (pleine terre) » (le parking
@@ -183,7 +196,14 @@ def _resoudre_zone(session, idus: list[str]) -> str:
             "n'est chiffrable en zone A ou N.",
             zone_dominante=zs.zone)
     cons.sort(key=lambda p: p.get("pct") or 0.0, reverse=True)
-    return cons[0]["zone"]
+    # ETUDE-STATIONNEMENT-FIX-3 (LOT 2, assemblage) — sur un assemblage de zones, on lit les règles et on
+    # implante sur la partie où l'HABITAT ORDINAIRE est admis, pas sur la plus grande part : UE/UT (habitat
+    # réservé au gardiennage/fonction) + UB → on retient UB. Sinon (aucune part n'admet un vrai programme
+    # d'habitation) on garde la part dominante (le refus « logement de fonction » est géré en aval).
+    insee = idus[0][:5]
+    from .service import _logement_fonction_seulement
+    habitat = [p for p in cons if p.get("zone") and not _logement_fonction_seulement(insee, p["zone"])]
+    return (habitat or cons)[0]["zone"]
 
 
 def _simplicite_forme(forme: str) -> int:
@@ -228,11 +248,21 @@ def _charger(session, idus, zone, conv, avec_pente):
             # (RNU / zone A/N) plutôt que de retomber sur un défaut.
             zone = _resoudre_zone(session, idus)
         regles = regles_mod.charger(insee, zone)
+        # ETUDE-STATIONNEMENT-FIX-3 (reliquat) — habitat admis sous condition d'un schéma d'affectation non lu
+        # (Saint-Louis UZ) : on marque l'admission « à vérifier » sur les règles (le contrôle la rendra visible).
+        from dataclasses import replace as _replace
+        from .service import _habitat_sous_schema
+        _hv = _habitat_sous_schema(insee, zone)
+        if _hv is not None:
+            regles = _replace(regles, habitat_a_verifier=_hv)
         terrain = terrain_mod.charger(
             session, idus,
             recul_voie_m=regles.recul_voie.valeur or 0.0,
             recul_separative_m=regles.recul_separatives.valeur or 0.0,
             inset_m=conv.inset_zone_m, avec_pente=avec_pente,
+            # assemblage : l'implantation se trace sur la part de la zone RETENUE (habitat admis), pas sur
+            # toute la famille U (sinon des logements se dessinent en UE/économique — cf. L'Étang-Salé).
+            zone_cible=zone,
         )
     finally:
         if fermer:
@@ -241,7 +271,7 @@ def _charger(session, idus, zone, conv, avec_pente):
 
 
 def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnement_mode="aerien",
-                niveaux_sous_sol=1, ordre="objectif", budget_override=None):
+                niveaux_sous_sol=1, ordre="objectif", budget_override=None, type_projet="collectif"):
     """Parcourt la grille ORDONNÉE forme×niveaux×fraction et renvoie (ranked, candidats) :
     `ranked` = liste des candidats FAISABLES, triée par la clef d'objectif décroissante, chaque
     item = (clef, paquet, forme, niveaux, fraction). `candidats` = la trace complète.
@@ -280,19 +310,29 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
             except Exception:  # noqa: BLE001 — la simplification ne doit jamais casser l'étude
                 pass
     frame = Frame.depuis(terrain.zone_implantation)
-    # budget par défaut 22 s : laisse une marge confortable sous la borne API (etude_timeout_s=60) pour le
-    # chargement (LiDAR), l'assemblage du payload, les planches SVG et les enrichissements du worker.
+    # ETUDE-FIABLE-1 (LOT A) — le RÉSULTAT est décidé par un NOMBRE de candidats (constante de config),
+    # pas par le temps : même machine lente ou rapide, on examine les MÊMES N premiers candidats de la
+    # grille ordonnée → même meilleur candidat → même chiffre. Le TEMPS (`garde_fou_s`) n'est qu'un FILET :
+    # s'il coupe AVANT d'avoir examiné les N prévus, on marque la recherche « partielle » (honnête).
+    from ..config import get_settings
+    _s = get_settings()
+    max_candidats = int(_s.etude_grille_max_candidats)
+    # Le 2ᵉ passage « faisable-probable » (repli) garde son early-stop à 3 faisables et un garde-fou temps
+    # ADAPTÉ (budget_override) : il ne sert qu'à PROUVER qu'une implantation tient sur une assiette que le
+    # 1ᵉʳ passage n'a pas su remplir — jamais à arbitrer un chiffre servi.
     if budget_override is not None:
-        budget_s = float(budget_override)
+        garde_fou_s = float(budget_override)
     else:
-        try:
-            budget_s = float(os.environ.get("LABUSE_ETUDE_GRILLE_BUDGET_S", "22"))
-        except (TypeError, ValueError):
-            budget_s = 22.0
+        garde_fou_s = float(_s.etude_grille_garde_fou_s)
+    # grille PLANIFIÉE : nb de candidats que la grille complète contient, borné par la constante de config.
+    total_grille = len(_FORMES) * len(_NIVEAUX) * len(fractions)
+    prevu = min(max_candidats, total_grille)
+    terrain.grille_candidats_prevus = prevu
     t0 = time.monotonic()
     candidats: list[Candidat] = []
     faisables: list = []
     coupe = False
+    garde_fou = False
     for forme in _FORMES:
         if coupe:
             break
@@ -300,9 +340,13 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
             if coupe:
                 break
             for fraction in fractions:
+                # PLAFOND DÉTERMINISTE (décide du résultat) — on n'examine que les N premiers candidats.
+                if len(candidats) >= max_candidats:
+                    coupe = True
+                    break
                 paquet, cand = _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction,
                                         repartition=repartition, stationnement_mode=stationnement_mode,
-                                        niveaux_sous_sol=niveaux_sous_sol)
+                                        niveaux_sous_sol=niveaux_sous_sol, type_projet=type_projet)
                 candidats.append(cand)
                 if paquet is not None:
                     _scene, cap, _ctrl, _chk, _geo, statut = paquet
@@ -314,23 +358,36 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
                     if ordre == "faisable_probable" and len(faisables) >= 3:
                         coupe = True
                         break
-                # BUDGET DE TEMPS (garde-fou DUR) — on borne la recherche INCONDITIONNELLEMENT : passé le
-                # budget, on s'arrête et on rend le MEILLEUR candidat trouvé (ou « simulation impossible » si
-                # aucun). La recherche ne franchit JAMAIS la borne de l'API → plus de 503 (D-003/E-057).
-                if (time.monotonic() - t0) > budget_s:
+                # GARDE-FOU TEMPS (filet, PAS le résultat) — si le temps file avant d'avoir examiné les N
+                # candidats prévus (assiette très lourde), on s'arrête SOUS la borne API et on le DIT
+                # (« recherche partielle »). Sur les témoins, N est atteint bien avant ce filet.
+                if (time.monotonic() - t0) > garde_fou_s:
                     coupe = True
-                    terrain.grille_budget_atteint = True
+                    garde_fou = True
                     break
+    # état de recherche : complète = on a examiné tous les candidats PRÉVUS sans que le filet temps coupe.
+    examines = len(candidats)
+    terrain.grille_candidats_examines = examines
+    if garde_fou:
+        terrain.grille_garde_fou_temps = True          # filet déclenché → recherche partielle (non reproductible)
+        terrain.grille_budget_atteint = True           # compat repli (déclenche le 2ᵉ passage si rien trouvé)
+    if ordre == "objectif":
+        terrain.grille_complete = (examines >= prevu) and not garde_fou
     faisables.sort(key=lambda it: it[0], reverse=True)
     return faisables, candidats
 
 
-# ENVELOPPE DE CALCUL GLOBALE (1ᵉʳ passage + repli), bornée bien SOUS le timeout API (etude_timeout_s=60) :
+# ENVELOPPE DE CALCUL GLOBALE (1ᵉʳ passage + repli), bornée bien SOUS le timeout API (etude_timeout_s=120) :
 # il reste ~20 s pour le chargement LiDAR, l'assemblage du payload et le rendu des planches. Sur un très gros
 # contour, une SEULE évaluation peut coûter ~10 s ; le repli ne démarre que s'il reste de la marge, et son
 # budget est plafonné par ce qui RESTE sous l'enveloppe — jamais un 2ᵉ budget plein qui empilerait les
 # dépassements et ferait franchir la borne (c'était la cause du 57,9 s mesuré).
-_ENVELOPPE_CALCUL_S = 40.0
+# ETUDE-PLAFOND-1 — enveloppe portée de 40 à 100 s en même temps que la borne (60→120) et le filet (57→100) :
+# à 40 s elle devenait une limite BASSE orpheline qui AFFAMAIT le 2ᵉ passage (repli de récupération) sur la
+# prod ~1,7× plus lente, alors que la borne autorise désormais 120 s. Le repli ne fait qu'AJOUTER des
+# faisables quand le 1ᵉʳ passage n'en a trouvé aucun → le résultat ne peut pas BAISSER. On garde ~20 s de
+# marge sous la borne (100 vs 120) pour le post-traitement, comme l'ancien ratio 40 vs 60.
+_ENVELOPPE_CALCUL_S = 100.0
 
 
 def _budget_repli(terrain, restant: float) -> float:
@@ -384,6 +441,10 @@ def _scenario_vide(terrain, conv, regles, objectif, candidats) -> Scenario:
 def _paquet_en_scenario(terrain, conv, regles, objectif, candidats, item) -> Scenario:
     _clef_, paquet, forme, niveaux, _frac = item
     scene, cap, controles, checks, _geo, statut = paquet
+    # CAPACITE-1 (D1) — AFFICHAGE : la faisabilité/le statut ci-dessus sont DÉJÀ décidés (verdict
+    # géométrique du moteur) ; on n'ajuste QUE la ligne affichée du contrôle de stationnement (barème
+    # par logement → « À confirmer », jamais « Réussi » avec une règle qui ne s'applique pas).
+    ctrl_mod.afficher_stationnement_a_confirmer(controles, regles)
     return Scenario(terrain, conv, regles, scene, cap, controles, checks, statut, forme, niveaux,
                     objectif, candidats, terrain.note_limites)
 
@@ -552,27 +613,39 @@ def _plafond_l151(session, idus, type_projet, bareme):
     (ratio, article, citation) ou None. L151-35 (résid. univ/social/RPA) : ≤ 1 /logt, ≤ 0,5 si < 800 m
     d'un transport collectif bien desservi. L151-36 (autres logements) : ≤ 1 si < 800 m.
     FAISA-REGLES-1 (E-056) — rayon porté de 500 à 800 m par la loi n° 2025-1129 du 26 novembre 2025."""
-    plu = bareme.flat_places if (bareme.validee and bareme.mode == "par_logement") else None
     dist = _tcsp_dist_m(session, idus)
     sous_800 = dist is not None and dist < 800
     if type_projet in _L15134_F6:
-        cap, art = (0.5 if sous_800 else 1.0), "L151-35"
+        # ETUDE-STATIONNEMENT-FIX-3 (LOT 3) — L151-35 distingue les catégories : le logement locatif AIDÉ est
+        # plafonné à 1 place/logt (0,5 si < 800 m d'un TCSP BIEN DESSERVI) ; les RÉSIDENCES UNIVERSITAIRES et
+        # les établissements pour PERSONNES ÂGÉES sont plafonnés à 0,5 place/logt (règle propre à ces usages).
+        # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — le 0,5 du logement AIDÉ dépend de la QUALITÉ de la desserte, que
+        # LABUSE ne connaît pas (seule la distance est mesurée) : il n'est PLUS appliqué d'office. Par défaut le
+        # plafond aidé reste à 1 /logt (base L151-35) ; le 0,5 est porté comme POSSIBLE « si la desserte le
+        # permet » (champ `conditionnel`), affiché mais non imposé. Univ/âgées : 0,5 ferme (usage, pas desserte).
+        if type_projet in ("senior", "etudiante"):
+            cap, conditionnel = 0.5, None
+        else:
+            cap = 1.0
+            conditionnel = 0.5 if sous_800 else None
+        art = "L151-35"
         cat = _CAT_L15134.get(type_projet, "catégorie L151-34")
+        _cond = (f" ; plafond de 0,5 place/logement POSSIBLE si la qualité de la desserte (transport collectif "
+                 f"bien desservi, < 800 m, loi 2025-1129) est ÉTABLIE — non imposé d'office"
+                 if conditionnel else "")
         cite = (f"Code de l'urbanisme L151-35 : pour une {cat}, il ne peut être exigé plus de {cap:g} "
-                f"aire de stationnement par logement"
-                + (" (terrain à moins de 800 m d'un transport collectif bien desservi, loi 2025-1129)" if sous_800 else "")
+                f"aire de stationnement par logement" + _cond
                 + " — le PLU ne s'applique que s'il est plus favorable ; éligibilité de la catégorie à confirmer.")
     elif type_projet == "collectif" and sous_800:
-        cap, art = 1.0, "L151-36"
+        # L151-36 collectif : le plafond de 1 /logt tient à la seule desserte (< 800 m bien desservie) → lui
+        # aussi CONDITIONNEL (qualité non établie par LABUSE) : non imposé d'office, affiché comme possible.
+        cap, conditionnel, art = None, 1.0, "L151-36"
         cite = ("Code de l'urbanisme L151-36 : à moins de 800 m d'un transport collectif bien desservi (loi "
                 "2025-1129 du 26/11/2025), il ne peut être exigé plus de 1 aire de stationnement par logement "
-                "— le PLU ne s'applique que s'il est plus favorable.")
+                "— plafond POSSIBLE si la qualité de la desserte est établie, non imposé d'office.")
     else:
         return None
-    # la loi ne « mord » que si elle plafonne SOUS la règle du PLU par logement.
-    if plu is not None and cap >= plu:
-        return None
-    return cap, art, cite
+    return cap, art, cite, conditionnel
 
 
 def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Optional[str] = None,
@@ -597,18 +670,39 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
     # transport collectif bien desservi. L151-36 : autres logements < 500 m → au plus 1. On remplace
     # alors le barème servi par ce plafond, et la citation dit la règle RETENUE (loi, article).
     _art151, _cite151 = "L151-35 (plafond national)", None
+    from dataclasses import replace
+    from .regles import BaremeStationnement, DESTINATION_PAR_PROJET
+    # ETUDE-STATIONNEMENT-FIX-2 (LOT 2) — le plafond national (L151-35/36) est un PLAFOND : il ne peut que
+    # faire BAISSER l'exigence locale, jamais la relever, et il s'applique MÊME quand le PLU sert une ligne
+    # dédiée (contrairement à FIX-1 qui le court-circuitait sur ligne dédiée). On l'ATTACHE donc au barème
+    # typé comme une borne (`plafond_national`), et `exiger` retient le min. Il ne REMPLACE le barème que
+    # (a) sur demande explicite de l'UI (`stationnement_ratio` passé) ou (b) quand il n'y a PAS de barème
+    # local validé — pour pouvoir chiffrer une capacité sous régime réduit.
+    _plaf = None
+    _art151, _cite151 = "L151-35 (plafond national)", None
     if stationnement_ratio is None and type_projet:
         _r151 = _plafond_l151(session, idus, type_projet, regles.stationnement)
         if _r151 is not None:
-            stationnement_ratio, _art151, _cite151 = _r151
+            _ratio, _art151, _cite151, _cond151 = _r151
+            # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — on n'attache le plafond comme BORNE que s'il est APPLIQUÉ
+            # d'office (`_ratio` non None : univ/âgées 0,5, ou base aidée 1). Le plafond CONDITIONNEL à la
+            # desserte (social 0,5, collectif 1) n'est PAS imposé ; il reste affiché « possible si desserte
+            # établie » par `_stationnement_regimes`. L'exigence locale est donc gardée par défaut.
+            if _ratio is not None:
+                _plaf = {"ratio": _ratio, "article": _art151, "citation": _cite151}
     if stationnement_ratio is not None:
-        from dataclasses import replace
-
-        from .regles import BaremeStationnement
+        # régime réduit choisi dans l'UI : on remplace le barème par le plafond par logement.
         regles = replace(regles, stationnement=BaremeStationnement(
             validee=True, mode="par_logement", base=None, arrondi="superieur",
             flat_places=stationnement_ratio, lignes=(), article=_art151,
             page_pdf=None, citation=_cite151 or f"plafond {stationnement_ratio:g} place / logement sous condition d'éligibilité"))
+    elif _plaf is not None and regles.stationnement.validee:
+        # barème local validé : on l'ATTACHE comme borne (ne relève jamais, s'applique à la ligne dédiée).
+        regles = replace(regles, stationnement=replace(regles.stationnement, plafond_national=_plaf))
+    # ETUDE-STATIONNEMENT-FIX-3 (LOT 3) — barème local ABSENT : le plafond national NE DEVIENT JAMAIS un
+    # minimum « validé ». C'est un MAXIMUM : sans minimum local, le stationnement reste « non vérifié » et le
+    # plafond n'est affiché que comme borne « à confirmer » (par `_stationnement_regimes.plafond_national`).
+    # (Avant, on fabriquait un barème validee=True au ratio du plafond → le plafond servait de minimum, faux.)
     zi = terrain.zone_implantation
     if zi is None or zi.is_empty or terrain.aire_zone_m2 < 60:
         return ([], [], None,
@@ -616,7 +710,8 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
                 terrain, regles, conv, None)
     faisables, candidats = _rechercher_avec_repli(terrain, regles, conv, objectif, repartition=repartition,
                                                   stationnement_mode=stationnement_mode,
-                                                  niveaux_sous_sol=niveaux_sous_sol)
+                                                  niveaux_sous_sol=niveaux_sous_sol,
+                                                  type_projet=(type_projet or "collectif"))
     if not faisables:
         return ([], [], None,
                 _message_impossible(terrain, regles, candidats, conv, stationnement_mode),

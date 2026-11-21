@@ -45,16 +45,23 @@ const CAUSE_COURT: Record<string, string> = {
   redhibitoire: 'rédhibitoire',
   capacite_nulle: 'capacité nulle',
   bati_non_ingere: 'bâti non estimé',
+  habitat_interdit: 'habitat interdit',
 }
 const causeCourt = (c?: string | null): string | null => {
   if (!c) return null
   if (c.startsWith('zone_non_constructible') || c.startsWith('zone_non_resolue')) return 'zone non constructible'
-  return CAUSE_COURT[c] ?? c.replace(/_/g, ' ')
+  // CHIRURGICAL-FIX-1 (E112a) — une cause « code:ZONE » (ex. « habitat_interdit:UE ») était rendue
+  // brute « habitat interdit:UE » (deux-points + code). On écrit la cause EN CLAIR, zone entre parenthèses.
+  const [head, zone] = c.split(':')
+  const libelle = CAUSE_COURT[head] ?? head.replace(/_/g, ' ')
+  return zone ? `${libelle} (zone ${zone})` : libelle
 }
 
 // RETOURS-29 (Comparatif v2, maquette 15-comparatif-v2) — SEULES les lignes que l'API sert, dans l'ordre
 // de la maquette. AUCUN classement LABUSE, AUCUNE puce de vente, AUCUN prix de marché (hors maquette).
-const PROPRIO: Record<string, string> = { morale: 'personne morale', public: 'public', particulier: 'particulier', succession: 'succession', indivision: 'indivision' }
+// CHIRURGICAL-FIX-1 (LOT H pt4) — « non déterminé » quand LABUSE n'a pas identifié le propriétaire
+// (ni personne morale) : même libellé que le Dossier et la fiche. Plus de « particulier » affirmé à tort.
+const PROPRIO: Record<string, string> = { morale: 'personne morale', public: 'public', particulier: 'particulier', succession: 'succession', indivision: 'indivision', non_determine: 'non déterminé' }
 const ROWS: Row[] = [
   // TERRAIN
   { label: 'Surface', prov: 'source', bar: true, best: 'hi', num: (r) => r.surface_m2 ?? null,
@@ -68,9 +75,14 @@ const ROWS: Row[] = [
   { label: 'Hauteur autorisée', prov: 'source', best: 'hi', num: (r) => r.gabarit_niveaux_max ?? null,
     val: (r) => r.gabarit_niveaux_max != null ? `R+${Math.max(0, r.gabarit_niveaux_max - 1)}${r.gabarit_combles ? ' + combles' : ''}` : '—',
     title: '« + combles » = niveau de combles aménageables sous un toit dont le faîtage domine l\'égout d\'au moins 1,80 m.' },
+  // OUTILS-P1-1 (pt 3) — « PLU sans plafond d'emprise » SEULEMENT si une règle est identifiée (silence
+  // prouvé du règlement) ; sinon « Règle non renseignée » (on ne sait pas). Plus de « non réglementée »
+  // qui confondait les deux.
   { label: 'Emprise au sol maximale', prov: 'source', best: 'hi', num: (r) => r.emprise_ces_pct ?? null,
-    val: (r) => r.emprise_ces_pct != null ? `${fmtInt(r.emprise_ces_pct)} %` : 'non réglementée',
-    title: 'Emprise au sol maximale fixée par le règlement de la zone (CES) — « non réglementée » si le PLU n\'en fixe pas.' },
+    val: (r) => r.emprise_ces_pct != null ? `${fmtInt(r.emprise_ces_pct)} %`
+      : r.emprise_ces_etat === 'sans_plafond' ? 'PLU sans plafond d\'emprise'
+      : 'Règle non renseignée',
+    title: 'Emprise au sol maximale fixée par le règlement de la zone (CES). « PLU sans plafond d\'emprise » = le règlement ne fixe pas de plafond (silence prouvé) ; « Règle non renseignée » = aucune règle d\'emprise identifiée pour la zone.' },
   // POTENTIEL CONSTRUCTIBLE
   { label: 'Plancher possible · bâti conservé', prov: 'estime', bar: true, best: 'hi', num: (r) => r.sdp_residuelle_m2 ?? null,
     val: (r) => {
@@ -82,7 +94,7 @@ const ROWS: Row[] = [
     title: 'Surface de plancher qui reste à bâtir en gardant le bâti existant.' },
   { label: 'Plancher possible · reconstruction', prov: 'estime', bar: true, best: 'hi', num: (r) => r.sdp_max_m2 ?? null,
     val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—',
-    title: 'Surface de plancher maximale réglementaire, terrain libéré (après démolition du bâti existant).' },
+    title: 'Surface de plancher estimée, terrain libéré (après démolition du bâti existant) — estimation : emprise × occupation (hypothèse) × niveaux, pas un maximum réglementaire.' },
   { label: 'Part du gabarit déjà occupée', prov: 'estime', best: 'lo', num: (r) => r.taux_emprise_pct ?? null,
     val: (r) => fmtTauxEmprise(r.taux_emprise_pct),
     title: 'Bâti existant ÷ emprise constructible (plus bas = plus de marge à bâtir). Au-delà de 100 % : « Saturé ».' },
@@ -90,12 +102,14 @@ const ROWS: Row[] = [
     val: (r) => r.charge_fonciere_m2 != null ? `${fmtInt(r.charge_fonciere_m2)} €/m²` : '—',
     title: 'Charge foncière supportable ramenée au m² de terrain — plus haut = plus intéressant (négatif = l\'opération ne dégage rien pour le foncier).' },
   // RISQUES ET CONTRAINTES
-  { label: 'Assainissement', prov: 'source', val: (r) => r.assainissement ?? '—',
-    title: 'Desserte d\'assainissement — souvent un constat de secteur (statistique), pas un raccordement vérifié à la parcelle.' },
+  // OUTILS-P1-1 (pt 3) — statistique de SECTEUR (zonage d'assainissement par secteur, pas un
+  // raccordement vérifié à la parcelle) : préfixée « Secteur : » pour le dire sans ambiguïté.
+  { label: 'Assainissement', prov: 'source', val: (r) => r.assainissement ? `Secteur : ${r.assainissement}` : '—',
+    title: 'Desserte d\'assainissement — constat de SECTEUR (statistique du zonage d\'assainissement), pas un raccordement vérifié à la parcelle. D\'où le préfixe « Secteur : ».' },
   { label: 'Contraintes relevées', prov: 'source',
-    val: (r) => (r.contraintes ?? []).length ? `${(r.contraintes ?? []).length} relevée${(r.contraintes ?? []).length > 1 ? 's' : ''}` : 'aucune relevée',
+    val: (r) => { const n = dedupContraintes(r.contraintes ?? []).length; return n ? `${n} relevée${n > 1 ? 's' : ''}` : 'aucune relevée' },
     render: (r) => {
-      const cs = r.contraintes ?? []
+      const cs = dedupContraintes(r.contraintes ?? [])
       if (!cs.length) return <span className="text-txt-dim">aucune relevée</span>
       return (
         <div className="flex flex-wrap gap-1">
@@ -124,6 +138,20 @@ const SECTION_OF: Record<string, Section> = {
 function contrainteCourt(c: string): string {
   const court = c.split(/\s[—·:(]/)[0].trim()
   return court.length > 34 ? `${court.slice(0, 32)}…` : court
+}
+
+// CHIRURGICAL-FIX-1 (E112b) — une même contrainte (même libellé COURT) pouvait apparaître plusieurs
+// fois (un aléa par niveau : « Aléa mouvement de terrain » ×3, « Aléa inondation » ×2…). On
+// DÉDOUBLONNE par le libellé affiché : une puce par contrainte distincte (la 1re infobulle complète
+// est conservée), et le compteur suit le nombre de puces distinctes.
+function dedupContraintes(cs: string[]): string[] {
+  const vus = new Set<string>()
+  const out: string[] = []
+  for (const c of cs) {
+    const k = contrainteCourt(c)
+    if (!vus.has(k)) { vus.add(k); out.push(c) }
+  }
+  return out
 }
 
 // RETOURS-29 (maquette 15) — badge de provenance en OUTLINE : « sourcé » (vert) / « estimé » (ambre).

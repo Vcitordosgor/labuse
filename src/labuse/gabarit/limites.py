@@ -119,6 +119,10 @@ class Edge:
     ring: Optional[int] = None          # index de l'anneau extérieur (adjacence cyclique par anneau)
     attached: bool = False              # GABARIT-6 : micro-arête résiduelle rattachée à sa voisine
     all_short: bool = False             # GABARIT-6 (b) : run nonclass dont TOUS les chunks font < 1 m
+    cadastrale: bool = True             # MOTEUR-VERITE-FIX-4 LOT 1 : l'arête est un (morceau de)
+    #  CÔTÉ DU CONTOUR CADASTRAL de la parcelle. False = coupe interne de zonage / ligne hors du
+    #  contour (portion multizone) : elle garde son retrait mais n'est JAMAIS posée en limite 0 m
+    #  ni comptée dans le budget « une limite / deux limites »
 
 
 @dataclass
@@ -337,6 +341,115 @@ def _attach_residual_microedges(edges: list[Edge], rings: list, *,
     return n_attached
 
 
+def _split_cotes(edges: list[Edge], cadastre_boundary: Optional[BaseGeometry] = None, *,
+                 neighbors: Optional[list[BaseGeometry]] = None,
+                 angle_deg: float = 25.0, tol_cadastre: float = 1.0,
+                 min_part_m: float = 1.0, tol_voie: float = 0.75,
+                 tol_voisin: float = 1.0) -> list[Edge]:
+    """MOTEUR-VERITE-FIX-4 LOT 1 — une limite séparative est un CÔTÉ du contour cadastral, partagé
+    avec une parcelle voisine. Jamais une coupe interne, jamais une ligne hors du contour, jamais
+    une polyligne qui fait le tour. Cette passe :
+
+    · FUSIONNE les chaînes séparatives contiguës (le classement par tronçon ne typait « latérale »
+      que les tronçons collés à la voie — le reste d'un même côté partait en « fond ») puis les
+      DÉCOUPE en CÔTÉS aux changements de direction francs (> `angle_deg`) : le budget « une
+      limite / deux limites » se compte sur des côtés, plus sur une polyligne qui en réunit trois
+      (AI1063, relecture FIX-4) ;
+    · TYPE chaque côté par la définition de l'article : LATÉRALE = aboutit à la voie (une
+      extrémité au contact d'une arête voie, ≤ `tol_voie`) ; FOND = le reste ;
+    · COUPE au CHANGEMENT DE VOISIN : une limite séparative est partagée avec UNE parcelle
+      voisine — un côté droit longé par deux voisins est DEUX limites (AT0753 : 29,4 m + 11,5 m
+      servis comme « un côté » de 40,9 m, relecture FIX-4) ;
+    · QUALIFIE chaque côté `cadastrale` : sur une portion multizone, les segments à plus de
+      `tol_cadastre` du contour cadastral réel (coupe interne de zonage, tracé GPU hors contour —
+      AE0114 16,3 m, AV1339 ~37 m) sont séparés et marqués `cadastrale=False` ;
+    · NE TOUCHE PAS aux anneaux fermés (garde FIX-3) ni aux arêtes voie / non classées.
+    """
+    import math
+
+    from shapely.geometry import Point
+    from shapely.ops import linemerge
+
+    voie_geoms = [e.geom for e in edges if e.type == "voie"]
+    seps = [e for e in edges if e.type in ("side", "rear")
+            and not getattr(e.geom, "is_ring", False)]
+    if not seps:
+        return edges
+    out = [e for e in edges if e not in seps]
+    merged = linemerge([e.geom for e in seps])
+    lines = ([merged] if merged.geom_type == "LineString"
+             else [g for g in merged.geoms if g.geom_type == "LineString"])
+    for line in lines:
+        if getattr(line, "is_ring", False):
+            # chaîne refermée sur elle-même (enclave) : garde FIX-3, jamais posée en limite
+            out.append(Edge(line, "rear", line.length, cadastrale=True))
+            continue
+        coords = list(line.coords)
+        segs = []
+        for i in range(len(coords) - 1):
+            seg = LineString([coords[i], coords[i + 1]])
+            mid = seg.interpolate(0.5, normalized=True)
+            cad = True
+            if cadastre_boundary is not None:
+                cad = mid.distance(cadastre_boundary) <= tol_cadastre
+            vid = None
+            if neighbors:
+                best = None
+                for k, g in enumerate(neighbors):
+                    d = mid.distance(g)
+                    if d <= tol_voisin and (best is None or d < best[0]):
+                        best = (d, k)
+                vid = best[1] if best else None
+            segs.append((coords[i], coords[i + 1], cad, vid))
+        parts: list[tuple[list, bool]] = []
+
+        def _cap(a, b):
+            return math.degrees(math.atan2(b[1] - a[1], b[0] - a[0]))
+
+        def _ecart(a, b):
+            d = (a - b) % 360.0
+            return min(d, 360.0 - d)
+
+        cur, cur_cad, cur_vid = [segs[0][0], segs[0][1]], segs[0][2], segs[0][3]
+        cap0 = _cap(segs[0][0], segs[0][1])
+        for i in range(1, len(segs)):
+            p0, p1, cad, vid = segs[i]
+            cap_seg = _cap(p0, p1)
+            cap_prec = _cap(cur[-2], cur[-1])
+            # rupture : changement de drapeau cadastral, CHANGEMENT DE VOISIN (une limite est
+            # partagée avec UNE parcelle voisine), angle franc local, OU dérive cumulée du cap
+            # depuis le début du côté (un vrai coin peut être une suite de petits angles)
+            if (cad != cur_cad
+                    or (vid is not None and cur_vid is not None and vid != cur_vid)
+                    or _ecart(cap_seg, cap_prec) > angle_deg
+                    or _ecart(cap_seg, cap0) > angle_deg):
+                parts.append((cur, cur_cad))
+                cur, cur_cad, cur_vid = [p0, p1], cad, vid
+                cap0 = cap_seg
+            else:
+                cur.append(p1)
+                if vid is not None:
+                    cur_vid = vid
+        parts.append((cur, cur_cad))
+        # micro-parts (< min_part_m) rattachées à la précédente (bruit de numérisation)
+        fused: list[tuple[list, bool]] = []
+        for pts, cad in parts:
+            if fused and LineString(pts).length < min_part_m:
+                fused[-1] = (fused[-1][0] + pts[1:], fused[-1][1])
+            else:
+                fused.append((pts, cad))
+        for pts, cad in fused:
+            part = LineString(pts)
+            t = "rear"
+            if voie_geoms:
+                p0, p1 = Point(part.coords[0]), Point(part.coords[-1])
+                if any(p0.distance(g) <= tol_voie or p1.distance(g) <= tol_voie
+                       for g in voie_geoms):
+                    t = "side"      # LATÉRALE : le côté ABOUTIT à la voie (définition de l'article)
+            out.append(Edge(part, t, part.length, cadastrale=cad))
+    return out
+
+
 # --------------------------------------------------------------------------- couche DB
 
 @dataclass
@@ -447,7 +560,21 @@ def classify_parcel_limits(session, parcel_id: int, *, emprises_publiques: bool 
     ), {"pid": parcel_id, **geom_param}).fetchall()
     roads = [Road(shp_wkt.loads(r[0]), r[1]) for r in rd_rows if r[0]]
 
-    res = summarize_edges(classify_edges(parcel, neighbors, roads, emprises_publiques=emprises_publiques,
-                                         private_roads=private_roads, voies_privees=voies_privees))
+    edges = classify_edges(parcel, neighbors, roads, emprises_publiques=emprises_publiques,
+                           private_roads=private_roads, voies_privees=voies_privees)
+    # MOTEUR-VERITE-FIX-4 LOT 1 — côtés cadastraux : sur une PORTION (multizone), le contour réel
+    # de la parcelle sert de référence (les lignes de découpe de zone et les tracés GPU hors du
+    # contour sont marqués cadastrale=False) ; dans tous les cas, les polylignes séparatives sont
+    # découpées en côtés aux angles francs (le budget se compte par côté).
+    cadastre_boundary = None
+    if sub_geom_wkt is not None:
+        brow = session.execute(text(
+            "SELECT ST_AsText(ST_Boundary(geom_2975)) FROM parcels WHERE id = :pid"),
+            {"pid": parcel_id}).first()
+        if brow and brow[0]:
+            cadastre_boundary = shp_wkt.loads(brow[0])
+    edges = _split_cotes(edges, cadastre_boundary,
+                         neighbors=[g for (g, _ir) in neighbors])
+    res = summarize_edges(edges)
     res.private_road = bool(private_roads)
     return res

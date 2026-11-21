@@ -393,6 +393,20 @@ def zone_destinations(commune: str, zone: str) -> dict:
             "referentiel": REF_SOURCE}
 
 
+def _avec_condition(libelle: str, condition: str | None) -> str:
+    """LOT K 3e — « Libellé (condition réelle, forme courte) » : la clause d'exception « sauf … »
+    jusqu'au premier « ; », pour nommer l'exception (gardiennage, 50 m²…) sans recopier tout l'article."""
+    if not condition:
+        return libelle
+    c = str(condition)
+    m = re.search(r"sauf\s*:?\s*(.+)", c, re.I | re.S)
+    court = (m.group(1) if m else c).split(";")[0].strip()
+    court = re.sub(r"\s*\([A-Za-z0-9.\s()]+\)\s*$", "", court).strip()   # retire le renvoi d'article final
+    if len(court) > 170:
+        court = court[:167].rstrip() + "…"
+    return f"{libelle} ({court})" if court else libelle
+
+
 def zone_resume(commune: str, zone: str) -> dict:
     """Résumé d'une zone pour la ligne « Destinations » de la fiche (X4.2) : principales
     autorisées / interdites / sous condition + seuil commerce, dépliable via `lignes`."""
@@ -408,7 +422,11 @@ def zone_resume(commune: str, zone: str) -> dict:
     grp = {"autorise": [], "interdit": [], "sous_condition": []}
     for l in lignes:
         eff = l.get("statut_effectif")
-        if eff in grp:
+        if eff == "sous_condition":
+            # CHIRURGICAL-FIX-1 (LOT K 3e) — NOMMER l'exception réelle (ex. AM0838/UE : logement de
+            # gardiennage, max 50 m²) au lieu d'un « Logement » sec « sous conditions ».
+            grp["sous_condition"].append(_avec_condition(l["libelle"], l.get("condition")))
+        elif eff in grp:
             grp[eff].append(l["libelle"])
     commerce = next(l for l in lignes if l["sous_destination"] == "artisanat_commerce_detail")
     return {"etat_calibration": t["etat_calibration"], "zone": t["zone"],
@@ -658,8 +676,20 @@ def _zone_regles_brut(doc: dict, zone: str) -> dict:
     if hit is None:
         return {}
     v = zones[hit]
-    if isinstance(v, dict) and v.get("regles"):
-        return v["regles"]
+    own = v.get("regles") if isinstance(v, dict) else None
+    if own and isinstance(v, dict) and v.get("renvoi") and "stationnement" not in own:
+        # ETUDE-STATIONNEMENT (merge moteur-verite) — un secteur porte ses règles de VOLUMÉTRIE propres MAIS
+        # renvoie le STATIONNEMENT à la zone mère (« se reporter au règlement de la zone mère »). On complète
+        # uniquement cette clé ABSENTE par celle de la cible du renvoi (sinon le barème renvoyé disparaît). On
+        # ne tire RIEN d'autre de la mère (mixité, pleine terre… restent propres au secteur : « sans objet »
+        # si absents) pour ne pas changer le reste du moteur.
+        cible = norm.get(_norm_zone(v["renvoi"]))
+        _stat = ((zones[cible].get("regles") or {}).get("stationnement")
+                 if cible is not None and cible != hit and isinstance(zones[cible], dict) else None)
+        if _stat is not None:
+            return {**own, "stationnement": _stat}
+    if own:
+        return own
     seen = {hit}
     while isinstance(v, dict) and v.get("renvoi") and not v.get("regles"):
         cible = norm.get(_norm_zone(v["renvoi"]))

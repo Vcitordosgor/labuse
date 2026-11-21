@@ -1,5 +1,20 @@
 # Estimer un bien
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On donne une adresse (→ parcelle) ou un lien d'annonce.
+> 2. L'outil retrouve les ventes comparables du secteur et les traits du bien.
+> 3. Il en déduit un prix au m², une fourchette et une fiabilité ; pour un lien, l'écart au marché.
+> 4. Il rend une estimation indicative et les ventes qui la fondent.
+> 5. Le « prix estimé » est en fait la médiane du secteur ; prudence sur les grands terrains.
+
+**Captures — l'outil en action**
+
+![Estimer un bien — Estimer un bien sur DH0076 (Saint-Paul, U2b) — prix estimé 6 275 €/m² (5 508–7 168), fiabilité Élevée sur 79 ventes comparables ; lecture foncière 21 425 000 €.](img/analyser-annonce.png)
+*Estimer un bien sur DH0076 (Saint-Paul, U2b) — prix estimé 6 275 €/m² (5 508–7 168), fiabilité Élevée sur 79 ventes comparables ; lecture foncière 21 425 000 €.*
+
+<!-- CCM -->
+
 Clé interne : `analyser-annonce` (num N1) · composant : `frontend/src/components/outils/AnalyserAnnonce.tsx` · endpoint principal : **`POST /radar/annonce/estimation3/{idu}`** (point unique ESTIMER-3) · PDF parcelle `/analyse-annonce/{idu}.pdf` (même point) · chemin lien (Radar seulement) : `POST /radar/annonce/analyser`, PDF `/analyse-annonce.pdf?url=…`.
 
 > Note de nommage : **`src/labuse/pige/estimer3.py` EXISTE** et c'est désormais le **cœur** du calcul (refonte ESTIMER-3 + ESTIMER-ECRAN-1, mergée le 11/11/2026). L'ancienne fiche disait « inexistant » : périmé. L'orchestration servie (écran == PDF == document) vit dans `estimer3.rapport3` ; l'endpoint `radar_annonce_estimation3` (`api.py` l. 2098) l'appelle ; l'adaptateur PDF `_est_bloc_depuis_estimer3` (`api.py` l. 2427) re-façonne le MÊME rapport sans recalculer. `marche_service.comparateur_bien/terrain` reste utilisé **en repli** (secteur) et pour le terrain nu ; `estimation_prix.py` ne fait toujours que la mise en forme.

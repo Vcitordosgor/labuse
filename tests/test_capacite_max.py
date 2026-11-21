@@ -43,9 +43,12 @@ def test_fiche_et_gabarit_portent_la_mention():
     # « les permis délivrés utilisent environ la moitié de ce maximum (médiane sur 6 601 permis) ».
     _gab = _lire("frontend/src/components/outils/Gabarit.tsx")
     assert "moitié de ce maximum" in _gab and "6 601 permis" in _gab
-    # RETOURS-28/29 — le Comparatif a RETIRÉ la ligne « Logements possibles » ; la capacité reste nommée
-    # « maximale réglementaire » (titre de la ligne « Plancher possible · reconstruction », maquette 15).
-    assert "maximale réglementaire" in _lire("frontend/src/components/compare/ComparePanel.tsx")
+    # RETOURS-28/29 — le Comparatif a RETIRÉ la ligne « Logements possibles ». CAPACITE-1 (B1) : la
+    # capacité de reconstruction est une ESTIMATION (occupation du gabarit = hypothèse), jamais un
+    # « maximum réglementaire » — le titre de la ligne « Plancher possible · reconstruction » le dit.
+    _cmp = _lire("frontend/src/components/compare/ComparePanel.tsx")
+    assert "Surface de plancher estimée" in _cmp and "maximum réglementaire" in _cmp
+    assert "maximale réglementaire" not in _cmp
 
 
 def test_copilote_porte_la_mention_sur_la_capacite():

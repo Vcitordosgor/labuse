@@ -1,0 +1,209 @@
+idu,fait,document,valeur
+97422000AD0887,estimer_prix_m2,ESTIMER,2500
+97422000AD0887,estimer_fourchette_m2,ESTIMER,2151-3300
+97422000AD0887,estimer_n_ventes_fiab,ESTIMER,13
+97422000AD0887,estimer_rayon_m,ESTIMER,500
+97422000AD0887,estimer_periode,ESTIMER,2022-2025
+97422000AD0887,estimer_type,ESTIMER,maison
+97422000AD0887,estimer_precision_pct,ESTIMER,28
+97422000AD0887,estimer_surface_m2,ESTIMER,1703
+97422000AD0887,estimer_marche_prix_median_maison,ESTIMER,2397
+97422000AD0887,estimer_marche_ventes_12m,ESTIMER,233
+97422000AD0887,ez_prix_median_bati_cercle,ETUDEZONE,2453
+97422000AD0887,ez_cercle_n_ventes,ETUDEZONE,12
+97422000AD0887,ez_cercle_periode_mois,ETUDEZONE,36
+97422000AD0887,ez_secteur_fiche_prix,ETUDEZONE,2577
+97422000AD0887,ez_secteur_fiche_n,ETUDEZONE,8
+97422000AD0887,ez_secteur_fiche_rayon_m,ETUDEZONE,500
+97422000AD0887,ez_annonces_suivies,ETUDEZONE,0
+97422000AD0887,ez_ventes_12m,ETUDEZONE,3
+97422000AD0887,ez_perimetre_ha,ETUDEZONE,312
+97416000HT0538,estimer_prix_m2_terrain_nu,ESTIMER,392
+97416000HT0538,estimer_total_terrain_eur,ESTIMER,200000
+97416000HT0538,estimer_fourchette_eur,ESTIMER,130000-270000
+97416000HT0538,estimer_n_ventes_fiab,ESTIMER,34
+97416000HT0538,estimer_scope,ESTIMER,secteur elargi (voisinage)
+97416000HT0538,estimer_precision_pct,ESTIMER,35
+97416000HT0538,estimer_surface_m2,ESTIMER,510
+97416000HT0538,estimer_marche_prix_median_maison,ESTIMER,3154
+97416000HT0538,estimer_marche_prix_median_appart,ESTIMER,2977
+97416000HT0538,ez_prix_median_bati_cercle,ETUDEZONE,2987
+97416000HT0538,ez_cercle_n_ventes,ETUDEZONE,118
+97416000HT0538,ez_secteur_fiche_prix,ETUDEZONE,2545
+97416000HT0538,ez_secteur_fiche_n,ETUDEZONE,36
+97416000HT0538,ez_annonces_suivies,ETUDEZONE,0
+97416000HT0538,ez_ventes_12m,ETUDEZONE,45
+97403000AR1517,estimer_prix_m2,ESTIMER,3582
+97403000AR1517,estimer_fourchette_m2,ESTIMER,2100-4068
+97403000AR1517,estimer_n_ventes_fiab,ESTIMER,25
+97403000AR1517,estimer_rayon_m,ESTIMER,500
+97403000AR1517,estimer_periode,ESTIMER,2022-2025
+97403000AR1517,estimer_precision_pct,ESTIMER,31
+97403000AR1517,estimer_marche_prix_median_maison,ESTIMER,2872
+97403000AR1517,ez_prix_median_bati_cercle,ETUDEZONE,3037
+97403000AR1517,ez_cercle_n_ventes,ETUDEZONE,36
+97403000AR1517,ez_secteur_fiche_prix,ETUDEZONE,3582
+97403000AR1517,ez_secteur_fiche_n,ETUDEZONE,26
+97403000AR1517,ez_annonces_suivies,ETUDEZONE,0
+97403000AR1517,ez_ventes_12m,ETUDEZONE,8
+97404000AM0838,estimer_prix,ESTIMER,Pas d'estimation : zone non constructible (UE)
+97404000AM0838,estimer_marche_prix_median_maison,ESTIMER,3888
+97404000AM0838,ez_prix_median_bati_cercle,ETUDEZONE,2742
+97404000AM0838,ez_cercle_n_ventes,ETUDEZONE,29
+97404000AM0838,ez_secteur_fiche_prix,ETUDEZONE,1909
+97404000AM0838,ez_secteur_fiche_n,ETUDEZONE,43
+97404000AM0838,ez_secteur_fiche_rayon_m,ETUDEZONE,1000
+97404000AM0838,ez_annonces_suivies,ETUDEZONE,0
+97404000AM0838,ez_ventes_12m,ETUDEZONE,11
+97417000AO0050,estimer_prix,ESTIMER,Pas d'estimation : zone non constructible (Pas)
+97417000AO0050,estimer_marche_prix_median_maison,ESTIMER,2121
+97417000AO0050,ez_prix_median_bati_cercle,ETUDEZONE,ABSENT (ligne non imprimee)
+97417000AO0050,ez_secteur_fiche_prix,ETUDEZONE,2188
+97417000AO0050,ez_secteur_fiche_n,ETUDEZONE,11
+97417000AO0050,ez_annonces_suivies,ETUDEZONE,0
+97417000AO0050,ez_ventes_12m,ETUDEZONE,3
+97411000IS0448,estimer_prix_m2,ESTIMER,2481
+97411000IS0448,estimer_fourchette_m2,ESTIMER,2000-3300
+97411000IS0448,estimer_n_ventes_fiab,ESTIMER,15
+97411000IS0448,estimer_rayon_m,ESTIMER,1000
+97411000IS0448,estimer_periode,ESTIMER,2022-2025
+97411000IS0448,estimer_precision_pct,ESTIMER,28
+97411000IS0448,estimer_marche_prix_median_maison,ESTIMER,3258
+97411000IS0448,ez_prix_median_bati_cercle,ETUDEZONE,2481
+97411000IS0448,ez_cercle_n_ventes,ETUDEZONE,15
+97411000IS0448,ez_secteur_fiche_prix,ETUDEZONE,2480
+97411000IS0448,ez_secteur_fiche_n,ETUDEZONE,21
+97411000IS0448,ez_annonces_suivies,ETUDEZONE,0
+97411000IS0448,ez_ventes_12m,ETUDEZONE,10
+97404000AY0153,estimer_prix_m2,ESTIMER,2652
+97404000AY0153,estimer_fourchette_m2,ESTIMER,1862-4952
+97404000AY0153,estimer_n_ventes_fiab,ESTIMER,28
+97404000AY0153,estimer_rayon_m,ESTIMER,500
+97404000AY0153,estimer_periode,ESTIMER,2022-2025
+97404000AY0153,estimer_precision_pct,ESTIMER,32
+97404000AY0153,estimer_marche_prix_median_maison,ESTIMER,3888
+97404000AY0153,ez_prix_median_bati_cercle,ETUDEZONE,3673
+97404000AY0153,ez_cercle_n_ventes,ETUDEZONE,54
+97404000AY0153,ez_secteur_fiche_prix,ETUDEZONE,2333
+97404000AY0153,ez_secteur_fiche_n,ETUDEZONE,43
+97404000AY0153,ez_annonces_suivies,ETUDEZONE,0
+97404000AY0153,ez_ventes_12m,ETUDEZONE,16
+97414000CO0153,estimer_prix,ESTIMER,Pas d'estimation : zone non constructible (A)
+97414000CO0153,estimer_marche_prix_median_maison,ESTIMER,2411
+97414000CO0153,ez_prix_median_bati_cercle,ETUDEZONE,2500
+97414000CO0153,ez_cercle_n_ventes,ETUDEZONE,12
+97414000CO0153,ez_secteur_fiche_prix,ETUDEZONE,3012
+97414000CO0153,ez_secteur_fiche_n,ETUDEZONE,22
+97414000CO0153,ez_annonces_suivies,ETUDEZONE,0
+97414000CO0153,ez_ventes_12m,ETUDEZONE,3
+97421000BN0260,estimer_prix,ESTIMER,Pas d'estimation : zone non constructible (A)
+97421000BN0260,estimer_marche_prix_median_maison,ESTIMER,1721
+97421000BN0260,ez_prix_median_bati_cercle,ETUDEZONE,ABSENT (ligne non imprimee)
+97421000BN0260,ez_secteur_fiche_prix,ETUDEZONE,1857
+97421000BN0260,ez_secteur_fiche_n,ETUDEZONE,63
+97421000BN0260,ez_secteur_fiche_scope,ETUDEZONE,commune entiere
+97421000BN0260,ez_annonces_suivies,ETUDEZONE,0
+97421000BN0260,ez_ventes_12m,ETUDEZONE,1
+97422000BW2635,estimer_prix_m2,ESTIMER,3522
+97422000BW2635,estimer_fourchette_m2,ESTIMER,2611-3951
+97422000BW2635,estimer_n_ventes_fiab,ESTIMER,65
+97422000BW2635,estimer_rayon_m,ESTIMER,1000
+97422000BW2635,estimer_periode,ESTIMER,2022-2025
+97422000BW2635,estimer_precision_pct,ESTIMER,30
+97422000BW2635,estimer_type,ESTIMER,appartement
+97422000BW2635,estimer_marche_prix_median_appart,ESTIMER,2093
+97422000BW2635,ez_prix_median_bati_cercle,ETUDEZONE,2886
+97422000BW2635,ez_cercle_n_ventes,ETUDEZONE,90
+97422000BW2635,ez_secteur_fiche_prix,ETUDEZONE,3000
+97422000BW2635,ez_secteur_fiche_n,ETUDEZONE,53
+97422000BW2635,ez_annonces_suivies,ETUDEZONE,0
+97422000BW2635,ez_ventes_12m,ETUDEZONE,42
+97412000CV0446,estimer_prix_m2_terrain_nu,ESTIMER,304
+97412000CV0446,estimer_total_terrain_eur,ESTIMER,168000
+97412000CV0446,estimer_fourchette_eur,ESTIMER,109000-227000
+97412000CV0446,estimer_n_ventes_fiab,ESTIMER,22
+97412000CV0446,estimer_scope,ESTIMER,secteur elargi (voisinage)
+97412000CV0446,estimer_precision_pct,ESTIMER,35
+97412000CV0446,estimer_surface_m2,ESTIMER,551
+97412000CV0446,estimer_marche_prix_median_maison,ESTIMER,2193
+97412000CV0446,ez_prix_median_bati_cercle,ETUDEZONE,2180
+97412000CV0446,ez_cercle_n_ventes,ETUDEZONE,31
+97412000CV0446,ez_secteur_fiche_prix,ETUDEZONE,2180
+97412000CV0446,ez_secteur_fiche_n,ETUDEZONE,17
+97412000CV0446,ez_annonces_suivies,ETUDEZONE,0
+97412000CV0446,ez_ventes_12m,ETUDEZONE,5
+97424000AO1198,estimer_prix,ESTIMER,Pas d'estimation : zone non constructible (Ub)
+97424000AO1198,estimer_marche_prix_median_maison,ESTIMER,2033
+97424000AO1198,estimer_surface_m2,ESTIMER,1
+97424000AO1198,ez_prix_median_bati_cercle,ETUDEZONE,ABSENT (ligne non imprimee)
+97424000AO1198,ez_secteur_fiche_prix,ETUDEZONE,2333
+97424000AO1198,ez_secteur_fiche_n,ETUDEZONE,86
+97424000AO1198,ez_secteur_fiche_scope,ETUDEZONE,commune entiere
+97424000AO1198,ez_annonces_suivies,ETUDEZONE,0
+97424000AO1198,ez_ventes_12m,ETUDEZONE,3
+97422000AD0887,comp_surface_m2,COMPARATIF_c1_constructibles,1703
+97422000AD0887,comp_surface_a_retenir,COMPARATIF_c1_constructibles,795 m2 (esquisse d'implantation)
+97422000AD0887,comp_charge_fonciere_eur_m2,COMPARATIF_c1_constructibles,-27
+97422000AD0887,comp_vefa_median_eur_m2,COMPARATIF_c1_constructibles,"~4785 (130 ventes VEFA/5ans, 4500-5000)"
+97422000AD0887,comp_prix_sortie_neuf_eur_m2,COMPARATIF_c1_constructibles,4318 (36 ventes)
+97416000HT0538,comp_surface_a_retenir,COMPARATIF_c1_constructibles,614 m2 (estimation rapide)
+97416000HT0538,comp_charge_fonciere_eur_m2,COMPARATIF_c1_constructibles,-66
+97416000HT0538,comp_vefa_median_eur_m2,COMPARATIF_c1_constructibles,~4931 (158 ventes VEFA/5ans)
+97416000HT0538,comp_prix_sortie_neuf_eur_m2,COMPARATIF_c1_constructibles,4258 (76 ventes)
+97403000AR1517,comp_surface_a_retenir,COMPARATIF_c1_constructibles,352 m2 (estimation rapide)
+97403000AR1517,comp_charge_fonciere_eur_m2,COMPARATIF_c1_constructibles,— (non chiffre)
+97404000AY0153,comp_charge_fonciere_eur_m2,COMPARATIF_c2_rouge_grandes,-34
+97404000AY0153,comp_surface_a_retenir,COMPARATIF_c2_rouge_grandes,99 m2 (estimation rapide)
+97404000AY0153,comp_vefa_median_eur_m2,COMPARATIF_c2_rouge_grandes,~4796 (66 ventes VEFA/5ans)
+97404000AY0153,comp_prix_sortie_neuf_eur_m2,COMPARATIF_c2_rouge_grandes,"4375 (repli ile, ecart ~27%)"
+97414000CO0153,comp_charge_fonciere_eur_m2,COMPARATIF_c2_rouge_grandes,— (non constructible)
+97414000CO0153,comp_vefa_ventes_5ans,COMPARATIF_c2_rouge_grandes,"5 (moins de 8, pas de fourchette)"
+97404000AM0838,comp_charge_fonciere_eur_m2,COMPARATIF_c2_rouge_grandes,— (non constructible)
+97404000AM0838,comp_vefa_median_eur_m2,COMPARATIF_c2_rouge_grandes,~4796 (66 ventes VEFA/5ans)
+97411000IS0448,comp_charge_fonciere_eur_m2,COMPARATIF_c3_cheval_public_copro,-10
+97411000IS0448,comp_surface_a_retenir,COMPARATIF_c3_cheval_public_copro,85 m2 (estimation rapide)
+97411000IS0448,comp_vefa_median_eur_m2,COMPARATIF_c3_cheval_public_copro,~4878 (355 ventes VEFA/5ans)
+97411000IS0448,comp_prix_sortie_neuf_eur_m2,COMPARATIF_c3_cheval_public_copro,4275 (77 ventes)
+97412000CV0446,comp_charge_fonciere_eur_m2,COMPARATIF_c3_cheval_public_copro,"— (non chiffre, SDP 241 maison hors cible collectif)"
+97412000CV0446,comp_surface_a_retenir,COMPARATIF_c3_cheval_public_copro,165 m2 (estimation rapide)
+97412000CV0446,comp_vefa_ventes_5ans,COMPARATIF_c3_cheval_public_copro,0 (moins de 8)
+97422000BW2635,comp_charge_fonciere_eur_m2,COMPARATIF_c3_cheval_public_copro,188
+97422000BW2635,comp_surface_a_retenir,COMPARATIF_c3_cheval_public_copro,3317 m2 (estimation rapide)
+97422000BW2635,comp_vefa_median_eur_m2,COMPARATIF_c3_cheval_public_copro,~4785 (130 ventes VEFA/5ans)
+97422000BW2635,comp_prix_sortie_neuf_eur_m2,COMPARATIF_c3_cheval_public_copro,4547 (10 ventes)
+97422000BW2635,comp_part_gabarit_occupee,COMPARATIF_c3_cheval_public_copro,44%
+97417000AO0050,comp_charge_fonciere,COMPARATIF_c4_rnu_exigu_salazie,— (non constructible)
+97417000AO0050,comp_surface_a_retenir,COMPARATIF_c4_rnu_exigu_salazie,—
+97424000AO1198,comp_charge_fonciere,COMPARATIF_c4_rnu_exigu_salazie,— (non constructible)
+97424000AO1198,comp_surface_a_retenir,COMPARATIF_c4_rnu_exigu_salazie,—
+97421000BN0260,comp_charge_fonciere,COMPARATIF_c4_rnu_exigu_salazie,— (non constructible)
+97421000BN0260,comp_surface_a_retenir,COMPARATIF_c4_rnu_exigu_salazie,—
+97417000AO0050,comp_vefa_ventes_5ans,COMPARATIF_c4_rnu_exigu_salazie,0 (moins de 8)
+97424000AO1198,comp_vefa_ventes_5ans,COMPARATIF_c4_rnu_exigu_salazie,0 (moins de 8)
+97421000BN0260,comp_vefa_ventes_5ans,COMPARATIF_c4_rnu_exigu_salazie,1 (moins de 8)
+estimer_lien_1,annonce_commune,ESTIMER_LIEN_1,L'Etang-Sale
+estimer_lien_1,annonce_type,ESTIMER_LIEN_1,Maison 5 pieces
+estimer_lien_1,annonce_prix_demande_eur,ESTIMER_LIEN_1,219000
+estimer_lien_1,annonce_surface_hab_m2,ESTIMER_LIEN_1,113
+estimer_lien_1,annonce_prix_m2_hab,ESTIMER_LIEN_1,1938
+estimer_lien_1,annonce_terrain_m2,ESTIMER_LIEN_1,230
+estimer_lien_1,lecture_bati_vs_commune_pct,ESTIMER_LIEN_1,-50
+estimer_lien_1,commune_prix_median_maison,ESTIMER_LIEN_1,3888
+estimer_lien_1,commune_n_ventes_maison,ESTIMER_LIEN_1,352
+estimer_lien_1,lecture_fonciere_valeur_terrain_eur,ESTIMER_LIEN_1,97000
+estimer_lien_1,terrain_prix_m2_nu,ESTIMER_LIEN_1,422
+estimer_lien_1,part_terrain_du_prix_pct,ESTIMER_LIEN_1,44
+estimer_lien_1,relevee_le,ESTIMER_LIEN_1,27/10/2026
+estimer_lien_2,annonce_commune,ESTIMER_LIEN_2,Le Tampon
+estimer_lien_2,annonce_type,ESTIMER_LIEN_2,Maison 4 pieces
+estimer_lien_2,annonce_prix_demande_eur,ESTIMER_LIEN_2,199500
+estimer_lien_2,annonce_surface_hab_m2,ESTIMER_LIEN_2,77
+estimer_lien_2,annonce_prix_m2_hab,ESTIMER_LIEN_2,2591
+estimer_lien_2,annonce_terrain_m2,ESTIMER_LIEN_2,515
+estimer_lien_2,lecture_bati_vs_commune_pct,ESTIMER_LIEN_2,+8
+estimer_lien_2,commune_prix_median_maison,ESTIMER_LIEN_2,2397
+estimer_lien_2,commune_n_ventes_maison,ESTIMER_LIEN_2,1738
+estimer_lien_2,lecture_fonciere_valeur_terrain_eur,ESTIMER_LIEN_2,135000
+estimer_lien_2,terrain_prix_m2_nu,ESTIMER_LIEN_2,263
+estimer_lien_2,part_terrain_du_prix_pct,ESTIMER_LIEN_2,68
+estimer_lien_2,relevee_le,ESTIMER_LIEN_2,27/10/2026

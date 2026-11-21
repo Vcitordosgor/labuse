@@ -47,6 +47,8 @@ function NumField({ label, value, onChange, unit, hint, dataAttr }: {
 
 // RETOURS-27 (pt 4) — pourcentages à la VIRGULE décimale (2,5 % · 0,4 %), jamais le point anglais.
 const pc = (v: number | null | undefined) => (v == null ? '—' : `${String(v).replace('.', ',')} %`)
+// OUTILS-P1-1 (pt 8) — date ISO (AAAA-MM-JJ) → JJ/MM/AAAA pour la date d'effet / la dernière vérification.
+const fmtJMA = (s: string | null | undefined) => (s && /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(0, 10).split('-').reverse().join('/') : (s ?? null))
 
 /** Case à cocher au gabarit LABUSE. */
 function CheckField({ label, checked, onChange, hint, dataAttr }: {
@@ -174,21 +176,33 @@ export function TaxeAmenagement() {
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
         <div className="flex items-center gap-1.5">
           <p className="label-caps text-[9.5px] text-txt-dim">Votre projet</p>
-          <Tip garder side="bottom" tip={`Estimez la taxe d'aménagement avant le dépôt du permis. Valeurs ${c.meta.annee} (CGI art. 1635 quater A et s.) ; à La Réunion, c'est la valeur forfaitaire hors Île-de-France qui s'applique (${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m²). La surface taxable = surface close et couverte > 1,80 m, garages et annexes INCLUS (≠ SDP). Le montant définitif est fixé par l'administration. Source : ${c.meta.source}.`}>
+          {/* OUTILS-P1-1 LOT3c (pt 10) — la DÉFINITION de la surface taxable (close+couverte > 1,80 m, garages
+              inclus) vit désormais en clair sous le champ (label + exemple) : on ne la répète plus dans le
+              « i », qui garde la MÉTHODE et les SOURCES (valeur forfaitaire, base légale, administration). */}
+          <Tip garder side="bottom" tip={`Estimez la taxe d'aménagement avant le dépôt du permis. Valeurs ${c.meta.annee} (CGI art. 1635 quater A et s.) ; à La Réunion, c'est la valeur forfaitaire hors Île-de-France qui s'applique (${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m²). Le montant définitif est fixé par l'administration. Source : ${c.meta.source}.`}>
             <span role="button" tabIndex={0} aria-label="Méthode et sources"
               className="flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[9px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
           </Tip>
         </div>
 
-        {/* Surface taxable — champ saisissable (texte, clavier numérique, sans flèches), « m² de surface taxable » à droite. */}
+        {/* OUTILS-P1-1 (pt 8) — le champ NOMME explicitement « Surface taxable (différente de la surface
+            de plancher) » et donne un exemple incluant un garage (la surface taxable inclut garages et
+            annexes clos et couverts, contrairement à la surface de plancher). */}
+        <label data-taxe-surface-label htmlFor="taxe-surface-input" className="label-caps text-[9.5px] leading-tight text-txt-dim">
+          Surface taxable <span className="text-txt-dim">(différente de la surface de plancher)</span>
+        </label>
         <div className="flex items-center gap-2">
           <input
-            data-taxe-field="surface" type="text" inputMode="numeric" aria-label="Surface taxable"
+            id="taxe-surface-input"
+            data-taxe-field="surface" type="text" inputMode="numeric" aria-label="Surface taxable (différente de la surface de plancher)"
             className="h-10 w-28 rounded-lg border border-line-2 bg-surface-3 px-3 text-[16px] font-mono tabular-nums text-txt-hi focus:border-mint focus:outline-none"
             placeholder="0" value={surface ?? ''}
             onChange={(e) => { const v = e.target.value.replace(/[^\d]/g, ''); setSurface(v === '' ? null : Number(v)) }} />
           <span className="text-[11px] text-txt-mut">m² de surface taxable</span>
         </div>
+        <p data-taxe-surface-exemple className="text-[10px] leading-snug text-txt-dim">
+          Surface close et couverte, sous une hauteur de plafond de plus de 1,80 m — garages et annexes INCLUS. Ex. : une maison de 100 m² + un garage de 20 m² = 120 m² de surface taxable.
+        </p>
 
         {/* Logement / Autre — segmented toggle. */}
         <div data-taxe-usage className="flex gap-1.5">
@@ -312,17 +326,35 @@ export function TaxeAmenagement() {
             </>
           )}
 
-          {/* Parts (composent la Taxe d'aménagement). */}
+          {/* Parts (composent la Taxe d'aménagement). OUTILS-P1-1 (pt 8) — CHAQUE taux montre sa SOURCE,
+              sa DATE D'EFFET et sa DERNIÈRE VÉRIFICATION, en clair sous la ligne du taux. */}
           {r.part_communale_eur != null && (
-            <div className="flex items-baseline justify-between gap-2 text-[11px]">
-              <span className="text-txt-mut">Part communale <span className="text-txt-dim">· {pc(r.taux_communal_pct)}{r.taux_communal_secteur_majore ? ' (majoré)' : ''}</span></span>
-              <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(r.part_communale_eur)}</span>
+            <div>
+              <div className="flex items-baseline justify-between gap-2 text-[11px]">
+                <span className="text-txt-mut">Part communale <span className="text-txt-dim">· {pc(r.taux_communal_pct)}{r.taux_communal_secteur_majore ? ' (majoré)' : ''}</span></span>
+                <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(r.part_communale_eur)}</span>
+              </div>
+              <p data-taxe-prov-communal className="pl-0.5 text-[9px] leading-snug text-txt-dim">
+                Source : {r.taux_communal_source === 'public' ? 'délibération communale (fichiers DGFiP)' : 'taux saisi'}
+                {r.taux_communal_delib_date ? ` · effet le ${fmtJMA(r.taux_communal_delib_date)}` : ''}
+                {c.meta.releve_le ? ` · vérifié le ${fmtJMA(c.meta.releve_le)}` : ''}
+                {r.taux_communal_perime ? ' · ⚠ non rafraîchi depuis plus d’un an' : ''}
+              </p>
             </div>
           )}
           {r.part_departementale_eur != null && (
-            <div className="flex items-baseline justify-between gap-2 text-[11px]">
-              <span className="text-txt-mut">Part départementale <span className="text-txt-dim">· {pc(r.taux_departemental_pct)}{!r.part_departementale_confirmee ? ', à confirmer' : ''}</span></span>
-              <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(r.part_departementale_eur)}</span>
+            <div>
+              <div className="flex items-baseline justify-between gap-2 text-[11px]">
+                <span className="text-txt-mut">Part départementale <span className="text-txt-dim">· {pc(r.taux_departemental_pct)}{!r.part_departementale_confirmee ? ', à confirmer' : ''}</span></span>
+                <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(r.part_departementale_eur)}</span>
+              </div>
+              <p data-taxe-prov-departemental className="pl-0.5 text-[9px] leading-snug text-txt-dim">
+                Source : {r.part_departementale_confirmee
+                  ? 'Conseil départemental 974 (délibération — plafond légal 2,5 %)'
+                  : 'plafond légal CGI art. 1635 quater — taux simulé au plafond, à confirmer'}
+                {` · barème ${r.annee}`}
+                {c.meta.releve_le ? ` · vérifié le ${fmtJMA(c.meta.releve_le)}` : ''}
+              </p>
             </div>
           )}
 
@@ -340,7 +372,13 @@ export function TaxeAmenagement() {
                 </div>
               )}
               <div className="flex items-baseline justify-between gap-2 border-t border-line pt-1">
-                <span className="font-semibold text-mint">Total à prévoir</span>
+                <span className="font-semibold text-mint">Total à prévoir
+                  {/* OUTILS-P1-1 (pt 8) — quand le taux départemental est SIMULÉ au plafond (non confirmé),
+                      « à confirmer » figure à côté du Total à prévoir, pas seulement sur la ligne du taux. */}
+                  {!r.part_departementale_confirmee && (
+                    <span data-taxe-total-a-confirmer className="ml-1.5 text-[10px] font-normal text-st-creuser">· à confirmer (taux départemental simulé au plafond)</span>
+                  )}
+                </span>
                 <span className="shrink-0 font-mono font-bold tabular-nums text-mint">{fmtEur(totalAPrevoir)}</span>
               </div>
             </div>

@@ -644,10 +644,24 @@ def comparateur_terrain(db: Session, idu: str, *, n_table: int = 8) -> dict:
                     "type": "Terrain", "surface_m2": k.get("surface_m2"), "prix_eur": k.get("prix_eur"),
                     "prix_m2": k.get("prix_m2"), "distance_m": k.get("distance_m")} for k in proches]
     perimetre = ("commune" if commune_fallback else (f"{radius} m autour de la parcelle" if radius else None))
+    # OUTILS-P0-2 (P2) — GAMME de surface des ventes de référence retenues : borne haute = p90 des
+    # surfaces (robuste au 10 % d'extrêmes). Mesuré au banc no-leak (docs/audit-2026-11/outils-p0-2/) :
+    # dès que la surface du sujet DÉPASSE ce p90, l'écart médian d'un total `surface × €/m²` passe de
+    # ~30 % à ~86 % (falaise nette à ratio=1,0). Au-dessus → « hors gamme », pas de total (cf. api).
+    surfs = sorted(float(v["surface_m2"]) for v in kept if v.get("surface_m2"))
+    surface_gamme = None
+    if surfs:
+        # p90 = 9e décile (borne haute robuste de la gamme) ; sous 10 ventes, repli sur le max observé.
+        p90 = (statistics.quantiles(surfs, n=10, method="inclusive")[8] if len(surfs) >= 10 else surfs[-1])
+        surface_gamme = {
+            "min_m2": round(surfs[0]), "max_m2": round(surfs[-1]),
+            "mediane_m2": round(statistics.median(surfs)),
+            "p90_m2": round(p90), "n": len(surfs)}
     return {"comparables": comparables, "n_total": len(kept), "radius_m": radius,
             "periode": [min(annees), max(annees)] if annees else None,
             "median": median, "q1": q1, "q3": q3, "n": len(prix_trim),
-            "commune_fallback": commune_fallback, "perimetre": perimetre}
+            "commune_fallback": commune_fallback, "perimetre": perimetre,
+            "surface_gamme": surface_gamme}
 
 
 def permits(db: Session, idu: str, *, profil: str) -> dict | None:

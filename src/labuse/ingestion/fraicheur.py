@@ -50,7 +50,14 @@ SOURCES = {
                # absence d'événement, pas sur une donnée périmée → non bornable (event-driven).
                "detection": "re-interrogation batchée des 12,6k SIREN propriétaires (upsert annonce_id)"},
     "dvf": {"label": "DVF (mutations, Etalab geo-dvf)", "cadence": "semestrielle (avril / octobre)",
-            "date_sql": "SELECT max(date_mutation)::date FROM dvf_mutations_parcelle",
+            # MINI-CORRECTIONS-1 (pt 5) — l'horizon de fraîcheur est lu sur les VENTES RÉELLEMENT SERVIES
+            # (`dvf_mutations`, la table que `refresh_dvf` recharge et que `_dvf_couverture` sert comme
+            # « ventes jusqu'à … »), PLUS sur la table de DÉTAIL par parcelle (`dvf_mutations_parcelle`).
+            # Cette dernière, alimentée par la grande passe Mac, pouvait retarder la mention (« ventes
+            # jusqu'au 31/12/2025 » alors que les mutations servies allaient jusqu'au 30/06/2026). Le prix
+            # des terrains nus (dvf_secteur_medianes), lui, suit via la reconstruction chaînée au refresh
+            # (jobs_impl.ingest_dvf → dvf-marche, dédup (id_mutation, id_parcelle)).
+            "date_sql": "SELECT max(date_mutation)::date FROM dvf_mutations",
             "ds_name": "DVF / valeurs foncières", "auto": True,
             # M32 Phase B §2 : millésime amont (vague 1 = DVF). `cadence_norme` = token servi ;
             # `prochain` = prochaine livraison géo-DVF (S1-2026 en octobre) ; `millesime` = édition
@@ -405,6 +412,11 @@ def refresh_dvf(session: Session, *, commit: bool = True, log_fn=print, http_get
     par_token = {r.token: r for r in check["ressources"]}
     if not check["modifies"]:
         log_fn(f"DVF : aucune nouvelle livraison (format Etalab {check['dernier_millesime']}) — no-op")
+        # MINI-CORRECTIONS-1 (pt 5) — MÊME en no-op, on rafraîchit l'horizon de fraîcheur depuis les
+        # ventes servies (persist_millesime lit désormais max(date_mutation) de dvf_mutations) : la mention
+        # ne doit pas rester figée en attendant une nouvelle livraison (cause du « ventes jusqu'au
+        # 31/12/2025 » : persist_millesime n'était rejoué qu'à un rechargement, et sur la mauvaise table).
+        persist_millesime(session, only="dvf", commit=commit)
         return {"recharges": [], "no_op": True, "dernier_millesime": check["dernier_millesime"]}
     recharges = []
     # la version (segment horodaté) n'est gravée qu'APRÈS un rechargement RÉUSSI de sa période.

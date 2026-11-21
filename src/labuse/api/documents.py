@@ -105,34 +105,20 @@ def rendre_document(db, idu: str, request: Request, document: str, *,
 def apporteur_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
     # DOCS-1 (décision Vic) — l'Apporteur est signé du CLIENT : sans nom exploitable (ni société, ni
     # prénom + nom ; jamais l'e-mail), le document REFUSE de générer et dit quoi renseigner.
-    _refus = _refus_sans_nom(db, request)
-    if _refus is not None:
-        return _refus
+    _exiger_nom_du_compte(db, request)
     return rendre_document(db, idu, request, "apporteur", forms=True, marque=False)
 
 
-def _refus_sans_nom(db: Session, request: Request) -> Response | None:
-    """Refus partagé Courrier/Apporteur : aucun nom exploitable sur le compte → PDF d'une ligne
-    « Renseignez le nom de votre société dans Compte », jamais un document signé d'une adresse e-mail."""
+def _exiger_nom_du_compte(db: Session, request: Request) -> None:
+    """CHIRURGICAL-FIX-1 (E2) — Apporteur signé du CLIENT : sans nom exploitable sur le compte, on
+    REFUSE PROPREMENT (HTTP 422 + message accentué), jamais un « PDF d'erreur » livré en 200 (un
+    document « réussi » qui est en fait une erreur, avec un libellé ASCII « Document non genere »)."""
     from ..courrier_compose import MSG_SANS_NOM, expediteur_du_compte, ExpediteurSansNom
     from .courrier import _marque_du_compte
     try:
         expediteur_du_compte(_marque_du_compte(db, request), None)
-        return None
     except ExpediteurSansNom:
-        from fpdf import FPDF
-        from fpdf.enums import XPos, YPos
-        p = FPDF(format="A4")
-        p.set_auto_page_break(True, margin=28)
-        p.set_margins(22, 24, 22)
-        p.add_page()
-        p.set_font("Helvetica", "B", 13)
-        p.multi_cell(p.epw, 8, "Document non genere", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        p.ln(2)
-        p.set_font("Helvetica", "", 11)
-        p.multi_cell(p.epw, 6, MSG_SANS_NOM, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        return Response(content=bytes(p.output()), media_type="application/pdf",
-                        headers={"Content-Disposition": 'attachment; filename="apporteur.pdf"'})
+        raise HTTPException(status_code=422, detail=MSG_SANS_NOM)
 
 
 # ── DOCS-1 (Lot C) — les 3 nouveaux documents : miroirs des outils Gabarit, Comparer, Étude de zone. ──
@@ -194,26 +180,44 @@ def _gabarit_refus_pdf(db: Session, idu: str, manques: list) -> Response:
     réelle est connue."""
     from ..exports.rendu import Cartouche, esc, page_html, render_pdf
     motif = (manques[0].get("libelle") if manques else None)
+    # CHIRURGICAL-FIX-1 (E107) — deux cas BIEN DISTINCTS : (1) la parcelle est VRAIMENT non
+    # constructible (verdict potentiel_batir : zone N/A, habitat interdit, zone rouge) → on le dit ;
+    # (2) la parcelle reste constructible mais le GABARIT n'est pas calculable (limite non qualifiée)
+    # → on ne doit JAMAIS écrire « ne porte pas d'enveloppe constructible » (faux), et on renvoie à la
+    # capacité estimée de la fiche. Avant, le cas (2) empruntait le texte du cas (1) (AD0887 : 719 m²
+    # de SDP, pourtant « ne porte pas d'enveloppe constructible : … : … »).
+    verdict_inconstructible = False
     try:
         from ..faisabilite.potentiel_batir import POTENTIEL_ABSENT, potentiel_batir
         pb = potentiel_batir(db, idu)
         if pb is not POTENTIEL_ABSENT and pb.get("constructible") is False and pb.get("motif"):
             motif = pb["motif"]                      # « Zone non constructible (N) », etc.
+            verdict_inconstructible = True
     except Exception:  # noqa: BLE001 — la raison précise n'est jamais un bloqueur du document de refus
         pass
-    motif = motif or "Parcelle inconstructible"
     cart = Cartouche(
         doc_title=f"LABUSE — Gabarit · {idu}",
         doc_ref=idu,
         doc_foot="Gabarit · enveloppe réglementaire · pré-analyse, non contractuel.")
-    corps = (
-        '<section><h2>Enveloppe constructible</h2>'
-        f'<div class="verdict">Cette parcelle ne porte pas d\'enveloppe constructible : {esc(motif)}.</div>'
-        '<p class="note">Le Gabarit dessine l\'enveloppe réglementaire d\'une parcelle constructible. '
-        'Sur une parcelle inconstructible (zone naturelle N, zone agricole fermée, habitat interdit, '
-        'ou zone rouge d\'un plan de prévention des risques), il n\'y a pas de volume à dessiner : le '
-        'document le dit, il ne fabrique pas une enveloppe qui n\'existe pas. Les contraintes et le '
-        'zonage détaillés figurent au Dossier de la parcelle.</p></section>')
+    if verdict_inconstructible:
+        corps = (
+            '<section><h2>Enveloppe constructible</h2>'
+            f'<div class="verdict">Cette parcelle ne porte pas d\'enveloppe constructible : {esc(motif)}.</div>'
+            '<p class="note">Le Gabarit dessine l\'enveloppe réglementaire d\'une parcelle constructible. '
+            'Sur une parcelle inconstructible (zone naturelle N, zone agricole fermée, habitat interdit, '
+            'ou zone rouge d\'un plan de prévention des risques), il n\'y a pas de volume à dessiner : le '
+            'document le dit, il ne fabrique pas une enveloppe qui n\'existe pas. Les contraintes et le '
+            'zonage détaillés figurent au Dossier de la parcelle.</p></section>')
+    else:
+        raison = esc(motif or "une limite de la parcelle n'est pas qualifiée")
+        corps = (
+            '<section><h2>Enveloppe constructible</h2>'
+            f'<div class="verdict">{raison}.</div>'
+            '<p class="note">Le gabarit ne peut pas être dessiné ici (une limite de la parcelle — bord '
+            'de ravine, littoral ou domaine public — n\'est pas qualifiée, donc le recul ne peut être '
+            'posé). <b>Cela ne préjuge pas de la constructibilité</b> : la capacité estimée de la '
+            'parcelle reste indiquée dans sa fiche (Dossier). Le calcul reprendra dès que la limite '
+            'sera renseignée.</p></section>')
     pdf = render_pdf(page_html("Gabarit", cart, corps))
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="gabarit-{idu}.pdf"',
@@ -283,18 +287,12 @@ def etude_zone_pdf(idu: str, request: Request, rayon_km: float = 2.0,
             "erreur": "parcelle_disparue", "message": _cd.phrase_disparue(_disp)})
     try:
         from .app import EtudeZoneIn, etude_zone as _etude_zone_fn
+        # OUTILS-P0-2 (P3) — le PDF présente le MÊME périmètre que l'écran : le « Prix médian du bâti »
+        # décrit le CERCLE dessiné (porté par `marche`), et le prix du secteur de la fiche est servi à
+        # part par l'endpoint (`prix_secteur_fiche`). Plus d'injection `prix_ancien` qui imprimait le
+        # secteur à la place du cercle — mêmes chiffres, même périmètre, écran == document.
         zone = _etude_zone_fn(EtudeZoneIn(idu=idu, rayon_km=rayon_km,
                                           sous_destination=(sous_destination or None)), db)
-        # DOCS-COHERENCE-1 (recette Vic) — le « Prix médian du bâti » de l'Étude de zone décrit la
-        # fenêtre RÉELLE du prix lu dans la fiche (prix_ancien : médiane + n + rayon, « 3 602 €/m² —
-        # 15 ventes à moins de 1 000 m »), identique au Comparatif ; « Ventes (12 mois) » reste à part.
-        try:
-            from ..marche_service import DVF_BANQUIER_ADAPTATIF, marche_dvf
-            _pa = marche_dvf(db, idu, profil=DVF_BANQUIER_ADAPTATIF)
-            if _pa and _pa.get("median"):
-                zone.setdefault("marche", {})["prix_ancien"] = _pa
-        except Exception:  # noqa: BLE001 — le prix de la fiche est un plus, jamais un bloqueur
-            pass
         res = builder.construire_etude_zone(idu, rayon_km, zone, _zone_map_html(db, zone))
     except HTTPException:
         raise
@@ -332,10 +330,15 @@ def _zone_map_html(db, zone: dict) -> str:
 @router.get("/analyse-annonce/{idu}.pdf")
 def analyse_annonce_parcelle_pdf(idu: str, request: Request,
                                  surface_hab: float | None = Query(None, gt=0, le=100000),
+                                 pieces: int | None = Query(None, gt=0, le=50),
+                                 ecartees: list[str] = Query(default=[]),
                                  db: Session = Depends(get_db)) -> Response:
     """Variante PARCELLE (entrée adresse) : rapport parcelle (tuiles + estimation + foncier + plan de
     situation). Lit les MÊMES endpoints que l'écran (fiche, exposition, classement du run servi).
-    `surface_hab` (ESTIMER-PRECISION-1, facultatif) : surface habitable saisie → total identique écran."""
+    OUTILS-P0-2 (P1) — le PDF reprend EXACTEMENT le scénario affiché : `surface_hab` (surface saisie),
+    `pieces` (pièces saisies), `ecartees` (ventes décochées) → même méthode, même montant, mêmes
+    fourchettes, mêmes ventes retenues qu'à l'écran. Avant, seule la surface voyageait (pièces et
+    décochages perdus → le document divergeait du scénario à l'écran)."""
     from ..exports import builder
     from ..quota import porte_export
     from .. import cadastre_disparue as _cd
@@ -347,7 +350,8 @@ def analyse_annonce_parcelle_pdf(idu: str, request: Request,
         raise HTTPException(status_code=422, detail={
             "erreur": "parcelle_disparue", "message": _cd.phrase_disparue(_disp)})
     try:
-        res = builder.construire_analyse_annonce_parc(db, idu, request=request, surface_hab=surface_hab)
+        res = builder.construire_analyse_annonce_parc(db, idu, request=request, surface_hab=surface_hab,
+                                                      pieces=pieces, ecartees=list(ecartees or []))
     except ValueError as exc:
         raise HTTPException(404, str(exc))
     except HTTPException:

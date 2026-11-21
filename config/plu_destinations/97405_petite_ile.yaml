@@ -37,6 +37,22 @@ zones:
             l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UB.7 §2'
+            page_pdf: 26
+            citation: 'Par rapport aux limites de fond de propriété, ne touchant pas la voie, les constructions doivent respecter un retrait minimal de 3 mètres. Cette distance peut être ramenée à 2 mètres dans le cas d’ouvertures limitées n’autorisant pas le vis-à-vis (type jalousie). Les constructions peuvent s’implanter en limites séparatives ne touchant pas la voie sous réserve d’une hauteur maximale de 4 mètres au faîtage.'
+            condition_texte: 'Les constructions peuvent s’implanter en limites séparatives ne touchant pas la voie sous réserve d’une hauteur maximale de 4 mètres au faîtage.'
+            condition_modelable: 'hauteur_bande:4 m au faîtage (sur la limite — aucune bande chiffrée au règlement)'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UB.7 §1'
+            page_pdf: 26
+            citation: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition soit : - Qu’elles se situent dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée. - D’une largeur de parcelle inférieure à 15 mètres. […] Pour les constructions implantées au-delà de la bande de 20 mètres, l’implantation ne pourra se faire que sur une limite séparative maximum. […] Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres. Cette marge peut être ramenée à 2 mètres dans le cas d’un mur plein.'
+            condition_texte: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition soit : qu’elles se situent dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée — soit d’une largeur de parcelle inférieure à 15 mètres. Pour les constructions implantées au-delà de la bande de 20 mètres, l’implantation ne pourra se faire que sur une limite séparative maximum.'
+            condition_modelable: 'profondeur_bande:20 m OU largeur_terrain_max:15 m + une_seule_limite (au-delà de la bande de 20 m)'
           min_m: 3.0
           article: UB.7
           page_pdf: 27
@@ -45,17 +61,35 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UB.12
           page_pdf: 31
-          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
-            ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'pour les constructions à usage d’habitation : 1 place de stationnement par logement ;
+
+            -
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            stationnement n’est demandée ; pour toute opération de logements collectifs (financés ou non
+
+            financés par un prêt aidé de l’Etat), 20 % de l’espace dédié au stationnement aérien devront être
+
+            -'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%."
-            article: "UB.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%.'
+            article: UB.12
             page_pdf: 31
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -151,6 +185,22 @@ zones:
           citation: Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UC.7 §2'
+            page_pdf: 36
+            citation: 'Par rapport aux limites de fond de propriété, ne touchant pas la voie, les constructions doivent respecter un retrait minimal de 3 mètres. Cette distance peut être ramenée à 2 mètres dans le cas d’ouvertures limitées n’autorisant pas le vis-à-vis (type jalousie). Les constructions peuvent s’implanter en limites séparatives ne touchant pas la voie sous réserve d’une hauteur maximale de 4 mètres au faîtage.'
+            condition_texte: 'Les constructions peuvent s’implanter en limites séparatives ne touchant pas la voie sous réserve d’une hauteur maximale de 4 mètres au faîtage.'
+            condition_modelable: 'hauteur_bande:4 m au faîtage (sur la limite — aucune bande chiffrée au règlement)'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UC.7 §1'
+            page_pdf: 36
+            citation: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition soit : - Qu’elles se situent dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée. - D’une largeur de parcelle inférieure à 15 mètres. […] Pour les constructions implantées au-delà de la bande de 20 mètres, l’implantation ne pourra se faire que sur une limite séparative maximum. […] Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres. Cette marge peut être ramenée à 2 mètres dans le cas d’un mur plein.'
+            condition_texte: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition soit : qu’elles se situent dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée — soit d’une largeur de parcelle inférieure à 15 mètres. Pour les constructions implantées au-delà de la bande de 20 mètres, l’implantation ne pourra se faire que sur une limite séparative maximum.'
+            condition_modelable: 'profondeur_bande:20 m OU largeur_terrain_max:15 m + une_seule_limite (au-delà de la bande de 20 m)'
           min_m: 3.0
           article: UC.7
           page_pdf: 37
@@ -159,16 +209,35 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UC.12
           page_pdf: 40
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%."
-            article: "UC.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%.'
+            article: UC.12
             page_pdf: 40
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -256,6 +325,22 @@ zones:
           citation: Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UC.7 §2 (UCe sans article 7 propre)'
+            page_pdf: 36
+            citation: 'Par rapport aux limites de fond de propriété, ne touchant pas la voie, les constructions doivent respecter un retrait minimal de 3 mètres. Cette distance peut être ramenée à 2 mètres dans le cas d’ouvertures limitées n’autorisant pas le vis-à-vis (type jalousie). Les constructions peuvent s’implanter en limites séparatives ne touchant pas la voie sous réserve d’une hauteur maximale de 4 mètres au faîtage.'
+            condition_texte: 'Les constructions peuvent s’implanter en limites séparatives ne touchant pas la voie sous réserve d’une hauteur maximale de 4 mètres au faîtage.'
+            condition_modelable: 'hauteur_bande:4 m au faîtage (sur la limite — aucune bande chiffrée au règlement)'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UC.7 §1 (UCe sans article 7 propre — seule la hauteur diffère de UC)'
+            page_pdf: 36
+            citation: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition soit : - Qu’elles se situent dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée. - D’une largeur de parcelle inférieure à 15 mètres. […] Pour les constructions implantées au-delà de la bande de 20 mètres, l’implantation ne pourra se faire que sur une limite séparative maximum. […] Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres. Cette marge peut être ramenée à 2 mètres dans le cas d’un mur plein.'
+            condition_texte: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition soit : qu’elles se situent dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée — soit d’une largeur de parcelle inférieure à 15 mètres. Pour les constructions implantées au-delà de la bande de 20 mètres, l’implantation ne pourra se faire que sur une limite séparative maximum.'
+            condition_modelable: 'profondeur_bande:20 m OU largeur_terrain_max:15 m + une_seule_limite (au-delà de la bande de 20 m)'
           min_m: 3.0
           article: UC.7
           page_pdf: 37
@@ -264,16 +349,35 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UC.12
           page_pdf: 40
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%."
-            article: "UC.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%.'
+            article: UC.12
             page_pdf: 40
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -368,6 +472,20 @@ zones:
           citation: Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'ARTICLE UD.7 §2'
+            page_pdf: 46
+            citation: 'Par rapport aux limites de fond de propriété, ne touchant pas la voie, les constructions doivent respecter un retrait minimal de 3 mètres. Cette distance peut être ramenée à 2 mètres dans le cas d’ouvertures limitées n’autorisant pas le vis-à-vis (type jalousie). Les constructions à usage d’annexes peuvent être édifiées en limite de terrain, regroupées en un seul point si elles ne sont pas intégrées au corps principal du bâtiment.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UD.7 §1'
+            page_pdf: 46
+            citation: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition soit : - Qu’elles se situent dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée. - D’une largeur de parcelle inférieure à 15 mètres. […] Pour les constructions implantées au-delà de la bande de 20 mètres, l’implantation ne pourra se faire que sur une limite séparative maximum. […] Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres. Cette marge peut être ramenée à 2 mètres dans le cas d’un mur plein.'
+            condition_texte: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition soit : qu’elles se situent dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée — soit d’une largeur de parcelle inférieure à 15 mètres. Pour les constructions implantées au-delà de la bande de 20 mètres, l’implantation ne pourra se faire que sur une limite séparative maximum.'
+            condition_modelable: 'profondeur_bande:20 m OU largeur_terrain_max:15 m + une_seule_limite (au-delà de la bande de 20 m)'
           min_m: 3.0
           article: UD.7
           page_pdf: 47
@@ -376,17 +494,35 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UD.12
           page_pdf: 50
-          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
-            ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'a) pour les constructions à usage d’habitation : 1 place de stationnement par logement ;
+
+            -
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            stationnement n’est demandée ;
+
+            Pour toute opération de logements collectifs (financés ou non financés par un prêt aidé de l’Etat), 20 %
+
+            -'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "UD.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;'
+            article: UD.12
             page_pdf: 50
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -479,6 +615,20 @@ zones:
           citation: Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'ARTICLE UD.7 §2 (UDe sans article 7 propre)'
+            page_pdf: 46
+            citation: 'Par rapport aux limites de fond de propriété, ne touchant pas la voie, les constructions doivent respecter un retrait minimal de 3 mètres. Cette distance peut être ramenée à 2 mètres dans le cas d’ouvertures limitées n’autorisant pas le vis-à-vis (type jalousie). Les constructions à usage d’annexes peuvent être édifiées en limite de terrain, regroupées en un seul point si elles ne sont pas intégrées au corps principal du bâtiment.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE UD.7 §1 (UDe sans article 7 propre — seule la hauteur diffère de UD)'
+            page_pdf: 46
+            citation: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition soit : - Qu’elles se situent dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée. - D’une largeur de parcelle inférieure à 15 mètres. […] Pour les constructions implantées au-delà de la bande de 20 mètres, l’implantation ne pourra se faire que sur une limite séparative maximum. […] Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres. Cette marge peut être ramenée à 2 mètres dans le cas d’un mur plein.'
+            condition_texte: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition soit : qu’elles se situent dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée — soit d’une largeur de parcelle inférieure à 15 mètres. Pour les constructions implantées au-delà de la bande de 20 mètres, l’implantation ne pourra se faire que sur une limite séparative maximum.'
+            condition_modelable: 'profondeur_bande:20 m OU largeur_terrain_max:15 m + une_seule_limite (au-delà de la bande de 20 m)'
           min_m: 3.0
           article: UD.7
           page_pdf: 47
@@ -487,17 +637,35 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UD.12
           page_pdf: 50
-          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
-            ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'a) pour les constructions à usage d’habitation : 1 place de stationnement par logement ;
+
+            -
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            stationnement n’est demandée ;
+
+            Pour toute opération de logements collectifs (financés ou non financés par un prêt aidé de l’Etat), 20 %
+
+            -'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "UD.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;'
+            article: UD.12
             page_pdf: 50
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -994,6 +1162,18 @@ zones:
           min_m: 0
           forme: alignement
         limites_separatives:
+          implantation_fond:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'ARTICLE UZ.7'
+            page_pdf: 83
+            citation: 'Les constructions pourront s’implanter soit en limite séparative soit en retrait.'
+          implantation_laterales:
+            mode: limite_ou_retrait
+            statut: valide
+            article: 'ARTICLE UZ.7'
+            page_pdf: 83
+            citation: 'Les constructions pourront s’implanter soit en limite séparative soit en retrait.'
           article: UZ.7
           page_pdf: 83
           citation: Les constructions pourront s’implanter soit en limite séparative soit en retrait.
@@ -1002,17 +1182,33 @@ zones:
           forme: alignement
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: UZ.12
           page_pdf: 85
-          citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
-            ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'pour les constructions à usage d’habitation : 1 place de stationnement par logement ;
+
+            -
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            stationnement n’est demandée ;
+
+            -'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "UZ.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;'
+            article: UZ.12
             page_pdf: 85
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -1113,6 +1309,20 @@ zones:
           citation: Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'ARTICLE 1 AU.7 §2'
+            page_pdf: 92
+            citation: 'Par rapport aux limites de fond de propriété, ne touchant pas la voie, les constructions doivent respecter un retrait minimal de 3 mètres. Cette distance peut être ramenée à 2 mètres dans le cas d’ouvertures limitées n’autorisant pas le vis-à-vis (type jalousie). Les constructions à usage d’annexes peuvent être édifiées en limite de terrain, regroupées en un seul point si elles ne sont pas intégrées au corps principal du bâtiment.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE 1 AU.7 §1'
+            page_pdf: 92
+            citation: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition soit : - Qu’elles se situent dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée. - D’une largeur de parcelle inférieure à 15 mètres. […] Pour les constructions implantées au-delà de la bande de 20 mètres, l’implantation ne pourra se faire que sur une limite séparative maximum. […] Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres. Cette marge peut être ramenée à 2 mètres dans le cas d’un mur plein.'
+            condition_texte: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition soit : qu’elles se situent dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée — soit d’une largeur de parcelle inférieure à 15 mètres. Pour les constructions implantées au-delà de la bande de 20 mètres, l’implantation ne pourra se faire que sur une limite séparative maximum.'
+            condition_modelable: 'profondeur_bande:20 m OU largeur_terrain_max:15 m + une_seule_limite (au-delà de la bande de 20 m)'
           min_m: 3.0
           article: 1 AU.7
           page_pdf: 92
@@ -1121,16 +1331,39 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: 1AU.12
           page_pdf: 96
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            e) pour les salles de spectacles et de réunions : 1 place de stationnement pour 20 m² de
+
+            f) pour les établissements d’enseignement : 1,5 place de stationnement par classe du premier
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "1AU.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;'
+            article: 1AU.12
             page_pdf: 96
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -1223,6 +1456,20 @@ zones:
           citation: Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'ARTICLE 1 AU.7 §2 (1AUa sous-secteur de 1AU, sans article 7 propre)'
+            page_pdf: 92
+            citation: 'Par rapport aux limites de fond de propriété, ne touchant pas la voie, les constructions doivent respecter un retrait minimal de 3 mètres. Cette distance peut être ramenée à 2 mètres dans le cas d’ouvertures limitées n’autorisant pas le vis-à-vis (type jalousie). Les constructions à usage d’annexes peuvent être édifiées en limite de terrain, regroupées en un seul point si elles ne sont pas intégrées au corps principal du bâtiment.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE 1 AU.7 §1 (1AUa sous-secteur de 1AU, sans article 7 propre)'
+            page_pdf: 92
+            citation: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition soit : - Qu’elles se situent dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée. - D’une largeur de parcelle inférieure à 15 mètres. […] Pour les constructions implantées au-delà de la bande de 20 mètres, l’implantation ne pourra se faire que sur une limite séparative maximum. […] Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres. Cette marge peut être ramenée à 2 mètres dans le cas d’un mur plein.'
+            condition_texte: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition soit : qu’elles se situent dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée — soit d’une largeur de parcelle inférieure à 15 mètres. Pour les constructions implantées au-delà de la bande de 20 mètres, l’implantation ne pourra se faire que sur une limite séparative maximum.'
+            condition_modelable: 'profondeur_bande:20 m OU largeur_terrain_max:15 m + une_seule_limite (au-delà de la bande de 20 m)'
           min_m: 3.0
           article: 1 AU.7
           page_pdf: 92
@@ -1231,16 +1478,39 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: 1AU.12
           page_pdf: 96
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            e) pour les salles de spectacles et de réunions : 1 place de stationnement pour 20 m² de
+
+            f) pour les établissements d’enseignement : 1,5 place de stationnement par classe du premier
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "1AU.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;'
+            article: 1AU.12
             page_pdf: 96
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:
@@ -1348,6 +1618,20 @@ zones:
           citation: Les constructions doivent respecter un recul minimal de 4 mètres par rapport à l'alignement.
           statut: valide
         limites_separatives:
+          implantation_fond:
+            mode: retrait_obligatoire
+            statut: valide
+            article: 'ARTICLE 1AUZ.7 §2 (graphie zonage « 1AUz » = chapitre ZONE 1AUZ)'
+            page_pdf: 102
+            citation: 'Par rapport aux limites de fond de propriété, ne touchant pas la voie, les constructions doivent respecter un retrait minimal de 3 mètres. Cette distance peut être ramenée à 2 mètres dans le cas d’un mur plein. D’ouvertures limitées n’autorisant pas le vis-à-vis (type jalousie). Les constructions à usage d’annexes peuvent être édifiées en limite de terrain, regroupées en un seul point si elles ne sont pas intégrées au corps principal du bâtiment.'
+          implantation_laterales:
+            mode: limite_sous_conditions
+            statut: valide
+            article: 'ARTICLE 1AUZ.7 §1 (graphie zonage « 1AUz » = chapitre ZONE 1AUZ)'
+            page_pdf: 102
+            citation: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition qu’elles se situent au minimum dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée. Si une construction est implantée en retrait de ces limites, la marge de recul minimale doit être égale à 3 mètres. Cette marge peut être ramenée à 2 mètres dans le cas d’un mur plein.'
+            condition_texte: 'Les constructions peuvent joindre les limites séparatives qui permettent l’accès au terrain principal, à condition qu’elles se situent au minimum dans une bande de 20 mètres comptée à partir de l’alignement pour une voie publique et de l’emprise de la voie pour une voie privée.'
+            condition_modelable: 'profondeur_bande:20 m (rédaction « au minimum » — coquille probable pour « au maximum », lue comme la bande des autres zones, voir NOTES)'
           min_m: 3.0
           article: 1AUZ.7
           page_pdf: 102
@@ -1356,16 +1640,39 @@ zones:
           statut: valide
       stationnement:
         par_logement:
-          places: 1.0
+          statut: valide
           article: 1AUZ.12
           page_pdf: 106
-          citation: 'pour les constructions : 1 place de stationnement par logement ;'
-          statut: valide
+          places: 1.0
+          arrondi: superieur
+          citation: 'pour les constructions : 1 place de stationnement par logement ;
+
+            b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement
+
+            par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de
+
+            d) pour les hôtels et restaurants : 1 place de stationnement pour 2 chambres et 1 place de
+
+            e) pour les salles de spectacles et de réunions : 1 place de stationnement pour 20 m² de
+
+            f) pour les établissements d’enseignement : 1,5 place de stationnement par classe du premier
+
+            0,75 m² par logement d’une ou deux pièces avec une superficie minimale de 3 m² ;
+
+            o  1,50 m² pour chaque logement de plus de deux pièces avec une superficie minimale
+
+            pour les constructions à usage de commerces et les activités artisanales : 1 place par tranche de'
+          social:
+            places: 1.0
+            tranche: 'logement aidé : 1 place/logt (seul le LLTS est dispensé)'
+          conditions:
+          - 'LLTS : aucune place exigée (dispense réservée au LLTS, pas à tout l''aidé)'
+          - 'toute opération de logements collectifs : 20 % de l''espace de stationnement aérien doit être perméable — à vérifier'
           exceptions:
-          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
-            article: "1AUZ.12"
+          - texte: 'b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;'
+            article: 1AUZ.12
             page_pdf: 106
-            porte: "destination"
+            porte: destination
             modifie_calcul: false
       pleine_terre:
         pct:

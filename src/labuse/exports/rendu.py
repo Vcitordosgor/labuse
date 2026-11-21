@@ -247,14 +247,24 @@ def render_pdf(page_html_str: str, *, forms: bool = False) -> bytes:
     NU4-FIX-1 (E/R1) : rendu HORS-PROCESS par défaut (un crash natif/OOM ne tue plus le worker).
     `LABUSE_PDF_PROCESS_ISOLE=0` repasse en rendu in-process (CI/plateformes sans spawn). La FILE
     `pdf_slot` (FIX-NU3-3) garde la concurrence bornée dans les deux modes."""
+    import multiprocessing
     import os
 
     from ..config import get_settings
     from ..perf_limits import pdf_slot
     s = get_settings()
-    # Sous pytest, rendu IN-PROCESS (spawn d'un enfant weasyprint à chaque PDF = lent/fragile en CI ;
-    # le mécanisme d'isolation est prouvé à part par `_execute_isole`). En service, isolé par défaut.
-    isole = s.pdf_process_isole and not os.environ.get("PYTEST_CURRENT_TEST")
+    # ETUDE-FIABLE-1 (LOT B6) — CAUSE du 500 « daemonic processes are not allowed to have children » :
+    # l'export PDF de l'Étude tourne DÉJÀ dans un processus enfant « spawn » DAEMONIQUE (modules.py
+    # `_dans_processus`, daemon=True) ; un processus daemonique ne PEUT PAS avoir d'enfants, donc le second
+    # niveau d'isolation (ProcessPoolExecutor WeasyPrint) lève une AssertionError → 500 technique. On rend
+    # alors EN-PROCESS : l'isolation crash/OOM est déjà fournie par le processus d'étude lui-même (tué à la
+    # borne). L'isolation de rendu reste active pour les PDF rendus dans le processus API PRINCIPAL (Dossier…).
+    #   · Variable d'activation de l'isolation (à vérifier en prod) : `pdf_process_isole`
+    #     (env LABUSE_PDF_PROCESS_ISOLE, défaut 1). Elle reste honorée ; on la NEUTRALISE SEULEMENT quand on
+    #     est déjà dans un enfant daemonique (où elle est à la fois impossible et inutile).
+    # Sous pytest, rendu IN-PROCESS aussi (spawn d'un enfant weasyprint à chaque PDF = lent/fragile en CI).
+    in_daemon = multiprocessing.current_process().daemon
+    isole = s.pdf_process_isole and not os.environ.get("PYTEST_CURRENT_TEST") and not in_daemon
     with pdf_slot():                       # au plus `pdf_rendu_max` rendus à la fois (file d'attente)
         if not isole:
             return _render_worker(page_html_str, forms)   # legacy / CI : in-process

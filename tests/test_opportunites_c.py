@@ -43,10 +43,15 @@ def test_rpg_reste_bloquant_en_zone_n():
 
 def test_causes_reellement_bloquantes_conservees_en_zone_u():
     rules_u = resolve_zone("U1c")
-    # PPR-UNIQUE-1 (E-006) — bande littorale PROPORTIONNÉE : une parcelle ENTIÈREMENT dans la bande
-    # (littoral_pct≈1) reste rédhibitoire, même en zone U…
-    assert not _cap(rules_u, littoral_pct=1.0).constructible
-    # … mais un simple CONTACT (part faible) n'annule plus toute la parcelle (plus de tout-ou-rien).
-    assert _cap(rules_u, littoral_pct=0.15).constructible
-    # aléa PPR fort = cause réellement bloquante → rédhibitoire.
+    # MOTEUR-VERITE-FIX-1 LOT 3 (V7) — le recul PROSPECTIF du trait de côte (bandes courte/longue)
+    # est une PROJECTION d'érosion, pas une servitude d'interdiction : même entièrement couverte,
+    # la parcelle reste constructible AVEC l'alerte « à vérifier auprès des services de l'État »
+    # (preuve : 97410000BX0750, 100 % en bande, maison AUTORISÉE et ACHEVÉE — DAACT 17/07/2025).
+    f_litt = _cap(rules_u, littoral_pct=1.0)
+    assert f_litt.constructible
+    assert any("trait de côte" in a.lower() for a in f_litt.avertissements)
+    f_contact = _cap(rules_u, littoral_pct=0.15)
+    assert f_contact.constructible
+    assert any("trait de côte" in a.lower() for a in f_contact.avertissements)
+    # aléa PPR fort = cause réellement bloquante → rédhibitoire (doctrine inchangée).
     assert not _cap(rules_u, alea_ppr="fort").constructible

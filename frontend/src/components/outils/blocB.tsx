@@ -29,8 +29,14 @@ function Banner({ children }: { children: React.ReactNode }) {
 type Servitudes = {
   idu: string; n: number; synthese: string
   servitudes: { categorie: string; effet: string; source: string; date: string | null; redhibitoire?: boolean }[]
-  // OUTILS-REFONTE-1 (9a) — familles examinées & claires (puces « rien à signaler »).
+  // OUTILS-P0-1 (#2) — chaque famille prend un état parmi quatre ; l'écran rend trois listes dérivées :
+  //  · verifie = « Aucune intersection détectée » (source dont la couverture de la commune est démontrée) ;
+  //  · couverture_inconnue = « Couverture inconnue » (rien remonté mais couverture non démontrée) ;
+  //  · lecture_indisponible = « Lecture indisponible » (lecture échouée — ex. radar PLU en panne).
   verifie?: string[]
+  couverture_inconnue?: string[]
+  lecture_indisponible?: string[]
+  plu_radar_ok?: boolean
   // RETOURS-27 (pt 2) — procédure PLU en cours (carte dédiée) ; null si aucune n'est servie.
   procedure_plu?: { libelle: string; stade?: string | null; source?: string | null; date?: string | null; date_constat?: string | null } | null
   non_couvert: string[]
@@ -111,32 +117,72 @@ export function O5Servitudes() {
                     {s.redhibitoire && <span aria-hidden className="text-red-500">●</span>}
                     <b className="text-[11.5px] text-txt-hi">{s.categorie}</b>
                     {s.redhibitoire
-                      ? <span className="rounded-full border border-red-500/40 bg-red-500/10 px-1.5 text-[8.5px] font-medium text-red-500">Inconstructible (partie rouge)</span>
+                      // OUTILS-LOT-4 bis (pt 2) — parcelle 100 % rouge (effet « parcelle entièrement
+                      // INCONSTRUCTIBLE », servi par le back) : étiquette « Inconstructible » SANS
+                      // « (partie rouge) » — ici il n'y a pas de partie constructible.
+                      ? <span className="rounded-full border border-red-500/40 bg-red-500/10 px-1.5 text-[8.5px] font-medium text-red-500">{s.effets.some((e) => /entièrement INCONSTRUCTIBLE/.test(e)) ? 'Inconstructible' : 'Inconstructible (partie rouge)'}</span>
                       : <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 text-[8.5px] font-medium text-mint">sourcé</span>}
                   </div>
-                  <p className="mt-1 text-[11px] leading-snug text-txt">{s.effets.join(' · ')}</p>
+                  {/* OUTILS-LOT-4 (pt 3) — une carte qui agrège plusieurs effets (ex. « Risque naturel » :
+                      PPR rouge + bleu + aléas) devenait trop longue. L'ESSENTIEL (le 1ᵉ effet, le plus
+                      fort) reste visible ; le reste passe dans un repli « Détail ». */}
+                  <p className="mt-1 text-[11px] leading-snug text-txt">{s.effets[0]}</p>
+                  {s.effets.length > 1 && (
+                    <details data-o5-detail className="group/d mt-0.5">
+                      <summary className="flex cursor-pointer list-none items-center gap-1 text-[10px] text-mint marker:hidden hover:underline">
+                        <span aria-hidden className="inline-block w-3 transition-transform duration-quick group-open/d:rotate-90">▸</span>
+                        Détail · {s.effets.length - 1} autre{s.effets.length - 1 > 1 ? 's' : ''}
+                      </summary>
+                      <p className="mt-1 text-[11px] leading-snug text-txt">{s.effets.slice(1).join(' · ')}</p>
+                    </details>
+                  )}
                   <p className="mt-0.5 text-[9.5px] text-txt-dim">{s.source}{s.date ? ` · ${s.date}` : ''}</p>
                 </div>
               ))}
             </>)
           })()}
-          {/* OUTILS-REFONTE-1 (9a) — « VÉRIFIÉ, RIEN À SIGNALER » : familles examinées et claires, en puces.
-              RETOURS-28 (Pièges) — si la commune n'a PAS de procédure PLU en cours, une puce « Procédure PLU »
-              s'y ajoute (« vérifié : aucune procédure »). */}
-          {((d.verifie?.length ?? 0) > 0 || !d.procedure_plu) && (
+          {/* OUTILS-P0-1 (#2) — « AUCUNE INTERSECTION DÉTECTÉE » : familles interrogées DONT la source
+              couvre de façon démontrée la zone de la parcelle (couche ingérée pour la commune) et qui
+              n'ont rien remonté. N'affiche plus « vérifié » sans preuve : les familles non démontrées
+              couvertes passent dans « Couverture inconnue » ci-dessous, les lectures échouées dans
+              « Lecture indisponible ». Les listes sont servies par le back (point de vérité unique). */}
+          {(d.verifie?.length ?? 0) > 0 && (
             <div data-o5-verifie className="flex flex-col gap-1.5">
-              <p className="label-caps text-[9.5px] text-txt-dim">Vérifié, rien à signaler</p>
+              <p className="label-caps text-[9.5px] text-txt-dim">Aucune intersection détectée</p>
               <div className="flex flex-wrap gap-1.5">
                 {(d.verifie ?? []).map((f) => (
                   <span key={f} className="rounded-full border border-line-2 bg-surface-2 px-2.5 py-0.5 text-[10.5px] text-txt-mut">{f}</span>
                 ))}
-                {!d.procedure_plu && (
-                  <span data-o5-procedure-ras className="rounded-full border border-line-2 bg-surface-2 px-2.5 py-0.5 text-[10.5px] text-txt-mut">Procédure PLU</span>
-                )}
               </div>
             </div>
           )}
-          {d.servitudes.length === 0 && (d.verifie?.length ?? 0) === 0 && (
+          {/* OUTILS-P0-1 (#2) — « COUVERTURE INCONNUE » : familles muettes dont on ne peut PAS démontrer
+              que la source couvre cette zone (zone blanche / couche non ingérée sur cette commune). */}
+          {(d.couverture_inconnue?.length ?? 0) > 0 && (
+            <div data-o5-couverture-inconnue className="flex flex-col gap-1.5">
+              <p className="label-caps text-[9.5px] text-amber">Couverture inconnue</p>
+              <div className="flex flex-wrap gap-1.5">
+                {(d.couverture_inconnue ?? []).map((f) => (
+                  <span key={f} className="rounded-full border border-amber/30 bg-amber/5 px-2.5 py-0.5 text-[10.5px] text-txt-mut">{f}</span>
+                ))}
+              </div>
+              <p className="text-[9.5px] leading-snug text-txt-dim">La couche n'est pas démontrée ingérée pour cette commune : l'absence d'alerte ne vaut pas absence réelle. Le certificat d'urbanisme fait foi.</p>
+            </div>
+          )}
+          {/* OUTILS-P0-1 (#2) — « LECTURE INDISPONIBLE » : la lecture de la famille a échoué (ex. radar
+              PLU en panne) — JAMAIS présentée « rien à signaler ». */}
+          {(d.lecture_indisponible?.length ?? 0) > 0 && (
+            <div data-o5-lecture-indisponible className="flex flex-col gap-1.5">
+              <p className="label-caps text-[9.5px] text-st-creuser">Lecture indisponible</p>
+              <div className="flex flex-wrap gap-1.5">
+                {(d.lecture_indisponible ?? []).map((f) => (
+                  <span key={f} className="rounded-full border border-st-creuser/40 bg-st-creuser/10 px-2.5 py-0.5 text-[10.5px] text-st-creuser">{f}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {d.servitudes.length === 0 && (d.verifie?.length ?? 0) === 0
+            && (d.couverture_inconnue?.length ?? 0) === 0 && (d.lecture_indisponible?.length ?? 0) === 0 && (
             <EmptyState title="Aucune servitude détectée dans les couches ingérées à cette parcelle." />
           )}
           {/* RETOURS-28 (Pièges) — « Non couvert » = UNE ligne fixe, le DÉTAIL (couches non ingérées,

@@ -1,0 +1,23 @@
+{
+ "insee": "97403",
+ "commune": "Entre-Deux",
+ "regles": [
+  {
+   "id": "97403-R1",
+   "article": "U12",
+   "mode": "par_logement",
+   "zones": [
+    "Ua",
+    "Ub",
+    "Ub1",
+    "Ub2",
+    "AUb"
+   ],
+   "pages": [
+    26,
+    27,
+    28
+   ]
+  }
+ ]
+}

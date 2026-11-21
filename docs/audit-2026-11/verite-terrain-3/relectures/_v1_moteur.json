@@ -1,0 +1,2760 @@
+{
+ "97402000AD0387": {
+  "surface_m2": 423.4115878728285,
+  "contenance_m2": 450,
+  "bati_m2": 57.758864056203834,
+  "constructible": true,
+  "verdict": "R+1 · estimation ~80 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "Uc",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+1",
+   "niveaux_max": 2,
+   "hauteur_m": 6.0,
+   "zone_implantation_m2": 89,
+   "emprise_sol_max_m2": 225,
+   "emprise_constructible_m2": 89,
+   "emprise_batie_max_m2": 40,
+   "surface_plancher_m2": 80,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~89 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "min(reculs, 450×50%)",
+    "valeur": "~89 m²",
+    "source": "Art. UC 9 · p.45 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 450×(1−30%) = 315 m²",
+    "valeur": "~89 m² retenu",
+    "source": "Art. UC 13.1 · p.50 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 8 m ÷ 3 m/niveau = 2 niveaux",
+    "valeur": "R+1",
+    "source": "Art. UC 10.2 · p.45 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "89 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~40 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "40 m² × 2 niveaux",
+    "valeur": "~80 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "80 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~64 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 3 logts)",
+    "formule": "0.04 ha × 60 logts/ha (30/niveau × 2)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 450 − emprise bâtie 40 − pleine terre 135 = 275 m² ; 1 pl./logt × 25 m² → ≤ 11 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. UC 12.2 · p.49 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. UC 12.2 · p.49 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97402000AH1916": {
+  "surface_m2": 499.20683492582367,
+  "contenance_m2": 499,
+  "bati_m2": null,
+  "constructible": true,
+  "verdict": "R+1 · estimation ~100 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "Ub",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+1",
+   "niveaux_max": 2,
+   "hauteur_m": 6.0,
+   "zone_implantation_m2": 111,
+   "emprise_sol_max_m2": 299,
+   "emprise_constructible_m2": 111,
+   "emprise_batie_max_m2": 50,
+   "surface_plancher_m2": 100,
+   "logements_au_sol": [
+    0,
+    2
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~111 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "min(reculs, 499×60%)",
+    "valeur": "~111 m²",
+    "source": "Art. UB 9 · p.31 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 499×(1−30%) = 349 m²",
+    "valeur": "~111 m² retenu",
+    "source": "Art. UB 13.1 · p.37 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 8 m ÷ 3 m/niveau = 2 niveaux",
+    "valeur": "R+1",
+    "source": "Art. UB 10.2 · p.31 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "111 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~50 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "50 m² × 2 niveaux",
+    "valeur": "~100 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "100 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~80 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 3 logts)",
+    "formule": "0.05 ha × 60 logts/ha (30/niveau × 2)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 499 − emprise bâtie 50 − pleine terre 150 = 299 m² ; 1 pl./logt × 25 m² → ≤ 12 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "valeur": "~0 à 2",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "clause « 25 % dès 2000 m² SDP » (logements locatifs sociaux, logements intermédiaires) — SDP projetée ~100 m² < 2000 m² : seuil non atteint",
+    "valeur": "non imposé",
+    "source": "UB 2.2 (3.) (clause de mixité sociale)"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97406000AP0422": {
+  "surface_m2": 562.7905696913676,
+  "contenance_m2": 570,
+  "bati_m2": 14.742796950707543,
+  "constructible": true,
+  "verdict": "R+0 · estimation ~67 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "AUr",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+0",
+   "niveaux_max": 1,
+   "hauteur_m": 3.0,
+   "zone_implantation_m2": 148,
+   "emprise_sol_max_m2": 228,
+   "emprise_constructible_m2": 148,
+   "emprise_batie_max_m2": 67,
+   "surface_plancher_m2": 67,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~148 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "min(reculs, 570×40%)",
+    "valeur": "~148 m²",
+    "source": "Art. Ur 9.2 · p.53 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 570×(1−50%) = 285 m²",
+    "valeur": "~148 m² retenu",
+    "source": "Art. Ur 13.3 · p.58 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 3.5 m ÷ 3 m/niveau = 1 niveaux",
+    "valeur": "R+0",
+    "source": "Art. Ur 10.1 · p.54 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "148 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~67 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "67 m² × 1 niveaux",
+    "valeur": "~67 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "67 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~53 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 2 logts)",
+    "formule": "0.06 ha × 30 logts/ha (30/niveau × 1)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 570 − emprise bâtie 67 − pleine terre 285 = 218 m² ; 1.5 pl./logt × 25 m² → ≤ 6 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. Ur 12.2 · p.103 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. Ur 12.2 · p.103 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97408000AC3753": {
+  "surface_m2": 492.8998176927066,
+  "contenance_m2": 493,
+  "bati_m2": null,
+  "constructible": true,
+  "verdict": "R+1 · estimation ~86 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "UBc",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+1",
+   "niveaux_max": 2,
+   "hauteur_m": 6.0,
+   "zone_implantation_m2": 95,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": 95,
+   "emprise_batie_max_m2": 43,
+   "surface_plancher_m2": 86,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~95 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
+    "valeur": "—",
+    "source": "Art. 9"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 493×(1−40%) = 296 m²",
+    "valeur": "~95 m² retenu",
+    "source": "Art. UB 13.1 · p.36 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 7 m ÷ 3 m/niveau = 2 niveaux",
+    "valeur": "R+1",
+    "source": "Art. UB 10.2 · p.31 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "95 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~43 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "43 m² × 2 niveaux",
+    "valeur": "~86 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "86 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~69 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 3 logts)",
+    "formule": "0.05 ha × 60 logts/ha (30/niveau × 2)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 493 − emprise bâtie 43 − pleine terre 197 = 253 m² ; 2 pl./logt × 25 m² → ≤ 5 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol (après modulation réunionnaise)",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Emprise au sol non réglementée par le PLU de La Possession (silence du règlement) : occupation du gabarit ~45% posée par hypothèse de modélisation ; la capacité est bornée par les reculs, la hauteur et la pleine terre.",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97408000AC3757": {
+  "surface_m2": 60.53822422726104,
+  "contenance_m2": 59,
+  "bati_m2": null,
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "UBc",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": null,
+   "niveaux_max": null,
+   "hauteur_m": null,
+   "zone_implantation_m2": null,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": null,
+   "emprise_batie_max_m2": null,
+   "surface_plancher_m2": null,
+   "logements_au_sol": [
+    0,
+    0
+   ],
+   "assiette_source": null
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — reculs (géométrie réelle)",
+    "formule": "contour cadastral réel inseté du recul limites séparatives (3 m)",
+    "valeur": "≈ 0 m² (contour vidé)",
+    "source": "Art. UB 7 · p.30 (PLU, calibrage validé)"
+   }
+  ],
+  "hypotheses": [],
+  "avertissements": []
+ },
+ "97408000AC3429": {
+  "surface_m2": 397.1588836605145,
+  "contenance_m2": 396,
+  "bati_m2": null,
+  "constructible": true,
+  "verdict": "R+1 · estimation ~90 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "UBc",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+1",
+   "niveaux_max": 2,
+   "hauteur_m": 6.0,
+   "zone_implantation_m2": 100,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": 100,
+   "emprise_batie_max_m2": 45,
+   "surface_plancher_m2": 90,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~100 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
+    "valeur": "—",
+    "source": "Art. 9"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 396×(1−40%) = 238 m²",
+    "valeur": "~100 m² retenu",
+    "source": "Art. UB 13.1 · p.36 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 7 m ÷ 3 m/niveau = 2 niveaux",
+    "valeur": "R+1",
+    "source": "Art. UB 10.2 · p.31 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "100 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~45 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "45 m² × 2 niveaux",
+    "valeur": "~90 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "90 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~72 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 2 logts)",
+    "formule": "0.04 ha × 60 logts/ha (30/niveau × 2)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 396 − emprise bâtie 45 − pleine terre 158 = 193 m² ; 2 pl./logt × 25 m² → ≤ 4 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol (après modulation réunionnaise)",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Emprise au sol non réglementée par le PLU de La Possession (silence du règlement) : occupation du gabarit ~45% posée par hypothèse de modélisation ; la capacité est bornée par les reculs, la hauteur et la pleine terre.",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97408000AN1382": {
+  "surface_m2": 262.3570372241668,
+  "contenance_m2": 277,
+  "bati_m2": 15.874307797059785,
+  "constructible": true,
+  "verdict": "R+2 · estimation ~22 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "UB",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+2",
+   "niveaux_max": 3,
+   "hauteur_m": 9.0,
+   "zone_implantation_m2": 16,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": 16,
+   "emprise_batie_max_m2": 7,
+   "surface_plancher_m2": 22,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~16 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
+    "valeur": "—",
+    "source": "Art. 9"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 277×(1−35%) = 180 m²",
+    "valeur": "~16 m² retenu",
+    "source": "Art. UB 13.1 · p.36 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 9 m ÷ 3 m/niveau = 3 niveaux",
+    "valeur": "R+2",
+    "source": "Art. UB 10.2 · p.31 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "16 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~7 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "7 m² × 3 niveaux",
+    "valeur": "~22 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "22 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~17 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 2 logts)",
+    "formule": "0.03 ha × 90 logts/ha (30/niveau × 3)",
+    "valeur": "~0 à 0",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 277 − emprise bâtie 7 − pleine terre 97 = 173 m² ; 2 pl./logt × 25 m² → ≤ 3 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~0–0 logts",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "clause « 20 % dès 1500 m² SDP » — SDP projetée ~22 m² < 1500 m² : seuil non atteint",
+    "valeur": "non imposé",
+    "source": "UB 2.2 4° (clause de mixité sociale)"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Emprise au sol non réglementée par le PLU de La Possession (silence du règlement) : occupation du gabarit ~45% posée par hypothèse de modélisation ; la capacité est bornée par les reculs, la hauteur et la pleine terre.",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97408000AN1912": {
+  "surface_m2": 472.23992829869053,
+  "contenance_m2": 467,
+  "bati_m2": 9.29039507944729,
+  "constructible": true,
+  "verdict": "R+2 · estimation ~130 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "UB",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+2",
+   "niveaux_max": 3,
+   "hauteur_m": 9.0,
+   "zone_implantation_m2": 97,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": 97,
+   "emprise_batie_max_m2": 43,
+   "surface_plancher_m2": 130,
+   "logements_au_sol": [
+    1,
+    2
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~97 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
+    "valeur": "—",
+    "source": "Art. 9"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 467×(1−35%) = 304 m²",
+    "valeur": "~97 m² retenu",
+    "source": "Art. UB 13.1 · p.36 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 9 m ÷ 3 m/niveau = 3 niveaux",
+    "valeur": "R+2",
+    "source": "Art. UB 10.2 · p.31 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "97 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~43 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "43 m² × 3 niveaux",
+    "valeur": "~130 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "130 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~104 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 4 logts)",
+    "formule": "0.05 ha × 90 logts/ha (30/niveau × 3)",
+    "valeur": "~1 à 2",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 467 − emprise bâtie 43 − pleine terre 163 = 260 m² ; 2 pl./logt × 25 m² → ≤ 5 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–2 logts",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "valeur": "~1 à 2",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "clause « 20 % dès 1500 m² SDP » — SDP projetée ~130 m² < 1500 m² : seuil non atteint",
+    "valeur": "non imposé",
+    "source": "UB 2.2 4° (clause de mixité sociale)"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Emprise au sol non réglementée par le PLU de La Possession (silence du règlement) : occupation du gabarit ~45% posée par hypothèse de modélisation ; la capacité est bornée par les reculs, la hauteur et la pleine terre.",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97408000AS0457": {
+  "surface_m2": 416.14961891186624,
+  "contenance_m2": 416,
+  "bati_m2": 3.654738926388953,
+  "constructible": true,
+  "verdict": "R+2 · estimation ~97 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "AUB",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+2",
+   "niveaux_max": 3,
+   "hauteur_m": 9.0,
+   "zone_implantation_m2": 72,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": 72,
+   "emprise_batie_max_m2": 32,
+   "surface_plancher_m2": 97,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~72 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
+    "valeur": "—",
+    "source": "Art. 9"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 416×(1−35%) = 270 m²",
+    "valeur": "~72 m² retenu",
+    "source": "Art. UB 13.1 · p.36 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 9 m ÷ 3 m/niveau = 3 niveaux",
+    "valeur": "R+2",
+    "source": "Art. UB 10.2 · p.31 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "72 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~32 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "32 m² × 3 niveaux",
+    "valeur": "~97 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "97 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~77 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 4 logts)",
+    "formule": "0.04 ha × 90 logts/ha (30/niveau × 3)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 416 − emprise bâtie 32 − pleine terre 146 = 238 m² ; 2 pl./logt × 25 m² → ≤ 5 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol (après modulation réunionnaise)",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Emprise au sol non réglementée par le PLU de La Possession (silence du règlement) : occupation du gabarit ~45% posée par hypothèse de modélisation ; la capacité est bornée par les reculs, la hauteur et la pleine terre.",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97408000AS0498": {
+  "surface_m2": 76.6031095790463,
+  "contenance_m2": 75,
+  "bati_m2": 8.000261129726207,
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "AUB",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": null,
+   "niveaux_max": null,
+   "hauteur_m": null,
+   "zone_implantation_m2": null,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": null,
+   "emprise_batie_max_m2": null,
+   "surface_plancher_m2": null,
+   "logements_au_sol": [
+    0,
+    0
+   ],
+   "assiette_source": null
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "≈ 0 m² (contour vidé)",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   }
+  ],
+  "hypotheses": [],
+  "avertissements": []
+ },
+ "97408000AS0583": {
+  "surface_m2": 6.785365147931554,
+  "contenance_m2": 7,
+  "bati_m2": null,
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "AUB",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": null,
+   "niveaux_max": null,
+   "hauteur_m": null,
+   "zone_implantation_m2": null,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": null,
+   "emprise_batie_max_m2": null,
+   "surface_plancher_m2": null,
+   "logements_au_sol": [
+    0,
+    0
+   ],
+   "assiette_source": null
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "≈ 0 m² (contour vidé)",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   }
+  ],
+  "hypotheses": [],
+  "avertissements": []
+ },
+ "97408000AO1919": {
+  "surface_m2": 579.4592576255033,
+  "contenance_m2": 585,
+  "bati_m2": null,
+  "constructible": true,
+  "verdict": "R+3 · estimation ~73 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "UA",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+3",
+   "niveaux_max": 4,
+   "hauteur_m": 12.0,
+   "zone_implantation_m2": 40,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": 40,
+   "emprise_batie_max_m2": 18,
+   "surface_plancher_m2": 73,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~40 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
+    "valeur": "—",
+    "source": "Art. 9"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 585×(1−35%) = 380 m²",
+    "valeur": "~40 m² retenu",
+    "source": "Art. UA 13.1 · p.22 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout non précisée → (hauteur faîtage 16−3) ÷ 3 = 4",
+    "valeur": "R+3",
+    "source": "Art. UA 10.2 · p.16 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "40 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~18 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "18 m² × 4 niveaux",
+    "valeur": "~73 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "73 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~58 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 7 logts)",
+    "formule": "0.06 ha × 120 logts/ha (30/niveau × 4)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 585 − emprise bâtie 18 − pleine terre 205 = 362 m² ; 2 pl./logt × 25 m² → ≤ 7 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. UA 12.2 · p.21 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. UA 12.2 · p.21 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "clause « 20 % dès 1500 m² SDP » — SDP projetée ~73 m² < 1500 m² : seuil non atteint",
+    "valeur": "non imposé",
+    "source": "UA 2.2 7° (clause de mixité sociale)"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Emprise au sol non réglementée par le PLU de La Possession (silence du règlement) : occupation du gabarit ~45% posée par hypothèse de modélisation ; la capacité est bornée par les reculs, la hauteur et la pleine terre.",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": [
+   "Hauteur égout (hé) non précisée pour UA : niveaux estimés depuis hf 16 m (prudent)."
+  ]
+ },
+ "97408000AB0302": {
+  "surface_m2": 489.91003188829967,
+  "contenance_m2": 492,
+  "bati_m2": 113.9987504639071,
+  "constructible": true,
+  "verdict": "R+1 · estimation ~92 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "UBc",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+1",
+   "niveaux_max": 2,
+   "hauteur_m": 6.0,
+   "zone_implantation_m2": 103,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": 103,
+   "emprise_batie_max_m2": 46,
+   "surface_plancher_m2": 92,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~103 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
+    "valeur": "—",
+    "source": "Art. 9"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 492×(1−40%) = 295 m²",
+    "valeur": "~103 m² retenu",
+    "source": "Art. UB 13.1 · p.36 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 7 m ÷ 3 m/niveau = 2 niveaux",
+    "valeur": "R+1",
+    "source": "Art. UB 10.2 · p.31 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "103 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~46 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "46 m² × 2 niveaux",
+    "valeur": "~92 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "92 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~74 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 3 logts)",
+    "formule": "0.05 ha × 60 logts/ha (30/niveau × 2)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 492 − emprise bâtie 46 − pleine terre 197 = 249 m² ; 2 pl./logt × 25 m² → ≤ 5 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol (après modulation réunionnaise)",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Emprise au sol non réglementée par le PLU de La Possession (silence du règlement) : occupation du gabarit ~45% posée par hypothèse de modélisation ; la capacité est bornée par les reculs, la hauteur et la pleine terre.",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97408000AB0333": {
+  "surface_m2": 43.7855697905658,
+  "contenance_m2": 38,
+  "bati_m2": null,
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "UBc",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": null,
+   "niveaux_max": null,
+   "hauteur_m": null,
+   "zone_implantation_m2": null,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": null,
+   "emprise_batie_max_m2": null,
+   "surface_plancher_m2": null,
+   "logements_au_sol": [
+    0,
+    0
+   ],
+   "assiette_source": null
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "≈ 0 m² (contour vidé)",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   }
+  ],
+  "hypotheses": [],
+  "avertissements": []
+ },
+ "97408000AC3538": {
+  "surface_m2": 399.9008049003528,
+  "contenance_m2": 403,
+  "bati_m2": 10.454276844575416,
+  "constructible": true,
+  "verdict": "R+1 · estimation ~87 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "UBc",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+1",
+   "niveaux_max": 2,
+   "hauteur_m": 6.0,
+   "zone_implantation_m2": 97,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": 97,
+   "emprise_batie_max_m2": 44,
+   "surface_plancher_m2": 87,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~97 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
+    "valeur": "—",
+    "source": "Art. 9"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 403×(1−40%) = 242 m²",
+    "valeur": "~97 m² retenu",
+    "source": "Art. UB 13.1 · p.36 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 7 m ÷ 3 m/niveau = 2 niveaux",
+    "valeur": "R+1",
+    "source": "Art. UB 10.2 · p.31 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "97 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~44 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "44 m² × 2 niveaux",
+    "valeur": "~87 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "87 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~70 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 2 logts)",
+    "formule": "0.04 ha × 60 logts/ha (30/niveau × 2)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 403 − emprise bâtie 44 − pleine terre 161 = 198 m² ; 2 pl./logt × 25 m² → ≤ 4 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol (après modulation réunionnaise)",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Emprise au sol non réglementée par le PLU de La Possession (silence du règlement) : occupation du gabarit ~45% posée par hypothèse de modélisation ; la capacité est bornée par les reculs, la hauteur et la pleine terre.",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97408000AC3540": {
+  "surface_m2": 400.09796666888093,
+  "contenance_m2": 403,
+  "bati_m2": null,
+  "constructible": true,
+  "verdict": "R+1 · estimation ~85 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "UBc",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+1",
+   "niveaux_max": 2,
+   "hauteur_m": 6.0,
+   "zone_implantation_m2": 94,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": 94,
+   "emprise_batie_max_m2": 43,
+   "surface_plancher_m2": 85,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~94 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
+    "valeur": "—",
+    "source": "Art. 9"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 403×(1−40%) = 242 m²",
+    "valeur": "~94 m² retenu",
+    "source": "Art. UB 13.1 · p.36 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 7 m ÷ 3 m/niveau = 2 niveaux",
+    "valeur": "R+1",
+    "source": "Art. UB 10.2 · p.31 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "94 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~43 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "43 m² × 2 niveaux",
+    "valeur": "~85 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "85 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~68 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 2 logts)",
+    "formule": "0.04 ha × 60 logts/ha (30/niveau × 2)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 403 − emprise bâtie 43 − pleine terre 161 = 199 m² ; 2 pl./logt × 25 m² → ≤ 4 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol (après modulation réunionnaise)",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Emprise au sol non réglementée par le PLU de La Possession (silence du règlement) : occupation du gabarit ~45% posée par hypothèse de modélisation ; la capacité est bornée par les reculs, la hauteur et la pleine terre.",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97408000AS0606": {
+  "surface_m2": 376.5035855712597,
+  "contenance_m2": 372,
+  "bati_m2": null,
+  "constructible": true,
+  "verdict": "R+2 · estimation ~74 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "AUB",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+2",
+   "niveaux_max": 3,
+   "hauteur_m": 9.0,
+   "zone_implantation_m2": 55,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": 55,
+   "emprise_batie_max_m2": 25,
+   "surface_plancher_m2": 74,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~55 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
+    "valeur": "—",
+    "source": "Art. 9"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 372×(1−35%) = 242 m²",
+    "valeur": "~55 m² retenu",
+    "source": "Art. UB 13.1 · p.36 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 9 m ÷ 3 m/niveau = 3 niveaux",
+    "valeur": "R+2",
+    "source": "Art. UB 10.2 · p.31 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "55 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~25 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "25 m² × 3 niveaux",
+    "valeur": "~74 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "74 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~59 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 3 logts)",
+    "formule": "0.04 ha × 90 logts/ha (30/niveau × 3)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 372 − emprise bâtie 25 − pleine terre 130 = 217 m² ; 2 pl./logt × 25 m² → ≤ 4 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. UB 12.2 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol (après modulation réunionnaise)",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Emprise au sol non réglementée par le PLU de La Possession (silence du règlement) : occupation du gabarit ~45% posée par hypothèse de modélisation ; la capacité est bornée par les reculs, la hauteur et la pleine terre.",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97412000BO0496": {
+  "surface_m2": 403.47785270636155,
+  "contenance_m2": 403,
+  "bati_m2": 155.35002623242798,
+  "constructible": true,
+  "verdict": "R+2 · estimation ~81 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "U3",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+2",
+   "niveaux_max": 3,
+   "hauteur_m": 9.0,
+   "zone_implantation_m2": 60,
+   "emprise_sol_max_m2": 282,
+   "emprise_constructible_m2": 60,
+   "emprise_batie_max_m2": 27,
+   "surface_plancher_m2": 81,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~60 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "min(reculs, 403×70%)",
+    "valeur": "~60 m²",
+    "source": "Art. U3 9.2 · p.50 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 403×(1−15%) = 343 m²",
+    "valeur": "~60 m² retenu",
+    "source": "Art. U3 13.1 · p.56 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 11 m ÷ 3 m/niveau = 3 niveaux",
+    "valeur": "R+2",
+    "source": "Art. U3 10.2 · p.51 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "60 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~27 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "27 m² × 3 niveaux",
+    "valeur": "~81 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "81 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~65 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 4 logts)",
+    "formule": "0.04 ha × 90 logts/ha (30/niveau × 3)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 403 − emprise bâtie 27 − pleine terre 60 = 316 m² ; 2 pl./logt × 25 m² → ≤ 6 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. U3 12.2 · p.55 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. U3 12.2 · p.55 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "clause « 20 % dès 2000 m² SDP » (logements locatifs sociaux) — SDP projetée ~81 m² < 2000 m² : seuil non atteint",
+    "valeur": "non imposé",
+    "source": "U3 2.2 (4) (clause de mixité sociale)"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97412000CT0213": {
+  "surface_m2": 358.2215341997497,
+  "contenance_m2": 352,
+  "bati_m2": 126.2348310013492,
+  "constructible": true,
+  "verdict": "R+1 · estimation ~85 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "U5",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+1",
+   "niveaux_max": 2,
+   "hauteur_m": 6.0,
+   "zone_implantation_m2": 94,
+   "emprise_sol_max_m2": 176,
+   "emprise_constructible_m2": 94,
+   "emprise_batie_max_m2": 42,
+   "surface_plancher_m2": 85,
+   "logements_au_sol": [
+    0,
+    2
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~94 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "min(reculs, 352×50%)",
+    "valeur": "~94 m²",
+    "source": "Art. U5 9.2 · p.80 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 352×(1−35%) = 229 m²",
+    "valeur": "~94 m² retenu",
+    "source": "Art. U5 13.1 · p.86 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 7 m ÷ 3 m/niveau = 2 niveaux",
+    "valeur": "R+1",
+    "source": "Art. U5 10.2 · p.80 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "94 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~42 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "42 m² × 2 niveaux",
+    "valeur": "~85 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "85 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~68 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 2 logts)",
+    "formule": "0.04 ha × 60 logts/ha (30/niveau × 2)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 352 − emprise bâtie 42 − pleine terre 123 = 187 m² ; 2 pl./logt × 25 m² → ≤ 4 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. U5 12.2 · p.84 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. U5 12.2 · p.84 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "valeur": "~0 à 2",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "clause « 20 % dès 2000 m² SDP » (logements locatifs sociaux) — SDP projetée ~85 m² < 2000 m² : seuil non atteint",
+    "valeur": "non imposé",
+    "source": "U5 2.2 (4) (clause de mixité sociale)"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97412000CD0348": {
+  "surface_m2": 412.87768080932585,
+  "contenance_m2": 405,
+  "bati_m2": 215.3025412820331,
+  "constructible": true,
+  "verdict": "R+1 · estimation ~115 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "U3a",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+1",
+   "niveaux_max": 2,
+   "hauteur_m": 6.0,
+   "zone_implantation_m2": 128,
+   "emprise_sol_max_m2": 284,
+   "emprise_constructible_m2": 128,
+   "emprise_batie_max_m2": 58,
+   "surface_plancher_m2": 115,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~128 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "min(reculs, 405×70%)",
+    "valeur": "~128 m²",
+    "source": "Art. U3 9.2 · p.50 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 405×(1−25%) = 304 m²",
+    "valeur": "~128 m² retenu",
+    "source": "Art. U3 13.1 · p.56 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 8 m ÷ 3 m/niveau = 2 niveaux",
+    "valeur": "R+1",
+    "source": "Art. U3 10.2 · p.51 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "128 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~58 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "58 m² × 2 niveaux",
+    "valeur": "~115 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "115 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~92 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 2 logts)",
+    "formule": "0.04 ha × 60 logts/ha (30/niveau × 2)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 405 − emprise bâtie 58 − pleine terre 101 = 246 m² ; 2 pl./logt × 25 m² → ≤ 5 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. U3 12.2 · p.55 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. U3 12.2 · p.55 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol (après modulation réunionnaise)",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97412000CD0857": {
+  "surface_m2": 339.35546544600754,
+  "contenance_m2": 363,
+  "bati_m2": 22.914503189644087,
+  "constructible": true,
+  "verdict": "R+1 · estimation ~64 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "U3a",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+1",
+   "niveaux_max": 2,
+   "hauteur_m": 6.0,
+   "zone_implantation_m2": 71,
+   "emprise_sol_max_m2": 254,
+   "emprise_constructible_m2": 71,
+   "emprise_batie_max_m2": 32,
+   "surface_plancher_m2": 64,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~71 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "min(reculs, 363×70%)",
+    "valeur": "~71 m²",
+    "source": "Art. U3 9.2 · p.50 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 363×(1−25%) = 272 m²",
+    "valeur": "~71 m² retenu",
+    "source": "Art. U3 13.1 · p.56 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 8 m ÷ 3 m/niveau = 2 niveaux",
+    "valeur": "R+1",
+    "source": "Art. U3 10.2 · p.51 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "71 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~32 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "32 m² × 2 niveaux",
+    "valeur": "~64 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "64 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~51 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 2 logts)",
+    "formule": "0.04 ha × 60 logts/ha (30/niveau × 2)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 363 − emprise bâtie 32 − pleine terre 91 = 240 m² ; 2 pl./logt × 25 m² → ≤ 5 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. U3 12.2 · p.55 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. U3 12.2 · p.55 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97412000BK1935": {
+  "surface_m2": 397.1646103386193,
+  "contenance_m2": 389,
+  "bati_m2": null,
+  "constructible": true,
+  "verdict": "R+1 · estimation ~69 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "U5ma",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+1",
+   "niveaux_max": 2,
+   "hauteur_m": 6.0,
+   "zone_implantation_m2": 77,
+   "emprise_sol_max_m2": 156,
+   "emprise_constructible_m2": 77,
+   "emprise_batie_max_m2": 34,
+   "surface_plancher_m2": 69,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~77 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "min(reculs, 389×40%)",
+    "valeur": "~77 m²",
+    "source": "Art. U5 9.2 · p.80 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 389×(1−35%) = 253 m²",
+    "valeur": "~77 m² retenu",
+    "source": "Art. U5 13.1 · p.86 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 7 m ÷ 3 m/niveau = 2 niveaux",
+    "valeur": "R+1",
+    "source": "Art. U5 10.2 · p.80 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "77 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~34 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "34 m² × 2 niveaux",
+    "valeur": "~69 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "69 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~55 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 2 logts)",
+    "formule": "0.04 ha × 60 logts/ha (30/niveau × 2)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 389 − emprise bâtie 34 − pleine terre 136 = 218 m² ; 2 pl./logt × 25 m² → ≤ 4 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. U5 12.2 · p.84 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. U5 12.2 · p.84 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol (après modulation réunionnaise)",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97412000BK1938": {
+  "surface_m2": 208.36582265656128,
+  "contenance_m2": 206,
+  "bati_m2": null,
+  "constructible": true,
+  "verdict": "R+1 · estimation ~14 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "U5ma",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+1",
+   "niveaux_max": 2,
+   "hauteur_m": 6.0,
+   "zone_implantation_m2": 16,
+   "emprise_sol_max_m2": 82,
+   "emprise_constructible_m2": 16,
+   "emprise_batie_max_m2": 7,
+   "surface_plancher_m2": 14,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~16 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "min(reculs, 206×40%)",
+    "valeur": "~16 m²",
+    "source": "Art. U5 9.2 · p.80 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 206×(1−35%) = 134 m²",
+    "valeur": "~16 m² retenu",
+    "source": "Art. U5 13.1 · p.86 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 7 m ÷ 3 m/niveau = 2 niveaux",
+    "valeur": "R+1",
+    "source": "Art. U5 10.2 · p.80 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "16 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~7 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "7 m² × 2 niveaux",
+    "valeur": "~14 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "14 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~11 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 1 logts)",
+    "formule": "0.02 ha × 60 logts/ha (30/niveau × 2)",
+    "valeur": "~0 à 0",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 206 − emprise bâtie 7 − pleine terre 72 = 127 m² ; 2 pl./logt × 25 m² → ≤ 3 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. U5 12.2 · p.84 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~0–0 logts",
+    "source": "Art. U5 12.2 · p.84 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol (après modulation réunionnaise)",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97414000CH1873": {
+  "surface_m2": 42.0787503593203,
+  "contenance_m2": 43,
+  "bati_m2": null,
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "UD1",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": null,
+   "niveaux_max": null,
+   "hauteur_m": null,
+   "zone_implantation_m2": null,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": null,
+   "emprise_batie_max_m2": null,
+   "surface_plancher_m2": null,
+   "logements_au_sol": [
+    0,
+    0
+   ],
+   "assiette_source": null
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — reculs (géométrie réelle)",
+    "formule": "contour cadastral réel inseté du recul limites séparatives (3 m)",
+    "valeur": "≈ 0 m² (contour vidé)",
+    "source": "Art. UD 7.2 · p.59 (PLU, calibrage validé)"
+   }
+  ],
+  "hypotheses": [],
+  "avertissements": []
+ },
+ "97414000CH1877": {
+  "surface_m2": 564.0333094442775,
+  "contenance_m2": 570,
+  "bati_m2": 77.38404882874407,
+  "constructible": true,
+  "verdict": "R+1 · estimation ~132 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "UD1",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+1",
+   "niveaux_max": 2,
+   "hauteur_m": 6.0,
+   "zone_implantation_m2": 146,
+   "emprise_sol_max_m2": 187,
+   "emprise_constructible_m2": 146,
+   "emprise_batie_max_m2": 66,
+   "surface_plancher_m2": 132,
+   "logements_au_sol": [
+    1,
+    2
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~146 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "min(reculs, 469×40%)",
+    "valeur": "~146 m²",
+    "source": "Art. UD 9.2 · p.62 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 469×(1−35%) = 305 m²",
+    "valeur": "~146 m² retenu",
+    "source": "Art. UD 13.1 · p.67 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 6 m ÷ 3 m/niveau = 2 niveaux",
+    "valeur": "R+1",
+    "source": "Art. UD 10.2 · p.62 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "146 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~66 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "66 m² × 2 niveaux",
+    "valeur": "~132 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "132 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~105 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 3 logts)",
+    "formule": "0.05 ha × 60 logts/ha (30/niveau × 2)",
+    "valeur": "~1 à 2",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 469 − emprise bâtie 66 − pleine terre 164 = 239 m² ; 2 pl./logt × 25 m² → ≤ 5 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. UD 12.2 · p.66 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–2 logts",
+    "source": "Art. UD 12.2 · p.66 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "valeur": "~1 à 2",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97414000CH1879": {
+  "surface_m2": 5.024682144382553,
+  "contenance_m2": 5,
+  "bati_m2": null,
+  "constructible": false,
+  "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+  "cause": "terrain_exigu",
+  "exigu_raison": "reculs",
+  "zone": "UD1",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": null,
+   "niveaux_max": null,
+   "hauteur_m": null,
+   "zone_implantation_m2": null,
+   "emprise_sol_max_m2": null,
+   "emprise_constructible_m2": null,
+   "emprise_batie_max_m2": null,
+   "surface_plancher_m2": null,
+   "logements_au_sol": [
+    0,
+    0
+   ],
+   "assiette_source": null
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "≈ 0 m² (contour vidé)",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   }
+  ],
+  "hypotheses": [],
+  "avertissements": []
+ },
+ "97419000AS0725": {
+  "surface_m2": 518.3468557703831,
+  "contenance_m2": 496,
+  "bati_m2": 206.1277175271336,
+  "constructible": true,
+  "verdict": "R+1 · estimation ~167 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "1AUc",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+1",
+   "niveaux_max": 2,
+   "hauteur_m": 6.0,
+   "zone_implantation_m2": 186,
+   "emprise_sol_max_m2": 248,
+   "emprise_constructible_m2": 186,
+   "emprise_batie_max_m2": 83,
+   "surface_plancher_m2": 167,
+   "logements_au_sol": [
+    1,
+    3
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~186 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "min(reculs, 496×50%)",
+    "valeur": "~186 m²",
+    "source": "Art. UC 9 · p.32 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 496×(1−30%) = 347 m²",
+    "valeur": "~186 m² retenu",
+    "source": "Art. UC 13 · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 6 m ÷ 3 m/niveau = 2 niveaux",
+    "valeur": "R+1",
+    "source": "Art. UC 10 · p.33 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "186 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~83 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "83 m² × 2 niveaux",
+    "valeur": "~167 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "167 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~134 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 3 logts)",
+    "formule": "0.05 ha × 60 logts/ha (30/niveau × 2)",
+    "valeur": "~2 à 2",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 496 − emprise bâtie 83 − pleine terre 149 = 264 m² ; 1.5 pl./logt × 25 m² → ≤ 7 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. AUINDICEE 12 (renvoi UC 12) · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~2–2 logts",
+    "source": "Art. AUINDICEE 12 (renvoi UC 12) · p.35 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "valeur": "~1 à 3",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97419000AL1122": {
+  "surface_m2": 315.3563990144441,
+  "contenance_m2": 317,
+  "bati_m2": 127.76119199468798,
+  "constructible": true,
+  "verdict": "R+2 · estimation ~83 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "1AUa",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+2",
+   "niveaux_max": 3,
+   "hauteur_m": 9.0,
+   "zone_implantation_m2": 62,
+   "emprise_sol_max_m2": 222,
+   "emprise_constructible_m2": 62,
+   "emprise_batie_max_m2": 28,
+   "surface_plancher_m2": 83,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~62 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "min(reculs, 317×70%)",
+    "valeur": "~62 m²",
+    "source": "Art. UA 9 · p.14 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 317×(1−25%) = 238 m²",
+    "valeur": "~62 m² retenu",
+    "source": "Art. UA 13 · p.17 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 9 m ÷ 3 m/niveau = 3 niveaux",
+    "valeur": "R+2",
+    "source": "Art. UA 10 · p.15 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "62 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~28 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "28 m² × 3 niveaux",
+    "valeur": "~83 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "83 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~67 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 3 logts)",
+    "formule": "0.03 ha × 90 logts/ha (30/niveau × 3)",
+    "valeur": "~1 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 317 − emprise bâtie 28 − pleine terre 79 = 210 m² ; 1.5 pl./logt × 25 m² → ≤ 6 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. AUINDICEE 12 (renvoi UA 12) · p.17 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~1–1 logts",
+    "source": "Art. AUINDICEE 12 (renvoi UA 12) · p.17 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol (après modulation réunionnaise)",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ },
+ "97419000AL1109": {
+  "surface_m2": 314.4036869925211,
+  "contenance_m2": 316,
+  "bati_m2": 166.45979198797968,
+  "constructible": true,
+  "verdict": "R+2 · estimation ~46 m² de plancher",
+  "cause": null,
+  "exigu_raison": null,
+  "zone": "1AUa",
+  "calibree": true,
+  "fourchette": {
+   "niveaux": "R+2",
+   "niveaux_max": 3,
+   "hauteur_m": 9.0,
+   "zone_implantation_m2": 34,
+   "emprise_sol_max_m2": 221,
+   "emprise_constructible_m2": 34,
+   "emprise_batie_max_m2": 15,
+   "surface_plancher_m2": 46,
+   "logements_au_sol": [
+    0,
+    1
+   ],
+   "assiette_source": "gabarit"
+  },
+  "steps": [
+   {
+    "label": "Emprise au sol — zone d'implantation réglementaire",
+    "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+    "valeur": "~34 m²",
+    "source": "Moteur gabarit — reculs par côté sourcés PLU"
+   },
+   {
+    "label": "Emprise au sol — % réglementé",
+    "formule": "min(reculs, 316×70%)",
+    "valeur": "~34 m²",
+    "source": "Art. UA 9 · p.14 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Contrainte pleine terre",
+    "formule": "emprise ≤ 316×(1−25%) = 237 m²",
+    "valeur": "~34 m² retenu",
+    "source": "Art. UA 13 · p.17 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Niveaux constructibles",
+    "formule": "hauteur d'égout retenue 9 m ÷ 3 m/niveau = 3 niveaux",
+    "valeur": "R+2",
+    "source": "Art. UA 10 · p.15 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Emprise bâtie (occupation du gabarit)",
+    "formule": "34 m² × 45% (espaces entre bâtiments, accès…)",
+    "valeur": "~15 m²",
+    "source": "hypothèse occupation"
+   },
+   {
+    "label": "Surface de plancher brute",
+    "formule": "15 m² × 3 niveaux",
+    "valeur": "~46 m²",
+    "source": "dérivé occupation×hauteur"
+   },
+   {
+    "label": "Surface habitable (rendement)",
+    "formule": "46 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+    "valeur": "~37 m²",
+    "source": "hypothèse rendement"
+   },
+   {
+    "label": "Logements — après plafond de densité (≤ 3 logts)",
+    "formule": "0.03 ha × 90 logts/ha (30/niveau × 3)",
+    "valeur": "~0 à 1",
+    "source": "hypothèse densité (ex-COS)"
+   },
+   {
+    "label": "Stationnement — scénario au sol",
+    "formule": "sol restant = terrain 316 − emprise bâtie 15 − pleine terre 79 = 222 m² ; 1.5 pl./logt × 25 m² → ≤ 6 logts",
+    "valeur": "plafond au sol",
+    "source": "Art. AUINDICEE 12 (renvoi UA 12) · p.17 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Stationnement — scénario sous-sol/silo",
+    "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+    "valeur": "~0–1 logts",
+    "source": "Art. AUINDICEE 12 (renvoi UA 12) · p.17 (PLU, calibrage validé)"
+   },
+   {
+    "label": "Logements retenus au sol",
+    "formule": "plafond de densité ∩ stationnement au sol",
+    "valeur": "~0 à 1",
+    "source": "dérivé"
+   },
+   {
+    "label": "Logements sociaux imposés (LLS)",
+    "formule": "aucune clause de mixité validée pour cette zone",
+    "valeur": "sans objet",
+    "source": "règlement PLU"
+   }
+  ],
+  "hypotheses": [
+   "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+   "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+   "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+   "Coefficient de rendement SDP→habitable supposé 80%.",
+   "Surface moyenne par logement supposée 65–80 m².",
+   "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+   "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+  ],
+  "avertissements": []
+ }
+}

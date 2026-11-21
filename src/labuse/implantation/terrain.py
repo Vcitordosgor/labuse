@@ -65,6 +65,13 @@ class Terrain:
     # bornée par le budget de temps (résultat rendu dans la borne au lieu d'un 503). Dit au client.
     grille_reduite: bool = False
     grille_budget_atteint: bool = False
+    # ETUDE-FIABLE-1 (LOT A) — état DÉTERMINISTE de la recherche (nombre de candidats examinés, prévu,
+    # complétude, déclenchement du filet temps). Alimente l'état « recherche complète / partielle / non
+    # aboutie » servi à l'écran et au PDF (identique sur toute machine à saisies égales).
+    grille_candidats_prevus: int = 0
+    grille_candidats_examines: int = 0
+    grille_complete: bool = False
+    grille_garde_fou_temps: bool = False
 
     @property
     def ecart_contenance_dessin_m2(self) -> float:
@@ -104,12 +111,16 @@ def _ppr_par_couleur(session, aw: str):
     return lire_zones_interdites_wkt(session, aw)
 
 
-def _zone_constructible(session, aw: str):
+def _zone_constructible(session, aw: str, zone_cible: Optional[str] = None):
     """ETUDE-ZONE-1 — portion CONSTRUCTIBLE de l'assiette, déjà intersectée avec elle (2975).
 
     Source UNIQUE : les zones PLU `plu_gpu_zone` et la famille via `labuse_zone_famille(subtype)`,
     EXACTEMENT la même que `faisabilite.zone_servie.zone_dominante` (donc que le Dossier et le
     Gabarit). Constructible = familles U/AU (`FAMILLES_CONSTRUCTIBLES`) ; A/N (et « autre ») exclus.
+
+    ETUDE-STATIONNEMENT-FIX-3 (LOT 2, assemblage) — `zone_cible` (ex. « UB ») restreint le DESSIN à la part
+    de CETTE zone : sur un assemblage UE (habitat de fonction) + UB, l'implantation se trace sur UB, pas sur
+    toute la famille U. Sans `zone_cible`, comportement historique (toute la part U/AU).
 
     Renvoie (geom_constructible | None, zonee) :
       - `zonee=False` quand AUCUNE zone PLU ne touche l'assiette (commune non zonée / RNU) : on NE
@@ -119,8 +130,13 @@ def _zone_constructible(session, aw: str):
     from sqlalchemy import text
     from labuse.faisabilite.zone_servie import FAMILLES_CONSTRUCTIBLES
 
+    # Le libellé PRÉCIS de la zone (UE, UB…) vit dans attrs->>'libelle' (1er token), PAS dans subtype
+    # (qui ne porte que la FAMILLE « U »). On extrait donc le même token que zone_servie._TOK, sinon un
+    # `zone_cible="UB"` ne pourrait jamais matcher (subtype='U') et le clip retomberait sur toute la
+    # famille U — y compris UE où l'habitat est de fonction (bug d'assemblage L'Étang-Salé / La Possession).
     rows = session.execute(text(
         "SELECT labuse_zone_famille(subtype) AS fam, "
+        "COALESCE(NULLIF(rtrim(split_part(btrim(attrs->>'libelle'), ' ', 1), ':'), ''), name) AS zone_lib, "
         "ST_AsText(ST_CollectionExtract(ST_MakeValid(ST_Intersection("
         "ST_MakeValid(geom_2975), ST_GeomFromText(:g,2975))), 3)) AS wkt "
         "FROM spatial_layers WHERE kind='plu_gpu_zone' "
@@ -128,12 +144,20 @@ def _zone_constructible(session, aw: str):
     ), {"g": aw}).fetchall()
     if not rows:
         return None, False
-    cons = []
-    for fam, wkt in rows:
-        if fam in FAMILLES_CONSTRUCTIBLES and wkt:
-            g = shp_wkt.loads(wkt)
-            if not g.is_empty:
-                cons.append(g)
+    _cible = str(zone_cible).strip().lower() if zone_cible else None
+    cons_all, cons_cible = [], []
+    for fam, zone_lib, wkt in rows:
+        if fam not in FAMILLES_CONSTRUCTIBLES or not wkt:
+            continue
+        g = shp_wkt.loads(wkt)
+        if g.is_empty:
+            continue
+        cons_all.append(g)
+        if _cible is not None and str(zone_lib or "").strip().lower() == _cible:
+            cons_cible.append(g)
+    # assemblage : on restreint à la part de la zone cible SI elle est identifiée ; sinon (subtype non
+    # apparié, zone unique) on garde toute la part constructible (jamais d'assiette vide par mésappariement).
+    cons = cons_cible if cons_cible else cons_all
     geom = unary_union(cons) if cons else None
     if geom is not None and not geom.is_valid:
         geom = geom.buffer(0)
@@ -163,7 +187,7 @@ def _pente_lidar(session, parcelles: list[Parcelle]) -> Optional[dict]:
 
 
 def charger(session, idus: list[str], *, recul_voie_m: float, recul_separative_m: float,
-            inset_m: float = 0.0, avec_pente: bool = True) -> Terrain:
+            inset_m: float = 0.0, avec_pente: bool = True, zone_cible: Optional[str] = None) -> Terrain:
     from sqlalchemy import text
     from labuse.gabarit.limites import classify_parcel_limits
 
@@ -234,7 +258,7 @@ def charger(session, idus: list[str], *, recul_voie_m: float, recul_separative_m
 
     # Clip GÉOMÉTRIQUE de l'assiette (dessin) à la portion constructible. No-op si ~100 % U/AU :
     # l'intersection PostGIS, même pleine, perturberait les sommets au flottant → dérive des témoins `reel`.
-    geom_c, zonee = _zone_constructible(session, aw)
+    geom_c, zonee = _zone_constructible(session, aw, zone_cible=zone_cible)
     if zonee and geom_c is None:                # zone PLU connue mais 100 % A/N → rien de constructible
         assiette = Polygon()
     elif zonee and geom_c is not None:
@@ -287,6 +311,16 @@ def charger(session, idus: list[str], *, recul_voie_m: float, recul_separative_m
         contraintes[kind] = int(n or 0)
     contraintes["ppr_rouge"] = 1 if (ppr_rouge is not None and not ppr_rouge.is_empty) else 0
     contraintes["ppr_bleue"] = 1 if (ppr_bleue is not None and not ppr_bleue.is_empty) else 0
+    # ETUDE-STATIONNEMENT-FIX-4 (LOT 2) — COUVERTURE par un inventaire de ZONE HUMIDE : CÂBLÉE dans le terrain
+    # (donc disponible AVANT le verdict), pour qu'une zone humide couvrant l'assiette fasse basculer l'étude en
+    # « À compléter » (AD0887 : inventaire « La Grande Ferme » sur toute l'assiette). % de l'assiette couvert.
+    _zh = session.execute(text(
+        "SELECT COALESCE(round((100*ST_Area(ST_Intersection("
+        " ST_MakeValid(ST_Union(geom_2975)), ST_GeomFromText(:g,2975)))"
+        " /NULLIF(ST_Area(ST_GeomFromText(:g,2975)),0))::numeric),0) FROM spatial_layers "
+        "WHERE kind='zone_humide' AND ST_Intersects(geom_2975, ST_GeomFromText(:g,2975))"
+    ), {"g": aw}).scalar()
+    contraintes["zone_humide_pct"] = int(_zh or 0)
 
     pente = _pente_lidar(session, parcelles) if avec_pente else None
 

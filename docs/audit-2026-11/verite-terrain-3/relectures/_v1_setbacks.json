@@ -1,0 +1,738 @@
+{
+ "97402000AD0387": {
+  "setbacks": [
+   [
+    "rear",
+    5.5
+   ],
+   [
+    "road",
+    4.0
+   ],
+   [
+    "side",
+    5.5
+   ]
+  ],
+  "maxHeight": [
+   11.0,
+   "faitage",
+   8.0
+  ],
+  "maxFootprint": [
+   50.0,
+   "integrated"
+  ],
+  "zoneImplantationM2": 83.6,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97402000AH1916": {
+  "setbacks": [
+   [
+    "rear",
+    5.5
+   ],
+   [
+    "road",
+    4.0
+   ],
+   [
+    "side",
+    5.5
+   ]
+  ],
+  "maxHeight": [
+   11.0,
+   "faitage",
+   8.0
+  ],
+  "maxFootprint": [
+   60.0,
+   "integrated"
+  ],
+  "zoneImplantationM2": 111.0,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97406000AP0422": {
+  "setbacks": [
+   [
+    "rear",
+    3.5
+   ],
+   [
+    "road",
+    5.0
+   ],
+   [
+    "side",
+    3.5
+   ]
+  ],
+  "maxHeight": [
+   7.0,
+   "faitage",
+   3.5
+  ],
+  "maxFootprint": [
+   40.0,
+   "integrated"
+  ],
+  "zoneImplantationM2": 146.2,
+  "partExcluePct": 41.0,
+  "exclusions": [
+   [
+    "ppr_rouge",
+    "PPR zone rouge exclue"
+   ]
+  ]
+ },
+ "97408000AC3753": {
+  "setbacks": [
+   [
+    "rear",
+    5.0
+   ],
+   [
+    "road",
+    3.0
+   ],
+   [
+    "side",
+    5.0
+   ]
+  ],
+  "maxHeight": [
+   10.0,
+   "faitage",
+   7.0
+  ],
+  "maxFootprint": [
+   null,
+   "absent"
+  ],
+  "zoneImplantationM2": 95.4,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97408000AC3757": {
+  "blocking": [
+   "Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni voisin cadastré (ravine, littoral ou domaine public non routier)"
+  ]
+ },
+ "97408000AC3429": {
+  "setbacks": [
+   [
+    "rear",
+    5.0
+   ],
+   [
+    "road",
+    3.0
+   ],
+   [
+    "side",
+    5.0
+   ]
+  ],
+  "maxHeight": [
+   10.0,
+   "faitage",
+   7.0
+  ],
+  "maxFootprint": [
+   null,
+   "absent"
+  ],
+  "zoneImplantationM2": 100.1,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97408000AN1382": {
+  "setbacks": [
+   [
+    "rear",
+    6.0
+   ],
+   [
+    "road",
+    3.0
+   ],
+   [
+    "side",
+    6.0
+   ]
+  ],
+  "maxHeight": [
+   12.0,
+   "faitage",
+   9.0
+  ],
+  "maxFootprint": [
+   null,
+   "absent"
+  ],
+  "zoneImplantationM2": 15.3,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97408000AN1912": {
+  "setbacks": [
+   [
+    "rear",
+    6.0
+   ],
+   [
+    "road",
+    3.0
+   ],
+   [
+    "side",
+    6.0
+   ]
+  ],
+  "maxHeight": [
+   12.0,
+   "faitage",
+   9.0
+  ],
+  "maxFootprint": [
+   null,
+   "absent"
+  ],
+  "zoneImplantationM2": 97.7,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97408000AS0457": {
+  "setbacks": [
+   [
+    "rear",
+    6.0
+   ],
+   [
+    "road",
+    3.0
+   ],
+   [
+    "side",
+    6.0
+   ]
+  ],
+  "maxHeight": [
+   12.0,
+   "faitage",
+   9.0
+  ],
+  "maxFootprint": [
+   null,
+   "absent"
+  ],
+  "zoneImplantationM2": 71.7,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97408000AS0498": {
+  "setbacks": [
+   [
+    "rear",
+    6.0
+   ],
+   [
+    "road",
+    3.0
+   ],
+   [
+    "side",
+    6.0
+   ]
+  ],
+  "maxHeight": [
+   12.0,
+   "faitage",
+   9.0
+  ],
+  "maxFootprint": [
+   null,
+   "absent"
+  ],
+  "zoneImplantationM2": 0.0,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97408000AS0583": {
+  "setbacks": [
+   [
+    "road",
+    3.0
+   ]
+  ],
+  "maxHeight": [
+   12.0,
+   "faitage",
+   9.0
+  ],
+  "maxFootprint": [
+   null,
+   "absent"
+  ],
+  "zoneImplantationM2": 0.0,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97408000AO1919": {
+  "setbacks": [
+   [
+    "rear",
+    8.0
+   ]
+  ],
+  "maxHeight": [
+   16.0,
+   "faitage",
+   null
+  ],
+  "maxFootprint": [
+   null,
+   "absent"
+  ],
+  "zoneImplantationM2": 40.1,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97408000AB0302": {
+  "setbacks": [
+   [
+    "rear",
+    5.0
+   ],
+   [
+    "road",
+    3.0
+   ],
+   [
+    "side",
+    5.0
+   ]
+  ],
+  "maxHeight": [
+   10.0,
+   "faitage",
+   7.0
+  ],
+  "maxFootprint": [
+   null,
+   "absent"
+  ],
+  "zoneImplantationM2": 102.1,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97408000AB0333": {
+  "setbacks": [
+   [
+    "rear",
+    5.0
+   ],
+   [
+    "road",
+    3.0
+   ],
+   [
+    "side",
+    5.0
+   ]
+  ],
+  "maxHeight": [
+   10.0,
+   "faitage",
+   7.0
+  ],
+  "maxFootprint": [
+   null,
+   "absent"
+  ],
+  "zoneImplantationM2": 0.0,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97408000AC3538": {
+  "setbacks": [
+   [
+    "rear",
+    5.0
+   ],
+   [
+    "road",
+    3.0
+   ],
+   [
+    "side",
+    5.0
+   ]
+  ],
+  "maxHeight": [
+   10.0,
+   "faitage",
+   7.0
+  ],
+  "maxFootprint": [
+   null,
+   "absent"
+  ],
+  "zoneImplantationM2": 96.2,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97408000AC3540": {
+  "setbacks": [
+   [
+    "rear",
+    5.0
+   ]
+  ],
+  "maxHeight": [
+   10.0,
+   "faitage",
+   7.0
+  ],
+  "maxFootprint": [
+   null,
+   "absent"
+  ],
+  "zoneImplantationM2": 93.8,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97408000AS0606": {
+  "setbacks": [
+   [
+    "rear",
+    6.0
+   ],
+   [
+    "road",
+    3.0
+   ],
+   [
+    "side",
+    6.0
+   ]
+  ],
+  "maxHeight": [
+   12.0,
+   "faitage",
+   9.0
+  ],
+  "maxFootprint": [
+   null,
+   "absent"
+  ],
+  "zoneImplantationM2": 55.5,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97412000BO0496": {
+  "setbacks": [
+   [
+    "rear",
+    6.5
+   ],
+   [
+    "road",
+    3.0
+   ],
+   [
+    "side",
+    6.5
+   ]
+  ],
+  "maxHeight": [
+   13.0,
+   "faitage",
+   11.0
+  ],
+  "maxFootprint": [
+   70.0,
+   "integrated"
+  ],
+  "zoneImplantationM2": 60.1,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97412000CT0213": {
+  "setbacks": [
+   [
+    "rear",
+    4.5
+   ],
+   [
+    "road",
+    4.0
+   ],
+   [
+    "side",
+    4.5
+   ]
+  ],
+  "maxHeight": [
+   9.0,
+   "faitage",
+   7.0
+  ],
+  "maxFootprint": [
+   50.0,
+   "integrated"
+  ],
+  "zoneImplantationM2": 95.6,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97412000CD0348": {
+  "setbacks": [
+   [
+    "rear",
+    4.5
+   ],
+   [
+    "road",
+    3.0
+   ],
+   [
+    "side",
+    4.5
+   ]
+  ],
+  "maxHeight": [
+   9.0,
+   "faitage",
+   8.0
+  ],
+  "maxFootprint": [
+   70.0,
+   "integrated"
+  ],
+  "zoneImplantationM2": 130.8,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97412000CD0857": {
+  "setbacks": [
+   [
+    "rear",
+    4.5
+   ],
+   [
+    "road",
+    3.0
+   ],
+   [
+    "side",
+    4.5
+   ]
+  ],
+  "maxHeight": [
+   9.0,
+   "faitage",
+   8.0
+  ],
+  "maxFootprint": [
+   70.0,
+   "integrated"
+  ],
+  "zoneImplantationM2": 66.8,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97412000BK1935": {
+  "setbacks": [
+   [
+    "rear",
+    4.5
+   ],
+   [
+    "road",
+    4.0
+   ],
+   [
+    "side",
+    4.5
+   ]
+  ],
+  "maxHeight": [
+   9.0,
+   "faitage",
+   7.0
+  ],
+  "maxFootprint": [
+   40.0,
+   "integrated"
+  ],
+  "zoneImplantationM2": 78.2,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97412000BK1938": {
+  "setbacks": [
+   [
+    "rear",
+    4.5
+   ],
+   [
+    "road",
+    4.0
+   ],
+   [
+    "side",
+    4.5
+   ]
+  ],
+  "maxHeight": [
+   9.0,
+   "faitage",
+   7.0
+  ],
+  "maxFootprint": [
+   40.0,
+   "integrated"
+  ],
+  "zoneImplantationM2": 15.8,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97414000CH1873": {
+  "blocking": [
+   "Limites de la parcelle non qualifiées (voie / limite séparative) — desservie par une voie privée : le règlement ne précise pas le recul"
+  ]
+ },
+ "97414000CH1877": {
+  "setbacks": [
+   [
+    "rear",
+    3.0
+   ]
+  ],
+  "maxHeight": [
+   10.0,
+   "faitage",
+   6.0
+  ],
+  "maxFootprint": [
+   40.0,
+   "integrated"
+  ],
+  "zoneImplantationM2": 144.8,
+  "partExcluePct": 24.0,
+  "exclusions": [
+   [
+    "ppr_rouge",
+    "PPR zone rouge exclue"
+   ]
+  ]
+ },
+ "97414000CH1879": {
+  "setbacks": [
+   [
+    "rear",
+    3.0
+   ]
+  ],
+  "maxHeight": [
+   10.0,
+   "faitage",
+   6.0
+  ],
+  "maxFootprint": [
+   40.0,
+   "integrated"
+  ],
+  "zoneImplantationM2": 0.0,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97419000AS0725": {
+  "setbacks": [
+   [
+    "rear",
+    4.5
+   ],
+   [
+    "road",
+    4.0
+   ],
+   [
+    "side",
+    4.5
+   ]
+  ],
+  "maxHeight": [
+   9.0,
+   "faitage",
+   6.0
+  ],
+  "maxFootprint": [
+   50.0,
+   "integrated"
+  ],
+  "zoneImplantationM2": 193.9,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97419000AL1122": {
+  "setbacks": [
+   [
+    "rear",
+    6.0
+   ],
+   [
+    "road",
+    4.0
+   ],
+   [
+    "side",
+    6.0
+   ]
+  ],
+  "maxHeight": [
+   12.0,
+   "faitage",
+   9.0
+  ],
+  "maxFootprint": [
+   70.0,
+   "integrated"
+  ],
+  "zoneImplantationM2": 61.4,
+  "partExcluePct": null,
+  "exclusions": []
+ },
+ "97419000AL1109": {
+  "setbacks": [
+   [
+    "rear",
+    6.0
+   ],
+   [
+    "road",
+    4.0
+   ],
+   [
+    "side",
+    6.0
+   ]
+  ],
+  "maxHeight": [
+   12.0,
+   "faitage",
+   9.0
+  ],
+  "maxFootprint": [
+   70.0,
+   "integrated"
+  ],
+  "zoneImplantationM2": 34.1,
+  "partExcluePct": null,
+  "exclusions": []
+ }
+}

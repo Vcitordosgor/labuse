@@ -1,0 +1,50 @@
+{
+ "insee": "97424",
+ "commune": "Cilaos",
+ "regles": [
+  {
+   "id": "97424-R1",
+   "article": "Ua 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "Ua",
+    "Uah"
+   ],
+   "pages": [
+    27,
+    28,
+    29
+   ]
+  },
+  {
+   "id": "97424-R2",
+   "article": "Ub 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "Ub",
+    "Ub1",
+    "AUb",
+    "AUb1",
+    "AUb2"
+   ],
+   "pages": [
+    39,
+    40,
+    41
+   ]
+  },
+  {
+   "id": "97424-R3",
+   "article": "Uc 12.2",
+   "mode": "par_logement",
+   "zones": [
+    "Uc"
+   ],
+   "pages": [
+    50,
+    51,
+    52
+   ]
+  }
+ ]
+}

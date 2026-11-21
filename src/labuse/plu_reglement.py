@@ -52,6 +52,14 @@ def _fmt_valeur(v, unite: str) -> tuple[str | None, str]:
     return str(v), "texte"   # ex. stationnement « 1 place / logement »
 
 
+def _article_court(source: str | None) -> str | None:
+    """« Art. Ud12.2 · p.67 (…) » → « Ud 12.2 » : un renvoi d'article lisible pour le client."""
+    if not source:
+        return None
+    m = re.search(r"Art\.?\s*([A-Za-z]+)\s*(\d+(?:\.\d+)?)", source)
+    return f"{m.group(1)} {m.group(2)}" if m else None
+
+
 def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
     """Le TABLEAU des règles clés de la zone AVEC leurs VALEURS (F4) — pas seulement des références
     d'articles. Chaque ligne : libellé · valeur formatée · état · source (article/page) + lien profond.
@@ -85,12 +93,17 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
     ref_h = src.get("hauteur")
     out.append({"cle": "hauteur", "libelle": "Hauteur max", "valeur": htxt, "etat": hetat,
                 "reference": ref_h, "url": _url(ref_h), "exceptions": _exc("hauteur")})
+    # CHIRURGICAL-FIX-1 (LOT H pt8) — la règle d'« espaces libres » (art. 2.6) garde SON nom : surface
+    # perméable, pleine terre, biotope ou espaces verts selon sa citation (jamais « pleine terre » pour
+    # une règle de perméabilité — AM0838/UE L'Étang-Salé : « 25 % … perméable »).
+    from .faisabilite.zonage import libelle_espaces_libres
+    _pt_lib = libelle_espaces_libres(getattr(rules, "pleine_terre_nature", None)) + " min"
     for cle, libelle, val, unite, skey in (
         ("emprise", "Emprise au sol max", rules.emprise_sol_pct, "%", "emprise"),
         ("recul_voirie", "Recul sur voie", rules.recul_voirie_m, "m", "recul_voirie"),
         ("recul_limites", "Recul limites séparatives", rules.recul_limites_sep_m, "m", "recul_limites"),
-        ("pleine_terre", "Pleine terre min", rules.pleine_terre_pct, "%", "pleine_terre"),
-        ("stationnement", "Stationnement", rules.stat_logement, "", "stat"),
+        ("pleine_terre", _pt_lib, rules.pleine_terre_pct, "%", "pleine_terre"),
+        ("stationnement", "Stationnement", rules.stat_logement, "", "stationnement"),
     ):
         txt, etat = _fmt_valeur(val, unite)
         # CHASSE-DONNEES-FIX-1 (Lot 6, D-50) — quand le recul limites sépar. porte une FORMULE
@@ -99,6 +112,33 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
             formule = str(rules.recul_limites_formule)
             txt = formule if etat != "chiffre" else f"{formule} (plancher {txt})"
             etat = "formule"
+        # CHIRURGICAL-FIX-1 (LOT H pt9) — en zone où l'HABITAT est interdit, l'absence de norme PAR
+        # LOGEMENT ne veut pas dire « stationnement non réglementé » : il n'y a pas de logement, et le
+        # règlement fixe des normes pour les AUTRES destinations (commerces, activités…). On le dit.
+        if cle == "stationnement" and etat == "absent" and getattr(rules, "habitat", None) == "interdit":
+            txt = ("sans objet pour le logement — habitat interdit dans la zone "
+                   "(voir le règlement pour les autres destinations)")
+            etat = "texte"
+        # CHIRURGICAL-FIX-1 (LOT J pt3a) — barème de stationnement à PLUSIEURS paliers (type de logement,
+        # taille de l'opération) : LABUSE n'en sert pas tout le détail. On ne montre donc PAS un nombre
+        # partiel (« 1 place / logement »), qui est le seul palier de base : la ligne RENVOIE à l'article.
+        # La capacité, elle, lit toujours le ratio de base via places_par_logement() — donnée inchangée.
+        if cle == "stationnement" and etat in ("texte", "chiffre") and ";" in (rules.stat_logement or ""):
+            _art = _article_court(src.get("stationnement"))
+            txt = ("barème selon le type de logement et la taille de l'opération"
+                   + (f" — voir l'article {_art}" if _art else " — voir le règlement de la zone"))
+            etat = "texte"
+        # CHIRURGICAL-FIX-1 (LOT J pt3c) — UNE seule phrase de sol : « X % de surface perméable, dont au
+        # moins Y % en pleine terre » (l'enveloppe perméable ET son noyau de pleine terre), au lieu de
+        # deux lignes séparées qui laissaient croire à deux obligations indépendantes.
+        _perm = getattr(rules, "permeabilite_pct", None)
+        if cle == "pleine_terre" and etat == "chiffre" and isinstance(_perm, (int, float)):
+            _permtxt, _ = _fmt_valeur(_perm, "%")
+            # LOT K 3b — « X % de LA PARCELLE … et Y % de LA PARCELLE … » (pas « dont », qui se lit
+            # « Y % de X % ») : les deux taux portent sur la parcelle, pas l'un sur l'autre.
+            txt = f"{_permtxt} de l'unité foncière en surface perméable et {txt} de l'unité foncière en pleine terre"
+            libelle = "Surface perméable et pleine terre"
+            etat = "texte"
         ref = src.get(skey)
         out.append({"cle": cle, "libelle": libelle, "valeur": txt, "etat": etat,
                     "reference": ref, "url": _url(ref), "exceptions": _exc(cle)})

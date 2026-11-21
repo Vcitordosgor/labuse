@@ -39,10 +39,15 @@ def test_non_constructible_borne_a_zero():
 
 
 def test_au_non_ouverte_ferme():
+    # MOTEUR-VERITE-FIX-1 (LOT 3, V10) — l'AU différée reste FERMÉE aujourd'hui (zone_ouverte
+    # False, rien_a_batir True) mais sert UN SEUL verdict cohérent avec la surface stockée :
+    # « Potentiel différé … ≈ N m² après ouverture » (fini le gate à 0 contre l'écran à 800).
     r = _assemble(sdp_raw=800, cause=None, constr_label=None,
                   au_classe="declasse_au_fermee", zone_fam="AU", zone_lib="2AU")
-    assert r["sdp_restante_m2"] == 0 and r["zone_ouverte"] is False
+    assert r["sdp_restante_m2"] == 800 and r["zone_ouverte"] is False
+    assert r["rien_a_batir"] is True and r["constructible"] is False
     assert "AU non ouverte" in r["motif"]
+    assert "après ouverture" in r["libelle"] and "800" in r["libelle"]
 
 
 def test_cause_residuelle_habitat_interdit_suffixe():

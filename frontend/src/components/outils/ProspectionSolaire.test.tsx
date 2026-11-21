@@ -43,8 +43,8 @@ const LIST = {
 const FICHE = {
   ok: true, idu: '97411000AP0000', commune: 'Saint-Paul', productible: 1598,
   prod_mensuel: [88, 84, 78, 64, 52, 46, 48, 56, 68, 78, 84, 90], mois_optimal: 12,
-  azimut: 12, azimut_confiance: 'basse', pente: 5, toit_m2: 140, piscine: true, piscine_m2: 32,
-  abf: false, ombrage: false, proba_occ: 60, classement: 'Neutre', millesime: 'PVGIS v5.3 SARAH3',
+  azimut: 12, azimut_confiance: 'basse', pente: 8.3, toit_m2: 140, piscine: true, piscine_m2: 32,
+  abf: false, ombrage: false, proba_occ: 60, classement: 'Écartée', millesime: 'PVGIS v5.3 SARAH3',
   // A6 — dimensionnement servi par le back ; A1 — inclinaison réelle du calcul PVGIS (config, 15°).
   kwc: 28, prod_annuel: 44744, kwc_par_m2: 0.2, inclinaison_deg: 15,
 }
@@ -119,7 +119,13 @@ describe('SOLAIRE — deux modes', () => {
     renderTool()
     await screen.findByText(/Profil mensuel/)
     expect(document.querySelectorAll('[data-solaire-bar]')).toHaveLength(12)          // profil mensuel
-    expect(document.querySelector('[data-solaire-fiche]')?.textContent).toContain('kWh/kWc/an')  // potentiel AVEC unité
+    const fiche = document.querySelector('[data-solaire-fiche]')!
+    expect(fiche.textContent).toContain('kWh/kWc/an')  // potentiel AVEC unité
+    // OUTILS-LOT-4 (pt 1) — décimales à la virgule : « 8,3° », jamais « 8.3° ».
+    expect(fiche.textContent).toContain('8,3°')
+    expect(fiche.textContent).not.toContain('8.3')
+    // OUTILS-LOT-4 (pt 2) — aucun classement/verdict LABUSE (« Écartée ») dans la prospection solaire.
+    expect(fiche.textContent).not.toContain('Écartée')
   })
 
   it('RECETTE-4 — les deux paragraphes sous le graphe mensuel sont RETIRÉS (plus de « Productible estimé… » ni « En clair… »)', async () => {
@@ -162,5 +168,66 @@ describe('SOLAIRE — deux modes', () => {
     // clic sur une ligne → focusParcelle(fiche) : la fiche s'ouvre (selectedIdu posé).
     fireEvent.click(document.querySelector('[data-piscines-row]')!)
     expect(useApp.getState().selectedIdu).toBe('97411000AP0000')
+  })
+})
+
+// OUTILS-P0-1 (#1) — GARDE-FOU ANTI-BOUCLE. L'outil est monté DANS UN HÔTE qui s'abonne au store ENTIER
+// (`useApp()` sans sélecteur), comme le faisait le panneau (ModulePanel) : l'hôte re-rend à CHAQUE
+// écriture du store. Avant le correctif, ouvrir un mode réécrivait `outilSousRetour` à chaque rendu
+// (le retour `onBack` étant recréé) → « Maximum update depth exceeded ». Le retour stabilisé
+// (useCallback) casse la boucle même sous ce pire cas. Le bouton de retour du panneau appelle
+// `outilSousRetour` : on le simule ici via `useApp.getState().outilSousRetour()`.
+describe('SOLAIRE — pas de boucle de rendu (ouvrir / reculer / rouvrir sous un hôte abonné au store entier)', () => {
+  beforeEach(() => {
+    mockFetch()
+    useApp.setState({ solairePrefill: null, outilSousRetour: null, selectedIdu: null })
+  })
+  afterEach(() => { vi.restoreAllMocks(); useApp.setState({ outilSousRetour: null }) })
+
+  function HoteStoreEntier() {
+    useApp()   // abonnement au store ENTIER — reproduit la condition du panneau (pire cas : re-rend à chaque set)
+    return <ProspectionSolaire />
+  }
+  function renderDansHote() {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    return render(<QueryClientProvider client={qc}><HoteStoreEntier /></QueryClientProvider>)
+  }
+  const reculer = () => { const r = useApp.getState().outilSousRetour; if (r) r() }
+
+  it('Piscines : ouvrir → reculer → rouvrir, sans « Maximum update depth exceeded »', async () => {
+    renderDansHote()
+    // ouvrir
+    fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
+    await waitFor(() => expect(document.querySelector('[data-piscines-perim="ile"]')).toBeTruthy())
+    // le mode a posé un retour interne dans le store (lu par le bouton du panneau)
+    expect(typeof useApp.getState().outilSousRetour).toBe('function')
+    // reculer (le geste du bouton « Retour » du panneau) → écran d'entrée
+    reculer()
+    await waitFor(() => expect(document.querySelector('[data-solaire-mode="piscines"]')).toBeTruthy())
+    // rouvrir — aucune boucle
+    fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
+    await waitFor(() => expect(document.querySelector('[data-piscines-perim="ile"]')).toBeTruthy())
+  })
+
+  it('Ensoleillement : ouvrir → reculer → rouvrir, sans « Maximum update depth exceeded »', async () => {
+    renderDansHote()
+    fireEvent.click(document.querySelector('[data-solaire-mode="ensoleillement"]')!)
+    // l'entrée parcelle du mode ensoleillement s'affiche + retour interne posé
+    await waitFor(() => expect(typeof useApp.getState().outilSousRetour).toBe('function'))
+    reculer()
+    await waitFor(() => expect(document.querySelector('[data-solaire-mode="ensoleillement"]')).toBeTruthy())
+    fireEvent.click(document.querySelector('[data-solaire-mode="ensoleillement"]')!)
+    await waitFor(() => expect(typeof useApp.getState().outilSousRetour).toBe('function'))
+  })
+
+  it('entrée depuis la fiche parcelle (solairePrefill) : ouvre Ensoleillement sur la parcelle, sans boucle', async () => {
+    useApp.setState({ solairePrefill: '97411000AP0000' })
+    renderDansHote()
+    // prefill → mode ensoleillement ouvert directement sur la fiche soleil de la parcelle
+    await screen.findByText(/Profil mensuel/)
+    expect(document.querySelector('[data-solaire-fiche]')?.textContent).toContain('kWh/kWc/an')
+    // reculer revient à l'écran d'entrée (les deux cartes)
+    reculer()
+    await waitFor(() => expect(document.querySelector('[data-solaire-mode="ensoleillement"]')).toBeTruthy())
   })
 })

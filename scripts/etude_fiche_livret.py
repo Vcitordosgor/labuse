@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+# ETUDE-FICHE-1 — génère LIVRET-ETUDE.html et LIVRET-ETUDE.pdf (lecture seule du produit ;
+# n'écrit que dans docs/audit-2026-11/etude-fiche-1/). Rendu WeasyPrint in-process.
+import os
+os.environ.setdefault("LABUSE_PDF_PROCESS_ISOLE", "0")
+from pathlib import Path
+
+BASE = Path("docs/audit-2026-11/etude-fiche-1")
+
+def fig(src, legende):
+    return f'<figure><img src="{src}"/><figcaption>{legende}</figcaption></figure>'
+
+CSS = """
+@page { size: A4; margin: 16mm 14mm 16mm 14mm;
+  @bottom-center { content: "LABUSE · Étude de faisabilité — livret d'audit · page " counter(page) " / " counter(pages); font-size: 8pt; color: #8a8f98; } }
+* { box-sizing: border-box; }
+body { font-family: "Helvetica Neue", Arial, sans-serif; color: #1a1d21; font-size: 10.5pt; line-height: 1.5; }
+h1 { font-size: 26pt; margin: 0 0 2mm; letter-spacing: -0.5px; }
+h2 { font-size: 15pt; margin: 9mm 0 2mm; padding-bottom: 1.5mm; border-bottom: 2px solid #15a46e; color: #0f172a; }
+h3 { font-size: 11.5pt; margin: 5mm 0 1mm; color: #0f172a; }
+.sous { color: #6b7280; font-size: 10pt; margin: 0 0 6mm; }
+.chapo { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 4mm 5mm; margin: 4mm 0; }
+.warn { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; padding: 3mm 4mm; margin: 3mm 0; }
+ol, ul { margin: 1mm 0 3mm; padding-left: 6mm; }
+li { margin: 0.8mm 0; }
+figure { margin: 4mm 0; page-break-inside: avoid; text-align: center; }
+figure img { max-width: 100%; border: 1px solid #e5e7eb; border-radius: 4px; }
+figcaption { font-size: 8.5pt; color: #6b7280; margin-top: 1mm; }
+table { width: 100%; border-collapse: collapse; margin: 3mm 0; font-size: 9pt; }
+th, td { border: 1px solid #e5e7eb; padding: 1.6mm 2mm; text-align: left; vertical-align: top; }
+th { background: #f3f4f6; }
+.g { color: #15803d; font-weight: bold; } .o { color: #c2410c; font-weight: bold; } .r { color: #b91c1c; font-weight: bold; }
+.pb { page-break-before: always; }
+.tag { display:inline-block; font-size:8pt; padding:0.3mm 1.5mm; border-radius:3px; background:#fee2e2; color:#991b1b; }
+.small { font-size: 9pt; color:#6b7280; }
+"""
+
+HTML = f"""<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>{CSS}</style></head><body>
+
+<h1>L'Étude de faisabilité</h1>
+<p class="sous">Comment elle marche, à quoi elle ressemble, ce qu'elle vaut — livret d'audit ETUDE-FICHE-1 · 12/11/2026 · lecture seule.<br/>
+Les détails de code sont dans la fiche <b>ETUDE-FAISABILITE.md</b>. Ce livret s'adresse à un lecteur non technique.</p>
+
+<div class="chapo">
+<h3 style="margin-top:0">Comment ça marche (en dix lignes)</h3>
+<ol>
+<li>Vous choisissez <b>1 à 8 parcelles contiguës</b> : LABUSE les fusionne en une seule « assiette ».</li>
+<li>Vous choisissez un <b>type de projet</b> : résidence étudiante, senior, logement social, ou lotissement.</li>
+<li>Vous composez votre <b>programme</b> (T1, T2, T3, T4) et le stationnement (aérien ou sous-sol).</li>
+<li>Vous cliquez <b>« Analyser »</b> — le calcul tourne quelques dizaines de secondes.</li>
+<li>LABUSE lit les <b>règles du PLU</b> (reculs, hauteur, emprise, perméabilité, stationnement, mixité) et les contraintes (PPR…).</li>
+<li>Il <b>retire les reculs et le PPR rouge</b> de l'assiette → il reste une « zone d'implantation ».</li>
+<li>Il <b>dessine</b> une ou deux barres de bâtiment (profondeur fixe 13 m), empile des niveaux, pose le parking et un accès.</li>
+<li>Il <b>découpe</b> la barre en logements, compte les places imposées, mesure emprise et hauteur.</li>
+<li>Il <b>confronte</b> le dessin aux règles : chaque contrôle est <i>Réussi / Échoué / À confirmer / Non effectué / Non applicable</i>.</li>
+<li>Il affiche un <b>plan masse</b>, une <b>coupe</b>, un tableau <b>réglementaire vs projet</b>, un verdict, et un <b>PDF</b>.</li>
+</ol>
+<p style="margin-bottom:0"><b>La boussole :</b> LABUSE ne cherche pas à <i>remplir</i> la parcelle comme un architecte. Il pose une forme simple et prudente (barre de 13 m), tout stationnement aérien par défaut, et soustrait le risque (PPR). Résultat : il <b>sous-estime</b> les logements d'un collectif et <b>surestime</b> un peu un lotissement.</p>
+</div>
+
+<h2 class="pb">Le parcours, écran par écran</h2>
+{fig("captures/01-etape1-parcelles.png", "① Choix des parcelles — contenance, zone PLU, règles de l'assiette et contiguïté (bloquante).")}
+{fig("captures/02-etape2-type-projet.png", "② Les quatre types de projet.")}
+{fig("captures/04-etape3-programme-aerien.png", "③ Composition du programme (T1–T4), stationnement, et jauge « ≈ N logements » avant calcul.")}
+{fig("captures/06-resultat-complet-social-aerien.png", "⑤ Résultat : plan masse, surfaces, « ce qui limite », contrôles, bouton PDF (Saint-André, logement social, aérien).")}
+
+<h2 class="pb">Les quatre types de projet</h2>
+{fig("captures/10-type-etudiante-aerien-resultat.png", "Résidence étudiante (aérien).")}
+{fig("captures/11-type-senior-aerien-resultat.png", "Résidence senior (aérien).")}
+{fig("captures/12-type-social-aerien-resultat.png", "Logement social (aérien).")}
+{fig("captures/17-lotissement-resultat.png", "Lotissement (Saint-Leu) — plan de division en lots, réseau de voirie en peigne.")}
+{fig("captures/13-type-social-sous-sol-resultat.png", "Stationnement en sous-sol (Étang-Salé) — le parking enterré libère le sol pour plus de logements.")}
+
+<h2 class="pb">Les cas limites</h2>
+{fig("captures/21-depassement-resultat.png", "Programme qui dépasse la capacité : 15 des 60 logements demandés sont dessinables, « manquent 45 ». L'impossibilité n'est pas affirmée.")}
+{fig("captures/22-non-contigues-etape1.png", "Parcelles non contiguës (communes différentes) : l'assiette est refusée dès l'étape 1.")}
+
+<h2 class="pb">Le PDF généré</h2>
+<p>Le PDF reprend <b>exactement les mêmes chiffres</b> que l'écran (un verrou automatique l'interdit d'afficher un nombre absent du calcul). Dix pages : synthèse, terrain, règles, enveloppe, plan masse, distribution &amp; coupe, capacité &amp; contrôles, hypothèses, annexe règlement.</p>
+{fig("pdf/pdf-page-01.png", "Page 1 — synthèse : verdict, programme, 6 chiffres clés.")}
+{fig("pdf/pdf-page-05.png", "Page 5 — plan masse dessiné et tableau des surfaces (chaque nombre étiqueté « Estimé » ou « Dérivé »).")}
+<div class="warn"><b>Deux réserves mesurées.</b> (1) Le PDF <b>recalcule</b> le projet dans son propre processus ; comme le calcul est borné en temps, un PDF rendu sur une machine plus lente peut afficher un projet <b>plus petit</b> que l'écran (observé : 14 logements R+1 au lieu de 18 R+2). (2) Sur le poste d'audit, le bouton PDF échouait (erreur technique d'imbrication de processus) — le PDF de ce livret a été rendu en direct ; à vérifier en production.</div>
+
+<h2 class="pb">Comparaison aux quatre études d'architectes</h2>
+<p>On a rejoué l'Étude sur les <b>mêmes parcelles et le même programme</b> que quatre études capacitaires d'architecte réelles (La Réunion). Verdict d'ensemble : <b>LABUSE sous-estime les grands collectifs et surestime un peu le lotissement.</b></p>
+<table>
+<tr><th>Cas</th><th>Type</th><th>LABUSE</th><th>Architecte</th><th>Ratio</th></tr>
+<tr><td>Étang-Salé (UA, 1 746 m²)</td><td>collectif</td><td>28 logts · 30 pl · R+3</td><td>29 logts · 31 pl · R+3</td><td class="g">0,97</td></tr>
+<tr><td>Saint-André (UC, 4 163 m²)</td><td>collectif</td><td>18 logts · 27 pl · R+2</td><td>48 logts · 48 pl · R+2</td><td class="r">0,38</td></tr>
+<tr><td>Saint-Denis RPA (Ui, 1 580 m², PPR)</td><td>senior</td><td>12 logts · 12 pl · R+3</td><td>22 logts · 8 pl · ~R+3</td><td class="o">0,55</td></tr>
+<tr><td>Saint-Leu (UD)</td><td>lotissement</td><td>36 lots</td><td>30 lots</td><td class="o">1,20</td></tr>
+</table>
+<h3>Pourquoi ces écarts</h3>
+<ul>
+<li><b>Forme bâtie</b> : une ou deux barres de 13 m sur la seule zone après reculs — LABUSE ne remplit pas la parcelle comme un architecte (cause principale, Saint-André ×2,7).</li>
+<li><b>Stationnement 100 % aérien par défaut</b> : il mange l'assiette ; l'architecte enterre (Étang-Salé : parité à ±1 car l'écart vient de là).</li>
+<li><b>Prise en compte du PPR</b> (rouge + bleue), absente des plans d'architecte : décisif à Saint-André (zone d'implantation 2 006 m² sur 4 163) et Saint-Denis.</li>
+<li><b>Barème de stationnement au pied de la lettre</b> : ignore la dérogation RPA 1 place/3 logements → LABUSE affiche <i>plus</i> de places que l'architecte.</li>
+<li><b>Hauteurs réglementaires strictes</b> — mais <b>concordantes</b> avec l'architecte dans les trois cas.</li>
+<li><b>Lotissement</b> : pavage déterministe au lot de 450 m² sans desserte/pente réelle → plus de lots.</li>
+</ul>
+<p class="small">Note : la parcelle AC0263 (Saint-Leu) est absente de la base LABUSE ; le rejeu lotissement a porté sur 3 parcelles. Détail complet : COMPARAISON-ARCHITECTES.md.</p>
+
+<h2 class="pb">Les limites — ce qui n'est jamais contrôlé</h2>
+<p>Même quand la règle existe, LABUSE ne vérifie pas : le <b>prospect</b> (hauteur relative, toujours « À confirmer »), l'<b>accessibilité PMR</b>, les <b>locaux vélos</b>, le <b>stationnement visiteurs</b> détaillé, la <b>gestion des eaux pluviales</b>, la <b>pente / géotechnique réelle</b> (lue mais terrain dessiné plat), les <b>destinations</b> (commerces, bureaux — il ne dessine que du logement), l'<b>intégration paysagère / ABF</b>, et toute <b>dérogation locale</b> au barème de stationnement. Le terrain est <b>supposé nu</b> : rien n'est déduit pour un bâti existant.</p>
+
+<h2>Mes doutes (par gravité)</h2>
+<h3>Peut tromper un promoteur</h3>
+<ol>
+<li><b>Résultat non reproductible.</b> Le calcul est borné en temps : la même parcelle donne <b>14 logements R+1</b> (machine lente/froide) ou <b>18 logements R+2</b> (calcul complet). Deux chiffres possibles, et un PDF qui peut contredire l'écran. <span class="tag">le plus grave</span></li>
+<li><b>Sous-estimation des collectifs</b> (0,38–0,55× l'architecte) : risque d'écarter une parcelle rentable.</li>
+<li><b>Stationnement surestimé</b> : ignore la dérogation RPA (1 place/3 logts) → 12 places au lieu de 8.</li>
+<li><b>Terrain supposé nu</b> : sur une parcelle bâtie, le chiffre affiché n'est pas un potentiel net.</li>
+</ol>
+<h3>Fait désordre</h3>
+<ol start="5">
+<li><b>Lotissement surdimensionné</b> (36 vs 30 lots) : pavage sans minimum de lot ni desserte réelle.</li>
+<li><b>Pente lue mais terrain dessiné plat</b> : « relief 4,5 m » annoncé comme facteur limitant d'un dessin plat.</li>
+<li><b>Prospect jamais chiffré</b> : « À confirmer » systématique bloque le verdict « Exploitable ».</li>
+<li><b>Le PDF peut échouer en production</b> (erreur d'imbrication de processus observée) ; « emprise mobilisable » calculée sur la zone dessinée, pas la contenance.</li>
+</ol>
+<h3>Sans conséquence</h3>
+<ol start="9">
+<li>La parcelle AC0263 est absente de la base (lacune de donnée).</li>
+<li>Sur une très grosse assiette, le budget de 22 s peut rendre « simulation impossible » (rare, relançable).</li>
+</ol>
+
+<p class="small" style="margin-top:8mm">Audit ETUDE-FICHE-1 · branche <b>audit/etude-fiche-1</b> · tout décrit le code réellement exécuté les 11–12/11/2026 ; ce qui n'a pas pu être vérifié est signalé comme tel.</p>
+
+</body></html>"""
+
+# La version .html (pour l'humain) référence les captures pleine résolution versionnées.
+(BASE / "LIVRET-ETUDE.html").write_text(HTML, encoding="utf-8")
+print("HTML écrit")
+
+# Pour le PDF, on sous-échantillonne les images (sips, largeur max 1100 px) dans un cache temporaire
+# et on fait pointer le HTML du PDF dessus → fichier < 2 Mio (garde pre-commit).
+import re, subprocess, tempfile
+cache = Path(tempfile.mkdtemp(prefix="livret_imgs_"))
+def _resize(rel):
+    src = BASE / rel
+    dst = cache / rel.replace("/", "_")
+    subprocess.run(["sips", "--resampleWidth", "1100", "-s", "format", "jpeg",
+                    "-s", "formatOptions", "72", str(src), "--out", str(dst)],
+                   check=True, capture_output=True)
+    return str(dst)
+pdf_html = re.sub(r'src="([^"]+\.png)"', lambda m: f'src="{_resize(m.group(1))}"', HTML)
+
+from weasyprint import HTML as WH
+WH(string=pdf_html, base_url=str(BASE)).write_pdf(str(BASE / "LIVRET-ETUDE.pdf"))
+print("PDF écrit :", (BASE / "LIVRET-ETUDE.pdf").stat().st_size, "octets")

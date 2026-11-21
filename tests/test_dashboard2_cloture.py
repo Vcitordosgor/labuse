@@ -107,22 +107,30 @@ def test_produit_retours_ouverts_le_meme(client, engine):
     de la page Produit (tests/interne masqués partout). Un signalement d'un compte client compte ;
     un signalement interne (compte NULL / plan 'interne') ne compte NI au Pilotage NI sur la page."""
     cid = _seed_client(engine)
+    # IDEMPOTENCE : on capture les lignes insérées (RETURNING) et on les SUPPRIME en fin de test (finally),
+    # sinon chaque exécution laisse 2 signalements de plus dans la base de test persistante (labuse_test) et
+    # le compte global dérive d'un run à l'autre, faussant l'égalité jauge == page.
     with engine.begin() as c:
         # un signalement CLIENT ouvert (compté) + un signalement SANS compte (interne, jamais compté)
-        c.execute(text("INSERT INTO signalements (type, type_erreur, statut, compte_id) "
-                       "VALUES ('fiche', 'donnee', 'nouveau', :c)"), {"c": cid})
-        c.execute(text("INSERT INTO signalements (type, type_erreur, statut, compte_id) "
-                       "VALUES ('fiche', 'donnee', 'nouveau', NULL)"))
-    pil = client.get("/admin/pilotage").json()
-    jauge = int(pil["a_faire"]["signalements_ouverts"]) + sum(int(v) for v in (pil.get("retours_par_type") or {}).values())
-    # la page : signalements nouveaux NON internes + retours nouveaux NON internes
-    sigs = client.get("/admin/signalements").json()["signalements"]
-    prod = client.get("/admin/produit").json()["retours"]
-    page = (sum(1 for s in sigs if s["statut"] == "nouveau" and s.get("compte_plan") != "interne" and s.get("compte_id") is not None)
-            + sum(1 for r in prod if r["statut"] == "nouveau" and r.get("compte_plan") != "interne" and r.get("compte") is not None))
-    assert jauge == page
-    # le signalement interne (compte NULL) n'est PAS compté
-    assert jauge >= 1
+        sid_client = c.execute(text("INSERT INTO signalements (type, type_erreur, statut, compte_id) "
+                                    "VALUES ('fiche', 'donnee', 'nouveau', :c) RETURNING id"), {"c": cid}).scalar()
+        sid_interne = c.execute(text("INSERT INTO signalements (type, type_erreur, statut, compte_id) "
+                                     "VALUES ('fiche', 'donnee', 'nouveau', NULL) RETURNING id")).scalar()
+    try:
+        pil = client.get("/admin/pilotage").json()
+        jauge = int(pil["a_faire"]["signalements_ouverts"]) + sum(int(v) for v in (pil.get("retours_par_type") or {}).values())
+        # la page : signalements nouveaux NON internes + retours nouveaux NON internes
+        sigs = client.get("/admin/signalements").json()["signalements"]
+        prod = client.get("/admin/produit").json()["retours"]
+        page = (sum(1 for s in sigs if s["statut"] == "nouveau" and s.get("compte_plan") != "interne" and s.get("compte_id") is not None)
+                + sum(1 for r in prod if r["statut"] == "nouveau" and r.get("compte_plan") != "interne" and r.get("compte") is not None))
+        assert jauge == page
+        # le signalement interne (compte NULL) n'est PAS compté
+        assert jauge >= 1
+    finally:
+        with engine.begin() as c:
+            c.execute(text("DELETE FROM signalements WHERE id = ANY(:ids)"), {"ids": [sid_client, sid_interne]})
+            c.execute(text("DELETE FROM comptes WHERE id = :c"), {"c": cid})
 
 
 def test_ia_conso_mois_le_meme(client):

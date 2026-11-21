@@ -44,7 +44,7 @@ export function usePagination(total: number, step: number = PAGE_SIZE): Paginati
 }
 
 export function ListPaginationFooter({
-  shown, total, step = PAGE_SIZE, onMore, children, className, countSuffix,
+  shown, total, step = PAGE_SIZE, onMore, children, className, countSuffix, uniteAccord,
 }: {
   shown: number
   total: number
@@ -55,6 +55,9 @@ export function ListPaginationFooter({
   // RECETTE-OUTILS-2 (R19) — complément rendu DANS le span du compteur (donc sur la MÊME ligne que
   // « N / M affichées », sans wrap), ex. « · triées par probabilité » du Scan patrimoine.
   countSuffix?: ReactNode
+  // OUTILS-P1-1 LOT3c (pt 7) — accord du participe quand l'unité n'est pas féminine (ex. des « blocs »
+  // → « affichés »). Défaut « affichées » (parcelles / lignes), rétro-compatible.
+  uniteAccord?: string
 }) {
   const remaining = Math.max(0, total - shown)
   const hasMore = remaining > 0
@@ -67,7 +70,7 @@ export function ListPaginationFooter({
     >
       {/* compteur TOUJOURS rendu, valeurs exactes */}
       <span data-pagination-count>
-        <b className="text-txt">{fmtInt(shown)} / {fmtInt(total)}</b> affichées{countSuffix}
+        <b className="text-txt">{fmtInt(shown)} / {fmtInt(total)}</b> {uniteAccord ?? 'affichées'}{countSuffix}
       </span>
       {hasMore && (
         <button data-pagination-more onClick={onMore} className="text-mint hover:underline">

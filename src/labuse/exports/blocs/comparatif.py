@@ -78,6 +78,8 @@ _CAUSE_COURT = {
     "terrain_exigu": "terrain exigu", "hors_plu": "hors PLU", "redhibitoire": "rédhibitoire",
     "capacite_nulle": "capacité nulle", "bati_non_ingere": "bâti non estimé",
     "assiette_a_verifier": "assiette à vérifier",   # EXIGU-FIX-1 — ignorance, jamais « trop étroit »
+    "capacite_a_verifier": "capacité à vérifier",   # MOTEUR-VERITE-FIX-3 LOT 3 — SDP ∅, pas un zéro
+    "habitat_interdit": "habitat interdit",
 }
 
 
@@ -87,7 +89,11 @@ def _cause_court(c):
         return None
     if c.startswith("zone_non_constructible") or c.startswith("zone_non_resolue"):
         return "zone non constructible"
-    return _CAUSE_COURT.get(c, c.replace("_", " "))
+    # CHIRURGICAL-FIX-1 (E112a) — cause « code:ZONE » (« habitat_interdit:UE ») écrite EN CLAIR,
+    # zone entre parenthèses, au lieu du brut « habitat interdit:UE ».
+    head, _, zone = c.partition(":")
+    libelle = _CAUSE_COURT.get(head, head.replace("_", " "))
+    return f"{libelle} (zone {zone})" if zone else libelle
 
 
 def _sdp_residuelle_cause(r):
@@ -139,40 +145,133 @@ def _pct(r, k, suffixe="%"):
     return f"{x} {suffixe}" if x is not None else None
 
 
+def _contraintes_txt(r):
+    """EXPORTS-FIX-3 LOT 2 (#1) — liste des contraintes de la colonne. Sur une parcelle NON
+    CONSTRUCTIBLE, on NE MONTRE PAS la clause rassurante « (pas d'exclusion automatique) » du PPR
+    partiel : elle rassurerait à tort alors que le verdict est « non constructible ».
+    CORRECTION (relecture 3) — on RETIRE SEULEMENT cette clause, pas toute la contrainte : la « zone
+    rouge sur X % » et sa « vigilance forte » DOIVENT rester affichées (sinon la zone rouge disparaît
+    de la colonne — c'était le bug). On ne touche PAS au message partagé de la cascade ; on l'ajuste
+    seulement à l'affichage, et seulement dans ce cas (il reste entier sur une parcelle constructible)."""
+    cs = list(r.get("contraintes") or [])
+    # CAPACITE-1 (B5) — UNE SEULE formule d'affichage, partagée avec les exports texte (Markdown/HTML)
+    # via `risques_arbitrage.ajuster_clause_affichage` : marché du neuf (VEFA) servi « 5 ans » (jamais
+    # « 36 mois » pour les mêmes ventes), et sur une parcelle NON CONSTRUCTIBLE la clause rassurante
+    # « (pas d'exclusion automatique) » du PPR partiel retirée (zone rouge X % + vigilance conservées).
+    from ...api.risques_arbitrage import ajuster_clause_affichage
+    _nc = _est_non_constructible(r)
+    cs = [x for x in (ajuster_clause_affichage(c, _nc) for c in cs) if x]
+    # CHIRURGICAL-FIX-1 (E112b) — DÉDOUBLONNAGE (en gardant l'ordre) : jamais deux fois la même
+    # contrainte dans la colonne (cohérent avec les puces dédoublonnées de l'écran Comparer).
+    _vus, _uniq = set(), []
+    for c in cs:
+        if c not in _vus:
+            _vus.add(c)
+            _uniq.append(c)
+    return " · ".join(esc(c) for c in _uniq) if _uniq else "aucune relevée"
+
+
+def _bati_existant(r):
+    """EXPORTS-FIX-3 LOT 3 (#5) — UNE valeur de bâti, celle de la fiche (etat_bien). Non mesuré
+    (trace aérienne seule) → « bâti détecté, à vérifier » (jamais « 1 % » là où la fiche ne mesure
+    aucun bâtiment, faute B1). Terrain nu → « aucun ». Mesuré → part du terrain."""
+    etat = r.get("bati_etat")
+    if etat == "non_mesure":
+        return "bâti détecté, à vérifier"
+    if etat == "nu":
+        return "aucun"
+    pct = r.get("bati_existant_pct")
+    if pct is None:
+        return None
+    return "aucun" if pct <= 0 else f"{_i(pct)} % du terrain"
+
+
 # Les lignes de Comparer, DANS L'ORDRE de l'écran : (label, prov, fn(row)->str|None). prov=None → ligne
 # « Classement LABUSE » (aucun badge, comme à l'écran).
 # RETOURS-29 (Comparatif v2, maquette 15) — le PDF suit le MÊME CONTENU que l'écran : mêmes lignes (dans
 # le même ordre), mêmes badges sourcé/estimé. Plus de classement LABUSE, de prix de marché, de logements.
 _PROPRIO = {"morale": "personne morale", "public": "public", "particulier": "particulier",
-            "succession": "succession", "indivision": "indivision"}
+            "succession": "succession", "indivision": "indivision",
+            "non_determine": "non déterminé"}   # CHIRURGICAL-FIX-1 (LOT H pt4) — comme le Dossier
 _LIGNES = [
     # TERRAIN
     ("Surface", "s", lambda r: _m2(r, "surface_m2")),
-    ("Bâti existant", "s", lambda r: (("aucun" if (r.get("bati_existant_pct") or 0) <= 0
-                                       else f"{_i(r.get('bati_existant_pct'))} % du terrain")
-                                      if r.get("bati_existant_pct") is not None else None)),
+    ("Bâti existant", "s", lambda r: _bati_existant(r)),
     ("Propriétaire", "s", lambda r: _PROPRIO.get(r.get("proprietaire"))),
     # URBANISME
     ("Hauteur autorisée", "s", lambda r: ((f"R+{max(0, int(r['gabarit_niveaux_max']) - 1)}"
                                            + (" + combles" if r.get("gabarit_combles") else ""))
                                           if r.get("gabarit_niveaux_max") is not None else None)),
-    ("Emprise au sol maximale", "s", lambda r: (_pct(r, "emprise_ces_pct") or "non réglementée")),
+    # OUTILS-P1-1 (pt 3) — même règle qu'à l'écran : « PLU sans plafond d'emprise » seulement si une
+    # règle est identifiée (silence prouvé), sinon « Règle non renseignée ».
+    ("Emprise au sol maximale", "s", lambda r: (_pct(r, "emprise_ces_pct")
+        or ("PLU sans plafond d'emprise" if r.get("emprise_ces_etat") == "sans_plafond"
+            else "Règle non renseignée"))),
     # POTENTIEL CONSTRUCTIBLE
     ("Plancher possible · bâti conservé", "e", lambda r: _sdp_residuelle_cause(r)),
     ("Plancher possible · reconstruction", "e", lambda r: _m2(r, "sdp_max_m2")),
+    # CAPACITE-1 (LOT C) — « surface à retenir » (RÈGLE UNIQUE) : le Comparatif ne présente jamais le
+    # plancher reconstruction (estimation rapide) comme capacité sans dire laquelle des deux grandeurs
+    # retenir. Même fonction `surface_a_retenir` que le Dossier et l'Étude.
+    ("Surface à retenir", "e", lambda r: _surface_a_retenir_txt(r)),
     ("Part du gabarit déjà occupée", "e", lambda r: esc(fmt_taux_emprise(r.get("taux_emprise_pct")))),
     # CHASSE-DOCS-FIX-1 (Lot 5) — charge foncière NÉGATIVE : chiffre + explication, jamais un « -59 €/m² » nu.
-    ("Charge foncière", "e", lambda r: ((f"{_i(r.get('charge_fonciere_m2'))} €/m²"
-        + (" — Bilan déficitaire : à ces hypothèses, le foncier ne se paie pas"
+    # EXPORTS-FIX-3 LOT 2 (#7) — la charge foncière DIT sa surface de référence (« par m² de terrain ») ;
+    # ses hypothèses sont données en note sous le tableau (sinon on ne l'affiche pas).
+    ("Charge foncière", "e", lambda r: ((f"{_i(r.get('charge_fonciere_m2'))} €/m² de terrain"
+        + (" — bilan déficitaire : à ces hypothèses, le foncier ne se paie pas"
            if (r.get("charge_fonciere_m2") or 0) < 0 else ""))
-        if r.get("charge_fonciere_m2") is not None else None)),
+        if (r.get("charge_fonciere_m2") is not None and r.get("bilan_hypotheses")) else None)),
     # RISQUES ET CONTRAINTES
-    ("Assainissement", "s", lambda r: esc(r.get("assainissement")) if r.get("assainissement") else None),
-    ("Contraintes relevées", "s", lambda r: (" · ".join(esc(c) for c in (r.get("contraintes") or []))
-                                             if (r.get("contraintes") or []) else "aucune relevée")),
+    # OUTILS-P1-1 (pt 3) — statistique de SECTEUR préfixée « Secteur : » (comme à l'écran).
+    ("Assainissement", "s", lambda r: (f"Secteur : {esc(r.get('assainissement'))}"
+                                       if r.get("assainissement") else None)),
+    ("Contraintes relevées", "s", lambda r: _contraintes_txt(r)),
 ]
 
 _BADGE = {"s": ("s", "sourcé"), "e": ("e", "estimé")}
+
+# EXPORTS-FIX-3 LOT 2 — lignes de CAPACITÉ / BILAN : sur une parcelle NON CONSTRUCTIBLE (verdict de
+# la fiche), elles ne s'affichent pas (« — »). Le mandat : « sans surface de plancher, hauteur, bilan
+# ni charge foncière ». La ligne « Emprise au sol maximale » reste (c'est une RÈGLE de zonage, pas une
+# capacité). Un verdict « Non constructible — <motif> » est affiché à part (voir `rendu`).
+_LIGNES_CAPACITE = {"Hauteur autorisée", "Plancher possible · bâti conservé",
+                    "Plancher possible · reconstruction", "Surface à retenir",
+                    "Part du gabarit déjà occupée", "Charge foncière"}
+
+
+def _surface_a_retenir_txt(r):
+    """CAPACITE-1 (LOT C) — cellule « surface à retenir » du Comparatif : valeur retenue + grandeur
+    (estimation rapide / scénario d'implantation), via la fonction unique `surface_a_retenir`
+    (dict posé par `compare()`). Jamais le plancher reconstruction nu comme capacité."""
+    sar = r.get("surface_a_retenir")
+    if not isinstance(sar, dict) or sar.get("valeur_m2") is None:
+        return "—"
+    return esc(f"{sar['valeur_m2']:g} m² ({sar['source']})")
+
+
+def _est_non_constructible(r) -> bool:
+    """EXPORTS-FIX-3 LOT 2 — la parcelle est-elle non constructible AU SENS DE LA FICHE ?
+    `constructible is False` = verdict ferme de `potentiel_batir` ; None (indéterminé) ne masque rien."""
+    return r.get("constructible") is False
+
+
+def _ligne_verdict(rows) -> str:
+    """Ligne « Constructibilité » : « Non constructible — <motif> » (la MÊME raison que la fiche) ou
+    « Constructible », sur chaque colonne. Rendue seulement si au moins une parcelle est non
+    constructible (sinon le tableau reste comme avant)."""
+    if not any(_est_non_constructible(r) for r in rows):
+        return ""
+    cells = ""
+    for r in rows:
+        if _est_non_constructible(r):
+            motif = esc(r.get("verdict_motif") or r.get("cause_libelle") or "zone non constructible")
+            cells += f'<td><strong>Non constructible</strong> — {motif}</td>'
+        elif r.get("constructible") is True:
+            cells += "<td>Constructible</td>"
+        else:
+            cells += "<td>—</td>"
+    return f'<tr><td class="lbl">Constructibilité</td>{cells}</tr>'
 
 
 def rendu(rows) -> str:
@@ -188,7 +287,9 @@ def rendu(rows) -> str:
         sub = (f'<div class="sub">{adr}</div>' if adr else "") + (f'<div class="sub">{zs}</div>' if zs else "")
         return f"<th>{idu}{sub}</th>"
     thead = "<tr><th></th>" + "".join(_col(r) for r in rows) + "</tr>"
-    body = ""
+    # EXPORTS-FIX-3 LOT 2 — verdict de constructibilité en tête du corps (avant l'urbanisme) : la même
+    # raison que la fiche, sans jamais un plancher/bilan flatteur sur une parcelle non constructible.
+    body = _ligne_verdict(rows)
     for label, prov, fn in _LIGNES:
         badge = ""
         if prov in _BADGE:
@@ -196,6 +297,10 @@ def rendu(rows) -> str:
             badge = chip_span(cls, lib)
         cells = ""
         for r in rows:
+            # EXPORTS-FIX-3 LOT 2 — parcelle non constructible : aucune capacité/bilan dans sa colonne.
+            if label in _LIGNES_CAPACITE and _est_non_constructible(r):
+                cells += "<td>—</td>"
+                continue
             v = fn(r)
             cells += f"<td>{v if v is not None else '—'}</td>"
         body += f'<tr><td class="lbl">{esc(label)}{badge}</td>{cells}</tr>'
@@ -205,5 +310,21 @@ def rendu(rows) -> str:
     # DOCS-1 (décision Vic) — titre + tableau forment UN bloc qui ne se coupe pas : s'il ne tient pas
     # sous la carte en page 1, l'ensemble (jamais le titre seul) passe en page 2 (`.cmp-bloc`).
     corps = f'<table class="cmp"><thead>{thead}</thead><tbody>{body}</tbody></table>'
-    bloc = f'<section class="cmp-bloc"><h2>Comparatif</h2>{corps}</section>'
+    # EXPORTS-FIX-3 LOT 2 (#7) — si au moins une charge foncière est affichée, on DONNE ses hypothèses
+    # et sa surface de référence (sinon le chiffre ne serait pas interprétable) : note sous le tableau.
+    note_bilan = ""
+    _avec_charge = [r for r in rows if r.get("charge_fonciere_m2") is not None and r.get("bilan_hypotheses")]
+    if _avec_charge:
+        # EXPORTS-FIX-3 LOT 2 (#5/#7) — CHAQUE bilan affiché donne SES hypothèses (une par colonne,
+        # étiquetée par l'IDU), jamais celles de la seule première parcelle.
+        blocs_h = ""
+        for r in _avec_charge:
+            hyps = r.get("bilan_hypotheses") or []
+            lis = "".join(f"<li>{esc(str(h))}</li>" for h in hyps)
+            blocs_h += (f'<p class="anote"><strong>{esc(r.get("idu",""))}</strong> — '
+                        f'charge foncière {_i(r.get("charge_fonciere_m2"))} €/m² de terrain. '
+                        f'Hypothèses :</p><ul class="anote">{lis}</ul>')
+        note_bilan = ('<p class="anote"><strong>Charge foncière</strong> = résultat du bilan promoteur '
+                      'rapporté au m² de terrain (indicatif).</p>' + blocs_h)
+    bloc = f'<section class="cmp-bloc"><h2>Comparatif</h2>{corps}{note_bilan}</section>'
     return _virgule_sortie(bloc)

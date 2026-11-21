@@ -134,7 +134,7 @@ def test_parcelle_structure_maquette():
     # lecture FONCIÈRE à côté de la lecture bâti (comme la variante lien)
     assert "Lecture foncière" in html and "186 000 €" in html and "26 % de l" in html
     # tableau des comparables + total
-    assert "Les 8 ventes les plus proches retenues" in html and "08/2025" in html and "103 m" in html
+    assert "Les 8 ventes les plus ressemblantes retenues" in html and "08/2025" in html and "103 m" in html
     # CHASSE-4-FIX (C4-005) — le périmètre des comparables est DIT avec le rayon réel (radius_m = 500 m).
     assert "41 autres ventes de maisons à moins de 500 m" in html and "Source : DVF, ventes de maisons" in html
     # page 2 : foncier + classement DÉRIVÉ DES RÈGLES + risques UNE LIGNE PAR ALÉA + marché + à vérifier
@@ -154,7 +154,7 @@ def test_parcelle_nue_titre_et_comparables_terrain():
     html = bloc.rendu_parcelle(_RAPPORT_NUE, plan_ortho_html="", plan_zonage_html="").replace("\u00a0", " ")
     assert "Parcelle CX0800" in html and "Saint-Leu" in html  # titre sans adresse (esc_noms span nb)
     assert "495 €/m²" in html and "Ordre de grandeur du terrain" in html and "900 000 €" in html
-    assert "Les 8 ventes de terrain nu les plus proches" in html and "06/2024" in html and "Terrain" in html
+    assert "Les 8 ventes de terrain nu les plus ressemblantes" in html and "06/2024" in html and "Terrain" in html
     assert "Source : DVF, ventes de terrain nu" in html
     assert "Lecture foncière" not in html                    # la nue EST foncière (pas de double lecture)
 
@@ -246,7 +246,7 @@ def test_construire_lien_document_deterministe():
     res2 = builder.construire_analyse_annonce_lien(_RAPPORT_LIEN, jour=J)
     assert res1.html == res2.html                    # même entrée → même HTML (PDF outil == PDF Docs)
     assert "Estimer un bien" in res1.cartouche.doc_title   # RECETTE-4 — titre PDF renommé
-    assert res1.numero == "AA-20261027-7890"   # suffixe = 4 derniers chiffres du list_id (ASCII, stable)
+    assert res1.numero == "AA-20261027-1234567890"   # E4 — identifiant ENTIER du list_id (cohérent avec _ref_droite)
     assert "Voir l'annonce" in res1.html and "leboncoin.fr/ad" in res1.html
     # DOCS-DA-1 (V11) — pied UNIFORME, une ligne, pour tous les documents (l'attribution « DVF · Radar »
     # et la mention « avis de valeur » vivent dans le CORPS de l'Estimer, plus au pied).
@@ -292,10 +292,70 @@ def test_risques_rows_une_ligne_par_alea_sans_doublon():
     assert len(rows) == 2                                        # 4 entrées → 2 aléas (plus de doublon)
     noms = {r["alea"] for r in rows}
     assert noms == {"Inondation", "Mouvement de terrain"}
-    assert all(r["niveau"] == "Fort" for r in rows)             # intensité Géorisques
-    assert all(r["zone_part"] == "Zone rouge · 23 %" for r in rows)   # zone PPR la plus contraignante + part
-    assert all("Zone rouge du PPR Saint-Leu (2015)" in r["implique"] for r in rows)
+    assert all(r["niveau"].startswith("Fort") for r in rows)    # intensité Géorisques (+ part, C5)
+    # EXPORTS-FIX-3 LOT 3 (#3) — la zone PPR (rouge, 23 % de la PARCELLE) est UNE : dite UNE SEULE fois
+    # (sur le 1ᵉʳ aléa), pas répétée « 23 % par aléa ».
+    assert rows[0]["zone_part"] == "Zone rouge · 23 %"
+    assert rows[1]["zone_part"] is None
+    # EXPORTS-FIX-3 LOT 3 (#1, relecture 6) — SEULE la ligne qui PORTE la zone rouge (celle qui affiche
+    # `zone_part`) mentionne la zone rouge ; l'aléa SUIVANT, hors zone rouge sur la parcelle (sur BI0351
+    # l'aléa faible couvre les 69 % complémentaires, 0 m² dans le rouge), ne la mentionne PAS.
+    assert "Zone rouge du PPR Saint-Leu (2015)" in rows[0]["implique"]
+    assert "zone rouge" not in rows[1]["implique"].lower()
+    assert "hors zonage PPR" in rows[1]["implique"]
     assert _risques_rows({"aleas": {"n": 0, "liste": []}}, "X") == []
+
+
+def test_risques_rows_ppr_multirisque_rattache_tous_les_aleas_nommes():
+    """CAPACITE-1 (B2) — un PPR MULTI-RISQUE (INONDATION_MOUVEMENT_DE_TERRAIN, cas BI0351) rattache sa
+    zone rouge à inondation ET à mouvement de terrain (les aléas que son libellé NOMME), jamais à la
+    seule « Inondation » par défaut. La part (31 %) est dite une seule fois ; le niveau affiché par aléa
+    est le plus FORT, pas « faible »."""
+    fiche = {"aleas": {"n": 4, "liste": [
+        {"nature": "PPR — zone rouge", "part_pct": 31,
+         "libelle": ("PPR inondation et mouvement de terrain — zone rouge sur 31 % de la parcelle : "
+                     "partie INCONSTRUCTIBLE (interdiction, C. env. L562-1)."),
+         "ppr": [{"document": "PPR", "approbation": "2018-07-13"}]},
+        {"nature": "Aléa mouvement de terrain", "niveau": "fort", "part_pct": 4, "source": "DEAL"},
+        {"nature": "Aléa mouvement de terrain", "niveau": "faible", "part_pct": 69, "source": "DEAL"},
+        {"nature": "Aléa inondation", "niveau": "fort", "part_pct": 7, "source": "DEAL"},
+    ]}}
+    rows = _risques_rows(fiche, "La Possession")
+    by = {r["alea"]: r for r in rows}
+    assert {"Inondation", "Mouvement de terrain"} <= set(by)
+    # les DEUX aléas que la zone rouge nomme la portent (jamais « mouvement de terrain hors zonage PPR »)
+    assert "rouge" in (by["Inondation"]["zone_part"] or "").lower()
+    assert "rouge" in (by["Mouvement de terrain"]["zone_part"] or "").lower()
+    assert "Zone rouge du PPR" in by["Inondation"]["implique"]
+    assert "Zone rouge du PPR" in by["Mouvement de terrain"]["implique"]
+    assert "hors zonage PPR" not in by["Mouvement de terrain"]["implique"]
+    # la part 31 % est dite UNE fois (pas de cumul 31 % + 31 %)
+    parts = [r["zone_part"] for r in rows if r["zone_part"] and "%" in r["zone_part"]]
+    assert len(parts) == 1 and "31" in parts[0]
+    # CAPACITE-1 (C5) — le mouvement de terrain affiche TOUS ses niveaux avec leur part, fort d'abord
+    _mvt = by["Mouvement de terrain"]["niveau"]
+    assert _mvt.startswith("Fort 4 %") and "Faible 69 %" in _mvt
+    # CAPACITE-1 (D5) — la zone rouge (31 %) recouvre le FORT (4 %), pas le FAIBLE (69 %, hors zone rouge)
+    assert "Fort 4 % (zone rouge)" in _mvt and "Faible 69 % (hors zone rouge)" in _mvt
+
+
+def test_risques_rows_zone_rouge_par_recouvrement_mesure():
+    """CAPACITE-1 (E3) — « en zone »/« hors zone » vient du RECOUVREMENT MESURÉ (part_rouge_pct), pas du
+    cumul de pourcentages. Cas où les deux divergent : un niveau TRÈS étendu mais HORS du rouge
+    (fort 50 %, recouvrement 0) reste « hors zone » ; un niveau PETIT entièrement dans le rouge
+    (moyen 10 %, recouvrement 10) est « en zone » — le cumul fort→faible aurait mis les deux hors."""
+    fiche = {"aleas": {"n": 3, "liste": [
+        {"nature": "PPR — zone rouge", "part_pct": 40,
+         "libelle": "PPR mouvement de terrain — zone rouge sur 40 % de la parcelle : partie INCONSTRUCTIBLE.",
+         "ppr": [{"document": "PPR", "approbation": "2018-07-13"}]},
+        {"nature": "Aléa mouvement de terrain", "niveau": "fort", "part_pct": 50,
+         "part_rouge_pct": 0, "source": "DEAL"},
+        {"nature": "Aléa mouvement de terrain", "niveau": "moyen", "part_pct": 10,
+         "part_rouge_pct": 10, "source": "DEAL"},
+    ]}}
+    _mvt = {r["alea"]: r for r in _risques_rows(fiche, "X")}["Mouvement de terrain"]["niveau"]
+    assert "Fort 50 % (hors zone rouge)" in _mvt   # grand mais hors du rouge (mesuré 0)
+    assert "Moyen 10 % (zone rouge)" in _mvt        # petit mais dans le rouge (mesuré 10)
 
 
 def test_a_verifier_derive_des_donnees_max_3():
@@ -333,7 +393,7 @@ def test_plan_cadre_parcelle_allongee_verticalement():
 
 
 def test_numero_prefixe_analyse_annonce():
-    assert numeros.numero_rapport("analyse-annonce", "97411000AB0123", J) == "AA-20261027-0123"
+    assert numeros.numero_rapport("analyse-annonce", "97411000AB0123", J) == "AA-20261027-97411000AB0123"
 
 
 def test_message_echec_lien_identique_a_l_outil():

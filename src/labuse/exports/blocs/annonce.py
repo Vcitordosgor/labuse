@@ -208,7 +208,11 @@ def _estimation(est: dict) -> str:
         src_bits.append(f"{_int(n)} vente" + ("s" if n != 1 else ""))
     if terrain:
         if est.get("perimetre"):
-            src_bits.append("secteur cadastral" if est["perimetre"] == "secteur" else "commune")
+            # EXPORTS-FIX-3 LOT 3 (#6) — le comparateur de terrain de l'Analyse agrège les ventes du
+            # VOISINAGE (secteur élargi), PAS la seule section cadastrale de la fiche : deux notions
+            # avaient la même étiquette « secteur cadastral » (Analyse 392 €/34 ventes vs fiche 354 €/
+            # 3 ventes sur HT0538). On nomme ici le vrai périmètre de l'Analyse, distinct de la fiche.
+            src_bits.append("secteur élargi (voisinage)" if est["perimetre"] == "secteur" else "commune")
     else:
         if isinstance(est.get("radius_m"), (int, float)):
             src_bits.append(f"rayon {_int(est['radius_m'])} m")
@@ -223,22 +227,49 @@ def _estimation(est: dict) -> str:
     prec_txt = (f" Précision mesurée sur les ventes 2025 : ±{_int(prec)} %." if isinstance(prec, (int, float)) else "")
     if terrain:
         note = "Terrain nu — comparé aux ventes de terrain nu du secteur (repère €/m² de terrain)." + prec_txt
+        # OUTILS-P0-2 (P2) — hors gamme / non constructible : pas de total, la raison est dite (écran == PDF).
+        sans_total = est.get("terrain_sans_total_raison")
+        if sans_total:
+            note += " " + sans_total
     elif est.get("nature") == "copropriete":   # CHASSE-4-FIX (C4-003)
         pl = est.get("type_label_pluriel") or "appartements"
         note = (f"Copropriété — comparée aux ventes d'<b>{esc(pl)}</b> de la commune (repère €/m²). "
                 "Le lot exact (étage, surface) n'est pas connu du modèle." + prec_txt)
     else:
         pl = est.get("type_label_pluriel") or "biens bâtis anciens"
-        note = (f"{(est.get('type_bien') or 'Bâti').capitalize()} — comparé aux ventes de <b>{esc(pl)}</b> "
-                "autour de la parcelle. État et prestations du bien non connus du modèle." + prec_txt)
+        # CHIRURGICAL-FIX-1 (E8) — ce chiffre est l'ESTIMATION du prix de CE bien (ESTIMER-3, pondérée par
+        # la ressemblance), NOMMÉE comme telle : jamais « le prix du secteur » (qui, lui, est servi
+        # ci-dessous par la fiche). On le dit explicitement pour qu'un lecteur ne confonde pas les deux.
+        note = (f"{(est.get('type_bien') or 'Bâti').capitalize()} — <b>estimation du prix de ce bien</b> "
+                f"d'après les ventes de <b>{esc(pl)}</b> semblables (méthode LABUSE pondérée par la "
+                "ressemblance) ; ce n'est pas le prix médian du secteur. État et prestations du bien non "
+                "connus du modèle." + prec_txt)
     # FIX-P-1 (P-04) — le prix au m² d'Estimer est une ESTIMATION pondérée (comparables de précision),
     # JAMAIS une médiane : il porte son propre libellé « Prix estimé au m² ». La « médiane » de marché
     # reste exclusivement le module unique marche_dvf_commune (bloc « La commune », « Prix médian … »).
-    gauche = ('<div class="estkicker">Prix estimé au m²</div>'
+    # CHIRURGICAL-FIX-1 (E8) — le PRIX DE SECTEUR affiché est celui de la FICHE (prix_ancien), pour que
+    # les deux documents (fiche/Dossier et Estimer) ne montrent jamais deux « prix de secteur » différents.
+    sect = est.get("secteur_fiche") if isinstance(est.get("secteur_fiche"), dict) else None
+    sect_html = ""
+    if sect and isinstance(sect.get("median"), (int, float)):
+        _bits = []
+        if isinstance(sect.get("n"), (int, float)):
+            _bits.append(f"{_int(sect['n'])} vente" + ("s" if sect["n"] != 1 else ""))
+        if isinstance(sect.get("radius_m"), (int, float)):
+            _bits.append(f"rayon {_int(sect['radius_m'])} m")
+        _per = _periode(sect.get("periode"))
+        if _per:
+            _bits.append(_per)
+        _src = (" · ".join(_bits))
+        sect_html = (f'<div class="estsecteur"><span class="muted">Prix médian du secteur (fiche) : </span>'
+                     f'<b>{_int(sect["median"])} €/m²</b>'
+                     + (f' <span class="muted">{esc(_src)}</span>' if _src else "") + "</div>")
+    gauche = ('<div class="estkicker">Prix estimé au m² — ce bien</div>'
               + f'<div class="estbig">{_int(median)} €/m²'
               + (f' <span class="estrange">{esc(fourch)}</span>' if fourch else "") + "</div>"
               + f'<div class="estmeta">{_chip(chip_cls, "Fiabilité " + niv)}'
               + (f' <span class="muted">{esc(source)}</span>' if source else "") + "</div>"
+              + sect_html
               + f'<p class="anote">{note}</p>')
     droite = _valeur_indicative(est) + ("" if terrain else _lecture_fonciere_box(est))
     return ('<h2>Estimation du prix</h2>'
@@ -301,10 +332,21 @@ def _lecture_fonciere_box(est: dict) -> str:
             f'<div class="lcsub">{esc(sub)}</div>{concl}</div>')
 
 
+#: EXPORTS-FIX-3 LOT 3 (#7) — le titre dit « les 8 ventes les plus proches » : on borne donc la table
+#: aux 8 PLUS PROCHES (tri par distance croissante, inconnus en dernier) — avant, le titre annonçait 8
+#: mais la table en affichait jusqu'à 12.
+_MAX_COMPARABLES = 8
+
+
 def _comparables(est: dict) -> str:
     comps = est.get("comparables") or []
     if not comps:
         return ""
+    # CHIRURGICAL-FIX-1 (LOT J pt3e) — les comparables sont classés par RESSEMBLANCE (le poids d'Estimer :
+    # type, surface, période…), PAS par distance. On ne les re-trie donc pas par distance (sinon une vente
+    # plus proche mais moins ressemblante passait devant) : on garde l'ordre de ressemblance servi, et le
+    # titre le dit. La colonne « Distance » reste, informative, mais n'est pas la clé de tri.
+    comps = list(comps)[:_MAX_COMPARABLES]
     head = ('<tr><th>Date</th><th>Type</th><th class="r">Surface</th><th class="r">Prix</th>'
             '<th class="r">€/m²</th><th class="r">Distance</th></tr>')
     rows = ""
@@ -331,8 +373,13 @@ def _comparables(est: dict) -> str:
         foot = (f"{_int(autres)} autre" + ("s" if autres > 1 else "") + " vente"
                 + ("s" if autres > 1 else "") + " " + _de(esc(pl)) + f" {esc(peri)}. ")
     foot += f"Source : DVF, ventes {_de(esc(pl))}" + (f", {esc(per)}" if per else "") + "."
-    titre = ("Les 8 ventes de terrain nu les plus proches" if terrain
-             else "Les 8 ventes les plus proches retenues")
+    # CHIRURGICAL-FIX-1 (LOT I 3d / LOT J pt3e) — ces 8 ventes sont les plus RESSEMBLANTES (par le poids
+    # d'Estimer), pas l'échantillon du prix médian de tête (calculé, lui, sur l'ensemble du secteur) : on
+    # le dit, pour ne pas laisser croire que la médiane affichée se lit sur ce tableau.
+    foot += (" Ces 8 ventes sont les plus ressemblantes (classées par ressemblance, pas par distance) ; "
+             "le prix médian indiqué plus haut est calculé sur tout le secteur, pas sur ce seul tableau.")
+    titre = ("Les 8 ventes de terrain nu les plus ressemblantes" if terrain
+             else "Les 8 ventes les plus ressemblantes retenues")
     return (f'<h2>{titre}</h2>'
             f'<table class="acomp">{head}{rows}</table>'
             f'<p class="anote">{foot}</p>')

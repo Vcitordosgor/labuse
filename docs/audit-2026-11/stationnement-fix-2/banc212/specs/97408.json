@@ -1,0 +1,55 @@
+{
+ "insee": "97408",
+ "commune": "La Possession",
+ "regles": [
+  {
+   "id": "97408-R1",
+   "article": "UA 12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "UA",
+    "UAm",
+    "UApsfr2"
+   ],
+   "pages": [
+    20,
+    21,
+    22
+   ]
+  },
+  {
+   "id": "97408-R2",
+   "article": "UB 12.2",
+   "mode": "par_typologie",
+   "zones": [
+    "UB",
+    "UBa",
+    "UBb",
+    "UBc",
+    "UBpsfr2",
+    "UBpszc",
+    "AUB",
+    "AUBb",
+    "AUBpsfr2"
+   ],
+   "pages": [
+    34,
+    35,
+    36
+   ]
+  },
+  {
+   "id": "97408-R3",
+   "article": "AUBm 12",
+   "mode": "par_typologie",
+   "zones": [
+    "AUBm"
+   ],
+   "pages": [
+    77,
+    78,
+    79
+   ]
+  }
+ ]
+}

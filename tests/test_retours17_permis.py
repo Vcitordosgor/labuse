@@ -68,6 +68,21 @@ def test_w1_w2_partition_exacte_somme_egale_total(client):
     assert total >= 3 and recent >= 1 and acheve >= 1 and autre >= 1
 
 
+def test_p1_1_compteur_et_liste_portent_sur_le_meme_ensemble(client):
+    """OUTILS-P1-1 (pt 5) — le COMPTEUR (count_only) et la LISTE (chemin paginé) portent sur le MÊME
+    ensemble, pour la MÊME fenêtre : même total ET même nombre de géolocalisés, à l'état défaut comme
+    sous un filtre d'état. C'est l'invariant que le panneau affiche (compteur de l'état actif = total de
+    la liste), prouvé ici au niveau de l'API (source unique du prédicat de fenêtre + d'état)."""
+    for qs in ("&months=3", "&months=3&etat=recent", "&months=240&etat=acheve",
+               "&months=240&etat=autre", "&months=240&nature=PC"):
+        c = client.get(f"/modules/permis?count_only=true{qs}").json()
+        liste = client.get(f"/modules/permis?limit=1{qs}").json()
+        assert c["total"] == liste["total"], f"total divergent pour {qs} : {c['total']} != {liste['total']}"
+        assert c["geocodes"] == liste["geocodes"], f"géolocalisés divergents pour {qs}"
+        # la liste sert la date de la dernière donnée Sitadel (affichée « donnée Sitadel au … »)
+        assert liste["donnees_jusqu_au"], f"date de donnée absente pour {qs}"
+
+
 def test_w1_etat_whitelist_fermee_valeur_libre_ignoree(client):
     """Une valeur d'`etat` hors whitelist retombe sur « tous » (aucune injection, aucun 500)."""
     assert _count(client, "&etat=recent") <= _count(client, "")
@@ -78,10 +93,11 @@ def test_w2_cinq_lignes_etat_avec_definitions_sur_les_lignes():
     """Le segment porte les CINQ lignes (Tous + 4 états) avec leur définition COURTE sur la ligne."""
     for k in ("'tous'", "'cours'", "'mort'", "'acheve'", "'autre'"):
         assert k in MP, k
-    for label in ("'Récent'", "'Dormant'", "'Achevés'", "'Autres'"):
+    # OUTILS-P1-1 (pt 5) — « Récent » → « Autorisés » (période dans la définition), « Dormant » → « Ancien permis ».
+    for label in ("'Récents'", "'Permis dormants'", "'Achevés'", "'Autres'"):
         assert label in MP, label
     # définitions courtes SUR les lignes (plus dans un paragraphe)
-    assert "autorisé ≤ 24 mois" in MP
+    assert "90 derniers jours de la donnée" in MP   # OUTILS-P1-1 LOT3b (pt 2) — fenêtre ancrée sur la donnée
     assert "ni récent, ni dormant, ni achevé" in MP
     # bloc total en tête + bandeau court
     assert "permis autorisés en base" in MP

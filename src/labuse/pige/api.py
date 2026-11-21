@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import logging
 import math
+import re
 
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
@@ -1825,8 +1826,15 @@ def _surface_pour_total(db, idu: str, emprise, mut: dict | None, insee: str,
                          "× ratio %.3f (ajustement niveaux ×%.3f, assise %d ventes commune %s)",
                          idu, emp, niveaux, ratio, mult, assise, insee)
                 niv_lib = f"{niveaux} niveau" + ("x" if niveaux > 1 else "")
+                # EXPORTS-FIX-3 LOT 3c — la formule IMPRIMÉE porte TOUS ses facteurs et redonne le
+                # total : elle mène par la surface habitable RÉELLE (s), pas l'emprise brute (emp).
+                # Avant : « 224 m² au sol × 1 niveau × 2 101 €/m² » (= 470 624) alors que le total
+                # affiché valait 237 000 — le ratio 0,516 et le ×niveaux 0,974 manquaient (DK0208).
+                _rf = ('%.3f' % ratio).replace('.', ',')
+                _mf = ('%.3f' % mult).replace('.', ',')
                 return s, {"source": "emprise_niveaux_lidar",
-                           "ligne": f"Surface habitable estimée : {emp} m² au sol × {niv_lib} (hauteur LiDAR)",
+                           "ligne": (f"Surface habitable estimée {s} m² ({emp} m² au sol × {_rf} "
+                                     f"ratio habitable × {_mf} pour {niv_lib}, hauteur LiDAR)"),
                            "note": (f"Surface habitable estimée d'après l'emprise au sol ({emp} m²) et "
                                     f"les {niv_lib} mesurés par la hauteur LiDAR, ajustée au ratio "
                                     "habitable/emprise des maisons du secteur "
@@ -1837,8 +1845,11 @@ def _surface_pour_total(db, idu: str, emprise, mut: dict | None, insee: str,
             log.info("estimation %s : surface habitable estimée = emprise %d m² × ratio %.3f "
                      "(médiane surface vendue / emprise sur %d ventes de maisons de la commune %s ; "
                      "pas de hauteur LiDAR)", idu, emp, ratio, assise, insee)
+            # EXPORTS-FIX-3 LOT 3c — la formule porte son facteur (ratio) et redonne le total : surface
+            # habitable RÉELLE (s) = emprise × ratio, multipliée ensuite par le €/m² habitable.
+            _rf = ('%.3f' % ratio).replace('.', ',')
             return s, {"source": "emprise_ratio",
-                       "ligne": f"Surface habitable estimée d'après l'emprise au sol ({s} m²)",
+                       "ligne": f"Surface habitable estimée {s} m² ({emp} m² au sol × {_rf} ratio habitable)",
                        "note": ("Surface habitable estimée d'après l'emprise au sol : total indicatif "
                                 "(ratio médian surface vendue / emprise au sol des ventes de maisons de "
                                 f"la commune : {('%.2f' % ratio).replace('.', ',')} sur "
@@ -1996,6 +2007,15 @@ def _estimation_annonce_core(db, idu: str, fiche: dict, surface_hab: float | Non
             niveau, ecart, fcal = _fiabilite_mesuree(db, "terrain", insee, repere_tn.get("n"), med,
                                                      repere_tn.get("q1"), repere_tn.get("q3"), cf,
                                                      repli=_fiabilite_segment("terrain"))
+            # OUTILS-P0-2 (P2) — GAMME de comparabilité en surface : un terrain BEAUCOUP plus grand que
+            # les ventes de référence ne se valorise pas à leur €/m² (prix dégressif à la taille). Mesuré
+            # au banc no-leak (docs/audit-2026-11/outils-p0-2/) : au-delà du p90 des surfaces de
+            # référence, l'écart médian d'un total passe de ~30 % à ~86 % (témoin AK0804 > 21 M€). Hors
+            # gamme → PAS de total (valeur indicative None), on garde le repère €/m² + les ventes de réf.
+            gamme = terr.get("surface_gamme") or {}
+            borne_haute = gamme.get("p90_m2")
+            hors_gamme = bool(surface_parc and borne_haute and float(surface_parc) > float(borne_haute))
+            vi = None if hors_gamme else _valeur_indicative(surface_parc, med, ecart)
             return {"nature": "nue", "type_comparateur": "terrain_nu", "type_bien": "terrain",
                     "median": med, "q1": repere_tn.get("q1"), "q3": repere_tn.get("q3"),
                     "n": repere_tn.get("n"), "periode": repere_tn.get("periode"),
@@ -2005,7 +2025,9 @@ def _estimation_annonce_core(db, idu: str, fiche: dict, surface_hab: float | Non
                     "comparables": terr.get("comparables") or [], "n_total": terr.get("n_total"),
                     "comparables_periode": terr.get("periode"),
                     "comparables_radius_m": terr.get("radius_m"),   # C4-005 — rayon réel des comparables
-                    "valeur_indicative": _valeur_indicative(surface_parc, med, ecart),
+                    "valeur_indicative": vi,
+                    "terrain_hors_gamme": hors_gamme, "surface_gamme": gamme or None,
+                    "surface_parcelle_m2": (round(float(surface_parc)) if surface_parc else None),
                     "repere_terrain_nu": repere_tn}
         return {"nature": "nue", "type_comparateur": "terrain_nu", "type_bien": "terrain",
                 "median": None, "comparables": [], "repere_terrain_nu": repere_tn,
@@ -2078,10 +2100,12 @@ def radar_annonce_estimation(
             fiche = parcel_fiche(idu, db=db)
         except ValueError:
             return {"idu": idu, "median": None, "type_comparateur": None, "note": "Parcelle inconnue."}
-        # CHASSE-4-FIX (C4-002) + NU-3-J#4 — nombre d'aléas = les familles d'aléas DISTINCTES
-        # (`distinct_hazards`), compteur UNIQUE partagé par la tuile « Aléas » de la fiche (`aleas.n_hazards`)
-        # et le PDF (`_risques_rows`, une ligne par hazard) : fiche == Estimer == PDF, fin de l'écart 6≠2.
-        n_aleas = len(distinct_hazards(((fiche or {}).get("aleas") or {}).get("liste")))
+        # CHASSE-4-FIX (C4-002) + NU-3-J#4 — compteur « Risques et pièges » = le POINT UNIQUE
+        # `_risques_rows` (une ligne par risque servi), partagé par l'outil Estimer et le PDF.
+        # EXPORTS-FIX-3 LOT 3 (#e) — `_risques_rows` inclut désormais la zone inondable TRI et le
+        # système d'endiguement (lus de la cascade) : on compte donc SUR CETTE source, pas sur
+        # `distinct_hazards(aleas.liste)` seul — sinon le compteur divergerait du tableau (cohérence).
+        n_aleas = len(_risques_rows(fiche, (fiche or {}).get("commune")))
         return {"idu": idu, "n_aleas": n_aleas,
                 **estimation_annonce(db, idu, fiche, surface_hab=surface_hab)}
 
@@ -2194,19 +2218,33 @@ def _regles_zone(zone: str | None, commune: str | None) -> list[dict]:
     if rl:
         out.append({"cle": "Recul par rapport aux limites", "valeur": rl})
     stat = getattr(zr, "stat_logement", None)
-    if isinstance(stat, str) and stat and "vérif" not in stat.lower():
+    # CAPACITE-1 (E2) — on n'affiche la ligne Stationnement que pour une règle CHIFFRÉE servie ; le
+    # sentinelle interne « a_verifier » (non calibré) ne doit jamais fuiter dans le tableau (il est dit
+    # dans la phrase de classement « stationnement non vérifié »).
+    if isinstance(stat, str) and stat and not any(k in stat.lower() for k in ("verif", "vérif", "a_verif")):
+        # CHIRURGICAL-FIX-1 (LOT K 3a) — barème à PLUSIEURS paliers (Le Tampon : « 1 place/logt ; 1,5… ») :
+        # Estimer ne sert plus le nombre partiel, il RENVOIE à l'article, COMME le Dossier (plu_reglement).
+        if ";" in stat:
+            from ..plu_reglement import _article_court
+            _art = _article_court((zr.sources or {}).get("stationnement"))
+            stat = ("barème selon le type de logement et la taille de l'opération"
+                    + (f" — voir l'article {_art}" if _art else " — voir le règlement de la zone"))
         out.append({"cle": "Stationnement", "valeur": stat})
     return out
 
 
-def _parcelle_mesures(db, idu: str, fiche: dict) -> list[dict]:
+def _parcelle_mesures(db, idu: str, fiche: dict, non_constructible: bool = False) -> list[dict]:
     """Les mesures DE LA PARCELLE face aux règles : assiette (aléa déduit), emprise bâtie, hauteurs LiDAR
     (faîtage / égout) + date de survol, SDP restante. Chaque mesure absente est OMISE."""
     pot = (fiche or {}).get("potentiel_transformation") or {}
     out = []
     ass = _assiette_alea_deduite(db, idu)
     if ass:
-        out.append({"cle": "Assiette constructible, aléa déduit", "valeur": f"{_fmt_m2_fr(ass)}"})
+        # CHIRURGICAL-FIX-1 (LOT H pt7) — JAMAIS « assiette constructible » sur une parcelle NON
+        # constructible (AM0838, habitat interdit en UE) : la surface hors aléa fort est un fait
+        # mesuré, pas une assiette à bâtir. Le mot « constructible » suit le verdict de la fiche.
+        cle = "Surface hors aléa fort" if non_constructible else "Assiette constructible, aléa déduit"
+        out.append({"cle": cle, "valeur": f"{_fmt_m2_fr(ass)}"})
     emp = _emprise_bati_fiche_m2(fiche)   # FIX-P-1 (P-03) — emprise UNIQUE de la fiche (BD TOPO clippée)
     if emp:
         out.append({"cle": "Bâti existant, emprise", "valeur": f"{_fmt_m2_fr(emp)}"})
@@ -2281,10 +2319,17 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
     liste = aleas.get("liste") or []
     # 1) intensité Géorisques par aléa (entrées « Aléa X »).
     intensite: dict[str, dict] = {}
+    # CAPACITE-1 (C5) — TOUS les niveaux d'un aléa avec leur part (mouvement de terrain : fort 4 % ·
+    # moyen 27 % · faible 69 %), pas seulement le plus fort — comme le Dossier §4. Ordre fort→faible.
+    niveaux_parts: dict[str, list[tuple]] = {}
     # 2) zone PPR la plus contraignante touchant la parcelle (rouge > bleue) + part + document.
     ppr_zone = None   # "rouge" | "bleue"
     ppr_part = None
     ppr_doc = None
+    # CAPACITE-1 (B2) — les aléas que la zone PPR retenue NOMME réellement (attribut `risque`, lu
+    # via le libellé déjà arbitré). Un PPR multi-risque (INONDATION_MOUVEMENT_DE_TERRAIN sur BI0351)
+    # se rattache à inondation ET mouvement de terrain — jamais à la seule « Inondation » par défaut.
+    ppr_hazards: list[str] = []
     hazards: list[str] = []
 
     def _noms(txt: str) -> list[str]:
@@ -2302,12 +2347,24 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
                 if lab not in hazards:
                     hazards.append(lab)
                 niv = e.get("niveau")
-                intensite[lab] = {"niveau": str(niv).capitalize() if niv else None,
-                                  "part_pct": e.get("part_pct")}
+                # CAPACITE-1 (B2/C5) — on garde le niveau le PLUS FORT (aleas_parcelle trie fort→faible :
+                # le premier vu) pour les décisions de zone, ET on COLLECTE tous les niveaux avec leur
+                # part pour les AFFICHER (C5 : mouvement de terrain fort 4 % · moyen 27 % · faible 69 %,
+                # plus seulement « Faible »/le plus fort).
+                if lab not in intensite:
+                    intensite[lab] = {"niveau": str(niv).capitalize() if niv else None,
+                                      "part_pct": e.get("part_pct")}
+                # CAPACITE-1 (E3) — on garde aussi le recouvrement MESURÉ de ce niveau avec la zone
+                # rouge/bleue du PPR (part_rouge_pct/part_bleue_pct d'aleas_parcelle) pour décider
+                # « en zone »/« hors zone » par un recouvrement, pas par un cumul de pourcentages.
+                niveaux_parts.setdefault(lab, []).append(
+                    (str(niv).capitalize() if niv else None, e.get("part_pct"),
+                     e.get("part_rouge_pct"), e.get("part_bleue_pct")))
         elif "ppr" in natl:
             z = "rouge" if "rouge" in natl else ("bleue" if "bleu" in natl else None)
             if z == "rouge" or (z == "bleue" and ppr_zone != "rouge"):
                 ppr_zone, ppr_part = z, e.get("part_pct")
+                ppr_hazards = _noms(e.get("libelle") or "")
                 ppr_list = e.get("ppr") or []
                 an = max((str(p.get("approbation") or "")[:4] for p in ppr_list if p.get("approbation")), default="")
                 ppr_doc = (f"PPR {commune}".strip() + (f" ({an})" if an else "")) if (ppr_list or z) else None
@@ -2333,26 +2390,104 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
     # tuile « Aléas » de la fiche `aleas.n_hazards`) : `len(_risques_rows) == aleas.n_hazards`, garanti.
     hazards = distinct_hazards(liste)
     rows = []
+    _zone_part_affichee = False
     for lab in hazards:
         it = intensite.get(lab) or {}
-        niveau = it.get("niveau")
-        if not niveau:
-            niveau = {"rouge": "Fort", "bleue": "Modéré"}.get(ppr_zone or "", "Signalé")
-        part = it.get("part_pct") if it.get("part_pct") is not None else ppr_part
+        # CAPACITE-1 (B2) — la zone PPR se rattache aux aléas qu'elle NOMME dans son attribut `risque`
+        # (`ppr_hazards`), pas au PREMIER hazard de la liste. Sur BI0351 le PPR rouge est
+        # INONDATION_MOUVEMENT_DE_TERRAIN : il porte inondation ET mouvement de terrain. L'ancien code
+        # (`_premier_ppr`) collait la zone rouge sur la seule « Inondation » (première de la liste) et
+        # laissait « mouvement de terrain : hors zonage PPR » — faux pour un PPR multi-risque.
+        # Repli : si le libellé PPR ne NOMME aucun aléa (donnée dégradée), on retombe sur l'ancien
+        # comportement (1ᵉʳ hazard) plutôt que d'orpheliner la zone.
+        _porte_zone = bool(ppr_zone) and (
+            (lab in ppr_hazards) if ppr_hazards else (bool(hazards) and lab == hazards[0]))
+        # CAPACITE-1 (C5) — TOUS les niveaux de l'aléa avec leur part dans la colonne NIVEAU (fort 4 % ·
+        # moyen 27 % · faible 69 %), comme le Dossier §4 ; plus « seulement le plus fort ».
+        nps = [np for np in (niveaux_parts.get(lab) or []) if np[0]]
+        def _niv1(n, p):
+            return f"{n}{f' {int(p)} %' if isinstance(p, (int, float)) else ''}"
+        def _cov_of(np):   # recouvrement mesuré de ce niveau avec la zone de la couleur retenue
+            return (np[2] if ppr_zone == "rouge" else np[3]) if len(np) >= 4 else None
+        if nps and _porte_zone:
+            # CAPACITE-1 (D5/E3) — « en zone »/« hors zone » par RECOUVREMENT MESURÉ de chaque niveau avec
+            # la zone rouge/bleue (BI0351 : fort/moyen recouvrent le rouge, faible 0 %). Repli (fixtures
+            # sans mesure) : cumul fort→faible ≤ part de la zone. Seuil 1 pt (bruit d'arrondi au bord).
+            _mesure = any(_cov_of(np) is not None for np in nps)
+            _cum, _bouts = 0.0, []
+            for np in nps:
+                n, p = np[0], np[1]
+                _pf = float(p) if isinstance(p, (int, float)) else 0.0
+                if _mesure:
+                    _cov = _cov_of(np)
+                    _dans = isinstance(_cov, (int, float)) and _cov >= 1
+                else:
+                    _dans = isinstance(ppr_part, (int, float)) and (_cum + _pf) <= (float(ppr_part) + 2)
+                _cum += _pf
+                _bouts.append(_niv1(n, p) + (f" (zone {ppr_zone})" if _dans else f" (hors zone {ppr_zone})"))
+            niveau = " · ".join(_bouts)
+        elif nps:
+            niveau = " · ".join(_niv1(np[0], np[1]) for np in nps)
+        else:
+            niveau = ({"rouge": "Fort", "bleue": "Modéré"}.get(ppr_zone or "", "Signalé")
+                      if _porte_zone else "Signalé")
         zone_part = None
-        if ppr_zone:
-            zone_part = f"Zone {ppr_zone}" + (f" · {int(part)} %" if isinstance(part, (int, float)) else "")
-        elif isinstance(part, (int, float)):
-            zone_part = f"{int(part)} %"
-        rows.append({"alea": lab, "niveau": niveau, "zone_part": zone_part,
-                     "implique": _implique(ppr_zone, ppr_doc)})
+        if _porte_zone and not _zone_part_affichee:
+            # La PART de la zone (31 % sur BI0351) est celle du PPR, dite une SEULE fois (pas « 31 %
+            # par aléa » : c'est la même emprise classée pour plusieurs risques).
+            zp = ppr_part
+            zone_part = f"Zone {ppr_zone}" + (f" · {int(zp)} %" if isinstance(zp, (int, float)) else "")
+            _zone_part_affichee = True
+        elif _porte_zone:
+            # Aléa AUSSI porté par la MÊME zone rouge/bleue (PPR multi-risque) — on nomme la zone sans
+            # répéter la part, pour ne pas laisser croire à un cumul de surfaces.
+            zone_part = f"Zone {ppr_zone} (même zone)"
+        # CAPACITE-1 (C5) — hors PPR, la part de chaque niveau est déjà dans la colonne NIVEAU : on ne
+        # duplique plus un « N % » cumulé dans la colonne ZONE·PART.
+        # L'implication de zone rouge/bleue va à CHAQUE aléa réellement porté par la zone ; les autres
+        # (ex. submersion hors PPR ici) gardent l'implication neutre « Aléa signalé, hors zonage PPR ».
+        implique = _implique(ppr_zone, ppr_doc) if _porte_zone else _implique(None, None)
+        rows.append({"alea": lab, "niveau": niveau, "zone_part": zone_part, "implique": implique})
+    # EXPORTS-FIX-3 LOT 3 (#e) — un risque présent sur la FICHE figure dans l'Analyse : la zone
+    # inondable TRI (directive inondation, scénario fréquent/moyen/extrême) et le système
+    # d'endiguement passent par la CASCADE (fiche.lines), pas par aleas.liste — _risques_rows ne les
+    # voyait pas (faute k : inondation extrême / endiguement absents de l'Analyse HT0538). On les ajoute.
+    _TRI_NIV = {"frequent": "Fréquent", "moyen": "Moyen", "extreme": "Extrême", "exceptionnel": "Extrême"}
+    for l in (fiche or {}).get("lines") or []:
+        if l.get("result") not in ("HARD_EXCLUDE", "SOFT_FLAG"):
+            continue
+        d = l.get("detail") or ""
+        dl = d.lower()
+        if "zone inondable tri" in dl or ("tri" in dl and "inond" in dl):
+            if not any(r["alea"] == "Inondation (TRI)" for r in rows):
+                sc = re.search(r"sc[eé]nario\s+(\w+)", dl)
+                niv = _TRI_NIV.get(sc.group(1), "Signalé") if sc else "Signalé"
+                pm = re.search(r"\((\d+)\s*%", d)
+                # CAPACITE-1 (E2) — le TRI (directive inondation) N'EST PAS un PPR : sa part de parcelle
+                # va dans la colonne NIVEAU, jamais sous l'en-tête « Zone PPR » (zone_part laissé vide).
+                _part = f" {pm.group(1)} %" if pm else ""
+                rows.append({"alea": "Inondation (TRI)", "niveau": f"{niv}{_part}", "zone_part": None,
+                             "implique": ("Cartographie de la directive inondation (submersion "
+                                          "modélisée) — complète le PPR ; à intégrer au projet.")})
+        elif "endigu" in dl:
+            if not any(r["alea"] == "Endiguement" for r in rows):
+                rows.append({"alea": "Endiguement", "niveau": "Signalé", "zone_part": None,
+                             "implique": ("Parcelle protégée par un système d'endiguement — inondation "
+                                          "RÉSIDUELLE en cas de défaillance ou de dépassement du "
+                                          "niveau de protection.")})
     return rows
 
 
-def _contrainte_limitante(db, idu: str, fiche: dict, zone: str | None, commune: str | None) -> dict:
+def _contrainte_limitante(db, idu: str, fiche: dict, zone: str | None, commune: str | None,
+                          non_constructible: bool = False) -> dict:
     """ANNONCE-5-FIX — LA règle qui limite la capacité, avec ses chiffres : hauteur (bâti existant au-delà
     du plafond), emprise (occupation proche du maximum), assiette (aléa fort déduit). Renvoie {"detail":…}
     (phrase chiffrée) ou {} si AUCUNE règle ne mord nettement. Jamais une phrase qui contredit le tableau."""
+    # CHIRURGICAL-FIX-1 (LOT H pt7) — une parcelle NON constructible n'a pas de « règle qui limite la
+    # capacité » : le vrai verrou est le verdict (habitat interdit…). On ne fabrique pas de phrase
+    # « l'assiette constructible limite » ; la phrase de classement portera le motif de non-constructibilité.
+    if non_constructible:
+        return {}
     try:
         from ..faisabilite.zonage import resolve_zone
         zr = resolve_zone(zone, commune) if zone else None
@@ -2387,22 +2522,35 @@ def _contrainte_limitante(db, idu: str, fiche: dict, zone: str | None, commune: 
     return {}
 
 
-def _classement_phrase(bande: str | None, libelle: str | None, contrainte: dict | None) -> str | None:
+def _classement_phrase(bande: str | None, libelle: str | None, contrainte: dict | None,
+                       stationnement_verifie: bool = True, nc_motif: str | None = None) -> str | None:
     """ANNONCE-5-FIX — phrase du classement DÉRIVÉE DES RÈGLES : elle nomme la règle qui limite avec ses
-    chiffres (via `_contrainte_limitante`), ou dit qu'aucune ne mord. Jamais une phrase qui contredit le
-    tableau des règles au-dessus. None si pas de bande."""
+    chiffres (via `_contrainte_limitante`), ou dit ce qui est vérifié et ce qui ne l'est pas. Jamais une
+    phrase qui contredit le tableau des règles au-dessus. None si pas de bande.
+    CAPACITE-1 (E2) — « aucune règle ne mord » est trop affirmatif quand le stationnement n'est pas
+    vérifié : on écrit alors ce qui EST vérifié (reculs, emprise, hauteur) ET ce qui ne l'est pas."""
     if not bande:
         return None
     tete = f"Classement {bande} · {libelle}" if libelle and libelle != bande else f"Classement {bande}"
+    # CHIRURGICAL-FIX-1 (LOT H pt7) — parcelle NON constructible : la phrase PORTE LE MOTIF de la fiche
+    # (« Rien à bâtir — habitat interdit… »), jamais « assiette constructible limite » ni « aucune règle
+    # ne mord » (qui laisseraient croire à une marge à bâtir).
+    if nc_motif:
+        return f"{tete} : {nc_motif}"
     if str(bande) == "NC":
         return f"{tete} : analyse incomplète — une donnée réglementaire manque pour classer la parcelle."
     detail = (contrainte or {}).get("detail")
     if detail:
         return f"{tete} : {detail}"
+    # E2 — réserve de stationnement : on ne dit pas « marge ouverte » si le stationnement reste à vérifier.
+    _reserve = ("" if stationnement_verifie else
+                " ; le stationnement de la zone n'est pas vérifié par LABUSE (à confirmer au règlement)")
     if str(bande) in ("A", "B"):
-        return f"{tete} : aucune règle de la zone ne mord nettement — la marge constructible reste ouverte."
+        _ouvert = ("la marge constructible reste ouverte" if stationnement_verifie
+                   else "les règles vérifiées (reculs, emprise, hauteur) ne mordent pas nettement")
+        return f"{tete} : {_ouvert}{_reserve}."
     return (f"{tete} : aucune règle réglementaire ne mord nettement ; la marge restante tient à la "
-            "configuration de la parcelle (forme, accès, bâti en place).")
+            f"configuration de la parcelle (forme, accès, bâti en place){_reserve}.")
 
 
 def _a_verifier(fiche: dict, nature: str, zone: str | None) -> list[str]:
@@ -2424,13 +2572,15 @@ def _a_verifier(fiche: dict, nature: str, zone: str | None) -> list[str]:
     return pts[:3]
 
 
-def _est_bloc_depuis_estimer3(db, idu: str, fiche: dict, surface_hab: float | None) -> dict:
+def _est_bloc_depuis_estimer3(db, idu: str, fiche: dict, surface_hab: float | None,
+                              pieces: int | None = None, ecartees=None) -> dict:
     """ESTIMER-ECRAN-1 — l'estimation du PDF parcelle, sourcée du MÊME point que l'écran (ESTIMER-3,
     `estimer3.rapport3`) → « un seul prix partout » : la valeur imprimée == la valeur affichée (0 écart).
     On re-façonne le rapport ESTIMER-3 au format attendu par le bloc PDF `rendu_parcelle` (median €/m²,
-    valeur indicative, comparables = ventes retenues) sans rien recalculer ici."""
+    valeur indicative, comparables = ventes retenues) sans rien recalculer ici. OUTILS-P0-2 (P1) —
+    `pieces` et `ecartees` reprennent le scénario de l'écran (pièces saisies, ventes décochées)."""
     from . import estimer3
-    r3 = estimer3.rapport3(db, idu, fiche, surface_hab=surface_hab)
+    r3 = estimer3.rapport3(db, idu, fiche, surface_hab=surface_hab, pieces=pieces, ecartees=ecartees)
     e = r3.get("estimation") or {}
     type_bien = r3.get("type_bien")
     terrain = type_bien == "terrain"
@@ -2478,12 +2628,18 @@ def _est_bloc_depuis_estimer3(db, idu: str, fiche: dict, surface_hab: float | No
             "ligne": ligne, "note": note,
         } if (e.get("valeur_eur") is not None and not masque) else None),
         "comparables": comps,
+        # OUTILS-P0-2 (P2) — terrain sans total (hors gamme / non constructible) : la raison imprimée.
+        "terrain_sans_total_raison": e.get("terrain_sans_total_raison"),
+        # OUTILS-P0-2 (recette) — terrain NON CONSTRUCTIBLE : pas de prix du tout, la raison tient lieu de
+        # note (« Pas d'estimation : zone non constructible (A) ») ; sinon « indisponible » faute de ventes.
         "note": (None if e.get("eur_m2") is not None
-                 else "Estimation indisponible — pas assez de ventes comparables dans le secteur."),
+                 else (e.get("terrain_sans_total_raison") if e.get("terrain_non_constructible")
+                       else "Estimation indisponible — pas assez de ventes comparables dans le secteur.")),
     }
 
 
-def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float | None = None) -> dict:
+def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float | None = None,
+                     pieces: int | None = None, ecartees=None) -> dict:
     """ANNONCE-5 — le rapport PARCELLE complet (variante adresse, 2 pages du PDF) : POINT UNIQUE lu par
     l'écran ET par le PDF → aucune divergence. Compose la fiche servie, l'estimation (comparables + valeur
     indicative), le foncier (règles calibrées face aux mesures de la parcelle), le classement (run servi +
@@ -2499,7 +2655,15 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
     zone = (zones[0] or {}).get("zone") if zones and isinstance(zones[0], dict) else None
     commune = (fiche or {}).get("commune")
     nature = _nature_parcelle(db, idu)
-    est = _est_bloc_depuis_estimer3(db, idu, fiche, surface_hab)
+    est = _est_bloc_depuis_estimer3(db, idu, fiche, surface_hab, pieces=pieces, ecartees=ecartees)
+    # CHIRURGICAL-FIX-1 (LOT F, E8) — le PRIX DE SECTEUR d'Estimer est celui de la FICHE (`prix_ancien`,
+    # médiane pondérée du secteur), distinct du « Prix estimé au m² » (ESTIMER-3, estimation pour CE bien) :
+    # les deux documents LABUSE affichent alors le MÊME prix de secteur. Écran == PDF (même `est`).
+    _pa = (fiche or {}).get("prix_ancien") or {}
+    if isinstance(est, dict) and isinstance(_pa.get("median"), (int, float)):
+        est["secteur_fiche"] = {"median": _pa.get("median"), "n": _pa.get("n"),
+                                "radius_m": _pa.get("radius_m"), "type_prix": _pa.get("type_prix"),
+                                "periode": _pa.get("periode")}
     try:
         cls = _classement_bande(db, idu)
     except Exception:  # noqa: BLE001
@@ -2514,12 +2678,17 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
     # DVF, E-022) : copropriété, terrain nu, bâti non mesuré (D-012 — jamais « bâtie, maison » sans
     # mesure), sinon « Parcelle bâtie » + type (maison/appartement).
     est_nat = est.get("nature")
-    if est_nat == "copropriete":   # CHASSE-4-FIX (C4-003)
+    # EXPORTS-FIX-3 LOT 3a — JAMAIS « bâtie » ni type de bien sans mesure : une parcelle au bâti non
+    # mesuré (taux d'emprise NULL) dont la seule trace est une détection aérienne (CoSIA/BD TOPO) est
+    # dite « Bâti détecté, à vérifier » (jamais « Parcelle bâtie, appartement » — faute A1 de l'audit).
+    if nature == "non_mesure":
+        nature_label = "Bâti détecté, à vérifier"
+    elif est_nat == "copropriete":   # CHASSE-4-FIX (C4-003)
         nature_label = "Copropriété"
     elif est_nat == "nue":
         nature_label = "Parcelle nue"
     elif est_nat == "bati_non_mesure":   # D-012
-        nature_label = "Bâti non mesuré"
+        nature_label = "Bâti détecté, à vérifier"
     else:
         suff = {"maison": ", maison", "appartement": ", appartement"}.get(type_bien or "", "")
         nature_label = f"Parcelle bâtie{suff}"
@@ -2529,7 +2698,24 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
     except Exception as exc:  # noqa: BLE001
         log.warning("rapport parcelle %s : marché commune indisponible (%s)", idu, exc)
         marche = None
-    contrainte = _contrainte_limitante(db, idu, fiche, zone, commune)
+    # CHIRURGICAL-FIX-1 (LOT H pt7) — verdict de constructibilité de la FICHE (point unique
+    # `potentiel_a_batir`) : sur une parcelle non constructible, Estimer ne parle pas d'« assiette
+    # constructible » et nomme le motif (habitat interdit…) dans la phrase de classement.
+    _pab = (fiche or {}).get("potentiel_a_batir") or {}
+    _non_constructible = _pab.get("constructible") is False
+    _nc_motif = (_pab.get("libelle") or "Parcelle non constructible") if _non_constructible else None
+    contrainte = _contrainte_limitante(db, idu, fiche, zone, commune,
+                                       non_constructible=_non_constructible)
+    # CAPACITE-1 (E2) — le stationnement de la zone est-il VÉRIFIÉ (règle chiffrée servie) ? Sinon la
+    # phrase de classement ne dit pas « marge ouverte » sans réserve.
+    try:
+        from ..faisabilite.zonage import resolve_zone as _rz
+        _zrs = _rz(zone, commune) if zone else None
+        _stat = getattr(_zrs, "stat_logement", None) if _zrs else None
+        _stat_verif = (isinstance(_stat, str) and bool(_stat)
+                       and not any(k in _stat.lower() for k in ("verif", "vérif", "a_verif")))
+    except Exception:  # noqa: BLE001
+        _stat_verif = True
     # RECETTE-4 — « Dernière vente » (date + prix DVF de la parcelle), lue de la fiche (dvf_parcelle.
     # derniere_mutation) → MÊME source que l'écran. None = aucune mutation (le PDF affiche « aucune depuis 2014 »).
     _dm = ((fiche or {}).get("dvf_parcelle") or {}).get("derniere_mutation") or {}
@@ -2546,14 +2732,40 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
         "estimation": est,
         "derniere_vente": derniere_vente,
         "classement": {"bande": cls.get("bande"), "libelle": cls.get("libelle"),
-                       "phrase": _classement_phrase(cls.get("bande"), cls.get("libelle"), contrainte)},
+                       "phrase": _classement_phrase(cls.get("bande"), cls.get("libelle"), contrainte,
+                                                     stationnement_verifie=_stat_verif,
+                                                     nc_motif=_nc_motif)},
         "foncier": {"zone": zone, "commune": commune,
                     "regles": _regles_zone(zone, commune),
-                    "parcelle": _parcelle_mesures(db, idu, fiche)},
-        "risques": _risques_rows(fiche, commune),
+                    "parcelle": _parcelle_mesures(db, idu, fiche,
+                                                  non_constructible=_non_constructible)},
+        "risques": _risques_complet(db, idu, fiche, commune),
         "marche": marche,
         "a_verifier": _a_verifier(fiche, nature, zone),
     }
+
+
+def _risques_complet(db, idu: str, fiche: dict, commune: str | None) -> list[dict]:
+    """CAPACITE-1 (E1) — la rubrique « Risques et contraintes » de l'Analyse d'annonce porte les aléas
+    (`_risques_rows`) ET les contraintes DORMANTES de la fiche (`alertes_fiche` : zone humide, bruit,
+    SUP, foncier public…) — faute AD0887 : zone humide au Comparatif/Dossier, absente de l'Analyse.
+    Même liste que la fiche ; aléas/PPR déjà couverts par `_risques_rows`."""
+    rows = _risques_rows(fiche, commune)
+    try:
+        from ..api.servitudes import alertes_fiche
+        _nt = lambda s: "".join((s or "").lower().split())[:40]
+        _vus = {_nt((r.get("implique") or "") + (r.get("alea") or "")) for r in rows}
+        for a in alertes_fiche(db, idu):
+            cat = str(a.get("categorie") or "")
+            if cat.startswith("Risque naturel") or cat.startswith("PPR"):
+                continue
+            eff = str(a.get("effet") or "")
+            if eff and not any(_nt(eff)[:30] in v for v in _vus):
+                rows.append({"alea": cat or "Contrainte", "niveau": "", "zone_part": "", "implique": eff})
+                _vus.add(_nt(eff))
+    except Exception:  # noqa: BLE001 — une contrainte absente ne casse jamais l'Analyse
+        pass
+    return rows
 
 
 @router.get("/radar/annonce/rapport/{idu}")

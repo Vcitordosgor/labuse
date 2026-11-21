@@ -40,7 +40,9 @@ describe('RECETTE-1 F2 — EntreeParcelle grise l\'entrée non utilisée', () =>
     expect(container.querySelector('[data-entree-parcelle-choisie]')).toBeTruthy()
     expect(container.querySelector('[data-entree-parcelle]')).toBeNull()
     // L'adresse ENTIÈRE est affichée (jamais coupée) ; plus de lien « Changer de parcelle ».
-    expect(container.textContent).toContain('14 Rue de Nice, 97400 Saint-Denis')
+    // OUTILS-P0-2 (recette L2, point 5) — le nom de commune porte un trait d'union INSÉCABLE (U+2011)
+    // pour ne pas se couper en fin de ligne (« Saint- / Denis ») ; la rue garde ses traits d'union normaux.
+    expect(container.textContent).toContain('14 Rue de Nice, 97400 Saint‑Denis')
     expect(queryByText('Changer de parcelle')).toBeNull()
     // La croix (data-entree-vider) vide le champ.
     const vider = container.querySelector('[data-entree-vider]') as HTMLElement

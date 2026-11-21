@@ -26,7 +26,7 @@ def _grille(ws):
     return g
 
 
-_REF = re.compile(r"\b([A-G])(\d+)\b")
+_REF = re.compile(r"\b([A-I])(\d+)\b")       # LOT L 3 — I = cellule de validité (hors zone visible)
 _SUM = re.compile(r"SUM\(([A-G])(\d+):([A-G])(\d+)\)")
 
 
@@ -53,8 +53,37 @@ def _evaluateur(grille):
             return "(" + "+".join(f"{c1}{rr}" for rr in range(r1, r2 + 1)) + ")"
 
         expr = _SUM.sub(som, expr)
+        # LOT M 2 — ISBLANK(ref) AVANT la substitution : cellule absente de la grille = VIDE (≠ 0).
+        expr = re.sub(r"ISBLANK\(([A-Z]+\d+)\)",
+                      lambda m: repr(grille.get(m.group(1)) in (None, "")), expr)
         expr = _REF.sub(lambda m: repr(ev(f"{m.group(1)}{m.group(2)}")), expr)
-        val = float(eval(expr, {"__builtins__": {}}, {}))  # noqa: S307 — vocabulaire contrôlé
+        expr = expr.replace("<>", "!=")       # LOT L 3 — « différent de » Excel (ex. I1<>"")
+        # Excel « = » (égalité, ex. « D89=0 ») → Python « == » (hors <=, >=, ==, !=).
+        expr = re.sub(r"(?<![<>=!])=(?!=)", "==", expr)
+        # CHIRURGICAL-FIX-1 (LOT H pt1) — le résultat/cash/marge sont des formules VIVANTES
+        # `=IF(AND(coût majeur absent), "non calculable…", calcul)` : l'évaluateur connaît IF/AND, et
+        # une cellule peut rendre un texte (coûts vides) qu'on retourne tel quel (pas de float()).
+        def _IF(cond, a, b):
+            return a if cond else b
+
+        def _AND(*xs):
+            return all(xs)
+
+        def _OR(*xs):
+            return any(xs)
+
+        def _IFERROR(a, b):   # LOT M 2 — valeur déjà évaluée ; NaN (div/0 propagée) → b
+            return b if (isinstance(a, float) and a != a) else a
+
+        try:
+            raw = eval(expr, {"__builtins__": {}},  # noqa: S307 — vocabulaire contrôlé
+                       {"IF": _IF, "AND": _AND, "OR": _OR, "IFERROR": _IFERROR,
+                        "ISTEXT": lambda x: isinstance(x, str), "NOT": lambda x: not x,
+                        "ISNUMBER": lambda x: isinstance(x, (int, float)) and not isinstance(x, bool),
+                        "TRUE": True, "FALSE": False})   # LOT O 1 — littéraux booléens Excel
+            val = float(raw) if isinstance(raw, (int, float, bool)) else raw
+        except Exception:  # noqa: BLE001 — eval EAGER (vs Excel paresseux) : une branche NON prise qui
+            val = None     # mêle texte et nombre lève ; on dégrade en None (cf. _valeurs_calculees).
         cache[coord] = val
         return val
 
@@ -71,11 +100,13 @@ def test_colonnes_sont_des_formules_pas_des_valeurs():
     g = _grille(ws)
     formules = [v for v in g.values() if isinstance(v, str) and v.startswith("=")]
     assert len(formules) > 150  # HT/TVA/TTC + totaux + synthèse
-    # la ligne Résultat net est bien une formule (jamais une valeur figée) :
-    # CA HT − dépenses HT, soit « =D{ca}-D{dep} » sur deux lignes consécutives.
+    # la ligne Résultat net est bien une formule VIVANTE (jamais une valeur figée) : CHIRURGICAL-FIX-1
+    # (LOT H pt1) — IF(aucun coût majeur, « non calculable… », CA HT − dépenses HT). La branche de
+    # calcul « =D{ca}-D{dep} » est présente ; la cellule se recalcule quand le client saisit ses coûts.
     lignes = {ws.cell(row, 1).value: row for row in range(1, ws.max_row + 1) if ws.cell(row, 1).value}
     res = ws.cell(lignes["Résultat net"], 4).value
-    assert isinstance(res, str) and re.fullmatch(r"=D\d+-D\d+", res), res
+    assert isinstance(res, str) and res.startswith("=IF(") and "non calculable" in res, res
+    assert re.search(r"D\d+-D\d+", res), res
 
 
 def test_assiette_a_le_format_de_sa_nature():

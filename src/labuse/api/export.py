@@ -19,14 +19,23 @@ _RESULT_LABEL = {
 }
 
 
+def _non_constructible(fiche: dict) -> bool:
+    """CAPACITE-1 (B5) — la parcelle est-elle non constructible ? Une exclusion dure de la cascade
+    (zonage A/N, PPR rouge couvrant, etc.) suffit. Sert à retirer la clause « (pas d'exclusion
+    automatique) » du PPR partiel sur une parcelle déjà exclue (comme le Comparatif et les PDF)."""
+    return any((r.get("result") == "HARD_EXCLUDE") for r in (fiche.get("cascade") or []))
+
+
 def _verdict_label(v: dict | None) -> str:
     v = v or {}
     return v.get("label") or TIER_LABELS.get(v.get("status"), v.get("status") or "—")
 
 
 def fiche_markdown(fiche: dict) -> str:
+    from .risques_arbitrage import ajuster_clause_affichage
     p = fiche["parcel"]
     v = fiche["verdict"]
+    _nc = _non_constructible(fiche)   # CAPACITE-1 (B5) — libellés alignés sur les PDF
     lines = [
         f"# LABUSE — Fiche parcelle {p['idu']}",
         "",
@@ -54,7 +63,7 @@ def fiche_markdown(fiche: dict) -> str:
     if v["reasons"]:
         lines.append("**Raisons (exclusion / réserve) :**")
         lines += [f"- _{_RESULT_LABEL.get(r['result'], r['result'])}"
-                  f"{('/' + r['severity']) if r.get('severity') else ''}_ — {r['detail']}  "
+                  f"{('/' + r['severity']) if r.get('severity') else ''}_ — {ajuster_clause_affichage(r['detail'], _nc)}  "
                   f"({r['source'] or 'n/d'})" for r in v["reasons"]]
         lines.append("")
 
@@ -120,7 +129,7 @@ def fiche_markdown(fiche: dict) -> str:
     for r in fiche["cascade"]:
         lines.append(
             f"| {r['layer_name']} | {_RESULT_LABEL.get(r['result'], r['result'])} | "
-            f"{r['severity'] or ''} | {r['detail']} | {r['source'] or 'n/d'} |"
+            f"{r['severity'] or ''} | {ajuster_clause_affichage(r['detail'], _nc)} | {r['source'] or 'n/d'} |"
         )
     lines.append("")
 
@@ -198,16 +207,18 @@ def fiche_markdown(fiche: dict) -> str:
 
 
 def fiche_html(fiche: dict) -> str:
+    from .risques_arbitrage import ajuster_clause_affichage
     p, v = fiche["parcel"], fiche["verdict"]
+    _nc = _non_constructible(fiche)   # CAPACITE-1 (B5) — libellés alignés sur les PDF
     rows = "".join(
         f"<tr><td>{html.escape(r['layer_name'])}</td>"
         f"<td>{html.escape(_RESULT_LABEL.get(r['result'], r['result']))}</td>"
         f"<td>{html.escape(r['severity'] or '')}</td>"
-        f"<td>{html.escape(r['detail'])}</td>"
+        f"<td>{html.escape(ajuster_clause_affichage(r['detail'], _nc) or '')}</td>"
         f"<td class='src'>{html.escape(r['source'] or 'n/d')}</td></tr>"
         for r in fiche["cascade"]
     )
-    reasons = "".join(f"<li>{html.escape(r['detail'])} <span class='src'>({html.escape(r['source'] or 'n/d')})</span></li>"
+    reasons = "".join(f"<li>{html.escape(ajuster_clause_affichage(r['detail'], _nc) or '')} <span class='src'>({html.escape(r['source'] or 'n/d')})</span></li>"
                       for r in v["reasons"]) or "<li>—</li>"
     rv = fiche.get("resume") or {}
     resume_html = ""

@@ -28,6 +28,18 @@ donnees:
     absence_type: absente_ici
     pourquoi: "Le cœur des signaux contradictoires ; en tête, rédhibitoires d'abord, statut par item."
 
+  # EXPORTS-FIX-3 LOT 3 (#e/#6) — zone inondable TRI (directive inondation) : un risque présent sur la
+  # fiche doit figurer dans le Dossier ; il passe par la cascade (layer='tri_zone'), pas par aleas.liste,
+  # et le Dossier l'OMETTAIT (HT0538 : inondation extrême 100 %). Affiché seulement s'il touche la parcelle.
+  - quoi:  tri_zone_inondable
+    ou:    { rang: 28, etat: en_tete, section: "Ce qui contraint" }
+    comment: { libelle: "Zone inondable (TRI)", format: texte, i: "Territoire à Risque important d'Inondation : cartographie de la directive inondation (submersion modélisée par scénario fréquent/moyen/extrême) — complète le PPR ; à intégrer au projet." }
+    absence: "Zone inondable (TRI) : la parcelle n'est dans aucun territoire à risque important d'inondation."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    statut_juridique: informatif
+    pourquoi: "Un risque d'inondation présent sur la fiche doit figurer partout (règle « un risque, tous les documents »)."
+
   # DOCS-DA-1 — les arrêtés CatNat (commune), SEULEMENT si le compte est COMPLET (≥ référence GASPAR
   # 06/09 — la troncature de septembre réparée) : l'historique de sinistres parle au banquier.
   - quoi:  catnat_arretes

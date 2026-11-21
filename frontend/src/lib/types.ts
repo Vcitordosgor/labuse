@@ -297,7 +297,7 @@ export interface Fiche {
   analyse_labuse?: {
     bande: string | null; signal_niveau: string | null
     contributions: { sens: 'hausse' | 'baisse'; libelle: string }[] | null
-    cause: string | null; non_calculable: boolean | null; sdp_residuelle_m2: number | null
+    cause: string | null; cause_libelle?: string | null; non_calculable: boolean | null; sdp_residuelle_m2: number | null
   } | null
   adresse?: string | null   // M6 2a (§1.8) : meilleure adresse postale BAN — null si aucune
   secteur?: string | null   // GEOPF-3 : lieu-dit BD NYME le plus proche (rayon borné) — null si aucun
@@ -378,6 +378,13 @@ export interface Fiche {
     // M40 : les 3 choses distinctes (jamais mélangées) + action.
     document_servi?: string | null; fait_foi?: string | null
     en_cours?: string | null; action?: string | null; fait_foi_ok?: boolean
+  } | null
+  // PLU-VEILLE-FIX-1 : bandeau PROPORTIONNEL (desync). niveau = fort | prescriptions | informations ;
+  // avec_a_verifier = les parcelles de la commune passent « À vérifier » (pas pour informations).
+  plu_modifie?: {
+    date: string | null; niveau: 'fort' | 'prescriptions' | 'informations' | null
+    ancien: string | null; nouveau: string | null
+    couches: string[]; avec_a_verifier: boolean; message: string
   } | null
   // M41 : radar procédures PLU (stade + conséquences parcellaires servables ; jamais l'issue).
   radar_procedure?: {
@@ -724,7 +731,21 @@ export interface ZoneEntreprise { siret: string; naf: string; naf_label: string 
 export interface ZoneFamille { section: string; nom: string; n: number; etablissements: ZoneEntreprise[]; charges: number }
 export interface ZoneEntreprises { total: number; familles: ZoneFamille[]; n_charges: number; cap_carte: number; millesime: string | null }
 export interface ZoneGenerateur { label: string; source: string }
-export interface ZoneMarche { ventes_12m: number; prix_m2_median_bati: number | null; annonces_actives: number; permis_36m: number }
+// OUTILS-P0-2 (P3) — le prix médian du bâti décrit le CERCLE dessiné (effectif + période portés) ;
+// `prix_secteur_fiche` = prix du secteur de la fiche (autre périmètre, rayon réel), servi à part.
+// `annonces_actives` : null quand la source Radar n'est pas ingérée → l'écran affiche « — », jamais 0.
+export interface ZoneMarche {
+  ventes_12m: number
+  prix_m2_median_bati: number | null
+  prix_m2_median_n?: number | null
+  prix_m2_median_fenetre_mois?: number | null   // OUTILS-P0-2 : fenêtre DEMANDÉE (36 mois), pas les dates extrêmes
+  prix_m2_median_periode?: [string, string] | null
+  // OUTILS-P0-2 (recette) — le secteur de la fiche DIT ce qu'il mesure : type (maison/appartement/mixte)
+  // + fenêtre réelle (années du segment, jamais un « 24 mois » inventé) + rayon réel + effectif.
+  prix_secteur_fiche?: { median: number; n: number | null; radius_m: number | null; commune_fallback: boolean; type_prix?: string | null; periode?: [number, number] | null } | null
+  annonces_actives: number | null
+  permis_36m: number
+}
 export type ZoneCouverture = 'servie' | 'non_couverte' | 'erreur'
 // DESTINATIONS-1 (X4.1) — verdict de la sous-destination choisie sur une zone PLU recouverte.
 // La `phrase` est SERVIE par le backend (même moteur que fiche/Copilote) — jamais reformulée au front.

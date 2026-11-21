@@ -1,0 +1,120 @@
+# ETUDE-STATIONNEMENT-FIX-2 — compte-rendu
+
+La preuve n'est plus « la citation est présente » mais « le nombre de places calculé est JUSTE ».
+Le relecteur avait recalculé 15 zones à la main : 6 rendaient un nombre faux. Elles sont désormais
+justes et verrouillées par un banc d'exécution permanent.
+
+## LOT 1 — banc d'exécution (la preuve = le résultat du calcul)
+
+`tests/test_banc_stationnement.py` : 15 zones × (maison T4 120 m² + collectif 20 × T3), valeurs LUES
+SUR L'IMAGE de la page officielle, comparées au calcul de `BaremeStationnement.exiger`.
+
+6 écarts trouvés et corrigés :
+
+| Zone | Avant | Après | Cause |
+|---|---|---|---|
+| Saint-Paul U2c | 40 | 44 | visiteurs 1/5 omis |
+| Saint-Louis UA | 50 | 40 (+10 publiques à part) | places publiques comptées comme à dessiner |
+| Saint-Leu UD | 40 | 30 | barème collectif par pièces lu comme individuel plat |
+| Trois-Bassins UC (maison) | 2 | 1 | arrondi inférieur non appliqué |
+| Saint-Joseph U2 | 22 | 20 | « 1/10 » visait l'hébergement CASF, pas l'ordinaire |
+| Petite-Île UB (aidé) | 0 | 20 | dispense réservée au LLTS, étendue à tout l'aidé |
+
+Écarts restants sur ces 15 zones : **0**. Banc vert.
+
+## LOT 2 — défauts de fond
+
+- **Plafond national L151-35/36** : c'est un PLAFOND. Il BORNE l'exigence résident (ne la relève jamais)
+  et s'applique MÊME sur une ligne dédiée (avant, il court-circuitait la ligne dédiée et pouvait
+  remplacer un barème plus favorable). Attaché au barème typé (`plafond_national`), `exiger` retient le
+  min et écrit le barème local écarté. Test : `test_plafond_national_ne_fait_que_baisser`.
+- **Filtre « logement de fonction seulement »** :
+  - ne se déclenche plus quand la zone ouvre un VRAI programme d'habitation (Saint-Louis UZ « 1 logement
+    individuel », Saint-Paul U1a quota social) ;
+  - suit les renvois vers la zone parente (Le Port 1AUe→Ue, Saint-Denis Uac→Ua héritent la restriction) ;
+  - ne refuse l'Étude que si TOUTES les parcelles constructibles sont fonction-only (une seule parcelle
+    « fonction » ne condamne plus un projet multi-parcelles).
+- **Liste nommée** des 88 zones refusées, avec citation + renvoi :
+  `zones-logement-fonction-refusees.md`.
+
+## LOT 3 — plan dessiné
+
+- **Dégagement d'allée mesuré LOCALEMENT** (BW2635 : 13 places « validées » avec 2,25 m parce que le
+  contrôle lisait la dimension minimale de la BOÎTE ENGLOBANTE, 5 m). Nouveau `_pincement_allee` :
+  ouverture morphologique restreinte au droit des places → une allée pincée sous 5 m devant une place
+  échoue, une allée large de 5 m partout réussit. Test :
+  `test_degagement_allee_mesure_localement_pas_boite`.
+
+## LOT 4 — document
+
+- **Source UNIQUE de « le barème existe-t-il »** : le drapeau `validee` (le même qui déclenche la
+  citation). HT0538/Ud (barème « 1 place / 75 m² de SDP ») était déclaré « absent » (garde-fou) tout en
+  affichant sa citation validée page suivante. `_regle_stationnement_courte` décrit désormais le barème
+  au m². Test : `test_bareme_existence_source_unique_par_m2_sdp`.
+- **Chaque PDF porte la version de calcul** : `_commit_build()` stampe le commit (env `LABUSE_BUILD_COMMIT`
+  au déploiement, sinon HEAD) dans la page Hypothèses.
+
+## Livrables
+
+- Banc permanent : `tests/test_banc_stationnement.py` (15 zones + 6 tests ciblés).
+- Liste nommée des refus : `zones-logement-fonction-refusees.md` (88 zones).
+- 3 Études régénérées APRÈS le dernier commit moteur (stamp `622f9dc7cbed`) :
+  `etude_97422000BW2635.pdf` · `etude_97416000HT0538.pdf` · `etude_97404000AD0887.pdf`.
+
+## Reste à traiter (non couvert par ce lot)
+
+Banc étendu aux 212 couples × 4 programmes ; « habitat interdit » motif réel (Le Tampon 2AUa,
+Saint-Paul U1pso) ; héritage de barème par renvoi (Saint-Benoît AUa5) ; Le Port aidé +8/1000 m² ;
+La Possession seuil 50 m² ; lotissement 0,8 visiteur/lot ; Saint-Pierre haie 1,50 m + voie piétonne
+« Non vérifié » ; prospect/implantation « Non vérifié » ; stationnement vélo chiffré ; « mêmes alertes
+partout » étendu à l'Étude (zone humide, inondation) ; statut de couverture = contrôles ;
+pleine terre / sol perméable / biotope distincts.
+
+---
+
+## Banc 212 — recalcul de TOUS les couples depuis l'image (tour 2)
+
+Le banc ne couvrait que les 15 zones du relecteur. **Les 267 couples commune-zone validés (23 communes,
+78 règles distinctes, renvois compris) ont été recalculés**, chacun par un agent qui LIT L'IMAGE de la
+page officielle (jamais le code), pour les 4 programmes du mandat. Écarts tranchés par l'image, puis
+corrigés commune par commune.
+
+**Résultat : 267/267 couples concordants 4 programmes/4, 0 écart.** Banc permanent
+`tests/test_banc_212.py` (305 cas). Contrôle citation inchangé (1465, 0 hors citation).
+
+Écarts trouvés (37) et corrigés, par catégorie :
+- **Arrondi inférieur** (La Plaine, Saint-Paul) : `arrondi: inferieur` sur l'opération → maison 1,5→1.
+- **Plafond aidé 1/logt** (Étang-Salé, Saint-André, Cilaos, Saint-Paul Usdu) : ligne `social {places: 1.0}`.
+- **Visiteur aidé 1/10** (Entre-Deux, Saint-Paul) : `visiteurs_social` (distinct du visiteur ordinaire 1/5).
+- **Terme au m² de l'aidé** (Le Port) : `m2_places/m2_tranche` additifs (0,2/logt + 8/1000 m² = 16).
+- **Places publiques** : Saint-Louis (universelles, aidé compris) ; Sainte-Suzanne (`exclut_social`, privé seul).
+- **Seuil de surface par logement** (Saint-Denis) : barème remodelé en tiers (< 100 m²→1 / ≥100→1,5).
+- **Couverture** (Saint-Pierre Uf6) : barème pointait la mauvaise page (109=Ug6) → corrigé p.126 + social.
+
+Sur-lectures de l'agent écartées par l'image en faveur du moteur (Saint-Pierre « tranche complète » =
+plancher). Structure moteur : `visiteurs_social`, `exclut_social`, `m2_places/m2_tranche`, helper
+`_parts_visiteurs` (public universel vs visiteur privé par destination).
+
+---
+
+## Reliquat (tour 3) — les 7 points
+
+1. **Alertes de la fiche dans l'Étude** — déjà câblé (`_attach_contraintes_signalees` : zone humide AD0887,
+   TRI inondation + endiguement HT0538). Test témoin explicite ajouté (`test_alertes_temoins_dans_l_etude`).
+   Les 3 Études régénérées le montrent (HT0538 inondation+endiguement, AD0887 zone humide).
+2. **Seuil de surface** — `LigneBareme.sdp_max_inclusif` : « ≤ 50 m² » (La Possession, Salazie) met 50 m²
+   dans la tranche basse (La Possession 20×50 m² = 24, pas 44). **5ᵉ programme au banc** : 20 logements à la
+   surface EXACTE du seuil de chaque règlement (8 communes).
+3. **Habitat interdit** — 2AUa (renvoi Ua, admis sous conditions) et U1pso (renvoi U1a) sont ADMISES par le
+   filtre fonction ; elles ne reçoivent jamais « habitat interdit (activités) » (réservé à rules.habitat
+   =='interdit'). Verrou au test. (Aucune parcelle servie dans ces zones pour un contrôle plus poussé.)
+4. **Visiteur de lotissement** — `visiteur_lotissement` : la règle 0,5/lot sur voie (Les Avirons,
+   Trois-Bassins) appliquée et DITE servie ; plus de 0,8/lot inventé présenté comme la règle.
+5. **Vélo chiffré + Non vérifié** — `BaremeStationnement.velo`/`velo_requis()` chiffrent l'exigence vélo
+   (La Plaine 2 m²/logt=40 m² ; Saint-Benoît 1/5 logts=4 ; Saint-Pierre 5 % SDP>300 m²=70 m²). Prospect déjà
+   « À confirmer » ; haie ≥1,50 m + voie piétonne (Saint-Pierre) en condition « à vérifier ».
+6. **Dossier = règle de l'Étude, complète** — `_regle_stationnement_courte` rend la typologie ET la
+   dimension d'opération (Le Tampon : « 0,5 pl. ≤T1 · 1 pl. T2 · 1,5 pl. T3+ · 1,5 pl./logt si opération
+   > 5 logts »), source unique que le Dossier lira (remplace la formule d'attente à la fusion).
+7. **Études régénérées** dans `~/Desktop/exports-audit-4/` après le dernier commit (stamp inclus, alertes
+   enrichies).

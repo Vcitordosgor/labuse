@@ -200,21 +200,17 @@ def test_idor_fiche_explain_export_ne_fuit_pas_la_prospection(app_client):
         assert marker in ca.get(f"/pipeline/parcel/{idu}").text
 
         # B (autre compte) ne doit RIEN voir de cette PII via la fiche legacy
+        # CAPACITE-1 (D3) — la route /export (md/html) a été retirée ; la surface legacy restante,
+        # servie sans scope de compte, est /explain : B (autre compte) ne doit RIEN y voir de la PII.
         rexpl = cb.get(f"/parcels/{idu}/explain")
         assert rexpl.status_code == 200, rexpl.text
         assert marker not in rexpl.text
-        rmd = cb.get(f"/parcels/{idu}/export", params={"format": "md"})
-        assert rmd.status_code == 200, rmd.text
-        assert marker not in rmd.text
-        rhtml = cb.get(f"/parcels/{idu}/export", params={"format": "html"})
-        assert rhtml.status_code == 200 and marker not in rhtml.text
         # …et A non plus (le bloc prospection est RETIRÉ de la fiche pour TOUS : il vit dans le CRM scopé)
-        assert marker not in ca.get(f"/parcels/{idu}/export", params={"format": "md"}).text
+        assert marker not in ca.get(f"/parcels/{idu}/explain").text
 
         # point 2 : deux comptes suivent la MÊME parcelle → plus de 500 (MultipleResultsFound)
         assert cb.post("/pipeline", json={"idu": idu}).status_code == 200
         assert ca.get(f"/parcels/{idu}/explain").status_code == 200
-        assert ca.get(f"/parcels/{idu}/export", params={"format": "md"}).status_code == 200
     finally:
         _purge(ea, eb)
         with session_scope() as s:

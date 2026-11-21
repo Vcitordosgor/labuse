@@ -61,17 +61,28 @@ def test_chip_projet_sort_en_ambre():
 
 # ── 1.6 numéro de rapport ───────────────────────────────────────────────────────────────────
 
-def test_numero_rapport_forme_courte():
-    # format court des anciens documents : 4 derniers chiffres de l'IDU (l'IDU entier est au cartouche)
+def test_numero_rapport_porte_idu_entier():
+    # CHIRURGICAL-FIX-1 (E4) — le numéro porte l'IDU ENTIER (plus `idu[-4:]`) : <préfixe>-<date>-<IDU>.
     n = numeros.numero_rapport("dossier", "97415000BO0852", date(2026, 9, 5))
-    assert n == "DP-20260905-0852"
-    assert numeros.numero_rapport("financier", "97401000AD0554", date(2026, 9, 5)) == "FI-20260905-0554"
+    assert n == "DP-20260905-97415000BO0852"
+    assert numeros.numero_rapport("financier", "97401000AD0554", date(2026, 9, 5)) == "FI-20260905-97401000AD0554"
     assert numeros.numero_rapport("apporteur", "X", date(2026, 9, 5)).startswith("AP-")
     # RECETTE-3 (T2) — le document Résumé (préfixe RE-) est supprimé : plus au catalogue des numéros.
     with pytest.raises(ValueError):
         numeros.numero_rapport("resume", "X")
     with pytest.raises(ValueError):
         numeros.numero_rapport("inconnu", "X")
+
+
+def test_numero_rapport_unique_par_parcelle_meme_jour():
+    # E4 — deux parcelles de même suffixe (0153) mais sections/communes différentes ne peuvent PLUS
+    # recevoir le même numéro le même jour (régression de la collision AY0153 / CO0153).
+    j = date(2026, 11, 15)
+    a = numeros.numero_rapport("dossier", "97404000AY0153", j)
+    b = numeros.numero_rapport("dossier", "97414000CO0153", j)
+    assert a != b
+    # … et chaque document garde un numéro distinct par type, mais unique par parcelle.
+    assert numeros.numero_rapport("apporteur", "97404000AY0153", j) != numeros.numero_rapport("apporteur", "97414000CO0153", j)
 
 
 # ── 1.4 verdict déterministe ─────────────────────────────────────────────────────────────────
@@ -151,7 +162,8 @@ def test_builder_construit_dossier_partiel():
     fiche = {"surface_m2": 742, "adresse": "103 Chaussée Royale, Saint-Paul",
              "commune": "Saint-Paul", "proprietaire_moral": True}
     res = builder.construire(_FakeDB(), "97415000BO0852", "dossier", fiche=fiche, jour=date(2026, 9, 5))
-    assert res.numero == "DP-20260905-0852"
+    # E4 — IDU entier ; LOT I pt4 — + clé de CONTENU (4 hex), déterministe (deux versions diffèrent).
+    assert res.numero.startswith("DP-20260905-97415000BO0852-")
     # EXPORTS-REBRANCHEMENT-1 lot 1 — le Dossier est le MIROIR de la fiche : sections de
     # declarations/fiche/sections.yaml (« 1. Identité »), plus les anciens titres de blocs.
     assert "Dossier parcelle" in res.html and "1. Identité" in res.html

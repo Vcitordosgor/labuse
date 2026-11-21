@@ -1,0 +1,1427 @@
+idu,id_mutation,d,valeur_fonciere,surface_terrain,existe,commune,gate_ferme,resid_cause,constr_label,au_classe,zone_fam,zone_lib
+97414000DH1444,2025-1271416,2025-09-29,17357000,9,t,Saint-Louis,t,terrain_exigu,,conditionnelle_operation,AU,1AUa
+97414000DH1441,2025-1271416,2025-09-29,17357000,97,t,Saint-Louis,t,terrain_exigu,,conditionnelle_operation,AU,1AUa
+97418000AY0341,2021-1677875,2021-11-10,15450000,257,t,Sainte-Marie,t,habitat_interdit:UEc,declasse_zone_fermee,,U,UEc
+97408000BO0496,2021-1678557,2021-12-21,9830183,255,t,La Possession,t,terrain_exigu,,conditionnelle_operation,AU,AUAv
+97413000DB0445,2025-1270825,2025-09-09,9786700,155,t,Saint-Leu,t,,declasse_non_constructible,conditionnelle_operation,AU,AUE
+97411000AZ0654,2021-1676513,2021-09-30,6921658,165,t,Saint-Denis,t,terrain_exigu,,,U,Ud
+97415000DI0473,2025-1272909,2025-12-22,6700000,937,t,Saint-Paul,t,terrain_exigu,,,U,U2d
+97418000BN0181,2021-1675670,2021-07-28,6400000,6834,t,Sainte-Marie,t,habitat_interdit:UEc,,,U,UEc
+97418000BN0180,2021-1675670,2021-07-28,6400000,115,t,Sainte-Marie,t,habitat_interdit:UEc,,,U,UEc
+97416000DN0717,2021-1678709,2021-12-16,5173455,117,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97414000DH0320,2024-1192845,2024-12-31,4900000,1421,t,Saint-Louis,t,habitat_interdit:US,declasse_zone_fermee,,U,US
+97418000AT0942,2025-1272990,2025-12-15,4456310.68,1376,t,Sainte-Marie,t,habitat_interdit:UEm,declasse_zone_fermee,,U,UEm
+97418000AT0869,2025-1272990,2025-12-15,4456310.68,2697,t,Sainte-Marie,t,habitat_interdit:UEm,declasse_zone_fermee,,U,UEm
+97418000AC0952,2025-1272990,2025-12-15,4456310.68,1122,t,Sainte-Marie,t,habitat_interdit:UEm,declasse_zone_fermee,,U,UEm
+97412000CD1361,2021-1680574,2021-04-30,4051825,45,t,Saint-Joseph,t,terrain_exigu,,,U,U3
+97412000CD1359,2021-1680574,2021-04-30,4051825,34,t,Saint-Joseph,t,terrain_exigu,,,U,U3
+97415000EX0375,2025-1266290,2025-01-17,4000000,3601,t,Saint-Paul,t,habitat_interdit:U1e,,,U,U1e
+97415000EX0435,2025-1266290,2025-01-17,4000000,1040,t,Saint-Paul,t,habitat_interdit:U1e,,,U,U1e
+97415000EX0433,2025-1266290,2025-01-17,4000000,904,t,Saint-Paul,t,habitat_interdit:U1e,,,U,U1e
+97415000EX0378,2025-1266290,2025-01-17,4000000,1144,t,Saint-Paul,t,habitat_interdit:U1e,,,U,U1e
+97421000AV1121,2021-1676648,2021-09-30,3526105,1,t,Salazie,t,terrain_exigu,,,U,UB
+97421000AV1123,2021-1676648,2021-09-30,3526105,92,t,Salazie,t,terrain_exigu,,,U,UB
+97415000DE0134,2023-1313947,2023-02-10,3200000,1950,t,Saint-Paul,t,redhibitoire,,,U,U2d
+97408000AO1613,2022-1635345,2022-06-30,3113526.8,8,t,La Possession,t,terrain_exigu,,,U,UA
+97408000AO1611,2022-1635345,2022-06-30,3113526.8,46,t,La Possession,t,terrain_exigu,,,U,UA
+97409000BE1591,2024-1191383,2024-06-20,2600000,240,t,Saint-André,t,terrain_exigu,,,U,UB
+97409000BE1589,2024-1191383,2024-06-20,2600000,418,t,Saint-André,t,terrain_exigu,,,U,UB
+97409000BE1596,2024-1191383,2024-06-20,2600000,237,t,Saint-André,t,terrain_exigu,,,U,UB
+97416000CS0807,2023-1319698,2023-10-05,2502000,9697,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97414000DH0826,2024-1192209,2024-12-16,2441500,2391,t,Saint-Louis,t,habitat_interdit:UE,,,U,UE
+97404000AL1612,2022-1633088,2022-03-28,2351029.2,12,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97404000AL1611,2022-1633088,2022-03-28,2351029.2,12,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97404000AL1610,2022-1633088,2022-03-28,2351029.2,12,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97404000AL1604,2022-1633088,2022-03-28,2351029.2,11,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97404000AL1608,2022-1633088,2022-03-28,2351029.2,12,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97404000AL1603,2022-1633088,2022-03-28,2351029.2,11,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97404000AL1607,2022-1633088,2022-03-28,2351029.2,12,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97404000AL1605,2022-1633088,2022-03-28,2351029.2,11,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97404000AL1609,2022-1633088,2022-03-28,2351029.2,12,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97404000AL1602,2022-1633088,2022-03-28,2351029.2,11,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97411000BL0156,2022-1633392,2022-04-07,2100000,17,t,Saint-Denis,t,terrain_exigu,,,U,Ua
+97411000BL0158,2022-1633392,2022-04-07,2100000,14,t,Saint-Denis,t,terrain_exigu,,,U,Ua
+97411000BL0157,2022-1633392,2022-04-07,2100000,14,t,Saint-Denis,t,terrain_exigu,,,U,Ua
+97418000AC0887,2023-1314938,2023-03-30,2000000,74,t,Sainte-Marie,t,surface_incertaine,,,U,UEm
+97415000EW0522,2022-1637603,2022-09-26,1600000,202,t,Saint-Paul,t,terrain_exigu,,,U,U2c
+97412000BK1195,2022-1635703,2022-07-04,1593939,23,t,Saint-Joseph,t,habitat_interdit:U6,,,U,U6
+97412000BK1192,2022-1635703,2022-07-04,1593939,1627,t,Saint-Joseph,t,habitat_interdit:U6,,,U,U6
+97412000BK1203,2022-1635703,2022-07-04,1593939,595,t,Saint-Joseph,t,habitat_interdit:U6,,,U,U6
+97416000CS1251,2024-1187381,2024-04-16,1587026.5,884,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97416000CS1636,2024-1187381,2024-04-16,1587026.5,122,t,Saint-Pierre,t,habitat_interdit:AUazi,,conditionnelle_operation,AU,AUazi
+97416000CS1633,2024-1187381,2024-04-16,1587026.5,1136,t,Saint-Pierre,t,zone_non_constructible:N,,,N,N
+97416000CS1613,2024-1187381,2024-04-16,1587026.5,6933,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97416000CS1611,2024-1187381,2024-04-16,1587026.5,490,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97416000CS1260,2024-1187381,2024-04-16,1587026.5,21,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97416000CS1254,2024-1187381,2024-04-16,1587026.5,392,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97416000CS1238,2024-1187381,2024-04-16,1587026.5,768,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97416000CS1647,2024-1187381,2024-04-16,1587026.5,13921,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97416000CS1643,2024-1187381,2024-04-16,1587026.5,804,t,Saint-Pierre,t,habitat_interdit:AUazi,,conditionnelle_operation,AU,AUazi
+97416000CS1639,2024-1187381,2024-04-16,1587026.5,5325,t,Saint-Pierre,t,habitat_interdit:AUazi,,conditionnelle_operation,AU,AUazi
+97407000BL0247,2025-1272255,2025-11-27,1570000,140,t,Le Port,t,terrain_exigu,declasse_zone_fermee,,U,Uem
+97407000AX0039,2023-1316697,2023-05-30,1542772.4,3588,t,Le Port,t,zone_non_constructible:Up,declasse_zone_fermee,,U,Up
+97407000AX0038,2023-1316697,2023-05-30,1542772.4,230,t,Le Port,t,zone_non_constructible:Up,declasse_zone_fermee,,U,Up
+97415000DE1289,2025-1268009,2025-04-18,1520060,54,t,Saint-Paul,t,terrain_exigu,,,U,U2c
+97416000CS1541,2024-1187908,2024-04-30,1520041.6,5462,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1582,2024-1187908,2024-04-30,1520041.6,3268,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1578,2024-1187908,2024-04-30,1520041.6,49,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97422000BI1004,2021-1678924,2021-12-29,1481025,299,t,Le Tampon,t,zone_non_constructible:Nco,,,N,Nco
+97422000BI1093,2025-1272445,2025-11-27,1481025,139,t,Le Tampon,t,terrain_exigu,,conditionnelle_operation,AU,1AUe
+97422000BI1093,2021-1678924,2021-12-29,1481025,139,t,Le Tampon,t,terrain_exigu,,conditionnelle_operation,AU,1AUe
+97422000BI1005,2025-1272445,2025-11-27,1481025,123,t,Le Tampon,t,zone_non_constructible:Nco,,,N,Nco
+97422000BI1005,2021-1678924,2021-12-29,1481025,123,t,Le Tampon,t,zone_non_constructible:Nco,,,N,Nco
+97422000BI1004,2025-1272445,2025-11-27,1481025,299,t,Le Tampon,t,zone_non_constructible:Nco,,,N,Nco
+97422000BI1002,2025-1272445,2025-11-27,1481025,317,t,Le Tampon,t,terrain_exigu,,conditionnelle_operation,AU,1AUe
+97422000BI1002,2021-1678924,2021-12-29,1481025,317,t,Le Tampon,t,terrain_exigu,,conditionnelle_operation,AU,1AUe
+97413000DL0275,2024-1191238,2024-10-31,1450000,10,t,Saint-Leu,t,terrain_exigu,,,U,UC
+97422000BP1993,2025-1267767,2025-04-08,1422608.8,243,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1995,2025-1267767,2025-04-08,1422608.8,663,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1996,2025-1267767,2025-04-08,1422608.8,698,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1970,2025-1267767,2025-04-08,1422608.8,634,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1997,2025-1267767,2025-04-08,1422608.8,777,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1980,2025-1267767,2025-04-08,1422608.8,280,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1950,2025-1267767,2025-04-08,1422608.8,1020,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1951,2025-1267767,2025-04-08,1422608.8,940,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1952,2025-1267767,2025-04-08,1422608.8,869,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1998,2025-1267767,2025-04-08,1422608.8,818,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1963,2025-1267767,2025-04-08,1422608.8,438,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1969,2025-1267767,2025-04-08,1422608.8,1029,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1968,2025-1267767,2025-04-08,1422608.8,985,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1979,2025-1267767,2025-04-08,1422608.8,260,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1953,2025-1267767,2025-04-08,1422608.8,1360,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1966,2025-1267767,2025-04-08,1422608.8,197,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1964,2025-1267767,2025-04-08,1422608.8,924,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1954,2025-1267767,2025-04-08,1422608.8,1,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1978,2025-1267767,2025-04-08,1422608.8,265,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1967,2025-1267767,2025-04-08,1422608.8,428,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BV3052,2025-1267767,2025-04-08,1422608.8,321,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1955,2025-1267767,2025-04-08,1422608.8,981,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1976,2025-1267767,2025-04-08,1422608.8,238,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1957,2025-1267767,2025-04-08,1422608.8,784,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1975,2025-1267767,2025-04-08,1422608.8,685,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1960,2025-1267767,2025-04-08,1422608.8,658,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BV3053,2025-1267767,2025-04-08,1422608.8,225,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1973,2025-1267767,2025-04-08,1422608.8,795,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BV3054,2025-1267767,2025-04-08,1422608.8,136,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1982,2025-1267767,2025-04-08,1422608.8,777,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1992,2025-1267767,2025-04-08,1422608.8,360,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BV3055,2025-1267767,2025-04-08,1422608.8,667,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BV3056,2025-1267767,2025-04-08,1422608.8,823,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BV3057,2025-1267767,2025-04-08,1422608.8,913,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BV3060,2025-1267767,2025-04-08,1422608.8,1062,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BV3061,2025-1267767,2025-04-08,1422608.8,1012,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BV3062,2025-1267767,2025-04-08,1422608.8,979,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BV3064,2025-1267767,2025-04-08,1422608.8,1064,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1949,2025-1267767,2025-04-08,1422608.8,1033,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1948,2025-1267767,2025-04-08,1422608.8,951,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1947,2025-1267767,2025-04-08,1422608.8,960,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1945,2025-1267767,2025-04-08,1422608.8,765,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1944,2025-1267767,2025-04-08,1422608.8,442,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97422000BP1981,2025-1267767,2025-04-08,1422608.8,371,t,Le Tampon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97407000AY0583,2022-1637941,2022-09-30,1370355,5223,t,Le Port,t,,declasse_zone_fermee,,U,Uem
+97408000BO0582,2024-1190686,2024-09-27,1351914,1141,t,La Possession,t,terrain_exigu,,conditionnelle_operation,AU,AUAv
+97408000BO0581,2024-1190686,2024-09-27,1351914,4,t,La Possession,t,terrain_exigu,,conditionnelle_operation,AU,AUAv
+97408000BO0560,2024-1190686,2024-09-27,1351914,1436,t,La Possession,t,terrain_exigu,,conditionnelle_operation,AU,AUAv
+97408000BO0559,2024-1190686,2024-09-27,1351914,64,t,La Possession,t,terrain_exigu,,conditionnelle_operation,AU,AUAv
+97415000EY0812,2024-1187852,2024-04-29,1350000,19,t,Saint-Paul,t,terrain_exigu,,,U,U3a
+97411000AO0675,2021-1674305,2021-05-03,1337600,988,t,Saint-Denis,t,terrain_exigu,,,U,Udp
+97411000HM0281,2024-1185927,2024-01-29,1297280,73,t,Saint-Denis,t,terrain_exigu,,,U,Uvac
+97405000AW1703,2025-1271142,2025-09-19,1200000,125,t,Petite-Île,t,habitat_interdit:UEa,,,U,UEa
+97418000AT0865,2023-1319197,2023-09-20,1200000,302,t,Sainte-Marie,t,habitat_interdit:UEm,declasse_zone_fermee,,U,UEm
+97407000AB0063,2024-1191092,2024-10-01,1162700,937,t,Le Port,t,zone_non_constructible:Ue,declasse_zone_fermee,,U,Ue
+97411000EP0231,2025-1271718,2025-11-07,1160000,50,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97416000CS0597,2023-1315246,2023-04-04,1151709.5,16,t,Saint-Pierre,t,surface_incertaine,,,U,Uazi
+97416000CS1575,2023-1320505,2023-11-14,1143329.6,717,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1520,2023-1320505,2023-11-14,1143329.6,5701,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1545,2023-1320505,2023-11-14,1143329.6,188,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97415000DH0256,2023-1316335,2023-06-01,1100000,92,t,Saint-Paul,t,terrain_exigu,,,U,U2b
+97404000AM0655,2025-1272080,2025-11-03,1100000,2453,t,L'Étang-Salé,t,,declasse_zone_fermee,,U,UE
+97415000CX0801,2024-1188895,2024-07-10,1086800,220,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,,U,U2c
+97415000CX0801,2025-1268404,2025-05-12,987250,220,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,,U,U2c
+97404000AM1090,2024-1193179,2024-12-06,984501,5209,t,L'Étang-Salé,t,habitat_interdit:UE,declasse_zone_fermee,,U,UE
+97404000AM1090,2022-1633378,2022-03-31,981274,5209,t,L'Étang-Salé,t,habitat_interdit:UE,declasse_zone_fermee,,U,UE
+97416000CS0262,2021-1677175,2021-11-03,960000,4535,t,Saint-Pierre,t,,declasse_non_constructible,,U,Ug
+97404000AM1093,2022-1639756,2022-11-10,942089.25,4265,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97422000EH0257,2021-1678988,2021-12-22,921957.5,1857,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97422000CI1147,2021-1678988,2021-12-22,921957.5,293,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97422000EH0135,2021-1678988,2021-12-22,921957.5,3912,t,Le Tampon,t,zone_non_constructible:Nco,,,N,Nco
+97416000CS1602,2024-1191171,2024-10-14,919385.6,5315,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97415000CX0801,2021-1674760,2021-06-11,905000,220,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,,U,U2c
+97415000CX0801,2025-1266090,2025-01-13,900000,220,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,,U,U2c
+97415000CX0644,2025-1266090,2025-01-13,900000,73,t,Saint-Paul,t,surface_incertaine,,,U,U2c
+97414000DH0323,2024-1187384,2024-04-11,900000,1536,t,Saint-Louis,t,habitat_interdit:US,declasse_zone_fermee,,U,US
+97416000DT0812,2023-1318279,2023-07-27,900000,74,t,Saint-Pierre,t,terrain_exigu,,,U,Ut
+97414000DH0322,2024-1187384,2024-04-11,900000,1536,t,Saint-Louis,t,habitat_interdit:US,declasse_zone_fermee,,U,US
+97415000CX0801,2022-1637372,2022-09-09,897000,220,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,,U,U2c
+97412000BK1850,2021-1680071,2021-03-22,891718,167,t,Saint-Joseph,t,habitat_interdit:1AU6c,,conditionnelle_operation,AU,1AU6c
+97412000BK1849,2021-1680071,2021-03-22,891718,24,t,Saint-Joseph,t,habitat_interdit:1AU6,,conditionnelle_operation,AU,1AU6
+97415000DK0228,2025-1268425,2025-05-28,884300,409,t,Saint-Paul,t,terrain_exigu,,,U,U3c
+97416000CS1593,2023-1318017,2023-08-01,866090.4,4966,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1590,2023-1318017,2023-08-01,866090.4,134,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97407000AE0048,2023-1317149,2023-06-30,862731,142,t,Le Port,t,terrain_exigu,,,U,Uoap
+97407000AE0786,2023-1317149,2023-06-30,862731,13,t,Le Port,t,terrain_exigu,,,U,Uoap
+97416000CS0597,2023-1314866,2023-03-22,850000,16,t,Saint-Pierre,t,surface_incertaine,,,U,Uazi
+97409000AL2385,2023-1315980,2023-04-28,850000,81,t,Saint-André,t,terrain_exigu,,,U,UB
+97409000AL2387,2023-1315980,2023-04-28,850000,23,t,Saint-André,t,terrain_exigu,,,U,UB
+97416000ER0303,2021-1681744,2021-08-20,825000,84,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97415000CY0972,2024-1186784,2024-03-14,820000,55,t,Saint-Paul,t,terrain_exigu,,conditionnelle_operation,AU,AU2c
+97415000EW1817,2022-1635208,2022-06-29,820000,147,t,Saint-Paul,t,terrain_exigu,,,U,U2c
+97416000CS1603,2024-1189918,2024-08-23,816788,4729,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97407000AE0048,2022-1638833,2022-10-27,810000,142,t,Le Port,t,terrain_exigu,,,U,Uoap
+97407000AE0786,2022-1638833,2022-10-27,810000,13,t,Le Port,t,terrain_exigu,,,U,Uoap
+97415000BN1392,2025-1271748,2025-11-07,802900,78,t,Saint-Paul,t,terrain_exigu,,,U,U1c
+97416000CS1597,2024-1185925,2024-01-18,802379.2,2725,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1517,2024-1185925,2024-01-18,802379.2,1911,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97415000BI0293,2022-1632821,2022-03-30,800000,544,t,Saint-Paul,t,terrain_exigu,,,U,U1b
+97414000DH0322,2022-1633450,2022-04-07,788580,1536,t,Saint-Louis,t,habitat_interdit:US,declasse_zone_fermee,,U,US
+97414000DH0323,2022-1633450,2022-04-07,788580,1536,t,Saint-Louis,t,habitat_interdit:US,declasse_zone_fermee,,U,US
+97408000AP0731,2025-1269899,2025-08-12,780000,58,t,La Possession,t,terrain_exigu,,,U,UB
+97416000DK0239,2022-1639308,2022-11-04,750000,1504,t,Saint-Pierre,t,habitat_interdit:Uazc,,,U,Uazc
+97405000AW1215,2025-1270294,2025-08-28,746107.8,2103,t,Petite-Île,t,habitat_interdit:UEa,,,U,UEa
+97405000AW1213,2025-1270294,2025-08-28,746107.8,1968,t,Petite-Île,t,habitat_interdit:UEa,,,U,UEa
+97415000CZ1091,2021-1676580,2021-10-11,725000,99,t,Saint-Paul,t,terrain_exigu,,,U,U2a
+97413000CY0858,2024-1187693,2024-05-02,725000,116,t,Saint-Leu,t,terrain_exigu,,,U,UD
+97415000CZ0448,2021-1676580,2021-10-11,725000,478,t,Saint-Paul,t,terrain_exigu,,,U,U2a
+97408000AP0731,2023-1315053,2023-03-30,720000,58,t,La Possession,t,terrain_exigu,,,U,UB
+97415000EW0720,2021-1674999,2021-07-01,700500,42,t,Saint-Paul,t,terrain_exigu,,,U,U2c
+97411000EP0231,2021-1673880,2021-04-23,700000,50,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97411000BZ0854,2023-1314181,2023-02-28,695000,203,t,Saint-Denis,t,,declasse_non_constructible,,U,Um
+97401000AM1664,2025-1271620,2025-10-21,690000,2909,t,Les Avirons,t,terrain_exigu,,,N,N
+97412000BK1708,2024-1190837,2024-09-27,661802,53,t,Saint-Joseph,t,terrain_exigu,,conditionnelle_operation,AU,1AU5
+97415000HI0533,2024-1186614,2024-02-28,660000,7,t,Saint-Paul,t,terrain_exigu,,,U,U2c
+97415000HI0545,2024-1186614,2024-02-28,660000,537,t,Saint-Paul,t,terrain_exigu,,,N,N
+97415000HI0534,2024-1186614,2024-02-28,660000,104,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,,U,U2c
+97415000DE1227,2021-1677648,2021-11-25,652300,8,t,Saint-Paul,t,terrain_exigu,,,U,U2c
+97413000DC0557,2025-1272372,2025-11-25,650000,82,t,Saint-Leu,t,terrain_exigu,,,U,UC
+97413000DC0530,2025-1272372,2025-11-25,650000,110,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UC
+97415000EW1526,2021-1674650,2021-06-01,647500,35,t,Saint-Paul,t,terrain_exigu,,,U,U2c
+97416000ES1995,2022-1640498,2022-12-06,645000,68,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97404000AT0482,2021-1681618,2021-08-02,644000,262,t,L'Étang-Salé,t,terrain_exigu,declasse_non_constructible,,U,UB
+97404000AT0483,2021-1681618,2021-08-02,644000,17,t,L'Étang-Salé,t,terrain_exigu,,,U,UB
+97415000CV0426,2022-1639659,2022-12-05,643500,48,t,Saint-Paul,t,terrain_exigu,,,U,U3c
+97415000BV1047,2024-1186162,2024-01-23,641000,6,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97416000CZ0860,2024-1191291,2024-10-31,635350,54,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97413000CX2639,2023-1318388,2023-08-16,633800,118,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UC
+97415000AV0368,2024-1191647,2024-11-15,630000,46,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97415000AV0370,2024-1191647,2024-11-15,630000,68,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97416000CS1526,2025-1267983,2025-04-25,626732.8,141,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1538,2025-1267983,2025-04-25,626732.8,3261,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1267,2025-1267983,2025-04-25,626732.8,134,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97416000ER0303,2021-1679701,2021-02-15,625000,84,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97411000EN0654,2025-1269179,2025-07-08,624750,72,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97416000CS1267,2024-1186713,2024-02-29,615932.8,134,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97416000CS1526,2024-1186713,2024-02-29,615932.8,141,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1538,2024-1186713,2024-02-29,615932.8,3261,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1539,2024-1190092,2024-08-26,606384.8,3342,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1576,2024-1190092,2024-08-26,606384.8,114,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1576,2023-1321835,2023-12-29,606384.8,114,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1539,2023-1321835,2023-12-29,606384.8,3342,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CV2368,2025-1268062,2025-04-25,600000,313,t,Saint-Pierre,t,terrain_exigu,,,N,N
+97404000AM0669,2021-1681432,2021-06-15,600000,2713,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97414000CH1088,2025-1268873,2025-06-12,598000,78,t,Saint-Louis,t,terrain_exigu,,,U,UD1
+97413000CX1159,2024-1189876,2024-08-27,582000,167,t,Saint-Leu,t,terrain_exigu,,,U,UD
+97415000BV1338,2024-1191212,2024-10-18,575000,400,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97413000CX2187,2021-1678507,2021-12-14,570000,178,t,Saint-Leu,t,terrain_exigu,,,U,UD
+97413000CX2180,2021-1678507,2021-12-14,570000,106,t,Saint-Leu,t,terrain_exigu,,,U,UD
+97411000DV0081,2023-1313394,2023-01-06,570000,2179,t,Saint-Denis,t,terrain_exigu,,,N,N
+97416000CW1997,2025-1271529,2025-10-13,560000,57,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97404000AT0483,2021-1679923,2021-03-02,558000,17,t,L'Étang-Salé,t,terrain_exigu,,,U,UB
+97404000AT0482,2021-1679923,2021-03-02,558000,262,t,L'Étang-Salé,t,terrain_exigu,declasse_non_constructible,,U,UB
+97414000EN2469,2021-1682345,2021-10-04,556300,572,t,Saint-Louis,t,,declasse_non_constructible,,U,UB
+97415000ER1590,2021-1676292,2021-09-10,549600,386,t,Saint-Paul,t,terrain_exigu,,,U,U5b
+97411000BX0278,2024-1188934,2024-07-11,549000,159,t,Saint-Denis,t,terrain_exigu,declasse_non_constructible,,U,Uh
+97411000IK0290,2025-1268449,2025-05-27,548600,200,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97416000CY0454,2023-1318183,2023-07-31,547895,81,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97413000DC0530,2025-1270588,2025-08-27,545000,110,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UC
+97413000DC0557,2025-1270588,2025-08-27,545000,82,t,Saint-Leu,t,terrain_exigu,,,U,UC
+97405000AW1625,2022-1636758,2022-07-27,544842,1122,t,Petite-Île,t,,declasse_non_constructible,,U,UD
+97418000BN0240,2021-1676665,2021-10-07,542500,1212,t,Sainte-Marie,t,habitat_interdit:UEc,declasse_zone_fermee,,U,UEc
+97418000AY0521,2021-1675958,2021-08-26,540000,415,t,Sainte-Marie,t,terrain_exigu,,,N,N
+97423000AD0574,2022-1631597,2022-01-25,540000,129,t,Les Trois-Bassins,t,terrain_exigu,,au_sous_plancher,AU,1AUb
+97416000CS1560,2023-1317474,2023-07-07,538160,3010,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1533,2023-1317474,2023-07-07,538160,86,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97418000AV2718,2025-1268391,2025-05-09,535000,449,t,Sainte-Marie,t,terrain_exigu,,,U,UB
+97411000IK0290,2021-1675322,2021-07-07,529900,200,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97420000BD0715,2025-1266155,2025-01-28,525000,49,t,Sainte-Suzanne,t,terrain_exigu,,,U,UB
+97420000BD0714,2025-1266155,2025-01-28,525000,55,t,Sainte-Suzanne,t,terrain_exigu,,,U,UB
+97413000DK0176,2023-1320522,2023-11-09,524750,85,t,Saint-Leu,t,terrain_exigu,,,U,UC
+97413000DK0176,2024-1189072,2024-07-11,524750,85,t,Saint-Leu,t,terrain_exigu,,,U,UC
+97416000EW0854,2025-1270926,2025-09-17,521390,162,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97408000AN0884,2021-1677537,2021-11-16,519550,90,t,La Possession,t,terrain_exigu,,,U,UB
+97408000AN0885,2021-1677537,2021-11-16,519550,707,t,La Possession,t,,declasse_non_constructible,,U,UB
+97411000KC0306,2021-1676139,2021-09-03,515000,106,t,Saint-Denis,t,terrain_exigu,,,U,Uj
+97418000AR2333,2021-1675925,2021-08-18,511500,130,t,Sainte-Marie,t,terrain_exigu,declasse_non_constructible,,U,UC
+97418000AR2396,2021-1675925,2021-08-18,511500,516,t,Sainte-Marie,t,zone_non_constructible:N,,,N,N
+97404000AM1091,2023-1320819,2023-11-10,510579.3,1862,t,L'Étang-Salé,t,habitat_interdit:UE,declasse_zone_fermee,,U,UE
+97415000BV1338,2021-1677020,2021-10-18,504400,400,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97418000AY0521,2023-1321161,2023-12-19,500000,415,t,Sainte-Marie,t,terrain_exigu,,,N,N
+97416000ET2055,2023-1321732,2023-12-26,495850,8,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97408000AM0773,2023-1317710,2023-07-10,490000,322,t,La Possession,t,terrain_exigu,,,U,UB
+97415000AW1353,2025-1271153,2025-09-26,488000,19,t,Saint-Paul,t,terrain_exigu,,,U,U4a
+97413000CX2180,2021-1681104,2021-06-24,487947,106,t,Saint-Leu,t,terrain_exigu,,,U,UD
+97413000CX2187,2021-1681104,2021-06-24,487947,178,t,Saint-Leu,t,terrain_exigu,,,U,UD
+97404000AM1105,2022-1632041,2022-02-18,482130.6,818,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1101,2022-1632041,2022-02-18,482130.6,20,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1076,2022-1632041,2022-02-18,482130.6,56,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1094,2022-1632041,2022-02-18,482130.6,357,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1077,2022-1632041,2022-02-18,482130.6,236,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97416000CS1568,2023-1316774,2023-06-13,482087.2,2765,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1546,2023-1316774,2023-06-13,482087.2,9,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97411000EI0256,2023-1314749,2023-03-15,481000,128,t,Saint-Denis,t,,declasse_non_constructible,,U,Um
+97420000BC1067,2022-1637872,2022-10-04,480000,79,t,Sainte-Suzanne,t,terrain_exigu,,,U,UB
+97422000EK0237,2024-1190390,2024-09-13,478500,1510,t,Le Tampon,t,terrain_exigu,,,U,Uav
+97405000AR1766,2023-1319360,2023-09-26,470000,18,t,Petite-Île,t,terrain_exigu,,,U,UC
+97422000BO1506,2023-1315364,2023-04-19,469400,75,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97415000AX0292,2021-1673672,2021-03-18,467990,95,t,Saint-Paul,t,terrain_exigu,,,U,U4b
+97415000AX0293,2021-1673672,2021-03-18,467990,80,t,Saint-Paul,t,terrain_exigu,,,U,U4b
+97415000BV1441,2022-1636000,2022-07-18,466500,369,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,,U,U6c
+97413000DE1425,2021-1677605,2021-11-19,460000,49,t,Saint-Leu,t,terrain_exigu,,,U,UCA
+97408000AT1441,2025-1273005,2025-12-22,460000,52,t,La Possession,t,terrain_exigu,,,U,UB
+97416000HN0873,2022-1633389,2022-04-15,459000,50,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97408000AP0676,2023-1320990,2023-12-11,459000,126,t,La Possession,t,terrain_exigu,,,N,N
+97410000BY0583,2021-1673483,2021-03-09,458000,67,t,Saint-Benoît,t,zone_non_constructible:A,,,A,A
+97410000BY0585,2021-1673483,2021-03-09,458000,73,t,Saint-Benoît,t,zone_non_constructible:A,,,A,A
+97410000BY0584,2021-1673483,2021-03-09,458000,8,t,Saint-Benoît,t,surface_incertaine,,,A,A
+97422000BO1698,2024-1187524,2024-04-26,457500,601,t,Le Tampon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUc
+97422000BO1701,2024-1187524,2024-04-26,457500,63,t,Le Tampon,t,terrain_exigu,,conditionnelle_operation,AU,1AUc
+97422000BO1700,2024-1187524,2024-04-26,457500,49,t,Le Tampon,t,terrain_exigu,,conditionnelle_operation,AU,1AUc
+97416000EX1806,2025-1266753,2025-02-13,455600,122,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97416000EX1805,2025-1266753,2025-02-13,455600,78,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97413000CX2187,2025-1270494,2025-08-18,455000,178,t,Saint-Leu,t,terrain_exigu,,,U,UD
+97413000CX2180,2025-1270494,2025-08-18,455000,106,t,Saint-Leu,t,terrain_exigu,,,U,UD
+97405000AW1703,2025-1271098,2025-09-19,454800,125,t,Petite-Île,t,habitat_interdit:UEa,,,U,UEa
+97404000AM1104,2024-1187799,2024-04-24,451186.4,1293,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1079,2024-1187799,2024-04-24,451186.4,368,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1100,2024-1187799,2024-04-24,451186.4,102,t,L'Étang-Salé,t,habitat_interdit:UE,declasse_zone_fermee,,U,UE
+97411000DW0155,2024-1192285,2024-11-28,450000,150,t,Saint-Denis,t,terrain_exigu,declasse_non_constructible,,U,Uh
+97408000AM0571,2025-1268245,2025-05-05,445000,190,t,La Possession,t,terrain_exigu,declasse_non_constructible,,U,UB
+97418000AV2718,2024-1188652,2024-06-27,441850,449,t,Sainte-Marie,t,terrain_exigu,,,U,UB
+97415000BV1338,2021-1675797,2021-08-06,440600,400,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97416000CS1569,2024-1186100,2024-02-02,440423.2,2534,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97411000EI0274,2022-1631132,2022-01-26,440000,53,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97422000CD0348,2023-1319663,2023-10-12,436750,224,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97404000AV0344,2023-1319377,2023-09-29,433800,43,t,L'Étang-Salé,t,terrain_exigu,,,U,UC
+97423000AE0419,2025-1268622,2025-05-22,430000,42,t,Les Trois-Bassins,t,terrain_exigu,,,U,Ub
+97416000EW0854,2023-1313331,2023-01-16,430000,162,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97415000CP0974,2023-1317725,2023-07-25,429950,302,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,,U,U3c
+97404000AM1125,2021-1678765,2021-12-23,429334.5,7912,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1092,2022-1633376,2022-03-31,427034.3,1598,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97408000AP0732,2024-1193056,2024-12-30,425000,136,t,La Possession,t,,declasse_non_constructible,,U,UB
+97408000AO1547,2021-1677208,2021-11-05,425000,244,t,La Possession,t,,declasse_non_constructible,,U,UA
+97416000ET1521,2021-1681739,2021-08-09,424150,55,t,Saint-Pierre,t,terrain_exigu,,,U,UfCA
+97411000IH0447,2024-1188780,2024-06-25,420300,34,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97416000HX0711,2021-1681806,2021-08-26,420230,23,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000HX0709,2021-1681806,2021-08-26,420230,15,t,Saint-Pierre,t,surface_incertaine,,,U,Ug
+97416000HX0710,2021-1681806,2021-08-26,420230,13,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000HX0713,2021-1681806,2021-08-26,420230,16,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000HX0714,2021-1681806,2021-08-26,420230,25,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000HX0715,2021-1681806,2021-08-26,420230,32,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97411000EP0231,2025-1266268,2025-01-31,420192,50,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97415000CI0770,2023-1314282,2023-02-20,420000,71,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97416000HP0750,2021-1677546,2021-11-09,419000,479,t,Saint-Pierre,t,zone_non_constructible:Us,,,U,Us
+97415000ER1590,2023-1317704,2023-07-10,418000,386,t,Saint-Paul,t,terrain_exigu,,,U,U5b
+97416000CZ1548,2021-1681832,2021-08-12,414711,85,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97405000AL1281,2024-1191490,2024-11-07,413380,16,t,Petite-Île,t,terrain_exigu,,,U,UC
+97416000DX0377,2023-1319561,2023-09-20,410000,44,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000EP0959,2023-1317812,2023-07-25,408360,43,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97413000CA0262,2024-1193143,2024-12-30,408059.8,157,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UE
+97416000HX0712,2021-1679593,2021-01-29,406840,21,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000HX0710,2021-1679593,2021-01-29,406840,13,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000HX0713,2021-1679593,2021-01-29,406840,16,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000HX0711,2021-1679593,2021-01-29,406840,23,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000HX0715,2021-1679593,2021-01-29,406840,32,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000HX0714,2021-1679593,2021-01-29,406840,25,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000HX0709,2021-1679593,2021-01-29,406840,15,t,Saint-Pierre,t,surface_incertaine,,,U,Ug
+97408000AT0543,2021-1677770,2021-11-29,405000,84,t,La Possession,t,terrain_exigu,,,U,UB
+97416000CS1222,2021-1682368,2021-10-06,404834.88,1642,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CZ1548,2021-1682181,2021-09-24,404000,85,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97416000CO0834,2022-1640901,2022-12-23,400000,100,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000ES1802,2023-1318333,2023-08-09,400000,24,t,Saint-Pierre,t,habitat_interdit:Uaza,,,U,Uaza
+97413000CD0376,2021-1681174,2021-07-20,400000,121,t,Saint-Leu,t,terrain_exigu,,,U,UC
+97413000AC0744,2024-1185884,2024-01-23,400000,966,t,Saint-Leu,t,zone_non_constructible:A,,,A,A
+97415000CH2393,2023-1314691,2023-03-17,400000,19,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97408000AC3650,2022-1639088,2022-10-21,400000,22,t,La Possession,t,terrain_exigu,,,U,UBc
+97408000AC3657,2022-1639088,2022-10-21,400000,44,t,La Possession,t,terrain_exigu,,,U,UBc
+97408000AC3659,2022-1639088,2022-10-21,400000,12,t,La Possession,t,terrain_exigu,,,U,UBc
+97416000CZ1541,2022-1638359,2022-10-07,400000,88,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97415000CP0974,2025-1270464,2025-08-25,397850,302,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,,U,U3c
+97414000ET0928,2023-1316993,2023-06-02,390000,124,t,Saint-Louis,t,terrain_exigu,,,U,UB
+97411000EK0369,2022-1631431,2022-01-21,389350,200,t,Saint-Denis,t,terrain_exigu,declasse_non_constructible,,U,Um
+97404000AL1603,2025-1267867,2025-04-18,388420,11,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97416000HI0384,2021-1680923,2021-06-09,388000,97,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97416000ET2054,2025-1268508,2025-05-27,387200,8,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97415000BN1392,2023-1316877,2023-06-01,387000,78,t,Saint-Paul,t,terrain_exigu,,,U,U1c
+97408000AC3657,2022-1640732,2022-12-23,385000,44,t,La Possession,t,terrain_exigu,,,U,UBc
+97404000AH1027,2025-1267647,2025-04-07,385000,237,t,L'Étang-Salé,t,terrain_exigu,,,N,Nce
+97416000CS1561,2024-1185805,2024-01-05,380704.8,2187,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1535,2024-1185805,2024-01-05,380704.8,3,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97418000AO1196,2021-1674941,2021-07-06,380000,75,t,Sainte-Marie,t,zone_non_constructible:N,,,N,N
+97415000AW2371,2025-1266945,2025-02-24,380000,16,t,Saint-Paul,t,terrain_exigu,,,U,U4b
+97415000AW2369,2025-1266945,2025-02-24,380000,39,t,Saint-Paul,t,terrain_exigu,,,U,U4b
+97412000BK1815,2023-1318647,2023-08-01,379713.12,2843,t,Saint-Joseph,t,habitat_interdit:1AU6,declasse_zone_fermee,conditionnelle_operation,AU,1AU6
+97412000BK1806,2023-1318647,2023-08-01,379713.12,2772,t,Saint-Joseph,t,habitat_interdit:1AU6,declasse_zone_fermee,conditionnelle_operation,AU,1AU6
+97412000BK1812,2023-1318647,2023-08-01,379713.12,266,t,Saint-Joseph,t,habitat_interdit:1AU6,declasse_zone_fermee,conditionnelle_operation,AU,1AU6
+97415000CH2805,2021-1675032,2021-06-21,378000,68,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97415000CH2371,2021-1675032,2021-06-21,378000,11,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97408000AM0773,2021-1673852,2021-04-02,377050,322,t,La Possession,t,terrain_exigu,,,U,UB
+97408000AC3650,2023-1314296,2023-02-16,377000,22,t,La Possession,t,terrain_exigu,,,U,UBc
+97413000CU0931,2021-1682234,2021-10-01,370949,6,t,Saint-Leu,t,terrain_exigu,,,U,UC
+97403000AP1233,2023-1314485,2023-02-22,370900,145,t,Entre-Deux,t,terrain_exigu,declasse_non_constructible,,U,Ub1
+97407000AI0905,2022-1640486,2022-12-22,369480,60,t,Le Port,t,terrain_exigu,,,U,Uc
+97407000AI0904,2022-1640486,2022-12-22,369480,2,t,Le Port,t,terrain_exigu,,,U,Uc
+97405000AR1761,2023-1318013,2023-07-31,365000,32,t,Petite-Île,t,terrain_exigu,,,U,UC
+97416000CW2833,2023-1317314,2023-06-13,365000,4,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97408000AP1053,2023-1315124,2023-04-07,362000,26,t,La Possession,t,terrain_exigu,,,U,UA
+97408000AP1052,2023-1315124,2023-04-07,362000,6,t,La Possession,t,terrain_exigu,,,U,UA
+97416000EN0403,2023-1315668,2023-04-17,361100,27,t,Saint-Pierre,t,terrain_exigu,,,U,Up
+97404000AL1609,2024-1190637,2024-09-26,361000,12,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97422000BP1751,2021-1681273,2021-06-29,360000,675,t,Le Tampon,t,habitat_interdit:Ue,,,U,Ue
+97408000BI0189,2022-1632726,2022-03-30,360000,158,t,La Possession,t,terrain_exigu,,,N,N
+97422000BP1750,2021-1681273,2021-06-29,360000,564,t,Le Tampon,t,habitat_interdit:Ue,,,U,Ue
+97422000BD3438,2022-1635280,2022-06-23,359263,2103,t,Le Tampon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUb
+97422000BD3432,2022-1635280,2022-06-23,359263,1966,t,Le Tampon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUb
+97415000CH2391,2023-1314041,2023-01-27,358000,16,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97408000BK0288,2024-1189806,2024-08-28,357000,11,t,La Possession,t,terrain_exigu,,,U,UB
+97416000HP0799,2024-1185974,2024-01-25,356590,13,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0797,2024-1185974,2024-01-25,356590,13,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0801,2024-1185974,2024-01-25,356590,5,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0815,2024-1185974,2024-01-25,356590,80,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0795,2024-1185974,2024-01-25,356590,12,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0802,2024-1185974,2024-01-25,356590,33,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000CS1572,2024-1192434,2024-12-13,355012,64,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97416000CS1530,2024-1192434,2024-12-13,355012,1981,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97415000EW1958,2025-1267608,2025-04-07,355000,37,t,Saint-Paul,t,terrain_exigu,,,U,U2c
+97422000BW2654,2022-1639572,2022-11-24,355000,285,t,Le Tampon,t,terrain_exigu,,,U,Uav
+97405000AR1778,2024-1186205,2024-02-12,355000,44,t,Petite-Île,t,terrain_exigu,,,U,UC
+97401000AO1054,2022-1632631,2022-03-22,354000,64,t,Les Avirons,t,terrain_exigu,,,U,Ud
+97414000ER0456,2022-1632579,2022-03-15,353800,2500,t,Saint-Louis,t,terrain_exigu,,,U,UC
+97408000AM0571,2021-1674242,2021-04-21,352870,190,t,La Possession,t,terrain_exigu,declasse_non_constructible,,U,UB
+97414000DT0756,2021-1677411,2021-11-02,352500,24,t,Saint-Louis,t,terrain_exigu,,,U,UC2
+97414000DT0503,2021-1677411,2021-11-02,352500,60,t,Saint-Louis,t,terrain_exigu,,,U,UC2
+97416000CS1556,2024-1187073,2024-03-22,351540,423,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1531,2024-1187073,2024-03-22,351540,1603,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97422000BO1698,2022-1631309,2022-01-24,350800,601,t,Le Tampon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUc
+97422000BO1701,2022-1631309,2022-01-24,350800,63,t,Le Tampon,t,terrain_exigu,,conditionnelle_operation,AU,1AUc
+97422000BO1700,2022-1631309,2022-01-24,350800,49,t,Le Tampon,t,terrain_exigu,,conditionnelle_operation,AU,1AUc
+97422000BO1700,2021-1679590,2021-01-18,350000,49,t,Le Tampon,t,terrain_exigu,,conditionnelle_operation,AU,1AUc
+97422000BO1698,2021-1679590,2021-01-18,350000,601,t,Le Tampon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUc
+97413000BM0792,2024-1187216,2024-03-28,350000,68,t,Saint-Leu,t,terrain_exigu,,,U,UC
+97410000AL0384,2025-1271410,2025-10-10,350000,301,t,Saint-Benoît,t,,declasse_non_constructible,,U,Ua
+97422000BO1701,2021-1679590,2021-01-18,350000,63,t,Le Tampon,t,terrain_exigu,,conditionnelle_operation,AU,1AUc
+97416000CS1567,2023-1317152,2023-06-23,345637.6,1986,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97411000KC0420,2023-1319768,2023-10-06,344700,2,t,Saint-Denis,t,terrain_exigu,,,U,Uj
+97411000KC0426,2023-1319768,2023-10-06,344700,20,t,Saint-Denis,t,terrain_exigu,,,U,Uj
+97411000KC0419,2023-1319768,2023-10-06,344700,28,t,Saint-Denis,t,terrain_exigu,,,U,Uj
+97422000BR1415,2022-1634984,2022-06-10,344500,144,t,Le Tampon,t,terrain_exigu,declasse_non_constructible,,U,Uc
+97416000HP0797,2023-1321399,2023-12-21,344000,13,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0799,2023-1321399,2023-12-21,344000,13,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0801,2023-1321399,2023-12-21,344000,5,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0802,2023-1321399,2023-12-21,344000,33,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0815,2023-1321399,2023-12-21,344000,80,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0795,2023-1321399,2023-12-21,344000,12,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97413000BM0792,2022-1635104,2022-06-14,340000,68,t,Saint-Leu,t,terrain_exigu,,,U,UC
+97408000AT0799,2025-1266344,2025-01-29,340000,191,t,La Possession,t,terrain_exigu,,,U,UB
+97416000DZ0905,2021-1679225,2021-12-31,340000,173,t,Saint-Pierre,t,terrain_exigu,declasse_non_constructible,,U,Uf
+97414000EN3832,2023-1313954,2023-02-07,340000,508,t,Saint-Louis,t,terrain_exigu,,,U,UB
+97416000CS1596,2023-1321424,2023-12-19,338693.6,1995,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1591,2023-1321424,2023-12-19,338693.6,3,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97416000HX1499,2025-1270676,2025-09-18,338000,32,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97415000AZ1066,2023-1319376,2023-09-11,338000,62,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97413000BM0792,2022-1633773,2022-05-06,338000,68,t,Saint-Leu,t,terrain_exigu,,,U,UC
+97415000CM1528,2021-1676605,2021-10-07,336000,40,t,Saint-Paul,t,terrain_exigu,,,U,U6b
+97412000BK1283,2023-1316012,2023-05-12,335000,21,t,Saint-Joseph,t,terrain_exigu,,,U,U5ma
+97415000DM0624,2021-1675206,2021-07-02,333000,79,t,Saint-Paul,t,terrain_exigu,,,U,U3c
+97402000AI1040,2022-1631320,2022-01-20,331591,375,t,Bras-Panon,t,terrain_exigu,,,U,Ub
+97402000AI1041,2022-1631320,2022-01-20,331591,87,t,Bras-Panon,t,terrain_exigu,,,U,Ub
+97422000BD2869,2023-1321527,2023-12-11,330000,686,t,Le Tampon,t,terrain_exigu,,,N,Nco
+97402000AH1395,2022-1631832,2022-02-25,330000,134,t,Bras-Panon,t,habitat_interdit:Ue,,,U,Ue
+97422000BD2864,2023-1321527,2023-12-11,330000,723,t,Le Tampon,t,terrain_exigu,,,N,Nco
+97418000AT2571,2025-1272257,2025-12-03,327721,507,t,Sainte-Marie,t,habitat_interdit:UEm,,,U,UEm
+97411000ID0194,2023-1314812,2023-03-15,327000,84,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97416000HN1302,2022-1636948,2022-08-29,325000,86,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97401000AN1273,2021-1680901,2021-06-03,325000,32,t,Les Avirons,t,terrain_exigu,,,U,Ud
+97411000EL0371,2022-1635725,2022-06-30,324500,16,t,Saint-Denis,t,terrain_exigu,,,U,Uh
+97418000AT0882,2021-1674602,2021-06-14,322581,843,t,Sainte-Marie,t,habitat_interdit:UEm,declasse_zone_fermee,,U,UEm
+97417000AI0111,2024-1186733,2024-03-12,320350,458,t,Saint-Philippe,t,hors_plu,,,,
+97417000AI0091,2024-1186733,2024-03-12,320350,996,t,Saint-Philippe,t,hors_plu,non_verifiable,,,
+97417000AI0093,2024-1186733,2024-03-12,320350,898,t,Saint-Philippe,t,hors_plu,,,,
+97417000AI0112,2024-1186733,2024-03-12,320350,390,t,Saint-Philippe,t,hors_plu,,,,
+97420000BD1000,2025-1269554,2025-07-25,320000,12,t,Sainte-Suzanne,t,terrain_exigu,,,U,UB
+97415000AZ1179,2023-1313918,2023-01-24,320000,41,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97416000DZ0905,2022-1638627,2022-10-07,320000,173,t,Saint-Pierre,t,terrain_exigu,declasse_non_constructible,,U,Uf
+97420000AD0415,2024-1191310,2024-10-31,320000,147,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97420000AD0417,2024-1191310,2024-10-31,320000,524,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97422000BS1792,2022-1640355,2022-12-16,317950,215,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97416000CW2828,2024-1189507,2024-07-31,316000,69,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97418000AY0521,2023-1320565,2023-11-20,315000,415,t,Sainte-Marie,t,terrain_exigu,,,N,N
+97414000EN3833,2023-1320896,2023-11-27,315000,441,t,Saint-Louis,t,terrain_exigu,,,U,UB
+97422000EL0325,2021-1676788,2021-10-08,311000,378,t,Le Tampon,t,terrain_exigu,,,U,Uav
+97422000EL0324,2021-1676788,2021-10-08,311000,66,t,Le Tampon,t,terrain_exigu,,,U,Uav
+97407000AO1089,2025-1270858,2025-09-25,310000,100,t,Le Port,t,terrain_exigu,,,U,Uc
+97412000AM1631,2023-1318929,2023-08-31,310000,136,t,Saint-Joseph,t,zone_non_constructible:Aba,,,A,Aba
+97413000CY1205,2021-1679476,2021-01-28,310000,144,t,Saint-Leu,t,terrain_exigu,,,U,UD
+97409000BM0634,2023-1321656,2023-12-26,303800,422,t,Saint-André,t,terrain_exigu,declasse_non_constructible,,U,UD
+97409000BM0639,2023-1321656,2023-12-26,303800,115,t,Saint-André,t,terrain_exigu,declasse_non_constructible,,U,UD
+97408000BI0342,2021-1672862,2021-01-27,303000,420,t,La Possession,t,zone_non_constructible:N,,,N,N
+97408000BI0159,2021-1672862,2021-01-27,303000,624,t,La Possession,t,terrain_exigu,,,N,N
+97408000BI0343,2021-1672862,2021-01-27,303000,74,t,La Possession,t,zone_non_constructible:N,,,N,N
+97408000BI0341,2021-1672862,2021-01-27,303000,442,t,La Possession,t,zone_non_constructible:N,,,N,N
+97422000BP1269,2021-1679847,2021-02-18,300165,85,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97422000BP1272,2021-1679847,2021-02-18,300165,81,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97422000BH1949,2021-1676997,2021-10-26,300000,6,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97415000AZ1179,2023-1313917,2023-02-06,300000,41,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97413000CM0393,2023-1316031,2023-05-02,300000,751,t,Saint-Leu,t,terrain_exigu,,,N,N
+97420000AZ0773,2022-1632238,2022-02-25,300000,60,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97411000HC0377,2022-1630953,2022-01-18,300000,211,t,Saint-Denis,t,terrain_exigu,,,U,Ui
+97412000BK1975,2025-1272625,2025-11-27,299123.11,3013,t,Saint-Joseph,t,habitat_interdit:1AU6,declasse_zone_fermee,conditionnelle_operation,AU,1AU6
+97405000BH0708,2021-1682485,2021-10-15,298000,766,t,Petite-Île,t,terrain_exigu,,,N,N
+97423000AE0419,2025-1268579,2025-05-22,296500,42,t,Les Trois-Bassins,t,terrain_exigu,,,U,Ub
+97405000AZ0920,2022-1633488,2022-04-21,296200,4140,t,Petite-Île,t,zone_non_constructible:N,,,N,N
+97405000AZ0917,2022-1633488,2022-04-21,296200,72,t,Petite-Île,t,terrain_exigu,,,N,N
+97415000AW2397,2025-1272635,2025-11-24,295000,99,t,Saint-Paul,t,terrain_exigu,,,U,U4b
+97415000AW2396,2025-1272635,2025-11-24,295000,17,t,Saint-Paul,t,terrain_exigu,,,U,U4b
+97401000AO1054,2023-1318665,2023-08-24,292759,64,t,Les Avirons,t,terrain_exigu,,,U,Ud
+97415000CP1334,2025-1266183,2025-01-29,290000,117,t,Saint-Paul,t,terrain_exigu,,,U,U3c
+97407000AE0316,2021-1679351,2021-10-20,290000,246,t,Le Port,t,terrain_exigu,,,U,Ub
+97416000DZ0905,2022-1633865,2022-05-02,290000,173,t,Saint-Pierre,t,terrain_exigu,declasse_non_constructible,,U,Uf
+97404000AT0762,2022-1638154,2022-09-26,289200,336,t,L'Étang-Salé,t,terrain_exigu,,au_sous_plancher,AU,AUb
+97408000AT0799,2021-1673166,2021-03-05,288700,191,t,La Possession,t,terrain_exigu,,,U,UB
+97410000AS1415,2025-1266676,2025-02-24,286215.3,305,t,Saint-Benoît,t,,,générique,AU,AUa5
+97410000AS1428,2025-1266676,2025-02-24,286215.3,306,t,Saint-Benoît,t,,,générique,AU,AUa5
+97410000AS1465,2025-1266676,2025-02-24,286215.3,294,t,Saint-Benoît,t,,,générique,AU,AUa5
+97418000AY0521,2022-1635680,2022-07-15,285000,415,t,Sainte-Marie,t,terrain_exigu,,,N,N
+97416000EK0586,2022-1638857,2022-10-27,285000,27,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97422000BP1522,2022-1634209,2022-05-16,284750,62,t,Le Tampon,t,terrain_exigu,,,U,Uav
+97422000BP1524,2022-1634209,2022-05-16,284750,185,t,Le Tampon,t,terrain_exigu,,,U,Uav
+97415000BW1839,2021-1678276,2021-12-09,283200,19,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97408000AM0732,2021-1675780,2021-08-26,280000,8,t,La Possession,t,terrain_exigu,,,U,UB
+97415000EW1958,2021-1678717,2021-12-17,278000,37,t,Saint-Paul,t,terrain_exigu,,,U,U2c
+97416000CS1570,2023-1315693,2023-04-28,277933.6,966,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1529,2023-1315693,2023-04-28,277933.6,634,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97412000BK1980,2025-1268749,2025-05-30,277125,2221,t,Saint-Joseph,t,habitat_interdit:1AU6,declasse_zone_fermee,conditionnelle_operation,AU,1AU6
+97416000IE0076,2021-1677119,2021-10-27,276640,2172,t,Saint-Pierre,t,terrain_exigu,,,U,UdBO
+97416000DZ0905,2022-1637612,2022-09-15,275000,173,t,Saint-Pierre,t,terrain_exigu,declasse_non_constructible,,U,Uf
+97422000BW3547,2021-1680508,2021-04-22,274518,97,t,Le Tampon,t,terrain_exigu,,,U,Ua
+97405000AN0626,2024-1188156,2024-06-04,272246,51,t,Petite-Île,t,terrain_exigu,,,U,UC
+97416000CS1571,2023-1321831,2023-12-29,271163.2,1557,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1536,2023-1321831,2023-12-29,271163.2,3,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97408000AB0414,2024-1192166,2024-12-13,270000,74,t,La Possession,t,terrain_exigu,,,U,UBc
+97414000EN4189,2025-1272627,2025-11-27,270000,1,t,Saint-Louis,t,surface_incertaine,,,U,UB
+97414000ET1356,2022-1635193,2022-06-23,269000,236,t,Saint-Louis,t,terrain_exigu,declasse_non_constructible,,U,UC
+97406000AV0705,2024-1187083,2024-03-29,266500,515,t,La Plaine-des-Palmistes,t,terrain_exigu,,,N,Nco
+97422000ED0521,2025-1267401,2025-03-12,265000,179,t,Le Tampon,t,terrain_exigu,declasse_non_constructible,,U,Ua
+97412000BK1287,2022-1633410,2022-04-07,263500,5,t,Saint-Joseph,t,terrain_exigu,,,U,U5ma
+97415000CM0671,2022-1635086,2022-06-17,262000,815,t,Saint-Paul,t,terrain_exigu,,,U,U6b
+97419000AN0249,2023-1313730,2023-01-31,260000,159,t,Sainte-Rose,t,terrain_exigu,declasse_non_constructible,,U,Uc
+97422000AX1345,2025-1267929,2025-04-25,260000,97,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97422000BI0511,2021-1681686,2021-07-30,260000,94,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97411000EH0183,2024-1187845,2024-04-26,259580,113,t,Saint-Denis,t,terrain_exigu,declasse_non_constructible,,U,Uh
+97405000AS0555,2024-1190922,2024-10-08,259000,111,t,Petite-Île,t,terrain_exigu,,,A,Acu
+97405000AN0626,2021-1680576,2021-04-29,256765,51,t,Petite-Île,t,terrain_exigu,,,U,UC
+97412000AM2080,2025-1267697,2025-03-31,255000,8,t,Saint-Joseph,t,terrain_exigu,,,U,U5
+97412000CV0683,2022-1633988,2022-05-02,255000,306,t,Saint-Joseph,t,terrain_exigu,declasse_non_constructible,,U,U5cvd
+97407000AV0151,2021-1675143,2021-06-24,253740,1409,t,Le Port,t,zone_non_constructible:Ue,,,U,Ue
+97412000BL0703,2021-1680879,2021-06-14,253500,419,t,Saint-Joseph,t,terrain_exigu,,,U,U3
+97414000ET1356,2022-1636268,2022-07-28,252400,236,t,Saint-Louis,t,terrain_exigu,declasse_non_constructible,,U,UC
+97412000BM1167,2022-1636151,2022-07-22,252244.08,58,t,Saint-Joseph,t,terrain_exigu,,,U,U3
+97412000BW1349,2024-1186204,2024-02-12,250000,52,t,Saint-Joseph,t,terrain_exigu,,,U,U3
+97415000HK0585,2025-1271313,2025-09-25,250000,41,t,Saint-Paul,t,terrain_exigu,,,U,U2c
+97402000AH1394,2022-1635819,2022-07-18,250000,139,t,Bras-Panon,t,habitat_interdit:Ue,,,U,Ue
+97422000ED0521,2025-1267399,2025-03-10,250000,179,t,Le Tampon,t,terrain_exigu,declasse_non_constructible,,U,Ua
+97416000CZ0913,2024-1187661,2024-04-16,250000,108,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97416000EP1002,2025-1269106,2025-06-19,250000,271,t,Saint-Pierre,t,zone_non_constructible:Us,,,U,Us
+97404000AM1080,2023-1316500,2023-05-12,249029.2,9,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1096,2023-1316500,2023-05-12,249029.2,1161,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97422000DE0935,2021-1678424,2021-12-15,248850,2,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97422000DE0933,2021-1678424,2021-12-15,248850,53,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97416000CS1335,2025-1270755,2025-09-24,248000,74,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97422000BD2864,2023-1314153,2023-02-24,246900,723,t,Le Tampon,t,terrain_exigu,,,N,Nco
+97422000BD2869,2023-1314153,2023-02-24,246900,686,t,Le Tampon,t,terrain_exigu,,,N,Nco
+97406000AV0705,2022-1638112,2022-09-29,245350,515,t,La Plaine-des-Palmistes,t,terrain_exigu,,,N,Nco
+97422000BD2864,2022-1632056,2022-02-28,245000,723,t,Le Tampon,t,terrain_exigu,,,N,Nco
+97408000AM0773,2022-1632229,2022-02-23,245000,322,t,La Possession,t,terrain_exigu,,,U,UB
+97424000AI2329,2024-1187765,2024-04-26,245000,61,t,Cilaos,t,terrain_exigu,,,U,Ub
+97424000AI2335,2024-1187765,2024-04-26,245000,28,t,Cilaos,t,terrain_exigu,,,U,Ub
+97422000BD2869,2022-1632056,2022-02-28,245000,686,t,Le Tampon,t,terrain_exigu,,,N,Nco
+97407000AO0886,2025-1272357,2025-12-01,245000,39,t,Le Port,t,terrain_exigu,,,U,Ua
+97411000EY0154,2021-1676610,2021-10-01,245000,191,t,Saint-Denis,t,terrain_exigu,,,U,Uh
+97424000AI2331,2024-1187765,2024-04-26,245000,17,t,Cilaos,t,terrain_exigu,,,U,Ub
+97424000AI2333,2024-1187765,2024-04-26,245000,60,t,Cilaos,t,terrain_exigu,,,U,Ub
+97413000DE1390,2024-1188679,2024-06-27,243890,50,t,Saint-Leu,t,terrain_exigu,,,U,UCA
+97416000ES1099,2021-1677332,2021-10-01,242000,9,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97417000BC1058,2024-1190781,2024-10-01,242000,708,t,Saint-Philippe,t,hors_plu,,,,
+97417000BC1056,2024-1190781,2024-10-01,242000,643,t,Saint-Philippe,t,hors_plu,,,,
+97417000BC1057,2024-1190781,2024-10-01,242000,772,t,Saint-Philippe,t,hors_plu,,,,
+97405000AR1585,2023-1313262,2023-01-09,240000,1,t,Petite-Île,t,terrain_exigu,,,U,UC
+97409000AX0335,2023-1315547,2023-03-30,240000,114,t,Saint-André,t,terrain_exigu,declasse_non_constructible,,U,UE
+97422000DI0336,2021-1680224,2021-03-31,240000,228,t,Le Tampon,t,terrain_exigu,,,U,Ud
+97416000HN1158,2021-1680415,2021-04-27,240000,37,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97422000AY1230,2024-1191944,2024-11-21,239050,111,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97406000AV1212,2025-1269879,2025-07-23,238000,243,t,La Plaine-des-Palmistes,t,terrain_exigu,declasse_non_constructible,,U,Ub
+97408000AT2040,2024-1191939,2024-11-21,237800,124,t,La Possession,t,terrain_exigu,declasse_non_constructible,,U,UB
+97412000BP0384,2021-1682318,2021-09-30,235530,154,t,Saint-Joseph,t,,declasse_non_constructible,,U,U3
+97408000AP1050,2021-1676677,2021-10-13,235000,148,t,La Possession,t,terrain_exigu,,,U,UA
+97418000AP2903,2022-1632400,2022-02-24,235000,16,t,Sainte-Marie,t,terrain_exigu,,,U,UD
+97408000AT2040,2024-1190780,2024-09-25,235000,124,t,La Possession,t,terrain_exigu,declasse_non_constructible,,U,UB
+97416000CS1522,2024-1186714,2024-02-29,234186.4,1301,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1580,2024-1186714,2024-02-29,234186.4,4,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97416000CS1548,2024-1186714,2024-02-29,234186.4,45,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97424000AI2333,2021-1677487,2021-11-05,232000,60,t,Cilaos,t,terrain_exigu,,,U,Ub
+97424000AI2335,2021-1677487,2021-11-05,232000,28,t,Cilaos,t,terrain_exigu,,,U,Ub
+97424000AI2329,2021-1677487,2021-11-05,232000,61,t,Cilaos,t,terrain_exigu,,,U,Ub
+97424000AI2331,2021-1677487,2021-11-05,232000,17,t,Cilaos,t,terrain_exigu,,,U,Ub
+97408000AP0730,2022-1631429,2022-02-01,230000,55,t,La Possession,t,terrain_exigu,,,U,UB
+97422000DH0537,2022-1635625,2022-07-06,230000,320,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97422000DH0537,2022-1635886,2022-07-12,230000,320,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97420000AL0627,2023-1315580,2023-04-24,230000,30,t,Sainte-Suzanne,t,terrain_exigu,,,U,UC
+97422000BI1108,2021-1682352,2021-10-08,230000,1016,t,Le Tampon,t,terrain_exigu,,,N,Nco
+97408000AT1976,2021-1673821,2021-03-23,230000,32,t,La Possession,t,terrain_exigu,,,U,UB
+97416000CS1319,2022-1640704,2022-12-22,229932,74,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97405000AW1613,2023-1315654,2023-03-31,228000,140,t,Petite-Île,t,terrain_exigu,,,U,UD
+97424000AM1019,2023-1315678,2023-04-13,226822.77,359,t,Cilaos,t,terrain_exigu,,conditionnelle_operation,AU,AUb2
+97424000AI2356,2023-1315678,2023-04-13,226822.77,8,t,Cilaos,t,terrain_exigu,,conditionnelle_operation,AU,AUb2
+97424000AI2359,2023-1315678,2023-04-13,226822.77,69,t,Cilaos,t,terrain_exigu,,conditionnelle_operation,AU,AUb2
+97413000CN0755,2022-1635693,2022-07-06,226800,517,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UB
+97413000CN0777,2022-1635693,2022-07-06,226800,99,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UB
+97412000BK1917,2021-1679299,2021-12-29,226500,246,t,Saint-Joseph,t,,declasse_non_constructible,,U,U3
+97412000BX1876,2025-1268251,2025-05-14,225000,193,t,Saint-Joseph,t,terrain_exigu,,,U,U3a
+97405000BI0851,2023-1321971,2023-06-09,225000,31,t,Petite-Île,t,terrain_exigu,,,U,UC
+97412000AL0225,2025-1269203,2025-06-27,223000,324,t,Saint-Joseph,t,zone_non_constructible:N,,,N,N
+97403000AM0447,2023-1314823,2023-03-13,222560,57,t,Entre-Deux,t,terrain_exigu,,,U,Ub
+97403000AM0442,2023-1314823,2023-03-13,222560,8,t,Entre-Deux,t,terrain_exigu,,,U,Ub
+97403000AM0446,2023-1314823,2023-03-13,222560,56,t,Entre-Deux,t,terrain_exigu,,,U,Ub
+97403000AM0453,2023-1314823,2023-03-13,222560,52,t,Entre-Deux,t,terrain_exigu,,,U,Ub
+97403000AM0455,2023-1314823,2023-03-13,222560,51,t,Entre-Deux,t,terrain_exigu,,,U,Ub
+97403000AM0461,2023-1314823,2023-03-13,222560,333,t,Entre-Deux,t,terrain_exigu,,,N,N
+97422000BN1616,2023-1313639,2023-01-30,222000,69,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97422000BN2950,2023-1313639,2023-01-30,222000,48,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97420000AC0737,2023-1313390,2023-01-26,222000,355,t,Sainte-Suzanne,t,terrain_exigu,declasse_non_constructible,,U,UB
+97422000BN2946,2023-1313639,2023-01-30,222000,15,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97404000AM1087,2023-1321924,2023-12-29,220580.5,1036,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97410000BN0580,2025-1272142,2025-10-30,220000,154,t,Saint-Benoît,t,,declasse_non_constructible,,U,Ua
+97411000IW0051,2022-1634912,2022-05-25,220000,259,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97412000AV0975,2023-1318538,2023-08-22,220000,518,t,Saint-Joseph,t,terrain_exigu,declasse_non_constructible,,U,U5vi
+97422000BO0699,2023-1321733,2023-12-27,219240,1218,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97416000CS1346,2022-1638177,2022-10-03,218983,74,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97420000BC1506,2023-1313919,2023-01-20,218700,16,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97415000CS0954,2021-1673720,2021-03-19,218000,64,t,Saint-Paul,t,terrain_exigu,,,U,U3b
+97413000CN0777,2024-1191993,2024-11-28,218000,99,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UB
+97422000CY0174,2021-1682309,2021-10-05,218000,1220,t,Le Tampon,t,,declasse_non_constructible,,U,Uc
+97413000CN0755,2024-1191993,2024-11-28,218000,517,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UB
+97422000AP1094,2025-1267317,2025-03-28,218000,61,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97422000CY0175,2021-1682309,2021-10-05,218000,166,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97408000AM0571,2025-1268478,2025-05-12,217500,190,t,La Possession,t,terrain_exigu,declasse_non_constructible,,U,UB
+97410000AS1461,2025-1267431,2025-03-31,216954.36,344,t,Saint-Benoît,t,,,générique,AU,AUa5
+97410000AS1460,2025-1267431,2025-03-31,216954.36,342,t,Saint-Benoît,t,,,générique,AU,AUa5
+97404000AM1089,2021-1682127,2021-09-02,216869.8,1019,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1102,2021-1682211,2021-09-13,216457.5,24,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1086,2021-1682211,2021-09-13,216457.5,652,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1083,2021-1682211,2021-09-13,216457.5,237,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97408000AO1811,2021-1675020,2021-07-09,215698,84,t,La Possession,t,terrain_exigu,,conditionnelle_operation,AU,AUBm
+97404000AM1088,2021-1678764,2021-12-23,215220.6,1011,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97405000AS0551,2025-1267025,2025-03-11,215000,181,t,Petite-Île,t,terrain_exigu,declasse_zone_fermee,,A,Acu
+97413000DE2133,2025-1269903,2025-07-29,215000,75,t,Saint-Leu,t,terrain_exigu,,,U,UC
+97414000HE0469,2025-1267837,2025-04-30,215000,33,t,Saint-Louis,t,terrain_exigu,,,U,UC2
+97416000EY0810,2021-1681168,2021-06-23,212000,122,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97406000AV0882,2024-1188187,2024-05-27,210000,256,t,La Plaine-des-Palmistes,t,terrain_exigu,declasse_non_constructible,,U,Ub
+97408000AY0389,2025-1269809,2025-08-08,210000,86,t,La Possession,t,terrain_exigu,,,U,UBb
+97416000EM1013,2024-1188074,2024-05-17,210000,2,t,Saint-Pierre,t,terrain_exigu,,,U,Up
+97416000CS1555,2024-1187189,2024-04-09,208840.8,743,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1532,2024-1187189,2024-04-09,208840.8,459,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97415000AV0370,2025-1266196,2025-01-17,208590,68,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97415000AV0368,2025-1266196,2025-01-17,208590,46,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97404000AM1103,2021-1682263,2021-09-14,208482.75,463,t,L'Étang-Salé,t,habitat_interdit:UE,declasse_zone_fermee,,U,UE
+97404000AM1099,2021-1682263,2021-09-14,208482.75,116,t,L'Étang-Salé,t,habitat_interdit:UE,declasse_zone_fermee,,U,UE
+97404000AM1081,2021-1682263,2021-09-14,208482.75,306,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97414000EK0566,2023-1313878,2023-01-25,207500,43,t,Saint-Louis,t,terrain_exigu,,,U,UC2
+97414000EK0569,2023-1313878,2023-01-25,207500,114,t,Saint-Louis,t,terrain_exigu,declasse_non_constructible,,U,UC2
+97404000AM1095,2021-1677372,2021-10-27,206974.6,923,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1078,2021-1677372,2021-10-27,206974.6,48,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97408000AO1811,2021-1675892,2021-08-23,205065,84,t,La Possession,t,terrain_exigu,,conditionnelle_operation,AU,AUBm
+97415000BW1301,2021-1674834,2021-06-15,205000,94,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97401000AO1067,2021-1681528,2021-05-28,205000,21,t,Les Avirons,t,terrain_exigu,,,U,Ud
+97415000BW1291,2021-1674834,2021-06-15,205000,45,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97411000IW0288,2025-1270150,2025-08-13,205000,15,t,Saint-Denis,t,zone_non_constructible:N,,,N,N
+97415000BW1315,2021-1674834,2021-06-15,205000,278,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97415000BW1293,2021-1674834,2021-06-15,205000,92,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,,U,U6c
+97415000BW1311,2021-1674834,2021-06-15,205000,92,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97405000AS0553,2024-1185917,2024-01-24,204000,177,t,Petite-Île,t,terrain_exigu,declasse_zone_fermee,,A,Acu
+97417000AN0327,2022-1639106,2022-11-15,204000,452,t,Saint-Philippe,t,hors_plu,,,,
+97416000CS1558,2023-1315526,2023-04-14,203632.8,1172,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97405000AS0556,2022-1637555,2022-09-13,201000,163,t,Petite-Île,t,terrain_exigu,declasse_zone_fermee,,A,Acu
+97419000AP0456,2022-1639821,2022-12-06,200000,6,t,Sainte-Rose,t,terrain_exigu,,,N,N
+97409000AX0985,2025-1271020,2025-09-16,200000,130,t,Saint-André,t,terrain_exigu,declasse_non_constructible,,U,UC
+97416000CW2618,2021-1682124,2021-09-24,200000,22,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97409000AX0989,2025-1271020,2025-09-16,200000,99,t,Saint-André,t,terrain_exigu,,,U,UC
+97404000AD1006,2023-1316950,2023-06-26,200000,971,t,L'Étang-Salé,t,,declasse_non_constructible,,U,UC
+97412000BK1708,2022-1633033,2022-03-28,200000,53,t,Saint-Joseph,t,terrain_exigu,,conditionnelle_operation,AU,1AU5
+97404000AD1441,2021-1682070,2021-09-10,200000,102,t,L'Étang-Salé,t,terrain_exigu,declasse_non_constructible,,U,UC
+97419000AP0455,2022-1639821,2022-12-06,200000,217,t,Sainte-Rose,t,terrain_exigu,,,N,N
+97413000CN0777,2022-1636733,2022-08-18,199900,99,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UB
+97413000CN0755,2022-1636733,2022-08-18,199900,517,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UB
+97410000AS1422,2024-1191012,2024-10-17,199543.8,310,t,Saint-Benoît,t,,,générique,AU,AUa5
+97410000AS1421,2024-1191012,2024-10-17,199543.8,321,t,Saint-Benoît,t,,,générique,AU,AUa5
+97409000AL2350,2022-1637286,2022-08-19,198740,232,t,Saint-André,t,terrain_exigu,,,U,UB
+97409000AL2352,2022-1637286,2022-08-19,198740,262,t,Saint-André,t,terrain_exigu,,,U,UB
+97410000BK0309,2021-1674398,2021-06-02,198000,141,t,Saint-Benoît,t,,declasse_non_constructible,,U,Ub
+97414000ET2198,2021-1680189,2021-03-26,194200,173,t,Saint-Louis,t,,,declasse_au_statut_inconnu,AU,2AUb2
+97422000BT0941,2023-1319662,2023-10-05,194000,100,t,Le Tampon,t,terrain_exigu,,,U,Uav
+97410000AS1416,2024-1189124,2024-07-23,192602.34,304,t,Saint-Benoît,t,,,générique,AU,AUa5
+97410000AS1436,2024-1189124,2024-07-23,192602.34,305,t,Saint-Benoît,t,,,générique,AU,AUa5
+97412000AX0552,2024-1191518,2024-03-18,192000,3112,t,Saint-Joseph,t,terrain_exigu,,,A,A
+97416000IH0273,2022-1631920,2022-02-18,192000,18,t,Saint-Pierre,t,surface_incertaine,,,U,Ug
+97422000BT1420,2024-1187748,2024-04-24,192000,28,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97418000AV2765,2021-1674271,2021-05-19,190800,6,t,Sainte-Marie,t,terrain_exigu,,,U,UA
+97420000AC0737,2021-1674388,2021-05-31,190000,355,t,Sainte-Suzanne,t,terrain_exigu,declasse_non_constructible,,U,UB
+97412000CS0618,2024-1187004,2024-03-26,190000,3228,t,Saint-Joseph,t,,declasse_zone_fermee,,A,A
+97418000AO1196,2025-1266852,2025-03-05,190000,75,t,Sainte-Marie,t,zone_non_constructible:N,,,N,N
+97410000AC0486,2022-1639794,2022-11-30,190000,166,t,Saint-Benoît,t,,declasse_non_constructible,,U,Ub
+97404000AV0223,2025-1267925,2025-04-25,190000,160,t,L'Étang-Salé,t,terrain_exigu,declasse_non_constructible,,U,UB
+97422000BI0897,2025-1271780,2025-10-30,188140,1636,t,Le Tampon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUb
+97422000AE0056,2021-1679704,2021-02-11,188000,684,t,Le Tampon,t,terrain_exigu,,,U,Ucm
+97422000BP1938,2021-1681930,2021-08-26,188000,687,t,Le Tampon,t,zone_non_constructible:2AUc,,declasse_au_statut_inconnu,AU,2AUc
+97408000BI0345,2022-1640981,2022-12-22,187339.45,502,t,La Possession,t,zone_non_constructible:N,,,N,N
+97408000BI0158,2022-1640981,2022-12-22,187339.45,642,t,La Possession,t,terrain_exigu,,,N,N
+97408000BI0344,2022-1640981,2022-12-22,187339.45,632,t,La Possession,t,zone_non_constructible:N,,,N,N
+97405000AS0555,2023-1315378,2023-03-31,187000,111,t,Petite-Île,t,terrain_exigu,,,A,Acu
+97405000AS0554,2022-1635042,2022-06-16,186993,197,t,Petite-Île,t,terrain_exigu,,,A,Acu
+97422000BT1420,2024-1186480,2024-02-26,186600,28,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97422000BI0897,2022-1640218,2022-12-16,185437,1636,t,Le Tampon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUb
+97416000CS1554,2024-1188458,2024-06-13,185404.8,518,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1523,2024-1188458,2024-06-13,185404.8,552,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1565,2024-1187897,2024-04-30,185231.2,1066,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97405000AS0547,2023-1320925,2023-12-01,185000,438,t,Petite-Île,t,terrain_exigu,,,A,Acu
+97422000BK2207,2023-1317587,2023-07-10,185000,49,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97413000CN0755,2023-1317551,2023-07-21,185000,517,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UB
+97413000CN0777,2023-1317551,2023-07-21,185000,99,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UB
+97420000AC0737,2022-1635622,2022-06-29,183600,355,t,Sainte-Suzanne,t,terrain_exigu,declasse_non_constructible,,U,UB
+97416000CS1559,2023-1320493,2023-11-14,182974.4,1052,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1534,2024-1186697,2024-02-29,181932.8,127,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1557,2024-1186697,2024-02-29,181932.8,919,t,Saint-Pierre,t,habitat_interdit:Uazi,declasse_zone_fermee,,U,Uazi
+97416000CS1564,2023-1315521,2023-04-14,180891.2,1039,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97414000ET1513,2025-1270141,2025-08-26,180000,187,t,Saint-Louis,t,terrain_exigu,,,U,UC
+97422000BO1795,2024-1187601,2024-04-19,180000,744,t,Le Tampon,t,zone_non_constructible:2AUc,declasse_zone_fermee,declasse_au_statut_inconnu,AU,2AUc
+97412000BX1342,2021-1680634,2021-05-19,180000,87,t,Saint-Joseph,t,terrain_exigu,,,U,U3a
+97422000BM1049,2022-1637065,2022-08-31,180000,9,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97417000AT1476,2023-1320444,2023-11-10,180000,189,t,Saint-Philippe,t,hors_plu,non_verifiable,,,
+97407000AX0223,2025-1267268,2025-03-14,180000,110,t,Le Port,t,terrain_exigu,declasse_non_constructible,,U,Uca
+97407000AX0224,2025-1267268,2025-03-14,180000,107,t,Le Port,t,terrain_exigu,declasse_non_constructible,,U,Uca
+97422000BR1407,2023-1321469,2023-12-22,180000,70,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97417000AT1477,2023-1320444,2023-11-10,180000,98,t,Saint-Philippe,t,hors_plu,,,,
+97422000BH1068,2021-1680539,2021-04-21,180000,33,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97422000BR1414,2023-1321469,2023-12-22,180000,88,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97409000BI0544,2023-1319555,2023-09-19,177000,157,t,Saint-André,t,terrain_exigu,declasse_non_constructible,,U,UB
+97408000AT2040,2023-1319993,2023-10-12,176170,124,t,La Possession,t,terrain_exigu,declasse_non_constructible,,U,UB
+97416000CS1544,2023-1315523,2023-04-14,176030.4,1,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97416000CS1566,2023-1315523,2023-04-14,176030.4,1010,t,Saint-Pierre,t,habitat_interdit:Uazi,,,U,Uazi
+97414000EK0569,2021-1681802,2021-08-11,175000,114,t,Saint-Louis,t,terrain_exigu,declasse_non_constructible,,U,UC2
+97411000BD0409,2022-1631711,2022-02-07,175000,73,t,Saint-Denis,t,terrain_exigu,,,U,Ud
+97414000EK0566,2021-1681802,2021-08-11,175000,43,t,Saint-Louis,t,terrain_exigu,,,U,UC2
+97414000DN0586,2023-1321678,2023-12-29,173500,114,t,Saint-Louis,t,terrain_exigu,declasse_non_constructible,,U,UA
+97414000EV0476,2025-1269729,2025-07-10,173371,142,t,Saint-Louis,t,terrain_exigu,declasse_non_constructible,,U,UC
+97414000EV0555,2025-1269729,2025-07-10,173371,228,t,Saint-Louis,t,terrain_exigu,,,U,UC
+97414000EV0552,2025-1269729,2025-07-10,173371,53,t,Saint-Louis,t,terrain_exigu,,,U,UC
+97414000EV0550,2025-1269729,2025-07-10,173371,190,t,Saint-Louis,t,terrain_exigu,,,U,UC
+97414000EV0553,2025-1269729,2025-07-10,173371,10,t,Saint-Louis,t,terrain_exigu,,,U,UC
+97412000BK1707,2022-1638090,2022-09-26,170880,552,t,Saint-Joseph,t,,declasse_non_constructible,conditionnelle_operation,AU,1AU5
+97414000EN3769,2024-1187700,2024-04-23,170629.56,1277,t,Saint-Louis,t,habitat_interdit:1AUe,declasse_zone_fermee,conditionnelle_operation,AU,1AUe
+97408000AM1263,2021-1675799,2021-08-09,170000,32,t,La Possession,t,terrain_exigu,,,U,UB
+97413000DI0387,2023-1321340,2023-12-18,170000,43,t,Saint-Leu,t,terrain_exigu,,,U,UC
+97422000BE2813,2024-1188910,2024-06-27,170000,69,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97413000CN0777,2023-1316604,2023-06-07,170000,99,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UB
+97413000CN0755,2023-1316604,2023-06-07,170000,517,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UB
+97414000EN3945,2022-1637629,2022-09-14,170000,18,t,Saint-Louis,t,terrain_exigu,,conditionnelle_operation,AU,1AUb2
+97416000DI0208,2022-1640223,2022-12-12,170000,1180,t,Saint-Pierre,t,habitat_interdit:Uaza,declasse_zone_fermee,,U,Uaza
+97405000AZ0950,2021-1678104,2021-11-17,170000,13,t,Petite-Île,t,terrain_exigu,,,U,UD
+97408000AM1268,2021-1675799,2021-08-09,170000,1,t,La Possession,t,terrain_exigu,,,U,UB
+97407000AY0586,2025-1267799,2025-04-28,169000,104,t,Le Port,t,terrain_exigu,declasse_non_constructible,,U,Ua
+97422000BT1420,2022-1640932,2022-12-30,168500,28,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97422000BT1422,2022-1640932,2022-12-30,168500,160,t,Le Tampon,t,terrain_exigu,,,N,Nco
+97416000EX1107,2023-1313497,2023-02-02,168000,55,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97416000EX1106,2023-1313497,2023-02-02,168000,54,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97416000EX1108,2023-1313497,2023-02-02,168000,39,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97408000AT2040,2023-1321627,2023-12-28,167750,124,t,La Possession,t,terrain_exigu,declasse_non_constructible,,U,UB
+97412000CD0255,2022-1631931,2022-02-22,166000,97,t,Saint-Joseph,t,terrain_exigu,,,U,U3a
+97404000AL1602,2022-1638113,2022-09-29,165654,11,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97405000AS0558,2022-1632536,2022-03-09,165000,21,t,Petite-Île,t,terrain_exigu,,,U,UC
+97422000BD2736,2022-1634068,2022-05-05,165000,87,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97416000ET2219,2025-1272634,2025-11-27,163350,56,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97412000BK1711,2022-1633309,2022-04-12,163330,437,t,Saint-Joseph,t,,declasse_non_constructible,conditionnelle_operation,AU,1AU5
+97414000EN3766,2023-1320252,2023-10-26,163280.6,1222,t,Saint-Louis,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97404000AL1607,2023-1313670,2023-01-23,162406,12,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97422000BD3497,2025-1266066,2025-01-03,162030,818,t,Le Tampon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUb
+97413000CN0777,2023-1315459,2023-03-26,162000,99,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UB
+97413000CN0755,2023-1315459,2023-03-26,162000,517,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UB
+97414000EN3768,2021-1679782,2021-02-11,161944.42,1212,t,Saint-Louis,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97404000AL1609,2022-1640540,2022-12-15,160782,12,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97404000AL1604,2023-1318536,2023-08-09,160782,11,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97422000CY0174,2022-1633254,2022-03-30,160000,1220,t,Le Tampon,t,,declasse_non_constructible,,U,Uc
+97416000HZ0975,2021-1677517,2021-11-05,160000,141,t,Saint-Pierre,t,terrain_exigu,declasse_non_constructible,,U,Ug
+97422000CY0175,2022-1633254,2022-03-30,160000,166,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97405000AW1168,2021-1681394,2021-07-23,160000,219,t,Petite-Île,t,,declasse_non_constructible,,U,UC
+97422000BH1369,2023-1321486,2023-12-22,160000,60,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97408000AC3587,2023-1313413,2023-01-09,160000,29,t,La Possession,t,terrain_exigu,,,U,UBc
+97408000AT2040,2025-1268457,2025-05-15,160000,124,t,La Possession,t,terrain_exigu,declasse_non_constructible,,U,UB
+97412000CS0740,2021-1679541,2021-01-14,159452,157,t,Saint-Joseph,t,terrain_exigu,declasse_zone_fermee,,A,A
+97404000AL1612,2022-1640195,2022-11-29,159158,12,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97404000AL1610,2022-1638848,2022-10-27,159158,12,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97404000AL1603,2022-1638292,2022-09-30,159158,11,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97414000EW0531,2021-1680133,2021-03-24,158730,117,t,Saint-Louis,t,terrain_exigu,,,U,UC
+97407000AH1084,2023-1317878,2023-07-31,158000,74,t,Le Port,t,terrain_exigu,,,U,Uc
+97409000AV1058,2023-1317817,2023-07-28,157000,473,t,Saint-André,t,terrain_exigu,,,U,UC
+97409000AV1059,2023-1317817,2023-07-28,157000,886,t,Saint-André,t,terrain_exigu,,,U,UC
+97416000HM0603,2021-1680548,2021-04-28,156500,572,t,Saint-Pierre,t,zone_non_constructible:Us,,,U,Us
+97409000AK0740,2021-1677183,2021-10-26,155000,2222,t,Saint-André,t,,,générique,AU,1AUc
+97416000EX1798,2021-1682558,2021-10-25,155000,596,t,Saint-Pierre,t,,declasse_non_constructible,,U,Uf
+97413000AC0744,2021-1678031,2021-11-25,155000,966,t,Saint-Leu,t,zone_non_constructible:A,,,A,A
+97416000HP0813,2022-1639181,2022-11-04,151765,119,t,Saint-Pierre,t,terrain_exigu,declasse_non_constructible,,U,Ud
+97416000HP0797,2022-1639181,2022-11-04,151765,13,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0799,2022-1639181,2022-11-04,151765,13,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0805,2022-1639181,2022-11-04,151765,1,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0795,2022-1639181,2022-11-04,151765,12,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0801,2022-1639181,2022-11-04,151765,5,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0802,2022-1639181,2022-11-04,151765,33,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97416000HP0815,2022-1639181,2022-11-04,151765,80,t,Saint-Pierre,t,terrain_exigu,,,U,Ud
+97408000AT2040,2023-1321653,2023-12-26,151400,124,t,La Possession,t,terrain_exigu,declasse_non_constructible,,U,UB
+97415000AS1144,2021-1674245,2021-05-05,150000,175,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97414000DN0575,2022-1634358,2022-05-20,150000,122,t,Saint-Louis,t,terrain_exigu,,,U,UA
+97415000AS1127,2021-1674245,2021-05-05,150000,252,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,,U,U4c
+97415000AS1141,2021-1674245,2021-05-05,150000,319,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97408000AY0492,2021-1675134,2021-06-29,150000,13,t,La Possession,t,terrain_exigu,,,U,UBb
+97405000AY0748,2023-1317598,2023-07-13,145550,473,t,Petite-Île,t,terrain_exigu,,,N,N
+97422000CX1246,2023-1321761,2023-12-27,145000,935,t,Le Tampon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUc
+97415000CM1939,2023-1313455,2023-01-06,145000,399,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97415000CM1938,2023-1313455,2023-01-06,145000,216,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,,U,U6c
+97411000HO0911,2025-1266592,2025-01-27,145000,29,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97420000AZ0766,2022-1638949,2022-10-14,145000,2121,t,Sainte-Suzanne,t,terrain_exigu,,,N,Nlit
+97404000AT0761,2022-1639738,2022-11-24,144550,167,t,L'Étang-Salé,t,terrain_exigu,,,N,N
+97407000AO1856,2025-1270389,2025-09-01,144500,82,t,Le Port,t,terrain_exigu,,,U,Uc
+97407000AO1499,2025-1270389,2025-09-01,144500,122,t,Le Port,t,terrain_exigu,,,U,Uc
+97408000AT0853,2021-1676007,2021-09-07,142600,286,t,La Possession,t,,declasse_non_constructible,,U,UB
+97407000BI0416,2021-1678469,2021-12-10,140000,314,t,Le Port,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUa
+97405000AW1280,2022-1632786,2022-03-24,140000,1736,t,Petite-Île,t,habitat_interdit:UEa,declasse_zone_fermee,,U,UEa
+97418000AI0725,2023-1316205,2023-05-12,139750,25,t,Sainte-Marie,t,terrain_exigu,,,U,UD
+97409000AY1051,2021-1679000,2021-12-28,138000,835,t,Saint-André,t,terrain_exigu,declasse_non_constructible,,U,UC
+97422000AE0733,2022-1632818,2022-03-23,137500,83,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97412000BK1968,2023-1317320,2023-06-30,135343,2079,t,Saint-Joseph,t,habitat_interdit:1AU6,declasse_zone_fermee,conditionnelle_operation,AU,1AU6
+97405000AR1766,2022-1636550,2022-07-21,135000,18,t,Petite-Île,t,terrain_exigu,,,U,UC
+97405000AR1778,2023-1314394,2023-03-01,135000,44,t,Petite-Île,t,terrain_exigu,,,U,UC
+97405000AR1773,2022-1638065,2022-09-16,135000,20,t,Petite-Île,t,terrain_exigu,,,U,UC
+97405000AR1768,2022-1639442,2022-11-17,135000,102,t,Petite-Île,t,terrain_exigu,declasse_non_constructible,,U,UC
+97414000ET2248,2022-1637262,2022-08-30,135000,573,t,Saint-Louis,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUb2
+97405000AR1763,2022-1637944,2022-09-21,135000,49,t,Petite-Île,t,terrain_exigu,,,U,UC
+97405000AR1761,2022-1637985,2022-09-23,135000,32,t,Petite-Île,t,terrain_exigu,,,U,UC
+97415000ER0755,2025-1269050,2025-06-19,135000,85,t,Saint-Paul,t,terrain_exigu,,,U,U5b
+97422000AE1008,2023-1315272,2023-04-11,135000,78,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97407000AO1557,2022-1637600,2022-09-15,134131.56,100,t,Le Port,t,terrain_exigu,,,U,Uc
+97407000AO1558,2022-1637600,2022-09-15,134131.56,100,t,Le Port,t,terrain_exigu,,,U,Uc
+97402000AK2113,2024-1189164,2024-07-23,134000,798,t,Bras-Panon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUb
+97405000AY0747,2022-1639989,2022-11-30,131900,505,t,Petite-Île,t,terrain_exigu,,,N,N
+97405000AY0746,2024-1191259,2024-10-18,131800,524,t,Petite-Île,t,terrain_exigu,,,N,N
+97422000BP1714,2023-1315074,2023-03-28,131000,28,t,Le Tampon,t,terrain_exigu,,,U,Uav
+97422000BT1420,2022-1631797,2022-01-28,130000,28,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97414000HI1613,2022-1640459,2022-12-15,130000,42,t,Saint-Louis,t,terrain_exigu,,,U,UC
+97405000AR1783,2022-1639592,2022-11-18,130000,10,t,Petite-Île,t,terrain_exigu,,,U,UC
+97422000CX1246,2022-1632430,2022-03-08,130000,935,t,Le Tampon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUc
+97404000AT0888,2025-1269874,2025-07-29,130000,60,t,L'Étang-Salé,t,terrain_exigu,,,U,UB
+97412000AM1928,2023-1316124,2023-04-26,129800,164,t,Saint-Joseph,t,terrain_exigu,declasse_non_constructible,,U,U5
+97412000AM1992,2023-1316124,2023-04-26,129800,598,t,Saint-Joseph,t,,declasse_non_constructible,,U,U5
+97412000BK1969,2025-1268460,2025-05-21,127791,1963,t,Saint-Joseph,t,habitat_interdit:1AU6,declasse_zone_fermee,conditionnelle_operation,AU,1AU6
+97414000HH0382,2025-1270752,2025-02-21,127000,340,t,Saint-Louis,t,terrain_exigu,,,U,UC2
+97401000AK0188,2021-1682497,2021-10-08,126400,7,t,Les Avirons,t,terrain_exigu,,,U,Ud
+97422000BP1754,2021-1679911,2021-03-12,125000,725,t,Le Tampon,t,habitat_interdit:Ue,declasse_zone_fermee,,U,Ue
+97422000BT1420,2021-1679208,2021-12-30,125000,28,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97422000BP1755,2021-1679911,2021-03-12,125000,641,t,Le Tampon,t,habitat_interdit:Ue,declasse_zone_fermee,,U,Ue
+97405000AR1776,2022-1636560,2022-07-21,124000,32,t,Petite-Île,t,terrain_exigu,,,U,UC
+97405000AL1671,2025-1272493,2025-11-24,122500,138,t,Petite-Île,t,terrain_exigu,declasse_non_constructible,,U,UC
+97414000CV0935,2021-1678317,2021-12-17,121000,104,t,Saint-Louis,t,terrain_exigu,,conditionnelle_operation,AU,1AUd
+97414000CV0943,2021-1678317,2021-12-17,121000,1,t,Saint-Louis,t,terrain_exigu,,conditionnelle_operation,AU,1AUd
+97414000EN3798,2024-1188226,2024-05-30,121000,405,t,Saint-Louis,t,,declasse_non_constructible,,U,UB
+97404000AL1611,2022-1640522,2022-12-14,120209,12,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97406000AI0868,2023-1320291,2023-11-10,120000,67,t,La Plaine-des-Palmistes,t,terrain_exigu,,,U,Ub
+97422000BP1745,2021-1679633,2021-01-27,120000,924,t,Le Tampon,t,habitat_interdit:Ue,,,U,Ue
+97406000AC0504,2024-1189932,2024-08-16,120000,52,t,La Plaine-des-Palmistes,t,terrain_exigu,,,U,Ub
+97408000AB0284,2022-1633433,2022-04-07,120000,300,t,La Possession,t,surface_incertaine,,,U,UBc
+97424000AM1011,2024-1191110,2024-10-15,119746.87,181,t,Cilaos,t,terrain_exigu,,conditionnelle_operation,AU,AUb2
+97410000AS0853,2022-1637845,2022-09-22,119100,3,t,Saint-Benoît,t,terrain_exigu,,,U,Ub
+97414000HE0586,2024-1186023,2024-01-29,118000,8,t,Saint-Louis,t,terrain_exigu,,,U,UC
+97416000EW1179,2022-1637102,2022-08-29,118000,426,t,Saint-Pierre,t,,declasse_non_constructible,,U,Ug
+97414000HE0579,2024-1186023,2024-01-29,118000,85,t,Saint-Louis,t,terrain_exigu,,,U,UC
+97422000AD0951,2025-1272384,2025-11-21,116000,500,t,Le Tampon,t,,declasse_non_constructible,,U,Ud
+97422000BK2231,2022-1636166,2022-07-26,115900,50,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97422000BE2118,2021-1680058,2021-03-19,115480,114,t,Le Tampon,t,terrain_exigu,declasse_non_constructible,,U,Ua
+97407000BI0409,2021-1674015,2021-04-23,115010,248,t,Le Port,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUa
+97410000BD0183,2023-1318714,2023-09-05,115000,879,t,Saint-Benoît,t,,declasse_zone_fermee,,U,Ue
+97418000AS1074,2021-1674355,2021-05-07,115000,8,t,Sainte-Marie,t,terrain_exigu,,,U,UC
+97414000CV0903,2021-1681278,2021-07-13,114500,108,t,Saint-Louis,t,terrain_exigu,,conditionnelle_operation,AU,1AUd
+97414000CV0942,2021-1681278,2021-07-13,114500,2,t,Saint-Louis,t,terrain_exigu,,conditionnelle_operation,AU,1AUd
+97411000EO0206,2023-1313554,2023-01-30,114500,14,t,Saint-Denis,t,terrain_exigu,,,U,Uj
+97416000ET1990,2021-1681188,2021-07-05,114110,33,t,Saint-Pierre,t,terrain_exigu,,,U,UfCA
+97414000EN3799,2024-1186477,2024-02-29,112200,326,t,Saint-Louis,t,,declasse_non_constructible,,U,UB
+97411000ER0150,2024-1191275,2024-03-28,112000,443,t,Saint-Denis,t,terrain_exigu,,,N,N
+97411000ER0151,2024-1191275,2024-03-28,112000,433,t,Saint-Denis,t,terrain_exigu,,,N,N
+97409000AY1051,2022-1631363,2022-01-21,111980,835,t,Saint-André,t,terrain_exigu,declasse_non_constructible,,U,UC
+97410000AS1458,2025-1266604,2025-01-28,111300,356,t,Saint-Benoît,t,,,générique,AU,AUa5
+97410000AS1440,2025-1271273,2025-10-02,110100,357,t,Saint-Benoît,t,,,générique,AU,AUa5
+97413000CN0755,2021-1677520,2021-11-30,110000,517,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UB
+97416000CZ2248,2021-1680627,2021-05-06,110000,102,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97413000CN0777,2021-1677520,2021-11-30,110000,99,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UB
+97414000EO1364,2022-1632054,2022-02-28,110000,420,t,Saint-Louis,t,,,declasse_au_statut_inconnu,AU,2AUb2
+97410000AS1459,2025-1268450,2025-05-28,109760,392,t,Saint-Benoît,t,,,générique,AU,AUa5
+97416000ET1985,2021-1681619,2021-08-13,109610,19,t,Saint-Pierre,t,terrain_exigu,,,U,UfCA
+97414000CP0756,2022-1631234,2022-01-17,108000,365,t,Saint-Louis,t,terrain_exigu,,,U,UD
+97412000CT0741,2022-1635897,2022-06-28,107600,217,t,Saint-Joseph,t,terrain_exigu,declasse_non_constructible,,U,U5
+97412000CT0747,2022-1635897,2022-06-28,107600,23,t,Saint-Joseph,t,terrain_exigu,,,U,U5
+97412000CT0744,2022-1635897,2022-06-28,107600,155,t,Saint-Joseph,t,terrain_exigu,declasse_non_constructible,,U,U5
+97416000ET1989,2022-1631749,2022-02-09,107290,22,t,Saint-Pierre,t,terrain_exigu,,,U,UfCA
+97416000CW2858,2024-1186101,2024-01-30,107000,24,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97410000AK0667,2022-1636361,2022-07-13,106502,1657,t,Saint-Benoît,t,terrain_exigu,,,U,Ua
+97410000AK0408,2022-1636361,2022-07-13,106502,3184,t,Saint-Benoît,t,terrain_exigu,,,U,Ua
+97417000BD1429,2021-1681667,2021-08-12,105200,1095,t,Saint-Philippe,t,hors_plu,non_verifiable,,,
+97401000AR1652,2024-1187681,2024-04-23,105000,266,t,Les Avirons,t,terrain_exigu,,,N,N
+97401000AR1652,2024-1187431,2024-04-15,105000,266,t,Les Avirons,t,terrain_exigu,,,N,N
+97410000CL0855,2021-1675830,2021-08-13,105000,565,t,Saint-Benoît,t,zone_non_constructible:Ns28,,,N,Ns28
+97414000EN3791,2021-1682376,2021-09-21,104500,469,t,Saint-Louis,t,,,declasse_au_statut_inconnu,AU,2AUb2
+97418000AC1191,2024-1191538,2024-10-23,104400,58,t,Sainte-Marie,t,terrain_exigu,,,U,UD
+97405000AW1621,2021-1680164,2021-03-19,104000,367,t,Petite-Île,t,terrain_exigu,declasse_non_constructible,,U,UD
+97409000AC1069,2023-1315315,2023-04-14,103970,361,t,Saint-André,t,,declasse_non_constructible,générique,AU,1AUc
+97402000AD1129,2024-1187747,2024-04-15,103806.95,961,t,Bras-Panon,t,habitat_interdit:1AUe,,conditionnelle_operation,AU,1AUe
+97420000AY0366,2023-1314596,2023-02-23,103000,126,t,Sainte-Suzanne,t,terrain_exigu,,,U,UB
+97409000AR2512,2021-1673186,2021-02-15,103000,387,t,Saint-André,t,,,générique,AU,1AUc
+97416000ET1986,2022-1631699,2022-02-04,102690,2,t,Saint-Pierre,t,terrain_exigu,,,U,UfCA
+97410000AS1463,2024-1191066,2024-10-21,102600,342,t,Saint-Benoît,t,,,générique,AU,AUa5
+97424000AI2004,2023-1320615,2023-11-15,102560,82,t,Cilaos,t,terrain_exigu,,,U,Ub
+97409000AR2518,2021-1676220,2021-09-14,102523,387,t,Saint-André,t,,,générique,AU,1AUc
+97410000AS1462,2024-1186141,2024-01-31,101890,322,t,Saint-Benoît,t,,,générique,AU,AUa5
+97416000HN1302,2021-1682112,2021-09-01,100000,86,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97417000AT1474,2023-1320517,2023-11-10,100000,141,t,Saint-Philippe,t,hors_plu,non_verifiable,,,
+97415000ER1590,2022-1639333,2022-11-04,100000,386,t,Saint-Paul,t,terrain_exigu,,,U,U5b
+97415000ER1590,2022-1639489,2022-11-04,100000,386,t,Saint-Paul,t,terrain_exigu,,,U,U5b
+97417000AT1475,2023-1320517,2023-11-10,100000,112,t,Saint-Philippe,t,hors_plu,non_verifiable,,,
+97417000AS0038,2021-1676916,2021-10-18,100000,1054,t,Saint-Philippe,t,hors_plu,non_verifiable,,,
+97411000BZ1729,2024-1186083,2024-02-05,100000,277,t,Saint-Denis,t,terrain_exigu,,,U,Uh
+97412000AZ0931,2024-1192275,2024-11-26,100000,284,t,Saint-Joseph,t,,declasse_non_constructible,conditionnelle_operation,AU,1AU5
+97416000CW2830,2023-1317253,2023-06-13,100000,1,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97416000CW2832,2023-1317253,2023-06-13,100000,15,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97416000CW2833,2023-1317253,2023-06-13,100000,4,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97412000AM2003,2023-1317909,2023-06-30,98600,112,t,Saint-Joseph,t,terrain_exigu,declasse_non_constructible,,U,U5
+97410000AS1438,2024-1187974,2024-05-23,98356.86,311,t,Saint-Benoît,t,,,générique,AU,AUa5
+97410000AS1420,2024-1186239,2024-02-12,98040.6,310,t,Saint-Benoît,t,,,générique,AU,AUa5
+97409000BL0217,2024-1189353,2024-08-01,98000,82,t,Saint-André,t,terrain_exigu,,,U,UB
+97412000AZ0934,2024-1192920,2024-12-30,98000,285,t,Saint-Joseph,t,,declasse_non_constructible,conditionnelle_operation,AU,1AU5
+97422000BH2034,2021-1680640,2021-05-11,98000,4,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97410000AS1437,2024-1187894,2024-04-29,97408.08,308,t,Saint-Benoît,t,,,générique,AU,AUa5
+97422000BP1958,2024-1187472,2024-04-17,97206.18,1017,t,Le Tampon,t,habitat_interdit:1AUe,declasse_zone_fermee,conditionnelle_operation,AU,1AUe
+97422000BP1959,2024-1187472,2024-04-17,97206.18,1179,t,Le Tampon,t,habitat_interdit:1AUe,declasse_zone_fermee,conditionnelle_operation,AU,1AUe
+97422000BP2000,2024-1187472,2024-04-17,97206.18,118,t,Le Tampon,t,habitat_interdit:1AUe,declasse_zone_fermee,conditionnelle_operation,AU,1AUe
+97410000AS1453,2024-1187047,2024-03-28,97091.82,307,t,Saint-Benoît,t,,,générique,AU,AUa5
+97412000AZ0935,2023-1317732,2023-07-07,97000,269,t,Saint-Joseph,t,,declasse_non_constructible,conditionnelle_operation,AU,1AU5
+97410000AS1429,2025-1267136,2025-03-10,96300,306,t,Saint-Benoît,t,,,générique,AU,AUa5
+97410000AS1424,2025-1267387,2025-03-31,96143.04,304,t,Saint-Benoît,t,,,générique,AU,AUa5
+97409000AT1666,2024-1187591,2024-04-11,96100,412,t,Saint-André,t,,declasse_non_constructible,,U,UC
+97422000BP1940,2021-1681561,2021-07-23,96000,314,t,Le Tampon,t,,,declasse_au_statut_inconnu,AU,2AUc
+97410000AS1431,2024-1188627,2024-06-24,95194.26,301,t,Saint-Benoît,t,,,générique,AU,AUa5
+97409000BN0318,2021-1677302,2021-10-28,95000,10061,t,Saint-André,t,zone_non_constructible:A,,,A,A
+97410000AS1432,2024-1186631,2024-03-06,94878,300,t,Saint-Benoît,t,,,générique,AU,AUa5
+97410000AS1435,2024-1188591,2024-06-24,94878,300,t,Saint-Benoît,t,,,générique,AU,AUa5
+97410000AS1414,2024-1188630,2024-06-26,94500,305,t,Saint-Benoît,t,,,générique,AU,AUa5
+97422000BD2869,2024-1187792,2024-04-24,94500,686,t,Le Tampon,t,terrain_exigu,,,N,Nco
+97410000AS1427,2024-1189827,2024-08-28,94245.48,298,t,Saint-Benoît,t,,,générique,AU,AUa5
+97410000AS1430,2024-1188592,2024-06-24,93929.22,297,t,Saint-Benoît,t,,,générique,AU,AUa5
+97412000CT0747,2022-1632407,2022-03-11,93000,23,t,Saint-Joseph,t,terrain_exigu,,,U,U5
+97412000CT0744,2022-1632407,2022-03-11,93000,155,t,Saint-Joseph,t,terrain_exigu,declasse_non_constructible,,U,U5
+97412000CT0741,2022-1632407,2022-03-11,93000,217,t,Saint-Joseph,t,terrain_exigu,declasse_non_constructible,,U,U5
+97410000AS1464,2024-1187440,2024-04-18,92980.44,294,t,Saint-Benoît,t,,,générique,AU,AUa5
+97417000AS0308,2021-1679178,2021-12-31,92800,6,t,Saint-Philippe,t,hors_plu,,,,
+97417000AS0286,2021-1679178,2021-12-31,92800,715,t,Saint-Philippe,t,hors_plu,,,,
+97417000AS0304,2021-1679178,2021-12-31,92800,22,t,Saint-Philippe,t,hors_plu,,,,
+97417000AS0307,2021-1679178,2021-12-31,92800,185,t,Saint-Philippe,t,hors_plu,non_verifiable,,,
+97414000HH0517,2022-1639875,2022-11-17,92000,65,t,Saint-Louis,t,terrain_exigu,,,U,UC2
+97410000AH1166,2024-1190270,2024-09-06,92000,1,t,Saint-Benoît,t,terrain_exigu,,,U,Ub
+97410000AS1426,2024-1185781,2024-01-09,91399.14,289,t,Saint-Benoît,t,,,générique,AU,AUa5
+97422000AH0444,2022-1633797,2022-04-29,91000,101,t,Le Tampon,t,habitat_interdit:UCto,,,U,UCto
+97402000AK1971,2024-1193208,2024-10-10,91000,240,t,Bras-Panon,t,,declasse_non_constructible,,U,Ub
+97422000AH0445,2022-1633797,2022-04-29,91000,746,t,Le Tampon,t,habitat_interdit:UCto,declasse_zone_fermee,,U,UCto
+97406000AC0538,2021-1676898,2021-10-20,90900,1318,t,La Plaine-des-Palmistes,t,habitat_interdit:Ue,declasse_zone_fermee,,U,Ue
+97405000AL1676,2025-1272649,2025-11-24,90000,268,t,Petite-Île,t,terrain_exigu,,,U,UC
+97422000BN2950,2023-1314131,2023-02-01,90000,48,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97405000AM0873,2022-1632894,2022-03-21,90000,74,t,Petite-Île,t,terrain_exigu,,,U,UC
+97422000BN2946,2023-1314131,2023-02-01,90000,15,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97422000BN1616,2023-1314131,2023-02-01,90000,69,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97422000BK2268,2022-1635827,2022-07-13,90000,50,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97414000EM0840,2022-1631912,2022-02-24,90000,524,t,Saint-Louis,t,terrain_exigu,,conditionnelle_operation,AU,1AUb2
+97405000AM0868,2022-1632894,2022-03-21,90000,64,t,Petite-Île,t,terrain_exigu,,,U,UC
+97405000AZ0949,2022-1636005,2022-07-12,90000,28,t,Petite-Île,t,terrain_exigu,,,U,UD
+97411000BE0030,2023-1316380,2023-05-25,90000,447,t,Saint-Denis,t,terrain_exigu,,,U,Ui
+97416000CW2859,2023-1316170,2023-04-27,89000,23,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97405000AM0872,2023-1318614,2023-08-30,89000,94,t,Petite-Île,t,terrain_exigu,,,U,UC
+97405000AM0867,2023-1318614,2023-08-30,89000,90,t,Petite-Île,t,terrain_exigu,,,U,UC
+97412000BT0608,2023-1314226,2023-02-17,89000,97,t,Saint-Joseph,t,terrain_exigu,,,U,U3
+97414000EO1392,2021-1682035,2021-08-24,88000,476,t,Saint-Louis,t,,,declasse_au_statut_inconnu,AU,2AUb2
+97414000EN3919,2022-1636305,2022-07-28,87000,422,t,Saint-Louis,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUb1
+97422000AX1633,2022-1635158,2022-06-22,86000,400,t,Le Tampon,t,zone_non_constructible:2AUc,declasse_zone_fermee,declasse_au_statut_inconnu,AU,2AUc
+97410000AH1169,2022-1639249,2022-11-02,85700,1,t,Saint-Benoît,t,terrain_exigu,,,U,Ub
+97413000CH0775,2021-1679586,2021-01-13,85500,2,t,Saint-Leu,t,terrain_exigu,,,U,UD
+97418000AE0403,2021-1673487,2021-03-24,85000,92,t,Sainte-Marie,t,terrain_exigu,,,U,UB
+97410000AC0678,2022-1639894,2022-11-28,85000,450,t,Saint-Benoît,t,zone_non_constructible:Ns21,,,N,Ns21
+97410000AC0679,2022-1639890,2022-11-28,85000,451,t,Saint-Benoît,t,zone_non_constructible:Ns21,,,N,Ns21
+97422000BD3718,2024-1192030,2024-11-27,81510,266,t,Le Tampon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUb
+97416000IL0598,2021-1678624,2021-11-30,81451,96,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97415000HK0495,2021-1678422,2021-11-25,81320,128,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,conditionnelle_operation,AU,AU2h
+97413000CR1001,2021-1681766,2021-08-20,81000,28,t,Saint-Leu,t,terrain_exigu,,,U,UD
+97409000AY1051,2021-1673235,2021-02-24,80500,835,t,Saint-André,t,terrain_exigu,declasse_non_constructible,,U,UC
+97409000AY1051,2022-1640375,2022-12-21,80000,835,t,Saint-André,t,terrain_exigu,declasse_non_constructible,,U,UC
+97409000AY1051,2023-1314931,2023-03-31,80000,835,t,Saint-André,t,terrain_exigu,declasse_non_constructible,,U,UC
+97409000BN0318,2021-1675943,2021-08-11,80000,10061,t,Saint-André,t,zone_non_constructible:A,,,A,A
+97405000BI1233,2024-1185940,2024-01-25,80000,33,t,Petite-Île,t,terrain_exigu,,,U,UB
+97416000HI1109,2024-1187328,2024-04-08,80000,26,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97422000CX1233,2021-1680353,2021-04-21,78208,544,t,Le Tampon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUc
+97412000BK1203,2022-1635706,2022-07-04,77051,595,t,Saint-Joseph,t,habitat_interdit:U6,,,U,U6
+97412000BK1192,2022-1635706,2022-07-04,77051,1627,t,Saint-Joseph,t,habitat_interdit:U6,,,U,U6
+97412000BK1195,2022-1635706,2022-07-04,77051,23,t,Saint-Joseph,t,habitat_interdit:U6,,,U,U6
+97405000AD0652,2024-1185945,2024-01-19,77000,390,t,Petite-Île,t,,declasse_non_constructible,,U,UC
+97422000AD0771,2021-1682278,2021-09-29,75700,61,t,Le Tampon,t,terrain_exigu,,,U,Ud
+97417000AS0365,2022-1634783,2022-06-14,75173,608,t,Saint-Philippe,t,hors_plu,,,,
+97424000AI1943,2023-1316306,2023-04-26,75000,1153,t,Cilaos,t,terrain_exigu,,conditionnelle_operation,AU,AUb
+97412000CS0749,2022-1633730,2022-04-15,75000,871,t,Saint-Joseph,t,,declasse_zone_fermee,,A,A
+97414000HI1018,2021-1680631,2021-05-07,75000,59,t,Saint-Louis,t,terrain_exigu,,,U,UC
+97414000EN4165,2025-1272068,2025-10-31,75000,379,t,Saint-Louis,t,,declasse_non_constructible,,U,UB
+97412000CX0926,2022-1631688,2022-02-11,75000,172,t,Saint-Joseph,t,terrain_exigu,declasse_non_constructible,,U,U5
+97410000AV0674,2024-1190435,2024-09-13,74449,123,t,Saint-Benoît,t,,declasse_zone_fermee,,A,A
+97406000AV1212,2021-1677512,2021-11-17,74000,243,t,La Plaine-des-Palmistes,t,terrain_exigu,declasse_non_constructible,,U,Ub
+97422000CX1166,2022-1637558,2022-09-14,74000,154,t,Le Tampon,t,terrain_exigu,declasse_non_constructible,,U,Uc
+97410000CL0842,2025-1267731,2025-04-14,74000,2291,t,Saint-Benoît,t,zone_non_constructible:A,,,A,A
+97410000CL0841,2025-1267731,2025-04-14,74000,1862,t,Saint-Benoît,t,zone_non_constructible:A,,,A,A
+97422000CX1167,2022-1637558,2022-09-14,74000,190,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97414000EN3761,2023-1319007,2023-08-29,72821.54,545,t,Saint-Louis,t,habitat_interdit:1AUe,declasse_zone_fermee,conditionnelle_operation,AU,1AUe
+97414000EN3832,2021-1680922,2021-06-07,72320,508,t,Saint-Louis,t,terrain_exigu,,,U,UB
+97414000CV0543,2023-1317622,2023-06-29,72000,62,t,Saint-Louis,t,terrain_exigu,,,U,UD
+97417000AS0287,2022-1631373,2022-01-27,72000,754,t,Saint-Philippe,t,hors_plu,non_verifiable,,,
+97417000AS0303,2022-1631373,2022-01-27,72000,4,t,Saint-Philippe,t,hors_plu,,,,
+97405000AI0919,2021-1679926,2021-03-02,72000,87,t,Petite-Île,t,terrain_exigu,,,U,UD
+97424000AI1997,2022-1634733,2022-06-08,72000,12,t,Cilaos,t,terrain_exigu,,,U,Ub
+97410000AV0675,2024-1192042,2024-11-25,71958.93,47,t,Saint-Benoît,t,terrain_exigu,,,A,A
+97422000DE0938,2022-1633370,2022-04-13,71000,21,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97413000CC0912,2024-1192667,2024-12-19,70000,123,t,Saint-Leu,t,terrain_exigu,declasse_non_constructible,,U,UC
+97406000AP0364,2021-1673988,2021-04-16,70000,138,t,La Plaine-des-Palmistes,t,terrain_exigu,,,U,Ur
+97406000AP0362,2021-1673988,2021-04-16,70000,208,t,La Plaine-des-Palmistes,t,terrain_exigu,,,U,Ur
+97412000CS0756,2022-1638558,2022-10-21,70000,1135,t,Saint-Joseph,t,,declasse_zone_fermee,,A,A
+97411000IE0376,2025-1270935,2025-10-02,70000,274,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97417000AT0330,2023-1315373,2023-04-17,70000,464,t,Saint-Philippe,t,hors_plu,,,,
+97404000AM1083,2021-1681683,2021-07-09,69600,237,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1079,2021-1681683,2021-07-09,69600,368,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1076,2021-1681683,2021-07-09,69600,56,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1080,2021-1681683,2021-07-09,69600,9,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1077,2021-1681683,2021-07-09,69600,236,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1081,2021-1681683,2021-07-09,69600,306,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1078,2021-1681683,2021-07-09,69600,48,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97404000AM1082,2021-1681683,2021-07-09,69600,132,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97415000EO1087,2024-1187120,2024-04-05,69000,102,t,Saint-Paul,t,terrain_exigu,,conditionnelle_operation,AU,AU5a
+97422000CX1232,2021-1680617,2021-05-06,68179,441,t,Le Tampon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUc
+97415000EW1942,2023-1317410,2023-06-28,67731,37,t,Saint-Paul,t,terrain_exigu,,,U,U2c
+97422000BD3717,2023-1317602,2023-07-13,67500,287,t,Le Tampon,t,,declasse_non_constructible,conditionnelle_operation,AU,1AUb
+97410000CD0940,2023-1316178,2023-05-24,66388.44,443,t,Saint-Benoît,t,,,générique,AU,AUb19
+97407000AH1355,2024-1193163,2024-12-30,65100,90,t,Le Port,t,terrain_exigu,,,U,Uc
+97422000CX1170,2021-1681041,2021-06-14,65000,4,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97417000AS0366,2023-1318833,2023-09-08,65000,613,t,Saint-Philippe,t,hors_plu,non_verifiable,,,
+97422000CX1167,2021-1681041,2021-06-14,65000,190,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97406000AC0280,2023-1318268,2023-07-21,65000,586,t,La Plaine-des-Palmistes,t,habitat_interdit:Ue,declasse_zone_fermee,,U,Ue
+97406000AC0279,2023-1318268,2023-07-21,65000,623,t,La Plaine-des-Palmistes,t,habitat_interdit:Ue,declasse_zone_fermee,,U,Ue
+97422000CX1165,2021-1681041,2021-06-14,65000,105,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97412000CE2826,2025-1267746,2025-04-07,65000,302,t,Saint-Joseph,t,,declasse_non_constructible,,U,U5ru
+97412000BT0176,2024-1192004,2024-11-29,65000,229,t,Saint-Joseph,t,,declasse_non_constructible,,U,U3
+97404000AM1124,2021-1682130,2021-07-09,64100,541,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97410000CD0946,2023-1318566,2023-08-25,63703.06,380,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0939,2023-1320024,2023-10-30,63703.06,416,t,Saint-Benoît,t,,,générique,AU,AUb19
+97411000EN0736,2021-1673091,2021-02-17,63625,302,t,Saint-Denis,t,terrain_exigu,declasse_non_constructible,,U,Um
+97411000EN0738,2021-1673091,2021-02-17,63625,29,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97410000CD0945,2023-1316264,2023-05-23,63404.69,429,t,Saint-Benoît,t,,,générique,AU,AUb19
+97418000AT0865,2021-1673923,2021-03-31,63040,302,t,Sainte-Marie,t,habitat_interdit:UEm,declasse_zone_fermee,,U,UEm
+97406000AV1212,2024-1191158,2024-10-29,63000,243,t,La Plaine-des-Palmistes,t,terrain_exigu,declasse_non_constructible,,U,Ub
+97410000CD0892,2023-1315174,2023-03-27,61912.81,475,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0936,2023-1317214,2023-06-27,61912.81,195,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0950,2024-1192224,2024-12-05,61912.81,75,t,Saint-Benoît,t,terrain_exigu,,générique,AU,AUb19
+97410000CD0933,2024-1192224,2024-12-05,61912.81,354,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0953,2023-1317214,2023-06-27,61912.81,229,t,Saint-Benoît,t,,,générique,AU,AUb19
+97407000AO1752,2023-1316975,2023-06-22,61260,126,t,Le Port,t,terrain_exigu,,,U,Uc
+97410000CD0897,2022-1640137,2022-12-08,60122.56,381,t,Saint-Benoît,t,,,générique,AU,AUb19
+97411000EL0500,2023-1313876,2023-02-09,60000,106,t,Saint-Denis,t,terrain_exigu,declasse_non_constructible,,U,Um
+97422000CX1073,2022-1636168,2022-07-26,60000,114,t,Le Tampon,t,terrain_exigu,declasse_non_constructible,,U,Uc
+97421000BC0154,2023-1321959,2023-06-22,60000,1039,t,Salazie,t,terrain_exigu,,,N,N
+97412000CV0202,2021-1680826,2021-05-31,60000,2500,t,Saint-Joseph,t,zone_non_constructible:Ntoh,,,N,Ntoh
+97404000AX0477,2022-1640386,2022-12-07,60000,265,t,L'Étang-Salé,t,terrain_exigu,declasse_non_constructible,,U,UA
+97414000DT0711,2024-1189035,2024-07-15,60000,1035,t,Saint-Louis,t,terrain_exigu,,,U,UC2
+97422000BP1817,2021-1682107,2021-09-07,60000,366,t,Le Tampon,t,terrain_exigu,,,U,Uav
+97410000CD0943,2023-1316342,2023-05-26,59973.88,401,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0896,2023-1315883,2023-04-28,59973.38,390,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0912,2023-1317601,2023-07-11,59824.19,371,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0895,2022-1640857,2022-12-30,59824.19,399,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0944,2023-1316496,2023-05-26,59824.19,400,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0941,2023-1316355,2023-05-31,59824.19,400,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0942,2023-1321158,2023-11-30,59675,399,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0909,2023-1315892,2023-05-12,59675,368,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0911,2024-1186210,2024-01-24,59525.81,347,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0951,2024-1188625,2024-06-19,59302.03,135,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0934,2024-1188625,2024-06-19,59302.03,265,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0935,2023-1321050,2023-11-24,59227.44,244,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0952,2023-1321050,2023-11-24,59227.44,166,t,Saint-Benoît,t,,,générique,AU,AUb19
+97415000CT2883,2022-1640070,2022-12-01,58933.85,40,t,Saint-Paul,t,terrain_exigu,,conditionnelle_operation,AU,AU3c
+97410000CD0954,2023-1317207,2023-06-26,58854.47,273,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0937,2023-1317207,2023-06-26,58854.47,125,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0923,2022-1639201,2022-11-09,58481.5,346,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0924,2022-1639200,2022-10-31,58481.5,396,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0915,2025-1272435,2025-11-28,58332.31,344,t,Saint-Benoît,t,,,générique,AU,AUb19
+97412000CT0744,2022-1635231,2022-06-15,58200,155,t,Saint-Joseph,t,terrain_exigu,declasse_non_constructible,,U,U5
+97412000CT0741,2022-1635231,2022-06-15,58200,217,t,Saint-Joseph,t,terrain_exigu,declasse_non_constructible,,U,U5
+97412000CT0743,2022-1635231,2022-06-15,58200,129,t,Saint-Joseph,t,,declasse_non_constructible,,U,U5
+97412000CT0742,2022-1635231,2022-06-15,58200,15,t,Saint-Joseph,t,terrain_exigu,,,U,U5
+97412000CT0747,2022-1635231,2022-06-15,58200,23,t,Saint-Joseph,t,terrain_exigu,,,U,U5
+97410000CD0913,2024-1188042,2024-05-28,57735.56,412,t,Saint-Benoît,t,,,générique,AU,AUb19
+97409000AN0671,2024-1192475,2024-12-23,57620,1551,t,Saint-André,t,terrain_exigu,,,U,UB
+97414000EN3833,2021-1682442,2021-10-06,57600,441,t,Saint-Louis,t,terrain_exigu,,,U,UB
+97410000CD0891,2023-1315061,2023-03-24,57288,441,t,Saint-Benoît,t,,,générique,AU,AUb19
+97414000EN3833,2023-1314834,2023-03-09,57200,441,t,Saint-Louis,t,terrain_exigu,,,U,UB
+97407000AO1558,2021-1677567,2021-11-09,56962.42,100,t,Le Port,t,terrain_exigu,,,U,Uc
+97407000AO1557,2021-1677567,2021-11-09,56962.42,100,t,Le Port,t,terrain_exigu,,,U,Uc
+97410000CD0900,2022-1640298,2022-12-20,56392.88,315,t,Saint-Benoît,t,,,générique,AU,AUb19
+97418000AS1017,2024-1192598,2024-12-23,56015,149,t,Sainte-Marie,t,terrain_exigu,,declasse_au_statut_inconnu,AU,2AUb
+97418000BO0182,2024-1192598,2024-12-23,56015,202,t,Sainte-Marie,t,terrain_exigu,,,N,N
+97418000BD0252,2024-1192598,2024-12-23,56015,73,t,Sainte-Marie,t,terrain_exigu,,,U,UC
+97418000BD0223,2024-1192598,2024-12-23,56015,99,t,Sainte-Marie,t,terrain_exigu,,,U,UC
+97418000AT2430,2024-1192598,2024-12-23,56015,32,t,Sainte-Marie,t,terrain_exigu,,,U,UB
+97418000AS1388,2024-1192598,2024-12-23,56015,51,t,Sainte-Marie,t,terrain_exigu,,,U,UAb
+97418000AS1383,2024-1192598,2024-12-23,56015,1712,t,Sainte-Marie,t,terrain_exigu,,,U,UAb
+97418000AS1382,2024-1192598,2024-12-23,56015,356,t,Sainte-Marie,t,zone_non_constructible:N,,,N,N
+97418000AS1380,2024-1192598,2024-12-23,56015,1623,t,Sainte-Marie,t,terrain_exigu,,,U,UAb
+97418000AS1378,2024-1192598,2024-12-23,56015,1409,t,Sainte-Marie,t,terrain_exigu,,,N,N
+97418000AS1371,2024-1192598,2024-12-23,56015,2068,t,Sainte-Marie,t,terrain_exigu,,,N,N
+97418000AS1278,2024-1192598,2024-12-23,56015,2584,t,Sainte-Marie,t,terrain_exigu,,,N,N
+97418000AS1274,2024-1192598,2024-12-23,56015,4679,t,Sainte-Marie,t,terrain_exigu,,,N,N
+97417000BD1438,2025-1268882,2025-06-05,55000,392,t,Saint-Philippe,t,hors_plu,non_verifiable,,,
+97417000AT0141,2023-1321589,2023-12-22,55000,376,t,Saint-Philippe,t,hors_plu,non_verifiable,,,
+97415000CY1172,2022-1638785,2022-10-17,55000,98,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,,U,U2c
+97410000CD0926,2024-1188087,2024-05-31,54751.81,498,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0920,2022-1639194,2022-10-31,54005.88,411,t,Saint-Benoît,t,,,générique,AU,AUb19
+97411000AV0312,2021-1677591,2021-11-23,53921.22,700,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97410000CD0921,2022-1639190,2022-10-31,53707.5,424,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0899,2022-1640856,2022-12-30,53409.13,306,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0922,2023-1320028,2023-10-31,52961.56,401,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0930,2022-1639199,2022-10-31,52812.38,349,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0904,2024-1186272,2024-01-31,52514,328,t,Saint-Benoît,t,,,générique,AU,AUb19
+97422000BL1751,2021-1680817,2021-05-28,52500,134,t,Le Tampon,t,terrain_exigu,declasse_non_constructible,,U,Uc
+97410000CD0928,2024-1188233,2024-05-31,52364.81,311,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0929,2022-1640657,2022-12-30,52364.81,307,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0927,2024-1188546,2024-05-31,52215.63,321,t,Saint-Benoît,t,,,générique,AU,AUb19
+97412000BK1967,2025-1268200,2025-04-30,52015,799,t,Saint-Joseph,t,habitat_interdit:1AU6,declasse_zone_fermee,conditionnelle_operation,AU,1AU6
+97410000CD0903,2022-1640651,2022-12-27,51469.69,321,t,Saint-Benoît,t,,,générique,AU,AUb19
+97405000AD0652,2023-1313362,2023-01-17,51402.82,390,t,Petite-Île,t,,declasse_non_constructible,,U,UC
+97410000CD0898,2023-1317205,2023-06-30,50574.56,303,t,Saint-Benoît,t,,,générique,AU,AUb19
+97411000CM0931,2024-1191388,2024-10-31,50000,139,t,Saint-Denis,t,terrain_exigu,declasse_non_constructible,,U,Uh
+97415000DM1454,2021-1675232,2021-06-30,50000,18,t,Saint-Paul,t,terrain_exigu,,,U,U3c
+97415000BY0458,2021-1674753,2021-06-08,50000,392,t,Saint-Paul,t,terrain_exigu,,,N,N
+97419000AR0661,2023-1313544,2023-01-23,50000,9,t,Sainte-Rose,t,terrain_exigu,,,U,Ub
+97415000BY0461,2021-1674753,2021-06-08,50000,618,t,Saint-Paul,t,terrain_exigu,,,N,N
+97419000AR0653,2023-1313544,2023-01-23,50000,29,t,Sainte-Rose,t,terrain_exigu,,,U,Ub
+97419000AR0655,2023-1313544,2023-01-23,50000,46,t,Sainte-Rose,t,terrain_exigu,,,U,Ub
+97410000BI0406,2022-1634296,2022-05-12,50000,865,t,Saint-Benoît,t,zone_non_constructible:Ns40,,,N,Ns40
+97410000CD0893,2023-1317213,2023-06-30,49828.63,311,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0948,2024-1192785,2024-12-30,49679.44,332,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0947,2024-1190259,2024-08-29,49381.06,330,t,Saint-Benoît,t,,,générique,AU,AUb19
+97419000AS0768,2021-1674961,2021-06-14,48000,6,t,Sainte-Rose,t,terrain_exigu,,,U,Uc
+97410000CD0938,2023-1316510,2023-05-26,47516.22,41,t,Saint-Benoît,t,terrain_exigu,,générique,AU,AUb19
+97410000CD0955,2023-1316510,2023-05-26,47516.22,289,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0902,2022-1640300,2022-12-16,47292.44,295,t,Saint-Benoît,t,,,générique,AU,AUb19
+97410000CD0908,2023-1317841,2023-07-28,46098.94,288,t,Saint-Benoît,t,,,générique,AU,AUb19
+97414000EN3727,2021-1682296,2021-09-23,46000,295,t,Saint-Louis,t,terrain_exigu,,,U,UB
+97405000AD0653,2021-1681906,2021-08-26,45466.54,342,t,Petite-Île,t,,declasse_non_constructible,,U,UC
+97410000CD0907,2023-1316179,2023-05-19,45353,283,t,Saint-Benoît,t,,,générique,AU,AUb19
+97412000BX1930,2025-1271391,2025-10-09,45000,645,t,Saint-Joseph,t,zone_non_constructible:A,,,A,A
+97410000CD0906,2023-1319192,2023-09-22,44000,298,t,Saint-Benoît,t,,,générique,AU,AUb19
+97407000AE0479,2025-1269023,2025-06-30,43400,247,t,Le Port,t,terrain_exigu,,,U,Ub
+97418000AO1768,2024-1190730,2024-10-02,42374.29,16,t,Sainte-Marie,t,terrain_exigu,,,U,UC1
+97418000AO1769,2024-1190730,2024-10-02,42374.29,94,t,Sainte-Marie,t,terrain_exigu,,,U,UC1
+97418000AO1691,2024-1190730,2024-10-02,42374.29,217,t,Sainte-Marie,t,surface_incertaine,,,U,UC1
+97418000AO1772,2024-1190730,2024-10-02,42374.29,103,t,Sainte-Marie,t,terrain_exigu,,,U,UC1
+97408000AC3499,2023-1316033,2023-05-17,40000,5,t,La Possession,t,terrain_exigu,,,U,UBc
+97406000AC0288,2021-1675803,2021-07-30,40000,597,t,La Plaine-des-Palmistes,t,habitat_interdit:Ue,declasse_zone_fermee,,U,Ue
+97422000BW3549,2021-1682510,2021-10-25,40000,105,t,Le Tampon,t,terrain_exigu,,,U,Ua
+97412000BK1970,2023-1317219,2023-06-27,38820,647,t,Saint-Joseph,t,habitat_interdit:1AU6,declasse_zone_fermee,conditionnelle_operation,AU,1AU6
+97412000BK1966,2023-1318058,2023-07-21,38539,592,t,Saint-Joseph,t,habitat_interdit:1AU6,declasse_zone_fermee,conditionnelle_operation,AU,1AU6
+97411000IW0237,2022-1632012,2022-03-03,38500,154,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97411000CV0753,2022-1636773,2022-08-19,37800,238,t,Saint-Denis,t,terrain_exigu,,,U,Uh
+97404000AW0586,2022-1637091,2022-08-23,36120,86,t,L'Étang-Salé,t,terrain_exigu,,,U,UA
+97406000AW0867,2024-1189071,2024-06-28,35800,718,t,La Plaine-des-Palmistes,t,terrain_exigu,,,U,Ur
+97408000AV1450,2022-1640946,2022-12-30,35000,215,t,La Possession,t,zone_non_constructible:A,,,A,A
+97416000IC0342,2022-1636131,2022-07-13,34000,162,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97423000AI0170,2023-1314500,2023-02-24,33000,1345,t,Les Trois-Bassins,t,zone_non_constructible:Nco,,,N,Nco
+97406000AI0567,2021-1675407,2021-07-15,33000,21,t,La Plaine-des-Palmistes,t,surface_incertaine,,,U,Uc
+97407000AH0668,2022-1640958,2022-12-27,31350,54,t,Le Port,t,terrain_exigu,,,U,Uc
+97424000AM1012,2024-1193085,2024-12-31,31050.35,119,t,Cilaos,t,terrain_exigu,,conditionnelle_operation,AU,AUb2
+97422000AD1092,2021-1679733,2021-02-18,30000,3048,t,Le Tampon,t,zone_non_constructible:A,,,A,A
+97411000AV0242,2024-1189123,2024-07-16,30000,502,t,Saint-Denis,t,zone_non_constructible:N,,,N,N
+97404000AC1135,2021-1679534,2021-01-29,30000,1015,t,L'Étang-Salé,t,terrain_exigu,,,A,A
+97417000AN0327,2021-1682176,2021-09-27,30000,452,t,Saint-Philippe,t,hors_plu,,,,
+97422000BD3764,2025-1271120,2025-09-29,28457.38,119,t,Le Tampon,t,terrain_exigu,,,U,Ub
+97411000AO0763,2024-1186060,2024-01-17,28001,197,t,Saint-Denis,t,terrain_exigu,,,U,Udp
+97411000AO0762,2022-1633675,2022-04-29,28001,103,t,Saint-Denis,t,terrain_exigu,,,U,Udp
+97411000AO0763,2022-1633675,2022-04-29,28001,197,t,Saint-Denis,t,terrain_exigu,,,U,Udp
+97411000AO0762,2024-1186060,2024-01-17,28001,103,t,Saint-Denis,t,terrain_exigu,,,U,Udp
+97413000DE2400,2021-1680518,2021-04-28,28000,146,t,Saint-Leu,t,terrain_exigu,,,U,UCA
+97419000AC0322,2021-1673453,2021-03-04,27900,411,t,Sainte-Rose,t,,declasse_non_constructible,,U,Uc
+97418000AP4255,2021-1674788,2021-06-09,27280,30,t,Sainte-Marie,t,terrain_exigu,,,U,UD
+97418000AP4252,2021-1674788,2021-06-09,27280,30,t,Sainte-Marie,t,terrain_exigu,,,U,UD
+97418000AP4253,2021-1674788,2021-06-09,27280,64,t,Sainte-Marie,t,terrain_exigu,,,U,UD
+97409000AX0989,2024-1186692,2024-02-21,25000,99,t,Saint-André,t,terrain_exigu,,,U,UC
+97409000AX0992,2024-1186692,2024-02-21,25000,940,t,Saint-André,t,terrain_exigu,,,N,Ntvb
+97419000AX0418,2021-1675646,2021-07-23,23940,400,t,Sainte-Rose,t,terrain_exigu,,,U,Uc
+97415000DT1083,2022-1634449,2022-06-03,23500,125,t,Saint-Paul,t,terrain_exigu,declasse_non_constructible,,U,U6c
+97411000IH0543,2024-1188461,2024-06-06,22143,13,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97415000BV1595,2024-1186538,2024-02-26,21428,68,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97416000CW2803,2022-1635173,2022-06-22,21250,81,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97411000CV0722,2021-1673560,2021-03-11,20650,118,t,Saint-Denis,t,terrain_exigu,,,U,Uh
+97411000IT0591,2025-1272339,2025-11-20,20000,251,t,Saint-Denis,t,terrain_exigu,declasse_non_constructible,,U,Um
+97414000DN0149,2021-1681213,2021-06-30,20000,278,t,Saint-Louis,t,terrain_exigu,,,N,Nco
+97412000BX1873,2025-1270728,2025-09-03,20000,681,t,Saint-Joseph,t,,declasse_zone_fermee,,A,A
+97414000DE1753,2022-1632108,2022-02-15,20000,2354,t,Saint-Louis,t,terrain_exigu,,,N,Nco
+97423000AK2035,2024-1188262,2024-06-04,19251,436,t,Les Trois-Bassins,t,terrain_exigu,,,N,Nco
+97409000BD0751,2025-1268288,2025-05-07,19056.13,45,t,Saint-André,t,terrain_exigu,,,U,UB
+97404000AI2299,2021-1678523,2021-12-16,18900,63,t,L'Étang-Salé,t,terrain_exigu,,,U,UC
+97413000DC1728,2022-1632234,2022-03-11,18309.79,68,t,Saint-Leu,t,terrain_exigu,,conditionnelle_operation,AU,AUE
+97402000AI0994,2023-1317787,2023-07-03,17760,296,t,Bras-Panon,t,terrain_exigu,,conditionnelle_operation,AU,1AUb
+97407000AX0207,2024-1191550,2024-11-19,17300,62,t,Le Port,t,zone_non_constructible:Up,,,U,Up
+97422000AE1043,2023-1321025,2023-11-28,15390,87,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97405000AW1613,2021-1680023,2021-03-19,15000,140,t,Petite-Île,t,terrain_exigu,,,U,UD
+97415000BW1931,2021-1674974,2021-06-18,15000,49,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97415000DM1026,2022-1640448,2022-12-22,15000,1,t,Saint-Paul,t,terrain_exigu,,,U,U3c
+97405000AW1614,2021-1680023,2021-03-19,15000,57,t,Petite-Île,t,terrain_exigu,,,U,UD
+97415000BW1933,2021-1674974,2021-06-18,15000,1,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97415000DM1025,2022-1640448,2022-12-22,15000,27,t,Saint-Paul,t,terrain_exigu,,,U,U3c
+97423000AB1876,2023-1317046,2023-05-31,15000,2128,t,Les Trois-Bassins,t,zone_non_constructible:N,,,N,N
+97416000HN1302,2021-1682111,2021-09-01,14900,86,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97412000AO0251,2023-1313821,2023-01-24,14500,2480,t,Saint-Joseph,t,zone_non_constructible:A,,,A,A
+97414000CT1513,2023-1320520,2023-11-04,14500,42,t,Saint-Louis,t,terrain_exigu,,,U,UD
+97411000IK0536,2023-1316399,2023-05-23,13770,7,t,Saint-Denis,t,terrain_exigu,,,U,Um
+97408000AM1339,2025-1271023,2025-10-03,12240,76,t,La Possession,t,terrain_exigu,,,U,UB
+97412000CX0697,2022-1639854,2022-11-21,12080,210,t,Saint-Joseph,t,terrain_exigu,,,U,U5
+97403000AO0392,2023-1313790,2023-02-01,12000,395,t,Entre-Deux,t,terrain_exigu,,,A,A
+97402000AH1870,2024-1191545,2024-11-08,11980,20,t,Bras-Panon,t,habitat_interdit:Ue,,,U,Ue
+97406000AI1039,2023-1316807,2023-06-15,11700,256,t,La Plaine-des-Palmistes,t,terrain_exigu,,,N,Nco
+97417000BC1120,2021-1679563,2021-02-03,11000,306,t,Saint-Philippe,t,hors_plu,non_verifiable,,,
+97407000AI1838,2021-1673056,2021-02-18,11000,44,t,Le Port,t,terrain_exigu,,,U,Uc
+97411000IL0612,2025-1268165,2025-05-05,10800,23,t,Saint-Denis,t,terrain_exigu,,,U,Uh
+97407000AL1652,2025-1270395,2025-09-02,10307.5,178,t,Le Port,t,terrain_exigu,,,U,Ub
+97407000AO1738,2023-1319971,2023-09-28,10000,51,t,Le Port,t,terrain_exigu,,,U,Uc
+97403000AP2003,2022-1639496,2022-11-18,10000,67,t,Entre-Deux,t,terrain_exigu,,,U,Ub
+97407000AO1827,2023-1313686,2023-02-02,10000,48,t,Le Port,t,terrain_exigu,,,U,Uc
+97409000BO0380,2023-1319471,2023-09-20,10000,4625,t,Saint-André,t,zone_non_constructible:A,,,A,A
+97409000BD1687,2022-1639873,2022-11-29,10000,61,t,Saint-André,t,terrain_exigu,,,U,UB
+97407000AO1873,2025-1273061,2025-12-22,10000,92,t,Le Port,t,terrain_exigu,,,U,Uc
+97407000AO1739,2023-1319971,2023-09-28,10000,39,t,Le Port,t,terrain_exigu,,,U,Uc
+97422000CL1488,2025-1268524,2025-05-28,9900,20,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97422000CL1487,2025-1268524,2025-05-28,9900,66,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97407000AS1265,2025-1266219,2025-01-16,9699.5,111,t,Le Port,t,terrain_exigu,declasse_non_constructible,,U,Uc
+97407000AL1653,2022-1632599,2022-03-17,9500,327,t,Le Port,t,terrain_exigu,,,U,Ub
+97412000BV0420,2024-1189092,2024-07-08,8800,31,t,Saint-Joseph,t,terrain_exigu,,,U,U2
+97412000AL0249,2021-1677468,2021-11-16,8367.4,832,t,Saint-Joseph,t,zone_non_constructible:Nco,,,N,Nco
+97406000AW0720,2023-1321408,2023-12-07,7800,2719,t,La Plaine-des-Palmistes,t,zone_non_constructible:A,,,A,A
+97408000AN2032,2021-1673946,2021-04-20,7560,45,t,La Possession,t,terrain_exigu,,,U,UA
+97415000EO1086,2024-1187369,2024-04-17,7560,14,t,Saint-Paul,t,terrain_exigu,,conditionnelle_operation,AU,AU5a
+97411000KE0455,2024-1192203,2024-12-16,7500,447,t,Saint-Denis,t,terrain_exigu,,,U,Uj
+97411000BZ0854,2022-1633187,2022-04-15,7500,203,t,Saint-Denis,t,,declasse_non_constructible,,U,Um
+97408000AO1811,2023-1317712,2023-07-13,7500,84,t,La Possession,t,terrain_exigu,,conditionnelle_operation,AU,AUBm
+97415000EO1073,2023-1320710,2023-11-15,7289.09,14,t,Saint-Paul,t,terrain_exigu,,conditionnelle_operation,AU,AU5a
+97415000EO1069,2025-1268138,2025-04-30,7000,36,t,Saint-Paul,t,terrain_exigu,,conditionnelle_operation,AU,AU5a
+97412000CX0521,2023-1317044,2023-06-23,6885,715,t,Saint-Joseph,t,terrain_exigu,,,A,A
+97412000CX0674,2023-1317044,2023-06-23,6885,822,t,Saint-Joseph,t,terrain_exigu,,,N,Nli
+97408000AO1873,2023-1321374,2023-12-27,6400,16,t,La Possession,t,terrain_exigu,,conditionnelle_operation,AU,AUBm
+97414000EK0671,2022-1635806,2022-06-27,6000,131,t,Saint-Louis,t,terrain_exigu,,,U,UC2
+97412000AZ0910,2022-1636608,2022-07-29,5000,25,t,Saint-Joseph,t,terrain_exigu,,,U,U5ru
+97412000AZ0909,2022-1636608,2022-07-29,5000,35,t,Saint-Joseph,t,terrain_exigu,,,U,U5ru
+97412000CX0521,2022-1639644,2022-11-07,4500,715,t,Saint-Joseph,t,terrain_exigu,,,A,A
+97412000CX0674,2022-1639644,2022-11-07,4500,822,t,Saint-Joseph,t,terrain_exigu,,,N,Nli
+97408000AW0805,2024-1187881,2024-04-30,4500,3731,t,La Possession,t,zone_non_constructible:A,,,A,A
+97412000BE0450,2024-1192766,2024-12-23,4426,39,t,Saint-Joseph,t,terrain_exigu,,,U,U5
+97415000EW1894,2021-1674206,2021-04-21,4200,20,t,Saint-Paul,t,terrain_exigu,,,U,U2c
+97413000BM0893,2024-1191887,2024-11-28,4200,41,t,Saint-Leu,t,terrain_exigu,,,U,UD
+97412000AO0940,2024-1189881,2024-08-26,4000,37,t,Saint-Joseph,t,terrain_exigu,,,U,U5vi
+97422000AS0982,2025-1269288,2025-06-30,3720,65,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97411000BK0606,2023-1318031,2023-08-03,3500,7,t,Saint-Denis,t,terrain_exigu,,,U,Ud
+97402000AI0996,2023-1317786,2023-07-03,3480,52,t,Bras-Panon,t,terrain_exigu,,conditionnelle_operation,AU,1AUb
+97406000AR0354,2025-1268237,2025-05-20,3040,65,t,La Plaine-des-Palmistes,t,terrain_exigu,,,U,Uc
+97406000AT0402,2022-1636142,2022-07-20,3000,154,t,La Plaine-des-Palmistes,t,terrain_exigu,,,N,N
+97401000AL0723,2023-1317561,2023-07-17,3000,51,t,Les Avirons,t,terrain_exigu,,,U,Uc
+97418000AN0174,2024-1189971,2024-08-29,3000,2648,t,Sainte-Marie,t,zone_non_constructible:A,,,A,A
+97416000ES2249,2025-1271840,2025-10-28,2700,38,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000ET2054,2024-1186200,2024-02-02,2560,8,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000IE1812,2022-1634727,2022-06-08,2530,26,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97403000AP1244,2023-1316602,2023-05-31,2500,123,t,Entre-Deux,t,terrain_exigu,declasse_non_constructible,,U,Ub
+97414000DH1427,2021-1679745,2021-02-04,2500,1033,t,Saint-Louis,t,terrain_exigu,,,U,UA
+97405000AM0815,2025-1267640,2025-04-07,2500,542,t,Petite-Île,t,zone_non_constructible:A,,,A,A
+97423000AB1704,2024-1192359,2024-10-29,2500,22,t,Les Trois-Bassins,t,terrain_exigu,,au_sous_plancher,AU,1AUa
+97403000AP2282,2023-1314405,2023-02-22,2100,30,t,Entre-Deux,t,terrain_exigu,,,U,Ub1
+97414000CH1927,2023-1317512,2023-07-13,2000,57,t,Saint-Louis,t,terrain_exigu,,,U,UD1
+97406000AD0657,2021-1678511,2021-12-27,2000,190,t,La Plaine-des-Palmistes,t,terrain_exigu,,,A,A
+97406000AD0655,2021-1678511,2021-12-27,2000,899,t,La Plaine-des-Palmistes,t,terrain_exigu,,,A,A
+97409000AL2385,2024-1187150,2024-03-22,2000,81,t,Saint-André,t,terrain_exigu,,,U,UB
+97409000AL2387,2024-1187150,2024-03-22,2000,23,t,Saint-André,t,terrain_exigu,,,U,UB
+97416000HO1086,2021-1682258,2021-09-27,2000,13,t,Saint-Pierre,t,terrain_exigu,,,U,Uf
+97401000AN1318,2024-1192143,2024-11-15,1500,19,t,Les Avirons,t,terrain_exigu,,,U,Ud
+97408000AM0940,2023-1314408,2023-02-27,1500,116,t,La Possession,t,terrain_exigu,,,U,UB
+97408000AM1191,2023-1314408,2023-02-27,1500,48,t,La Possession,t,terrain_exigu,,,U,UB
+97408000AM1194,2023-1314408,2023-02-27,1500,30,t,La Possession,t,terrain_exigu,,,U,UB
+97414000HE0586,2023-1318336,2023-07-13,1500,8,t,Saint-Louis,t,terrain_exigu,,,U,UC
+97414000HE0588,2023-1318336,2023-07-13,1500,8,t,Saint-Louis,t,terrain_exigu,,,U,UC
+97422000AW0741,2022-1635715,2022-07-07,1500,1579,t,Le Tampon,t,,declasse_non_constructible,,U,Ub
+97411000IL0610,2025-1268278,2025-05-16,1350,1,t,Saint-Denis,t,terrain_exigu,,,U,Uh
+97413000CG0486,2024-1187456,2024-04-12,1200,584,t,Saint-Leu,t,zone_non_constructible:APF,,,A,APF
+97408000AW1289,2023-1316320,2023-05-17,1200,11,t,La Possession,t,terrain_exigu,,,U,UBb
+97412000BY1659,2022-1640315,2022-12-13,1100,21,t,Saint-Joseph,t,terrain_exigu,,,U,U5
+97411000CY0547,2024-1187292,2024-03-28,1100,1105,t,Saint-Denis,t,zone_non_constructible:A,,,A,A
+97414000EN4072,2025-1269773,2025-07-15,1100,17,t,Saint-Louis,t,terrain_exigu,,declasse_au_statut_inconnu,AU,2AUb1
+97417000BC1211,2022-1640281,2022-12-12,1000,45,t,Saint-Philippe,t,hors_plu,,,,
+97417000BC1210,2022-1640281,2022-12-12,1000,46,t,Saint-Philippe,t,hors_plu,,,,
+97421000AY0249,2024-1189742,2024-08-06,1000,583,t,Salazie,t,terrain_exigu,,,U,UC
+97409000AL2213,2024-1192165,2024-12-16,1000,1,t,Saint-André,t,terrain_exigu,,,U,UB
+97415000AW2254,2021-1678787,2021-12-21,1000,47,t,Saint-Paul,t,terrain_exigu,,,U,U4b
+97418000AR1823,2023-1318253,2023-08-03,1000,234,t,Sainte-Marie,t,zone_non_constructible:N,,,N,N
+97407000AL1665,2023-1314601,2023-03-06,1000,3,t,Le Port,t,terrain_exigu,,,U,Uc
+97413000CY0920,2021-1678329,2021-12-21,950,38,t,Saint-Leu,t,terrain_exigu,,,U,UD
+97417000BC0767,2023-1315091,2023-03-14,807.21,353,t,Saint-Philippe,t,hors_plu,non_verifiable,,,
+97413000DM0230,2024-1189579,2024-08-14,710,65,t,Saint-Leu,t,terrain_exigu,,,U,UC
+97412000AV0975,2021-1676943,2021-10-18,700,518,t,Saint-Joseph,t,terrain_exigu,declasse_non_constructible,,U,U5vi
+97409000AL2384,2023-1316417,2023-05-30,628.54,2,t,Saint-André,t,terrain_exigu,,,U,UC
+97415000HO1052,2022-1633626,2022-04-21,600,23,t,Saint-Paul,t,terrain_exigu,,,U,U6c
+97407000AS1249,2023-1315087,2023-03-24,528,6,t,Le Port,t,terrain_exigu,,,U,Uc
+97412000CX0888,2024-1188489,2024-06-10,500,467,t,Saint-Joseph,t,zone_non_constructible:Nco,,,N,Nco
+97416000EK0485,2021-1681681,2021-07-30,480,32,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97403000AM0782,2025-1269580,2025-07-04,435,3,t,Entre-Deux,t,terrain_exigu,,,U,Ub
+97409000AL2383,2023-1314557,2023-03-13,314.27,1,t,Saint-André,t,terrain_exigu,,,U,UC
+97415000DK0797,2023-1315766,2023-04-26,129,129,t,Saint-Paul,t,zone_non_resolue:A,,,A,A
+97415000DK0795,2023-1315766,2023-04-26,129,72,t,Saint-Paul,t,zone_non_resolue:A,,,A,A
+97415000HO1099,2023-1319967,2023-10-09,1,4,t,Saint-Paul,t,zone_non_resolue:A,,,A,A
+97420000AH0423,2023-1319553,2023-09-28,1,14,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97415000HI0503,2024-1189348,2024-07-23,1,701,t,Saint-Paul,t,habitat_interdit:U2e,,,U,U2e
+97415000HI0502,2024-1189348,2024-07-23,1,672,t,Saint-Paul,t,habitat_interdit:U2e,,,U,U2e
+97415000HI0501,2024-1189348,2024-07-23,1,617,t,Saint-Paul,t,habitat_interdit:U2e,,,U,U2e
+97407000AO1718,2022-1640625,2022-12-27,1,69,t,Le Port,t,terrain_exigu,,,U,Uc
+97420000AH0345,2023-1317960,2023-07-20,1,89,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97420000AH0344,2023-1317960,2023-07-20,1,12,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97420000AH0309,2023-1319553,2023-09-28,1,4,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97420000AH0294,2023-1317960,2023-07-20,1,383,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97407000AO1784,2022-1640625,2022-12-27,1,124,t,Le Port,t,terrain_exigu,,,U,Uc
+97409000AL2010,2024-1192619,2024-12-26,1,89,t,Saint-André,t,terrain_exigu,,,U,UB
+97420000AD0416,2023-1317960,2023-07-20,1,300,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97409000AL2019,2024-1192619,2024-12-26,1,462,t,Saint-André,t,terrain_exigu,,,U,UB
+97420000AD0319,2023-1317960,2023-07-20,1,194,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97420000AC1149,2023-1319553,2023-09-28,1,7,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97420000AC0926,2023-1319553,2023-09-28,1,60,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97407000AO1785,2022-1640625,2022-12-27,1,1,t,Le Port,t,terrain_exigu,,,U,Uc
+97409000AL2021,2024-1192619,2024-12-26,1,360,t,Saint-André,t,terrain_exigu,,,U,UB
+97409000AL2171,2024-1192619,2024-12-26,1,108,t,Saint-André,t,terrain_exigu,,,U,UC
+97407000AO1846,2022-1640625,2022-12-27,1,203,t,Le Port,t,terrain_exigu,,,U,Uc
+97407000AO1847,2022-1640625,2022-12-27,1,381,t,Le Port,t,terrain_exigu,,,U,Uc
+97407000AO1848,2022-1640625,2022-12-27,1,105,t,Le Port,t,terrain_exigu,,,U,Uc
+97422000BT1329,2021-1681640,2021-08-02,1,61,t,Le Tampon,t,terrain_exigu,,,U,Ua
+97422000BT1329,2021-1682045,2021-09-07,1,61,t,Le Tampon,t,terrain_exigu,,,U,Ua
+97422000BT1330,2021-1681640,2021-08-02,1,16,t,Le Tampon,t,terrain_exigu,,,U,Ua
+97422000BT1330,2021-1682045,2021-09-07,1,16,t,Le Tampon,t,terrain_exigu,,,U,Ua
+97420000AB1980,2023-1319553,2023-09-28,1,9,t,Sainte-Suzanne,t,terrain_exigu,,,U,UB
+97420000AB1974,2023-1319553,2023-09-28,1,17,t,Sainte-Suzanne,t,terrain_exigu,,,U,UB
+97420000AB1973,2023-1319553,2023-09-28,1,65,t,Sainte-Suzanne,t,terrain_exigu,,,U,UB
+97420000AB1972,2023-1319553,2023-09-28,1,68,t,Sainte-Suzanne,t,terrain_exigu,,,U,UB
+97420000AB1145,2023-1319553,2023-09-28,1,24,t,Sainte-Suzanne,t,terrain_exigu,,,U,UB
+97420000AB1143,2023-1319553,2023-09-28,1,26,t,Sainte-Suzanne,t,terrain_exigu,,,U,UB
+97409000BE2099,2025-1271318,2025-10-07,1,427,t,Saint-André,t,terrain_exigu,,,U,UB
+97409000BE2100,2025-1271318,2025-10-07,1,201,t,Saint-André,t,terrain_exigu,declasse_non_constructible,,U,UB
+97415000AH0788,2022-1635752,2022-06-28,1,74,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97409000AL2382,2024-1192619,2024-12-26,1,105,t,Saint-André,t,terrain_exigu,,,U,UC
+97407000AO1849,2022-1640625,2022-12-27,1,67,t,Le Port,t,terrain_exigu,,,U,Uc
+97407000AO1850,2022-1640625,2022-12-27,1,137,t,Le Port,t,terrain_exigu,,,U,Uc
+97416000IL0017,2021-1681091,2021-06-23,1,49,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000IL0031,2021-1681091,2021-06-23,1,290,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000IL0455,2021-1681091,2021-06-23,1,352,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000IL0456,2021-1681091,2021-06-23,1,23,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97416000IL0457,2021-1681091,2021-06-23,1,363,t,Saint-Pierre,t,terrain_exigu,,,U,Ug
+97418000BM0535,2025-1271352,2025-10-16,1,3,t,Sainte-Marie,t,terrain_exigu,,,U,UB
+97418000BM0502,2025-1271352,2025-10-16,1,120,t,Sainte-Marie,t,terrain_exigu,declasse_non_constructible,,U,UB
+97414000EN3826,2023-1320360,2023-10-31,1,107,t,Saint-Louis,t,terrain_exigu,,conditionnelle_operation,AU,1AUb1
+97418000AV2718,2024-1190054,2024-09-04,1,449,t,Sainte-Marie,t,terrain_exigu,,,U,UB
+97418000AV1535,2023-1319389,2023-09-18,1,27,t,Sainte-Marie,t,terrain_exigu,,,U,UB
+97418000AV1534,2023-1319389,2023-09-18,1,45,t,Sainte-Marie,t,terrain_exigu,,,U,UB
+97408000AO0868,2021-1673541,2021-03-24,1,40,t,La Possession,t,terrain_exigu,,,N,N
+97408000AO0869,2021-1673541,2021-03-24,1,57,t,La Possession,t,zone_non_constructible:N,,,N,N
+97408000AO0902,2021-1673541,2021-03-24,1,1881,t,La Possession,t,zone_non_constructible:N,,,N,N
+97408000AO0912,2021-1673541,2021-03-24,1,801,t,La Possession,t,terrain_exigu,,,N,N
+97408000AO0913,2021-1673541,2021-03-24,1,1043,t,La Possession,t,zone_non_constructible:N,,,N,N
+97408000AO1021,2021-1673541,2021-03-24,1,1166,t,La Possession,t,terrain_exigu,,,N,N
+97415000AH0804,2022-1635752,2022-06-28,1,83,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97405000BE1003,2023-1314794,2023-03-09,1,142,t,Petite-Île,t,terrain_exigu,,,U,UC
+97406000AI0606,2024-1188311,2024-06-12,1,20,t,La Plaine-des-Palmistes,t,terrain_exigu,,,U,Uc
+97412000CD1429,2021-1679493,2021-01-11,1,4,t,Saint-Joseph,t,terrain_exigu,,,U,U3
+97404000AM1106,2022-1634684,2022-05-23,1,274,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97422000AK1397,2022-1637675,2022-09-06,1,668,t,Le Tampon,t,terrain_exigu,,,U,Uc
+97406000AL0659,2024-1191433,2024-11-05,1,109,t,La Plaine-des-Palmistes,t,terrain_exigu,,,U,Ub
+97406000AL0664,2024-1191433,2024-11-05,1,259,t,La Plaine-des-Palmistes,t,terrain_exigu,,,U,Ub
+97404000AM1097,2022-1634684,2022-05-23,1,1905,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97412000CD1424,2021-1679493,2021-01-11,1,58,t,Saint-Joseph,t,terrain_exigu,,,U,U3
+97406000AL0666,2024-1191433,2024-11-05,1,147,t,La Plaine-des-Palmistes,t,terrain_exigu,,,U,Ub
+97406000AL0672,2024-1191433,2024-11-05,1,196,t,La Plaine-des-Palmistes,t,terrain_exigu,,,U,Ub
+97406000AP0362,2024-1191432,2024-10-31,1,208,t,La Plaine-des-Palmistes,t,terrain_exigu,,,U,Ur
+97409000AL1971,2024-1192619,2024-12-26,1,641,t,Saint-André,t,terrain_exigu,,,U,UB
+97409000AL1986,2024-1192619,2024-12-26,1,21,t,Saint-André,t,terrain_exigu,,,U,UB
+97406000AP0364,2024-1191432,2024-10-31,1,138,t,La Plaine-des-Palmistes,t,terrain_exigu,,,U,Ur
+97412000CD1357,2021-1679493,2021-01-11,1,54,t,Saint-Joseph,t,terrain_exigu,,,U,U3
+97422000AD1220,2022-1639683,2022-11-23,1,116,t,Le Tampon,t,terrain_exigu,,,U,Ud
+97409000AL1963,2024-1192619,2024-12-26,1,14,t,Saint-André,t,terrain_exigu,,,U,UB
+97422000AD1216,2022-1639683,2022-11-23,1,136,t,Le Tampon,t,terrain_exigu,,,U,Ud
+97409000AL1961,2024-1192619,2024-12-26,1,824,t,Saint-André,t,terrain_exigu,,,U,UB
+97409000AL1954,2024-1192619,2024-12-26,1,14,t,Saint-André,t,terrain_exigu,,,U,UB
+97413000CS0354,2025-1269628,2025-07-11,1,12,t,Saint-Leu,t,surface_incertaine,,,U,UC
+97413000CS0923,2023-1320767,2023-11-27,1,20,t,Saint-Leu,t,terrain_exigu,,,U,UC
+97409000AL1949,2024-1192619,2024-12-26,1,14,t,Saint-André,t,terrain_exigu,,,U,UB
+97422000AD1210,2022-1639683,2022-11-23,1,138,t,Le Tampon,t,terrain_exigu,,,U,Ud
+97422000AD1207,2022-1639683,2022-11-23,1,83,t,Le Tampon,t,terrain_exigu,,,U,Ud
+97412000BY1839,2023-1321834,2023-12-28,1,47,t,Saint-Joseph,t,terrain_exigu,,,U,U5
+97412000BY1838,2023-1321834,2023-12-28,1,5,t,Saint-Joseph,t,terrain_exigu,,,U,U5
+97412000BY1837,2023-1321834,2023-12-28,1,17,t,Saint-Joseph,t,terrain_exigu,,,U,U5
+97408000AW1094,2021-1673508,2021-03-12,1,184,t,La Possession,t,terrain_exigu,,,U,UBb
+97404000AM1082,2022-1634684,2022-05-23,1,132,t,L'Étang-Salé,t,habitat_interdit:UE,,,U,UE
+97420000AR0938,2022-1638030,2022-09-14,1,7,t,Sainte-Suzanne,t,terrain_exigu,,,U,UB
+97409000AL1990,2024-1192619,2024-12-26,1,38,t,Saint-André,t,terrain_exigu,,,U,UB
+97420000AH0430,2023-1319553,2023-09-28,1,34,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97420000AH0425,2023-1319553,2023-09-28,1,9,t,Sainte-Suzanne,t,terrain_exigu,,,U,UA
+97407000AM0746,2021-1678410,2021-12-09,1,98,t,Le Port,t,terrain_exigu,,,U,Ua
+97407000AM0909,2021-1678410,2021-12-09,1,27,t,Le Port,t,terrain_exigu,,,U,Ua
+97407000AM1219,2021-1678410,2021-12-09,1,7,t,Le Port,t,surface_incertaine,,,U,Ua
+97407000AM1512,2021-1678410,2021-12-09,1,561,t,Le Port,t,terrain_exigu,,,U,Ua
+97407000AO1073,2022-1640625,2022-12-27,1,242,t,Le Port,t,terrain_exigu,,,U,Uc
+97407000AO1091,2022-1640625,2022-12-27,1,278,t,Le Port,t,terrain_exigu,,,U,Uc
+97407000AO1259,2022-1640625,2022-12-27,1,16,t,Le Port,t,terrain_exigu,,,U,Uc
+97407000AO1321,2022-1640625,2022-12-27,1,261,t,Le Port,t,terrain_exigu,,,U,Uc
+97407000AO1369,2022-1640625,2022-12-27,1,54,t,Le Port,t,terrain_exigu,,,U,Uc
+97415000AH1128,2022-1635746,2022-06-28,1,88,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97415000AH1125,2022-1635746,2022-06-28,1,87,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97415000AH0961,2022-1635752,2022-06-28,1,21,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97415000AH0820,2022-1635752,2022-06-28,1,12,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97415000AH0818,2022-1635752,2022-06-28,1,37,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97415000AH0816,2022-1635752,2022-06-28,1,5,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97415000AH0814,2022-1635752,2022-06-28,1,33,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97415000AH0810,2022-1635752,2022-06-28,1,33,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97415000AH0809,2022-1635752,2022-06-28,1,74,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97415000AH0807,2022-1635752,2022-06-28,1,102,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97415000AH0731,2022-1635752,2022-06-28,1,19,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97415000AH0773,2022-1635752,2022-06-28,1,452,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97423000AD0769,2025-1271769,2025-10-30,1,833,t,Les Trois-Bassins,t,terrain_exigu,,au_sous_plancher,AU,1AUb
+97415000AH0781,2022-1635752,2022-06-28,1,2,t,Saint-Paul,t,surface_incertaine,,,U,U4c
+97415000AH1184,2022-1635752,2022-06-28,1,54,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97415000AH1129,2022-1635746,2022-06-28,1,20,t,Saint-Paul,t,terrain_exigu,,,U,U4c
+97418000AT2320,2024-1189349,2024-07-29,,120,t,Sainte-Marie,t,terrain_exigu,declasse_non_constructible,,U,UB
+97415000ET1631,2023-1319111,2023-09-22,,2831,t,Saint-Paul,t,zone_non_resolue:A,,,A,A
+97415000ET0602,2023-1319111,2023-09-22,,1456,t,Saint-Paul,t,zone_non_resolue:A,,,A,A
+97418000AT2306,2025-1268171,2025-04-30,,106,t,Sainte-Marie,t,terrain_exigu,declasse_non_constructible,,U,UB
+97406000AW0720,2023-1321269,2023-12-07,,2719,t,La Plaine-des-Palmistes,t,zone_non_constructible:A,,,A,A
+97407000AD0088,2023-1316704,2023-06-20,,256,t,Le Port,t,zone_non_constructible:Uppp,,,U,Uppp
+97407000AC0007,2023-1316704,2023-06-20,,980,t,Le Port,t,zone_non_constructible:Up,,,U,Up
+97415000ET1625,2023-1319111,2023-09-22,,2019,t,Saint-Paul,t,zone_non_resolue:A,,,A,A
+97415000ET1626,2023-1319111,2023-09-22,,114,t,Saint-Paul,t,zone_non_resolue:A,,,A,A
+97415000ET1628,2023-1319111,2023-09-22,,2388,t,Saint-Paul,t,zone_non_resolue:A,,,A,A

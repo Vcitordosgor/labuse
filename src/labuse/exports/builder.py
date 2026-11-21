@@ -8,6 +8,7 @@ bout sur les quatre témoins ; les lots 2-7 ajoutent les blocs.
 """
 from __future__ import annotations
 
+import hashlib
 import logging
 from dataclasses import dataclass
 from datetime import date
@@ -371,7 +372,12 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
                or any(isinstance(a, dict) and any(
                       k in ((a.get("nature") or "") + " " + (a.get("libelle") or "")).lower()
                       for k in ("inond", "submers", "ravine", "humide")) for a in _aleas))
-    obs_pollution = industriel or _releve("sol_pollue") or _releve("casias")
+    # CHIRURGICAL-FIX-1 (LOT H pt2) — on DISTINGUE un inventaire de pollution RELEVÉ (sol pollué /
+    # casias) d'une simple ICPE à proximité : sans inventaire, on ne parle pas d'« ancien site
+    # industriel / sol pollué » (la fiche ne relève rien dans les inventaires) — juste « installation
+    # classée à proximité ». `obs_pollution` (= pose la question d'observation) reste l'union des deux.
+    pollution_inventaire = bool(_releve("sol_pollue") or _releve("casias"))
+    obs_pollution = industriel or pollution_inventaire
     # DOCS-COHERENCE-1 (C2) — question « Mouvements de sol » quand un aléa de mouvement de terrain est
     # relevé (au lieu de la question d'eau, qui ne concerne que inondation/ravine/zone humide).
     obs_mouvement = (_releve("mouvement_terrain") or any(
@@ -388,10 +394,34 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
         # la ligne HTA/HTB (< 50 m) n'a AUCUNE couche fiable dans le socle → le drapeau `obs_ligne_ht`
         # (toujours False) et sa question morte ont été retirés (cf. blocs/apporteur.py §6).
         "obs_eau": obs_eau, "obs_mouvement": obs_mouvement, "obs_pollution": obs_pollution,
+        "pollution_inventaire": pollution_inventaire,   # CHIRURGICAL-FIX-1 (LOT H pt2)
         "icpe_detail": icpe_detail,   # RECETTE-11 D7 — description/distance de l'ICPE relevée
         "voisines": voisines,
         "plan": _apporteur_plan(db, idu, voisines),
     }
+
+
+def _signature_valeurs(valeurs: dict) -> str:
+    """CHIRURGICAL-FIX-1 (LOT I pt4) — signature STABLE du contenu servi (les Valeur), pour discriminer
+    deux versions d'un document le même jour. Déterministe (tri par id) ; même données → même clé."""
+    return "|".join(f"{k}={getattr(valeurs[k], 'valeur', None)!r}" for k in sorted(valeurs))
+
+
+import re as _re_sig  # noqa: E402
+
+
+def _signature_contenu(corps: str) -> str:
+    """CHIRURGICAL-FIX-1 (LOT J pt4) — signature du CONTENU RÉELLEMENT RENDU (le corps HTML, numéro mis
+    à part). Deux documents dont le contenu AFFICHÉ diffère ne peuvent pas recevoir le même numéro ; une
+    génération à l'identique garde le même numéro. On retire d'abord les éléments VISUELS volatils (cartes
+    SVG, images encodées en base64) pour que deux rendus identiques du même contenu restent stables."""
+    t = _re_sig.sub(r"<svg\b[^>]*>.*?</svg>", "", corps, flags=_re_sig.S)
+    t = _re_sig.sub(r"data:image/[^\"')\s]+", "", t)
+    return hashlib.sha1(t.encode("utf-8")).hexdigest()
+
+
+#: jeton substitué par le vrai numéro une fois le corps rendu (sert à calculer la signature du contenu).
+_NUMERO_PLACEHOLDER = "\x00§NUMERO§\x00"
 
 
 def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = None,
@@ -407,7 +437,6 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     # NUMÉRO identiques (preuve : pdftotext diff vide). L'entrée « flash » reste acceptée
     # (facturation _flash_fulfill), le document rendu est LE Dossier.
     document = "dossier" if document == "flash" else document
-    numero = numeros.numero_rapport(document, idu, j)
     if DOCUMENTS[document] == _MIROIR:
         from . import miroir
         ids = sorted(ids_m for ids_m in miroir.ids_declares() | {"run_label_servi"}
@@ -416,19 +445,32 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
         label, _st = _LABEL["dossier"]
         adresse = f.get("adresse") or ""
         au = f.get("donnees_labuse_au") or _donnees_labuse_au() or f"{j:%d/%m/%Y}"
-        cart = Cartouche(
-            doc_title=f"LABUSE — {label}" + (f" · {adresse}" if adresse else ""),
-            doc_ref=f"{idu} · {numero}",
-            doc_foot=_FOOT["dossier"].format(au=au))
         # EXPORTS-REBRANCHEMENT-2 lot 1 — le plan de situation de §1 = le MÊME composant que
         # l'Apporteur (ortho IGN + contour + voisines du même propriétaire). Best-effort : réseau
         # indisponible / parcelle sans géométrie → cadre neutre, jamais une erreur.
         plan_html = _plan_situation_html(db, idu)
+        # CAPACITE-1 (D2) — MÊME liste d'alertes que la fiche : on attache `alertes_fiche` au Dossier
+        # (zone humide, bruit, SUP, DPU présent, AU fermée… lus EN DIRECT dans spatial_layers) pour que
+        # le §5 les affiche TOUTES, même celles que le run de cascade manque (faute AD0887 : zone humide
+        # absente du Dossier). Rendu par `miroir.rendu_sections` (section risques).
+        try:
+            from ..api.servitudes import alertes_fiche
+            f["_alertes_dormantes"] = alertes_fiche(db, idu)
+        except Exception:  # noqa: BLE001 — jamais bloquant pour le Dossier
+            f["_alertes_dormantes"] = []
         # DOCS-1 (décision Vic) — la carte de situation remonte sur la PAGE DE GARDE (couverture avec
         # carte + résumé) ; elle n'est plus répétée en §1 (une seule carte de situation par Dossier).
-        corps = (miroir.cover_dossier(idu, f, numero, j, valeurs, MODELE_VERSION,
+        # CHIRURGICAL-FIX-1 (LOT J pt4) — le numéro porte une clé du CONTENU RÉELLEMENT RENDU : on rend
+        # d'abord le corps avec un jeton, on en tire la signature, puis on substitue le vrai numéro.
+        corps = (miroir.cover_dossier(idu, f, _NUMERO_PLACEHOLDER, j, valeurs, MODELE_VERSION,
                                       plan_html=plan_html, donnees_au=au)
                  + miroir.rendu_sections(valeurs, f, plan_html=""))
+        numero = numeros.numero_rapport(document, idu, j, discriminant=_signature_contenu(corps))
+        corps = corps.replace(_NUMERO_PLACEHOLDER, numero)
+        cart = Cartouche(
+            doc_title=f"LABUSE — {label}" + (f" · {adresse}" if adresse else ""),
+            doc_ref=f"{idu} · {numero}",
+            doc_foot=_FOOT["dossier"].format(au=au))
         html = page_html(label, cart, corps)
         return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart,
                            contexte={"adresse": adresse})
@@ -441,21 +483,28 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     label, _ = _LABEL.get(document, (document, ""))
     adresse = f.get("adresse") or ""
     au = f.get("donnees_labuse_au") or _donnees_labuse_au() or f"{j:%d/%m/%Y}"
+    # CHIRURGICAL-FIX-1 (LOT J pt4) — numéro = clé du CONTENU rendu (couverture + blocs + contexte, p.
+    # ex. l'Apporteur) : on rend d'abord avec un jeton, on signe, puis on substitue le vrai numéro. Deux
+    # documents au contenu affiché différent ne peuvent plus partager un numéro.
+    corps = _cover(document, idu, f, _NUMERO_PLACEHOLDER, j, valeurs)
+    for b in blocs:
+        corps += b.rendu(valeurs, ctx) if document in _AVEC_CONTEXTE else b.rendu(valeurs)
+    numero = numeros.numero_rapport(document, idu, j, discriminant=_signature_contenu(corps))
+    corps = corps.replace(_NUMERO_PLACEHOLDER, numero)
     cart = Cartouche(
         doc_title=f"LABUSE — {label}" + (f" · {adresse}" if adresse else ""),
         doc_ref=f"{idu} · {numero}",
         doc_foot=_FOOT.get(document, "Document d'information LABUSE.").format(au=au),
     )
-    corps = _cover(document, idu, f, numero, j, valeurs)
-    for b in blocs:
-        corps += b.rendu(valeurs, ctx) if document in _AVEC_CONTEXTE else b.rendu(valeurs)
     html = page_html(label, cart, corps)
     return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart,
                        contexte={**(ctx or {}), "adresse": adresse})
 
 
 # ── DOCS-1 (Lot C) — les 3 nouveaux documents : miroirs des outils, même builder/couverture/pied. ──
-_GABARIT_INCALCULABLE = "Gabarit non calculable sur cette parcelle : donnée réglementaire manquante"
+# CHIRURGICAL-FIX-1 (E107) — marqueur du cas « gabarit non calculable » (limite non qualifiée),
+# DISTINCT d'un verdict de non-constructibilité. Pas de deux-points en fin : le rendu l'enrobe.
+_GABARIT_INCALCULABLE = "Gabarit non calculable sur cette parcelle (une limite n'est pas qualifiée)"
 
 
 def _entete_doc(document: str, ref_ligne: str, numero: str, jour: date) -> str:
@@ -578,14 +627,30 @@ def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | Non
     j = jour or today_reunion()
     ids = [i.strip() for i in idus if i and i.strip()][:3]
     ref0 = ids[0] if ids else ""
-    numero = numeros.numero_rapport("comparatif", ref0, j)
     suffixe = f"{len(rows)} parcelles"
-    cart = _cart("comparatif", suffixe, " · ".join(ids), numero, j)
     _note_html = (f'<p class="notice" style="color:#b06a2c">{esc(note_limite)}</p>'
                   if note_limite else "")
-    _cover = _resume_comparatif(rows) + (map_html or "")
-    corps = _entete_doc("comparatif", suffixe, numero, j) + _cover + _note_html + bloc_comparatif.rendu(rows)
-    html = page_html(_LABEL["comparatif"][0], cart, corps, paysage=True)
+    # CHIRURGICAL-FIX-1 (LOT L 5 / LOT M mineur) — couverture COMPACTE EN DEUX COLONNES (résumé à
+    # gauche, carte à droite) : plus de couverture presque vide suivie d'une carte seule sur sa propre
+    # page. Le tableau enchaîne juste après.
+    _cover = (f'<div class="cmp-cover">'
+              f'<div class="cmp-resume">{_resume_comparatif(rows)}</div>'
+              f'<div class="cmp-carte">{map_html or ""}</div></div>')
+    # CHIRURGICAL-FIX-1 (LOT I pt4 / LOT K 3g) — le numéro du Comparatif tient compte de TOUTES ses
+    # parcelles ET de TOUT son contenu rendu : deux comparatifs au contenu affiché différent diffèrent.
+    corps = (_entete_doc("comparatif", suffixe, _NUMERO_PLACEHOLDER, j)
+             + _cover + _note_html + bloc_comparatif.rendu(rows))
+    numero = numeros.numero_rapport("comparatif", ref0, j,
+                                    discriminant="|".join(sorted(ids)) + "|" + _signature_contenu(corps))
+    corps = corps.replace(_NUMERO_PLACEHOLDER, numero)
+    cart = _cart("comparatif", suffixe, " · ".join(ids), numero, j)
+    _cmp_css = (".cmp-cover{display:flex;gap:10pt;align-items:flex-start;margin:2pt 0 6pt;"
+                "page-break-inside:avoid}"
+                ".cmp-resume{flex:1 1 55%}.cmp-carte{flex:1 1 45%}"
+                ".cmp-cover .plan{max-height:46mm;overflow:hidden;margin:0}"
+                ".cmp-cover .plan img,.cmp-cover .plan svg{max-height:44mm;width:auto}"
+                ".cmp-bloc{page-break-before:avoid}")
+    html = page_html(_LABEL["comparatif"][0], cart, corps, paysage=True, page_extra_css=_cmp_css)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
                        contexte={"comparatif": rows})
 
@@ -831,26 +896,32 @@ def _alea_label_carte(risques: list[dict]) -> str | None:
 
 
 def construire_analyse_annonce_parc(db, idu: str, *, request=None, surface_hab: float | None = None,
+                                    pieces: int | None = None, ecartees=None,
                                     jour: date | None = None) -> ResultatDoc:
     """Variante PARCELLE (entrée adresse), 2 PAGES selon la maquette. Un SEUL point de données :
     `pige.api.rapport_parcelle` (lu AUSSI par l'écran → PDF == outil). Deux cartes (ortho + cadastre /
     zonage / aléas), 6 tuiles, estimation + valeur indicative + comparables ; page 2 : foncier + risques
-    + marché + à vérifier. Aucun recalcul ici. `surface_hab` (ESTIMER-PRECISION-1, facultatif) : surface
-    habitable saisie → le total l'utilise, à l'identique de l'écran (écran == PDF == Doc)."""
+    + marché + à vérifier. Aucun recalcul ici. OUTILS-P0-2 (P1) — `surface_hab`, `pieces` et `ecartees`
+    reprennent le scénario EXACT de l'écran (surface + pièces saisies, ventes décochées) → même méthode,
+    même montant, mêmes fourchettes, mêmes ventes retenues (écran == PDF == Doc)."""
     from .blocs import annonce as bloc_annonce
     from ..api.app import parcel_fiche
     from ..pige.api import rapport_parcelle
     j = jour or today_reunion()
     fiche = parcel_fiche(idu, db=db, request=request)
-    rapport = rapport_parcelle(db, idu, fiche, surface_hab=surface_hab)
-    numero = numeros.numero_rapport("analyse-annonce", idu, j)
-    rapport["_ref_droite"] = f"{numero} · {j:%d/%m/%Y}"
+    rapport = rapport_parcelle(db, idu, fiche, surface_hab=surface_hab,
+                               pieces=pieces, ecartees=ecartees)
+    # CHIRURGICAL-FIX-1 (LOT K 3g) — le numéro d'Estimer change quand SON CONTENU change (surface, pièces,
+    # ventes retenues…) : on rend avec un jeton, on signe le corps, puis on substitue le vrai numéro.
+    rapport["_ref_droite"] = f"{_NUMERO_PLACEHOLDER} · {j:%d/%m/%Y}"
     adresse = rapport.get("adresse") or ""
     lieu = adresse or rapport.get("commune") or idu
     carte_ortho = _carte_ortho_html(db, idu)
     carte_zon = _carte_zonage_html(db, idu, zone_label=rapport.get("zone"),
                                    alea_label=_alea_label_carte(rapport.get("risques")))
     corps = bloc_annonce.rendu_parcelle(rapport, plan_ortho_html=carte_ortho, plan_zonage_html=carte_zon)
+    numero = numeros.numero_rapport("analyse-annonce", idu, j, discriminant=_signature_contenu(corps))
+    corps = corps.replace(_NUMERO_PLACEHOLDER, numero)
     cart = _cart("analyse-annonce", lieu, idu, numero, j)
     html = page_html(_LABEL["analyse-annonce"][0], cart, corps, page_extra_css=_ANNONCE_PAGE_CSS)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,

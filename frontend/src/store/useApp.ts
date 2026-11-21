@@ -553,7 +553,10 @@ interface AppState {
   // navigation le ferme). L'overlay est SANS carte : le plan masse est DESSINÉ en SVG (PlanMasseSvg)
   // à partir de la géométrie du scénario — jamais la carte de fond.
   etudeIdus: string[] | null
-  ouvrirEtude: (idus: string[]) => void
+  // ETUDE-FIABLE-1 (LOT B2) — ROUVRIR une étude : la config archivée (recette) à relire SANS recalcul.
+  // null = nouvelle étude (parcours normal). Typé souplement pour ne pas tirer l'API dans le store.
+  etudeRouvrir: Record<string, unknown> | null
+  ouvrirEtude: (idus: string[], rouvrir?: Record<string, unknown> | null) => void
   fermerEtude: () => void
   // ÉTUDE DE ZONE Z3 — segment du tiroir « Autour de cette parcelle » : 0 = à pied 15 min, 1 = voiture 5 min
   zoneSeg: number
@@ -682,7 +685,7 @@ interface AppState {
 // niveau App) tombe à TOUTE navigation (setModule, setView, openCompare…), comme les autres overlays
 // plein écran. `ouvrirEtude` pose le drapeau APRÈS ce spread (il ne spread pas CLOSE_OVERLAYS) → pas
 // d'auto-fermeture.
-const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, evolutionTableOpen: false, radarTableOpen: false, densifierTableOpen: false, sourceLine: null, outilRetour: [] as OutilRetour[], outilSousRetour: null as (() => void) | null, etudeIdus: null as string[] | null } as const
+const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, evolutionTableOpen: false, radarTableOpen: false, densifierTableOpen: false, sourceLine: null, outilRetour: [] as OutilRetour[], outilSousRetour: null as (() => void) | null, etudeIdus: null as string[] | null, etudeRouvrir: null as Record<string, unknown> | null } as const
 
 export const useApp = create<AppState>((set, get) => ({
   tuyauActives: {},
@@ -1061,8 +1064,9 @@ export const useApp = create<AppState>((set, get) => ({
   // CLOSE_OVERLAYS (il ne se saborde pas) : il pose seulement l'assiette. La fermeture rend la main à
   // l'écran dessous (Docs, fiche, Assemblage) inchangé.
   etudeIdus: null,
-  ouvrirEtude: (idus) => set({ etudeIdus: idus }),
-  fermerEtude: () => set({ etudeIdus: null }),
+  etudeRouvrir: null,
+  ouvrirEtude: (idus, rouvrir = null) => set({ etudeIdus: idus, etudeRouvrir: rouvrir }),
+  fermerEtude: () => set({ etudeIdus: null, etudeRouvrir: null }),
   // OUTILS-FIX-3 Lot D — fil de retour entre outils. `pushOutilRetour` est appelé par un pont APRÈS sa
   // navigation (la nav a déjà vidé la pile via CLOSE_OVERLAYS) → il ne reste que l'entrée de départ.
   outilRetour: [],

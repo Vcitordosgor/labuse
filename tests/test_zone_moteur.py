@@ -280,5 +280,8 @@ def test_endpoint_etude_zone_concurrents_et_ratio(monkeypatch):
     assert all(c["temps_min"] is not None for c in out["concurrents"]["items"]), "chaque concurrent porte son temps"
     # habitants / concurrents = 600 / 2 = 300
     assert out["habitants_par_concurrent"] == 300
+    # OUTILS-P0-2 (P3) : la médiane du cercle porte son effectif + sa période ; `prix_secteur_fiche`
+    # n'est ajouté QUE si la parcelle a un prix de secteur DVF (ici, parcelle semée sans ventes → absent).
     assert set(out["marche"]) == {"ventes_12m", "prix_m2_median_bati", "annonces_actives",
-                              "annonces_reserve", "permis_36m"}   # EXPORTS-1 (5.5) : réserve pige servie
+                              "annonces_reserve", "permis_36m",
+                              "prix_m2_median_n", "prix_m2_median_fenetre_mois", "prix_m2_median_periode"}

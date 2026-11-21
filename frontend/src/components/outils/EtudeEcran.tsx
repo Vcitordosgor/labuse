@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../../store/useApp'
 import { EtudeV6 } from './EtudeV6'
+import type { EtudeIn } from '../../lib/api'
 import type { EtudeProgramme } from './M22Programme'
 import { BilanEcran } from '../fiche/BilanEcran'
 
@@ -16,6 +17,7 @@ import { BilanEcran } from '../fiche/BilanEcran'
 // affichée transmet son programme au Bilan existant — pas de refonte du Bilan).
 export function EtudeEcran() {
   const etudeIdus = useApp((s) => s.etudeIdus)
+  const etudeRouvrir = useApp((s) => s.etudeRouvrir)
   const fermerEtude = useApp((s) => s.fermerEtude)
   const [bilanProg, setBilanProg] = useState<EtudeProgramme | null>(null)
 
@@ -34,7 +36,7 @@ export function EtudeEcran() {
       <div className="mx-auto my-6 flex min-h-[calc(100vh-3rem)] max-w-[1400px] flex-col overflow-hidden rounded-lg border border-line bg-surface-1"
         onClick={(e) => e.stopPropagation()}>
         {/* clé = l'assiette : rouvrir sur une autre parcelle REMONTE le wizard (état neuf). */}
-        <EtudeV6 key={etudeIdus.join(',')} initialIdus={etudeIdus} onClose={fermerEtude} onBilan={setBilanProg} />
+        <EtudeV6 key={etudeIdus.join(',')} initialIdus={etudeIdus} rouvrir={(etudeRouvrir ?? undefined) as EtudeIn | undefined} onClose={fermerEtude} onBilan={setBilanProg} />
       </div>
 
       {/* Bilan de ce scénario — par-dessus l'Étude (son propre overlay). Le Bilan porte sur la 1ʳᵉ parcelle. */}

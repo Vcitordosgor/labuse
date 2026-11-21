@@ -56,6 +56,18 @@ def verdict_zonage(valeurs: dict[str, Valeur]) -> Verdict | None:
                 f"{_NON_CONSTRUCTIBLE[fam]} sont admises, et sous conditions (voir la liste "
                 f"des destinations ci-dessous).", "warn", "")
     if fam in _CONSTRUCTIBLE:
+        # CHIRURGICAL-FIX-1 (LOT F, C-iii) — le §2 ne proclame plus « constructible » quand le §3 conclut
+        # que CETTE parcelle n'est pas retenue (habitat interdit en UE, terrain exigu, PPR rouge… = une
+        # `cause` servie par le bloc potentiel). On nomme la FAMILLE de zone et on renvoie au §3, sans
+        # affirmer une constructibilité que la parcelle n'a pas (même boussole « jamais un faux
+        # constructible » que le §3). La SATURATION (zone constructible, SDP consommée → `cause` absente)
+        # garde « constructible » : la zone l'est, seul le résiduel manque.
+        pot = _val(valeurs, "potentiel_verdict")
+        if isinstance(pot, dict) and pot.get("cause"):
+            famille = "urbaine" if fam == "U" else "à urbaniser (ouverture sous conditions)"
+            return (f"{lib} — zone {famille}, mais <strong>cette parcelle n'est pas retenue comme "
+                    f"constructible</strong> (voir le potentiel, section 3). Le document opposable du "
+                    f"Géoportail de l'urbanisme fait foi.", "warn", "")
         return (f"{lib} — {_CONSTRUCTIBLE[fam]}. Le document opposable du Géoportail de "
                 f"l'urbanisme fait foi ; les valeurs de règle ci-dessous sont une aide à la lecture.",
                 "", "")
@@ -81,9 +93,19 @@ def verdict_potentiel(valeurs: dict[str, Valeur]) -> Verdict | None:
         # trahirait justement un faux constructible. Pour cette cause, on sert TOUJOURS le message de
         # zonage, jamais le libelle. Les autres causes (géométriques/réglementaires) gardent le leur.
         cause_base = cause.partition(":")[0]
+        fam = _val(valeurs, "zone_plu_famille")
+        famU = str(fam).upper() if fam else None
+        # EXPORTS-FIX-3 LOT 2 — ORDRE DES MOTIFS (« un seul verdict, partout ») : une zone non
+        # constructible (famille A/N) PRIME sur toute cause géométrique servie (terrain_exigu,
+        # reculs…). Sur 97408000BI0351 (2,8 ha de zone N), le run servi porte cause=terrain_exigu →
+        # l'ancien code imprimait « terrain trop étroit » ici (ECARTS A2/B2). Désormais le §3 dit la
+        # même raison que la fiche (potentiel_batir) et le §2 (verdict_zonage) : « zone naturelle ».
+        if famU in ("A", "N"):
+            nat = {"A": "agricole", "N": "naturelle"}[famU]
+            return (f"Terrain non constructible — zone {nat} (zone {fam}) : le potentiel de "
+                    f"construction est nul par la règle de zonage.", "warn", "")
         if libelle and cause_base != "zone_non_constructible":
             return (f"{libelle}", "warn", "")
-        fam = _val(valeurs, "zone_plu_famille")
         z = f" (zone {fam})" if fam else ""
         return (f"Terrain non constructible{z} : le potentiel de construction est nul par la règle "
                 f"de zonage.", "warn", "")
@@ -109,7 +131,16 @@ def verdict_potentiel(valeurs: dict[str, Valeur]) -> Verdict | None:
                 extra = f" ≈ {n}"
             else:
                 extra = f" — surface de plancher constructible restante (bâti conservé) ≈ {n}"
-        return (f"Potentiel de construction : {libelle}{extra}.", "", "")
+            # EXPORTS-FIX-3 LOT 3 (#6) — la SDP est une surface de plancher ESTIMÉE : elle ne compte
+            # ni le stationnement ni la pleine terre (qui réduisent le bâtissable net). On le DIT.
+            extra += " (surface de plancher estimée, hors stationnement et pleine terre)"
+        # CAPACITE-1 (LOT C) — la RÈGLE UNIQUE « surface à retenir » (même fonction que l'Étude) clôt
+        # le §3 : elle dit laquelle des deux grandeurs retenir et pourquoi. Jamais deux documents avec
+        # deux surfaces à retenir différentes (garde-fou). Portée par le verdict `p` (producteur
+        # db-aware `robinet_fiche._c_potentiel`), sans nouvelle donnée de registre. Absente si non calculée.
+        sar = p.get("surface_a_retenir") if isinstance(p, dict) else None
+        sar_txt = f" {sar['phrase']}" if isinstance(sar, dict) and sar.get("phrase") else ""
+        return (f"Potentiel de construction : {libelle}{extra}.{sar_txt}", "", "")
     return None
 
 

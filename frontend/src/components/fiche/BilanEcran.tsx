@@ -81,15 +81,20 @@ export function entreesInitiales(m: BilanModele, etude?: BilanDepuisEtude | null
   const calendrier: Record<string, number | null> = {}
   for (const c of m.calendrier ?? []) calendrier[c.id] = c.defaut
   // « Depuis l'Étude » : SDP du scénario + logements (par type) comme 1er produit. Sinon tout à blanc.
-  const parType = etude?.par_type ? Object.entries(etude.par_type).filter(([, n]) => n > 0).map(([t, n]) => `${t}×${n}`).join(' · ') : ''
+  // CHIRURGICAL-FIX-1 (LOT I 1e) — sur une parcelle où l'HABITAT est interdit (non constructible,
+  // motif servi), on ne PROPOSE jamais un produit « Logements » avec un chiffre d'affaires : le
+  // programme reste à blanc, même si une Étude était reliée (il n'y a pas de logements à y construire).
+  const interdit = !!m.sourcee.non_constructible_motif
+  const depuisEtude: BilanDepuisEtude | null = etude && !interdit ? etude : null
+  const parType = depuisEtude?.par_type ? Object.entries(depuisEtude.par_type).filter(([, n]) => n > 0).map(([t, n]) => `${t}×${n}`).join(' · ') : ''
   return {
     programme: {
       terrain: m.sourcee.terrain ?? null, surface_taxable: null, loyer: null,
-      sdp: etude ? etude.sdp_m2 : null,
+      sdp: depuisEtude ? depuisEtude.sdp_m2 : null,
     },
-    produits: etude
+    produits: depuisEtude
       ? [
-          { libelle: parType ? `Logements · ${parType}` : 'Logements', lots: etude.logements, suv: etude.shab_m2 ?? null, prix_ttc_m2_suv: null, tva: null },
+          { libelle: parType ? `Logements · ${parType}` : 'Logements', lots: depuisEtude.logements, suv: depuisEtude.shab_m2 ?? null, prix_ttc_m2_suv: null, tva: null },
           { libelle: 'Produit 2', lots: null, suv: null, prix_ttc_m2_suv: null, tva: null },
         ]
       : [
@@ -264,7 +269,16 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
 
       <div className="grid gap-4 p-5">
         {/* Bandeau zone à cheval : partie non constructible (familles ≠ U/AU) */}
-        {modele.sourcee.non_constructible_pct > 0 && (
+        {/* CHIRURGICAL-FIX-1 (E104) — quand le verdict (point unique potentiel_batir) ferme TOUTE la
+            parcelle (habitat interdit, PPR rouge…), on NOMME le motif au lieu de « (N/A) » et on ne
+            propose plus « Utiliser 0 m² ». Le modèle ne présente plus la parcelle 100 % constructible. */}
+        {modele.sourcee.non_constructible_motif ? (
+          <div className="rounded-md border border-amber bg-surface-1 p-3 text-[13px]">
+            <b className="text-amber">Parcelle non constructible — {modele.sourcee.non_constructible_motif}</b>
+            <span className="text-txt"> : aucun programme ne peut y être porté en l'état.</span>
+            {modele.sourcee.zonage && <div className="mt-1 text-[12px] text-txt-mut">{modele.sourcee.zonage}</div>}
+          </div>
+        ) : modele.sourcee.non_constructible_pct > 0 && (
           <div className="rounded-md border border-amber bg-surface-1 p-3 text-[13px]">
             <b className="text-amber">Parcelle à {fmtNum(modele.sourcee.non_constructible_pct)} % en zone non constructible (N/A)</b>
             <span className="text-txt"> : le programme ne peut porter que sur la partie constructible{modele.sourcee.constructible_m2 != null ? ` (${fmtNum(modele.sourcee.constructible_m2)} m²)` : ''}.</span>

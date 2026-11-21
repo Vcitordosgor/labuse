@@ -27,7 +27,17 @@ from .contract import (
 )
 from .validate import validate_input
 
-INCOMPLETE_MESSAGE = "Calcul incomplet — donnée réglementaire manquante"
+# MOTEUR-VERITE-FIX-8 LOT 3 — levier de CONTRÔLE (hors production) : quand activé, le moteur rétablit
+# le retrait séparatif PRUDENT de référence (fraction × faîtage de la zone) au lieu du scénario
+# niveau-par-niveau. Sert UNIQUEMENT au rejeu « sans la règle » du contrôle inverse, pour isoler
+# l'effet de la règle des changements de géométrie depuis main. Faux en production.
+RETRAIT_PRUDENT_REFERENCE = False
+
+# CHIRURGICAL-FIX-1 (E107) — le message ne doit JAMAIS laisser croire que la parcelle est non
+# constructible : c'est le GABARIT qui n'est pas calculable (une limite de la parcelle n'est pas
+# qualifiée). La raison précise vit dans validationErrors ; la constructibilité et la capacité
+# estimée restent dans la fiche. (« Calcul incomplet » se lisait comme un verdict défavorable.)
+INCOMPLETE_MESSAGE = "Gabarit non calculable sur cette parcelle"
 
 
 def _round(x: float, n: int = 1) -> float:
@@ -77,20 +87,79 @@ def compute_gabarit(inp: GabaritInput) -> GabaritResult:
     parcel_4326 = shape_from_geojson(inp.parcel.geometry)
     parcel_m = to_metric(parcel_4326)
 
-    buffers = []
-    for sb in inp.setbacks:
-        line_m = to_metric(shape_from_geojson(sb.geometry))
-        if sb.setbackM and sb.setbackM > 0:
-            buffers.append(line_m.buffer(sb.setbackM))
-    setback_union = unary_union(buffers) if buffers else None
-
-    after_setbacks = parcel_m.difference(setback_union) if setback_union is not None else parcel_m
-    after_setbacks = _as_polygonal(after_setbacks)
-
     excl_polys = [to_metric(shape_from_geojson(ex.geometry)) for ex in inp.exclusions]
     excl_union = unary_union(excl_polys) if excl_polys else None
-    zone_m = after_setbacks.difference(excl_union) if excl_union is not None else after_setbacks
-    zone_m = _as_polygonal(zone_m)
+
+    def _zone_apres_reculs(recul_sep_m: Optional[float]):
+        """Inset de la parcelle par les reculs par côté ; `recul_sep_m` remplace, s'il est donné,
+        le recul des limites séparatives (setbacks `limite-sep`) — les voies gardent le leur."""
+        buffers = []
+        for sb in inp.setbacks:
+            line_m = to_metric(shape_from_geojson(sb.geometry))
+            d = sb.setbackM
+            if recul_sep_m is not None and sb.ruleId == "limite-sep":
+                d = recul_sep_m
+            if d and d > 0:
+                buffers.append(line_m.buffer(d))
+        union = unary_union(buffers) if buffers else None
+        apres = parcel_m.difference(union) if union is not None else parcel_m
+        apres = _as_polygonal(apres)
+        zone = apres.difference(excl_union) if excl_union is not None else apres
+        return _as_polygonal(zone), apres, union
+
+    # MOTEUR-VERITE-FIX-1 (LOT 1, corrige la régression D-024 du 31/10) — recul séparatif en
+    # FORMULE « L ≥ H/n, minimum X m » : H est la hauteur à l'ÉGOUT du bâtiment ENVISAGÉ, jamais
+    # le faîtage maximal de la zone. On évalue chaque nombre de niveaux admis (égout envisagé =
+    # n × étage) et on RETIENT le scénario au PLANCHER maximal (aire de la zone d'implantation,
+    # bornée au plafond d'emprise CES s'il existe, × niveaux). À plancher égal, le recul le plus
+    # petit (l'aire la plus grande) l'emporte — géométrie prudente et déterministe.
+    niveaux_retenus: Optional[int] = None
+    recul_sep_retenu: Optional[float] = None
+    scenario_txt: Optional[str] = None
+    f = inp.reculSepFormule
+    _zone_set = False
+    if f is not None and any(sb.ruleId == "limite-sep" for sb in inp.setbacks):
+        _surf = float(inp.parcel.areaM2)
+        _mf = inp.maxFootprint
+        _plaf = (None if (_mf is None or _mf.status == "absent" or _mf.percent is None)
+                 else _surf * float(_mf.percent) / 100.0)
+        if RETRAIT_PRUDENT_REFERENCE and f.hauteurReferenceM is not None:
+            # MOTEUR-VERITE-FIX-8 LOT 3 — rejeu de contrôle « sans la règle » : on RÉTABLIT le retrait
+            # PRUDENT de référence (fraction × faîtage maximal de la zone, ce que fait main) au lieu du
+            # scénario niveau-par-niveau — pour séparer l'effet de la règle des changements de géométrie.
+            _rp = round(max(float(f.minimumM), float(f.fraction) * float(f.hauteurReferenceM)), 2)
+            zone_m, after_setbacks, setback_union = _zone_apres_reculs(_rp)
+            niveaux_retenus, recul_sep_retenu, _zone_set = max(1, int(f.niveauxMax)), _rp, True
+            scenario_txt = (f"recul séparatif PRUDENT (contrôle sans règle) = max({f.minimumM:g} m, "
+                            f"faîtage {f.hauteurReferenceM:g} m × {f.fraction:.3g}) = {_rp:g} m")
+        else:
+            best = None   # (proxy_plancher, -recul, n, zone, apres, union, recul)
+            for n in range(1, max(1, int(f.niveauxMax)) + 1):
+                # MOTEUR-VERITE-FIX-4 LOT 6 — H envisagé = n × étage (+ marge de toiture/acrotère
+                # quand la référence est la hauteur TOTALE de façade) : la hauteur de façade est
+                # celle du BÂTIMENT ENVISAGÉ, pas le maximum de la zone.
+                h_n = n * float(f.etageM) + float(getattr(f, "margeM", 0.0) or 0.0)
+                rec_n = round(max(float(f.minimumM), float(f.fraction) * h_n), 2)
+                zone_n, apres_n, union_n = _zone_apres_reculs(rec_n)
+                aire_n = float(zone_n.area)
+                proxy = (min(aire_n, _plaf) if _plaf is not None else aire_n) * n
+                cand = (proxy, -rec_n, n, zone_n, apres_n, union_n, rec_n)
+                if best is None or (cand[0], cand[1]) > (best[0], best[1]):
+                    best = cand
+            _, _, niveaux_retenus, zone_m, after_setbacks, setback_union, recul_sep_retenu = best
+            _zone_set = True
+            _marge = float(getattr(f, "margeM", 0.0) or 0.0)
+            _h_ret = niveaux_retenus * float(f.etageM) + _marge
+            _ref_txt = ("hauteur totale de façade du bâtiment envisagé "
+                        f"({niveaux_retenus} niveau(x) × {f.etageM:g} m + marge toiture/acrotère "
+                        f"{_marge:g} m = {_h_ret:g} m)" if _marge > 0 else
+                        f"égout du bâtiment envisagé ({niveaux_retenus} niveau(x) × {f.etageM:g} m"
+                        f" = {_h_ret:g} m)")
+            scenario_txt = (f"recul séparatif = max({f.minimumM:g} m, H×{f.fraction:.3g}) avec H = "
+                            f"{_ref_txt} → {recul_sep_retenu:g} m ; scénario"
+                            f" retenu = plancher maximal parmi R+0…R+{int(f.niveauxMax) - 1}")
+    if not _zone_set:
+        zone_m, after_setbacks, setback_union = _zone_apres_reculs(None)
 
     # bandes de retrait (pour la carte) = ce que les reculs retirent de la parcelle
     retrait_m = _as_polygonal(parcel_m.difference(after_setbacks)) if setback_union is not None else None
@@ -126,6 +195,13 @@ def compute_gabarit(inp: GabaritInput) -> GabaritResult:
 
     # --- règles appliquées + non intégrées -----------------------------------
     applied: list[AppliedRule] = _grouped_setbacks(inp)
+    # MOTEUR-VERITE-FIX-1 (LOT 1) — la règle AFFICHÉE porte le recul RETENU du scénario (et le dit),
+    # jamais le seul minimum d'entrée : écran, PDF et capacité racontent le même chiffre.
+    if recul_sep_retenu is not None:
+        for i, ar in enumerate(applied):
+            if ar.ruleId == "limite-sep":
+                applied[i] = ar.model_copy(update={"value": recul_sep_retenu,
+                                                   "detail": scenario_txt})
     rules_by_id = {ar.id: ar for ar in inp.applicableRules if ar.id}
     _mfr = rules_by_id.get(mf.ruleId)
     applied.append(AppliedRule(
@@ -180,10 +256,16 @@ def compute_gabarit(inp: GabaritInput) -> GabaritResult:
         hauteurEgoutM=None if mh.egoutMeters is None else _round(mh.egoutMeters),
         coverage=coverage,
         partExcluePct=part_exclue_pct,
+        niveauxRetenus=niveaux_retenus,
+        reculSepRetenuM=recul_sep_retenu,
+        reculSepScenario=scenario_txt,
         appliedRules=applied,
         nonIntegratedRules=non_integ,
         contourGeoJSON=_gj(parcel_m),
         zoneImplantationGeoJSON=_gj(zone_m),
         retraitsGeoJSON=_gj(retrait_m),
         exclusionsGeoJSON=_gj(excl_in_parcel_m),
+        # MOTEUR-VERITE-FIX-10 — l'assiette du scénario APRÈS reculs, AVANT exclusions (dont la zone
+        # rouge) : la géométrie exacte sur laquelle mesurer le rouge réellement recoupé.
+        assietteScenarioGeoJSON=_gj(_as_polygonal(after_setbacks)),
     )

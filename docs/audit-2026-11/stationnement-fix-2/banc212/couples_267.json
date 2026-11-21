@@ -1,0 +1,7213 @@
+{
+  "couples": [
+    {
+      "insee": "97401",
+      "zone": "Ua",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 29,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97401",
+      "zone": "Ub",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 29,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97401",
+      "zone": "Ub1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 29,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97401",
+      "zone": "Ub2",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 29,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97401",
+      "zone": "Ub3",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 29,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97401",
+      "zone": "Uc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 29,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97401",
+      "zone": "Uc1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 29,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97401",
+      "zone": "Uc3",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 29,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97401",
+      "zone": "Ud",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 29,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97401",
+      "zone": "Ud1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 29,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97401",
+      "zone": "Ud3",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 29,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97401",
+      "zone": "AUa",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 29,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97401",
+      "zone": "AUc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 29,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97401",
+      "zone": "AUd",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 29,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97402",
+      "zone": "Ua",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97402",
+      "zone": "Ub",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97402",
+      "zone": "Uba",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97402",
+      "zone": "Uc",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97402",
+      "zone": "Ud",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97402",
+      "zone": "1AUa",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97402",
+      "zone": "1AUb",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97402",
+      "zone": "1AUc",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97402",
+      "zone": "1AUd",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97402",
+      "zone": "2AUa",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97402",
+      "zone": "2AUb",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97402",
+      "zone": "2AUc",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97403",
+      "zone": "Ua",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97403",
+      "zone": "Ub",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97403",
+      "zone": "Ub1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97403",
+      "zone": "Ub2",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97403",
+      "zone": "AUb",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97404",
+      "zone": "UA",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97405",
+      "zone": "UB",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97405",
+      "zone": "UC",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97405",
+      "zone": "UCe",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97405",
+      "zone": "UD",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97405",
+      "zone": "UDe",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97405",
+      "zone": "UZ",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97405",
+      "zone": "1AU",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97405",
+      "zone": "1AUa",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97405",
+      "zone": "1AUz",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97406",
+      "zone": "Ua",
+      "seuil_m2": 30.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97406",
+      "zone": "Ub",
+      "seuil_m2": 30.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97406",
+      "zone": "Uc",
+      "seuil_m2": 30.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97406",
+      "zone": "Ur",
+      "seuil_m2": 30.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97406",
+      "zone": "AUb",
+      "seuil_m2": 30.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97406",
+      "zone": "AUc",
+      "seuil_m2": 30.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97406",
+      "zone": "AUr",
+      "seuil_m2": 30.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97407",
+      "zone": "Ua",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 16,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 16,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97407",
+      "zone": "Ub",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 16,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 16,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97407",
+      "zone": "Uc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 16,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 16,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97407",
+      "zone": "Uca",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 16,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 16,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97407",
+      "zone": "Ud",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 16,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 16,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97407",
+      "zone": "1AUa",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 16,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 16,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97407",
+      "zone": "1AUc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 16,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 16,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97407",
+      "zone": "1AUm",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 16,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 16,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97408",
+      "zone": "UA",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97408",
+      "zone": "UAm",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97408",
+      "zone": "UApsfr2",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97408",
+      "zone": "UB",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97408",
+      "zone": "UBa",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97408",
+      "zone": "UBb",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97408",
+      "zone": "UBc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97408",
+      "zone": "UBpsfr2",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97408",
+      "zone": "UBpszc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97408",
+      "zone": "AUBm",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97408",
+      "zone": "AUB",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97408",
+      "zone": "AUBb",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97408",
+      "zone": "AUBpsfr2",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 3,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97409",
+      "zone": "UC",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97409",
+      "zone": "AUc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97409",
+      "zone": "2AUc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97410",
+      "zone": "Ua",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 24,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 10,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 24,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97410",
+      "zone": "Ub",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 24,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 10,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 24,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97410",
+      "zone": "Ue",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 24,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 10,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 24,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97410",
+      "zone": "Up",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 24,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 10,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 24,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97410",
+      "zone": "Ut",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 24,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 10,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 24,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Uavap",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Up",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Ud",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Udo",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Uu",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Ui",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Uicm",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Uj",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Um",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Uh",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Ua",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Uac",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Uad",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Uat",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97411",
+      "zone": "Uv",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "U1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "U2",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "U2a",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "U3",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "U3a",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "U3ar",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "U4",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "U5",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "U5cv",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "U5cvd",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "U5ma",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "U5ru",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "U5vi",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "1AU3",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "1AU3a",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "1AU5",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "1AU5ru",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "1AU5vi",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "2AU2",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "2AU3",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "2AU3a",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "2AU5",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "2AU5cvd",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "2AU5ma",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "2AU5ru",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "2AU5vi",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "3AU3",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "3AU3a",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "3AU5",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97412",
+      "zone": "3AU5ma",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97413",
+      "zone": "UA",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97413",
+      "zone": "UB",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97413",
+      "zone": "UC",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97413",
+      "zone": "UD",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97413",
+      "zone": "UE",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97413",
+      "zone": "UF",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97413",
+      "zone": "UP",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "UA",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "UA1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "UB",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "UC",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "UC1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "UC2",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "UD",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "UD1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "UZ",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "1AUa",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "1AUa oap1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "1AUa oap2",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "1AUa oap3",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "1AUb1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "1AUb2",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "1AUc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "1AUc oap4",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "1AUc oap5",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "1AUc1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "1AUc2",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "1AUd",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "1AUd1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "2AUb1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "2AUb2",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "2AUd",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97414",
+      "zone": "2AUd1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 10
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U1a",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 24,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 24,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U1b",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 24,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 24,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U1c",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 24,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 24,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U1d",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 24,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 24,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U1f",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U1g",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "AU1b",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 24,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 24,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 24,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U2a",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 34,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 34,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U2b",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 34,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 34,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U2c",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U2d",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "AU2c",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U3a",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 34,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 34,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U3b",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 34,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 34,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U3c",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "Usdu",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "AU3a",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 34,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 34,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "AU3b",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 34,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 34,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "AU3c",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U4a",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 34,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 34,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U4b",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U4c",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "AU4b",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "AU4c",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U5a",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 34,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 34,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U5b",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U5c",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "AU5a",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 34,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 34,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "AU5b",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "AU5c",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U6a",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 34,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 34,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U6b",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "U6c",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "AU6a",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 34,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 34,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 34,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "AU6b",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97415",
+      "zone": "AU6c",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 44,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 22,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 44,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 44,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97416",
+      "zone": "Ucv",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 18,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 17,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 18,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 13,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97416",
+      "zone": "Ud",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 18,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 18,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 13,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97416",
+      "zone": "Udl",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 18,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 18,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 13,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97416",
+      "zone": "UdBO",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 18,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 18,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 13,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97416",
+      "zone": "Ug",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97416",
+      "zone": "AUg",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97416",
+      "zone": "Uf",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97416",
+      "zone": "UfCA",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97416",
+      "zone": "AUf",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97416",
+      "zone": "AUfGB",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97416",
+      "zone": "Up",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 20,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97418",
+      "zone": "UA",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97418",
+      "zone": "UAb",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97418",
+      "zone": "UAz",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97418",
+      "zone": "UB",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97418",
+      "zone": "UC",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97418",
+      "zone": "UC1",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97418",
+      "zone": "UC2",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97418",
+      "zone": "UD",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97418",
+      "zone": "UD1",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97418",
+      "zone": "1AUb",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97418",
+      "zone": "1AUc",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97418",
+      "zone": "2AUa",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97418",
+      "zone": "2AUb",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97418",
+      "zone": "2AUc",
+      "seuil_m2": 100.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97419",
+      "zone": "Ua",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97419",
+      "zone": "Ub",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97419",
+      "zone": "Uc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97419",
+      "zone": "Ud",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97419",
+      "zone": "1AUa",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97419",
+      "zone": "1AUc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97419",
+      "zone": "2AUa",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97419",
+      "zone": "2AUb",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97419",
+      "zone": "2AUc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97419",
+      "zone": "2AUd",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 25,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97420",
+      "zone": "UA",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97420",
+      "zone": "UB",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97420",
+      "zone": "UC",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97420",
+      "zone": "UAv",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97420",
+      "zone": "UC1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97420",
+      "zone": "1AUa",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97420",
+      "zone": "1AUb",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97420",
+      "zone": "1AUc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97420",
+      "zone": "2AUa",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97420",
+      "zone": "2AUb",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 10
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 10
+        },
+        "seuil_20T2": {
+          "total": 40,
+          "publiques": 10
+        }
+      }
+    },
+    {
+      "insee": "97421",
+      "zone": "UA",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97421",
+      "zone": "UA1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97421",
+      "zone": "UB",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97421",
+      "zone": "UC",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97421",
+      "zone": "AUa1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97421",
+      "zone": "AUb",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97421",
+      "zone": "AUc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 20,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97422",
+      "zone": "Ua",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97422",
+      "zone": "Uav",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97422",
+      "zone": "Ub",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97422",
+      "zone": "Uc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97422",
+      "zone": "Ucm",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97422",
+      "zone": "Ud",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97422",
+      "zone": "1AUa",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97422",
+      "zone": "1AUb",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97422",
+      "zone": "1AUc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97423",
+      "zone": "Ua",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 28,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97423",
+      "zone": "Uaa",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 28,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97423",
+      "zone": "Ub",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 28,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97423",
+      "zone": "Uc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 28,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97423",
+      "zone": "1AUa",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 28,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97423",
+      "zone": "1AUb",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 28,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97423",
+      "zone": "1AUc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 1,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 40,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 40,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 28,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97424",
+      "zone": "Ua",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97424",
+      "zone": "Uah",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97424",
+      "zone": "Ub",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97424",
+      "zone": "Ub1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97424",
+      "zone": "Uc",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97424",
+      "zone": "AUb",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97424",
+      "zone": "AUb1",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    },
+    {
+      "insee": "97424",
+      "zone": "AUb2",
+      "seuil_m2": 50.0,
+      "programs": {
+        "maison_T4_120": {
+          "total": 2,
+          "publiques": 0
+        },
+        "collectif_20T3_1400": {
+          "total": 30,
+          "publiques": 0
+        },
+        "aide_20T3_1400": {
+          "total": 20,
+          "publiques": 0
+        },
+        "mixte_10x110_10x30": {
+          "total": 30,
+          "publiques": 0
+        },
+        "seuil_20T2": {
+          "total": 30,
+          "publiques": 0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "1280x720": {
+    "ok": true,
+    "entrees": 4,
+    "dansVue": true,
+    "auDessusCoupe": true,
+    "legBottom": 356,
+    "coupeTop": 392
+  },
+  "1440x694": {
+    "ok": true,
+    "entrees": 4,
+    "dansVue": true,
+    "auDessusCoupe": true,
+    "legBottom": 330,
+    "coupeTop": 366
+  },
+  "1440x900": {
+    "ok": true,
+    "entrees": 4,
+    "dansVue": true,
+    "auDessusCoupe": true,
+    "legBottom": 536,
+    "coupeTop": 572
+  },
+  "1920x1080": {
+    "ok": true,
+    "entrees": 4,
+    "dansVue": true,
+    "auDessusCoupe": true,
+    "legBottom": 716,
+    "coupeTop": 752
+  },
+  "2560x1300": {
+    "ok": true,
+    "entrees": 4,
+    "dansVue": true,
+    "auDessusCoupe": true,
+    "legBottom": 934,
+    "coupeTop": 970
+  }
+}

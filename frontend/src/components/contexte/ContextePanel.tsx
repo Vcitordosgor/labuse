@@ -514,7 +514,9 @@ export function ContextePanel() {
                       const pz = d.foncier!.prix_terrain_nu.par_zone?.[fam]
                       return pz?.calculable
                         ? <div key={fam}><p className="font-mono text-lg font-bold text-txt-hi">{fmt(pz.median_eur_m2)} €/m²</p><p className="text-[10px] text-txt-dim">terrain nu zone {fam} · {fmt(pz.n)} ventes</p></div>
-                        : <div key={fam}><p className="font-mono text-[12px] text-txt-mut">zone {fam} —</p><p className="text-[10px] text-txt-dim">&lt; {d.foncier!.prix_terrain_nu.seuil_n} ventes</p></div>
+                        // OUTILS-P1-1 (pt 6) — prix masqué (sous le seuil) : « Échantillon insuffisant · N vente(s) »
+                        // avec le COMPTE réel (jamais un chiffre trompeur), plutôt qu'un « < seuil » muet.
+                        : <div key={fam}><p className="font-mono text-[12px] text-txt-mut">zone {fam} —</p><p className="text-[10px] text-txt-dim">Échantillon insuffisant · {pz?.n != null ? `${fmt(pz.n)} vente${pz.n > 1 ? 's' : ''}` : `moins de ${d.foncier!.prix_terrain_nu.seuil_n} ventes`}</p></div>
                     })}
                   </div>
                 )}
@@ -603,9 +605,10 @@ export function ContextePanel() {
               </LigneCarte>
 
               <LigneCarte id="foncier" chiffre="n_parcelles_commune" ic="◫" titre="Foncier et rareté"
-                // RETOURS-15 B2 — la ligne « N parcelles promues » (classement LABUSE, hors périmètre)
-                // est retirée du sous-titre ; on garde l'horizon ZAN, sinon le compte factuel de parcelles.
-                sous={r?.['horizon_epuisement_ans'] != null ? `ZAN ${fmtAns(r['horizon_epuisement_ans'])}` : `${fmt(d.foncier?.n_parcelles)} parcelles`}
+                // OUTILS-P1-1 (pt 6) — l'horizon ZAN n'est PLUS mis en avant dans le sous-titre (il se
+                // lisait comme une échéance ferme « ZAN 1,1 an ») : le sous-titre dit le compte FACTUEL de
+                // parcelles ; l'horizon devient un SCÉNARIO dans le détail (« Scénario au rythme observé »).
+                sous={`${fmt(d.foncier?.n_parcelles)} parcelles`}
                 val={d.foncier ? `${fmt(d.foncier.stock_opportunites.ha)} ha` : null} ton="orange">
                 {d.foncier && (
                   <>
@@ -629,10 +632,14 @@ export function ContextePanel() {
                   <RowT lbl="Consommation NAF (budget ZAN consommé)" val={r?.['pct_budget_consomme'] != null ? `${fmtDec(r['pct_budget_consomme'])} %${r?.['budget_zan_ha'] != null ? ` de ${fmtV(r['budget_zan_ha'], ' ha')}` : ''}` : '—'} />
                   <RowT lbl="Budget ZAN restant (estimé)" val={fmtV(r?.['reste_zan_ha'], ' ha')} />
                   <RowT lbl="Rythme de consommation" val={fmtV(r?.['rythme_conso_ha_an'], ' ha/an')} />
-                  {/* RECETTE-PROD-1 (F) — couleur alignée sur le signal ZAN (seuil 5 ans) : plus de vert
-                      systématique sur un horizon tendu (« 4,2 ans » = alerte, orange comme le signal). */}
-                  <RowT lbl="Horizon d'épuisement" val={r?.['horizon_epuisement_ans'] != null ? fmtAns(r['horizon_epuisement_ans']) : '—'}
+                  {/* OUTILS-P1-1 (pt 6) — l'horizon devient un SCÉNARIO « au rythme observé » (couleur
+                      alignée sur le signal ZAN, seuil 5 ans), avec son HYPOTHÈSE (le rythme de consommation)
+                      et ses ANNÉES dit juste dessous : une PROJECTION, pas une échéance réglementaire. */}
+                  <RowT lbl="Scénario au rythme observé" val={r?.['horizon_epuisement_ans'] != null ? `${fmtAns(r['horizon_epuisement_ans'])} avant épuisement` : '—'}
                     ton={r?.['horizon_epuisement_ans'] != null ? (r['horizon_epuisement_ans'] <= 0 ? 'rouge' : r['horizon_epuisement_ans'] < 5 ? 'orange' : 'vert') : undefined} strong />
+                  {r?.['horizon_epuisement_ans'] != null && (
+                    <p data-zan-hypothese className="text-[10px] leading-snug text-txt-dim">Projection, pas une échéance réglementaire : au rythme observé{r?.['rythme_conso_ha_an'] != null ? ` de ${fmtV(r['rythme_conso_ha_an'], ' ha/an')}` : ''}, le budget ZAN restant serait consommé en {fmtAns(r['horizon_epuisement_ans'])}.</p>
+                  )}
                 </div>
                 <Source nom={`Cadastre DGFiP · ${d.densifiables?.source ?? 'analyse LABUSE'} · Consommation ENAF Cerema (estimé)`} />
               </LigneCarte>

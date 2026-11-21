@@ -1,0 +1,80 @@
+{
+ "insee": "97407",
+ "commune": "Le Port",
+ "regles": [
+  {
+   "id": "97407-R1",
+   "article": "Ua 12.1",
+   "mode": "par_logement",
+   "zones": [
+    "Ua",
+    "1AUa"
+   ],
+   "pages": [
+    29,
+    30,
+    31,
+    150,
+    151,
+    152
+   ]
+  },
+  {
+   "id": "97407-R2",
+   "article": "Ub 12.1",
+   "mode": "par_logement",
+   "zones": [
+    "Ub"
+   ],
+   "pages": [
+    43,
+    44,
+    45
+   ]
+  },
+  {
+   "id": "97407-R3",
+   "article": "Uc 12.1",
+   "mode": "par_logement",
+   "zones": [
+    "Uc",
+    "Uca",
+    "1AUc"
+   ],
+   "pages": [
+    58,
+    59,
+    60,
+    150,
+    151,
+    152
+   ]
+  },
+  {
+   "id": "97407-R4",
+   "article": "Ud 12.1",
+   "mode": "par_logement",
+   "zones": [
+    "Ud"
+   ],
+   "pages": [
+    72,
+    73,
+    74
+   ]
+  },
+  {
+   "id": "97407-R5",
+   "article": "1AU 12.1",
+   "mode": "par_logement",
+   "zones": [
+    "1AUm"
+   ],
+   "pages": [
+    150,
+    151,
+    152
+   ]
+  }
+ ]
+}

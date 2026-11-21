@@ -148,7 +148,9 @@ def test_faux_constructible_jamais(zone="N"):
     fiche["potentiel_transformation"] = dict(FICHE["potentiel_transformation"],
                                              cause="zone_non_constructible", libelle="Fort potentiel sous-densité")
     html = builder.construire(_FakeDB(), "IDU", "dossier", fiche=fiche, jour=date(2026, 9, 5)).html
-    assert "Terrain non constructible (zone N)" in html
+    # EXPORTS-FIX-3 LOT 2 — le §3 nomme la raison de zone (« zone naturelle (zone N) »), ordre des
+    # motifs imposé par le mandat ; toujours « Terrain non constructible », jamais « Fort potentiel ».
+    assert "Terrain non constructible" in html and "zone N" in html
     assert "Fort potentiel" not in html               # le libellé brut ne fuit pas
     assert "Reconstruction après démolition" not in html   # aucun scénario sous cause
 
@@ -170,7 +172,9 @@ def test_archive_reproductible(tmp_path):
     from labuse.exports import archive
     res = _dossier()
     payload = archive.payload_archive("dossier", "97415000BO0852", res.numero, res.valeurs, "2026-09-05")
-    assert payload["numero_rapport"] == "DP-20260905-0852"
+    # E4 — IDU entier ; LOT I pt4 — + clé de CONTENU (4 hex) : deux versions le même jour diffèrent.
+    assert payload["numero_rapport"].startswith("DP-20260905-97415000BO0852-")
+    assert res.numero == _dossier().numero   # déterministe : même contenu → même numéro (reproductible)
     assert "surface_parcelle_m2" in payload["valeurs"]
     pdf = tmp_path / "d.pdf"
     pdf.write_bytes(b"%PDF fake")

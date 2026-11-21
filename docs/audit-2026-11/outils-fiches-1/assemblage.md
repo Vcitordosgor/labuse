@@ -1,5 +1,20 @@
 # Assemblage
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On sélectionne plusieurs parcelles voisines sur la carte.
+> 2. L'outil vérifie qu'elles se touchent et les traite comme un seul terrain.
+> 3. Il calcule la capacité à bâtir de l'ensemble (une fois, pas la somme des parcelles).
+> 4. Il rend la surface totale, les droits à bâtir et un bilan.
+> 5. Surfaces et bilan sont des estimations du moteur, pas des valeurs publiées.
+
+**Captures — l'outil en action**
+
+![Assemblage — Assemblage de 3 parcelles contiguës (BZ1065/1066/1288) — surface d'assiette 2 768 m², reconstruction 573 m², bilan : prix de sortie 4 175 €/m² vs marché 452 €/m², 3 propriétaires listés.](img/assemblage.png)
+*Assemblage de 3 parcelles contiguës (BZ1065/1066/1288) — surface d'assiette 2 768 m², reconstruction 573 m², bilan : prix de sortie 4 175 €/m² vs marché 452 €/m², 3 propriétaires listés.*
+
+<!-- CCM -->
+
 Clé interne : `assemblage` (num M16) · composant : `frontend/src/components/outils/moteurs.tsx` (`function M16`, ligne 138) · endpoint(s) : `POST /moteurs/assemblage` (principal), `GET /moteurs/assemblage/voisines`, `GET /assemblage/study`, `GET /assemblages`, `GET /moteurs/config`.
 
 ---

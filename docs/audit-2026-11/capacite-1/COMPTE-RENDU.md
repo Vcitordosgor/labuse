@@ -1,0 +1,333 @@
+# CAPACITÉ-1 — LOT B : correctifs de relecture
+
+Branche `fix/capacite-1` (worktree `~/Desktop/labuse-capacite`). Aucune prod, aucun run servi recalculé,
+aucun run île. Documents régénérés dans `~/Desktop/exports-audit-4/` (3 parcelles : HT0538 Saint-Pierre Ud ·
+BI0351 La Possession N · DK0208 Saint-Paul UA). Chaque correction est citée depuis le **fichier livré régénéré**.
+
+> Régénération directe (mêmes builders que les routes, parcelle par parcelle — `/tmp/regen_capacite.py`),
+> cache de fiche vidé avant (une fiche périmée servait un `potentiel_transformation` vide). L'Étude de
+> BI0351 et DK0208 reste un **document de refus** « simulation impossible » (aucun scénario d'implantation) :
+> non touchée par B3/B4, donc non régénérée.
+
+---
+
+## B1 — Les 614 m² ne s'appellent plus « maximale réglementaire » ni « jusqu'à » : « estimation », facteurs écrits
+
+Le 614 repose sur une **hypothèse** (occupation du gabarit 45 %, cf. DIAGNOSTIC §3) — ce n'est pas un maximum
+réglementaire. Renommé **partout** (une seule source par document).
+
+- **Source du libellé** (lu par Dossier/fiche/Comparatif/pré-dossier) : `declarations/fiche/reste_a_declarer.yaml`
+  — `libelle: "Surface de plancher estimée, terrain libéré"` (était « SDP maximale réglementaire, terrain libéré »).
+- **Facteurs écrits** sous la valeur : `src/labuse/exports/miroir.py` (dérivés des valeurs servies, aucun run).
+- Libellés annexes alignés : `registre/donnees.py` (libellé canonique), `bilan/reperes.py` (Comparatif),
+  `faisabilite/engine.py` (verdict : « estimation ~N m² » au lieu de « jusqu'à »), `api/pre_dossier.py`
+  (« Surface de plancher estimée » au lieu de « jusqu'à »), `copilote_v2/resume_fiche.py`,
+  `frontend/.../ComparePanel.tsx` (+ test `tests/test_capacite_max.py`), `flash/templates/rapport.html.j2`.
+
+**Cité du Dossier régénéré** `97416000HT0538/01-dossier.pdf` §3 :
+> `Surface de plancher estimée, terrain libéré    614 m²    estimé`
+> `estimation : ~273 m² d'emprise × 45 % d'occupation (hypothèse, pas une règle du PLU) × 5 niveaux — hors stationnement et pleine terre`
+
+**Cité du pré-dossier régénéré** `97416000HT0538/06-pre-dossier-pc.zip → …-regles-zonage.pdf` :
+> `Capacité constructible — scénario « terrain libéré » … plancher estimée ~614 m². Pré-faisabilité sur
+> règlement public (estimation, pas un certificat…)` (était « Surface de plancher jusqu'à ~614 m² »).
+
+Plus aucune occurrence de « maximale réglementaire » / « jusqu'à » pour le 614 dans les documents livrés.
+
+---
+
+## B2 — BI0351 : la zone rouge du PPR rattachée à son VRAI aléa, pas à « Inondation » par défaut
+
+Le PPR rouge de BI0351 est **multi-risque** : attribut `risque = INONDATION_MOUVEMENT_DE_TERRAIN` (mesuré en
+base, 27 %+4 % = 31 %). L'Analyse d'annonce collait la zone rouge sur le **premier** aléa de la liste
+(« Inondation ») et écrivait « mouvement de terrain : hors zonage PPR » (faux) + un niveau « Faible » (le dernier
+vu, au lieu du plus fort).
+
+- **Correctif** : `src/labuse/pige/api.py` `_risques_rows` — la zone PPR se rattache aux aléas que son libellé
+  **nomme** (`ppr_hazards`), pas au premier ; le niveau affiché par aléa est le plus **fort** (repli ancien
+  comportement si le libellé PPR ne nomme aucun aléa, pour ne pas orpheliner la zone). Test ajouté :
+  `tests/test_annonce_pdf.py::test_risques_rows_ppr_multirisque_rattache_tous_les_aleas_nommes`.
+
+**Cité de l'Analyse régénérée** `97408000BI0351/05-analyse-annonce-adresse.pdf` :
+> `Inondation             Fort   Zone rouge · 31 %         Zone rouge du PPR La Possession (2018) …`
+> `Mouvement de terrain   Fort   Zone rouge (même zone)    Zone rouge du PPR La Possession (2018) …`
+
+Le mouvement de terrain porte désormais la zone rouge (« même zone », part dite une seule fois) et son niveau
+**Fort** — plus de « hors zonage PPR » ni de « Faible ».
+
+---
+
+## B3 — HT0538 Étude p.3 : DPU, une seule formule (« non vérifié » des deux côtés)
+
+Le DPU n'est **pas ingéré** pour Saint-Pierre → « non vérifié » (comme le Dossier §5). La colonne « Sur le
+terrain » affichait pourtant « signalée », contredisant le libellé.
+
+- **Correctif** : `src/labuse/exports/etude_faisabilite.py` — une contrainte « non vérifié / non ingéré »
+  affiche « non vérifié » dans « Sur le terrain » et déplace la raison dans « Traitement » (plus jamais
+  « signalée » en face de « non vérifié »).
+
+**Cité de l'Étude régénérée** `97416000HT0538/08-etude-faisabilite.pdf` p.3 :
+> `Droit de préemption urbain (DPU)   non vérifié   non vérifié — non ingéré pour cette commune ; à vérifier …`
+
+---
+
+## B4 — HT0538 Étude : couverture « À vérifier » honnête
+
+Statut « À vérifier » (barème de stationnement non servi) mais le bandeau clamait « meilleure capacité
+trouvée : 10 logements » et la colonne Places affichait « 0 ».
+
+- **Correctif** : `src/labuse/exports/etude_faisabilite.py` — quand un garde-fou tombe, le bandeau dit
+  « capacité **à vérifier** : au mieux ~N logements … À confirmer avant de retenir » (ton d'alerte) ; la colonne
+  Places affiche « stationnement non vérifié » au lieu de « 0 » (barème non servi = non calculé, pas 0 exigé).
+  Helper partagé `_bareme_stationnement_absent`.
+
+**Cité de l'Étude régénérée** `97416000HT0538/08-etude-faisabilite.pdf` p.1 :
+> `Logement collectif — capacité à vérifier : au mieux ~10 logements en R+4, stationnement aérien. À confirmer
+> avant de retenir ce programme (voir « À vérifier » ci-dessous).`
+> tableau : `Votre projet … R+4 … stationnement non vérifié … À vérifier`
+
+---
+
+## B5 — Exports texte (Markdown/HTML) alignés sur les PDF
+
+Deux divergences : la fenêtre du marché du neuf (VEFA) servie « 36 mois » (les PDF disent « 5 ans ») et la
+clause rassurante « (pas d'exclusion automatique) » servie sur une parcelle **non constructible** (BI0351).
+
+- **Correctif** : helper unique `src/labuse/api/risques_arbitrage.py::ajuster_clause_affichage` (VEFA → « 5 ans » ;
+  clause « exclusion automatique » retirée si non constructible, zone rouge + vigilance conservées), appelé par
+  les exports texte (`src/labuse/api/export.py`, Markdown ET HTML) **et** par le Comparatif
+  (`src/labuse/exports/blocs/comparatif.py`, qui portait sa propre copie) → une seule formule.
+
+**Cité de la fiche Markdown régénérée** `97416000HT0538/10-export-fiche.md` :
+> `Marché du logement neuf (VEFA) sur la commune : … (158 ventes VEFA / 5 ans) …` (était « / 36 mois »).
+
+**Cité de la fiche Markdown régénérée** `97408000BI0351/10-export-fiche.md` (zone N, non constructible) :
+> `PPR zone rouge sur 31 % de la surface — vigilance forte.` (la clause « (pas d'exclusion automatique) » a disparu).
+
+**Cité du Comparatif régénéré** `_comparatif/cmp-comparatif-3-parcelles.pdf` : colonne BI0351 « … zone rouge sur
+31 % de la surface — … » (clause retirée) ; marché du neuf « … ventes VEFA / 5 ans ».
+
+---
+
+## Fichiers régénérés (`~/Desktop/exports-audit-4/`)
+
+| Parcelle | Documents régénérés |
+|---|---|
+| 97416000HT0538 | 01-dossier · 05-analyse-annonce · 06-pre-dossier-pc.zip · 08-etude-faisabilite · 10/11-export-fiche |
+| 97408000BI0351 | 01-dossier · 05-analyse-annonce · 10/11-export-fiche (Étude = refus inchangé) |
+| 97414000DK0208 | 01-dossier · 05-analyse-annonce · 10/11-export-fiche (Étude = refus inchangé) |
+| _comparatif | cmp-comparatif-3-parcelles.pdf |
+
+## Tests
+
+- `tests/test_annonce_pdf.py` (B2, + nouveau test multi-risque), `tests/test_capacite_max.py` (B1 frontend),
+  `tests/test_faisabilite.py` (verdict), `tests/test_risques_arbitrage.py` : **verts**.
+- Hook pré-push (secrets · front tsc+vitest · pytest unitaires · cohérence 12 témoins) : voir § ci-dessous.
+
+---
+
+# CAPACITÉ-1 — LOT C : une seule « surface à retenir », deux grandeurs nommées (décision Vic, rejet de ma proposition)
+
+La proposition du LOT A (faire du scénario « la » capacité) est écartée : le solveur est optimiste là où une
+règle manque (à Saint-Pierre le stationnement **existe**, art. Ud6 ≈ 1 place / 75 m², il n'est pas ingéré →
+888 m² est un **majorant**), il ne rend rien sur 8 parcelles / 11, et le plus grand chiffre irait contre la
+règle « jamais de faux positif ». Documents régénérés : **HT0538** et **AD0887** (Le Tampon, Étude complète) +
+**BI0351** (analyse). Chaque point cité depuis le fichier livré.
+
+## C1/C2 — deux grandeurs nommées + LA règle unique « surface à retenir »
+
+- **Deux noms, jamais confondus** : « **estimation rapide** » (moteur analytique, toute parcelle, base de la
+  fiche/Dossier/Comparatif/classement) et « **scénario d'implantation** » (Étude).
+- **Une seule fonction** `src/labuse/faisabilite/surface_retenue.py:surface_a_retenir`, lue par le Dossier (§3,
+  via l'extracteur `robinet_fiche._c_surface_a_retenir` + `verdicts.verdict_potentiel`) ET par l'Étude
+  (`etude_faisabilite`). Elle vaut le scénario **seulement si** une Étude existe et que son barème de
+  stationnement est appliqué ; sinon l'estimation rapide. L'estimation rapide est lue **en direct**
+  (`estimation_rapide_m2` → `parcel_faisabilite`, table rase) pour concorder entre documents même sur une
+  parcelle bâtie (colonne `sdp_max` du run partielle). Le Dossier relit le scénario **persisté** (révision),
+  sans rejouer le moteur (trop lent).
+
+**Cité — HT0538 Dossier §3 ET Étude** (même phrase) :
+> `Surface à retenir : 614 m² (estimation rapide). Le scénario dessiné atteint 888 m², non retenu tant que le
+> stationnement n'est pas vérifié.`
+
+**Cité — AD0887 Dossier §3 ET Étude** (même phrase) :
+> `Surface à retenir : 795 m² (scénario d'implantation, stationnement déduit). L'estimation rapide donnait
+> 1 047 m², hors stationnement.`
+
+## C3 — l'Étude explique l'écart en une phrase chiffrée
+
+**Cité — HT0538 Étude** : `Écart avec l'estimation rapide : occupation supposée 46 % du gabarit contre 67 %
+dessinée ; le scénario ne déduit PAS le stationnement (règle existante, non ingérée par LABUSE).`
+(Les % d'occupation sont **dérivés par parcelle** `sdp ÷ (zone × niveaux)`, d'où ~45–49 % selon l'assiette.)
+**Cité — AD0887 Étude** : `… occupation supposée 49 % du gabarit contre 37 % dessinée ; stationnement déduit.`
+
+## C4 — « règle existante, non ingérée par LABUSE » (plus « non opposable » / « aucun ratio »)
+
+Corrigé dans `etude_faisabilite.py` (section Stationnement + garde-fou), `implantation/controles.py` (libellé
+du contrôle), `faisabilite/engine.py` (avertissement) **et `DIAGNOSTIC.md`**.
+**Cité — HT0538 Étude** : `Stationnement non vérifié — la règle de stationnement de cette zone existe au
+règlement du PLU mais n'est pas ingérée par LABUSE …` ; contrôle : `Stationnement | règle existante, non
+ingérée par LABUSE | … | À confirmer`.
+
+## C5 — BI0351 : le mouvement de terrain affiche ses trois niveaux avec leurs parts
+
+**Cité — BI0351 Analyse d'annonce** :
+> `Mouvement de terrain   Fort 4 % · Moyen 27 % · Faible 69 %   Zone rouge (même zone)   Zone rouge du PPR La
+> Possession (2018) …`
+(plus « seulement le plus fort » ; la part de chaque niveau est dans la colonne NIVEAU). Le rattachement B2
+reste : la zone rouge porte inondation ET mouvement de terrain.
+
+## C6 — garde-fou : un seul « surface à retenir » par parcelle
+
+`tests/test_surface_retenue.py` : règle pure (sans/avec Étude, stationnement appliqué ou non, jamais le plus
+grand par défaut) + test `reel` `test_un_seul_surface_a_retenir_par_parcelle` qui **échoue si le chemin Dossier
+et le chemin Étude divergent** pour HT0538 (tous deux retiennent 614, estimation rapide). **Vert.**
+
+## C7/C8 — le Comparatif ET le pré-dossier lisent la MÊME fonction (relance Vic)
+
+La règle devait être lue par *tous* les documents : le Comparatif et le pré-dossier sont maintenant
+branchés sur `surface_a_retenir(estimation_rapide_m2, scenario_etude_persiste)` — la même expression que
+le Dossier (§3) et l'Étude.
+
+- **Comparatif** : `compare()` (api/app.py) pose `surface_a_retenir` par parcelle ; `exports/blocs/comparatif.py`
+  ajoute la ligne **« Surface à retenir »** (sous « Plancher possible · reconstruction »). Sur AD0887, le
+  plancher reconstruction (1 047 m², estimation rapide) n'est **jamais** présenté comme capacité sans la ligne
+  qui tranche.
+  **Cité — `_comparatif/cmp-comparatif-ad0887.pdf`** (colonnes AD0887 · HT0538 · DK0208) :
+  > `Plancher possible · reconstruction   1 047 m²   614 m²   153 m²`
+  > `Surface à retenir   795 m² (scénario d'implantation)   614 m² (estimation rapide)   153 m² (estimation rapide)`
+- **Pré-dossier** : `api/pre_dossier.py` ajoute la phrase « surface à retenir » à la section Capacité.
+  **Cité — `97422000AD0887/06-pre-dossier-pc.zip → …-regles-zonage.pdf`** :
+  > `… retenir : 795 m² (scénario d'implantation, stationnement déduit). L'estimation rapide donnait 1 047 m², hors stationnement.`
+  **Cité — `97416000HT0538/06-pre-dossier-pc.zip`** :
+  > `… Surface à retenir : 614 m² (estimation rapide). Le scénario dessiné atteint 888 m², non retenu tant que le stationnement n'est pas vérifié.`
+
+## C9 — garde-fou étendu aux quatre documents
+
+`tests/test_surface_retenue.py::test_un_seul_surface_a_retenir_tous_documents` (paramétré HT0538 **et**
+AD0887) : le chemin « persisté » (Dossier/Comparatif/pré-dossier, expression partagée) doit égaler le chemin
+LIVE de l'Étude, HT0538 → 614 (estimation), AD0887 → **795 (scénario), jamais 1 047**. **Vert.**
+
+## Hors lot (à faire, listé seulement)
+
+1. **Ingérer les barèmes de stationnement** des communes où ils manquent (Saint-Pierre art. Ud6, etc.) — alors
+   l'Étude déduira le stationnement et « surface à retenir » pourra retenir le scénario.
+2. **Recaler le 45 %** (coef d'occupation) sur les résultats du solveur là où le stationnement est connu
+   (ex. occupation dessinée mesurée), pour rapprocher estimation rapide et scénario.
+
+## Tests LOT C
+
+- `tests/test_surface_retenue.py` (règle + garde-fou reel), `tests/test_annonce_pdf.py` (C5 niveaux), registre
+  intègre (`surface_a_retenir` déclarée + servie par le robinet constructibilité) : **verts**.
+
+---
+
+# CAPACITÉ-1 — LOT D : relecture de contrôle (la règle change)
+
+## D1 — « surface à retenir » = la PLUS PETITE des deux ; esquisse « à vérifier », jamais « exploitable »
+
+Un contrôle qui applique la mauvaise règle ne « retient » pas un scénario. À AD0887, l'Étude marquait le
+stationnement « Réussi » avec la règle de l'habitat individuel (8 places) alors que ses 8 logements
+collectifs relèvent du barème collectif (art. Ud12.2, > 5 logements). Nouvelle règle dans la fonction unique
+`faisabilite/surface_retenue.surface_a_retenir` : **la plus petite** entre l'estimation rapide et l'esquisse
+(quand une esquisse existe), sinon l'estimation rapide. La seconde grandeur s'appelle désormais
+« **esquisse d'implantation** », toujours à vérifier.
+
+**Cité — HT0538 Dossier/Étude/Comparatif/pré-dossier** :
+> `Surface à retenir : 614 m² (estimation rapide). L'esquisse d'implantation atteint 888 m², à vérifier : stationnement non déduit.`
+
+**Cité — AD0887 Dossier/Étude/Comparatif/pré-dossier** :
+> `Surface à retenir : 795 m² (esquisse d'implantation, stationnement à vérifier : la surface réelle peut être inférieure). L'estimation rapide donnait 1 047 m², hors stationnement.`
+
+**Contrôle de stationnement** (`implantation/controles.py`) : « Réussi » seulement pour un barème spécifique
+au collectif (`par_typologie`) ; un barème « par logement » (taux unique, destination non distinguée) → **« À
+confirmer »**, jamais « Réussi » avec une règle qui ne s'applique pas.
+**Cité — AD0887 Étude** : `Stationnement | barème « par logement » | 8 places dessinées | À confirmer`.
+*Hors lot (à faire)* : vérifier commune par commune quelle règle de stationnement le solveur applique selon
+le programme.
+
+## D2 — mêmes alertes partout (la liste de la fiche)
+
+Source unique `api/servitudes.alertes_fiche` (= `contraintes_parcelle`, lue EN DIRECT dans `spatial_layers`).
+Chaque document complète sa rubrique contraintes/risques avec cette liste : Étude (`_attach_contraintes_signalees`),
+Comparatif (`compare()`, cap de 5 retiré), Dossier (§5, bloc « Contraintes dormantes relevées »), pré-dossier
+(PCMI4). Le DPU lit la même présence par parcelle que la fiche (plus `_dispositifs_block` par commune) : AD0887
+hors périmètre n'affiche plus « DPU signalée ».
+**Cité — AD0887** : zone humide « La Grande Ferme » désormais au Dossier (§5), à l'Étude, au Comparatif ET au
+pré-dossier. **Garde** : `test_alertes_fiche_dans_tous_les_documents` (20 parcelles tirées déterministes) échoue
+si une alerte de la fiche manque dans le builder de l'Étude.
+
+## D3 — route d'export texte Markdown/HTML retirée
+
+`GET /parcels/{idu}/export` (md/html) n'était appelée par **aucun écran** (grep front : 0). Route supprimée
+(`api/app.py`) ; tests du route retirés/réaffectés à `/explain` (`test_api`, `test_prospection`, `test_audit_secu`) ;
+fichiers `10/11-export-fiche.*` retirés du lot. Les fonctions `fiche_markdown/fiche_html` restent (santé démo).
+
+## D4 — Étude : l'écart expliqué avec les chiffres du Dossier + une emprise mesurée
+
+**Cité — HT0538 Étude** :
+> `Écart avec l'estimation rapide : elle suppose 45 % d'occupation du gabarit (comme le Dossier) ; l'esquisse
+> dessine 199 m² d'emprise sur 266 m² de zone d'implantation, soit 75 % mesurés …`
+(45 % = le facteur B1 du Dossier ; 75 % = emprise dessinée ÷ zone d'implantation — plus deux % recalculés depuis la SDP.)
+
+## D5 — Analyse BI0351 : la zone rouge ne couvre que les niveaux qu'elle recouvre
+
+**Cité — BI0351 Analyse** :
+> `Mouvement de terrain   Fort 4 % (zone rouge) · Moyen 27 % (zone rouge) · Faible 69 % (hors zone rouge)`
+(rouge 31 % = fort 4 % + moyen 27 % ; le faible 69 % est hors zone rouge, plus la ligne entière.)
+
+## D6 — un seul exemplaire de chaque document
+
+Fichiers périmés retirés de la racine de `~/Desktop/exports-audit-4/` : `etude-HT0538.pdf`, `AVANT-APRES.md`
+(et les `10/11-export-fiche.*` de D3). Chaque document : le dernier tirage, une seule fois.
+
+## Tests LOT D
+
+`tests/test_surface_retenue.py` (règle min + grandeurs + garde `surface à retenir` + garde `alertes`),
+`tests/test_annonce_pdf.py` (D5 zone rouge / niveaux), suite unitaire complète : **verts**.
+
+---
+
+# CAPACITÉ-1 — LOT E : relecture de contrôle (deux écarts hors Étude)
+
+> L'Étude et la règle « surface à retenir » ne sont PAS touchées (audit séparé). Documents régénérés :
+> Analyses d'annonce (HT0538, AD0887, BI0351) + pré-dossiers (HT0538, AD0887).
+
+## E1 — la zone humide manquait encore dans l'Analyse et la fiche « Règles du zonage » du pré-dossier
+
+Source unique `servitudes.alertes_fiche` branchée sur **toutes** les rubriques contraintes/risques :
+- **Analyse d'annonce** : `pige/api._risques_complet` ajoute les contraintes dormantes aux aléas.
+- **Pré-dossier « Règles du zonage »** (`api/pre_dossier._regles_et_pieces`) : complétude des servitudes.
+
+**Cité — AD0887 Analyse** `05-analyse-annonce-adresse.pdf` : `Zone humide — La Grande Ferme : remblai,
+drainage…`. **Cité — pré-dossier** `06-…zip → …-regles-zonage.pdf` : `Zone humide — La Grande Ferme …`.
+
+**Garde étendue à TOUTES les pièces, ZIP compris** : `tests/test_surface_retenue.py` —
+`test_alertes_fiche_dans_les_builders_de_contraintes` (20 parcelles : builders Étude **et** Analyse ⊇
+alertes_fiche) + `test_alertes_fiche_dans_les_pieces_zip` (rend le ZIP, lit regles-zonage + PCMI4).
+
+## E2 — Analyse : « ce qui est vérifié / ce qui ne l'est pas » + le TRI n'est pas un PPR
+
+- `pige/api._classement_phrase` : quand le stationnement n'est pas vérifié, on n'affirme plus « aucune
+  règle ne mord » ; on écrit ce qui EST vérifié et ce qui ne l'est pas. Le sentinelle « a_verifier » ne
+  fuite plus dans le tableau des règles (`_regles_zone`).
+  **Cité — HT0538 Analyse** : `les règles vérifiées (reculs, emprise, hauteur) ne mordent pas nettement ;
+  le stationnement de la zone n'est pas vérifié par LABUSE (à confirmer au règlement).`
+- `pige/api._risques_rows` : le TRI (directive inondation) n'est pas un PPR → sa part va dans la colonne
+  NIVEAU, la colonne « Zone PPR » reste vide.
+  **Cité — HT0538 Analyse** : `Inondation (TRI)   Extrême 100 %   [—]   Cartographie de la directive…`.
+
+## E3 — « en zone » / « hors zone » par RECOUVREMENT MESURÉ
+
+`servitudes.aleas_parcelle` mesure, pour chaque niveau d'aléa, son intersection géométrique avec la zone
+rouge/bleue du PPR (`part_rouge_pct`/`part_bleue_pct`) ; `_risques_rows` s'en sert au lieu d'un cumul de
+pourcentages.
+**Cité — BI0351 Analyse** : `Mouvement de terrain   Fort 4 % (zone rouge) · Moyen 27 % (zone rouge) ·
+Faible 69 % (hors zone rouge)` (mesuré : fort 4 %+moyen 27 % dans le rouge, faible 0 %).
+Test `test_risques_rows_zone_rouge_par_recouvrement_mesure` : un niveau étendu mais hors du rouge reste
+« hors zone », un petit niveau entièrement dans le rouge est « en zone » (là où le cumul se tromperait).
+
+## Tests LOT E
+
+`tests/test_annonce_pdf.py` (E2/E3), `tests/test_surface_retenue.py` (gardes E1 builders + ZIP),
+suite unitaire complète : **verts**.

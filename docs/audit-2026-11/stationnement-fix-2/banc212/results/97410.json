@@ -1,0 +1,23 @@
+{
+ "insee": "97410",
+ "regles": [
+  {
+   "rule_id": "97410-R1",
+   "found": true,
+   "programs": {
+    "maison_T4_120": {
+     "total": 1
+    },
+    "collectif_20T3_1400": {
+     "total": 24
+    },
+    "aide_20T3_1400": {
+     "total": 10
+    },
+    "mixte_10x110_10x30": {
+     "total": 24
+    }
+   }
+  }
+ ]
+}

@@ -1,5 +1,23 @@
 # Communes
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On compare les 24 communes ou on en ouvre une.
+> 2. L'outil rassemble les ventes, les permis et la consommation d'espace de chaque commune.
+> 3. Il en tire des prix, des rythmes, un budget foncier restant et un score de comparaison.
+> 4. Il rend un tableau classé et des fiches commune.
+> 5. Le « score où investir » est une estimation non calibrée, à lire avec prudence.
+
+**Captures — l'outil en action**
+
+![Communes — Les 24 communes comparées — tableau : instruction (mois), permis 5 ans, déficit SRU, €/m² ancien / VEFA / terrain nu (Saint-Paul 1 922 permis, €/m² ancien 4 297…).](img/communes-comparatif.png)
+*Les 24 communes comparées — tableau : instruction (mois), permis 5 ans, déficit SRU, €/m² ancien / VEFA / terrain nu (Saint-Paul 1 922 permis, €/m² ancien 4 297…).*
+
+![Communes — Évolution du marché (24 communes) — table par trimestre 2024T3→2026T4 : €/m² ancien, €/m² terrain, permis ; neuf ≈ 4 375 €/m².](img/communes-evolution.png)
+*Évolution du marché (24 communes) — table par trimestre 2024T3→2026T4 : €/m² ancien, €/m² terrain, permis ; neuf ≈ 4 375 €/m².*
+
+<!-- CCM -->
+
 Clé interne : `communes` (num O6) · composant : `frontend/src/components/outils/Communes.tsx` · endpoints : `/communes`, `/communes/status`, `/communes/{commune}/contexte`, `/comparateur-communes`, `/communes/{commune}/acquisitions-pm`, `/moteurs/barometre`, `/moteurs/marche/{commune}`, `/moteurs/zan`, `/pipeline-rarete`
 
 > **Note sur les « 5 chemins » du mandat.** Le briefing nomme Marché · Comparateur · Vélocité · Rareté · Évolution (+ Baromètre/`barometre`/M18). À l'écran, l'outil a été **restructuré** (`Communes.tsx` lignes 13-24) en **quatre portes** : *Comparaison communes*, *Évolution du marché* (= l'ex-Baromètre M18), *Marché des annonces (Radar)*, *Acquisitions récentes*. Les notions *Marché local*, *Vélocité* et *Rareté/ZAN* ne sont plus des onglets propres : elles ont été **transférées dans la fiche commune du Contexte** (`ContextePanel`, servie par `/communes/{commune}/contexte`) et dans des **colonnes** du comparateur. J'ai donc structuré la fiche par **chemin fonctionnel** (Comparateur, Évolution/Baromètre, Marché, Vélocité, Rareté/ZAN, Acquisitions), en disant pour chacun où il vit aujourd'hui.

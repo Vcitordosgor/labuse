@@ -86,10 +86,12 @@ describe('COURRIER — service d\'envoi (3 étapes)', () => {
     fireEvent.click(document.querySelector('[data-courrier-demander]')!)
     await waitFor(() => expect(document.querySelector('[data-courrier-confirm]')).toBeTruthy())
     // RECETTE-1 R13 — la confirmation porte le rang PROPRE AU COMPTE (n° 3), PAS le id PK global (42).
-    expect(screen.getByText(/Demande n° 3 transmise/)).toBeTruthy()
+    // OUTILS-P1-1 (pt 10) — « Demande reçue » (pas « transmise »), suivie de l'ÉTAT RÉEL « À déposer ».
+    expect(screen.getByText(/Demande reçue — n° 3/)).toBeTruthy()
+    expect(document.querySelector('[data-courrier-etat-reel]')!.textContent).toContain('À déposer')
     expect(screen.queryByText(/n° 42/)).toBeNull()
     expect(screen.getByText(/Mes courriers/)).toBeTruthy()
-    // AUCUN état interne (imprimé/posté) ni timeline côté client.
+    // AUCUN état interne prématuré ni « Posté » tant que la demande n'est qu'« À déposer ».
     expect(screen.queryByText('Imprimé')).toBeNull()
     expect(screen.queryByText('Posté')).toBeNull()
   })

@@ -23,7 +23,7 @@ from ..rendu import esc, ligne_kv, note, table_kv
 # la CAPACITÉ CONSTRUCTIBLE (sdp/capacité), le PRIX DE SECTEUR, la HAUTEUR LiDAR (inutile à sa mission).
 IDS = ("surface_parcelle_m2", "zone_plu_famille", "reglement_plu_bloc", "statut_plu",
        "emprise_batie_m2", "n_batiments", "type_proprietaire", "prix_achat_historique_eur",
-       "distance_arret_m", "aleas_parcelle_liste",
+       "distance_arret_m", "aleas_parcelle_liste", "contraintes_parcelle_liste",  # LOT H pt2
        "er_emplacement_reserve", "ebc_classe", "dpu_perimetre", "peb_zone")
 
 # `appearance:auto` : les <input>/<textarea> deviennent des CHAMPS REMPLISSABLES avec
@@ -126,26 +126,66 @@ def _sur_place(valeurs) -> str:
     return " · ".join(bits) or "terrain a priori nu"
 
 
+# CHIRURGICAL-FIX-1 (LOT H pt2) — une alerte reprise dans un document porte la MÊME nature, la MÊME
+# gravité et la MÊME part que sur la fiche (« scénario extreme, 85 % de la parcelle » sur BW2635 ;
+# « vigilance forte, 34 % » en zone rouge ; « 100 % de la parcelle » pour la zone humide). On garde
+# donc nature + gravité + part, en ne jetant QUE l'explication longue (phrase après « : » ou après
+# « — » quand ce n'est pas une gravité/part).
+_GRAVITE = ("niveau", "scénario", "scenario", "extreme", "extrême", "fort", "faible", "moyen",
+            "vigilance", "prescription", "%")
+
+
+def _desc_alerte(libelle: str) -> str:
+    """Nature + gravité + part d'une alerte, sans son explication longue (fidèle à la fiche)."""
+    s = (libelle or "").strip()
+    # 1) explication introduite par « : » — jetée, SAUF si la part (N %) y figure (ex. zone humide :
+    #    « … : La Grande Ferme (100 % de la parcelle) »), auquel cas on garde jusqu'à la part.
+    if " : " in s:
+        head, tail = s.split(" : ", 1)
+        if re.search(r"\d+\s*%", head):
+            s = head
+        else:
+            m = re.search(r"\([^)]*\d+\s*%[^)]*\)|\d+\s*%", tail)
+            s = f"{head} : {tail[:m.end()]}" if m else head
+    # 2) après « — » : on garde une gravité/part (courte, ou portant un mot de gravité / un %), on jette
+    #    une explication longue (DPU, bruit…). Une gravité suivie d'une note (« ; … ») est coupée au « ; ».
+    if " — " in s:
+        head, tail = s.split(" — ", 1)
+        tail = tail.rstrip(" .")
+        if len(tail) <= 45 or any(k in tail.lower() for k in _GRAVITE):
+            s = f"{head} — {tail.split(' ; ')[0].strip()}"
+        else:
+            s = head
+    return s.strip()
+
+
 def _contraintes(valeurs) -> str:
     """Une ligne « Ce qui gêne » : aléas + prescriptions (ER/EBC/DPU) + zone de bruit (PEB). Vide → ''."""
     bits: list[str] = []
-    liste = val(valeurs, "aleas_parcelle_liste") or []
-    # RECETTE-11 D7 — « Ce qui gêne » reprend la liste du Dossier §4 : on prend la description de
-    # l'aléa (libellé court avant « — »), pas seulement sa `nature`. Sinon un PPR « inondation ET
-    # mouvement de terrain » se réduisait à « Inondation » — le mouvement de terrain manquait.
-    natures = [((x.get("libelle") or "").split(" — ")[0].strip() or x.get("nature"))
+    # CHIRURGICAL-FIX-1 (LOT H pt2) — MÊME liste que la fiche/Comparatif (toutes les alertes SOFT/HARD),
+    # pas seulement les aléas : l'Apporteur n'omet plus la zone humide (AD0887) ni l'inondation extrême
+    # (BW2635). Repli sur les seuls aléas si le champ complet manque (vieille réponse en cache).
+    full = val(valeurs, "contraintes_parcelle_liste")
+    liste = full or val(valeurs, "aleas_parcelle_liste") or []
+    # RECETTE-11 D7 / CHIRURGICAL-FIX-1 pt2 — la description porte nature + GRAVITÉ + PART (via
+    # `_desc_alerte`), pas seulement la nature : « Zone inondable TRI — scénario extreme (85 % de la
+    # parcelle) », pas « Zone inondable TRI » ; « PPR zone rouge sur 34 % — vigilance forte ».
+    natures = [(_desc_alerte(x.get("libelle") or "") or x.get("nature"))
                for x in liste if isinstance(x, dict) and (x.get("nature") or x.get("libelle"))]
     bits += list(dict.fromkeys(n for n in natures if n))
-    if a(valeurs, "dpu_perimetre"):
-        bits.append("préemption (DPU)")
-    if a(valeurs, "er_emplacement_reserve"):
-        bits.append("emplacement réservé")
-    if a(valeurs, "ebc_classe"):
-        bits.append("espace boisé classé")
-    peb = val(valeurs, "peb_zone")
-    if peb:
-        bits.append(f"bruit d'aéroport (PEB {esc(str(peb))})" if not isinstance(peb, dict)
-                    else f"bruit d'aéroport (PEB {esc(str(peb.get('zone') or peb.get('libelle') or ''))})")
+    # CHIRURGICAL-FIX-1 (LOT H pt2) — ces prescriptions (DPU/ER/EBC/PEB) ne sont ajoutées QUE sur le
+    # REPLI aléas : la liste complète les porte déjà (dpu, prescription_plu EBC, sup, peb…) — sinon doublon.
+    if not full:
+        if a(valeurs, "dpu_perimetre"):
+            bits.append("préemption (DPU)")
+        if a(valeurs, "er_emplacement_reserve"):
+            bits.append("emplacement réservé")
+        if a(valeurs, "ebc_classe"):
+            bits.append("espace boisé classé")
+        peb = val(valeurs, "peb_zone")
+        if peb:
+            bits.append(f"bruit d'aéroport (PEB {esc(str(peb))})" if not isinstance(peb, dict)
+                        else f"bruit d'aéroport (PEB {esc(str(peb.get('zone') or peb.get('libelle') or ''))})")
     return " · ".join(b for b in bits if b)
 
 
@@ -180,12 +220,18 @@ def _coup_d_oeil(valeurs, ctx) -> str:
         plu = val(valeurs, "statut_plu")
         libelle = None
         if isinstance(plu, dict):
-            # EXPORTS-FIX-1 C1/A7 — date d'APPROBATION réelle (Sudocuh) et format JJ/MM/AAAA, jamais
-            # la date de publication GPU en ISO (« 2025-12-17 ») : cohérent avec le Dossier.
+            # CHIRURGICAL-FIX-1 (LOT F, E7) — la date d'approbation est celle de la FICHE : le DOCUMENT
+            # OPPOSABLE servi (`plu_fraicheur.horizon`, ex. 2023-08-11 pour 97422_PLU_20230811), et non
+            # l'approbation d'ORIGINE Sudocuh (`approbation_opp`), qui précède une révision et affichait
+            # une date périmée (08/12/2018) divergente de la fiche. Sudocuh ne reste qu'en repli ultime.
+            horizon = plu.get("horizon")
             appro = plu.get("approbation_sudocuh")
-            if appro:
+            if horizon:
+                y, m, d = (horizon.split("T")[0].split("-") + ["", "", ""])[:3]
+                libelle = f"Version du PLU servie, approuvée le {d}/{m}/{y}"
+            elif appro:
                 y, m, d = (appro.split("T")[0].split("-") + ["", "", ""])[:3]
-                libelle = f"PLU approuvé le {d}/{m}/{y}"
+                libelle = f"Version du PLU servie, approuvée le {d}/{m}/{y}"
             else:
                 libelle = plu.get("libelle")
                 if libelle:
@@ -406,7 +452,13 @@ def rendu(valeurs, ctx=None) -> str:
         # DOC-APPORTEUR-018 (RECETTE-11 D7) — quand la cascade RELÈVE une ICPE, on imprime sa
         # description/distance (« …SCI MILHAC, régime Enregistrement, 93 m »), plus seulement la
         # phrase générique ; l'`icpe_detail` était calculé par le builder mais jamais consommé ici.
-        _aide_poll = "Un ancien site industriel ou un sol pollué est signalé à proximité (analyse de risques)."
+        # CHIRURGICAL-FIX-1 (LOT H pt2) — on ne DIT « ancien site industriel / sol pollué » que si un
+        # INVENTAIRE de pollution est relevé (sol pollué / casias). Sur la seule proximité d'une ICPE,
+        # on dit le FAIT constaté (« installation classée à proximité »), sans inférer la pollution.
+        if ctx.get("pollution_inventaire"):
+            _aide_poll = "Un ancien site industriel ou un sol pollué est signalé à proximité (analyse de risques)."
+        else:
+            _aide_poll = "Une installation classée pour la protection de l'environnement (ICPE) est signalée à proximité."
         _icpe = ctx.get("icpe_detail")
         if _icpe:
             _aide_poll += f" {_icpe}"

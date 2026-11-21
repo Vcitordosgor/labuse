@@ -232,7 +232,9 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
           {/* U1.5 — encart propriétaire : raison sociale + SIREN + « changer » (retour état 1). */}
           <div data-scan-owner className="flex items-center justify-between gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
             <div className="min-w-0">
-              <div className="truncate text-[13.5px] font-semibold text-txt-hi">{ownerNom ?? '…'}</div>
+              {/* OUTILS-P1-1 LOT3c (pt 6) — raison sociale JAMAIS coupée par « … » : elle passe sur deux
+                  lignes au besoin (`break-words`, plus de `truncate`). */}
+              <div className="break-words text-[13.5px] font-semibold leading-tight text-txt-hi">{ownerNom ?? '…'}</div>
               <div className="mt-0.5 font-mono text-[10.5px] text-txt-dim">SIREN <Siren value={owner} className="font-mono text-txt-dim" /></div>
             </div>
             {/* RETOURS-25 (pt 3) — « changer » : bouton vert de la DA (plus un lien nu souligné). */}

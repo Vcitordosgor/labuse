@@ -2963,12 +2963,31 @@ def commune_acquisitions_pm(commune: str,
 @app.get("/parcels/at")
 def parcel_at(lon: float, lat: float, db: Session = Depends(get_db)) -> dict:
     """Résolution point → parcelle (C7, décision produit Vic : clic UNIVERSEL — n'importe
-    quelle parcelle de la trame cadastrale ouvre sa fiche, promue ou écartée)."""
+    quelle parcelle de la trame cadastrale ouvre sa fiche, promue ou écartée).
+
+    MINI-CORRECTIONS-1 (pt 4) — ne rend JAMAIS « rien » quand un point tombe HORS de toute parcelle
+    (point BAN posé sur la voirie / le trottoir, adresse hors cadastre) : à défaut d'une parcelle
+    CONTENANTE, on renvoie la parcelle la PLUS PROCHE avec sa distance en mètres. Ainsi la barre
+    d'adresse atterrit toujours sur une parcelle (la bonne, ou la plus proche en l'annonçant) — plus
+    de « aucune adresse » après un choix dans la liste des suggestions. `distance_m` : 0 si contenante,
+    > 0 pour la plus proche, None seulement si la base est vide."""
+    pt = "ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)"
     row = db.execute(text(
-        """SELECT p.idu FROM parcels p
-           WHERE ST_Contains(p.geom, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326))
-           LIMIT 1"""), {"lon": lon, "lat": lat}).first()
-    return {"idu": row[0] if row else None}
+        f"""SELECT p.idu FROM parcels p
+            WHERE ST_Contains(p.geom, {pt})
+            LIMIT 1"""), {"lon": lon, "lat": lat}).first()
+    if row:
+        return {"idu": row[0], "distance_m": 0.0}
+    # Pas de parcelle contenante → la PLUS PROCHE (KNN index GiST via l'opérateur `<->`), distance
+    # mesurée en mètres sur la géographie (geography) pour un chiffre honnête quelle que soit la latitude.
+    near = db.execute(text(
+        f"""SELECT p.idu, ST_Distance(p.geom::geography, {pt}::geography) AS d
+            FROM parcels p
+            ORDER BY p.geom <-> {pt}
+            LIMIT 1"""), {"lon": lon, "lat": lat}).first()
+    if near:
+        return {"idu": near[0], "distance_m": round(float(near[1]), 1)}
+    return {"idu": None, "distance_m": None}
 
 
 @app.get("/parcels/{idu}/geojson")
@@ -3644,9 +3663,13 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
         # CONTENANCE-1 (Lot B) : la surface de terrain (base taxable pré-remplie) = contenance si
         # présente, sinon dessin.
         "SELECT p.commune, round(COALESCE(p.contenance_m2, p.surface_m2)) AS surface_terrain_m2, z.zone_libelle, z.zone_fam,"
-        "       r.sdp_residuelle_m2 AS sdp_gabarit_m2, r.taux_emprise_pct"
+        "       r.sdp_residuelle_m2 AS sdp_gabarit_m2, r.taux_emprise_pct,"
+        # CHIRURGICAL-FIX-1 (E117) — emprise bâtie servie (BD TOPO/CoSIA), peuplée même pour une
+        # parcelle NON constructible (donc absente de parcel_residuel). Repli de `deja_batie`.
+        "       pmb.emprise_bati_m2"
         " FROM parcels p LEFT JOIN parcel_zone_plu z ON z.idu = p.idu"
         " LEFT JOIN parcel_residuel r ON r.parcel_id = p.id"
+        " LEFT JOIN p_model_bati pmb ON pmb.idu = p.idu"
         " WHERE p.idu = :i"),
         {"i": idu}).mappings().first()
     if not row:
@@ -3674,7 +3697,8 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
             # on le libelle pour que l'utilisateur ne confonde pas les deux.
             "sdp_gabarit_libelle": ("SDP résiduelle (droits à bâtir restants, bâti conservé)"
                                     if (sdp is not None and sdp > 0) else None),
-            "deja_batie": bool(row["taux_emprise_pct"] and float(row["taux_emprise_pct"]) > 0),
+            "deja_batie": bool((row["taux_emprise_pct"] and float(row["taux_emprise_pct"]) > 0)
+                               or (row["emprise_bati_m2"] and float(row["emprise_bati_m2"]) > 0)),
             "taux_communal_pct": (pub["part_communale_pct"] if pub else None),
             "taux_communal_source": ("public" if pub else None),
             "taux_communal_millesime": (pub["millesime"] if pub else None),
@@ -5320,6 +5344,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # KELFONCIER-FIX-1 (Lot A) — statut d'ouverture de la zone AU (§4 Urbanisme + cause §10).
         "au_ouverture": _au_ouverture_block(db, idu),
         "plu_fraicheur": _plu_fraicheur(idu),   # M32 §2 : fraîcheur GPU-vs-mairie du zonage
+        "plu_modifie": _plu_modifie(db, idu),   # PLU-VEILLE-FIX-1 : bandeau « PLU modifié — règles en cours »
         "radar_procedure": _radar_proc(idu, (score_v2 or {}).get("tier")),   # M41 — radar procédures PLU
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
         "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
@@ -5823,6 +5848,21 @@ def _ppr_reference_commune(db: Session, insee: str) -> list[dict] | None:
     return [{"document": r["document"], "approbation": r["approbation"]} for r in rows] or None
 
 
+def _ppr_documents_couvrant(db: Session, idu: str) -> set[str]:
+    """CHIRURGICAL-FIX-1 (LOT J pt3f) — les documents PPR qui COUVRENT réellement la parcelle (leur zonage
+    l'intersecte), à distinguer de ceux qui EXISTENT seulement dans la commune (AM0838 : seul le PPR 2016
+    la touche ; le PPRL 2017 existe dans la commune mais ne la couvre pas). Repli : set vide (jamais un crash)."""
+    try:
+        rows = db.execute(text(
+            "WITH p AS (SELECT geom_2975 g FROM parcels WHERE idu = :idu) "
+            "SELECT DISTINCT sl.attrs->>'document' AS document FROM spatial_layers sl CROSS JOIN p "
+            "WHERE sl.kind = 'ppr' AND sl.geom_2975 IS NOT NULL AND ST_Intersects(sl.geom_2975, p.g) "
+            "AND sl.attrs->>'document' IS NOT NULL"), {"idu": idu}).scalars().all()
+        return {r for r in rows if r}
+    except Exception:  # noqa: BLE001
+        return set()
+
+
 def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict | None:
     """PIEGES-RISQUES-2 (Lot C) — la LISTE des aléas de la fiche §Pièges & risques lit désormais la MÊME
     fonction que l'outil (`servitudes.aleas_parcelle`, couches `spatial_layers` EN DIRECT) au lieu de la
@@ -5836,6 +5876,13 @@ def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict
     if not al:
         return None
     ppr_ref = _ppr_reference_commune(db, idu[:5])
+    # CHIRURGICAL-FIX-1 (LOT J pt3f) — on distingue le plan qui COUVRE la parcelle (son zonage l'intersecte)
+    # de celui qui EXISTE seulement dans la commune. On N'adosse à l'aléa PPR que le(s) document(s) couvrant(s)
+    # (AM0838 : le PPR 2016, pas le PPRL 2017) ; les autres plans de la commune sont listés à part.
+    _couvrants = _ppr_documents_couvrant(db, idu)
+    ppr_couvre = ([p for p in ppr_ref if p["document"] in _couvrants] or ppr_ref) if ppr_ref else None
+    ppr_commune_autres = ([p for p in ppr_ref if p["document"] not in _couvrants]
+                          if (ppr_ref and _couvrants) else None) or None
     items: list[dict] = []
     for a in al:
         is_ppr = a["nature"].startswith("PPR")
@@ -5848,7 +5895,7 @@ def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict
             "redhibitoire": a["redhibitoire"],
             "source": a["source"],
             "millesime": a["millesime"],
-            "ppr": ppr_ref if is_ppr else None,
+            "ppr": ppr_couvre if is_ppr else None,
         })
     items.sort(key=lambda a: (not a["redhibitoire"],
                               -_ALEA_NIVEAU_RANG.get((a["niveau"] or "").lower(), 0)))
@@ -5867,7 +5914,9 @@ def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict
     # reste servi pour la liste ; la tuile « Aléas » affiche `n_hazards` pour ne plus diverger d'Estimer.
     from ..pige.api import distinct_hazards as _distinct_hazards
     return {"n": len(items), "n_hazards": len(_distinct_hazards(items)),
-            "liste": items, "synthese": synthese}
+            "liste": items, "synthese": synthese,
+            # LOT J pt3f — plans de prévention présents dans la commune mais qui NE COUVRENT PAS la parcelle.
+            "ppr_commune_autres": ppr_commune_autres}
 
 
 def _dpe_connu_block(db: Session, idu: str) -> dict | None:
@@ -6496,6 +6545,30 @@ def _icd_block(s2) -> dict | None:
 _PLU_FRAICHEUR_CACHE: dict = {}
 
 
+def _plu_modifie(db, idu: str) -> dict | None:
+    """PLU-VEILLE-FIX-1 — le bandeau CLIENT « PLU modifié le jj/mm/aaaa — règles en cours de mise à
+    jour », servi sur la fiche ET dans les documents TANT que la commune est en cours de mise à jour
+    (une couche d'urbanisme en retard sur le Géoportail, ou règles pas encore recalibrées/validées).
+    None quand la commune est à jour. Jamais un 500 : une veille absente = pas de bandeau."""
+    insee = (idu or "")[:5]
+    if not insee:
+        return None
+    try:
+        from .. import controle_plu
+        e = controle_plu.lire_etat(db, insee)
+    except Exception:  # noqa: BLE001 — la fiche ne tombe jamais pour un défaut de veille
+        return None
+    if not e or e.get("etat") != "desync":
+        return None
+    # Bandeau PROPORTIONNEL (décision Vic) : le message et le fait que les parcelles passent
+    # « À vérifier » dépendent de la couche en décalage (fort / prescriptions / informations).
+    return {"date": e.get("date_modif_fr"), "niveau": e.get("niveau"),
+            "ancien": e.get("ancien"), "nouveau": e.get("nouveau"),
+            "couches": e.get("couches_en_retard") or [],
+            "avec_a_verifier": bool(e.get("avec_a_verifier")),
+            "message": e.get("message") or "PLU mis à jour — intégration en cours."}
+
+
 def _plu_fraicheur(idu: str) -> dict | None:
     """M32 Phase B §2 — étiquette de FRAÎCHEUR du zonage PLU (spec millésime, GPU-vs-mairie).
     L'HORIZON du zonage = date d'approbation MAIRIE (point de vérité config/plu_millesimes.yaml,
@@ -6530,12 +6603,14 @@ def _plu_fraicheur(idu: str) -> dict | None:
     if statut == "a_jour":
         # EXPORTS-REBRANCHEMENT-1 lot 0 — « à jour du GPU » (fraîcheur de NOTRE synchronisation)
         # ne se dit plus au client (doctrine PAGE-SOURCES-1, 18/09) : on dit le FAIT juridique.
-        document_servi, fait_foi = doc, "Document opposable — il fait foi à ce jour."
-        # M57-P1 (d) : ce libellé est GÉNÉRIQUE (gated sur `note` config = assertion d'agent, PAS
-        # une source ni une procédure détectée). Reformulé en avertissement NEUTRE, sans « en cours »
-        # ni sablier (cf. rendu front qui n'applique plus le cadre « En cours (non servi) » à a_jour).
-        en_cours = ("Des modifications postérieures au document peuvent exister — à confirmer en mairie."
-                    if note else None)
+        # EXPORTS-FIX-3 LOT 3f — « opposable » n'est affirmé QU'À LA DATE DES DONNÉES LABUSE, jamais
+        # « à ce jour » (qui laisserait croire que le GPU a été confronté aujourd'hui : une révision
+        # publiée depuis la synchro ne serait pas vue — faute « e » de l'audit). Le caveat « évolution
+        # postérieure à confirmer en mairie » est TOUJOURS porté (plus seulement si une note config existe).
+        document_servi = doc
+        fait_foi = ("Document opposable à la date des données LABUSE (voir la couverture) — "
+                    "une évolution publiée depuis n'est pas confrontée ici.")
+        en_cours = "Des modifications postérieures au document peuvent exister — à confirmer en mairie."
         action = None  # l'avertissement neutre porte déjà « à confirmer en mairie »
     elif statut == "annule_partiel":
         document_servi = doc
@@ -7404,6 +7479,34 @@ _FICHE_LOCK = threading.Lock()
 _FICHE_VER = {"v": "", "at": -1.0}
 _FICHE_VER_TTL_S = 60.0
 _FICHE_VER_LOCK = threading.Lock()
+# EXPORTS-FIX-3 LOT 3 — RÉVISION DE CODE du CONTENU de fiche : la clé du cache de fiche (`fiche_cache`
+# L1/L2) ne portait QUE la fraîcheur des données (data_sources + tuyau_rev), jamais le code. Un
+# correctif de LIBELLÉ porté par la DONNÉE de fiche (ex. le libellé PPR « hors zone rouge » produit par
+# `servitudes._ppr_ligne` et STOCKÉ dans `aleas.liste[].libelle`) restait donc servi depuis le cache,
+# périmé. Ce jeton est AJOUTÉ à la version : tout changement de jeton invalide le cache (recalcul à la
+# demande).
+#
+# RÉVISION (relecture) — le jeton se DÉDUIT de la révision git déployée (la prod est un checkout git sur
+# le VPS, cf. deploy.sh) : tout nouveau commit change la clé → le cache se recalcule SANS geste manuel.
+# LIMITE CONNUE (dite en clair) : un déploiement SANS `.git` (wheel/pip) retombe sur la constante de
+# repli ci-dessous, qui elle est à bumper à la main. Calculé UNE fois à l'import (git borné à 2 s).
+_FICHE_CODE_REV_FALLBACK = "2026-11-14-exports-fix-3"
+
+
+def _derive_fiche_code_rev() -> str:
+    try:
+        import subprocess
+        sha = subprocess.run(
+            ["git", "-C", str(Path(__file__).resolve().parent), "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=2)
+        if sha.returncode == 0 and sha.stdout.strip():
+            return "git:" + sha.stdout.strip()
+    except Exception:  # noqa: BLE001 — pas de git (wheel) : repli constante (limite connue)
+        pass
+    return _FICHE_CODE_REV_FALLBACK
+
+
+_FICHE_CODE_REV = _derive_fiche_code_rev()
 
 # ───────────────────────── VITESSE-2 (Lot 7) — CACHE DE FICHE PARTAGÉ (base) ─────────────────────────
 # Le `_FICHE_CACHE` ci-dessus est PAR WORKER : avec 5 workers, une fiche ouverte sur l'un reste froide
@@ -7528,7 +7631,7 @@ def _fiche_version(db: Session) -> str:
                 except Exception:  # noqa: BLE001 — mvt_meta pas encore créée (base neuve)
                     db.rollback()
                     rev = ""
-                _FICHE_VER["v"] = f"{ds}.{rev}"
+                _FICHE_VER["v"] = f"{ds}.{rev}.{_FICHE_CODE_REV}"
             except Exception:  # noqa: BLE001 — data_sources absente : pas de version, pas de cache
                 db.rollback()
                 _FICHE_VER["v"] = ""
@@ -7976,16 +8079,26 @@ def _calcul_etude_zone(db: Session, inp: EtudeZoneIn) -> dict:
     if inp.rayon_km is not None and not is_rayon:
         out["rayon_demande_non_retenu_km"] = inp.rayon_km
     out["naf_label"] = naf_label(naf) if naf else None
-    # DOCS-COHERENCE-1 (A8, arbitrage) — quand l'Étude de zone part d'une PARCELLE, son « Prix médian
-    # du bâti » LIT l'id de la fiche (marche_dvf, médiane du secteur de la parcelle), identique au
-    # Dossier §8 et au Comparatif ; plus de prix propre à la zone qui divergeait (une seule source).
+    # OUTILS-P0-2 (P3, revue Astra) — l'en-tête « Prix médian du bâti » DÉCRIT LE CERCLE dessiné
+    # (`marche.prix_m2_median_bati`, calculé dans le périmètre, avec son effectif et sa période), il
+    # n'est PLUS écrasé par la médiane du SECTEUR de la fiche (un autre périmètre). Le prix du secteur,
+    # s'il existe, est servi À PART (`prix_secteur_fiche` : médiane + rayon réel + effectif) pour que
+    # les deux repères coexistent sans se confondre — le cercle change de prix quand le rayon change.
     if inp.idu and isinstance(out.get("marche"), dict):
         try:
             from ..marche_service import DVF_BANQUIER_ADAPTATIF, marche_dvf
             _pa = marche_dvf(db, idu, profil=DVF_BANQUIER_ADAPTATIF) or {}
             if _pa.get("median") is not None:
-                out["marche"]["prix_m2_median_bati"] = _pa["median"]
-        except Exception:  # noqa: BLE001 — jamais un 500 ; repli sur la médiane de zone
+                # OUTILS-P0-2 (recette) — la ligne du secteur DIT CE QU'ELLE MESURE : le type de bien
+                # (maison/appartement/mixte) et la fenêtre réelle (années, segment « récente »/« élargie »
+                # du prix de secteur — jamais un « 24 mois » inventé que ce prix ne mesure pas).
+                out["marche"]["prix_secteur_fiche"] = {
+                    "median": _pa["median"], "n": _pa.get("n"),
+                    "radius_m": _pa.get("radius_m"),
+                    "commune_fallback": bool(_pa.get("commune_fallback")),
+                    "type_prix": _pa.get("type_prix"),
+                    "periode": _pa.get("periode")}
+        except Exception:  # noqa: BLE001 — jamais un 500 ; le prix de secteur est un plus
             db.rollback()
     if out.get("zone_disponible"):
         out["marche"] = out.get("marche")   # déjà posé par etude_de_zone
@@ -9040,6 +9153,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         # M40 — source qui fait foi (GPU-vs-mairie) : présent aussi sur le payload par défaut et les
         # exports (md/html), pas seulement la fiche premium. Jamais un zonage servi sans mention.
         "plu_fraicheur": _plu_fraicheur(idu),
+        "plu_modifie": _plu_modifie(db, idu),   # PLU-VEILLE-FIX-1 : bandeau « PLU modifié — règles en cours »
         "radar_procedure": _radar_proc(idu, verdict_block["tier"]),   # M41 — radar procédures PLU
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
         "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
@@ -9147,35 +9261,10 @@ def parcel_explain(idu: str, db: Session = Depends(get_db)) -> dict:
     return explain_parcel(fiche)
 
 
-@app.get("/parcels/{idu}/export")
-def export_fiche(idu: str, format: str = Query("md", pattern="^(md|html)$"),
-                 db: Session = Depends(get_db)):
-    """Export fiche : Markdown (md) ou HTML détaillé (html). Surface DONNÉES (cloisonnée par
-    compte via `_build_fiche`) — distincte des documents PDF (builder exports). EXPORTS-2 lot 8
-    ne touche PAS cet export : seul l'export PDF (`/export.pdf`) est redirigé (RECETTE-3 T2 : vers
-    le Dossier depuis la suppression du Résumé)."""
-    import html as html_mod
-
-    from fastapi.responses import HTMLResponse, PlainTextResponse
-
-    from .export import fiche_html, fiche_markdown
-
-    _check_idu(idu)
-    # CHASSE-DONNEES-FIX-1 (Lot 2) — une parcelle disparue du cadastre : l'export REFUSE de composer
-    # une fiche vivante (l'écran route déjà vers le stub, pas _build_fiche) et sert le message.
-    _disp = _cadastre_disparue.info_disparue(db, idu)
-    if _disp:
-        _ph = _cadastre_disparue.phrase_disparue(_disp)
-        if format == "html":
-            return HTMLResponse(f"<!doctype html><html lang=fr><meta charset=utf-8>"
-                                f"<title>{html_mod.escape(idu)}</title><body>"
-                                f"<h1>{html_mod.escape(idu)}</h1><p>{html_mod.escape(_ph)}</p></body></html>")
-        return PlainTextResponse(f"# {idu}\n\n{_ph}\n", media_type="text/markdown")
-
-    fiche = _build_fiche(db, idu)
-    if format == "html":
-        return HTMLResponse(fiche_html(fiche))
-    return PlainTextResponse(fiche_markdown(fiche), media_type="text/markdown")
+# CAPACITE-1 (D3) — l'export fiche TEXTE (`GET /parcels/{idu}/export?format=md|html`) a été RETIRÉ :
+# l'interface ne le propose nulle part (grep front : 0 appelant) et il faisait doublon avec le Dossier
+# PDF. Les fonctions `api/export.fiche_markdown`/`fiche_html` restent (santé démo `_warm_demo_core`,
+# demo.py, test_micro_opportunite). Si un besoin d'export texte réapparaît, le recâbler ICI.
 
 
 @app.get("/parcels/{idu}/spf-letter")
@@ -9211,9 +9300,24 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # MÊME valeur que la fiche SERVIE (qv2.potentiel_transformation : run servi + réconciliation de
     # l'écartement hors_classement), jamais un recalcul live divergent. Une seule source par notion.
     _pt_serv = qv2.get("potentiel_transformation") or {}
-    cf = (fa.get("bilan") or {}).get("charge_fonciere") or {}
+    # EXPORTS-FIX-3 LOT 2 — le VERDICT de la fiche (point unique `potentiel_batir`), avec le motif
+    # dans l'ordre imposé (zone non constructible → zone rouge → reste).
+    _pab = qv2.get("potentiel_a_batir") or {}
+    _bilan = fa.get("bilan") or {}
+    cf = _bilan.get("charge_fonciere") or {}
     lignes = qv2.get("lines") or []
     contraintes = [l for l in lignes if l.get("result") in ("HARD_EXCLUDE", "SOFT_FLAG")]
+    # EXPORTS-FIX-3 LOT 2 (#4) — la colonne « Contraintes » du Comparatif doit faire remonter les
+    # contraintes MAJEURES (zone rouge du PPR, espace boisé classé) même quand elles ne sont pas dans
+    # les 4 premières lignes de la cascade (c'était la faute b/d : BI0351 listait bassin versant/bruit/
+    # propriété publique/sol naturel, sans la zone rouge ni l'EBC). On les met en tête, cap porté à 5.
+    def _major_contrainte(detail: str) -> bool:
+        d = (detail or "").lower()
+        return (("ppr" in d and "rouge" in d) or "espace boisé classé" in d
+                or "boisé classé" in d or "ebc" in d)
+    _maj = [c for c in contraintes if _major_contrainte(c.get("detail"))]
+    _aut = [c for c in contraintes if not _major_contrainte(c.get("detail"))]
+    contraintes_ordonnees = _maj + _aut
     # contrainte MAJEURE explicite : HARD_EXCLUDE d'abord, sinon le 1er SOFT_FLAG, sinon rien.
     majeure = next((c["detail"] for c in contraintes if c["result"] == "HARD_EXCLUDE"),
                    next((c["detail"] for c in contraintes if c["result"] == "SOFT_FLAG"), None))
@@ -9237,13 +9341,20 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
             proprietaire = {"Succession": "succession", "Indivision": "indivision"}.get(
                 tete_denomination(pm.get("denomination")), "morale")
     else:
-        proprietaire = "particulier"
+        # CHIRURGICAL-FIX-1 (LOT H pt4) — sans personne morale, le propriétaire est « non déterminé »
+        # (comme le Dossier et la fiche « Propriétaire non identifié »), PAS « particulier » : LABUSE
+        # n'a pas le nom, on n'affirme pas qu'il s'agit d'un particulier. Même valeur partout.
+        proprietaire = "non_determine"
     # bâti existant % = emprise bâtie (BD TOPO/CoSIA) ÷ surface terrain — jamais un « 0 » inventé.
-    # NU-3-J#8 — MÊME dénominateur que la fiche : la surface de TERRAIN servie (contenance|dessin),
-    # pas la surface de dessin brute — sinon le taux divergeait de la fiche de ±1 à 4 points.
+    # NU-3-J#8 — MÊME dénominateur que la fiche : la surface de TERRAIN servie (contenance|dessin).
+    # CHIRURGICAL-FIX-1 (LOT H pt4) — et MÊME NUMÉRATEUR que la fiche : l'emprise bâtie SERVIE
+    # (le_bien.emprise_batie_m2, BD TOPO), PAS res["emprise_batie_m2"] (résiduel) qui divergeait
+    # (IS0448 : résiduel 259 → 27 % alors que la fiche sert 128 → 13 %). Repli résiduel si le_bien absent.
     surf = qv2.get("surface_terrain_m2") or qv2.get("surface_m2") or 0
-    bati_pct = (round(100 * res["emprise_batie_m2"] / surf)
-                if res.get("disponible") and res.get("emprise_batie_m2") is not None and surf else None)
+    _emprise = (qv2.get("le_bien") or {}).get("emprise_batie_m2")   # emprise SERVIE par la fiche (= 128 pour IS0448)
+    if _emprise is None and res.get("disponible"):
+        _emprise = res.get("emprise_batie_m2")
+    bati_pct = (round(100 * _emprise / surf) if _emprise is not None and surf else None)
     # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — logements_min/logements_possibles NE SONT PLUS SERVIS :
     # aucun nombre de logements de l'ancien calcul de capacité (fourchette estimate_capacity,
     # SDP ÷ logement moyen) dans Comparer — la ligne (écran ET PDF) renvoie à l'Étude de faisabilité
@@ -9269,6 +9380,13 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     _terr_sel = max(_terr, key=lambda s: s.get("n_ventes") or 0) if _terr else None
     prix_terrain = _terr_sel["mediane_prix_m2"] if _terr_sel else None
     prix_terrain_n = (_terr_sel or {}).get("n_ventes")
+    # OUTILS-P1-1 (pt 3) — prix du terrain FILTRÉ AU CALCUL sous le seuil d'échantillon (SEUIL_N = 8
+    # ventes, même règle que le Dossier §8) : une médiane fondée sur moins de 8 ventes n'est pas assez
+    # fiable → on ne la SERT PAS (None). Le NOMBRE de ventes reste servi (l'écran/PDF dit « échantillon
+    # insuffisant » au lieu d'un prix trompeur).
+    from ..dvf_mediane import SEUIL_N as _SEUIL_N
+    if prix_terrain is not None and prix_terrain_n is not None and int(prix_terrain_n) < _SEUIL_N:
+        prix_terrain = None
     return {
         "idu": qv2["idu"], "commune": qv2.get("commune"),
         # CHASSE-DONNEES-FIX-1 (Lot 1) — le Comparatif sert la surface de TERRAIN (contenance|dessin)
@@ -9284,7 +9402,14 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "fraction": s2.get("fraction"),    # M135 P2 — « 1/5 » ou None
         "raison": raison,                  # M135 P3 — chip court, ou None
         # faisabilité (fiche_payload — même bilan que la fiche)
-        "zone": fa.get("zone"), "constructible": fa.get("constructible"),
+        # EXPORTS-FIX-3 LOT 2 — VERDICT UNIQUE : la constructibilité ET le motif servis au Comparatif
+        # sont CEUX DE LA FICHE (`potentiel_a_batir`, règle unique `potentiel_batir`), jamais un
+        # recalcul divergent. Quand la fiche dit « non constructible », le Comparatif le dit aussi et
+        # n'affiche ni plancher, ni hauteur, ni bilan, ni charge foncière (rendu `comparatif.py`).
+        "zone": fa.get("zone"),
+        "constructible": (_pab.get("constructible") if _pab.get("constructible") is not None
+                          else fa.get("constructible")),
+        "verdict_motif": _pab.get("motif"),
         # RECETTE-PROD-1 (12) — « Constructible : oui/non » (verdict faisabilité) MENTAIT : une Um
         # bâtie sur-occupée est « oui » (zone constructible, emprise ≥ seuil) mais a 0 potentiel
         # résiduel ; une voisine trop étroite est « non » (terrain_exigu). On sert donc SÉPARÉMENT
@@ -9302,8 +9427,18 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
                               else (res.get("sdp_residuelle_m2") if res.get("disponible") else None)),
         "sous_densite": res.get("sous_densite") if res.get("disponible") else None,
         "charge_fonciere_m2": cf.get("par_m2_terrain"),
+        # EXPORTS-FIX-3 LOT 2 (#7) — un bilan n'est affiché QUE s'il peut dire ses hypothèses et la
+        # surface à laquelle il se rapporte : on sert les hypothèses du bilan (fa.bilan.hypotheses) +
+        # la base (par m² de terrain). Sans elles, le rendu n'affiche pas la charge foncière.
+        "bilan_hypotheses": list(_bilan.get("hypotheses") or []),
+        "charge_fonciere_base": "par m² de terrain",
         "n_contraintes": len(contraintes),
-        "contraintes": [c["detail"] for c in contraintes[:4]],
+        # CAPACITE-1 (D2) — plus de cap à 5 : toute alerte de la fiche doit pouvoir figurer (le cap
+        # masquait des contraintes réelles). La complétude vs `alertes_fiche` est posée dans compare().
+        "contraintes": [c["detail"] for c in contraintes_ordonnees],
+        # EXPORTS-FIX-3 LOT 3 (#5) — l'état du bâti EXACTEMENT comme la fiche (etat_bien servi) : une
+        # seule valeur partout ; non mesuré (trace aérienne seule) → « bâti détecté, à vérifier ».
+        "bati_etat": qv2.get("etat_bien"),
         # OUTILS-FIX-5 L4 — `contrainte_majeure` REBRANCHÉE : elle était calculée (HARD_EXCLUDE
         # d'abord, sinon 1er SOFT_FLAG) mais absente du payload depuis e6b7b5bb → le front retombait
         # en permanence sur « N signalée(s) ». On sert la valeur, tirée des MÊMES lignes de cascade
@@ -9598,8 +9733,20 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
             zr = None
         ces = getattr(zr, "emprise_sol_pct", None) if zr else None
         row["emprise_ces_pct"] = float(ces) if isinstance(ces, (int, float)) else None
-        row["emprise_ces_source"] = ((zr.sources or {}).get("emprise")
-                                     if zr and row["emprise_ces_pct"] is not None else None)
+        # OUTILS-P1-1 (pt 3) — « PLU sans plafond d'emprise » (règle d'emprise IDENTIFIÉE mais sans
+        # valeur : plu_destinations PROUVE le silence du règlement, sentinelle « pas de règle dans le
+        # PLU ») vs « Règle non renseignée » (aucune règle d'emprise identifiée pour la zone). Le signal
+        # vient de la source d'emprise posée par resolve_zone (plafond chiffré / absence prouvée / rien).
+        _emprise_src = (zr.sources or {}).get("emprise") if zr else None
+        if row["emprise_ces_pct"] is not None:
+            row["emprise_ces_etat"] = "plafond"
+            row["emprise_ces_source"] = _emprise_src
+        elif _emprise_src and "pas de règle dans le PLU" in _emprise_src:
+            row["emprise_ces_etat"] = "sans_plafond"
+            row["emprise_ces_source"] = _emprise_src
+        else:
+            row["emprise_ces_etat"] = "non_renseigne"
+            row["emprise_ces_source"] = None
         # COMPARER-2 §4 / SOURCES-FIX-2 lot B — Classement LABUSE (bande + Signal de mutation) du RUN
         # SERVI (SCORE_LABUSE_RUN = runs.current()), la MÊME source que l'écran Analyse et la fiche
         # (score_labuse). NULL tant que le run servi n'est pas peuplé dans score_labuse — la bascule
@@ -9626,6 +9773,31 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
                 row["adresse"] = None
         except Exception:  # noqa: BLE001 — adresse indisponible ne doit jamais casser la comparaison
             row["adresse"] = None
+        # CAPACITE-1 (LOT C) — « surface à retenir » (RÈGLE UNIQUE, même fonction que le Dossier et
+        # l'Étude) : le Comparatif ne présente jamais le plancher reconstruction (estimation rapide)
+        # comme capacité sans cette ligne. Estimation rapide LIVE vs scénario d'implantation PERSISTÉ.
+        try:
+            from ..faisabilite.surface_retenue import estimation_rapide_m2, surface_a_retenir
+            from ..exports.etude_faisabilite import scenario_etude_persiste
+            _est = estimation_rapide_m2(db, idu)
+            _scn = scenario_etude_persiste(db, idu)
+            if _est not in (None, "") or _scn is not None:
+                row["surface_a_retenir"] = surface_a_retenir(_est, _scn)
+        except Exception:  # noqa: BLE001 — n'empêche jamais la comparaison
+            pass
+        # CAPACITE-1 (D2) — MÊME liste d'alertes que la fiche : toute alerte de `alertes_fiche` absente
+        # de la colonne « Contraintes » (le run de cascade pouvait en manquer, ex. zone humide AD0887)
+        # est ajoutée. Un seul statut par fait (dédup par clé normalisée).
+        try:
+            from .servitudes import alertes_fiche as _alertes_fiche
+            _norm = lambda s: "".join((s or "").lower().split())[:48]
+            _vus = {_norm(c) for c in (row.get("contraintes") or [])}
+            for _a in _alertes_fiche(db, idu):
+                if _norm(_a["effet"]) not in _vus:
+                    row.setdefault("contraintes", []).append(_a["effet"])
+                    _vus.add(_norm(_a["effet"]))
+        except Exception:  # noqa: BLE001
+            pass
         out.append(row)
     # NU5-FIX-1 (A-O5) — IDU demandés mais non rendus : introuvables (ignores), surnuméraires
     # (tronques, au-delà de 3), doublons retirés. L'écran les affiche (« X non trouvée(s), Y au-delà

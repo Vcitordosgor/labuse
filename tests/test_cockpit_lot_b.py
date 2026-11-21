@@ -109,10 +109,11 @@ def test_familles_attendues():
     # F4 passe de 22 à 24.
     # FRAICHEUR-FIX-1 : + fraicheur-nuit (F1, le contrôle de fraîcheur de nuit) + ingest-inpi-rne
     # (F2, le chargement INPI mensuel) → 39 jobs, F1 passe de 3 à 4, F2 de 7 à 8.
-    # ESTIMER-2 (fix/estimer-2) : + estimer-banc-precision (F4, le banc de précision de nuit) → 40 jobs,
-    # F4 passe de 24 à 25.
-    assert par_fam == {1: 4, 2: 8, 3: 3, 4: 25}
-    assert sum(par_fam.values()) == 40
+    # PLU-VEILLE-FIX-1 : + plu-veille-nuit (F1, la veille PLU/GPU de nuit) → F1 passe de 4 à 5.
+    # ESTIMER-2 (fix/estimer-2) : + estimer-banc-precision (F4, le banc de précision de nuit) → F4 24 à 25.
+    # Fusion des deux branches : les DEUX jobs sont au registre → 41 jobs.
+    assert par_fam == {1: 5, 2: 8, 3: 3, 4: 25}
+    assert sum(par_fam.values()) == 41
 
 
 # ─────────────── endpoints (db) ───────────────

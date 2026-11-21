@@ -1,0 +1,87 @@
+{
+ "insee": "97405",
+ "commune": "Petite-Île",
+ "regles": [
+  {
+   "id": "97405-R1",
+   "article": "UB.12",
+   "mode": "par_logement",
+   "zones": [
+    "UB"
+   ],
+   "pages": [
+    30,
+    31,
+    32
+   ]
+  },
+  {
+   "id": "97405-R2",
+   "article": "UC.12",
+   "mode": "par_logement",
+   "zones": [
+    "UC",
+    "UCe"
+   ],
+   "pages": [
+    39,
+    40,
+    41
+   ]
+  },
+  {
+   "id": "97405-R3",
+   "article": "UD.12",
+   "mode": "par_logement",
+   "zones": [
+    "UD",
+    "UDe"
+   ],
+   "pages": [
+    49,
+    50,
+    51
+   ]
+  },
+  {
+   "id": "97405-R4",
+   "article": "UZ.12",
+   "mode": "par_logement",
+   "zones": [
+    "UZ"
+   ],
+   "pages": [
+    84,
+    85,
+    86
+   ]
+  },
+  {
+   "id": "97405-R5",
+   "article": "1AU.12",
+   "mode": "par_logement",
+   "zones": [
+    "1AU",
+    "1AUa"
+   ],
+   "pages": [
+    95,
+    96,
+    97
+   ]
+  },
+  {
+   "id": "97405-R6",
+   "article": "1AUZ.12",
+   "mode": "par_logement",
+   "zones": [
+    "1AUz"
+   ],
+   "pages": [
+    105,
+    106,
+    107
+   ]
+  }
+ ]
+}

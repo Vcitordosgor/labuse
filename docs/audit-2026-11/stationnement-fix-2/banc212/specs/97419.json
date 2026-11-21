@@ -1,0 +1,88 @@
+{
+ "insee": "97419",
+ "commune": "Sainte-Rose",
+ "regles": [
+  {
+   "id": "97419-R1",
+   "article": "UA 12",
+   "mode": "par_typologie",
+   "zones": [
+    "Ua",
+    "2AUa"
+   ],
+   "pages": [
+    16,
+    17,
+    18
+   ]
+  },
+  {
+   "id": "97419-R2",
+   "article": "UB 12",
+   "mode": "par_typologie",
+   "zones": [
+    "Ub",
+    "2AUb"
+   ],
+   "pages": [
+    25,
+    26,
+    27
+   ]
+  },
+  {
+   "id": "97419-R3",
+   "article": "UC 12",
+   "mode": "par_typologie",
+   "zones": [
+    "Uc",
+    "2AUc"
+   ],
+   "pages": [
+    34,
+    35,
+    36
+   ]
+  },
+  {
+   "id": "97419-R4",
+   "article": "UD 12",
+   "mode": "par_typologie",
+   "zones": [
+    "Ud",
+    "2AUd"
+   ],
+   "pages": [
+    42,
+    43,
+    44
+   ]
+  },
+  {
+   "id": "97419-R5",
+   "article": "AUINDICEE 12 (renvoi UA 12)",
+   "mode": "par_typologie",
+   "zones": [
+    "1AUa"
+   ],
+   "pages": [
+    16,
+    17,
+    18
+   ]
+  },
+  {
+   "id": "97419-R6",
+   "article": "AUINDICEE 12 (renvoi UC 12)",
+   "mode": "par_typologie",
+   "zones": [
+    "1AUc"
+   ],
+   "pages": [
+    34,
+    35,
+    36
+   ]
+  }
+ ]
+}
