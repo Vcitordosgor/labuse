@@ -342,3 +342,31 @@ def test_destination_suit_le_type_de_projet():
     prog = _prog([(3, 70, 4)])
     assert b.exiger(prog, destination="social").places == 4
     assert b.exiger(prog, destination="collectif").places == 6
+
+
+# ── ETUDE-STATIONNEMENT-FIX-20c — le tampon « version <commit> » du PDF porte le commit qui l'a RÉELLEMENT
+#    produit : le HEAD si l'arbre est propre, MARQUÉ « +modifs » si des fichiers suivis sont modifiés (régénérer
+#    avant de committer stampait le commit PRÉCÉDENT — c'est ainsi que les PDF ont porté bdfae41a9 au lieu de
+#    b9439bc7b). Le document ne prétend jamais porter un commit propre qu'on n'a pas. ───────────────────────────
+def test_commit_build_reflete_l_etat_reel_du_depot():
+    import os
+    import subprocess
+
+    from labuse.exports import etude_faisabilite
+    if os.environ.get("LABUSE_BUILD_COMMIT"):
+        import pytest
+        pytest.skip("tampon forcé par LABUSE_BUILD_COMMIT (déploiement)")
+    cwd = os.path.dirname(etude_faisabilite.__file__)
+    head = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"], capture_output=True, text=True, cwd=cwd)
+    if head.returncode != 0 or not head.stdout.strip():
+        import pytest
+        pytest.skip("dépôt git indisponible")
+    short = head.stdout.strip()
+    dirty = bool(subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"],
+                                capture_output=True, text=True, cwd=cwd).stdout.strip())
+    stamp = etude_faisabilite._commit_build()
+    assert stamp is not None and stamp.startswith(short), f"tampon {stamp!r} ne part pas du HEAD {short!r}"
+    if dirty:
+        assert stamp == short + "+modifs", f"arbre modifié → tampon doit être « {short}+modifs », obtenu {stamp!r}"
+    else:
+        assert stamp == short, f"arbre propre → tampon doit être EXACTEMENT le HEAD {short!r}, obtenu {stamp!r}"

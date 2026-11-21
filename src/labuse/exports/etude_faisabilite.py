@@ -24,17 +24,30 @@ from .rendu import FOOT_LIGNE, Cartouche, esc, page_html
 def _commit_build() -> Optional[str]:
     """ETUDE-STATIONNEMENT-FIX-2 (LOT 4) — le commit QUI A PRODUIT le document, pour que chaque PDF porte
     sa version de calcul. Priorité à la variable d'env `LABUSE_BUILD_COMMIT` (posée au déploiement) ; à
-    défaut, le HEAD du dépôt (régénérations locales) ; None si rien n'est lisible (prod sans git ni env)."""
+    défaut, le HEAD du dépôt (régénérations locales) ; None si rien n'est lisible (prod sans git ni env).
+
+    FIX-20c — le HEAD seul MENT quand on régénère AVANT de committer : l'arbre de travail porte alors le code
+    qui produit le document, mais `git rev-parse HEAD` renvoie le commit PRÉCÉDENT (c'est ainsi que les PDF de
+    FIX-20b ont porté bdfae41a9 au lieu de b9439bc7b). On SIGNALE donc les modifs non commises des fichiers
+    SUIVIS par un suffixe « +modifs » : un document ne prétend jamais porter un commit propre qu'on n'a pas.
+    Un PDF propre (sans suffixe) → régénéré APRÈS commit, arbre propre = le commit qui l'a réellement produit."""
     import os
     sha = os.environ.get("LABUSE_BUILD_COMMIT")
     if sha:
         return sha.strip()[:12]
     try:
         import subprocess
-        out = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"], capture_output=True, text=True,
-                             timeout=2, cwd=os.path.dirname(__file__))
-        if out.returncode == 0 and out.stdout.strip():
-            return out.stdout.strip()
+        cwd = os.path.dirname(__file__)
+        head = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"], capture_output=True, text=True,
+                              timeout=2, cwd=cwd)
+        if head.returncode != 0 or not head.stdout.strip():
+            return None
+        short = head.stdout.strip()
+        dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], capture_output=True,
+                               text=True, timeout=2, cwd=cwd)
+        if dirty.returncode == 0 and dirty.stdout.strip():   # modifs non commises (fichiers suivis)
+            return short + "+modifs"
+        return short
     except Exception:  # noqa: BLE001 — stamp best-effort, jamais bloquant
         pass
     return None
