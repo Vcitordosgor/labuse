@@ -31,6 +31,7 @@ from sqlalchemy.orm import Session
 # annulé) est décodé par UNE seule fonction, celle de la fiche : ingestion/permits.py. L'outil Permis
 # et le drawer s'y adossent (fin de la divergence avec le `_ETAT_LABELS` local, où 4 = « Chantier ouvert »).
 from ..ingestion.permits import est_annule, etat_libelle
+from .. import permis_classe  # OUTIL-PERMIS-FIX-1 — LA définition unique de l'état d'un permis
 from ..perf_cache import MemoLRU as _MemoLRU  # VITESSE-3 (NU-D-018) — mémo clé de fraîcheur
 
 router = APIRouter(prefix="/modules", tags=["modules"])
@@ -558,40 +559,21 @@ def patrimoine(siren: str, fmt: str = "json",
 
 # ───────────────────────── M03 — RADAR PERMIS ─────────────────────────
 
-def _permis_etat_pred(etat: str | None, a: str) -> str:
-    """RETOURS-17 W2 — prédicat SQL de l'ÉTAT DE CYCLE d'un permis. La base se partitionne EXACTEMENT
-    en quatre états dont la somme fait le total (constat Vic 05/09 : trois chips qui ne s'additionnaient
-    pas) : Récent (autorisé ≤ 24 mois) · Dormant (PC ancien sans achèvement, non bâti) · Achevé (DAACT
-    déclaré) · Autre (le reste). Le découpage « récent » (24 mois) est ancré sur :dmax = fin du flux
-    Sitadel (honnêteté : le flux s'arrête avant aujourd'hui). « dormant » garde son endpoint dédié
-    (/promesses : la jointure parcelle+run est coûteuse) ; ICI on sert récent/achevé/autre. `a` = préfixe
-    d'alias table (`''` pour count/carte, `'s.'` pour la liste). Mesuré le 05/09 (base locale, q_v11_m137,
-    dmax 2026-07-31) : récent 5 580 · dormant 15 466 · achevé 20 534 · autre 8 964 = 50 544 (= total base).
-    Whitelist fermée (etat ∈ {recent, acheve, autre}) — aucune valeur libre n'entre dans le SQL."""
-    rc = "(:dmax - interval '24 months')"
-    if etat == "recent":
-        return f" AND {a}date >= {rc}"
-    if etat == "acheve":
-        return f" AND {a}date < {rc} AND {a}raw->>'daact' IS NOT NULL"
-    if etat == "autre":
-        # non récent, sans DAACT, et surtout PAS un dormant : mêmes critères que /promesses
-        # (PC ancien de plus de 36 mois, rattaché à une parcelle notée du run, toujours non bâtie).
-        return (f" AND {a}date < {rc} AND {a}raw->>'daact' IS NULL"
-                f" AND NOT ({a}type = 'PC' AND {a}date < now() - interval '36 months'"
-                f" AND EXISTS (SELECT 1 FROM jsonb_array_elements_text({a}idu_codes) _c(idu)"
-                f"   JOIN parcels _p ON _p.idu = _c.idu"
-                f"   JOIN dryrun_parcel_evaluations _d ON _d.parcel_id = _p.id AND _d.run_label = :run"
-                f"   WHERE NOT EXISTS (SELECT 1 FROM dryrun_cascade_results _cr"
-                f"     WHERE _cr.run_label = :run AND _cr.parcel_id = _p.id"
-                f"     AND _cr.layer_name = 'bati' AND _cr.result = 'HARD_EXCLUDE')))")
-    return ""
+def _permis_etat_pred(etat: str | None, a: str, bati: bool = True) -> str:
+    """OUTIL-PERMIS-FIX-1 (LOT 1) — fragment de FILTRE d'état, délégué à la définition UNIQUE
+    (`permis_classe`). recent|dormant|acheve|autre dérivent TOUS du même CASE que le compteur →
+    le filtre et le compteur portent sur les mêmes identifiants (avant : « autre » était soustrait
+    au front et « dormant » vivait ailleurs avec une autre horloge). `a` = préfixe d'alias table.
+    L'horloge unique est `:dmax` (fin du flux Sitadel) ; le dormant lit `parcel_bati_emprise`."""
+    return permis_classe.etat_pred_sql(etat, a, ":dmax", bati)
 
 
 @router.get("/permis")
 def permis(commune: str | None = None, months: int = 24, nature: str | None = None,
            limit: int = Query(300, ge=1, le=2000), offset: int = Query(0, ge=0),  # GB-029 : ge=0 → 422, plus de 500
            count_only: bool = False,   # RETOURS-16 V4 — compteur seul (ni lignes ni carte)
-           etat: str | None = None,    # RETOURS-17 W2 — état de cycle : recent|acheve|autre (dormant = /promesses)
+           etat: str | None = None,    # OUTIL-PERMIS-FIX-1 — état de cycle : recent|dormant|acheve|autre
+           etats: bool = False,        # OUTIL-PERMIS-FIX-1 (LOT 1) — partition COMPTÉE des 4 états en une passe
            db: Session = Depends(get_db)) -> dict:
     # fenêtre ancrée sur la FIN DES DONNÉES (le flux Sitadel s'arrête avant aujourd'hui) — honnêteté
     dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
@@ -610,15 +592,47 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
     coupure_recent = db.execute(
         text("SELECT (:d - interval '24 months')::date::text"), {"d": dmax}).scalar()
     limit = max(1, min(limit, 2000))  # garde-fou payload ; « voir plus » pagine par offset
-    # RETOURS-17 W2 — prédicat d'état de cycle (récent/achevé/autre), whitelist fermée. `ep` sans alias
-    # (count + carte), `eps` avec alias `s.` (liste). :run n'est lu que par l'état « autre ».
-    if etat not in (None, "recent", "acheve", "autre"):
+    # OUTIL-PERMIS-FIX-1 (LOT 1) — prédicat d'état de cycle (recent|dormant|acheve|autre), whitelist
+    # fermée, dérivé de la définition UNIQUE `permis_classe`. `ep` sans alias (count + carte), `eps`
+    # avec alias `s.` (liste). L'horloge unique est :dmax ; le dormant lit `parcel_bati_emprise`.
+    if etat not in (None, *permis_classe.ETATS):
         etat = None
-    ep, eps = _permis_etat_pred(etat, ""), _permis_etat_pred(etat, "s.")
-    prun = runs.cascade()  # C1 cascade if etat == "autre" else None
+    # OUTIL-PERMIS-FIX-1 — garde : sans la couche d'emprise bâtie, le dormant est inactif (pas de 500).
+    bati_ok = permis_classe.bati_table_existe(db)
+    ep, eps = _permis_etat_pred(etat, "", bati_ok), _permis_etat_pred(etat, "s.", bati_ok)
+    # OUTIL-PERMIS-FIX-1 (LOT 5) — chaque permis porte SON état de cycle (liste + carte) : la couleur
+    # d'un point est celle de SON état, identique quel que soit le filtre actif (avant, le front peignait
+    # tout un segment d'une couleur, et « Tous » reclassait un achevé ancien en orange).
+    etat_cycle_bare = permis_classe.etat_case_sql("", ":dmax", bati_ok)
+    etat_cycle_s = permis_classe.etat_case_sql("s.", ":dmax", bati_ok)
+    prun = runs.cascade()  # conservé pour les params liés des requêtes historiques (inoffensif)
     # RETOURS-16 V4 — chemin compteur : le chip « Tous » du segment doit dire le TOTAL EN BASE
     # (toute la profondeur), pas la somme de deux fenêtres. Un COUNT léger, jamais les 47k geoms.
     if count_only:
+        # OUTIL-PERMIS-FIX-1 (LOT 1) — PARTITION : les quatre états COMPTÉS en une passe (GROUP BY du
+        # MÊME CASE que le filtre), plus aucun état obtenu par soustraction. La somme = Tous = total
+        # base (datés). On DIT aussi la ligne sans date (LOT 4). Sert les compteurs d'entrée de l'outil.
+        if etats:
+            rows = db.execute(text(
+                f"""SELECT ({permis_classe.etat_case_sql('', ':dmax', bati_ok)}) AS e,
+                          count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
+                   FROM sitadel_permits
+                   WHERE (CAST(:c AS text) IS NULL OR commune = :c)
+                     AND (CAST(:nat AS text) IS NULL OR type = :nat)
+                     AND date IS NOT NULL
+                   GROUP BY 1"""),
+                {"c": commune, "nat": nature, "dmax": dmax}).mappings().all()
+            parts = {r["e"]: int(r["n"] or 0) for r in rows}
+            sans_date = db.execute(text(
+                "SELECT count(*) FROM sitadel_permits WHERE date IS NULL"
+                " AND (CAST(:c AS text) IS NULL OR commune = :c)"
+                " AND (CAST(:nat AS text) IS NULL OR type = :nat)"),
+                {"c": commune, "nat": nature}).scalar()
+            return {"total": sum(parts.values()),
+                    "geocodes": sum(int(r["geo"] or 0) for r in rows),
+                    "donnees_jusqu_au": dmax.date().isoformat(), "coupure_recent": coupure_recent,
+                    "etats": {k: parts.get(k, 0) for k in permis_classe.ETATS},
+                    "sans_date": int(sans_date or 0)}
         c = db.execute(text(
             f"""SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
                FROM sitadel_permits
@@ -635,6 +649,7 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
                s.raw->>'etat' AS etat, s.raw->>'daact' AS daact,
                s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
                s.raw->>'geoloc' AS geoloc,   -- RETOURS-14 S5.1 : la liste DIT la localisation approximative
+               ({etat_cycle_s}) AS etat_cycle,   -- OUTIL-PERMIS-FIX-1 : état de cycle (couleur unique)
                d.date_depot::text AS depot, CASE WHEN d.valide THEN d.delai_mois END AS delai_mois,
                CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
         FROM sitadel_permits s
@@ -642,7 +657,7 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         WHERE (CAST(:c AS text) IS NULL OR s.commune = :c)
           AND (CAST(:nat AS text) IS NULL OR s.type = :nat)
           AND s.date >= :dmax - (:m || ' months')::interval{eps}
-        ORDER BY s.date DESC LIMIT :lim OFFSET :off"""),
+        ORDER BY s.date DESC, s.permit_id ASC LIMIT :lim OFFSET :off"""),
         {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun, "lim": limit, "off": offset}).mappings().all()
     # MERGE RETOURS×CIRCUIT-2 — les deux apports cohabitent :
     #  · CIRCUIT-2 lot 1.6 : le count « nu » (sans filtre d'état) passe par le moteur nommé
@@ -671,15 +686,16 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
     carte = []
     if offset == 0:
         crows = db.execute(text(f"""
-            SELECT permit_id, type, date::date::text AS date, ST_AsGeoJSON(geom) AS g
+            SELECT permit_id, type, date::date::text AS date, ({etat_cycle_bare}) AS etat_cycle,
+                   ST_AsGeoJSON(geom) AS g
             FROM sitadel_permits
             WHERE (CAST(:c AS text) IS NULL OR commune = :c)
               AND (CAST(:nat AS text) IS NULL OR type = :nat)
               AND date >= :dmax - (:m || ' months')::interval AND geom IS NOT NULL{ep}
-            ORDER BY date DESC LIMIT 60000"""),
+            ORDER BY date DESC, permit_id ASC LIMIT 60000"""),
             {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun}).mappings().all()
         carte = [{"permit_id": r["permit_id"], "type": r["type"], "date": r["date"],
-                  "geom": json.loads(r["g"])} for r in crows]
+                  "etat_cycle": r["etat_cycle"], "geom": json.loads(r["g"])} for r in crows]
     return {
         "commune": commune or "Toute l'île", "months": months, "nature": nature,
         "total": true_total, "affiches": offset + len(rows), "has_more": offset + len(rows) < true_total,
@@ -694,7 +710,7 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         # 4 = ANNULÉ ; KELFONCIER-FIX-1 Lot C avait déjà corrigé la fiche). Le front en fait une pastille
         # 3 tons : autorisé / travaux commencés / achevés → vert, annulé → rouge. `etat` (code) reste servi.
         "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "commune", "depot", "delai_mois",
-                                        "etat", "nb_lgt", "surf_hab", "geoloc")},
+                                        "etat", "nb_lgt", "surf_hab", "geoloc", "etat_cycle")},
                    "etat_libelle": etat_libelle({"etat": r["etat"], "daact": r["daact"]}),
                    "annule": est_annule({"etat": r["etat"], "daact": r["daact"]}),
                    "geom": json.loads(r["g"]) if r["g"] else None} for r in rows],
@@ -779,41 +795,60 @@ def parcelle_permis(idu: str, db: Session = Depends(get_db)) -> dict:
     if not exists:
         return {"idu": idu, "indisponible": "via_permits_geo non construit (relancer M-VIA)",
                 "c100": 0, "c200": 0, "items": []}
-    rows = db.execute(text("""
+    dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
+    # OUTIL-PERMIS-FIX-1 (LOT 3) — chaque permis du voisinage reçoit SON état de cycle par la MÊME
+    # fonction que l'île/la commune (`permis_classe`) : le mode parcelle affiche DÉSORMAIS les dormants
+    # et peint chaque point de la même couleur qu'ailleurs. ST_Distance mesure depuis la GÉOMÉTRIE de la
+    # parcelle (sa limite), pas son centre.
+    etat_case = permis_classe.etat_case_sql("s.", ":dmax", permis_classe.bati_table_existe(db))
+    rows = db.execute(text(f"""
         WITH p AS (SELECT geom_2975 AS g FROM parcels WHERE idu = :idu)
         SELECT w.permit_id, s.type, s.date::date::text AS date, s.commune,
                s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt,
                s.raw->>'petitioner_name' AS porteur,
                round(ST_Distance(p.g, w.g))::int AS dist_m,
+               ({etat_case}) AS etat_cycle,
                -- PERMIS-CHECK-2 pt 1 — la GÉOM (4326, comme le radar) voyage : le front dessine ces
                -- permis EN POINTS CLIQUABLES (la phrase « X permis » = X points à l'écran, jamais un
                -- compte sans support visible). Même colonne `geom` que /permis (carte).
                CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
         FROM p JOIN via_permits_geo w ON ST_DWithin(p.g, w.g, 200)
                JOIN sitadel_permits s ON s.permit_id = w.permit_id
-        ORDER BY dist_m ASC LIMIT 500"""), {"idu": idu}).mappings().all()
+        ORDER BY dist_m ASC, w.permit_id ASC LIMIT 500"""),
+        {"idu": idu, "dmax": dmax}).mappings().all()
     # OUT-PERMIS-009 — les COMPTES c100/c200 sont des COUNT EXACTS (jamais le len() d'une liste
     # plafonnée) : une parcelle dense à 185 permis réels doit compter 185, pas 100. La liste peut
     # rester bornée (payload) mais le compte servi à l'écran dit le vrai total (et `tronque` le signale).
+    # OUTIL-PERMIS-FIX-1 (LOT 3) — `buffer_200m` = la BANDE réellement mesurée (200 m autour de la
+    # LIMITE de la parcelle, en 4326) : le front la dessine à la place du cercle-centroïde (qui, pour une
+    # grande parcelle, excluait visuellement des permis pourtant correctement comptés par ST_DWithin).
     cnt = db.execute(text("""
         WITH p AS (SELECT geom_2975 AS g FROM parcels WHERE idu = :idu)
-        SELECT count(*) FILTER (WHERE ST_DWithin(p.g, w.g, 100)) AS c100, count(*) AS c200
+        SELECT count(*) FILTER (WHERE ST_DWithin(p.g, w.g, 100)) AS c100, count(*) AS c200,
+               (SELECT ST_AsGeoJSON(ST_Transform(ST_Buffer(g, 200), 4326)) FROM p) AS buf
         FROM p JOIN via_permits_geo w ON ST_DWithin(p.g, w.g, 200)"""),
         {"idu": idu}).mappings().first()
     c100 = int(cnt["c100"] or 0)
     c200 = int(cnt["c200"] or 0)
     items = [{"permit_id": r["permit_id"], "nature": r["type"],
               "nature_libelle": _NATURE_LABELS.get(r["type"], r["type"]),
-              "date": r["date"], "etat": r["etat"], "nb_lgt": r["nb_lgt"],
+              "date": r["date"], "etat": r["etat"], "etat_cycle": r["etat_cycle"],
+              "nb_lgt": r["nb_lgt"],
               "porteur": r["porteur"], "distance_m": r["dist_m"],
               "rayon": "100m" if r["dist_m"] <= 100 else "200m",
               "geom": json.loads(r["g"]) if r["g"] else None} for r in rows]
+    # OUTIL-PERMIS-FIX-1 (LOT 3) — partition par état DANS les 200 m (dormant compris), COMPTÉE sur les
+    # permis dessinables (jamais soustraite), pour que le mode parcelle montre les mêmes états qu'ailleurs.
+    partition = {k: sum(1 for i in items if i["geom"] and i["etat_cycle"] == k)
+                 for k in permis_classe.ETATS}
     return {
         "idu": idu,
         "c100": c100,
         "c200": c200,
         "affiches": len(items),
         "tronque": c200 > len(items),
+        "buffer_200m": json.loads(cnt["buf"]) if cnt and cnt["buf"] else None,
+        "etats": partition,
         # PERMIS-CHECK-2 pt 1 — la source ne renvoie que des permis GÉOLOCALISÉS (via_permits_geo) :
         # `localises` = ceux avec une géom dessinable ; `non_localises` = le reste (rare, s.geom nul).
         "localises": sum(1 for i in items if i["geom"]),
@@ -829,56 +864,60 @@ def parcelle_permis(idu: str, db: Session = Depends(get_db)) -> dict:
 # « Promesse morte » = PC daté > N mois, SANS daact, ET parcelle toujours sans bâti significatif.
 
 @router.get("/promesses")
-def promesses(commune: str | None = None, months: int = 24,
+def promesses(commune: str | None = None, months: int = 36,   # OUTIL-PERMIS-FIX-1 — défaut = 3 ans
               limit: int = 1000, offset: int = Query(0, ge=0), count_only: bool = False,  # GB-029
               db: Session = Depends(get_db)) -> dict:
     limit = max(1, min(limit, 2000))  # 1re page légère (défaut 1000), le reste en « voir plus »
-    # Le COUNT(DISTINCT) est coûteux (~4 s) : DÉCOUPLÉ du chemin des lignes (appel parallèle count_only)
-    # pour que la liste s'affiche vite et s'étoffe — décision Vic « rapide qui s'étoffe > 10 s ».
+    dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
+    # OUTIL-PERMIS-FIX-1 — sans la couche d'emprise bâtie, on ne mesure pas → aucun dormant (jamais un 500).
+    if dmax is None or not permis_classe.bati_table_existe(db):
+        return {"total": 0} if count_only else {"commune": commune or "Toute l'île",
+                "months": months, "total": 0, "affiches": 0, "has_more": False, "items": []}
+    # OUTIL-PERMIS-FIX-1 (LOT 2) — le compteur dormant lit la MÊME définition mesurée que la liste
+    # et la partition (`permis_point_mort`, réécrit) : plus de jointure au run, plus d'horloge `now()`.
     if count_only:
-        # CIRCUIT-2 lot 1.6 — le count vit au moteur nommé `commune_compteurs`
-        # (id registre point_mort_n) : ce robinet ne calcule plus, il appelle.
         from ..registre.moteurs.commune import permis_point_mort
-        return {"total": permis_point_mort(db, commune, months, runs.cascade())}
-    # CTE MATERIALIZED = parade au plan « fast-start » de LIMIT/OFFSET-0 (28 s → 5 s) : la jointure
-    # latérale lourde est calculée en bloc (hash joins) AVANT le tri+plafond.
-    # §3 (23/08/2026) — la GÉOM du permis est RÉ-AJOUTÉE (ST_AsGeoJSON) : depuis la fusion Radar+Point
-    # mort, l'outil « Permis » rend le point mort en POINTS CLIQUABLES (comme le radar), plus en
-    # surlignage de parcelle (module-hl). Payload = la géom du permis (centroïde) par ligne — mesuré
-    # léger (une page 1000 ; les non-géocodés restent listés, geom NULL).
+        return {"total": permis_point_mort(db, commune, months, dmax)}
+    # CTE MATERIALIZED = parade au plan « fast-start » de LIMIT/OFFSET-0. DORMANT = la définition UNIQUE
+    # (OUTIL-PERMIS-FIX-1 LOT 2) : PC autorisé, NON annulé (≠4), NON commencé (≠5), sans DAACT, > 3 ans
+    # (ancré sur :dmax), ET aucune parcelle bâtie (emprise mesurée ≥ seuil dans `parcel_bati_emprise`).
+    # La parcelle AFFICHÉE est la MOINS bâtie du permis (celle qui porte l'opportunité). §3 : la géom du
+    # permis est rendue en POINTS CLIQUABLES (payload léger, non-géocodés listés geom NULL).
     rows = db.execute(text("""
         WITH cand AS MATERIALIZED (
-            -- audit-promesses : `d.q_score` (matrice MORTE depuis M129-B) RETIRÉ — il était sélectionné
-            -- et renvoyé mais aucun consommateur ne le lit (vestige). `d` reste utilisé pour `status`.
             SELECT s.permit_id, s.type, s.date, s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt,
                    p.idu, round(p.surface_m2) AS surface_m2,
-                   CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g,
-                   (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
+                   CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
             FROM sitadel_permits s
-            JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
-            JOIN parcels p ON p.idu = c.idu
-            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+            JOIN LATERAL (
+                -- parcelle MESURABLE la moins bâtie (preuve du « terrain nu » affichée)
+                SELECT be.idu, pa.surface_m2
+                FROM jsonb_array_elements_text(s.idu_codes) c(idu)
+                JOIN parcel_bati_emprise be ON be.idu = c.idu
+                JOIN parcels pa ON pa.idu = be.idu
+                ORDER BY be.bati_m2 ASC, be.idu ASC LIMIT 1) p ON true
             WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
-              AND s.date < now() - (:m || ' months')::interval
+              AND (s.raw->>'etat' IS NULL OR s.raw->>'etat' NOT IN ('4','5','6'))
               AND s.raw->>'daact' IS NULL
-              -- parcelle toujours non bâtie : pas d'exclusion « déjà bâti » au run q_v2
-              AND NOT EXISTS (SELECT 1 FROM dryrun_cascade_results cr
-                              WHERE cr.run_label = :run AND cr.parcel_id = p.id
-                                AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')
+              AND s.date < :dmax - (:m || ' months')::interval
+              AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text(s.idu_codes) c2(idu)
+                              JOIN parcel_bati_emprise be2 ON be2.idu = c2.idu
+                              WHERE be2.bati_m2 >= :seuil)
         )
         SELECT cand.permit_id, cand.type, cand.date::date::text AS date, cand.etat, cand.nb_lgt,
-               cand.idu, cand.surface_m2, cand.g, s2.tier AS statut, cand.etage0,
+               cand.idu, cand.surface_m2, cand.g, s2.tier AS statut,
                s2.tier AS tier_v2, s2.rang AS rang_v2
         FROM cand LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = cand.idu AND s2.run_id = :v2run
-        ORDER BY cand.date ASC LIMIT :lim OFFSET :off"""),
-        {"c": commune, "m": months, "run": runs.cascade(), "v2run": _v2run(db), "lim": limit, "off": offset}).mappings().all()
+        ORDER BY cand.date ASC, cand.permit_id ASC LIMIT :lim OFFSET :off"""),
+        {"c": commune, "m": months, "dmax": dmax, "seuil": permis_classe.BATI_SEUIL_M2,
+         "v2run": _v2run(db), "lim": limit, "off": offset}).mappings().all()
     # tri anciens d'abord (= les plus « morts »). total via l'appel count_only parallèle ; ici on déduit
     # has_more du remplissage de la page (une page pleine ⇒ il reste potentiellement des lignes).
     return {"commune": commune or "Toute l'île", "months": months, "total": None,
             "affiches": offset + len(rows), "has_more": len(rows) == limit,
             "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "etat", "nb_lgt", "idu",
                                             "surface_m2", "statut")},
-                       "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
+                       "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": False,
                        "geom": json.loads(r["g"]) if r["g"] else None}
                       for r in rows]}
 

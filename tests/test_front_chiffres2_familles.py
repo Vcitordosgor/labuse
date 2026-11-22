@@ -274,7 +274,9 @@ def test_f03_permis_coupure_et_sommeil_servis():
     assert '"coupure_recent"' in mods and "interval '24 months'" in mods
     assert '"muet"' in mods and "SEUIL_DEPOT_MUET_ANS" in mods
     mp = (SRC / "components/outils/ModulePanel.tsx").read_text(encoding="utf-8")
-    assert "baseCoupure ?? radarCoupure" in mp and "dc.muet" in mp
+    # OUTIL-PERMIS-FIX-1 (LOT 1) — le front ne reconstruit MÊME PLUS la coupure au client : il consomme
+    # l'ÉTAT DE CYCLE servi par le back (`etat_cycle`, dérivé de la coupure 24 mois servie). F03 renforcé.
+    assert "etat_cycle" in mp and "dc.muet" in mp
     assert "minus24m" not in mp, "fenêtre de 24 mois reconstruite au front (F03)"
     assert "dc.depuis_ans >= 3" not in mp, "seuil de sommeil recodé au front (F03)"
 def test_f01e_risque_synthese_servie():

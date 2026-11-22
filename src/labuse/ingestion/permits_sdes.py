@@ -404,11 +404,19 @@ def geocode_par_adresse(session: Session, log=print) -> dict:
     return {"rattaches_adresse": int(n), "restants_sans_geom": int(reste)}
 
 
-def refresh_since(session: Session) -> str:
-    """Borne du delta : max(date) en base − 3 mois (recouvrement états/DAACT tardifs)."""
-    mx = session.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
-    base = (mx or datetime(2013, 1, 1, tzinfo=timezone.utc))
-    return (base - timedelta(days=REFRESH_OVERLAP_MONTHS * 31)).date().isoformat()
+def refresh_since(session: Session) -> str | None:
+    """OUTIL-PERMIS-FIX-1 (LOT 4) — CORRECTION-SAFE : renvoie None (re-fetch du millésime COMPLET).
+
+    La borne du delta était max(date) − 3 mois, avec un filtre serveur `DATE_REELLE_AUTORISATION=gte:since`.
+    Or le SDES publie un fichier CUMULATIF mensuel qui CORRIGE des permis anciens : la correction qui a
+    déplacé 97440925G0371 de 12/12/2025 à 16/02/2026 — deux dates ANTÉRIEURES à la fenêtre de 3 mois —
+    n'était jamais re-fetchée (le filtre l'excluait), donc la date périmée restait en base (constat du
+    relecteur). L'API Dido ne filtre QUE sur la date d'autorisation (pas de date de MODIFICATION) : la
+    seule voie pour réconcilier toute correction est de re-charger le millésime complet et de ré-upserter
+    (idempotent, `ON CONFLICT`). Le volume (dép. 974, ~50 k lignes, quelques Mo) rend ce plein mensuel
+    acceptable. La constante `REFRESH_OVERLAP_MONTHS` n'est donc plus une borne de date, elle est conservée
+    pour mémoire (voir le compte-rendu OUTIL-PERMIS-FIX-1, LOT 4)."""
+    return None
 
 
 def run(refresh: bool = False, geocode: bool = True, log=print) -> dict:
@@ -423,7 +431,10 @@ def run(refresh: bool = False, geocode: bool = True, log=print) -> dict:
         try:
             ensure_indexes(s, log=log)
             since = refresh_since(s) if refresh else None
-            log(f"SDES Sitadel3 — {'delta depuis ' + since if since else 'backfill complet 2013+'}")
+            # OUTIL-PERMIS-FIX-1 (LOT 4) — refresh = réconciliation PLEINE (corrections SDES captées),
+            # since vaut None dans les deux cas désormais (cf. refresh_since).
+            log("SDES Sitadel3 — " + ("réconciliation mensuelle (millésime complet, corrections captées)"
+                                       if refresh else "backfill complet 2013+"))
             stats = ingest_sdes(s, since=since, log=log)
             if geocode:
                 stats["geocode"] = geocode_missing(s, log=log)
@@ -458,7 +469,8 @@ if __name__ == "__main__":
 
     ap = argparse.ArgumentParser(description="Ingestion SITADEL via SDES/Dido (Sitadel3, dep 974)")
     ap.add_argument("--refresh", action="store_true",
-                    help="delta seulement (max(date) − 3 mois de recouvrement) — cron mensuel")
+                    help="réconciliation mensuelle : re-charge le millésime complet et ré-upserte "
+                         "(idempotent) — capte les CORRECTIONS SDES sur permis anciens (LOT 4)")
     ap.add_argument("--no-geocode", action="store_true",
                     help="sauter le fallback géoloc API Carto (réseau)")
     args = ap.parse_args()

@@ -39,15 +39,137 @@ CREATE INDEX IF NOT EXISTS ix_parcel_viab_commune ON parcel_viabilisation (commu
 CREATE INDEX IF NOT EXISTS ix_parcel_viab_band ON parcel_viabilisation (band);
 """
 
-# Permis Sitadel AUTORISÉS et géolocalisés, projetés en 2975 (helper indexé, refait
-# à chaque run). Un permis n'a de DATE_REELLE_AUTORISATION que s'il a été accordé.
-_PERMITS_DDL = """
-DROP TABLE IF EXISTS via_permits_geo;
-CREATE TABLE via_permits_geo AS
-SELECT permit_id, date::date AS d, (raw->>'etat') AS etat, ST_Transform(geom, 2975) AS g
-FROM sitadel_permits WHERE geom IS NOT NULL AND date IS NOT NULL;
-CREATE INDEX ON via_permits_geo USING gist (g);
+# Permis Sitadel AUTORISÉS et géolocalisés, projetés en 2975 (couche de voisinage lue par le mode
+# parcelle de l'outil Permis, la fiche parcelle et le score de viabilisation). Un permis n'a de
+# DATE_REELLE_AUTORISATION que s'il a été accordé.
+#
+# OUTIL-PERMIS-FIX-1 (LOT 3) — la couche était un SNAPSHOT refait seulement au run M-VIA (DROP+CREATE) :
+# elle prenait un mois de retard sur `sitadel_permits` et lui manquait 3 004 permis déjà géolocalisés
+# (BZ1065 comptait 11 au lieu de 13). Désormais elle est MAINTENUE PAR TRIGGER : chaque INSERT/UPDATE/
+# DELETE sur `sitadel_permits` met à jour la ligne correspondante → elle suit d'elle-même l'ingestion,
+# sans dépendre du run M-VIA. `ensure_via_permits_geo()` est idempotent (table + index + trigger), et
+# `resync=True` refait le plein une fois (réconciliation initiale / après un backfill sans trigger).
+# Migration : l'ancienne couche était un snapshot SANS clé primaire. On la refait (cache dérivé,
+# reconstruit par le resync) pour poser la PK permit_id. Transactionnel → les lecteurs ne voient
+# jamais la table absente.
+_VIA_MIGRATE = """
+DO $mig$
+BEGIN
+    IF to_regclass('via_permits_geo') IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM pg_constraint
+                       WHERE conrelid = 'via_permits_geo'::regclass AND contype = 'p') THEN
+        DROP TABLE via_permits_geo;
+    END IF;
+END
+$mig$;
 """
+
+_VIA_CREATE_TABLE = """
+CREATE TABLE IF NOT EXISTS via_permits_geo (
+    permit_id VARCHAR(40) PRIMARY KEY,
+    d         DATE,
+    etat      TEXT,
+    g         geometry(Point, 2975)
+)
+"""
+_VIA_CREATE_INDEX = (
+    "CREATE INDEX IF NOT EXISTS ix_via_permits_geo_g ON via_permits_geo USING gist (g)")
+
+# Fonction + trigger : via_permits_geo suit sitadel_permits ligne à ligne (autorisé & géolocalisé).
+_VIA_TRIGGER_FN = """
+CREATE OR REPLACE FUNCTION via_permits_geo_sync() RETURNS trigger AS $fn$
+BEGIN
+    -- DÉFENSIF (base partagée) : si la couche n'existe pas (une autre session l'a droppée), on ne casse
+    -- JAMAIS l'écriture sur sitadel_permits. DELETE+INSERT (sans ON CONFLICT) : indépendant de la PK,
+    -- donc robuste même si la table a été recréée sans contrainte unique par du code hérité.
+    IF to_regclass('via_permits_geo') IS NULL THEN
+        RETURN COALESCE(NEW, OLD);
+    END IF;
+    IF (TG_OP = 'DELETE') THEN
+        DELETE FROM via_permits_geo WHERE permit_id = OLD.permit_id;
+        RETURN OLD;
+    END IF;
+    DELETE FROM via_permits_geo WHERE permit_id = NEW.permit_id;
+    IF NEW.geom IS NOT NULL AND NEW.date IS NOT NULL THEN
+        INSERT INTO via_permits_geo (permit_id, d, etat, g)
+        VALUES (NEW.permit_id, NEW.date::date, NEW.raw->>'etat', ST_Transform(NEW.geom, 2975));
+    END IF;
+    RETURN NEW;
+END;
+$fn$ LANGUAGE plpgsql
+"""
+_VIA_TRIGGER_DROP = "DROP TRIGGER IF EXISTS trg_via_permits_geo_sync ON sitadel_permits"
+_VIA_TRIGGER_CREATE = """
+CREATE TRIGGER trg_via_permits_geo_sync
+    AFTER INSERT OR UPDATE OR DELETE ON sitadel_permits
+    FOR EACH ROW EXECUTE FUNCTION via_permits_geo_sync()
+"""
+
+# Réconciliation plein : (ré)aligne la couche sur TOUT sitadel_permits (autorisés & géolocalisés).
+_VIA_RESYNC_INSERT = """
+INSERT INTO via_permits_geo (permit_id, d, etat, g)
+SELECT permit_id, date::date, raw->>'etat', ST_Transform(geom, 2975)
+FROM sitadel_permits WHERE geom IS NOT NULL AND date IS NOT NULL
+ON CONFLICT (permit_id) DO UPDATE SET d = EXCLUDED.d, etat = EXCLUDED.etat, g = EXCLUDED.g
+"""
+_VIA_RESYNC_PRUNE = """
+DELETE FROM via_permits_geo w
+WHERE NOT EXISTS (SELECT 1 FROM sitadel_permits s
+                 WHERE s.permit_id = w.permit_id AND s.geom IS NOT NULL AND s.date IS NOT NULL)
+"""
+
+
+def ensure_via_permits_geo(session: Session, resync: bool = True) -> dict:
+    """OUTIL-PERMIS-FIX-1 (LOT 3) — garantit la couche de voisinage `via_permits_geo` et son TRIGGER de
+    synchronisation (idempotent). Migre l'ancien snapshot sans PK, puis (resync=True) réaligne la couche
+    sur tout `sitadel_permits` une fois. À exécuter UNE fois en prod (cf. COMMANDE DE RECONSTRUCTION du
+    compte-rendu) ; ensuite le trigger entretient la couche tout seul à chaque mise à jour des permis."""
+    for stmt in (_VIA_MIGRATE, _VIA_CREATE_TABLE, _VIA_CREATE_INDEX,
+                 _VIA_TRIGGER_FN, _VIA_TRIGGER_DROP, _VIA_TRIGGER_CREATE):
+        session.execute(text(stmt))
+    session.commit()
+    if resync:
+        session.execute(text(_VIA_RESYNC_INSERT))
+        session.execute(text(_VIA_RESYNC_PRUNE))
+        session.commit()
+    n = session.execute(text("SELECT count(*) FROM via_permits_geo")).scalar()
+    return {"via_permits_geo": int(n or 0)}
+
+
+# OUTIL-PERMIS-FIX-1 (LOT 2) — EMPRISE DE BÂTI MESURÉE par parcelle de permis PC (idu → m² de bâti
+# réellement intersecté avec les empreintes BD TOPO `spatial_layers.kind='batiment'`). C'est LA mesure
+# du dormant (« aucun bâtiment détecté » = emprise < 10 m²), vérifiée identique au contre-audit du
+# relecteur (97441516A0419 → 253 m², 97441122A0103 → 133 m², 97442320A0048 → 188 m²). Seuls les PC
+# peuvent être dormants → on ne mesure que leurs parcelles (borne le calcul).
+_BATI_CREATE = """
+CREATE TABLE IF NOT EXISTS parcel_bati_emprise (
+    idu     VARCHAR(14) PRIMARY KEY,
+    bati_m2 DOUBLE PRECISION NOT NULL
+)
+"""
+_BATI_FILL = """
+INSERT INTO parcel_bati_emprise (idu, bati_m2)
+SELECT p.idu, coalesce(sum(ST_Area(ST_Intersection(p.geom_2975, bl.geom_2975))), 0)
+FROM (SELECT DISTINCT c.idu FROM sitadel_permits s,
+             jsonb_array_elements_text(s.idu_codes) c(idu) WHERE s.type = 'PC') pp
+JOIN parcels p ON p.idu = pp.idu
+LEFT JOIN spatial_layers bl ON bl.kind = 'batiment' AND ST_Intersects(p.geom_2975, bl.geom_2975)
+GROUP BY p.idu
+ON CONFLICT (idu) DO UPDATE SET bati_m2 = EXCLUDED.bati_m2
+"""
+
+
+def ensure_parcel_bati_emprise(session: Session) -> dict:
+    """OUTIL-PERMIS-FIX-1 (LOT 2) — garantit et (re)remplit `parcel_bati_emprise` (emprise de bâti
+    mesurée par parcelle de permis PC). À exécuter une fois en prod (cf. COMMANDE DE RECONSTRUCTION du
+    compte-rendu), puis à chaque run M-VIA (le bâti et les parcelles de permis évoluent lentement)."""
+    session.execute(text(_BATI_CREATE))
+    session.execute(text(_BATI_FILL))
+    session.commit()
+    row = session.execute(text(
+        "SELECT count(*) n, count(*) FILTER (WHERE bati_m2 >= 10) baties "
+        "FROM parcel_bati_emprise")).mappings().first()
+    return {"parcel_bati_emprise": int(row["n"] or 0), "baties": int(row["baties"] or 0)}
 
 # Score SQL — miroir EXACT de viabilisation.compute_score (poids W_*).
 _SCORE_SQL = f"""
@@ -193,7 +315,11 @@ def build_viabilisation(session: Session, communes: list[str] | None = None) -> 
     for stmt in _DDL.strip().split(";\n"):
         if stmt.strip():
             session.execute(text(stmt))
-    session.execute(text(_PERMITS_DDL.replace("\n", " ")))
+    # OUTIL-PERMIS-FIX-1 (LOT 3) — via_permits_geo est désormais une couche MAINTENUE PAR TRIGGER (plus
+    # un snapshot DROP+CREATE qui prenait du retard). On garantit table+trigger et on réaligne le plein.
+    ensure_via_permits_geo(session, resync=True)
+    # OUTIL-PERMIS-FIX-1 (LOT 2) — emprise de bâti mesurée (définition unique du dormant) rafraîchie.
+    ensure_parcel_bati_emprise(session)
     session.commit()
 
     if communes is None:

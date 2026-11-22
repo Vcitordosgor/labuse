@@ -103,7 +103,9 @@ export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplib
     titre.textContent = String(f.nature_libelle ?? f.nature ?? 'Permis')
     sub.textContent = [f.permit_id ? String(f.permit_id) : pid, f.commune ? String(f.commune) : ''].filter(Boolean).join(' · ')
     if (f.statut) {
-      const bd = document.createElement('span'); bd.textContent = String(f.statut) + (f.annule ? ' · annulé' : '')
+      // OUTIL-PERMIS-FIX-1 (LOT 5) — `statut` dit DÉJÀ « annulé » (etat_libelle, code 4) : le flag `annule`
+      // ne sert qu'à la COULEUR (rouge), il ne RÉPÈTE plus le mot (avant : « annulé · annulé »).
+      const bd = document.createElement('span'); bd.textContent = String(f.statut)
       bd.style.cssText = `display:inline-block;margin-top:7px;padding:1px 8px;border-radius:999px;font-size:11px;${f.annule ? 'background:rgba(232,73,29,.15);color:#e8491d' : 'background:rgba(74,222,128,.15);color:#4ADE80'}`
       box.insertBefore(bd, corps)
     }

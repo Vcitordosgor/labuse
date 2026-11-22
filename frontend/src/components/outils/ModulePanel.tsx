@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePiegeFocus } from '../../lib/usePiegeFocus'
 import {
   courrierPdf, getCommunes, getCourrierStatut, getFiche, modBailleur,
-  modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPermis, modPermisCount,
+  modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPermis, modPermisEtats,
   modPermisFiche, modPromesses, modPromessesCount, modVelocite, postCourrierDemande, postCourrierAdressage,
   postCourrierComposer,
 } from '../../lib/api'
@@ -492,7 +492,9 @@ function PermitFicheCorps({ permitId, onClose }: { permitId: string; onClose: ()
               className="mt-1.5 w-full">
               Scan patrimoine du porteur →</Bouton>
           )}
-          <F label="Nombre de lots" value={d['nb_lots']} />
+          {/* OUTIL-PERMIS-FIX-1 (LOT 4) — le champ est alimenté par NB_LGT_TOT_CREES (logements créés),
+              pas des « lots » (un lot ≠ un logement). Le libellé dit ce qui est mesuré. */}
+          <F label="Logements créés" value={d['nb_lots']} />
           <F label="Surface habitable" value={d['surface_hab_m2'] != null ? `${fmt(d['surface_hab_m2'])} m²` : null} />
           {d['geoloc_note'] && <p className="mt-1 text-[10px] leading-snug text-txt-dim">Position : {String(d['geoloc_note'])}.</p>}
           {/* OUTILS-P1-1 LOT3b (pt 1) — dates au format FR JJ/MM/AAAA (jamais AAAA-MM-JJ à l'écran). */}
@@ -582,11 +584,13 @@ export function M03() {
   // F2 (OUTILS-3) — « Tous » = tous les états SUPERPOSÉS sur la carte, chacun sa couleur (récent vert,
   // dormant corail, achevé/autre gris) — avant, tout était peint en vert (« 47 000 verts, lit 5 580 »).
   const tous = seg === 'tous'
-  // RETOURS-17 W2 — état de cycle servi par /permis (dormant reste sur /promesses).
-  const etatSeg = seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre' : null
-  // RETOURS-16 (point 11) — l'init suit le segment par défaut « Récent » = 3 mois (≈ 90 jours). Avant,
-  // l'ouverture était « Tous » = 240 mois (toute la profondeur → carte = base entière).
-  const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 3)
+  // OUTIL-PERMIS-FIX-1 (LOT 1) — état de cycle servi par /permis : « Récent » est DÉSORMAIS un filtre
+  // serveur (etat=recent, 24 mois), plus une fenêtre 3 mois dérivée. Le dormant garde /promesses (liste
+  // scorée). Résultat : le total du segment (liste) = le compteur du segment, par construction.
+  const etatSeg = seg === 'cours' ? 'recent' : seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre' : null
+  // La fenêtre « récent » (24 mois) est faite par le SERVEUR (prédicat d'état) : la liste travaille sur
+  // toute la profondeur (240) et l'état fait le tri — plus de fenêtre 3 mois qui désaccordait les chiffres.
+  const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 240)
   const [nature, setNature] = useState('')
   // RETOURS-23 (suite, pt 1) — la fiche permis s'ouvre en BULLE sur la carte (ancre automatique : jamais
   // coupée, cf. ouvrirBullePermis), que le clic vienne d'un point carte OU d'une ligne de liste.
@@ -631,15 +635,15 @@ export function M03() {
   // RECETTE-4 — même fenêtre que `choisirSeg` : 'tous' → 240 mois (pas 24, qui appliquait « Récent »
   // sous un chip « Tous » affiché actif).
   // RETOURS-16 (point 11) — ouverture (et re-cale par clé) sur « Récent » = 3 mois (≈ 90 jours).
-  useEffect(() => { const s = moduleKey === 'promesses' ? 'mort' : 'cours'; setSeg(s); setMonths(s === 'mort' ? 36 : 3) }, [moduleKey])
+  useEffect(() => { const s = moduleKey === 'promesses' ? 'mort' : 'cours'; setSeg(s); setMonths(s === 'mort' ? 36 : 240) }, [moduleKey])
 
-  const MONTHS_RADAR = [3, 12, 24, 48, 72, 240]   // 3 = « 90 jours » (défaut) ; 240 = toute la profondeur Sitadel
-  const MONTHS_PM = [24, 36, 48, 60]   // point mort : 36 = caducité légale du PC (défaut à l'ouverture)
-  // RETOURS-17 — Dormant garde sa fenêtre de caducité (36 mois) ; Récent = 24 mois ; Tous/Achevé/Autre
-  // travaillent sur toute la profondeur (240 mois), l'état de cycle fait le tri côté serveur.
+  const MONTHS_RADAR = [12, 24, 48, 72, 240]   // période d'AFFINAGE (240 = toute la profondeur Sitadel)
+  const MONTHS_PM = [24, 36, 48, 60]   // dormant : 36 = « plus de 3 ans » (défaut à l'ouverture)
+  // OUTIL-PERMIS-FIX-1 (LOT 1) — l'état de cycle fait le tri côté SERVEUR (récent = 24 mois, dormant = 36).
+  // La fenêtre `months` n'est plus qu'un AFFINAGE optionnel : par défaut 240 (toute la profondeur) pour
+  // que compteur et liste d'un segment portent sur les mêmes identifiants. Dormant garde 36 (son horloge).
   const choisirSeg = (s: 'cours' | 'mort' | 'tous' | 'acheve' | 'autre') => {
-    // RETOURS-16 (point 11) — « Récent » = 90 jours (3 mois) ; Dormant 36 ; le reste toute la profondeur.
-    setSeg(s); setMonths(s === 'mort' ? 36 : s === 'cours' ? 3 : 240)
+    setSeg(s); setMonths(s === 'mort' ? 36 : 240)
   }
 
   // deux sources, une seule active à la fois (enabled) : RADAR = tous les permis ; POINT MORT = PC
@@ -664,36 +668,30 @@ export function M03() {
     queryFn: ({ pageParam }) => modPromesses(pmMonths, PM_PAGE, pageParam as number),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * PM_PAGE : undefined,
-    enabled: pointMort || tous,   // F2 — le point mort alimente aussi la carte en mode « Tous »
+    // OUTIL-PERMIS-FIX-1 (LOT 5) — la liste DORMANTE (lourde) ne se charge QUE sur le segment Dormant.
+    // En « Tous », les dormants sont déjà dans la carte /permis (chaque point porte SON `etat_cycle`,
+    // colorié corail) : ouvrir « Tous » sur l'île ne déclenche plus la liste lourde des dormants.
+    enabled: pointMort,
   })
   // total point mort (COUNT ~4 s) DÉCOUPLÉ : arrive en parallèle, ne bloque pas la 1re page
-  const qPmCount = useQuery({ queryKey: ['m04-count', pmMonths, commune], queryFn: () => modPromessesCount(pmMonths), staleTime: 60_000, enabled: pointMort || tous })
+  const qPmCount = useQuery({ queryKey: ['m04-count', pmMonths, commune], queryFn: () => modPromessesCount(pmMonths), staleTime: 60_000, enabled: pointMort })
 
-  // PERMIS (refonte) — les DEUX entrées affichent un compteur RÉEL : radar = total de la page 0
-  // (cache react-query, chargée à l'arrivée = entrée par défaut) ; point mort = count fixe (caducité
-  // 36 mois), toujours servi, indépendant de la fenêtre active.
-  const qPmEntry = useQuery({ queryKey: ['pm-entry', commune], queryFn: () => modPromessesCount(36), staleTime: 60_000 })
-  // RETOURS-16 (point 11) — compteur « Récent » = 90 DERNIERS JOURS (3 mois), cohérent avec la fenêtre
-  // par défaut appliquée. (Sert aussi `donnees_jusqu_au` et `coupure_recent`, servis quelle que soit
-  // la fenêtre demandée.) Léger : limit=1, pas de carte.
-  const qRadarEntry = useQuery({ queryKey: ['radar-entry', commune], queryFn: () => modPermis(3, null, 1, 0), staleTime: 60_000 })
-  const radarEntryTotal = (qRadarEntry.data as Record<string, any> | undefined)?.['total'] as number | undefined
-  // RETOURS-16 V4 — le chip « Tous » disait la SOMME de deux fenêtres (Récent 24 m + Dormant 36 m+,
-  // « Tous 21 038 ») quand le bas d'écran comptait la base entière (50 544) : deux totaux différents
-  // sans périmètre dit (constat Vic). « Tous » = désormais le VRAI total en base (count_only, léger).
-  const qTousEntry = useQuery({ queryKey: ['tous-entry', commune], queryFn: () => modPermisCount(240), staleTime: 60_000 })
-  const tousEntryTotal = qTousEntry.data?.total
-  // RETOURS-17 W1 — mesuré : 70 % des « autres » sont des permis ACHEVÉS (DAACT) — 40 % de la base entière.
-  // Ils méritent leur propre ligne (décision Vic 05/09) plutôt que d'être noyés dans « Autres ». Compteur léger.
-  const qAcheveEntry = useQuery({ queryKey: ['acheve-entry', commune], queryFn: () => modPermisCount(240, 'acheve'), staleTime: 60_000 })
-  const acheveEntryTotal = qAcheveEntry.data?.total
-  const pmEntryTotal = qPmEntry.data?.total
-  // RETOURS-17 W2 — « Autre » DÉRIVÉ = total − récent − dormant − achevé : garantit que la somme des états
-  // fait TOUJOURS le total (partition exacte), sans payer le COUNT « autre » (≈ 560 ms) à chaque montage.
-  const autreEntryTotal = (tousEntryTotal != null && radarEntryTotal != null && pmEntryTotal != null && acheveEntryTotal != null)
-    ? Math.max(0, tousEntryTotal - radarEntryTotal - pmEntryTotal - acheveEntryTotal) : undefined
-  // base : coupure « récent » du compteur « Tous » (SERVIE par le back, cf. cut24 plus bas).
-  const baseCoupure = (qTousEntry.data as Record<string, any> | undefined)?.['coupure_recent'] as string | undefined
+  // OUTIL-PERMIS-FIX-1 (LOT 1) — UNE SEULE requête PARTITION sert les cinq compteurs d'entrée, chacun
+  // COMPTÉ par le serveur depuis la définition UNIQUE (`permis_classe`). Plus de 4 appels + soustraction
+  // pour « Autres » (constat du relecteur : le filtre « Autres » trouvait 4 880 permis de moins que son
+  // compteur, parce que « Récent » comptait 3 mois et « Autres » était dérivé). Récent = 24 mois partout.
+  const qEtats = useQuery({ queryKey: ['permis-etats', commune], queryFn: () => modPermisEtats(240), staleTime: 60_000 })
+  const etatsN = qEtats.data?.etats
+  const radarEntryTotal = etatsN?.recent
+  const pmEntryTotal = etatsN?.dormant
+  const acheveEntryTotal = etatsN?.acheve
+  const autreEntryTotal = etatsN?.autre
+  const tousEntryTotal = qEtats.data?.total
+  // OUTIL-PERMIS-FIX-1 (LOT 3/4) — permis SANS point (non géolocalisés, absents du voisinage) et ligne
+  // SANS date : comptés et DITS (le relecteur : « 11 géolocalisés » ne révélait aucune des deux pertes).
+  const sansPoint = (qEtats.data && qEtats.data.total != null && qEtats.data.geocodes != null)
+    ? Math.max(0, qEtats.data.total - qEtats.data.geocodes) : undefined
+  const sansDate = qEtats.data?.sans_date
   const setPermitHover = useApp((s) => s.setPermitHover)
   useEffect(() => () => setPermitHover(null), [setPermitHover])   // nettoyage au démontage
 
@@ -709,9 +707,9 @@ export function M03() {
   const [permisOwner, setPermisOwner] = useState<{ siren: string; nom: string } | null>(null)
   const qParcelPermis = useQuery({ queryKey: ['parcelle-permis-search', parcelIdu],
     queryFn: () => modParcellePermis(parcelIdu!), enabled: !!parcelIdu })
-  // date du millésime Sitadel servi — lue du compteur radar (fenêtre 24 m, TOUJOURS actif).
-  const donneesJusquAu = (qRadarEntry.data as Record<string, any> | undefined)?.['donnees_jusqu_au'] as string | undefined
-  const radarCoupure = (qRadarEntry.data as Record<string, any> | undefined)?.['coupure_recent'] as string | undefined
+  // date du millésime Sitadel servi — lue de la partition (toujours active). OUTIL-PERMIS-FIX-1 (LOT 4) :
+  // c'est la « dernière autorisation intégrée » (max date Sitadel), pas aujourd'hui.
+  const donneesJusquAu = qEtats.data?.donnees_jusqu_au
 
   const q = pointMort ? qPm : qRadar
   const pages = (q.data?.pages ?? []) as Record<string, any>[]
@@ -725,28 +723,24 @@ export function M03() {
   // liste = items paginés accumulés (« voir plus ») ; la ZONE dessinée filtre les géocodés
   const radarListItems = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter(inZone).filter(passeGeo)
   const geomInZone = (i: Record<string, any>) => !zone || pointInPolygon((i['geom'] as { coordinates: [number, number] }).coordinates, zone)
-  // CARTE = points cliquables. RETOURS-17 W3 : la COULEUR SUIT L'ÉTAT (avant, tout radar était peint
-  // en vert → « 47 000 verts, lit 5 580 récents », constat Vic). carteRadar = les points servis par
-  // /permis (leur état dépend du segment/date) ; cartePm = les dormants (corail), superposés en « Tous ».
+  // CARTE = points cliquables. OUTIL-PERMIS-FIX-1 (LOT 5) : chaque point porte SON `etat_cycle` servi par
+  // le back → la couleur est celle de l'état DU PERMIS, identique quel que soit le filtre actif (même en
+  // « Tous », un achevé ancien reste gris, un dormant reste corail — plus de reclassement par date au
+  // front). La liste dormante lourde ne s'ouvre plus en « Tous » : les dormants sont déjà dans cette carte.
   // O17 (d/i) — le filtre « non géocodés seuls » vide la carte ; liste et carte suivent les mêmes filtres.
   const carteRadar = (pointMort || geoFiltre === 'nongeo' ? [] : ((head?.['carte'] ?? []) as Record<string, any>[])).filter(geomInZone)
-  const cartePm = ((pointMort || tous) && geoFiltre !== 'nongeo'
+  // en segment Dormant uniquement : les points viennent de /promesses (liste scorée), marqués dormant.
+  const cartePm = (pointMort && geoFiltre !== 'nongeo'
     ? (qPm.data?.pages ?? []).flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter((i) => i['geom'])
     : []).filter(geomInZone)
-  // RETOURS-17 W3 — état de PANNEAU d'une ligne/point radar : Récent (≤ 24 mois) vert · Achevé/Autre gris.
-  // Le segment fixe l'état sauf en « Tous » où la coupure `cut24` distingue récent du reste.
-  // FRONT-CHIFFRES-2 (F03) — `cut24` est la coupure SERVIE (`coupure_recent` = dmax − 24 mois, calculée
-  // au back) : le front ne reconstruit plus la fenêtre. Sans coupure servie (base vide) → rien de récent.
-  const cut24 = (baseCoupure ?? radarCoupure) ?? '9999-99-99'
   // RECETTE-1 (H2.4, Vic) — PÉRIMÈTRE : dès qu'une parcelle est saisie (parcelIdu), tout l'outil
-  // travaille dans ses 200 m (compteurs d'état, filtre, liste, carte) ; jamais deux périmètres actifs.
-  // Classe d'état client depuis le payload /parcelle-permis : achevé = raw etat '6' ; récent = ≤ cut24.
+  // travaille dans ses 200 m ; jamais deux périmètres actifs.
   const perim = !!parcelIdu
-  const perimClasse = (i: Record<string, any>): PermisEtat =>
-    i['etat'] === '6' ? 'acheve' : (String(i['date'] ?? '') >= cut24 ? 'recent' : 'autre')
-  const radarEtat = (i: Record<string, any>): PermisEtat =>
-    seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre'
-    : (String(i['date'] ?? '') >= cut24 ? 'recent' : 'autre')
+  // OUTIL-PERMIS-FIX-1 (LOT 1/3) — l'état vient du SERVEUR (`etat_cycle`), la MÊME fonction qu'à l'île :
+  // le mode parcelle affiche les mêmes états (dormant compris) et les mêmes couleurs. Repli `autre`.
+  const serveurEtat = (i: Record<string, any>): PermisEtat => (i['etat_cycle'] as PermisEtat) || 'autre'
+  const perimClasse = serveurEtat
+  const radarEtat = serveurEtat
   const _feat = (i: Record<string, any>, etat: PermisEtatCarte) => ({ type: 'Feature' as const, geometry: i['geom'],
     // RECETTE-1 (H2) — commune + précision géocodage portées à la feature → lues par la BULLE (MapView).
     properties: { kind: 'permis', etat, permit_id: i['permit_id'], label: `${i['type']} ${i['date']}`,
@@ -766,37 +760,41 @@ export function M03() {
       permit_id: i['permit_id'], label: `${i['nature'] ?? ''} ${i['date']}`.trim(),
       commune: i['commune'] ?? null, geoloc: i['geoloc'] ?? null } })   // RECETTE-1 (H2) — pour la bulle
   // RECETTE-1 (H2.4) — compteurs par état DANS les 200 m + filtre + liste scopés au périmètre.
-  const perimSeg = seg === 'cours' ? 'recent' : seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre' : 'tous'
+  // OUTIL-PERMIS-FIX-1 (LOT 3) — le mode parcelle a DÉSORMAIS un segment Dormant (serveur `etats`).
+  const perimSeg = seg === 'cours' ? 'recent' : seg === 'mort' ? 'dormant'
+    : seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre' : 'tous'
   const perimItems: Record<string, any>[] = perim
     ? parcelPermisItems.filter((i) => perimSeg === 'tous' || perimClasse(i) === perimSeg)
         .map((i) => ({ ...i, type: i['nature'] }))
     : []
+  // compteurs = la partition SERVIE (comptée sur les permis dessinables), pas une reclassification front.
+  const perimEtats = ((qParcelPermis.data as Record<string, any> | undefined)?.['etats'] ?? {}) as Record<string, number>
   const perimCounts = {
     tous: parcelPermisItems.length,
-    recent: parcelPermisItems.filter((i) => perimClasse(i) === 'recent').length,
-    acheve: parcelPermisItems.filter((i) => perimClasse(i) === 'acheve').length,
-    autre: parcelPermisItems.filter((i) => perimClasse(i) === 'autre').length,
+    recent: perimEtats['recent'] ?? 0,
+    dormant: perimEtats['dormant'] ?? 0,
+    acheve: perimEtats['acheve'] ?? 0,
+    autre: perimEtats['autre'] ?? 0,
   }
   const items = perim ? perimItems : radarListItems
-  // cercle 200 m discret autour de la parcelle (centroïde servi par la fiche) ; le contour de la
-  // parcelle est déjà tracé par focusParcelle. « Réinitialiser » (ci-dessous) revient à l'île.
-  const perimCentre = useQuery({ queryKey: ['perim-centre', parcelIdu], queryFn: () => getFiche(parcelIdu!), enabled: perim, staleTime: 60_000 })
-  const perimCercle = (() => {
-    const c = (perimCentre.data as { coords?: [number, number] } | undefined)?.coords
-    if (!perim || !c) return null
-    const [lon, lat] = c, dLat = 200 / 111320, dLon = 200 / (111320 * Math.cos((lat * Math.PI) / 180))
-    const pts: [number, number][] = []
-    for (let a = 0; a <= 360; a += 10) { const r = (a * Math.PI) / 180; pts.push([lon + dLon * Math.cos(r), lat + dLat * Math.sin(r)]) }
-    return { type: 'Feature' as const, geometry: { type: 'Polygon' as const, coordinates: [pts] }, properties: { kind: 'zone-iso' } }
+  // OUTIL-PERMIS-FIX-1 (LOT 3) — la BANDE des 200 m est le TAMPON RÉEL servi par le back (200 m autour de
+  // la LIMITE de la parcelle, `buffer_200m`), plus un cercle autour du centroïde : pour une grande
+  // parcelle, le dessin correspond DÉSORMAIS à la distance réellement mesurée (le relecteur : un point à
+  // 146,6 m, correctement compté, tombait hors du cercle affiché). Le contour de la parcelle reste tracé
+  // par focusParcelle. La croix de la carte de sélection revient à l'île.
+  const perimBuffer = (() => {
+    const g = (qParcelPermis.data as Record<string, any> | undefined)?.['buffer_200m']
+    if (!perim || !g) return null
+    return { type: 'Feature' as const, geometry: g, properties: { kind: 'zone-iso' } }
   })()
   useModuleMap([],
-    // W3 — `etat` voyage dans les properties ; la carte peint depuis la MÊME source de couleurs.
-    // RECETTE-1 (H2.4) — en périmètre : cercle 200 m + permis des 200 m colorés par état (filtrés par seg).
+    // OUTIL-PERMIS-FIX-1 (LOT 5) — carte peinte depuis l'`etat_cycle` SERVI (même couleur par permis,
+    // quel que soit le filtre). En périmètre : tampon 200 m réel + permis des 200 m colorés par état.
     featureCollection(perim
-      ? [...(perimCercle ? [perimCercle] : []), ...perimItems.map(featParcelle)]
+      ? [...(perimBuffer ? [perimBuffer] : []), ...perimItems.map(featParcelle)]
       : [...carteRadar.map((i) => _feat(i, carteEtat(radarEtat(i)))), ...cartePm.map((i) => _feat(i, 'dormant'))]),
-    // O17 (i) — `geoFiltre` ; pt 1 — `parcelIdu`/données ; H2.4 — `seg`/centre pour re-peindre le périmètre.
-    [seg, pointMort, tous, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone, geoFiltre, parcelIdu, qParcelPermis.dataUpdatedAt, perimCentre.dataUpdatedAt])
+    // O17 (i) — `geoFiltre` ; pt 1 — `parcelIdu`/données ; H2.4 — `seg` pour re-peindre le périmètre.
+    [seg, pointMort, tous, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone, geoFiltre, parcelIdu, qParcelPermis.dataUpdatedAt])
   const total = perim ? perimItems.length : pointMort ? qPmCount.data?.total : ((head?.['total'] as number) ?? 0)
   const loaded = perim ? perimItems.length : pages.flatMap((p) => (p['items'] ?? []) as unknown[]).length
 
@@ -812,15 +810,19 @@ export function M03() {
   // définition) ; l'état du cycle inactif reprend le mot du sous-titre : « Permis dormants ».
   const ETATS = (perim ? ([
     ['cours', 'Récents', 'recent', perimCounts.recent, 'autorisés depuis 24 mois'],
+    ['mort', 'Permis dormants', 'dormant', perimCounts.dormant, 'PC > 3 ans, sans achèvement déclaré, aucun bâtiment détecté'],
     ['acheve', 'Achevés', 'acheve', perimCounts.acheve, 'travaux déclarés (DAACT)'],
-    ['autre', 'Autres', 'autre', perimCounts.autre, 'ni récent, ni achevé'],
+    ['autre', 'Autres', 'autre', perimCounts.autre, 'ni récent, ni dormant, ni achevé'],
     ['tous', 'Tous', null, perimCounts.tous, 'dans les 200 m'],
   ] as const) : ([
-    ['cours', 'Récents', 'recent', radarEntryTotal, 'autorisés, 90 derniers jours de la donnée'],
-    ['mort', 'Permis dormants', 'dormant', pmEntryTotal, 'autorisés depuis plus de 3 ans, sans achèvement déclaré (DAACT), terrain resté nu'],
+    // OUTIL-PERMIS-FIX-1 (LOT 6) — chaque état dit l'ÉVÉNEMENT (autorisation), la fenêtre et la date de
+    // référence (fin des données). « Récent » = 24 mois PARTOUT (plus « 90 derniers jours »). Le dormant
+    // dit ce qui est MESURÉ (« aucun bâtiment détecté »), jamais « terrain resté nu » ni « caducité ».
+    ['cours', 'Récents', 'recent', radarEntryTotal, 'autorisés depuis 24 mois (fin des données)'],
+    ['mort', 'Permis dormants', 'dormant', pmEntryTotal, 'PC autorisés depuis plus de 3 ans, sans achèvement déclaré (DAACT), aucun bâtiment détecté sur leurs parcelles'],
     ['acheve', 'Achevés', 'acheve', acheveEntryTotal, 'travaux déclarés (DAACT)'],
     ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni dormant, ni achevé'],
-    ['tous', 'Tous', null, tousEntryTotal, 'toute la base'],
+    ['tous', 'Tous', null, tousEntryTotal, 'toute la base (autorisations)'],
   ] as const))
   const actE = ETATS.find((e) => e[0] === seg) ?? ETATS[0]
   // résumé « Filtrer par état » replié : l'état actif + son compte (« Tous — 50 544 »).
@@ -919,7 +921,7 @@ export function M03() {
                   /* OUT-PERMIS-011 — /modules/parcelle-permis n'est PAS fenêtré : il rend tous les permis
                      géolocalisés ≤ 200 m, sur TOUTE la profondeur Sitadel. L'ancien « 240 derniers mois »
                      (max(MONTHS_RADAR) = 20 ans) se lisait comme un faux fenêtrage. */
-                  ? <>sur toute la profondeur Sitadel servie{donneesJusquAu ? ` (Sitadel au ${fmtDateNum(donneesJusquAu)})` : ''}.</>
+                  ? <>sur toute la profondeur Sitadel servie{donneesJusquAu ? ` (dernière autorisation intégrée le ${fmtDateNum(donneesJusquAu)})` : ''}.</>
                   : loc === 0
                     ? <>aucun point à afficher.</>
                     : <>cliquez les points sur la carte{nonLocTxt}.</>}
@@ -942,11 +944,23 @@ export function M03() {
       <div data-permis-total className="shrink-0 rounded-lg border border-line-2 bg-surface-1 px-3 py-2">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="tnum text-[24px] font-semibold leading-none text-txt-hi">{tousEntryTotal != null ? fmt(tousEntryTotal) : '…'}</span>
-          <span data-permis-sitadel-date className="text-[12px] text-txt-mut">permis autorisés{donneesJusquAu ? ` · Sitadel au ${fmtDateNum(donneesJusquAu)}` : ''}</span>
-          <Tip garder tip="Sitadel recense les permis AUTORISÉS (accordés), pas les demandes en cours d'instruction.">
+          {/* OUTIL-PERMIS-FIX-1 (LOT 4) — la date affichée est la « dernière autorisation intégrée »
+              (max date Sitadel en base), pas aujourd'hui. */}
+          <span data-permis-sitadel-date className="text-[12px] text-txt-mut">permis autorisés{donneesJusquAu ? ` · dernière autorisation intégrée le ${fmtDateNum(donneesJusquAu)}` : ''}</span>
+          {/* OUTIL-PERMIS-FIX-1 (LOT 6) — la mention dit exactement ce que couvre Sitadel. */}
+          <Tip garder tip="Sitadel recense les autorisations d'urbanisme ACCORDÉES (y compris celles annulées ensuite), pas les refus ni les demandes en cours d'instruction.">
             <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] leading-none text-txt-dim">i</span>
           </Tip>
         </div>
+        {/* OUTIL-PERMIS-FIX-1 (LOT 3/4) — les deux pertes de couverture sont DITES : permis sans point
+            (non géolocalisés, absents du voisinage 200 m) et la ligne sans date (écartée du filtre temporel). */}
+        {(sansPoint || sansDate) ? (
+          <div data-permis-couverture className="mt-1 text-[10.5px] leading-snug text-txt-dim">
+            {sansPoint ? <>{fmt(sansPoint)} sans point sur la carte (non géolocalisés)</> : null}
+            {sansPoint && sansDate ? ' · ' : null}
+            {sansDate ? <>{fmt(sansDate)} sans date (hors fenêtre temporelle)</> : null}
+          </div>
+        ) : null}
       </div>
 
       {/* RETOURS-18 X1/X2 — ACCORDÉON : un seul bloc ouvert à la fois (ouvrir l'un referme les autres).
@@ -1061,7 +1075,7 @@ export function M03() {
               <p data-permis-dossiers className="shrink-0 px-2 text-[10px] leading-snug text-txt-dim">
                 {total != null ? fmt(total) : '…'} dossier{(total ?? 0) > 1 ? 's' : ''}
                 {geocodesSel != null && <> · <span data-permis-geocodes>{fmt(geocodesSel)} géolocalisé{geocodesSel > 1 ? 's' : ''}</span></>}
-                {donneesJusquAu && <> · donnée Sitadel au {fmtDateNum(donneesJusquAu)}</>}
+                {donneesJusquAu && <> · dernière autorisation intégrée le {fmtDateNum(donneesJusquAu)}</>}
               </p>
             )
           })()}
