@@ -37,12 +37,13 @@ preparer() {
   # 2. archive des couches (332 lignes, insee 97408)
   pg_dump -d labuse --schema-only -t plu_layer_archive --no-owner --no-acl > "$D/archive_ddl.sql"
   psql -d labuse -c "\copy (SELECT insee,commune,kind,subtype,name,idurba,geom,attrs,archive_le,motif FROM plu_layer_archive ORDER BY id) TO '$D/archive.copy'"
-  # 3. les 4 peb absents de prod (identifiés par empreinte géométrique — jamais par id)
-  psql -d labuse -c "\copy (SELECT kind,subtype,name,geom,attrs,data_source_id,commune,created_at,geom_2975,geom_simple,geom_ile FROM spatial_layers sl WHERE kind='peb' AND md5(ST_AsBinary(geom)) IN ('05f663e87b57e94c5de8158cf49ea8b4','71394ce21d9113951d4bc193ceafef9d','9663c54b83b41b3443843cebc3143534','dd60e4029d9aeb7467e93ab5f050af94')) TO '$D/peb.copy'"
+  # 3. (volet peb RETIRÉ — décision Vic 22/11) : l'écart peb Mac 12 / prod 8 n'était PAS 4 manquants
+  #    en prod mais 4 DOUBLONS côté Mac (les 4 zones Roland Garros A/B/C/D existent déjà en prod, une
+  #    chacune ; le Mac les a en double). La prod fait foi — on ne pousse rien. Contrôle : peb reste = 8.
   wc -l "$D"/*.copy
   echo "→ scp vers le serveur"
   ssh "$HOST" "mkdir -p $SD && chmod 777 $SD"
-  scp -q "$D"/reglement.copy "$D"/archive.copy "$D"/peb.copy "$D"/archive_ddl.sql "$HOST:$SD/"
+  scp -q "$D"/reglement.copy "$D"/archive.copy "$D"/archive_ddl.sql "$HOST:$SD/"
   echo "✓ preparé ($D → $HOST:$SD)"
 }
 
@@ -72,14 +73,14 @@ SELECT 'prescriptions_97408_vieilles', count(*), 86 FROM spatial_layers WHERE ki
 SELECT 'prescriptions_97411_vieilles', count(*), 2908 FROM spatial_layers WHERE kind='plu_gpu_prescription' AND attrs->>'idurba'='97411_PLU_20260423';
 SELECT 'reglement_97411_97408_avant', count(*), 397 FROM plu_reglement_extrait WHERE insee IN ('97411','97408');
 SELECT 'archive_absente', count(*), 0 FROM pg_tables WHERE tablename='plu_layer_archive';
-SELECT 'peb_avant', count(*), 8 FROM spatial_layers WHERE kind='peb';
+SELECT 'peb_temoin_intouche', count(*), 8 FROM spatial_layers WHERE kind='peb';
 SELECT 'icpe_temoin', count(*), 1271 FROM spatial_layers WHERE kind='icpe';
 SQLEOF" | grep -v "^SET$" || true
   echo "── empreinte parcelle→zone AVANT (doit rester IDENTIQUE après) ──"
   ssh "$HOST" "sudo -u postgres psql -d labuse -At -F'§' -c \"SELECT left(idu,5), count(*), md5(string_agg(idu||'→'||coalesce(zone_lib,''), '|' ORDER BY idu)) FROM parcel_zone_plu WHERE idu LIKE '97411%' OR idu LIKE '97408%' GROUP BY 1 ORDER BY 1\""
   echo "── fichiers préparés sur le serveur ──"
   ssh "$HOST" "wc -l $SD/*.copy 2>/dev/null || echo 'fichiers ABSENTS — lancer preparer d abord'"
-  echo "(attendus : reglement 553 · archive 332 · peb 4)"
+  echo "(attendus : reglement 553 · archive 332 ; peb NON poussés — prod fait foi)"
 }
 
 appliquer() {
@@ -134,12 +135,8 @@ INSERT INTO plu_reglement_extrait (insee,commune,idurba,millesime,document,zone,
 SET search_path = public;  -- le DDL de pg_dump vide le search_path : on le rétablit pour la suite
 \\copy plu_layer_archive (insee,commune,kind,subtype,name,idurba,geom,attrs,archive_le,motif) FROM '/tmp/ml5_plu_srv/archive.copy'
 
--- 4. les 4 peb du Mac
-CREATE TEMP TABLE _peb (LIKE spatial_layers INCLUDING DEFAULTS);
-ALTER TABLE _peb DROP COLUMN id;
-\\copy _peb (kind,subtype,name,geom,attrs,data_source_id,commune,created_at,geom_2975,geom_simple,geom_ile) FROM '/tmp/ml5_plu_srv/peb.copy'
-INSERT INTO spatial_layers (kind,subtype,name,geom,attrs,data_source_id,commune,created_at,geom_2975,geom_simple,geom_ile)
-  SELECT kind,subtype,name,geom,attrs,data_source_id,commune,created_at,geom_2975,geom_simple,geom_ile FROM _peb;
+-- (volet peb RETIRÉ — décision Vic 22/11 : la prod a déjà les 4 zones Roland Garros, le Mac a des
+--  doublons ; on ne pousse rien. Le contrôle de sortie prouve que peb reste INTOUCHÉ = 8.)
 
 -- contrôles de SORTIE (dans la même transaction)
 DO \$\$
@@ -152,7 +149,7 @@ BEGIN
   SELECT count(*) INTO n FROM plu_layer_archive;
   IF n <> 332 THEN RAISE EXCEPTION 'archive attendue 332, trouvée %', n; END IF;
   SELECT count(*) INTO n FROM spatial_layers WHERE kind='peb';
-  IF n <> 12 THEN RAISE EXCEPTION 'peb après attendu 12, trouvé %', n; END IF;
+  IF n <> 8 THEN RAISE EXCEPTION 'peb MODIFIÉ ! attendu 8 (intouché), trouvé %', n; END IF;
   SELECT count(*) INTO n FROM spatial_layers WHERE kind='icpe';
   IF n <> 1271 THEN RAISE EXCEPTION 'icpe touchées ! attendu 1271, trouvé %', n; END IF;
 END \$\$;
