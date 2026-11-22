@@ -95,7 +95,10 @@ export function EtudeZone() {
   // divergente du back : on n'offre QUE les rayons que le back calcule en cercle (sinon il retombe sur
   // l'isochrone — un rayon affiché « 3 km » donnerait un périmètre ≠ cercle, cf. E-69).
   const cfgMot = useQuery({ queryKey: ['moteurs-config'], queryFn: getMoteursConfig, staleTime: 3600_000 })
-  const rayonsServis = cfgMot.data?.rayons_etude_zone ?? [0.5, 1, 2, 5]
+  // MINI-CORRECTIONS-2 (pt 28) — « 5 km » retiré du sélecteur (demande Vic) : on ne garde que 0,5 / 1 /
+  // 2 km. On filtre les rayons servis (plutôt que de seulement changer le repli) pour que 5 disparaisse
+  // même quand le back le sert encore. Le back sait toujours le calculer, l'UI ne le propose plus.
+  const rayonsServis = (cfgMot.data?.rayons_etude_zone ?? [0.5, 1, 2, 5]).filter((r) => r <= 2)
   // RECETTE-4 — l'état sous-destination (menu Activité) est retiré.
 
   // DESTINATIONS-1 (X4.4) — porte Copilote « Étude de zone » préremplie (parcelle + sous-destination).
@@ -189,8 +192,9 @@ export function EtudeZone() {
   // suit l'idiome de l'outil (fermé ▸ pointe à droite, ouvert ▾).
   // RECETTE-OUTILS-1 (point 30) — TOUS les accordéons de lecture sont fermés par défaut (plus
   // d'ouverture d'office de Population/Économie).
-  // OUTILS-P0-2 (recette) — la section « Immobilier » (le prix du cercle) est DÉPLIÉE à l'ouverture.
-  const [openSecs, setOpenSecs] = useState<Set<string>>(() => new Set(['immobilier']))
+  // MINI-CORRECTIONS-2 (pt 29) — les SEPT sections de l'accordéon sont FERMÉES par défaut (demande Vic) :
+  // plus d'ouverture d'office d'« Immobilier ».
+  const [openSecs, setOpenSecs] = useState<Set<string>>(() => new Set())
 
   // RECETTE-OUTILS-1 T5 — le « Réinitialiser » du haut (et son handler `resetEtude`) sont retirés :
   // l'outil garde son reset de zone via « Changer la zone » / Retour.
@@ -214,12 +218,15 @@ export function EtudeZone() {
       {/* RECETTE-1 H8.3 — AMPLEUR : rayon en km réglable par + / − (cercle exact tracé sur la carte). */}
       {/* CHASSE-DONNEES-FIX-1 (E-77) — rayons SERVIS (discrets), plus un stepper 0,5-10 proposant des
           rayons que le back ne calcule pas en cercle. */}
-      <div data-zone-rayons className="flex items-center justify-between rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
-        <span className="text-[11px] text-txt-mut">Rayon</span>
-        <div className="flex items-center gap-1.5">
+      {/* MINI-CORRECTIONS-2 (pt 28) — marges refaites : la rangée tient dans son cadre sans rien couper.
+          Les boutons se répartissent (flex-1, largeur égale) et peuvent passer à la ligne (flex-wrap)
+          au lieu de déborder ; plus aucun défilement horizontal possible (cf. pt 13). */}
+      <div data-zone-rayons className="flex flex-wrap items-center gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
+        <span className="shrink-0 text-[11px] text-txt-mut">Rayon</span>
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
           {rayonsServis.map((r) => (
             <button key={r} data-zone-rayon={r} aria-pressed={rayonKm === r} onClick={() => setRayonKm(r)}
-              className={`h-7 min-w-[3.5rem] whitespace-nowrap rounded-md border px-2 font-mono text-[12px] transition-colors duration-quick ${rayonKm === r ? 'border-mint text-mint' : 'border-line-2 text-txt-hi hover:border-mint hover:text-mint'}`}>
+              className={`h-7 min-w-0 flex-1 whitespace-nowrap rounded-md border px-2 font-mono text-[12px] transition-colors duration-quick ${rayonKm === r ? 'border-mint text-mint' : 'border-line-2 text-txt-hi hover:border-mint hover:text-mint'}`}>
               {String(r).replace('.', ',')} km</button>
           ))}
         </div>

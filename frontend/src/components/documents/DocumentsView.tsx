@@ -74,7 +74,7 @@ function DocCard({ d, onOpen }: { d: DocCatalogue; onOpen: () => void }) {
         <span className="grid h-8 w-8 place-items-center rounded-md border border-line-2 text-mint transition-colors duration-quick">
           <DocGlyphe />
         </span>
-        <span aria-hidden className="text-txt-faint transition-colors duration-quick">→</span>
+        {/* MINI-CORRECTIONS-2 (pt 32) — flèche « → » retirée de chaque tuile Docs. */}
       </div>
       <div className="min-w-0">
         <div className="text-[15px] font-semibold text-txt">{d.nom}</div>

@@ -257,7 +257,7 @@ exports[`formes de la fiche (maquette v3) — 12 composants > OutilsSection (un 
     >
       Simuler l'ouverture
       <span
-        style="color: var(--mint);"
+        style="color: currentcolor;"
       >
         →
       </span>

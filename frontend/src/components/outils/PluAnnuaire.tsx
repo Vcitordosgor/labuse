@@ -172,21 +172,9 @@ export function PluAnnuaire() {
       {/* ── ÉTAPE 2 — RECHERCHE : la barre + le verbatim sourcé ── */}
       {insee && servable && mode === 'recherche' && (
         <>
-          {/* OUTILS-P1-1 (pt 9) — AU-DESSUS de la recherche : l'ÉDITION du document (règlement + millésime
-              + identifiant GPU) et son ÉTAT D'INDEXATION (combien d'extraits indexés pour la recherche).
-              La recherche porte sur ce qui est indexé — on le dit, le règlement intégral reste en PDF. */}
-          <div data-plu-doc-etat className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] leading-snug">
-            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="font-medium text-txt">{cur?.document ?? 'Règlement PLU'}</span>
-              {cur?.millesime && <span className="text-txt-dim">édition {fmtDateNum(cur.millesime) ?? cur.millesime}</span>}
-              {cur?.idurba && <span className="font-mono text-[9.5px] text-txt-dim">{cur.idurba}</span>}
-            </div>
-            <div className="mt-0.5 text-txt-mut">
-              {(cur?.extraits ?? 0) > 0
-                ? <>Indexé pour la recherche : <b className="text-txt">{cur!.extraits}</b> extrait{(cur!.extraits) > 1 ? 's' : ''} d’articles{cur?.pagination_ambigue ? ' · pagination à vérifier sur certains articles' : ''}.</>
-                : <>Document non indexé pour la recherche verbatim — ouvrez le règlement intégral.</>}
-            </div>
-          </div>
+          {/* MINI-CORRECTIONS-2 (pt 14) — encadré « <doc>.pdf · édition … · identifiant · Indexé pour la
+              recherche : N extraits » RETIRÉ (jugé inutile par Vic). L'en-tête « PLU du … » (étape 1)
+              reste. La recherche porte toujours sur le verbatim indexé, dit juste en dessous. */}
           <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
             {/* RETOURS-15 C1 (P1) — le bouton « ← Voies » est retiré de l'annuaire (demande Vic). */}
             <p className="text-[10.5px] leading-snug text-txt-mut">

@@ -282,7 +282,11 @@ export function OutilsSection({ outils, colonne }: { outils: OutilSection[]; col
           <div key={i} style={!colonne && o.full ? { gridColumn: '1 / -1' } : undefined}>
             <Bouton niveau="secondaire" ton="vert" data-porte={o.data} onClick={o.onClick}
               className={`w-full justify-between ${vert ? '' : NEUTRE_CLS}`}>
-              {o.label}<span style={{ color: vert ? 'var(--mint)' : 'var(--txt-faint)' }}>→</span>
+              {/* MINI-CORRECTIONS-2 (pt 4) — la flèche suit la COULEUR DU TEXTE du bouton (currentColor)
+                  au lieu d'un vert figé : au survol le bouton vert passe le texte en encre sombre
+                  (mint-on) et la flèche aussi, donc elle reste visible (avant : flèche mint sur fond
+                  mint = invisible). Le bouton neutre garde sa flèche discrète. */}
+              {o.label}<span style={{ color: vert ? 'currentColor' : 'var(--txt-faint)' }}>→</span>
             </Bouton>
           </div>
         )

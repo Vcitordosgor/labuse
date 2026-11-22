@@ -146,16 +146,10 @@ export function O5Servitudes() {
               n'ont rien remonté. N'affiche plus « vérifié » sans preuve : les familles non démontrées
               couvertes passent dans « Couverture inconnue » ci-dessous, les lectures échouées dans
               « Lecture indisponible ». Les listes sont servies par le back (point de vérité unique). */}
-          {(d.verifie?.length ?? 0) > 0 && (
-            <div data-o5-verifie className="flex flex-col gap-1.5">
-              <p className="label-caps text-[9.5px] text-txt-dim">Aucune intersection détectée</p>
-              <div className="flex flex-wrap gap-1.5">
-                {(d.verifie ?? []).map((f) => (
-                  <span key={f} className="rounded-full border border-line-2 bg-surface-2 px-2.5 py-0.5 text-[10.5px] text-txt-mut">{f}</span>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* MINI-CORRECTIONS-2 (pt 27) — l'encart « Aucune intersection détectée » et ses puces sont
+              RETIRÉS de l'écran (on sait déjà que ces familles ont été contrôlées sans résultat
+              puisqu'elles ne figurent pas dans les risques) : la liste part dans le « i » du bas,
+              avec le « Non couvert » (pt 26). */}
           {/* OUTILS-P0-1 (#2) — « COUVERTURE INCONNUE » : familles muettes dont on ne peut PAS démontrer
               que la source couvre cette zone (zone blanche / couche non ingérée sur cette commune). */}
           {(d.couverture_inconnue?.length ?? 0) > 0 && (
@@ -185,17 +179,22 @@ export function O5Servitudes() {
             && (d.couverture_inconnue?.length ?? 0) === 0 && (d.lecture_indisponible?.length ?? 0) === 0 && (
             <EmptyState title="Aucune servitude détectée dans les couches ingérées à cette parcelle." />
           )}
-          {/* RETOURS-28 (Pièges) — « Non couvert » = UNE ligne fixe, le DÉTAIL (couches non ingérées,
-              per API) passe dans le « i ». Les procédures PLU n'y figurent plus (carte/puce dédiées). */}
-          {/* RETOURS-29 (Pièges) — le « i » est INLINE, à la FIN de la phrase (sur la même ligne) : plus
-              de flex-wrap qui le rejetait à la ligne. Le détail (couches non ingérées) vit dans le « i ». */}
-          <p data-o5-non-couvert className="mt-auto pt-1 text-[10px] leading-snug text-txt-dim">
-            Non couvert : oléoducs (Le Port, Sainte-Marie) et servitudes non publiées au Géoportail. Le certificat d'urbanisme fait foi.{(d.non_couvert?.length ?? 0) > 0 && (
-              <Tip garder side="top" tip={`${d.non_couvert.join(' · ')}.`}>
-                <span role="button" tabIndex={0} aria-label="Détail du non couvert"
-                  className="ml-1 inline-flex h-[13px] w-[13px] translate-y-[2px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
-              </Tip>
-            )}
+          {/* MINI-CORRECTIONS-2 (pt 26 + pt 27) — le TEXTE « Non couvert : oléoducs… certificat
+              d'urbanisme fait foi » est RETIRÉ de l'écran et, avec la LISTE des familles contrôlées
+              sans résultat (ex-encart « Aucune intersection détectée »), passe dans UN SEUL « i » au
+              survol. À l'écran il ne reste qu'une mention discrète + le « i ». */}
+          <p data-o5-non-couvert className="mt-auto flex items-center gap-1 pt-1 text-[10px] leading-snug text-txt-dim">
+            <span>Couverture des contrôles</span>
+            <Tip garder side="top" tip={
+              <div className="flex flex-col gap-1.5 text-left">
+                {(d.verifie?.length ?? 0) > 0 && <span>Contrôlées sans intersection : {(d.verifie ?? []).join(' · ')}.</span>}
+                <span>Non couvert : oléoducs (Le Port, Sainte-Marie) et servitudes non publiées au Géoportail. Le certificat d'urbanisme fait foi.</span>
+                {(d.non_couvert?.length ?? 0) > 0 && <span>{d.non_couvert.join(' · ')}.</span>}
+              </div>
+            }>
+              <span role="button" tabIndex={0} aria-label="Détail de la couverture des contrôles et du non couvert"
+                className="inline-flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+            </Tip>
           </p>
         </div>
       )}

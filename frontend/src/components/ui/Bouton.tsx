@@ -8,6 +8,7 @@
 // remplacent .btn/.b-pri/.b-sec/.p-on/.cta/.act/.ia-btn, les `btnPlein` inline et les
 // <div>/<span onClick> qui faisaient office de bouton. NE PAS réintroduire de bouton stylé à la main.
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { Chargement } from '../Loading'
 
 export type BoutonNiveau = 'primaire' | 'secondaire' | 'lien'
 export type BoutonTon = 'vert' | 'ambre' | 'ia' | 'danger'
@@ -17,6 +18,12 @@ export interface BoutonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   ton?: BoutonTon
   /** icône seule → carré 32×32 (pas de padding horizontal). */
   icone?: boolean
+  /** MINI-CORRECTIONS-2 (pt 12) — état de chargement LISIBLE, porté par le composant Bouton donc
+   *  identique partout : points + libellé en `currentColor` (la couleur de texte du bouton), bouton
+   *  désactivé et `aria-busy`. `loadingLabel` remplace le texte le temps du chargement (sinon on garde
+   *  les enfants). Fini le gris illisible sur le vert. */
+  loading?: boolean
+  loadingLabel?: string
   children?: ReactNode
 }
 
@@ -37,7 +44,7 @@ const BASE =
   'inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none ' +
   'transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto'
 
-export function Bouton({ niveau = 'secondaire', ton = 'vert', icone = false, className = '', type, children, ...rest }: BoutonProps) {
+export function Bouton({ niveau = 'secondaire', ton = 'vert', icone = false, loading = false, loadingLabel, className = '', type, disabled, children, ...rest }: BoutonProps) {
   const t = TON[ton]
   const pad = icone ? 'w-8 px-0 shrink-0' : 'px-[14px]'
   let variant: string
@@ -52,8 +59,11 @@ export function Bouton({ niveau = 'secondaire', ton = 'vert', icone = false, cla
     variant = `bg-transparent border-0 underline underline-offset-2 ${t.line.split(' ').pop()} hover:text-mint`
   }
   return (
-    <button type={type ?? 'button'} className={`${BASE} ${pad} ${variant} ${className}`.trim()} {...rest}>
-      {children}
+    <button type={type ?? 'button'} disabled={disabled || loading} aria-busy={loading || undefined}
+      className={`${BASE} ${pad} ${variant} ${className}`.trim()} {...rest}>
+      {loading
+        ? <Chargement variant="inline" accent="courant" delai={0} label={loadingLabel ?? (typeof children === 'string' ? children : undefined)} />
+        : children}
     </button>
   )
 }

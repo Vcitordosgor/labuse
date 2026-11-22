@@ -63,7 +63,7 @@ function EntreeSolaire({ onChoose }: { onChoose: (m: 'piscines' | 'ensoleillemen
         <b className="text-[13px] text-txt">{titre}</b>
         <span className="mt-0.5 block text-[10.5px] leading-snug text-txt-dim">{desc}</span>
       </span>
-      <span className="text-txt-dim">→</span>
+      {/* MINI-CORRECTIONS-2 (pt 31) — flèche « → » retirée des tuiles Piscines et Ensoleillement. */}
     </button>
   )
   return (

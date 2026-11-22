@@ -52,8 +52,14 @@ export function Chargement({
   )
 
   if (variant === 'inline') {
+    // MINI-CORRECTIONS-2 (pt 12) — `accent='courant'` = chargement DANS un bouton plein (ex. « Calcul
+    // de la zone… » sur le vert) : les points (bg-current) ET le label doivent prendre la COULEUR DU
+    // TEXTE DU BOUTON (encre sombre), lisibles. Avant, le wrapper forçait `text-txt-mut` (gris) → gris
+    // sur vert = illisible (bug Vic). On n'impose le gris que pour les autres accents (chargement
+    // inline dans du texte neutre). L'état de chargement du Bouton (prop `loading`) passe par ici.
+    const wrapTone = accent === 'courant' ? '' : 'text-txt-mut'
     return (
-      <span className={`inline-flex items-center gap-2 align-middle text-txt-mut ${className}`}
+      <span className={`inline-flex items-center gap-2 align-middle ${wrapTone} ${className}`}
         role="status" aria-live="polite" aria-busy="true">
         {dots}
         {label && <span className="text-xs">{label}</span>}

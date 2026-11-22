@@ -16,25 +16,27 @@
 import { TOKENS } from './tokens'
 
 export type PermisEtat = 'recent' | 'dormant' | 'acheve' | 'autre'
-/** Trois valeurs peintes sur la carte (Achevé + Autre → gris). */
-export type PermisEtatCarte = 'recent' | 'dormant' | 'gris'
+/** MINI-CORRECTIONS-2 (pt 16) — QUATRE couleurs distinctes désormais (Achevé et Autre ne sont plus
+ *  fondus) : la carte et la légende répondent « récent / dormant / achevé / autre » d'un coup d'œil. */
+export type PermisEtatCarte = 'recent' | 'dormant' | 'acheve' | 'autre'
 
 export const PERMIS_ETAT_COLOR: Record<PermisEtatCarte, string> = {
-  recent: TOKENS.mint,        // vert de marque #4ADE80
-  dormant: TOKENS.coral,      // corail #E2726A (couleur historique du dormant, inchangée)
-  gris: TOKENS.stExclue,      // gris neutre existant #6B7A72 (Achevé + Autre)
+  recent: TOKENS.blue,        // bleu #8FB4F0 — Récents (demande Vic)
+  dormant: TOKENS.coral,      // corail/rouge #E2726A — Dormants
+  acheve: TOKENS.stExclue,    // gris neutre #6B7A72 — Achevés
+  autre: TOKENS.amber,        // orange #E0A94F — Autres
 }
 
-/** Réduit un état de panneau (4) à sa couleur de carte (3). */
-export const carteEtat = (e: PermisEtat): PermisEtatCarte =>
-  e === 'recent' ? 'recent' : e === 'dormant' ? 'dormant' : 'gris'
+/** Couleur de carte d'un état de panneau : identité (4 ↔ 4) depuis MINI-CORRECTIONS-2 (pt 16). */
+export const carteEtat = (e: PermisEtat): PermisEtatCarte => e
 
 /** Couleur de la pastille d'un état de panneau. */
 export const etatColor = (e: PermisEtat): string => PERMIS_ETAT_COLOR[carteEtat(e)]
 
-// Légende de carte (W3) — trois entrées, l'ordre du cycle de vie. Achevé et Autre fondus en « gris ».
+// Légende de carte — QUATRE entrées, l'ordre du cycle de vie, mêmes couleurs que les points.
 export const PERMIS_LEGENDE: { key: PermisEtatCarte; color: string; label: string }[] = [
   { key: 'recent', color: PERMIS_ETAT_COLOR.recent, label: 'Récent (autorisé ≤ 24 mois)' },
   { key: 'dormant', color: PERMIS_ETAT_COLOR.dormant, label: 'Dormant (ancien PC sans achèvement)' },
-  { key: 'gris', color: PERMIS_ETAT_COLOR.gris, label: 'Achevé ou autre' },
+  { key: 'acheve', color: PERMIS_ETAT_COLOR.acheve, label: 'Achevé (travaux déclarés)' },
+  { key: 'autre', color: PERMIS_ETAT_COLOR.autre, label: 'Autre' },
 ]

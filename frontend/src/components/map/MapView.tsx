@@ -71,6 +71,15 @@ export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplib
   fermerBullePermis()   // une seule bulle permis à la fois
   const select = useApp.getState().select
   const box = document.createElement('div'); box.style.cssText = POPUP_BOX_CSS
+  // MINI-CORRECTIONS-2 (pt 17) — la fiche permis CHARGÉE est plus haute que l'estimation `_POP_H`
+  // utilisée pour choisir l'ancre : ancrée au-dessus d'un point, elle passait SOUS la barre du haut
+  // (coupée). On BORNE sa hauteur à la zone visible de la carte (et à `_POP_H`) avec défilement
+  // interne : l'ancre reste exacte, la bulle est TOUJOURS entièrement visible, quel que soit le point.
+  {
+    const _ch = m.getContainer().clientHeight
+    box.style.maxHeight = Math.max(180, Math.min(_POP_H - 40, _ch - 80)) + 'px'
+    box.style.overflowY = 'auto'
+  }
   const titre = document.createElement('b'); titre.textContent = 'Permis'
   titre.style.cssText = 'display:block;font-size:14px;font-weight:650;padding-right:16px'; box.appendChild(titre)
   const sub = document.createElement('div'); sub.style.cssText = 'color:#98a39d;font-size:12px;margin-top:4px;font-family:ui-monospace,monospace'; box.appendChild(sub)
@@ -1001,15 +1010,16 @@ export function MapView() {
                    ['all', ['==', ['get', 'kind'], 'operation'], ['==', ['get', 'radar_cite'], true]], '#4ADE80',
                    ['==', ['get', 'kind'], 'operation'], '#E0A94F',
                    ['==', ['get', 'kind'], 'zone-origin'], '#4ADE80',
-                   // RETOURS-17 W3 — la COULEUR DU POINT PERMIS SUIT SON ÉTAT (avant : tout en vert →
-                   // « 47 000 verts, lit 5 580 récents », Vic 05/09). Récent vert · Dormant corail ·
-                   // Achevé/Autre gris — MÊME source que les pastilles du panneau (lib/permisEtats).
+                   // MINI-CORRECTIONS-2 (pt 16) — la COULEUR DU POINT PERMIS suit son état, en QUATRE
+                   // couleurs : Récent BLEU · Dormant ROUGE · Achevé GRIS · Autre ORANGE — MÊME source
+                   // que les pastilles du panneau et la légende (lib/permisEtats).
                    ['==', ['get', 'kind'], 'permis'],
                      ['match', ['get', 'etat'],
                        'recent', PERMIS_ETAT_COLOR.recent,
                        'dormant', PERMIS_ETAT_COLOR.dormant,
-                       'gris', PERMIS_ETAT_COLOR.gris,
-                       PERMIS_ETAT_COLOR.recent],
+                       'acheve', PERMIS_ETAT_COLOR.acheve,
+                       'autre', PERMIS_ETAT_COLOR.autre,
+                       PERMIS_ETAT_COLOR.autre],
                    ['==', ['get', 'kind'], 'radar'],
                    /* DA-FIX-4 Lot 3 (DA-039) — plus de bleu d'interface : « à revérifier » passe en ambre,
                       l'état par défaut en neutre. (La symbologie carte police/BPE, elle, n'est pas touchée.) */
@@ -1611,11 +1621,41 @@ export function MapView() {
     // FOND VERT, liseré NOIR, nom en BLANC. Le vert est assez profond pour que le blanc reste lisible.
     // Le hot (commune à chaudes, mode opinion) ne change plus la couleur — il garde juste une lueur.
     const PAST_BG = '#0E7A43', PAST_BORDER = '#000000', PAST_TXT = '#FFFFFF'
-    const updateVis = () => {
+    // MINI-CORRECTIONS-2 (pt 7) — anti-chevauchement AUTOMATIQUE en espace écran. Les décalages
+    // manuels (OFFSETS) restaient figés en pixels alors que l'espacement des pastilles change avec la
+    // largeur du conteneur (fitBounds) : à 1280 px la côte était serrée et plusieurs noms (Saint-Leu/
+    // Les Avirons/Saint-Louis/L'Étang-Salé/Entre-Deux, Sainte-Marie/Saint-André…) se chevauchaient. On
+    // garde OFFSETS comme nudge de base (bon placement horizontal) puis on POUSSE verticalement toute
+    // pastille qui recouvre une déjà placée, jusqu'à zéro chevauchement, recalculé sur les rectangles
+    // réellement rendus → correct à 1280/1440/1920. Recalcul depuis la base à chaque passe (pas de dérive).
+    const relayout = () => {
       const show = m.getZoom() < 10
       aggMarkers.current.forEach((mk) => { mk.getElement().style.display = show ? '' : 'none' })
+      if (!show) return
+      type P = { mk: maplibregl.Marker; cx: number; ay: number; w: number; h: number; fy: number; bx: number; by: number }
+      const PAD = 3
+      const items: P[] = aggMarkers.current.map((mk) => {
+        const b = (mk as unknown as { _base: [number, number] })._base ?? [0, 0]
+        const p = m.project(mk.getLngLat())
+        const r = mk.getElement().getBoundingClientRect()
+        return { mk, cx: p.x + b[0], ay: p.y + b[1], w: r.width, h: r.height, fy: p.y + b[1], bx: b[0], by: b[1] }
+      }).sort((a, z) => a.ay - z.ay || a.cx - z.cx)
+      const placed: P[] = []
+      for (const it of items) {
+        let guard = 0, moved = true
+        while (moved && guard++ < 60) {
+          moved = false
+          for (const q of placed) {
+            const overlapX = Math.abs(it.cx - q.cx) < (it.w + q.w) / 2 + PAD
+            const overlapY = Math.abs(it.fy - q.fy) < (it.h + q.h) / 2 + PAD
+            if (overlapX && overlapY) { it.fy = q.fy + (it.h + q.h) / 2 + PAD; moved = true }
+          }
+        }
+        placed.push(it)
+        it.mk.setOffset([it.bx, it.by + (it.fy - it.ay)])
+      }
     }
-    // anti-chevauchement (côte Nord dense) : décalages pixels manuels, consignés
+    // nudge de base (côte Nord dense) : décalages pixels manuels, point de départ du anti-chevauchement
     // RECETTE-1 R39 — « Sainte-Suzanne » chevauchait « Saint-André » : on la REMONTE (y plus négatif,
     // -6 → -22) et on descend légèrement Saint-André pour dégager les deux étiquettes.
     const OFFSETS: Record<string, [number, number]> = {
@@ -1659,12 +1699,17 @@ export function MapView() {
       // (liste/compteurs/filtres suivent) ET recadrer la carte (l'effet de fit sur `commune` s'en
       // charge). `focusCommune` fait les trois d'un coup.
       el.onclick = (e) => { e.stopPropagation(); useApp.getState().focusCommune(c.commune) }
-      aggMarkers.current.push(new maplibregl.Marker({ element: el, offset: OFFSETS[c.commune] ?? [0, 0] })
-        .setLngLat([(c.bbox[0] + c.bbox[2]) / 2, (c.bbox[1] + c.bbox[3]) / 2]).addTo(m))
+      const base = (OFFSETS[c.commune] ?? [0, 0]) as [number, number]
+      const mk = new maplibregl.Marker({ element: el, offset: base })
+        .setLngLat([(c.bbox[0] + c.bbox[2]) / 2, (c.bbox[1] + c.bbox[3]) / 2]).addTo(m)
+      ;(mk as unknown as { _base: [number, number] })._base = base
+      aggMarkers.current.push(mk)
     }
-    updateVis()
-    m.on('zoom', updateVis)
-    return () => { m.off('zoom', updateVis); aggMarkers.current.forEach((mk) => mk.remove()); aggMarkers.current = [] }
+    relayout()
+    // MINI-CORRECTIONS-2 (pt 7) — positions écran = fonction du zoom ET de la largeur (fitBounds) :
+    // on recalcule aussi sur `move` (fin d'animation de cadrage comprise) et `resize`, pas que `zoom`.
+    m.on('zoom', relayout); m.on('move', relayout); m.on('resize', relayout)
+    return () => { m.off('zoom', relayout); m.off('move', relayout); m.off('resize', relayout); aggMarkers.current.forEach((mk) => mk.remove()); aggMarkers.current = [] }
   }, [ile, communes.data, mapReady, opinion])
 
   // changement de commune → recadrage sur son emprise (bbox servie par /communes)
@@ -1984,6 +2029,18 @@ export function MapView() {
             {s}
           </BoutonCarte>
         ))}
+        {/* MINI-CORRECTIONS-2 (pt 9) — sous les +/−, un bouton « Vue de l'île » qui revient à la vue
+            d'ensemble (utile au clavier/souris sur PC) : on efface commune, fiche commune et fiche
+            parcelle puis on force le recadrage sur l'emprise de l'île (refitCommune bump le nonce même
+            si on est déjà en mode île mais zoomé à la main). Le déplacement reste la navigation
+            maplibre native (cliquer-glisser, molette, double-clic, flèches clavier) — pas de joystick. */}
+        <BoutonCarte title="Vue de l'île"
+          onClick={() => { const st = useApp.getState(); st.setCommune(null); st.setContexteCommune(null); st.select(null); st.refitCommune() }}>
+          <svg viewBox="0 0 20 20" className="h-[17px] w-[17px]" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 7V4.5A1.5 1.5 0 0 1 4.5 3H7 M13 3h2.5A1.5 1.5 0 0 1 17 4.5V7 M17 13v2.5a1.5 1.5 0 0 1-1.5 1.5H13 M7 17H4.5A1.5 1.5 0 0 1 3 15.5V13" />
+            <circle cx="10" cy="10" r="2.4" />
+          </svg>
+        </BoutonCarte>
       </div>
       {/* RECETTE-OUTILS-3 (S11) — bloc de contrôle 3D (↺/↻ · inclinaison · recentrer), seulement en 3D. */}
       {terrain3d && <Controle3D map={map} />}
@@ -2049,17 +2106,12 @@ export function MapView() {
             : 'Cliquez pour placer les points · Entrée pour valider · Échap pour annuler')}
         </div>
       )}
-      {!tool && (
+      {/* MINI-CORRECTIONS-2 (pt 8) — l'indication « Zoomez ou cliquez une commune pour voir ses
+          parcelles » (et sa variante zonageFill) est RETIRÉE entièrement : à l'échelle île plus aucun
+          bandeau. On conserve seulement, une fois zoomé, le rappel « Cliquez une parcelle… ». */}
+      {!tool && !(ile && lowZoom) && (
         <div data-carte-banner className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-line-2 bg-surface-2 px-4 py-1.5 text-xs text-txt-mut shadow-elev-1">
-          {/* COUCHES-2 point 1 — le bandeau ne CONTREDIT plus la carte : quand le zonage PLU peint déjà
-              l'aperçu d'ensemble par famille à l'échelle île (zonageFill), il ne dit plus « zoomez pour
-              voir les parcelles » (elles sont peintes) mais annonce l'aperçu + le geste pour le DÉTAIL.
-              Sans aperçu peint (couche éteinte), le message d'origine reste (rien n'est peint → zoomer). */}
-          {ile && lowZoom
-            ? (zonageFill
-              ? 'Vue d’ensemble par zone PLU — zoomez ou cliquez une commune pour le détail parcelle'
-              : 'Zoomez ou cliquez une commune pour voir ses parcelles')
-            : 'Cliquez une parcelle pour ouvrir sa fiche'}
+          Cliquez une parcelle pour ouvrir sa fiche
         </div>
       )}
       {/* FINITIONS-1 (P10) — la pastille « Carte au JJ/MM/AAAA — mise à jour en attente » (bas-gauche)
