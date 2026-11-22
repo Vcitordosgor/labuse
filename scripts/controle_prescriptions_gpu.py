@@ -28,8 +28,8 @@ from shapely.ops import unary_union
 APICARTO = "https://apicarto.ign.fr/api/gpu"
 ENDPOINTS = {"surf": "prescription-surf", "lin": "prescription-lin", "pct": "prescription-pct"}
 # conversion deg²→m² au voisinage de La Réunion (lat ~-21) : 1° lat ≈ 111 km, 1° lon ≈ 103,6 km
-K = 111_000 * 103_600
-SEUIL_SURF_M2 = 50.0      # une composante d'aire < 50 m² = sliver de bord, ignorée
+K = 111_000 * 103_600  # deg²→m² approx (La Réunion, lat ~-21)
+SEUIL_SURF_M2 = 200.0     # plancher de bruit : un écart ZIP(2975→4326) vs servi(apicarto 4326) crée des slivers <~200 m² ; au-delà = vrai objet
 SEUIL_DEPL_PCT = 2.0      # lin/pct : déplacement relatif < 2 % = bruit
 LABELS = {"01": "EBC", "05": "ER", "02": "secteur conditionné"}
 
@@ -122,9 +122,13 @@ def gpu_document_zip(insee: str) -> dict:
                         z.extract(m, tmpd)
                 shp = os.path.join(tmpd, base + ".shp")
                 if os.path.exists(shp):
-                    r = shapefile.Reader(shp)
+                    # .dbf parfois en Latin-1 (byte 0xe9 = « é ») : latin-1 décode tous les octets
+                    # sans crash ; on ne lit que TYPEPSC (chiffres ASCII) + la géométrie.
+                    r = shapefile.Reader(shp, encoding="latin-1", encodingErrors="replace")
                     fields = [f[0] for f in r.fields[1:]]
-                    ipsc = fields.index("TYPEPSC") if "TYPEPSC" in fields else None
+                    # champ TYPEPSC — casse variable selon la version CNIG du document
+                    # (« TYPEPSC » pour Saint-Paul, « typepsc » pour Les Avirons) → insensible à la casse.
+                    ipsc = next((i for i, f in enumerate(fields) if f.strip().lower() == "typepsc"), None)
                     for sr in r.shapeRecords():
                         g = shp_transform(lambda x, y, z=None: tr.transform(x, y), shape(sr.shape.__geo_interface__))
                         tp = (str(sr.record[ipsc]).strip() if ipsc is not None else "") or None
@@ -166,80 +170,98 @@ def servi_geoms(commune: str, kind: str, idurba: str) -> list[tuple[str, object]
     return [(r[0], make_valid(shape(json.loads(r[1])))) for r in rows if len(r) == 2 and r[1]]
 
 
-def _sig_components(geom):
+def _polygones(geom) -> list:
+    """Composantes POLYGONALES à plat — la différence de deux polygones quasi-coïncidents rend souvent
+    une GeometryCollection (polygones + bouts de lignes) ; son geom_type n'est NI « Multi… » NI
+    « Polygon », donc l'ancien filtre la laissait passer en bloc (plancher contourné). On n'extrait
+    QUE les polygones (les slivers dégénérés en ligne ont une aire nulle → écartés)."""
     if geom is None or geom.is_empty:
         return []
-    parts = list(geom.geoms) if geom.geom_type.startswith("Multi") else [geom]
-    return [c for c in parts if (c.area * K > SEUIL_SURF_M2 if "Polygon" in c.geom_type else True)]
+    gt = geom.geom_type
+    if gt == "Polygon":
+        return [geom]
+    if gt.startswith("Multi") or gt == "GeometryCollection":
+        out = []
+        for g in geom.geoms:
+            out.extend(_polygones(g))
+        return out
+    return []  # LineString/Point : aire nulle, pas une vraie prescription surfacique
 
 
-def _parcelles_dune_tuile(insee: str, wkt: str) -> list[list[str]]:
-    """Intersection parcelles × géométrie (déjà simplifiée/petite) ; mesure l'aire d'intersection
-    en 2975. Rend [(idu, m2, pct)]. Peut lever (timeout) → l'appelant découpe en grille."""
-    return _psql(
-        "SELECT p.idu, round(a::numeric) m2, round((100*a/nullif(parc,0))::numeric,1) pct FROM ("
-        "  SELECT p.idu, "
-        "    ST_Area(ST_Transform(ST_Intersection(ST_MakeValid(ST_Transform(p.geom,4326)),"
-        f"      ST_MakeValid(ST_GeomFromText('{wkt}',4326))),2975)) a, "
-        "    ST_Area(ST_Transform(p.geom,2975)) parc "
-        f"  FROM parcels p WHERE left(p.idu,5)='{insee}' "
-        f"    AND ST_Intersects(ST_Transform(p.geom,4326), ST_MakeValid(ST_GeomFromText('{wkt}',4326)))"
-        ") p WHERE a > 50")
+def _sig_components(geom):
+    # plancher de bruit appliqué à CHAQUE polygone (slivers de reprojection <~200 m² écartés).
+    return [c for c in _polygones(geom) if c.area * K > SEUIL_SURF_M2]
 
 
 def _parcelles_touchees(insee: str, comp_geoms: list) -> dict:
-    """Découpage : une requête par COMPOSANTE significative, idus dédupliqués. Jamais d'estimation.
-    Robustesse (mandat) : la géométrie est simplifiée à ~1 m (tol 1e-5°) pour alléger l'intersection ;
-    si une composante dépasse quand même le délai, on la DÉCOUPE en grille 4×4 et on somme."""
-    from shapely import simplify
-    from shapely.geometry import box
+    """Parcelles dont l'intersection avec les composantes de changement dépasse 50 m² ET/OU 5 % de
+    leur surface — JAMAIS d'estimation. Rapide et robuste : la diff (un ruban d'EBC peut être fin mais
+    toucher 600+ parcelles) est reprojetée en 2975, DÉCOUPÉE par `ST_Subdivide` (≤64 sommets/pièce) et
+    jointe à `parcels.geom_2975` INDEXÉE ; l'aire d'intersection est SOMMÉE par parcelle. Pas d'API."""
+    from shapely.ops import unary_union
+    if not comp_geoms:
+        return {"sig50": {}, "sig5pct": {}}
+    wkt = make_valid(unary_union(comp_geoms)).wkt
+    rows = _psql(
+        "WITH d AS (SELECT (ST_Dump(ST_Subdivide("
+        f"  ST_MakeValid(ST_Transform(ST_GeomFromText('{wkt}',4326),2975)),64))).geom g) "
+        "SELECT idu, round(sum(a)::numeric) m2, round((100*sum(a)/max(parc))::numeric,1) pct FROM ("
+        "  SELECT p.idu, ST_Area(ST_Intersection(p.geom_2975, d.g)) a, ST_Area(p.geom_2975) parc "
+        f"  FROM parcels p JOIN d ON p.geom_2975 && d.g AND ST_Intersects(p.geom_2975, d.g) "
+        f"  WHERE left(p.idu,5)='{insee}'"
+        ") z GROUP BY idu HAVING sum(a) > 50")
     sig50, sig5 = {}, {}
-
-    def _ajouter(rows):
-        for r in rows:
-            idu, m2, pct = r[0], float(r[1]), float(r[2] or 0)
-            sig50[idu] = max(sig50.get(idu, 0), m2)
-            if pct > 5.0:
-                sig5[idu] = max(sig5.get(idu, 0), pct)
-
-    for g0 in comp_geoms:
-        g = make_valid(simplify(g0, 1e-5))
-        if g.is_empty:
-            continue
-        try:
-            _ajouter(_parcelles_dune_tuile(insee, g.wkt))
-        except RuntimeError:                       # timeout → découpe en grille 4×4
-            minx, miny, maxx, maxy = g.bounds
-            nx = ny = 4
-            dx, dy = (maxx - minx) / nx, (maxy - miny) / ny
-            for i in range(nx):
-                for j in range(ny):
-                    tuile = g.intersection(box(minx + i * dx, miny + j * dy,
-                                               minx + (i + 1) * dx, miny + (j + 1) * dy))
-                    if tuile.is_empty:
-                        continue
-                    _ajouter(_parcelles_dune_tuile(insee, make_valid(tuile).wkt))
+    for r in rows:
+        idu, m2, pct = r[0], float(r[1]), float(r[2] or 0)
+        sig50[idu] = m2
+        if pct > 5.0:
+            sig5[idu] = pct
     return {"sig50": sig50, "sig5pct": sig5}
 
 
-def controler(insee: str, commune: str) -> dict:
+def controler(insee: str, commune: str, avec_parcelles: bool = True, cap_s: int = 600) -> dict:
+    """Verdict + surfaces (1er temps) ; parcelles touchées (2e temps) si `avec_parcelles`.
+    Cap de `cap_s` (défaut 10 min) par commune : au-delà → verdict « ARRÊTÉ (>10 min) »."""
+    import signal
+
+    def _timeout(*_a):
+        raise TimeoutError
+    old = signal.signal(signal.SIGALRM, _timeout)
+    signal.alarm(cap_s)
+    try:
+        return _controler(insee, commune, avec_parcelles)
+    except TimeoutError:
+        return {"insee": insee, "commune": commune, "verdict": f"ARRÊTÉ (>{cap_s // 60} min)"}
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old)
+
+
+def _controler(insee: str, commune: str, avec_parcelles: bool) -> dict:
     own = servi_idurba(insee, commune)
     res = {"insee": insee, "commune": commune, "idurba_servi": own, "par_type": {}, "parcelles": {}}
     if own is None:
         res["verdict"] = "SANS DOCUMENT SERVI"
         return res
-    # téléchargement du document GPU — apicarto d'abord ; REPLI ZIP officiel si apicarto échoue
-    # (Vic : le pack zip fait foi et se télécharge d'un bloc). La source et le NOMBRE d'objets par
-    # type sont rapportés → un téléchargement incomplet se VOIT dans le tableau.
+    # Source PRINCIPALE = pack ZIP officiel du GPU (un fichier, fait foi — Vic) ; apicarto en SECOURS.
+    # La source et le NOMBRE d'objets par type sont rapportés → un téléchargement incomplet se VOIT.
+    def _via_apicarto() -> dict:
+        return {kind: gpu_document(insee, kind) for kind in ENDPOINTS}
+
     gpu_par_kind: dict[str, list] = {}
     try:
-        for kind in ENDPOINTS:
-            gpu_par_kind[kind] = gpu_document(insee, kind)
-        res["source"] = "apicarto (partition)"
+        gpu_par_kind = gpu_document_zip(insee)
+        res["source"] = "ZIP officiel GPU"
+        # certains documents anciens sont en MapInfo TAB (pas .shp) → le lecteur ZIP rend 0 objet ;
+        # si le servi a des prescriptions, c'est une LECTURE ZIP ratée → on bascule sur apicarto.
+        if sum(len(v) for v in gpu_par_kind.values()) == 0 and any(
+                servi_geoms(commune, k, own) for k in ENDPOINTS):
+            gpu_par_kind = _via_apicarto()
+            res["source"] = "apicarto (ZIP non-shapefile)"
     except _DownloadError:
         try:
-            gpu_par_kind = gpu_document_zip(insee)
-            res["source"] = "ZIP officiel GPU"
+            gpu_par_kind = _via_apicarto()
+            res["source"] = "apicarto (secours)"
         except _DownloadError as e:
             res["verdict"] = "ERREUR TÉLÉCHARGEMENT"       # jamais « tout retiré » sur un échec réseau
             res["erreur"] = str(e)[:150]
@@ -270,7 +292,7 @@ def controler(insee: str, commune: str) -> dict:
                                                       "n_ajout": len(ca), "n_retrait": len(cr)}
                     diff_surf_by_type[tp] = ca + cr
             else:
-                b = 1.8e-5
+                b = 1.8e-5  # ~2 m en degrés
                 bg = unary_union([x.buffer(b) for x in gg]) if gg else None
                 bs = unary_union([x.buffer(b) for x in sg]) if sg else None
                 sym = (bg.symmetric_difference(bs).area if (bg and bs)
@@ -280,28 +302,32 @@ def controler(insee: str, commune: str) -> dict:
                 if pct > SEUIL_DEPL_PCT:
                     different = True
                     res["par_type"][f"{kind}/{tp}"] = {"deplacement_pct": round(pct, 1)}
-    # parcelles touchées — par type surf qui a changé, avec découpage par composante
-    for tp, comps in diff_surf_by_type.items():
-        t = _parcelles_touchees(insee, comps)
-        res["parcelles"][LABELS.get(tp, f"type {tp}")] = {
-            "sig50_n": len(t["sig50"]), "sig5pct_n": len(t["sig5pct"]),
-            "sig5pct_idus": sorted(t["sig5pct"])}
     res["verdict"] = "DIFFÉRENT" if different else "identique"
+    # 2e temps — parcelles touchées, seulement si demandé ET commune différente.
+    if avec_parcelles and different:
+        for tp, comps in diff_surf_by_type.items():
+            t = _parcelles_touchees(insee, comps)
+            res["parcelles"][LABELS.get(tp, f"type {tp}")] = {
+                "sig50_n": len(t["sig50"]), "sig5pct_n": len(t["sig5pct"]),
+                "sig5pct_idus": sorted(t["sig5pct"])}
     return res
 
 
 def main():
     args = sys.argv[1:]
-    json_only = False
-    if args and args[0] == "--json":
-        json_only = True
+    json_only = verdict_only = False
+    while args and args[0] in ("--json", "--verdict-only"):
+        if args[0] == "--json":
+            json_only = True
+        else:
+            verdict_only = True      # 1er temps : verdict + surfaces, SANS les parcelles
         args = args[1:]
     insee, commune = args[0], args[1]
-    r = controler(insee, commune)
+    r = controler(insee, commune, avec_parcelles=not verdict_only)
     if json_only:
         print(json.dumps(r, ensure_ascii=False))
         return
-    print(f"=== {commune} ({insee}) — servi {r['idurba_servi']} — source {r.get('source','?')} — n_gpu {r.get('n_gpu',{})} ===")
+    print(f"=== {commune} ({insee}) — servi {r.get('idurba_servi')} — source {r.get('source','?')} — n_gpu {r.get('n_gpu',{})} ===")
     print(f"VERDICT : {r['verdict']}")
     for k, v in r["par_type"].items():
         print(f"  {k}: {v}")
