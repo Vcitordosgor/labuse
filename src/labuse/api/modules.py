@@ -3054,6 +3054,20 @@ def _plu_millesimes() -> dict:
     return yaml.safe_load(p.read_text())["communes"]
 
 
+@_ft.lru_cache(maxsize=1)
+def _plu_dates_gpu() -> dict:
+    """OUTIL-PLU-FIX-1 (LOT 1) — dates distinctes (publication GPU, édition), modifications postérieures
+    et procédures en cours, sourcées du contre-audit (config/plu_dates_gpu.yaml)."""
+    import pathlib
+
+    import yaml
+    p = pathlib.Path(__file__).resolve().parents[3] / "config" / "plu_dates_gpu.yaml"
+    try:
+        return yaml.safe_load(p.read_text()).get("communes", {})
+    except Exception:  # noqa: BLE001
+        return {}
+
+
 @router.get("/plu-annuaire/communes")
 def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
     """M51 — état du corpus par commune : SERVABLE (n extraits), RNU, révision non réconciliée,
@@ -3070,6 +3084,19 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
     res = etat_corpus_plu(db, _plu_millesimes())
     res["n_plu_vigueur"] = res["n_communes"] - res["n_rnu"]
     res["non_servis"] = sorted(c["commune"] for c in res["communes"] if c["statut"] in ("revision", "non_ingere"))
+    # OUTIL-PLU-FIX-1 (LOT 1) — on attache à chaque commune ses dates DISTINCTES (approbation de la
+    # version = date_mairie ; publication GPU ; édition matérielle du PDF), ses actes postérieurs et
+    # l'inventaire des procédures. L'écran dira laquelle il affiche ; l'absence de badge n'est plus lue
+    # comme « aucune procédure ».
+    mil, dates = _plu_millesimes(), _plu_dates_gpu()
+    for c in res["communes"]:
+        dg = dates.get(c["insee"], {})
+        c["date_approbation"] = (mil.get(c["insee"], {}) or {}).get("date_mairie")
+        c["publication_gpu"] = dg.get("publication_gpu")
+        c["edition"] = dg.get("edition")
+        c["modifications"] = dg.get("modifications")
+        c["procedures_inventaire"] = dg.get("procedures")
+        c["note_doc"] = dg.get("note")
     return res
 
 
@@ -3183,6 +3210,7 @@ def plu_titre_corps(verbatim: str) -> tuple[str | None, str]:
 @router.get("/plu-annuaire/search")
 def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = None,
                         limit: int = Query(25, ge=1, le=200),   # FIX-C5
+                        offset: int = Query(0, ge=0),           # OUTIL-PLU-FIX-1 LOT 5 — pagination réelle
                         db: Session = Depends(get_db)) -> dict:
     """M51 — recherche full-text (french) qui SERT DU VERBATIM SOURCÉ : chaque résultat porte
     commune, document, article, PAGE PDF, millésime, lien. Aucun résumé, aucun reformulé. `doute` et
@@ -3205,7 +3233,7 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                                 f"en mairie (complétion auto à l'approbation, veille M41).") if rev else
                                (f"{nm} : règlement non ingéré (hors corpus) — rien à servir. "
                                 f"Voir /plu-annuaire/communes.")}
-    res = search_reglement(db, q, insee, limit=limit, zone=zone)
+    res = search_reglement(db, q, insee, limit=limit, zone=zone, offset=offset)
     # OUT-PLU-008 — `n_total` = total des correspondances (sans plafond) ; `affiches` = page servie.
     # L'écran dit « N affichés sur M » plutôt que de présenter le compte plafonné comme le total.
     n_total = count_reglement(db, q, insee, zone=zone)
@@ -3232,10 +3260,16 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                                                 "porte": e.get("porte")})
         except Exception:  # noqa: BLE001
             exceptions_zone = []
+    # OUTIL-PLU-FIX-1 (LOT 5) — le bloc d'exceptions DIT d'où il vient (calibrage LABUSE, pas le texte
+    # indexé) et il est renvoyé MÊME si aucun extrait n'est trouvé (le front l'affiche désormais hors du
+    # bloc « résultats » — un filtre de zone erroné ne masque plus l'exception).
+    exceptions_source = ("Exceptions issues du CALIBRAGE LABUSE (config/plu_destinations), pas du texte "
+                         "indexé — vérifiez au règlement.") if exceptions_zone else None
     # OUT-PLU-008 — `n` = extraits AFFICHÉS (page servie, plafonnée par `limit`), `n_total` = total réel
     # des correspondances. L'écran dit « N affichés sur M » (jamais le compte plafonné pris pour le total).
     return {"query": q, "insee": insee, "n": len(res), "n_total": n_total,
+            "limit": limit, "offset": offset,
             "tronque": n_total > len(res), "resultats": res,
-            "exceptions_zone": exceptions_zone,
+            "exceptions_zone": exceptions_zone, "exceptions_source": exceptions_source,
             "avis": "Verbatim du règlement opposable (source GPU). Vérifiez toujours au document "
                     "(lien) ; ceci n'est pas un conseil juridique."}

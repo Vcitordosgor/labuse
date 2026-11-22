@@ -827,22 +827,36 @@ export interface PluExtrait {
   // RETOURS-23 (pt 6) — titre « en clair » lu en tête du verbatim + corps (aperçu sans le titre).
   titre?: string | null; corps?: string
   pagination_ambigue: boolean; pagination_note?: string; source_url: string; gpu_consult?: string
+  // OUTIL-PLU-FIX-1 (LOT 2) — lien DIRECT vers le règlement écrit (.pdf), distinct du pack .zip.
+  pdf_url?: string | null
 }
 export interface PluSearch {
   query: string; insee: string | null; n: number; n_total?: number; tronque?: boolean; resultats: PluExtrait[]; message?: string; avis?: string
+  // OUTIL-PLU-FIX-1 (LOT 5) — pagination réelle (offset) : la page servie et son décalage.
+  limit?: number; offset?: number
   // PLU-EXCEPTIONS-1 — exceptions calibrées de la zone filtrée (verbatim + article/page), sous l'article.
   exceptions_zone?: { regle: string; texte: string; article: string | null; page_pdf: number | null; porte: string | null }[]
+  // OUTIL-PLU-FIX-1 (LOT 5) — provenance DITE du bloc d'exceptions (calibrage, pas texte indexé).
+  exceptions_source?: string | null
 }
 export interface PluCommune {
   insee: string; commune: string; statut: string; idurba?: string; millesime?: string
   extraits: number; doutes?: number; pagination_ambigue?: boolean; message?: string
   // M137-P — le « PLU intégral » = pack officiel GPU (.zip) à télécharger (aucun PDF en base).
   source_url?: string | null; document?: string | null
+  // OUTIL-PLU-FIX-1 (LOT 2) — règlement écrit direct (.pdf) ; (LOT 3) — couverture d'indexation.
+  pdf_url?: string | null
+  pct_indexe?: number | null; pages_image?: number | null; pages_texte?: number | null; pages_total?: number | null
+  // OUTIL-PLU-FIX-1 (LOT 1) — dates DISTINCTES + actes postérieurs + inventaire des procédures (sourcés).
+  date_approbation?: string | null; publication_gpu?: string | null; edition?: string | null
+  modifications?: { type: string; date?: string; source?: string; note?: string }[] | null
+  procedures_inventaire?: { type: string; date?: string; source?: string }[] | null
+  note_doc?: string | null
   // RETOURS-12 O4 — procédure PLU EN COURS (source unique veille_plu) : « révision générale »… ou null.
   procedure_active?: string | null; procedure_date?: string | null
 }
-export const pluAnnuaireSearch = (qy: string, insee?: string, zone?: string) =>
-  j<PluSearch>(`/modules/plu-annuaire/search?q=${encodeURIComponent(qy)}${insee ? `&insee=${insee}` : ''}${zone ? `&zone=${encodeURIComponent(zone)}` : ''}`)
+export const pluAnnuaireSearch = (qy: string, insee?: string, zone?: string, offset = 0) =>
+  j<PluSearch>(`/modules/plu-annuaire/search?q=${encodeURIComponent(qy)}${insee ? `&insee=${insee}` : ''}${zone ? `&zone=${encodeURIComponent(zone)}` : ''}${offset ? `&offset=${offset}` : ''}`)
 export const pluAnnuaireCommunes = () =>
   j<{ n_communes: number; servables: number; n_plu_vigueur: number; non_servis: string[]; n_revision: number; n_rnu: number; n_non_ingere: number
       // RETOURS-12 O4 — compteur RÉCONCILIÉ des procédures PLU en cours (source unique veille_plu).

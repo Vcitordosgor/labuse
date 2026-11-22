@@ -59,8 +59,11 @@ export const MODULES: ModuleDef[] = [
   // sont des ALIAS sans carte, placées près de l'outil qui les résout (ordre sans effet sur le menu).
 
   // 1. PLU — M137-P/Q : Annuaire PLU (O13) + « Procédure & changement » unifiés (hub Plu.tsx, 2 voies).
+  // OUTIL-PLU-FIX-1 (LOT 6) — phrase de tuile ajustée à ce que l'outil fait VRAIMENT : un annuaire par
+  // commune (pack officiel à télécharger + recherche du verbatim indexé), pas une couverture
+  // exhaustive « chaque zone » (indexation inégale, dite à l'écran).
   { key: 'plu', num: 'O13', group: 'instruire', phare: true,
-    label: 'PLU', desc: 'Chaque zone, son règlement, articles cités.' },
+    label: 'PLU', desc: 'Règlement par commune : pack officiel + recherche du verbatim (article, page).' },
 
   // 2. Permis — §3 : Radar permis (M03) + « au point mort » (M04, devenu un filtre ; clé promesses aliasée).
   { key: 'permis', num: 'M03', group: 'marche', descSmall: true,
