@@ -71,21 +71,25 @@ export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplib
   fermerBullePermis()   // une seule bulle permis à la fois
   const select = useApp.getState().select
   const box = document.createElement('div'); box.style.cssText = POPUP_BOX_CSS
-  // MINI-CORRECTIONS-2 (pt 17) — la fiche permis CHARGÉE est plus haute que l'estimation `_POP_H`
-  // utilisée pour choisir l'ancre : ancrée au-dessus d'un point, elle passait SOUS la barre du haut
-  // (coupée). On BORNE sa hauteur à la zone visible de la carte (et à `_POP_H`) avec défilement
-  // interne : l'ancre reste exacte, la bulle est TOUJOURS entièrement visible, quel que soit le point.
+  // MINI-CORRECTIONS-2 (pt 17, 2ᵉ passe) — la fiche permis CHARGÉE (surtout un dormant multi-parcelles)
+  // est plus haute que l'estimation `_POP_H`. On BORNE la bulle à la zone visible de la carte ET on la
+  // structure en COLONNE FLEX : un en-tête (titre/statut) fixe, un CORPS qui DÉFILE à l'intérieur, et un
+  // PIED FIXE (bouton « Voir la parcelle » + source) TOUJOURS visible. Ainsi la bulle ne déborde jamais
+  // (ancre exacte) et le bouton reste accessible sans défiler hors de l'écran, quel que soit le point.
+  box.style.display = 'flex'; box.style.flexDirection = 'column'; box.style.overflow = 'hidden'
   {
     const _ch = m.getContainer().clientHeight
-    box.style.maxHeight = Math.max(180, Math.min(_POP_H - 40, _ch - 80)) + 'px'
-    box.style.overflowY = 'auto'
+    box.style.maxHeight = Math.max(200, Math.min(_POP_H, _ch - 80)) + 'px'
   }
   const titre = document.createElement('b'); titre.textContent = 'Permis'
-  titre.style.cssText = 'display:block;font-size:14px;font-weight:650;padding-right:16px'; box.appendChild(titre)
-  const sub = document.createElement('div'); sub.style.cssText = 'color:#98a39d;font-size:12px;margin-top:4px;font-family:ui-monospace,monospace'; box.appendChild(sub)
-  const corps = document.createElement('div'); corps.style.cssText = 'margin-top:9px;font-size:12px;line-height:1.75'
+  titre.style.cssText = 'display:block;flex:none;font-size:14px;font-weight:650;padding-right:16px'; box.appendChild(titre)
+  const sub = document.createElement('div'); sub.style.cssText = 'flex:none;color:#98a39d;font-size:12px;margin-top:4px;font-family:ui-monospace,monospace'; box.appendChild(sub)
+  // CORPS défilant (en-tête statut + lignes de détail) — borné en hauteur par le flex:1 + min-height:0.
+  const corps = document.createElement('div'); corps.style.cssText = 'flex:1 1 auto;min-height:0;overflow-y:auto;margin-top:9px;font-size:12px;line-height:1.75'
+  // PIED FIXE (jamais défilé) — bouton + source y sont ajoutés quand la fiche arrive.
+  const pied = document.createElement('div'); pied.style.cssText = 'flex:none'
   const load = document.createElement('div'); load.textContent = 'Chargement de la fiche…'; load.style.cssText = 'color:#c9d2cc;font-size:12px;margin-top:9px'
-  box.appendChild(load); box.appendChild(corps)
+  corps.appendChild(load); box.appendChild(corps); box.appendChild(pied)
   const popup = new maplibregl.Popup({ offset: 12, anchor: _ancrePermis(m, lngLat, centre), className: 'labuse-popup', maxWidth: '320px', closeButton: true, closeOnClick: true })
     .setLngLat(lngLat).setDOMContent(box).addTo(m)
   _permisPopup = popup
@@ -104,27 +108,31 @@ export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplib
     sub.textContent = [f.permit_id ? String(f.permit_id) : pid, f.commune ? String(f.commune) : ''].filter(Boolean).join(' · ')
     if (f.statut) {
       // OUTIL-PERMIS-FIX-1 (LOT 5) — `statut` dit DÉJÀ « annulé » (etat_libelle, code 4) : le flag `annule`
-      // ne sert qu'à la COULEUR (rouge), il ne RÉPÈTE plus le mot (avant : « annulé · annulé »).
+      // ne sert qu'à la COULEUR (rouge), il ne RÉPÈTE plus le mot (avant : « annulé · annulé »). On conserve
+      // l'en-tête FIXE (relecture 3 : flex:none / align-self, hors du corps défilant).
       const bd = document.createElement('span'); bd.textContent = String(f.statut)
-      bd.style.cssText = `display:inline-block;margin-top:7px;padding:1px 8px;border-radius:999px;font-size:11px;${f.annule ? 'background:rgba(232,73,29,.15);color:#e8491d' : 'background:rgba(74,222,128,.15);color:#4ADE80'}`
-      box.insertBefore(bd, corps)
+      bd.style.cssText = `flex:none;display:inline-block;align-self:flex-start;margin-top:7px;padding:1px 8px;border-radius:999px;font-size:11px;${f.annule ? 'background:rgba(232,73,29,.15);color:#e8491d' : 'background:rgba(74,222,128,.15);color:#4ADE80'}`
+      box.insertBefore(bd, corps)   // en-tête FIXE (hors du corps défilant)
     }
     ligne('Destination', String(f.destination_libelle ?? ''))
     ligne('Pétitionnaire', String(f.porteur ?? f.porteur_note ?? ''))
     if (f.porteur_siren) ligne('SIREN', String(f.porteur_siren))
-    ligne('Lots', f.nb_lots != null ? String(f.nb_lots) : '')
+    ligne('Logements créés', f.nb_lots != null ? String(f.nb_lots) : '')   // OUTIL-PERMIS-FIX-1 (LOT 4)
     ligne('Surface habitable', f.surface_hab_m2 != null ? `${f.surface_hab_m2} m²` : '')
     ligne('Autorisé le', fmtD(f.date_autorisation))
     const parcs = Array.isArray(f.parcelles) ? (f.parcelles as string[]) : []
     if (parcs.length) ligne('Parcelle(s)', parcs.map((p) => (p.length >= 14 ? `${p.slice(8, 10)} ${p.slice(10)}` : p)).join(', '))
     const idu0 = parcs[0] ?? null
+    // PIED FIXE (hors du corps défilant) : séparateur + bouton « Voir la parcelle » + source. Toujours
+    // visible, même si le détail au-dessus défile. (MINI-CORRECTIONS-2 pt 17, 2ᵉ passe.)
+    pied.style.cssText = 'flex:none;border-top:1px solid #232a26;margin-top:9px;padding-top:9px'
     if (idu0 && idu0.length === 14) {
       const bp = document.createElement('button'); bp.textContent = 'Voir la parcelle →'
-      bp.style.cssText = 'margin-top:11px;width:100%;color:#4ADE80;background:none;border:1px solid rgba(74,222,128,.35);border-radius:8px;cursor:pointer;font:12px system-ui;padding:7px 10px'
-      bp.addEventListener('click', () => { select(String(idu0)); popup.remove() }); corps.appendChild(bp)
+      bp.style.cssText = 'width:100%;color:#4ADE80;background:none;border:1px solid rgba(74,222,128,.35);border-radius:8px;cursor:pointer;font:12px system-ui;padding:7px 10px'
+      bp.addEventListener('click', () => { select(String(idu0)); popup.remove() }); pied.appendChild(bp)
     }
     const srcEl = document.createElement('div'); srcEl.textContent = 'Source : Sitadel (SDES)'
-    srcEl.style.cssText = 'margin-top:9px;color:#6b756f;font-size:10px'; corps.appendChild(srcEl)
+    srcEl.style.cssText = 'margin-top:9px;color:#6b756f;font-size:10px'; pied.appendChild(srcEl)
   }).catch(() => { load.textContent = 'Fiche permis indisponible — réessayez.' })
   return popup
 }

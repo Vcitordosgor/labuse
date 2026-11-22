@@ -389,7 +389,9 @@ export function M16() {
                         <div data-asm-charge data-neg={neg ? '1' : '0'}>
                           <div className="flex items-baseline justify-between gap-2">
                             <span className="text-txt-dim">Charge foncière estimée</span>
-                            <span className={`font-medium ${neg ? 'text-st-ecartee' : 'text-mint'}`}>{fmtEurCompact(c)}</span>
+                            {/* MINI-CORRECTIONS-2 (pt 21 suite) — plus de rouge/vert hors charte : la charge
+                                foncière est en texte normal, le SIGNE (− / +) dit le négatif/positif. */}
+                            <span className="font-medium text-txt-hi">{fmtEurCompact(c)}</span>
                           </div>
                           <div className="text-right text-[9px] leading-tight text-txt-dim">{fmt(d.charge_fonciere.par_m2_terrain)} €/m²</div>
                         </div>
@@ -413,8 +415,16 @@ export function M16() {
                     )}
                     {/* RETOURS-27 (pt 7) — « Prix connu pour 1 parcelle sur 4 » sur UNE SEULE ligne (phrase
                         continue, plus de libellé/valeur séparés par justify-between). */}
-                    <p data-asm-chiffrables className={`text-[11px] ${d.n_chiffrables < d.n ? 'text-st-creuser' : 'text-txt-dim'}`}>
-                      Prix connu pour <span className={d.n_chiffrables < d.n ? 'font-medium' : 'text-txt'}>{d.n_chiffrables} parcelle{d.n_chiffrables > 1 ? 's' : ''} sur {d.n}</span>
+                    {/* MINI-CORRECTIONS-2 (pt 21 suite) — réserve de couverture du prix : plus d'orange hors
+                        charte, texte normal ; le « i » habituel porte la réserve (prix connu sur une partie
+                        seulement des parcelles). */}
+                    <p data-asm-chiffrables className="flex items-center gap-1 text-[11px] text-txt-dim">
+                      <span>Prix connu pour <span className="text-txt">{d.n_chiffrables} parcelle{d.n_chiffrables > 1 ? 's' : ''} sur {d.n}</span></span>
+                      {d.n_chiffrables < d.n && (
+                        <Tip garder tip="Le bilan n'utilise le prix observé que pour les parcelles où il est connu ; pour les autres, la charge foncière est estimée. À lire comme un ordre de grandeur.">
+                          <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] leading-none text-txt-dim">i</span>
+                        </Tip>
+                      )}
                     </p>
                   </div>
                 </details>
@@ -434,7 +444,9 @@ export function M16() {
             ) : (
               <span className="text-txt-mut">
                 {d.n_personnes_morales > 0 && <>{d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''} · </>}
-                <b className="text-st-creuser">{d.n_particuliers} propriétaire{d.n_particuliers > 1 ? 's' : ''} particulier{d.n_particuliers > 1 ? 's' : ''}</b>
+                {/* MINI-CORRECTIONS-2 (pt 21 suite) — plus d'orange hors charte sur un simple décompte :
+                    « N propriétaires particuliers » en texte normal (la bordure neutre du bloc suffit). */}
+                <b className="text-txt">{d.n_particuliers} propriétaire{d.n_particuliers > 1 ? 's' : ''} particulier{d.n_particuliers > 1 ? 's' : ''}</b>
               </span>
             )}
             {/* RECETTE-4 — noms des personnes morales EN ENTIER (plusieurs lignes si besoin) : plus de troncature (break-words). */}
