@@ -59,3 +59,53 @@ surestimée (ER de 470 m² ignoré) ; **Bras-Panon : aucun impact**. À re-corri
 **Je m'arrête ici** (LOT 2 conditionné à un LOT 1 vert = « identiques », ce qui n'est pas le
 cas). Dis-moi : ré-ingérer les prescriptions des 2 communes avant q_v25, ou lancer q_v25 en
 acceptant l'écart de 2 parcelles et corriger après ?
+
+---
+
+# LOT 1 bis (22/11 ap-midi) — ingestion Mac, PREUVE ÉCHOUÉE → ARRÊT. Mon LOT 1 était faux.
+
+**Décision Vic** : prescriptions seules, preuve avant envoi (diff = exactement +1 EBC BP, +1 EBC
++1 ER SJ, rien d'autre), sinon ARRÊT.
+
+**Ce que j'ai fait** : ré-ingéré les prescriptions seules des 2 communes sur le **Mac** (purge
+ciblée par ancien idurba — garde le débordement 97419 — puis `ingest_gpu_prescriptions`),
+snapshots avant/après, comparaison robuste par type.
+
+**La preuve a ÉCHOUÉ**, et le diagnostic révèle que **mon analyse du LOT 1 était erronée** :
+- au LOT 1 je mesurais l'aire **globale, tous types confondus** (« recouvrement 100 % »
+  trompeur, car le type 02 couvre tout) et ne regardais **que les ajouts**, pas les **retraits**.
+
+**Vrais chiffres** (ancien document servi vs GPU en vigueur, **par type, ajouts ET retraits**) :
+
+| Commune | Type | Δ réel | Parcelles intersectées |
+|---|---|---|---|
+| Bras-Panon | EBC (01) | +490 / −379 m² | **633** |
+| Bras-Panon | type 02 | +243 m² | — |
+| **Saint-Joseph** | **EBC (01)** | +58 m² / **−19,9 ha retirés** (1 grand EBC déclassé) | **~3 777** (brut, bords inclus) |
+| Saint-Joseph | ER (05) | +470 m² | 2 (AH1041, AH1042) |
+
+**L'écart est substantiel**, pas « 2 parcelles » : un **espace boisé classé de ~20 ha a été
+déclassé à Saint-Joseph** par le nouveau PLU → la constructibilité de centaines/milliers de
+parcelles y change (EBC retiré = assiette rendue). Ce n'est ni un ré-étiquetage ni un détail.
+
+**Second problème** : le pipeline `ingest_gpu_prescriptions` (requête **par bbox**, puis filtre
+partition) donne un résultat **différent du téléchargement direct par partition** (Saint-Joseph
+surf-01 : ré-ingéré 65 features / 11 442 ha vs GPU-partition 64 / 11 435 ha — ~7 ha de
+débordement d'une commune voisine). Donc même l'ingestion « officielle » ne reproduit pas
+exactement le document GPU : à fiabiliser avant tout envoi.
+
+**État** : **ARRÊT**. **La prod n'a jamais été touchée** (écritures uniquement sur le Mac). Le
+**Mac a été restauré** à l'état d'avant depuis la prod (empreintes Mac = prod re-vérifiées,
+Bras-Panon `8f78…`, Saint-Joseph `5ca7…`). **q_v25 NON lancé** (règle « un rouge → ARRÊT »).
+
+**Ce qu'il faut maintenant décider (Vic)** : l'écart réel (déclassement d'un EBC de 20 ha à
+Saint-Joseph, mouvements EBC à Bras-Panon) dépasse largement ce que j'avais estimé. Options :
+1. **Mettre à jour les prescriptions** (geste de fond complet, intersections recalculées) en
+   acceptant que la constructibilité de nombreuses parcelles de ces 2 communes change — **avant**
+   q_v25 ; mais d'abord fiabiliser l'ingestion (partition, pas bbox) pour reproduire exactement
+   le GPU. Puis relire l'impact (combien de parcelles gagnent/perdent de la constructibilité).
+2. **Lancer q_v25 sans ces prescriptions** (en l'état servi actuel) et traiter ces 2 communes
+   après — mais alors le classement servira un EBC de 20 ha qui n'existe plus à Saint-Joseph.
+
+Je n'ingère/n'envoie/ne lance rien avant ta réponse. Je corrige aussi, par ce rapport, les
+chiffres faux de mon LOT 1.
