@@ -660,13 +660,16 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
      valeur ReactNode (ex. « N m max », hors `.t-val`) restait claire sur le vert. */
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover,
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover * { color:var(--ink) !important; }
-  /* MINI-CORRECTIONS-2 (pt 1) — la PUCE de droite reste lisible au survol. Le survol force TOUT le
-     texte en encre sombre (RETOURS-18, règle `*` ci-dessus) ; or une puce garde son fond sombre
-     (bg-amber-bg / bg-mint-bg…) → encre sombre sur fond sombre = illisible (ce que Vic pointe). On
-     éclaircit son fond au survol : l'encre sombre déjà imposée y redevient lisible, quelle que soit
-     la variante de puce (vigilances, bâtiments…). Vaut pour TOUTES les rangées. */
+  /* MINI-CORRECTIONS-2 (pt 1, 2ᵉ passe — décision Vic) — au survol d'une rangée, la PUCE de droite
+     passe en FOND NOIR (encre) avec le TEXTE EN VERT (le vert de la rangée, `--mint`), au lieu d'un
+     contour sombre sur vert. Haute lisibilité, sur la charte. On neutralise aussi la règle `*` qui
+     forçait le texte de la puce en encre sombre. Vaut pour TOUTES les rangées / variantes de puce. */
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-right > span[class*="rounded-full"] {
-    background:rgba(7,16,9,0.08) !important; border-color:rgba(7,16,9,0.30) !important;
+    background:var(--ink) !important; border-color:var(--ink) !important;
+  }
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-right > span[class*="rounded-full"],
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-right > span[class*="rounded-full"] * {
+    color:var(--mint) !important;
   }
 }
 .fiche-v6 .t-open { background:var(--f-card); border:0.5px solid var(--f-linecard); border-top:none; border-bottom-left-radius:12px; border-bottom-right-radius:12px; margin-bottom:9px; padding:2px 13px 13px; animation:apparition 150ms ease-out both; }

@@ -269,7 +269,10 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
           {/* RECETTE-OUTILS-2 (R19) — en Possession, cette ligne est reprise EN PIED de l'accordéon
               « Chiffres clés » de M02 (pour libérer la hauteur de la liste) → on ne la rend ici que pour
               l'onglet Construction. */}
-          {tab === 'construit' && (
+          {/* MINI-CORRECTIONS-2 (pt 20, 2ᵉ passe) — ce texte d'explication est AUSSI masqué quand l'onglet
+              Construction est à zéro opération (nConstruit === 0) : l'onglet vide ne montre QUE
+              « Aucune opération pour ce filtre. » (+ le geste admin pour l'admin). */}
+          {tab === 'construit' && nConstruit !== 0 && (
             <p className="-mt-1 text-[10px] leading-snug text-txt-off">
               Opérations bâties et programmes (Sitadel + sites promoteurs) — indépendant du nombre de parcelles possédées.
             </p>

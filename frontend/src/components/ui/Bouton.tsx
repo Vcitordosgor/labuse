@@ -58,9 +58,15 @@ export function Bouton({ niveau = 'secondaire', ton = 'vert', icone = false, loa
     // Lien : souligné, sans contour ; survol/focus = texte vert (quel que soit le ton).
     variant = `bg-transparent border-0 underline underline-offset-2 ${t.line.split(' ').pop()} hover:text-mint`
   }
+  // MINI-CORRECTIONS-2 (pt 12, 2ᵉ passe) — l'état CHARGEMENT ne doit PAS être « désactivé » : `:disabled`
+  // applique `opacity:.4` qui assombrit le vert → texte sombre sur vert sombre, contraste ~2,6:1. On
+  // garde le bouton au VERT PLEIN (non assombri) + texte/points sombres (`currentColor`), seulement
+  // NON cliquable (`pointer-events-none`) et `aria-busy`. L'état DÉSACTIVÉ (prop `disabled`) reste,
+  // lui, atténué comme avant — inchangé.
+  const loadingCls = loading ? 'pointer-events-none' : ''
   return (
-    <button type={type ?? 'button'} disabled={disabled || loading} aria-busy={loading || undefined}
-      className={`${BASE} ${pad} ${variant} ${className}`.trim()} {...rest}>
+    <button type={type ?? 'button'} disabled={disabled} aria-busy={loading || undefined}
+      className={[BASE, pad, variant, loadingCls, className].filter(Boolean).join(' ').trim()} {...rest}>
       {loading
         ? <Chargement variant="inline" accent="courant" delai={0} label={loadingLabel ?? (typeof children === 'string' ? children : undefined)} />
         : children}

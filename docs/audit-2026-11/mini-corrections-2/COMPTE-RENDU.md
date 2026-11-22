@@ -13,6 +13,26 @@ Légende d'état : **✅ fait** · **ℹ️ vérifié/expliqué (sans correctif 
 
 ---
 
+## RELECTURE 2 (feedback Vic) — corrections appliquées
+
+Suite à ta relecture (25 points validés), voici les reprises. `tsc` vert · `vitest` **345/345** · `vite build` exit 0.
+
+- **#1 — puce au survol : fond NOIR + texte VERT.** (`styles/index.css`) Au survol d'une rangée, la puce de droite passe en **fond encre** (`var(--ink)`) + **texte vert** (`var(--mint)`, le vert de la rangée), au lieu du contour sombre sur vert. Vaut pour toutes les rangées / variantes de puce. Vérifié en survol réel : fond `rgb(7,16,9)`, texte `rgb(74,222,128)`. Captures : `01-before.png` / `01-after.png`.
+- **#12 — bouton en chargement : vert PLEIN, contraste ≥ 4,5.** (`ui/Bouton.tsx` + `Loading.tsx` + `outils/EtudeZone.tsx`) L'état chargement n'est plus « désactivé » (le `:disabled → opacity:.4` assombrissait le vert, contraste ~2,6). Le bouton garde le **vert plein** (opacité 1) + texte/points sombres, seulement non cliquable (`pointer-events-none`) + `aria-busy`. Contraste mesuré **8,34:1**. L'état désactivé reste atténué, inchangé. Capture : `12-after.png`.
+- **#18 — libellés Commune / Catégorie.** (`outils/VeillePromoteurs.tsx`) Un petit libellé au-dessus de chaque select (« Commune », « Catégorie ») et **« Toutes »** comme valeur par défaut → plus de « Toutes les comr » / « Toutes catégori » coupés. Capture : `18-after.png`.
+- **#20 — onglet Construction vide : juste le texte.** (`outils/ScanPatrimoine.tsx` + `VeillePromoteurs.tsx`) Le texte d'explication « Opérations bâties et programmes… » est **aussi** masqué à zéro opération, et l'illustration (oiseau de l'EmptyState) est retirée : l'onglet vide ne montre QUE **« Aucune opération pour ce filtre. »** (+ le bouton admin pour l'admin). Capture réelle d'une société à 0 opération : **CAP-MAY (SIREN 024038531)**, `20-after.png`.
+- **#21-22 — point médian isolé retiré.** (`outils/moteurs.tsx`) Plus de « · » en tête de la ligne d'écart (il devenait orphelin quand la ligne passe à la ligne) ; l'espacement vient du `gap-x-1`. Capture : `21-22-after.png`.
+- **#11 — Blocs & Successions : croix.** Déjà livré au commit précédent : « Réinitialiser les filtres » remplacé par la croix (✕) en haut à droite du bloc de filtres, visible seulement si un filtre a été modifié, remet tout au départ. Captures : `11bis-blocs-{before,after}.png` · `11bis-successions-{before,after}.png`.
+
+**Preuves « après » ajoutées (demandées) :**
+- **#17** — fiche d'un permis **dormant** (`17-dormant-after.png`) et d'un permis **achevé** (`17-acheve-after.png`), ouvertes sur un point **tout en haut** de la carte, **entièrement visibles** (haut de bulle à y≈153, sous la barre à y=56 ; hauteur bornée à la zone visible).
+- **#20** — `20-after.png` (CAP-MAY, Construction à 0).
+- **#23** — bas de l'outil Assemblage avec deux parcelles, **sans le bouton** Étude (`23-after.png`).
+- **#24** — tableau Comparer affiché pour **97411000BZ0824 · BZ0381 · BZ1065** (`24-after.png`, 3 colonnes).
+- **#30** — outil Estimer ouvert sur une parcelle **avec sa fiche ouverte en même temps** (`30-after.png`).
+
+---
+
 ## FICHE PARCELLE
 
 ### 1. Rangées de la fiche — puce illisible au survol ✅

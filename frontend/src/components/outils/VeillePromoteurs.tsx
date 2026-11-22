@@ -250,17 +250,24 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
               onPick={(idu, centre) => { if (centre) setFlyTo({ center: [centre.lon, centre.lat], zoom: 16 }); select(idu); setVeilleOwner(null) }}
               onChanger={() => setVeilleOwner(null)} />
           )}
-          {/* MINI-CORRECTIONS-2 (pt 18) — Commune + Catégorie sur UNE ligne, MÊME largeur (grille 2 col) ;
-              le champ date porte un LIBELLÉ visible qui dit ce qu'il filtre. */}
+          {/* MINI-CORRECTIONS-2 (pt 18, 2ᵉ passe) — Commune + Catégorie sur UNE ligne, MÊME largeur ; un
+              petit LIBELLÉ au-dessus de chacune (« Commune », « Catégorie ») et « Toutes » comme valeur
+              par défaut → plus aucun texte coupé (avant : « Toutes les comr » / « Toutes catégori »). */}
           <div className="grid grid-cols-2 gap-2">
-            <Select data-vp-commune wrapClassName="w-full" value={commune} onChange={(e) => setCommune(e.target.value)} className={`${sel} w-full`}>
-              <option value="">Toutes les communes</option>
-              {CP_COMMUNES.map(([, n]) => <option key={n} value={n}>{n}</option>)}
-            </Select>
-            <Select data-vp-categorie wrapClassName="w-full" value={categorie} onChange={(e) => setCategorie(e.target.value)} className={`${sel} w-full`}>
-              <option value="">Toutes catégories</option>
-              {(d?.categories ?? []).map((c) => <option key={c.cle} value={c.cle}>{c.label}</option>)}
-            </Select>
+            <label className="flex min-w-0 flex-col gap-1 text-[10.5px] text-txt-mut">
+              Commune
+              <Select data-vp-commune wrapClassName="w-full" value={commune} onChange={(e) => setCommune(e.target.value)} className={`${sel} w-full`}>
+                <option value="">Toutes</option>
+                {CP_COMMUNES.map(([, n]) => <option key={n} value={n}>{n}</option>)}
+              </Select>
+            </label>
+            <label className="flex min-w-0 flex-col gap-1 text-[10.5px] text-txt-mut">
+              Catégorie
+              <Select data-vp-categorie wrapClassName="w-full" value={categorie} onChange={(e) => setCategorie(e.target.value)} className={`${sel} w-full`}>
+                <option value="">Toutes</option>
+                {(d?.categories ?? []).map((c) => <option key={c.cle} value={c.cle}>{c.label}</option>)}
+              </Select>
+            </label>
           </div>
           <label className="flex flex-col gap-1 text-[10.5px] text-txt-mut">
             Opérations déposées depuis
@@ -286,7 +293,11 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
                 {d.tronquee && <p className="text-[10px] leading-snug text-txt-dim">Les {d.plafond} premières sont affichées : affinez la recherche.</p>}
               </>}
           <div className="flex flex-col gap-1.5">
-            {promoteurs.length === 0 && <EmptyState title="Aucune opération pour ce filtre." />}
+            {/* MINI-CORRECTIONS-2 (pt 20, 2ᵉ passe) — onglet Construction vide : JUSTE le texte, « et basta »
+                (pas d'oiseau/illustration de l'EmptyState). L'exploration générale garde l'EmptyState. */}
+            {promoteurs.length === 0 && (strict
+              ? <p data-vp-vide className="px-6 py-10 text-center text-sm font-medium text-txt">Aucune opération pour ce filtre.</p>
+              : <EmptyState title="Aucune opération pour ce filtre." />)}
             {/* RETOURS-12 O6 — UNE CARTE PAR PROMOTEUR (regroupée par SIREN). En-tête : nom + total permis
                 + total logements (= somme de ses opérations, même périmètre que la frise). Ses opérations
                 sont listées dessous ; ses programmes publiés une seule fois ; sa frise une seule fois. */}

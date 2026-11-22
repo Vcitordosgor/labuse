@@ -31,7 +31,7 @@ import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import type { EtudeZoneResult, ZoneEntreprises, ZoneFamille } from '../../lib/types'
 import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
-import { Chargement, Squelette } from '../Loading'
+import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 // RECETTE-4 — DestinationSelect/DestinationBadge retirés de l'Étude de zone (menu Activité supprimé).
 import { Bouton } from '../ui/Bouton'
@@ -237,10 +237,14 @@ export function EtudeZone() {
           composant DestinationSelect reste au dépôt (toujours utilisé par la Faisabilité). */}
 
       {/* RETOURS-13 R28 — bouton d'ACTION PRINCIPALE vert opaque. RECETTE-1 H8.5 — une fois la zone lue,
-          le bouton DISPARAÎT (l'étape 2 s'ouvre d'elle-même) ; il revient si l'on relance (mut.reset). */}
+          le bouton DISPARAÎT (l'étape 2 s'ouvre d'elle-même) ; il revient si l'on relance (mut.reset).
+          MINI-CORRECTIONS-2 (pt 12, 2ᵉ passe) — chargement via la prop `loading` du Bouton : vert PLEIN
+          + « Calcul de la zone… » sombre + points, non cliquable ; plus l'atténuation `disabled` qui
+          cassait le contraste. `disabled` ne garde QUE l'état « pas encore prêt ». */}
       {!res?.zone_disponible && (
-        <Bouton niveau="primaire" ton="vert" onClick={() => mut.mutate()} disabled={!pretA || mut.isPending}>
-          {mut.isPending ? <Chargement variant="inline" accent="courant" label="Calcul de la zone…" /> : 'Lire la zone'}
+        <Bouton niveau="primaire" ton="vert" onClick={() => mut.mutate()} disabled={!pretA}
+          loading={mut.isPending} loadingLabel="Calcul de la zone…">
+          Lire la zone
         </Bouton>
       )}
 

@@ -335,12 +335,15 @@ export function M16() {
                       <div data-asm-sdp-libere className="mt-0.5 flex flex-wrap items-baseline gap-x-1 text-[11px] leading-snug text-txt">
                         <span className="text-txt-dim">Après démolition · </span>
                         <b className="tnum whitespace-nowrap text-txt-hi">{fmt(d.sdp_terrain_libere_m2)} m²</b> <Badge ton="neutre">estimé</Badge>
+                        {/* MINI-CORRECTIONS-2 (pt 21-22, 2ᵉ passe) — plus de « · » en tête d'écart : quand la
+                            ligne passe à la ligne, le point médian isolé était orphelin. L'espacement
+                            vient du `gap-x-1` du conteneur flex. */}
                         {d.sdp_existante_totale_m2 != null
                           ? (() => {
                               const ecart = (d.sdp_terrain_libere_m2 as number) - (d.sdp_existante_totale_m2 as number)
-                              return <span data-asm-sdp-ecart className="text-txt-dim"> · {ecart >= 0 ? '+' : '−'}{fmt(Math.abs(ecart))} m² par rapport à l'existant</span>
+                              return <span data-asm-sdp-ecart className="text-txt-dim">{ecart >= 0 ? '+' : '−'}{fmt(Math.abs(ecart))} m² par rapport à l'existant</span>
                             })()
-                          : <span data-asm-sdp-ecart-absent className="text-txt-dim"> · écart non calculé (existant non mesuré)</span>}
+                          : <span data-asm-sdp-ecart-absent className="text-txt-dim">écart non calculé (existant non mesuré)</span>}
                       </div>
                     )}
                   </div>
