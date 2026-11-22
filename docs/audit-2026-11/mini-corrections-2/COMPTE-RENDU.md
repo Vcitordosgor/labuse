@@ -33,6 +33,21 @@ Suite à ta relecture (25 points validés), voici les reprises. `tsc` vert · `v
 
 ---
 
+## RELECTURE 3 (feedback Vic) — deux reprises
+
+`tsc` vert · `vitest` **345/345** (dont le test Assemblage mis à jour) · `vite build` exit 0.
+
+- **#17 — la fiche permis entière tient dans la carte, le bouton reste toujours visible.** (`map/MapView.tsx`, `ouvrirBullePermis`) La bulle est désormais structurée en **colonne flex** : en-tête (titre/statut) fixe · **corps qui DÉFILE à l'intérieur** (borne de hauteur sur la zone visible) · **PIED FIXE** (bouton « Voir la parcelle → » + « Source : Sitadel ») **toujours visible**. Avant, tout le corps défilait et le bouton/source passaient sous le pli. Preuves avec un **permis dormant à 3 parcelles** (97441612A0486, parcelles EN 0284/0287/0291) :
+  - bulle **ancrée AU-DESSUS d'un point bas** (le cas que Vic voyait coupé), aux hauteurs **600 / 800 / 900 px** : `17-above-h600.png` · `17-above-h800.png` · `17-above-h900.png` — fiche entière + bouton + source visibles (mesuré : haut de bulle sous la barre, bas dans la carte, bouton et source dans la zone visible).
+  - bulle **ancrée SOUS un point haut** à 900 px : `17-below-h900.png`.
+- **#21 suite — Bilan et lignes suivantes : plus de couleurs hors charte.** (`outils/moteurs.tsx`)
+  - « Charge foncière estimée −26 019 € » : **plus de rouge** (`text-txt-hi`), c'est le **signe −** qui dit le négatif.
+  - « Prix connu pour 1 parcelle sur 2 » : **plus d'orange** (texte normal) ; la réserve (prix connu sur une partie des parcelles) passe par le **« i »** habituel.
+  - « 2 propriétaires particuliers » : **plus d'orange** (texte normal ; la bordure neutre du bloc suffit à signaler qu'il reste des particuliers).
+  - Couleurs vérifiées neutres (gris/encre, aucun rouge/orange/vert). Captures : `21bis-bilan-after.png` · `21bis-proprio-after.png`. Test `Assemblage.test.tsx` mis à jour (charge négative = signe, plus de `text-st-ecartee`).
+
+---
+
 ## FICHE PARCELLE
 
 ### 1. Rangées de la fiche — puce illisible au survol ✅
