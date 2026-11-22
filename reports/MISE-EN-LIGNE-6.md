@@ -109,3 +109,29 @@ Saint-Joseph, mouvements EBC à Bras-Panon) dépasse largement ce que j'avais es
 
 Je n'ingère/n'envoie/ne lance rien avant ta réponse. Je corrige aussi, par ce rapport, les
 chiffres faux de mon LOT 1.
+
+## Correction des chiffres d'impact (lecture seule, mesures abouties)
+
+Les comptes « 3 777 » et « 633 » étaient des **effleurements de bord** : le contour d'un EBC
+redessiné de 1-2 m crée des slivers tout le long de son périmètre, qui bordent des centaines de
+parcelles **sans qu'aucune ne perde de surface constructible**. Le chiffre pertinent est
+l'intersection **> 5 % de la surface de la parcelle** :
+
+| Commune | Changement | Aire (brut) | **Parcelles matériellement touchées (>5 %)** |
+|---|---|---|---|
+| **Saint-Joseph** | EBC déclassé | **−19,9 ha** (mais surtout sur domaine non parcellaire — ravine/forêt) | **6** (9 avec >50 m²) |
+| **Saint-Joseph** | ER ajouté | +470 m² | **2** (AH1041, AH1042) |
+| **Bras-Panon** | EBC (contour redessiné) | +490 / −379 m² (net ~0) | **~0** (bords uniquement ; compte précis >5 % en time-out, mais aire nette négligeable) |
+| **Bras-Panon** | type 02 | +243 m² | **0** |
+
+**Conclusion honnête, chiffres stabilisés** : le document GPU a **réellement changé** (un EBC de
+~20 ha a été redessiné/déclassé à Saint-Joseph, essentiellement sur du non-bâti), mais l'impact
+**matériel** sur la constructibilité est **modeste et concentré à Saint-Joseph : ~6 parcelles
+(EBC) + 2 (ER)** ; **Bras-Panon : négligeable**. Mon LOT 1 avait tort sur la méthode (aire
+globale, ajouts seuls) ; la vérité se situe entre mes deux estimations : **pas « 2 parcelles »
+par chance, pas « des milliers » par artefact, mais ~8 parcelles réellement concernées, à
+Saint-Joseph**.
+
+Cela n'enlève rien à l'ARRÊT : la preuve exigée (diff = exactement +1/+1/+1) n'est pas atteinte,
+et l'ingestion `ingest_gpu_prescriptions` (bbox) ne reproduit pas exactement le GPU (partition) —
+à fiabiliser avant tout envoi. **Rien lancé, prod intacte, Mac restauré, q_v25 non lancé.**
