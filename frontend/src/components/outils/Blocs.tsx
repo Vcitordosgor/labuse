@@ -202,6 +202,17 @@ export function Blocs() {
           puis la case « publics » et « Réinitialiser » sur UNE ligne. La liste se met à jour à chaque
           changement (pas de bouton « Voir les parcelles »). */}
       <div data-blocs-filtres className="flex flex-col gap-2">
+        {/* MINI-CORRECTIONS-2 (pt 11 bis) — « Réinitialiser les filtres » remplacé par LA MÊME CROIX que
+            partout ailleurs, en HAUT À DROITE du bloc de filtres, qui remet tous les filtres à leur
+            valeur de départ. Visible seulement si un filtre a été modifié (`dirty`). */}
+        {dirty && (
+          <div className="flex justify-end">
+            <button data-blocs-reset-filtres onClick={resetAll} aria-label="Réinitialiser les filtres"
+              className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">
+              ✕
+            </button>
+          </div>
+        )}
         {/* RETOURS-28 (Blocs, 9d) — 4 BOUTONS-MENUS : le libellé est DANS le bouton (option sélectionnée),
             pas d'intitulé extérieur ; grille de 2 colonnes ÉGALES (wrapClassName w-full) ; police resserrée
             + pl-1 pour que « Plancher restant : tous » tienne SANS troncature sous le chevron (pr-9). */}
@@ -231,11 +242,7 @@ export function Blocs() {
           <Tip garder tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
             <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
           </Tip>
-          {dirty && (
-            <Bouton niveau="lien" ton="vert" data-blocs-reset-filtres onClick={resetAll} className="ml-auto">
-              Réinitialiser
-            </Bouton>
-          )}
+          {/* MINI-CORRECTIONS-2 (pt 11 bis) — « Réinitialiser » retiré d'ici : remplacé par la croix en haut du bloc. */}
         </div>
       </div>
 

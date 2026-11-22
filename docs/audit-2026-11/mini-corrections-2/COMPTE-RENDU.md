@@ -93,13 +93,12 @@ Captures : `10-before.png` (coupures « … » sur Permis, Étude de zone, Estim
 
 ## TOUS LES OUTILS
 
-### 11. Croix unifiée — plus de « changer » ni « Réinitialiser » sur la sélection ✅ (avec une réserve documentée)
+### 11. Croix unifiée — plus de « changer » ni « Réinitialiser » nulle part ✅
 Composant de référence : `EntreeParcelle.tsx` (carte à croix + phrase « La croix vide le champ… »).
 - **Scan patrimoine (SCI MAHE / société)** : la carte société (`ScanPatrimoine.tsx`) adopte la grammaire de la croix — nom + SIREN + **✕** qui remet l'outil à zéro + phrase « La croix vide le champ : tapez un autre propriétaire ou SIREN. ». Le lien **« changer » est retiré**. Captures : `11-before.png` / `11-after.png` (exemple CBO TERRITORIA, le SIREN SCI MAHE n'étant pas résolu dans la base locale).
 - **OwnerParcelles** (sous-panneau partagé Scan/Veille) : lien **« changer » retiré** (on recommence par la croix de la carte de sélection, ou la barre de recherche toujours visible en Veille).
 - **Permis** : lien **« Réinitialiser les filtres » retiré** (`ModulePanel.tsx`, bloc proximité) — la parcelle de référence se vide par la croix, l'état revient au défaut via « Filtrer par état ».
-
-**Réserve (choix assumé, à valider)** : les liens « Réinitialiser les filtres » de **Blocs** et **Successions** ont été **conservés**. Ce sont des resets de **filtres** (commune/surface…) dans des outils **sans carte de sélection** (parcelle/adresse/société) — hors du cadre « Sélection » du point 11. Les retirer priverait l'outil de son seul reset accessible. Dis-moi si tu veux quand même les supprimer (le reset manuel via les menus reste possible).
+- **Blocs fonciers** et **Successions à venir** (décision Vic, 2ᵉ passe) : le lien « Réinitialiser les filtres » est remplacé par **LA MÊME CROIX que partout ailleurs**, placée **en haut à droite du bloc de filtres**, qui **remet tous les filtres à leur valeur de départ**. Elle n'apparaît **que si un filtre a été modifié**. Captures : `11bis-blocs-before.png` / `11bis-blocs-after.png` · `11bis-successions-before.png` / `11bis-successions-after.png`.
 
 ### 12. État de chargement du Bouton vert lisible ✅
 `frontend/src/components/Loading.tsx` + `frontend/src/components/ui/Bouton.tsx`.
@@ -264,7 +263,7 @@ Test mis à jour (`blocB.O5.test.tsx`) : vérifie que l'encart visible a disparu
 | 8 | Hint zoom retiré | ✅ | 25 | Comparer sous-titre | ✅ |
 | 9 | Vue de l'île + nav | ✅ | 26 | Pièges « Non couvert » → i | ✅ |
 | 10 | 16 phrases | ✅ | 27 | Pièges « Aucune intersection » → i | ✅ |
-| 11 | Croix unifiée | ✅ (réserve 2 filtres) | 28 | Rayon sans 5 km | ✅ |
+| 11 | Croix unifiée (dont Blocs/Successions) | ✅ | 28 | Rayon sans 5 km | ✅ |
 | 12 | Bouton loading lisible | ✅ | 29 | Accordéon fermé | ✅ |
 | 13 | Pas de scroll horizontal | ✅ | 30 | Estimer ouvre fiche | ✅ |
 | 14 | PLU encadré retiré | ✅ | 31 | Tuiles solaires flèches | ✅ |
@@ -272,4 +271,4 @@ Test mis à jour (`blocB.O5.test.tsx`) : vérifie que l'encart visible a disparu
 | 16 | Permis états i + couleurs | ✅ | 33 | CRM carte coupée | ✅ |
 | 17 | Permis fiche coupée | ✅ | | | |
 
-**Seul point d'attention demandant ton arbitrage** : point 11 — j'ai gardé « Réinitialiser les filtres » dans Blocs et Successions (resets de filtres, pas de carte de sélection). Dis-moi si tu veux les supprimer aussi.
+Tous les points sont traités. L'arbitrage du point 11 est tranché : Blocs et Successions passent aussi à la croix (en haut à droite du bloc de filtres, visible seulement si un filtre a été modifié, remet tout au départ).
