@@ -18,7 +18,6 @@ import { estIdu, iduComplet } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { M02 } from './ModulePanel'
 import { VeillePromoteurs } from './VeillePromoteurs'
-import { Bouton } from '../ui/Bouton'
 
 type Tab = 'possede' | 'construit'
 // RETOURS-15 B5 (P11) — l'outil s'ouvre sur DEUX PORTES : « Un propriétaire » (la recherche puis ses
@@ -227,18 +226,23 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
       ) : (
         /* ───────── ÉTAT 2 — propriétaire trouvé : encart en tête + onglets soulignés. ───────── */
         <>
-          {/* RETOURS-23 (pt 1) — « ← Retour » interne retiré : le bouton unique du haut ramène à l'accueil
-              (il relâche aussi `owner`) ; le lien « changer » (dans l'encart) reste pour re-saisir. */}
-          {/* U1.5 — encart propriétaire : raison sociale + SIREN + « changer » (retour état 1). */}
-          <div data-scan-owner className="flex items-center justify-between gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
-            <div className="min-w-0">
-              {/* OUTILS-P1-1 LOT3c (pt 6) — raison sociale JAMAIS coupée par « … » : elle passe sur deux
-                  lignes au besoin (`break-words`, plus de `truncate`). */}
-              <div className="break-words text-[13.5px] font-semibold leading-tight text-txt-hi">{ownerNom ?? '…'}</div>
-              <div className="mt-0.5 font-mono text-[10.5px] text-txt-dim">SIREN <Siren value={owner} className="font-mono text-txt-dim" /></div>
+          {/* MINI-CORRECTIONS-2 (pt 11) — carte de sélection de référence UNIFIÉE (même grammaire que
+              EntreeParcelle) : la société choisie s'affiche ici, et la CROIX (✕) remet l'outil à zéro.
+              Plus de lien « changer » : partout une seule façon de recommencer, la croix. */}
+          <div className="flex flex-col gap-1">
+            <div data-scan-owner className="flex items-start gap-2 rounded-lg border border-mint/50 bg-surface-2 px-2.5 py-2">
+              <div className="min-w-0 flex-1">
+                {/* OUTILS-P1-1 LOT3c (pt 6) — raison sociale JAMAIS coupée par « … » : elle passe sur deux
+                    lignes au besoin (`break-words`, plus de `truncate`). */}
+                <div className="break-words text-[13.5px] font-semibold leading-tight text-txt-hi">{ownerNom ?? '…'}</div>
+                <div className="mt-0.5 font-mono text-[10.5px] text-txt-dim">SIREN <Siren value={owner} className="font-mono text-txt-dim" /></div>
+              </div>
+              <button data-scan-vider onClick={changer} aria-label="Vider le champ — choisir un autre propriétaire"
+                className="-mr-0.5 -mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-line-2 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">
+                ✕
+              </button>
             </div>
-            {/* RETOURS-25 (pt 3) — « changer » : bouton vert de la DA (plus un lien nu souligné). */}
-            <Bouton niveau="lien" ton="vert" data-scan-changer onClick={changer} className="shrink-0">changer</Bouton>
+            <p className="px-0.5 text-[10px] leading-snug text-txt-dim">La croix vide le champ : tapez un autre propriétaire ou SIREN.</p>
           </div>
 
           {/* U1.6 — onglets SOULIGNÉS (pas des boutons pleins) ; le propriétaire est partagé (aucune relance).
@@ -265,7 +269,10 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
           {/* RECETTE-OUTILS-2 (R19) — en Possession, cette ligne est reprise EN PIED de l'accordéon
               « Chiffres clés » de M02 (pour libérer la hauteur de la liste) → on ne la rend ici que pour
               l'onglet Construction. */}
-          {tab === 'construit' && (
+          {/* MINI-CORRECTIONS-2 (pt 20, 2ᵉ passe) — ce texte d'explication est AUSSI masqué quand l'onglet
+              Construction est à zéro opération (nConstruit === 0) : l'onglet vide ne montre QUE
+              « Aucune opération pour ce filtre. » (+ le geste admin pour l'admin). */}
+          {tab === 'construit' && nConstruit !== 0 && (
             <p className="-mt-1 text-[10px] leading-snug text-txt-off">
               Opérations bâties et programmes (Sitadel + sites promoteurs) — indépendant du nombre de parcelles possédées.
             </p>

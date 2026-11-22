@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
 import { O5Servitudes } from './blocB'
@@ -34,16 +34,21 @@ describe('O5 — quatre états, plus de « vérifié » sans preuve', () => {
   beforeEach(() => { useApp.setState({ selectedIdu: IDU }) })
   afterEach(() => { vi.restoreAllMocks(); useApp.setState({ selectedIdu: null }) })
 
-  it('« Aucune intersection détectée » (verifie) + « Couverture inconnue » ; plus de « Vérifié, rien à signaler »', async () => {
+  it('MINI-CORRECTIONS-2 (pt 27) : verifie va dans le « i » (plus d\'encart « Aucune intersection détectée ») + « Couverture inconnue »', async () => {
     mockFetch(servitudesPayload({ verifie: ['Sols pollués'], couverture_inconnue: ['Préemption', 'Eau et zones humides'] }))
     renderO5()
-    await waitFor(() => expect(document.querySelector('[data-o5-verifie]')).toBeTruthy())
-    const clair = document.querySelector('[data-o5-verifie]')!
-    expect(clair.textContent).toContain('Aucune intersection détectée')
-    expect(clair.textContent).toContain('Sols pollués')
-    // l'ancien libellé a disparu
+    await waitFor(() => expect(document.querySelector('[data-o5-couverture-inconnue]')).toBeTruthy())
+    // l'encart visible « Aucune intersection détectée » est RETIRÉ (pt 27)
+    expect(document.querySelector('[data-o5-verifie]')).toBeNull()
+    expect(document.body.textContent).not.toContain('Aucune intersection détectée')
     expect(document.body.textContent).not.toContain('Vérifié, rien à signaler')
-    // la section « Couverture inconnue » apparaît avec ses familles
+    // la liste des familles contrôlées sans résultat + le « Non couvert » (pt 26) vivent dans le « i »
+    const info = document.querySelector('[data-o5-non-couvert] [role="button"]') as HTMLElement
+    expect(info).toBeTruthy()
+    fireEvent.click(info)
+    await waitFor(() => expect(document.querySelector('[role="tooltip"]')?.textContent).toContain('Sols pollués'))
+    expect(document.querySelector('[role="tooltip"]')!.textContent).toContain('Non couvert')
+    // la section « Couverture inconnue » (inchangée) apparaît avec ses familles
     const inconnu = document.querySelector('[data-o5-couverture-inconnue]')!
     expect(inconnu).toBeTruthy()
     expect(inconnu.textContent).toContain('Couverture inconnue')
@@ -58,8 +63,9 @@ describe('O5 — quatre états, plus de « vérifié » sans preuve', () => {
     const indispo = document.querySelector('[data-o5-lecture-indisponible]')!
     expect(indispo.textContent).toContain('Lecture indisponible')
     expect(indispo.textContent).toContain('Procédure PLU')
-    // « Procédure PLU » n'est PAS présentée comme « rien à signaler »
-    expect(document.querySelector('[data-o5-verifie]')?.textContent).not.toContain('Procédure PLU')
+    // MINI-CORRECTIONS-2 (pt 27) — l'encart « Aucune intersection détectée » n'existe plus (le verifie
+    // part dans le « i ») : « Procédure PLU » ne peut donc pas y être présenté « rien à signaler ».
+    expect(document.querySelector('[data-o5-verifie]')).toBeNull()
   })
 
   it('OUTILS-LOT-4 bis (pt 2) : parcelle 100 % rouge → badge « Inconstructible » SANS « (partie rouge) »', async () => {

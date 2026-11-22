@@ -11,7 +11,7 @@ import { EntreeParcelle } from '../outils/EntreeParcelle'   // RECETTE-OUTILS-1 
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'   // RECETTE-OUTILS-1 (point 21) — export PDF = Docs
 import { docComparatifUrl } from '../../lib/api'
 import { Squelette } from '../Loading'
-import { EmptyState } from '../States'
+import { EmptyState, ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
 import { Tip } from '../Tip'   // RETOURS-29 — détail d'une contrainte au clic
 
@@ -210,7 +210,8 @@ export function CompareModule() {
           « Adresse, IDU ou référence » + « — ou — cliquez une parcelle sur la carte »). Jusqu'à 3
           parcelles en puces retirables. Plus de « + 1 libre », plus d'étape numérotée, plus de
           « Réinitialiser » en tête. */}
-      <p className="text-[11px] font-medium text-txt">Jusqu'à 3 parcelles — barre ou clic carte.</p>
+      {/* MINI-CORRECTIONS-2 (pt 25) — suffixe « — barre ou clic carte » retiré (le bloc de saisie le dit déjà). */}
+      <p className="text-[11px] font-medium text-txt">Jusqu'à 3 parcelles.</p>
       {n < 3 && (
         <EntreeParcelle source={null} viderApresPick
           onPick={(idu) => { if (!compareIdus.includes(idu)) addToCompare(idu) }} />
@@ -292,6 +293,22 @@ export function ComparePanel() {
             </div>
           )}
           {compareIdus.length > 0 && q.isPending && <div className="p-4"><Squelette lignes={4} /></div>}
+          {/* MINI-CORRECTIONS-2 (pt 24) — CAUSE du « seulement la barre de titre, sans tableau » : le
+              rendu ne traitait QUE trois cas (0 parcelle · en cours · parcels>0). Si la requête ÉCHOUE
+              ou RÉPOND SANS parcelle exploitable (parcelles ignorées / hors périmètre), plus rien ne
+              s'affichait sous le titre. On ajoute les deux états manquants : erreur (avec réessai) et
+              « aucune donnée » — l'utilisateur a TOUJOURS un retour. */}
+          {compareIdus.length > 0 && q.isError && (
+            <div data-compare-erreur className="p-4">
+              <ErrorState message="Comparaison indisponible — réessayez." retry={() => q.refetch()} />
+            </div>
+          )}
+          {compareIdus.length > 0 && !q.isPending && !q.isError && parcels.length === 0 && (
+            <div data-compare-aucune className="p-4">
+              <EmptyState title="Aucune donnée à comparer pour ces parcelles."
+                hint={<>Les parcelles demandées n'ont pas de fiche comparable (hors périmètre ou introuvables). Retirez-en une (✕) ou choisissez-en d'autres.</>} />
+            </div>
+          )}
           {/* RECETTE-2 (D6) — table-fixed : les 3 colonnes de données se partagent la largeur à ÉGALITÉ et
               tiennent dans l'overlay (jamais de défilement horizontal) ; le texte long passe à la ligne
               dans sa cellule (whitespace-nowrap retiré plus bas). */}

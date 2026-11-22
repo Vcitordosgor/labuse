@@ -695,6 +695,13 @@ export function Fiche({ idu }: { idu: string }) {
     : []
   const proprioSignal = proprioLines.filter((l) => (l.weight ?? 0) > 0).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0]
   const proprioType = f?.proprietaire_moral?.denomination ?? (f?.proprietaire_moral ? 'personne morale' : 'personne physique / non recensé')
+  // MINI-CORRECTIONS-2 (pt 6) — quand il n'y a PAS de personne morale au fichier DGFiP mais que la
+  // base RATTACHE une copropriété (RNIC, déjà servie en `f.coproprietes` et affichée dans le tiroir),
+  // l'en-tête disait « Non identifié » en contradiction avec son propre corps. On l'étiquette donc
+  // « Copropriété » : le terrain d'une copro appartient au syndicat des copropriétaires, absent du
+  // fichier des personnes morales — ce n'est pas un propriétaire « non identifié ». (OWNER_TYPES :
+  // « copropriete » → « Copropriété ».) Fallback « Non identifié » conservé si ni PM ni copro.
+  const copro0 = f?.coproprietes && f.coproprietes.length > 0 ? f.coproprietes[0] : undefined
   // Règles : zone PLU + SDP résiduelle (données déjà chargées).
   const reglesLines = ongletLines('regles')
   const reglesZone = f?.reglement_plu?.zones?.[0]?.zone
@@ -1147,8 +1154,8 @@ export function Fiche({ idu }: { idu: string }) {
                     {CLIENT.fiche.demanderAnalyse}
                   </Bouton>
                 )}
+                {/* MINI-CORRECTIONS-2 (pt 2) — icône retirée, texte « Copilote » seul (demande Vic). */}
                 <Bouton onClick={() => setIaOuvert('question')} data-askbar-open niveau="secondaire" ton="ia" className="flex-1">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 4H4v13h5l3 3 3-3h2z" /></svg>
                   Copilote
                 </Bouton>
               </div>
@@ -1306,16 +1313,25 @@ export function Fiche({ idu }: { idu: string }) {
         {/* MANDAT RNU (B3) : bannière commune sans document local — étiquetage OBLIGATOIRE,
             flag général (config/rnu_communes.yaml). Jamais une affirmation de constructibilité ;
             la PAU est une ESTIMATION (wording validé Vic, servi par l'API — jamais reformulé ici). */}
+        {/* MINI-CORRECTIONS-2 (pt 3) — version COMPACTE pour les communes au RNU (Saint-Philippe…) :
+            le bandeau tenait sur 5-6 lignes. On garde (1) la ligne de titre, (2) la ligne « Parcelle
+            DANS/HORS l'enveloppe urbanisée estimée » ; TOUT le reste (le détail du régime national +
+            l'avertissement sur l'estimation de l'enveloppe) passe dans le « i » au survol. Aucune
+            information supprimée — seulement repliée. */}
         {f?.rnu && (
           <div data-rnu-banner style={{ marginTop: 10, background: '#2a2213', border: '1px solid #4a3c20', borderRadius: 6, padding: '9px 12px' }}>
-            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 600, color: '#e6b15c' }}>⚠ {f.rnu.libelle}</p>
-            <p style={{ margin: '4px 0 0', fontSize: 10.5, lineHeight: 1.5, color: '#c9b98e' }}>
-              {f.rnu.detail}
+            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 600, color: '#e6b15c', display: 'flex', alignItems: 'baseline', gap: 2 }}>
+              <span style={{ minWidth: 0 }}>⚠ {f.rnu.libelle}</span>
+              <InfoI aria="Détail du régime au règlement national d'urbanisme" tip={
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 260 }}>
+                  <span>{f.rnu.detail}</span>
+                  {f.rnu.avertissement_pau && <span>{f.rnu.avertissement_pau}</span>}
+                </div>
+              } />
             </p>
             {f.rnu.dans_pau != null && (
-              <p data-rnu-pau style={{ margin: '5px 0 0', fontSize: 10.5, lineHeight: 1.5, color: '#e6b15c' }}>
+              <p data-rnu-pau style={{ margin: '4px 0 0', fontSize: 10.5, lineHeight: 1.5, color: '#e6b15c' }}>
                 {f.rnu.dans_pau ? 'Parcelle DANS l’enveloppe urbanisée estimée.' : 'Parcelle HORS de l’enveloppe urbanisée estimée.'}
-                <span style={{ color: '#c9b98e' }}> {f.rnu.avertissement_pau}</span>
               </p>
             )}
           </div>
@@ -1514,8 +1530,8 @@ export function Fiche({ idu }: { idu: string }) {
             {/* FICHE-RANGEMENT-3 Lot 4 — la commune n'est plus rappelée en sous-titre (déjà dans
                 l'en-tête « PARCELLE · <COMMUNE> ») : le sous-titre ne porte que le signal propriétaire. */}
             <RefDrawer id="identite" order={ordreSection('identite')} icon={IC.proprio} name="Identité" accent={proprioAccent}
-              context={proprioSignal ? (f.proprietaire_moral ? proprioType : 'non identifié') : undefined}
-              value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType : 'Non identifié')  /* CHASSE-FIX-1 (C24) : absence de PM ≠ personne physique — le tiroir le dit déjà. OUTILS-LOT-4 (pt 9) : nom du propriétaire NON tronqué (ex. « RESIDENCE LES BAMBOUS ») — `.t-val` l'enroule (max-width 150px, break-word). */}
+              context={proprioSignal ? (f.proprietaire_moral ? proprioType : (copro0 ? 'copropriété' : 'non identifié')) : undefined}
+              value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType : (copro0 ? 'Copropriété' : 'Non identifié'))  /* CHASSE-FIX-1 (C24) : absence de PM ≠ personne physique — le tiroir le dit déjà. OUTILS-LOT-4 (pt 9) : nom du propriétaire NON tronqué (ex. « RESIDENCE LES BAMBOUS ») — `.t-val` l'enroule (max-width 150px, break-word). MINI-CORRECTIONS-2 (pt 6) : copropriété connue → « Copropriété » plutôt que « Non identifié ». */}
               micro={proprioPastilles.length ? <MicroPastilles items={proprioPastilles} /> : undefined}>
               <div className="flex flex-col gap-3">
                 {/* KELFONCIER-FIX-2 (Lot G) — maquette v3 : Verdict + Tuiles×4 (SIREN · Créée·état ·

@@ -18,6 +18,7 @@ import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
 import { carteEtat, etatColor, type PermisEtat, type PermisEtatCarte } from '../../lib/permisEtats'
 import { ChevronSection } from '../panel/ChevronSection'
+import { Tip } from '../Tip'   // MINI-CORRECTIONS-2 (pt 15/16) — infobulles « i » (en-tête permis, états)
 import { useApp } from '../../store/useApp'
 import { Chargement, Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
@@ -923,17 +924,9 @@ export function M03() {
                     ? <>aucun point à afficher.</>
                     : <>cliquez les points sur la carte{nonLocTxt}.</>}
               </div>
-              {/* RECETTE-OUTILS-1 (T5) — plus de « Réinitialiser » en bloc isolé : un lien
-                  « Réinitialiser les filtres » (dans le corps de l'outil), visible seulement quand un
-                  filtre diffère du défaut (parcelle focalisée OU état ≠ défaut). */}
-              {(parcelIdu || seg !== (moduleKey === 'promesses' ? 'mort' : 'tous')) && (
-                <div className="mt-1 flex justify-start">
-                  <Bouton niveau="lien" ton="ambre" data-permis-reset-filtres
-                    onClick={() => { setParcelIdu(null); setSeg(moduleKey === 'promesses' ? 'mort' : 'tous') }}>
-                    Réinitialiser les filtres
-                  </Bouton>
-                </div>
-              )}
+              {/* MINI-CORRECTIONS-2 (pt 11) — lien « Réinitialiser les filtres » RETIRÉ : la parcelle de
+                  référence se vide par la croix de sa carte de sélection, et l'état revient à son défaut
+                  depuis le sélecteur « Filtrer par état ». Plus de « Réinitialiser… » dans l'outil. */}
             </>
           )
         })()}
@@ -943,24 +936,18 @@ export function M03() {
           comme une part alors que c'est le total). Nombre 24px + « permis autorisés en base ».
           PERMIS-CHECK-1 P4 — la 2e ligne (« … localisés sur la carte · toute la profondeur Sitadel,
           jusqu'au … ») est RETIRÉE (constat Vic) : le total et la mention Sitadel ci-dessous suffisent. */}
+      {/* MINI-CORRECTIONS-2 (pt 15) — UNE SEULE section d'en-tête (plus de triplet répété) : le nombre,
+          « permis autorisés · Sitadel au JJ/MM/AAAA », et la précision « autorisés ≠ instruction en
+          cours » repliée dans un « i » au survol. */}
       <div data-permis-total className="shrink-0 rounded-lg border border-line-2 bg-surface-1 px-3 py-2">
-        <div className="flex items-baseline gap-2">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="tnum text-[24px] font-semibold leading-none text-txt-hi">{tousEntryTotal != null ? fmt(tousEntryTotal) : '…'}</span>
-          <span className="text-[12px] text-txt-mut">permis autorisés en base</span>
+          <span data-permis-sitadel-date className="text-[12px] text-txt-mut">permis autorisés{donneesJusquAu ? ` · Sitadel au ${fmtDateNum(donneesJusquAu)}` : ''}</span>
+          <Tip garder tip="Sitadel recense les permis AUTORISÉS (accordés), pas les demandes en cours d'instruction.">
+            <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] leading-none text-txt-dim">i</span>
+          </Tip>
         </div>
-        {/* OUTILS-P1-1 LOT3 (pt 4) — date de la donnée Sitadel (max(date) en base, servie `donnees_jusqu_au`). */}
-        {donneesJusquAu && (
-          /* OUTILS-P1-1 LOT3b (pt 1) — date au format FR JJ/MM/AAAA (jamais AAAA-MM-JJ à l'écran). */
-          <div data-permis-sitadel-date className="mt-0.5 text-[10px] leading-snug text-txt-dim">Donnée Sitadel au {fmtDateNum(donneesJusquAu)}</div>
-        )}
       </div>
-
-      {/* RETOURS-18 X1 — bandeau Sitadel PERMANENT. RETOURS-19 Y5 — tient sur UNE ligne (phrase resserrée
-          + `whitespace-nowrap`) ; `overflow-hidden`/ellipse en garde-fou : la section ne défile JAMAIS
-          latéralement (l'infobulle porte la phrase entière si jamais elle était tronquée). */}
-      <p className="shrink-0 -mt-0.5 truncate px-0.5 text-[9.5px] leading-snug text-txt-dim">
-        Sitadel : les permis <b className="text-txt-mut">autorisés</b>, pas l'instruction en cours.
-      </p>
 
       {/* RETOURS-18 X1/X2 — ACCORDÉON : un seul bloc ouvert à la fois (ouvrir l'un referme les autres).
           Le bloc « Voir les permis » (grow) prend la hauteur restante et défile seul ; les autres sont à
@@ -981,22 +968,25 @@ export function M03() {
               // (`total`, servi par la requête active) : le compte affiché et la liste portent toujours
               // sur le même ensemble, même si la fenêtre d'« Affiner » est changée.
               const nShown = actif && total != null ? total : n
-          // OUTILS-P1-1 LOT3c (pt 3) — la définition passe SOUS le libellé, sur TOUTE la largeur (plus de
-          // « sans / achèvement / déclaré » sur 4 lignes coincé entre le nom et le compte) : 1ʳᵉ ligne =
-          // pastille · nom · compte à droite ; 2ᵉ ligne = définition pleine largeur.
+          // MINI-CORRECTIONS-2 (pt 16) — l'explication passe dans un « i » (plus de 2ᵉ ligne) ; la ligne
+          // tient sur UNE ligne : pastille · nom · i · compte. La pastille porte un fin liseré neutre
+          // pour rester VISIBLE quand la ligne est survolée/sélectionnée (fond menthe) — avant, le point
+          // « récent » vert disparaissait sur le survol vert ; il est désormais BLEU + cerné.
           return (
             <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)} aria-pressed={actif}
-              className={`group flex w-full flex-col gap-0.5 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-quick ${
+              className={`group flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-quick ${
                 actif ? 'bg-mint text-mint-ink' : 'border border-line-2 text-txt hover:bg-mint hover:text-mint-ink'}`}>
-              <span className="flex w-full items-center gap-2">
-                {/* pastille = couleur de carte de l'état ; « Tous » n'a pas UNE couleur → anneau neutre. */}
-                {etat
-                  ? <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: etatColor(etat) }} />
-                  : <span className="h-2 w-2 shrink-0 rounded-full border border-current opacity-50" />}
-                <span className="text-[12px] font-medium leading-snug">{label}</span>
-                <span className="ml-auto shrink-0 tnum text-[12px] font-medium">{nShown != null ? fmt(nShown) : '…'}</span>
-              </span>
-              {def && <span className={`w-full pl-4 text-[11px] leading-snug ${actif ? 'text-mint-ink/70' : 'text-txt-mut group-hover:text-mint-ink/70'}`}>{def}</span>}
+              {/* pastille = couleur de carte de l'état ; « Tous » n'a pas UNE couleur → anneau neutre. */}
+              {etat
+                ? <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: etatColor(etat), boxShadow: '0 0 0 1.5px rgba(10,15,13,.35)' }} />
+                : <span className="h-2 w-2 shrink-0 rounded-full border border-current opacity-50" />}
+              <span className="text-[12px] font-medium leading-snug">{label}</span>
+              {def && (
+                <Tip garder tip={def}>
+                  <span className={`cursor-help rounded-full border px-1 text-[8px] leading-none ${actif ? 'border-mint-ink/40 text-mint-ink/70' : 'border-line-2 text-txt-dim group-hover:border-mint-ink/40 group-hover:text-mint-ink/70'}`}>i</span>
+                </Tip>
+              )}
+              <span className="ml-auto shrink-0 tnum text-[12px] font-medium">{nShown != null ? fmt(nShown) : '…'}</span>
             </button>
               )
             })}
@@ -2097,13 +2087,13 @@ export function ModulePanel() {
   // figé) : il remplit l'`aside` et rend lui-même le bandeau DA (mêmes classes que ci-dessous).
   if (def.key === 'analyser-annonce') {
     return (
-      <aside className="apparition flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
+      <aside data-outil-panel className="apparition flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
         <Body key={def.key} />
       </aside>
     )
   }
   return (
-    <aside className="apparition flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
+    <aside data-outil-panel className="apparition flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
       <div className="flex shrink-0 flex-col border-b border-mint/20 bg-mint/[0.07] px-4 py-3">
         {/* M6.1 item 3 : retour direct au menu Outils (fil d'Ariane) — plus besoin de
             repasser par le rail pour changer d'outil. */}

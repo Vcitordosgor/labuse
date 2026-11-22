@@ -21,7 +21,6 @@ import { ListPaginationFooter } from '../ListPagination'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Siren } from '../shared/Siren'
-import { Bouton } from '../ui/Bouton'
 import { CommuneScope } from './ModulePanel'
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
@@ -59,15 +58,18 @@ export function Successions() {
       {/* entrée : périmètre EXPLICITE (Toute l'île par défaut). RETOURS-15 C8 — le filtre « Résiduel
           minimum (SDP) » est retiré (le tri serveur reste résiduel décroissant). */}
       <div className="flex flex-col gap-1">
-        <div className="min-w-0 flex-1"><CommuneScope commune={commune} noteFiltre={false} onChange={(c) => setCommune(c)} /></div>
-        {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser les filtres » DANS le bloc filtre, visible seulement
-            quand le périmètre diffère du défaut (Toute l'île). Plus de « Réinitialiser » en tête. */}
+        {/* MINI-CORRECTIONS-2 (pt 11 bis) — « Réinitialiser les filtres » remplacé par LA MÊME CROIX que
+            partout ailleurs, en HAUT À DROITE du bloc de filtres, qui remet le périmètre à son départ
+            (Toute l'île). Visible seulement si le filtre a été modifié (commune ≠ défaut). */}
         {commune && (
-          /* RETOURS-25 — « Réinitialiser les filtres » en VERT (cohérent avec Blocs). */
-          <Bouton niveau="lien" ton="vert" data-successions-reset-filtres onClick={resetAll} className="self-start">
-            Réinitialiser les filtres
-          </Bouton>
+          <div className="flex justify-end">
+            <button data-successions-reset-filtres onClick={resetAll} aria-label="Réinitialiser les filtres"
+              className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">
+              ✕
+            </button>
+          </div>
         )}
+        <div className="min-w-0 flex-1"><CommuneScope commune={commune} noteFiltre={false} onChange={(c) => setCommune(c)} /></div>
       </div>
 
       {q.isLoading && <Squelette lignes={6} />}

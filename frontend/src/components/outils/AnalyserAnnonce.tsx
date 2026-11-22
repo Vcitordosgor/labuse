@@ -707,7 +707,9 @@ export function AnalyserAnnonce() {
   const lastCommune = useRef<string | null>(null)
   useEffect(() => {
     if (etape === 'parcelle' && parcelle) {
-      focusParcelle(parcelle)
+      // MINI-CORRECTIONS-2 (pt 30) — choisir une parcelle OUVRE sa fiche (`fiche: true`) en même temps,
+      // l'outil restant ouvert à gauche : plus besoin d'un lien « Ouvrir la fiche parcelle → ».
+      focusParcelle(parcelle, { fiche: true })
     } else if (etape === 'annonce' && res?.annonce) {
       focusParcelle(null)
       setModuleMap({ idus: [], extra: null })

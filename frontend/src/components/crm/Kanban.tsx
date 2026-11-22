@@ -612,7 +612,10 @@ export function Kanban() {
               </div>
               {/* G6 (M12) : min-h modeste = zone de dépôt confortable pour une colonne vide, sans
                   la colonne géante de ~800 px. Une colonne pleine défile en interne (max-h-full). */}
-              <div className="flex min-h-[72px] flex-1 flex-col gap-2.5 overflow-y-auto overflow-x-clip px-2.5 pb-2.5">
+              {/* MINI-CORRECTIONS-2 (pt 33) — `pt-2.5` ajouté : sans espace en haut, la 1ʳᵉ carte était
+                  collée sous l'en-tête de colonne et son bord supérieur (ring/ombre/badge) était coupé
+                  par `overflow-y-auto`. L'espace la dégage. */}
+              <div className="flex min-h-[72px] flex-1 flex-col gap-2.5 overflow-y-auto overflow-x-clip px-2.5 pb-2.5 pt-2.5">
                 {items.map((e) => (
                   <Card key={e.id} e={e} onDragStart={() => setDragId(e.id)}
                     newEvents={evCount.data?.par_parcelle[e.idu] ?? 0}

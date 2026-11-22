@@ -58,12 +58,15 @@ describe('ASSEMBLAGE (H5) — étapes, contiguïté, isolées, plus de Courrier'
     expect(document.querySelector('[data-asm-kpi="sdp"]')?.textContent).toContain('065')  // 11 065
   })
 
-  it('RETOURS-25 — « vs meilleure seule » retirée · charge négative ROUGE · Bilan (marché de la zone)', async () => {
+  it('RETOURS-25 — « vs meilleure seule » retirée · charge négative (signe, PAS de rouge) · Bilan (marché de la zone)', async () => {
     renderM16(); await verifier('[data-asm-charge]')
     expect(document.querySelector('[data-asm-kpi="ratio"]')).toBeFalsy()   // tuile « vs meilleure seule » retirée
     const bloc = document.querySelector('[data-asm-charge]') as HTMLElement
     expect(bloc.getAttribute('data-neg')).toBe('1')
-    expect(bloc.querySelector('.text-st-ecartee')).toBeTruthy()           // charge négative en rouge
+    // MINI-CORRECTIONS-2 (pt 21 suite) — plus de texte coloré hors charte : la charge négative n'est
+    // plus en rouge (`text-st-ecartee`) ; c'est le SIGNE (− / +) qui dit le négatif.
+    expect(bloc.querySelector('.text-st-ecartee')).toBeNull()
+    expect(bloc.textContent).toMatch(/[−-]/)                               // le signe négatif est présent
     // le marché de la zone (479 €/m²) vit DANS le Bilan (4 lignes : charge · prix de sortie · marché · chiffrables)
     expect(document.querySelector('[data-asm-bilan]')?.textContent).toContain('479')
   })

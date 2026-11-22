@@ -28,10 +28,11 @@ function centreDeGeom(geom: unknown): { lon: number; lat: number } | null {
   return { lon: (minX + maxX) / 2, lat: (minY + maxY) / 2 }
 }
 
-export function OwnerParcelles({ siren, nom, onPick, onChanger }: {
+export function OwnerParcelles({ siren, nom, onPick }: {
   siren: string
   nom: string
   onPick: (idu: string, centre: { lon: number; lat: number } | null) => void
+  /** MINI-CORRECTIONS-2 (pt 11) — conservé pour compat des appelants mais plus rendu (fin du « changer »). */
   onChanger?: () => void
 }) {
   const [parcelles, setParcelles] = useState<Parcelle[]>([])
@@ -65,10 +66,8 @@ export function OwnerParcelles({ siren, nom, onPick, onChanger }: {
           <span className="font-medium text-txt-hi">{titre}</span>
           {total > 0 && <> — {total} parcelle{total > 1 ? 's' : ''} — choisissez :</>}
         </p>
-        {onChanger && (
-          <button data-owner-changer onClick={onChanger}
-            className="shrink-0 text-[10px] text-mint underline underline-offset-2 hover:text-mint/80">changer</button>
-        )}
+        {/* MINI-CORRECTIONS-2 (pt 11) — lien « changer » retiré : on recommence par la croix de la carte
+            de sélection (Scan patrimoine) ou en re-cherchant dans la barre toujours visible (Veille). */}
       </div>
       {err && <p data-owner-msg className="px-1 text-[10.5px] text-st-creuser">{err}</p>}
       {parcelles.map((p) => (

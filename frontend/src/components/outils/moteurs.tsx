@@ -14,6 +14,7 @@ import { Tip } from '../Tip'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
 import { trierCommunes } from '../../lib/communes'
 import { Bouton } from '../ui/Bouton'
+import { Badge } from '../ui/Badge'   // MINI-CORRECTIONS-2 (pt 21) — badge « estimé » habituel (neutre)
 import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 import { EntreeParcelle } from './EntreeParcelle'   // RECETTE-1 H5 — entrée parcelle (adresse OU clic carte)
 
@@ -136,7 +137,7 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
 const ASM_MAX_DEFAUT = 8   // repli ; CHASSE-DONNEES-FIX-1 (E-78) la valeur vient de /moteurs/config.
 
 export function M16() {
-  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, select, ouvrirEtude } = useApp()
+  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, select } = useApp()   // MINI-CORRECTIONS-2 (pt 23) — `ouvrirEtude` retiré (bouton Étude supprimé)
   // CHASSE-DONNEES-FIX-1 (suite 2, E-78) — plafond d'écran SERVI (config/moteurs.yaml), plus codé en
   // dur : un seul endroit décide « 8 max » (décision Vic RECETTE-1 H5), le back plafonne à 30 (API).
   const cfgMot = useQuery({ queryKey: ['moteurs-config'], queryFn: getMoteursConfig, staleTime: 3600_000 })
@@ -319,22 +320,30 @@ export function M16() {
                         ? <b className="tnum whitespace-nowrap">{fmt(d.sdp_existante_totale_m2)} m²</b>
                         : <span className="text-txt-dim">non mesuré</span>}
                     </div>
-                    <div data-asm-sdp-conserve className="mt-0.5 text-[11px] leading-tight text-txt">
+                    {/* MINI-CORRECTIONS-2 (pt 21) — plus de texte coloré hors charte (le vert/orange
+                        signalaient à tort une opinion sur un simple CHIFFRE estimé) : le nombre est en
+                        texte normal, « estimé » passe par le BADGE habituel (neutre). */}
+                    <div data-asm-sdp-conserve className="mt-0.5 flex flex-wrap items-baseline gap-x-1 text-[11px] leading-tight text-txt">
                       <span className="text-txt-dim">Si conservé · </span>
                       {d.sdp_bati_conserve_m2 > 0
-                        ? <b className="tnum whitespace-nowrap text-mint">+{fmt(d.sdp_bati_conserve_m2)} m² estimés{d.sdp_conserve_estimation ? ' *' : ''}</b>
+                        ? <><b className="tnum whitespace-nowrap text-txt-hi">+{fmt(d.sdp_bati_conserve_m2)} m²{d.sdp_conserve_estimation ? ' *' : ''}</b> <Badge ton="neutre">estimé</Badge></>
                         : <span className="text-txt-dim">aucun ajout estimé</span>}
                     </div>
                     {d.sdp_terrain_libere_m2 != null && (
-                      <div data-asm-sdp-libere className="mt-0.5 text-[11px] leading-snug text-txt">
+                      /* MINI-CORRECTIONS-2 (pt 22) — plus de `whitespace-nowrap` sur l'écart : « par rapport
+                         à l'existant » passe À LA LIGNE au lieu de déborder de la case. */
+                      <div data-asm-sdp-libere className="mt-0.5 flex flex-wrap items-baseline gap-x-1 text-[11px] leading-snug text-txt">
                         <span className="text-txt-dim">Après démolition · </span>
-                        <b className="tnum whitespace-nowrap text-amber">{fmt(d.sdp_terrain_libere_m2)} m² estimés</b>
+                        <b className="tnum whitespace-nowrap text-txt-hi">{fmt(d.sdp_terrain_libere_m2)} m²</b> <Badge ton="neutre">estimé</Badge>
+                        {/* MINI-CORRECTIONS-2 (pt 21-22, 2ᵉ passe) — plus de « · » en tête d'écart : quand la
+                            ligne passe à la ligne, le point médian isolé était orphelin. L'espacement
+                            vient du `gap-x-1` du conteneur flex. */}
                         {d.sdp_existante_totale_m2 != null
                           ? (() => {
                               const ecart = (d.sdp_terrain_libere_m2 as number) - (d.sdp_existante_totale_m2 as number)
-                              return <span data-asm-sdp-ecart className={`whitespace-nowrap ${ecart < 0 ? 'text-st-ecartee' : 'text-mint'}`}> · {ecart >= 0 ? '+' : '−'}{fmt(Math.abs(ecart))} m² par rapport à l'existant</span>
+                              return <span data-asm-sdp-ecart className="text-txt-dim">{ecart >= 0 ? '+' : '−'}{fmt(Math.abs(ecart))} m² par rapport à l'existant</span>
                             })()
-                          : <span data-asm-sdp-ecart-absent className="text-txt-dim"> · écart non calculé (existant non mesuré)</span>}
+                          : <span data-asm-sdp-ecart-absent className="text-txt-dim">écart non calculé (existant non mesuré)</span>}
                       </div>
                     )}
                   </div>
@@ -380,7 +389,9 @@ export function M16() {
                         <div data-asm-charge data-neg={neg ? '1' : '0'}>
                           <div className="flex items-baseline justify-between gap-2">
                             <span className="text-txt-dim">Charge foncière estimée</span>
-                            <span className={`font-medium ${neg ? 'text-st-ecartee' : 'text-mint'}`}>{fmtEurCompact(c)}</span>
+                            {/* MINI-CORRECTIONS-2 (pt 21 suite) — plus de rouge/vert hors charte : la charge
+                                foncière est en texte normal, le SIGNE (− / +) dit le négatif/positif. */}
+                            <span className="font-medium text-txt-hi">{fmtEurCompact(c)}</span>
                           </div>
                           <div className="text-right text-[9px] leading-tight text-txt-dim">{fmt(d.charge_fonciere.par_m2_terrain)} €/m²</div>
                         </div>
@@ -404,8 +415,16 @@ export function M16() {
                     )}
                     {/* RETOURS-27 (pt 7) — « Prix connu pour 1 parcelle sur 4 » sur UNE SEULE ligne (phrase
                         continue, plus de libellé/valeur séparés par justify-between). */}
-                    <p data-asm-chiffrables className={`text-[11px] ${d.n_chiffrables < d.n ? 'text-st-creuser' : 'text-txt-dim'}`}>
-                      Prix connu pour <span className={d.n_chiffrables < d.n ? 'font-medium' : 'text-txt'}>{d.n_chiffrables} parcelle{d.n_chiffrables > 1 ? 's' : ''} sur {d.n}</span>
+                    {/* MINI-CORRECTIONS-2 (pt 21 suite) — réserve de couverture du prix : plus d'orange hors
+                        charte, texte normal ; le « i » habituel porte la réserve (prix connu sur une partie
+                        seulement des parcelles). */}
+                    <p data-asm-chiffrables className="flex items-center gap-1 text-[11px] text-txt-dim">
+                      <span>Prix connu pour <span className="text-txt">{d.n_chiffrables} parcelle{d.n_chiffrables > 1 ? 's' : ''} sur {d.n}</span></span>
+                      {d.n_chiffrables < d.n && (
+                        <Tip garder tip="Le bilan n'utilise le prix observé que pour les parcelles où il est connu ; pour les autres, la charge foncière est estimée. À lire comme un ordre de grandeur.">
+                          <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] leading-none text-txt-dim">i</span>
+                        </Tip>
+                      )}
                     </p>
                   </div>
                 </details>
@@ -425,7 +444,9 @@ export function M16() {
             ) : (
               <span className="text-txt-mut">
                 {d.n_personnes_morales > 0 && <>{d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''} · </>}
-                <b className="text-st-creuser">{d.n_particuliers} propriétaire{d.n_particuliers > 1 ? 's' : ''} particulier{d.n_particuliers > 1 ? 's' : ''}</b>
+                {/* MINI-CORRECTIONS-2 (pt 21 suite) — plus d'orange hors charte sur un simple décompte :
+                    « N propriétaires particuliers » en texte normal (la bordure neutre du bloc suffit). */}
+                <b className="text-txt">{d.n_particuliers} propriétaire{d.n_particuliers > 1 ? 's' : ''} particulier{d.n_particuliers > 1 ? 's' : ''}</b>
               </span>
             )}
             {/* RECETTE-4 — noms des personnes morales EN ENTIER (plusieurs lignes si besoin) : plus de troncature (break-words). */}
@@ -464,14 +485,8 @@ export function M16() {
           </div>
           {/* RECETTE-1 (H5, Vic) — bouton « Préparer courrier propriétaire » RETIRÉ de l'Assemblage. */}
           {/* RETOURS-26 (pt 1) — phrase « Indivision : non détectable en open data… » retirée. */}
-
-          {/* RETOURS-27 (pt 7) — pont vers l'Étude de faisabilité, TOUT EN BAS (après la liste des parcelles). */}
-          {msel.length >= 1 && (
-            <Bouton niveau="secondaire" ton="vert" data-asm-etude className="w-full shrink-0"
-              onClick={() => ouvrirEtude(msel)}>
-              Étude de faisabilité de cet assemblage →
-            </Bouton>
-          )}
+          {/* MINI-CORRECTIONS-2 (pt 23) — pont « Étude de faisabilité de cet assemblage → » RETIRÉ de
+              l'Assemblage (demande Vic). L'Étude de faisabilité reste accessible par Docs. */}
         </>
       )}
     </div>

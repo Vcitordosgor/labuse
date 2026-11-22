@@ -59,22 +59,21 @@ export const MODULES: ModuleDef[] = [
   // sont des ALIAS sans carte, placées près de l'outil qui les résout (ordre sans effet sur le menu).
 
   // 1. PLU — M137-P/Q : Annuaire PLU (O13) + « Procédure & changement » unifiés (hub Plu.tsx, 2 voies).
-  // OUTIL-PLU-FIX-1 (LOT 6) — phrase de tuile ajustée à ce que l'outil fait VRAIMENT : un annuaire par
-  // commune (pack officiel à télécharger + recherche du verbatim indexé), pas une couverture
-  // exhaustive « chaque zone » (indexation inégale, dite à l'écran).
+  // MINI-CORRECTIONS-2 (pt 10) — sous-titres réécrits en UNE ligne, sans « … ». OUTIL-PLU-FIX-1 (LOT 6)
+  // valide cette phrase : honnête (plus de « chaque zone » qui surpromettait une couverture exhaustive).
   { key: 'plu', num: 'O13', group: 'instruire', phare: true,
-    label: 'PLU', desc: 'Règlement par commune : pack officiel + recherche du verbatim (article, page).' },
+    label: 'PLU', desc: 'Le règlement d\'urbanisme de chaque commune.' },
 
   // 2. Permis — §3 : Radar permis (M03) + « au point mort » (M04, devenu un filtre ; clé promesses aliasée).
-  { key: 'permis', num: 'M03', group: 'marche', descSmall: true,
-    label: 'Permis', desc: 'Qui construit quoi, commune par commune — et les permis dormants.' },
+  { key: 'permis', num: 'M03', group: 'marche',
+    label: 'Permis', desc: 'Qui construit quoi, et où, permis par permis.' },
   { key: 'promesses', num: 'M04', group: 'marche', hidden: true,
     label: 'Permis', desc: 'Les « dormants » (PC accordés jamais réalisés) sont un filtre de l’outil Permis' },
 
   // 3. Commune — M137-Z : « Communes » (Marché · Comparateur · Vélocité · Rareté) ; onglet Évolution =
   // Baromètre (M18 aliasé). Entrée = table des 24 communes, clic → fiche commune.
-  { key: 'communes', num: 'O6', group: 'marche', phare: true, descSmall: true,
-    label: 'Communes', desc: 'Les 24 communes en chiffres : marché, rareté, rythme.' },
+  { key: 'communes', num: 'O6', group: 'marche', phare: true,
+    label: 'Communes', desc: 'Les 24 communes : marché, rythme, rareté.' },
   { key: 'barometre', num: 'M18', group: 'marche', hidden: true,
     label: 'Communes', desc: 'L’évolution du marché et le Rapport PDF sont dans l’onglet « Évolution » de Communes' },
 
@@ -100,22 +99,22 @@ export const MODULES: ModuleDef[] = [
 
   // 7. Comparer des parcelles.
   { key: 'comparer', num: 'A8', group: 'instruire',
-    label: 'Comparer des parcelles', desc: 'Des parcelles côte à côte, critère par critère.' },
+    label: 'Comparer des parcelles', desc: 'Des parcelles côte à côte, critère par critère.' },  // MINI-CORRECTIONS-2 (pt 10) : inchangé, déjà sur 1 ligne.
 
   // 8. Pièges et risques — M137-T : Contrôle avant achat (M10) + Servitudes invisibles (O5) fusionnés.
   { key: 'risques', num: 'M10', group: 'instruire', phare: true,
     label: 'Pièges et risques', desc: 'Ce qui peut bloquer le projet, avant d\'acheter.' },
 
   // 9. Étude de zone — Z4 : la chalandise (isochrone IGN, habitants/emplois/concurrents SIRENE).
-  { key: 'etude-zone', num: 'M27', group: 'marche', descSmall: true,
-    label: 'Étude de zone', desc: 'Habitants, emplois, concurrents : la zone autour d\'un point.' },
+  { key: 'etude-zone', num: 'M27', group: 'marche',
+    label: 'Étude de zone', desc: 'Habitants, emplois, marché autour d\'une adresse.' },
 
   // ANNONCE-1 — « Analyser une annonce » : une adresse OU un lien d'annonce Leboncoin. Adresse →
   // parcelle (fiche + estimation DVF débloquée par l'idu + foncier) ; lien → ce que dit l'annonce +
   // écart au repère commune (fiabilité limitée, aucun rattachement parcelle). Carte à droite.
-  { key: 'analyser-annonce', num: 'N1', group: 'marche', descSmall: true,
+  { key: 'analyser-annonce', num: 'N1', group: 'marche',
     // RECETTE-4 — libellé renommé « Estimer un bien » (clé interne `analyser-annonce`/num N1 inchangés).
-    label: 'Estimer un bien', desc: 'Une adresse ou un lien d\'annonce, croisés au marché et au foncier.' },
+    label: 'Estimer un bien', desc: 'Le prix d\'un bien, par adresse ou annonce.' },
 
   // 10. Remonter le temps — la frise des faits datés + le comparateur d'orthos.
   { key: 'temps', num: 'M08', group: 'temps',
@@ -132,7 +131,7 @@ export const MODULES: ModuleDef[] = [
   // classification des limites voie/séparative = adjacence cadastre + BD TOPO, mesurée 0 faux/70).
   // GABARIT-2 : servi sur le réel → carte VISIBLE au menu (le `hidden` de GABARIT-1 est retiré).
   { key: 'gabarit', num: 'M24', group: 'instruire',
-    label: 'Gabarit réglementaire', desc: 'Où et jusqu’où implanter, selon les règles sourcées.' },
+    label: 'Gabarit réglementaire', desc: 'Où et jusqu’où implanter, selon les règles.' },
 
   // 12. Taxe d'aménagement — K3 : assiette, part communale/départementale, barème servi par le back.
   { key: 'taxe-amenagement', num: 'K3', group: 'instruire',
@@ -140,20 +139,19 @@ export const MODULES: ModuleDef[] = [
 
   // 13. Prospection solaire — M26 : toits exposés + piscines (parcel_solar/PVGIS, gelé 11/07/2026).
   { key: 'prospection-solaire', num: 'M26', group: 'agir',
-    /* RECETTE-2 (S27) — accroche SANS point final (décision Vic). */
-    label: 'Prospection solaire', desc: 'Les toits bien exposés, les piscines à équiper' },
+    label: 'Prospection solaire', desc: 'Les toits bien exposés, les piscines à équiper.' },
 
   // DENSIFIER-PLI (PISCINES-2 Lot B) — l'outil « Densifier l'existant » (ex-clé `renouvellement`) est
   // RETIRÉ du menu : plié dans le filtre Capacité (case « Déjà bâti » + « SDP restante ≥ X », run servi).
   // Le précalcul figé `parcel_renouvellement` n'est plus lu par aucun écran (table conservée en base).
 
   // Blocs fonciers — OUTILS-MUSCLER-3 : assiettes contiguës d'un même propriétaire PM (parcel_blocs).
-  { key: 'blocs-fonciers', num: 'M29', group: 'agir', descSmall: true,
-    label: 'Blocs fonciers', desc: 'Les assiettes d’un même propriétaire, sur toute l’île.' },
+  { key: 'blocs-fonciers', num: 'M29', group: 'agir',
+    label: 'Blocs fonciers', desc: 'Toutes les assiettes d’un même propriétaire.' },
 
   // 16. Successions à venir — OUTILS-MUSCLER-1 A : radar patrimonial (jamais « est en succession »).
   { key: 'successions', num: 'M28', group: 'agir',
-    label: 'Successions à venir', desc: 'Le foncier dont le propriétaire approche une succession.' },
+    label: 'Successions à venir', desc: 'Le foncier à l’approche d’une succession.' },
 
   // 17. Courrier propriétaire — M09 : le client prépare, LABUSE envoie.
   { key: 'courriers', num: 'M09', group: 'agir',

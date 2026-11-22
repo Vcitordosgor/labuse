@@ -185,46 +185,38 @@ export function PluAnnuaire() {
       {/* ── ÉTAPE 2 — RECHERCHE : la barre + le verbatim sourcé ── */}
       {insee && servable && mode === 'recherche' && (
         <>
-          {/* OUTILS-P1-1 (pt 9) — AU-DESSUS de la recherche : l'ÉDITION du document (règlement + millésime
-              + identifiant GPU) et son ÉTAT D'INDEXATION (combien d'extraits indexés pour la recherche).
-              La recherche porte sur ce qui est indexé — on le dit, le règlement intégral reste en PDF. */}
-          <div data-plu-doc-etat className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] leading-snug">
-            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="font-medium text-txt">{cur?.document ?? 'Règlement PLU'}</span>
-              {cur?.idurba && <span className="font-mono text-[9.5px] text-txt-dim">{cur.idurba}</span>}
-            </div>
-            {/* OUTIL-PLU-FIX-1 (LOT 1) — dates DISTINCTES, nommées : la version approuvée, l'édition
-                matérielle du PDF (quand une pièce la donne), la publication au GPU. Fini le « édition
-                17/12/2025 » faux (c'était l'approbation). Format français. */}
-            <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[10px] text-txt-dim">
+          {/* FUSION MINI-CORRECTIONS-2 × OUTIL-PLU-FIX-1 — l'encadré VERBEUX de pt 14 (nom de fichier +
+              « édition <millésime> » + « Indexé : N extraits ») est bien RETIRÉ (grief Vic : du bruit).
+              Mais le contre-audit EXIGE à l'écran : l'IDENTIFIANT du dépôt actif (idurba), les dates
+              DISTINCTES (approbation / édition / publication, format FR — fini le « édition 17/12/2025 »
+              faux), les actes postérieurs, les procédures, et la PART INDEXÉE. On réintroduit donc un
+              bloc ÉPURÉ, porteur de cette seule information utile — pas l'ancien encadré. */}
+          <div data-plu-doc-etat className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10px] leading-snug text-txt-dim">
+            {cur?.idurba && <span className="font-mono text-[9.5px]">dépôt {cur.idurba}</span>}
+            {/* LOT 1 — dates distinctes, nommées, en français. */}
+            <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
               {cur?.date_approbation && <span>version approuvée le <b className="text-txt-mut">{fmtDateNum(cur.date_approbation) ?? cur.date_approbation}</b></span>}
               {cur?.edition && <span>· édition PDF {cur.edition}</span>}
               {cur?.publication_gpu && <span>· publiée au GPU le {fmtDateNum(cur.publication_gpu) ?? cur.publication_gpu}</span>}
             </div>
             {cur?.modifications && cur.modifications.length > 0 && (
-              <div className="mt-0.5 text-[10px] text-cp-amber">
+              <div className="mt-0.5 text-cp-amber">
                 {cur.modifications.map((mo, i) => (
                   <div key={i}>⚠ {mo.type}{mo.date ? ` du ${fmtDateNum(mo.date) ?? mo.date}` : ''}{mo.note ? ` — ${mo.note}` : ''}</div>
                 ))}
               </div>
             )}
             {cur?.procedures_inventaire && cur.procedures_inventaire.length > 0 && (
-              <div className="mt-0.5 text-[10px] text-txt-dim">
-                Procédure(s) en cours : {cur.procedures_inventaire.map((p) => p.type).join(', ')} (source : contre-audit).
-              </div>
+              <div className="mt-0.5">Procédure(s) en cours : {cur.procedures_inventaire.map((p) => p.type).join(', ')} (source : contre-audit).</div>
             )}
-            <div className="mt-0.5 text-txt-mut">
-              {(cur?.extraits ?? 0) > 0
-                ? <>Indexé pour la recherche : <b className="text-txt">{cur!.extraits}</b> extrait{(cur!.extraits) > 1 ? 's' : ''} d’articles{cur?.pagination_ambigue ? ' · pagination à vérifier sur certains articles' : ''}.</>
-                : <>Document non indexé pour la recherche verbatim — ouvrez le règlement intégral.</>}
-            </div>
-            {/* OUTIL-PLU-FIX-1 (LOT 3) — part INDEXÉE de la commune + pages en image (non indexables) :
-                l'écran ne laisse plus croire qu'une commune sous-couverte « n'a pas la règle ». */}
+            {/* LOT 3 — part INDEXÉE + pages en image : l'écran ne laisse plus croire qu'une commune
+                sous-couverte « n'a pas la règle ». */}
             {cur?.pct_indexe != null && (
-              <div className="mt-0.5 text-[10px] text-txt-dim">
-                ≈ {cur.pct_indexe} % des pages de texte sont indexées
-                {cur.pages_image ? <> · <b className="text-cp-amber">{cur.pages_image} page{cur.pages_image > 1 ? 's' : ''} en image</b> (non indexée{cur.pages_image > 1 ? 's' : ''} : plan/scan)</> : null}
-                {cur.pct_indexe < 100 ? ' — le reste du règlement est dans le PDF intégral.' : '.'}
+              <div className="mt-0.5">
+                Indexé pour la recherche : ≈ {cur.pct_indexe} % des pages de texte
+                {cur.pages_image ? <> · <b className="text-cp-amber">{cur.pages_image} page{cur.pages_image > 1 ? 's' : ''} en image</b> (non indexée{cur.pages_image > 1 ? 's' : ''})</> : null}
+                {cur?.pagination_ambigue ? ' · pagination à vérifier' : ''}
+                {cur.pct_indexe < 100 ? ' — le reste est dans le PDF intégral.' : '.'}
               </div>
             )}
           </div>

@@ -14,6 +14,7 @@ import { EmptyState } from '../States'
 import { iduComplet, fmtDateSitadel } from '../../lib/format'
 import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R4.2 — recherche adresse/IDU commune
 import { OwnerParcelles } from '../OwnerParcelles'   // RECHERCHE-2 Lot 2 — propriétaire → ses parcelles
+import { Tip } from '../Tip'   // MINI-CORRECTIONS-2 (pt 18) — « i » (définition d'une opération)
 import { CollecteProgrammes } from '../admin/Programmes'   // LOT S1 — geste admin discret réutilisant la collecte
 import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
@@ -193,15 +194,24 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
   }), [d])
   useEffect(() => { setModuleMap({ idus: [], extra }); return () => setModuleMap({ idus: [], extra: null }) }, [extra, setModuleMap])
 
+  // MINI-CORRECTIONS-2 (pt 20) — onglet « Construction » (mode strict) À ZÉRO opération : on n'affiche
+  // QUE « Aucune opération pour ce filtre. » (+ le geste admin). Pas de titre, pas de texte d'explication,
+  // pas de compteur, pas de note de bas. `strictVide` gate ces éléments quand le propriétaire ciblé n'a
+  // rien construit.
+  const strictVide = strict && !!d && d.n_total === 0
+
   return (
     <div data-veille-promoteurs className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1 text-[12.5px]">
-      <div>
-        <h2 className="font-display text-base font-bold text-txt-hi">{strict ? 'Ce qu\'ils construisent' : 'Veille promoteurs'}</h2>
-        {/* RETOURS-23 (pt 15) — en mode général, la phrase « Ce que les promoteurs, bailleurs sociaux et
-            SEM CONSTRUISENT… Données Sitadel au … » est RETIRÉE (demande Vic). Le sous-titre « strict »
-            (un propriétaire ciblé) reste. */}
-        {strict && <p className="mt-0.5 text-[11.5px] text-txt-mut">Uniquement les opérations de ce propriétaire (groupes de permis contigus, même période).</p>}
-      </div>
+      {/* MINI-CORRECTIONS-2 (pt 20) — titre + explication masqués quand l'onglet Construction est vide. */}
+      {!strictVide && (
+        <div>
+          <h2 className="font-display text-base font-bold text-txt-hi">{strict ? 'Ce qu\'ils construisent' : 'Veille promoteurs'}</h2>
+          {/* RETOURS-23 (pt 15) — en mode général, la phrase « Ce que les promoteurs, bailleurs sociaux et
+              SEM CONSTRUISENT… Données Sitadel au … » est RETIRÉE (demande Vic). Le sous-titre « strict »
+              (un propriétaire ciblé) reste. */}
+          {strict && <p className="mt-0.5 text-[11.5px] text-txt-mut">Uniquement les opérations de ce propriétaire (groupes de permis contigus, même période).</p>}
+        </div>
+      )}
 
       {/* LOT S1 — geste ADMIN discret : collecter les programmes du promoteur courant depuis son site.
           Réservé au rôle admin (l'endpoint /admin/programmes/* garde exiger_admin côté serveur). Le SIREN
@@ -240,30 +250,54 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
               onPick={(idu, centre) => { if (centre) setFlyTo({ center: [centre.lon, centre.lat], zoom: 16 }); select(idu); setVeilleOwner(null) }}
               onChanger={() => setVeilleOwner(null)} />
           )}
-          <div className="flex flex-wrap gap-2">
-            <Select data-vp-commune value={commune} onChange={(e) => setCommune(e.target.value)} className={sel}>
-              <option value="">Toutes les communes</option>
-              {CP_COMMUNES.map(([, n]) => <option key={n} value={n}>{n}</option>)}
-            </Select>
-            <Select data-vp-categorie value={categorie} onChange={(e) => setCategorie(e.target.value)} className={sel}>
-              <option value="">Toutes catégories</option>
-              {(d?.categories ?? []).map((c) => <option key={c.cle} value={c.cle}>{c.label}</option>)}
-            </Select>
-            <input data-vp-depuis type="date" value={depuis} onChange={(e) => setDepuis(e.target.value)} className={sel} aria-label="Déposées depuis…" />
+          {/* MINI-CORRECTIONS-2 (pt 18, 2ᵉ passe) — Commune + Catégorie sur UNE ligne, MÊME largeur ; un
+              petit LIBELLÉ au-dessus de chacune (« Commune », « Catégorie ») et « Toutes » comme valeur
+              par défaut → plus aucun texte coupé (avant : « Toutes les comr » / « Toutes catégori »). */}
+          <div className="grid grid-cols-2 gap-2">
+            <label className="flex min-w-0 flex-col gap-1 text-[10.5px] text-txt-mut">
+              Commune
+              <Select data-vp-commune wrapClassName="w-full" value={commune} onChange={(e) => setCommune(e.target.value)} className={`${sel} w-full`}>
+                <option value="">Toutes</option>
+                {CP_COMMUNES.map(([, n]) => <option key={n} value={n}>{n}</option>)}
+              </Select>
+            </label>
+            <label className="flex min-w-0 flex-col gap-1 text-[10.5px] text-txt-mut">
+              Catégorie
+              <Select data-vp-categorie wrapClassName="w-full" value={categorie} onChange={(e) => setCategorie(e.target.value)} className={`${sel} w-full`}>
+                <option value="">Toutes</option>
+                {(d?.categories ?? []).map((c) => <option key={c.cle} value={c.cle}>{c.label}</option>)}
+              </Select>
+            </label>
           </div>
+          <label className="flex flex-col gap-1 text-[10.5px] text-txt-mut">
+            Opérations déposées depuis
+            <input data-vp-depuis type="date" value={depuis} onChange={(e) => setDepuis(e.target.value)} className={`${sel} w-full`} />
+          </label>
         </>
       )}
       {q.isLoading && <Squelette lignes={6} className="mt-4" />}
       {d && (
         <>
           {strict
-            ? <p className="text-[12px] text-txt"><b>{d.n_total.toLocaleString('fr-FR')}</b> opération{d.n_total > 1 ? 's' : ''} · <b>{d.n_logements_total.toLocaleString('fr-FR')}</b> logements <span className="text-txt-mut">— construit ou en cours{Number.isFinite(anneeDepuis) ? `, permis depuis ${anneeDepuis}` : ''}{d.millesime ? ` · Sitadel au ${fmtDateSitadel(d.millesime)}` : ''}</span></p>
+            ? (strictVide ? null : <p className="text-[12px] text-txt"><b>{d.n_total.toLocaleString('fr-FR')}</b> opération{d.n_total > 1 ? 's' : ''} · <b>{d.n_logements_total.toLocaleString('fr-FR')}</b> logements <span className="text-txt-mut">— construit ou en cours{Number.isFinite(anneeDepuis) ? `, permis depuis ${anneeDepuis}` : ''}{d.millesime ? ` · Sitadel au ${fmtDateSitadel(d.millesime)}` : ''}</span></p>)
             : <>
-                <p className="text-[11px] text-txt-dim"><b className="text-txt-mut">{d.n_total.toLocaleString('fr-FR')}</b> opérations · <b className="text-txt-mut">{d.n_logements_total.toLocaleString('fr-FR')}</b> logements · {d.n_servi} affichées{d.tronquee ? ` (plafond ${d.plafond})` : ''}</p>
-                <p className="text-[10px] leading-snug text-txt-dim">{d.regle.phrase}.</p>
+                {/* MINI-CORRECTIONS-2 (pt 18) — compteur « N opérations · N logements » sur UNE ligne +
+                    « i » portant la définition d'une opération ; le message de plafond ne s'affiche
+                    QUE lorsque le plafond est atteint (sinon rien). */}
+                <p className="flex items-center gap-1.5 text-[11px] text-txt-dim">
+                  <span><b className="text-txt-mut">{d.n_total.toLocaleString('fr-FR')}</b> opérations · <b className="text-txt-mut">{d.n_logements_total.toLocaleString('fr-FR')}</b> logements</span>
+                  <Tip garder tip={`${d.regle.phrase}.`}>
+                    <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] leading-none text-txt-dim">i</span>
+                  </Tip>
+                </p>
+                {d.tronquee && <p className="text-[10px] leading-snug text-txt-dim">Les {d.plafond} premières sont affichées : affinez la recherche.</p>}
               </>}
           <div className="flex flex-col gap-1.5">
-            {promoteurs.length === 0 && <EmptyState title="Aucune opération pour ce filtre." />}
+            {/* MINI-CORRECTIONS-2 (pt 20, 2ᵉ passe) — onglet Construction vide : JUSTE le texte, « et basta »
+                (pas d'oiseau/illustration de l'EmptyState). L'exploration générale garde l'EmptyState. */}
+            {promoteurs.length === 0 && (strict
+              ? <p data-vp-vide className="px-6 py-10 text-center text-sm font-medium text-txt">Aucune opération pour ce filtre.</p>
+              : <EmptyState title="Aucune opération pour ce filtre." />)}
             {/* RETOURS-12 O6 — UNE CARTE PAR PROMOTEUR (regroupée par SIREN). En-tête : nom + total permis
                 + total logements (= somme de ses opérations, même périmètre que la frise). Ses opérations
                 sont listées dessous ; ses programmes publiés une seule fois ; sa frise une seule fois. */}
@@ -328,7 +362,8 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
               )
             })}
           </div>
-          <p className="text-[10px] leading-snug text-txt-dim">{d.note}</p>
+          {/* MINI-CORRECTIONS-2 (pt 20) — note de bas masquée quand l'onglet Construction est vide. */}
+          {!strictVide && <p className="text-[10px] leading-snug text-txt-dim">{d.note}</p>}
 
           {/* LOT S1 — programmes DÉJÀ collectés sur le site du promoteur (référentiel), scopés au SIREN
               courant. Un FAIT (nom · commune · année) + le rattachement à une opération quand connu +
