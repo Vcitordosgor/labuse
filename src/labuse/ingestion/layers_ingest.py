@@ -269,6 +269,27 @@ def ingest_gpu_zones(session, insee, bbox, commune, run_id, sids) -> int:
 _PRESCRIPTION_ENDPOINTS = (("surf", "prescription-surf"), ("lin", "prescription-lin"), ("pct", "prescription-pct"))
 
 
+def _fetch_gpu_partition(c, endpoint: str, part: str) -> list[dict]:
+    """MISE-EN-LIGNE-7 — TOUTES les features du document `part` (ex. DU_97412), paginées, SANS
+    aucun objet d'une commune voisine. Requête PAR PARTITION (`?partition=`), pas par bbox : la
+    bbox capturait les objets frontaliers des documents VOISINS (débordement mesuré : Saint-Joseph
+    surf-01 renvoyait 65 features / +7 ha au lieu de 64 — un EBC d'une commune limitrophe). On
+    refiltre sur `partition == part` par ceinture-et-bretelles (l'API par partition ne renvoie déjà
+    que ce document)."""
+    feats: list[dict] = []
+    start = 0
+    while True:
+        r = c.get(f"{APICARTO}/gpu/{endpoint}",
+                  params={"partition": part, "_start": start, "_limit": 1000})
+        r.raise_for_status()
+        page = r.json().get("features", []) or []
+        feats.extend(f for f in page if (f.get("properties") or {}).get("partition") == part)
+        if len(page) < 1000:
+            break
+        start += len(page)
+    return feats
+
+
 def ingest_gpu_prescriptions(session, bbox, commune, run_id, sids, insee: str | None = None) -> int:
     """Prescriptions du PLU (API Carto GPU) → kind='plu_gpu_prescription', subtype=typepsc.
 
@@ -277,19 +298,24 @@ def ingest_gpu_prescriptions(session, bbox, commune, run_id, sids, insee: str | 
     contraintes opposables, jusqu'ici non ingérées (la cascade ne lisait que le zonage).
     Le GPU fournit le LIBELLÉ lisible : on le stocke tel quel (jamais inventé). La géométrie
     surf est un polygone (couverture mesurable) ; lin/pct sont ligne/point (présence seule).
-    Source/url/millésime (idurba) tracés. Idempotent à l'appelant (purge avant rechargement)."""
-    poly = json.dumps(_bbox_polygon(bbox))
+    Source/url/millésime (idurba) tracés. Idempotent à l'appelant (purge avant rechargement).
+
+    MISE-EN-LIGNE-7 — requête PAR PARTITION du document (`DU_<insee>`), plus par bbox : l'ingestion
+    reproduit EXACTEMENT le document GPU de la commune, sans aucun objet d'une commune voisine.
+    Repli bbox uniquement si `insee` est absent (chemin hérité ; jamais emprunté en prod)."""
     src = sids.get(KIND_SOURCE["plu_gpu_prescription"])
-    # M6 2b (A-02) : même garde que les zones — une prescription n'est rattachée qu'à la
-    # commune dont le document GPU la porte (41 % de doublons bbox corrigés à l'audit).
     part = agorah_plu.agorah_partition(insee) if insee else None
     n = 0
     with _client() as c:
         for geom_kind, endpoint in _PRESCRIPTION_ENDPOINTS:
             try:
-                r = c.get(f"{APICARTO}/gpu/{endpoint}", params={"geom": poly})
-                r.raise_for_status()
-                feats = r.json().get("features", []) or []
+                if part:
+                    feats = _fetch_gpu_partition(c, endpoint, part)
+                else:   # hérité : pas d'insee → bbox (comportement d'origine, filtre partition ci-dessous)
+                    r = c.get(f"{APICARTO}/gpu/{endpoint}",
+                              params={"geom": json.dumps(_bbox_polygon(bbox))})
+                    r.raise_for_status()
+                    feats = r.json().get("features", []) or []
             except Exception:
                 continue  # un endpoint vide/en échec n'empêche pas les autres (résultats partiels)
             for f in feats:
@@ -297,7 +323,7 @@ def ingest_gpu_prescriptions(session, bbox, commune, run_id, sids, insee: str | 
                     continue
                 p = f.get("properties") or {}
                 if part and p.get("partition") and p.get("partition") != part:
-                    continue    # document d'une commune voisine (débordement bbox)
+                    continue    # (défense : déjà filtré par _fetch_gpu_partition)
                 typepsc = (p.get("typepsc") or "").strip() or None
                 libelle = (p.get("libelle") or p.get("txt") or "prescription PLU").strip()
                 _insert_layer(
