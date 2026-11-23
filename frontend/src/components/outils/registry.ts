@@ -65,8 +65,10 @@ export const MODULES: ModuleDef[] = [
     label: 'PLU', desc: 'Le règlement d\'urbanisme de chaque commune.' },
 
   // 2. Permis — §3 : Radar permis (M03) + « au point mort » (M04, devenu un filtre ; clé promesses aliasée).
+  // OUTIL-PERMIS-FIX-1 (LOT 6) — formule EXACTE : on compte des AUTORISATIONS Sitadel, pas des chantiers
+  // observés (« Qui construit quoi » laissait croire que l'exécution avait été constatée).
   { key: 'permis', num: 'M03', group: 'marche',
-    label: 'Permis', desc: 'Qui construit quoi, et où, permis par permis.' },
+    label: 'Permis', desc: 'Les autorisations d\'urbanisme (Sitadel) : récentes, dormantes, achevées — par commune et parcelle.' },
   { key: 'promesses', num: 'M04', group: 'marche', hidden: true,
     label: 'Permis', desc: 'Les « dormants » (PC accordés jamais réalisés) sont un filtre de l’outil Permis' },
 

@@ -107,14 +107,17 @@ export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplib
     titre.textContent = String(f.nature_libelle ?? f.nature ?? 'Permis')
     sub.textContent = [f.permit_id ? String(f.permit_id) : pid, f.commune ? String(f.commune) : ''].filter(Boolean).join(' · ')
     if (f.statut) {
-      const bd = document.createElement('span'); bd.textContent = String(f.statut) + (f.annule ? ' · annulé' : '')
+      // OUTIL-PERMIS-FIX-1 (LOT 5) — `statut` dit DÉJÀ « annulé » (etat_libelle, code 4) : le flag `annule`
+      // ne sert qu'à la COULEUR (rouge), il ne RÉPÈTE plus le mot (avant : « annulé · annulé »). On conserve
+      // l'en-tête FIXE (relecture 3 : flex:none / align-self, hors du corps défilant).
+      const bd = document.createElement('span'); bd.textContent = String(f.statut)
       bd.style.cssText = `flex:none;display:inline-block;align-self:flex-start;margin-top:7px;padding:1px 8px;border-radius:999px;font-size:11px;${f.annule ? 'background:rgba(232,73,29,.15);color:#e8491d' : 'background:rgba(74,222,128,.15);color:#4ADE80'}`
       box.insertBefore(bd, corps)   // en-tête FIXE (hors du corps défilant)
     }
     ligne('Destination', String(f.destination_libelle ?? ''))
     ligne('Pétitionnaire', String(f.porteur ?? f.porteur_note ?? ''))
     if (f.porteur_siren) ligne('SIREN', String(f.porteur_siren))
-    ligne('Lots', f.nb_lots != null ? String(f.nb_lots) : '')
+    ligne('Logements créés', f.nb_lots != null ? String(f.nb_lots) : '')   // OUTIL-PERMIS-FIX-1 (LOT 4)
     ligne('Surface habitable', f.surface_hab_m2 != null ? `${f.surface_hab_m2} m²` : '')
     ligne('Autorisé le', fmtD(f.date_autorisation))
     const parcs = Array.isArray(f.parcelles) ? (f.parcelles as string[]) : []

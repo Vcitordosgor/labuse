@@ -141,7 +141,10 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "deal_bruit_cartes": Rt(("spatial_layers",), couches=("bruit_carte",),
                             millesime="CBS 2022 — dépassements Lden/Ln (type c, RN/RD/VC)"),
     "sudocuh": Rt(("sudocuh_procedures",), millesime="Sudocuh — état au 31/12/2024"),
-    "sitadel": Rt(("sitadel_permits", "via_permits_geo"), millesime="2026-07"),
+    "sitadel": Rt(("sitadel_permits", "via_permits_geo"),
+                  # OUTIL-PERMIS-FIX-2 (Défaut F) — plus de date FIGÉE (« 2026-07 » périmé) : via_permits_geo
+                  # suit sitadel_permits par TRIGGER ; le millésime réel = dernière autorisation intégrée.
+                  millesime="SDES mensuel — via_permits_geo suivie par trigger (millésime = dernière autorisation intégrée)"),
     "qpv_2024": Rt(("spatial_layers",), couches=("qpv", "tva_primo"), millesime="génération 2024"),
     "npnru": Rt(("anru_quartiers", "spatial_layers"), couches=("anru",)),
     "sru_dhup": Rt(("commune_contexte_sru",), millesime="inventaire LLS — CSV v2 du 18/12/2025"),

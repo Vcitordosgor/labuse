@@ -20,12 +20,19 @@ const PROMESSES = {
   has_more: false,
   items: [{ permit_id: 'PC9', type: 'PC', date: '2023-11-14', commune: 'Le Tampon', etat: '3', surface_m2: 800, nb_lgt: 12, geom: GEOM, tier_v2: 'neutre', etage0: false, statut: null }],
 }
+// OUTIL-PERMIS-FIX-1 (LOT 1) — la PARTITION des 4 états en UNE requête (count_only=true&etats=true) :
+// les cinq compteurs d'entrée en découlent (récent 5 613 · dormant 412 · achevé · autre · total),
+// chacun COMPTÉ (plus de soustraction pour « Autres »).
+const ETATS = {
+  total: 50808, geocodes: 50074, donnees_jusqu_au: '2026-06-30', coupure_recent: '2024-06-30',
+  sans_date: 1, etats: { recent: 5613, dormant: 412, acheve: 21000, autre: 23783 },
+}
 
 function mockFetch() {
   global.fetch = vi.fn(async (url: string) => {
     const u = String(url)
-    if (u.includes('count_only')) return { ok: true, json: async () => ({ total: 412 }) }
-    if (u.includes('/modules/promesses')) return { ok: true, json: async () => PROMESSES }
+    if (u.includes('etats=true')) return { ok: true, json: async () => ETATS }   // partition (5 compteurs)
+    if (u.includes('/modules/promesses')) return { ok: true, json: async () => ({ total: 412, ...PROMESSES }) }
     if (u.includes('/modules/permis')) return { ok: true, json: async () => RADAR }
     if (u.includes('/communes')) return { ok: true, json: async () => [] }   // RETOURS-18 — bloc Affiner rend CommunePermisSelect
     return { ok: true, json: async () => ({}) }

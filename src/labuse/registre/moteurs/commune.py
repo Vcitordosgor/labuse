@@ -310,20 +310,23 @@ def compte_permis_commune(db, commune: str | None, months: int, nature: str | No
         {"c": commune, "m": months, "nat": nature, "dmax": dmax}).mappings().first()
 
 
-def permis_point_mort(db, commune: str | None, months: int, run: str | None) -> int:
-    """point_mort_n — permis PC autorisés sans DAACT dans la fenêtre, sur parcelle toujours non
-    bâtie au run servi (extraction du chemin count_only de modules.py:promesses)."""
-    return int(db.execute(text("""
-        SELECT count(DISTINCT s.id) FROM sitadel_permits s
-        JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
-        JOIN parcels p ON p.idu = c.idu
-        JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
-          AND s.date < now() - (:m || ' months')::interval AND s.raw->>'daact' IS NULL
-          AND NOT EXISTS (SELECT 1 FROM dryrun_cascade_results cr
-                          WHERE cr.run_label = :run AND cr.parcel_id = p.id
-                            AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')"""),
-        {"c": commune, "m": months, "run": run}).scalar() or 0)
+def permis_point_mort(db, commune: str | None, months: int, dmax) -> int:
+    """point_mort_n — DORMANT au sens OUTIL-PERMIS-FIX-1 (LOT 2), définition UNIQUE : permis de
+    construire AUTORISÉ (code ≠ 4 annulé, ≠ 5 commencé, ≠ 6 achevé), sans DAACT, de plus de `months`
+    mois (ancré sur `dmax` = fin des données, PLUS sur `now()`), ET aucune parcelle bâtie (emprise de
+    bâti MESURÉE ≥ seuil dans `parcel_bati_emprise` = parcelle × empreintes BD TOPO). Le dormant exige
+    une parcelle MESURABLE (présente dans la table) : on ne qualifie jamais « nu » un terrain non mesuré.
+    Avant : jointure `dryrun_*` au run servi (« absence d'exclusion forte » ≠ absence de bâti) +
+    horloge `now()` qui faisait dériver le total — constats du relecteur (28/30 dormants bâtis)."""
+    from ... import permis_classe
+    if not permis_classe.bati_table_existe(db):   # sans la couche mesurée : aucun dormant (jamais un 500)
+        return 0
+    pred = permis_classe._dormant_sql("s.", ":dmax").replace(
+        f"interval '{permis_classe.DORMANT_MOIS} months'", "(:m || ' months')::interval")
+    return int(db.execute(text(
+        f"SELECT count(*) FROM sitadel_permits s"
+        f" WHERE (CAST(:c AS text) IS NULL OR s.commune = :c) AND {pred}"),
+        {"c": commune, "m": months, "dmax": dmax}).scalar() or 0)
 
 
 # ── piscines (extraction de api/modules.py:prospection_piscines) ────────────────────────────────
