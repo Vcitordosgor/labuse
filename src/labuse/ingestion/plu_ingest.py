@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS plu_reglement_extrait (
     zone               text,
     article_ref        text,
     page_pdf           int  NOT NULL,
+    page_debut         int,
+    page_fin           int,
     texte_verbatim     text NOT NULL,
     doute              boolean NOT NULL DEFAULT false,
     doute_motif        text,
@@ -36,6 +38,9 @@ CREATE TABLE IF NOT EXISTS plu_reglement_extrait (
 -- OUTIL-PLU-FIX-1 (LOT 2) — pdf_url = lien DIRECT vers le règlement écrit (.pdf), distinct du pack
 -- intégral .zip (source_url). Le bouton « PDF ↗ » doit ouvrir un PDF (+ #page=N), jamais un .zip.
 ALTER TABLE plu_reglement_extrait ADD COLUMN IF NOT EXISTS pdf_url text;
+-- OUTIL-PLU-FIX-2 (B1) — page_debut/page_fin : bornes de page de l'extrait (égales, borné à la page).
+ALTER TABLE plu_reglement_extrait ADD COLUMN IF NOT EXISTS page_debut int;
+ALTER TABLE plu_reglement_extrait ADD COLUMN IF NOT EXISTS page_fin   int;
 CREATE INDEX IF NOT EXISTS ix_plu_extrait_tsv    ON plu_reglement_extrait USING gin(tsv);
 CREATE INDEX IF NOT EXISTS ix_plu_extrait_insee  ON plu_reglement_extrait(insee);
 CREATE INDEX IF NOT EXISTS ix_plu_extrait_doc    ON plu_reglement_extrait(insee, document);
@@ -44,14 +49,27 @@ CREATE INDEX IF NOT EXISTS ix_plu_extrait_doc    ON plu_reglement_extrait(insee,
 # En-tête d'article ou de zone. Formats rencontrés sur l'île : mutualisé « Article U 4 »,
 # classique « Article Ua 1 », NUMÉROTÉ « Article 1- » / « ARTICLE 1 - » (dispositions générales),
 # code « Article R111-2 », titres « ZONE UE » / « CHAPITRE|TITRE|SECTION … ».
+# OUTIL-PLU-FIX-2 (B3) — un en-tête est une LIGNE DE TITRE, pas une référence dans une phrase. On NE
+# matche plus en minuscule (« voir article 13.3 », « la zone n'ont pas », « sous le titre IV » sont de
+# la prose, pas des titres) : le mot-clé doit commencer par une MAJUSCULE (ARTICLE/Article, ZONE/Zone,
+# CHAPITRE/Chapitre…). Le drapeau `i` est retiré ; un garde anti-renvoi (`_looks_cross_ref`) écarte en
+# plus les « (voir Article … » capitalisés. Supprime les 76 extraits bidon et rend les articles entiers.
 _HEADER = re.compile(
-    r'(?im)^[ \t]*('
+    r'(?m)^[ \t]*('
     r'(?:ARTICLE|Article)\s+[A-Za-z]{0,4}\s*\.?\s*\d+[A-Za-z0-9.\-]*'
-    r'|ZONE\s+[0-9A-Za-z]{1,6}\b'
-    r'|(?:CHAPITRE|TITRE|SECTION)\s+[IVXLC0-9]+\b'
+    r'|(?:ZONE|Zone)\s+[0-9A-Za-z]{1,6}\b'
+    r'|(?:CHAPITRE|TITRE|SECTION|Chapitre|Titre|Section)\s+[IVXLC0-9]+\b'
     r')')
 _ZONE_FROM_ART = re.compile(r'(?i)(?:ARTICLE)\s+([A-Za-z]{1,4})\s*[-–]?\s*\d')
 _ZONE_FROM_ZONE = re.compile(r'(?i)ZONE\s+([0-9A-Za-z]{1,5})')
+# référence croisée dans la prose juste avant le « titre » : « (voir Article… », « cf. Article… »,
+# « au titre… », « à l'article… » → l'en-tête matché n'est pas un vrai début d'article.
+_CROSSREF_PRE = re.compile(r"(?i)(?:\(|voir|cf\.?|à l['’]|au|du|de la|sous le|présent|dudit|ledit)\s*$")
+
+
+def _looks_cross_ref(flat: str, start: int) -> bool:
+    pre = _norm(flat[max(0, start - 30):start])
+    return bool(_CROSSREF_PRE.search(pre))
 
 # OUTIL-PLU-FIX-1 (LOT 4) — un code de zone réunionnais : préfixe optionnel (chiffre), classe
 # U/AU/A/N, puis secteur. Sert à REFUSER les faux libellés (QUI, EST, DE, R, L, SONT, RURAL…) issus
@@ -199,66 +217,78 @@ def _pagination_ambigue(pages: list[str]) -> bool:
     return False
 
 
-def _split_articles(path: str) -> tuple[list[dict], bool]:
-    """Découpe le PDF en extraits ARTICLE ({article_ref, zone, page_pdf, texte, doute, doute_motif}).
-    Renvoie aussi le drapeau pagination_ambigue (document-level).
+_MAX_CHARS = 2800                               # taille max d'un extrait (B1 : « avec une taille maximale »)
+_SUBART = re.compile(r'(?m)(?=^\s*(?:\d{1,2}\.\d{1,2}\b|[-–•]\s))')   # frontière de sous-article/alinéa
 
-    OUTIL-PLU-FIX-1 (LOT 3) — on découpe sur le flux NETTOYÉ de ses en-têtes/pieds courants : une
-    bannière « Zone U2e » répétée en haut de chaque page ne crée plus de frontière d'article (elle
-    coupait l'article U2e au milieu du §6.3, cf. Saint-Paul p.92). La zone de page (bannière) est
-    conservée à part et sert d'étiquette fiable (LOT 4)."""
+
+def _chunk(body: str, maxlen: int = _MAX_CHARS) -> list[str]:
+    """Découpe un corps trop long au sous-article / paragraphe, en morceaux ≤ maxlen (B1)."""
+    body = body.strip()
+    if len(body) <= maxlen:
+        return [body] if body else []
+    parts = [p for p in _SUBART.split(body) if p.strip()] or [body]
+    out, cur = [], ""
+    for p in parts:
+        if cur and len(cur) + len(p) > maxlen:
+            out.append(cur.strip()); cur = ""
+        while len(p) > maxlen:                  # paragraphe isolé plus long que maxlen → coupe dure
+            out.append(p[:maxlen].strip()); p = p[maxlen:]
+        cur += p
+    if cur.strip():
+        out.append(cur.strip())
+    return out
+
+
+def _split_articles(path: str) -> tuple[list[dict], bool]:
+    """Découpe le PDF en extraits (article → sous-article/paragraphe), BORNÉS À LA PAGE.
+    Chaque extrait porte page_debut == page_fin == page_pdf : la page citée est EXACTEMENT celle où se
+    trouve le texte (OUTIL-PLU-FIX-2 B1 — fini les blocs fusionnés cités à leur page de tête).
+
+    Méthode : on coupe le flux nettoyé à l'UNION des frontières d'EN-TÊTE (article/zone, filtrées des
+    renvois de prose, B3) ET des frontières de PAGE. Un article qui court sur plusieurs pages devient
+    donc une suite d'extraits, un par page, portant tous sa référence. Un corps de page trop dense est
+    re-scindé au sous-article (`_chunk`). La zone vient de la BANNIÈRE de la page (fiable) ou, à défaut,
+    de l'en-tête d'article (C3 — plus de « Article N 14 » qui étiquette 50 pages en N)."""
+    import bisect
     pages = _pages(path)
     ambigu = _pagination_ambigue(pages)       # détecté sur le texte brut (numéros imprimés)
     clean, zbanner = _clean_pages(pages)
-    # flux plat NETTOYÉ + carte offset→page_pdf (le n° de page reste celui du PDF d'origine)
     starts, buf, pos = [], [], 0
     for i, t in enumerate(clean):
         starts.append((pos, i + 1)); buf.append(t); pos += len(t)
     flat = "".join(buf)
+    page_off = [o for o, _ in starts]
 
     def page_of(off: int) -> int:
-        pg = 1
-        for o, p in starts:
-            if o <= off:
-                pg = p
-            else:
-                break
-        return pg
+        j = bisect.bisect_right(page_off, off) - 1
+        return starts[j][1] if j >= 0 else 1
 
-    heads = list(_HEADER.finditer(flat))
+    # en-têtes RÉELS (B3) : on écarte les références croisées lues en pleine phrase.
+    heads = [m for m in _HEADER.finditer(flat) if not _looks_cross_ref(flat, m.start())]
+    head_pos = [m.start() for m in heads]
+    head_ref = {m.start(): _norm(m.group(1)) for m in heads}
+    cuts = sorted(set(head_pos) | set(page_off) | {len(flat)})
     out: list[dict] = []
-    for i, m in enumerate(heads):
-        ref = _norm(m.group(1))
-        end = heads[i + 1].start() if i + 1 < len(heads) else len(flat)
-        body = flat[m.start():end].strip()
-        pg = page_of(m.start())
-        # zone éventuellement portée par l'en-tête lui-même (« Article Ua 1 », « ZONE UE »)
-        zm = _ZONE_FROM_ART.match(ref) or _ZONE_FROM_ZONE.match(ref)
+    for a, b in zip(cuts, cuts[1:]):
+        body = flat[a:b].strip()
+        if not body:
+            continue
+        j = bisect.bisect_right(head_pos, a) - 1
+        ref = head_ref[head_pos[j]] if j >= 0 else None
+        pg = page_of(a)
+        is_zone_title = bool(ref) and ref.upper().startswith("ZONE")
+        if is_zone_title and len(re.sub(r'\s', '', body)) < 60:
+            continue                           # titre de zone nu (sommaire/intitulé) : pas un extrait
+        zm = _ZONE_FROM_ART.match(ref or "") or _ZONE_FROM_ZONE.match(ref or "")
         z_ref = _valid_zone(zm.group(1)) if zm else None
-        body_net = len(re.sub(r'\s', '', body))
-        is_zone_title = ref.upper().startswith("ZONE")
-        # OUTIL-PLU-FIX-1 (LOT 3) — un titre de zone n'est PLUS jeté AVEC son corps : le préambule de
-        # chapitre (« caractère de la zone »…) et surtout les dispositions générales qui suivent le
-        # sommaire (ex. Saint-Denis : « piscine » dans l'emprise au sol, p.5/p.22) restaient hors
-        # recherche (« piscine » rendait zéro). On ne saute QUE les titres NUS (entrée de sommaire,
-        # corps trivial < 60 c.) ; on émet les autres pour que leur texte soit indexé.
-        if is_zone_title and body_net < 60:
-            continue                   # titre nu (sommaire/intitulé) : pas un extrait servable
-        # OUTIL-PLU-FIX-1 (LOT 4) — l'étiquette vient du chapitre RÉELLEMENT régi : l'en-tête d'article
-        # (« Article Ua 10 ») sinon la bannière de page (« Zones U1a…U1pso » → famille U1). Aucun
-        # héritage « glissant » : une page sans bannière (dispositions générales, lexique, annexes)
-        # reste SANS étiquette plutôt que de recopier la zone du chapitre précédent (faux « N »).
-        zone = z_ref or zbanner[pg - 1]
-        # un bloc LONG rattaché à un titre de zone de sommaire = dispositions générales mêlées :
-        # on ne lui invente pas une zone unique (mieux sans étiquette que fausse).
-        if is_zone_title and body_net > 1500:
-            zone = None
-        doute = body_net < 25
-        out.append({
-            "article_ref": ref, "zone": zone, "page_pdf": pg,
-            "texte": body, "doute": doute,
-            "doute_motif": "extrait quasi vide — page peut-être illisible/scannée, à vérifier au PDF" if doute else None,
-        })
+        zone = zbanner[pg - 1] or z_ref        # bannière de PAGE d'abord (per-page, fiable) ; sinon l'en-tête
+        for piece in _chunk(body):
+            pn = len(re.sub(r'\s', '', piece))
+            out.append({
+                "article_ref": ref, "zone": zone, "page_pdf": pg,
+                "page_debut": pg, "page_fin": pg, "texte": piece, "doute": pn < 25,
+                "doute_motif": "extrait quasi vide — page peut-être illisible/scannée, à vérifier au PDF" if pn < 25 else None,
+            })
     return out, ambigu
 
 
@@ -297,15 +327,17 @@ def ingest_reglement(session: Session, *, insee: str, commune: str, idurba: str,
         session.execute(text("""
             INSERT INTO plu_reglement_extrait
               (insee, commune, idurba, millesime, document, zone, article_ref, page_pdf,
-               texte_verbatim, doute, doute_motif, pagination_ambigue, source_url, pdf_url, fetched_at, tsv)
+               page_debut, page_fin, texte_verbatim, doute, doute_motif, pagination_ambigue,
+               source_url, pdf_url, fetched_at, tsv)
             VALUES
               (:insee, :commune, :idurba, :millesime, :document, :zone, :article_ref, :page_pdf,
-               :texte, :doute, :doute_motif, :ambigu, :url, :pdf_url, :fetched_at,
+               :page_debut, :page_fin, :texte, :doute, :doute_motif, :ambigu, :url, :pdf_url, :fetched_at,
                to_tsvector('fr_unaccent',
                  coalesce(:article_ref,'') || ' ' || coalesce(:zone,'') || ' ' || :texte))
         """), {"insee": insee, "commune": commune, "idurba": idurba, "millesime": millesime,
                "document": document, "zone": e["zone"], "article_ref": e["article_ref"],
-               "page_pdf": e["page_pdf"], "texte": e["texte"], "doute": e["doute"],
+               "page_pdf": e["page_pdf"], "page_debut": e.get("page_debut", e["page_pdf"]),
+               "page_fin": e.get("page_fin", e["page_pdf"]), "texte": e["texte"], "doute": e["doute"],
                "doute_motif": e["doute_motif"], "ambigu": ambigu, "url": source_url,
                "pdf_url": pdf_url, "fetched_at": fetched_at})
     if commit:
@@ -368,38 +400,73 @@ def ingest_commune_reglements(session: Session, *, insee: str, commune: str, idu
             "extraits": total, "detail": resultats}
 
 
-def _search_where(q: str, insee: str | None, zone: str | None) -> tuple[list[str], dict]:
-    """Clause WHERE commune à search/count. OUTIL-PLU-FIX-1 (LOT 5) : config `fr_unaccent` (casse +
-    accents), et filtre zone qui SUIT LES SECTEURS ET LES RENVOIS au règlement commun — un secteur
-    UBc remonte à {UB, U} (appariement EXACT, jamais A pris pour AU), et une famille UB rattrape ses
-    secteurs (UB → UBa, UBc…) par préfixe."""
+def _classe_token(zone: str) -> str:
+    """Préfixe de CLASSE d'un code (chiffres optionnels + U/AU/A/N), ex. AU3ST→'AU', 2AUd→'2AU', Ua→'U'."""
+    m = re.match(r'^(\d*)(AU|U|A|N)', _norm(zone).upper())
+    return (m.group(1) + m.group(2)) if m else _norm(zone).upper()
+
+
+def _zone_match(a: str, b: str) -> bool:
+    """Deux codes de zone s'apparentent (OUTIL-PLU-FIX-2 B2+C1) si :
+      (a) l'un est ANCÊTRE de l'autre dans la chaîne de candidats (ex. A→Ah, U→Ua), OU
+      (b) ils partagent un ancêtre commun PLUS PROFOND que la seule classe (ex. AU3c↔AU3ST : famille
+          AU3 ; UBc↔UBa : famille UB).
+    Un simple partage de classe NE SUFFIT PAS : AU3c n'attrape pas AU1 (commun = « AU » = classe), et
+    A n'attrape jamais AU (classes disjointes, commun = ∅)."""
+    au, bu = _norm(a).upper(), _norm(b).upper()
+    sa, sb = set(zone_candidats(au)), set(zone_candidats(bu))
+    if au in sb or bu in sa:                      # (a) ancêtre / descendant
+        return True
+    common = sa & sb                              # (b) ancêtre commun plus profond que la classe
+    if not common:
+        return False
+    return len(max(common, key=len)) > len(_classe_token(au))
+
+
+def zones_apparentees(session: Session, zone: str, insee: str | None) -> list[str]:
+    """Liste des codes de zone STOCKÉS apparentés à `zone` (cf. `_zone_match`). On interroge les zones
+    réellement présentes (indexé, bon marché) et on filtre en Python — appariement EXACT ensuite."""
+    sql = "SELECT DISTINCT zone FROM plu_reglement_extrait WHERE zone IS NOT NULL"
+    params: dict = {}
+    if insee:
+        sql += " AND insee = :i"; params["i"] = insee
+    stored = [z for z in session.execute(text(sql), params).scalars().all() if z]
+    return sorted({z.upper() for z in stored if _zone_match(zone, z)})
+
+
+def _search_where(q: str, insee: str | None, zones_ok: list[str] | None,
+                  zone_given: bool) -> tuple[list[str], dict]:
+    """Clause WHERE commune à search/count (config `fr_unaccent` : casse + accents).
+    Filtre zone (OUTIL-PLU-FIX-2) : appariement EXACT sur la liste d'apparentées `zones_ok` (jamais de
+    LIKE qui confondait A et AU, B2) ; on INCLUT aussi les extraits SANS étiquette (`zone IS NULL`) car
+    ils portent les dispositions GÉNÉRALES, applicables à toute zone — sinon 31–41 % du règlement
+    (Le Port, Saint-Pierre, Cilaos) devenaient inatteignables dès qu'on filtrait (C2)."""
     where = ["tsv @@ websearch_to_tsquery('fr_unaccent', :q)"]
     params: dict = {"q": q}
     if insee:
         where.append("insee = :insee")
         params["insee"] = insee
-    if zone:
-        cands = zone_candidats(zone)
-        where.append("(upper(zone) = ANY(:zones) OR upper(zone) LIKE :zpref)")
-        params["zones"] = cands
-        params["zpref"] = _norm(zone).upper() + "%"
+    if zone_given:
+        where.append("(upper(zone) = ANY(:zones) OR zone IS NULL)")
+        params["zones"] = zones_ok or []
     return where, params
 
 
 def search_reglement(session: Session, q: str, insee: str | None = None, limit: int = 25,
                      zone: str | None = None, offset: int = 0) -> list[dict]:
     """Recherche full-text (fr_unaccent) qui rend le VERBATIM SOURCÉ complet + la référence + le lien.
-    `insee` None = île entière. `zone` filtre la famille de zone et ses secteurs (lien contextuel
-    fiche → règlement). `offset` pagine RÉELLEMENT (OUTIL-PLU-FIX-1 LOT 5 : offset=25 ne renvoyait plus
-    les 25 premiers). Aucun résumé : `texte_verbatim` est le texte brut ; `doute` et
-    `pagination_ambigue` sont RENDUS pour affichage."""
-    where, params = _search_where(q, insee, zone)
+    `insee` None = île entière. `zone` filtre la famille de zone et ses secteurs (classe-conscient) +
+    les dispositions générales. `offset` pagine RÉELLEMENT. Aucun résumé : `texte_verbatim` est le texte
+    brut ; `doute`/`pagination_ambigue` sont RENDUS ; `page_debut`/`page_fin` bornent la page citée."""
+    zones_ok = zones_apparentees(session, zone, insee) if zone else None
+    where, params = _search_where(q, insee, zones_ok, bool(zone))
     params["lim"] = limit
     params["off"] = max(0, offset)
     rows = session.execute(text(f"""
         SELECT insee, commune, idurba, to_char(millesime,'YYYY-MM-DD') AS millesime, document,
-               zone, article_ref, page_pdf, texte_verbatim, doute, doute_motif, pagination_ambigue,
-               source_url, pdf_url, ts_rank(tsv, websearch_to_tsquery('fr_unaccent', :q)) AS rang
+               zone, article_ref, page_pdf, page_debut, page_fin, texte_verbatim, doute, doute_motif,
+               pagination_ambigue, source_url, pdf_url,
+               ts_rank(tsv, websearch_to_tsquery('fr_unaccent', :q)) AS rang
         FROM plu_reglement_extrait
         WHERE {' AND '.join(where)}
         ORDER BY rang DESC, insee, page_pdf, id
@@ -412,7 +479,8 @@ def count_reglement(session: Session, q: str, insee: str | None = None,
                     zone: str | None = None) -> int:
     """OUT-PLU-008 — nombre TOTAL d'extraits correspondant à la requête (sans le plafond `limit`),
     pour que l'écran dise « N affichés sur M » et non le simple compte de la page servie."""
-    where, params = _search_where(q, insee, zone)
+    zones_ok = zones_apparentees(session, zone, insee) if zone else None
+    where, params = _search_where(q, insee, zones_ok, bool(zone))
     return int(session.execute(text(
         f"SELECT count(*) FROM plu_reglement_extrait WHERE {' AND '.join(where)}"),
         params).scalar() or 0)

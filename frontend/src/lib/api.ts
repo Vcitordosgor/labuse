@@ -838,6 +838,8 @@ export interface PluSearch {
   exceptions_zone?: { regle: string; texte: string; article: string | null; page_pdf: number | null; porte: string | null }[]
   // OUTIL-PLU-FIX-1 (LOT 5) — provenance DITE du bloc d'exceptions (calibrage, pas texte indexé).
   exceptions_source?: string | null
+  // OUTIL-PLU-FIX-2 (M4) — note de périmètre servie dans le payload (consommateur non-UI).
+  note_perimetre?: string | null
 }
 export interface PluCommune {
   insee: string; commune: string; statut: string; idurba?: string; millesime?: string

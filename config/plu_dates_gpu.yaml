@@ -28,7 +28,8 @@ communes:
   "97407": {publication_gpu: "2025-11-18",
             note: "dépôt actif portant annulation partielle (secteur portuaire) + jugement joint"}
   "97408": {publication_gpu: "2026-10-29",
-            procedures: [{type: "révision allégée", source: "relevé relecteur (La Possession)"}]}
+            procedures: [{type: "révision allégée", source: "relevé relecteur (La Possession)"}],
+            note: "Texte indexé = édition déc. 2025 (sur pièce) ; le lien « PDF ↗ » ouvre l'édition active juin 2026 (texte identique sur l'échantillon vérifié, pagination des ancres #page à confirmer entre éditions)."}
   "97409": {note: "PLU 2019 opposable (mairie). Aucun lot téléchargeable renvoyé par le GPU — lien mairie."}
   "97410": {publication_gpu: "2020-09-22",
             modifications: [{type: "modification", date: "2026-06-30",

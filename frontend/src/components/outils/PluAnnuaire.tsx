@@ -169,11 +169,9 @@ export function PluAnnuaire() {
       {/* ── ÉTAPE 2 — commune SERVABLE, voie à choisir : PLU intégral / Rechercher ── */}
       {insee && servable && mode === 'choix' && (
         <div data-plu-choix className="flex flex-col gap-2">
-          <a data-plu-integral href={cur?.source_url ?? '#'} target="_blank" rel="noreferrer"
-            className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2.5">
-            <span className="text-[12.5px] font-medium text-mint">Télécharger le PLU intégral (.zip) ↓</span>
-            <span className="text-[10px] leading-snug text-txt-dim">Pack officiel Géoportail de l’Urbanisme — règlement, zonage, annexes{cur?.document ? ` · contient ${cur.document}` : ''}</span>
-          </a>
+          {/* OUTIL-PLU-FIX-2 (C6) — le lien « intégral » est résolu EN DIRECT sur le GPU (comme pour une
+              commune en révision), pas gelé à l'ingestion : si le dépôt actif change, le lien suit. */}
+          <PackIntegral insee={insee} fallback={cur?.source_url ?? undefined} document={cur?.document ?? undefined} />
           <button data-plu-rechercher onClick={() => setMode('recherche')}
             className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-left">
             <span className="text-[12.5px] font-medium text-txt">Rechercher dans le PLU →</span>
@@ -219,6 +217,9 @@ export function PluAnnuaire() {
                 {cur.pct_indexe < 100 ? ' — le reste est dans le PDF intégral.' : '.'}
               </div>
             )}
+            {/* OUTIL-PLU-FIX-2 (C7) — note d'édition (ex. La Possession : texte indexé déc. 2025, lien PDF
+                juin 2026) servie aussi sur une commune SERVABLE, pas seulement en révision. */}
+            {cur?.note_doc && <div className="mt-0.5 text-cp-amber">{cur.note_doc}</div>}
           </div>
           <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
             {/* RETOURS-15 C1 (P1) — le bouton « ← Voies » est retiré de l'annuaire (demande Vic). */}
@@ -261,7 +262,10 @@ export function PluAnnuaire() {
             <ErrorState message="Erreur de recherche." retry={() => run()} />
           )}
 
-          {d?.message && (
+          {/* OUTIL-PLU-FIX-2 (M2) — le 🕓 bandeau de STATUT ne vaut que pour RNU / révision (retour
+              anticipé sans n_total) ; un 0-résultat de recherche (n_total === 0) passe par le bloc
+              « aucun extrait » ci-dessous, qui garde le lien « Ouvrir le règlement ». */}
+          {d?.message && d.n_total == null && (
             <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11.5px] text-txt-mut">
               <span className="mr-1">🕓</span>{d.message}
             </div>
@@ -270,7 +274,7 @@ export function PluAnnuaire() {
           {/* OUTIL-PLU-FIX-1 (LOT 5) — le bloc d'exceptions est rendu HORS du bloc « résultats » : il
               s'affiche MÊME sans extrait trouvé (un filtre de zone erroné ne masque plus l'exception),
               et il DIT sa provenance (calibrage LABUSE, pas le texte indexé). */}
-          {d && !d.message && d.exceptions_zone && d.exceptions_zone.length > 0 && (
+          {d && d.n_total != null && d.exceptions_zone && d.exceptions_zone.length > 0 && (
             <div data-plu-exceptions className="rounded-lg border border-amber/40 bg-amber/10 px-3 py-2">
               <div className="mb-1 text-[11px] font-medium text-amber">
                 Exception{d.exceptions_zone.length > 1 ? 's' : ''} au règlement — zone {zone}
@@ -292,7 +296,7 @@ export function PluAnnuaire() {
           {/* OUTILS-P1-1 (pt 9) — recherche VIDE sur un document (partiellement) indexé : on le DIT
               honnêtement (« Aucun extrait trouvé dans les documents indexés ») et on offre d'ouvrir le
               règlement intégral — le reste du règlement, non indexé, peut contenir d'autres passages. */}
-          {d && !d.message && d.resultats.length === 0 && (
+          {d && d.n_total != null && d.resultats.length === 0 && (
             <div data-plu-aucun className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11px] leading-snug text-txt-mut">
               <p>Aucun extrait trouvé dans les documents indexés{zone ? <> pour la zone <span className="font-mono text-mint">{zone}</span></> : null}.</p>
               <p className="mt-1 text-[10px] text-txt-dim">La recherche porte sur les articles indexés par LABUSE ; le règlement complet peut contenir d’autres passages.</p>
@@ -303,7 +307,7 @@ export function PluAnnuaire() {
             </div>
           )}
 
-          {d && !d.message && d.resultats.length > 0 && (
+          {d && d.n_total != null && d.resultats.length > 0 && (
             <div data-plu-results className="flex flex-col gap-2">
               <div className="text-[11px] text-txt-mut">
                 {/* OUT-PLU-008 + LOT 5 — « X–Y sur M » : le décalage de page est DIT (jamais le compte
@@ -385,6 +389,26 @@ function PluExtraitCard({ r, premier = false }: { r: PluExtrait; premier?: boole
         {r.pagination_note && <span className="text-st-creuser">⚠ {r.pagination_note}</span>}
       </div>
     </div>
+  )
+}
+
+// OUTIL-PLU-FIX-2 (C6) — bouton « PLU intégral (.zip) » d'une commune SERVABLE, résolu EN DIRECT sur le
+// GPU (comme PackVigueur) : plus de lien gelé à l'ingestion. On garde le lien stocké en REPLI (GPU
+// injoignable) et on ALERTE si le dépôt actif du GPU a dérivé depuis l'ingestion (idurba différent).
+function PackIntegral({ insee, fallback, document }: { insee: string; fallback?: string; document?: string }) {
+  const pack = useQuery({ queryKey: ['plu-pack', insee], queryFn: () => pluAnnuairePack(insee), staleTime: 300_000 })
+  const p = pack.data
+  const live = p?.disponible && p.url ? p.url : undefined
+  const href = live ?? fallback ?? '#'
+  return (
+    <a data-plu-integral href={href} target="_blank" rel="noreferrer"
+      className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2.5">
+      <span className="text-[12.5px] font-medium text-mint">Télécharger le PLU intégral (.zip) ↓</span>
+      <span className="text-[10px] leading-snug text-txt-dim">
+        Pack officiel Géoportail de l’Urbanisme — règlement, zonage, annexes{document ? ` · contient ${document}` : ''}
+        {live ? ' · lien vérifié en direct' : (pack.isLoading ? ' · vérification du pack actif…' : '')}
+      </span>
+    </a>
   )
 }
 

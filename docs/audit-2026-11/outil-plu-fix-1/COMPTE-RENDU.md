@@ -1,9 +1,75 @@
-# OUTIL-PLU-FIX-1 — rendre l'outil PLU digne d'un promoteur
+# OUTIL-PLU-FIX-2 — réponse à la relecture indépendante (`~/Desktop/relecture-plu-1.md`)
+
+> La relecture a raison sur toute la ligne, y compris sur ma classification fautive de B1 : je l'avais
+> dit « non bloquant · quelques pages (p.2/p.19) » ; l'écart réel allait **jusqu'à 143 pages / 143 Ko**
+> dans UN extrait (Saint-Benoît), et **20–69 % des résultats citaient une page où le mot n'était pas**.
+> C'est corrigé. Tous les chiffres ci-dessous sont **tirés de l'API** `/modules/plu-annuaire/search`
+> (`n_total`) ou mesurés base↔PDF, pas de tests. Réingestion FIX-2 : **6407 extraits, 21 communes**.
+
+### Bloquants
+
+- **B1 — page citée (cible : 0 % de résultats mal paginés).** Découpage **réécrit** : on coupe à
+  l'UNION des frontières d'en-tête ET de **page**, puis au sous-article/paragraphe avec **taille max
+  2800 c.** ; chaque extrait est **borné à une page** (`page_debut == page_fin == page_pdf`) → la page
+  citée EST celle du texte. `src/labuse/ingestion/plu_ingest.py:_split_articles` (+ colonnes
+  `page_debut`/`page_fin`). **Mesuré sur l'API + PDF, 6 termes × 21 communes : 0/4092 = 0 %**
+  (L'Étang-Salé 69 %→0, Saint-Benoît 46 %→0). Plus aucun bloc > 2800 c. ni > 1 page.
+- **B2 — filtre par zone (A ↛ AU).** La règle d'apparentement est **classe-consciente** : on ne matche
+  plus par `LIKE 'A%'`. `zones_apparentees`/`_zone_match` (`plu_ingest.py`) : deux zones s'apparentent
+  si l'une est ancêtre de l'autre OU si elles partagent un ancêtre **plus profond que la classe**.
+  Mesuré : `zone=A` à Saint-Paul → **n_total=1, {A:1}, 0 AU** ; **0 croisement de classe** sur A/AU/N/U
+  × 21 communes.
+- **B3 — articles tronqués par de fausses en-têtes en prose.** `_HEADER` n'est plus insensible à la
+  casse : un en-tête est une ligne de TITRE (majuscule initiale), pas « (voir article 13.3) », « la
+  zone n'ont pas », « sous le titre IV » (prose en minuscule) ; + garde anti-renvoi `_looks_cross_ref`.
+  **Extraits bidon : 76 → 0** (`article N.N` / `zone de|du|souple` en minuscule) ; **Article 7 de
+  Saint-Paul entier** (contient « (voir article 13.3) », n'est plus coupé dessus).
+
+### À corriger
+
+- **C1 — `zone=AU3c` → 0.** Corrigé par `_zone_match` : `AU3c` rejoint la famille `AU3` (→ `AU3ST`),
+  **comme `AU3`** (n_total identiques), sans ramener AU1/AU4/AU5.
+- **C2 — 31–41 % d'extraits sans étiquette inatteignables au filtre.** Le filtre de zone inclut
+  désormais les extraits `zone IS NULL` (dispositions GÉNÉRALES, communes à toute zone). Le Port
+  `zone=UB` : n_total=45 **dont 16 sans étiquette** (avant : cachés).
+- **C3 — gros blocs mal-étiquetés (Article N 14 sur 50 p.).** Supprimés par B1 (plus de bloc multi-page) ;
+  l'étiquette vient d'abord de la **bannière de page** (per-page) puis de l'en-tête. Résidu honnête :
+  une page d'annexe sans bannière peut hériter la dernière zone — page toujours citée juste.
+- **C4 — % de couverture gonflé.** Métrique refaite : une page est « indexée » si un extrait y est
+  **réellement cité** (plus de span) et une « page de texte » est une page à **corps réel** (après
+  retrait du chrome — sinon La Possession p.110-164, en-tête seul, faussait). `plu_couverture` re-peuplée.
+- **C5 — matrice *emprise* fausse.** Corrigée ci-dessous, re-tirée de l'API (voir tableau point 5).
+- **C6 — lien intégral gelé.** Le bouton « PLU intégral (.zip) » d'une commune servie est maintenant
+  **résolu en direct** sur le GPU (`PackIntegral`, `PluAnnuaire.tsx`), repli sur le lien stocké si GPU
+  injoignable.
+- **C7 — La Possession, éditions.** `pdf_url` = édition active juin 2026 (seule servie en direct) ; le
+  texte indexé vient de l'édition déc. 2025 (sur pièce). **Note visible** à l'écran : « texte indexé déc.
+  2025 ; lien PDF juin 2026 ; pagination des ancres à confirmer entre éditions » (`plu_dates_gpu.yaml`).
+- **C8 — bloc d'exceptions « même à 0 résultat ».** Formulation corrigée : le bloc est bien rendu hors
+  du bloc résultats ET sa **provenance est dite** (calibrage, pas texte indexé) ; il n'existe toutefois
+  QUE pour les zones calibrées (`config/plu_destinations`), indépendamment de n — dit honnêtement ici.
+
+### Mineurs
+
+- **M1 — « recul ».** Synonymes serveur : `recul` → `recul OR retrait OR implantation OR limites`.
+  Saint-Louis UA : `recul` **0 → 16**.
+- **M2 — message 0 résultat.** L'API renvoie désormais un `message` explicite (« Aucun extrait indexé
+  ne correspond à … ») ; le front garde le lien « Ouvrir le règlement ».
+- **M3 — réf. bidon Saint-Denis piscine.** Résolu par B1/B3 (plus de `Zone N`/`Zone souple` bidon).
+- **M4 — note de périmètre hors UI.** Servie dans le payload (`note_perimetre`), pas seulement à l'écran.
+- **M5 — chemins doc.** La route réelle est `/modules/plu-annuaire/…` (préfixe `/modules`). Casse
+  d'idurba `plu`/`PLU` sans effet (comparaison insensible à la casse). Signalé.
+
+---
+
+# OUTIL-PLU-FIX-1 — rendre l'outil PLU digne d'un promoteur (contre-audit initial)
 
 > Branche `fix/outil-plu-1` (worktree `~/Desktop/labuse-plu-fix`), API 7480 / front 10280. Réponse
 > **point par point à la liste fermée** du contre-audit (`~/Desktop/audit-outils/01-PLU-ASTRA.md`).
 > Base locale `labuse` (PostGIS, user OS `openclaw`). Aucune prod touchée, aucun merge dans `main`.
 > Captures avant/après : `~/Desktop/outil-plu-fix-1/` (fichiers `00-*` avant relecteur, `01-04-apres-*`).
+> **NB : les chiffres ci-dessous sont ceux de FIX-1 ; la section FIX-2 en tête les met à jour (matrice,
+> couverture, étiquettes) après la réingestion à découpage borné-page.**
 
 Interpréteur des rejeux : `PYTHONPATH=src ~/Desktop/labuse/.venv/bin/python` ·
 requêtes : `psql -h localhost -U openclaw -d labuse`.
@@ -195,20 +261,27 @@ Uavap »). **Aucun héritage glissant** vers les dispositions générales (évit
   filtre de zone erroné ne le masque plus) et **DIT sa provenance** : *« Exceptions issues du CALIBRAGE
   LABUSE (config/plu_destinations), pas du texte indexé »* (`exceptions_source`).
 
-**Matrice 6 communes × 6 termes — avant / après** (compte d'extraits correspondants) :
+**Matrice 6 communes × 6 termes.**
 
-| Commune | station. | hauteur | emprise | recul | clôture | piscine |
+> ⚠️ **CORRIGÉ en OUTIL-PLU-FIX-2 (C5).** La colonne *emprise* de la version initiale de ce tableau
+> était FAUSSE (sous-estimée, 6/6 communes) — elle venait d'un test, pas de l'API. Les chiffres
+> ci-dessous sont RE-TIRÉS DE L'API `/modules/plu-annuaire/search` (`n_total`) **après la réingestion
+> FIX-2** (découpage borné à la page → comptes par extrait-de-page, mécaniquement plus élevés ;
+> *recul* inclut désormais les synonymes retrait/implantation/limites, cf. M1). Voir la section
+> OUTIL-PLU-FIX-2 en tête de document.
+
+| Commune | station. | hauteur | emprise | recul* | clôture | piscine |
 |---|---|---|---|---|---|---|
-| Saint-Denis | 55→59 | 54→57 | 23→35 | 32→35 | 18→19 | **0→2** |
-| La Possession | 40→**20** | 66→**33** | 54→**30** | 30→**15** | 16→**8** | 30→**15** |
-| Saint-Paul | 48→52 | 86→94 | 48→61 | 57→61 | **82→88** | 46→46 |
-| Le Tampon | 30→31 | 31→32 | 34→37 | 7→7 | 20→21 | 8→8 |
-| Trois-Bassins | 24→24 | 31→31 | 9→10 | 18→18 | 15→15 | 11→11 |
-| Entre-Deux | 20→21 | 16→17 | 11→18 | 5→5 | 5→5 | 6→6 |
+| Saint-Denis | 74 | 64 | 67 | 124 | 22 | 2 |
+| La Possession | 36 | 47 | 56 | 96 | 16 | 15 |
+| Saint-Paul | 101 | 150 | 112 | 318 | 138 | 46 |
+| Le Tampon | 55 | 44 | 68 | 136 | 32 | 8 |
+| Trois-Bassins | 33 | 40 | 33 | 99 | 17 | 12 |
+| Entre-Deux | 25 | 21 | 29 | 69 | 14 | 6 |
 
-(La Possession **baisse de moitié** = dédoublonnage ; les autres montent légèrement = texte récupéré ;
-piscine Saint-Denis 0→2 = couverture récupérée. Les colonnes « Zone U / Zone AU » du relecteur
-mesuraient un code exact précis ; non reproduites telles quelles — le filtre par famille les couvre.)
+(*recul* = synonymes activés. La Possession reste dédupliquée — `count(DISTINCT idurba)=1`. Les colonnes
+« Zone U / Zone AU » du relecteur mesuraient un code exact ; non reproduites — le filtre par famille,
+classe-conscient, les couvre, cf. B2/C1.)
 
 ---
 

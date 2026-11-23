@@ -3220,6 +3220,11 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
     q = (q or "").strip()
     if not q:
         raise HTTPException(400, "Requête vide.")
+    # OUTIL-PLU-FIX-2 (M1) — synonymes : les règlements écrivent « implantation / retrait / limites
+    # séparatives », jamais « recul ». Un promoteur qui tape « recul » ne doit pas tomber sur du vide.
+    q_fts = q
+    if re.search(r"(?i)\brecul", q):
+        q_fts = f"{q} OR retrait OR implantation OR limites"
     if insee:
         mil = _plu_millesimes().get(insee)
         if mil and mil["statut"] == "rnu":
@@ -3233,10 +3238,10 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                                 f"en mairie (complétion auto à l'approbation, veille M41).") if rev else
                                (f"{nm} : règlement non ingéré (hors corpus) — rien à servir. "
                                 f"Voir /plu-annuaire/communes.")}
-    res = search_reglement(db, q, insee, limit=limit, zone=zone, offset=offset)
+    res = search_reglement(db, q_fts, insee, limit=limit, zone=zone, offset=offset)
     # OUT-PLU-008 — `n_total` = total des correspondances (sans plafond) ; `affiches` = page servie.
     # L'écran dit « N affichés sur M » plutôt que de présenter le compte plafonné comme le total.
-    n_total = count_reglement(db, q, insee, zone=zone)
+    n_total = count_reglement(db, q_fts, insee, zone=zone)
     for r in res:
         r["gpu_consult"] = "https://www.geoportail-urbanisme.gouv.fr/"
         # RETOURS-23 (pt 6) — titre « en clair » + corps (aperçu sans le titre) pour la carte d'extrait.
@@ -3267,9 +3272,19 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                          "indexé — vérifiez au règlement.") if exceptions_zone else None
     # OUT-PLU-008 — `n` = extraits AFFICHÉS (page servie, plafonnée par `limit`), `n_total` = total réel
     # des correspondances. L'écran dit « N affichés sur M » (jamais le compte plafonné pris pour le total).
+    # OUTIL-PLU-FIX-2 (M2) — message explicite quand rien ne correspond (plus seulement le disclaimer).
+    # (M4) — note de PÉRIMÈTRE servie dans le payload (pas seulement dans l'UI) : un consommateur non-UI
+    # doit savoir que la recherche communale ne vérifie pas prescriptions/servitudes/PPR d'une parcelle.
+    message = None
+    if n_total == 0:
+        message = (f"Aucun extrait indexé ne correspond à « {q} »"
+                   + (f" en zone {zone}" if zone else "")
+                   + " — le règlement complet (PDF) peut contenir d'autres passages.")
     return {"query": q, "insee": insee, "n": len(res), "n_total": n_total,
-            "limit": limit, "offset": offset,
+            "limit": limit, "offset": offset, "message": message,
             "tronque": n_total > len(res), "resultats": res,
             "exceptions_zone": exceptions_zone, "exceptions_source": exceptions_source,
+            "note_perimetre": ("Recherche communale (texte du règlement) : ne vérifie pas, à la parcelle, "
+                               "les prescriptions graphiques, les servitudes (SUP) ni le PPR."),
             "avis": "Verbatim du règlement opposable (source GPU). Vérifiez toujours au document "
                     "(lien) ; ceci n'est pas un conseil juridique."}

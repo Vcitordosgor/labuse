@@ -100,10 +100,19 @@ def main() -> int:
             continue
         d = fitz.open(str(cands[-1]))
         n = d.page_count
-        txt = [i + 1 for i in range(n) if len(d[i].get_text().strip()) > 40]
+        # OUTIL-PLU-FIX-2 (C4) — « page de texte » = page avec un CORPS réel APRÈS retrait du chrome
+        # (en-têtes/pieds courants). Une page qui ne porte que le bandeau répété (ex. La Possession
+        # p.110-164, ~70 c. d'en-tête, zéro corps) n'est PAS du texte à indexer : ne pas la compter au
+        # dénominateur (sinon couverture faussement basse).
+        clean, _zb = P._clean_pages(P._pages(str(cands[-1])))
+        txt = [i + 1 for i in range(n) if len(clean[i].strip()) > 40]
         img = [i + 1 for i in range(n)
-               if len(d[i].get_text().strip()) <= 40 and len(d[i].get_images()) > 0]
-        idx = _pages_couvertes(str(cands[-1]))      # pages couvertes par SPAN d'extrait
+               if len(clean[i].strip()) <= 40 and len(d[i].get_images()) > 0]
+        # OUTIL-PLU-FIX-2 (C4) — couverture HONNÊTE : une page est « indexée » si un extrait y est
+        # RÉELLEMENT cité (page_pdf), pas si elle tombe dans le SPAN d'un gros bloc. Les extraits étant
+        # bornés à la page (B1), page_pdf == la page du texte → plus de gonflage par blocs fusionnés.
+        idx = {int(r[0]) for r in s.execute(text(
+            "SELECT DISTINCT page_pdf FROM plu_reglement_extrait WHERE insee=:i"), {"i": insee})}
         txt_idx = sorted(set(txt) & idx)
         absentes = [p for p in txt if p not in idx]
         pct = round(100 * len(txt_idx) / len(txt)) if txt else 0
