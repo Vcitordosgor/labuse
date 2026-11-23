@@ -5,7 +5,7 @@ import { Badge } from '../ui/Badge'
 import { Chevron } from '../ui/Chevron'
 import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, docDossierUrl, getDossierStatut, getFaisabilite, getFiche, getGabarit, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, docDossierUrl, getDossierStatut, getFaisabilite, getFiche, getGabarit, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, modParcelleTitulaires, patchPipeline, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
 // DOCS-FIX-1 (P3/P4) — ouverture propre des documents de la fiche (fetch + blob + attente + erreur FR
 // au toast), le MÊME comportement que la page Docs et que le Bilan. Plus de lien <a> qui ouvre un
 // onglet blanc puis du JSON sur erreur. P11 — URLs par les builders encodés (docDossierUrl…), plus de littéral.
@@ -406,6 +406,33 @@ function ProjetButton({ idu }: { idu: string }) {
 // pour le bloc Signaux du haut, retiré (doublon du tiroir « Dispositifs et périmètres », qui porte
 // EBC/ER avec leur contexte). Plus aucun lecteur → fonction retirée.
 
+
+/** SCAN-FIX-1 (bloquant 1, fiche) — ligne DISCRÈTE « + N autres titulaires » dans le tiroir Identité.
+ *  Le fichier DGFiP porte souvent plusieurs titulaires par parcelle (gestionnaire, bailleur à
+ *  construction, usufruitier…) que le titulaire principal masque ; on le DIT sans encombrer, détail
+ *  (nom · droit) derrière le « i ». Endpoint dédié à l'écran (n'alimente aucun export). Rien si 0. */
+function AutresTitulaires({ idu }: { idu: string }) {
+  const q = useQuery({ queryKey: ['parcelle-titulaires', idu], queryFn: () => modParcelleTitulaires(idu) })
+  const n = q.data?.n_autres ?? 0
+  if (n <= 0) return null
+  const liste = q.data!.titulaires
+  return (
+    <Lignes>
+      <Ligne label="Autres titulaires" valeur={<>
+        + {n} titulaire{n > 1 ? 's' : ''} (droits)
+        <InfoI aria="Détail des autres titulaires de la parcelle" tip={
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span>Autres titulaires au fichier DGFiP (hors titulaire principal) :</span>
+            {liste.map((t, i) => (
+              <span key={i}>• {t.denomination ?? '—'} — {t.droit_label ?? t.droit_code ?? 'droit inconnu'}
+                {t.siren ? ` (${t.siren_reel ? `SIREN ${t.siren}` : `${t.siren}, identifiant fiscal`})` : ''}</span>
+            ))}
+          </div>
+        } />
+      </>} />
+    </Lignes>
+  )
+}
 
 /** M11 · SURFACE C — onglet FAISABILITÉ : le résultat, le calcul TRACÉ étape par étape (déterministe,
  *  exact, sourcé), l'explication IA À LA DEMANDE (violet premium, ancrée sur les steps). M60 P1a : la
@@ -1590,6 +1617,11 @@ export function Fiche({ idu }: { idu: string }) {
                           {pm.groupe_label && <Ligne label="Groupe" valeur={pm.groupe_label} />}
                         </Lignes>
                       )}
+                      {/* SCAN-FIX-1 (bloquant 1, fiche) — ligne DISCRÈTE « + N autres titulaires » (le fichier
+                          DGFiP porte souvent plusieurs titulaires par parcelle : gestionnaire, bailleur à
+                          construction, usufruitier… que le titulaire principal affiché ci-dessus masque). Le
+                          détail (nom · droit) est derrière le « i ». Écran seulement (endpoint dédié). */}
+                      <AutresTitulaires idu={idu} />
                       {proc && (
                         <FactNote>{proc.libelle} (Sourcé {proc.etats.map((e) => e.source).filter((s, i, a) => a.indexOf(s) === i).join(' / ')}) — {proc.note}</FactNote>
                       )}

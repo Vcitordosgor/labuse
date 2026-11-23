@@ -1072,9 +1072,17 @@ export interface OperationPromoteur {
   annee: number | null; etat: string | null; etat_libelle: string | null; lon: number | null; lat: number | null
   idus: string[]; libelle: string; radar_bien_id: number | null; radar_cite: boolean
   programme?: ProgrammeLie | null
+  // SCAN-FIX-1 (bloquants 2-4)
+  nb_logements_annules: number; n_permis_pc: number; n_permis_dp: number; n_permis_annules: number
+  n_sans_petitionnaire: number; span_m: number; span_jours: number; ambigu: boolean; annule: boolean
+}
+export interface CartePromoteur {
+  siren: string | null; denomination: string | null; categorie: string
+  n_operations: number; n_permis: number; nb_logements: number; nb_logements_annules: number; ambigu: boolean
 }
 export interface VeillePromoteurs {
   n_total: number; n_servi: number; tronquee: boolean; plafond: number; n_logements_total: number
+  n_logements_annules: number; n_operations_ambigues: number; par_promoteur: CartePromoteur[]
   categories: { cle: string; label: string }[]; millesime: string | null
   regle: { contiguite_m: number; periode_mois: number; phrase: string }
   operations: OperationPromoteur[]; note: string
@@ -1093,6 +1101,9 @@ export interface PromoteurFrise {
   siren: string; denomination: string | null; n_operations: number; n_logements: number
   // RETOURS-13 R29 — le chiffre dit ce qu'il compte + activité de pétitionnaire (Sitadel 2013+).
   perimetre_note: string
+  // SCAN-FIX-1 (bloquant 2) — deux listes nommées + part pétitionnaire inconnu.
+  sur_son_foncier: { n_operations: number; n_permis: number; n_logements: number; n_logements_annules: number; n_permis_sans_petitionnaire: number; part_petitionnaire_inconnu: number | null; note: string }
+  deposes_petitionnaire: { n_permis: number; n_logements: number; note: string }
   petitionnaire: { n_permis: number; n_logements: number; note: string }
   filiales_identifiees: { siren: string; nom: string | null; n_permis: number; n_logements: number }[]
   frise: { annee: number; n_operations: number; n_logements: number }[]
@@ -1814,6 +1825,8 @@ export const getSourcesCalibrages = () => j<Record<string, SourceCalibrage[]>>('
 // ── Modules outils (Vague 1) ──
 // M129-C (Vic 19/08/2026) : modDivision retiré — division hors produit (endpoint dormant).
 export const modPatrimoineSearch = (q: string) => j<{ resultats: { siren: string; nom: string; n: number; siren_reel: boolean }[]; total: number; affiches: number; masques: number; plafond: number }>(`/modules/patrimoine/search?q=${encodeURIComponent(q)}`)
+// SCAN-FIX-1 (fiche, écran seul) — autres titulaires d'une parcelle (hors principal) avec leur droit DGFiP.
+export const modParcelleTitulaires = (idu: string) => j<{ n_autres: number; titulaires: { siren: string | null; denomination: string | null; droit_code: string | null; droit_label: string | null; siren_reel: boolean }[] }>(`/modules/parcelle/${encodeURIComponent(idu)}/titulaires`)
 // RETOURS-11 (T4) — liste PAGINÉE (limit/offset) : l'endpoint sert déjà des pages (géom calculée pour la
 // page seulement) ; le front tranche par 200 via « Voir plus » (jamais de dump). Défauts = 1re page 200.
 export const modPatrimoine = (siren: string, limit = 200, offset = 0, blocsLimit?: number) =>
