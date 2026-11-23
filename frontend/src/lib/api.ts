@@ -829,8 +829,10 @@ export interface PluExtrait {
   pagination_ambigue: boolean; pagination_note?: string; source_url: string; gpu_consult?: string
   // OUTIL-PLU-FIX-1 (LOT 2) — lien DIRECT vers le règlement écrit (.pdf), distinct du pack .zip.
   pdf_url?: string | null
-  // OUTIL-PLU-FIX-3 — l'extrait est l'ARTICLE ENTIER ; page_pdf = page du mot ; page_debut/fin = étendue.
-  page_debut?: number | null; page_fin?: number | null; page_match?: number | null; extrait?: string
+  // OUTIL-PLU-FIX-3/4 — l'extrait est l'ARTICLE ENTIER ; page_pdf = page du mot ; page_debut/fin =
+  // étendue ; pages_match = TOUTES les pages où une forme du mot apparaît (pluriels compris).
+  page_debut?: number | null; page_fin?: number | null; page_match?: number | null
+  pages_match?: number[] | null; extrait?: string
 }
 export interface PluSearch {
   query: string; insee: string | null; n: number; n_total?: number; tronque?: boolean; resultats: PluExtrait[]; message?: string; avis?: string
@@ -853,6 +855,8 @@ export interface PluCommune {
   // OUTIL-PLU-FIX-1 (LOT 2) — règlement écrit direct (.pdf) ; (LOT 3) — couverture d'indexation.
   pdf_url?: string | null
   pct_indexe?: number | null; pages_image?: number | null; pages_texte?: number | null; pages_total?: number | null
+  // OUTIL-PLU-FIX-4 (critère 3) — part indexée à l'article vs au chapitre + drapeau peu structuré.
+  pct_article?: number | null; pct_chapitre?: number | null; peu_structure?: boolean | null
   // OUTIL-PLU-FIX-1 (LOT 1) — dates DISTINCTES + actes postérieurs + inventaire des procédures (sourcés).
   date_approbation?: string | null; publication_gpu?: string | null; edition?: string | null
   modifications?: { type: string; date?: string; source?: string; note?: string }[] | null

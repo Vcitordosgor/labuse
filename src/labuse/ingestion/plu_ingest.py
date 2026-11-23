@@ -66,7 +66,9 @@ _HEADER = re.compile(
     r'|(?:ZONE|Zone)\s+[0-9A-Za-z]{1,6}\b'
     r'|(?:CHAPITRE|TITRE|SECTION|Chapitre|Titre|Section)\s+[IVXLC0-9]+\b'
     r')')
-_ZONE_FROM_ART = re.compile(r'(?i)(?:ARTICLE)\s+([A-Za-z]{1,4})\s*[-–]?\s*\d')
+# OUTIL-PLU-FIX-4 (critère 4) — tolère le POINT entre la classe et le numéro (« Article N.1 », « N.2 »
+# à Saint-Denis) : sinon z_ref=None → repli bannière → zone fausse (13 « Article N.x » étiquetés A).
+_ZONE_FROM_ART = re.compile(r'(?i)(?:ARTICLE)\s+([A-Za-z]{1,4})\s*[-–.]?\s*\d')
 _ZONE_FROM_ZONE = re.compile(r'(?i)ZONE\s+([0-9A-Za-z]{1,5})')
 # référence croisée dans la prose juste avant le « titre » : « (voir Article… », « cf. Article… »,
 # « au titre… », « à l'article… » → l'en-tête matché n'est pas un vrai début d'article.
@@ -254,15 +256,35 @@ def _pagination_ambigue(pages: list[str]) -> bool:
     return False
 
 
+# OUTIL-PLU-FIX-4 (critère 3) — niveaux de structure SOUS l'article, pour re-découper un GROS BLOC
+# (règlement scanné / en-tête d'article suivant non détecté) au niveau qui existe dans le document :
+# section/chapitre/sous-section, titre numéroté (« 1 - OCCUPATIONS »), sous-article (« 6.3 »), ou
+# intertitre tout en capitales. N'est appliqué qu'aux blocs longs (≥ 6 pages) → les articles normaux
+# restent entiers (D1 préservé : l'exception reste avec sa règle).
+_SUBHEAD = re.compile(
+    r'(?m)^[ \t]*('
+    r'(?:SECTION|Section|CHAPITRE|Chapitre|SOUS-SECTION|Sous-section)\s+[IVXLC0-9]'
+    r'|\d{1,2}\s*[-–.)]?\s*[A-ZÀ-Ÿ]{2,}'       # titre numéroté « 6 IMPLANTATION », « 2. OCCUPATION »
+    r'|[A-ZÀ-Ÿ][A-ZÀ-Ÿ0-9 \-\'’/]{10,}\s*$'    # intertitre tout en capitales
+    r')')
+# NB : on NE découpe PAS au sous-article « 6.3 » (séparerait l'exception de sa règle — D1) : l'article
+# et ses sous-points 6.1/6.2/6.3 restent ensemble ; on ne redécoupe qu'au niveau article/section/titre.
+_BLOC_SEUIL_PAGES = 6                            # au-delà → on tente le sous-découpage
+
+
 def _split_articles(path: str) -> tuple[list[dict], bool]:
-    """OUTIL-PLU-FIX-3 — l'extrait est l'ARTICLE ENTIER : d'un en-tête d'article au suivant, QUEL QUE
+    """OUTIL-PLU-FIX-3/4 — l'extrait est l'ARTICLE ENTIER : d'un en-tête d'article au suivant, QUEL QUE
     SOIT le nombre de pages, avec ses sous-articles, ses « Toutefois… » et ses exceptions. JAMAIS coupé
     par une page ni par une taille. La PAGE est une donnée à part : `page_map` = suite de (offset dans le
     texte → page PDF), d'où `page_debut`/`page_fin` et, à la recherche, la page EXACTE du mot.
 
-    Étiquette de zone (point 5) : d'ABORD l'en-tête de l'article (« ARTICLE N 1 » → N), ensuite le
-    chapitre (titre « ZONE … »), et seulement À DÉFAUT la bannière de page. L'en-tête PRIME sur la
-    bannière (corrige E2 : plus de « ARTICLE N 1..6 » rangés en AUES)."""
+    GROS BLOCS (critère 3) : quand l'en-tête d'article suivant n'est pas détecté (scan), un bloc ≥ 6
+    pages est re-découpé au NIVEAU QUI EXISTE (section/titre numéroté/sous-article/intertitre) ; la zone
+    du bloc est conservée (un bloc ne contient jamais plusieurs zones). Ce qui reste > 10 pages (aucun
+    niveau plus fin) est laissé entier et SIGNALÉ.
+
+    Étiquette de zone (point 5) : d'ABORD l'en-tête de l'article (« ARTICLE N 1 » → N), ensuite la
+    bannière de page. L'en-tête PRIME sur la bannière (corrige E2)."""
     import bisect
     pages = _pages(path)
     ambigu = _pagination_ambigue(pages)       # détecté sur le texte brut (numéros imprimés)
@@ -285,7 +307,9 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
     head_ref = {m.start(): _norm(m.group(1)) for m in heads}
     head_pos = sorted(head_ref)
 
-    def _emit(a: int, b: int, ref: str | None) -> dict | None:
+    _UNSET = object()
+
+    def _emit(a: int, b: int, ref: str | None, zone=_UNSET) -> dict | None:
         raw = flat[a:b]
         texte = raw.strip()
         if not texte:
@@ -295,13 +319,13 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
         # entrée de SOMMAIRE (points de suite « ZONE AU1 …… 3 ») ou titre de zone nu : pas un extrait.
         if (is_zone_title and letters < 40) or (texte.count('.') > letters and letters < 40):
             return None
-        zm = _ZONE_FROM_ART.match(ref or "") or _ZONE_FROM_ZONE.match(ref or "")
-        z_ref = _valid_zone(zm.group(1)) if zm else None
+        if zone is _UNSET:
+            # PRIORITÉ (points 5 / E2) : l'EN-TÊTE DE L'ARTICLE d'abord (« ARTICLE N 1 » → N), sinon la
+            # bannière de la page de début. Pas de « zone de chapitre » héritée du sommaire.
+            zm = _ZONE_FROM_ART.match(ref or "") or _ZONE_FROM_ZONE.match(ref or "")
+            z_ref = _valid_zone(zm.group(1)) if zm else None
+            zone = z_ref or zbanner[page_of(a) - 1]
         pg0 = page_of(a)
-        # PRIORITÉ (points 5 / E2) : l'EN-TÊTE DE L'ARTICLE d'abord (« ARTICLE N 1 » → N), sinon la
-        # bannière de la page de début. On n'utilise PAS de « zone de chapitre » héritée du sommaire
-        # (elle polluait : le dernier « ZONE N » du sommaire étiquetait tout le document en N).
-        zone = z_ref or zbanner[pg0 - 1]
         lead = len(raw) - len(raw.lstrip())
         pmap = [[0, pg0]]                        # page_map : offset dans `texte` → page PDF
         for o in page_off:
@@ -316,17 +340,38 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
                 "texte": texte, "doute": net < 25,
                 "doute_motif": "extrait quasi vide — page peut-être illisible/scannée, à vérifier au PDF" if net < 25 else None}
 
+    def _emit_block(a: int, b: int, ref: str | None) -> list[dict]:
+        """Émet l'article [a,b) ; si c'est un GROS BLOC (≥ seuil pages), le re-découpe au niveau interne
+        existant (critère 3), en conservant SA zone (un bloc = une zone)."""
+        e = _emit(a, b, ref)
+        if not e:
+            return []
+        if e["page_fin"] - e["page_debut"] < _BLOC_SEUIL_PAGES:
+            return [e]                           # article normal : entier (D1 préservé)
+        subs = [m.start() for m in _SUBHEAD.finditer(flat, a + 1, b)]
+        if not subs:
+            return [e]                           # aucun niveau plus fin : laissé entier (signalé)
+        cuts = sorted({a} | set(subs) | {b})
+        pieces = []
+        for x, y in zip(cuts, cuts[1:]):
+            if x == a:
+                sref = ref
+            else:
+                head_line = _norm(flat[x:min(y, x + 90)].splitlines()[0]) if flat[x:y].strip() else ""
+                sref = head_line[:60] or ref
+            pe = _emit(x, y, sref, zone=e["zone"])   # zone du bloc conservée (point 4)
+            if pe:
+                pieces.append(pe)
+        return pieces or [e]
+
     out: list[dict] = []
     first = head_pos[0] if head_pos else len(flat)
-    pre = _emit(0, first, None)                 # préambule / dispositions générales avant le 1er en-tête
-    if pre and len(re.sub(r'\s', '', pre["texte"])) >= 200:
-        out.append(pre)
+    # préambule avant le 1er en-tête (dispositions générales) : gardé seulement s'il est substantiel.
+    out.extend(e for e in _emit_block(0, first, None) if len(re.sub(r'\s', '', e["texte"])) >= 200)
     for a in head_pos:
         j = bisect.bisect_right(bounds, a)
         b = bounds[j] if j < len(bounds) else len(flat)
-        e = _emit(a, b, head_ref[a])
-        if e:
-            out.append(e)
+        out.extend(_emit_block(a, b, head_ref[a]))
     return out, ambigu
 
 
@@ -500,50 +545,78 @@ def _search_where(q: str, insee: str | None, zones_ok: list[str] | None,
     return where, params
 
 
-def locate_match(texte: str, page_map: list | None, terms: list[str]) -> tuple[int | None, str]:
-    """OUTIL-PLU-FIX-3 (points 2-3) — dans un article (possiblement multi-pages), situe la 1re
-    occurrence d'un des `terms` (insensible casse/accents), rend (page PDF du mot, extrait AUTOUR du
-    mot). Fonde la page citée et l'ancre `#page` sur la position RÉELLE du mot, pas sur la page de tête."""
-    import bisect
+def _ua1(s: str) -> str:
+    """unaccent + minuscule, LONGUEUR PRÉSERVÉE (1 car. → 1 car.) : les offsets restent alignés au texte."""
+    out = []
+    for ch in s.lower():
+        d = _ud.normalize("NFD", ch)
+        out.append(d[0] if d else ch)
+    return "".join(out)
 
-    def ua(s: str) -> str:
-        # unaccent 1:1 (longueur PRÉSERVÉE) : chaque caractère → sa base, sinon les offsets ne
-        # correspondraient plus au page_map (bug mesuré : 8 % de pages fausses).
-        out = []
-        for ch in s.lower():
-            d = _ud.normalize("NFD", ch)
-            out.append(d[0] if d else ch)
-        return "".join(out)
-    ut = ua(texte)
-    # on cite le mot SIGNIFICATIF, pas un mot-outil : « emprise au sol » → on situe « emprise »/« sol »,
-    # jamais « au » (qui est partout et ferait citer la mauvaise page). On garde les termes ≥ 4 lettres ;
-    # si aucun, on retombe sur tous.
-    toks = [ua(t).strip() for t in (terms or []) if len(ua(t).strip()) >= 2]
-    sig = [t for t in toks if len(t) >= 4] or toks
-    firsts = {}
-    for tu in sig:
-        i = ut.find(tu)
-        if i >= 0:
-            firsts[tu] = i
-    if not firsts:
-        best = 0
-    else:
-        # cite le CLUSTER : la position où le plus de mots cherchés sont PROCHES (l'expression
-        # « emprise au sol », « espaces verts » est servie à sa vraie page), à défaut la 1re occurrence.
-        def cluster(pos: int) -> int:
-            return sum(1 for v in firsts.values() if pos - 60 <= v <= pos + 260)
-        best = min(firsts.values(), key=lambda p: (-cluster(p), p))
+
+# mot, césure comprise : « station-\nnement » / soft-hyphen est UN mot.
+_WORD_RE = re.compile(r'[0-9A-Za-zÀ-ÿ]+(?:[­\-]\s*\n\s*[0-9A-Za-zÀ-ÿ]+)*')
+
+
+def _page_slices(texte: str, page_map: list | None) -> list[tuple[int, int | None, str]]:
+    """Découpe `texte` en (offset, page, texte_de_la_page) selon page_map (offsets→pages)."""
     pm = page_map or [[0, None]]
-    offs = [int(p[0]) for p in pm]
-    j = max(0, bisect.bisect_right(offs, best) - 1)
-    page = pm[j][1]
-    a, b = max(0, best - 120), min(len(texte), best + 220)
+    out = []
+    for i in range(len(pm)):
+        off = int(pm[i][0])
+        end = int(pm[i + 1][0]) if i + 1 < len(pm) else len(texte)
+        out.append((off, pm[i][1], texte[off:end]))
+    return out
+
+
+def _fenetre(texte: str, start: int, terms: list[str]) -> str:
+    """Extrait AUTOUR du mot : fenêtre à la 1re forme d'un terme dans la page (recherche souple pour le
+    seul AFFICHAGE — la PAGE, elle, est décidée par le stemmer Postgres), sinon au début de la page."""
+    qrads = [_ua1(t) for t in (terms or []) if len(_ua1(t)) >= 4] or [_ua1(t) for t in (terms or [])]
+    pos = start
+    for m in _WORD_RE.finditer(texte, start, start + 4000):
+        tok = _ua1(m.group(0)).replace("­", "").replace("-", "").replace("\n", "").replace(" ", "")
+        if any(len(q) >= 4 and (tok.startswith(q) or q.startswith(tok)) for q in qrads):
+            pos = m.start(); break
+    a, b = max(0, pos - 120), min(len(texte), pos + 220)
     snip = texte[a:b].strip()
     if a > 0:
         snip = "… " + snip
     if b < len(texte):
         snip = snip + " …"
-    return page, snip
+    return snip
+
+
+def locate_match(session: Session, texte: str, page_map: list | None, q: str,
+                 terms: list[str]) -> tuple[int | None, str, list[int]]:
+    """OUTIL-PLU-FIX-4 (points 1-3) — situe le mot dans l'article avec EXACTEMENT la même correspondance
+    que la recherche : on teste chaque PAGE de l'article avec `to_tsvector('fr_unaccent', …) @@
+    websearch_to_tsquery('fr_unaccent', q)` (mêmes radicaux/accents/synonymes que le FTS). Rend
+    (1re page où le mot apparaît, extrait autour du mot, TOUTES les pages où il apparaît). Fini le
+    `find()` littéral qui ratait les pluriels (« hauteurs » matchait l'article mais pas la page)."""
+    slices = _page_slices(texte, page_map)
+    txts = [s[2] for s in slices]
+    pgs = [int(s[1] or 0) for s in slices]
+
+    def _pages_for(query: str) -> list[int]:
+        rows = session.execute(text(
+            "SELECT t.pg FROM unnest(CAST(:txt AS text[]), CAST(:pg AS int[])) AS t(txt, pg) "
+            "WHERE to_tsvector('fr_unaccent', t.txt) @@ websearch_to_tsquery('fr_unaccent', :q) "
+            "ORDER BY t.pg"), {"txt": txts, "pg": pgs, "q": query}).scalars().all()
+        return [int(p) for p in rows if p]
+
+    pages = _pages_for(q)
+    if not pages:
+        # expression à 2 mots répartis sur deux pages : la requête AND ne matche aucune page SEULE.
+        # On retombe sur l'OR des termes → la page où UNE forme du mot apparaît (critère 1).
+        q_or = " OR ".join(t for t in (terms or []) if len(t) >= 2) or q
+        pages = _pages_for(q_or)
+    if not pages:                                 # repli ultime : page de tête
+        pg0 = slices[0][1] if slices else None
+        return pg0, _fenetre(texte, 0, terms), [pg0] if pg0 else []
+    first = pages[0]
+    off0 = next((o for o, pg, _ in slices if pg == first), 0)
+    return first, _fenetre(texte, off0, terms), sorted(set(pages))
 
 
 def search_reglement(session: Session, q: str, insee: str | None = None, limit: int = 25,
@@ -569,8 +642,9 @@ def search_reglement(session: Session, q: str, insee: str | None = None, limit: 
     out = []
     for r in rows:
         d = dict(r)
-        pg, snip = locate_match(d.get("texte_verbatim") or "", d.get("page_map"), terms or [])
+        pg, snip, pages = locate_match(session, d.get("texte_verbatim") or "", d.get("page_map"), q, terms or [])
         d["page_match"] = pg or d.get("page_debut") or d.get("page_pdf")
+        d["pages_match"] = pages or [d["page_match"]]   # TOUTES les pages où le mot apparaît (point 1)
         d["extrait"] = snip
         out.append(d)
     return out

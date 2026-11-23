@@ -212,10 +212,17 @@ export function PluAnnuaire() {
             {cur?.pct_indexe != null && (
               <div className="mt-0.5">
                 Indexé pour la recherche : ≈ {cur.pct_indexe} % des pages de texte
+                {/* OUTIL-PLU-FIX-4 (critère 3) — part indexée À L'ARTICLE vs AU CHAPITRE, dite séparément. */}
+                {cur.pct_article != null ? <> (dont ≈ {cur.pct_article} % à l’article{(cur.pct_chapitre ?? 0) > 0 ? `, ${cur.pct_chapitre} % au chapitre` : ''})</> : null}
                 {cur.pages_image ? <> · <b className="text-cp-amber">{cur.pages_image} page{cur.pages_image > 1 ? 's' : ''} en image</b> (non indexée{cur.pages_image > 1 ? 's' : ''})</> : null}
                 {cur?.pagination_ambigue ? ' · pagination à vérifier' : ''}
                 {cur.pct_indexe < 100 ? ' — le reste est dans le PDF intégral.' : '.'}
               </div>
+            )}
+            {/* OUTIL-PLU-FIX-4 (critère 3) — règlement peu structuré (scanné / en-têtes non détectés) :
+                certains résultats sont servis AU CHAPITRE, pas à l'article. On le DIT à l'écran. */}
+            {cur?.peu_structure && (
+              <div className="mt-0.5 text-cp-amber">⚠ Règlement peu structuré : certains résultats sont donnés par chapitre (et non par article).</div>
             )}
             {/* OUTIL-PLU-FIX-2 (C7) — note d'édition (ex. La Possession : texte indexé déc. 2025, lien PDF
                 juin 2026) servie aussi sur une commune SERVABLE, pas seulement en révision. */}
@@ -390,7 +397,9 @@ function PluExtraitCard({ r, premier = false }: { r: PluExtrait; premier?: boole
       <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 border-t border-line/60 pt-1.5 text-[10px] text-txt-dim">
         {/* OUTIL-PLU-FIX-3 — p. = page où le mot apparaît ; « article p. X-Y » quand l'article court
             sur plusieurs pages. « Lire tout » montre l'article ENTIER (exceptions comprises). */}
-        <span className="text-txt-mut">Règlement{r.millesime ? ` du ${fmtDateNum(r.millesime)}` : ''} · p. {r.page_pdf}{r.page_debut != null && r.page_fin != null && r.page_fin !== r.page_debut ? ` (article p. ${r.page_debut}-${r.page_fin})` : ''}</span>
+        {/* OUTIL-PLU-FIX-4 (point 1) — p. = TOUTES les pages où le mot apparaît (pluriels compris) ;
+            « article p. X-Y » = étendue de l'article. Le lien ouvre la 1re page du mot. */}
+        <span className="text-txt-mut">Règlement{r.millesime ? ` du ${fmtDateNum(r.millesime)}` : ''} · p. {r.pages_match && r.pages_match.length > 1 ? r.pages_match.join(', ') : r.page_pdf}{r.page_debut != null && r.page_fin != null && r.page_fin !== r.page_debut ? ` (article p. ${r.page_debut}-${r.page_fin})` : ''}</span>
         {long && (
           <button data-plu-lire onClick={() => setOuvert((o) => !o)} className="text-mint hover:underline">
             {ouvert ? 'Réduire ▲' : 'Lire l’article entier ▾'}
