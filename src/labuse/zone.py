@@ -679,18 +679,27 @@ def prix_par_type_zone(session: Session, geom_geojson: dict) -> dict:
         m = mediane_bati(session, geom_geojson=geom_geojson, type_local=tl)
         rows.append({"type": slug, "label": label, "base": "bâti", "n": m["n"],
                      "median_eur_m2": m["median"], "periode": m["periode"]})
+    # OUTIL-COMMUNES-FIX-1 (A-1) — ALIGNÉ sur le référentiel terrain nu (`marche_dvf_commune`) : même
+    # DÉFINITION qu'`ligne2_terrain_zone` et consorts — acte sans bâti (`surface_reelle_bati = 0`, pas
+    # « < 20 »), natures Vente + « Vente terrain à bâtir » (plus de `ILIKE 'vente%'` qui laissait entrer la
+    # VEFA/le neuf), et borne €/m² `BORNE_TERRAIN` [50 ; 4 000] (jusque-là ABSENTE). `dvf_mutations` est à la
+    # maille MUTATION (dépendances déjà agrégées) : `surface_reelle_bati = 0` y est l'équivalent exact du
+    # `HAVING sum(bati_p) = 0` de la maille éclatée. MAILLE propre à l'Étude de zone (polygone dessiné,
+    # fenêtre 36 mois cohérente avec maison/appartement) — documentée dans l'inventaire du compte-rendu.
+    from .marche_dvf_commune import BORNE_TERRAIN
     rt = session.execute(text(
         f"""SELECT count(*) n,
-                   round(percentile_cont(0.5) WITHIN GROUP (
-                     ORDER BY dm.valeur_fonciere / NULLIF(dm.surface_terrain, 0))::numeric) med,
-                   to_char(min(dm.date_mutation), 'MM/YYYY') d0,
-                   to_char(max(dm.date_mutation), 'MM/YYYY') d1
-            FROM dvf_mutations dm
-            WHERE dm.geom IS NOT NULL AND dm.nature_mutation ILIKE 'vente%'
-              AND dm.valeur_fonciere > 0 AND dm.type_local IS NULL
-              AND dm.surface_terrain >= 100 AND coalesce(dm.surface_reelle_bati, 0) < 20
-              AND dm.date_mutation >= ({_ANCRE_DVF} - interval '36 months')
-              AND ST_Contains({z}, ST_Transform(dm.geom, 2975))"""),
+                   round(percentile_cont(0.5) WITHIN GROUP (ORDER BY r)::numeric) med,
+                   to_char(min(d), 'MM/YYYY') d0, to_char(max(d), 'MM/YYYY') d1
+            FROM (SELECT dm.valeur_fonciere / NULLIF(dm.surface_terrain, 0) AS r, dm.date_mutation AS d
+                  FROM dvf_mutations dm
+                  WHERE dm.geom IS NOT NULL
+                    AND dm.nature_mutation IN ('Vente', 'Vente terrain à bâtir')
+                    AND dm.valeur_fonciere > 0 AND dm.type_local IS NULL
+                    AND dm.surface_terrain >= 100 AND coalesce(dm.surface_reelle_bati, 0) = 0
+                    AND dm.date_mutation >= ({_ANCRE_DVF} - interval '36 months')
+                    AND ST_Contains({z}, ST_Transform(dm.geom, 2975))) q
+            WHERE r BETWEEN {BORNE_TERRAIN[0]} AND {BORNE_TERRAIN[1]}"""),
         {"zone": json.dumps(geom_geojson)}).mappings().first()
     nt = int(rt["n"] or 0)
     from .dvf_mediane import SEUIL_N
