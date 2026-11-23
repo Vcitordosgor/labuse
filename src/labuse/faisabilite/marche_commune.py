@@ -102,23 +102,36 @@ def ligne2_terrain_zone(db: Session, commune: str) -> dict:
     Source = dvf_mutations_parcelle (ventes terrain nu) × parcel_zone_plu (zonage calibré LABUSE).
     Date amont = millésime de dvf_mutations_parcelle (≠ dvf_mutations des lignes 1/3 — P2-54)."""
     # Dédup comme dvf_marche : une mutation est répétée par parcelle ET par nature_culture. On prend
-    # UN terrain par (mutation, parcelle) (max OVER), on SOMME le terrain de la mutation, et le €/m²
+    # UN terrain par (mutation, parcelle) (max), on SOMME le terrain de la mutation, et le €/m²
     # (valeur / terrain TOTAL de la mutation) est calculé UNE fois — jamais valeur÷un-bout (artefact
     # AU 28 089 €/m² mesuré sur le calcul naïf ; dédupé : ~328 €/m²). Une mutation compte dans chaque
     # zone qu'elle touche.
+    #
+    # OUTIL-COMMUNES-FIX-1 bloquant 1 — QUALIFICATION SUR L'ACTE ENTIER. Avant : le filtre bâti était
+    # posé PAR PARCELLE (`surface_reelle_bati = 0`) et la zone AVANT de reconstituer la vente — un acte
+    # « maison + jardin nu » survivait comme terrain nu et recevait le prix de l'acte ENTIER rapporté à
+    # la seule surface nue (cas 2021-1672641 ; Saint-Denis U 482 €/m² dont 679 actes mixtes → 288 sans
+    # eux). Désormais : `allparc` lit TOUTES les parcelles de l'acte, `tot` ne garde que les actes dont
+    # le bâti total est nul (`sum(bati_p) = 0`) et RECONSTITUE la surface terrain entière de l'acte (sur
+    # toutes ses parcelles, toutes zones). Natures Vente + « Vente terrain à bâtir » (M101 B2).
     rows = db.execute(text("""
-        WITH parc AS (
-          SELECT DISTINCT m.id_mutation, m.id_parcelle, z.zone_fam, m.valeur_fonciere AS val,
-                 m.millesime AS mill,
-                 max(COALESCE(m.surface_terrain,0)) OVER (PARTITION BY m.id_mutation, m.id_parcelle) AS terr_parc
+        WITH allparc AS (
+          SELECT m.id_mutation, m.id_parcelle, max(m.valeur_fonciere) AS val, max(m.millesime) AS mill,
+                 max(COALESCE(m.surface_terrain,0)) AS terr_parc,
+                 max(COALESCE(m.surface_reelle_bati,0)) AS bati_parc
           FROM dvf_mutations_parcelle m
           JOIN parcels p ON p.idu = m.id_parcelle AND p.commune = :c
-          JOIN parcel_zone_plu z ON z.idu = m.id_parcelle
-          WHERE m.nature_mutation = 'Vente' AND COALESCE(m.surface_reelle_bati,0) = 0
-            AND m.surface_terrain > 0 AND z.zone_fam IN ('U','AU')),
+          WHERE m.nature_mutation IN ('Vente','Vente terrain à bâtir')
+          GROUP BY m.id_mutation, m.id_parcelle),
         tot AS (SELECT id_mutation, sum(terr_parc) AS terr_tot, max(val) AS val, max(mill) AS mill
-                FROM parc GROUP BY id_mutation),
-        muz AS (SELECT DISTINCT id_mutation, zone_fam FROM parc)
+                FROM allparc GROUP BY id_mutation
+                HAVING sum(bati_parc) = 0 AND sum(terr_parc) > 0),
+        muz AS (SELECT DISTINCT m.id_mutation, z.zone_fam
+                FROM dvf_mutations_parcelle m
+                JOIN parcels p ON p.idu = m.id_parcelle AND p.commune = :c
+                JOIN parcel_zone_plu z ON z.idu = m.id_parcelle
+                WHERE z.zone_fam IN ('U','AU')
+                  AND m.nature_mutation IN ('Vente','Vente terrain à bâtir'))
         SELECT muz.zone_fam,
                percentile_cont(0.5) WITHIN GROUP (ORDER BY tot.val / NULLIF(tot.terr_tot,0)) AS med,
                count(*) AS n, max(tot.mill) AS mill
@@ -168,12 +181,16 @@ def ligne4_tendance(db: Session, commune: str) -> dict:
     bâti). n ≥ 30 par fenêtre, sinon « non calculable » — jamais une flèche sur 8 ventes."""
     # MÊME population que sector_price (bornes + type appart/maison + dédup par mutation réelle
     # mutation_id) pour ne pas fabriquer une deuxième médiane divergente ; on FENÊTRE seulement.
+    # OUTIL-COMMUNES-FIX-1 (à corriger 8) — la tendance est affichée À CÔTÉ de l'« ancien » (nature
+    # 'Vente' stricte, VEFA exclue). Elle doit donc mesurer LA MÊME population : on passe de
+    # `ILIKE '%vente%'` (qui incluait la VEFA, le neuf) à `= 'Vente'` stricte. Sinon « ancien » et sa
+    # « tendance » parlaient de deux marchés — le relecteur l'a relevé sur Saint-Denis.
     r = db.execute(text("""
         WITH ref AS (SELECT max(date_mutation) mx FROM dvf_mutations WHERE commune = :c),
         d AS (SELECT DISTINCT ON (mutation_id) mutation_id, date_mutation,
                      valeur_fonciere / NULLIF(surface_reelle_bati,0) AS eur_m2
               FROM dvf_mutations
-              WHERE commune = :c AND nature_mutation ILIKE '%vente%' AND surface_reelle_bati >= 20
+              WHERE commune = :c AND nature_mutation = 'Vente' AND surface_reelle_bati >= 20
                 AND valeur_fonciere > 20000 AND type_local ILIKE ANY(ARRAY['%APPARTEMENT%','%MAISON%'])
                 AND date_mutation > (SELECT mx FROM ref) - interval '24 months'),
         f AS (SELECT date_mutation > (SELECT mx FROM ref) - interval '12 months' AS recent, eur_m2 FROM d)
@@ -432,16 +449,20 @@ def _median_terrain_commune(db: Session, commune: str, *, mois: int = 12) -> tup
     ligne (jusqu'à 327 copies d'un couple) : un `sum(surface_terrain)` BRUT groupé par mutation comptait
     le terrain d'un couple autant de fois qu'il est répété → `st` gonflé, `vf/st` (€/m²) sous-estimé
     (mesuré : 19/24 communes voyaient leur médiane bouger, jusqu'à 27,5 €/m²). On prend UNE surface de
-    terrain par couple (`max … OVER (PARTITION BY mutation, parcelle)` + `DISTINCT`) avant de sommer."""
+    terrain par couple (`max … OVER (PARTITION BY mutation, parcelle)` + `DISTINCT`) avant de sommer.
+
+    OUTIL-COMMUNES-FIX-1 bloquant 1 — QUALIFICATION SUR L'ACTE ENTIER : on ne garde l'acte que si son
+    bâti TOTAL est nul (`sum(bati_p) = 0`), jamais un filtre bâti par parcelle. Natures Vente + VTB."""
     row = db.execute(text(
         "WITH mx AS (SELECT max(date_mutation) d FROM dvf_mutations WHERE lower(commune)=lower(:c)), "
         "par AS (SELECT DISTINCT dm.id_mutation, dm.id_parcelle, dm.valeur_fonciere vf, "
-        "          max(dm.surface_terrain) OVER (PARTITION BY dm.id_mutation, dm.id_parcelle) terr_p "
+        "          max(COALESCE(dm.surface_terrain,0)) OVER (PARTITION BY dm.id_mutation, dm.id_parcelle) terr_p, "
+        "          max(COALESCE(dm.surface_reelle_bati,0)) OVER (PARTITION BY dm.id_mutation, dm.id_parcelle) bati_p "
         "        FROM dvf_mutations_parcelle dm JOIN parcels p ON p.idu = dm.id_parcelle, mx "
-        "        WHERE lower(p.commune)=lower(:c) AND dm.nature_mutation ILIKE 'vente%' "
-        "          AND COALESCE(dm.surface_reelle_bati,0)=0 AND dm.surface_terrain>0 "
+        "        WHERE lower(p.commune)=lower(:c) AND dm.nature_mutation IN ('Vente','Vente terrain à bâtir') "
         "          AND dm.date_mutation > mx.d - make_interval(months => :mois) AND dm.date_mutation <= mx.d), "
-        "t AS (SELECT id_mutation, max(vf) vf, sum(terr_p) st FROM par GROUP BY id_mutation) "
+        "t AS (SELECT id_mutation, max(vf) vf, sum(terr_p) st FROM par GROUP BY id_mutation "
+        "      HAVING sum(bati_p) = 0 AND sum(terr_p) > 0) "
         "SELECT round(percentile_cont(0.5) WITHIN GROUP (ORDER BY vf/NULLIF(st,0)))::int, count(*) "
         "FROM t WHERE vf/NULLIF(st,0) BETWEEN 50 AND 4000"), {"c": commune, "mois": mois}).first()
     return (row[0] if row else None), (int(row[1]) if row and row[1] else 0)

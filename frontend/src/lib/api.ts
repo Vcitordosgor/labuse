@@ -406,7 +406,7 @@ export interface ContexteCommune {
   } | null
   // OUTILS-6 C2 — les chiffres COMMUNS au comparateur des 24 communes (même moteur, même run)
   comparable: {
-    ancien_median_eur_m2: number | null; ancien_n: number | null; neuf_eur_m2: number | null
+    ancien_median_eur_m2: number | null; ancien_n: number | null; neuf_eur_m2: number | null; neuf_n: number | null
     permis_5a: number | null; delai_median_mois: number | null; stock_opportunites_n: number | null; source: string
   } | null
   // OUTILS-6 C5 — les blocs ajoutés, chacun depuis le moteur de son outil d'origine

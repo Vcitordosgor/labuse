@@ -497,15 +497,20 @@ export function ContextePanel() {
               <GroupeLabel>Le marché</GroupeLabel>
 
               <LigneCarte id="marche" chiffre="prix_ancien_median_eur_m2" ic="↗" titre="Prix"
-                sous={`ancien ${fmt(d.comparable?.ancien_median_eur_m2)} · neuf (VEFA) ${fmt(d.comparable?.neuf_eur_m2)} €/m²`}
+                sous={`ancien ${fmt(d.comparable?.ancien_median_eur_m2)} · VEFA déclarée ${fmt(d.comparable?.neuf_eur_m2)} €/m²`}
                 val={tendPct != null ? `${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %` : null}
                 ton={tendPct != null && Number(tendPct) < 0 ? 'rouge' : 'vert'}>
                 <div className="flex flex-col gap-0.5 text-[12px]">
-                  <RowT lbl="Ancien médian (commune entière)" val={`${fmt(d.comparable?.ancien_median_eur_m2)} €/m²`} strong />
-                  <RowT lbl="Prix VEFA commune" val={`${fmt(d.comparable?.neuf_eur_m2)} €/m²`} />
-                  {/* CHASSE-DONNEES-FIX-1 (Lot 7, E-72) — « récentes » = ≤ 3 ans après l'ACHÈVEMENT du
-                      bâtiment (pas récent dans le temps) : une vente 2015 d'un immeuble achevé 2014 compte. */}
-                  <RowT lbl="Neuf observé (ventes ≤ 3 ans après achèvement)" val={d.prix_neuf_observe?.eur_m2 != null ? `${fmt(d.prix_neuf_observe.eur_m2)} €/m²` : '—'} />
+                  <RowT lbl="Ancien médian (commune entière)" val={`${fmt(d.comparable?.ancien_median_eur_m2)} €/m²${d.comparable?.ancien_n != null ? ` · n ${fmt(d.comparable.ancien_n)}` : ''}`} strong />
+                  {/* OUTIL-COMMUNES-FIX-1 (à corriger 4) — DEUX prix neuf distincts, nommés sans ambiguïté et
+                      avec leur effectif : « VEFA déclarée » = ce que l'acte DÉCLARE (vente en l'état futur
+                      d'achèvement) ; « neuf inféré sur la parcelle » = rapprochement ventes↔achèvements de
+                      permis sur la parcelle, méthode indicative (jamais présenté comme une preuve). */}
+                  <RowT lbl="VEFA déclarée (prix à l'acte)" val={`${fmt(d.comparable?.neuf_eur_m2)} €/m²${d.comparable?.neuf_n != null ? ` · n ${fmt(d.comparable.neuf_n)}` : ''}`} />
+                  <RowT lbl="Neuf inféré sur la parcelle" val={d.prix_neuf_observe?.eur_m2 != null ? `${fmt(d.prix_neuf_observe.eur_m2)} €/m²${d.prix_neuf_observe?.n != null ? ` · n ${fmt(d.prix_neuf_observe.n)}` : ''}` : '—'} />
+                  {d.prix_neuf_observe?.eur_m2 != null && (
+                    <p className="text-[10px] leading-snug text-txt-dim">Rapprochement ventes ≤ 3 ans après l'achèvement d'un permis sur la parcelle — méthode indicative, pas une preuve que le logement vendu appartient au bâtiment achevé.</p>
+                  )}
                   {tendPct != null && <RowT lbl="Tendance 12 mois" val={`${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %`} />}
                 </div>
                 {d.foncier?.prix_terrain_nu.par_zone && (
@@ -553,9 +558,16 @@ export function ContextePanel() {
                         return (
                           <div className="flex flex-col gap-0.5 text-[12px]">
                             <RowT lbl="Biens en vente" val={fmt(ma!.biens)} />
-                            <RowT lbl="Prix demandé médian" val={sous ? libSeuil : (ma!.prix_demande_median_eur_m2 != null ? `${fmt(ma!.prix_demande_median_eur_m2)} €/m²` : '—')} />
-                            <RowT lbl="Écart demandé / acté" strong={!sous && ma!.ecart_demande_acte_pct != null}
+                            {/* OUTIL-COMMUNES-FIX-1 (à corriger 6) — les DEUX médianes sont montrées
+                                SÉPARÉMENT avec leur nature/effectif : demandé = annonces Radar (tous types,
+                                statuts mêlés, relevé en continu) ; acté = ancien DVF commune entière. */}
+                            <RowT lbl="Prix demandé médian (annonces, Radar)" val={sous ? libSeuil : (ma!.prix_demande_median_eur_m2 != null ? `${fmt(ma!.prix_demande_median_eur_m2)} €/m²${ma!.prix_demande_n != null ? ` · n ${fmt(ma!.prix_demande_n)}` : ''}` : '—')} />
+                            <RowT lbl="Prix acté médian (ancien, DVF commune)" val={ma!.prix_acte_eur_m2 != null ? `${fmt(ma!.prix_acte_eur_m2)} €/m²` : '—'} />
+                            <RowT lbl="Écart demandé / acté (indicatif)" strong={!sous && ma!.ecart_demande_acte_pct != null}
                               val={sous ? libSeuil : (ma!.ecart_demande_acte_pct != null ? `${ma!.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(ma!.ecart_demande_acte_pct)} %` : '—')} />
+                            {!sous && ma!.ecart_demande_acte_pct != null && (
+                              <p className="text-[10px] leading-snug text-txt-dim">Deux populations NON comparables (annonces tous types / statuts mêlés / relevé continu vs ventes « ancien » DVF, fenêtre et composition différentes) : écart INDICATIF, pas une marge de négociation.</p>
+                            )}
                             {sous && <p className="text-[10px] text-txt-dim">Prix demandé et écart servis à partir de {ma!.demande_seuil_n} biens relevés (robustesse Radar).</p>}
                           </div>
                         )
