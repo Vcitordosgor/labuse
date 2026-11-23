@@ -207,7 +207,7 @@ export function O5Servitudes() {
 /* ───────────── O6 — COMPARATEUR DE COMMUNES (S47) ───────────── */
 
 type Comparateur = {
-  communes: Record<string, string | number | null>[]
+  communes: Record<string, string | number | boolean | null>[]
   indicateurs: Record<string, { libelle: string; direction: string; poids: number; source: string; nature: string }>
   methode: string; avertissement: string
 }
@@ -228,12 +228,14 @@ const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'm
   { k: 'permis', head: 'Permis (5 ans)',
     title: 'Dynamisme permis — permis SITADEL cumulés sur 5 ans (glissants)' },
   { k: 'deficit_sru', head: 'Déficit SRU (pts)',
-    title: 'Déficit SRU — objectif légal − taux de logement social, en points' },
+    title: 'Déficit SRU — objectif de référence − taux de logement social, en points, pour les communes SOUMISES. Les communes EXEMPTÉES (obligations suspendues sur la période, décret) affichent « exon. » et ne portent pas de déficit opposable.' },
   { k: 'prix_ancien', head: '€/m² ancien',
-    title: '€/m² ANCIEN — médiane DVF de la commune entière (tous types bâti, ventes strictes, n ≥ 100). Vue MACRO : la même série que le Baromètre.',
+    // OUTIL-COMMUNES-FIX-2 #6 — ne plus attribuer un prix « local » à la fiche commune : la fiche sert
+    // le MÊME prix communal (commune entière) que cette colonne, pas un prix de secteur de parcelle.
+    title: '€/m² ANCIEN — médiane DVF de la commune entière (tous types bâti, ventes strictes, n ≥ 100). Vue MACRO : la même série que le Baromètre ET que la fiche commune (même prix communal).',
     // NU-3-M-H02 — depuis FIX-FINAL-1 (NU-A-002), le prix LOCAL de la fiche est typé par la NATURE
     // réelle du bien (dernière mutation DVF), plus de « appartements priorisés ».
-    tip: '€/m² ANCIEN — médiane DVF COMMUNE ENTIÈRE (tous types bâti, ventes strictes, n ≥ 100). Vue macro, série du Baromètre. ⚠ La FICHE d’une commune affiche un prix LOCAL (secteur autour de la parcelle centrale, par type du bien) — plus fin, souvent inférieur : c’est normal qu’il diffère de cette colonne.' },
+    tip: '€/m² ANCIEN — médiane DVF COMMUNE ENTIÈRE (tous types bâti, ventes strictes, n ≥ 100). Vue macro, série du Baromètre. La FICHE COMMUNE reprend CE prix communal (identique). Le prix LOCAL (secteur autour d’une parcelle, par type) vit sur la FICHE PARCELLE §Marché — plus fin, souvent inférieur.' },
   { k: 'prix_neuf', head: '€/m² VEFA',
     // RECETTE-2 (D3) — on DIT le seuil dans le « i » : « — » = moins de 8 ventes VEFA (médiane instable).
     // PRIX-SORTIE-1 (Vic 05/10/2026) — « prix VEFA commune » (prix observé à l'acte), JAMAIS « prix de
@@ -284,13 +286,27 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
   // terrain). Plus besoin d'aller chercher la légende pour savoir sur combien de ventes repose un chiffre.
   const SEUILS: Record<string, number> = { prix_ancien: 100, prix_neuf: 8, prix_terrain_nu: 10 }
   const UNITE: Record<string, string> = { prix_ancien: 'ventes', prix_neuf: 'ventes VEFA', prix_terrain_nu: 'ventes de terrain nu' }
+  // OUTIL-COMMUNES-FIX-2 #2 — statut SRU exempté porté jusque dans la cellule (plus de faux « déficit »).
+  const exemptee = (c: Record<string, unknown>) => String(c['sru_statut'] ?? '') === 'exemptee'
   const cellTitle = (k: string, c: Record<string, unknown>): string | undefined => {
+    // #2 — SRU : une commune exemptée ne porte pas de « déficit » (obligations suspendues sur la période).
+    if (k === 'deficit_sru' && exemptee(c)) return 'Commune exemptée SRU — obligations suspendues sur la période (pas de déficit opposable)'
     if (!(k in SEUILS)) return undefined
     const n = c[`${k}_n`] as number | null | undefined
     const zone = k === 'prix_terrain_nu' ? (c['prix_terrain_nu_zone'] as string | null) : null
-    if (c[k] == null) return `— : moins de ${SEUILS[k]} ${UNITE[k]}${n != null ? ` (n = ${n})` : ''}`
-    return `n = ${n ?? '—'} ${UNITE[k]}${zone ? ` · zone ${zone}` : ''}`
+    if (c[k] == null) {
+      // #9 — sous RNU, le tiret du terrain dit sa vraie raison (pas « moins de 10 »).
+      if (k === 'prix_terrain_nu' && c['plu_rnu'] === true)
+        return '— : commune au RNU (pas de zone U/AU de PLU à comparer)'
+      return `— : moins de ${SEUILS[k]} ${UNITE[k]}${n != null ? ` (n = ${n})` : ''}`
+    }
+    // #1 — terrain : effectif ENTRANT dans la médiane, zone, et actes multizone (ratio sur l'acte entier).
+    const mz = k === 'prix_terrain_nu' ? (c['prix_terrain_nu_multizone'] as number | null) : null
+    return `n = ${n ?? '—'} ${UNITE[k]}${zone ? ` · zone ${zone}` : ''}${mz ? ` · dont ${mz} acte(s) aussi en AU (ratio sur l'acte entier)` : ''}`
   }
+  // #2 — cellule « Déficit SRU » : les exemptées affichent « exon. » (survol : obligations suspendues).
+  const cellDisplay = (k: string, c: Record<string, unknown>) =>
+    (k === 'deficit_sru' && exemptee(c)) ? 'exon.' : fmtFr(c[k])
   // COMMUNE-124 Lot A — l'accroche (ex-Banner) est fusionnée dans le sous-titre du panneau ; la légende
   // (ex-pied permanent) est repliée sous le bouton « Légende » du panneau (CommunesLegende). Ce moteur
   // ne rend plus QUE le tableau (en-tête collant + rangs qui défilent). Le parent borne la hauteur.
@@ -335,7 +351,7 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
                        garantit « nombres jamais coupés ». Les en-têtes, eux, peuvent passer sur 2 lignes (leading-tight). */
                     className={`tnum whitespace-nowrap text-right font-mono text-[11px] ${
                       isBest ? 'font-semibold text-mint' : tri.k === col.k ? 'font-semibold text-txt-hi' : 'text-txt-mut'}`}>
-                    {fmtFr(c[col.k])}</span>
+                    {cellDisplay(col.k, c)}</span>
                 )
               })}
               {/* OUTILS-1 B4 — « Fiche → » PERMANENT sur chaque ligne. RETOURS-23 (pt 3) — plus d'ambre
@@ -361,7 +377,7 @@ export function CommunesLegende() {
       <b className="text-txt-mut">Légende :</b>{' '}
       <b>Instruction</b> = délai médian dépôt→autorisation (mois) ·{' '}
       <b>Permis 5 ans</b> = permis SITADEL cumulés sur 5 ans ·{' '}
-      <b>Déficit SRU</b> = objectif légal − taux de logement social (points) ·{' '}
+      <b>Déficit SRU</b> = objectif de référence − taux de logement social (points), communes SOUMISES ; les EXEMPTÉES affichent « exon. » ·{' '}
       <b>€/m² ancien</b> = médiane DVF commune entière (ventes strictes) ·{' '}
       <b>€/m² VEFA</b> = prix VEFA commune observé à l’acte ·{' '}
       <b>€/m² terrain nu</b> = médiane DVF terrain nu par zone PLU (U sinon AU) — le chiffre du promoteur.

@@ -108,16 +108,19 @@ def ligne2_terrain_zone(db: Session, commune: str) -> dict:
     # zone qu'elle touche.
     #
     # OUTIL-COMMUNES-FIX-1 bloquant 1 — QUALIFICATION SUR L'ACTE ENTIER. Avant : le filtre bâti était
-    # posé PAR PARCELLE (`surface_reelle_bati = 0`) et la zone AVANT de reconstituer la vente — un acte
-    # « maison + jardin nu » survivait comme terrain nu et recevait le prix de l'acte ENTIER rapporté à
-    # la seule surface nue (cas 2021-1672641 ; Saint-Denis U 482 €/m² dont 679 actes mixtes → 288 sans
-    # eux). Désormais : on ne garde que les actes dont le bâti total est nul (`sum(bati_p) = 0`) et on
-    # RECONSTITUE la surface terrain entière de l'acte (toutes ses parcelles, toutes zones). Natures
-    # Vente + « Vente terrain à bâtir » (M101 B2).
+    # posé PAR PARCELLE et la zone AVANT de reconstituer la vente — un acte « maison + jardin nu »
+    # survivait comme terrain nu (cas 2021-1672641). On ne garde que les actes dont le bâti total est nul.
     #
-    # A-2 (relecture) — SCAN UNIQUE : un `LEFT JOIN parcel_zone_plu` porte l'appartenance de zone
-    # (`bool_or(zone_fam = 'U'/'AU')`) dans LE MÊME passage que la somme bâti/terrain, au lieu des deux
-    # scans `allparc` + `muz` (mesuré Saint-Paul : 637 → 66 ms, résultat identique à l'euro/à l'unité).
+    # OUTIL-COMMUNES-FIX-2 #1 — QUALIFIER AVANT TOUTE JOINTURE CADASTRALE. La jointure `parcels` rattachait
+    # au cadastre COURANT avant de chercher le bâti : une parcelle bâtie DISPARUE du cadastre (absente de
+    # `parcels`) échappait à la somme et faisait passer le reste de l'acte pour du terrain nu
+    # (cas 2021-1677591 : maison 50 m² sur AV0527, absente de `parcels`, à Saint-Denis). Désormais on lit
+    # TOUTES les lignes DVF de l'acte via `code_commune = :insee` (indépendant du cadastre), on somme bâti
+    # ET terrain de l'acte entier, puis on rattache la zone (parcel_zone_plu). Saint-Denis U 288→285 sur
+    # 604 actes (610 → 604). Scan unique (LEFT JOIN zone), ~65 ms. `n` = actes ENTRANT réellement dans la
+    # médiane (ratio non nul), jamais le comptage brut (612 affiché pour 610 utilisés).
+    insee = db.execute(text("SELECT left(min(idu), 5) FROM parcels WHERE commune = :c"),
+                       {"c": commune}).scalar()
     rows = db.execute(text("""
         WITH base AS (
           SELECT m.id_mutation, m.id_parcelle, max(m.valeur_fonciere) AS val, max(m.millesime) AS mill,
@@ -126,9 +129,8 @@ def ligne2_terrain_zone(db: Session, commune: str) -> dict:
                  bool_or(z.zone_fam = 'U')  AS z_u,
                  bool_or(z.zone_fam = 'AU') AS z_au
           FROM dvf_mutations_parcelle m
-          JOIN parcels p ON p.idu = m.id_parcelle AND p.commune = :c
           LEFT JOIN parcel_zone_plu z ON z.idu = m.id_parcelle AND z.zone_fam IN ('U','AU')
-          WHERE m.nature_mutation IN ('Vente','Vente terrain à bâtir')
+          WHERE m.code_commune = :insee AND m.nature_mutation IN ('Vente','Vente terrain à bâtir')
           GROUP BY m.id_mutation, m.id_parcelle),
         tot AS (SELECT id_mutation, sum(terr_parc) AS terr_tot, max(val) AS val, max(mill) AS mill,
                        bool_or(z_u) AS has_u, bool_or(z_au) AS has_au
@@ -136,22 +138,28 @@ def ligne2_terrain_zone(db: Session, commune: str) -> dict:
                 HAVING sum(bati_parc) = 0 AND sum(terr_parc) > 0)
         SELECT 'U' AS zone_fam,
                percentile_cont(0.5) WITHIN GROUP (ORDER BY val / NULLIF(terr_tot,0)) AS med,
-               count(*) AS n, max(mill) AS mill
-        FROM tot WHERE has_u AND terr_tot > 0
+               count(*) FILTER (WHERE val / NULLIF(terr_tot,0) IS NOT NULL) AS n,
+               count(*) FILTER (WHERE has_au AND val / NULLIF(terr_tot,0) IS NOT NULL) AS n_multizone,
+               max(mill) AS mill
+        FROM tot WHERE has_u
         UNION ALL
         SELECT 'AU',
                percentile_cont(0.5) WITHIN GROUP (ORDER BY val / NULLIF(terr_tot,0)),
-               count(*), max(mill)
-        FROM tot WHERE has_au AND terr_tot > 0"""), {"c": commune}).mappings().all()
+               count(*) FILTER (WHERE val / NULLIF(terr_tot,0) IS NOT NULL),
+               count(*) FILTER (WHERE has_u AND val / NULLIF(terr_tot,0) IS NOT NULL),
+               max(mill)
+        FROM tot WHERE has_au"""), {"insee": insee}).mappings().all()
     par_zone = {r["zone_fam"]: r for r in rows}
-    # A-2 — le scan unique renvoie TOUJOURS les deux lignes (U, AU) ; une zone vide porte `mill = NULL`.
-    # On écarte les None avant `max` (comparaison None/str interdite en py3).
+    # le scan renvoie TOUJOURS les deux lignes (U, AU) ; une zone vide porte `mill = NULL`.
     mill = max((r["mill"] for r in rows if r["mill"] is not None), default=None)
     cellules = {}
     for zone in ("U", "AU"):
         r = par_zone.get(zone)
         if r and r["n"] >= SEUIL_TERRAIN_CELLULE_N and r["med"] is not None:
-            cellules[zone] = {"median_eur_m2": round(r["med"]), "n": r["n"], "calculable": True}
+            # #1 — `n_multizone` = actes comptés AUSSI dans l'autre zone (U∩AU) : le ratio porte sur le
+            # prix ET la surface de l'acte entier, qui peut couvrir plusieurs zones (dit dans le « i »).
+            cellules[zone] = {"median_eur_m2": round(r["med"]), "n": r["n"], "calculable": True,
+                              "n_multizone": int(r["n_multizone"] or 0)}
         else:
             cellules[zone] = {"calculable": False, "n": (r["n"] if r else 0),
                               "motif": f"n < {SEUIL_TERRAIN_CELLULE_N}"}
@@ -188,17 +196,19 @@ def ligne4_tendance(db: Session, commune: str) -> dict:
     bâti). n ≥ 30 par fenêtre, sinon « non calculable » — jamais une flèche sur 8 ventes."""
     # MÊME population que sector_price (bornes + type appart/maison + dédup par mutation réelle
     # mutation_id) pour ne pas fabriquer une deuxième médiane divergente ; on FENÊTRE seulement.
-    # OUTIL-COMMUNES-FIX-1 (à corriger 8) — la tendance est affichée À CÔTÉ de l'« ancien » (nature
-    # 'Vente' stricte, VEFA exclue). Elle doit donc mesurer LA MÊME population : on passe de
-    # `ILIKE '%vente%'` (qui incluait la VEFA, le neuf) à `= 'Vente'` stricte. Sinon « ancien » et sa
-    # « tendance » parlaient de deux marchés — le relecteur l'a relevé sur Saint-Denis.
+    # OUTIL-COMMUNES-FIX-1 (à corriger 8) — la tendance est affichée À CÔTÉ de l'« ancien » : elle doit
+    # mesurer LA MÊME population (on avait déjà retiré la VEFA).
+    # OUTIL-COMMUNES-FIX-2 #6 — ALIGNEMENT EXACT sur la sélection de l'« ancien » servi par commune
+    # (`prix_ancien_communes` / `_BAROMETRE_RETENUE`) : nature 'Vente', valeur > 1 000 €, €/m² dans
+    # [100 ; 12 000] — SANS filtre de type de local ni de surface bâtie minimale (que la tendance imposait
+    # seule). Ancien et tendance parlent désormais du MÊME ensemble de logements (le relecteur l'a relevé).
     r = db.execute(text("""
         WITH ref AS (SELECT max(date_mutation) mx FROM dvf_mutations WHERE commune = :c),
         d AS (SELECT DISTINCT ON (mutation_id) mutation_id, date_mutation,
                      valeur_fonciere / NULLIF(surface_reelle_bati,0) AS eur_m2
               FROM dvf_mutations
-              WHERE commune = :c AND nature_mutation = 'Vente' AND surface_reelle_bati >= 20
-                AND valeur_fonciere > 20000 AND type_local ILIKE ANY(ARRAY['%APPARTEMENT%','%MAISON%'])
+              WHERE commune = :c AND nature_mutation = 'Vente' AND valeur_fonciere > 1000
+                AND valeur_fonciere / NULLIF(surface_reelle_bati,0) BETWEEN 100 AND 12000
                 AND date_mutation > (SELECT mx FROM ref) - interval '24 months'),
         f AS (SELECT date_mutation > (SELECT mx FROM ref) - interval '12 months' AS recent, eur_m2 FROM d)
         SELECT count(*) FILTER (WHERE recent) n12,

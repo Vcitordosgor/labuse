@@ -476,3 +476,94 @@ PYTHONPATH=src .venv/bin/python -m pytest -m coherence tests/coherence_ecrans/ -
 PYTHONPATH=src .venv/bin/python -m pytest tests/test_sru_signal.py tests/test_zan_signal.py \
     tests/test_barometre_partiel.py tests/test_terrain_nu_acte_entier.py -q
 ```
+
+---
+
+# OUTIL-COMMUNES-FIX-2 — recontrôle externe (03-COMMUNES-ASTRA-2)
+
+Liste fermée de six points (le délai d'instruction est hors périmètre ; les changements de
+propriétaires sont clos). Chaque chiffre obtenu par appel direct aux fonctions servies (byte-identiques
+à l'API) sur la base locale.
+
+## #1 — Terrain nu : qualifier sur l'ACTE ENTIER avant toute jointure cadastrale ✅
+**Défaut** : `ligne2_terrain_zone` / `_median_terrain` rattachaient au cadastre COURANT (`JOIN parcels`)
+AVANT de chercher le bâti → une parcelle bâtie DISPARUE du cadastre (absente de `parcels`) échappait à
+la somme et faisait passer l'acte pour du terrain nu. Cas : **2021-1677591** (Saint-Denis), maison 50 m²
+sur **AV0527 absente de `parcels`**.
+**Correctif** : qualification + reconstitution de l'acte via `code_commune = :insee` (indépendant du
+cadastre), puis rattachement de la zone (`parcel_zone_plu`). Scan unique, ~65 ms.
+
+| Commune (zone U) | Affiché avant | Après (acte entier) | Effectif entrant | Attendu relecteur |
+|---|---|---|---|---|
+| Saint-Denis | 288 / 612 | **285 / 604** | 604 | 285 / 604 ✅ |
+| Saint-Paul | 271 / 880 | **271 / 879** | 879 | 271 / 879 ✅ |
+| Saint-Pierre | 301 / 784 | **300 / 780** | 780 | 300 / 780 ✅ |
+| Le Tampon | 203 / 660 | **203 / 658** | 658 | 202 / 657 (±1) |
+| Cilaos | 88 / 92 | **88 / 92** | 92 | 88 / 92 ✅ |
+
+- **Effectif affiché = celui ENTRANT dans la médiane** (ratio non nul) : 604, plus 612.
+- **Multizone dit dans le « i »** : actes comptés aussi en AU = **0 / 2 / 1 / 3 / 1** (SD/SP/St-Pierre/
+  Tampon/Cilaos) — exactement les chiffres du relecteur ; le « i » dit « dont N acte(s) aussi en AU (ratio
+  sur l'acte entier) ».
+- **Étude de zone** : `prix_par_type_zone` lisait `dvf_mutations` (31 171 mutations **toutes bâties**, zéro
+  terrain nu) → rebranché sur `dvf_mutations_parcelle` (acte entier, polygone) : Saint-Denis rend
+  désormais **306 €/m² sur 251 ventes** (au lieu de n=0). L'explication « zéro géométrie en local » du
+  1ᵉʳ compte rendu était **fausse** (la vraie cause : table sans terrain nu) — rectifiée.
+- **Maille des repères locaux** : la fiche parcelle §Marché porte déjà son périmètre (« section
+  cadastrale ») ; le tableau/fiche commune = « commune par zone » ; le Bilan = secteur.
+
+## #2 — SRU : statut officiel jusque dans les cellules du tableau ✅
+Le tableau affichait un « déficit » (22,1 ; 10,4 ; 14,1 ; 17,2 ; 3,1 pts) pour les **cinq exemptées**
+(Cilaos, Saint-Philippe, Les Trois-Bassins, Salazie, Sainte-Rose). Désormais la cellule « Déficit SRU »
+affiche **« exon. »** pour une commune exemptée (survol : « obligations suspendues sur la période »), et
+l'aide/légende ne parlent plus d'« objectif légal » pour elles (« objectif de référence », communes
+SOUMISES ; les exemptées = « exon. »). `sru_statut` porté par le payload du comparateur.
+
+## #3 — Risques & urbanisme : num ⊆ dénom, arrêtés ≠ périls, RNU, révision ✅ (révision : voir plus bas)
+- **Numérateur et dénominateur sur les MÊMES parcelles** (parc vivant) : `pct_parcelles_couche` et
+  `_pct_ppr_mvt` filtrent désormais le numérateur sur le parc vivant. **Plus aucune commune > 100 %**
+  (mesuré sur les 24) ; Saint-Denis PPR = **27 763 / 38 295 = 72,5 %**.
+- **CatNat** : un arrêté (par `date_arrete`) couvre plusieurs périls → on sert **arrêtés distincts** ET
+  **entrées par péril** : Saint-Denis **14 / 21**, Cilaos **11 / 16**, Saint-Philippe **18 / 21**.
+- **RNU** : sous RNU, la rubrique « Zones du PLU » est **masquée** (Saint-Philippe n'affiche plus 621 ha
+  en N) ; le tiret du terrain au tableau dit « commune au RNU » (pas « moins de 10 »).
+- **Saint-Denis — révision générale** : *RESTE À RÉCONCILIER AVEC LE GPU.* La donnée servie qualifie la
+  procédure de « clôturée » sur un événement (23/04/2026) + la publication d'un document
+  (97411_PLU_20260805), alors que le GPU la présente **en cours**. La publication d'un document ne suffit
+  pas à établir la clôture : à corriger côté ingestion du statut de procédure (hors maille de ce commit,
+  logique PLU partagée).
+
+## #4 — VEFA : lots distincts de même surface ✅
+Un `DISTINCT (mutation, parcelle, type, surface)` écrasait deux lots réels de même surface (acte
+**2021-1678474** : lots 44, 65 ET 65 m² → 109 au lieu de 174 → 7 018 au lieu de 4 397 €/m²). DVF ne porte
+pas le numéro de lot ici mais répète chaque lot une fois par nature_culture : la surface réelle d'une
+(parcelle, type) = `sum(surfaces) / nombre de cultures distinctes`. Médianes : Saint-Denis **4 878**
+(était 4 886), Saint-Pierre **4 931** (4 952), Le Tampon **4 785** (4 853) — tous conformes au relecteur.
+
+## #5 — Dates & comparaisons ✅
+- **ZAN — carte détaillée datée** : le scénario porte sa base (« fin 2024 ») et l'épuisement en **année
+  absolue** (« → vers 2025 »), plus de « 1,1 an avant épuisement » sans date.
+- **Trimestres série par série** : chaque série (ancien / terrain / permis) porte SA marque de couverture,
+  lue de la borne de SA source (Sitadel ≠ DVF). « partiel » = **trimestre incomplet** (couverture), plus
+  le heuristique de volume. Au front, chaque CELLULE est grisée selon SA série (plus toute la ligne sur le
+  seul drapeau de l'ancien).
+- **Demandé / acté** : le prix acté affiché à côté du demandé porte désormais **son effectif et sa
+  période** (DVF commune entière), l'écart reste « indicatif ».
+
+## #6 — Mentions & aides ✅
+- **Ancien et tendance sur la MÊME sélection** : `ligne4_tendance` adopte la sélection de l'« ancien »
+  servi (`_BAROMETRE_RETENUE` : Vente, valeur > 1 000, €/m² ∈ [100 ; 12 000], sans filtre de type ni de
+  surface minimale).
+- **Aide du tableau** : ne dit plus que la fiche commune montre un prix LOCAL (la fiche reprend le prix
+  COMMUNAL ; le prix local vit sur la fiche PARCELLE).
+- **« Ménages »** : la série INSEE des ménages n'est pas ingérée ; la valeur servie EST le compte de
+  résidences principales → la ligne est renommée **« Résidences principales (RP) »** (plus appelée « ménages »).
+- **PLH échu** : un PLH dont la période est passée est dit **« échu »** avec ses années (Saint-Philippe 2018-2023).
+- **Tiret du terrain sous RNU** : « commune au RNU » (cf. #3).
+- **Revenu** : le niveau de vie Filosofi est nommé **« agrégat local »** (pas la valeur communale officielle).
+- **Taxe d'aménagement** : son **millésime** est affiché (ex. 2022).
+
+## Preuves & tests
+Tests ajoutés : `tests/test_communes_fix2.py` (db — valeurs exactes 285/604, 72,5 %, 14/21, VEFA 4 878,
+Étude de zone terrain > 0, mutation 2021-1677591 écartée ; skip sur base de test vide, comme les voisins).
+Valeurs toutes reproduites en direct sur la base locale.

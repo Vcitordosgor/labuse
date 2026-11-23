@@ -94,15 +94,21 @@ def _median_terrain(db: Session, commune: str, seuil: int) -> dict:
     ses parcelles ne porte de bâti (`sum(bati) = 0` sur toute la mutation) — un acte mixte (maison +
     jardin nu) n'en est pas une et ne reçoit JAMAIS le prix de l'acte entier rapporté à la seule
     surface nue (cas 2021-1672641). La surface terrain est RECONSTITUÉE sur toutes les parcelles de
-    l'acte (max par parcelle puis somme par mutation), millésime entier, natures Vente+VTB (M101 B2)."""
+    l'acte (max par parcelle puis somme par mutation), millésime entier, natures Vente+VTB (M101 B2).
+
+    OUTIL-COMMUNES-FIX-2 #1 — QUALIFIER AVANT TOUTE JOINTURE CADASTRALE : on lit les lignes DVF par
+    `code_commune` (indépendant du cadastre courant), jamais via `JOIN parcels` qui laissait échapper une
+    parcelle bâtie DISPARUE du cadastre (elle faisait passer l'acte pour du terrain nu)."""
     lo, hi = BORNE_TERRAIN
+    insee = db.execute(text("SELECT left(min(idu), 5) FROM parcels WHERE lower(commune) = lower(:c)"),
+                       {"c": commune}).scalar()
     r = db.execute(text(
         "WITH parc AS ("   # un enregistrement par (mutation, parcelle) : dédoublonnage DVF
         "  SELECT dm.id_mutation, dm.id_parcelle, max(dm.valeur_fonciere) AS vf, max(dm.date_mutation) AS d, "
         "         max(COALESCE(dm.surface_terrain, 0)) AS terr_p, "
         "         max(COALESCE(dm.surface_reelle_bati, 0)) AS bati_p "
-        "  FROM dvf_mutations_parcelle dm JOIN parcels p ON p.idu = dm.id_parcelle "
-        "  WHERE lower(p.commune) = lower(:c) AND " + NATURE_TERRAIN_SQL + " "
+        "  FROM dvf_mutations_parcelle dm "
+        "  WHERE dm.code_commune = :insee AND " + NATURE_TERRAIN_SQL + " "
         "  GROUP BY dm.id_mutation, dm.id_parcelle), "
         # ACTE ENTIER : on garde la mutation UNIQUEMENT si son bâti total est nul (sum(bati_p)=0).
         "tot AS (SELECT id_mutation, sum(terr_p) AS terr_tot, max(vf) AS vf, "
@@ -114,7 +120,7 @@ def _median_terrain(db: Session, commune: str, seuil: int) -> dict:
         "       to_char(min(d0), 'YYYY') AS y0, to_char(max(d1), 'YYYY') AS y1, "
         "       to_char(max(d1), 'YYYY-MM-DD') AS mill "
         "FROM tot"),
-        {"c": commune, "lo": lo, "hi": hi}).mappings().first() or {}
+        {"insee": insee, "lo": lo, "hi": hi}).mappings().first() or {}
     n = int(r.get("n") or 0)
     mill = r.get("mill")
     if n < seuil or r.get("med") is None:

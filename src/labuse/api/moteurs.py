@@ -1038,14 +1038,16 @@ def _barometre_data(db: Session, insee: str | None = None) -> dict:
     dvf_l = [dict(r) for r in dvf]
     terrain_l = [dict(r) for r in terrain]
     permis_l = [dict(r) for r in permis]
-    for s in (dvf_l, terrain_l, permis_l):
-        _marque_partiel(s, "mutations" if s is not permis_l else "permis")
-    # à corriger 5 — COUVERTURE de la série PERMIS : son dernier trimestre est partiel si Sitadel ne
-    # couvre pas tout le trimestre (données arrêtées en août → 2026T3 = 2 mois sur 3), indépendamment du
-    # volume. Le relecteur l'a mesuré : le drapeau était faux pour l'île et Saint-Denis (volume stable).
-    # On ne touche PAS DVF/terrain (ils gardent le heuristique de volume `_marque_partiel`, déjà juste) :
-    # le drapeau d'UNE série ne doit plus être lu pour une AUTRE (Sitadel ≠ DVF).
+    # OUTIL-COMMUNES-FIX-2 #5 — « PARTIEL » = TRIMESTRE INCOMPLET (couverture), PAS « faible volume ».
+    # CHAQUE série porte SA PROPRE marque, lue de la borne de SA source (Sitadel ≠ DVF ventes ≠ DVF
+    # parcelles) : un trimestre est partiel si sa fin dépasse la dernière donnée de la source. On retire
+    # le heuristique de volume (`_marque_partiel`) qui grisait de bons trimestres à faible volume et dont
+    # le drapeau « ancien » était lu pour toute la ligne au front.
     _maj_sit = db.execute(text("SELECT max(date::date) FROM sitadel_permits")).scalar()
+    _maj_dvf = db.execute(text("SELECT max(date_mutation) FROM dvf_mutations")).scalar()
+    _maj_dvfp = db.execute(text("SELECT max(date_mutation) FROM dvf_mutations_parcelle")).scalar()
+    _marque_partiel_couverture(dvf_l, _maj_dvf)
+    _marque_partiel_couverture(terrain_l, _maj_dvfp)
     _marque_partiel_couverture(permis_l, _maj_sit)
     return {"perimetre": (f"{nom} (DVF communal, Sitadel)" if nom
                           else "île entière (24 communes DVF, flux Sitadel régional)"),
