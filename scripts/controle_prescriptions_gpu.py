@@ -141,6 +141,23 @@ def gpu_document_zip(insee: str) -> dict:
 
 def _psql(sql: str, sep: str = "\x1f") -> list[list[str]]:
     import os
+    # Cible PROD en LECTURE SEULE si CONTROLE_PROD_SSH est posé (ex. « labuse-vps ») : la géométrie
+    # et le ZIP restent calculés sur le Mac ; seules les requêtes `servi`/parcelles passent sur la prod
+    # via ssh + sudo -u postgres (auth peer, sans mot de passe). Multiplexage ssh pour la vitesse.
+    prod = os.environ.get("CONTROLE_PROD_SSH")
+    if prod:
+        psep = "§"   # séparateur imprimable, sûr à travers ssh (ni geojson ni idu n'en contiennent)
+        full = f"SET statement_timeout='170s';\n{sql}"
+        out = subprocess.run(
+            ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=30",
+             "-o", "ControlMaster=auto", "-o", "ControlPath=/tmp/cm_controle_%r@%h:%p",
+             "-o", "ControlPersist=60s", prod,
+             f"sudo -u postgres psql -At -F '{psep}' -d labuse"],
+            input=full, capture_output=True, text=True)
+        if out.returncode != 0:
+            raise RuntimeError(out.stderr.strip()[:300])
+        return [line.split(psep) for line in out.stdout.splitlines()
+                if line.strip() and line.strip() != "SET"]   # « SET » = écho du statement_timeout
     # statement_timeout par PGOPTIONS (et pas un `-c SET …` qui émettrait une ligne « SET »
     # parasite, prise à tort pour une donnée).
     env = {**os.environ, "PGOPTIONS": "-c statement_timeout=170000"}
@@ -329,9 +346,9 @@ def main():
         return
     print(f"=== {commune} ({insee}) — servi {r.get('idurba_servi')} — source {r.get('source','?')} — n_gpu {r.get('n_gpu',{})} ===")
     print(f"VERDICT : {r['verdict']}")
-    for k, v in r["par_type"].items():
+    for k, v in r.get("par_type", {}).items():      # .get : un verdict ARRÊTÉ/ERREUR n'a pas ces clés
         print(f"  {k}: {v}")
-    for lbl, v in r["parcelles"].items():
+    for lbl, v in r.get("parcelles", {}).items():
         print(f"  parcelles {lbl} : >50 m² = {v['sig50_n']} · >5% = {v['sig5pct_n']} {v['sig5pct_idus'][:10]}")
 
 
