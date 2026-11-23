@@ -78,7 +78,9 @@ def test_v3_dormant_partout_plus_de_point_mort_visible():
     assert "'Au point mort'" not in MP and "au point mort ·" not in MP
     assert "Permis dormant — permis de construire" in MP
     reg = (ROOT / "frontend/src/components/outils/registry.ts").read_text(encoding="utf-8")
-    assert "permis dormants" in reg and "les permis au point mort" not in reg
+    # OUTIL-PERMIS-FIX-1 (LOT 6) — la tuile dit une formule EXACTE (autorisations : récentes, dormantes,
+    # achevées) ; « dormant » reste dit, l'ancien outil « les permis au point mort » a disparu.
+    assert "dormant" in reg.lower() and "les permis au point mort" not in reg
     ctx = (ROOT / "frontend/src/components/contexte/ContextePanel.tsx").read_text(encoding="utf-8")
     assert 'lbl="Permis dormants"' in ctx and "Permis au point mort" not in ctx
     # le Copilote route toujours le vocabulaire ancien, mais AFFICHE le nouveau libellé
@@ -97,9 +99,11 @@ def test_v4_count_only_et_chip_tous_en_base(client):
     full = client.get("/modules/permis?months=240&limit=1").json()
     assert d["total"] == full["total"] and d["total"] >= 2
     assert d["geocodes"] == full["geocodes"]
-    # le front branche bien le chip « Tous » dessus
-    assert "modPermisCount(240)" in MP
+    # OUTIL-PERMIS-FIX-1 (LOT 1) — le front branche le chip « Tous » sur la PARTITION comptée (une seule
+    # requête count_only&etats=true), plus modPermisCount + soustraction.
+    assert "modPermisEtats(240)" in MP
     assert "radarEntryTotal + pmEntryTotal" not in MP   # la somme trompeuse a disparu
+    assert "autreEntryTotal = etatsN" in MP             # « Autres » est COMPTÉ (servi), plus dérivé
 
 
 def test_v4_ligne_du_bas_nomme_ses_perimetres():
@@ -113,5 +117,5 @@ def test_v4_ligne_du_bas_nomme_ses_perimetres():
     # chaque état porte sa DÉFINITION COURTE sur sa ligne
     assert "depuis 24 mois" in MP   # OUTILS-P1-1 (pt 5) — période dans la définition (périmètre)
     assert "travaux déclarés (DAACT)" in MP
-    # « Tous » compte toujours la base entière (count_only léger)
-    assert "modPermisCount(240)" in MP
+    # « Tous » compte la base entière via la partition (count_only&etats=true, léger)
+    assert "modPermisEtats(240)" in MP

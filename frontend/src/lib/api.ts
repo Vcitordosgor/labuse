@@ -1852,6 +1852,12 @@ export const modPermis = (months: number, nature?: string | null, limit = 300, o
 // RETOURS-16 V4 — compteur seul (ni lignes ni carte) : le chip « Tous » dit le total EN BASE.
 export const modPermisCount = (months: number, etat?: string | null) =>
   j<{ total: number; geocodes?: number; donnees_jusqu_au?: string }>(`/modules/permis?${cq()}&months=${months}${etat ? `&etat=${etat}` : ''}&count_only=true`)
+// OUTIL-PERMIS-FIX-1 (LOT 1) — PARTITION des 4 états COMPTÉS en UNE requête (plus de 4 appels + une
+// soustraction). `etats.recent+dormant+acheve+autre = total`. Sert les compteurs d'entrée de l'outil.
+export const modPermisEtats = (months = 240) =>
+  j<{ total: number; geocodes: number; donnees_jusqu_au?: string; coupure_recent?: string; sans_date: number;
+      etats: { recent: number; dormant: number; acheve: number; autre: number } }>(
+    `/modules/permis?${cq()}&months=${months}&count_only=true&etats=true`)
 export const modPermisFiche = (permitId: string) =>
   j<Record<string, unknown>>(`/modules/permis/${encodeURIComponent(permitId)}`)
 export const modParcellePermis = (idu: string) =>

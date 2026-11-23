@@ -578,9 +578,10 @@ export function ContextePanel() {
                 sous={`${fmt(d.permis_bloc.permis_12m)} permis / 12 mois${d.permis_bloc.logements_12m != null ? ` · ${fmt(d.permis_bloc.logements_12m)} logts` : ''}`}
                 val={d.permis_bloc.delai_median_mois != null ? `${fmtDec(d.permis_bloc.delai_median_mois)} mois` : null}>
                 <div className="flex flex-col gap-0.5 text-[12px]">
-                  {/* RECETTE-PROD-1 (F) — « déposés », pas « autorisés » : le total 12 mois INCLUT les annulés
-                      (329 = 327 autorisés par type + 2 annulés, affichés séparément ci-dessous). */}
-                  <RowT lbl="Permis déposés (12 mois)" val={`${fmt(d.permis_bloc.permis_12m)}${d.permis_bloc.permis_5a != null ? ` · ${fmt(d.permis_bloc.permis_5a)} sur 5 ans` : ''}`} strong />
+                  {/* OUTIL-PERMIS-FIX-1 (LOT 6) — l'événement compté est l'AUTORISATION (colonne `date`,
+                      ancrée sur la fin des données), PAS le dépôt : « déposés » prêtait à confusion avec le
+                      vrai bloc Dépôts (date_depot, section). Le total inclut les annulés, séparés ci-dessous. */}
+                  <RowT lbl="Permis autorisés (12 mois, annulés compris)" val={`${fmt(d.permis_bloc.permis_12m)}${d.permis_bloc.permis_5a != null ? ` · ${fmt(d.permis_bloc.permis_5a)} sur 5 ans` : ''}`} strong />
                   {/* KELFONCIER-FIX-2 (Lot D) — ventilation PC / PA / DP (+ PD) sur 12 mois, à côté du chiffre
                       existant. Servie par le back (permis_type_12m, KELFONCIER-FIX-1 Lot C), même source SITADEL.
                       Ordre stable PC · PA · DP · PD ; seuls les types présents s'affichent. */}
