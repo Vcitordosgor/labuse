@@ -150,15 +150,34 @@ def test_fix3_point2_promesses_lit_fonction_unique_et_clampe():
     assert "MONTHS_PM = [36, 48, 60, 72]" in mp           # plus de « 24 » (< plancher)
 
 
-def test_fix3_point3_delais_vivants_et_fiche_coherente():
-    """Point 3 — la couche des délais est MAINTENUE PAR TRIGGER (dérivée de sitadel_permits) et la fiche
-    n'affiche un délai que s'il est COHÉRENT avec le dépôt ET l'autorisation montrés (source unique)."""
+def test_fix3_point3_delais_vivants_maintenus_par_trigger():
+    """Point 3 (relecture 3 suite) — la couche des délais est MAINTENUE PAR TRIGGER (dérivée de
+    sitadel_permits) et rafraîchie à la ré-ingestion."""
     from labuse.ingestion import permit_delais_m10 as m10
     assert hasattr(m10, "ensure_delais_vivants") and "m10_permit_delais_sync" in m10._M10_TRIGGER_FN
     from pathlib import Path
-    root = Path(__file__).resolve().parents[1]
-    mods = (root / "src/labuse/api/modules.py").read_text(encoding="utf-8")
-    assert "delai_coherent" in mods                       # garde de cohérence dans la fiche
-    assert "s.date_depot::date::text AS date_depot" in mods   # dépôt depuis Sitadel (source unique)
-    sdes = (root / "src/labuse/ingestion/permits_sdes.py").read_text(encoding="utf-8")
+    sdes = (Path(__file__).resolve().parents[1] / "src/labuse/ingestion/permits_sdes.py").read_text(encoding="utf-8")
     assert "ensure_delais_vivants" in sdes                # la ré-ingestion rafraîchit la couche
+
+
+def test_fix4_point2_depot_depuis_an_depot_pas_dr_depot():
+    """OUTIL-PERMIS-FIX-4 (Point 2) — le DÉPÔT de la couche des délais vient de AN_DEPOT (année), PAS de
+    DR_DEPOT (corrompu = date d'autorisation / postérieur à 62,6 %). L'ingestion stocke `an_depot`."""
+    from labuse.ingestion import permit_delais_m10 as m10
+    # le SQL de la couche dérive le dépôt de raw->>'an_depot' (01-01), plus de s.date_depot (DR_DEPOT)
+    assert "an_depot" in m10._M10_ROW_SQL and "-01-01" in m10._M10_DEPOT_SQL
+    assert "s.date_depot" not in m10._M10_ROW_SQL          # DR_DEPOT (date_depot) n'alimente plus le délai
+    from pathlib import Path
+    sdes = (Path(__file__).resolve().parents[1] / "src/labuse/ingestion/permits_sdes.py").read_text(encoding="utf-8")
+    assert '"an_depot"' in sdes and "AN_DEPOT" in sdes     # l'ingestion stocke l'année de dépôt
+
+
+def test_fix4_point4_fiche_delai_seulement_si_depot_precis():
+    """OUTIL-PERMIS-FIX-4 (Point 4) — la fiche n'affiche dépôt+délai QUE si le dépôt est une DATE PRÉCISE
+    fiable (DR_DEPOT strictement antérieur à l'autorisation ET non un 1er janvier = proxy d'année) ;
+    sinon ni dépôt ni délai (jamais « 0 mois » issu d'un DR_DEPOT = date d'autorisation)."""
+    from pathlib import Path
+    mods = (Path(__file__).resolve().parents[1] / "src/labuse/api/modules.py").read_text(encoding="utf-8")
+    assert "s.date_depot < s.date" in mods                 # strictement antérieur
+    assert "EXTRACT(MONTH FROM s.date_depot) = 1 AND EXTRACT(DAY FROM s.date_depot) = 1" in mods  # exclut le proxy 01-01
+    assert "delai_coherent" not in mods                    # l'ancienne garde (mandat 3) est remplacée

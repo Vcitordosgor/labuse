@@ -746,23 +746,27 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
                s.raw->>'geoloc' AS geoloc,
                s.raw->>'petitioner_name' AS porteur, s.raw->>'petitioner_siren' AS porteur_siren,
                s.idu_codes,
-               -- OUTIL-PERMIS-FIX-3 (Point 3) — UNE SEULE version des dates : dépôt ET autorisation depuis
-               -- `sitadel_permits` (la donnée SERVIE). La couche des délais (m10) n'est lue que pour le
-               -- DÉLAI, et seulement s'il est COHÉRENT avec ces deux dates (sinon il n'est pas affiché).
-               s.date_depot::date::text AS date_depot,
-               d.delai_mois, d.date_achevement::text AS date_achevement,
-               (d.valide AND d.date_autorisation = s.date::date
-                AND d.date_depot = s.date_depot::date) AS delai_coherent,
+               -- OUTIL-PERMIS-FIX-4 (Point 4) — le DÉPÔT de la fiche n'est montré que s'il est une DATE
+               -- PRÉCISE FIABLE : `date_depot` (DR_DEPOT) STRICTEMENT antérieure à l'autorisation ET non
+               -- un 1er janvier (= proxy d'ANNÉE, 10 787 cas). Restent 377 vraies dates précises. Sinon
+               -- (DR_DEPOT = autorisation / postérieur / proxy / absent) → NI dépôt NI délai (la couche
+               -- des délais des Communes utilise l'ANNÉE de dépôt, trop imprécise pour une fiche).
+               CASE WHEN s.date_depot IS NOT NULL AND s.date IS NOT NULL AND s.date_depot < s.date
+                    AND NOT (EXTRACT(MONTH FROM s.date_depot) = 1 AND EXTRACT(DAY FROM s.date_depot) = 1)
+                    THEN s.date_depot::date::text END AS date_depot,
+               CASE WHEN s.date_depot IS NOT NULL AND s.date IS NOT NULL AND s.date_depot < s.date
+                    AND NOT (EXTRACT(MONTH FROM s.date_depot) = 1 AND EXTRACT(DAY FROM s.date_depot) = 1)
+                    THEN (EXTRACT(YEAR FROM s.date)::int - EXTRACT(YEAR FROM s.date_depot)::int) * 12
+                       + (EXTRACT(MONTH FROM s.date)::int - EXTRACT(MONTH FROM s.date_depot)::int) END AS delai_mois,
                CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
         FROM sitadel_permits s
-        LEFT JOIN m10_permit_delais d ON d.permit_id = s.permit_id
         WHERE s.permit_id = :pid"""), {"pid": permit_id}).mappings().first()
     if not r:
         raise HTTPException(404, "Permis introuvable")
-    # OUTIL-PERMIS-FIX-3 (Point 3) — le délai n'est affiché QUE s'il est cohérent avec le dépôt ET
-    # l'autorisation montrés (couche des délais à jour) : plus de « 11 mois » calculé sur d'autres dates.
+    # OUTIL-PERMIS-FIX-4 (Point 4) — délai affiché UNIQUEMENT si la date de dépôt est fiable (précise,
+    # antérieure à l'autorisation) : jamais « 0 mois » issu d'un DR_DEPOT = date d'autorisation (défaut).
     delai = None
-    if r["delai_coherent"] and r["delai_mois"] is not None:
+    if r["delai_mois"] is not None and r["date_depot"] is not None:
         delai = {"mois": r["delai_mois"],
                  "libelle": f"{r['delai_mois']} mois entre dépôt et autorisation"}
     return {
@@ -776,7 +780,7 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
         # FRONT-CHIFFRES-2 (F32) — la note d'incohérence dépôt/autorisation (seuil 1 mois) vient de la
         # fonction PARTAGÉE `miroir.permis_incoherence_note`, plus de la regex de seuil au front.
         "note_incoherence": _miroir.permis_incoherence_note(r["date_depot"], r["date_autorisation"]) or None,
-        "date_achevement": r["date_achevement"] or r["daact"],
+        "date_achevement": r["daact"],
         "delai_instruction": delai,
         # KELFONCIER-FIX-2 (Lot D) — statut par la fonction PARTAGÉE de la fiche (ingestion/permits.py) :
         # l'annulé (état 4) est dit « annulé », plus « Chantier ouvert » (divergence de l'ancien _ETAT_LABELS).

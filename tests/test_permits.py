@@ -97,3 +97,25 @@ def test_dynamique_respecte_le_rayon(db_session):
     # SANS le rayon, le lointain (999 logts) gonflerait le compte : le test l'interdit.
     assert pm["dynamique"]["permis_recents"] == 1
     assert pm["dynamique"]["logements_recents"] == 10
+
+
+def test_delai_depuis_an_depot_et_fiche_masquee(db_session):
+    """OUTIL-PERMIS-FIX-4 (Points 2-4) — la couche des délais dérive le dépôt de AN_DEPOT (année), PAS de
+    DR_DEPOT (= date d'autorisation, corrompu) ; et la fiche masque dépôt+délai quand le dépôt n'est pas
+    une date précise fiable (DR_DEPOT = autorisation)."""
+    import json as _j
+    from labuse.ingestion.permit_delais_m10 import ensure_delais_vivants
+    # permit DP : AN_DEPOT 2023 (dépôt réel), autorisation 2026-01-15, DR_DEPOT = autorisation (corrompu)
+    db_session.execute(text(
+        "INSERT INTO sitadel_permits (permit_id, type, date, date_depot, idu_codes, commune, raw) VALUES "
+        "('DELAI-AN','DP','2026-01-15','2026-01-15','[]'::jsonb,'Permia',CAST(:raw AS jsonb))"),
+        {"raw": _j.dumps({"an_depot": "2023", "famille": "logements", "nb_lgt": "1"})})
+    ensure_delais_vivants(db_session, resync=True)
+    r = db_session.execute(text(
+        "SELECT date_depot, delai_mois, valide FROM m10_permit_delais WHERE permit_id='DELAI-AN'")).mappings().first()
+    # dépôt = AN_DEPOT-01-01 (2023-01-01), délai = 36 mois + 0 = 36 ; valide (autorisation ≥ dépôt).
+    # (La couche a bien dérivé le dépôt de AN_DEPOT, PAS de date_depot=DR_DEPOT=autorisation=2026-01-15,
+    #  qui aurait donné un délai 0 fallacieux.)
+    assert str(r["date_depot"]) == "2023-01-01" and r["delai_mois"] == 36 and r["valide"] is True
+    db_session.execute(text("DELETE FROM sitadel_permits WHERE permit_id='DELAI-AN'"))
+    db_session.execute(text("DELETE FROM m10_permit_delais WHERE permit_id='DELAI-AN'"))

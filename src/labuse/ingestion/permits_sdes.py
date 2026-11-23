@@ -208,6 +208,10 @@ def ingest_sdes(session: Session, since: str | None = None, log=print) -> dict:
                    "destination": rec.get("DESTINATION_PRINCIPALE"),
                    "daact": rec.get("DATE_REELLE_DAACT") or None,
                    "etat": rec.get(df["etat"]),
+                   # OUTIL-PERMIS-FIX-4 (Point 2) — ANNÉE DE DÉPÔT (AN_DEPOT) : la SEULE date de dépôt
+                   # fiable du flux. `DR_DEPOT` est corrompu (= date d'autorisation, ou postérieur dans
+                   # 62,6 % des cas) → la couche des délais la lit ICI, pas DR_DEPOT (date_depot).
+                   "an_depot": (rec.get("AN_DEPOT") or "").strip() or None,
                    "famille": key,
                    "insee": insee}
             # RETOURS-13 R30 — l'ADRESSE DU TERRAIN (colonnes ADR_* du flux) voyage dans raw :

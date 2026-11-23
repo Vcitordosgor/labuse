@@ -430,3 +430,48 @@ Permis à proximité            1 permis (< 500 m, 24 mois)            sourcé
 Back : `ingestion/permits.py` (P1 — rayon), `api/modules.py` (P2 — /promesses lit la fonction unique + clamp ; P3 — fiche cohérente), `registre/moteurs/commune.py` (P2 — clamp point_mort), `ingestion/permit_delais_m10.py` (P3 — trigger + resync), `ingestion/permits_sdes.py` (P3 — ré-ingestion rafraîchit m10).
 Front : `components/outils/ModulePanel.tsx` (P2 — MONTHS_PM).
 Tests : `test_permits.py` (db — rayon), `test_outil_permis_fix1.py` (non-db — P1/P2/P3). Couche : `m10_permit_delais` reconstruite + trigger.
+
+---
+---
+
+# OUTIL-PERMIS-FIX-4 — réserve de la relecture 3 : la colonne « Instruction (mois) » tombée à 0
+
+Mon recalcul de `m10_permit_delais` (mandat 3, OUTIL-PERMIS-FIX-3) l'a reconstruite depuis `sitadel_permits.date_depot` (= `DR_DEPOT`). Résultat : la colonne « Instruction (mois) » de l'outil Communes serait passée à **0** pour les 24 communes.
+
+## Point 1 — Constat (lecture seule)
+
+| | Saint-Denis | Saint-Pierre | Saint-Paul | Le Tampon | Saint-Louis | Saint-André |
+|---|--:|--:|--:|--:|--:|--:|
+| **main (avant ma branche)** — validé relecteur | 9 | 8 | 9 | 9 | 9 | 9 |
+| **ma branche (mandat 3)** — DR_DEPOT | **0** | 0 | 0 | 0 | 0 | 0 |
+| **ma branche (ce correctif)** — AN_DEPOT | **9** | **8** | **9** | **9** | **9** | **9** |
+
+Oui, elle avait changé (8-9 → 0). Le correctif la **restaure** (médiane logements, source unique `m10_permit_delais` lue par `registre/moteurs/commune.indicateurs_communes`).
+
+## Point 2 — Cause
+
+- **L'ancienne couche (14/07)** datait le dépôt avec **`AN_DEPOT`** (ANNÉE de dépôt, convention `AAAA-01-01` — d'où `date_depot = 2025-01-01` pour 97440925G0371, dont `AN_DEPOT = 2025`).
+- **La mienne (mandat 3)** lisait `sitadel_permits.date_depot`, alimenté par **`DR_DEPOT`**. Or `DR_DEPOT` est **corrompu** : dans l'échantillon SDES il vaut **exactement la date d'autorisation** ; sur l'île, il est **postérieur à l'autorisation dans 62,6 %** des cas (31 810/50 843) ; sur les permis autorisés en 2023, **5 sur 2 692** seulement l'ont avant l'autorisation. Ce n'est pas une date de dépôt.
+- **Le bon champ** : `AN_DEPOT` (l'année de dépôt, fiable). Vérifié : la médiane recalculée dessus = **9/8/9/9/9/9**, exactement les valeurs validées par le relecteur.
+
+## Point 3 — Correction
+
+- **Source du dépôt = `AN_DEPOT`** : l'ingestion stocke `raw.an_depot` ; la couche des délais en dérive `date_depot = AAAA-01-01`, `delai_mois = autorisation − (AAAA-01-01)`, `valide = autorisation ≥ dépôt`. Médiane commune **8-9 restaurée**.
+- **Reste MAINTENUE PAR TRIGGER** (dérivée de `sitadel_permits`, via `raw.an_depot`) : vérifié transactionnel (changer `an_depot` → délai recalculé, ROLLBACK → restauré).
+- **Délai absent, jamais 0 (fiche)** : une date de dépôt n'est **fiable pour une fiche** que si c'est une **date précise** (DR_DEPOT strictement antérieur à l'autorisation ET non un 1er janvier = proxy d'année). **377** permis seulement y satisfont ; pour eux la fiche montre dépôt + délai (ex. 9744012520063 : dépôt 29/12/2025, délai 4 mois). Pour tous les autres → **ni dépôt ni délai** (jamais un « 0 mois » issu d'un `DR_DEPOT` = autorisation). La médiane communale, elle, est un AGRÉGAT qui tolère l'année de dépôt (proxy) — distinction documentée.
+
+## Point 4 — 97440925G0371
+
+« Dépôt et autorisation le même jour, délai 0 » était **le même défaut** (son `DR_DEPOT` = 2026-02-16 = l'autorisation ; son vrai dépôt est `AN_DEPOT = 2025`, soit ~13 mois). La date de dépôt n'étant pas fiable (précise), **la fiche ne montre NI dépôt NI délai** (vérifié : `date_depot: null`, `delai_instruction: null`).
+
+## La couche sert-elle ailleurs ?
+
+Oui : `m10_permit_delais` alimente l'indicateur **« Dynamisme / délai d'instruction » de l'outil Communes** (comparateur, `commune.indicateurs_communes` → `velocite`, médiane sur `valide AND famille='logements'`) **et** l'outil **Vélocité** autonome (`/modules/velocite`). Le recalcul rafraîchit les deux.
+
+## Preuves des mandats précédents (stables après ré-ingestion)
+
+dmax 30/09/2026 inchangé (51 125 lignes). Partition île `5201/854/21322/23747 = 51 124` (compteur = filtre) ; dormant 854 ; 10 parcelles c200 `13/14/0/…` inchangées ; 97440925G0371 date d'autorisation 16/02/2026.
+
+## Fichiers touchés (mandat 4)
+
+`ingestion/permits_sdes.py` (stocke `raw.an_depot`), `ingestion/permit_delais_m10.py` (dépôt = AN_DEPOT, trigger + `build_delais`), `api/modules.py` (fiche : délai seulement si dépôt précis fiable ; le rayon du Dossier n'est pas touché ici). Tests : `test_outil_permis_fix1.py` (+2), `test_permits.py` (+1, db). Couche : `m10_permit_delais` reconstruite depuis AN_DEPOT, `raw.an_depot` peuplé.

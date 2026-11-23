@@ -108,23 +108,25 @@ def _valide(dep: date | None, aut: date | None, delai: int | None) -> bool:
     return delai is not None and delai >= 0 and dep is not None and aut is not None and aut >= dep
 
 
-# ─────────────────── OUTIL-PERMIS-FIX-3 (Point 3) — couche VIVANTE, dérivée de sitadel_permits ───────────────────
-# `sitadel_permits` porte déjà dépôt (`date_depot`), autorisation (`date`), achèvement (`raw.daact`),
-# famille (`raw.famille`), nature (`type`). On recalcule m10 DEPUIS CETTE DONNÉE (pas un re-pull réseau,
-# qui pourrait redonner un millésime différent de ce qui est SERVI) et on la MAINTIENT PAR TRIGGER, comme
-# `via_permits_geo` : la couche des délais suit désormais chaque mise à jour des permis. Même règle de
-# validité (`_valide` : dépôt+autorisation présents, délai ≥ 0, autorisation ≥ dépôt).
+# ─────────────────── OUTIL-PERMIS-FIX-3/4 — couche VIVANTE, dérivée de sitadel_permits ───────────────────
+# OUTIL-PERMIS-FIX-4 (Point 2/3) — le DÉPÔT vient de `raw.an_depot` (= AN_DEPOT, ANNÉE de dépôt du flux
+# SDES), PAS de `date_depot` (= DR_DEPOT, corrompu : = date d'autorisation ou postérieur à 62,6 %). Le
+# dépôt est donc connu À L'ANNÉE : convention `AAAA-01-01` (comme l'ancienne couche validée par le
+# relecteur → médiane 8-9 mois par commune). La couche reste MAINTENUE PAR TRIGGER (suit les MAJ permis).
+# Règle de validité : année de dépôt présente, autorisation présente, et autorisation ≥ année de dépôt.
+_M10_DEPOT_SQL = "CASE WHEN s.raw->>'an_depot' ~ '^[0-9]{4}$' THEN ((s.raw->>'an_depot')||'-01-01')::date END"
 _M10_DELAI_SQL = (
-    "(EXTRACT(YEAR FROM s.date)::int - EXTRACT(YEAR FROM s.date_depot)::int) * 12"
-    " + (EXTRACT(MONTH FROM s.date)::int - EXTRACT(MONTH FROM s.date_depot)::int)")
+    "(EXTRACT(YEAR FROM s.date)::int - (s.raw->>'an_depot')::int) * 12"
+    " + (EXTRACT(MONTH FROM s.date)::int - 1)")
 _M10_ACH_SQL = "CASE WHEN s.raw->>'daact' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}' THEN (left(s.raw->>'daact',10))::date END"
 _M10_ROW_SQL = f"""
   s.permit_id, s.commune, s.type AS nature, s.raw->>'famille' AS famille,
-  s.date_depot::date AS date_depot, s.date::date AS date_autorisation,
+  {_M10_DEPOT_SQL} AS date_depot, s.date::date AS date_autorisation,
   {_M10_ACH_SQL} AS date_achevement,
-  CASE WHEN s.date_depot IS NOT NULL AND s.date IS NOT NULL THEN {_M10_DELAI_SQL} END AS delai_mois,
-  (s.date_depot IS NOT NULL AND s.date IS NOT NULL AND s.date >= s.date_depot
-   AND ({_M10_DELAI_SQL}) >= 0) AS valide
+  -- valide ⇔ dépôt (année) connu ET autorisation présente ET autorisation ≥ dépôt (01-01). Le `::int`
+  -- du délai n'est évalué QUE dans ce CASE (dépôt non nul = an_depot à 4 chiffres) → jamais d'erreur.
+  CASE WHEN COALESCE(s.date::date >= ({_M10_DEPOT_SQL}), false) THEN {_M10_DELAI_SQL} END AS delai_mois,
+  COALESCE(s.date::date >= ({_M10_DEPOT_SQL}), false) AS valide
 """
 
 _M10_TRIGGER_FN = f"""
@@ -205,7 +207,10 @@ def build_delais(session: Session, log=print) -> dict:
                 continue
             nature = ((rec.get(df.get("type_col")) or df.get("type_fixe") or "").strip()
                       or None)
-            dep = _pdate(rec.get("DR_DEPOT"))
+            # OUTIL-PERMIS-FIX-4 (Point 2) — DÉPÔT = AN_DEPOT (ANNÉE, convention 01-01), PAS DR_DEPOT
+            # (corrompu). Même source que le trigger (raw.an_depot). Médiane commune 8-9 mois retrouvée.
+            an = (rec.get("AN_DEPOT") or "").strip()
+            dep = date(int(an), 1, 1) if an.isdigit() and 2000 <= int(an) <= 2100 else None
             aut = _pdate(rec.get("DATE_REELLE_AUTORISATION"))
             ach = _pdate(rec.get("DATE_REELLE_DAACT"))
             delai = _months(dep, aut)
