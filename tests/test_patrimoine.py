@@ -36,10 +36,12 @@ def _seed(db, idu, wkt, siren, denom, tier="a_creuser", zone_fam="U"):
 
 def test_patrimoine_search_ne_leve_pas(db_session):
     from labuse.api.modules import patrimoine_search
-    assert patrimoine_search("x", db=db_session) == []          # < 2 car. → vide, jamais une exception
+    vide = patrimoine_search("x", db=db_session)                # < 2 car. → objet vide, jamais une exception
+    assert vide["resultats"] == [] and vide["total"] == 0 and vide["masques"] == 0
     _seed(db_session, "97499000PA0001", _WKT[0], "111222333", "SCI PATCO ALPHA")
     out = patrimoine_search("PATCO", db=db_session)             # ne lève pas
-    assert any(r["siren"] == "111222333" and r["n"] >= 1 for r in out)
+    assert any(r["siren"] == "111222333" and r["n"] >= 1 for r in out["resultats"])
+    assert out["total"] >= 1 and out["masques"] == 0            # SCAN-FIX-1 (pt 8) — masqués annoncés
 
 
 def test_patrimoine_hors_ecartees_par_vous(db_session, monkeypatch):

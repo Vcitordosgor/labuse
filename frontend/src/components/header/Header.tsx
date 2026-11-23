@@ -172,7 +172,9 @@ export function Omnibox() {
 
       // 3. NOM de propriétaire → Scan patrimoine état 2 (réutilise la recherche de Scan patrimoine)
       if (/[a-zA-Zà-ÿ]/.test(val)) {
-        const owners = await modPatrimoineSearch(val).catch(() => [])
+        // SCAN-FIX-1 (pt 8) — la recherche renvoie désormais { resultats, total, masqués } (plus une liste nue).
+        const res = await modPatrimoineSearch(val).catch(() => null)
+        const owners = res?.resultats ?? []
         if (owners[0]) { ouvrirScan(owners[0].siren); return }
       }
 

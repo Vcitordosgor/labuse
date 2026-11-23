@@ -210,7 +210,7 @@ def division_list(min_score: int = 0, limit: int = Query(300, ge=1, le=2000),   
 # ───────────────────────── M02 — SCAN PATRIMOINE INVERSÉ ─────────────────────────
 
 @router.get("/patrimoine/search")
-def patrimoine_search(q: str, db: Session = Depends(get_db)) -> list[dict]:
+def patrimoine_search(q: str, db: Session = Depends(get_db)) -> dict:
     # M103 P2 (défaut M100 n°3) : la colonne MAJIC est 100 % désaccentuée (82 701 lignes) et
     # ILIKE ne plie pas les accents — « Société » rendait 0 en silence. LE MÊME pliage
     # (constants.sql_plie) s'applique au paramètre ET à la colonne (motif NDé M99-B, déjà en
@@ -218,7 +218,7 @@ def patrimoine_search(q: str, db: Session = Depends(get_db)) -> list[dict]:
     from ..constants import params_pliage, sql_plie
     from ..patrimoine_alias import expand_sigle
     if len(q.strip()) < 2:
-        return []
+        return {"resultats": [], "total": 0, "affiches": 0, "masques": 0, "plafond": 12}
     # GB-006 : si la saisie EST un sigle foncier connu (« SHLMR »…), on cherche AUSSI son expansion en
     # raison sociale (les fichiers fonciers ne stockent que le nom légal complet). Table extensible.
     alias = expand_sigle(q)
@@ -227,18 +227,35 @@ def patrimoine_search(q: str, db: Session = Depends(get_db)) -> list[dict]:
     if alias:
         params["a"] = alias
         alias_clause = " OR " + sql_plie("pm.denomination") + " LIKE " + sql_plie("'%' || :a || '%'")
-    # GB-007 : le compteur `n` DOIT être le MÊME que le scan (qui fait JOIN parcels) — sinon
-    # l'autocomplétion sur-comptait les lignes MAJIC dont l'IDU n'a pas de parcelle (2632 vs 2618).
-    rows = db.execute(text(f"""
-        SELECT pm.siren, max(pm.denomination) AS nom, count(*) AS n
-        FROM parcelle_personne_morale pm
-        JOIN parcels p ON p.idu = pm.idu
+    # SCAN-FIX-1 (pt 8) — le compteur `n` annoncé par la recherche = le MÊME que le scan : désormais
+    # les parcelles RECENSÉES (toutes les parcelles du SIREN aux fichiers DGFiP, via `parcelle_pm_droit`
+    # si présent), plus les seules RATTACHÉES. Avant, la recherche comptait les rattachées (1 833) alors
+    # que le scan affiche les recensées (1 946) → deux chiffres pour la même société. REPLI : table de principal.
+    PLAFOND = 12
+    use_droit = bool(db.execute(
+        text("SELECT to_regclass('parcelle_pm_droit') IS NOT NULL")).scalar())
+    if use_droit:
+        src = ("(SELECT DISTINCT siren, idu, denomination FROM parcelle_pm_droit "
+               "WHERE millesime = (SELECT max(millesime) FROM parcelle_pm_droit)) pm")
+    else:
+        src = "parcelle_personne_morale pm"
+    base = f"""
+        SELECT pm.siren, max(pm.denomination) AS nom, count(DISTINCT pm.idu) AS n
+        FROM {src}
         WHERE pm.siren IS NOT NULL
           AND ({sql_plie('pm.denomination')} LIKE {sql_plie("'%' || :q || '%'")}
                OR pm.siren LIKE :qs{alias_clause})
-        GROUP BY pm.siren ORDER BY n DESC LIMIT 12"""),
-        params).mappings().all()
-    return [dict(r) for r in rows]
+        GROUP BY pm.siren"""
+    # total RÉEL des sociétés qui correspondent (pour annoncer les résultats masqués au-delà du plafond)
+    total = int(db.execute(text(f"SELECT count(*) FROM ({base}) t"), params).scalar() or 0)
+    rows = db.execute(text(base + f" ORDER BY n DESC, pm.siren LIMIT {PLAFOND}"), params).mappings().all()
+    resultats = [dict(r) for r in rows]
+    # SCAN-FIX-1 (pt 8) — un identifiant « U… » est un IDENTIFIANT FISCAL (MAJIC), PAS un SIREN : on le
+    # qualifie à plat pour que le front ne mette ni lien pappers ni traitement « entreprise ».
+    for r in resultats:
+        r["siren_reel"] = bool(re.fullmatch(r"\d{9}", str(r.get("siren") or "")))
+    return {"resultats": resultats, "total": total, "affiches": len(resultats),
+            "masques": max(0, total - len(resultats)), "plafond": PLAFOND}
 
 
 _TIERS_ACTIONNABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser",
@@ -287,6 +304,25 @@ def _dernier_depot_comptes(db: Session, siren: str) -> dict | None:
     return _depots_par_siren(db, [siren]).get(siren)
 
 
+@router.get("/parcelle/{idu}/titulaires")
+def parcelle_titulaires(idu: str, db: Session = Depends(get_db)) -> dict:
+    """SCAN-FIX-1 (fiche parcelle, ÉCRAN SEULEMENT) — les AUTRES titulaires d'une parcelle (hors
+    titulaire principal servi dans la fiche), avec leur droit DGFiP. Lu de la table complète
+    `parcelle_pm_droit` (tous titulaires, tous droits). Sert une ligne discrète « + N autres
+    titulaires » et son détail (bulle « i ») dans le tiroir Identité. N'alimente AUCUN export
+    (PDF/Excel) : endpoint dédié à l'écran. Repli : table absente → vide (jamais un 500)."""
+    if not db.execute(text("SELECT to_regclass('parcelle_pm_droit') IS NOT NULL")).scalar():
+        return {"n_autres": 0, "titulaires": []}
+    rows = db.execute(text(
+        "SELECT siren, denomination, droit_code, droit_label FROM parcelle_pm_droit "
+        "WHERE idu = :idu AND millesime = (SELECT max(millesime) FROM parcelle_pm_droit) "
+        "AND ordre_titulaire > 1 ORDER BY ordre_titulaire"), {"idu": idu}).mappings().all()
+    titulaires = [{"siren": r["siren"], "denomination": r["denomination"],
+                   "droit_code": r["droit_code"], "droit_label": r["droit_label"],
+                   "siren_reel": bool(re.fullmatch(r"\d{9}", str(r["siren"] or "")))} for r in rows]
+    return {"n_autres": len(titulaires), "titulaires": titulaires}
+
+
 @router.get("/patrimoine")
 def patrimoine(siren: str, fmt: str = "json",
                limit: int = Query(200, ge=1, le=2000), offset: int = Query(0, ge=0),
@@ -318,21 +354,42 @@ def patrimoine(siren: str, fmt: str = "json",
     has_frame = bool(db.execute(text("SELECT to_regclass('p_model_frame') IS NOT NULL")).scalar())
     frame_join = "LEFT JOIN p_model_frame pf ON pf.idu = p.idu" if has_frame else ""
     frame_expr = "(pf.idu IS NOT NULL)" if has_frame else "NULL::boolean"
+    # SCAN-FIX-1 (bloquant 1, pt 7) — « qui possède » lit désormais la table COMPLÈTE des droits
+    # `parcelle_pm_droit` (tous titulaires, tous droits DGFiP), et non plus le seul titulaire principal
+    # servi dans `parcelle_personne_morale` (qui écrasait la distinction propriété/gestion/autres). Chaque
+    # parcelle du SIREN est servie UNE fois avec SON droit de plus haut rang pour ce SIREN (DISTINCT ON
+    # idu, ordre_titulaire) → la propriété (P/U/N), la gestion (G/Q/Z/S) et les autres droits (B/E/F…)
+    # sont séparables dans les comptes ET la liste. REPLI (prod non migrée) : la table de principal.
+    use_droit = bool(db.execute(
+        text("SELECT to_regclass('parcelle_pm_droit') IS NOT NULL")).scalar())
+    if use_droit:
+        src_cte = """src AS (
+            SELECT DISTINCT ON (idu) idu, droit_code, droit_label, groupe, denomination
+            FROM parcelle_pm_droit
+            WHERE siren = :s AND millesime = (SELECT max(millesime) FROM parcelle_pm_droit)
+            ORDER BY idu, ordre_titulaire)"""
+    else:
+        src_cte = """src AS (
+            SELECT idu, NULL::varchar AS droit_code, NULL::varchar AS droit_label,
+                   groupe, denomination
+            FROM parcelle_personne_morale WHERE siren = :s)"""
     rows = db.execute(text(f"""
+        WITH {src_cte}
         SELECT p.id, p.idu, p.commune, p.surface_m2, p.contenance_m2, z.zone_fam, r.sdp_residuelle_m2,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                pb.emprise_bati_m2 AS emprise_bati,
                {frame_expr} AS dans_frame,
+               src.droit_code, src.droit_label,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
-        FROM parcelle_personne_morale pm
-        JOIN parcels p ON p.idu = pm.idu
+        FROM src
+        JOIN parcels p ON p.idu = src.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN parcel_zone_plu z ON z.idu = p.idu
         LEFT JOIN p_model_bati pb ON pb.idu = p.idu
         {frame_join}
-        WHERE pm.siren = :s ORDER BY s2.rang ASC NULLS LAST"""),
+        ORDER BY s2.rang ASC NULLS LAST"""),
         {"s": siren, "run": runs.cascade(), "v2run": _score_v2_run_id(db)}).mappings().all()
     bodacc = db.execute(text(
         "SELECT type_procedure, date_annonce FROM v_foncier_sous_pression WHERE siren = :s LIMIT 1"),
@@ -416,9 +473,41 @@ def patrimoine(siren: str, fmt: str = "json",
     # SIREN aux fichiers fonciers DGFiP, y compris celles sans géométrie cadastrale), RATTACHÉES au cadastre
     # (jointes à `parcels` → une géométrie → `rows`). L'écart (ex. 1 871 vs 1 833) est ainsi ventilé, jamais
     # muet : des parcelles recensées peuvent manquer au cadastre ingéré (le JOIN les écartait en silence).
-    n_recensees = int(db.execute(text(
-        "SELECT count(*) FROM parcelle_personne_morale WHERE siren = :s"), {"s": siren}).scalar() or 0)
+    if use_droit:
+        n_recensees = int(db.execute(text(
+            "SELECT count(DISTINCT idu) FROM parcelle_pm_droit WHERE siren = :s "
+            "AND millesime = (SELECT max(millesime) FROM parcelle_pm_droit)"),
+            {"s": siren}).scalar() or 0)
+    else:
+        n_recensees = int(db.execute(text(
+            "SELECT count(*) FROM parcelle_personne_morale WHERE siren = :s"), {"s": siren}).scalar() or 0)
     n_rattachees = len(rows)
+    # SCAN-FIX-1 (bloquant 1, pt 7) — VENTILATION PAR DROIT : propriété (P/U/N), gestion (G/Q/Z/S),
+    # autres droits (bailleur à construction, emphytéote, foncier…). Comptes RECENSÉES (fichier DGFiP,
+    # distinct idu par famille, y compris hors cadastre) ET RATTACHÉES au cadastre (lignes servies), avec
+    # la surface réellement rattachée par famille. Un SIREN seulement gestionnaire n'est PLUS compté
+    # « propriétaire » (contre-audit §1 : CBO gestionnaire/mandataire sur 14 parcelles).
+    droits_familles = {"propriete": {"label": "Propriété"}, "gestion": {"label": "Gestion / mandat"},
+                       "autres": {"label": "Autres droits"}}
+    par_droit: dict | None = None
+    if use_droit:
+        from ..ingestion.pm_droits import famille_droit
+        rec = {"propriete": 0, "gestion": 0, "autres": 0}
+        for (dc,) in db.execute(text(
+                "SELECT droit_code FROM (SELECT DISTINCT ON (idu) idu, ordre_titulaire, droit_code "
+                "FROM parcelle_pm_droit WHERE siren = :s "
+                "AND millesime = (SELECT max(millesime) FROM parcelle_pm_droit) "
+                "ORDER BY idu, ordre_titulaire) t"), {"s": siren}).all():
+            rec[famille_droit(dc)] += 1
+        ratt = {"propriete": 0, "gestion": 0, "autres": 0}
+        surf = {"propriete": 0.0, "gestion": 0.0, "autres": 0.0}
+        for r in rows:
+            fam = famille_droit(r["droit_code"])
+            ratt[fam] += 1
+            surf[fam] += (_surface.surface_terrain(r["surface_m2"], r["contenance_m2"]).valeur or 0)
+        par_droit = {fam: {"label": droits_familles[fam]["label"], "recensees": rec[fam],
+                           "rattachees": ratt[fam], "surface_rattachee_m2": round(surf[fam])}
+                     for fam in ("propriete", "gestion", "autres")}
     n_constructible_u_au = sum(1 for r in rows if r["zone_fam"] in ("U", "AU"))
     # #3 VALORISATION indicative du foncier nu (zones U/AU) au RÉFÉRENTIEL UNIQUE prix terrain de zone
     # (ligne2_terrain_zone, une fois par commune). Indicative — seules les zones U/AU ont un prix marché.
@@ -531,6 +620,12 @@ def patrimoine(siren: str, fmt: str = "json",
         "n_bati_non_renseigne": n_bati_non_renseigne,   # OUTILS-P1-1 (pt 7) — distinct de « nu »
         "n_recensees": n_recensees,                     # OUTILS-P1-1 (pt 7) — fichiers fonciers DGFiP
         "n_rattachees": n_rattachees,                   # OUTILS-P1-1 (pt 7) — jointes au cadastre
+        "surface_rattachee_m2": surface_totale_m2,      # SCAN-FIX-1 (pt 7) — surface RÉELLEMENT rattachée au cadastre
+        "par_droit": par_droit,                         # SCAN-FIX-1 (bloquant 1) — propriété / gestion / autres droits
+        # SCAN-FIX-1 (pt 7) — l'en-tête dit le PÉRIMÈTRE : ce SIREN SEUL, filiales NON comprises
+        # (le patrimoine n'est pas consolidé — cf. frise Construction qui identifie les filiales).
+        "perimetre": {"siren_seul": True, "filiales_incluses": False,
+                      "libelle": "Ce SIREN seul — filiales non comprises"},
         "n_constructible_u_au": n_constructible_u_au,
         "n_actionnables": n_actionnables,
         # KO-10 — le libellé front dit « hors écartées par vous » SI ce compte a écarté des parcelles.
@@ -551,6 +646,8 @@ def patrimoine(siren: str, fmt: str = "json",
                    "surface_m2": round(r["surface_m2"] or 0),  # DESSIN (compat)
                    **_surface.champs_terrain(r["surface_m2"], r["contenance_m2"]),  # CONTENANCE-1 (B)
                    "sdp": r["sdp_residuelle_m2"],
+                   # SCAN-FIX-1 (bloquant 1) — droit DGFiP de la parcelle pour ce SIREN (famille propriété/gestion/autres)
+                   "droit_code": r["droit_code"], "droit_label": r["droit_label"],
                    "n_etablissements": etab_count.get(r["idu"], 0),   # KELFONCIER-FIX-1 (Lot H)
                    "geom": json.loads(geoms[r["idu"]]) if geoms.get(r["idu"]) else None} for r in page],
     }

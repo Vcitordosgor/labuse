@@ -1813,7 +1813,7 @@ export const getSourcesCalibrages = () => j<Record<string, SourceCalibrage[]>>('
 
 // ── Modules outils (Vague 1) ──
 // M129-C (Vic 19/08/2026) : modDivision retiré — division hors produit (endpoint dormant).
-export const modPatrimoineSearch = (q: string) => j<{ siren: string; nom: string; n: number }[]>(`/modules/patrimoine/search?q=${encodeURIComponent(q)}`)
+export const modPatrimoineSearch = (q: string) => j<{ resultats: { siren: string; nom: string; n: number; siren_reel: boolean }[]; total: number; affiches: number; masques: number; plafond: number }>(`/modules/patrimoine/search?q=${encodeURIComponent(q)}`)
 // RETOURS-11 (T4) — liste PAGINÉE (limit/offset) : l'endpoint sert déjà des pages (géom calculée pour la
 // page seulement) ; le front tranche par 200 via « Voir plus » (jamais de dump). Défauts = 1re page 200.
 export const modPatrimoine = (siren: string, limit = 200, offset = 0, blocsLimit?: number) =>

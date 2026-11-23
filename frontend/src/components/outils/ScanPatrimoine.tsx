@@ -49,7 +49,12 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
   // SCAN-PATRIMOINE-1 (écart 1) — quand la recherche par NOM matche PLUSIEURS sociétés, on ne
   // tranche plus au plus gros en silence : on affiche la liste (nom · SIREN · nb parcelles) et on
   // laisse choisir (même geste que le Copilote). Vidée dès qu'un propriétaire est retenu ou re-saisi.
-  const [candidats, setCandidats] = useState<{ siren: string; nom: string; n: number }[]>([])
+  const [candidats, setCandidats] = useState<{ siren: string; nom: string; n: number; siren_reel?: boolean }[]>([])
+  // SCAN-FIX-1 (pt 8) — nombre de sociétés correspondantes NON affichées (au-delà du plafond), annoncé.
+  const [masques, setMasques] = useState(0)
+  // SCAN-FIX-1 (pt 8) — une adresse peut porter PLUSIEURS parcelles : on ne prend plus la première en
+  // silence, on propose le choix (idu · commune). Vidé dès qu'un propriétaire est retenu ou re-saisi.
+  const [candidatsParcelles, setCandidatsParcelles] = useState<{ idu: string; label: string }[]>([])
   const [busy, setBusy] = useState(false)
   const qc = useQueryClient()
 
@@ -72,8 +77,8 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
 
   // RETOURS-16 V5 — la query de suggestions maison (`sug`, par nom) est retirée : le composant
   // de barre partagé porte désormais la suggestion (propriétaire/SIREN/parcelle/adresse, typée).
-  const choisir = (siren: string, nom?: string) => { setOwner(siren); setOwnerLabel(nom ?? null); setMsg(null); setCandidats([]) }
-  const changer = () => { setOwner(null); setOwnerLabel(null); setQ(''); setMsg(null); setCandidats([]) }
+  const choisir = (siren: string, nom?: string) => { setOwner(siren); setOwnerLabel(nom ?? null); setMsg(null); setCandidats([]); setMasques(0); setCandidatsParcelles([]) }
+  const changer = () => { setOwner(null); setOwnerLabel(null); setQ(''); setMsg(null); setCandidats([]); setMasques(0); setCandidatsParcelles([]) }
   // résout l'IDU → propriétaire moral de la fiche ; null si particulier / non renseigné.
   // OUTILS-FIX-5 L1 — on lit le MÊME id que la fiche §1 (`proprietaire_moral.siren`, app.py:3839,
   // id registre `type_proprietaire`). L'ancienne lecture `f.owner_siren` visait un champ RACINE
@@ -94,7 +99,7 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
     const val = (raw ?? q).trim()
     if (raw != null) setQ(raw)
     setMsg(null)
-    setCandidats([])   // SCAN-PATRIMOINE-1 — toute nouvelle résolution repart d'une liste vide
+    setCandidats([]); setMasques(0); setCandidatsParcelles([])   // SCAN-PATRIMOINE-1 — nouvelle résolution = listes vides
     if (val.length < 2) return
     setBusy(true)
     try {
@@ -109,20 +114,27 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
       // SCAN-PATRIMOINE-1 (écart 1) — UN seul résultat : on le retient. PLUSIEURS : on affiche la liste
       // (nom · SIREN · nb parcelles) et on laisse choisir — plus d'auto-sélection du plus gros en silence.
       const results = await qc.fetchQuery({ queryKey: ['scan-search', val], queryFn: () => modPatrimoineSearch(val) })
-      const list = (results as { siren: string; nom: string; n: number }[] | undefined) ?? []
-      if (list.length === 1) { choisir(list[0].siren, list[0].nom); return }
-      if (list.length > 1) { setCandidats(list); return }
+      const list = results?.resultats ?? []
+      // SCAN-FIX-1 (pt 8) — on annonce les résultats masqués (au-delà du plafond) pour TOUTE liste servie.
+      if (list.length >= 1) setMasques(results?.masques ?? 0)
+      if (list.length === 1 && (results?.masques ?? 0) === 0) { choisir(list[0].siren, list[0].nom); return }
+      if (list.length >= 1) { setCandidats(list); return }
       // REPLI ADRESSE : une adresse ne matche aucune dénomination → on la géocode (BAN, publique) et on
-      // remonte à la parcelle puis au propriétaire.
+      // remonte à la/aux parcelle(s) puis au propriétaire. SCAN-FIX-1 (pt 8) — PLUSIEURS parcelles à la
+      // même adresse : on propose le choix (idu · commune) au lieu de prendre la première en silence.
       const feats = await banAutocomplete(val)
-      const f0 = feats[0]
-      let iduRes = f0?.idu ?? null
-      if (f0 && !iduRes) { const at = await parcelAt(f0.lon, f0.lat).catch(() => null); iduRes = at?.idu ?? null }
-      if (iduRes) {
-        const s = await ownerDeIdu(iduRes)
+      const parcelles: { idu: string; label: string }[] = []
+      for (const f of feats.slice(0, 8)) {
+        let idu = f?.idu ?? null
+        if (f && !idu) { const at = await parcelAt(f.lon, f.lat).catch(() => null); idu = at?.idu ?? null }
+        if (idu && !parcelles.some((p) => p.idu === idu)) parcelles.push({ idu, label: f?.label ?? idu })
+      }
+      if (parcelles.length === 1) {
+        const s = await ownerDeIdu(parcelles[0].idu)
         if (s) choisir(s); else setMsg(PAS_DE_PM)
         return
       }
+      if (parcelles.length > 1) { setCandidatsParcelles(parcelles); return }
       setMsg('Aucun propriétaire trouvé — précisez le nom, un SIREN/SIRET, un IDU ou une adresse.')
     } finally { setBusy(false) }
   }
@@ -194,15 +206,40 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
               nom · SIREN · nb parcelles, on laisse trancher (comme le Copilote). Plus d'auto-sélection. */}
           {candidats.length > 0 && (
             <div data-scan-candidats className="flex flex-col gap-1.5">
-              <p className="text-[11px] leading-snug text-txt">Plusieurs sociétés correspondent — laquelle&nbsp;?</p>
+              <p className="text-[11px] leading-snug text-txt">
+                {candidats.length === 1 ? 'Une société correspond :' : 'Plusieurs sociétés correspondent — laquelle ?'}
+              </p>
               {candidats.map((c) => (
                 <button key={c.siren} data-scan-candidat={c.siren} onClick={() => choisir(c.siren, c.nom)} disabled={busy}
                   className="hover-fill flex items-center justify-between gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left disabled:opacity-40">
                   <span className="min-w-0">
                     <span className="block truncate text-[12.5px] text-txt">{c.nom}</span>
-                    <span className="mt-0.5 block font-mono text-[10.5px] text-txt-dim">SIREN {c.siren}</span>
+                    {/* SCAN-FIX-1 (pt 8) — un « U… » est un identifiant fiscal MAJIC, PAS un SIREN : on le dit. */}
+                    <span className="mt-0.5 block font-mono text-[10.5px] text-txt-dim">
+                      {c.siren_reel === false ? `${c.siren} · identifiant fiscal, pas un SIREN` : `SIREN ${c.siren}`}
+                    </span>
                   </span>
                   <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-txt-dim">{c.n} parcelles</span>
+                </button>
+              ))}
+              {/* SCAN-FIX-1 (pt 8) — résultats masqués au-delà du plafond, ANNONCÉS (plus de silence). */}
+              {masques > 0 && (
+                <p data-scan-masques className="text-[10.5px] leading-snug text-txt-off">
+                  {masques} autre{masques > 1 ? 's' : ''} résultat{masques > 1 ? 's' : ''} non affiché{masques > 1 ? 's' : ''} — précisez le nom pour les voir.
+                </p>
+              )}
+            </div>
+          )}
+          {/* SCAN-FIX-1 (pt 8) — une ADRESSE qui porte plusieurs parcelles : on laisse choisir. */}
+          {candidatsParcelles.length > 0 && (
+            <div data-scan-candidats-parcelles className="flex flex-col gap-1.5">
+              <p className="text-[11px] leading-snug text-txt">Plusieurs parcelles à cette adresse — laquelle&nbsp;?</p>
+              {candidatsParcelles.map((p) => (
+                <button key={p.idu} data-scan-candidat-parcelle={p.idu} disabled={busy}
+                  onClick={async () => { setBusy(true); try { const s = await ownerDeIdu(p.idu); if (s) choisir(s); else setMsg(PAS_DE_PM) } finally { setBusy(false) } }}
+                  className="hover-fill flex items-center justify-between gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left disabled:opacity-40">
+                  <span className="min-w-0 truncate text-[12.5px] text-txt">{p.label}</span>
+                  <span className="shrink-0 whitespace-nowrap font-mono text-[10.5px] text-txt-dim">{p.idu}</span>
                 </button>
               ))}
             </div>

@@ -14,8 +14,9 @@ function mockFetch() {
     const json = async (v: unknown) => v
     if (u.includes('/modules/patrimoine/search')) {
       // un propriétaire n'est renvoyé que pour un NOM d'entreprise (contient « SCI »).
-      const owner = u.toLowerCase().includes('sci') ? [{ siren: '123456789', nom: 'SCI TEST', n: 4 }] : []
-      return { ok: true, json: () => json(owner) }
+      // SCAN-FIX-1 (pt 8) — nouvelle forme { resultats, total, masqués }.
+      const liste = u.toLowerCase().includes('sci') ? [{ siren: '123456789', nom: 'SCI TEST', n: 4, siren_reel: true }] : []
+      return { ok: true, json: () => json({ resultats: liste, total: liste.length, affiches: liste.length, masques: 0, plafond: 12 }) }
     }
     if (u.includes('/projets')) return { ok: true, json: () => json([{ id: 7, nom: 'Mon projet test', statut: 'actif', counts: {} }]) }
     if (u.includes('/communes')) return { ok: true, json: () => json([{ insee: '97415', commune: 'Saint-Paul' }]) }

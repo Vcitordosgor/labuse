@@ -298,11 +298,33 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
                 {fmt(d['n_recensees'] as number)} recensées (fichiers fonciers DGFiP), dont {fmt(d['n_rattachees'] as number)} rattachées au cadastre — {fmt((d['n_recensees'] as number) - (d['n_rattachees'] as number))} sans géométrie cadastrale (hors carte).
               </p>
             )}
+            {/* SCAN-FIX-1 (bloquant 1, pt 7) — VENTILATION PAR DROIT DGFiP : la propriété (P/U/N), la
+                gestion (G/mandat/syndic) et les autres droits (bailleur à construction, emphytéote…) sont
+                DISTINGUÉES, dans les comptes comme dans la liste. Un SIREN seulement gestionnaire n'est
+                plus compté « propriétaire » (contre-audit §1 : CBO gestionnaire/mandataire sur 14). */}
+            {d['par_droit'] != null && (() => {
+              const pd = d['par_droit'] as Record<string, { label: string; recensees: number; rattachees: number; surface_rattachee_m2: number }>
+              return (
+                <div data-m02-par-droit className="grid grid-cols-3 gap-2 px-2.5 pb-2">
+                  {(['propriete', 'gestion', 'autres'] as const).map((k) => pd[k] && (
+                    <div key={k} data-m02-droit={k} className="min-w-0 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5">
+                      <div className="num-key tabular-nums text-[15px] text-mint">{fmt(pd[k].recensees)}</div>
+                      <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{pd[k].label}</div>
+                      <div className="mt-0.5 text-[9.5px] leading-tight text-txt-dim">{fmtM2(pd[k].surface_rattachee_m2)} rattachée</div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
             {/* RECETTE-OUTILS-2 (R19) — EN PIED de l'accordéon : les trois lignes de contexte (nature de
                 la donnée, millésime des fichiers fonciers, dépôt de comptes) autrefois en tête, qui
                 mangeaient la hauteur de la liste. Repliées par défaut avec les chiffres. */}
             <div className="flex flex-col gap-1 border-t border-line px-2.5 pb-2.5 pt-2 text-[10px] leading-snug text-txt-dim">
               <p>Parcelles détenues (fichiers fonciers DGFiP) — c’est ce qu’il possède, pas ce qu’il construit.</p>
+              {/* SCAN-FIX-1 (pt 7) — l'en-tête dit le PÉRIMÈTRE : ce SIREN SEUL, filiales non comprises. */}
+              {d['perimetre'] != null && (
+                <p data-m02-perimetre>Périmètre : {String((d['perimetre'] as { libelle?: string }).libelle ?? 'ce SIREN seul — filiales non comprises')}.</p>
+              )}
               {d['millesime_majic'] && (
                 <p data-m02-millesime>Fichiers fonciers DGFiP · situation {String(d['millesime_majic'])}</p>
               )}
@@ -390,7 +412,10 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
                     l'adresse BAN, même source que la fiche §3). Silencieux si 0. */}
                 <Row idu={idu} hoverFull
                   sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`
-                    + (Number(i['n_etablissements']) > 0 ? ` · occupé par ${fmt(i['n_etablissements'] as number)} établissement${Number(i['n_etablissements']) > 1 ? 's' : ''}` : '')}
+                    + (Number(i['n_etablissements']) > 0 ? ` · occupé par ${fmt(i['n_etablissements'] as number)} établissement${Number(i['n_etablissements']) > 1 ? 's' : ''}` : '')
+                    /* SCAN-FIX-1 (bloquant 1) — droit DGFiP affiché par parcelle quand ce n'est PAS la propriété
+                       simple (P) : « gérant/mandataire », « bailleur à construction »… → la liste distingue. */
+                    + (i['droit_code'] && i['droit_code'] !== 'P' ? ` · ${String(i['droit_label'] || i['droit_code'])}` : '')}
                   fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
                     ['Patrimoine', `${d['n_parcelles']} parcelles · SDP restante ${fmt(d['sdp_residuelle_m2'] as number)} m²`]]} />
               </div>
