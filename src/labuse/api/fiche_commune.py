@@ -383,7 +383,9 @@ def permis_bloc(db: Session, commune: str) -> dict:
         # la carte « Permis et rythme ». Chaque clé = type Sitadel ; libellés = ingestion.permits._TYPE_LABEL.
         "permis_type_12m": par_type,
         "permis_annules_12m": annules_12m,
-        "source": "SITADEL (autorisations) · SITADEL — délais d'instruction · permis au point mort (36 mois sans DAACT, run servi).",
+        # OUTIL-PERMIS-FIX-2 (G3) — le dormant est MESURÉ au bâti (parcel_bati_emprise), plus « run servi »
+        # (ancien proxy « absence d'exclusion au run »). Le libellé dit ce qui est mesuré.
+        "source": "SITADEL (autorisations) · SITADEL — délais d'instruction · permis dormants (PC > 3 ans sans DAACT, aucun bâtiment détecté sur leurs parcelles).",
     }
 
 

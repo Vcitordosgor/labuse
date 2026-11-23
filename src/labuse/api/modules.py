@@ -628,11 +628,15 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
                 " AND (CAST(:c AS text) IS NULL OR commune = :c)"
                 " AND (CAST(:nat AS text) IS NULL OR type = :nat)"),
                 {"c": commune, "nat": nature}).scalar()
+            # OUTIL-PERMIS-FIX-2 (G2) — la fraîcheur de la couche de bâti (qui fonde « aucun bâtiment
+            # détecté ») : date de mesure servie pour le « i » des dormants + signal si la BD TOPO a bougé.
+            from ..faisabilite.viabilisation_build import bati_emprise_fraicheur
             return {"total": sum(parts.values()),
                     "geocodes": sum(int(r["geo"] or 0) for r in rows),
                     "donnees_jusqu_au": dmax.date().isoformat(), "coupure_recent": coupure_recent,
                     "etats": {k: parts.get(k, 0) for k in permis_classe.ETATS},
-                    "sans_date": int(sans_date or 0)}
+                    "sans_date": int(sans_date or 0),
+                    "bati_fraicheur": bati_emprise_fraicheur(db)}
         c = db.execute(text(
             f"""SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
                FROM sitadel_permits

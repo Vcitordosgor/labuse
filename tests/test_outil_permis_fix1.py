@@ -82,6 +82,33 @@ def test_fix2_defautA_signal_peremption_viabilisation():
     assert "viabilisation_fraicheur" in app and "perimee" in app
 
 
+def test_fix2_G2_garde_fraicheur_bati():
+    """OUTIL-PERMIS-FIX-2 (G2) — la couche `parcel_bati_emprise` (qui fonde « aucun bâtiment détecté »)
+    a un garde-fou de fraîcheur, comme la viabilisation : `bati_emprise_fraicheur()` existe, sa date est
+    servie dans la partition (pour le « i » des dormants), et `/readyz` la signale."""
+    from labuse.faisabilite import viabilisation_build as vb
+    assert hasattr(vb, "bati_emprise_fraicheur")
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    mods = (root / "src/labuse/api/modules.py").read_text(encoding="utf-8")
+    assert "bati_fraicheur" in mods and "bati_emprise_fraicheur" in mods   # servie dans la partition
+    app = (root / "src/labuse/api/app.py").read_text(encoding="utf-8")
+    assert "bati_emprise" in app and "bati_emprise_fraicheur" in app       # signalée dans /readyz
+    mp = (root / "frontend/src/components/outils/ModulePanel.tsx").read_text(encoding="utf-8")
+    assert "bati_fraicheur" in mp and "bâti mesuré le" in mp               # date dans le « i » des dormants
+
+
+def test_fix2_G3_libelle_fiche_commune_mesure_bati():
+    """OUTIL-PERMIS-FIX-2 (G3) — la source du bloc dormant de la fiche commune ne dit plus « run servi »
+    (ancien proxy) mais ce qui est MESURÉ (bâti)."""
+    from pathlib import Path
+    fc = (Path(__file__).resolve().parents[1] / "src/labuse/api/fiche_commune.py").read_text(encoding="utf-8")
+    # l'ancienne formulation « (36 mois sans DAACT, run servi) » du bloc dormant a disparu…
+    assert "36 mois sans DAACT, run servi" not in fc
+    # …remplacée par ce qui est MESURÉ (le « run servi » résiduel ligne ~395 est un autre bloc, Densifier).
+    assert "permis dormants (PC > 3 ans sans DAACT, aucun bâtiment détecté sur leurs parcelles)" in fc
+
+
 def test_fix2_defautD_F_libelles():
     """OUTIL-PERMIS-FIX-2 (Défauts D & F) — « Permis déposés, 12 mois » → « autorisés » (AnalyserAnnonce) ;
     le marqueur millésime figé « 2026-07 » de sitadel/via_permits_geo disparaît (couche suivie par trigger)."""

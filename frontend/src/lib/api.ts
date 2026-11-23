@@ -1832,7 +1832,9 @@ export const modPermisCount = (months: number, etat?: string | null) =>
 // soustraction). `etats.recent+dormant+acheve+autre = total`. Sert les compteurs d'entrée de l'outil.
 export const modPermisEtats = (months = 240) =>
   j<{ total: number; geocodes: number; donnees_jusqu_au?: string; coupure_recent?: string; sans_date: number;
-      etats: { recent: number; dormant: number; acheve: number; autre: number } }>(
+      etats: { recent: number; dormant: number; acheve: number; autre: number };
+      // OUTIL-PERMIS-FIX-2 (G2) — fraîcheur de la couche de bâti (fonde « aucun bâtiment détecté »).
+      bati_fraicheur?: { perimee: boolean | null; built_at: string | null; note?: string | null } }>(
     `/modules/permis?${cq()}&months=${months}&count_only=true&etats=true`)
 export const modPermisFiche = (permitId: string) =>
   j<Record<string, unknown>>(`/modules/permis/${encodeURIComponent(permitId)}`)

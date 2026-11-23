@@ -323,3 +323,36 @@ Back : `permis_classe.py` (Défaut C), `api/modules.py` (promesses — Défaut C
 Front : `components/outils/ModulePanel.tsx` (Défauts E, F), `components/outils/AnalyserAnnonce.tsx` (Défaut D).
 Tests : `test_outil_permis_fix1.py` (C/A/D/F), `regles/test_point_mort.py` (cas parcelle absente — C).
 Couches (re)construites en base locale : `sitadel_permits` rechargée, `via_permits_geo` (trigger, 50 414), `parcel_bati_emprise`, `parcel_viabilisation` (24 communes) + `parcel_viabilisation_meta`.
+
+---
+
+## Relecture 2 (`~/Desktop/relecture-permis-2.md`) — G1, G2, G3
+
+La seconde relecture valide A, B, C et la liste fermée entière. Trois restes :
+
+### G2 (à corriger) — garde-fou de fraîcheur du BÂTI (`parcel_bati_emprise`)
+
+Même famille que le Défaut A, non traitée pour le bâti : la couche qui fonde « aucun bâtiment détecté » était un instantané sans repère. Ajouté, par symétrie avec la viabilisation :
+- `parcel_bati_emprise_meta` (singleton) : à chaque `ensure_parcel_bati_emprise`, on enregistre l'état de la **source** bâti (`spatial_layers kind='batiment'` : nombre + dernière `created_at`) et la **date de mesure** (`built_at`).
+- `bati_emprise_fraicheur(db)` : `perimee=True` si la BD TOPO a bougé depuis la mesure → un dormant « aucun bâtiment détecté » ne repose plus en silence sur une mesure plus vieille que sa source.
+- **Date connue, affichée dans le « i » des dormants** : la partition `/modules/permis?etats` sert `bati_fraicheur` ; le segment Dormant ajoute « · bâti mesuré le JJ/MM/AAAA » (et « ⚠ mesure périmée (BD TOPO plus récente) » si `perimee`).
+- **Signalée dans `/readyz`** : champ `bati_emprise` + action « relancer la mesure de bâti » si périmée.
+- État local : `built_at` 23/11/2026, source 817 506 bâtiments (BD TOPO, dernière création 29/06/2026), **`perimee=False`**.
+
+### G3 (mineur) — libellé de source de la fiche commune
+
+`fiche_commune.permis_bloc` disait encore « *permis au point mort (36 mois sans DAACT, **run servi**)* » — l'ANCIENNE logique (proxy « absence d'exclusion au run »). Corrigé : « *permis dormants (PC > 3 ans sans DAACT, **aucun bâtiment détecté sur leurs parcelles**)* » — ce qui est réellement mesuré. Le chiffre (78/126/7) était déjà juste ; c'est son explication qui est corrigée.
+
+### G1 (mineur, NOTÉ — non corrigé, par consigne) — LIMITE CONNUE
+
+Le signal de péremption de la viabilisation (`viabilisation_fraicheur`) compare **le nombre** de permis et **la date max** de `via_permits_geo`. Une **mise à jour d'attribut en place** entre deux runs (un permis qui reçoit une DAACT → devient achevé, ou dont la géom bouge) ne change **ni le compte ni la date max** → `perimee` reste `False` alors que `c100_recent`/`c100_acheve` du score peuvent avoir dérivé. Le signal **attrape le cas courant** (nouveaux permis mensuels : compte + date max bougent) mais **rate les reclassements silencieux**. Correction possible (non faite ici, par consigne) : comparer aussi une empreinte d'état/géom de la couche, ou dater sa dernière écriture (le trigger pourrait tamponner un `updated_at`). **Limite connue, non bloquante** : la couche est reconstruite à chaque run M-VIA, et le cas courant est couvert.
+
+### Mineur E (rappel) — divulgation, pas réconciliation
+
+L'affinage `months` : le chip de l'état **actif** affiche la partition pleine profondeur pendant que la liste affinée montre moins. C'est désormais **dit** (note sous le segment) ; ce n'est pas une mise en accord des deux nombres (acceptable pour un mineur, assumé).
+
+### Fichiers touchés (relecture 2)
+
+Back : `faisabilite/viabilisation_build.py` (G2 — meta bâti + `bati_emprise_fraicheur`), `api/modules.py` (G2 — `bati_fraicheur` dans la partition), `api/app.py` (G2 — `/readyz.bati_emprise`), `api/fiche_commune.py` (G3).
+Front : `lib/api.ts` + `components/outils/ModulePanel.tsx` (G2 — date de mesure dans le « i » des dormants).
+Tests : `test_outil_permis_fix1.py` (G2, G3). Couche : `parcel_bati_emprise_meta` (repère posé).

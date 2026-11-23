@@ -692,6 +692,12 @@ export function M03() {
   const sansPoint = (qEtats.data && qEtats.data.total != null && qEtats.data.geocodes != null)
     ? Math.max(0, qEtats.data.total - qEtats.data.geocodes) : undefined
   const sansDate = qEtats.data?.sans_date
+  // OUTIL-PERMIS-FIX-2 (G2) — la DATE DE MESURE du bâti (qui fonde « aucun bâtiment détecté ») est dite
+  // dans le « i » du segment Dormant ; si la couche est plus vieille que la BD TOPO, on le SIGNALE.
+  const batiFr = qEtats.data?.bati_fraicheur
+  const dormantDefSuffixe = batiFr?.built_at
+    ? ` · bâti mesuré le ${fmtDateNum(batiFr.built_at)}${batiFr.perimee ? ' ⚠ mesure périmée (BD TOPO plus récente)' : ''}`
+    : ''
   const setPermitHover = useApp((s) => s.setPermitHover)
   useEffect(() => () => setPermitHover(null), [setPermitHover])   // nettoyage au démontage
 
@@ -822,7 +828,7 @@ export function M03() {
     // référence (fin des données). « Récent » = 24 mois PARTOUT (plus « 90 derniers jours »). Le dormant
     // dit ce qui est MESURÉ (« aucun bâtiment détecté »), jamais « terrain resté nu » ni « caducité ».
     ['cours', 'Récents', 'recent', radarEntryTotal, 'autorisés depuis 24 mois (fin des données)'],
-    ['mort', 'Permis dormants', 'dormant', pmEntryTotal, 'PC autorisés depuis plus de 3 ans, sans achèvement déclaré (DAACT), aucun bâtiment détecté sur leurs parcelles'],
+    ['mort', 'Permis dormants', 'dormant', pmEntryTotal, `PC autorisés depuis plus de 3 ans, sans achèvement déclaré (DAACT), aucun bâtiment détecté sur leurs parcelles${dormantDefSuffixe}`],
     ['acheve', 'Achevés', 'acheve', acheveEntryTotal, 'travaux déclarés (DAACT)'],
     ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni dormant, ni achevé'],
     ['tous', 'Tous', null, tousEntryTotal, 'toute la base (autorisations)'],
