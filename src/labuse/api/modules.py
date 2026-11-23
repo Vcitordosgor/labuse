@@ -900,9 +900,12 @@ def promesses(commune: str | None = None, months: int = 36,   # OUTIL-PERMIS-FIX
               AND (s.raw->>'etat' IS NULL OR s.raw->>'etat' NOT IN ('4','5','6'))
               AND s.raw->>'daact' IS NULL
               AND s.date < :dmax - (:m || ' months')::interval
+              -- OUTIL-PERMIS-FIX-2 (Défaut C) — TOUTES les parcelles retrouvées ET mesurées sans bâti
+              -- (aucune absente de parcel_bati_emprise, aucune ≥ seuil) : même prédicat que permis_classe.
+              AND jsonb_array_length(s.idu_codes) >= 1
               AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text(s.idu_codes) c2(idu)
-                              JOIN parcel_bati_emprise be2 ON be2.idu = c2.idu
-                              WHERE be2.bati_m2 >= :seuil)
+                              LEFT JOIN parcel_bati_emprise be2 ON be2.idu = c2.idu
+                              WHERE be2.idu IS NULL OR be2.bati_m2 >= :seuil)
         )
         SELECT cand.permit_id, cand.type, cand.date::date::text AS date, cand.etat, cand.nb_lgt,
                cand.idu, cand.surface_m2, cand.g, s2.tier AS statut,

@@ -623,7 +623,10 @@ function RapportAnnonce({ res }: { res: AnnonceAnalyse }) {
             { k: 'Évolution maisons, 12 mois', v: cm?.evolution_maison_12m_pct != null ? pctSigne(cm.evolution_maison_12m_pct) : '—' },
             { k: 'PLU', v: cm?.plu_statut ?? '—' },
             { k: 'Aléas principaux', v: cm?.aleas?.length ? cm.aleas.join(', ') : '—' },
-            { k: 'Permis déposés, 12 mois', v: cm?.permis_12m != null ? fmtInt(cm.permis_12m) : '—' },
+            { /* OUTIL-PERMIS-FIX-2 (Défaut D) — `permis_12m` compte par date d'AUTORISATION (fiche_commune.permis_bloc,
+                  fenêtre 12 mois sur max(date)) : même indicateur que la fiche commune (« Permis autorisés (12 mois) »).
+                  « déposés » était faux. */
+              k: 'Permis autorisés, 12 mois', v: cm?.permis_12m != null ? fmtInt(cm.permis_12m) : '—' },
           ])}
         </div>
         {commune && (

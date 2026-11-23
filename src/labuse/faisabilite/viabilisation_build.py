@@ -338,5 +338,53 @@ def build_viabilisation(session: Session, communes: list[str] | None = None) -> 
         session.commit()
         per_commune[c] = n
         total += n
+    # OUTIL-PERMIS-FIX-2 (Défaut A) — on ENREGISTRE l'état de la couche de voisinage contre laquelle ce
+    # run a compté (c100/c200…). `via_permits_geo` est désormais VIVANTE (trigger) ; `parcel_viabilisation`
+    # reste un instantané. Si la couche bouge après ce run (nouveaux permis), l'instantané devient périmé
+    # → `viabilisation_fraicheur` le SIGNALE (fiche + readyz) au lieu de servir en silence des compteurs
+    # de voisinage plus vieux que la couche (constat RELECTURE-1 : BZ 1065 outil 13 vs fiche 11).
+    session.execute(text(_VIAB_META_DDL))
+    session.execute(text(
+        "INSERT INTO parcel_viabilisation_meta (id, built_at, via_count, via_max_d) "
+        "SELECT 1, now(), count(*), max(d) FROM via_permits_geo "
+        "ON CONFLICT (id) DO UPDATE SET built_at=EXCLUDED.built_at, "
+        "via_count=EXCLUDED.via_count, via_max_d=EXCLUDED.via_max_d"))
+    session.commit()
     return {"n": total, "communes": len(communes), "per_commune": per_commune,
             "duree_s": round(time.time() - t0, 1)}
+
+
+# OUTIL-PERMIS-FIX-2 (Défaut A) — repère de fraîcheur de parcel_viabilisation (singleton).
+_VIAB_META_DDL = """
+CREATE TABLE IF NOT EXISTS parcel_viabilisation_meta (
+    id        INTEGER PRIMARY KEY DEFAULT 1,
+    built_at  TIMESTAMPTZ,
+    via_count INTEGER,
+    via_max_d DATE
+)
+"""
+
+
+def viabilisation_fraicheur(session: Session) -> dict:
+    """OUTIL-PERMIS-FIX-2 (Défaut A) — l'instantané `parcel_viabilisation` est-il PÉRIMÉ par rapport à la
+    couche de voisinage VIVANTE `via_permits_geo` ? Compare l'état enregistré au dernier `build_viabilisation`
+    (nombre de permis, dernière autorisation) à l'état COURANT de la couche. `perimee=True` ⇒ des permis
+    ont bougé depuis le dernier run : les compteurs de voisinage du score (c100/c200) sont plus vieux que la
+    couche → à relancer (M-VIA). Garde défensive : couches absentes → `perimee=None` (indéterminé, jamais 500)."""
+    if (session.execute(text("SELECT to_regclass('parcel_viabilisation_meta')")).scalar() is None
+            or session.execute(text("SELECT to_regclass('via_permits_geo')")).scalar() is None):
+        return {"perimee": None, "raison": "couche ou repère absent"}
+    meta = session.execute(text(
+        "SELECT built_at, via_count, via_max_d FROM parcel_viabilisation_meta WHERE id=1")).mappings().first()
+    cur = session.execute(text(
+        "SELECT count(*) AS n, max(d) AS maxd FROM via_permits_geo")).mappings().first()
+    if not meta:
+        return {"perimee": None, "raison": "jamais construit avec repère"}
+    perimee = (int(meta["via_count"] or -1) != int(cur["n"] or 0)
+               or str(meta["via_max_d"]) != str(cur["maxd"]))
+    return {"perimee": bool(perimee),
+            "built_at": meta["built_at"].isoformat() if meta["built_at"] else None,
+            "via_count_build": int(meta["via_count"] or 0), "via_count_now": int(cur["n"] or 0),
+            "via_max_d_build": str(meta["via_max_d"]), "via_max_d_now": str(cur["maxd"]),
+            "note": ("Score de viabilisation PÉRIMÉ : des permis ont bougé depuis le dernier calcul "
+                     "(relancer build-parcel-viabilisation)." if perimee else None)}

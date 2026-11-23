@@ -236,3 +236,90 @@ Le bloc « dépôts » (`DepotsBlock`) dit déjà son événement (dépôt), son
 Back : `src/labuse/permis_classe.py` (nouveau), `api/modules.py`, `registre/moteurs/commune.py`, `api/fiche_commune.py`, `faisabilite/viabilisation_build.py`, `ingestion/permits.py`, `ingestion/permits_sdes.py`.
 Front : `components/outils/ModulePanel.tsx`, `components/outils/registry.ts`, `components/map/MapView.tsx`, `components/contexte/ContextePanel.tsx`, `lib/api.ts`.
 Couches locales (re)construites : `via_permits_geo` (+ trigger), `parcel_bati_emprise`.
+
+---
+---
+
+# OUTIL-PERMIS-FIX-2 — réponse à la relecture indépendante (`~/Desktop/relecture-permis-1.md`)
+
+> La relecture confirme les trois bloquants levés et trouve **trois défauts** (A bloquant, B, C) + **trois mineurs** (D, E, F). Correction de chacun, **exécution** cette fois des correctifs codés (ré-ingestion + reconstruction viabilisation **en base locale**), preuves rejouées sur les données ainsi rechargées.
+>
+> Effet de bord assumé du rechargement : le millésime Sitadel passe de **31/08 à 30/09/2026** (+316 permis, 127 dates corrigées) — tous les chiffres ci-dessous sont donc ceux de la **donnée vive rechargée**, pas ceux du mandat 1.
+
+## Défaut A (bloquant) — classement/fiche = outil, et péremption SIGNALÉE
+
+**Cause** : `via_permits_geo` est devenue vivante (trigger) mais `parcel_viabilisation` restait un instantané du 05/09 ; les deux divergeaient entre deux runs (BZ 1065 : outil 13, fiche/score 11 ; **43,75 %** des parcelles divergentes).
+
+**Correctif exécuté (base locale)** : `build_viabilisation` relancé sur les 24 communes (434 582 parcelles, 2 124 s). `parcel_viabilisation.c100/c200` recalculés contre la couche vive.
+
+**Preuve — outil = fiche (c200), 10 parcelles de la relecture** (API `/parcelle-permis` vs `parcel_viabilisation` stocké) :
+
+| Parcelle | outil (c200) | fiche (c200) |
+|---|--:|--:|
+| 97411000BZ1065 | 13 | 13 ✅ |
+| 97415000CV1498 | 14 | 14 ✅ |
+| 97424000AB0001 | 0 | 0 ✅ |
+| 97411000AD0001 | 18 | 18 ✅ |
+| 97422000AD0887 | 14 | 14 ✅ |
+| 97414000DK0208 | 33 | 33 ✅ |
+| 97416000HT0538 | 32 | 32 ✅ |
+| 97408000AC2215 | 13 | 13 ✅ |
+| 97422000BW2635 | 3 | 3 ✅ |
+| 97408000BI0351 | 12 | 12 ✅ |
+
+Et **globalement** : `parcel_viabilisation.c200` = recompte frais depuis `via_permits_geo` pour **toutes** les parcelles (`c200_divergents = 0`, contre 43,75 % avant). BZ 1065 outil 13 = fiche 13 = score (band `confirmee`).
+
+**Signal de péremption (structurel, pour que ça ne revienne pas)** : nouveau repère `parcel_viabilisation_meta` (état de la couche au dernier run) + fonction `viabilisation_fraicheur(db)`. Si `via_permits_geo` bouge après le run, `perimee=True`, signalé **dans la fiche** (bloc Viabilisation → `perimee` + note) **et dans `/readyz`** (champ `viabilisation` + action « relancer build-parcel-viabilisation »). Après le run : `perimee=False` (via_count 50 414, via_max_d 2026-09-30, en phase).
+
+**Ce que la reconstruction change dans les entrées du classement** (avant = instantané 05/09, après = recompte frais) :
+- **20 145** parcelles changent de **note** (`score`), dont **4 804** changent de **classe** (`band`).
+- Sens : surtout vers le **haut** (le snapshot SOUS-comptait le voisinage) — **18 900** parcelles +6 à +15 pts, **918** de plus de +15 pts ; en baisse : 256 de −6 à −15, 67 de plus de −15.
+
+**Séquence PROD exacte (NON exécutée en prod)** — la couche de voisinage puis la viabilisation ; la commande `viabilisation` fait déjà les deux (elle appelle `ensure_via_permits_geo(resync=True)` + `ensure_parcel_bati_emprise` avant de recalculer) :
+```bash
+# (optionnel, pour isoler l'étape couche) table + trigger + réconciliation pleine, idempotent :
+python - <<'PY'
+from labuse.db import session_scope
+from labuse.faisabilite.viabilisation_build import ensure_via_permits_geo
+with session_scope() as s: print(ensure_via_permits_geo(s, resync=True))
+PY
+# reconstruction du classement (recompte c100/c200/score/band + pose le repère de fraîcheur) :
+python -m labuse viabilisation
+# contrôle : /readyz → viabilisation.perimee=False ; la fiche ne signale plus « périmé ».
+```
+En prod, cette séquence déplacera ~20 000 notes de viabilisation (ordre de grandeur mesuré en local), majoritairement vers le haut, et réconciliera c200 fiche/score avec l'outil.
+
+## Défaut B — donnée Sitadel rechargée (exécuté)
+
+Rechargement plein `python -m labuse.ingestion.permits_sdes --refresh --no-geocode` (refresh correction-safe). Résultats :
+- **97440925G0371 : 2025-12-12 → 2026-02-16** ✅ (date officielle SDES logements), `nb_lgt` servi « Logements créés » = 2.
+- **127 permis** ont vu leur **date** corrigée par le rechargement (dont le témoin) ; **721** ont vu un champ clé corrigé (date/état/logements/DAACT) ; **316 nouveaux** permis ; **506** enregistrements écartés sans cadastre, **7** dépôts invalides (comptés et dits au rapport d'ingestion).
+- Nouveau millésime : **dernière autorisation intégrée = 30/09/2026** (était 31/08).
+
+Requête de preuve : `SELECT date::date FROM sitadel_permits WHERE permit_id='97440925G0371';` → `2026-02-16`.
+
+## Défaut C — dormant = TOUTES parcelles retrouvées et mesurées (exécuté)
+
+`permis_classe._dormant_sql` : avant, un `EXISTS` « au moins une parcelle mesurée » + `NOT EXISTS` « une parcelle bâtie » → une parcelle **absente** de `parcels` (donc non mesurée) était **ignorée** (47/895 dormants, bâti possiblement invisible). Après : `jsonb_array_length ≥ 1` **ET** `NOT EXISTS` une parcelle **non mesurée** (`LEFT JOIN … WHERE be.idu IS NULL`) **ou** bâtie (≥ 10 m²) → le permis n'est dormant **que si toutes ses parcelles sont retrouvées et mesurées sans bâti**.
+
+- Sur les données de la relecture : **895 → 848** (−47, exactement les dormants à parcelle absente).
+- Sur la donnée **vive rechargée** : **nouveau total dormant = 854** (île ; Saint-Denis 78, Saint-Paul 126, Cilaos 7). Le même prédicat sert la partition, le filtre, la liste `/promesses`, le mode parcelle et la fiche commune (vérifié : `/promesses?count_only` = 854 = partition).
+
+## Mineurs
+
+- **D** — `AnalyserAnnonce.tsx` : « Permis déposés, 12 mois » → **« Permis autorisés, 12 mois »** (`permis_12m` compte par date d'autorisation, même indicateur que la fiche commune).
+- **E** — affinage `months` : le compteur de l'état **actif** suit déjà la liste (`nShown=total`) et changer d'état réapplique la profondeur complète (`choisirSeg`→240). On le **DIT** désormais (note sous le segment quand la fenêtre est affinée) ; `monthsDefaut` corrigé (240, plus un résidu « 3 »).
+- **F** — `perimCounts.tous` lit le **`c200` exact** de l'API (plus la longueur du payload ≤ 500) ; marqueur millésime `tables.py` « 2026-07 » figé → libellé non figé (« via_permits_geo suivie par trigger, millésime = dernière autorisation intégrée »).
+
+## Preuves du mandat 1, rejouées sur la donnée rechargée
+
+- **Partition = filtre, 4 périmètres** : île `5201 / 854 / 21322 / 23747 = 51 124` ; Saint-Denis `418/78/1467/1976=3 939` ; Saint-Paul `593/126/2076/3653=6 448` ; Cilaos `48/7/112/238=405`. Compteur == filtre pour les 4 états, 4/4 périmètres.
+- **10 parcelles** : c200 outil = recompte indépendant = fiche (tableau Défaut A).
+- **30 témoins** (même tirage) : **1 dormant** (97440816A0043, parcelle AY0502 mesurée bâti 0 m²), 28 autre, **1 achevé** (un témoin a reçu une DAACT au rechargement — correction de donnée, correctement reclassé achevé).
+
+## Fichiers touchés (mandat 2)
+
+Back : `permis_classe.py` (Défaut C), `api/modules.py` (promesses — Défaut C), `faisabilite/viabilisation_build.py` (repère + `viabilisation_fraicheur` — Défaut A), `api/app.py` (fiche viabilisation + readyz — Défaut A), `registre/tables.py` (Défaut F).
+Front : `components/outils/ModulePanel.tsx` (Défauts E, F), `components/outils/AnalyserAnnonce.tsx` (Défaut D).
+Tests : `test_outil_permis_fix1.py` (C/A/D/F), `regles/test_point_mort.py` (cas parcelle absente — C).
+Couches (re)construites en base locale : `sitadel_permits` rechargée, `via_permits_geo` (trigger, 50 414), `parcel_bati_emprise`, `parcel_viabilisation` (24 communes) + `parcel_viabilisation_meta`.

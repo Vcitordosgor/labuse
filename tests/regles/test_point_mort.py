@@ -30,20 +30,23 @@ def test_point_mort_temoin(engine):
                       {"i": idu, "b": bati})
         # dmax explicite = aujourd'hui ; fenêtre « > 36 mois » → un permis vieux de 48 mois qualifie.
         dmax = c.execute(text("SELECT now()")).scalar()
-        # 5 permis PC vieux de 48 mois :
-        #   P0 nue, autorisé (2), sans DAACT      → DORMANT ✓
-        #   P1 bâtie, autorisé (2), sans DAACT    → bâti détecté → NON
-        #   P0 nue, avec DAACT                    → achevé → NON
-        #   P0 nue, ANNULÉ (4)                    → NON (sort des dormants)
-        #   P0 nue, TRAVAUX COMMENCÉS (5)         → NON (sort des dormants)
-        cas = (("C4PM0000000", {"etat": "2"}), ("C4PM0000001", {"etat": "2"}),
-               ("C4PM0000000", {"etat": "2", "daact": "2021-01-01"}),
-               ("C4PM0000000", {"etat": "4"}), ("C4PM0000000", {"etat": "5"}))
-        for idu, raw in cas:
+        # 6 permis PC vieux de 48 mois (idu_codes, raw) :
+        #   [P0 nue], autorisé (2), sans DAACT                 → DORMANT ✓
+        #   [P1 bâtie], autorisé (2), sans DAACT               → bâti détecté → NON
+        #   [P0 nue], avec DAACT                               → achevé → NON
+        #   [P0 nue], ANNULÉ (4)                               → NON (sort des dormants)
+        #   [P0 nue], TRAVAUX COMMENCÉS (5)                    → NON (sort des dormants)
+        #   OUTIL-PERMIS-FIX-2 (Défaut C) :
+        #   [P0 nue, PARCELLE ABSENTE du cadastre], autorisé   → NON (mesure incomplète, pas « toutes »)
+        cas = ((["C4PM0000000"], {"etat": "2"}), (["C4PM0000001"], {"etat": "2"}),
+               (["C4PM0000000"], {"etat": "2", "daact": "2021-01-01"}),
+               (["C4PM0000000"], {"etat": "4"}), (["C4PM0000000"], {"etat": "5"}),
+               (["C4PM0000000", "C4PMABSENTE00"], {"etat": "2"}))
+        for idus, raw in cas:
             c.execute(text(
                 "INSERT INTO sitadel_permits (commune, type, date, idu_codes, raw) VALUES"
                 " ('TemoinPM-C4', 'PC', now() - interval '48 months', :idus, :raw)"),
-                {"idus": json.dumps([idu]), "raw": json.dumps(raw)})
+                {"idus": json.dumps(idus), "raw": json.dumps(raw)})
         n = permis_point_mort(c, "TemoinPM-C4", months=36, dmax=dmax)
         c.execute(text("DELETE FROM parcels WHERE commune = 'TemoinPM-C4'"))
         c.execute(text("DELETE FROM sitadel_permits WHERE commune = 'TemoinPM-C4'"))

@@ -57,3 +57,37 @@ def test_lot4_refresh_correction_safe():
     permis anciens (cas 97440925G0371 : 12/12/2025 → 16/02/2026). None = réconciliation pleine."""
     from labuse.ingestion.permits_sdes import refresh_since
     assert refresh_since(None) is None
+
+
+def test_fix2_defautC_dormant_exige_toutes_parcelles_mesurees():
+    """OUTIL-PERMIS-FIX-2 (Défaut C) — « aucun bâtiment détecté sur LEURS parcelles » (toutes) : le
+    prédicat exclut tout permis dont une parcelle est ABSENTE de la mesure (LEFT JOIN + `IS NULL`) ou
+    bâtie. Avant, une parcelle absente de `parcels` était IGNORÉE (EXISTS trop faible) → bâti invisible."""
+    d = pc._dormant_sql("s.", ":dmax")
+    assert "LEFT JOIN parcel_bati_emprise" in d
+    assert "_be.idu IS NULL" in d               # une parcelle NON mesurée disqualifie
+    assert "jsonb_array_length(s.idu_codes) >= 1" in d
+    assert "NOT EXISTS" in d and f">= {pc.BATI_SEUIL_M2}" in d
+    # plus de JOIN strict « au moins une parcelle mesurée » (qui ignorait les absentes) : seul le LEFT JOIN
+    assert "JOIN parcel_bati_emprise _be ON _be.idu = _c.idu)" not in d
+
+
+def test_fix2_defautA_signal_peremption_viabilisation():
+    """OUTIL-PERMIS-FIX-2 (Défaut A) — la fonction de fraîcheur existe et le signal est câblé (fiche +
+    readyz) : parcel_viabilisation ne peut plus être plus vieux que via_permits_geo sans être signalé."""
+    from labuse.faisabilite import viabilisation_build as vb
+    assert hasattr(vb, "viabilisation_fraicheur") and hasattr(vb, "ensure_via_permits_geo")
+    from pathlib import Path
+    app = (Path(__file__).resolve().parents[1] / "src/labuse/api/app.py").read_text(encoding="utf-8")
+    assert "viabilisation_fraicheur" in app and "perimee" in app
+
+
+def test_fix2_defautD_F_libelles():
+    """OUTIL-PERMIS-FIX-2 (Défauts D & F) — « Permis déposés, 12 mois » → « autorisés » (AnalyserAnnonce) ;
+    le marqueur millésime figé « 2026-07 » de sitadel/via_permits_geo disparaît (couche suivie par trigger)."""
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    aa = (root / "frontend/src/components/outils/AnalyserAnnonce.tsx").read_text(encoding="utf-8")
+    assert "Permis autorisés, 12 mois" in aa and "Permis déposés, 12 mois" not in aa
+    tb = (root / "src/labuse/registre/tables.py").read_text(encoding="utf-8")
+    assert 'millesime="2026-07"' not in tb

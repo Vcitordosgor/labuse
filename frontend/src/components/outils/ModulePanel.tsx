@@ -769,8 +769,11 @@ export function M03() {
     : []
   // compteurs = la partition SERVIE (comptée sur les permis dessinables), pas une reclassification front.
   const perimEtats = ((qParcelPermis.data as Record<string, any> | undefined)?.['etats'] ?? {}) as Record<string, number>
+  // OUTIL-PERMIS-FIX-2 (Défaut F) — « Tous » = le COUNT EXACT c200 servi par l'API (jamais la longueur du
+  // payload ≤ 500, qui sous-comptait une parcelle à > 500 permis dans les 200 m).
+  const perimC200 = ((qParcelPermis.data as Record<string, any> | undefined)?.['c200'] as number | undefined)
   const perimCounts = {
-    tous: parcelPermisItems.length,
+    tous: perimC200 ?? parcelPermisItems.length,
     recent: perimEtats['recent'] ?? 0,
     dormant: perimEtats['dormant'] ?? 0,
     acheve: perimEtats['acheve'] ?? 0,
@@ -828,8 +831,14 @@ export function M03() {
   // résumé « Filtrer par état » replié : l'état actif + son compte (« Tous — 50 544 »).
   const resumeEtat = `${actE[1]} — ${actE[3] != null ? fmt(actE[3]) : '…'}`
   // résumé « Affiner » replié : les filtres actifs, ou « aucun filtre » quand tout est au défaut.
-  const monthsDefaut = pointMort ? 36 : seg === 'cours' ? 3 : 240   // RETOURS-16 (point 11) — Récent = 90 j
+  // OUTIL-PERMIS-FIX-1 (LOT 1) — défaut = 240 pour TOUT segment non-dormant (l'état fait la fenêtre au
+  // serveur ; cliquer un segment réapplique 240, cf. choisirSeg) ; dormant garde 36.
+  const monthsDefaut = pointMort ? 36 : 240
   const aucunFiltre = nature === '' && !commune && geoFiltre === 'tous' && months === monthsDefaut
+  // OUTIL-PERMIS-FIX-2 (Défaut E) — la fenêtre « Affiner » est plus étroite que la profondeur des compteurs
+  // d'état : la liste se rétrécit, mais le compteur de l'état ACTIF suit (nShown=total) et changer d'état
+  // réapplique la profondeur complète. On le DIT pour que l'écart ne surprenne pas.
+  const fenetreAffinee = !perim && months !== monthsDefaut
   const resumeAffiner = aucunFiltre ? 'aucun filtre' : [
     !pointMort && nature ? NATURES.find(([v]) => v === nature)?.[1] : null,
     !pointMort && months >= 240 ? 'Tout' : `${months} m${pointMort ? '+' : ''}`,
@@ -1005,6 +1014,14 @@ export function M03() {
               )
             })}
           </div>
+          {/* OUTIL-PERMIS-FIX-2 (Défaut E) — fenêtre affinée : le DIRE (le compteur de l'état actif suit la
+              liste ; les autres restent sur toute la profondeur et changer d'état la réapplique). */}
+          {fenetreAffinee && (
+            <p data-permis-affinage-note className="mt-1 px-1 text-[10px] leading-snug text-txt-dim">
+              Liste affinée à {months >= 240 ? 'toute la profondeur' : `${months} mois`} ; les compteurs des
+              états inactifs portent sur toute la profondeur (changer d'état la réapplique).
+            </p>
+          )}
         </BlocAccordeon>
 
         {/* RETOURS-18 X1 — « Affiner » : période · type · commune · géocodage. Résumé replié = filtres

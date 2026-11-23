@@ -67,13 +67,16 @@ def _dormant_sql(a: str, dmax: str, bati: bool = True) -> str:
         f" AND ({a}raw->>'etat' IS NULL OR {a}raw->>'etat' NOT IN ('4','5','6'))"
         f" AND {a}raw->>'daact' IS NULL"
         f" AND {a}date < {dmax} - interval '{DORMANT_MOIS} months'"
-        # parcelle MESURABLE (sinon on ne certifie pas « terrain nu »)
-        f" AND EXISTS (SELECT 1 FROM jsonb_array_elements_text({a}idu_codes) _c(idu)"
-        f"   JOIN parcel_bati_emprise _be ON _be.idu = _c.idu)"
-        # AUCUN bâtiment détecté : aucune parcelle avec emprise ≥ seuil
+        # OUTIL-PERMIS-FIX-2 (Défaut C) — « aucun bâtiment détecté sur LEURS parcelles » (toutes) : on
+        # exige que CHAQUE parcelle du permis soit RETROUVÉE et MESURÉE sans bâti. Avant, une parcelle
+        # absente de `parcels` (donc de `parcel_bati_emprise`) était IGNORÉE : si le bâti du permis était
+        # sur elle, il restait invisible et le permis était faussement « dormant » (47/895, relecture-1).
+        # Le permis doit avoir au moins une parcelle, et AUCUNE ne doit être non mesurée (_be.idu NULL)
+        # ni bâtie (≥ seuil).
+        f" AND jsonb_array_length({a}idu_codes) >= 1"
         f" AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text({a}idu_codes) _c(idu)"
-        f"   JOIN parcel_bati_emprise _be ON _be.idu = _c.idu"
-        f"   WHERE _be.bati_m2 >= {BATI_SEUIL_M2})"
+        f"   LEFT JOIN parcel_bati_emprise _be ON _be.idu = _c.idu"
+        f"   WHERE _be.idu IS NULL OR _be.bati_m2 >= {BATI_SEUIL_M2})"
     )
 
 
