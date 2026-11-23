@@ -6,8 +6,9 @@ un `ToolResult` avec source + millésime. Import PARESSEUX des symboles d'`api.a
 
 Preuve de non-recréation (RAPPORT_M78 §1b) : les comptages passent par `filtre()` (facette canonique,
 égalité validée à l'oracle indépendant) ; le marché par `build_marche_commune` ; la fiche par
-`_q_v2_fiche` ; les stats par `commune_contexte` ; les délais par `velocite` (réserve Sitadel citée
-mot pour mot) ; le patrimoine par `patrimoine`. Le tier/verdict est LU du run servi, jamais recalculé.
+`_q_v2_fiche` ; les stats par `commune_contexte` ; le patrimoine par `patrimoine`. (OUTIL-PERMIS-FIX-5 :
+l'outil des délais d'instruction est retiré — délai jamais mesuré, non montré.) Le tier/verdict est LU
+du run servi, jamais recalculé.
 """
 from __future__ import annotations
 
@@ -423,29 +424,10 @@ def stats_commune(db: Session, *, commune: str) -> ToolResult:
                       millesime=sru.get("millesime") or marche.get("millesime"))
 
 
-# ───────────────────────── delais_instruction ─────────────────────────
-def delais_instruction(db: Session, *, commune: str) -> ToolResult:
-    """Délai médian d'instruction via `velocite` — la RÉSERVE Sitadel est CITÉE mot pour mot."""
-    from ..api.modules import velocite
-    resolue = resoudre_commune(commune)              # M103 P4 — filet toponyme
-    if resolue is None:
-        return _refus_commune("delais_instruction", commune)
-    commune = resolue
-    v = velocite(fmt="json", nature=None, db=db)
-    row = next((r for r in v["communes"] if r["commune"] == commune), None)
-    if not row or row.get("delai_median_mois") is None:
-        return ToolResult("delais_instruction", ok=False, refus=f"aucun délai mesurable à {commune}")
-    n_mur = row.get("n_mur")
-    # Réserve = censure (accordés seulement) + disclaimer (historique) + limite type/service, mot pour mot.
-    reserve = (v["censure"] + " " + v["disclaimer"]
-               + " Je n'ai pas le détail par type de dossier ni par service.")
-    if n_mur is not None and n_mur < 30:
-        reserve += f" Échantillon faible ({n_mur} permis) — à prendre avec prudence."
-    data = {"commune": commune, "delai_median_mois": row["delai_median_mois"], "n_mur": n_mur,
-            "n_permis_accordes": row.get("n_valide"), "tendance": row.get("tendance")}
-    return ToolResult("delais_instruction", valeur=row["delai_median_mois"], data=data,
-                      source="Sitadel — délais d'instruction (dossiers accordés)",
-                      millesime=v.get("cohortes"), partiel=True, reserve=reserve)
+# OUTIL-PERMIS-FIX-5 (Point 2) — l'outil `delais_instruction` est RETIRÉ du Copilote : le délai
+# d'instruction n'a jamais été mesuré (dépôt connu à l'année → +4 mois de gonflement médian). « On ne
+# montre pas un délai faux » (Vic). Le Copilote ne sert donc plus de chiffre de délai (ni ici, ni au
+# résumé de fiche). Le COMPTE de permis reste servi par `compter_permis` (outil distinct).
 
 
 # ───────────────────────── marche ─────────────────────────
@@ -931,7 +913,6 @@ OUTILS = {
     "parcelles_par_entreprise": parcelles_par_entreprise,
     "fiche_parcelle": fiche_parcelle,
     "stats_commune": stats_commune,
-    "delais_instruction": delais_instruction,
     "marche": marche,
     "compter_piscines": compter_piscines,
     "destination_zone": destination_zone,

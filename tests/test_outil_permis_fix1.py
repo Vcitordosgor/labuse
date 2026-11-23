@@ -181,3 +181,62 @@ def test_fix4_point4_fiche_delai_seulement_si_depot_precis():
     assert "s.date_depot < s.date" in mods                 # strictement antérieur
     assert "EXTRACT(MONTH FROM s.date_depot) = 1 AND EXTRACT(DAY FROM s.date_depot) = 1" in mods  # exclut le proxy 01-01
     assert "delai_coherent" not in mods                    # l'ancienne garde (mandat 3) est remplacée
+
+
+def _src(rel: str) -> str:
+    from pathlib import Path
+    return (Path(__file__).resolve().parents[1] / rel).read_text(encoding="utf-8")
+
+
+def test_fix5_point2_classement_conserve_velocite_signale_avec_poids():
+    """OUTIL-PERMIS-FIX-5 (Point 2) — le délai entre dans la NOTE du classement : on NE TOUCHE PAS au
+    calcul (axe velocite, poids 0,15, direction -1) ; on le SIGNALE seulement, avec son poids."""
+    from labuse.registre.moteurs.commune import INDICATEURS
+    libelle, direction, poids, _src_, _nat = INDICATEURS["velocite"]
+    assert poids == 0.15 and direction == -1               # calcul du composite inchangé
+    assert "NON MESURÉ" in libelle and "0,15" in libelle   # signalé, avec son poids
+
+
+def test_fix5_point2_velocite_retiree_du_payload_comparateur():
+    """OUTIL-PERMIS-FIX-5 (Point 2) — la valeur brute du délai (`velocite`) est retirée des lignes
+    AFFICHÉES du comparateur, APRÈS le calcul du composite (qui la garde)."""
+    cmp = _src("src/labuse/api/comparateur.py")
+    assert 'r.pop("velocite"' in cmp                       # valeur brute retirée du payload servi
+    assert cmp.index("composite_communes(rows") < cmp.index('r.pop("velocite"')  # après le composite
+
+
+def test_fix5_point2_delai_median_retire_de_la_fiche_commune():
+    """OUTIL-PERMIS-FIX-5 (Point 2) — `delai_median_mois` n'est plus une clé servie par la fiche commune
+    (ni bloc comparable, ni carte « Permis et rythme »)."""
+    fc = _src("src/labuse/api/fiche_commune.py")
+    assert '"delai_median_mois":' not in fc                # plus aucune clé de dict servie
+
+
+def test_fix5_point2_copilote_ne_sert_plus_le_delai():
+    """OUTIL-PERMIS-FIX-5 (Point 2) — l'outil Copilote `delais_instruction` est retiré (registre +
+    catalogue + schéma) : le Copilote ne sert plus de chiffre de délai."""
+    from labuse.copilote_v2 import outils
+    from labuse.copilote_v2 import answering
+    assert "delais_instruction" not in outils.OUTILS
+    assert "delais_instruction" not in answering._ARG_SPEC
+    assert not any(t["nom"] == "delais_instruction" for t in answering.CATALOGUE)
+
+
+def test_fix5_point2_registre_coherent_velocite_en_attente_sans_robinet():
+    """OUTIL-PERMIS-FIX-5 (Point 2) — le chiffre `velocite_delai_median_mois` est `en_attente` (entrée
+    interne du composite) et servi par AUCUN robinet ; le registre reste cohérent."""
+    from labuse import registre
+    assert registre.verifier() == []                       # invariant global tenu
+    d = registre.CHIFFRES["velocite_delai_median_mois"]
+    assert d.en_attente                                    # déclaré, servi par aucun robinet
+    servi = any("velocite_delai_median_mois" in r.chiffres for r in registre.ROBINETS.values())
+    assert not servi                                       # plus aucun robinet ne le sert
+    assert "copilote_delais_instruction" not in registre.ROBINETS
+
+
+def test_fix5_point2_front_colonne_et_outil_velocite_retires():
+    """OUTIL-PERMIS-FIX-5 (Point 2) — front : colonne « Instruction » du comparateur retirée, composant
+    M05 (outil Vélocité) supprimé, helper `modVelocite` supprimé (plus aucun écran n'appelle le délai)."""
+    assert "k: 'velocite'" not in _src("frontend/src/components/outils/blocB.tsx")
+    assert "export function M05" not in _src("frontend/src/components/outils/ModulePanel.tsx")
+    assert "export const modVelocite" not in _src("frontend/src/lib/api.ts")

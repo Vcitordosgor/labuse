@@ -29,11 +29,13 @@ describe('COMMUNES — O6Comparateur (table des 24 communes)', () => {
   })
   afterEach(() => vi.restoreAllMocks())
 
-  it('« VÉLO » n\'existe plus ; en-têtes lisibles + étiquette permis HONNÊTE (5 ans, pas 12 m)', async () => {
+  it('« VÉLO » et « Instruction » n\'existent plus ; en-têtes lisibles + étiquette permis HONNÊTE (5 ans)', async () => {
     renderO6()
     await screen.findByText('Saint-Paul')
     expect(screen.queryByText(/vélo/i)).toBeNull()
-    expect(screen.getByText(/Instruction \(mois\)/)).toBeTruthy()
+    // OUTIL-PERMIS-FIX-5 (Point 2) — la colonne « Instruction (mois) » (délai jamais mesuré, dépôt connu
+    // à l'année) est RETIRÉE. « On ne montre pas un délai faux » (Vic).
+    expect(screen.queryByText(/Instruction/i)).toBeNull()
     expect(screen.getByText(/Permis \(5 ans\)/)).toBeTruthy()      // la donnée est un cumul 5 ans
     expect(screen.getByText(/Déficit SRU \(pts\)/)).toBeTruthy()   // en-tête (la légende dit « Déficit SRU » sans unité)
   })
@@ -61,14 +63,16 @@ describe('COMMUNES — O6Comparateur (table des 24 communes)', () => {
     }
   })
 
-  it('meilleure valeur en vert : instruction MIN (8) ; colonne « Parcelles à potentiel » retirée (B2)', async () => {
+  it('colonnes « Parcelles à potentiel » (B2) et « Instruction » (FIX-5) retirées ; prix neutres', async () => {
     const { container } = renderO6()
     await screen.findByText('Saint-Paul')
     // RETOURS-15 B2 — la colonne « Parcelles à potentiel » (stock) est retirée du comparateur.
     expect(container.querySelectorAll('[data-o6-cell="stock"]').length).toBe(0)
     expect(container.querySelector('[data-o6-tri="stock"]')).toBeNull()
-    const bestInstr = [...container.querySelectorAll('[data-o6-cell="velocite"]')].find((el) => el.textContent === '8')
-    expect(bestInstr?.className).toContain('text-mint')
+    // OUTIL-PERMIS-FIX-5 (Point 2) — la colonne « Instruction » (vélocité) est retirée : plus aucune
+    // cellule velocite, et donc plus de « meilleure valeur en vert » (c'était le seul axe « mieux = bas »).
+    expect(container.querySelectorAll('[data-o6-cell="velocite"]').length).toBe(0)
+    expect(container.querySelector('[data-o6-tri="velocite"]')).toBeNull()
     // les prix restent NEUTRES (pas de faux signal bon/mauvais)
     const prix = [...container.querySelectorAll('[data-o6-cell="prix_ancien"]')]
     expect(prix.every((el) => !el.className.includes('text-mint'))).toBe(true)

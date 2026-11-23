@@ -475,3 +475,55 @@ dmax 30/09/2026 inchangé (51 125 lignes). Partition île `5201/854/21322/23747 
 ## Fichiers touchés (mandat 4)
 
 `ingestion/permits_sdes.py` (stocke `raw.an_depot`), `ingestion/permit_delais_m10.py` (dépôt = AN_DEPOT, trigger + `build_delais`), `api/modules.py` (fiche : délai seulement si dépôt précis fiable ; le rayon du Dossier n'est pas touché ici). Tests : `test_outil_permis_fix1.py` (+2), `test_permits.py` (+1, db). Couche : `m10_permit_delais` reconstruite depuis AN_DEPOT, `raw.an_depot` peuplé.
+
+---
+
+# OUTIL-PERMIS-FIX-5 — le délai d'instruction n'a jamais été mesuré : retrait de l'affichage
+
+**Constat du relecteur (accepté).** La date de dépôt servie à la médiane communale est le **1er janvier de l'année de dépôt** (`AN_DEPOT → AAAA-01-01`). Le délai est donc **gonflé de plusieurs mois** et la médiane de **8-9 mois est un artefact** : le délai n'a jamais été réellement mesuré. Décision de Vic : **« on ne montre pas un délai faux. »**
+
+## Point 1 — Chiffrage de l'écart (le gonflement)
+
+Sur les permis à **vraie date de dépôt précise** (`DR_DEPOT < autorisation`, hors 1ᵉʳ janvier = proxy d'année) **et** dotés d'un `AN_DEPOT` exploitable — **n = 375** (les « 377 » du relevé moins 2 sans `AN_DEPOT` à 4 chiffres) — j'ai comparé, permis par permis, le délai **réel** (autorisation − `DR_DEPOT`) au délai **1ᵉʳ janvier** (autorisation − `AAAA-01-01`) :
+
+| Mesure | Valeur |
+|---|---|
+| Médiane du délai **réel** | **3 mois** |
+| Médiane du délai **1ᵉʳ janvier** | **7 mois** |
+| **Écart médian** (1ᵉʳ janv. − réel) | **+4 mois** |
+| Écart moyen | +4,6 mois |
+
+→ Le 1ᵉʳ janvier **ajoute ~4 mois médians** à un délai réel de 3 mois : la médiane communale « 8-9 mois » est bien un **artefact de la granularité annuelle** du dépôt, pas une mesure.
+
+## Point 2 — Retrait de l'affichage partout (le délai faux n'est plus montré)
+
+Le délai médian (indicateur `velocite` / `delai_median_mois`, couche `m10_permit_delais`) est **retiré de TOUT écran et document** :
+
+| Surface | Fichier | Geste |
+|---|---|---|
+| **Comparateur communes** — colonne « Instruction (mois) » | `frontend/.../blocB.tsx` (colonne + légende + note « vert ») ; `api/comparateur.py` (`r.pop("velocite")` après composite) | colonne supprimée ; valeur brute retirée du payload |
+| **Fiche commune + carte « Permis et rythme »** | `api/fiche_commune.py` (`_comparable_bloc`, `permis_bloc`, défaut) ; `frontend/.../ContextePanel.tsx` (valeur de tête + ligne « Délai d'instruction médian ») | `delai_median_mois` retiré (back + front) |
+| **Outil Vélocité `/modules/velocite`** | `frontend/.../ModulePanel.tsx` (composant `M05` **supprimé**) ; `frontend/.../api.ts` (`modVelocite` supprimé) | plus aucun écran ; endpoint back laissé **dormant, sans consommateur** |
+| **PDF (Flash)** — section « Vélocité administrative » | `flash/data.py` (bloc `out["velocite"]`) ; `flash/templates/rapport.html.j2` (section) | section supprimée |
+| **Copilote** — carte « Instruction » + outil `delais_instruction` | `copilote_v2/resume_fiche.py`, `outils.py` (outil + registre), `answering.py` (catalogue, guidance, schéma) | outil retiré ; le Copilote ne sert plus de chiffre de délai |
+| **Registre** | `registre/robinets.py` (6 déclarations), `donnees.py` | `velocite_delai_median_mois` retiré de tous les robinets + robinet `copilote_delais_instruction` supprimé ; chiffre marqué **`en_attente`** |
+
+**Où le délai apparaît ENCORE — et comment c'est traité :**
+- **Classement (signal, PAS retiré du calcul)** : l'axe `velocite` reste dans le **score composite** du comparateur, **poids 0,15**, direction « plus bas = mieux », **calcul inchangé** (consigne respectée). Il est **signalé** dans `INDICATEURS` (libellé : « délai NON MESURÉ, dépôt à l'année ⇒ gonflé +4 mois ; retiré de l'affichage, conservé au classement, poids 0,15 ») et dans `donnees.py`. Le chiffre reste **calculé en interne** par le moteur comme entrée du composite ; il n'est **servi par aucun robinet** (`en_attente`).
+- **Fiche d'un permis individuel** (Point 3) : inchangé — voir ci-dessous.
+- **Radar / marché des annonces** (`RadarMarche.tsx`, `delai_median_j`) : **NON touché** — c'est un délai du **marché des annonces** (jours, Pige), pas l'instruction administrative.
+
+## Point 3 — Fiche d'un permis : délai seulement pour vraie date de dépôt (déjà fait, conservé)
+
+Inchangé depuis le mandat 4 : `api/modules.py:permis_fiche` ne montre dépôt + délai **que** si le dépôt est une **date précise fiable** (`DR_DEPOT < autorisation`, hors 1ᵉʳ janvier). Sinon ni dépôt ni délai. Gardé tel quel.
+
+## Cohérence & vérifications (hook)
+
+- `registre.verifier() == []` (invariant non-db vérifié au hook : chiffre `en_attente` ⇒ servi par aucun robinet — conforme).
+- Front : `tsc -b` vert ; `vitest run` **345/345** (test `CommunesTable` réécrit : la colonne « Instruction » est désormais **absente**, plus de « meilleure valeur en vert » — c'était le seul axe « mieux = plus bas »).
+- Python non-db : suite complète verte (dont registre, comparateur, copilote).
+- Aucun témoin de `tests/coherence_ecrans/` ne fige le délai → cohérence inchangée.
+
+## Fichiers touchés (mandat 5)
+
+Back : `api/comparateur.py`, `api/fiche_commune.py`, `flash/data.py`, `flash/templates/rapport.html.j2`, `copilote_v2/{outils,answering,resume_fiche}.py`, `registre/moteurs/commune.py`, `registre/donnees.py`, `registre/robinets.py`. Front : `components/outils/blocB.tsx`, `components/outils/ModulePanel.tsx`, `components/contexte/ContextePanel.tsx`, `lib/api.ts`, `components/outils/CommunesTable.test.tsx`. Aucune donnée touchée en base (retrait d'affichage pur ; le calcul du composite est intact).
