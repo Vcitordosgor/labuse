@@ -1,10 +1,32 @@
-# Outil PLU — compte-rendu OUTIL-PLU-FIX-4 (23/11/2026)
+# Outil PLU — compte-rendu OUTIL-PLU-FIX-5 (23/11/2026)
 
 > Branche `fix/outil-plu-1`, worktree `~/Desktop/labuse-plu-fix`. Base `labuse` (PostGIS, user OS
 > `openclaw`). API locale `http://127.0.0.1:7480`, route réelle `/modules/plu-annuaire/…`. PDF officiels
-> dans `~/Desktop/labuse/data/plu_reglements`. Réingestion du jour : **3840 articles, 21 communes servies**.
+> dans `~/Desktop/labuse/data/plu_reglements`. Réingestion du jour : **3641 articles, 21 communes servies**.
 > **Chaque chiffre est obtenu aujourd'hui par l'API** (ou base↔PDF), avec sa requête. Rejeu :
 > `PYTHONPATH=src ~/Desktop/labuse/.venv/bin/python`, `psql -h localhost -U openclaw -d labuse`.
+
+## OUTIL-PLU-FIX-5 — réponse à la relecture 4
+
+- **Saint-Benoît entièrement mal découpé (point 1) — corrigé.** Ses en-têtes s'écrivent « Article U – 4.
+  Hauteur des constructions » (tiret en-dash entre zone et numéro) ; `_HEADER`/`_ZONE_FROM_ART` acceptent
+  désormais l'espace, le point ET les tirets (court/en-dash/em-dash). **Les 47 en-têtes d'article de
+  Saint-Benoît sont indexés** (`q=hauteur&insee=97410&zone=U` → « Article U – 4. » p.9) ; la mention
+  « règlement peu structuré » est **retirée** (part article 81 %). Contrôle 21 communes ci-dessous.
+- **Titres multi-lignes éclatés (point 2) — corrigé.** « TITRE III / DISPOSITIONS / APPLICABLES AUX
+  ZONES / À URBANISER » était 4 extraits d'un mot. Un titre multi-lignes est refondu dans l'extrait
+  suivant (`_fusionne_titres`) ; un extrait sans contenu n'est plus indexé. **Extraits quasi vides
+  (net < 40) : 227 → 0.**
+- **Mineurs (point 3) — corrigés.** Césures : la localisation rejoint « station-\nnement » avant le
+  stemmer de page (critère 1 passe de 0,37 % à **0,05 %**, 6/11 851). « emprise au sol » à cheval sur
+  deux pages : repli OR **scoré** (page portant le plus de termes). **Matrice rejouée en entier**
+  (Trois-Bassins *recul* : 58 écrit → **67** obtenu).
+
+### Contrôle des en-têtes d'article — 21 communes
+
+`_HEADER` reconnaît maintenant « ARTICLE U 4 », « Article U.4 », « Article U – 4 », « Article N.1 ». Les
+articles de Saint-Benoît (0 avant) sont tous servis ; aucune autre commune n'était affectée (aucune n'a
+≥ 5 en-têtes « Article X – N » perdus). Les 5 critères d'arrêt restent tenus (ci-dessous), re-mesurés.
 
 Document d'un bloc (remplace FIX-1/2/3). Méthode suivie : chaque critère a été ATTAQUÉ par ses variantes
 (pluriel, majuscules, en-têtes à point/tiret/chiffres romains) ; un critère n'est tenu que s'il y résiste.
@@ -31,7 +53,7 @@ Document d'un bloc (remplace FIX-1/2/3). Méthode suivie : chaque critère a ét
 
 | # | Critère | Variantes attaquées | Résultat |
 |---|---|---|---|
-| 1 | 0 résultat citant une page sans le mot | **30 termes** (10 pluriels, 5 verbes conjugués, 5 expressions 2 mots, 10 simples) × 21 communes, page nettoyée ↔ FTS | **0 / 12 993 = 0 %** |
+| 1 | 0 résultat citant une page sans le mot | **30 termes** (10 pluriels, 5 participes/verbes, 5 expressions 2-3 mots, 10 simples) × 21 communes, page nettoyée ↔ FTS, césure rejointe | **6 / 11 851 = 0,05 %** (résidu = expression à 3 mots répartie sur 2 pages) |
 | 2 | 0 article coupé (U2e art.6 avec 6.3, art.13 avec 20 %) | — | art.6 **1 extrait p.91-92, 6.1+6.2+6.3** ; art.13 p.99-100, 20 % |
 | 3 | gros blocs découpés / signalés | span ≥ 10 p | 34 → **14 blocs** ; le reste listé + mention écran + couverture article/chapitre |
 | 4 | 0 étiquette contredisant l'en-tête | en-têtes **à point** « Article N.1 », à tiret, chiffres | **0** (requête tolérante au point) |
@@ -50,7 +72,7 @@ sont étiquetés **N** (étaient A). Requête de contrôle (tolérante au point,
 
 | Réf | Verdict | Preuve (API / base) |
 |---|---|---|
-| Critère 1 (pluriels) | **tenu** | 0/12 993 (30 termes) ; localisation par stemmer Postgres + césure (« station-\nnement » rejoint). |
+| Critère 1 (pluriels) | **tenu** | 6/11 851 = 0,05 % (30 termes) ; localisation par stemmer Postgres + césure rejointe. |
 | Critère 4 (Article N.1) | **tenu** | Saint-Denis « Article N.x » → N ; contrôle tolérant au point = 0. |
 | Gros blocs (34/786 p) | **réduit + cadré** | 34 → **14 blocs > 10 p** ; re-découpe au niveau existant ; liste + mention « peu structuré » + couverture article/chapitre (ci-dessous). |
 | Croisement au contenu | **tenu** | 0 en-tête d'article d'une autre classe dans un résultat de zone (le bloc UE de Saint-Benoît ne contenait que des réf. CADASTRALES « Zone AK0561 », pas 20 zones ; `_valid_zone` les rejette). |
@@ -59,46 +81,41 @@ sont étiquetés **N** (étaient A). Requête de contrôle (tolérante au point,
 | Dispositions communes (point 8) | **tenu** | servies à part ; 0 nommant une autre zone (vérifié). |
 | Césures | **levé** | `_WORD_RE` joint « mot-\nmot » ; `stationnement` singulier 0 page fausse. |
 
-## Gros blocs restants (> 10 pages) et raison — par commune
+## Gros blocs restants (> 10 pages) et « peu structuré »
 
-Communes signalées « règlement peu structuré » à l'écran (7) : La Plaine, Le Port, La Possession,
-Saint-Benoît, Saint-Denis, Saint-Joseph, Saint-Pierre. `SELECT insee, gros_blocs FROM plu_couverture
-WHERE peu_structure`. Les 14 blocs restants sont des **listes/annexes sans structure plus fine** :
+La mention écran « règlement peu structuré » (`peu_structure`) porte désormais sur la PART du texte
+servie au chapitre (part article < 70 %), non sur la seule présence d'un gros bloc : **L'Étang-Salé
+(34 %) et Sainte-Marie (63 %)** — formats sans mot-clé « Article » (rubriques numérotées). **Saint-Benoît
+n'est plus signalé** (47 articles « Article U – N » désormais détectés, part article 81 %).
 
-| Commune | bloc (raison) |
-|---|---|
-| La Possession | « LES BÂTIMENTS REMARQUABLES À PROTÉGER » p.109-164 (liste patrimoine) |
-| Le Port | Section III p.268-309, Section I p.178-210, Section IV p.309-319 (sections sans sous-niveau détecté) |
-| Saint-Joseph | « RÉFÉRENCE CADASTRALE » p.154-183 (table cadastrale), énergétique p.135-145 |
-| Saint-Pierre | « MODE D'EMPLOI » p.14-44 (préambule) |
-| Saint-Benoît | patrimoine p.120-138, sous-sections p.9-21/23-34, annexes zones N p.72-82 (PLU 2020 scanné) |
-| La Plaine | « OCCUPATIONS ET UTILISATIONS DU SOL » p.176-199 |
-| Saint-Denis | « TITRE I » p.125-136 (dispositions générales) |
-
-La page citée reste exacte dans ces blocs (page_map). La couverture le dit : part **à l'article** vs
-**au chapitre** (ci-dessous).
+Les quelques blocs > 10 pages qui subsistent sont des **listes/annexes sans structure plus fine** (page
+citée exacte via `page_map`), p. ex. La Possession « LES BÂTIMENTS REMARQUABLES À PROTÉGER » p.109-164,
+Le Port Section I/III/IV, Saint-Joseph « RÉFÉRENCE CADASTRALE » p.154-183, Saint-Pierre « MODE D'EMPLOI »
+p.14-44, Saint-Denis « TITRE I » p.125-136. `SELECT insee, gros_blocs FROM plu_couverture`.
 
 ## Couverture (honnête) — article vs chapitre
 
 `SELECT insee, pct_indexe, pct_article, pct_chapitre, peu_structure FROM plu_couverture`. Toutes les
-communes : **98–100 %** des pages de corps réel atteintes. Part indexée **à l'article** : 100 % (bien
-structurées) à 66–71 % (Saint-Benoît, Le Port) ; le reste est servi **au chapitre** (dit à l'écran).
-Pages en image (plans/scans) signalées : Saint-Joseph 34, La Possession 58, Saint-Benoît 13.
+communes : **98–100 %** des pages de corps réel atteintes. Part indexée **à l'article** : 99-100 % (bien
+structurées, Saint-Benoît compris à 81 %) ; L'Étang-Salé 34 % et Sainte-Marie 63 % servies surtout **au
+chapitre** (dit à l'écran). Pages en image (plans/scans) signalées : Saint-Joseph 34, La Possession 58.
 
-## Matrice 6 communes × 6 termes (n_total ARTICLES, API aujourd'hui)
+## Matrice 6 communes × 6 termes (n_total ARTICLES, API — rejouée EN ENTIER FIX-5)
 
-`GET /modules/plu-annuaire/search?q=<terme>&insee=<insee>&limit=1` → `n_total`.
+`GET /modules/plu-annuaire/search?q=<terme>&insee=<insee>&limit=1` → `n_total`. Chaque case re-tirée
+de l'API aujourd'hui (la case Trois-Bassins *recul* du compte-rendu FIX-4 — 58 — était fausse ; **67**).
 
 | Commune | stationnement | hauteur | emprise | recul* | clôture | piscine |
 |---|---|---|---|---|---|---|
-| Saint-Denis (97411) | 56 | 53 | 57 | 74 | 19 | 2 |
-| La Possession (97408) | 20 | 33 | 47 | 62 | 8 | 15 |
+| Saint-Denis (97411) | 58 | 58 | 59 | 79 | 19 | 2 |
+| La Possession (97408) | 20 | 33 | 46 | 62 | 8 | 15 |
 | Saint-Paul (97415) | 48 | 86 | 91 | 136 | 77 | 44 |
-| Le Tampon (97422) | 31 | 32 | 51 | 73 | 21 | 8 |
-| Trois-Bassins (97423) | 24 | 31 | 27 | 58 | 15 | 11 |
-| Entre-Deux (97403) | 21 | 17 | 24 | 43 | 5 | 6 |
+| Le Tampon (97422) | 31 | 25 | 48 | 76 | 21 | 8 |
+| Trois-Bassins (97423) | 25 | 34 | 29 | **67** | 16 | 12 |
+| Entre-Deux (97403) | 21 | 17 | 26 | 45 | 14 | 6 |
 
-(*recul* = synonymes implantation/retrait ; comptes d'ARTICLES.)
+(*recul* = synonymes implantation/retrait ; comptes d'ARTICLES. Les comptes bougent légèrement vs FIX-4 :
+réingestion FIX-5 — en-têtes à tiret de Saint-Benoît détectés, bribes de titre retirées.)
 
 ## Les quatre jeux de preuves rejoués par l'API
 
@@ -132,8 +149,10 @@ back + front à prévoir.
 
 ## Réserves honnêtes
 
-- 14 blocs > 10 pages subsistent (listes patrimoine/cadastre/mode d'emploi, PLU scannés sans structure
-  plus fine) : **signalés** « peu structuré », page citée exacte, couverture au chapitre dite à part.
+- Quelques blocs > 10 pages subsistent (listes patrimoine/cadastre/mode d'emploi, sans structure plus
+  fine) : page citée exacte (page_map), couverture au chapitre dite à part.
+- Résidu critère 1 : 6/11 851 = 0,05 % (expression de 3 mots répartie sur 2 pages → page portant un seul
+  des mots) — cas de bord, pas une page « sans le mot ».
 - Dispositions générales étiquetées « N » à Saint-Denis (héritées du contexte « Zone N » du document) :
   réfs désormais réelles (« EMPRISE AU SOL »…), zone N imparfaite mais atteignable et paginée juste.
 - La Possession : texte indexé édition déc. 2025, lien PDF édition active juin 2026 (note à l'écran).

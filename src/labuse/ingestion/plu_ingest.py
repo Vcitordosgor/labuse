@@ -62,13 +62,15 @@ CREATE INDEX IF NOT EXISTS ix_plu_extrait_doc    ON plu_reglement_extrait(insee,
 # plus les « (voir Article … » capitalisés. Supprime les 76 extraits bidon et rend les articles entiers.
 _HEADER = re.compile(
     r'(?m)^[ \t]*('
-    r'(?:ARTICLE|Article)\s+[A-Za-z]{0,4}\s*\.?\s*\d+[A-Za-z0-9.\-]*'
+    # OUTIL-PLU-FIX-5 (Saint-Benoît) — séparateur zone→numéro : espace, point, tiret court/en-dash/em-dash
+    # (« Article U – 4. Hauteur » n'était pas détecté → 47 en-têtes perdus, commune entière sans article).
+    r'(?:ARTICLE|Article)\s+[A-Za-z]{0,4}\s*[-–—.]?\s*\d+[A-Za-z0-9.\-]*'
     r'|(?:ZONE|Zone)\s+[0-9A-Za-z]{1,6}\b'
     r'|(?:CHAPITRE|TITRE|SECTION|Chapitre|Titre|Section)\s+[IVXLC0-9]+\b'
     r')')
 # OUTIL-PLU-FIX-4 (critère 4) — tolère le POINT entre la classe et le numéro (« Article N.1 », « N.2 »
 # à Saint-Denis) : sinon z_ref=None → repli bannière → zone fausse (13 « Article N.x » étiquetés A).
-_ZONE_FROM_ART = re.compile(r'(?i)(?:ARTICLE)\s+([A-Za-z]{1,4})\s*[-–.]?\s*\d')
+_ZONE_FROM_ART = re.compile(r'(?i)(?:ARTICLE)\s+([A-Za-z]{1,4})\s*[-–—.]?\s*\d')
 _ZONE_FROM_ZONE = re.compile(r'(?i)ZONE\s+([0-9A-Za-z]{1,5})')
 # référence croisée dans la prose juste avant le « titre » : « (voir Article… », « cf. Article… »,
 # « au titre… », « à l'article… » → l'en-tête matché n'est pas un vrai début d'article.
@@ -372,7 +374,48 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
         j = bisect.bisect_right(bounds, a)
         b = bounds[j] if j < len(bounds) else len(flat)
         out.extend(_emit_block(a, b, head_ref[a]))
-    return out, ambigu
+    return _fusionne_titres(out), ambigu
+
+
+def _fusionne_titres(pieces: list[dict]) -> list[dict]:
+    """OUTIL-PLU-FIX-5 (point 2) — un titre sur PLUSIEURS LIGNES (« TITRE III / DISPOSITIONS /
+    APPLICABLES AUX ZONES / À URBANISER ») était éclaté en extraits d'un mot (227 quasi vides). On
+    REFOND chaque fragment de titre (quasi vide, majoritairement en CAPITALES) dans l'extrait suivant,
+    dont il devient l'en-tête ; un titre sans contenu à la fin est abandonné (non indexé). Cible : 0
+    extrait sans contenu."""
+    def est_titre(e: dict) -> bool:
+        t = e.get("texte") or ""
+        net = len(re.sub(r'\s', '', t))
+        if net >= 50:
+            return False
+        ref = (e.get("article_ref") or "")
+        if re.match(r'(?i)^(section|chapitre|titre|sous-section)\b', ref):
+            return True                           # titre de section nu → refondu dans la suite
+        letters = [c for c in t if c.isalpha()]
+        return bool(letters) and sum(c.isupper() for c in letters) / len(letters) > 0.6
+    res: list[dict] = []
+    pending: list[dict] = []
+    for e in pieces:
+        if est_titre(e):
+            pending.append(e)
+            continue
+        if pending:
+            pre = "\n".join(p["texte"] for p in pending)
+            shift = len(pre) + 1
+            e = dict(e)
+            e["texte"] = pre + "\n" + e["texte"]
+            e["page_debut"] = pending[0]["page_debut"]
+            e["page_pdf"] = pending[0]["page_pdf"]
+            e["page_map"] = [[0, pending[0]["page_debut"]]] + [[int(o) + shift, pg] for o, pg in e["page_map"]]
+            e["article_ref"] = pending[0]["article_ref"] or e["article_ref"]
+            e["doute"] = len(re.sub(r'\s', '', e["texte"])) < 25
+            pending = []
+        res.append(e)
+    # un extrait SANS contenu (net < 40) qui n'est pas un vrai « Article … » (ligne de section nue,
+    # ligne de table d'adresses d'annexe…) n'est PAS indexé (cible 0, point 2).
+    return [e for e in res
+            if len(re.sub(r'\s', '', e.get("texte") or "")) >= 40
+            or re.match(r'(?i)^article\s', e.get("article_ref") or "")]
 
 
 def ensure_fts_config(session: Session) -> None:
@@ -556,6 +599,8 @@ def _ua1(s: str) -> str:
 
 # mot, césure comprise : « station-\nnement » / soft-hyphen est UN mot.
 _WORD_RE = re.compile(r'[0-9A-Za-zÀ-ÿ]+(?:[­\-]\s*\n\s*[0-9A-Za-zÀ-ÿ]+)*')
+# césure de fin de ligne à SUPPRIMER (rejoint le mot) : « -\n » / soft-hyphen « ­\n ».
+_CESURE = re.compile(r'[­\-]\s*\n\s*')
 
 
 def _page_slices(texte: str, page_map: list | None) -> list[tuple[int, int | None, str]]:
@@ -595,7 +640,9 @@ def locate_match(session: Session, texte: str, page_map: list | None, q: str,
     (1re page où le mot apparaît, extrait autour du mot, TOUTES les pages où il apparaît). Fini le
     `find()` littéral qui ratait les pluriels (« hauteurs » matchait l'article mais pas la page)."""
     slices = _page_slices(texte, page_map)
-    txts = [s[2] for s in slices]
+    # OUTIL-PLU-FIX-5 (césure, point 3) — on REJOINT les mots coupés en fin de ligne (« station-\nnement »)
+    # AVANT le stemmer de page, sinon « stationnement » n'y est pas trouvé → page fausse.
+    txts = [_CESURE.sub("", s[2]) for s in slices]
     pgs = [int(s[1] or 0) for s in slices]
 
     def _pages_for(query: str) -> list[int]:
@@ -606,15 +653,25 @@ def locate_match(session: Session, texte: str, page_map: list | None, q: str,
         return [int(p) for p in rows if p]
 
     pages = _pages_for(q)
-    if not pages:
-        # expression à 2 mots répartis sur deux pages : la requête AND ne matche aucune page SEULE.
-        # On retombe sur l'OR des termes → la page où UNE forme du mot apparaît (critère 1).
-        q_or = " OR ".join(t for t in (terms or []) if len(t) >= 2) or q
-        pages = _pages_for(q_or)
-    if not pages:                                 # repli ultime : page de tête
-        pg0 = slices[0][1] if slices else None
-        return pg0, _fenetre(texte, 0, terms), [pg0] if pg0 else []
-    first = pages[0]
+    if pages:
+        first = pages[0]
+    else:
+        # expression répartie sur deux pages : la requête AND ne matche aucune page SEULE. Repli OR
+        # SCORÉ (point 3 « localisé correctement ») : la page qui porte le PLUS de termes, pas celle
+        # d'un seul mot faible ; pages_match = toutes les pages portant un terme.
+        sig = [t for t in (terms or []) if len(t) >= 3] or [q]
+        score: dict[int, int] = {}
+        order: list[int] = []
+        for t in sig:
+            for p in _pages_for(t):
+                if p not in score:
+                    order.append(p)
+                score[p] = score.get(p, 0) + 1
+        if not score:                             # repli ultime : page de tête
+            pg0 = slices[0][1] if slices else None
+            return pg0, _fenetre(texte, 0, terms), [pg0] if pg0 else []
+        first = sorted(order, key=lambda p: (-score[p], p))[0]
+        pages = sorted(score)
     off0 = next((o for o, pg, _ in slices if pg == first), 0)
     return first, _fenetre(texte, off0, terms), sorted(set(pages))
 

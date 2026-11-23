@@ -133,7 +133,10 @@ def main() -> int:
         gros = s.execute(text(
             "SELECT article_ref, page_debut, page_fin FROM plu_reglement_extrait "
             "WHERE insee=:i AND page_fin-page_debut >= 10 ORDER BY page_fin-page_debut DESC"), {"i": insee}).all()
-        peu = len(gros) > 0
+        # OUTIL-PLU-FIX-5 (point 1) — « peu structuré » = une PART IMPORTANTE du texte n'est servie qu'au
+        # chapitre (part article < 70 %). Une commune bien découpée à l'article (ex. Saint-Benoît, 47
+        # articles « Article U – N ») avec seulement quelques tables d'annexe n'est PLUS signalée.
+        peu = pct_art < 70
         gros_txt = "; ".join(f"{(gr[0] or '?')[:32]} p.{gr[1]}-{gr[2]}" for gr in gros[:12])
         lab, nul = s.execute(text(
             "SELECT count(*) FILTER (WHERE zone IS NOT NULL), count(*) FILTER (WHERE zone IS NULL) "
