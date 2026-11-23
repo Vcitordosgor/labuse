@@ -217,17 +217,60 @@ def _operations(db: Session, groupes: list[int], commune: str | None, depuis: st
         cite = next((radar_par_idu[i] for i in op["idus"] if i in radar_par_idu), None)
         op["radar_bien_id"] = cite
         op["radar_cite"] = cite is not None
-    # PROMO-1 (P4) — attache le PROGRAMME publié rattaché (par les coordonnées stables SIREN + commune +
-    # année). On ne sert que des FAITS + le LIEN (nom du programme, URL) — jamais un texte/visuel.
-    prog_par_op: dict[tuple, dict] = {}
+    # SCAN-FIX-1 (bloquant 6) — un nom de programme n'est attaché à une opération QUE si le rattachement
+    # est SANS AMBIGUÏTÉ. La clé (société, commune, année) NE suffit PAS : plusieurs programmes peuvent la
+    # partager (collision Zirondelles/Zoiseau Blanc) et plusieurs OPÉRATIONS aussi (double affectation). On
+    # n'attache donc que si la clé mappe EXACTEMENT 1 programme ET EXACTEMENT 1 opération. Sinon : aucun
+    # rattachement (le programme reste « publié sur leur site », listé par la frise). On garde l'id attaché
+    # pour que la frise ne reliste pas un programme déjà posé sur une opération.
+    from collections import defaultdict
+    progs_par_cle: dict[tuple, list[dict]] = defaultdict(list)
     for r in db.execute(text(
-        "SELECT nom, url, promoteur_nom, op_siren, op_commune, op_annee FROM programmes "
+        "SELECT id, nom, url, promoteur_nom, op_siren, op_commune, op_annee FROM programmes "
         "WHERE rattachement_mode IS NOT NULL")).mappings():
-        prog_par_op[(r["op_siren"], r["op_commune"], r["op_annee"])] = dict(r)
+        progs_par_cle[(r["op_siren"], r["op_commune"], r["op_annee"])].append(dict(r))
+    ops_par_cle: dict[tuple, list[dict]] = defaultdict(list)
     for op in operations:
-        prog = prog_par_op.get((op["siren"], op["commune"], op["annee"]))
-        op["programme"] = ({"nom": prog["nom"], "url": prog["url"], "promoteur_nom": prog["promoteur_nom"]}
-                           if prog else None)
+        ops_par_cle[(op["siren"], op["commune"], op["annee"])].append(op)
+        op["programme"] = None
+    ids_attaches: set = set()
+    for cle, progs in progs_par_cle.items():
+        ops_cle = ops_par_cle.get(cle, [])
+        if len(progs) == 1 and len(ops_cle) == 1:          # rattachement sans ambiguïté
+            prog = progs[0]
+            ops_cle[0]["programme"] = {"nom": prog["nom"], "url": prog["url"],
+                                       "promoteur_nom": prog["promoteur_nom"]}
+            ids_attaches.add(prog["id"])
+        # sinon : collision (≥2 programmes) ou double affectation (≥2 opérations) → on n'attache rien
+        # (le programme reste « publié sur leur site » ; la frise le reliste par son nom/URL non servi).
+    # SCAN-FIX-1 (point 7) — la CATÉGORIE AFFICHÉE vient d'une SOURCE QUI LA JUSTIFIE. Les groupes DGFiP
+    # 5/6 justifient « bailleur social » / « SEM ». Le groupe 0 (« personnes morales non remarquables »)
+    # ne justifie PAS « promoteur » : on ne l'affiche promoteur QUE si l'activité SIRENE du SIREN est la
+    # promotion immobilière (NAF 4110…) ; sinon « Société privée » (neutre), jamais « promoteur » par défaut.
+    sirens = {op["siren"] for op in operations if op["siren"]}
+    naf_par_siren: dict[str, str] = {}
+    if sirens and db.execute(text("SELECT to_regclass('sirene_etablissements') IS NOT NULL")).scalar():
+        for r in db.execute(text(
+            "SELECT siren, min(naf) AS naf FROM sirene_etablissements "
+            "WHERE siren = ANY(:s) AND naf IS NOT NULL GROUP BY siren"),
+                {"s": list(sirens)}).mappings():
+            naf_par_siren[r["siren"]] = r["naf"]
+    for op in operations:
+        if op["categorie"] == "bailleur":
+            op["categorie_label"], op["categorie_justifiee"] = "Bailleur social (Office HLM)", True
+            op["categorie_source"] = "DGFiP — groupe 5 (Office HLM)"
+        elif op["categorie"] == "sem":
+            op["categorie_label"], op["categorie_justifiee"] = "Société d'économie mixte (SEM)", True
+            op["categorie_source"] = "DGFiP — groupe 6 (SEM)"
+        else:   # groupe 0 — « promoteur » SEULEMENT si l'activité SIRENE le justifie
+            naf = (naf_par_siren.get(op["siren"]) or "")
+            if naf.startswith("4110"):
+                op["categorie_label"], op["categorie_justifiee"] = "Promoteur", True
+                op["categorie_source"] = f"SIRENE — NAF {naf} (promotion immobilière)"
+            else:
+                op["categorie_label"], op["categorie_justifiee"] = "Société privée", False
+                op["categorie_source"] = ("groupe DGFiP 0 (personnes morales non remarquables) — "
+                                          "activité ne justifiant pas « promoteur »")
     return operations
 
 
@@ -257,6 +300,7 @@ def veille_promoteurs(commune: str | None = Query(None), categorie: str | None =
     for o in ops:
         g = par_promoteur.setdefault(o["siren"] or "∅", {
             "siren": o["siren"], "denomination": o["denomination"], "categorie": o["categorie"],
+            "categorie_label": o.get("categorie_label"), "categorie_justifiee": o.get("categorie_justifiee"),
             "n_operations": 0, "n_permis": 0, "nb_logements": 0, "nb_logements_annules": 0, "ambigu": False})
         g["n_operations"] += 1
         g["n_permis"] += o["n_permis"]
@@ -311,10 +355,16 @@ def promoteur_frise(siren: str, db: Session = Depends(get_db)) -> dict:
     ops_nommees = [{"annee": o["annee"], "commune": o["commune"], "nb_logements": o["nb_logements"],
                     "libelle": o["libelle"], "programme": o.get("programme")}
                    for o in sorted(ops, key=lambda o: (o["annee"] or 0), reverse=True)]
+    # SCAN-FIX-1 (bloquant 6) — « publiés sur leur site » = TOUS les programmes du promoteur qui ne sont
+    # PAS effectivement attachés à une opération servie (donc aussi ceux dont le rattachement était ambigu
+    # — collision de clé ou double affectation — et qu'on a refusé d'attacher ci-dessus). On reconnaît les
+    # attachés par le (nom, url) réellement posé sur une opération.
+    attaches_noms = {(o["programme"]["nom"], o["programme"]["url"]) for o in ops if o.get("programme")}
     non_rattaches = [dict(r) for r in db.execute(text(
         "SELECT id, nom, commune, url, annee FROM programmes "
-        "WHERE (promoteur_siren = :s OR (:s IS NULL AND promoteur_nom = :n)) AND rattachement_mode IS NULL "
-        "ORDER BY commune NULLS LAST, nom"), {"s": siren, "n": denom}).mappings()]
+        "WHERE (promoteur_siren = :s OR (:s IS NULL AND promoteur_nom = :n)) "
+        "ORDER BY commune NULLS LAST, nom"), {"s": siren, "n": denom}).mappings()
+        if (r["nom"], r["url"]) not in attaches_noms]
     # RETOURS-13 R29 — LE CHIFFRE DIT CE QU'IL COMPTE (doute Vic « CBO a que 20 opérations
     # depuis 2013 ?? ») : les « opérations » ci-dessus = permis ≥ 1 logement sur les parcelles
     # que la société POSSÈDE ENCORE (un promoteur revend après livraison → les opérations

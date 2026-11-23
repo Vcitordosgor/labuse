@@ -205,6 +205,43 @@ labuse python -c "from labuse.ingestion import pm_droits as p; from labuse.db im
 # (adapter l'accès session au runner prod ; vérifier ensuite le garde-fou unicité bascule_gardes.)
 ```
 
+## LOT 2 — Qui construit (bloquants 2, 3, 4)
+
+Fichier : `src/labuse/api/veille_promoteurs.py` (+ `VeillePromoteurs.tsx`). Tests : `tests/test_veille_promoteurs.py` (5). Tranche permis CBO/SIDR (359) copiée dans scanfix via l'index GIN `idu_codes` (lecture légère) ; **totaux île et taux de désaccord mesurés par agrégats légers sur `labuse`** (lecture seule, sanctionnée).
+
+- **Deux listes séparées et nommées (bloquant 2)** — la frise sert `sur_son_foncier` (« Permis sur son foncier », propriétaire du terrain) ET `deposes_petitionnaire` (« Permis qu'elle a déposés », pétitionnaire identifié), avec la **part de permis dont le pétitionnaire est inconnu**. CBO : foncier 21 op / 63 permis / 200 logts, **pétitionnaire inconnu sur 81 %** ; déposés 19 permis / 143 logts. Titre « ce qu'ils construisent » **retiré** (→ « Permis sur son foncier »).
+- **Attribution déterministe + cas ambigus (bloquant 2)** — le permis va au SIREN qui détient le PLUS de parcelles (départage `groupe` puis `siren` croissants) ; `ambigu=true` si ex æquo. **Deux exécutions = même résultat** (prouvé par test). L'attribution est faite **avant** le filtre catégorie.
+- **Annulés hors « construit/en cours » ; PC/DP ; achèvement de groupe (bloquant 3)** — logements de permis annulés (`etat=4`) exclus du total et comptés à part ; PC et DP distingués (`n_permis_pc`/`n_permis_dp`) ; un groupe n'est « travaux achevés » que si **tous** ses permis non annulés le sont, sinon « N/M permis achevés — reste en cours ». Preuve île (`labuse`) : **1 705 logts annulés** et **116 DP** (= audit) ; « construit ou en cours » 19 353 → **17 648**.
+- **Définition = règle appliquée, étendue réelle, vraie distance (bloquant 4)** — distance **géodésique** (haversine) au lieu de deg→m ; `span_m` (distance max du groupe) et `span_jours` servis par opération ; la phrase de règle dit « de proche en proche » et que l'étendue réelle est affichée (ex. CBO op à span 467 m / 1 711 j — honnête).
+- **Partition + filtre neutre + plafond + cartes (bloquant 4, pt 7)** — catégories = partition (owner choisi avant filtre ; test `test_partition_…`) ; `par_promoteur` (cartes société) calculé sur **toutes** les opérations, pas sur les 200 servies ; plafond annoncé dans les **deux** modes.
+
+**Taux de désaccord pétitionnaire/propriétaire (île, `labuse`)** : 592/1 817 = **33 %** (audit 28,8 % ; recalculé sur le foncier 2026 + majorité déterministe) — confirme qu'une attribution par le foncier n'est pas « qui dépose », d'où les deux listes.
+
+```sql
+-- rejouable (labuse, lecture seule) — annulés & DP (permis PM 0/5/6, >=1 lgt, géoloc) : voir §LOT2 du dépôt
+-- désaccord : WITH perm(pétitionnaire 9 ch) + own(majorité) → count FILTER (pet<>owner)
+```
+
+## LOT 3 — Signaux et catégories (bloquant 5, point 7)
+
+Fichiers : `modules.py` (`_depots_par_siren`, `patrimoine`) + `ModulePanel.tsx` ; `veille_promoteurs.py` (catégorie). Tests : `test_patrimoine` (signal INPI retiré), `test_veille_promoteurs::test_categorie_justifiee_par_source`.
+
+- **« Aucun dirigeant au registre INPI » RETIRÉ** — reposait sur une absence locale (`pm_dirigeants` non peuplé) ; mis en défaut par le contre-audit (5/10). `inpi_sans_dirigeant` = toujours `False` ; bloc rouge supprimé de l'écran.
+- **« Sommeil probable » RETIRÉ** — remplacé par le **fait daté** « dernier exercice déposé : AAAA · publié le JJ/MM/AAAA » (champ `parution` ajouté) ; si aucun dépôt : « aucun dépôt de comptes publié à ce jour » (factuel, sans interprétation).
+- **BODACC daté + nature** — l'avis porte sa **date** (`date_annonce`) et sa **nature** : une procédure **clôturée** s'affiche en ton neutre (« clôturée le … — fait historique »), une procédure ouverte garde l'alerte. Plus de bandeau rouge sans date suggérant une procédure en cours.
+- **« Promoteur » plus donné au groupe fiscal 0 (point 7)** — la catégorie affichée vient d'une **source qui la justifie** : NAF SIRENE `4110x` (promotion immobilière) → « Promoteur » ; groupes DGFiP 5/6 → « Bailleur social »/« SEM » ; sinon « **Société privée** » (neutre). Vérifié à l'écran : **CBO (groupe 0, NAF non-4110) = « Société privée »**, pas « Promoteur ».
+- **Recharge BODACC si en retard (449090075)** — commande fournie : `labuse ingest-bodacc-depots` (upsert `bodacc_depots` depuis l'API BODACC pour tous les SIREN PM) ; à lancer quand la base est en retard. *(Non exécutée en scanfix : table de dépôts non tranchée ; la logique d'affichage factuel est en place.)*
+
+## LOT 4 — Programmes (bloquant 6)
+
+Fichier : `veille_promoteurs.py` (`_operations` attachement + frise `programmes_publies`). Test : `test_programmes_rattachement_sans_ambiguite`.
+- Un nom de programme n'est attaché à une opération **que si** la clé (société, commune, année) mappe **exactement 1 programme ET exactement 1 opération**. **Collision** (≥2 programmes même clé, ex. Zirondelles/Zoiseau Blanc) → aucun attaché. **Double affectation** (1 programme, clé → ≥2 opérations) → non attaché. Les non-attachés restent listés « **publiés sur leur site** » (sans opération). Prouvé par test (Kaisary attaché seul ; Zirondelles/Zoiseau Blanc/KaisaryDup en « publiés »).
+
+## LOT 5 — Valorisation (point 9)
+
+Fichier : `modules.py` (`patrimoine`). Test : `test_patrimoine` (`"valorisation_nu_eur" not in out`).
+- `valorisation_nu_eur` et `n_valorisables` **retirés** de la réponse servie (client ET Copilote — le Copilote appelle `patrimoine()`, donc la suppression côté payload suffit ; aucune autre référence en `src/`/`frontend/`). Le calcul (médianes de zone × surface, `ligne2_terrain_zone`) est **supprimé** (pas corrigé, comme demandé) — assiette non filtrée des bâties + médianes contaminées ; surface de confusion/latence supprimée.
+
 ## Point 10 (mineur) — erreurs relevées dans l'audit Claude (NOTÉES, non corrigées dans le fichier d'audit)
 Le contre-audit ASTRA les liste déjà ; je les consigne ici sans toucher `04-SCAN-PATRIMOINE.md` :
 1. **Code droit = colonne 17**, pas 21 (l'audit Claude ne mentionnait pas la colonne ; le LOT 0 de ce compte-rendu avait supposé 21 — corrigé sur l'entête réel 2026).
@@ -215,4 +252,18 @@ Le contre-audit ASTRA les liste déjà ; je les consigne ici sans toucher `04-SC
 
 ---
 
-*État : LOT 0 ✅ · LOT 1 ✅ (données + Possession par droit + recherche + endpoint fiche + preuves + captures ; reliquat = fil UI fiche). LOTS 2-5 non commencés (checkpoint demandé par la structure du mandat). Base partagée `labuse` NON modifiée — tout en `labuse_scanfix`.*
+## Captures (`~/Desktop/outil-scan-fix-1/`)
+- `01-cbo-possession-par-droit.png` — Possession CBO : propriété 1 904 / gestion 13 / autres 29, périmètre, situation 2026 (LOT 1).
+- `02-recherche-foncière-masqués.png` — recherche FONCIERE : 12 affichés / 34 masqués annoncés (LOT 1, pt 8).
+- `03-recherche-identifiant-fiscal-U.png` — U… « identifiant fiscal, pas un SIREN » (LOT 1, pt 8).
+- `04-sidr-possession-par-droit.png` — Possession SIDR par droit (LOT 1).
+- `05-cbo-construction-foncier-annules.png` — Construction CBO : « Permis sur son foncier », 3 annulés exclus, carte « Société privée » (LOTS 2-3).
+- `06-cbo-frise-deux-listes.png` — frise CBO : « sur son foncier » (81 % pétitionnaire inconnu) vs « déposés » (LOT 2).
+
+## Tests ajoutés / adaptés
+- Back : `test_pm_droits` (3), `test_veille_promoteurs` (5 : attribution déterministe, partition, catégorie NAF, programmes sans ambiguïté, frise 2 listes), `test_patrimoine` (recherche objet, INPI retiré, valorisation retirée), `test_front_chiffres2_familles::f03` (sommeil retiré → fait daté), `test_reparations1_lot2` (lecture sirene_etablissements déclarée au graphe).
+- Front : `ScanPatrimoine.test`, `omnibox.test`, `VeillePromoteurs.test` adaptés. vitest + tsc -b verts.
+
+---
+
+*État : LOT 0 ✅ · LOT 1 ✅ · fil fiche ✅ · LOT 2 ✅ · LOT 3 ✅ · LOT 4 ✅ · LOT 5 ✅. Base partagée `labuse` JAMAIS écrite (tout en `labuse_scanfix` ; totaux île par agrégats légers lecture seule). Bascule `recompute_principal` NON appliquée à la base commune/prod — commande fournie. Recharge BODACC dépôts : commande fournie (`labuse ingest-bodacc-depots`), non exécutée.*

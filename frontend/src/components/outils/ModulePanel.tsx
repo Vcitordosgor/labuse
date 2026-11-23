@@ -246,18 +246,22 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
           {/* RECETTE-OUTILS-2 (R19) — millésime MAJIC et « Dépôt de comptes » ne sont PLUS des lignes en
               tête (elles poussaient la liste des parcelles hors champ) : regroupées EN PIED de l'accordéon
               « Chiffres clés » (fermé par défaut), plus bas. */}
-          {/* signaux d'APPROCHE : BODACC (procédure) + INPI (société absente du registre = succession /
-              sommeil probable). Libellés FACTUELS — jamais « fantôme ». */}
-          {d['bodacc'] != null && (
-            <div className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">
-              ● BODACC — {(d['bodacc'] as Record<string, string>)['type_procedure']}
-            </div>
-          )}
-          {d['inpi_sans_dirigeant'] === true && (
-            <div data-m02-inpi className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] text-st-creuser">
-              ● Aucun dirigeant au registre INPI — succession ou société en sommeil probable (signal d'approche). À vérifier au registre.
-            </div>
-          )}
+          {/* SCAN-FIX-1 (bloquant 5) — FAIT DATÉ, jamais une interprétation sur une absence locale. L'avis
+              BODACC porte SA DATE et SA NATURE (ouverture vs clôture) : une procédure CLÔTURÉE ne se montre
+              plus comme un risque en cours (ton neutre), une procédure ouverte garde l'alerte. Le signal
+              « aucun dirigeant au registre INPI → succession/sommeil » est RETIRÉ (reposait sur une absence
+              dans la base locale, mis en défaut par le contre-audit). */}
+          {d['bodacc'] != null && (() => {
+            const b = d['bodacc'] as { type_procedure?: string; date_annonce?: string }
+            const cloturee = /clôtur|cloture|clôtur|fin de|radiation/i.test(b.type_procedure ?? '')
+            const dte = b.date_annonce ? fmtDateNum(b.date_annonce) : null
+            return (
+              <div data-m02-bodacc className={`rounded-lg border px-3 py-2 text-[11px] ${cloturee ? 'border-line-2 bg-surface-3 text-txt-mut' : 'border-st-ecartee/40 bg-st-ecartee/10 text-st-ecartee'}`}>
+                ● BODACC — {b.type_procedure ?? 'procédure'}{dte ? <> · <b>{cloturee ? 'clôturée' : 'publié'} le {dte}</b></> : null}
+                {cloturee && <span className="text-txt-dim"> (procédure close — fait historique)</span>}
+              </div>
+            )
+          })()}
           {/* RECETTE-OUTILS-2 (R19) — le nom du propriétaire n'apparaît qu'UNE fois : en fusion (Scan
               patrimoine), l'encart du haut le porte déjà → on NE le répète plus ici. Hors fusion (M02
               seul, dormant), on le garde. */}
@@ -331,9 +335,12 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               {d['depot_comptes'] != null && (
                 <p data-m02-depot>
                   Dépôt de comptes — {(() => {
-                    const dc = d['depot_comptes'] as { annee: number | null; depuis_ans: number | null; muet?: boolean }
-                    if (dc.muet) return `aucun dépôt depuis ${dc.depuis_ans} ans (société en sommeil probable)`
-                    return `dernier exercice déposé : ${dc.annee ?? '—'}`
+                    // SCAN-FIX-1 (bloquant 5) — FAIT DATÉ seulement : « dernier dépôt publié le… / dernier
+                    // exercice déposé : AAAA ». Plus de « société en sommeil probable » (silence ≠ sommeil).
+                    const dc = d['depot_comptes'] as { annee: number | null; depuis_ans: number | null; parution?: string | null }
+                    const pub = dc.parution ? fmtDateNum(dc.parution) : null
+                    if (dc.annee == null && !pub) return 'aucun dépôt de comptes publié à ce jour'
+                    return `dernier exercice déposé : ${dc.annee ?? '—'}${pub ? ` · publié le ${pub}` : ''}`
                   })()}
                 </p>
               )}

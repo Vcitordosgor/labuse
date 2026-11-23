@@ -294,7 +294,10 @@ def _depots_par_siren(db: Session, sirens: list[str]) -> dict[str, dict]:
         cloture, parution = r["derniere_cloture"], r["derniere_parution"]
         annee = cloture.year if cloture else (parution.year if parution else None)
         depuis = (annee_courante - parution.year) if parution else None
+        # SCAN-FIX-1 (bloquant 5) — on sert le FAIT DATÉ (dernier dépôt publié le…), plus l'interprétation
+        # « sommeil probable » (qui reposait sur un silence = une absence relative dans la base locale).
         out[r["siren"]] = {"annee": annee, "depuis_ans": depuis,
+                           "parution": parution.isoformat() if parution else None,
                            "muet": depuis is not None and depuis >= SEUIL_DEPOT_MUET_ANS}
     return out
 
@@ -340,7 +343,6 @@ def patrimoine(siren: str, fmt: str = "json",
     `fmt` est désormais un vrai paramètre (json|csv), plus un param fantôme ignoré."""
     from .app import _score_v2_run_id
     from ..assemblage import ADJ_BUFFER_M
-    from ..faisabilite.marche_commune import ligne2_terrain_zone
     # ROBUSTESSE — cette fonction est aussi appelée EN DIRECT (copilote `parcelles_par_entreprise`,
     # tests) où les défauts `Query()` ne sont pas résolus : on retombe sur les valeurs par défaut.
     limit = limit if isinstance(limit, int) else 200
@@ -423,9 +425,11 @@ def patrimoine(siren: str, fmt: str = "json",
     # ENTREPRISE (SIREN à 9 chiffres). Une ASL / un syndicat de copropriété porte un identifiant
     # non-entreprise (ex. « U23889204 », « W97400… ») : il n'a par nature AUCUN dirigeant INPI et
     # ne « tombe pas en sommeil ». Sans ce garde-fou, le scan d'une ASL affichait un faux signal.
-    _siren_entreprise = bool(re.fullmatch(r"\d{9}", str(siren or "")))
-    inpi_sans_dirigeant = _siren_entreprise and bool(rows) and bool(nom) and not db.execute(text(
-        "SELECT EXISTS (SELECT 1 FROM pm_dirigeants WHERE siren = :s)"), {"s": siren}).scalar()
+    # SCAN-FIX-1 (bloquant 5) — le signal « aucun dirigeant au registre INPI → succession / sommeil »
+    # est RETIRÉ : il reposait sur une ABSENCE dans la base locale (`pm_dirigeants` non peuplé pour ce
+    # SIREN), pas sur un fait. Le contre-audit l'a mis en défaut (5/10 avaient un dirigeant public). On ne
+    # sert plus d'interprétation ; les faits datés (dépôt de comptes, avis BODACC daté) les remplacent.
+    inpi_sans_dirigeant = False
     # #2 l'agrégat dit l'ACTIONNABLE. « Écartées » de base = étage 0 cascade (exclues/faux positif).
     # CONNEXIONS-2 Lot 4 (KO-10) : si le COMPTE courant a explicitement ÉCARTÉ des parcelles dans un
     # de SES projets (projet_parcelles.statut='ecartee') ou archivé une piste (pipeline_entries), on
@@ -509,26 +513,10 @@ def patrimoine(siren: str, fmt: str = "json",
                            "rattachees": ratt[fam], "surface_rattachee_m2": round(surf[fam])}
                      for fam in ("propriete", "gestion", "autres")}
     n_constructible_u_au = sum(1 for r in rows if r["zone_fam"] in ("U", "AU"))
-    # #3 VALORISATION indicative du foncier nu (zones U/AU) au RÉFÉRENTIEL UNIQUE prix terrain de zone
-    # (ligne2_terrain_zone, une fois par commune). Indicative — seules les zones U/AU ont un prix marché.
-    prix_zone: dict[tuple[str, str], float] = {}
-    for c in {r["commune"] for r in rows if r["commune"]}:
-        try:
-            cellules = (ligne2_terrain_zone(db, c).get("valeurs") or {}).get("par_zone") or {}
-            for fam, cell in cellules.items():
-                if cell.get("calculable"):
-                    prix_zone[(c, fam)] = cell["median_eur_m2"]
-        except Exception:  # noqa: BLE001 — la valorisation est un bonus, jamais un 500
-            pass
-    val_nu = 0.0
-    n_valorisables = 0
-    for r in rows:
-        px = prix_zone.get((r["commune"], r["zone_fam"])) if r["zone_fam"] in ("U", "AU") else None
-        # CONTENANCE-1 (Lot C) : valeur nue = surface de TERRAIN (contenance si présente) × prix/m².
-        _surf_t = _surface.surface_terrain(r["surface_m2"], r["contenance_m2"]).valeur
-        if px and _surf_t:
-            val_nu += _surf_t * px
-            n_valorisables += 1
+    # SCAN-FIX-1 (point 9) — la VALORISATION du foncier nu est RETIRÉE de la réponse servie (client ET
+    # Copilote), pas corrigée : son assiette (bâties non filtrées) et son prix (médianes contaminées par
+    # des actes mixtes) n'étaient pas sûrs, et le champ n'avait de toute façon aucun consommateur UI. On ne
+    # calcule plus rien (ni `val_nu`, ni `ligne2_terrain_zone`) : surface de confusion/latence supprimée.
     # #5 ASSIETTE CONTIGUË : parcelles du portefeuille d'un seul tenant (contact cadastral ADJ_BUFFER_M)
     # → « Analyser en assiette ». Fréquent (79 % des portefeuilles multi-parcelles). Plus gros bloc ≥ 2.
     assiette_contigue: list[str] = []
@@ -632,8 +620,6 @@ def patrimoine(siren: str, fmt: str = "json",
         "hors_ecartees_par_vous": bool(ecartees_par_vous),
         "n_ecartees_par_vous": len(ecartees_par_vous),
         "sdp_residuelle_m2": sdp_residuelle,
-        "valorisation_nu_eur": round(val_nu) if n_valorisables else None,
-        "n_valorisables": n_valorisables,
         "bodacc": dict(bodacc) if bodacc else None,
         "depot_comptes": depot,          # DONNEES-1 lot 2.3 — {annee, depuis_ans} ou None (aucun dépôt)
         "inpi_sans_dirigeant": inpi_sans_dirigeant,

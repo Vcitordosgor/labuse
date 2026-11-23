@@ -1075,9 +1075,12 @@ export interface OperationPromoteur {
   // SCAN-FIX-1 (bloquants 2-4)
   nb_logements_annules: number; n_permis_pc: number; n_permis_dp: number; n_permis_annules: number
   n_sans_petitionnaire: number; span_m: number; span_jours: number; ambigu: boolean; annule: boolean
+  // SCAN-FIX-1 (point 7) — catégorie justifiée par une source (SIRENE NAF / groupe DGFiP), sinon neutre.
+  categorie_label?: string | null; categorie_justifiee?: boolean | null; categorie_source?: string | null
 }
 export interface CartePromoteur {
   siren: string | null; denomination: string | null; categorie: string
+  categorie_label?: string | null; categorie_justifiee?: boolean | null
   n_operations: number; n_permis: number; nb_logements: number; nb_logements_annules: number; ambigu: boolean
 }
 export interface VeillePromoteurs {

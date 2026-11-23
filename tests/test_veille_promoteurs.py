@@ -95,6 +95,59 @@ def test_partition_le_filtre_ne_change_pas_l_attribution(db_session):
     assert bail["n_total"] == 0   # aucun bailleur → partition, pas de recouvrement
 
 
+def test_categorie_justifiee_par_source(db_session):
+    """SCAN-FIX-1 (point 7) — « Promoteur » n'est PLUS donné au groupe fiscal 0 par défaut : il vient de
+    l'activité SIRENE (NAF 4110 = promotion immobilière). Sinon « Société privée » (neutre). Groupes 5/6
+    restent bailleur/SEM (justifiés par le groupe DGFiP)."""
+    from labuse.api.veille_promoteurs import veille_promoteurs
+    s = db_session
+    _seed(s)
+    # A (groupe 0) a une activité SIRENE de promotion immobilière → « Promoteur » justifié.
+    s.execute(text("INSERT INTO sirene_etablissements (siret, siren, naf, actif, diffusible) "
+                   "VALUES (:si,:s,'4110D',true,true)"), {"si": A + "00011", "s": A})
+    # B (groupe 0) : aucune activité de promotion (NAF location) → « Société privée », pas « Promoteur ».
+    s.execute(text("INSERT INTO sirene_etablissements (siret, siren, naf, actif, diffusible) "
+                   "VALUES (:si,:s,'6820A',true,true)"), {"si": B + "00022", "s": B})
+    # B doit posséder une opération en propre pour tester son libellé (il perd le permis ambigu).
+    _permit(s, "PB", ["97499000VP0004"], PT_FAR, 6, commune="Bville")
+    r = veille_promoteurs(commune=None, categorie=None, depuis=None, siren=None, limit=200, db=s)
+    lab = {o["siren"]: (o["categorie_label"], o["categorie_justifiee"]) for o in r["operations"]}
+    assert lab[A] == ("Promoteur", True)
+    assert lab[B] == ("Société privée", False)
+
+
+def _prog(db, nom, siren, commune, annee, *, mode="auto"):
+    db.execute(text(
+        "INSERT INTO programmes (promoteur_nom, nom, promoteur_siren, commune, url, url_portfolio, "
+        " source, annee, date_releve, op_siren, op_commune, op_annee, rattachement_mode) "
+        "VALUES (:pn,:nom,:s,:c,:u,'http://x','site',:a, now(), :s,:c,:a,:m)"),
+        {"pn": f"SCI {siren}", "nom": nom, "s": siren, "c": commune, "u": f"http://x/{nom}", "a": annee, "m": mode})
+
+
+def test_programmes_rattachement_sans_ambiguite(db_session):
+    """SCAN-FIX-1 (bloquant 6) — un programme n'est attaché à une opération QUE si c'est sans ambiguïté.
+    COLLISION (2 programmes même clé société/commune/année) → aucun attaché. DOUBLE AFFECTATION (1
+    programme, mais la clé matche 2 opérations) → non attaché. Clé → 1 programme + 1 opération → attaché.
+    Les non-attachés restent « publiés sur leur site »."""
+    from labuse.api.veille_promoteurs import promoteur_frise
+    s = db_session
+    _seed(s)
+    # DOUBLE AFFECTATION : 2e opération A en 2024 sur Patville (loin de P1) → clé (A,Patville,2024) = 2 ops.
+    _permit(s, "P2FAR", ["97499000VP0001"], PT_FAR, 8, commune="Patville", date="2024-09-01")
+    _prog(s, "KaisaryDup", A, "Patville", 2024)              # 1 prog mais 2 ops → NON attaché
+    # COLLISION : 2 programmes même clé (A, DPville, 2024) → aucun attaché.
+    _prog(s, "Zirondelles", A, "DPville", 2024)
+    _prog(s, "Zoiseau Blanc", A, "DPville", 2024)
+    # CLEAN : 1 programme, 1 opération (A, Ambiville, 2024) → attaché.
+    _prog(s, "Kaisary", A, "Ambiville", 2024)
+    fr = promoteur_frise(A, db=s)
+    attaches = {o["programme"]["nom"] for o in fr["operations"] if o.get("programme")}
+    assert attaches == {"Kaisary"}                           # seul le rattachement sans ambiguïté tient
+    publies = {p["nom"] for p in fr["programmes_publies"]}
+    assert {"Zirondelles", "Zoiseau Blanc", "KaisaryDup"} <= publies   # ambigus → « publiés sur leur site »
+    assert "Kaisary" not in publies                          # l'attaché n'est pas relisté
+
+
 def test_frise_deux_listes_et_part_inconnue(db_session):
     from labuse.api.veille_promoteurs import promoteur_frise
     s = db_session

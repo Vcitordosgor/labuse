@@ -207,6 +207,8 @@ LECTURES: tuple[Lecture, ...] = (
       "Sonde d'évaluation : lit détections/jeu/validation pour mesurer la précision sur échantillon — instrumentation interne, aucun robinet."),
     L("sirene_etablissements", "proprietaire_facettes.py", None, None,
       "SOURCES-3 lot 0.1 — facette de filtre APE du Scan patrimoine : NAF SIRENE (sirene_etablissements.naf, DISTINCT+comptes) rendu au format pointé « 68.20B ». Remplace le cache DINUM owner_enrichment (débranché de l'affichage, réservé au Score V). La liste sert au filtrage, pas au registre."),
+    L("sirene_etablissements", "api/veille_promoteurs.py", None, None,
+      "SCAN-FIX-1 (point 7) — NAF SIRENE du propriétaire foncier pour JUSTIFIER la catégorie affichée : « Promoteur » seulement si NAF 4110… (promotion immobilière), jamais par défaut sur le groupe fiscal 0. Libellé d'affichage, pas un chiffre du registre."),
     L("p_model_bati_cosia", "faisabilite/bati_revele.py", "tier_opportunite", "fiche_parcelle_score",
       "Lit l'emprise CoSIA par parcelle pour peupler parcel_bati_revele → tier déclassé `declasse_bati_revele` avec motif daté SERVI dans le classement."),
     L("parcel_amenites", "api/fiche_ask.py", "equipements_proximite_liste", "fiche_parcelle_autour",
