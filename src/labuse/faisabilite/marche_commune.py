@@ -111,35 +111,42 @@ def ligne2_terrain_zone(db: Session, commune: str) -> dict:
     # posé PAR PARCELLE (`surface_reelle_bati = 0`) et la zone AVANT de reconstituer la vente — un acte
     # « maison + jardin nu » survivait comme terrain nu et recevait le prix de l'acte ENTIER rapporté à
     # la seule surface nue (cas 2021-1672641 ; Saint-Denis U 482 €/m² dont 679 actes mixtes → 288 sans
-    # eux). Désormais : `allparc` lit TOUTES les parcelles de l'acte, `tot` ne garde que les actes dont
-    # le bâti total est nul (`sum(bati_p) = 0`) et RECONSTITUE la surface terrain entière de l'acte (sur
-    # toutes ses parcelles, toutes zones). Natures Vente + « Vente terrain à bâtir » (M101 B2).
+    # eux). Désormais : on ne garde que les actes dont le bâti total est nul (`sum(bati_p) = 0`) et on
+    # RECONSTITUE la surface terrain entière de l'acte (toutes ses parcelles, toutes zones). Natures
+    # Vente + « Vente terrain à bâtir » (M101 B2).
+    #
+    # A-2 (relecture) — SCAN UNIQUE : un `LEFT JOIN parcel_zone_plu` porte l'appartenance de zone
+    # (`bool_or(zone_fam = 'U'/'AU')`) dans LE MÊME passage que la somme bâti/terrain, au lieu des deux
+    # scans `allparc` + `muz` (mesuré Saint-Paul : 637 → 66 ms, résultat identique à l'euro/à l'unité).
     rows = db.execute(text("""
-        WITH allparc AS (
+        WITH base AS (
           SELECT m.id_mutation, m.id_parcelle, max(m.valeur_fonciere) AS val, max(m.millesime) AS mill,
                  max(COALESCE(m.surface_terrain,0)) AS terr_parc,
-                 max(COALESCE(m.surface_reelle_bati,0)) AS bati_parc
+                 max(COALESCE(m.surface_reelle_bati,0)) AS bati_parc,
+                 bool_or(z.zone_fam = 'U')  AS z_u,
+                 bool_or(z.zone_fam = 'AU') AS z_au
           FROM dvf_mutations_parcelle m
           JOIN parcels p ON p.idu = m.id_parcelle AND p.commune = :c
+          LEFT JOIN parcel_zone_plu z ON z.idu = m.id_parcelle AND z.zone_fam IN ('U','AU')
           WHERE m.nature_mutation IN ('Vente','Vente terrain à bâtir')
           GROUP BY m.id_mutation, m.id_parcelle),
-        tot AS (SELECT id_mutation, sum(terr_parc) AS terr_tot, max(val) AS val, max(mill) AS mill
-                FROM allparc GROUP BY id_mutation
-                HAVING sum(bati_parc) = 0 AND sum(terr_parc) > 0),
-        muz AS (SELECT DISTINCT m.id_mutation, z.zone_fam
-                FROM dvf_mutations_parcelle m
-                JOIN parcels p ON p.idu = m.id_parcelle AND p.commune = :c
-                JOIN parcel_zone_plu z ON z.idu = m.id_parcelle
-                WHERE z.zone_fam IN ('U','AU')
-                  AND m.nature_mutation IN ('Vente','Vente terrain à bâtir'))
-        SELECT muz.zone_fam,
-               percentile_cont(0.5) WITHIN GROUP (ORDER BY tot.val / NULLIF(tot.terr_tot,0)) AS med,
-               count(*) AS n, max(tot.mill) AS mill
-        FROM muz JOIN tot USING (id_mutation)
-        WHERE tot.terr_tot > 0
-        GROUP BY muz.zone_fam"""), {"c": commune}).mappings().all()
+        tot AS (SELECT id_mutation, sum(terr_parc) AS terr_tot, max(val) AS val, max(mill) AS mill,
+                       bool_or(z_u) AS has_u, bool_or(z_au) AS has_au
+                FROM base GROUP BY id_mutation
+                HAVING sum(bati_parc) = 0 AND sum(terr_parc) > 0)
+        SELECT 'U' AS zone_fam,
+               percentile_cont(0.5) WITHIN GROUP (ORDER BY val / NULLIF(terr_tot,0)) AS med,
+               count(*) AS n, max(mill) AS mill
+        FROM tot WHERE has_u AND terr_tot > 0
+        UNION ALL
+        SELECT 'AU',
+               percentile_cont(0.5) WITHIN GROUP (ORDER BY val / NULLIF(terr_tot,0)),
+               count(*), max(mill)
+        FROM tot WHERE has_au AND terr_tot > 0"""), {"c": commune}).mappings().all()
     par_zone = {r["zone_fam"]: r for r in rows}
-    mill = max((r["mill"] for r in rows), default=None)
+    # A-2 — le scan unique renvoie TOUJOURS les deux lignes (U, AU) ; une zone vide porte `mill = NULL`.
+    # On écarte les None avant `max` (comparaison None/str interdite en py3).
+    mill = max((r["mill"] for r in rows if r["mill"] is not None), default=None)
     cellules = {}
     for zone in ("U", "AU"):
         r = par_zone.get(zone)

@@ -2844,13 +2844,19 @@ def _sru_signal(sru: dict | None) -> dict | None:
     import re as _re
     annees = _re.findall(r"(?:19|20)\d{2}", str(sru.get("millesime") or ""))
     an = f" · SRU {annees[-1]}" if annees else ""
+    # Le STATUT officiel fait foi (M101 B2 / bloquant 2). M3 (relecture) — un statut INATTENDU (nouvelle
+    # valeur de millésime, NULL, faute de frappe) ne doit JAMAIS disparaître en silence NI devenir
+    # « déficitaire » par défaut : on l'affiche « statut inconnu » pour qu'il soit RELU, jamais interprété.
     if statut == "carencee":
         return {"code": "sru", "ton": "rouge",
                 "libelle": f"SRU carencée ({taux:.1f} % / {obj:.0f} %){an}".replace(".", ",")}
-    if statut == "deficitaire" and taux < obj:
+    if statut == "deficitaire":
         return {"code": "sru", "ton": "rouge",
                 "libelle": f"SRU déficitaire ({taux:.1f} % / {obj:.0f} %){an}".replace(".", ",")}
-    return None   # exemptée / conforme → aucune alerte (statut daté porté par la carte SRU)
+    if statut in ("exemptee", "conforme"):
+        return None   # statuts BÉNINS connus → aucune alerte (statut daté porté par la carte SRU)
+    return {"code": "sru", "ton": "orange",   # statut HORS référentiel → dit, jamais « déficitaire »
+            "libelle": f"SRU : statut inconnu « {statut or '—'} » ({taux:.1f} % / {obj:.0f} %){an}".replace(".", ",")}
 
 
 def _signaux_commune(db: Session, commune: str, insee: str | None,

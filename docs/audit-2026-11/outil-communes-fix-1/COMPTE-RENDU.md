@@ -89,7 +89,8 @@ unifier dans le même point de calcul au LOT 1.
 | **Fiche parcelle §Marché** | `marche_service.comparateur_terrain` (repère secteur) | P4 | **OUI** |
 | **Fiche parcelle §Marché — comparaison Bilan** | `faisabilite/bilan.py:1144` `_prix_terrain_local` → cache `dvf_secteur_medianes` | cache sain | **NON** |
 | **Estimer un bien** | `comparateur_terrain` (P4) + banc `banc_estimer` (P6) | P4/P6 | **OUI** |
-| **Étude de zone / modules** | `api/modules.py:307,428` `ligne2_terrain_zone` ; `modules.py:2839` `prix_terrain_nu_zone`→P2 | P2 | **OUI** |
+| **Étude de zone / modules (valorisation zone)** | `api/modules.py:307,428` `ligne2_terrain_zone` ; `modules.py:2839` `prix_terrain_nu_zone`→P2 | P2 | **OUI** |
+| **Étude de zone (« prix par type »)** | `zone.py:663` `prix_par_type_zone` — calcul INDÉPENDANT (polygone dessiné, `dvf_mutations`, 36 mois) | P8 (ajouté A-1) | **OUI (A-1)** — définition alignée sur le référentiel (acte sans bâti, Vente+VTB, borne [50,4000]) ; maille = polygone dessiné (documentée) |
 | **Classement — charge foncière** | `api/scoreur.py:205` `prix_terrain_nu_zone`→P2 (valorisation affichée) ; la charge elle-même = `compute_bilan` (bilan à rebours) | P2 (affiché à côté) | charge = **NON** ; repère terrain-zone affiché = **OUI** |
 | **Classement — Score LABUSE / composite** | `registre/moteurs/commune.py:18-25` INDICATEURS : stock/vélocité/permis/SRU/ZAN/**prix_neuf VEFA** | n'utilise PAS le terrain nu | **NON** |
 | **Classement — Signal (`market_signal`)** | `faisabilite/marche_commune.py:349` : liquidité DVF bâti + offre Sitadel | n'utilise PAS le terrain nu | **NON** |
@@ -391,18 +392,24 @@ différentes) : écart INDICATIF, pas une marge de négociation*. (Changement ad
 
 ## Vérification 10 — relecture sur l'app ✅
 
-API `:7520` + front `:10320` (ports du mandat) lancés ; relu en direct puis **arrêtés avant de rendre la
+API `:7520` + front `:10320` (ports du mandat) lancés ; relu **à l'écran** sur **Saint-Denis, Cilaos et
+Saint-Philippe** (chaque libellé corrigé du tableau et de la fiche), puis **arrêtés avant de rendre la
 main**. Captures dans `~/Desktop/outil-communes-fix-1/` :
 
 - `01-tableau-24-terrain-nu-corrige.png` — terrain nu corrigé sur les 24 communes (St-Denis 288, St-Paul
-  271, Cilaos 88…) + effectifs/raison du tiret au survol des cellules (LOT 5).
+  271, Cilaos 88…) + effectifs/raison du tiret au survol des cellules (LOT 5 : « n = 880 … zone U »,
+  « — : moins de 8 ventes VEFA (n = 5) », « — : moins de 10 ventes de terrain nu »).
 - `02-fiche-cilaos-sru-exemptee-zan-scenario.png` — Cilaos (exemptée) : **aucun** signal « SRU
-  déficitaire » ; signal ZAN « scénario −50 % : solde simulé déjà dépassé (Cerema conso 2021-2024) » ;
-  SRU affiché « 2,9 / 25 % ».
+  déficitaire » ; ZAN « scénario −50 % : solde simulé déjà dépassé (Cerema conso 2021-2024) » ; SRU « 2,9 / 25 % ».
+- `03-fiche-saint-denis-prix-vefa-declaree.png` — Saint-Denis (conforme) : « Prix ancien 2 493 · **VEFA
+  déclarée** 4 886 €/m² », **tendance +1,8 %** (alignée), **38 295 parcelles** + **PPR 72,7 %** (parc
+  vivant cohérent), ZAN scénario, **aucun** signal SRU (conforme).
+- `04-fiche-saint-philippe-rnu-exemptee.png` — Saint-Philippe (exemptée, RNU) : **aucun** signal « SRU
+  déficitaire » ; bandeau RNU ; « VEFA déclarée — » ; ZAN scénario.
 
-Cas chiffrés rejoués en direct (endpoints `:7520`) : Cilaos & Saint-Philippe sans signal SRU ; Saint-Paul
-« SRU déficitaire (18,3 % / 25 %) · SRU 2025 » ; ZAN daté partout ; terrain nu tableau 288/271/301/203/88 ;
-VEFA + neuf inféré avec effectifs ; porte « Changements de propriétaires (personnes morales) ».
+Les trois communes exigées par la relecture sont relues à l'écran. (Note env. : le serveur API local est
+tué par le bac à sable après ~1-2 min ; chaque fiche a été capturée dans sa fenêtre de vie, le reste des
+chiffres étant confirmé par appels directs aux endpoints `:7520`.)
 
 ---
 
@@ -423,6 +430,43 @@ en isolement**, flottement dû aux autres sessions qui partagent la base locale 
 seul vrai accroc introduit — un garde de structure `test_chirurgical_fix_j` exigeant la syntaxe
 `OVER (PARTITION BY …)` dans `_median_terrain_commune` — a été corrigé en conservant cette syntaxe (dédup
 par couple) tout en ajoutant la qualification acte-entier.
+
+## Reprises après relecture indépendante (RELECTURE-COMMUNES-1)
+
+La relecture valide les 3 bloquants et la liste fermée (reproduits à la valeur près). Reprises :
+
+### A-1 — `zone.py:prix_par_type_zone` rebranché sur le calcul unique ✅
+Second lecteur du terrain nu (Étude de zone, « prix par type »), **absent de l'inventaire initial**,
+sur un calcul indépendant. Aligné sur la DÉFINITION du référentiel : natures **Vente + VTB** (fini
+`ILIKE 'vente%'` qui laissait entrer la VEFA), **acte sans bâti** (`surface_reelle_bati = 0`, plus
+`< 20` — sur `dvf_mutations` à la maille mutation, c'est l'équivalent exact du `sum(bati)=0`), et
+**borne [50 ; 4 000] €/m²** (jusque-là ABSENTE). La **maille** reste propre à l'Étude de zone (polygone
+dessiné, fenêtre 36 mois cohérente avec maison/appartement) — **désormais documentée** dans l'inventaire
+ci-dessus. Inventaire complété (ligne P8). *Note base locale : `dvf_mutations.geom` n'est pas peuplé
+ici (0/31 171), donc ce chemin rend n=0 localement — vérifié au niveau code/définition, chiffrable en
+prod où la géométrie est ingérée.*
+
+### A-2 — `ligne2_terrain_zone` : vitesse restaurée, résultat identique ✅
+Le double scan (`allparc` + `muz`) est remplacé par **un scan unique** avec `LEFT JOIN parcel_zone_plu`
+portant l'appartenance de zone (`bool_or(zone_fam='U'/'AU')`) dans le même passage. **Mesuré Saint-Paul :
+637 → 66 ms** (≈ 10×), **résultat identique à l'euro/à l'unité** (St-Denis U 288/612, St-Paul 271/880,
+Cilaos 88/92 — inchangés).
+
+### M3 — SRU : statut inattendu → « statut inconnu », jamais « déficitaire » ✅
+`_sru_signal` suit le statut officiel ; un statut HORS référentiel (nouvelle valeur de millésime, NULL,
+faute de frappe) ne disparaît plus en silence et n'est jamais interprété « déficitaire » : il affiche
+**« SRU : statut inconnu « … » »** (ton orange) pour être relu. Couvert par deux tests ajoutés
+(`test_sru_signal.py`). `deficitaire` fait foi même si `taux ≥ objectif` (plus de signal dû perdu).
+
+### Mineurs consignés (limites connues, chiffrées)
+- **M1** — fuite multi-communes : **7 actes** (sur 40 203) retenus « terrain nu » dans une commune alors
+  que leur bâti réel est dans une AUTRE commune (`JOIN parcels p.commune = :c`). Négligeable sur les
+  médianes ; non corrigé (coût disproportionné). `marche_commune.py`.
+- **M2** — surface d'acte multi-zones : `terr_tot` inclut les parcelles hors U/AU (dilution par de
+  l'hectare agricole) — **9 actes sur 612 à Saint-Denis (1,5 %)**, impact médiane négligeable. `marche_commune.py`.
+- **M4** — dédup VEFA par valeur de surface : deux lots de surfaces proches (45/46 m²) comptés
+  séparément (ambiguïté de la donnée source DVF, pas du correctif) — effet **≤ 1,4 %** sur la médiane.
+  `ingestion/dvf_marche.py`.
 
 ## Comment rejouer
 

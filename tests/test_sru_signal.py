@@ -45,3 +45,19 @@ def test_donnee_absente_sans_signal():
     assert _sru_signal(None) is None
     assert _sru_signal({"statut": "deficitaire", "taux_lls": None, "objectif_pct": 25}) is None
     assert _sru_signal({"statut": "deficitaire", "taux_lls": 10, "objectif_pct": None}) is None
+
+
+def test_statut_inattendu_donne_statut_inconnu_jamais_deficitaire():
+    # M3 (relecture) — un statut HORS référentiel ne disparaît pas en silence et n'est JAMAIS « déficitaire ».
+    for mauvais in ("soumise", "a_rattraper", "", "  ", "DEFICITAIRE_V2"):
+        s = _sru_signal(_sru(mauvais, 10.0, 25))
+        assert s is not None, f"statut {mauvais!r} : signal perdu en silence"
+        assert "inconnu" in s["libelle"]
+        assert "déficitaire" not in s["libelle"] and "carencée" not in s["libelle"]
+        assert s["ton"] == "orange"
+
+
+def test_deficitaire_meme_si_taux_superieur_objectif():
+    # Le statut fait foi : une donnée « deficitaire » odd (taux ≥ objectif) reste signalée, jamais perdue.
+    s = _sru_signal(_sru("deficitaire", 30.0, 25))
+    assert s and "déficitaire" in s["libelle"]
