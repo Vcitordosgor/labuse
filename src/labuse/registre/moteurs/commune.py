@@ -321,12 +321,15 @@ def permis_point_mort(db, commune: str | None, months: int, dmax) -> int:
     from ... import permis_classe
     if not permis_classe.bati_table_existe(db):   # sans la couche mesurée : aucun dormant (jamais un 500)
         return 0
+    # OUTIL-PERMIS-FIX-3 (Point 2) — l'affinage ne peut que RESTREINDRE les 854 : seuil d'âge clampé à
+    # ≥ 36 mois (un « Affiner → 24 m+ » ne doit jamais AJOUTER de dormants).
+    m_dormant = max(int(months), permis_classe.DORMANT_MOIS)
     pred = permis_classe._dormant_sql("s.", ":dmax").replace(
         f"interval '{permis_classe.DORMANT_MOIS} months'", "(:m || ' months')::interval")
     return int(db.execute(text(
         f"SELECT count(*) FROM sitadel_permits s"
         f" WHERE (CAST(:c AS text) IS NULL OR s.commune = :c) AND {pred}"),
-        {"c": commune, "m": months, "dmax": dmax}).scalar() or 0)
+        {"c": commune, "m": m_dormant, "dmax": dmax}).scalar() or 0)
 
 
 # ── piscines (extraction de api/modules.py:prospection_piscines) ────────────────────────────────

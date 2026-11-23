@@ -118,3 +118,47 @@ def test_fix2_defautD_F_libelles():
     assert "Permis autorisés, 12 mois" in aa and "Permis déposés, 12 mois" not in aa
     tb = (root / "src/labuse/registre/tables.py").read_text(encoding="utf-8")
     assert 'millesime="2026-07"' not in tb
+
+
+# ─────────────────── OUTIL-PERMIS-FIX-3 (relecteur externe sur 2fc4636f9) ───────────────────
+
+def test_fix3_point1_rayon_dossier_present():
+    """Point 1 — le compte `dynamique` du Dossier (nearby_permits) GARDE le RAYON (ST_DWithin) ET
+    l'exclusion des dates nulles. Garde NON-DB (le vrai test spatial est db-marqué, hors hook — c'est
+    justement pourquoi la régression du mandat 1 n'a pas été vue : aucun test non-db ne couvrait le rayon)."""
+    from pathlib import Path
+    src = (Path(__file__).resolve().parents[1] / "src/labuse/ingestion/permits.py").read_text(encoding="utf-8")
+    # la sous-requête de dynamique (fenêtre now()-mois) doit porter le rayon ET l'exclusion des dates nulles
+    import re
+    dyn = src[src.index("Dynamique de secteur"):]
+    dyn = dyn[:dyn.index("niveau =")]
+    assert "ST_DWithin" in dyn, "le RAYON a disparu du compte de dynamique (régression Dossier)"
+    assert ":r" in dyn and "s.date IS NOT NULL" in dyn
+
+
+def test_fix3_point2_promesses_lit_fonction_unique_et_clampe():
+    """Point 2 — la liste /promesses lit la DÉFINITION UNIQUE et l'affinage ne peut que RESTREINDRE les
+    854 (seuil d'âge clampé ≥ 36 mois), côté liste ET compteur ; le front n'offre plus « 24 »."""
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    mods = (root / "src/labuse/api/modules.py").read_text(encoding="utf-8")
+    assert "permis_classe._dormant_sql" in mods          # la liste lit la fonction unique
+    assert "max(int(months), permis_classe.DORMANT_MOIS)" in mods   # clamp côté liste
+    cm = (root / "src/labuse/registre/moteurs/commune.py").read_text(encoding="utf-8")
+    assert "max(int(months), permis_classe.DORMANT_MOIS)" in cm     # clamp côté compteur (point_mort)
+    mp = (root / "frontend/src/components/outils/ModulePanel.tsx").read_text(encoding="utf-8")
+    assert "MONTHS_PM = [36, 48, 60, 72]" in mp           # plus de « 24 » (< plancher)
+
+
+def test_fix3_point3_delais_vivants_et_fiche_coherente():
+    """Point 3 — la couche des délais est MAINTENUE PAR TRIGGER (dérivée de sitadel_permits) et la fiche
+    n'affiche un délai que s'il est COHÉRENT avec le dépôt ET l'autorisation montrés (source unique)."""
+    from labuse.ingestion import permit_delais_m10 as m10
+    assert hasattr(m10, "ensure_delais_vivants") and "m10_permit_delais_sync" in m10._M10_TRIGGER_FN
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    mods = (root / "src/labuse/api/modules.py").read_text(encoding="utf-8")
+    assert "delai_coherent" in mods                       # garde de cohérence dans la fiche
+    assert "s.date_depot::date::text AS date_depot" in mods   # dépôt depuis Sitadel (source unique)
+    sdes = (root / "src/labuse/ingestion/permits_sdes.py").read_text(encoding="utf-8")
+    assert "ensure_delais_vivants" in sdes                # la ré-ingestion rafraîchit la couche

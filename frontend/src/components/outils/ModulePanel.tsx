@@ -638,7 +638,9 @@ export function M03() {
   useEffect(() => { const s = moduleKey === 'promesses' ? 'mort' : 'cours'; setSeg(s); setMonths(s === 'mort' ? 36 : 240) }, [moduleKey])
 
   const MONTHS_RADAR = [12, 24, 48, 72, 240]   // période d'AFFINAGE (240 = toute la profondeur Sitadel)
-  const MONTHS_PM = [24, 36, 48, 60]   // dormant : 36 = « plus de 3 ans » (défaut à l'ouverture)
+  // OUTIL-PERMIS-FIX-3 (Point 2) — dormant : 36 = « plus de 3 ans » (plancher ET défaut). Plus de « 24 » :
+  // l'affinage ne peut que RESTREINDRE les 854 (le serveur clampe de toute façon à ≥ 36).
+  const MONTHS_PM = [36, 48, 60, 72]
   // OUTIL-PERMIS-FIX-1 (LOT 1) — l'état de cycle fait le tri côté SERVEUR (récent = 24 mois, dormant = 36).
   // La fenêtre `months` n'est plus qu'un AFFINAGE optionnel : par défaut 240 (toute la profondeur) pour
   // que compteur et liste d'un segment portent sur les mêmes identifiants. Dormant garde 36 (son horloge).

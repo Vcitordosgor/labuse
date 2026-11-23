@@ -108,6 +108,80 @@ def _valide(dep: date | None, aut: date | None, delai: int | None) -> bool:
     return delai is not None and delai >= 0 and dep is not None and aut is not None and aut >= dep
 
 
+# ─────────────────── OUTIL-PERMIS-FIX-3 (Point 3) — couche VIVANTE, dérivée de sitadel_permits ───────────────────
+# `sitadel_permits` porte déjà dépôt (`date_depot`), autorisation (`date`), achèvement (`raw.daact`),
+# famille (`raw.famille`), nature (`type`). On recalcule m10 DEPUIS CETTE DONNÉE (pas un re-pull réseau,
+# qui pourrait redonner un millésime différent de ce qui est SERVI) et on la MAINTIENT PAR TRIGGER, comme
+# `via_permits_geo` : la couche des délais suit désormais chaque mise à jour des permis. Même règle de
+# validité (`_valide` : dépôt+autorisation présents, délai ≥ 0, autorisation ≥ dépôt).
+_M10_DELAI_SQL = (
+    "(EXTRACT(YEAR FROM s.date)::int - EXTRACT(YEAR FROM s.date_depot)::int) * 12"
+    " + (EXTRACT(MONTH FROM s.date)::int - EXTRACT(MONTH FROM s.date_depot)::int)")
+_M10_ACH_SQL = "CASE WHEN s.raw->>'daact' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}' THEN (left(s.raw->>'daact',10))::date END"
+_M10_ROW_SQL = f"""
+  s.permit_id, s.commune, s.type AS nature, s.raw->>'famille' AS famille,
+  s.date_depot::date AS date_depot, s.date::date AS date_autorisation,
+  {_M10_ACH_SQL} AS date_achevement,
+  CASE WHEN s.date_depot IS NOT NULL AND s.date IS NOT NULL THEN {_M10_DELAI_SQL} END AS delai_mois,
+  (s.date_depot IS NOT NULL AND s.date IS NOT NULL AND s.date >= s.date_depot
+   AND ({_M10_DELAI_SQL}) >= 0) AS valide
+"""
+
+_M10_TRIGGER_FN = f"""
+CREATE OR REPLACE FUNCTION m10_permit_delais_sync() RETURNS trigger AS $fn$
+BEGIN
+    IF to_regclass('m10_permit_delais') IS NULL THEN RETURN COALESCE(NEW, OLD); END IF;
+    IF (TG_OP = 'DELETE') THEN
+        DELETE FROM m10_permit_delais WHERE permit_id = OLD.permit_id; RETURN OLD;
+    END IF;
+    DELETE FROM m10_permit_delais WHERE permit_id = NEW.permit_id;
+    INSERT INTO m10_permit_delais
+      (permit_id, commune, nature, famille, date_depot, date_autorisation,
+       date_achevement, delai_mois, valide, computed_at)
+    SELECT {_M10_ROW_SQL}, now() FROM sitadel_permits s WHERE s.permit_id = NEW.permit_id;
+    RETURN NEW;
+END;
+$fn$ LANGUAGE plpgsql
+"""
+_M10_TRIGGER_DROP = "DROP TRIGGER IF EXISTS trg_m10_permit_delais_sync ON sitadel_permits"
+_M10_TRIGGER_CREATE = """
+CREATE TRIGGER trg_m10_permit_delais_sync
+    AFTER INSERT OR UPDATE OR DELETE ON sitadel_permits
+    FOR EACH ROW EXECUTE FUNCTION m10_permit_delais_sync()
+"""
+_M10_RESYNC = f"""
+INSERT INTO m10_permit_delais
+  (permit_id, commune, nature, famille, date_depot, date_autorisation,
+   date_achevement, delai_mois, valide, computed_at)
+SELECT {_M10_ROW_SQL}, now() FROM sitadel_permits s
+ON CONFLICT (permit_id) DO UPDATE SET
+  commune=EXCLUDED.commune, nature=EXCLUDED.nature, famille=EXCLUDED.famille,
+  date_depot=EXCLUDED.date_depot, date_autorisation=EXCLUDED.date_autorisation,
+  date_achevement=EXCLUDED.date_achevement, delai_mois=EXCLUDED.delai_mois,
+  valide=EXCLUDED.valide, computed_at=now()
+"""
+_M10_PRUNE = ("DELETE FROM m10_permit_delais d "
+              "WHERE NOT EXISTS (SELECT 1 FROM sitadel_permits s WHERE s.permit_id = d.permit_id)")
+
+
+def ensure_delais_vivants(session: Session, resync: bool = True) -> dict:
+    """OUTIL-PERMIS-FIX-3 (Point 3) — garantit la couche des délais et son TRIGGER (dérivée de
+    `sitadel_permits`, maintenue à chaque mise à jour). `resync=True` recalcule le plein sur la donnée
+    SERVIE (réconciliation après un rechargement). À exécuter une fois en prod (cf. compte-rendu)."""
+    for stmt in _DDL.strip().split(";\n"):
+        if stmt.strip():
+            session.execute(text(stmt))
+    for stmt in (_M10_TRIGGER_FN, _M10_TRIGGER_DROP, _M10_TRIGGER_CREATE):
+        session.execute(text(stmt))
+    session.commit()
+    if resync:
+        session.execute(text(_M10_RESYNC))
+        session.execute(text(_M10_PRUNE))
+        session.commit()
+    n = session.execute(text("SELECT count(*) FROM m10_permit_delais")).scalar()
+    return {"m10_permit_delais": int(n or 0)}
+
+
 def build_delais(session: Session, log=print) -> dict:
     """Construit/rafraîchit m10_permit_delais depuis SDES/Dido (backfill complet, idempotent)."""
     t0 = time.time()

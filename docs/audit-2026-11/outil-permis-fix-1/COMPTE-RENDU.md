@@ -356,3 +356,77 @@ L'affinage `months` : le chip de l'état **actif** affiche la partition pleine p
 Back : `faisabilite/viabilisation_build.py` (G2 — meta bâti + `bati_emprise_fraicheur`), `api/modules.py` (G2 — `bati_fraicheur` dans la partition), `api/app.py` (G2 — `/readyz.bati_emprise`), `api/fiche_commune.py` (G3).
 Front : `lib/api.ts` + `components/outils/ModulePanel.tsx` (G2 — date de mesure dans le « i » des dormants).
 Tests : `test_outil_permis_fix1.py` (G2, G3). Couche : `parcel_bati_emprise_meta` (repère posé).
+
+---
+---
+
+# OUTIL-PERMIS-FIX-3 — relecteur externe (recontrôle de 2fc4636f9)
+
+Il valide les états, les 854 dormants, les dix voisinages, les couleurs, le chargement de « Tous ». Trois restes, dont **le premier est une régression que j'avais introduite**.
+
+## Point 1 (BLOQUANT) — Dossier : rayon 500 m rétabli (régression du mandat 1)
+
+**Cause** : au mandat 1, en excluant les dates nulles de la requête `dynamique` du Dossier (`ingestion/permits.py`, `nearby_permits`), j'ai **supprimé la condition `ST_DWithin`** (le `:r` restait passé mais inutilisé). Le Dossier écrivait « dans un rayon de 500 m » et recevait le **total de l'île** (≈ 5 140 permis / 8 543 logements) pour n'importe quelle parcelle.
+
+**Correctif** : rayon `ST_DWithin(ST_Transform(p.centroid,2975), ST_Transform(s.geom,2975), :r)` **rétabli**, l'exclusion des dates nulles **conservée**.
+
+**Attendus — recompte (rayon 500 m, 24 mois)** : `97411000BZ1065 = 1 permis / 4 logements` ; `97424000AB0001 = 0` ; `97415000CV1498 = 5 permis / 6 logements`. ✅ (identiques en SQL).
+
+**Dossier PDF par la VRAIE route** (`GET /dossier/97411000BZ1065.pdf`, HTTP 200) — la ligne servie :
+```
+Permis à proximité            1 permis (< 500 m, 24 mois)            sourcé
+```
+(avant le correctif : ~5 140 permis.)
+
+**Pourquoi ni mes tests ni le hook ne l'ont vu** :
+1. `tests/test_permits.py` est marqué **`pytest.mark.db`** → le **hook pre-push (`-m "not db"`) ne le lance jamais**.
+2. Même joué, il **ne couvrait pas** le compte de dynamique avec le rayon : `test_permit_hors_rayon_absent` teste la **liste** (qui garde SON `ST_DWithin`), et `test_nature_et_dynamique` ne sème que des permis **proches** sur une base de test minuscule → retirer le filtre de distance ne changeait aucun compte. Le bug n'était visible que sur la vraie base (50 k permis étalés sur l'île).
+
+**Tests ajoutés** : `test_permits.test_dynamique_respecte_le_rayon` (db — sème un proche 10 logts + un lointain 999 logts, exige que le compte ne voie QUE le proche) **et** `test_outil_permis_fix1.test_fix3_point1_rayon_dossier_present` (**non-db, DANS le hook** — échoue si `ST_DWithin` disparaît du compte de dynamique : c'est la garde qui aurait attrapé ma régression).
+
+**Diff ciblé — rien d'autre changé dans les documents** : `git diff 99e9635b4..HEAD -- src/labuse/exports/ src/labuse/api/{documents,dossier,pre_dossier,bilan}.py` = **vide**. Le seul chemin de mes commits vers le Dossier est `ingestion/permits.py` (le rayon).
+
+## Point 2 (BLOQUANT) — Dormants : l'affinage ne peut que RESTREINDRE les 854
+
+**Cause** : la liste `/modules/promesses` gardait un prédicat RECOPIÉ, avec son `:m` injecté sans plancher. « Affiner → 24 m+ » remplaçait les 36 mois de la définition par 24 → **1 118 dormants** ; `97441123A0147` (Autre) passait Dormant.
+
+**Correctif** :
+- `/modules/promesses` lit DÉSORMAIS la **définition unique** `permis_classe._dormant_sql` (plus de prédicat recopié) ;
+- le seuil d'âge est **clampé à ≥ 36 mois** (`max(months, DORMANT_MOIS)`) côté liste **et** compteur (`permis_point_mort`) : un affinage ne peut qu'**OTER** des dormants, jamais en ajouter ;
+- le front n'offre plus « 24 » (`MONTHS_PM = [36, 48, 60, 72]`).
+
+**Preuve — dormant par valeur d'affinage, 4 périmètres** (non-croissant, ≤ 854, et 24 m = 36 m = base) :
+
+| Réglage | La Réunion | Saint-Denis | Saint-Paul | Cilaos |
+|---|--:|--:|--:|--:|
+| 24 m (clampé→36) | 854 | 78 | 126 | 7 |
+| 36 m | 854 | 78 | 126 | 7 |
+| 48 m | 622 | 64 | 86 | 6 |
+| 60 m | 455 | 50 | 68 | 3 |
+| 72 m | 352 | 44 | 58 | 3 |
+
+`97441123A0147` : **absent** de la liste dormante à months=24 (reste « Autre »).
+
+## Point 3 (à corriger) — couche des délais recalculée, vivante, cohérente
+
+**Cause** : `m10_permit_delais` était figée au **14/07/2026**. La fiche mélangeait le **dépôt + délai** de m10 (vieux) et l'**autorisation** de Sitadel rechargé → `97440925G0371` : dépôt 01/01/2025, autorisation 16/02/2026, « 11 mois » (calculé sur d'autres dates). **108 dates** différaient entre m10 et Sitadel.
+
+**Correctif** :
+- **Recalcul sur la donnée rechargée, SANS re-pull réseau** : m10 est reconstruite DEPUIS `sitadel_permits` (dépôt `date_depot`, autorisation `date`, achèvement `raw.daact`) — la donnée SERVIE, pas un millésime Dido potentiellement différent. **0 date ne diffère plus** (était 108).
+- **Suit les mises à jour comme le voisinage** : trigger `trg_m10_permit_delais_sync` sur `sitadel_permits` (INSERT/UPDATE/DELETE) + `ensure_delais_vivants` appelée par la ré-ingestion. Vérifié transactionnel (UPDATE → délai recalculé, ROLLBACK → restauré).
+- **Une seule version** : la fiche prend dépôt ET autorisation depuis `sitadel_permits`, et n'affiche le **délai que s'il est COHÉRENT** avec ces deux dates (`delai_coherent = valide ET m10.date_autorisation = sitadel.date ET m10.date_depot = sitadel.date_depot`).
+- Résultat fiche `97440925G0371` : **dépôt 16/02/2026, autorisation 16/02/2026, délai 0 mois** (cohérent).
+
+**La couche sert ailleurs** : OUI — l'outil **Communes** (comparateur / vélocité) lit `m10_permit_delais` (`registre/moteurs/commune.py:35`, `velocite_delai_median_mois` = médiane du délai dépôt→autorisation sur `valide AND famille='logements'`). Le recalcul rafraîchit donc aussi ce délai médian servi aux Communes.
+
+## Preuves des mandats précédents, rejouées (donnée vive)
+
+- Partition = filtre, 4 périmètres : île `5201/854/21322/23747 = 51 124` ; Saint-Denis `418/78/1467/1976=3 939` ; Saint-Paul `593/126/2076/3653=6 448` ; Cilaos `48/7/112/238=405`. 4/4 OK ; `/promesses` = colonne Dormant.
+- 10 parcelles : c200 outil `13/14/0/18/14/33/32/13/3/12` (inchangé).
+- 30 témoins : 1 dormant (97440816A0043).
+
+## Fichiers touchés (mandat 3)
+
+Back : `ingestion/permits.py` (P1 — rayon), `api/modules.py` (P2 — /promesses lit la fonction unique + clamp ; P3 — fiche cohérente), `registre/moteurs/commune.py` (P2 — clamp point_mort), `ingestion/permit_delais_m10.py` (P3 — trigger + resync), `ingestion/permits_sdes.py` (P3 — ré-ingestion rafraîchit m10).
+Front : `components/outils/ModulePanel.tsx` (P2 — MONTHS_PM).
+Tests : `test_permits.py` (db — rayon), `test_outil_permis_fix1.py` (non-db — P1/P2/P3). Couche : `m10_permit_delais` reconstruite + trigger.
