@@ -1207,6 +1207,19 @@ def readyz(request: Request, commune: str | None = None):
         st = dict(st)
         st["mail_liens"] = {"base_url": _base, "ok": _liens_ok,
                             "avert": config.base_url_probleme()}
+        # OUTIL-PERMIS-FIX-2 (Défaut A) — SIGNALE si le score/classement (parcel_viabilisation) est plus
+        # vieux que la couche de voisinage VIVANTE : l'opérateur voit qu'il faut relancer M-VIA (jamais un
+        # instantané périmé servi en silence). Avertissement, pas un 503 (l'app reste servie).
+        try:
+            from ..faisabilite.viabilisation_build import viabilisation_fraicheur
+            with session_scope() as _s:
+                _fr = viabilisation_fraicheur(_s)
+            st["viabilisation"] = _fr
+            if _fr.get("perimee"):
+                st["actions"] = list(st.get("actions") or []) + [
+                    "relancer build-parcel-viabilisation (score de voisinage périmé vs couche vive)"]
+        except Exception:  # noqa: BLE001 — jamais faire tomber /readyz pour ce signal annexe
+            pass
     return JSONResponse(status_code=200 if st.get("ready") else 503, content=st)
 
 
@@ -6533,6 +6546,16 @@ def _viabilisation_block(db: Session, idu: str) -> dict | None:
     if isinstance(ind, dict) and ind.get("libelle"):
         ind["libelle"] = (str(ind["libelle"]).replace(" confirmée par les faits", " probable")
                           .replace(" confirmée", " probable"))
+    # OUTIL-PERMIS-FIX-2 (Défaut A) — `via_permits_geo` est VIVANTE (trigger), `parcel_viabilisation` est
+    # un instantané : s'il est plus vieux que la couche (nouveaux permis depuis le dernier run M-VIA), on
+    # le SIGNALE au lieu de servir en silence des compteurs de voisinage périmés (constat RELECTURE-1 :
+    # outil 13 vs fiche 11 sur BZ 1065). Fraîcheur GLOBALE (pas par parcelle) → mémorisée (TTL 60 s).
+    if isinstance(ind, dict):
+        from ..faisabilite.viabilisation_build import viabilisation_fraicheur
+        fr = _mem_cached(("viab-fraicheur",), 60.0, lambda: viabilisation_fraicheur(db))
+        if fr.get("perimee"):
+            ind["perimee"] = True
+            ind["perimee_note"] = fr.get("note")
     return ind
 
 

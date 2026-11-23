@@ -90,16 +90,25 @@ def test_filtre_test_elargi():
 def test_courrier_a_deposer_le_meme(client, engine):
     """Jauge « Courrier » = pilotage.courrier.a_deposer = nb de demandes « à déposer » de la page."""
     cid = _seed_client(engine)
+    # IDEMPOTENCE (même patron que test_produit_retours_ouverts_le_meme) : on capture la demande insérée
+    # (RETURNING) et on la SUPPRIME en fin de test (finally), sinon chaque exécution laisse 1 demande
+    # « demande » de plus dans la base de test persistante (labuse_test) et le compte global dérive d'un
+    # run à l'autre — au-delà de la pagination (300), la jauge (tout) et la page (plafonnée) divergent.
     with engine.begin() as c:
-        c.execute(text(
+        did = c.execute(text(
             "INSERT INTO courrier_demandes (compte_id, n, communes, corps, statut) "
-            "VALUES (:c, 1, 'Saint-Denis', 'corps de test', 'demande')"), {"c": cid})
-    pil = client.get("/admin/pilotage").json()
-    dem = client.get("/courrier/admin/demandes").json()["demandes"]
-    ALIAS = {"tarif_confirme": "demande", "a_traiter": "demande"}
-    a_deposer_page = sum(1 for d in dem if ALIAS.get(d["statut"], d["statut"]) == "demande")
-    assert pil["courrier"]["a_deposer"] == a_deposer_page
-    assert a_deposer_page >= 1
+            "VALUES (:c, 1, 'Saint-Denis', 'corps de test', 'demande') RETURNING id"), {"c": cid}).scalar()
+    try:
+        pil = client.get("/admin/pilotage").json()
+        dem = client.get("/courrier/admin/demandes").json()["demandes"]
+        ALIAS = {"tarif_confirme": "demande", "a_traiter": "demande"}
+        a_deposer_page = sum(1 for d in dem if ALIAS.get(d["statut"], d["statut"]) == "demande")
+        assert pil["courrier"]["a_deposer"] == a_deposer_page
+        assert a_deposer_page >= 1
+    finally:
+        with engine.begin() as c:
+            c.execute(text("DELETE FROM courrier_demandes WHERE id = :d"), {"d": did})
+            c.execute(text("DELETE FROM comptes WHERE id = :c"), {"c": cid})
 
 
 def test_produit_retours_ouverts_le_meme(client, engine):

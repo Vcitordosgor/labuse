@@ -312,8 +312,10 @@ def nearby_permits(session, parcel_id: int, radius_m: float = 300.0, limit: int 
                       coalesce(sum(NULLIF(s.raw->>'nb_lgt','')::int), 0) AS logts
                FROM sitadel_permits s, p
                WHERE s.geom IS NOT NULL
-                 AND ST_DWithin(ST_Transform(p.centroid,2975), ST_Transform(s.geom,2975), :r)
-                 AND (s.date IS NULL OR s.date >= now() - (:mois || ' months')::interval)"""
+                 -- OUTIL-PERMIS-FIX-1 (LOT 6) — un permis SANS date n'entre plus dans la fenêtre « N mois »
+                 -- (le relecteur : le Dossier acceptait une date nulle dans le calcul « 24 mois »).
+                 AND s.date IS NOT NULL
+                 AND s.date >= now() - (:mois || ' months')::interval"""
         ), {"pid": parcel_id, "r": radius_m, "mois": mois_dyn},
     ).mappings().first()
     n_recent = int(dyn["n"]) if dyn else 0

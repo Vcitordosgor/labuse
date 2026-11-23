@@ -96,21 +96,23 @@ def test_w2_cinq_lignes_etat_avec_definitions_sur_les_lignes():
     # OUTILS-P1-1 (pt 5) — « Récent » → « Autorisés » (période dans la définition), « Dormant » → « Ancien permis ».
     for label in ("'Récents'", "'Permis dormants'", "'Achevés'", "'Autres'"):
         assert label in MP, label
-    # définitions courtes SUR les lignes (plus dans un paragraphe)
-    assert "90 derniers jours de la donnée" in MP   # OUTILS-P1-1 LOT3b (pt 2) — fenêtre ancrée sur la donnée
+    # définitions courtes SUR les lignes. OUTIL-PERMIS-FIX-1 (LOT 1/6) : « Récent » = 24 mois PARTOUT
+    # (ancré sur la fin des données), plus « 90 derniers jours ».
+    assert "autorisés depuis 24 mois (fin des données)" in MP
     assert "ni récent, ni dormant, ni achevé" in MP
     # bloc total en tête + bandeau court
     assert "permis autorisés en base" in MP
-    # FINITIONS-2 (title sweep, bb7d9281) a retiré l'attribut title « … l'instruction déposée n'y
-    # figure pas » ; la même vérité reste en TEXTE VISIBLE resserré sous le bandeau Sitadel.
-    assert "pas l'instruction en cours" in MP
+    # OUTIL-PERMIS-FIX-1 (LOT 6) — la mention Sitadel dit ce qui est couvert : autorisations accordées
+    # (y compris annulées ensuite), pas les refus ni les demandes en cours d'instruction.
+    assert "pas les refus ni les demandes en cours d'instruction" in MP
 
 
 def test_w2_w3_source_unique_des_couleurs_aucune_teinte_nouvelle():
-    """Une SEULE source de couleurs (lib/permisEtats), reprise par le panneau ET la carte : vert de
-    marque (mint), corail historique, gris neutre EXISTANT (st-exclue) — aucune teinte inventée, aucun bleu."""
+    """Une SEULE source de couleurs (lib/permisEtats), reprise par le panneau ET la carte : les quatre
+    états tirent des TOKENS existants (bleu Récent, corail Dormant, gris st-exclue Achevé, orange Autre —
+    la palette CONFIRMÉE par le relecteur), aucune teinte inventée."""
     # le module de couleurs tire des TOKENS existants, ne pose aucun hex nouveau
-    assert "TOKENS.mint" in ET and "TOKENS.coral" in ET and "TOKENS.stExclue" in ET
+    assert "TOKENS.blue" in ET and "TOKENS.coral" in ET and "TOKENS.stExclue" in ET and "TOKENS.amber" in ET
     assert "'#" not in ET  # aucune couleur HEX en dur (les hex en commentaire documentent le token)
     # panneau et carte importent la MÊME source
     assert "from '../../lib/permisEtats'" in MP
@@ -130,7 +132,8 @@ def test_w3_couleurs_etat_sur_carte_et_panneau_sans_legende_carto():
     assert "PERMIS_LEGENDE" not in LG               # la carte ne porte plus la légende permis (B1)
     assert "PERMIS_ETAT_COLOR" in MV                # …mais la carte peint toujours les points par état
     assert "etatColor" in MP                        # …et le panneau porte les mêmes couleurs (pastilles)
-    # les trois couleurs de carte restent une source unique (Achevé + Autre fondus en gris)
-    assert ET.count("label:") == 3 or ET.count("label:'") + ET.count("label: '") == 3
+    # OUTIL-PERMIS-FIX-1 — QUATRE états distincts en légende (Dormant n'est plus fondu) : une couleur
+    # par état, source unique. Chaque entrée de légende porte sa `key` (recent/dormant/acheve/autre).
+    for k in ("key: 'recent'", "key: 'dormant'", "key: 'acheve'", "key: 'autre'"):
+        assert k in ET, k
     assert "Récent (autorisé ≤ 24 mois)" in ET
-    assert "Achevé ou autre" in ET

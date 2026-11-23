@@ -353,13 +353,13 @@ def permis_bloc(db: Session, commune: str) -> dict:
     mort) viennent du MÊME moteur/id que l'outil Permis (`permis_point_mort` / point_mort_n)."""
     from ..faisabilite.marche_commune import ligne6_offre_engagee
     from ..registre.moteurs.commune import permis_point_mort
-    from .. import runs
+    from sqlalchemy import text as _text
     offre = ligne6_offre_engagee(db, commune)
     # OUTILS-FIX-5 L5 — « dormants » de la fiche commune = LE MÊME id que l'outil Permis
-    # (point_mort_n = permis_point_mort : PC sans DAACT depuis 36 mois sur parcelle non bâtie au run
-    # servi). Avant, la fiche comptait pc_caducs (103 à Saint-Benoît) quand l'outil affichait le point
-    # mort (651) sous le même mot « dormants » — un seul id, un seul chiffre désormais (cœur OUTILS-FIX-5).
-    point_mort = permis_point_mort(db, commune, months=36, run=runs.cascade())
+    # (point_mort_n = permis_point_mort). OUTIL-PERMIS-FIX-1 (LOT 2) : définition unique mesurée (bâti
+    # < seuil), ancrée sur dmax (fin des données) — plus de jointure au run ni d'horloge now().
+    _dmax = db.execute(_text("SELECT max(date) FROM sitadel_permits")).scalar()
+    point_mort = permis_point_mort(db, commune, months=36, dmax=_dmax) if _dmax else 0
     cmp = comparable(db, commune) or {}
     # KELFONCIER-FIX-1 (Lot C) — compteurs PC / PA / DP (+ PD) et ANNULÉS sur 12 mois, à la maille
     # commune (Sitadel). L'état ANNULÉ (ETAT_DAU=4) est SÉPARÉ des autorisés (avant, il les gonflait).
