@@ -108,11 +108,12 @@ def main() -> int:
         txt = [i + 1 for i in range(n) if len(clean[i].strip()) > 40]
         img = [i + 1 for i in range(n)
                if len(clean[i].strip()) <= 40 and len(d[i].get_images()) > 0]
-        # OUTIL-PLU-FIX-2 (C4) — couverture HONNÊTE : une page est « indexée » si un extrait y est
-        # RÉELLEMENT cité (page_pdf), pas si elle tombe dans le SPAN d'un gros bloc. Les extraits étant
-        # bornés à la page (B1), page_pdf == la page du texte → plus de gonflage par blocs fusionnés.
+        # OUTIL-PLU-FIX-3 (C4) — l'article étant l'unité (multi-pages), une page est « indexée » si elle
+        # figure dans le page_map d'un article (toutes les pages que l'article traverse), pas seulement
+        # sa page de début. Métrique honnête : pages réellement couvertes par un extrait servi.
         idx = {int(r[0]) for r in s.execute(text(
-            "SELECT DISTINCT page_pdf FROM plu_reglement_extrait WHERE insee=:i"), {"i": insee})}
+            "SELECT DISTINCT (e->>1)::int FROM plu_reglement_extrait, "
+            "jsonb_array_elements(page_map) e WHERE insee=:i AND page_map IS NOT NULL"), {"i": insee})}
         txt_idx = sorted(set(txt) & idx)
         absentes = [p for p in txt if p not in idx]
         pct = round(100 * len(txt_idx) / len(txt)) if txt else 0

@@ -333,6 +333,19 @@ export function PluAnnuaire() {
               {d.avis && <div className="text-[10px] text-txt-dim">{d.avis}</div>}
             </div>
           )}
+
+          {/* OUTIL-PLU-FIX-3 (point 8) — les DISPOSITIONS COMMUNES (articles sans zone propre, communs à
+              toutes les zones) sont présentées À PART, jamais mélangées aux articles de la zone filtrée. */}
+          {d && d.n_total != null && d.dispositions_communes && d.dispositions_communes.length > 0 && (
+            <div data-plu-communes className="flex flex-col gap-2">
+              <div className="mt-1 text-[11px] font-medium text-txt-mut">
+                Dispositions communes (applicables à toutes les zones) — {d.dispositions_communes.length}
+              </div>
+              {d.dispositions_communes.map((r: PluExtrait, i: number) => (
+                <PluExtraitCard key={`c${i}`} r={r} />
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>
@@ -373,12 +386,14 @@ function PluExtraitCard({ r, premier = false }: { r: PluExtrait; premier?: boole
       {r.doute && (
         <span className="mt-1 inline-block rounded bg-st-ecartee/15 px-1 text-[9.5px] text-st-ecartee">doute — vérifier au PDF</span>
       )}
-      {/* pied une ligne : règlement daté + page · Lire tout ▾ · PDF ↗ */}
+      {/* pied une ligne : règlement daté + PAGE DU MOT (+ étendue de l'article) · Lire tout ▾ · PDF ↗ */}
       <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 border-t border-line/60 pt-1.5 text-[10px] text-txt-dim">
-        <span className="text-txt-mut">Règlement{r.millesime ? ` du ${fmtDateNum(r.millesime)}` : ''} · p. {r.page_pdf}</span>
+        {/* OUTIL-PLU-FIX-3 — p. = page où le mot apparaît ; « article p. X-Y » quand l'article court
+            sur plusieurs pages. « Lire tout » montre l'article ENTIER (exceptions comprises). */}
+        <span className="text-txt-mut">Règlement{r.millesime ? ` du ${fmtDateNum(r.millesime)}` : ''} · p. {r.page_pdf}{r.page_debut != null && r.page_fin != null && r.page_fin !== r.page_debut ? ` (article p. ${r.page_debut}-${r.page_fin})` : ''}</span>
         {long && (
           <button data-plu-lire onClick={() => setOuvert((o) => !o)} className="text-mint hover:underline">
-            {ouvert ? 'Réduire ▲' : 'Lire tout ▾'}
+            {ouvert ? 'Réduire ▲' : 'Lire l’article entier ▾'}
           </button>
         )}
         {/* OUTIL-PLU-FIX-1 (LOT 2) — un lien « PDF » ouvre un PDF (règlement écrit direct, + ancre

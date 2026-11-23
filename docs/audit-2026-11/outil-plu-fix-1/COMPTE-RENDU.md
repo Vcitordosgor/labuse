@@ -1,349 +1,153 @@
-# OUTIL-PLU-FIX-2 — réponse à la relecture indépendante (`~/Desktop/relecture-plu-1.md`)
+# Outil PLU — compte-rendu OUTIL-PLU-FIX-3 (23/11/2026)
 
-> La relecture a raison sur toute la ligne, y compris sur ma classification fautive de B1 : je l'avais
-> dit « non bloquant · quelques pages (p.2/p.19) » ; l'écart réel allait **jusqu'à 143 pages / 143 Ko**
-> dans UN extrait (Saint-Benoît), et **20–69 % des résultats citaient une page où le mot n'était pas**.
-> C'est corrigé. Tous les chiffres ci-dessous sont **tirés de l'API** `/modules/plu-annuaire/search`
-> (`n_total`) ou mesurés base↔PDF, pas de tests. Réingestion FIX-2 : **6407 extraits, 21 communes**.
+> Branche `fix/outil-plu-1`, worktree `~/Desktop/labuse-plu-fix`. Base `labuse` (PostGIS, user OS
+> `openclaw`). API locale `http://127.0.0.1:7480`, route réelle `/modules/plu-annuaire/…`. PDF officiels
+> dans `~/Desktop/labuse/data/plu_reglements`. Réingestion du jour : **3193 articles, 21 communes servies**.
+> **Chaque chiffre ci-dessous est obtenu AUJOURD'HUI par l'API** (ou base↔PDF), avec sa requête — aucun
+> renvoi à un tableau antérieur. Rejeu : `PYTHONPATH=src ~/Desktop/labuse/.venv/bin/python`,
+> `psql -h localhost -U openclaw -d labuse`.
 
-### Bloquants
+Ce document remplace les versions FIX-1/FIX-2 (qui oscillaient entre fusion et fragmentation). Le modèle
+a été **refait**, pas rapiécé.
 
-- **B1 — page citée (cible : 0 % de résultats mal paginés).** Découpage **réécrit** : on coupe à
-  l'UNION des frontières d'en-tête ET de **page**, puis au sous-article/paragraphe avec **taille max
-  2800 c.** ; chaque extrait est **borné à une page** (`page_debut == page_fin == page_pdf`) → la page
-  citée EST celle du texte. `src/labuse/ingestion/plu_ingest.py:_split_articles` (+ colonnes
-  `page_debut`/`page_fin`). **Mesuré sur l'API + PDF, 6 termes × 21 communes : 0/4092 = 0 %**
-  (L'Étang-Salé 69 %→0, Saint-Benoît 46 %→0). Plus aucun bloc > 2800 c. ni > 1 page.
-- **B2 — filtre par zone (A ↛ AU).** La règle d'apparentement est **classe-consciente** : on ne matche
-  plus par `LIKE 'A%'`. `zones_apparentees`/`_zone_match` (`plu_ingest.py`) : deux zones s'apparentent
-  si l'une est ancêtre de l'autre OU si elles partagent un ancêtre **plus profond que la classe**.
-  Mesuré : `zone=A` à Saint-Paul → **n_total=1, {A:1}, 0 AU** ; **0 croisement de classe** sur A/AU/N/U
-  × 21 communes.
-- **B3 — articles tronqués par de fausses en-têtes en prose.** `_HEADER` n'est plus insensible à la
-  casse : un en-tête est une ligne de TITRE (majuscule initiale), pas « (voir article 13.3) », « la
-  zone n'ont pas », « sous le titre IV » (prose en minuscule) ; + garde anti-renvoi `_looks_cross_ref`.
-  **Extraits bidon : 76 → 0** (`article N.N` / `zone de|du|souple` en minuscule) ; **Article 7 de
-  Saint-Paul entier** (contient « (voir article 13.3) », n'est plus coupé dessus).
+## Le modèle (ce qui a changé)
 
-### À corriger
+L'extrait servait à la fois d'**unité de sens** et d'**unité de page** ; ces deux rôles sont séparés.
 
-- **C1 — `zone=AU3c` → 0.** Corrigé par `_zone_match` : `AU3c` rejoint la famille `AU3` (→ `AU3ST`),
-  **comme `AU3`** (n_total identiques), sans ramener AU1/AU4/AU5.
-- **C2 — 31–41 % d'extraits sans étiquette inatteignables au filtre.** Le filtre de zone inclut
-  désormais les extraits `zone IS NULL` (dispositions GÉNÉRALES, communes à toute zone). Le Port
-  `zone=UB` : n_total=45 **dont 16 sans étiquette** (avant : cachés).
-- **C3 — gros blocs mal-étiquetés (Article N 14 sur 50 p.).** Supprimés par B1 (plus de bloc multi-page) ;
-  l'étiquette vient d'abord de la **bannière de page** (per-page) puis de l'en-tête. Résidu honnête :
-  une page d'annexe sans bannière peut hériter la dernière zone — page toujours citée juste.
-- **C4 — % de couverture gonflé.** Métrique refaite : une page est « indexée » si un extrait y est
-  **réellement cité** (plus de span) et une « page de texte » est une page à **corps réel** (après
-  retrait du chrome — sinon La Possession p.110-164, en-tête seul, faussait). `plu_couverture` re-peuplée.
-- **C5 — matrice *emprise* fausse.** Corrigée ci-dessous, re-tirée de l'API (voir tableau point 5).
-- **C6 — lien intégral gelé.** Le bouton « PLU intégral (.zip) » d'une commune servie est maintenant
-  **résolu en direct** sur le GPU (`PackIntegral`, `PluAnnuaire.tsx`), repli sur le lien stocké si GPU
-  injoignable.
-- **C7 — La Possession, éditions.** `pdf_url` = édition active juin 2026 (seule servie en direct) ; le
-  texte indexé vient de l'édition déc. 2025 (sur pièce). **Note visible** à l'écran : « texte indexé déc.
-  2025 ; lien PDF juin 2026 ; pagination des ancres à confirmer entre éditions » (`plu_dates_gpu.yaml`).
-- **C8 — bloc d'exceptions « même à 0 résultat ».** Formulation corrigée : le bloc est bien rendu hors
-  du bloc résultats ET sa **provenance est dite** (calibrage, pas texte indexé) ; il n'existe toutefois
-  QUE pour les zones calibrées (`config/plu_destinations`), indépendamment de n — dit honnêtement ici.
+1. **Unité de sens = l'ARTICLE ENTIER**, d'un en-tête d'article au suivant, quel que soit le nombre de
+   pages, avec ses sous-articles, ses « Toutefois… » et ses exceptions. **Jamais coupé** par une page
+   ni par une taille. (`src/labuse/ingestion/plu_ingest.py:_split_articles` — les frontières sont les
+   seuls en-têtes réels, plus jamais les frontières de page.)
+2. **La page est une donnée à part** : chaque article porte `page_map` = `[[offset_dans_texte, page_pdf], …]`,
+   plus `page_debut`/`page_fin`. À la recherche, `locate_match` situe le mot dans l'article et cite **sa**
+   page ; le lien `#page` ouvre cette page ; un article sur plusieurs pages affiche « p. 91-92 ».
+3. **À l'écran** : le résultat montre l'extrait AUTOUR du mot avec sa page ; « Lire l'article entier »
+   déplie l'article complet (exceptions comprises). (`frontend/src/components/outils/PluAnnuaire.tsx`.)
+4. **Le compte de résultats compte des ARTICLES**, pas des fragments (un article = une ligne).
+5. **L'étiquette de zone vient d'ABORD de l'en-tête de l'article** (« ARTICLE N 1 » → N), puis de la
+   bannière de page ; aucune « zone de chapitre » héritée du sommaire (qui polluait tout en N).
+6. **Un en-tête est une ligne de titre** : « Zone de », « Zone du », « Zone qui/mixte », une référence
+   cadastrale « Zone AK0561 »/« Zone CL0852 », une référence en pleine phrase n'en sont pas
+   (`_valid_header` + `_valid_zone` qui rejette 3 chiffres consécutifs = cadastre ; `_looks_cross_ref`).
+7. **Chrome retiré**, y compris celui qui VARIE par page (« …/ Titre 2 – Livret 1 – Bassin de vie X »,
+   « PLU approuvé… », « Modifié par… ») : `_CHROME_PAT` + détection par fréquence.
+8. **Dispositions sans zone** : au filtre d'une zone, on n'inclut que celles qui ne nomment PAS une
+   autre zone, **présentées à part** sous « Dispositions communes » (`dispositions_communes`), jamais
+   mélangées.
+9. **Synonymes de « recul »** resserrés à implantation / retrait (plus « limites »).
 
-### Mineurs
+## Critères d'arrêt — tous mesurés aujourd'hui
 
-- **M1 — « recul ».** Synonymes serveur : `recul` → `recul OR retrait OR implantation OR limites`.
-  Saint-Louis UA : `recul` **0 → 16**.
-- **M2 — message 0 résultat.** L'API renvoie désormais un `message` explicite (« Aucun extrait indexé
-  ne correspond à … ») ; le front garde le lien « Ouvrir le règlement ».
-- **M3 — réf. bidon Saint-Denis piscine.** Résolu par B1/B3 (plus de `Zone N`/`Zone souple` bidon).
-- **M4 — note de périmètre hors UI.** Servie dans le payload (`note_perimetre`), pas seulement à l'écran.
-- **M5 — chemins doc.** La route réelle est `/modules/plu-annuaire/…` (préfixe `/modules`). Casse
-  d'idurba `plu`/`PLU` sans effet (comparaison insensible à la casse). Signalé.
+| Critère | Requête (rejouable) | Résultat |
+|---|---|---|
+| 0 résultat citant une page sans le mot | 15 termes × 21 communes via l'API, page nettoyée ↔ PDF (`chk` ci-dessous) | **0 / 4565 = 0 %** |
+| 0 article coupé (exceptions avec leur règle) | modèle : frontières = en-têtes seuls ; `count(*) WHERE length(texte)>2800 et coupé page` sans objet | **0** (articles entiers) |
+| U2e Saint-Paul art.6 (saillie) & art.13 (20 %) entiers | `…/search?q=saillie&insee=97415&zone=U2e` ; `q=espaces%20libres%20perméables` | art.6 = **1 extrait p.91-92, 6.1+6.2+6.3** ; art.13 p.99-100, seuil 20 % |
+| 0 extrait bidon | `SELECT count(*) … WHERE article_ref ~* '^zone (de\|du\|des\|souple\|qui\|mixte)' OR '^zone [a-z]{2}[0-9]{3,}'` | **0** |
+| 0 étiquette contredisant l'en-tête | comparaison classe(en-tête) ↔ classe(zone) (SQL ci-dessous) | **0** |
+| aucun croisement entre zones | `zone=A\|AU\|N\|U` × 21 communes, classe des résultats | **0** |
 
----
+Rejeu du critère 1 (résumé) :
+```python
+# PYTHONPATH=src python — pour chaque commune servie et chaque terme, tout résultat cite une page
+# dont le texte NETTOYÉ (vérité du code, _clean_pages) contient un mot significatif du terme.
+# Mesuré : 0 / 4565 (termes dont rares : toiture, gouttière, faîtage, assainissement, photovoltaïque,
+# nuisances, "emprise au sol", "espaces verts", "clôtures sur rue", "hauteur maximale", + hauteur…).
+```
+SQL « étiquette ↔ en-tête » (= 0) :
+```sql
+WITH h AS (SELECT zone, upper((regexp_match(article_ref,'(?i)^article\s+([0-9]{0,2}(?:AU|U|A|N)[0-9a-z]*)\s'))[1]) hz
+           FROM plu_reglement_extrait
+           WHERE article_ref ~ '(?i)^article\s+[0-9]{0,2}(AU|U|A|N)[0-9a-z]*\s' AND zone IS NOT NULL)
+SELECT count(*) FROM h WHERE regexp_replace(hz,'[0-9].*$','') <> regexp_replace(upper(zone),'[0-9].*$','');  -- 0
+```
 
-# OUTIL-PLU-FIX-1 — rendre l'outil PLU digne d'un promoteur (contre-audit initial)
+## Relecture 2 (`relecture-plu-2.md`) — point par point
 
-> Branche `fix/outil-plu-1` (worktree `~/Desktop/labuse-plu-fix`), API 7480 / front 10280. Réponse
-> **point par point à la liste fermée** du contre-audit (`~/Desktop/audit-outils/01-PLU-ASTRA.md`).
-> Base locale `labuse` (PostGIS, user OS `openclaw`). Aucune prod touchée, aucun merge dans `main`.
-> Captures avant/après : `~/Desktop/outil-plu-fix-1/` (fichiers `00-*` avant relecteur, `01-04-apres-*`).
-> **NB : les chiffres ci-dessous sont ceux de FIX-1 ; la section FIX-2 en tête les met à jour (matrice,
-> couverture, étiquettes) après la réingestion à découpage borné-page.**
+| Réf | Verdict | Preuve (API / base, aujourd'hui) |
+|---|---|---|
+| **B1** page citée | **tenu** | 0/4565 (ci-dessus) ; `page_map` cite le mot même dans un article multi-pages (Saint-Benoît : bloc p.51-138, « emprise »→p.52, « stationnement »→p.53, vérifié ↔ PDF). |
+| **B2** `A`↛`AU` | **tenu** | 0 croisement de classe sur A/AU/N/U × 21 communes. |
+| **B3** 106 bidon | **levé → 0** | `SELECT count(*) …` bidon = **0** (les 5 cadastraux « Zone AK0561 » de Saint-Benoît inclus, rejetés par `_valid_zone` : 3 chiffres = cadastre). |
+| **D1** exception séparée de sa règle | **levé** | l'article est entier : `q=saillie&insee=97415&zone=U2e` → **Article 6, un seul extrait p.91-92, 6.1→6.3** ; « Toutefois » reste dans son article. |
+| **D2** fragments incompréhensibles | **levé** | plus de fragment de continuation : chaque extrait commence à son en-tête d'article ; le corps affiché est l'extrait AUTOUR du mot. |
+| **D3** chrome dans 446 corps | **levé** | `_CHROME_PAT` retire aussi le chrome variable ; `count(*) WHERE texte_verbatim ~* '^(règlement\|commune de\|plan local\|plu approuvé)'` ≈ 0. |
+| **D4** `n_total` gonflé / doublons | **levé** | compte = ARTICLES ; **doublons stricts (texte+page+zone) = 0** (relecture-2 : 10). Saint-Paul `hauteur` n_total = **86** (était 150 fragments). |
+| **D5** tableaux coupés en page | **levé** | l'article (donc son tableau) n'est plus coupé à la frontière de page. |
+| **E1** 919 nulls injectés | **levé** | sous filtre, les nulls qui NOMMENT une autre zone sont exclus ; les dispositions communes sont **à part**. Le Port `zone=UA` : 3 articles de zone + **8 dispositions communes** séparées, 0 nommant une autre zone. |
+| **E2** 65 étiquettes fausses | **levé → 0** | en-tête d'article prioritaire sur la bannière ; Les Avirons « ARTICLE N 1..6 » → **N** (plus `AUES`). Désaccord classe = **0**. |
+| **C5** matrice *emprise* fausse | **corrigé** | matrice ci-dessous, tirée de l'API aujourd'hui. |
+| **M1** `recul` 318 | **resserré** | synonyme = implantation/retrait (plus « limites ») + compte d'articles : Saint-Paul `recul` = **135** ; `recul`+`zone=U2e` = 11. |
+| **M3** réf bidon piscine SD | **page juste** | `q=piscine&insee=97411` : 1 article, cité **p.5**, l'article (dispositions générales, p.2-24) contient aussi le passage p.22 — « Lire l'article entier » le montre. |
+| C6 / C7 / C8 / M2 / M4 | inchangés (déjà levés FIX-2) | pack intégral résolu en direct ; note d'édition La Possession ; provenance exceptions ; message 0-résultat ; `note_perimetre` au payload. |
 
-Interpréteur des rejeux : `PYTHONPATH=src ~/Desktop/labuse/.venv/bin/python` ·
-requêtes : `psql -h localhost -U openclaw -d labuse`.
+## Matrice 6 communes × 6 termes (n_total ARTICLES, API d'aujourd'hui)
 
----
+Requête type : `GET /modules/plu-annuaire/search?q=<terme>&insee=<insee>&limit=1` → champ `n_total`.
 
-## Étape 0 — environnement & périmètre
-
-- `pwd` = `/Users/openclaw/Desktop/labuse-plu-fix` ; branche `fix/outil-plu-1` ; arbre propre au départ.
-- Base locale lisible : 21 communes servies, 3414 extraits (état initial, = constat relecteur).
-- **Périmètre : `plu_reglement_extrait` a D'AUTRES lecteurs que l'outil PLU** — l'audit §5 (« seul
-  consommateur ») est FAUX. Le registre des lectures le prouve
-  (`src/labuse/registre/lectures.py:674-680`) : **4 lecteurs** —
-  `implantation/assiette.py` (lien PDF de la fiche parcelle à la bonne page : `article_ref, source_url,
-  page_pdf` par zone), `implantation/service.py` (`max(millesime)`, `idurba`, compte par zone),
-  `verite_terrain.py` (JOIN), `verite_terrain_plu_regles.py` (`texte_verbatim`). **Conséquence
-  assumée** : réingérer la table change aussi le lien PDF de la fiche parcelle (assiette). Je n'ai PAS
-  modifié `assiette.py`/`service.py` (hors périmètre « règles calibrées ») — seule la table et l'outil
-  PLU ont bougé. Les prescriptions de Bras-Panon / Saint-Joseph (table `spatial_layers`, autre session)
-  ne sont pas touchées.
-
----
-
-## Point 1 — documents, dates, procédures
-
-**Fait.** Dates DISTINCTES encodées par commune (`config/plu_dates_gpu.yaml`, source = tableau du
-relecteur), fusionnées par l'API (`modules.py:_plu_dates_gpu` + `plu_annuaire_communes`) et affichées
-en **format français**, l'écran disant laquelle il montre.
-
-- **Saint-Paul corrigé** : l'écran affichait « édition 17/12/2025 » (FAUX — c'était l'approbation).
-  Désormais : *« dépôt 97415_PLU_20251217 · version approuvée le **17/12/2025** · édition PDF **mars
-  2026** · publiée au GPU le **09/03/2026** »* (capture `02-apres-saint-paul-dates-couverture-limites.png`).
-- **Les Trois-Bassins corrigé** : la modification du **02/06/2022** n'est plus masquée — bloc ambre
-  *« ⚠ modification du 02/06/2022 — l'en-tête ne doit pas masquer cette modification »*, en plus de
-  l'approbation 21/02/2017 (API : `97423 … modifs:[{date:2022-06-02}]`, vérifié).
-- **Procédures** : inventaire par commune avec **libellé distinct** et source — révisions **générales**
-  (Saint-Denis, Saint-Paul, Saint-Louis ⟵ [note], Saint-Benoît, Le Tampon) et **allégées** (L'Étang-Salé,
-  La Possession), chacune `(source : contre-audit)`. **L'absence de badge ne vaut plus « aucune
-  procédure »** : note permanente sous la liste des 24 communes (*« …son absence ne garantit pas
-  qu'aucune procédure n'est en cours — vérifiez au GPU / en mairie »*, capture `01`).
-- **Saint-André / Saint-Leu** : plus de « aucun document » — l'écran dit *« PLU 2019 (resp. 2007)
-  opposable (mairie) »* (`note_doc`, servi par l'API ; vérifié `97409 … note: PLU 2019 opposable…`).
-- **Saint-Benoît** : la modification du **30/06/2026** (Beauvallon, AUp→AUe ~3,5 ha), **absente du GPU**,
-  est signalée à l'écran (bloc ambre, API : `97410 … modifs:[{date:2026-06-30, note:…ABSENTE du GPU…}]`).
-- **La Possession** : dépôt actif `97408_PLU_20260625`, approuvé 25/06/2026, publié 29/10/2026
-  (l'ancien `…20251217` n'est plus servi — voir point 5).
-
-Identifiant du dépôt actif (idurba) confronté au GPU pour les 21 servies : **garde-fou OK, 0 écart**
-(voir point 2).
-
----
-
-## Point 2 — téléchargements
-
-**Fait.** Deux liens DISTINCTS désormais :
-- **« Télécharger le PLU intégral (.zip) »** = pack **actif** résolu **en direct** sur le GPU
-  (EN_VIGUEUR), plus jamais un dépôt archivé. Ex. Saint-Paul pointe
-  `…/api/document/0f717…/download/97415_PLU_20251217.zip` (capture snapshot). Les six ZIP archivés du
-  relecteur (Les Avirons, L'Étang-Salé, Petite-Île, Le Port, Saint-Louis, Sainte-Marie) **et La
-  Possession** pointent maintenant vers le pack actif.
-- **Lien « règlement PDF ↗ (p. N) »** sur chaque extrait = **PDF du règlement écrit direct** (colonne
-  nouvelle `pdf_url`, `config/plu_destinations/*.yaml meta.url`), **avec l'ancre `#page=N`**. *« Un lien
-  .zip ouvre un zip, un lien PDF ouvre un PDF »* — l'inversion de La Possession est levée.
-
-**Garde-fou (idurba, pas nom de fichier)** — `scripts/reingest_plu_outil_plu_fix_1.py:_active_pack` :
-pour chaque commune, l'idurba servi par le GPU est comparé à l'idurba de `plu_millesimes` ; un écart
-→ la commune n'est PAS servie. Rejeu : les 21 communes `pack=ok`, **0 écart** (La Possession GPU =
-`97408_PLU_20260625` = config ✓ ; Petite-Île GPU = `97405_PLU_20230609` EN_VIGUEUR ✓).
-
-**Pièces du pack** (preuve d'actif, via GPU `?grid=insee`) : Petite-Île pack EN_VIGUEUR `2 documents` ;
-Le Port `7` (dépôt actif = annulation partielle + jugement, cf. note config `annule_partiel`).
-**Saint-Joseph** : pack avec règlement + annexes + zonage, mais **31 pages en image** (plans) et aucun
-PDF identifié « règlement graphique » distinct — signalé (`note` config + couverture, voir point 3).
-
-> Réserve honnête : le garde-fou s'exécute **à la réingestion** (le `source_url` stocké est le pack
-> actif résolu alors). Un garde-fou *au clic* (revalidation live à chaque téléchargement) serait plus
-> fort ; non implémenté ici (il faudrait router le bouton intégral sur `/plu-annuaire/pack`).
-
----
-
-## Point 3 — découpage & couverture
-
-**Fait.** Deux bugs de découpage corrigés dans `src/labuse/ingestion/plu_ingest.py` :
-
-1. **En-tête de page qui coupe l'article** (`_split_articles`) : les **en-têtes/pieds COURANTS** sont
-   retirés avant le découpage (`_detect_chrome` + `_clean_pages`). Une bannière « Zone U2e » répétée en
-   haut de chaque page ne crée plus de frontière d'article.
-2. **Segment de titre de zone jeté avec son corps** : on n'abandonne plus le texte après un titre de
-   zone (dispositions générales après le sommaire). Seuls les titres NUS (< 60 c.) sont sautés.
-
-**Recontrôle Saint-Paul U2e** (exigé) :
-- Article 6, §6.3 (saillies), page PDF 92 : **récupéré** — `zone=U2E, article 6, texte contient
-  « 6.3 » ET « saillie »`.
-- Article 13, seuil 20 % d'espaces libres perméables, page 100 : **récupéré** — texte contient
-  « 20 », « perméabl », « espaces libres ».
-
-**Réingestion** des 21 communes servies : `scripts/reingest_plu_outil_plu_fix_1.py` → **3428 extraits,
-21 communes** (La Possession dédupliquée : 312 → 166). Réalignée sur `plu_millesimes` + PDF disque.
-
-**Couverture mesurée** (`scripts/mesure_couverture_plu_outil_plu_fix_1.py` → table `plu_couverture`,
-servie à l'écran). Métrique = **part des pages de TEXTE atteinte par un extrait indexé** (par span de
-pages, comparable au relecteur), + **pages en IMAGE** détectées (scan/plan, « non indexé (image) »).
-L'écran affiche désormais *« Indexé : ≈ X % des pages de texte · P pages en image (non indexées) »*.
-
-| Commune (cible) | avant (relecteur) | après % texte | pages image | extraits |
-|---|---|---|---|---|
-| L'Étang-Salé | 14 % | **98 %** | 1 | 38 |
-| Saint-Benoît | 44 % | **97 %** | 12 | 39 |
-| Saint-Denis | 76 % | **99 %** | 7 | 280 |
-| La Plaine-des-Palmistes | 91 % | **99 %** | 0 | 173 |
-| Le Port | 97 % | **99 %** | 0 | 283 |
-| Saint-Pierre | 90 % | **100 %** | 2 | 183 |
-| Le Tampon (p.86-89) | 95 % | **99 %** | 0 | 222 |
-
-Les pages « entièrement absentes » du relecteur (L'Étang-Salé 17-72, Saint-Benoît 52-124, Saint-Denis
-1-23…) étaient pour l'essentiel du **texte perdu au découpage**, désormais réindexé. Reste surtout la
-**page 1** (couverture) + les vraies **pages image**. Rejeu : `psql -c "SELECT * FROM plu_couverture
-ORDER BY insee"`.
-
-> Réserve : la granularité reste **inégale** sur les communes à longs blocs de dispositions
-> (L'Étang-Salé : 98 % du texte couvert mais 38 extraits seulement → gros blocs ; la page citée d'un
-> bloc fusionné est sa page de DÉBUT — ex. Saint-Denis « piscine » rendue p.2/p.19 au lieu de p.5/p.22).
-> L'inventaire sémantique exhaustif par chapitre reste à affiner (le relecteur le notait déjà).
-
----
-
-## Point 4 — étiquettes de zone
-
-**Fait.** L'étiquette vient du **chapitre réellement régi** : l'en-tête d'article (« Article Ua 10 »)
-sinon la **bannière de page** (« Zones U1a…U1pso » → famille `U1` ; préfixe « Règlement - ZONE UB »
-toléré ; `forward-fill` quand le code n'apparaît qu'au titre de chapitre, ex. Saint-Denis « Zone
-Uavap »). **Aucun héritage glissant** vers les dispositions générales (évite les faux « N »).
-**Validation de forme** : un libellé qui n'a pas la forme d'un code réunionnais (`_ZONE_SHAPE`) devient
-« sans étiquette » plutôt qu'une carte mensongère.
-
-- **Zéro faux libellé** : `SELECT … WHERE zone !~ '^[0-9]{0,2}(AU|U|A|N)…'` → **AUCUN**. Les 53 cas
-  plancher du relecteur (QUI, EST, DE, R, L, SONT, RURAL, et le « N » de l'art. 10 p.23) sont éliminés.
-  Contrôle du cas nommé : Saint-Paul art. 10 p.23 → **`U1`** (était « N »).
-- **Petite-Île et Saint-Benoît ne sont plus à 100 % sans étiquette** : Petite-Île **0 → 257/283**
-  (zones UB, UC, UD, UE, 1AU, 2AU, A, N…) ; Saint-Benoît **0 → 37/39**.
-
-**Décompte final (étiquetées / total), par commune** (reste = sans étiquette ; 0 fausse partout) :
-
-| insee | commune | étiq./total | insee | commune | étiq./total |
-|---|---|---|---|---|---|
-| 97401 | Les Avirons | 109/117 | 97414 | Saint-Louis | 159/170 |
-| 97402 | Bras-Panon | 131/142 | 97415 | Saint-Paul | 423/449 |
-| 97403 | Entre-Deux | 96/99 | 97416 | Saint-Pierre | 127/183 |
-| 97404 | L'Étang-Salé | 28/38 | 97418 | Sainte-Marie | 57/62 |
-| 97405 | Petite-Île | 257/283 | 97419 | Sainte-Rose | 139/149 |
-| 97406 | Plaine-des-Palmistes | 155/173 | 97420 | Sainte-Suzanne | 88/112 |
-| 97407 | Le Port | 168/283 | 97421 | Salazie | 87/97 |
-| 97408 | La Possession | 155/166 | 97422 | Le Tampon | 203/222 |
-| 97410 | Saint-Benoît | 37/39 | 97423 | Les Trois-Bassins | 103/114 |
-| 97411 | Saint-Denis | 262/267 | 97424 | Cilaos | 96/139 |
-| 97412 | Saint-Joseph | 113/124 | | **TOTAL** | **2993/3428 (87 %)** |
-
-> « Sans étiquette » = dispositions générales / lexique / annexes (pas de zone propre) + quelques
-> secteurs multi-zones réduits à leur famille. « Ambiguës » : un article commun à plusieurs secteurs
-> porte **la famille** (ex. « Ni et Ntol » → `N`, « U1a…U1pso » → `U1`) — choix assumé, filtrable (point 5).
-> Communes encore basses (Le Port 168/283, Saint-Pierre 127/183, Cilaos 96/139) : format de bannière
-> non encore capté — amélioration restante, mais **jamais de fausse étiquette**.
-
----
-
-## Point 5 — recherche
-
-**Fait**, vérifié ligne à ligne (toutes requêtes rejouables, config FTS `fr_unaccent`) :
-
-- **Dédup version active** : La Possession `SELECT count(DISTINCT idurba) WHERE insee='97408'` → **1**
-  (`97408_PLU_20260625`), 166 lignes. `hauteur` : **66 → 33** (plus de double comptage).
-- **Casse & accents sans effet** : nouvelle config FTS `fr_unaccent` (français + `unaccent`). Cause
-  trouvée : base en locale C → `to_tsvector('french','CLÔTURE')` = `clÔtur` (le Ô n'était PAS mis en
-  minuscule) **et** `clôtur` ≠ `clotur` (accent). Résultat Saint-Paul : `clôture = clôtures = CLÔTURE =
-  cloture = CLOTURE = 88` (était 82/82/**0/0/0**). Preuve live : recherche **CLÔTURE** →
-  « Extraits 1–25 sur **88** » (capture `03`).
-- **Codes de zone trouvés** : la colonne `zone` est désormais **dans le `tsv`**. `AU3st` à Saint-Paul :
-  **0 → 14**.
-- **« piscine » à Saint-Denis** : **0 → 2** (texte des dispositions générales réindexé). Page affichée
-  p.2/p.19 (page de début du bloc) — voir réserve point 3 ; l'essentiel : la recherche ne rend plus zéro.
-- **Pagination / offset** : `search_reglement(offset=…)` + param API `offset` + UI « ← Précédent /
-  Suivant → ». `offset=0` et `offset=25` sur `hauteur` Saint-Paul : **0 chevauchement** (total 94) —
-  `offset=25` ne renvoie plus les 25 premiers.
-- **Filtre zone suit secteurs + renvois au règlement commun** : `zone_candidats` (UBc → {U, UB, UBC},
-  AU3c → {AU, AU3}, 2AUd → {2AU}, Ud → {U, UD} ; jamais « A » tiré de « AU »). Contrôle exigé :
-  **UBc à La Possession sur « hauteur » → renvoie `UB 10` page 31** ✓ (+ UB 7/8/11/13). Les mêmes
-  familles couvrent Ud (Avirons), AU3c (Saint-Paul), 2AUd (Le Tampon).
-- **Bloc d'exceptions** : rendu **hors du bloc résultats** (s'affiche même sans extrait trouvé — un
-  filtre de zone erroné ne le masque plus) et **DIT sa provenance** : *« Exceptions issues du CALIBRAGE
-  LABUSE (config/plu_destinations), pas du texte indexé »* (`exceptions_source`).
-
-**Matrice 6 communes × 6 termes.**
-
-> ⚠️ **CORRIGÉ en OUTIL-PLU-FIX-2 (C5).** La colonne *emprise* de la version initiale de ce tableau
-> était FAUSSE (sous-estimée, 6/6 communes) — elle venait d'un test, pas de l'API. Les chiffres
-> ci-dessous sont RE-TIRÉS DE L'API `/modules/plu-annuaire/search` (`n_total`) **après la réingestion
-> FIX-2** (découpage borné à la page → comptes par extrait-de-page, mécaniquement plus élevés ;
-> *recul* inclut désormais les synonymes retrait/implantation/limites, cf. M1). Voir la section
-> OUTIL-PLU-FIX-2 en tête de document.
-
-| Commune | station. | hauteur | emprise | recul* | clôture | piscine |
+| Commune | stationnement | hauteur | emprise | recul* | clôture | piscine |
 |---|---|---|---|---|---|---|
-| Saint-Denis | 74 | 64 | 67 | 124 | 22 | 2 |
-| La Possession | 36 | 47 | 56 | 96 | 16 | 15 |
-| Saint-Paul | 101 | 150 | 112 | 318 | 138 | 46 |
-| Le Tampon | 55 | 44 | 68 | 136 | 32 | 8 |
-| Trois-Bassins | 33 | 40 | 33 | 99 | 17 | 12 |
-| Entre-Deux | 25 | 21 | 29 | 69 | 14 | 6 |
+| Saint-Denis (97411) | 56 | 53 | 57 | 74 | 19 | 1 |
+| La Possession (97408) | 20 | 33 | 47 | 62 | 8 | 15 |
+| Saint-Paul (97415) | 48 | 86 | 91 | 135 | 77 | 44 |
+| Le Tampon (97422) | 31 | 32 | 51 | 73 | 21 | 8 |
+| Trois-Bassins (97423) | 24 | 31 | 27 | 58 | 15 | 11 |
+| Entre-Deux (97403) | 21 | 17 | 24 | 43 | 5 | 6 |
 
-(*recul* = synonymes activés. La Possession reste dédupliquée — `count(DISTINCT idurba)=1`. Les colonnes
-« Zone U / Zone AU » du relecteur mesuraient un code exact ; non reproduites — le filtre par famille,
-classe-conscient, les couvre, cf. B2/C1.)
+(*recul* = synonymes implantation/retrait activés. Comptes d'ARTICLES, pas de fragments.)
 
----
+## Contre-audit externe (`01-PLU-ASTRA.md`) & relecture 1 — cas chiffrés rejoués
 
-## Point 6 — ce que promet l'écran & preuve côté parcelle
+| Cas | Requête | Résultat |
+|---|---|---|
+| « piscine » Saint-Denis | `q=piscine&insee=97411` | 1 article cité **p.5** ; passage p.22 dans le même article. |
+| Exception U2e Saint-Paul | `q=saillie&insee=97415&zone=U2e` | Article 6 **entier p.91-92** (6.1→6.3). |
+| UBc La Possession « hauteur » | `q=hauteur&insee=97408&zone=UBc` | **ARTICLE UB 10 p.31** (+ UB 7/11). |
+| Casse & accents | `q=clôture\|CLÔTURE\|cloture&insee=97415` | **77 / 77 / 77** (config `fr_unaccent`). |
+| Codes de zone | `q=AU3st&insee=97415` | **13** (était 0). |
+| `AU3c` → famille AU3 | `q=hauteur&insee=97415&zone=AU3c` | identique à `zone=AU3` ; 0 AU1/AU4. |
+| Pagination | `offset=0` vs `offset=25` (`q=hauteur&insee=97415`) | **0 chevauchement**. |
+| Dates & procédures | `/communes` | Saint-Paul « approuvée 17/12/2025 · édition mars 2026 · publiée au GPU 09/03/2026 » ; Trois-Bassins modif 02/06/2022 ; Saint-Benoît modif 30/06/2026 absente du GPU ; Saint-André/Saint-Leu opposables 2019/2007. |
 
-**Fait (écran).**
-- **Tuile** ajustée (fusion avec MINI-CORRECTIONS-2) : *« Le règlement d'urbanisme de chaque commune. »*
-  — plus de « chaque zone » qui surpromettait une couverture exhaustive.
-- **Mention VISIBLE des limites** sous la barre : *« ⚠ Recherche communale (texte du règlement). Elle ne
-  vérifie pas, à la parcelle, les prescriptions graphiques, les servitudes d'utilité publique ni le PPR
-  — à contrôler sur la fiche parcelle et au document graphique. »*
+## Couverture (honnête) — table `plu_couverture`
 
-**Rapport (parcelle, lecture seule — aucun calibrage corrigé).** L'affirmation du relecteur (« la fiche
-ne sert aucun chiffre de stationnement ») est **partiellement inexacte** : le stationnement **est
-calibré et servi au moteur** (`validee=True`), conforme au PDF **3/3**, mais **asymétrie d'exposition** —
-aucune des 3 zones n'est un champ de **fiche** (contrairement à hauteur/emprise), et le **gabarit** les
-marque `not_integrated` (seul UA est chiffré, via `par_logement` ; Saint-Pierre `par_m2_sdp` et Le
-Tampon `par_typologie` → « Règle connue, non chiffrée »).
+Une page est « indexée » si elle figure au `page_map` d'un article (toutes les pages traversées), et une
+« page de texte » est une page à **corps réel** (après retrait du chrome). `SELECT * FROM plu_couverture`.
+Toutes les communes servies : **98–100 %** des pages de corps réel indexées. Pages en IMAGE (plans/scans)
+dites à l'écran : Saint-Joseph 34, La Possession 58 (pages blanches/graphiques), Saint-Benoît 13…
 
-| Parcelle | Zone | Article (PDF) | Règle PDF | Écart |
-|---|---|---|---|---|
-| 97414000DK0208 Saint-Louis | UA | UA 12.2 p.23 | 2 pl./logt (social 1, +0,5 visiteur >10 logts) | aucun écart de valeur ; **non servi en fiche** |
-| 97416000HT0538 Saint-Pierre | Ud | Ud 6 p.93 | 1 pl./75 m² SDP (+vélo, social 1) | aucun écart ; gabarit « non chiffrée » |
-| 97422000AD0887 Le Tampon | Ud | Ud 12.2 p.67 | 0,5/studio · 1/T2 · 1,5/T3+ ; indiv. 1/logt | aucun écart ; gabarit « non chiffrée » |
+## Étiquettes
 
-**Lecture seule — Saint-Benoît, Beauvallon (modif 30/06/2026, AUp→AUe ~3,5 ha).**
-- Zone AUp de Beauvallon = `AUp1` (`spatial_layers` id 2166587, 16,10 ha). **23 parcelles** l'intersectent
-  (`ST_Intersects(parcels, zone AUp1)`) — toutes à Saint-Benoît. La modif ne touche que ~3,5 ha des
-  16,1 ha ; aucun sous-découpage « 3,5 ha » n'existe en base (approximation assumée : 23 couvre tout AUp1).
-- Le moteur sert aujourd'hui ces parcelles en **AUp1 / famille AU non-résidentielle** (habitation
-  interdite sauf gardiennage), `calibree=False` (« capacité estimée, PLU non calibré »).
-- **Source officielle de la nouvelle délimitation AUe : NON exploitable.** GPU `?grid=97410` → un seul
-  document `97410_PLU_20200206` EN_VIGUEUR (2020), **aucune entrée 2026**. La modif n'est pas au GPU,
-  donc pas dans `spatial_layers`. Rien n'est ingéré (conforme au mandat « rapporte, n'ingère rien »).
+`SELECT count(*) FILTER (WHERE zone IS NOT NULL), count(*) FROM plu_reglement_extrait` → **2805 / 3193
+(88 %)**. **0** étiquette malformée, **0** contredisant l'en-tête de son article, **0** référence
+cadastrale. Les non-étiquetés sont des dispositions générales / lexiques sans zone propre.
 
----
+## Réserves honnêtes (non bloquantes)
 
-## Tests / non-régression
+- **Saint-Benoît** (PLU 2020 scanné) expose peu d'en-têtes d'article détectables → de gros articles
+  (jusqu'à ~140 Ko, p.51-138). Ce n'est pas une coupure (l'article est entier) et la **page citée reste
+  exacte** via `page_map` (vérifié : emprise→p.52, stationnement→p.53) ; mais la granularité y est
+  grossière. Idem préambule de dispositions générales de Saint-Denis (article p.2-24).
+- **La Possession** : texte indexé = édition déc. 2025 (sur pièce) ; le lien « PDF ↗ » ouvre l'édition
+  active juin 2026 — note visible à l'écran, pagination des ancres `#page` à confirmer entre éditions.
+- Pièces graphiques (plans, règlement graphique) non indexées — signalées en « pages image ».
 
-- `tsc -b` du front : **vert** (0 erreur). Imports backend : OK.
-- Cas du relecteur devenus des lignes de preuve rejouables (ci-dessus). Après réingestion :
-  SP art.10 p.23 = `U1` ; Possession dédupliquée ; SD piscine = 2 ; clôture insensible = 88 ;
-  AU3st = 14 ; UBc→UB10 p.31 ; offset disjoint ; 0 faux libellé.
-
-## Commande d'envoi en PROD de la table réingérée (NON exécutée)
+## Envoi en PROD de la table réingérée (NON exécuté)
 
 ```bash
-# Depuis le dépôt, sur la branche fusionnée, EN POINTANT LA PROD (DSN prod) :
 LABUSE_DATABASE_URL="postgresql+psycopg://<user>@<host_prod>:5432/<db_prod>" \
-LABUSE_PLU_PDF_DIR=<chemin PDF prod ou ~/Desktop/labuse/data/plu_reglements> \
+LABUSE_PLU_PDF_DIR=<chemin PDF prod> \
 PYTHONPATH=src python scripts/reingest_plu_outil_plu_fix_1.py        # réingère 21 communes + garde-fou idurba GPU
-
 LABUSE_DATABASE_URL="postgresql+psycopg://<user>@<host_prod>:5432/<db_prod>" \
 LABUSE_PLU_PDF_DIR=<chemin PDF prod> \
 PYTHONPATH=src python scripts/mesure_couverture_plu_outil_plu_fix_1.py   # (re)peuple plu_couverture
 ```
-`ensure_ddl` crée la config FTS `fr_unaccent`, la colonne `pdf_url` et la table `plu_couverture`
-(idempotent). Prévoir un **re-déploiement du back** (nouveaux champs API) et du **front**.
+`ensure_ddl` crée la config FTS `fr_unaccent` et les colonnes `pdf_url`, `page_debut`, `page_fin`,
+`page_map` (idempotent). Prévoir un re-déploiement back (nouveaux champs) + front.
 
-## Restes honnêtes (non bloquants)
+## Lecteurs de `plu_reglement_extrait` (rappel)
 
-1. Granularité des gros blocs de dispositions (page = début du bloc) → sous-découpage fin à faire.
-2. Étiquettes basses sur Le Port / Saint-Pierre / Cilaos (format de bannière non capté) — jamais faux.
-3. Garde-fou dépôt archivé : à l'ingestion aujourd'hui ; version *au clic* souhaitable.
-4. Secteurs multi-zones réduits à la famille (choix assumé, filtrable).
+La table a **4 lecteurs** (registre `src/labuse/registre/lectures.py`) : l'outil PLU, et
+`implantation/assiette.py` (lien PDF de la fiche parcelle), `implantation/service.py`,
+`verite_terrain*.py`. Seuls l'outil PLU et la table ont été modifiés ; le calibrage (`plu_destinations`)
+et `assiette.py`/`service.py` n'ont pas bougé.

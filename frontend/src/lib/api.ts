@@ -829,9 +829,13 @@ export interface PluExtrait {
   pagination_ambigue: boolean; pagination_note?: string; source_url: string; gpu_consult?: string
   // OUTIL-PLU-FIX-1 (LOT 2) — lien DIRECT vers le règlement écrit (.pdf), distinct du pack .zip.
   pdf_url?: string | null
+  // OUTIL-PLU-FIX-3 — l'extrait est l'ARTICLE ENTIER ; page_pdf = page du mot ; page_debut/fin = étendue.
+  page_debut?: number | null; page_fin?: number | null; page_match?: number | null; extrait?: string
 }
 export interface PluSearch {
   query: string; insee: string | null; n: number; n_total?: number; tronque?: boolean; resultats: PluExtrait[]; message?: string; avis?: string
+  // OUTIL-PLU-FIX-3 (point 8) — dispositions communes (sans zone) présentées à part sous filtre de zone.
+  dispositions_communes?: PluExtrait[]
   // OUTIL-PLU-FIX-1 (LOT 5) — pagination réelle (offset) : la page servie et son décalage.
   limit?: number; offset?: number
   // PLU-EXCEPTIONS-1 — exceptions calibrées de la zone filtrée (verbatim + article/page), sous l'article.

@@ -3220,11 +3220,14 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
     q = (q or "").strip()
     if not q:
         raise HTTPException(400, "Requête vide.")
-    # OUTIL-PLU-FIX-2 (M1) — synonymes : les règlements écrivent « implantation / retrait / limites
-    # séparatives », jamais « recul ». Un promoteur qui tape « recul » ne doit pas tomber sur du vide.
+    # OUTIL-PLU-FIX-3 (point 9) — synonymes de « recul » RESSERRÉS : seulement ce qui parle
+    # d'IMPLANTATION ou de RETRAIT (plus « limites », trop large). `terms` = mots servant à CITER la page
+    # du mot dans l'article et à rendre l'extrait autour (points 2-3).
     q_fts = q
+    terms = re.findall(r"[0-9A-Za-zÀ-ÿ]{2,}", q)
     if re.search(r"(?i)\brecul", q):
-        q_fts = f"{q} OR retrait OR implantation OR limites"
+        q_fts = f"{q} OR retrait OR implantation"
+        terms = terms + ["retrait", "implantation"]
     if insee:
         mil = _plu_millesimes().get(insee)
         if mil and mil["statut"] == "rnu":
@@ -3238,14 +3241,18 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                                 f"en mairie (complétion auto à l'approbation, veille M41).") if rev else
                                (f"{nm} : règlement non ingéré (hors corpus) — rien à servir. "
                                 f"Voir /plu-annuaire/communes.")}
-    res = search_reglement(db, q_fts, insee, limit=limit, zone=zone, offset=offset)
-    # OUT-PLU-008 — `n_total` = total des correspondances (sans plafond) ; `affiches` = page servie.
-    # L'écran dit « N affichés sur M » plutôt que de présenter le compte plafonné comme le total.
+    res = search_reglement(db, q_fts, insee, limit=limit, zone=zone, offset=offset, terms=terms)
+    # OUT-PLU-008 — `n_total` = total des articles correspondant (sans plafond) ; `n` = page servie.
     n_total = count_reglement(db, q_fts, insee, zone=zone)
     for r in res:
         r["gpu_consult"] = "https://www.geoportail-urbanisme.gouv.fr/"
-        # RETOURS-23 (pt 6) — titre « en clair » + corps (aperçu sans le titre) pour la carte d'extrait.
-        r["titre"], r["corps"] = plu_titre_corps(r.get("texte_verbatim") or "")
+        # OUTIL-PLU-FIX-3 (points 2-3) — la page CITÉE est celle du mot dans l'article (`page_match`) ;
+        # « p. X-Y » quand l'article court sur plusieurs pages ; le corps est l'extrait AUTOUR du mot,
+        # « Lire tout » montrera l'article entier (texte_verbatim), exceptions comprises.
+        r["page_pdf"] = r.get("page_match") or r.get("page_debut") or r.get("page_pdf")
+        r["titre"], _corps = plu_titre_corps(r.get("texte_verbatim") or "")
+        r["corps"] = r.get("extrait") or _corps
+        r.pop("page_map", None)
         if r.get("pagination_ambigue"):
             r["pagination_note"] = ("pagination du document ambiguë (double numérotation) — la page "
                                     "citée est la PAGE PDF du fichier, pas la page imprimée.")
@@ -3280,9 +3287,17 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
         message = (f"Aucun extrait indexé ne correspond à « {q} »"
                    + (f" en zone {zone}" if zone else "")
                    + " — le règlement complet (PDF) peut contenir d'autres passages.")
+    # OUTIL-PLU-FIX-3 (point 8) — sous filtre de zone, on présente À PART les « Dispositions communes »
+    # (articles sans zone propre, qui ne nomment aucune autre zone), jamais mélangées aux articles de
+    # la zone demandée.
+    communes_list: list[dict] = []
+    if zone:
+        communes_list = [r for r in res if r.get("zone") is None]
+        res = [r for r in res if r.get("zone") is not None]
     return {"query": q, "insee": insee, "n": len(res), "n_total": n_total,
             "limit": limit, "offset": offset, "message": message,
-            "tronque": n_total > len(res), "resultats": res,
+            "tronque": n_total > len(res) + len(communes_list), "resultats": res,
+            "dispositions_communes": communes_list,
             "exceptions_zone": exceptions_zone, "exceptions_source": exceptions_source,
             "note_perimetre": ("Recherche communale (texte du règlement) : ne vérifie pas, à la parcelle, "
                                "les prescriptions graphiques, les servitudes (SUP) ni le PPR."),

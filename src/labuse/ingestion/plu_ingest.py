@@ -7,7 +7,9 @@ Granularité = article (unité naturelle, regex-détectable). On cite la PAGE PD
 page imprimée seule (noyée dans les en-têtes, ambiguë en double numérotation)."""
 from __future__ import annotations
 
+import json as _json
 import re
+import unicodedata as _ud
 
 import fitz
 from sqlalchemy import text
@@ -26,6 +28,7 @@ CREATE TABLE IF NOT EXISTS plu_reglement_extrait (
     page_pdf           int  NOT NULL,
     page_debut         int,
     page_fin           int,
+    page_map           jsonb,
     texte_verbatim     text NOT NULL,
     doute              boolean NOT NULL DEFAULT false,
     doute_motif        text,
@@ -41,6 +44,9 @@ ALTER TABLE plu_reglement_extrait ADD COLUMN IF NOT EXISTS pdf_url text;
 -- OUTIL-PLU-FIX-2 (B1) — page_debut/page_fin : bornes de page de l'extrait (égales, borné à la page).
 ALTER TABLE plu_reglement_extrait ADD COLUMN IF NOT EXISTS page_debut int;
 ALTER TABLE plu_reglement_extrait ADD COLUMN IF NOT EXISTS page_fin   int;
+-- OUTIL-PLU-FIX-3 — page_map = [[offset_dans_texte, page_pdf], …] : situe le mot cité à sa page réelle
+-- dans un article multi-pages (l'article n'est plus coupé par page).
+ALTER TABLE plu_reglement_extrait ADD COLUMN IF NOT EXISTS page_map jsonb;
 CREATE INDEX IF NOT EXISTS ix_plu_extrait_tsv    ON plu_reglement_extrait USING gin(tsv);
 CREATE INDEX IF NOT EXISTS ix_plu_extrait_insee  ON plu_reglement_extrait(insee);
 CREATE INDEX IF NOT EXISTS ix_plu_extrait_doc    ON plu_reglement_extrait(insee, document);
@@ -71,6 +77,17 @@ def _looks_cross_ref(flat: str, start: int) -> bool:
     pre = _norm(flat[max(0, start - 30):start])
     return bool(_CROSSREF_PRE.search(pre))
 
+
+def _valid_header(ref: str) -> bool:
+    """OUTIL-PLU-FIX-3 (B3) — un titre « ZONE X » n'est un VRAI en-tête que si X est un code de zone
+    (U/AU/A/N…). « Zone de », « Zone du », « Zone qui », « Zone mixte », une référence cadastrale
+    « Zone CL0852 » ne sont PAS des zones : ni extrait bidon, ni faux découpage. Les en-têtes
+    ARTICLE/CHAPITRE/TITRE/SECTION restent acceptés tels quels."""
+    m = _ZONE_FROM_ZONE.match(ref)
+    if ref.upper().startswith("ZONE") and m:
+        return _valid_zone(m.group(1)) is not None
+    return True
+
 # OUTIL-PLU-FIX-1 (LOT 4) — un code de zone réunionnais : préfixe optionnel (chiffre), classe
 # U/AU/A/N, puis secteur. Sert à REFUSER les faux libellés (QUI, EST, DE, R, L, SONT, RURAL…) issus
 # d'un « ZONE <mot> » attrapé dans la prose : un libellé qui n'a pas cette forme devient « sans
@@ -89,10 +106,14 @@ def _norm(s: str) -> str:
 
 
 def _valid_zone(z: str | None) -> str | None:
-    """Renvoie le code zone normalisé (MAJ) s'il a la forme d'un code réunionnais, sinon None."""
+    """Renvoie le code zone normalisé (MAJ) s'il a la forme d'un code réunionnais, sinon None.
+    OUTIL-PLU-FIX-3 — rejette aussi les RÉFÉRENCES CADASTRALES prises pour des zones (« AK0561 »,
+    « CL0852 ») : un vrai code de zone n'a jamais 3 chiffres consécutifs (au plus « AU3 », « 2AU »)."""
     if not z:
         return None
     z = _norm(z).upper().rstrip('.')
+    if re.search(r'\d{3,}', z):          # section+parcelle cadastrale, pas une zone
+        return None
     return z if _ZONE_SHAPE.match(z) else None
 
 
@@ -115,10 +136,19 @@ def _banner_zone(expr: str) -> str | None:
     return _valid_zone(pref) or codes[0]
 
 
+# OUTIL-PLU-FIX-3 (D3) — en-tête/pied COURANT qui VARIE d'une page à l'autre (le « / Titre 2 – Livret 1
+# – Bassin de vie X » change de livret en livret → la détection par fréquence le rate). On le reconnaît
+# aussi par son DÉBUT DE LIGNE : « Règlement… », « Commune de… », « Ville de… », « Mairie… », « Plan
+# Local d'Urbanisme… », « PLU approuvé… », « Edition… », « Modifié par… », une liste de dates, etc.
+_CHROME_PAT = re.compile(
+    r"(?i)^\s*(?:r[eè]glement\b|commune d|ville d|mairie\b|plan local|p\.?\s?l\.?\s?u\b"
+    r"|plu approuv|[eé]dition\b|modifi[eé] par|dossier approuv|d[eé]partement\b"
+    r"|\d{1,2}/\d{1,2}/\d{2,4}[\s,]*$)")
+
+
 def _detect_chrome(pages: list[str]) -> set[str]:
-    """Lignes d'en-tête/pied COURANTES (répétées sur beaucoup de pages) : bandeau « Règlement –
-    Commune de … », ligne « PLU approuvé le … / Edition … / Modifié par DCM du : … », numéros de
-    page. Seuil = max(4, pages/5)."""
+    """Lignes d'en-tête/pied COURANTES CONSTANTES (répétées sur beaucoup de pages). Seuil = max(4,
+    pages/5). Complété par `_CHROME_PAT` pour le chrome qui varie (voir `_clean_pages`)."""
     from collections import Counter
     c: Counter = Counter()
     for t in pages:
@@ -130,29 +160,36 @@ def _detect_chrome(pages: list[str]) -> set[str]:
 
 
 def _clean_pages(pages: list[str]) -> tuple[list[str], list[str | None]]:
-    """Retire de chaque page le « chrome » (en-têtes/pieds courants, bannière de zone, n° de page) et
-    renvoie (pages nettoyées, zone de bannière par page). La bannière n'est PLUS dans le flux — elle
-    ne coupe donc plus l'article (LOT 3) — mais sa zone est conservée pour l'étiquette (LOT 4)."""
+    """Retire de chaque page le « chrome » (en-têtes/pieds courants — constants OU variables par page,
+    D3 —, bannière de zone, n° de page) et renvoie (pages nettoyées, zone de bannière par page). Le
+    texte servi est ainsi celui du règlement, sans en-têtes/pieds répétés."""
     chrome = _detect_chrome(pages)
     clean: list[str] = []
     zbanner: list[str | None] = []
     for t in pages:
         cur: str | None = None
         kept: list[str] = []
-        for idx, l in enumerate(t.splitlines()):
+        lines = t.splitlines()
+        nlines = len(lines)
+        for idx, l in enumerate(lines):
             n = _norm(l)
             if not n:
                 kept.append(l)
                 continue
             top = idx < 12       # le titre de chapitre (« Zone Uavap ») peut suivre un bandeau de 4-5 lignes
-            if n in chrome:
-                continue
+            bottom = idx >= nlines - 3
+            # BANNIÈRE d'ABORD : « Règlement - ZONE UB » (Petite-Île) commence par « Règlement » comme le
+            # chrome ; il faut en extraire la zone AVANT de retirer la ligne comme chrome.
             mb = _BANNER.match(n) if top else None
             if mb:
                 bz = _banner_zone(mb.group(1))
                 if bz:
                     cur = cur or bz
                     continue
+            if n in chrome:
+                continue
+            if (top or bottom) and _CHROME_PAT.match(n):   # D3 — chrome qui varie par page
+                continue
             if _PAGEFOOT.match(n):
                 continue
             kept.append(l)
@@ -217,38 +254,15 @@ def _pagination_ambigue(pages: list[str]) -> bool:
     return False
 
 
-_MAX_CHARS = 2800                               # taille max d'un extrait (B1 : « avec une taille maximale »)
-_SUBART = re.compile(r'(?m)(?=^\s*(?:\d{1,2}\.\d{1,2}\b|[-–•]\s))')   # frontière de sous-article/alinéa
-
-
-def _chunk(body: str, maxlen: int = _MAX_CHARS) -> list[str]:
-    """Découpe un corps trop long au sous-article / paragraphe, en morceaux ≤ maxlen (B1)."""
-    body = body.strip()
-    if len(body) <= maxlen:
-        return [body] if body else []
-    parts = [p for p in _SUBART.split(body) if p.strip()] or [body]
-    out, cur = [], ""
-    for p in parts:
-        if cur and len(cur) + len(p) > maxlen:
-            out.append(cur.strip()); cur = ""
-        while len(p) > maxlen:                  # paragraphe isolé plus long que maxlen → coupe dure
-            out.append(p[:maxlen].strip()); p = p[maxlen:]
-        cur += p
-    if cur.strip():
-        out.append(cur.strip())
-    return out
-
-
 def _split_articles(path: str) -> tuple[list[dict], bool]:
-    """Découpe le PDF en extraits (article → sous-article/paragraphe), BORNÉS À LA PAGE.
-    Chaque extrait porte page_debut == page_fin == page_pdf : la page citée est EXACTEMENT celle où se
-    trouve le texte (OUTIL-PLU-FIX-2 B1 — fini les blocs fusionnés cités à leur page de tête).
+    """OUTIL-PLU-FIX-3 — l'extrait est l'ARTICLE ENTIER : d'un en-tête d'article au suivant, QUEL QUE
+    SOIT le nombre de pages, avec ses sous-articles, ses « Toutefois… » et ses exceptions. JAMAIS coupé
+    par une page ni par une taille. La PAGE est une donnée à part : `page_map` = suite de (offset dans le
+    texte → page PDF), d'où `page_debut`/`page_fin` et, à la recherche, la page EXACTE du mot.
 
-    Méthode : on coupe le flux nettoyé à l'UNION des frontières d'EN-TÊTE (article/zone, filtrées des
-    renvois de prose, B3) ET des frontières de PAGE. Un article qui court sur plusieurs pages devient
-    donc une suite d'extraits, un par page, portant tous sa référence. Un corps de page trop dense est
-    re-scindé au sous-article (`_chunk`). La zone vient de la BANNIÈRE de la page (fiable) ou, à défaut,
-    de l'en-tête d'article (C3 — plus de « Article N 14 » qui étiquette 50 pages en N)."""
+    Étiquette de zone (point 5) : d'ABORD l'en-tête de l'article (« ARTICLE N 1 » → N), ensuite le
+    chapitre (titre « ZONE … »), et seulement À DÉFAUT la bannière de page. L'en-tête PRIME sur la
+    bannière (corrige E2 : plus de « ARTICLE N 1..6 » rangés en AUES)."""
     import bisect
     pages = _pages(path)
     ambigu = _pagination_ambigue(pages)       # détecté sur le texte brut (numéros imprimés)
@@ -263,32 +277,56 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
         j = bisect.bisect_right(page_off, off) - 1
         return starts[j][1] if j >= 0 else 1
 
-    # en-têtes RÉELS (B3) : on écarte les références croisées lues en pleine phrase.
-    heads = [m for m in _HEADER.finditer(flat) if not _looks_cross_ref(flat, m.start())]
-    head_pos = [m.start() for m in heads]
+    # en-têtes RÉELS (B3) : on écarte les renvois de prose ET les faux « ZONE <mot/cadastre> ».
+    heads = [m for m in _HEADER.finditer(flat)
+             if not _looks_cross_ref(flat, m.start()) and _valid_header(_norm(m.group(1)))]
+    # frontières = SEULEMENT les en-têtes (plus jamais les frontières de page → article entier).
+    bounds = sorted({m.start() for m in heads} | {len(flat)})
     head_ref = {m.start(): _norm(m.group(1)) for m in heads}
-    cuts = sorted(set(head_pos) | set(page_off) | {len(flat)})
-    out: list[dict] = []
-    for a, b in zip(cuts, cuts[1:]):
-        body = flat[a:b].strip()
-        if not body:
-            continue
-        j = bisect.bisect_right(head_pos, a) - 1
-        ref = head_ref[head_pos[j]] if j >= 0 else None
-        pg = page_of(a)
+    head_pos = sorted(head_ref)
+
+    def _emit(a: int, b: int, ref: str | None) -> dict | None:
+        raw = flat[a:b]
+        texte = raw.strip()
+        if not texte:
+            return None
+        letters = len(re.sub(r'[^0-9A-Za-zÀ-ÿ]', '', texte))
         is_zone_title = bool(ref) and ref.upper().startswith("ZONE")
-        if is_zone_title and len(re.sub(r'\s', '', body)) < 60:
-            continue                           # titre de zone nu (sommaire/intitulé) : pas un extrait
+        # entrée de SOMMAIRE (points de suite « ZONE AU1 …… 3 ») ou titre de zone nu : pas un extrait.
+        if (is_zone_title and letters < 40) or (texte.count('.') > letters and letters < 40):
+            return None
         zm = _ZONE_FROM_ART.match(ref or "") or _ZONE_FROM_ZONE.match(ref or "")
         z_ref = _valid_zone(zm.group(1)) if zm else None
-        zone = zbanner[pg - 1] or z_ref        # bannière de PAGE d'abord (per-page, fiable) ; sinon l'en-tête
-        for piece in _chunk(body):
-            pn = len(re.sub(r'\s', '', piece))
-            out.append({
-                "article_ref": ref, "zone": zone, "page_pdf": pg,
-                "page_debut": pg, "page_fin": pg, "texte": piece, "doute": pn < 25,
-                "doute_motif": "extrait quasi vide — page peut-être illisible/scannée, à vérifier au PDF" if pn < 25 else None,
-            })
+        pg0 = page_of(a)
+        # PRIORITÉ (points 5 / E2) : l'EN-TÊTE DE L'ARTICLE d'abord (« ARTICLE N 1 » → N), sinon la
+        # bannière de la page de début. On n'utilise PAS de « zone de chapitre » héritée du sommaire
+        # (elle polluait : le dernier « ZONE N » du sommaire étiquetait tout le document en N).
+        zone = z_ref or zbanner[pg0 - 1]
+        lead = len(raw) - len(raw.lstrip())
+        pmap = [[0, pg0]]                        # page_map : offset dans `texte` → page PDF
+        for o in page_off:
+            if a < o < b:
+                off = o - a - lead
+                p = page_of(o)
+                if off >= 0 and p != pmap[-1][1]:
+                    pmap.append([off, p])
+        net = len(re.sub(r'\s', '', texte))
+        return {"article_ref": ref, "zone": zone, "page_pdf": pg0,
+                "page_debut": pg0, "page_fin": page_of(b - 1), "page_map": pmap,
+                "texte": texte, "doute": net < 25,
+                "doute_motif": "extrait quasi vide — page peut-être illisible/scannée, à vérifier au PDF" if net < 25 else None}
+
+    out: list[dict] = []
+    first = head_pos[0] if head_pos else len(flat)
+    pre = _emit(0, first, None)                 # préambule / dispositions générales avant le 1er en-tête
+    if pre and len(re.sub(r'\s', '', pre["texte"])) >= 200:
+        out.append(pre)
+    for a in head_pos:
+        j = bisect.bisect_right(bounds, a)
+        b = bounds[j] if j < len(bounds) else len(flat)
+        e = _emit(a, b, head_ref[a])
+        if e:
+            out.append(e)
     return out, ambigu
 
 
@@ -327,17 +365,20 @@ def ingest_reglement(session: Session, *, insee: str, commune: str, idurba: str,
         session.execute(text("""
             INSERT INTO plu_reglement_extrait
               (insee, commune, idurba, millesime, document, zone, article_ref, page_pdf,
-               page_debut, page_fin, texte_verbatim, doute, doute_motif, pagination_ambigue,
+               page_debut, page_fin, page_map, texte_verbatim, doute, doute_motif, pagination_ambigue,
                source_url, pdf_url, fetched_at, tsv)
             VALUES
               (:insee, :commune, :idurba, :millesime, :document, :zone, :article_ref, :page_pdf,
-               :page_debut, :page_fin, :texte, :doute, :doute_motif, :ambigu, :url, :pdf_url, :fetched_at,
+               :page_debut, :page_fin, CAST(:page_map AS jsonb), :texte, :doute, :doute_motif, :ambigu,
+               :url, :pdf_url, :fetched_at,
                to_tsvector('fr_unaccent',
                  coalesce(:article_ref,'') || ' ' || coalesce(:zone,'') || ' ' || :texte))
         """), {"insee": insee, "commune": commune, "idurba": idurba, "millesime": millesime,
                "document": document, "zone": e["zone"], "article_ref": e["article_ref"],
                "page_pdf": e["page_pdf"], "page_debut": e.get("page_debut", e["page_pdf"]),
-               "page_fin": e.get("page_fin", e["page_pdf"]), "texte": e["texte"], "doute": e["doute"],
+               "page_fin": e.get("page_fin", e["page_pdf"]),
+               "page_map": _json.dumps(e.get("page_map") or [[0, e["page_pdf"]]]),
+               "texte": e["texte"], "doute": e["doute"],
                "doute_motif": e["doute_motif"], "ambigu": ambigu, "url": source_url,
                "pdf_url": pdf_url, "fetched_at": fetched_at})
     if commit:
@@ -434,45 +475,105 @@ def zones_apparentees(session: Session, zone: str, insee: str | None) -> list[st
     return sorted({z.upper() for z in stored if _zone_match(zone, z)})
 
 
+# OUTIL-PLU-FIX-3 (point 8) — un extrait SANS zone qui NOMME une zone/secteur précis (« en zone UA… »,
+# « secteur AU3… ») n'est PAS une disposition commune à toutes les zones : il ne doit pas remonter au
+# filtre d'une AUTRE zone. Les vraies dispositions communes (lexique, dispositions générales qui ne
+# nomment aucune zone) restent incluses, et sont présentées à part (« Dispositions communes »).
+_ZNAME_SQL = r'\y(zones?|secteurs?)\s+[0-9]{0,2}(AU|U|A|N)[0-9A-Za-z]'
+
+
 def _search_where(q: str, insee: str | None, zones_ok: list[str] | None,
                   zone_given: bool) -> tuple[list[str], dict]:
     """Clause WHERE commune à search/count (config `fr_unaccent` : casse + accents).
-    Filtre zone (OUTIL-PLU-FIX-2) : appariement EXACT sur la liste d'apparentées `zones_ok` (jamais de
-    LIKE qui confondait A et AU, B2) ; on INCLUT aussi les extraits SANS étiquette (`zone IS NULL`) car
-    ils portent les dispositions GÉNÉRALES, applicables à toute zone — sinon 31–41 % du règlement
-    (Le Port, Saint-Pierre, Cilaos) devenaient inatteignables dès qu'on filtrait (C2)."""
+    Filtre zone (OUTIL-PLU-FIX-2/3) : appariement EXACT sur la liste d'apparentées `zones_ok` (jamais de
+    LIKE qui confondait A et AU, B2) ; on inclut les dispositions COMMUNES (`zone IS NULL` qui ne nomment
+    PAS une autre zone, point 8)."""
     where = ["tsv @@ websearch_to_tsquery('fr_unaccent', :q)"]
     params: dict = {"q": q}
     if insee:
         where.append("insee = :insee")
         params["insee"] = insee
     if zone_given:
-        where.append("(upper(zone) = ANY(:zones) OR zone IS NULL)")
+        where.append("(upper(zone) = ANY(:zones) OR (zone IS NULL AND texte_verbatim !~* :znamep))")
         params["zones"] = zones_ok or []
+        params["znamep"] = _ZNAME_SQL
     return where, params
 
 
+def locate_match(texte: str, page_map: list | None, terms: list[str]) -> tuple[int | None, str]:
+    """OUTIL-PLU-FIX-3 (points 2-3) — dans un article (possiblement multi-pages), situe la 1re
+    occurrence d'un des `terms` (insensible casse/accents), rend (page PDF du mot, extrait AUTOUR du
+    mot). Fonde la page citée et l'ancre `#page` sur la position RÉELLE du mot, pas sur la page de tête."""
+    import bisect
+
+    def ua(s: str) -> str:
+        # unaccent 1:1 (longueur PRÉSERVÉE) : chaque caractère → sa base, sinon les offsets ne
+        # correspondraient plus au page_map (bug mesuré : 8 % de pages fausses).
+        out = []
+        for ch in s.lower():
+            d = _ud.normalize("NFD", ch)
+            out.append(d[0] if d else ch)
+        return "".join(out)
+    ut = ua(texte)
+    # on cite le mot SIGNIFICATIF, pas un mot-outil : « emprise au sol » → on situe « emprise »/« sol »,
+    # jamais « au » (qui est partout et ferait citer la mauvaise page). On garde les termes ≥ 4 lettres ;
+    # si aucun, on retombe sur tous.
+    toks = [ua(t).strip() for t in (terms or []) if len(ua(t).strip()) >= 2]
+    sig = [t for t in toks if len(t) >= 4] or toks
+    firsts = {}
+    for tu in sig:
+        i = ut.find(tu)
+        if i >= 0:
+            firsts[tu] = i
+    if not firsts:
+        best = 0
+    else:
+        # cite le CLUSTER : la position où le plus de mots cherchés sont PROCHES (l'expression
+        # « emprise au sol », « espaces verts » est servie à sa vraie page), à défaut la 1re occurrence.
+        def cluster(pos: int) -> int:
+            return sum(1 for v in firsts.values() if pos - 60 <= v <= pos + 260)
+        best = min(firsts.values(), key=lambda p: (-cluster(p), p))
+    pm = page_map or [[0, None]]
+    offs = [int(p[0]) for p in pm]
+    j = max(0, bisect.bisect_right(offs, best) - 1)
+    page = pm[j][1]
+    a, b = max(0, best - 120), min(len(texte), best + 220)
+    snip = texte[a:b].strip()
+    if a > 0:
+        snip = "… " + snip
+    if b < len(texte):
+        snip = snip + " …"
+    return page, snip
+
+
 def search_reglement(session: Session, q: str, insee: str | None = None, limit: int = 25,
-                     zone: str | None = None, offset: int = 0) -> list[dict]:
-    """Recherche full-text (fr_unaccent) qui rend le VERBATIM SOURCÉ complet + la référence + le lien.
-    `insee` None = île entière. `zone` filtre la famille de zone et ses secteurs (classe-conscient) +
-    les dispositions générales. `offset` pagine RÉELLEMENT. Aucun résumé : `texte_verbatim` est le texte
-    brut ; `doute`/`pagination_ambigue` sont RENDUS ; `page_debut`/`page_fin` bornent la page citée."""
+                     zone: str | None = None, offset: int = 0,
+                     terms: list[str] | None = None) -> list[dict]:
+    """Recherche full-text (fr_unaccent). L'unité est l'ARTICLE ENTIER (`texte_verbatim`) ; `terms`
+    (mots de la requête) sert à CITER la page du mot dans l'article (`page_match`) et à rendre l'extrait
+    AUTOUR du mot (`extrait`). `page_debut`/`page_fin` donnent « p. X-Y ». `offset` pagine réellement."""
     zones_ok = zones_apparentees(session, zone, insee) if zone else None
     where, params = _search_where(q, insee, zones_ok, bool(zone))
     params["lim"] = limit
     params["off"] = max(0, offset)
     rows = session.execute(text(f"""
         SELECT insee, commune, idurba, to_char(millesime,'YYYY-MM-DD') AS millesime, document,
-               zone, article_ref, page_pdf, page_debut, page_fin, texte_verbatim, doute, doute_motif,
-               pagination_ambigue, source_url, pdf_url,
+               zone, article_ref, page_pdf, page_debut, page_fin, page_map, texte_verbatim, doute,
+               doute_motif, pagination_ambigue, source_url, pdf_url,
                ts_rank(tsv, websearch_to_tsquery('fr_unaccent', :q)) AS rang
         FROM plu_reglement_extrait
         WHERE {' AND '.join(where)}
         ORDER BY rang DESC, insee, page_pdf, id
         LIMIT :lim OFFSET :off
     """), params).mappings().all()
-    return [dict(r) for r in rows]
+    out = []
+    for r in rows:
+        d = dict(r)
+        pg, snip = locate_match(d.get("texte_verbatim") or "", d.get("page_map"), terms or [])
+        d["page_match"] = pg or d.get("page_debut") or d.get("page_pdf")
+        d["extrait"] = snip
+        out.append(d)
+    return out
 
 
 def count_reglement(session: Session, q: str, insee: str | None = None,
