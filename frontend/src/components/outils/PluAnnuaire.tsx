@@ -213,7 +213,7 @@ export function PluAnnuaire() {
               <div className="mt-0.5">
                 Indexé pour la recherche : ≈ {cur.pct_indexe} % des pages de texte
                 {/* OUTIL-PLU-FIX-4 (critère 3) — part indexée À L'ARTICLE vs AU CHAPITRE, dite séparément. */}
-                {cur.pct_article != null ? <> (dont ≈ {cur.pct_article} % à l’article{(cur.pct_chapitre ?? 0) > 0 ? `, ${cur.pct_chapitre} % au chapitre` : ''})</> : null}
+                {cur.pct_article != null ? <> (dont ≈ {cur.pct_article} % à l’article{cur.pct_chapitre ? `, ${cur.pct_chapitre} % au chapitre` : ''})</> : null}
                 {cur.pages_image ? <> · <b className="text-cp-amber">{cur.pages_image} page{cur.pages_image > 1 ? 's' : ''} en image</b> (non indexée{cur.pages_image > 1 ? 's' : ''})</> : null}
                 {cur?.pagination_ambigue ? ' · pagination à vérifier' : ''}
                 {cur.pct_indexe < 100 ? ' — le reste est dans le PDF intégral.' : '.'}
