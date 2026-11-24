@@ -840,6 +840,9 @@ export interface PluExtrait {
   // étendue ; pages_match = TOUTES les pages où une forme du mot apparaît (pluriels compris).
   page_debut?: number | null; page_fin?: number | null; page_match?: number | null
   pages_match?: number[] | null; extrait?: string
+  // OUTIL-PLU-FIX-9 (point 4) — un article générique servi à l'identique sous plusieurs zones est
+  // regroupé à l'affichage : zones_concernees = toutes les zones où CETTE règle s'applique.
+  zones_concernees?: string[] | null
 }
 export interface PluSearch {
   query: string; insee: string | null; n: number; n_total?: number; tronque?: boolean; resultats: PluExtrait[]; message?: string; avis?: string
@@ -853,6 +856,8 @@ export interface PluSearch {
   exceptions_source?: string | null
   // OUTIL-PLU-FIX-2 (M4) — note de périmètre servie dans le payload (consommateur non-UI).
   note_perimetre?: string | null
+  // OUTIL-PLU-FIX-6 (point 1) — « AU3c : le règlement renvoie à U3c » quand le secteur filtré renvoie.
+  renvoi_note?: string | null
 }
 export interface PluCommune {
   insee: string; commune: string; statut: string; idurba?: string; millesime?: string
@@ -866,6 +871,7 @@ export interface PluCommune {
   pct_article?: number | null; pct_chapitre?: number | null; peu_structure?: boolean | null
   // OUTIL-PLU-FIX-1 (LOT 1) — dates DISTINCTES + actes postérieurs + inventaire des procédures (sourcés).
   date_approbation?: string | null; publication_gpu?: string | null; edition?: string | null
+  millesime_lot?: string | null   // OUTIL-PLU-FIX-7 (point 4) — date du dépôt GPU, nommée distinctement
   modifications?: { type: string; date?: string; source?: string; note?: string }[] | null
   procedures_inventaire?: { type: string; date?: string; source?: string }[] | null
   note_doc?: string | null
@@ -2723,6 +2729,7 @@ export interface EtudeStationnementRegimes {
     citation: string | null; applique: boolean; etat: string
     regle_courte?: string | null   // ETUDE-V6-3 (item 3) — règle en clair pour le récap
     source_url?: string | null     // ETUDE-V6-4 (item 3) — lien doc PLU officiel
+    distingue_autres_cas?: boolean  // OUTIL-PLU-FIX-7 (point 2) — le barème distingue d'autres cas (social/opération…)
   }
   plafond_national: {
     categorie: string; reference: string; ratio_plafond: number

@@ -757,6 +757,16 @@ def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, i
         "regle_courte": _regle_stationnement_courte(b),
         # ETUDE-STATIONNEMENT-FIX-9 (point 3) — bornes de surface (seuils) pour l'affichage décimal près d'un seuil.
         "bornes_surface_m2": (b.bornes_surface_m2() if hasattr(b, "bornes_surface_m2") else []),
+        # OUTIL-PLU-FIX-7 (point 2) — ÉCRAN SEULEMENT : le barème du PLU distingue d'AUTRES cas (logement
+        # social/aidé, senior, étudiant, opération, seuils publics…) au-delà de la valeur « logement
+        # ordinaire » affichée. On le SIGNALE (la fiche renvoie alors à l'article + page), sans changer le
+        # calibrage : Saint-Louis UA 12.2 (1 social / 2 autres / 0,5 public), Saint-Pierre Ud6 (locatif social).
+        "distingue_autres_cas": bool(
+            len(getattr(b, "lignes", ()) or ()) > 1
+            or (getattr(b, "conditions", ()) or ())
+            or any(getattr(l, "role", None) == "operation"
+                   or getattr(l, "destination", None) not in (None, "collectif", "individuel", "logement")
+                   for l in (getattr(b, "lignes", ()) or ()))),
     }
     sous_rayon, dist = _tcsp_sous_rayon(session, idus)
     cat = _L15134.get(type_projet)
