@@ -960,8 +960,9 @@ DONNEES: dict[str, Donnee] = {
     domaine_source="régimes de TVA du questionnaire (renvoi expert-comptable)",
     table="(saisie client — questionnaire du Financier)"),
  "duree_portage_saisi_mois": C("Durée de portage (saisi)", "mois", "parcelle",
-    "durée de portage en mois — écran 4, pré-remplie par le délai d'instruction médian + 20 mois "
-    "de chantier",
+    # OUTIL-PERMIS-FIX-7 (Point 1) — l'ancien pré-remplissage du portage par un délai d'instruction a été
+    # retiré (le délai n'est jamais mesuré) : c'est une SAISIE CLIENT pure, sans valeur proposée.
+    "durée de portage en mois — écran 4, saisie client (aucune valeur pré-remplie)",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/bilan.py (écran 4)",
     reservoirs=(), portee="projet", table="(saisie client — questionnaire du Financier)"),
  "apport_saisi_eur": C("Apport (saisi)", "€", "parcelle",

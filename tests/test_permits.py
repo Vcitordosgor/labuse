@@ -99,6 +99,27 @@ def test_dynamique_respecte_le_rayon(db_session):
     assert pm["dynamique"]["logements_recents"] == 10
 
 
+def test_dynamique_exclut_les_annules(db_session):
+    """OUTIL-PERMIS-FIX-7 (Point 3) — les permis ANNULÉS (ETAT_DAU=4) SORTENT du compte « à proximité »
+    (n, logements, sans-nb) et sont comptés À PART (`permis_annules`), via la règle d'état unique
+    (permis_classe.annule_sql). On sème 2 permis PROCHES : un normal (3 logts) + un ANNULÉ (5 logts)."""
+    import json as _j
+    pid = _parcel(db_session, "PMT00300",
+                  "POLYGON((55.35 -21.35,55.351 -21.35,55.351 -21.349,55.35 -21.349,55.35 -21.35))")
+    for num, pt, lgt, etat in (("PCANN-OK", "POINT(55.3505 -21.3495)", 3, "2"),      # autorisé
+                               ("PCANN-NUL", "POINT(55.3506 -21.3494)", 5, "4")):    # ANNULÉ (code 4)
+        db_session.execute(text(
+            "INSERT INTO sitadel_permits (permit_id,type,date,idu_codes,commune,geom,raw) VALUES "
+            "(:p,'PC', now()-interval '6 months', '[]'::jsonb,'Permia', ST_GeomFromText(:w,4326), CAST(:raw AS jsonb))"),
+            {"p": num, "w": pt, "raw": _j.dumps({"nb_lgt": lgt, "etat": etat, "daact": None})})
+    pm = nearby_permits(db_session, pid, radius_m=500, fenetre_mois=24)
+    dyn = pm["dynamique"]
+    assert dyn["permis_recents"] == 1          # l'annulé est HORS du compte
+    assert dyn["logements_recents"] == 3       # les 5 logts de l'annulé ne sont pas sommés
+    assert dyn["permis_annules"] == 1          # mais il est compté À PART
+    db_session.execute(text("DELETE FROM sitadel_permits WHERE permit_id IN ('PCANN-OK','PCANN-NUL')"))
+
+
 def test_delai_depuis_an_depot_et_fiche_masquee(db_session):
     """OUTIL-PERMIS-FIX-4 (Points 2-4) — la couche des délais dérive le dépôt de AN_DEPOT (année), PAS de
     DR_DEPOT (= date d'autorisation, corrompu) ; et la fiche masque dépôt+délai quand le dépôt n'est pas

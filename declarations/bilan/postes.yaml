@@ -83,7 +83,9 @@ programme:
 calendrier:
   - {id: compromis,    libelle: "Compromis",                 defaut: 0}
   - {id: depot_pc,     libelle: "Dépôt PC",                  defaut: 2}
-  - {id: obtention_pc, libelle: "Obtention PC",              defaut: 6, repere: sitadel}
+  # OUTIL-PERMIS-FIX-6 (Point 2) — `repere: sitadel` RETIRÉ (délai jamais mesuré, non proposé) ; le
+  # `defaut: 6` est INCHANGÉ → aucun total ne bouge pour un bilan où le bouton n'était pas utilisé.
+  - {id: obtention_pc, libelle: "Obtention PC",              defaut: 6}
   - {id: purge_pc,     libelle: "Purge PC",                  defaut: 9}
   - {id: reiteration,  libelle: "Réitération authentique",   defaut: 18}
   - {id: droc,         libelle: "DROC",                      defaut: 18}
