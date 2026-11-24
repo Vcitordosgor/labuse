@@ -230,6 +230,70 @@ def test_surface_constructible_est_intersection_directe_uau():
         assert abs(u["surface_constructible_m2"] - 21516) <= 30, u["surface_constructible_m2"]
 
 
+# ── OUTIL-ASSEMBLAGE-FIX-2 (LOT 0) — filet : un test par point de la relecture. Écouent AVANT les
+# correctifs (LOT 1-4), passent après. Preuve que le défaut existe, figée en test. ──
+
+def _endpoint_app(idus):
+    """Endpoint /moteurs/assemblage sur la base de l'île (lecture seule), skip si indisponible."""
+    from labuse.api.moteurs import AssemblageIn
+    from labuse.api.moteurs import assemblage as endpoint
+    with _app_session() as s:
+        return endpoint(AssemblageIn(idus=idus), db=s)
+
+
+def test_fix2_cv_affiche_obligation_mixite():
+    """Point 1-2 : l'écran Assemblage doit PORTER l'obligation de mixité du trio CV (bande
+    intermédiaire) et dire que le +178 261 € est une BORNE HAUTE (accession non chiffrée)."""
+    out = _endpoint_app(["97415000CV0724", "97415000CV1506", "97415000CV1507"])
+    if out.get("n", 0) < 2:
+        pytest.skip("parcelles CV absentes")
+    mx = out.get("mixite")
+    assert mx is not None, "payload sans champ `mixite`"
+    assert mx.get("declenchee") is True and mx.get("regime") == "intermediaire"
+    assert mx.get("borne_haute") is True            # CA au prix libre, obligation non chiffrée
+    assert "2" in str(mx.get("article") or "") and mx.get("page")
+
+
+def test_fix2_bande_1500_1800_porte_regle_article_page():
+    """Point 1 : une parcelle en bande 1 500–1 800 → la clause porte la RÈGLE (quota %, article, page)."""
+    from labuse.faisabilite.bilan import _clause_mixite
+    from labuse.faisabilite.engine import Hypotheses
+    h = Hypotheses.charger("Saint-Paul")
+    c = _clause_mixite({"sdp_max_m2": 3000, "sdp_programme_m2": 1600, "logements_estimes": 8,
+                        "terrain_m2": 2000}, h)
+    assert c["regime"] == "intermediaire"
+    assert c.get("quota_pct") == 30 and "2" in str(c.get("article") or "") and c.get("page")
+
+
+def test_fix2_vingt_logements_sous_1500_declenche():
+    """Point 3 : ≥ 20 logements (programme < 1 500 m²) → régime intermédiaire (Art. 2, ligne PC)."""
+    from labuse.faisabilite.bilan import _clause_mixite
+    from labuse.faisabilite.engine import Hypotheses
+    h = Hypotheses.charger("Saint-Paul")
+    c = _clause_mixite({"sdp_max_m2": 2890, "sdp_programme_m2": 1494, "logements_estimes": 20,
+                        "terrain_m2": 3000}, h)   # témoin AY1666
+    assert c["declenchee"] is True and c["regime"] == "intermediaire"
+
+
+def test_fix2_zac_savane_des_tamarins_exclue():
+    """Point 4 : une parcelle dans la ZAC Savane des Tamarins → clause NON déclenchée (Art. 2 p.15)."""
+    from labuse.faisabilite.bilan import _clause_mixite
+    from labuse.faisabilite.engine import Hypotheses
+    h = Hypotheses.charger("Saint-Paul")
+    c = _clause_mixite({"sdp_max_m2": 4000, "sdp_programme_m2": 2000, "logements_estimes": 25,
+                        "terrain_m2": 7000, "zac_mixite_exclue": True}, h)   # ≥1800 ET terrain>6000
+    assert c["declenchee"] is False
+    assert "ZAC" in str(c.get("detail") or "") or "Savane" in str(c.get("detail") or "")
+
+
+def test_fix2_identifiant_introuvable_nomme():
+    """Point 6 : 4 identifiants dont 1 introuvable → l'endpoint NOMME l'écarté (comme /compare)."""
+    out = _endpoint_app(["97415000CV0724", "97415000CV1506", "97415000CV1507", "97415000ZZ9999"])
+    if out.get("n", 0) < 2:
+        pytest.skip("parcelles CV absentes")
+    assert "97415000ZZ9999" in (out.get("introuvables") or []), "introuvable écarté en silence"
+
+
 # ── OUTIL-ASSEMBLAGE-FIX-1 (LOT 3) — mixité : déclenchement sur le PROGRAMME chiffré + régime à bandes ──
 
 def test_clause_mixite_regime_a_bandes_saint_paul():
