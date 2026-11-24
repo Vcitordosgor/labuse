@@ -59,13 +59,14 @@ def test_geste_trimestriel_vide_apres_curation_et_detecte_vieillissement():
     # +45 j : seuls les radars ACTIFS (seuil 30 j) sortent, pas les 90 j
     r45 = V.a_reverifier(reg, datetime.date(2026, 9, 20))
     assert r45 and all(x["seuil"] == 30 and x["actif"] for x in r45)
-    # +106 j : tout le monde sort SAUF les entrées fraîchement re-constatées. OUTIL-COMMUNES-FIX-4 LOT 2 :
-    # Sainte-Marie (97418) et Sainte-Suzanne (97420) ont été re-vérifiées le 2026-11-24 (approbation du PLU)
-    # → leur date_constat est postérieure au 2026-11-20, elles ne sont pas encore dues (22, pas 24).
+    # +106 j : tout le monde sort SAUF les entrées fraîchement re-constatées le 2026-11-24 (date_constat
+    # postérieure au 2026-11-20, pas encore dues) : Sainte-Marie (97418) + Sainte-Suzanne (97420)
+    # approuvées (FIX-4 LOT 2) et La Plaine-des-Palmistes (97406) re-datée de sa pièce du 27/11/2025
+    # (FIX-6 LOT 2) → 24 − 3 = 21.
     due = V.a_reverifier(reg, datetime.date(2026, 11, 20))
-    assert len(due) == 22, f"attendu 22 (24 − 2 fraîchement recurées), obtenu {len(due)}"
+    assert len(due) == 21, f"attendu 21 (24 − 3 fraîchement recurées), obtenu {len(due)}"
     due_insee = {x["insee"] for x in due}
-    assert "97418" not in due_insee and "97420" not in due_insee
+    assert due_insee.isdisjoint({"97418", "97420", "97406"})
 
 
 def test_sursis_s_arme_quand_padd_source():

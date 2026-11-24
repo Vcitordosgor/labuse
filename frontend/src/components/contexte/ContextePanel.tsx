@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { getCommuneAcquisitions, getContexteCommune, motMarcheCommune, motRarete } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
 import { fmtDateNum, fmtAns } from '../../lib/format'   // RECETTE-2 (B2/B5/B6) — dates JJ/MM/AAAA, « 1,1 an »
+import { catnatReste } from '../../lib/catnat'   // FIX-6 LOT 3 — « et N autres » sur le total source
 import { Trace } from '../../lib/trace'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
@@ -22,12 +23,9 @@ function sentenceCase(s: string): string {
   return low.charAt(0).toLocaleUpperCase('fr-FR') + low.slice(1)
 }
 
-// RECETTE-PROD-1 (F) — toute date ISO « ( AAAA-MM-JJ) » (avec espace parasite) → « (JJ/MM/AAAA) ».
-// La source de vérité (config/veille_plu.yaml) est corrigée, mais le contexte est caché : ce normaliseur
-// garantit l'affichage français immédiat quel que soit l'état du cache.
-function normDatesFr(s?: string | null): string {
-  return (s ?? '').replace(/\(\s*(\d{4})-(\d{2})-(\d{2})\)/g, (_m, y, mo, d) => `(${d}/${mo}/${y})`)
-}
+// OUTIL-COMMUNES-FIX-6 LOT 4 — `normDatesFr` RETIRÉ : la carte Urbanisme n'affiche plus la chaîne `source`
+// brute du registre (qui portait la note interne « OUTIL-COMMUNES-FIX-… ») mais `source_citation` servie
+// (collectivité + date, déjà formatée côté API) + le lien `source_url`.
 
 // RECETTE-PROD-1 (F) — `ton` optionnel : colore la valeur selon la tension (vert/orange/rouge), au lieu
 // du vert systématique de `strong`. Sert à aligner « Horizon d'épuisement » sur le signal ZAN (alerte).
@@ -680,12 +678,20 @@ export function ContextePanel() {
               {/* ═══ LES RÈGLES ═══ */}
               <GroupeLabel>Les règles</GroupeLabel>
 
+              {/* OUTIL-COMMUNES-FIX-6 LOT 2 — pour une commune EN RÉVISION, le bandeau (et le détail) portent
+                  la date de la DERNIÈRE PIÈCE de procédure (etat_au), pas celle de la PRESCRIPTION
+                  (date_reglement, souvent ancienne). La Plaine-des-Palmistes : 27/11/2025, pas 24/09/2015. */}
+              {(() => {
+                const _revision = d.plu_statut.statut.startsWith('en ')
+                const _bandeauDate = _revision ? d.plu_statut.etat_au : d.plu_statut.date_reglement
+                return (
               <LigneCarte id="regle-plu" chiffre="statut_plu" ic="§" titre="Urbanisme"
-                sous={d.plu_statut.statut.startsWith('aucune') ? d.plu_statut.statut : `PLU ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${fmtDateNum(d.plu_statut.date_reglement)}` : ''}`}
+                sous={d.plu_statut.statut.startsWith('aucune') ? d.plu_statut.statut : `PLU ${d.plu_statut.statut}${_bandeauDate ? ` · ${fmtDateNum(_bandeauDate)}` : ''}`}
                 val={d.plu_statut.statut} badge ton={d.plu_statut.statut === 'RNU' ? 'orange' : 'vert'}>
                 <p className="text-[12px] leading-relaxed text-txt">
                   {d.plu_statut.statut === 'RNU' ? "Pas de PLU opposable : c'est le Règlement National d'Urbanisme qui s'applique."
                     : d.plu_statut.statut === 'à jour' ? `Le PLU est opposable${d.plu_statut.date_reglement ? ` (approuvé le ${fmtDateNum(d.plu_statut.date_reglement)})` : ''}.`
+                      : _revision ? `Document local — ${d.plu_statut.statut}${d.plu_statut.etat_au ? ` · dernière pièce le ${fmtDateNum(d.plu_statut.etat_au)}` : ''}.`
                       : `Document local — ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${fmtDateNum(d.plu_statut.date_reglement)}` : ''}.`}
                 </p>
                 {/* OUTIL-COMMUNES-FIX-4 LOT 2 — l'état porte la DATE DE SA SOURCE (« état au … ») : un état
@@ -751,8 +757,13 @@ export function ContextePanel() {
                     <p data-plh-sans-objet className="text-[12px] text-txt-mut">Aucun programme local de l'habitat recensé pour l'intercommunalité {d.epci ?? ''}.</p>
                   )}
                 </div>
-                <Source nom={`${normDatesFr(d.plu_statut.source) || 'GPU'} · Zonage PLU (GPU) · PLH (EPCI)`} />
+                {/* OUTIL-COMMUNES-FIX-6 LOT 4 — la ligne de source montre au promoteur la COLLECTIVITÉ, la
+                    DATE de la pièce et le LIEN (source_citation + source_url servis), plus jamais la note
+                    interne « OUTIL-COMMUNES-FIX-… » du registre. */}
+                <Source nom={`${d.plu_statut.source_citation || 'GPU'} · Zonage PLU (GPU) · PLH (EPCI)`} url={d.plu_statut.source_url} />
               </LigneCarte>
+                )
+              })()}
 
               {/* Fiscalité et dispositifs — taxes + zonages + QPV/ORT (creux dits). */}
               {(() => {
@@ -842,11 +853,15 @@ export function ContextePanel() {
                                 a.code_national].filter(Boolean).join(' · ')}</div>
                         </div>
                       ))}
-                      {/* #3 — le « et N autres » compte sur la LISTE affichée (entrées par péril), pas sur
-                          le nombre d'arrêtés distincts (sinon le reste était faux). */}
-                      {d.risques.catnat_detail.length > 6 ? (
-                        <div className="text-[11px] text-txt-dim">et {d.risques.catnat_detail.length - 6} autre{d.risques.catnat_detail.length - 6 > 1 ? 's' : ''}…</div>
-                      ) : null}
+                      {/* OUTIL-COMMUNES-FIX-6 LOT 3 — le « et N autres » se calcule sur le TOTAL de la
+                          source (catnat_perils), pas sur la liste tronquée à 12 (sinon « et 6 autres »
+                          alors qu'il en reste 18). Helper pur `catnatReste`. */}
+                      {(() => {
+                        const reste = catnatReste(d.risques.catnat_perils, d.risques.catnat_detail.length, 6)
+                        return reste > 0 ? (
+                          <div className="text-[11px] text-txt-dim">et {reste} autre{reste > 1 ? 's' : ''}…</div>
+                        ) : null
+                      })()}
                     </div>
                   ) : null}
                   {d.risques.azi_tri && (d.risques.azi_tri.azi?.length || d.risques.azi_tri.tri?.length) ? (

@@ -83,10 +83,10 @@ communes:
     stade: "prescrite"
     date_acte: "2015-09-24"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 — révision prescrite le 2015-09-24. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2023-05-27) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
-    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
-    date_constat: "2026-08-06"
-    etat_source_date: "2023-05-27"
+    source: "Révision du PLU EN COURS — pièce municipale (Ville de La Plaine-des-Palmistes) du 27/11/2025 qui confirme la révision en cours (approbation ultérieure annoncée, non réalisée). Prescription initiale 2015-09-24 (Sudocuh 31/12/2024). L'opposable GPU du 2023-05-27 n'est PAS la dernière preuve."
+    source_url: "https://www.plaine-des-palmistes.re/urbanisme/"
+    date_constat: "2026-11-24"
+    etat_source_date: "2025-11-27"
     confiance: "SOURCE"
   "97407":
     commune: "Port"
