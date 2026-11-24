@@ -186,8 +186,15 @@ def compute_medianes_secteur(session: Session) -> dict:
         sect AS (SELECT DISTINCT substring(dm.id_parcelle FROM 1 FOR 10) AS secteur, dm.id_mutation
                  FROM dvf_mutations_parcelle dm
                  WHERE dm.nature_mutation IN ('Vente', 'Vente terrain à bâtir'))
-        SELECT s.secteur, 'terrain', count(*),
-               percentile_cont(0.5) WITHIN GROUP (ORDER BY a.val)::int,
+        -- FIX-6 LOT 1 — l'EFFECTIF `n_ventes` (et `mediane_valeur`) ne comptent QUE les ventes qui
+        -- entrent dans la médiane €/m² (ratio DANS les bornes [50 ; 20 000]), comme `mediane_prix_m2`.
+        -- Avant : `count(*)` comptait TOUS les actes de la section → effectif faux (IZ 18 au lieu de 14)
+        -- et seuil de diffusion franchi à tort (Comparer servait un prix fondé sur 1 vente, CD = 133/13).
+        -- Le seuil appliqué par Comparer (api/app.py) porte sur ce `n_ventes` → désormais correct.
+        SELECT s.secteur, 'terrain',
+               count(*) FILTER (WHERE a.val / NULLIF(a.terr_tot, 0) BETWEEN 50 AND 20000),
+               percentile_cont(0.5) WITHIN GROUP (ORDER BY a.val)
+                 FILTER (WHERE a.val / NULLIF(a.terr_tot, 0) BETWEEN 50 AND 20000)::int,
                percentile_cont(0.5) WITHIN GROUP (ORDER BY a.val / NULLIF(a.terr_tot, 0))
                  FILTER (WHERE a.val / NULLIF(a.terr_tot, 0) BETWEEN 50 AND 20000)::int,
                :fenetre,

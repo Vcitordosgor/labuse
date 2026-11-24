@@ -440,6 +440,8 @@ export interface ContexteCommune {
     statut: string; libelle: string | null; procedure?: string | null; date_reglement: string | null
     etat_au?: string | null   // FIX-4 LOT 2 — « état au … » : date de la pièce la plus récente
     confiance?: string | null; recherche_verbatim: boolean; source: string | null
+    // FIX-6 LOT 4 — citation affichée (collectivité + date) + lien, sans la note interne du registre
+    source_citation?: string | null; source_url?: string | null
     // COMMUNE-FIX-1 (D12) — procédure PLU en cours au dernier relevé Sudocuh
     procedure_sudocuh?: { document: string | null; etat: string | null; prescription: string | null; millesime: string | null } | null
   }
@@ -481,9 +483,10 @@ export interface ContexteCommune {
     frr: { classement: 'totalite' | 'partie' | 'hors'; libelle: string; source_ref: string; lien: string }
     avertissement?: string | null
   } | null
+  // FIX-6 LOT 4 — compteurs techniques : null = indisponible (source en échec), jamais 0 menteur.
   outils: {
-    permis_en_cours: number; permis_point_mort: number; densifiables: number
-    radar_biens: number; scan_pm: number; solaire_piscines: number
+    permis_en_cours: number | null; permis_point_mort: number | null; densifiables: number | null
+    radar_biens: number | null; scan_pm: number | null; solaire_piscines: number | null
   }
   // M36 Lot D : le compteur du tier haut EN DUR (même point de calcul que /communes)
   classement: { tiers_hauts: number; dossiers: number; libelle: string; source: string } | null

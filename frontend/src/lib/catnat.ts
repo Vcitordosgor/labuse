@@ -8,7 +8,8 @@ export function catnatReste(
   detailLen: number,
   montres: number,
 ): number {
-  // LOT 0 (filet) : implémentation COURANTE (buggée) — calcule sur la liste tronquée. Corrigée au LOT 3.
-  void totalPerils
-  return detailLen - montres
+  // LOT 3 : reste = TOTAL de la source − affichées. Repli sur la longueur de liste si le total est
+  // inconnu. Jamais négatif.
+  const total = totalPerils ?? detailLen
+  return Math.max(0, total - montres)
 }

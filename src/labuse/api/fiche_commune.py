@@ -360,8 +360,10 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
     from .. import rnu as rnu_mod
     if rnu_mod.is_rnu_insee(insee):
         return {"statut": "RNU", "libelle": "Règlement National d'Urbanisme (pas de PLU opposable)",
-                "date_reglement": None, "recherche_verbatim": True,
-                "source": "config/rnu_communes.yaml"}
+                "date_reglement": None, "etat_au": None, "recherche_verbatim": True,
+                "source": "config/rnu_communes.yaml",
+                "source_citation": "Règlement National d'Urbanisme — pas de PLU opposable (RNU)",
+                "source_url": None}
     from .. import veille_plu
     e = veille_plu.entry(insee) or {}
     proc = e.get("procedure")
@@ -386,6 +388,20 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
         statut = f"aucune procédure connue au {_d}" if _d else "aucune procédure connue"
     else:
         statut = _PLU_STATUT.get(proc, "document local")
+    # FIX-6 LOT 4 — CITATION de source destinée au promoteur : collectivité + date de la pièce + (lien via
+    # source_url), PAS la note interne du registre (« OUTIL-COMMUNES-FIX-… »). Construite des champs, jamais
+    # recopiée de `source` (gardé brut pour l'admin).
+    _coll = f"Ville de {commune}" if commune else "Commune"
+    _au = _fr_date_iso(etat_au)
+    if proc == "aucune":
+        source_citation = f"SuDocUH (planification nationale) — relevé au {_au}" if _au else "SuDocUH (planification nationale)"
+    elif proc == "cloturee":
+        _ap = _fr_date_iso(None if e.get("date_acte") in (None, "ABSENT") else e.get("date_acte"))
+        source_citation = f"{_coll} — PLU approuvé le {_ap}" if _ap else f"{_coll} — PLU approuvé"
+    elif proc in ("revision_plu", "elaboration_plu", "modification_plu"):
+        source_citation = f"{_coll} — {statut}, pièce la plus récente au {_au}" if _au else f"{_coll} — {statut}"
+    else:
+        source_citation = _coll
     return {
         "statut": statut,
         "libelle": e.get("stade"),
@@ -395,7 +411,9 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
         "etat_au": etat_au,   # FIX-4 LOT 2 — date de la pièce la plus récente établissant cet état
         "confiance": e.get("confiance"),
         "recherche_verbatim": True,
-        "source": e.get("source"),
+        "source": e.get("source"),              # BRUT (admin/registre) — jamais affiché au promoteur
+        "source_citation": source_citation,     # FIX-6 LOT 4 — affiché : collectivité + date
+        "source_url": e.get("source_url"),       # FIX-6 LOT 4 — lien vers la pièce
     }
 
 
@@ -648,11 +666,14 @@ def outils_counters(db: Session, commune: str, insee: str | None,
     permis = blocs.get("permis") or {}
     dens = blocs.get("densifiables") or {}
     radar = blocs.get("marche_annonces") or {}
+    # FIX-6 LOT 4 — compteurs de passerelles : None = source INDISPONIBLE (bloc en échec), jamais 0. Le
+    # `or 0` transformait un échec de source en « 0 » (faux zéro, confondu avec une commune réellement
+    # sans permis). On garde donc la valeur telle quelle (int réel, 0 réel compris) ou None (indisponible).
     return {
-        "permis_en_cours": permis.get("permis_12m") or 0,
-        "permis_point_mort": permis.get("point_mort") or 0,
-        "densifiables": dens.get("parcelles") or 0,
-        "radar_biens": radar.get("biens") or 0,
+        "permis_en_cours": permis.get("permis_12m"),
+        "permis_point_mort": permis.get("point_mort"),
+        "densifiables": dens.get("parcelles"),
+        "radar_biens": radar.get("biens"),
         "scan_pm": int(scan_pm),
         "solaire_piscines": int(piscines),
     }
@@ -679,15 +700,17 @@ _FALLBACK = {
                    "parc_ancien_pct": None,
                    "source": "INSEE — population municipale légale · INSEE RP · INSEE Filosofi (niveau de vie)"},
     "plu_statut": {"statut": "document local", "libelle": None, "procedure": None,
-                   "procedure_sudocuh": None,
-                   "date_reglement": None, "confiance": None, "recherche_verbatim": True, "source": None},
+                   "procedure_sudocuh": None, "etat_au": None,
+                   "date_reglement": None, "confiance": None, "recherche_verbatim": True,
+                   "source": None, "source_citation": None, "source_url": None},
     # FIX-4 LOT 3 — faux zéros bannis : un bloc permis en échec est « indisponible » (None), jamais
     # « 0 permis » / « 0 au point mort » qui se confond avec une commune réellement sans permis.
     "permis": {"permis_12m": None, "permis_5a": None, "logements_12m": None,
                "point_mort": None,
                "source": "SITADEL (autorisations) · permis au point mort"},
-    "outils": {"permis_en_cours": 0, "permis_point_mort": 0, "densifiables": 0,
-               "radar_biens": 0, "scan_pm": 0, "solaire_piscines": 0},
+    # FIX-6 LOT 4 — compteurs techniques : None = indisponible (source en échec), jamais 0 menteur.
+    "outils": {"permis_en_cours": None, "permis_point_mort": None, "densifiables": None,
+               "radar_biens": None, "scan_pm": None, "solaire_piscines": None},
 }
 
 

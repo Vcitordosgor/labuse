@@ -9465,6 +9465,9 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # ventes, même règle que le Dossier §8) : une médiane fondée sur moins de 8 ventes n'est pas assez
     # fiable → on ne la SERT PAS (None). Le NOMBRE de ventes reste servi (l'écran/PDF dit « échantillon
     # insuffisant » au lieu d'un prix trompeur).
+    # FIX-6 LOT 1 — `prix_terrain_n` (= `n_ventes` du cache de section) compte désormais les ventes DANS
+    # les bornes de prix (celles qui fondent la médiane), plus le total des actes : le seuil ci-dessous
+    # est donc franchi par les vraies ventes utilisées (97415000CD : 1 vente dans les bornes → None).
     from ..dvf_mediane import SEUIL_N as _SEUIL_N
     if prix_terrain is not None and prix_terrain_n is not None and int(prix_terrain_n) < _SEUIL_N:
         prix_terrain = None

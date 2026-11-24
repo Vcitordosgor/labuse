@@ -1,0 +1,27 @@
+=== 97411000IZ terrain : 284 €/m² · 14 ventes  (attendu 284 · 14) ===
+=== 97415000CD terrain : n=1 · med=133 ; servi par Comparer ? NON (seuil 8 → attendu NON, 1 vente) ===
+=== empreinte APRÈS : lignes=2354 checksum=-19351249823 ===
+=== cache n_ventes == ventes dans les bornes ? divergences=0 sur 786 sections (0 = effectif = ventes utilisées) ===
+=== sections qui PERDENT leur prix servi (n≥8 → <8) : 76 (attendu 76) ===
+
+=== 20 plus gros écarts d'effectif (n_ventes avant → après) ===
+  97424000AD : 36 → 0  (med None)
+  97424000AM : 52 → 21  (med 132)
+  97412000CE : 55 → 25  (med 133)
+  97423000AK : 70 → 45  (med 140)
+  97415000BZ : 24 → 0  (med None)
+  97415000ET : 46 → 24  (med 155)
+  97415000CH : 31 → 11  (med 138)
+  97406000AW : 33 → 14  (med 115)
+  97415000EH : 27 → 8  (med 162)
+  97424000AE : 39 → 21  (med 107)
+  97418000AP : 33 → 17  (med 220)
+  97416000EV : 34 → 19  (med 302)
+  97405000AL : 37 → 22  (med 172)
+  97412000AO : 38 → 24  (med 163)
+  97414000CR : 13 → 0  (med None)
+  97405000AR : 54 → 41  (med 225)
+  97412000CZ : 16 → 3  (med 109)
+  97415000CT : 66 → 54  (med 257)
+  97415000CD : 13 → 1  (med 133)
+  97412000BZ : 12 → 0  (med None)
