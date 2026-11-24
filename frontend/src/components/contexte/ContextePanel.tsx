@@ -568,8 +568,10 @@ export function ContextePanel() {
                                 statuts mêlés, relevé en continu) ; acté = ancien DVF commune entière. */}
                             <RowT lbl="Prix demandé médian (annonces, Radar)" val={sous ? libSeuil : (ma!.prix_demande_median_eur_m2 != null ? `${fmt(ma!.prix_demande_median_eur_m2)} €/m²${ma!.prix_demande_n != null ? ` · n ${fmt(ma!.prix_demande_n)}` : ''}` : '—')} />
                             {/* OUTIL-COMMUNES-FIX-2 #5 — le prix acté porte SON effectif et SA période, à
-                                côté du prix demandé (deux populations différentes, l'écart reste indicatif). */}
-                            <RowT lbl="Prix acté médian (ancien, DVF commune)" val={ma!.prix_acte_eur_m2 != null ? `${fmt(ma!.prix_acte_eur_m2)} €/m²${ma!.prix_acte_n != null ? ` · n ${fmt(ma!.prix_acte_n)}` : ''}${ma!.prix_acte_periode ? ` · ${ma!.prix_acte_periode}` : ''}` : '—'} />
+                                côté du prix demandé (deux populations différentes, l'écart reste indicatif).
+                                FIX-4 LOT 5 — la PÉRIODE est désormais des DATES RÉELLES (du … au …), plus la
+                                seule maille « DVF commune entière » sans aucune date. */}
+                            <RowT lbl="Prix acté médian (ancien, DVF commune)" val={ma!.prix_acte_eur_m2 != null ? `${fmt(ma!.prix_acte_eur_m2)} €/m²${ma!.prix_acte_n != null ? ` · n ${fmt(ma!.prix_acte_n)}` : ''}${ma!.prix_acte_periode_dates ? ` · du ${ma!.prix_acte_periode_dates[0]} au ${ma!.prix_acte_periode_dates[1]}` : ''}${ma!.prix_acte_periode ? ` · ${ma!.prix_acte_periode}` : ''}` : '—'} />
                             <RowT lbl="Écart demandé / acté (indicatif)" strong={!sous && ma!.ecart_demande_acte_pct != null}
                               val={sous ? libSeuil : (ma!.ecart_demande_acte_pct != null ? `${ma!.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(ma!.ecart_demande_acte_pct)} %` : '—')} />
                             {!sous && ma!.ecart_demande_acte_pct != null && (
@@ -659,8 +661,12 @@ export function ContextePanel() {
                       et ses ANNÉES dit juste dessous : une PROJECTION, pas une échéance réglementaire. */}
                   {/* OUTIL-COMMUNES-FIX-2 #5 — la CARTE DÉTAILLÉE porte la DATE DE DÉPART du scénario (terme
                       de la série Cerema 2021-2024, ≈ 1ᵉʳ janvier 2024) et l'épuisement en ANNÉE ABSOLUE :
-                      plus de « 1,1 an avant épuisement » sans date, qui se lisait comme un futur en 2026. */}
-                  <RowT lbl="Scénario au rythme observé (base fin 2024)" val={r?.['horizon_epuisement_ans'] != null
+                      plus de « 1,1 an avant épuisement » sans date, qui se lisait comme un futur en 2026.
+                      OUTIL-COMMUNES-FIX-4 LOT 5 — UNE SEULE date de départ : le libellé disait « base fin
+                      2024 » quand l'hypothèse et le calcul (2024 + ans) partent du 1ᵉʳ janvier 2024 (reste
+                      ZAN mesuré au terme de la série 2021-2024). Sur ~1,1 an, un an d'écart changeait le
+                      sens : on aligne le libellé sur le 1ᵉʳ janvier 2024 (sans toucher au chiffre servi). */}
+                  <RowT lbl="Scénario au rythme observé (base 1ᵉʳ janvier 2024)" val={r?.['horizon_epuisement_ans'] != null
                       ? (Number(r['horizon_epuisement_ans']) <= 0 ? 'déjà dépassé' : `${fmtAns(r['horizon_epuisement_ans'])} → vers ${2024 + Math.round(Number(r['horizon_epuisement_ans']))}`)
                       : '—'}
                     ton={r?.['horizon_epuisement_ans'] != null ? (r['horizon_epuisement_ans'] <= 0 ? 'rouge' : r['horizon_epuisement_ans'] < 5 ? 'orange' : 'vert') : undefined} strong />
@@ -682,6 +688,12 @@ export function ContextePanel() {
                     : d.plu_statut.statut === 'à jour' ? `Le PLU est opposable${d.plu_statut.date_reglement ? ` (approuvé le ${fmtDateNum(d.plu_statut.date_reglement)})` : ''}.`
                       : `Document local — ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${fmtDateNum(d.plu_statut.date_reglement)}` : ''}.`}
                 </p>
+                {/* OUTIL-COMMUNES-FIX-4 LOT 2 — l'état porte la DATE DE SA SOURCE (« état au … ») : un état
+                    ancien n'est jamais présenté comme actuel, il est daté par la pièce la plus récente
+                    (approbation / opposable GPU / à défaut squelette Sudocuh). */}
+                {d.plu_statut.etat_au && (
+                  <p className="mt-1 text-[11px] text-txt-dim">État au {fmtDateNum(d.plu_statut.etat_au)} (pièce la plus récente trouvée) — vérification trimestrielle.</p>
+                )}
                 {/* COMMUNE-FIX-1 (D12) — procédure PLU en cours au dernier relevé Sudocuh (révision, modification…). */}
                 {d.plu_statut.procedure_sudocuh?.etat && (
                   <p className="mt-1 text-[11px] leading-relaxed text-txt-mut">
@@ -804,12 +816,17 @@ export function ContextePanel() {
                 val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % en PPR` : (d.risques.parc_national ? 'Parc National' : null)}
                 badge={d.risques.ppr_pct != null} ton="orange">
                 <div className="flex flex-col gap-0.5 text-[12px]">
-                  <RowT lbl="PPR (risque naturel)" val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % des parcelles` : '—'} />
+                  {/* FIX-4 LOT 3 — l'EXPOSITION (PPR/mvt) vient de scans spatiaux qui peuvent être
+                      indisponibles (statement_timeout sur les grosses communes) : on affiche alors
+                      « indisponible », jamais « — » qui se lit comme 0 %. */}
+                  <RowT lbl="PPR (risque naturel)" val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % des parcelles` : 'indisponible'} />
                   {/* RECETTE-PROD-1 (F) — dire DE QUOI : part des parcelles exposées à l'aléa. */}
-                  <RowT lbl="Mouvement de terrain" val={d.risques.mouvement_terrain_pct != null ? `${fmtDec(d.risques.mouvement_terrain_pct)} % des parcelles` : '—'} />
+                  <RowT lbl="Mouvement de terrain" val={d.risques.mouvement_terrain_pct != null ? `${fmtDec(d.risques.mouvement_terrain_pct)} % des parcelles` : 'indisponible'} />
                   {/* OUTIL-COMMUNES-FIX-2 #3 — on DISTINGUE les arrêtés (par date d'arrêté) des entrées par
-                      péril (un arrêté couvre plusieurs périls) : Saint-Denis 14 arrêtés / 21 périls. */}
-                  <RowT lbl="Arrêtés CatNat (distincts)" val={`${fmt(d.risques.catnat_arretes)}${d.risques.catnat_perils != null && d.risques.catnat_perils !== d.risques.catnat_arretes ? ` · ${fmt(d.risques.catnat_perils)} entrées par péril` : ''}`} />
+                      péril (un arrêté couvre plusieurs périls) : Saint-Denis 14 arrêtés / 21 périls.
+                      FIX-4 LOT 3 — catnat_arretes null = INDISPONIBLE (bloc en échec), jamais « 0 »
+                      (qui se confondrait avec une commune réellement sans arrêté). */}
+                  <RowT lbl="Arrêtés CatNat (distincts)" val={d.risques.catnat_arretes == null ? 'indisponible' : `${fmt(d.risques.catnat_arretes)}${d.risques.catnat_perils != null && d.risques.catnat_perils !== d.risques.catnat_arretes ? ` · ${fmt(d.risques.catnat_perils)} entrées par péril` : ''}`} />
                   {d.risques.catnat_detail?.length ? (
                     /* RECETTE-2 (B2) — chaque arrêté sur DEUX lignes : libellé pleine largeur, puis
                        « JJ/MM/AAAA → JJ/MM/AAAA · code » (plus de libellé coupé mot par mot, plus de
@@ -842,7 +859,7 @@ export function ContextePanel() {
                   ) : d.risques.azi_tri ? (
                     <RowT lbl="Inondation (AZI / TRI)" val="aucun document recensé (GASPAR)" />
                   ) : null}
-                  <RowT lbl="Aire d'adhésion Parc National" val={d.risques.parc_national ? 'oui' : 'non'} />
+                  <RowT lbl="Aire d'adhésion Parc National" val={d.risques.parc_national == null ? 'indisponible' : (d.risques.parc_national ? 'oui' : 'non')} />
                 </div>
                 <Source nom={d.risques.source} />
               </LigneCarte>

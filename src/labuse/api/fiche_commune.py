@@ -53,6 +53,16 @@ def marche_annonces(db: Session, commune: str) -> dict | None:
     cmp = comparable(db, commune) or {}
     acte = cmp.get("ancien_median_eur_m2")
     acte_n = cmp.get("ancien_n")   # OUTIL-COMMUNES-FIX-2 #5 — effectif des ACTES, à côté du prix demandé
+    # FIX-4 LOT 5 — PÉRIODE RÉELLE des actes, à côté du prix. L'ancien champ « DVF commune entière
+    # (ventes strictes) » décrivait la maille sans donner AUCUNE date. On sert les dates min/max de la
+    # POPULATION EXACTE derrière la médiane (même filtre `_BAROMETRE_RETENUE` que `prix_ancien_communes`).
+    from .moteurs import _BAROMETRE_RETENUE
+    _per = db.execute(text(
+        f"SELECT to_char(min(date_mutation), 'DD/MM/YYYY') AS d0, "
+        f"       to_char(max(date_mutation), 'DD/MM/YYYY') AS d1 "
+        f"FROM dvf_mutations WHERE commune = :c AND {_BAROMETRE_RETENUE}"),
+        {"c": commune}).mappings().first() or {}
+    acte_periode_dates = ([_per["d0"], _per["d1"]] if _per.get("d0") and _per.get("d1") else None)
     biens = int(row.get("actives") or 0)
     # NU5-FIX-1 (E-5) — l'écart demandé/acté était calculé sur `prix_demande_n` (annonces avec prix
     # bâti), une population DIFFÉRENTE des « biens en vente » affichés : +66 % sur 7 annonces alors que
@@ -76,7 +86,9 @@ def marche_annonces(db: Session, commune: str) -> dict | None:
         "ecart_demande_acte_pct": ecart,
         "prix_acte_eur_m2": acte,
         "prix_acte_n": acte_n,        # #5 — effectif des ventes actées (DVF commune entière)
+        # FIX-4 LOT 5 — la maille ET les dates réelles (plus de maille sans période).
         "prix_acte_periode": "DVF commune entière (ventes strictes)",
+        "prix_acte_periode_dates": acte_periode_dates,   # [JJ/MM/AAAA, JJ/MM/AAAA] des ventes retenues
         "derniere_collecte": derniere,
         "source": "Radar LABUSE (annonces relevées) · écart mesuré contre le baromètre DVF commune entière.",
     }
@@ -114,48 +126,46 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
     # CIRCUIT-2 lot 1.6 — la part par couche est calculée par le moteur nommé `commune_compteurs`
     # (id registre ppr_pct) : ce robinet ne calcule plus, il appelle (le total est calculé une fois).
     from ..registre.moteurs.commune import compte_parcelles_commune, pct_parcelles_couche
-    # OUTIL-COMMUNES-FIX-1 (à corriger 8) — DÉNOMINATEUR PPR = le parc VIVANT (exclut les parcelles
-    # disparues du cadastre), LA MÊME base que le bandeau de la fiche (`n_parcelles`). Avant : un
-    # `count(*)` brut sur `parcels` comptait les disparues → Saint-Denis 38 557 au dénominateur du risque
-    # quand le bandeau affiche 38 295 (le lecteur passait de l'un à l'autre). Un seul parc, une seule base.
-    tot = compte_parcelles_commune(db, commune)
 
-    def _pct_layer(kind: str, subtype: str | None = None) -> float | None:
-        return pct_parcelles_couche(db, commune, kind, tot, subtype)
+    # ── FIX-4 LOT 3 — ISOLATION DU FAUX ZÉRO ──────────────────────────────────────────────────────
+    # Le nombre d'arrêtés CatNat est un FAIT (table `catnat_arretes`, indexée sur insee) totalement
+    # INDÉPENDANT du calcul d'exposition PPR/mvt (scans spatiaux ST_Intersects de 30 s+ sur les grosses
+    # communes). Avant, `tot`/`_pct_layer` tournaient EN PREMIER ; quand leur scan dépassait le
+    # statement_timeout de l'API (Saint-Denis / Saint-Paul / La Plaine-des-Palmistes — les trois plus
+    # lourdes), TOUT le bloc risques levait → repli `_FALLBACK` → `catnat_arretes = 0` : une
+    # indisponibilité servie comme « 0 arrêté ». On calcule donc CatNat (+ périls + détail) D'ABORD, et
+    # on ISOLE l'exposition : un échec/timeout du scan donne `ppr_pct = mouvement_terrain_pct = None`
+    # (indisponible), JAMAIS un faux 0 d'arrêté. None = indisponible ; 0 = vraiment zéro.
 
     # OUTIL-COMMUNES-FIX-2 #3 — DISTINGUER arrêtés et périls. `catnat_arretes` porte UNE ligne par
-    # (commune, péril) d'un même arrêté CatNat : `count(*)` mélangeait les deux. Un ARRÊTÉ est identifié
-    # par sa date de publication (`date_arrete`) et couvre plusieurs périls. On sert les DEUX comptes :
-    # Saint-Denis 14 arrêtés / 21 entrées par péril ; Cilaos 11 / 16 ; Saint-Philippe 18 / 21.
-    _cn = db.execute(text(
-        "SELECT count(DISTINCT date_arrete) AS arretes, count(*) AS perils "
-        "FROM catnat_arretes WHERE insee = :i"), {"i": insee}).mappings().first() if insee else None
-    catnat = int((_cn or {}).get("arretes") or 0)          # arrêtés DISTINCTS
-    catnat_perils = int((_cn or {}).get("perils") or 0)    # entrées par péril
-    # SOURCES-4 lot 1 — le détail des arrêtés dormait dans `catnat_arretes` (seul le COMPTE était
-    # servi). On surface la liste : le péril, les trois dates (début/fin/arrêté) et le code national
-    # + la date de publication au JO (jusque-là seulement dans `raw`). 12 plus récents — la fiche dit
-    # « et N autres » via le compte total. Chaque champ vient du producteur (GASPAR/Géorisques).
-    catnat_detail = [dict(r) for r in db.execute(text(
-        "SELECT type_peril, "
-        "       to_char(date_debut, 'YYYY-MM-DD') AS date_debut, "
-        "       to_char(date_fin, 'YYYY-MM-DD') AS date_fin, "
-        "       to_char(date_arrete, 'YYYY-MM-DD') AS date_arrete, "
-        "       raw->>'code_national_catnat' AS code_national, "
-        "       raw->>'date_publication_jo' AS date_publication_jo "
-        "FROM catnat_arretes WHERE insee = :i "
-        "ORDER BY date_debut DESC NULLS LAST, date_arrete DESC NULLS LAST LIMIT 12"),
-        {"i": insee}).mappings().all()] if insee else []
-    # NU5-FIX-1 (E-3) — « Parc national » ne vaut QUE pour le CŒUR (la vraie contrainte foncière),
-    # pas l'aire d'adhésion (aucune contrainte) : sans ce filtre, le flag ressortait pour les 24/24
-    # communes (presque toutes touchent les Hauts), y compris Le Port (6 parcelles de bord) — un
-    # indicateur non discriminant. On ne compte que `subtype='coeur'`.
-    parc = db.execute(text(
-        "SELECT EXISTS (SELECT 1 FROM parcels p JOIN spatial_layers sl ON sl.kind = 'parc_national' "
-        "AND sl.subtype = 'coeur' AND ST_Intersects(p.geom_2975, sl.geom_2975) WHERE p.commune = :c)"),
-        {"c": commune}).scalar()
-    # SOURCES-1 lot 2 — le fait AZI/TRI de la commune (GASPAR, table azi_communes) : quels
-    # documents inondation couvrent la commune. None si la source n'est pas ingérée.
+    # (commune, péril) d'un même arrêté CatNat : un ARRÊTÉ est identifié par sa date de publication
+    # (`date_arrete`) et couvre plusieurs périls. Saint-Denis 14 arrêtés / 21 périls ; Cilaos 11 / 16.
+    catnat = catnat_perils = None   # None = indisponible (jamais 0 par repli)
+    catnat_detail: list[dict] = []
+    if insee:
+        try:
+            _cn = db.execute(text(
+                "SELECT count(DISTINCT date_arrete) AS arretes, count(*) AS perils "
+                "FROM catnat_arretes WHERE insee = :i"), {"i": insee}).mappings().first() or {}
+            catnat = int(_cn.get("arretes") or 0)          # arrêtés DISTINCTS (0 réel possible)
+            catnat_perils = int(_cn.get("perils") or 0)    # entrées par péril
+            # SOURCES-4 lot 1 — le détail des arrêtés (péril, trois dates, code national + date JO).
+            catnat_detail = [dict(r) for r in db.execute(text(
+                "SELECT type_peril, "
+                "       to_char(date_debut, 'YYYY-MM-DD') AS date_debut, "
+                "       to_char(date_fin, 'YYYY-MM-DD') AS date_fin, "
+                "       to_char(date_arrete, 'YYYY-MM-DD') AS date_arrete, "
+                "       raw->>'code_national_catnat' AS code_national, "
+                "       raw->>'date_publication_jo' AS date_publication_jo "
+                "FROM catnat_arretes WHERE insee = :i "
+                "ORDER BY date_debut DESC NULLS LAST, date_arrete DESC NULLS LAST LIMIT 12"),
+                {"i": insee}).mappings().all()]
+        except Exception:  # noqa: BLE001 — table absente : indisponible (None), jamais un faux 0
+            db.rollback()
+            catnat = catnat_perils = None
+            catnat_detail = []
+
+    # SOURCES-1 lot 2 — le fait AZI/TRI de la commune (GASPAR). None si la source n'est pas ingérée.
     azi_tri = None
     if insee:
         try:
@@ -164,37 +174,55 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
         except Exception:  # noqa: BLE001 — table absente = source non ingérée, jamais un 500
             db.rollback()
             azi_tri = None
-    # SOURCES-FIX-2 lot A — aléa mouvement de terrain = l'aléa RÉGLEMENTAIRE zoné
-    # (kind='georisque_alea' subtype='mouvement_terrain', DEAL PPR/aléas source 30), MÊME
-    # donnée que la couche carte `alea_mvt` et la fiche §Pièges & risques.
-    mvt_pct = _pct_layer("georisque_alea", "mouvement_terrain")
+
+    # EXPOSITION (PPR, mouvement de terrain, Parc National) — scans spatiaux COÛTEUX, ISOLÉS du CatNat.
+    # Un échec (statement_timeout, table absente) ⇒ pct = None (indisponible) + rollback de la
+    # transaction avortée pour que les blocs suivants de la fiche ne tombent pas en cascade. OUTIL-
+    # COMMUNES-FIX-1 (à corriger 8) : dénominateur = parc VIVANT (`compte_parcelles_commune`).
+    ppr_pct = mvt_pct = None
+    parc = None
     mvt_repli = False
-    # QV21-PROMO-1 (E-2) — Saint-Denis (97411) : aléa ÉTUDES mvt ABSENT de la source DEAL
-    # (`ALEA_MOUVEMENT_TERRAIN` ne renvoie AUCUNE entité pour 97411, ni par code_insee ni par emprise ;
-    # seul commune des 24 dans ce cas), alors que son PPR « inondation + mouvement de terrain » EST
-    # approuvé et zoné. On lit alors « le bon type d'aléa » — le zonage réglementaire PPR i+mvt, MÊME
-    # source DEAL — plutôt que d'annoncer un mvt quasi nul (0,1 %, slivers de zones de communes
-    # voisines débordant sur quelques parcelles de bord) et trompeur sur une commune de montagne à
-    # risque majeur. Gate = la commune n'a AUCUNE zone d'aléa études mvt À ELLE (pas le pct, qui compte
-    # aussi les zones voisines par ST_Intersects) ; les 23 autres communes, qui ont leurs propres
-    # `georisque_alea/mouvement_terrain`, sont INCHANGÉES.
-    a_ses_zones_mvt = db.execute(text(
-        "SELECT EXISTS (SELECT 1 FROM spatial_layers WHERE commune = :c "
-        "AND kind = 'georisque_alea' AND subtype = 'mouvement_terrain')"), {"c": commune}).scalar()
-    if not a_ses_zones_mvt:
-        ppr_mvt = _pct_ppr_mvt(db, commune, tot)
-        if ppr_mvt:
-            mvt_pct, mvt_repli = ppr_mvt, True
+    try:
+        tot = compte_parcelles_commune(db, commune)
+
+        def _pct_layer(kind: str, subtype: str | None = None) -> float | None:
+            return pct_parcelles_couche(db, commune, kind, tot, subtype)
+
+        ppr_pct = _pct_layer("ppr")
+        # SOURCES-FIX-2 lot A — mvt = aléa RÉGLEMENTAIRE zoné (georisque_alea/mouvement_terrain, DEAL).
+        mvt_pct = _pct_layer("georisque_alea", "mouvement_terrain")
+        # QV21-PROMO-1 (E-2) — Saint-Denis : aléa ÉTUDES mvt ABSENT de la DEAL alors que le PPR i+mvt est
+        # zoné. Sans zone d'aléa études PROPRE à la commune, on lit le zonage réglementaire PPR i+mvt
+        # (même source) plutôt qu'un mvt quasi nul trompeur. Les 23 autres communes sont inchangées.
+        a_ses_zones_mvt = db.execute(text(
+            "SELECT EXISTS (SELECT 1 FROM spatial_layers WHERE commune = :c "
+            "AND kind = 'georisque_alea' AND subtype = 'mouvement_terrain')"), {"c": commune}).scalar()
+        if not a_ses_zones_mvt:
+            ppr_mvt = _pct_ppr_mvt(db, commune, tot)
+            if ppr_mvt:
+                mvt_pct, mvt_repli = ppr_mvt, True
+        # NU5-FIX-1 (E-3) — « Parc national » ne vaut QUE pour le CŒUR (la vraie contrainte foncière).
+        parc = db.execute(text(
+            "SELECT EXISTS (SELECT 1 FROM parcels p JOIN spatial_layers sl ON sl.kind = 'parc_national' "
+            "AND sl.subtype = 'coeur' AND ST_Intersects(p.geom_2975, sl.geom_2975) WHERE p.commune = :c)"),
+            {"c": commune}).scalar()
+    except Exception:  # noqa: BLE001 — scan d'exposition indisponible (timeout) : None, jamais un faux 0
+        db.rollback()
+        log.warning("fiche_commune: exposition PPR/mvt indisponible pour %s (scan échoué)", commune)
+        ppr_pct = mvt_pct = parc = None
+        mvt_repli = False
     return {
-        "ppr_pct": _pct_layer("ppr"),
+        "ppr_pct": ppr_pct,
         "mouvement_terrain_pct": mvt_pct,
         # E-2 — provenance honnête : True = lu du zonage PPR i+mvt (aléa études mvt non cartographié
         # par la DEAL pour cette commune), False = aléa études réglementaire zoné (cas normal).
         "mouvement_terrain_repli_ppr": mvt_repli,
-        "catnat_arretes": int(catnat),           # #3 — arrêtés DISTINCTS (par date d'arrêté)
-        "catnat_perils": int(catnat_perils),      # #3 — entrées par péril (≥ arrêtés)
+        # FIX-4 LOT 3 — None = indisponible (jamais 0 par repli) ; 0 = vraiment aucun arrêté.
+        "catnat_arretes": catnat,                # #3 — arrêtés DISTINCTS (par date d'arrêté)
+        "catnat_perils": catnat_perils,           # #3 — entrées par péril (≥ arrêtés)
         "catnat_detail": catnat_detail,   # SOURCES-4 lot 1 — arrêtés détaillés (péril, dates, code national)
-        "parc_national": bool(parc),
+        # parc national : None si l'exposition est indisponible (scan échoué), jamais un False menteur.
+        "parc_national": None if parc is None else bool(parc),
         "azi_tri": azi_tri,
         "source": ("DEAL Réunion — PPR / aléas (zones PPR, aléa mouvement de terrain" +
                    (" ; mvt lu du zonage PPR i+mvt pour cette commune — aléa études mvt non cartographié"
@@ -331,12 +359,17 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
         if row and (row["etat_detaille"] or row["du_en_cours"]):
             procedure_sudocuh = {"document": row["du_en_cours"], "etat": row["etat_detaille"],
                                  "prescription": row["prescription"], "millesime": row["millesime"]}
+    # FIX-4 LOT 2 — l'ÉTAT affiché porte la DATE DE SA SOURCE (« état au … ») : la pièce la plus récente
+    # trouvée pour la commune (approbation / opposable GPU / à défaut le squelette Sudocuh 31/12/2024).
+    # Un état ancien n'est jamais présenté comme actuel au 24/11/2026 — il est explicitement daté.
+    etat_au = e.get("etat_source_date") or veille_plu._meta().get("source_squelette_date")
     return {
         "statut": _PLU_STATUT.get(proc, "document local"),
         "libelle": e.get("stade"),
         "procedure": proc,
         "procedure_sudocuh": procedure_sudocuh,   # COMMUNE-FIX-1 (D12) — révision/modification en cours (Sudocuh)
         "date_reglement": None if e.get("date_acte") in (None, "ABSENT") else e.get("date_acte"),
+        "etat_au": etat_au,   # FIX-4 LOT 2 — date de la pièce la plus récente établissant cet état
         "confiance": e.get("confiance"),
         "recherche_verbatim": True,
         "source": e.get("source"),
@@ -612,8 +645,10 @@ _FALLBACK = {
     "comparable": None, "marche_annonces": None, "densifiables": None, "loyer": None,
     "zonage_abc": None, "fiscalite": None, "taxe_amenagement": None, "ort": None, "zfang_frr": None,
     "parc_social": None, "prix_neuf_observe": None, "scot": None,
-    "risques": {"ppr_pct": None, "mouvement_terrain_pct": None, "catnat_arretes": 0,
-                "catnat_detail": [], "parc_national": False, "azi_tri": None,
+    # FIX-4 LOT 3 — faux zéros bannis : un bloc en échec affiche « indisponible » (None), jamais 0 arrêté
+    # ni « hors Parc national » (False). 0 et False ne sont servis que par le calcul réel.
+    "risques": {"ppr_pct": None, "mouvement_terrain_pct": None, "catnat_arretes": None,
+                "catnat_perils": None, "catnat_detail": [], "parc_national": None, "azi_tri": None,
                 "source": "DEAL Réunion — PPR / aléas · GASPAR · BD TOPO"},
     "population": {"habitants": None, "habitants_pop_totale": None, "habitants_millesime": None,
                    "menages": None, "menages_millesime": None, "niveau_vie_moyen_eur": None,
@@ -623,8 +658,10 @@ _FALLBACK = {
     "plu_statut": {"statut": "document local", "libelle": None, "procedure": None,
                    "procedure_sudocuh": None,
                    "date_reglement": None, "confiance": None, "recherche_verbatim": True, "source": None},
-    "permis": {"permis_12m": 0, "permis_5a": None, "logements_12m": None,
-               "point_mort": 0,
+    # FIX-4 LOT 3 — faux zéros bannis : un bloc permis en échec est « indisponible » (None), jamais
+    # « 0 permis » / « 0 au point mort » qui se confond avec une commune réellement sans permis.
+    "permis": {"permis_12m": None, "permis_5a": None, "logements_12m": None,
+               "point_mort": None,
                "source": "SITADEL (autorisations) · permis au point mort"},
     "outils": {"permis_en_cours": 0, "permis_point_mort": 0, "densifiables": 0,
                "radar_biens": 0, "scan_pm": 0, "solaire_piscines": 0},

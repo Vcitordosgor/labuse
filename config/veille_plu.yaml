@@ -21,6 +21,10 @@ meta:
   source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
   date_constat_initial: "2026-08-06"
   cadence: "annuelle (Sudocuh) ; curation trimestrielle (registre) ; radar actif = 30 j"
+  # FIX-4 LOT 2 — date de la pièce du SQUELETTE (Sudocuh). « état au … » par défaut quand une entrée ne
+  # porte pas de pièce plus récente (`etat_source_date`). Sert à dater l'état servi : aucun état ancien
+  # n'est présenté comme actuel au 24/11/2026 — il porte la date de sa source.
+  source_squelette_date: "2024-12-31"
 communes:
   "97401":
     commune: "Avirons"
@@ -61,6 +65,7 @@ communes:
     source: "Sudocuh 31/12/2024 — révision prescrite le 2022-04-28. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-09-17) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
+    etat_source_date: "2025-09-17"
     confiance: "SOURCE"
   "97405":
     commune: "Petite-Île"
@@ -81,6 +86,7 @@ communes:
     source: "Sudocuh 31/12/2024 — révision prescrite le 2015-09-24. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2023-05-27) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
+    etat_source_date: "2023-05-27"
     confiance: "SOURCE"
   "97407":
     commune: "Port"
@@ -132,6 +138,7 @@ communes:
     source: "Sudocuh 31/12/2024 — révision générale prescrite le 2024-09-27. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2026-04-23, document 97411_PLU_20260805) NE PROUVE PAS la clôture — une publication de document n'est pas la délibération d'approbation de la révision ; le GPU donne la procédure EN COURS. On ne déduit plus la clôture ; statut à lever par la délibération d'approbation."
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
+    etat_source_date: "2026-04-23"
     confiance: "SOURCE"
   "97412":
     commune: "Saint-Joseph"
@@ -162,6 +169,7 @@ communes:
     source: "Sudocuh 31/12/2024 — révision prescrite le 2022-02-25. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-12-18) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
+    etat_source_date: "2025-12-18"
     confiance: "SOURCE"
   "97415":
     commune: "Saint-Paul"
@@ -172,6 +180,7 @@ communes:
     source: "Sudocuh 31/12/2024 — révision prescrite le 2021-12-16. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-12-17) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
+    etat_source_date: "2025-12-17"
     confiance: "SOURCE"
   "97416":
     commune: "Saint-Pierre"
@@ -196,13 +205,14 @@ communes:
     note: "Élaboration PLU prescrite il y a 24 ans, commune toujours en RNU, aucun acte postérieur connu — dormante. Au radar (factuel) mais pas de vigilance sursis."
   "97418":
     commune: "Sainte-Marie"
-    procedure: "revision_plu"
-    stade: "prescrite"
-    date_acte: "2021-06-03"
+    procedure: "cloturee"
+    stade: "approuvée"
+    date_acte: "2025-11-26"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 — révision prescrite le 2021-06-03. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-11-26) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
-    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
-    date_constat: "2026-08-06"
+    source: "OUTIL-COMMUNES-FIX-4 LOT 2 — PLU révisé APPROUVÉ par délibération du conseil municipal le 26/11/2025, exécutoire le 14/01/2026 (mairie de Sainte-Marie / GPU). La révision prescrite le 2021-06-03 est donc CLÔTURÉE par un acte d'approbation (plus seulement un opposable GPU : FIX-3 B-3 ne tenait plus)."
+    source_url: "https://www.ville-saintemarie.re/urbanisme/"
+    date_constat: "2026-11-24"
+    etat_source_date: "2026-01-14"
     confiance: "SOURCE"
   "97419":
     commune: "Sainte-Rose"
@@ -216,13 +226,14 @@ communes:
     confiance: "SOURCE"
   "97420":
     commune: "Sainte-Suzanne"
-    procedure: "revision_plu"
-    stade: "prescrite"
-    date_acte: "2018-02-28"
+    procedure: "cloturee"
+    stade: "approuvée"
+    date_acte: "2025-09-29"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 — révision prescrite le 2018-02-28. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-09-29) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
-    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
-    date_constat: "2026-08-06"
+    source: "OUTIL-COMMUNES-FIX-4 LOT 2 — la pièce officielle du PLU au GPU porte ENSEMBLE la prescription (28/02/2018) et l'APPROBATION (29/09/2025) de la MÊME procédure de révision : elle est donc CLÔTURÉE par un acte d'approbation (plus seulement un opposable GPU : FIX-3 B-3 ne tenait plus)."
+    source_url: "https://www.geoportail-urbanisme.gouv.fr/"
+    date_constat: "2026-11-24"
+    etat_source_date: "2025-09-29"
     confiance: "SOURCE"
   "97421":
     commune: "Salazie"

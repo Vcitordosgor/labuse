@@ -111,9 +111,13 @@ def taux_communal_public(db, insee: str | None, *, today: date | None = None) ->
     # (délibération en vigueur), plus notre plomberie (« source DGFiP/DELTA, relevé le … » =
     # millésime de relevé, interdit côté client depuis PAGE-SOURCES-1 18/09). Les champs
     # structurés (source, delib_date, maj_at, perime) restent servis — admin et sonde de fraîcheur.
+    # FIX-4 LOT 5 — « taux AU <date> » et non « en vigueur DEPUIS » : la délibération est une référence
+    # HISTORIQUE (date d'effet connue), pas une preuve que le taux est TOUJOURS en vigueur aujourd'hui.
+    # « en vigueur depuis » laissait entendre un maintien non établi (recontrôle externe §10). On date
+    # la référence sans prolonger sa validité jusqu'à ce jour.
     millesime = "Taux communal"
     if depuis:
-        millesime += f" en vigueur depuis le {depuis} (délibération communale)"
+        millesime += f" au {depuis} (délibération communale — référence datée, maintien non vérifié)"
     return {"part_communale_pct": float(row[0]), "source": row[1],
             "delib_date": delib.isoformat() if delib else None,
             "maj_at": maj_d.isoformat() if maj_d else None,

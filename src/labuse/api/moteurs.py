@@ -976,9 +976,14 @@ def _barometre_data(db: Session, insee: str | None = None) -> dict:
     # trimestrielle, puis JOINT la qualification unique. Plus de qualification inline par code_commune qui
     # ratait le bâti d'une autre commune de l'acte (B-2).
     from ..marche_dvf_commune import ACTE_TERRAIN_NU_CTE
+    # FIX-4 LOT 4 — `scope` MATÉRIALISÉ. Pour une commune (insee non nul), le planner estimait `scope` à
+    # 1 ligne et choisissait une boucle imbriquée qui RE-SCANNAIT `dvf_mutations_parcelle` pour chaque
+    # acte de `acte_nu` (27 321 passes, 54 M buffers) → Cilaos ~200 s → HTTP 500 sous le statement_timeout
+    # de l'API. `MATERIALIZED` force l'évaluation unique de `scope` (≈179 lignes) puis une jointure propre :
+    # 200 s → 0,2 s, identique pour les 24 communes. L'île (insee NULL) passait déjà en hash join (0,5 s).
     terrain = db.execute(text(f"""
         WITH {ACTE_TERRAIN_NU_CTE},
-        scope AS (SELECT DISTINCT m.id_mutation FROM dvf_mutations_parcelle m
+        scope AS MATERIALIZED (SELECT DISTINCT m.id_mutation FROM dvf_mutations_parcelle m
                   WHERE m.nature_mutation IN ('Vente','Vente terrain à bâtir') AND m.date_mutation IS NOT NULL
                     AND date_trunc('quarter', m.date_mutation) < date_trunc('quarter', CURRENT_DATE)
                     AND date_trunc('quarter', m.date_mutation) >= :axis_min
