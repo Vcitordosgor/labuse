@@ -202,6 +202,9 @@ export function PluAnnuaire() {
                 {cur.modifications.map((mo, i) => (
                   <div key={i}>⚠ {mo.type}{mo.date ? ` du ${fmtDateNum(mo.date) ?? mo.date}` : ''}{mo.note ? ` — ${mo.note}` : ''}</div>
                 ))}
+                {/* OUTIL-PLU-FIX-6 (point 4) — un acte communal postérieur est connu : le verbatim servi
+                    reste celui du dépôt GPU actif, mais on ne le dit plus « opposable » sans réserve. */}
+                <div className="mt-0.5">Opposabilité SOUS RÉSERVE de cet acte postérieur (vérifiez en mairie l'état en vigueur).</div>
               </div>
             )}
             {cur?.procedures_inventaire && cur.procedures_inventaire.length > 0 && (
@@ -263,6 +266,10 @@ export function PluAnnuaire() {
                 <button onClick={() => setZone('')} className="rounded bg-surface-3 px-1 text-txt-dim hover:text-txt">✕ retirer</button>
               </div>
             )}
+            {/* OUTIL-PLU-FIX-6 (point 1) — renvoi de secteur : « AU3c : le règlement renvoie à U3c ». */}
+            {d?.renvoi_note && (
+              <div data-plu-renvoi className="text-[10.5px] text-cp-amber">↪ {d.renvoi_note}</div>
+            )}
           </div>
 
           {m.isError && (
@@ -303,7 +310,11 @@ export function PluAnnuaire() {
           {/* OUTILS-P1-1 (pt 9) — recherche VIDE sur un document (partiellement) indexé : on le DIT
               honnêtement (« Aucun extrait trouvé dans les documents indexés ») et on offre d'ouvrir le
               règlement intégral — le reste du règlement, non indexé, peut contenir d'autres passages. */}
-          {d && d.n_total != null && d.resultats.length === 0 && (
+          {/* OUTIL-PLU-FIX-6 (point 5) — « Aucun extrait » ne s'affiche PLUS en même temps qu'une
+              disposition commune : si le filtre de zone ne rend rien MAIS qu'une disposition commune
+              s'applique (ex. « piscine » filtré sur UA à Saint-Denis), le bloc ci-dessous la montre. */}
+          {d && d.n_total != null && d.resultats.length === 0 &&
+           (!d.dispositions_communes || d.dispositions_communes.length === 0) && (
             <div data-plu-aucun className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11px] leading-snug text-txt-mut">
               <p>Aucun extrait trouvé dans les documents indexés{zone ? <> pour la zone <span className="font-mono text-mint">{zone}</span></> : null}.</p>
               <p className="mt-1 text-[10px] text-txt-dim">La recherche porte sur les articles indexés par LABUSE ; le règlement complet peut contenir d’autres passages.</p>

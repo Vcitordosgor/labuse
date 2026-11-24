@@ -3258,7 +3258,7 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
     commune, document, article, PAGE PDF, millésime, lien. Aucun résumé, aucun reformulé. `doute` et
     `pagination_ambigue` sont RENDUS. `insee` absent = île entière. RNU / commune non ingérée =
     réponse honnête."""
-    from ..ingestion.plu_ingest import corpus_status, count_reglement, search_reglement
+    from ..ingestion.plu_ingest import corpus_status, count_reglement, search_reglement, zone_renvoi_note
     q = (q or "").strip()
     if not q:
         raise HTTPException(400, "Requête vide.")
@@ -3285,7 +3285,7 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                                 f"Voir /plu-annuaire/communes.")}
     res = search_reglement(db, q_fts, insee, limit=limit, zone=zone, offset=offset, terms=terms)
     # OUT-PLU-008 — `n_total` = total des articles correspondant (sans plafond) ; `n` = page servie.
-    n_total = count_reglement(db, q_fts, insee, zone=zone)
+    n_total = count_reglement(db, q_fts, insee, zone=zone, terms=terms)
     for r in res:
         r["gpu_consult"] = "https://www.geoportail-urbanisme.gouv.fr/"
         # OUTIL-PLU-FIX-3 (points 2-3) — la page CITÉE est celle du mot dans l'article (`page_match`) ;
@@ -3336,10 +3336,12 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
     if zone:
         communes_list = [r for r in res if r.get("zone") is None]
         res = [r for r in res if r.get("zone") is not None]
+    # OUTIL-PLU-FIX-6 (point 1) — si le secteur filtré RENVOIE à une autre zone (AU3c→U3c), on le DIT.
+    renvoi_note = zone_renvoi_note(zone, insee) if (zone and insee) else None
     return {"query": q, "insee": insee, "n": len(res), "n_total": n_total,
             "limit": limit, "offset": offset, "message": message,
             "tronque": n_total > len(res) + len(communes_list), "resultats": res,
-            "dispositions_communes": communes_list,
+            "dispositions_communes": communes_list, "renvoi_note": renvoi_note,
             "exceptions_zone": exceptions_zone, "exceptions_source": exceptions_source,
             "note_perimetre": ("Recherche communale (texte du règlement) : ne vérifie pas, à la parcelle, "
                                "les prescriptions graphiques, les servitudes (SUP) ni le PPR."),

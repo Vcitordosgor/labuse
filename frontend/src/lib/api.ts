@@ -846,6 +846,8 @@ export interface PluSearch {
   exceptions_source?: string | null
   // OUTIL-PLU-FIX-2 (M4) — note de périmètre servie dans le payload (consommateur non-UI).
   note_perimetre?: string | null
+  // OUTIL-PLU-FIX-6 (point 1) — « AU3c : le règlement renvoie à U3c » quand le secteur filtré renvoie.
+  renvoi_note?: string | null
 }
 export interface PluCommune {
   insee: string; commune: string; statut: string; idurba?: string; millesime?: string

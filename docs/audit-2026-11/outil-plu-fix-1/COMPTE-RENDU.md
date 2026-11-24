@@ -1,10 +1,93 @@
-# Outil PLU — compte-rendu OUTIL-PLU-FIX-5 (23/11/2026)
+# Outil PLU — compte-rendu OUTIL-PLU-FIX-6 (24/11/2026)
 
 > Branche `fix/outil-plu-1`, worktree `~/Desktop/labuse-plu-fix`. Base `labuse` (PostGIS, user OS
 > `openclaw`). API locale `http://127.0.0.1:7480`, route réelle `/modules/plu-annuaire/…`. PDF officiels
-> dans `~/Desktop/labuse/data/plu_reglements`. Réingestion du jour : **3641 articles, 21 communes servies**.
-> **Chaque chiffre est obtenu aujourd'hui par l'API** (ou base↔PDF), avec sa requête. Rejeu :
+> dans `~/Desktop/labuse/data/plu_reglements`. Réingestion du jour : **3606 articles, 21 communes servies**
+> (dont **849 extraits sans zone** = dispositions générales / communes / annexes, désormais correctement
+> non étiquetés). **Chaque chiffre est obtenu aujourd'hui par l'API** (ou base↔PDF), avec sa requête. Rejeu :
 > `PYTHONPATH=src ~/Desktop/labuse/.venv/bin/python`, `psql -h localhost -U openclaw -d labuse`.
+
+> **Rapport source `~/Desktop/audit-outils/01-PLU-ASTRA-2.md` VIDE** : le fichier ne contient que la ligne
+> `pbpaste > ~/Desktop/audit-outils/01-PLU-ASTRA-2.md` (le collage a échoué). J'ai donc travaillé sur la
+> **liste fermée de cinq points du mandat** (ci-dessous), qui FAIT foi. Points déclarés clos par le mandat
+> (téléchargements, exceptions U2e, casse/accents, doublons Possession, pagination) : non rouverts.
+
+## OUTIL-PLU-FIX-6 — réponse à la liste fermée de cinq points
+
+**1. BLOQUANT — renvois de secteur (resolve_zone, même résolution que la fiche) — corrigé & prouvé.**
+Un filtre de zone issu d'une fiche parcelle sur un secteur qui renvoie aux règles d'une autre zone sert
+désormais les articles de la zone CIBLE, avec la note. Résolution unique via `faisabilite.zonage.resolve_zone`
+(+ `config/plu_destinations`) — pas de seconde table. **Parcours parcelle témoins rejoués par l'API** :
+
+| Parcelle | Zone (spatial_layers) | Note servie | `hauteur` | `stationnement` |
+|---|---|---|---|---|
+| **97415000CP0681** (Saint-Paul) | AU3c (72,3 %) | « AU3c : le règlement renvoie à U3c » | 5 extraits, **tous zone U3** (1er : Article 10 p.114) | 2 extraits U3 (Article 12 p.120) |
+| **97422000AD0250** (Le Tampon) | 2AUd (73,0 %) | « 2AUd : le règlement renvoie à Ud » | 5 extraits, **tous zone UD** (ARTICLE Ud10 p.63) | 4 extraits UD (ARTICLE Ud12 p.66) |
+
+*Deux secteurs d'un même ancêtre ne sont JAMAIS confondus* : Saint-Paul stocke bel et bien une zone
+**AU3ST**, et le filtre AU3c ne ramène QUE U3 (jamais AU3ST). `zones_apparentees(AU3c)` = `['AU3','U3']`,
+`zones_apparentees(2AUd)` = `['UD']` ; candidats AU3c = `[AU, AU3, AU3C]` (disjoints de AU3ST).
+Inventaire des renvois ENTRE zones stockées des 21 communes (testés sur hauteur + stationnement) : 4 —
+Étang-Salé `AUT→UT`, Saint-Paul `AU1LEC→U1lec`, `AU1E→U1e`, `AU3E→U3e` ; chacun ne sert que sa famille + la cible.
+
+**2. BLOQUANT — bon chapitre / zone / article — corrigé & prouvé.** Les chapitres SANS zone (dispositions
+générales, définitions, lexiques, annexes) ne portent plus d'étiquette de zone :
+- Saint-Denis p.4-24 → **zone `None`** (le sommaire « ZONE N …119 » n'est plus pris pour un en-tête :
+  `_is_toc_header`, points de suite).
+- L'Étang-Salé (INSEE **97404**) p.6-14 → **`None`** : le SOMMAIRE p.3 listait « ZONE UA / UB / UC » et la
+  bannière captait « UA », qui fuyait sur les dispositions générales. Une page listant **≥ 2 zones** est
+  un sommaire → aucune bannière, reset (`_clean_pages`).
+- Saint-Benoît annexes p.54-72 → **`['None']`** (frontière de bloc `_RESET_CHAP_M`).
+- **UB 9 et UB 10 de La Possession ne sont plus fusionnés** (base : `ARTICLE UB 9` p.31, `ARTICLE UB 10`
+  p.31-32, séparés) : un VRAI article court (« UB 9 : Sans objet ») n'est plus pris pour un fragment de titre.
+- **Saint-Denis p.22 « Piscines et bassins » n'est plus titré « Ordures ménagères »** : l'intertitre en
+  chiffres ROMAINS « XXI. AMÉNAGEMENTS EXTÉRIEURS » est désormais une frontière de sous-découpe ; le passage
+  piscine porte ce titre (vérifié API : `piscine|UA` Saint-Denis → disposition commune « XXI. AMÉNAGEMENTS
+  EXTÉRIEURS » p.22).
+- **Dispositions communes atteignables depuis n'importe quelle zone, servies à part** : `piscine` filtré sur
+  `UA` à Saint-Denis → 0 résultat de zone **+ 2 dispositions communes** (« XXI. AMÉNAGEMENTS EXTÉRIEURS »
+  p.22, « LEXIQUE » p.5).
+
+**3. À CORRIGER — stationnement — corrigé & prouvé.** Le stemmer français réduit `stationnement`→`station`,
+qui matchait « station d'épuration / de potabilisation ». On exige désormais le radical littéral `\ystationn`
+(partagé par toutes les vraies formes, pas par les collisions), au résultat ET à la localisation de page :
+- Saint-Denis `stationnement` : **n_total 58 → 53** ; les pages 131/140/142 (station d'épuration) **ne sont
+  plus citées** (0). Le Tampon : pages 20/35 **plus citées** (0).
+- Règle CIBLÉE sur le mot (pas un « stem+1 » générique, qui exclurait des flexions légitimes : `implantation`
+  et `implantées` divergent dès `implant`). Contrôle des autres recherches de la matrice : `retrait→retr`
+  ne produit **0 faux positif** d'article (retraite/retroussis co-occurrent) ; hauteur/emprise/recul/clôture/
+  piscine ne sur-stemment pas. *Fiche parcelle (gabarit)* : l'outil PLU cite bien l'article et la page —
+  Saint-Louis `ARTICLE UA 12` p.22-24 (⊃ UA 12.2 p.23), Saint-Pierre `ARTICLE Ud6` p.93-95. La VALEUR de
+  stationnement affichée par la fiche de faisabilité relève du calibrage/gabarit, **hors du périmètre de
+  cette correction** (table `plu_reglement_extrait`) : non modifiée, aucun écart de calibrage introduit.
+
+**4. À CORRIGER — documentaire — corrigé.** Millésime du LOT distingué de la date du RÈGLEMENT ÉCRIT, badges
+de procédure, réserve d'opposabilité (`config/plu_dates_gpu.yaml`, vérifs sur pièces p.1) :
+- Saint-Denis : couverture = « Modification simplifiée n°8, dossier approuvé **FÉVRIER 2024** » ; lot déposé
+  au GPU **05/08/2026**. L'écran affiche « édition PDF février 2024 » ≠ « publiée au GPU 24/08/2026 ».
+- Badges de procédure servis pour chaque procédure connue : révisions générales (Saint-Benoît, Saint-Denis,
+  **Saint-Louis**, Saint-Paul, Le Tampon), révisions allégées (L'Étang-Salé, La Possession), **Saint-Pierre
+  modification n°1 à l'enquête jusqu'au 30/10/2026** (ajoutée).
+- **Pas « opposable » sans réserve** quand un acte communal postérieur est connu : Saint-Benoît (Beauvallon
+  ~3,5 ha AUp→AUe, conseil du 30/06/2026, absente du GPU) affiche désormais « Opposabilité SOUS RÉSERVE de
+  cet acte postérieur (vérifiez en mairie) ».
+
+**5. MINEUR — corrigé.** « Aucun extrait trouvé » ne s'affiche plus en même temps qu'une disposition commune
+(front : le bloc est masqué si `dispositions_communes` est non vide) — cf. `piscine|UA` Saint-Denis ci-dessus.
+
+### Matrice rejouée par l'API (n_total, 24/11)
+
+| Commune | stationnement | hauteur | emprise | recul\* | clôture | piscine |
+|---|---|---|---|---|---|---|
+| Saint-Denis (97411) | **53** | 58 | 61 | 84 | 22 | 2 |
+| La Possession (97408) | 19 | 33 | 47 | 62 | 8 | 15 |
+| Saint-Paul (97415) | 48 | 97 | 91 | 149 | 87 | 44 |
+| Le Tampon (97422) | 26 | 32 | 57 | 76 | 21 | 8 |
+| Les Trois-Bassins (97423) | 25 | 34 | 29 | 67 | 16 | 12 |
+| Entre-Deux (97403) | 17 | 22 | 25 | 36 | 16 | 6 |
+
+\* `recul` = recul OR retrait OR implantation. Les comptes varient vs FIX-5 à cause de la re-découpe (chiffres
+romains → davantage d'articles distincts) et de l'anti-collision stationnement (−5 à Saint-Denis).
 
 ## OUTIL-PLU-FIX-5 — réponse à la relecture 4
 

@@ -61,7 +61,10 @@ CREATE INDEX IF NOT EXISTS ix_plu_extrait_doc    ON plu_reglement_extrait(insee,
 # CHAPITRE/Chapitre…). Le drapeau `i` est retiré ; un garde anti-renvoi (`_looks_cross_ref`) écarte en
 # plus les « (voir Article … » capitalisés. Supprime les 76 extraits bidon et rend les articles entiers.
 _HEADER = re.compile(
-    r'(?m)^[ \t]*('
+    # OUTIL-PLU-FIX-6 (point 2, La Possession) — un en-tête peut suivre une FIN DE PHRASE sur la même
+    # ligne : « …Sans objet. ARTICLE UB 10 - … » (extraction PDF qui colle la suite) → sinon UB 10 est
+    # fondu dans UB 9. On ancre en DÉBUT DE LIGNE ou juste après « . ».
+    r'(?m)(?:^[ \t]*|(?<=\.)[ \t]+)('
     # OUTIL-PLU-FIX-5 (Saint-Benoît) — séparateur zone→numéro : espace, point, tiret court/en-dash/em-dash
     # (« Article U – 4. Hauteur » n'était pas détecté → 47 en-têtes perdus, commune entière sans article).
     r'(?:ARTICLE|Article)\s+[A-Za-z]{0,4}\s*[-–—.]?\s*\d+[A-Za-z0-9.\-]*'
@@ -80,6 +83,28 @@ _CROSSREF_PRE = re.compile(r"(?i)(?:\(|voir|cf\.?|à l['’]|au|du|de la|sous le
 def _looks_cross_ref(flat: str, start: int) -> bool:
     pre = _norm(flat[max(0, start - 30):start])
     return bool(_CROSSREF_PRE.search(pre))
+
+
+# OUTIL-PLU-FIX-6 (point 2, Saint-Denis) — une ligne de SOMMAIRE (« ZONE N …………… 119 ») n'est pas un
+# en-tête de chapitre : sinon elle absorbe les dispositions générales qui la suivent et les étiquette
+# « N ». On reconnaît les points de suite (table des matières).
+_TOC_LEADER = re.compile(r'\.{4,}|…{2,}')
+# titre de chapitre SANS zone : réinitialise l'étiquette (dispositions générales/communes, définitions,
+# lexique, annexes, titres liminaires) — point 2 : ces pages ne portent pas l'étiquette d'une zone.
+_RESET_CHAP_SRC = (
+    r"(?:\d+[.)]\s*)?(?:titre\s+[ivx]+\b|annexes?\b|dispositions?\s+(?:g[ée]n[ée]rales?|communes|"
+    r"applicables?\s+à\s+(?:toutes|l'ensemble))|d[ée]finitions?\b|lexique\b|glossaire\b|pr[ée]ambule\b)")
+_RESET_CHAP = re.compile(r"(?i)^\s*" + _RESET_CHAP_SRC)
+# variante MULTILIGNE pour trouver ces titres comme frontières de bloc dans le flux plat.
+_RESET_CHAP_M = re.compile(r"(?im)^[ \t]*(" + _RESET_CHAP_SRC + r".*)$")
+
+
+def _is_toc_header(flat: str, start: int) -> bool:
+    """La ligne de l'en-tête matché porte-t-elle des points de suite (entrée de sommaire) ?"""
+    a = flat.rfind("\n", 0, start) + 1
+    b = flat.find("\n", start)
+    line = flat[a: b if b != -1 else len(flat)]
+    return bool(_TOC_LEADER.search(line))
 
 
 def _valid_header(ref: str) -> bool:
@@ -170,11 +195,31 @@ def _clean_pages(pages: list[str]) -> tuple[list[str], list[str | None]]:
     chrome = _detect_chrome(pages)
     clean: list[str] = []
     zbanner: list[str | None] = []
+    resets: list[bool] = []
     for t in pages:
         cur: str | None = None
         kept: list[str] = []
         lines = t.splitlines()
         nlines = len(lines)
+        # OUTIL-PLU-FIX-6 (point 2) — page d'un chapitre SANS zone (dispositions générales/communes,
+        # définitions, lexique, annexes, titre liminaire) → réinitialise l'étiquette (stoppe le
+        # report de la dernière bannière, qui « fuyait » sur ces pages : Saint-Benoît annexes → UE).
+        reset = any(_RESET_CHAP.match(_norm(x)) for x in lines[:10] if _norm(x))
+        # OUTIL-PLU-FIX-6 (point 2) — SOMMAIRE : une page qui liste PLUSIEURS zones (« ZONE UA … ZONE UB
+        # … ZONE UC ») n'est pas une page de zone ; on n'en tire AUCUNE bannière (sinon le sommaire
+        # d'Étang-Salé p.3 étiquette UA ses dispositions générales p.6-14). On la traite en reset.
+        _bz_page = []
+        for x in lines[:12]:
+            nx = _norm(x)
+            mbx = _BANNER.match(nx)
+            if mbx:
+                bzx = _banner_zone(mbx.group(1))
+                if bzx:
+                    _bz_page.append(bzx)
+        sommaire = len(set(_bz_page)) >= 2
+        if sommaire:
+            reset = True
+        resets.append(reset)
         for idx, l in enumerate(lines):
             n = _norm(l)
             if not n:
@@ -188,7 +233,8 @@ def _clean_pages(pages: list[str]) -> tuple[list[str], list[str | None]]:
             if mb:
                 bz = _banner_zone(mb.group(1))
                 if bz:
-                    cur = cur or bz
+                    if not sommaire and not _is_toc_header(n, 0):   # pas une ligne de sommaire (points de conduite)
+                        cur = cur or bz
                     continue
             if n in chrome:
                 continue
@@ -205,6 +251,8 @@ def _clean_pages(pages: list[str]) -> tuple[list[str], list[str | None]]:
     # avant le 1er titre (dispositions générales, sommaire) restent sans étiquette.
     last: str | None = None
     for i in range(len(zbanner)):
+        if resets[i]:                      # chapitre sans zone → on cesse de reporter la bannière
+            last = None
         if zbanner[i] is not None:
             last = zbanner[i]
         elif last is not None:
@@ -267,6 +315,7 @@ _SUBHEAD = re.compile(
     r'(?m)^[ \t]*('
     r'(?:SECTION|Section|CHAPITRE|Chapitre|SOUS-SECTION|Sous-section)\s+[IVXLC0-9]'
     r'|\d{1,2}\s*[-–.)]?\s*[A-ZÀ-Ÿ]{2,}'       # titre numéroté « 6 IMPLANTATION », « 2. OCCUPATION »
+    r'|[IVX]{1,5}\s*[-–.)]\s*[A-ZÀ-Ÿ]{2,}'     # intertitre en chiffres ROMAINS « XXI. AMÉNAGEMENTS EXTÉRIEURS »
     r'|[A-ZÀ-Ÿ][A-ZÀ-Ÿ0-9 \-\'’/]{10,}\s*$'    # intertitre tout en capitales
     r')')
 # NB : on NE découpe PAS au sous-article « 6.3 » (séparerait l'exception de sa règle — D1) : l'article
@@ -301,12 +350,23 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
         j = bisect.bisect_right(page_off, off) - 1
         return starts[j][1] if j >= 0 else 1
 
-    # en-têtes RÉELS (B3) : on écarte les renvois de prose ET les faux « ZONE <mot/cadastre> ».
+    # en-têtes RÉELS (B3) : on écarte les renvois de prose, les faux « ZONE <mot/cadastre> » ET les
+    # entrées de SOMMAIRE (points de suite, point 2 — sinon « ZONE N …119 » absorbe les dispositions
+    # générales et les étiquette N).
     heads = [m for m in _HEADER.finditer(flat)
-             if not _looks_cross_ref(flat, m.start()) and _valid_header(_norm(m.group(1)))]
-    # frontières = SEULEMENT les en-têtes (plus jamais les frontières de page → article entier).
-    bounds = sorted({m.start() for m in heads} | {len(flat)})
+             if not _looks_cross_ref(flat, m.start()) and _valid_header(_norm(m.group(1)))
+             and not _is_toc_header(flat, m.start())]
     head_ref = {m.start(): _norm(m.group(1)) for m in heads}
+    # OUTIL-PLU-FIX-6 (point 2) — un titre de chapitre SANS zone (ANNEXES, DISPOSITIONS GÉNÉRALES,
+    # DÉFINITIONS, LEXIQUE, TITRE liminaire) est une FRONTIÈRE de bloc : l'annexe forme son PROPRE bloc
+    # (zone None), au lieu d'être avalée par le bloc de zone précédent (Saint-Benoît annexes AU/N → UE).
+    reset_at: set[int] = set()
+    for m in _RESET_CHAP_M.finditer(flat):
+        if not _is_toc_header(flat, m.start()):
+            head_ref[m.start()] = _norm(m.group(1))[:60]
+            reset_at.add(m.start())
+    # frontières = en-têtes d'article/zone + titres de chapitre sans zone (jamais les frontières de page).
+    bounds = sorted(set(head_ref) | {len(flat)})
     head_pos = sorted(head_ref)
 
     _UNSET = object()
@@ -322,11 +382,14 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
         if (is_zone_title and letters < 40) or (texte.count('.') > letters and letters < 40):
             return None
         if zone is _UNSET:
-            # PRIORITÉ (points 5 / E2) : l'EN-TÊTE DE L'ARTICLE d'abord (« ARTICLE N 1 » → N), sinon la
-            # bannière de la page de début. Pas de « zone de chapitre » héritée du sommaire.
-            zm = _ZONE_FROM_ART.match(ref or "") or _ZONE_FROM_ZONE.match(ref or "")
-            z_ref = _valid_zone(zm.group(1)) if zm else None
-            zone = z_ref or zbanner[page_of(a) - 1]
+            if ref and _RESET_CHAP.match(ref):
+                zone = None                      # chapitre SANS zone (annexe, dispositions générales…)
+            else:
+                # PRIORITÉ (points 5 / E2) : l'EN-TÊTE DE L'ARTICLE d'abord (« ARTICLE N 1 » → N), sinon la
+                # bannière de la page de début. Pas de « zone de chapitre » héritée du sommaire.
+                zm = _ZONE_FROM_ART.match(ref or "") or _ZONE_FROM_ZONE.match(ref or "")
+                z_ref = _valid_zone(zm.group(1)) if zm else None
+                zone = z_ref or zbanner[page_of(a) - 1]
         pg0 = page_of(a)
         lead = len(raw) - len(raw.lstrip())
         pmap = [[0, pg0]]                        # page_map : offset dans `texte` → page PDF
@@ -389,6 +452,9 @@ def _fusionne_titres(pieces: list[dict]) -> list[dict]:
         if net >= 50:
             return False
         ref = (e.get("article_ref") or "")
+        if re.match(r'(?i)^article\s', ref):
+            return False                          # un VRAI article court (« UB 9 : Sans objet ») n'est
+            #                                       PAS un fragment de titre (sinon UB 9 fond dans UB 10).
         if re.match(r'(?i)^(section|chapitre|titre|sous-section)\b', ref):
             return True                           # titre de section nu → refondu dans la suite
         letters = [c for c in t if c.isalpha()]
@@ -535,32 +601,41 @@ def _classe_token(zone: str) -> str:
     return (m.group(1) + m.group(2)) if m else _norm(zone).upper()
 
 
-def _zone_match(a: str, b: str) -> bool:
-    """Deux codes de zone s'apparentent (OUTIL-PLU-FIX-2 B2+C1) si :
-      (a) l'un est ANCÊTRE de l'autre dans la chaîne de candidats (ex. A→Ah, U→Ua), OU
-      (b) ils partagent un ancêtre commun PLUS PROFOND que la seule classe (ex. AU3c↔AU3ST : famille
-          AU3 ; UBc↔UBa : famille UB).
-    Un simple partage de classe NE SUFFIT PAS : AU3c n'attrape pas AU1 (commun = « AU » = classe), et
-    A n'attrape jamais AU (classes disjointes, commun = ∅)."""
-    au, bu = _norm(a).upper(), _norm(b).upper()
-    sa, sb = set(zone_candidats(au)), set(zone_candidats(bu))
-    if au in sb or bu in sa:                      # (a) ancêtre / descendant
-        return True
-    common = sa & sb                              # (b) ancêtre commun plus profond que la classe
-    if not common:
-        return False
-    return len(max(common, key=len)) > len(_classe_token(au))
+def _renvoi_cible(zone: str, insee: str | None) -> str | None:
+    """OUTIL-PLU-FIX-6 (point 1) — cible du RENVOI réglementaire d'un secteur (Saint-Paul AU3c→U3c,
+    Le Tampon 2AUd→Ud) via `resolve_zone` : la MÊME résolution que la fiche parcelle (config/
+    plu_destinations + patterns AU→U), pas une seconde table. None si la zone n'est pas un renvoi."""
+    if not insee:
+        return None
+    try:
+        from ..faisabilite.zonage import resolve_zone
+        zr = resolve_zone(zone, insee)
+        m = re.search(r'règles de (\S+)', getattr(zr, "via_renvoi", None) or "")
+        return m.group(1) if m else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def zone_renvoi_note(zone: str, insee: str | None) -> str | None:
+    """Phrase à afficher quand le filtre d'un secteur ouvre les articles de sa zone de renvoi."""
+    cible = _renvoi_cible(zone, insee)
+    return f"{zone} : le règlement renvoie à {cible}" if cible else None
 
 
 def zones_apparentees(session: Session, zone: str, insee: str | None) -> list[str]:
-    """Liste des codes de zone STOCKÉS apparentés à `zone` (cf. `_zone_match`). On interroge les zones
-    réellement présentes (indexé, bon marché) et on filtre en Python — appariement EXACT ensuite."""
+    """Zones STOCKÉES à servir pour le filtre `zone` : la zone et ses ANCÊTRES de famille (le règlement
+    commun — JAMAIS les secteurs frères : AU3c ne ramène pas AU3st), PLUS la cible du RENVOI réglementaire
+    (AU3c→U3c, 2AUd→Ud) et ses ancêtres. Appariement EXACT sur l'ensemble (aucun wildcard de classe)."""
+    cands = {c.upper() for c in zone_candidats(zone)}
+    cible = _renvoi_cible(zone, insee)
+    if cible:
+        cands |= {c.upper() for c in zone_candidats(cible)}
     sql = "SELECT DISTINCT zone FROM plu_reglement_extrait WHERE zone IS NOT NULL"
     params: dict = {}
     if insee:
         sql += " AND insee = :i"; params["i"] = insee
     stored = [z for z in session.execute(text(sql), params).scalars().all() if z]
-    return sorted({z.upper() for z in stored if _zone_match(zone, z)})
+    return sorted({z.upper() for z in stored if z.upper() in cands})
 
 
 # OUTIL-PLU-FIX-3 (point 8) — un extrait SANS zone qui NOMME une zone/secteur précis (« en zone UA… »,
@@ -569,9 +644,27 @@ def zones_apparentees(session: Session, zone: str, insee: str | None) -> list[st
 # nomment aucune zone) restent incluses, et sont présentées à part (« Dispositions communes »).
 _ZNAME_SQL = r'\y(zones?|secteurs?)\s+[0-9]{0,2}(AU|U|A|N)[0-9A-Za-z]'
 
+# OUTIL-PLU-FIX-6 (point 3) — collisions de STEMMER : le dictionnaire français de Postgres réduit
+# « stationnement » à « station », qui matche alors « station d'épuration / de potabilisation / de
+# service ». Toutes les VRAIES formes (stationnement(s), stationner, stationne, stationné, stationnant)
+# partagent le radical « stationn » ; les collisions (station, stations) NON. On exige donc ce radical
+# dans le verbatim pour ce mot précis. Règle ciblée sur mot (pas « stem+1 » générique, qui exclurait des
+# flexions légitimes co-radicalées, ex. « implantation » et « implantées » divergent dès « implant »).
+_RADICAUX_SPECIFIQUES = {"stationnement": r'\ystationn', "stationnements": r'\ystationn'}
+
+
+def _radicaux_requis(terms: list[str] | None) -> list[str]:
+    """Radicaux littéraux à exiger dans le verbatim pour neutraliser les collisions de stemmer."""
+    out, seen = [], set()
+    for t in (terms or []):
+        r = _RADICAUX_SPECIFIQUES.get(_ua1(t))
+        if r and r not in seen:
+            seen.add(r); out.append(r)
+    return out
+
 
 def _search_where(q: str, insee: str | None, zones_ok: list[str] | None,
-                  zone_given: bool) -> tuple[list[str], dict]:
+                  zone_given: bool, terms: list[str] | None = None) -> tuple[list[str], dict]:
     """Clause WHERE commune à search/count (config `fr_unaccent` : casse + accents).
     Filtre zone (OUTIL-PLU-FIX-2/3) : appariement EXACT sur la liste d'apparentées `zones_ok` (jamais de
     LIKE qui confondait A et AU, B2) ; on inclut les dispositions COMMUNES (`zone IS NULL` qui ne nomment
@@ -585,6 +678,9 @@ def _search_where(q: str, insee: str | None, zones_ok: list[str] | None,
         where.append("(upper(zone) = ANY(:zones) OR (zone IS NULL AND texte_verbatim !~* :znamep))")
         params["zones"] = zones_ok or []
         params["znamep"] = _ZNAME_SQL
+    for i, rad in enumerate(_radicaux_requis(terms)):          # OUTIL-PLU-FIX-6 point 3 : anti-collision
+        where.append(f"texte_verbatim ~* :rad{i}")
+        params[f"rad{i}"] = rad
     return where, params
 
 
@@ -644,13 +740,19 @@ def locate_match(session: Session, texte: str, page_map: list | None, q: str,
     # AVANT le stemmer de page, sinon « stationnement » n'y est pas trouvé → page fausse.
     txts = [_CESURE.sub("", s[2]) for s in slices]
     pgs = [int(s[1] or 0) for s in slices]
+    rads = _radicaux_requis(terms) or _radicaux_requis([q])   # OUTIL-PLU-FIX-6 point 3 : anti-collision
 
     def _pages_for(query: str) -> list[int]:
-        rows = session.execute(text(
-            "SELECT t.pg FROM unnest(CAST(:txt AS text[]), CAST(:pg AS int[])) AS t(txt, pg) "
-            "WHERE to_tsvector('fr_unaccent', t.txt) @@ websearch_to_tsquery('fr_unaccent', :q) "
-            "ORDER BY t.pg"), {"txt": txts, "pg": pgs, "q": query}).scalars().all()
-        return [int(p) for p in rows if p]
+        # Une page ne compte que si elle porte le radical SPÉCIFIQUE (le cas échéant) : on ne cite plus la
+        # page d'une « station d'épuration » pour une recherche « stationnement ».
+        sql = ("SELECT t.pg FROM unnest(CAST(:txt AS text[]), CAST(:pg AS int[])) AS t(txt, pg) "
+               "WHERE to_tsvector('fr_unaccent', t.txt) @@ websearch_to_tsquery('fr_unaccent', :q)")
+        p = {"txt": txts, "pg": pgs, "q": query}
+        for i, rad in enumerate(rads):
+            sql += f" AND t.txt ~* :rad{i}"; p[f"rad{i}"] = rad
+        sql += " ORDER BY t.pg"
+        rows = session.execute(text(sql), p).scalars().all()
+        return [int(p_) for p_ in rows if p_]
 
     pages = _pages_for(q)
     if pages:
@@ -683,7 +785,7 @@ def search_reglement(session: Session, q: str, insee: str | None = None, limit: 
     (mots de la requête) sert à CITER la page du mot dans l'article (`page_match`) et à rendre l'extrait
     AUTOUR du mot (`extrait`). `page_debut`/`page_fin` donnent « p. X-Y ». `offset` pagine réellement."""
     zones_ok = zones_apparentees(session, zone, insee) if zone else None
-    where, params = _search_where(q, insee, zones_ok, bool(zone))
+    where, params = _search_where(q, insee, zones_ok, bool(zone), terms)
     params["lim"] = limit
     params["off"] = max(0, offset)
     rows = session.execute(text(f"""
@@ -708,11 +810,11 @@ def search_reglement(session: Session, q: str, insee: str | None = None, limit: 
 
 
 def count_reglement(session: Session, q: str, insee: str | None = None,
-                    zone: str | None = None) -> int:
+                    zone: str | None = None, terms: list[str] | None = None) -> int:
     """OUT-PLU-008 — nombre TOTAL d'extraits correspondant à la requête (sans le plafond `limit`),
     pour que l'écran dise « N affichés sur M » et non le simple compte de la page servie."""
     zones_ok = zones_apparentees(session, zone, insee) if zone else None
-    where, params = _search_where(q, insee, zones_ok, bool(zone))
+    where, params = _search_where(q, insee, zones_ok, bool(zone), terms)
     return int(session.execute(text(
         f"SELECT count(*) FROM plu_reglement_extrait WHERE {' AND '.join(where)}"),
         params).scalar() or 0)
