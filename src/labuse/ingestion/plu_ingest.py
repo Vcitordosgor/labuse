@@ -323,9 +323,40 @@ def zone_candidats(zone: str) -> list[str]:
     return list(seen)
 
 
+def _dedup_double_draw(page) -> str:
+    """OUTIL-PLU-FIX-9 (point 3) — certains PDF rendent les TITRES en « fausse graisse » = le texte est
+    DESSINÉ DEUX FOIS À LA MÊME POSITION. `get_text()` (texte brut) rend alors la ligne EN DOUBLE
+    consécutif (« 10.1 - Définition\\n10.1 - Définition » — Le Tampon : 521 lignes sur 116 pages). On
+    retire le doublon consécutif UNIQUEMENT quand ce texte n'occupe qu'UNE ordonnée sur la page (dessin
+    EN PLACE) ; une valeur de TABLEAU répétée sur plusieurs lignes (« RECOMMANDÉ », « 100 % ») occupe
+    PLUSIEURS ordonnées et reste intacte — aucune règle n'est perdue."""
+    plain = page.get_text()
+    ys: dict[str, set] = {}
+    for b in page.get_text("dict").get("blocks", []):
+        for ln in b.get("lines", []):
+            t = _norm("".join(s.get("text", "") for s in ln.get("spans", [])))
+            if t:
+                ys.setdefault(t, set()).add(round(ln["bbox"][1]))
+    out: list[str] = []
+    prev: str | None = None
+    removed = False
+    for l in plain.splitlines():
+        nl = _norm(l)
+        if nl and nl == prev and len(nl) > 3 and len(ys.get(nl, ())) <= 1:
+            removed = True
+            continue                               # doublon consécutif dessiné EN PLACE → retiré
+        out.append(l)
+        if nl:
+            prev = nl
+    if not removed:
+        return plain                               # page intacte → texte RIGOUREUSEMENT inchangé
+    res = "\n".join(out)
+    return res + "\n" if plain.endswith("\n") else res
+
+
 def _pages(path: str) -> list[str]:
     d = fitz.open(path)
-    return [d[i].get_text() for i in range(d.page_count)]
+    return [_dedup_double_draw(d[i]) for i in range(d.page_count)]
 
 
 def _pagination_ambigue(pages: list[str]) -> bool:
@@ -775,19 +806,59 @@ def _classe_token(zone: str) -> str:
     return (m.group(1) + m.group(2)) if m else _norm(zone).upper()
 
 
-def _renvoi_cible(zone: str, insee: str | None) -> str | None:
-    """OUTIL-PLU-FIX-6 (point 1) — cible du RENVOI réglementaire d'un secteur (Saint-Paul AU3c→U3c,
+def _sans_prefixe_chiffre(zone: str) -> str | None:
+    """OUTIL-PLU-FIX-9 (point 1) — libellé de la zone SANS son préfixe de PHASAGE (1AUto→AUto, 2AUa→AUa).
+    Le plan de zonage numérote les phases d'ouverture (1AU/2AU/3AU) ; le RÈGLEMENT écrit, lui, ne tient
+    souvent qu'UN chapitre pour la famille (« ZONE AUto » servie sous le libellé AUTO à Sainte-Rose).
+    None si le retrait ne change rien (pas de préfixe)."""
+    s = _norm(zone)
+    stripped = re.sub(r'^\d+', '', s)
+    return stripped if stripped and stripped.upper() != s.upper() else None
+
+
+def _renvoi_texte(session: Session, zone: str, insee: str | None) -> str | None:
+    """OUTIL-PLU-FIX-9 (point 1) — cible d'un renvoi EXPRIMÉ DANS LE TEXTE du règlement quand la zone
+    n'a pas de chapitre propre : « …pour la zone AUt, (il convient de) se reporter au règlement de la
+    zone Ua ». On lit le libellé TEL QU'ÉCRIT (phasage retiré : 1AUt→AUt). Vérifié sur pièce :
+    Bras-Panon AUt→Ua (p.80), Trois-Bassins AUt→Ub (p.66-70), Le Tampon AUto→Ucto (p.86-89)."""
+    if not insee:
+        return None
+    strip = _sans_prefixe_chiffre(zone) or _norm(zone)
+    if not strip:
+        return None
+    rx = re.compile(r'(?i)zones?\s+' + re.escape(strip) + r'\b[^.]{0,90}?'
+                    r'report\w+\s+au\s+r[èe]glement\s+de\s+la\s+zone\s+'
+                    r'([0-9]{0,2}(?:AU|U|A|N)[0-9A-Za-z]{0,6})')
+    rows = session.execute(text(
+        "SELECT texte_verbatim FROM plu_reglement_extrait WHERE insee = :i AND texte_verbatim ILIKE :l"),
+        {"i": insee, "l": f"%zone {strip}%"}).scalars().all()
+    for t in rows:
+        m = rx.search(t or "")
+        if m:
+            z = _valid_zone(m.group(1))
+            if z and z != _valid_zone(strip):      # jamais un renvoi circulaire vers soi-même
+                return z
+    return None
+
+
+def _renvoi_cible(zone: str, insee: str | None, session: Session | None = None) -> str | None:
+    """OUTIL-PLU-FIX-6/9 (point 1) — cible du RENVOI réglementaire d'un secteur (Saint-Paul AU3c→U3c,
     Le Tampon 2AUd→Ud) via `resolve_zone` : la MÊME résolution que la fiche parcelle (config/
-    plu_destinations + patterns AU→U), pas une seconde table. None si la zone n'est pas un renvoi."""
+    plu_destinations + patterns AU→U), pas une seconde table ; à DÉFAUT, le renvoi lu DANS le texte du
+    règlement (`_renvoi_texte`). None si la zone n'est pas un renvoi."""
     if not insee:
         return None
     try:
         from ..faisabilite.zonage import resolve_zone
         zr = resolve_zone(zone, insee)
         m = re.search(r'règles de (\S+)', getattr(zr, "via_renvoi", None) or "")
-        return m.group(1) if m else None
+        if m:
+            return m.group(1)
     except Exception:  # noqa: BLE001
-        return None
+        pass
+    if session is not None:
+        return _renvoi_texte(session, zone, insee)
+    return None
 
 
 def _zone_u_equivalente(zone: str) -> str | None:
@@ -803,12 +874,21 @@ def zone_renvoi_note(zone: str, insee: str | None, session: Session | None = Non
     """Phrase à afficher quand le filtre d'un secteur ouvre les articles de sa zone de renvoi. Le renvoi
     CONFIGURÉ (resolve_zone) prime ; à défaut, le renvoi GÉNÉRIQUE AU→U de même indice est annoncé LORSQU'IL
     sert réellement (la zone AU n'a pas de chapitre propre mais la zone U de même indice est, elle, servie)."""
-    cible = _renvoi_cible(zone, insee)
+    cible = _renvoi_cible(zone, insee, session)
     if cible:
         return f"{zone} : le règlement renvoie à {cible}"
-    if session is not None:
+    if session is not None and not _chapitre_propre(session, zone, insee):
+        # phasage : la zone de plan partage le chapitre de la famille écrit sans préfixe (1AUto → AUto)
+        strip = _sans_prefixe_chiffre(zone)
+        if strip:
+            scands = {c.upper() for c in zone_candidats(strip)}
+            stored = {z.upper() for z in session.execute(text(
+                "SELECT DISTINCT zone FROM plu_reglement_extrait WHERE zone IS NOT NULL AND insee = :i"),
+                {"i": insee}).scalars().all() if z}
+            if scands & stored:
+                return f"{zone} : articles de la zone {strip} (phasage du plan de zonage)"
         ueq = _zone_u_equivalente(zone)
-        if ueq and not _chapitre_propre(session, zone, insee) and zones_apparentees(session, zone, insee):
+        if ueq and zones_apparentees(session, zone, insee):
             return (f"{zone} (zone à urbaniser) : le règlement renvoie au règlement de la zone {ueq} "
                     f"de même indice — articles de {ueq} servis ci-dessous.")
     return None
@@ -831,7 +911,7 @@ def zones_apparentees(session: Session, zone: str, insee: str | None) -> list[st
     commun — JAMAIS les secteurs frères : AU3c ne ramène pas AU3st), PLUS la cible du RENVOI réglementaire
     (AU3c→U3c, 2AUd→Ud) et ses ancêtres. Appariement EXACT sur l'ensemble (aucun wildcard de classe)."""
     cands = {c.upper() for c in zone_candidats(zone)}
-    cible = _renvoi_cible(zone, insee)
+    cible = _renvoi_cible(zone, insee, session)
     if cible:
         cands |= {c.upper() for c in zone_candidats(cible)}
     sql = "SELECT DISTINCT zone FROM plu_reglement_extrait WHERE zone IS NOT NULL"
@@ -840,6 +920,13 @@ def zones_apparentees(session: Session, zone: str, insee: str | None) -> list[st
         sql += " AND insee = :i"; params["i"] = insee
     stored = [z for z in session.execute(text(sql), params).scalars().all() if z]
     match = sorted({z.upper() for z in stored if z.upper() in cands})
+    # OUTIL-PLU-FIX-9 (point 1) — PHASAGE : une zone de plan 1AUto/2AUa sans chapitre propre peut partager
+    # le chapitre de la famille écrit SANS le préfixe de phase (Sainte-Rose 1AUto → chapitre « AUTO »).
+    if not match:
+        strip = _sans_prefixe_chiffre(zone)
+        if strip:
+            scands = {c.upper() for c in zone_candidats(strip)}
+            match = sorted({z.upper() for z in stored if z.upper() in scands})
     # OUTIL-PLU-FIX-8 (LOT 3) — renvoi GÉNÉRIQUE AU→U « de même indice » : une zone À URBANISER sans
     # chapitre propre stocké (ni AUa, ni la classe « AU ») ouvre le règlement de la zone U de même indice
     # (AUa→Ua, 1AU3→U3). Purement ADDITIF et DÉCLENCHÉ UNIQUEMENT quand aucune zone propre ne correspond

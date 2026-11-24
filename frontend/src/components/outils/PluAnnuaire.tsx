@@ -394,7 +394,11 @@ function PluExtraitCard({ r, premier = false }: { r: PluExtrait; premier?: boole
       <div className="flex items-start justify-between gap-2">
         <span className="shrink-0 font-mono text-[12px] font-medium text-mint">{numeroArticle(r.article_ref)}</span>
         <div className="flex flex-wrap items-center justify-end gap-1">
-          {r.zone && <span className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[9.5px] text-txt-mut">zone {r.zone}</span>}
+          {/* OUTIL-PLU-FIX-9 (point 4) — règle servie à l'identique sous plusieurs zones : on liste TOUTES
+              les zones concernées (un seul extrait), sinon la zone unique. */}
+          {r.zones_concernees && r.zones_concernees.length > 1
+            ? <span className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[9.5px] text-txt-mut">zones {r.zones_concernees.join(', ')}</span>
+            : r.zone && <span className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[9.5px] text-txt-mut">zone {r.zone}</span>}
           <span className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[9.5px] text-txt-mut">{r.commune}</span>
         </div>
       </div>

@@ -131,11 +131,11 @@ def test_le_port_2AU_article_aspect_servi(sess):
 
 
 def test_le_port_1AU_2AU_ont_des_articles_propres(sess):
-    """Le Port 1AU et 2AU portent chacune des articles PROPRES (pas seulement des dispositions communes)."""
+    """RELECTURE-7 §1 (durci) : Le Port 1AU et 2AU portent chacune EXACTEMENT 15 articles propres."""
     for z in ("1AU", "2AU"):
         n = sess.execute(text("SELECT count(*) FROM plu_reglement_extrait WHERE insee='97407' AND zone=:z"),
                          {"z": z}).scalar()
-        assert n >= 10, f"zone {z} : {n} articles propres (attendu ≥ 10)"
+        assert n == 15, f"zone {z} : {n} articles propres (attendu exactement 15)"
 
 
 def test_preambule_saint_pierre_ucv_rattache(sess):
@@ -147,17 +147,24 @@ def test_preambule_saint_pierre_ucv_rattache(sess):
 
 
 def test_preambules_zones_reattaches_count(sess):
-    """RELECTURE-6 §6 : les préambules de zone nommant UNE zone ne sont plus en « sans zone ». Sous le
-    filtre de leur zone, Saint-Pierre sert bien un préambule pour Ucv/Ud/Ug/Uf/Us/Up/Ut."""
-    for z in ("Ucv", "Ud", "Ug", "Uf", "Us", "Up", "Ut"):
-        app = P.zones_apparentees(sess, z, "97416")
-        assert app, f"zone {z} injoignable (aucune zone apparentée stockée)"
+    """RELECTURE-7 §1 (durci — n'était plus tautologique) : chaque zone de Saint-Pierre porte EXACTEMENT
+    UN préambule (extrait dont le texte commence par « Préambule » ET nomme « La/Les zone(s) <x> ») — le
+    test échouerait si un préambule n'était pas rattaché (zone NULL), pas seulement si la zone existe."""
+    attendu = {"UCV": "Ucv", "UD": "Ud", "UG": "Ug", "UF": "Uf", "US": "Us", "UP": "Up", "UT": "Ut"}
+    for zone, lbl in attendu.items():
+        rows = sess.execute(text(
+            "SELECT texte_verbatim FROM plu_reglement_extrait WHERE insee='97416' AND zone=:z "
+            "AND texte_verbatim ~* '^\\s*Pr.ambule'"), {"z": zone}).scalars().all()
+        assert len(rows) == 1, f"zone {zone} : {len(rows)} préambule(s) rattaché(s) (attendu 1)"
+        assert re.search(rf"(?i)\b(?:la|les)\s+zones?\s+{lbl}\b", rows[0]), \
+            f"le préambule de {zone} ne définit pas « la zone {lbl} »"
 
 
-def test_couverture_plan_zonage_peu_de_zeros(sess):
-    """RELECTURE-6 §5-6 : sur les 21 communes, chaque zone du plan de zonage doit avoir ≥1 résultat sous
-    son filtre (via son chapitre propre OU le renvoi AU→U). Résidu toléré : zones AU touristiques sans
-    équivalent U (1AUt/1AUto) — borné et DOCUMENTÉ, pas un trou silencieux."""
+def test_couverture_plan_zonage_liste_nominative(sess):
+    """RELECTURE-7 §4 (durci) : sur les 21 communes, CHAQUE zone du plan de zonage a ≥1 résultat sous son
+    filtre. On affirme la LISTE NOMINATIVE des zones injoignables (et non « ≤ 4 ») : après FIX-9
+    (Sainte-Rose 1AUto→AUTO ; Bras-Panon/Trois-Bassins AUt→Ua/Ub ; Le Tampon AUto→Ucto par renvoi texte),
+    elle doit être VIDE. Un nouveau trou ferait échouer le test en le NOMMANT."""
     import pathlib
 
     import yaml
@@ -172,10 +179,8 @@ def test_couverture_plan_zonage_peu_de_zeros(sess):
     for r in rows:
         if r.insee in servables and r.lib:
             zbyc[r.insee].add(r.lib)
-    zeros = [(i, z) for i in zbyc for z in zbyc[i] if not P.zones_apparentees(sess, z, i)]
-    # borne stricte : au plus les zones AU touristiques connues sans équivalent U
-    assert len(zeros) <= 4, f"{len(zeros)} zones injoignables (attendu ≤ 4) : {sorted(zeros)}"
-    assert all(re.match(r"(?i)^\d*AU", z) for _, z in zeros), f"zéro NON-AU injoignable : {zeros}"
+    zeros = sorted((i, z) for i in zbyc for z in zbyc[i] if not P.zones_apparentees(sess, z, i))
+    assert zeros == [], f"zones du plan injoignables (devrait être vide) : {zeros}"
 
 
 def test_renvoi_generique_AUa_vers_U(sess):
@@ -183,6 +188,68 @@ def test_renvoi_generique_AUa_vers_U(sess):
     note = P.zone_renvoi_note("AUa", "97401", sess)
     assert note and "zone Ua" in note and "urbaniser" in note.lower()
     assert P.zones_apparentees(sess, "AUa", "97401"), "AUa ne sert aucune zone (renvoi U cassé)"
+
+
+def test_sainte_rose_1AUto_relie_au_chapitre_AUTO(sess):
+    """FIX-9 (point 1) : Sainte-Rose 1AUto (plan) est relié au chapitre « AUTO » du règlement (phasage) —
+    la règle existait en base mais était injoignable. On sert bien les articles AUTO (≥10, p.58-63)."""
+    assert P.zones_apparentees(sess, "1AUto", "97419") == ["AUTO"], \
+        f"1AUto mal relié : {P.zones_apparentees(sess, '1AUto', '97419')}"
+    n = sess.execute(text("SELECT count(*) FROM plu_reglement_extrait WHERE insee='97419' AND zone='AUTO'")).scalar()
+    assert n >= 10, f"chapitre AUTO absent ({n} extraits)"
+    rows = P.search_reglement(sess, "hauteur", insee="97419", zone="1AUto", terms=["hauteur"], limit=10)
+    assert any(r["zone"] == "AUTO" for r in rows), "le filtre 1AUto ne sert pas le chapitre AUTO"
+
+
+def test_les_3_autres_AU_renvoient_par_le_texte(sess):
+    """FIX-9 (point 1) : les 3 autres zones ex-« introuvables » ne sont PAS des trous — leur règlement
+    renvoie DANS LE TEXTE à une zone U servie (vérifié PDF : Bras-Panon AUt→Ua p.80, Trois-Bassins
+    AUt→Ub p.66-70, Le Tampon AUto→Ucto p.86-89). Chacune doit donc servir des articles sous son filtre."""
+    cas = [("97402", "1AUt", "UA"), ("97423", "1AUt", "UB"), ("97422", "1AUto", "UC")]
+    for insee, plan, attendu in cas:
+        app = P.zones_apparentees(sess, plan, insee)
+        assert attendu in app, f"{insee} {plan} : apparentées={app}, attendu ⊇ {{{attendu}}}"
+        assert P.count_reglement(sess, "hauteur", insee=insee, zone=plan, terms=["hauteur"]) > 0, \
+            f"{insee} {plan} ne sert aucun article de hauteur"
+
+
+def test_le_tampon_pas_de_lignes_doublees(sess):
+    """FIX-9 (point 3) : l'artefact d'extraction « fausse graisse » (ligne de titre dessinée 2×) est
+    corrigé — AUCUN extrait du Tampon ne contient 2 lignes NON VIDES identiques consécutives (était 521
+    lignes sur 116 pages). Témoin : « 10.3 - Règle particulière… » n'apparaît qu'UNE fois dans Uc10."""
+    rows = sess.execute(text("SELECT texte_verbatim FROM plu_reglement_extrait WHERE insee='97422'")).scalars().all()
+    doubles = 0
+    for t in rows:
+        lignes = [re.sub(r"\s+", " ", x).strip() for x in (t or "").splitlines()]
+        for i in range(1, len(lignes)):
+            if lignes[i] and lignes[i] == lignes[i - 1] and len(lignes[i]) > 3:
+                doubles += 1
+    assert doubles == 0, f"{doubles} ligne(s) doublée(s) consécutive(s) subsistent au Tampon"
+    # témoin de la relecture-7 §6 : l'article Uc10 ne double plus son intertitre « 10.3 - Règle particulière »
+    uc10 = sess.execute(text("SELECT texte_verbatim FROM plu_reglement_extrait WHERE insee='97422' "
+                             "AND zone='UC' AND article_ref ILIKE '%Uc10%' "
+                             "AND texte_verbatim ILIKE '%10.3 - Règle particulière%'")).scalars().all()
+    assert uc10, "article Uc10 (10.3) introuvable"
+    assert all(t.count("10.3 - Règle particulière") == 1 for t in uc10), "le titre 10.3 est encore doublé dans Uc10"
+
+
+def test_saint_paul_hauteur_sans_filtre_regroupe_les_identiques(sess):
+    """FIX-9 (point 4) : « hauteur » à Saint-Paul SANS filtre regroupe les extraits au texte identique
+    servis sous des zones AU*ST différentes en UN extrait portant la liste des zones (zones_concernees),
+    sans retirer la règle d'aucune zone (le filtre AU3st la ressert seule)."""
+    from labuse.api.modules import plu_annuaire_search
+    r = plu_annuaire_search(q="hauteur", insee="97415", zone=None, limit=200, offset=0, db=sess)
+    # 0 texte strictement identique répété dans la liste affichée
+    norm = [re.sub(r"\s+", " ", (x.get("texte_verbatim") or "")).strip() for x in r["resultats"]]
+    from collections import Counter
+    rep = sum(v - 1 for v in Counter(norm).values() if v > 1)
+    assert rep == 0, f"{rep} extrait(s) identique(s) encore répété(s) à l'affichage"
+    # le groupe « Article 10- » porte bien les 5 secteurs AU*ST
+    g = [x for x in r["resultats"] if set(["AU1", "AU3ST", "AU4ST", "AU5ST", "AU6ST"]).issubset(set(x.get("zones_concernees") or []))]
+    assert g, "les 5 zones AU*ST ne sont pas regroupées sur un seul extrait"
+    # la règle reste servable pour une zone précise
+    rf = plu_annuaire_search(q="hauteur", insee="97415", zone="AU3st", limit=25, offset=0, db=sess)
+    assert any(x["zone"] == "AU3ST" for x in rf["resultats"]), "AU3st ne sert plus sa règle"
 
 
 # ─────────────────────── Non-régression relectures 1-6 + rapports externes ───────────────────────
@@ -288,10 +355,10 @@ def test_annexe_NS_NTA_NTB_reste_commune(sess):
 
 
 def test_entre_deux_48_articles_separes(sess):
-    """RELECTURE-6 §A.4 : Entre-Deux garde ses 48 en-têtes d'article distincts, 0 doublon octet."""
+    """RELECTURE-7 §1 (durci) : Entre-Deux garde EXACTEMENT 48 en-têtes d'article distincts."""
     refs = sess.execute(text("SELECT article_ref FROM plu_reglement_extrait WHERE insee='97403' "
                              "AND article_ref ~* '^article'")).scalars().all()
-    assert len(set(refs)) >= 40, f"seulement {len(set(refs))} en-têtes d'article distincts à Entre-Deux"
+    assert len(set(refs)) == 48, f"{len(set(refs))} en-têtes d'article distincts à Entre-Deux (attendu 48)"
 
 
 def test_refs_de_prose_zero(sess):

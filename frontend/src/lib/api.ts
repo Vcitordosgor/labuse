@@ -836,6 +836,9 @@ export interface PluExtrait {
   // étendue ; pages_match = TOUTES les pages où une forme du mot apparaît (pluriels compris).
   page_debut?: number | null; page_fin?: number | null; page_match?: number | null
   pages_match?: number[] | null; extrait?: string
+  // OUTIL-PLU-FIX-9 (point 4) — un article générique servi à l'identique sous plusieurs zones est
+  // regroupé à l'affichage : zones_concernees = toutes les zones où CETTE règle s'applique.
+  zones_concernees?: string[] | null
 }
 export interface PluSearch {
   query: string; insee: string | null; n: number; n_total?: number; tronque?: boolean; resultats: PluExtrait[]; message?: string; avis?: string

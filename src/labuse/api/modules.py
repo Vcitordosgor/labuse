@@ -3298,9 +3298,14 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                                 f"en mairie (complétion auto à l'approbation, veille M41).") if rev else
                                (f"{nm} : règlement non ingéré (hors corpus) — rien à servir. "
                                 f"Voir /plu-annuaire/communes.")}
-    res = search_reglement(db, q_fts, insee, limit=limit, zone=zone, offset=offset, terms=terms)
     # OUT-PLU-008 — `n_total` = total des articles correspondant (sans plafond) ; `n` = page servie.
     n_total = count_reglement(db, q_fts, insee, zone=zone, terms=terms)
+    # OUTIL-PLU-FIX-9 (point 4) — le REGROUPEMENT À L'AFFICHAGE (ci-dessous) doit voir TOUS les extraits
+    # identiques ENSEMBLE, pas seulement la page courante (les 7 « Article 10- » de Saint-Paul sont
+    # dispersés dans le classement). On récupère donc l'ensemble des correspondances (plafond 1000 de
+    # sécurité), on regroupe, PUIS on pagine la liste regroupée.
+    fetch = min(n_total, 1000) if n_total else limit
+    res = search_reglement(db, q_fts, insee, limit=fetch, zone=zone, offset=0, terms=terms)
     for r in res:
         r["gpu_consult"] = "https://www.geoportail-urbanisme.gouv.fr/"
         # OUTIL-PLU-FIX-3 (points 2-3) — la page CITÉE est celle du mot dans l'article (`page_match`) ;
@@ -3313,6 +3318,28 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
         if r.get("pagination_ambigue"):
             r["pagination_note"] = ("pagination du document ambiguë (double numérotation) — la page "
                                     "citée est la PAGE PDF du fichier, pas la page imprimée.")
+    # REGROUPEMENT : un même article générique (« Article 10- ») servi à l'identique sous plusieurs zones
+    # (Saint-Paul sans filtre : AU1/AU3ST/AU4ST/AU5ST/AU6ST…) n'apparaît qu'UNE fois, avec la liste des
+    # zones concernées (`zones_concernees`). La règle reste servable pour CHAQUE zone (rien n'est retiré de
+    # la base ; le filtre d'une zone précise la ressert seule).
+    import re as _re_grp
+    _vus: dict[str, dict] = {}
+    _group: list[dict] = []
+    for r in res:
+        k = _re_grp.sub(r"\s+", " ", (r.get("texte_verbatim") or "")).strip()
+        if k and k in _vus:
+            g = _vus[k]
+            if r.get("zone") and r["zone"] not in g["zones_concernees"]:
+                g["zones_concernees"].append(r["zone"])
+        else:
+            r["zones_concernees"] = [r["zone"]] if r.get("zone") else []
+            _vus[k] = r
+            _group.append(r)
+    for g in _group:
+        g["zones_concernees"] = sorted(z for z in g["zones_concernees"] if z)
+    n_brut = len(res)                              # extraits bruts (avant regroupement d'affichage)
+    n_group = len(_group)                          # entrées distinctes après regroupement
+    res = _group[offset: offset + limit]           # pagination SUR la liste regroupée
     # PLU-EXCEPTIONS-1 — quand la recherche est cadrée sur une zone (ouverture depuis la fiche/Copilote),
     # on joint les exceptions CALIBRÉES de cette zone (verbatim + article + page) pour les afficher SOUS
     # l'article. Aide à la lecture : n'entre dans aucun calcul (Lot C).
@@ -3354,8 +3381,10 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
     # OUTIL-PLU-FIX-6 (point 1) — si le secteur filtré RENVOIE à une autre zone (AU3c→U3c), on le DIT.
     renvoi_note = zone_renvoi_note(zone, insee, db) if (zone and insee) else None
     return {"query": q, "insee": insee, "n": len(res), "n_total": n_total,
+            "n_extraits": n_brut,       # OUTIL-PLU-FIX-9 — total d'extraits bruts (avant regroupement)
+            "n_groupes": n_group,       # total d'entrées distinctes après regroupement d'affichage
             "limit": limit, "offset": offset, "message": message,
-            "tronque": n_total > len(res) + len(communes_list), "resultats": res,
+            "tronque": n_group > offset + len(res), "resultats": res,
             "dispositions_communes": communes_list, "renvoi_note": renvoi_note,
             "exceptions_zone": exceptions_zone, "exceptions_source": exceptions_source,
             "note_perimetre": ("Recherche communale (texte du règlement) : ne vérifie pas, à la parcelle, "

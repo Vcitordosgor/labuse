@@ -160,6 +160,43 @@ def main() -> int:
     print("     sans-zone de FIX-7 venait à ~95 % de la SUPPRESSION d'extraits (ré-découpe/réfs de")
     print("     prose), pas d'une attribution ; seuls 3 extraits recevaient alors une zone (_zone_de_fiche).")
 
+    h("9. FIX-9 point 1 — LES 4 EX-« INTROUVABLES » SONT TOUTES RELIÉES (0 trou)")
+    for ins, z, how in [("97419", "1AUto", "chapitre propre AUTO (phasage)"),
+                        ("97402", "1AUt", "renvoi texte → Ua"),
+                        ("97423", "1AUt", "renvoi texte → Ub"),
+                        ("97422", "1AUto", "renvoi texte → Ucto")]:
+        app = P.zones_apparentees(s, z, ins)
+        n = P.count_reglement(s, "hauteur", insee=ins, zone=z, terms=["hauteur"])
+        print(f"   {ins} {z:6} apparentées={app}  n(hauteur)={n}   [{how}]")
+    print("   → le compte-rendu FIX-8 (« 4 zones sans règlement correspondant ») était INEXACT : les 4")
+    print("     ont bien un règlement (1 chapitre propre + 3 renvois lus sur pièce p.80/66-70/86-89).")
+
+    h("10. FIX-9 point 3 — LIGNES DOUBLÉES (artefact fausse-graisse, dessin EN PLACE)")
+    rows = s.execute(text("SELECT insee, texte_verbatim FROM plu_reglement_extrait")).all()
+    import re as _re
+    cons = {}
+    for r in rows:
+        ls = [_re.sub(r"\s+", " ", x).strip() for x in (r.texte_verbatim or "").splitlines()]
+        for i in range(1, len(ls)):
+            if ls[i] and ls[i] == ls[i - 1] and len(ls[i]) > 3:
+                cons[r.insee] = cons.get(r.insee, 0) + 1
+    print(f"   Le Tampon (97422) doublons consécutifs EN PLACE servis = {cons.get('97422', 0)}  (était 521 sur 116 pages)")
+    autres = {k: v for k, v in cons.items() if k != "97422"}
+    print(f"   lignes consécutives identiques AILLEURS = {autres} → ce sont des CELLULES DE TABLEAU (y")
+    print("     distincts : palette « RECOMMANDÉ », colonnes « 100 % ») — légitimes, NON retirées.")
+
+    h("11. FIX-9 point 4 — REGROUPEMENT À L'AFFICHAGE (Saint-Paul « hauteur » sans filtre)")
+    from labuse.api.modules import plu_annuaire_search
+    r = plu_annuaire_search(q="hauteur", insee="97415", zone=None, limit=200, offset=0, db=s)
+    norms = [_re.sub(r"\s+", " ", (x.get("texte_verbatim") or "")).strip() for x in r["resultats"]]
+    from collections import Counter as _C
+    print(f"   extraits bruts = {r['n_extraits']} ; entrées après regroupement = {r['n_groupes']} ; "
+          f"doublons de texte affichés = {sum(v - 1 for v in _C(norms).values() if v > 1)}")
+    for g in r["resultats"]:
+        zc = g.get("zones_concernees") or []
+        if len(zc) > 1:
+            print(f"     {str(g['article_ref']):14} regroupé sur zones {zc}")
+
     s.close()
     print("\nPLU_CHIFFRES_DONE")
     return 0
