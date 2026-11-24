@@ -873,7 +873,13 @@ def _c_permis(db, idu, f):
         return None
     dyn = (nearby_permits(db, pid, radius_m=500, fenetre_mois=24) or {}).get("dynamique") or {}
     n = dyn.get("permis_recents")
-    return ({"n": n, "non_couvert": False, "rayon_m": 500, "fenetre_mois": 24} if n else None)
+    if n is None:
+        return None
+    # OUTIL-PERMIS-FIX-6 (Point 3) — on RESTITUE le zéro (0/0, jamais masqué : « aucun permis » ≠ donnée
+    # indisponible) ET le total de logements DÉCLARÉS, avec la réserve sur les permis sans nombre de logements.
+    return {"n": n, "logements": dyn.get("logements_recents"),
+            "sans_logements": dyn.get("permis_sans_logements"),
+            "non_couvert": False, "rayon_m": 500, "fenetre_mois": 24}
 
 
 # ══ Score / en-tête ════════════════════════════════════════════════════════════════════════

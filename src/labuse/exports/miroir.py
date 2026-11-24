@@ -712,11 +712,23 @@ def _r_n(v):
 def _r_permis_proximite(v):
     # EXPORTS-FIX-1 B7 — le compte de permis « à proximité » dit son rayon ET sa fenêtre (définition
     # client 500 m · 24 mois, arbitrage Q7 du 05/09), jamais un « 15 » nu.
+    # OUTIL-PERMIS-FIX-6 (Point 3) — on RESTITUE le total de LOGEMENTS déclarés (plus seulement le compte)
+    # ET on DIT les permis sans nombre de logements. Le zéro n'est plus masqué (0 permis, 0 logement) :
+    # « aucun permis » se distingue d'une donnée indisponible.
     if not isinstance(v, dict) or v.get("n") is None:
         return _r_n(v)
     n, r, fen = v.get("n"), v.get("rayon_m"), v.get("fenetre_mois")
+    lg, sans = v.get("logements"), v.get("sans_logements")
     suff = f" (< {groupe(r)} m, {fen} mois)" if r and fen else ""
-    return esc(f"{groupe(n)} permis{suff}")
+    txt = f"{groupe(n)} permis{suff}"
+    if lg is not None:
+        mot = "logement" if lg < 2 else "logements"
+        if sans:
+            txt += (f", {groupe(lg)} {mot} déclaré{'s' if lg >= 2 else ''} "
+                    f"({groupe(sans)} permis sans nombre de logements)")
+        else:
+            txt += f", {groupe(lg)} {mot}"
+    return esc(txt)
 
 
 def _r_dvf_liste(v, val: Valeur, zone=None):

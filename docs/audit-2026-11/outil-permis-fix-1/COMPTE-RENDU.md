@@ -527,3 +527,70 @@ Inchangé depuis le mandat 4 : `api/modules.py:permis_fiche` ne montre dépôt +
 ## Fichiers touchés (mandat 5)
 
 Back : `api/comparateur.py`, `api/fiche_commune.py`, `flash/data.py`, `flash/templates/rapport.html.j2`, `copilote_v2/{outils,answering,resume_fiche}.py`, `registre/moteurs/commune.py`, `registre/donnees.py`, `registre/robinets.py`. Front : `components/outils/blocB.tsx`, `components/outils/ModulePanel.tsx`, `components/contexte/ContextePanel.tsx`, `lib/api.ts`, `components/outils/CommunesTable.test.tsx`. Aucune donnée touchée en base (retrait d'affichage pur ; le calcul du composite est intact).
+
+---
+
+# OUTIL-PERMIS-FIX-6 — réponse à la relecture ASTRA-3 (liste fermée de 3 points)
+
+**Contexte.** Le relecteur a recontrôlé `main` au commit `3d7ad83bd`. Il **clôt** le rayon 500 m et les dormants (854, confirmés 622@48 mois / 455@60 mois, plancher 36 mois). Deux défauts **bloquants** restaient + une correction du Dossier. J'ai lu le rapport **en entier** (`~/Downloads/02-PERMIS-ASTRA-3.md`) et traité **chaque cas**, pas seulement le résumé.
+
+> **Note de méthode (cherché par le chiffre, pas la variable).** Le rapport désigne un extracteur précis : `src/labuse/exports/robinet_fiche.py:866`. En cherchant **ce que le relecteur a lu** (« 1 permis (< 500 m, 24 mois) », Page 9), j'ai constaté que **le Dossier ≠ le Rapport Flash** : le Dossier est le document `exports/` (miroir de la fiche), pas le template `flash/rapport.html.j2`. Une première passe avait corrigé le flash (mauvais document) : **reverté**. Le correctif Point 3 porte sur la **vraie** chaîne du Dossier.
+
+## Point 1 (BLOQUANT) — la liste et les fiches
+
+**Liste `/modules/permis`** (`modules.py:649` + `ModulePanel.tsx:1161`). La liste servait `depot = AN_DEPOT-01-01` (1er janvier fictif) et `delai_mois` (m10) → « 13 m » pour `97440925G0371`, « 8 m » à L'Étang-Salé. **Retiré** : plus de jointure `m10_permit_delais`, plus de colonnes `depot`/`delai_mois` dans la requête ni les `items`, plus de badge « N m » dans la ligne front. La carte ne les portait pas.
+
+**Fiche individuelle** (`modules.py:749`). Le filtre « date précise » (DR_DEPOT < autorisation, hors 1er janvier) laissait passer des dates dont l'année **contredit** `AN_DEPOT`. Ajout de la condition : `an_depot` présent (4 chiffres) **ET** `EXTRACT(YEAR FROM date_depot) = AN_DEPOT`.
+
+| Mesure (base locale) | Avant | Après |
+|---|---|---|
+| Permis gardant un **dépôt affiché** | 377 | **365** |
+| Dépôts retirés | — | **12** (10 années contradictoires + 2 sans `AN_DEPOT`) |
+| **Délai le plus long restant** (vérifié main) | 74 mois (`97441626E0304`) | **18 mois** (`97442224A0357` : dépôt 24/09/2024 → autorisation 19/03/2026, `AN_DEPOT`=2024) |
+
+- `97441626E0304` (Saint-Pierre, `AN_DEPOT`=2026, dépôt affiché 01/06/2020 → 74 mois) : la fiche renvoie désormais `date_depot=null`, `delai_instruction=null`. **Écarté.**
+- `97440925G0371` (témoin) : inchangé — `date_depot=null`, `delai=null` (DR_DEPOT = autorisation). Correct.
+
+## Point 2 (BLOQUANT pour le retrait) — le Bilan + /velocite
+
+- **Repère « Sitadel : N mois dépôt → PC »** (`bilan/reperes.py:385`) : la fonction `_sitadel` et la clé `reperes_publics["sitadel"]` sont **supprimées**. Mesuré avant retrait : Saint-Denis **9**, Saint-Pierre **8** mois.
+- **Bouton « N mois » du calendrier** (`BilanEcran.tsx:400`) : supprimé ; le promoteur saisit son délai, **sans valeur proposée**. Dans `declarations/bilan/postes.yaml`, `repere: sitadel` retiré de l'étape `obtention_pc` — `defaut: 6` **conservé**.
+- **Bilan PDF + Excel, aucune trace** : `moteur.py` / `pdf.py` / `excel.py` **non touchés** (0 ligne au `git diff`) ; le calendrier du PDF rend `defaut`/saisie (jamais le repère, qui était un **bouton front**). `moteur.py:129` marque le calendrier « (info) » → il n'entre dans **aucun total**. Pour un Bilan où le bouton n'était pas utilisé, **aucune formule ni aucun total ne bouge** (le repère n'était jamais une entrée du calcul). Vérifié sur 3 parcelles témoins : `reperes_publics` perd sa seule clé `sitadel`, le catalogue `obtention_pc` garde `defaut:6`.
+- **`/modules/velocite` SUPPRIMÉ** (répond 404). Il n'avait **plus aucun lecteur** après FIX-5 (composant M05 + `modVelocite` + outil Copilote `delais_instruction` retirés) : ni écran, ni PDF, ni Copilote, ni robinet. (Le relecteur le voyait encore livrer « 8 mois à Saint-Pierre ».)
+- **Balayage complet du délai par commune** (`velocite`, `delai_median`, `delai_mois`, `instruction`), sort de chacun :
+
+| Occurrence | Sort |
+|---|---|
+| `api/comparateur.py` (axe `velocite`, poids 0,15) | **Conservé au classement** (calcul inchangé), signalé — comme annoncé, accepté par le relecteur. Valeur brute toujours retirée du payload (FIX-5). |
+| `registre/moteurs/commune.py` `INDICATEURS["velocite"]` / `donnees.py` `velocite_delai_median_mois` | Conservé en interne (entrée composite), `en_attente`, servi par aucun robinet (FIX-5). |
+| `api/modules.py` `/velocite` | **Endpoint supprimé** (FIX-6). |
+| `api/modules.py` liste/fiche `delai_mois` | **Retiré** (liste) / **conditionné à l'année AN_DEPOT** (fiche) (FIX-6). |
+| `bilan/reperes.py` `_sitadel` | **Supprimé** (FIX-6). |
+| `copilote_v2/*` | Outil `delais_instruction` retiré, consigne interdit le chiffre (FIX-5). |
+| `accueil.py` / `events.py` / `alertes.py` (`date_depot`) | **Hors périmètre** : activité de *dépôt* (date), pas un *délai par commune*. Non touché. |
+
+## Point 3 (À CORRIGER) — le Dossier (ligne permis 500 m)
+
+La **vraie** chaîne : `nearby_permits` (centroïde, 500 m EPSG 2975, `now()−24 mois`) → `_c_permis` (`exports/robinet_fiche.py:866`) → `miroir._r_permis_proximite`. Elle ne gardait **que le compte** et **masquait le zéro** (retour `None` si `n=0`). Corrigé : l'extracteur remonte `logements` + `permis_sans_logements`, et **renvoie toujours** (zéro restitué) ; `nearby_permits` expose `permis_sans_logements` ; le miroir rend le total **déclaré** + la réserve.
+
+Rendu Dossier (chaîne réelle rejouée sur base locale) :
+
+| Parcelle | Recompte | Avant (Page 9) | Après |
+|---|---|---|---|
+| `97411000BZ1065` · Saint-Denis | 1 permis, 4 logts, 0 sans nb | « 1 permis (< 500 m, 24 mois) » (logts absents) | **1 permis (< 500 m, 24 mois), 4 logements** |
+| `97424000AB0001` · Cilaos | 0 permis | *zéro masqué* | **0 permis (< 500 m, 24 mois), 0 logement** |
+| `97415000CV1498` · Saint-Paul | 5 permis, 6 logts, 1 sans nb | « 5 permis (< 500 m, 24 mois) » (logts absents) | **5 permis (< 500 m, 24 mois), 6 logements déclarés (1 permis sans nombre de logements)** |
+
+> Le résumé du mandat disait « AB0001 → aucun permis » ; le **rapport** dit « restituer le zéro, 0 / 0 ». J'ai suivi le **rapport** (lecture directe 1/4, 0/0, 5/6). Seule cette ligne du Dossier change : `git diff` ne touche que `ingestion/permits.py` (+`permis_sans_logements`), `exports/robinet_fiche.py` et `exports/miroir.py` ; `moteur`/`pdf`/`excel`/blocs du Dossier intacts. Aucun témoin `tests/coherence_ecrans/` ne fige `n_permis_proximite`.
+
+## Preuves des mandats précédents (rejouées)
+
+Dormants **854** (île) · m10 **51 125** lignes (**50 960** valides) · `dmax` **30/09/2026** · rayon Dossier **500 m** — tous inchangés.
+
+## Vérifications (hook)
+
+`registre.verifier() == []` · `tsc -b` vert · `vitest run` **345/345** · pytest non-db complet vert · +6 garde-fous FIX-6 (`test_outil_permis_fix1.py`).
+
+## Fichiers touchés (mandat 6)
+
+Back : `api/modules.py` (liste sans dépôt/délai, fiche année==AN_DEPOT, `/velocite` supprimé), `bilan/reperes.py` (repère Sitadel supprimé), `ingestion/permits.py` (`permis_sans_logements`), `exports/robinet_fiche.py` + `exports/miroir.py` (Dossier : zéro restitué + logements + réserve), `api/fiche_commune.py` (docstring). Config : `declarations/bilan/postes.yaml` (repère retiré, defaut:6 gardé). Front : `components/outils/ModulePanel.tsx` (badge délai liste retiré), `components/fiche/BilanEcran.tsx` (bouton retiré). Tests : `test_outil_permis_fix1.py` (+6), `test_api.py` (/velocite → 404). **Le `flash/` reverté** (mauvais document). Aucune écriture en base.

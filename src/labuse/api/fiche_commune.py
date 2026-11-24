@@ -348,9 +348,10 @@ def scot_commune(db: Session, commune: str) -> dict | None:
 
 # ───────────────────────────── C5 — construire ici (permis + point mort) ─────────────────────────────
 def permis_bloc(db: Session, commune: str) -> dict:
-    """Le bloc « Construire ici » : permis autorisés (12 mois / 5 ans) et délai d'instruction viennent des
-    MÊMES sources que le comparateur (SITADEL + m10, cf. `comparable`) ; les permis DORMANTS (au point
-    mort) viennent du MÊME moteur/id que l'outil Permis (`permis_point_mort` / point_mort_n)."""
+    """Le bloc « Construire ici » : permis autorisés (12 mois / 5 ans) viennent de la MÊME source que le
+    comparateur (SITADEL, cf. `comparable`) ; les permis DORMANTS (au point mort) viennent du MÊME
+    moteur/id que l'outil Permis (`permis_point_mort` / point_mort_n). (OUTIL-PERMIS-FIX-5 : le délai
+    médian d'instruction n'est plus servi — jamais mesuré, dépôt daté à l'année.)"""
     from ..faisabilite.marche_commune import ligne6_offre_engagee
     from ..registre.moteurs.commune import permis_point_mort
     from sqlalchemy import text as _text

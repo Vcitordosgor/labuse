@@ -309,7 +309,10 @@ def nearby_permits(session, parcel_id: int, radius_m: float = 300.0, limit: int 
         text(
             """WITH p AS (SELECT centroid FROM parcels WHERE id = :pid)
                SELECT count(*) AS n,
-                      coalesce(sum(NULLIF(s.raw->>'nb_lgt','')::int), 0) AS logts
+                      coalesce(sum(NULLIF(s.raw->>'nb_lgt','')::int), 0) AS logts,
+                      -- OUTIL-PERMIS-FIX-6 (Point 3) — permis du rayon SANS nombre de logements déclaré :
+                      -- le total devient un « déclaré » partiel, à DIRE en réserve (Dossier).
+                      count(*) FILTER (WHERE NULLIF(s.raw->>'nb_lgt','') IS NULL) AS sans_lgt
                FROM sitadel_permits s, p
                WHERE s.geom IS NOT NULL
                  -- OUTIL-PERMIS-FIX-3 (Point 1) — RÉGRESSION RÉTABLIE : le RAYON (:r mètres, EPSG 2975)
@@ -333,6 +336,8 @@ def nearby_permits(session, parcel_id: int, radius_m: float = 300.0, limit: int 
             "items": items, "source": "SITADEL / Région ODS 974",
             "dynamique": {"niveau": niveau, "permis_recents": n_recent,
                           "logements_recents": int(dyn["logts"]) if dyn else 0,
+                          # OUTIL-PERMIS-FIX-6 (Point 3) — permis du rayon sans nombre de logements.
+                          "permis_sans_logements": int(dyn["sans_lgt"]) if dyn else 0,
                           "annees": round(mois_dyn / 12, 1), "fenetre_mois": mois_dyn,
                           # couverture : ne jamais lire « calme » sans la qualifier.
                           "couverture_pct": couverture_pct, "geolocalises": geoloc, "total": total,

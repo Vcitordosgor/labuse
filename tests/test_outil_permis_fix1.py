@@ -240,3 +240,62 @@ def test_fix5_point2_front_colonne_et_outil_velocite_retires():
     assert "k: 'velocite'" not in _src("frontend/src/components/outils/blocB.tsx")
     assert "export function M05" not in _src("frontend/src/components/outils/ModulePanel.tsx")
     assert "export const modVelocite" not in _src("frontend/src/lib/api.ts")
+
+
+def test_fix6_point1_liste_permis_sans_depot_ni_delai():
+    """OUTIL-PERMIS-FIX-6 (Point 1) — la LISTE /modules/permis ne sert plus le dépôt (1er janvier) ni le
+    délai : plus de jointure m10 ni de colonnes `depot`/`delai_mois` (front : plus de « N m » par ligne)."""
+    mods = _src("src/labuse/api/modules.py")
+    liste = mods[mods.index('@router.get("/permis")'):mods.index('@router.get("/permis/{permit_id}")')]
+    assert "m10_permit_delais" not in liste                # plus de jointure m10 dans la liste
+    assert "AS depot" not in liste and "delai_mois" not in liste
+    assert "i['delai_mois']" not in _src("frontend/src/components/outils/ModulePanel.tsx")
+
+
+def test_fix6_point1_fiche_depot_exige_annee_an_depot():
+    """OUTIL-PERMIS-FIX-6 (Point 1) — sur la fiche, une date de dépôt n'est retenue QUE si son année est
+    celle déclarée par Sitadel (AN_DEPOT) : 10/377 la contredisaient (ex. 97441626E0304 = « 74 mois »)."""
+    mods = _src("src/labuse/api/modules.py")
+    fiche = mods[mods.index('@router.get("/permis/{permit_id}")'):]
+    assert "EXTRACT(YEAR FROM s.date_depot)::int = (s.raw->>'an_depot')::int" in fiche
+    assert "s.raw->>'an_depot' ~ '^[0-9]{4}$'" in fiche
+
+
+def test_fix6_point2_endpoint_velocite_supprime():
+    """OUTIL-PERMIS-FIX-6 (Point 2) — l'endpoint /modules/velocite est SUPPRIMÉ (aucun lecteur)."""
+    mods = _src("src/labuse/api/modules.py")
+    assert '@router.get("/velocite")' not in mods and "def velocite(" not in mods
+
+
+def test_fix6_point2_bilan_repere_sitadel_retire():
+    """OUTIL-PERMIS-FIX-6 (Point 2) — le repère Bilan « Sitadel : N mois dépôt → PC » est retiré (back +
+    catalogue + front), le `defaut: 6` du calendrier est conservé (aucun total ne bouge)."""
+    reperes_src = _src("src/labuse/bilan/reperes.py")
+    assert "def _sitadel" not in reperes_src               # la fonction du repère est supprimée
+    assert 'out["sitadel"] = ' not in reperes_src          # plus d'assignation de la clé
+    assert "mois dépôt → PC" not in reperes_src            # plus le libellé « Sitadel : N mois dépôt → PC »
+    # catalogue : obtention_pc garde defaut:6 mais plus de repère sitadel
+    from labuse.bilan.catalogue import charger_catalogue
+    cat = charger_catalogue()
+    ob = next(c for c in cat.calendrier if c["id"] == "obtention_pc")
+    assert ob.get("defaut") == 6 and not ob.get("repere")
+    # front : plus de bouton repère au calendrier (le code conditionnel `c.repere === 'sitadel'` a disparu)
+    bilan_tsx = _src("frontend/src/components/fiche/BilanEcran.tsx")
+    assert "c.repere === 'sitadel'" not in bilan_tsx
+    assert "sitadel.valeur" not in bilan_tsx
+
+
+def test_fix6_point3_dossier_ligne_permis_honnete():
+    """OUTIL-PERMIS-FIX-6 (Point 3) — la ligne « permis à 500 m » du Dossier (exports : extracteur
+    n_permis_proximite + miroir) RESTITUE le zéro (0/0 jamais masqué), donne les logements DÉCLARÉS et
+    signale les permis sans nombre de logements. (Chaîne : nearby_permits → _c_permis → _r_permis_proximite.)"""
+    # 1) nearby_permits remonte les permis SANS nombre de logements
+    assert "permis_sans_logements" in _src("src/labuse/ingestion/permits.py")
+    # 2) l'extracteur du Dossier ne masque plus le zéro (plus de `if n else None`) et porte logements+réserve
+    rf = _src("src/labuse/exports/robinet_fiche.py")
+    extr = rf[rf.index('@extracteur("n_permis_proximite")'):rf.index('@extracteur("tier_opportunite")')]
+    assert "if n is None:" in extr and '"logements":' in extr and '"sans_logements":' in extr
+    assert "if n else None" not in extr                  # le zéro n'est plus masqué
+    # 3) le miroir rend logements déclarés + la réserve « sans nombre de logements »
+    mir = _src("src/labuse/exports/miroir.py")
+    assert "sans nombre de logements" in mir and "logement" in mir
