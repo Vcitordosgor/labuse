@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { getCommuneAcquisitions, getContexteCommune, motMarcheCommune, motRarete } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
 import { fmtDateNum, fmtAns } from '../../lib/format'   // RECETTE-2 (B2/B5/B6) — dates JJ/MM/AAAA, « 1,1 an »
+import { catnatReste } from '../../lib/catnat'   // FIX-6 LOT 3 — « et N autres » sur le total source
 import { Trace } from '../../lib/trace'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
@@ -842,11 +843,15 @@ export function ContextePanel() {
                                 a.code_national].filter(Boolean).join(' · ')}</div>
                         </div>
                       ))}
-                      {/* #3 — le « et N autres » compte sur la LISTE affichée (entrées par péril), pas sur
-                          le nombre d'arrêtés distincts (sinon le reste était faux). */}
-                      {d.risques.catnat_detail.length > 6 ? (
-                        <div className="text-[11px] text-txt-dim">et {d.risques.catnat_detail.length - 6} autre{d.risques.catnat_detail.length - 6 > 1 ? 's' : ''}…</div>
-                      ) : null}
+                      {/* OUTIL-COMMUNES-FIX-6 LOT 3 — le « et N autres » se calcule sur le TOTAL de la
+                          source (catnat_perils), pas sur la liste tronquée à 12 (sinon « et 6 autres »
+                          alors qu'il en reste 18). Helper pur `catnatReste`. */}
+                      {(() => {
+                        const reste = catnatReste(d.risques.catnat_perils, d.risques.catnat_detail.length, 6)
+                        return reste > 0 ? (
+                          <div className="text-[11px] text-txt-dim">et {reste} autre{reste > 1 ? 's' : ''}…</div>
+                        ) : null
+                      })()}
                     </div>
                   ) : null}
                   {d.risques.azi_tri && (d.risques.azi_tri.azi?.length || d.risques.azi_tri.tri?.length) ? (
