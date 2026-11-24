@@ -323,3 +323,207 @@ Back : `permis_classe.py` (Défaut C), `api/modules.py` (promesses — Défaut C
 Front : `components/outils/ModulePanel.tsx` (Défauts E, F), `components/outils/AnalyserAnnonce.tsx` (Défaut D).
 Tests : `test_outil_permis_fix1.py` (C/A/D/F), `regles/test_point_mort.py` (cas parcelle absente — C).
 Couches (re)construites en base locale : `sitadel_permits` rechargée, `via_permits_geo` (trigger, 50 414), `parcel_bati_emprise`, `parcel_viabilisation` (24 communes) + `parcel_viabilisation_meta`.
+
+---
+
+## Relecture 2 (`~/Desktop/relecture-permis-2.md`) — G1, G2, G3
+
+La seconde relecture valide A, B, C et la liste fermée entière. Trois restes :
+
+### G2 (à corriger) — garde-fou de fraîcheur du BÂTI (`parcel_bati_emprise`)
+
+Même famille que le Défaut A, non traitée pour le bâti : la couche qui fonde « aucun bâtiment détecté » était un instantané sans repère. Ajouté, par symétrie avec la viabilisation :
+- `parcel_bati_emprise_meta` (singleton) : à chaque `ensure_parcel_bati_emprise`, on enregistre l'état de la **source** bâti (`spatial_layers kind='batiment'` : nombre + dernière `created_at`) et la **date de mesure** (`built_at`).
+- `bati_emprise_fraicheur(db)` : `perimee=True` si la BD TOPO a bougé depuis la mesure → un dormant « aucun bâtiment détecté » ne repose plus en silence sur une mesure plus vieille que sa source.
+- **Date connue, affichée dans le « i » des dormants** : la partition `/modules/permis?etats` sert `bati_fraicheur` ; le segment Dormant ajoute « · bâti mesuré le JJ/MM/AAAA » (et « ⚠ mesure périmée (BD TOPO plus récente) » si `perimee`).
+- **Signalée dans `/readyz`** : champ `bati_emprise` + action « relancer la mesure de bâti » si périmée.
+- État local : `built_at` 23/11/2026, source 817 506 bâtiments (BD TOPO, dernière création 29/06/2026), **`perimee=False`**.
+
+### G3 (mineur) — libellé de source de la fiche commune
+
+`fiche_commune.permis_bloc` disait encore « *permis au point mort (36 mois sans DAACT, **run servi**)* » — l'ANCIENNE logique (proxy « absence d'exclusion au run »). Corrigé : « *permis dormants (PC > 3 ans sans DAACT, **aucun bâtiment détecté sur leurs parcelles**)* » — ce qui est réellement mesuré. Le chiffre (78/126/7) était déjà juste ; c'est son explication qui est corrigée.
+
+### G1 (mineur, NOTÉ — non corrigé, par consigne) — LIMITE CONNUE
+
+Le signal de péremption de la viabilisation (`viabilisation_fraicheur`) compare **le nombre** de permis et **la date max** de `via_permits_geo`. Une **mise à jour d'attribut en place** entre deux runs (un permis qui reçoit une DAACT → devient achevé, ou dont la géom bouge) ne change **ni le compte ni la date max** → `perimee` reste `False` alors que `c100_recent`/`c100_acheve` du score peuvent avoir dérivé. Le signal **attrape le cas courant** (nouveaux permis mensuels : compte + date max bougent) mais **rate les reclassements silencieux**. Correction possible (non faite ici, par consigne) : comparer aussi une empreinte d'état/géom de la couche, ou dater sa dernière écriture (le trigger pourrait tamponner un `updated_at`). **Limite connue, non bloquante** : la couche est reconstruite à chaque run M-VIA, et le cas courant est couvert.
+
+### Mineur E (rappel) — divulgation, pas réconciliation
+
+L'affinage `months` : le chip de l'état **actif** affiche la partition pleine profondeur pendant que la liste affinée montre moins. C'est désormais **dit** (note sous le segment) ; ce n'est pas une mise en accord des deux nombres (acceptable pour un mineur, assumé).
+
+### Fichiers touchés (relecture 2)
+
+Back : `faisabilite/viabilisation_build.py` (G2 — meta bâti + `bati_emprise_fraicheur`), `api/modules.py` (G2 — `bati_fraicheur` dans la partition), `api/app.py` (G2 — `/readyz.bati_emprise`), `api/fiche_commune.py` (G3).
+Front : `lib/api.ts` + `components/outils/ModulePanel.tsx` (G2 — date de mesure dans le « i » des dormants).
+Tests : `test_outil_permis_fix1.py` (G2, G3). Couche : `parcel_bati_emprise_meta` (repère posé).
+
+---
+---
+
+# OUTIL-PERMIS-FIX-3 — relecteur externe (recontrôle de 2fc4636f9)
+
+Il valide les états, les 854 dormants, les dix voisinages, les couleurs, le chargement de « Tous ». Trois restes, dont **le premier est une régression que j'avais introduite**.
+
+## Point 1 (BLOQUANT) — Dossier : rayon 500 m rétabli (régression du mandat 1)
+
+**Cause** : au mandat 1, en excluant les dates nulles de la requête `dynamique` du Dossier (`ingestion/permits.py`, `nearby_permits`), j'ai **supprimé la condition `ST_DWithin`** (le `:r` restait passé mais inutilisé). Le Dossier écrivait « dans un rayon de 500 m » et recevait le **total de l'île** (≈ 5 140 permis / 8 543 logements) pour n'importe quelle parcelle.
+
+**Correctif** : rayon `ST_DWithin(ST_Transform(p.centroid,2975), ST_Transform(s.geom,2975), :r)` **rétabli**, l'exclusion des dates nulles **conservée**.
+
+**Attendus — recompte (rayon 500 m, 24 mois)** : `97411000BZ1065 = 1 permis / 4 logements` ; `97424000AB0001 = 0` ; `97415000CV1498 = 5 permis / 6 logements`. ✅ (identiques en SQL).
+
+**Dossier PDF par la VRAIE route** (`GET /dossier/97411000BZ1065.pdf`, HTTP 200) — la ligne servie :
+```
+Permis à proximité            1 permis (< 500 m, 24 mois)            sourcé
+```
+(avant le correctif : ~5 140 permis.)
+
+**Pourquoi ni mes tests ni le hook ne l'ont vu** :
+1. `tests/test_permits.py` est marqué **`pytest.mark.db`** → le **hook pre-push (`-m "not db"`) ne le lance jamais**.
+2. Même joué, il **ne couvrait pas** le compte de dynamique avec le rayon : `test_permit_hors_rayon_absent` teste la **liste** (qui garde SON `ST_DWithin`), et `test_nature_et_dynamique` ne sème que des permis **proches** sur une base de test minuscule → retirer le filtre de distance ne changeait aucun compte. Le bug n'était visible que sur la vraie base (50 k permis étalés sur l'île).
+
+**Tests ajoutés** : `test_permits.test_dynamique_respecte_le_rayon` (db — sème un proche 10 logts + un lointain 999 logts, exige que le compte ne voie QUE le proche) **et** `test_outil_permis_fix1.test_fix3_point1_rayon_dossier_present` (**non-db, DANS le hook** — échoue si `ST_DWithin` disparaît du compte de dynamique : c'est la garde qui aurait attrapé ma régression).
+
+**Diff ciblé — rien d'autre changé dans les documents** : `git diff 99e9635b4..HEAD -- src/labuse/exports/ src/labuse/api/{documents,dossier,pre_dossier,bilan}.py` = **vide**. Le seul chemin de mes commits vers le Dossier est `ingestion/permits.py` (le rayon).
+
+## Point 2 (BLOQUANT) — Dormants : l'affinage ne peut que RESTREINDRE les 854
+
+**Cause** : la liste `/modules/promesses` gardait un prédicat RECOPIÉ, avec son `:m` injecté sans plancher. « Affiner → 24 m+ » remplaçait les 36 mois de la définition par 24 → **1 118 dormants** ; `97441123A0147` (Autre) passait Dormant.
+
+**Correctif** :
+- `/modules/promesses` lit DÉSORMAIS la **définition unique** `permis_classe._dormant_sql` (plus de prédicat recopié) ;
+- le seuil d'âge est **clampé à ≥ 36 mois** (`max(months, DORMANT_MOIS)`) côté liste **et** compteur (`permis_point_mort`) : un affinage ne peut qu'**OTER** des dormants, jamais en ajouter ;
+- le front n'offre plus « 24 » (`MONTHS_PM = [36, 48, 60, 72]`).
+
+**Preuve — dormant par valeur d'affinage, 4 périmètres** (non-croissant, ≤ 854, et 24 m = 36 m = base) :
+
+| Réglage | La Réunion | Saint-Denis | Saint-Paul | Cilaos |
+|---|--:|--:|--:|--:|
+| 24 m (clampé→36) | 854 | 78 | 126 | 7 |
+| 36 m | 854 | 78 | 126 | 7 |
+| 48 m | 622 | 64 | 86 | 6 |
+| 60 m | 455 | 50 | 68 | 3 |
+| 72 m | 352 | 44 | 58 | 3 |
+
+`97441123A0147` : **absent** de la liste dormante à months=24 (reste « Autre »).
+
+## Point 3 (à corriger) — couche des délais recalculée, vivante, cohérente
+
+**Cause** : `m10_permit_delais` était figée au **14/07/2026**. La fiche mélangeait le **dépôt + délai** de m10 (vieux) et l'**autorisation** de Sitadel rechargé → `97440925G0371` : dépôt 01/01/2025, autorisation 16/02/2026, « 11 mois » (calculé sur d'autres dates). **108 dates** différaient entre m10 et Sitadel.
+
+**Correctif** :
+- **Recalcul sur la donnée rechargée, SANS re-pull réseau** : m10 est reconstruite DEPUIS `sitadel_permits` (dépôt `date_depot`, autorisation `date`, achèvement `raw.daact`) — la donnée SERVIE, pas un millésime Dido potentiellement différent. **0 date ne diffère plus** (était 108).
+- **Suit les mises à jour comme le voisinage** : trigger `trg_m10_permit_delais_sync` sur `sitadel_permits` (INSERT/UPDATE/DELETE) + `ensure_delais_vivants` appelée par la ré-ingestion. Vérifié transactionnel (UPDATE → délai recalculé, ROLLBACK → restauré).
+- **Une seule version** : la fiche prend dépôt ET autorisation depuis `sitadel_permits`, et n'affiche le **délai que s'il est COHÉRENT** avec ces deux dates (`delai_coherent = valide ET m10.date_autorisation = sitadel.date ET m10.date_depot = sitadel.date_depot`).
+- Résultat fiche `97440925G0371` : **dépôt 16/02/2026, autorisation 16/02/2026, délai 0 mois** (cohérent).
+
+**La couche sert ailleurs** : OUI — l'outil **Communes** (comparateur / vélocité) lit `m10_permit_delais` (`registre/moteurs/commune.py:35`, `velocite_delai_median_mois` = médiane du délai dépôt→autorisation sur `valide AND famille='logements'`). Le recalcul rafraîchit donc aussi ce délai médian servi aux Communes.
+
+## Preuves des mandats précédents, rejouées (donnée vive)
+
+- Partition = filtre, 4 périmètres : île `5201/854/21322/23747 = 51 124` ; Saint-Denis `418/78/1467/1976=3 939` ; Saint-Paul `593/126/2076/3653=6 448` ; Cilaos `48/7/112/238=405`. 4/4 OK ; `/promesses` = colonne Dormant.
+- 10 parcelles : c200 outil `13/14/0/18/14/33/32/13/3/12` (inchangé).
+- 30 témoins : 1 dormant (97440816A0043).
+
+## Fichiers touchés (mandat 3)
+
+Back : `ingestion/permits.py` (P1 — rayon), `api/modules.py` (P2 — /promesses lit la fonction unique + clamp ; P3 — fiche cohérente), `registre/moteurs/commune.py` (P2 — clamp point_mort), `ingestion/permit_delais_m10.py` (P3 — trigger + resync), `ingestion/permits_sdes.py` (P3 — ré-ingestion rafraîchit m10).
+Front : `components/outils/ModulePanel.tsx` (P2 — MONTHS_PM).
+Tests : `test_permits.py` (db — rayon), `test_outil_permis_fix1.py` (non-db — P1/P2/P3). Couche : `m10_permit_delais` reconstruite + trigger.
+
+---
+---
+
+# OUTIL-PERMIS-FIX-4 — réserve de la relecture 3 : la colonne « Instruction (mois) » tombée à 0
+
+Mon recalcul de `m10_permit_delais` (mandat 3, OUTIL-PERMIS-FIX-3) l'a reconstruite depuis `sitadel_permits.date_depot` (= `DR_DEPOT`). Résultat : la colonne « Instruction (mois) » de l'outil Communes serait passée à **0** pour les 24 communes.
+
+## Point 1 — Constat (lecture seule)
+
+| | Saint-Denis | Saint-Pierre | Saint-Paul | Le Tampon | Saint-Louis | Saint-André |
+|---|--:|--:|--:|--:|--:|--:|
+| **main (avant ma branche)** — validé relecteur | 9 | 8 | 9 | 9 | 9 | 9 |
+| **ma branche (mandat 3)** — DR_DEPOT | **0** | 0 | 0 | 0 | 0 | 0 |
+| **ma branche (ce correctif)** — AN_DEPOT | **9** | **8** | **9** | **9** | **9** | **9** |
+
+Oui, elle avait changé (8-9 → 0). Le correctif la **restaure** (médiane logements, source unique `m10_permit_delais` lue par `registre/moteurs/commune.indicateurs_communes`).
+
+## Point 2 — Cause
+
+- **L'ancienne couche (14/07)** datait le dépôt avec **`AN_DEPOT`** (ANNÉE de dépôt, convention `AAAA-01-01` — d'où `date_depot = 2025-01-01` pour 97440925G0371, dont `AN_DEPOT = 2025`).
+- **La mienne (mandat 3)** lisait `sitadel_permits.date_depot`, alimenté par **`DR_DEPOT`**. Or `DR_DEPOT` est **corrompu** : dans l'échantillon SDES il vaut **exactement la date d'autorisation** ; sur l'île, il est **postérieur à l'autorisation dans 62,6 %** des cas (31 810/50 843) ; sur les permis autorisés en 2023, **5 sur 2 692** seulement l'ont avant l'autorisation. Ce n'est pas une date de dépôt.
+- **Le bon champ** : `AN_DEPOT` (l'année de dépôt, fiable). Vérifié : la médiane recalculée dessus = **9/8/9/9/9/9**, exactement les valeurs validées par le relecteur.
+
+## Point 3 — Correction
+
+- **Source du dépôt = `AN_DEPOT`** : l'ingestion stocke `raw.an_depot` ; la couche des délais en dérive `date_depot = AAAA-01-01`, `delai_mois = autorisation − (AAAA-01-01)`, `valide = autorisation ≥ dépôt`. Médiane commune **8-9 restaurée**.
+- **Reste MAINTENUE PAR TRIGGER** (dérivée de `sitadel_permits`, via `raw.an_depot`) : vérifié transactionnel (changer `an_depot` → délai recalculé, ROLLBACK → restauré).
+- **Délai absent, jamais 0 (fiche)** : une date de dépôt n'est **fiable pour une fiche** que si c'est une **date précise** (DR_DEPOT strictement antérieur à l'autorisation ET non un 1er janvier = proxy d'année). **377** permis seulement y satisfont ; pour eux la fiche montre dépôt + délai (ex. 9744012520063 : dépôt 29/12/2025, délai 4 mois). Pour tous les autres → **ni dépôt ni délai** (jamais un « 0 mois » issu d'un `DR_DEPOT` = autorisation). La médiane communale, elle, est un AGRÉGAT qui tolère l'année de dépôt (proxy) — distinction documentée.
+
+## Point 4 — 97440925G0371
+
+« Dépôt et autorisation le même jour, délai 0 » était **le même défaut** (son `DR_DEPOT` = 2026-02-16 = l'autorisation ; son vrai dépôt est `AN_DEPOT = 2025`, soit ~13 mois). La date de dépôt n'étant pas fiable (précise), **la fiche ne montre NI dépôt NI délai** (vérifié : `date_depot: null`, `delai_instruction: null`).
+
+## La couche sert-elle ailleurs ?
+
+Oui : `m10_permit_delais` alimente l'indicateur **« Dynamisme / délai d'instruction » de l'outil Communes** (comparateur, `commune.indicateurs_communes` → `velocite`, médiane sur `valide AND famille='logements'`) **et** l'outil **Vélocité** autonome (`/modules/velocite`). Le recalcul rafraîchit les deux.
+
+## Preuves des mandats précédents (stables après ré-ingestion)
+
+dmax 30/09/2026 inchangé (51 125 lignes). Partition île `5201/854/21322/23747 = 51 124` (compteur = filtre) ; dormant 854 ; 10 parcelles c200 `13/14/0/…` inchangées ; 97440925G0371 date d'autorisation 16/02/2026.
+
+## Fichiers touchés (mandat 4)
+
+`ingestion/permits_sdes.py` (stocke `raw.an_depot`), `ingestion/permit_delais_m10.py` (dépôt = AN_DEPOT, trigger + `build_delais`), `api/modules.py` (fiche : délai seulement si dépôt précis fiable ; le rayon du Dossier n'est pas touché ici). Tests : `test_outil_permis_fix1.py` (+2), `test_permits.py` (+1, db). Couche : `m10_permit_delais` reconstruite depuis AN_DEPOT, `raw.an_depot` peuplé.
+
+---
+
+# OUTIL-PERMIS-FIX-5 — le délai d'instruction n'a jamais été mesuré : retrait de l'affichage
+
+**Constat du relecteur (accepté).** La date de dépôt servie à la médiane communale est le **1er janvier de l'année de dépôt** (`AN_DEPOT → AAAA-01-01`). Le délai est donc **gonflé de plusieurs mois** et la médiane de **8-9 mois est un artefact** : le délai n'a jamais été réellement mesuré. Décision de Vic : **« on ne montre pas un délai faux. »**
+
+## Point 1 — Chiffrage de l'écart (le gonflement)
+
+Sur les permis à **vraie date de dépôt précise** (`DR_DEPOT < autorisation`, hors 1ᵉʳ janvier = proxy d'année) **et** dotés d'un `AN_DEPOT` exploitable — **n = 375** (les « 377 » du relevé moins 2 sans `AN_DEPOT` à 4 chiffres) — j'ai comparé, permis par permis, le délai **réel** (autorisation − `DR_DEPOT`) au délai **1ᵉʳ janvier** (autorisation − `AAAA-01-01`) :
+
+| Mesure | Valeur |
+|---|---|
+| Médiane du délai **réel** | **3 mois** |
+| Médiane du délai **1ᵉʳ janvier** | **7 mois** |
+| **Écart médian** (1ᵉʳ janv. − réel) | **+4 mois** |
+| Écart moyen | +4,6 mois |
+
+→ Le 1ᵉʳ janvier **ajoute ~4 mois médians** à un délai réel de 3 mois : la médiane communale « 8-9 mois » est bien un **artefact de la granularité annuelle** du dépôt, pas une mesure.
+
+## Point 2 — Retrait de l'affichage partout (le délai faux n'est plus montré)
+
+Le délai médian (indicateur `velocite` / `delai_median_mois`, couche `m10_permit_delais`) est **retiré de TOUT écran et document** :
+
+| Surface | Fichier | Geste |
+|---|---|---|
+| **Comparateur communes** — colonne « Instruction (mois) » | `frontend/.../blocB.tsx` (colonne + légende + note « vert ») ; `api/comparateur.py` (`r.pop("velocite")` après composite) | colonne supprimée ; valeur brute retirée du payload |
+| **Fiche commune + carte « Permis et rythme »** | `api/fiche_commune.py` (`_comparable_bloc`, `permis_bloc`, défaut) ; `frontend/.../ContextePanel.tsx` (valeur de tête + ligne « Délai d'instruction médian ») | `delai_median_mois` retiré (back + front) |
+| **Outil Vélocité `/modules/velocite`** | `frontend/.../ModulePanel.tsx` (composant `M05` **supprimé**) ; `frontend/.../api.ts` (`modVelocite` supprimé) | plus aucun écran ; endpoint back laissé **dormant, sans consommateur** |
+| **PDF (Flash)** — section « Vélocité administrative » | `flash/data.py` (bloc `out["velocite"]`) ; `flash/templates/rapport.html.j2` (section) | section supprimée |
+| **Copilote** — carte « Instruction » + outil `delais_instruction` | `copilote_v2/resume_fiche.py`, `outils.py` (outil + registre), `answering.py` (catalogue, guidance, schéma) | outil retiré ; le Copilote ne sert plus de chiffre de délai |
+| **Registre** | `registre/robinets.py` (6 déclarations), `donnees.py` | `velocite_delai_median_mois` retiré de tous les robinets + robinet `copilote_delais_instruction` supprimé ; chiffre marqué **`en_attente`** |
+
+**Où le délai apparaît ENCORE — et comment c'est traité :**
+- **Classement (signal, PAS retiré du calcul)** : l'axe `velocite` reste dans le **score composite** du comparateur, **poids 0,15**, direction « plus bas = mieux », **calcul inchangé** (consigne respectée). Il est **signalé** dans `INDICATEURS` (libellé : « délai NON MESURÉ, dépôt à l'année ⇒ gonflé +4 mois ; retiré de l'affichage, conservé au classement, poids 0,15 ») et dans `donnees.py`. Le chiffre reste **calculé en interne** par le moteur comme entrée du composite ; il n'est **servi par aucun robinet** (`en_attente`).
+- **Fiche d'un permis individuel** (Point 3) : inchangé — voir ci-dessous.
+- **Radar / marché des annonces** (`RadarMarche.tsx`, `delai_median_j`) : **NON touché** — c'est un délai du **marché des annonces** (jours, Pige), pas l'instruction administrative.
+
+## Point 3 — Fiche d'un permis : délai seulement pour vraie date de dépôt (déjà fait, conservé)
+
+Inchangé depuis le mandat 4 : `api/modules.py:permis_fiche` ne montre dépôt + délai **que** si le dépôt est une **date précise fiable** (`DR_DEPOT < autorisation`, hors 1ᵉʳ janvier). Sinon ni dépôt ni délai. Gardé tel quel.
+
+## Cohérence & vérifications (hook)
+
+- `registre.verifier() == []` (invariant non-db vérifié au hook : chiffre `en_attente` ⇒ servi par aucun robinet — conforme).
+- Front : `tsc -b` vert ; `vitest run` **345/345** (test `CommunesTable` réécrit : la colonne « Instruction » est désormais **absente**, plus de « meilleure valeur en vert » — c'était le seul axe « mieux = plus bas »).
+- Python non-db : suite complète verte (dont registre, comparateur, copilote).
+- Aucun témoin de `tests/coherence_ecrans/` ne fige le délai → cohérence inchangée.
+
+## Fichiers touchés (mandat 5)
+
+Back : `api/comparateur.py`, `api/fiche_commune.py`, `flash/data.py`, `flash/templates/rapport.html.j2`, `copilote_v2/{outils,answering,resume_fiche}.py`, `registre/moteurs/commune.py`, `registre/donnees.py`, `registre/robinets.py`. Front : `components/outils/blocB.tsx`, `components/outils/ModulePanel.tsx`, `components/contexte/ContextePanel.tsx`, `lib/api.ts`, `components/outils/CommunesTable.test.tsx`. Aucune donnée touchée en base (retrait d'affichage pur ; le calcul du composite est intact).

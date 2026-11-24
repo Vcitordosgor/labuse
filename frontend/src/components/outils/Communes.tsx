@@ -123,8 +123,9 @@ function AcquisitionsRecentes() {
       {/* O16(d) — le champ DGFiP ne publie QUE les personnes morales : dit une fois, franchement. */}
       {commune && (
         <p className="shrink-0 text-[10px] leading-snug text-txt-dim">
-          Personnes morales uniquement — fichier DGFiP ; les acquisitions par des particuliers ne
-          sont pas publiées.
+          Changement de propriétaire entre deux millésimes DGFiP — un changement de millésime
+          n'établit pas un achat (ni sa date exacte). Personnes morales uniquement ; les
+          particuliers ne sont pas publiés.
         </p>
       )}
       {/* O16(b) — filtre par millésime d'arrivée (seulement les années effectivement présentes).
@@ -258,8 +259,11 @@ export function Communes() {
         <Porte dataAttr="radar-marche" titre="Marché des annonces (Radar)"
           sous="Les biens en vente repérés, par commune."
           onClick={() => setRadarTableOpen(true)} />
-        <Porte dataAttr="acquisitions" titre="Acquisitions récentes"
-          sous="Changements de propriétaire moral (DGFiP)."
+        {/* OUTIL-COMMUNES-FIX-1 (à corriger 7) — « Acquisitions récentes » affirmait plus que la source :
+            le fichier DGFiP établit un CHANGEMENT de propriétaire entre deux millésimes, pas un achat
+            prouvé. L'entrée nomme donc ce que la source dit vraiment. */}
+        <Porte dataAttr="acquisitions" titre="Changements de propriétaires (personnes morales)"
+          sous="Changements entre deux millésimes DGFiP — pas nécessairement un achat récent."
           onClick={() => setVue('acquisitions')} />
       </div>
     )

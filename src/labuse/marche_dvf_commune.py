@@ -89,18 +89,25 @@ def _median_bati(db: Session, commune: str, type_bien: str, seuil: int) -> dict:
 
 
 def _median_terrain(db: Session, commune: str, seuil: int) -> dict:
-    """Médiane €/m² du TERRAIN NU de la commune (`dvf_mutations_parcelle`, ventes sans bâti),
-    DÉDOUBLONNÉE par mutation (max par parcelle puis somme par mutation), millésime entier."""
+    """Médiane €/m² du TERRAIN NU de la commune (`dvf_mutations_parcelle`), QUALIFIÉE SUR L'ACTE
+    ENTIER (OUTIL-COMMUNES-FIX-1 bloquant 1) : un acte n'est une vente de terrain nu que si AUCUNE de
+    ses parcelles ne porte de bâti (`sum(bati) = 0` sur toute la mutation) — un acte mixte (maison +
+    jardin nu) n'en est pas une et ne reçoit JAMAIS le prix de l'acte entier rapporté à la seule
+    surface nue (cas 2021-1672641). La surface terrain est RECONSTITUÉE sur toutes les parcelles de
+    l'acte (max par parcelle puis somme par mutation), millésime entier, natures Vente+VTB (M101 B2)."""
     lo, hi = BORNE_TERRAIN
     r = db.execute(text(
-        "WITH parc AS ("
-        "  SELECT DISTINCT dm.id_mutation, dm.id_parcelle, dm.valeur_fonciere AS vf, dm.date_mutation AS d, "
-        "         max(COALESCE(dm.surface_terrain, 0)) OVER (PARTITION BY dm.id_mutation, dm.id_parcelle) AS terr_p "
+        "WITH parc AS ("   # un enregistrement par (mutation, parcelle) : dédoublonnage DVF
+        "  SELECT dm.id_mutation, dm.id_parcelle, max(dm.valeur_fonciere) AS vf, max(dm.date_mutation) AS d, "
+        "         max(COALESCE(dm.surface_terrain, 0)) AS terr_p, "
+        "         max(COALESCE(dm.surface_reelle_bati, 0)) AS bati_p "
         "  FROM dvf_mutations_parcelle dm JOIN parcels p ON p.idu = dm.id_parcelle "
         "  WHERE lower(p.commune) = lower(:c) AND " + NATURE_TERRAIN_SQL + " "
-        "    AND COALESCE(dm.surface_reelle_bati, 0) = 0 AND dm.surface_terrain > 0), "
+        "  GROUP BY dm.id_mutation, dm.id_parcelle), "
+        # ACTE ENTIER : on garde la mutation UNIQUEMENT si son bâti total est nul (sum(bati_p)=0).
         "tot AS (SELECT id_mutation, sum(terr_p) AS terr_tot, max(vf) AS vf, "
-        "               min(d) AS d0, max(d) AS d1 FROM parc GROUP BY id_mutation) "
+        "               min(d) AS d0, max(d) AS d1 FROM parc GROUP BY id_mutation "
+        "        HAVING sum(bati_p) = 0 AND sum(terr_p) > 0) "
         "SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY vf / NULLIF(terr_tot, 0)) "
         "         FILTER (WHERE vf / NULLIF(terr_tot, 0) BETWEEN :lo AND :hi) AS med, "
         "       count(*) FILTER (WHERE vf / NULLIF(terr_tot, 0) BETWEEN :lo AND :hi) AS n, "

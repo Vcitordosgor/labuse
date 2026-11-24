@@ -825,25 +825,9 @@ def _contexte_commune(db: Session, idu: str, commune: str, avail: set[str]) -> d
     territorialisé) est VOLONTAIREMENT EXCLU — donnée trop incertaine (garde-fou : pas de champ faux)."""
     out: dict[str, Any] = {}
 
-    # 1) Vélocité administrative — délai médian d'instruction PC (dépôt → autorisation).
-    # Source Sitadel/SDES : dossiers ACCORDÉS uniquement ; cohortes mûres (dépôts > 12 mois) ;
-    # seuil de fiabilité ≥ 8 dossiers (sinon médiane non significative → on n'affiche pas).
-    if "m10_permit_delais" in avail:
-        v = db.execute(text("""
-            WITH cut AS (SELECT (max(date_depot) - make_interval(months => 12))::date AS c
-                         FROM m10_permit_delais WHERE nature = 'PC')
-            SELECT count(*) FILTER (WHERE valide AND date_depot <= (SELECT c FROM cut)) AS n,
-              round(percentile_cont(0.5) WITHIN GROUP (ORDER BY delai_mois)
-                    FILTER (WHERE valide AND date_depot <= (SELECT c FROM cut))) AS med,
-              round(percentile_cont(0.25) WITHIN GROUP (ORDER BY delai_mois)
-                    FILTER (WHERE valide AND date_depot <= (SELECT c FROM cut))) AS p25,
-              round(percentile_cont(0.75) WITHIN GROUP (ORDER BY delai_mois)
-                    FILTER (WHERE valide AND date_depot <= (SELECT c FROM cut))) AS p75
-            FROM m10_permit_delais WHERE commune = :c AND nature = 'PC'"""),
-            {"c": commune}).mappings().first()
-        if v and v["med"] is not None and (v["n"] or 0) >= 8:
-            out["velocite"] = {"median_mois": _i(v["med"]), "p25_mois": _i(v["p25"]),
-                               "p75_mois": _i(v["p75"]), "n": int(v["n"])}
+    # 1) OUTIL-PERMIS-FIX-5 (Point 2) — la « Vélocité administrative » (délai médian d'instruction PC) est
+    # RETIRÉE du PDF : le délai n'a jamais été mesuré (dépôt connu à l'année → +4 mois de gonflement médian).
+    # « On ne montre pas un délai faux » (Vic). Le bloc `out["velocite"]` n'est plus produit (cf. template).
 
     # 2) Leviers social / bailleur — SRU (déficit LLS) + QPV (TVA réduite). Sourcé (millésime porté).
     sru = None

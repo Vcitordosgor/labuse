@@ -81,19 +81,25 @@ def _radar_medianes(db: Session, commune: str) -> dict:
     return dict(r)
 
 
+# OUTIL-COMMUNES-FIX-1 bloquant 1 — QUALIFICATION SUR L'ACTE ENTIER : `allparc` lit TOUTES les parcelles
+# de l'acte (pour sommer le bâti et reconstituer la surface), `tot` ne garde que les actes sans bâti
+# (`sum(bati_parc) = 0`), `muz` repère les actes touchant une zone U/AU. Plus de filtre bâti par parcelle
+# qui laissait passer les actes mixtes au prix de l'acte entier. Natures Vente + VTB (M101 B2).
 _SQL_TERRAIN_ILE = """
-    WITH parc AS (
-      SELECT DISTINCT m.id_mutation, m.id_parcelle, m.valeur_fonciere AS val, m.millesime AS mill,
-             max(COALESCE(m.surface_terrain,0)) OVER (PARTITION BY m.id_mutation, m.id_parcelle) AS terr_parc
+    WITH allparc AS (
+      SELECT m.id_mutation, m.id_parcelle, max(m.valeur_fonciere) AS val, max(m.millesime) AS mill,
+             max(COALESCE(m.surface_terrain,0)) AS terr_parc, max(COALESCE(m.surface_reelle_bati,0)) AS bati_parc
       FROM dvf_mutations_parcelle m
-      JOIN parcel_zone_plu z ON z.idu = m.id_parcelle
-      WHERE m.nature_mutation = 'Vente' AND COALESCE(m.surface_reelle_bati,0) = 0
-        AND m.surface_terrain > 0 AND z.zone_fam IN ('U','AU')),
+      WHERE m.nature_mutation IN ('Vente','Vente terrain à bâtir')
+      GROUP BY m.id_mutation, m.id_parcelle),
     tot AS (SELECT id_mutation, sum(terr_parc) AS terr_tot, max(val) AS val, max(mill) AS mill
-            FROM parc GROUP BY id_mutation)
-    SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY val / NULLIF(terr_tot,0)) AS med,
-           count(*) AS n, max(mill) AS mill
-    FROM tot WHERE terr_tot > 0"""
+            FROM allparc GROUP BY id_mutation HAVING sum(bati_parc) = 0 AND sum(terr_parc) > 0),
+    muz AS (SELECT DISTINCT m.id_mutation FROM dvf_mutations_parcelle m
+            JOIN parcel_zone_plu z ON z.idu = m.id_parcelle
+            WHERE z.zone_fam IN ('U','AU') AND m.nature_mutation IN ('Vente','Vente terrain à bâtir'))
+    SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY tot.val / NULLIF(tot.terr_tot,0)) AS med,
+           count(*) AS n, max(tot.mill) AS mill
+    FROM muz JOIN tot USING (id_mutation) WHERE tot.terr_tot > 0"""
 
 
 def _dvf_terrain(db: Session, commune: str | None) -> dict:

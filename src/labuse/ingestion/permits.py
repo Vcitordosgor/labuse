@@ -312,8 +312,11 @@ def nearby_permits(session, parcel_id: int, radius_m: float = 300.0, limit: int 
                       coalesce(sum(NULLIF(s.raw->>'nb_lgt','')::int), 0) AS logts
                FROM sitadel_permits s, p
                WHERE s.geom IS NOT NULL
-                 -- OUTIL-PERMIS-FIX-1 (LOT 6) — un permis SANS date n'entre plus dans la fenêtre « N mois »
-                 -- (le relecteur : le Dossier acceptait une date nulle dans le calcul « 24 mois »).
+                 -- OUTIL-PERMIS-FIX-3 (Point 1) — RÉGRESSION RÉTABLIE : le RAYON (:r mètres, EPSG 2975)
+                 -- avait disparu au mandat 1 (en retirant « date NULL ») → le Dossier comptait toute l'île
+                 -- (5 140 permis) au lieu du voisinage. Le rayon ET l'exclusion des dates nulles tiennent.
+                 AND ST_DWithin(ST_Transform(p.centroid, 2975), ST_Transform(s.geom, 2975), :r)
+                 -- un permis SANS date n'entre pas dans la fenêtre « N mois » (le Dossier acceptait une date nulle).
                  AND s.date IS NOT NULL
                  AND s.date >= now() - (:mois || ' months')::interval"""
         ), {"pid": parcel_id, "r": radius_m, "mois": mois_dyn},

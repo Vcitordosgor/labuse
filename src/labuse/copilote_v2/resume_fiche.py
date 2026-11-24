@@ -211,9 +211,9 @@ def resume_commune(db: Session, commune: str) -> dict | None:
     _lignes_tf = fisc.get("lignes") or []
     if _lignes_tf:
         carte("Fiscalité", _lignes_tf[0]["ligne"] + ".")
-    comp = c.get("comparable") or {}
-    if comp.get("delai_median_mois") is not None:
-        carte("Instruction", f"Délai médian d'instruction {comp['delai_median_mois']} mois.")
+    # OUTIL-PERMIS-FIX-5 (Point 2) — carte « Instruction » (délai médian) RETIRÉE : délai jamais mesuré
+    # (dépôt connu à l'année → gonflé). « On ne montre pas un délai faux » (Vic). `delai_median_mois` n'est
+    # d'ailleurs plus servi par le bloc `comparable` de la fiche commune.
     fonc = c.get("foncier") or {}
     if fonc.get("classement"):
         carte("Foncier", f"Classement du foncier : {fonc['classement']}.")

@@ -21,15 +21,16 @@ def comparable(db: Session, commune: str) -> dict | None:
     r = raw_rows(db).get(commune)
     if not r:
         return None
-    velo = r.get("velocite")
+    # OUTIL-PERMIS-FIX-5 (Point 2) — `delai_median_mois` RETIRÉ : le délai d'instruction n'a jamais été
+    # mesuré (dépôt connu à l'année → +4 mois de gonflement médian). « On ne montre pas un délai faux » (Vic).
     return {
         "ancien_median_eur_m2": r.get("prix_ancien"),
         "ancien_n": r.get("prix_ancien_n"),
         "neuf_eur_m2": r.get("prix_neuf"),
+        "neuf_n": r.get("prix_neuf_n"),   # OUTIL-COMMUNES-FIX-1 (à corriger 4) — effectif VEFA à l'écran
         "permis_5a": r.get("permis"),
-        "delai_median_mois": round(float(velo), 1) if velo is not None else None,
         "stock_opportunites_n": r.get("stock"),
-        "source": "DVF (baromètre commune entière) + SITADEL (autorisations et délais d'instruction) — "
+        "source": "DVF (baromètre commune entière) + SITADEL (autorisations) — "
                   "même moteur que le comparateur des 24 communes.",
     }
 
@@ -105,8 +106,12 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
     pas de sous-type dans nos attributs, on n'invente pas « inondation » — on dit « PPR (risque naturel) »."""
     # CIRCUIT-2 lot 1.6 — la part par couche est calculée par le moteur nommé `commune_compteurs`
     # (id registre ppr_pct) : ce robinet ne calcule plus, il appelle (le total est calculé une fois).
-    from ..registre.moteurs.commune import pct_parcelles_couche
-    tot = db.execute(text("SELECT count(*) FROM parcels WHERE commune = :c"), {"c": commune}).scalar() or 0
+    from ..registre.moteurs.commune import compte_parcelles_commune, pct_parcelles_couche
+    # OUTIL-COMMUNES-FIX-1 (à corriger 8) — DÉNOMINATEUR PPR = le parc VIVANT (exclut les parcelles
+    # disparues du cadastre), LA MÊME base que le bandeau de la fiche (`n_parcelles`). Avant : un
+    # `count(*)` brut sur `parcels` comptait les disparues → Saint-Denis 38 557 au dénominateur du risque
+    # quand le bandeau affiche 38 295 (le lecteur passait de l'un à l'autre). Un seul parc, une seule base.
+    tot = compte_parcelles_commune(db, commune)
 
     def _pct_layer(kind: str, subtype: str | None = None) -> float | None:
         return pct_parcelles_couche(db, commune, kind, tot, subtype)
@@ -377,13 +382,16 @@ def permis_bloc(db: Session, commune: str) -> dict:
         "permis_12m": (offre.get("valeurs") or {}).get("permis_12m") or 0,
         "permis_5a": cmp.get("permis_5a"),
         "logements_12m": (offre.get("valeurs") or {}).get("logements_12m"),
-        "delai_median_mois": cmp.get("delai_median_mois"),
+        # OUTIL-PERMIS-FIX-5 (Point 2) — `delai_median_mois` RETIRÉ de la carte « Permis et rythme » :
+        # délai jamais mesuré (dépôt à l'année → gonflé). « On ne montre pas un délai faux » (Vic).
         "point_mort": int(point_mort),
         # KELFONCIER-FIX-1 (Lot C) — ventilation PC/PA/DP/PD (autorisés, 12 mois) + annulés, servie à
         # la carte « Permis et rythme ». Chaque clé = type Sitadel ; libellés = ingestion.permits._TYPE_LABEL.
         "permis_type_12m": par_type,
         "permis_annules_12m": annules_12m,
-        "source": "SITADEL (autorisations) · SITADEL — délais d'instruction · permis au point mort (36 mois sans DAACT, run servi).",
+        # OUTIL-PERMIS-FIX-2 (G3) — le dormant est MESURÉ au bâti (parcel_bati_emprise), plus « run servi »
+        # (ancien proxy « absence d'exclusion au run »). Le libellé dit ce qui est mesuré.
+        "source": "SITADEL (autorisations) · permis dormants (PC > 3 ans sans DAACT, aucun bâtiment détecté sur leurs parcelles).",
     }
 
 
@@ -601,8 +609,8 @@ _FALLBACK = {
                    "procedure_sudocuh": None,
                    "date_reglement": None, "confiance": None, "recherche_verbatim": True, "source": None},
     "permis": {"permis_12m": 0, "permis_5a": None, "logements_12m": None,
-               "delai_median_mois": None, "point_mort": 0,
-               "source": "SITADEL (autorisations) · SITADEL — délais d'instruction · permis au point mort"},
+               "point_mort": 0,
+               "source": "SITADEL (autorisations) · permis au point mort"},
     "outils": {"permis_en_cours": 0, "permis_point_mort": 0, "densifiables": 0,
                "radar_biens": 0, "scan_pm": 0, "solaire_piscines": 0},
 }

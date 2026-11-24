@@ -208,6 +208,10 @@ def ingest_sdes(session: Session, since: str | None = None, log=print) -> dict:
                    "destination": rec.get("DESTINATION_PRINCIPALE"),
                    "daact": rec.get("DATE_REELLE_DAACT") or None,
                    "etat": rec.get(df["etat"]),
+                   # OUTIL-PERMIS-FIX-4 (Point 2) — ANNÉE DE DÉPÔT (AN_DEPOT) : la SEULE date de dépôt
+                   # fiable du flux. `DR_DEPOT` est corrompu (= date d'autorisation, ou postérieur dans
+                   # 62,6 % des cas) → la couche des délais la lit ICI, pas DR_DEPOT (date_depot).
+                   "an_depot": (rec.get("AN_DEPOT") or "").strip() or None,
                    "famille": key,
                    "insee": insee}
             # RETOURS-13 R30 — l'ADRESSE DU TERRAIN (colonnes ADR_* du flux) voyage dans raw :
@@ -441,6 +445,11 @@ def run(refresh: bool = False, geocode: bool = True, log=print) -> dict:
                 # R30 — le repli ADRESSE passe APRÈS le repli cadastral (une parcelle disparue
                 # n'est ni dans parcels ni à l'API Carto ; seule l'adresse du permis la localise).
                 stats["geocode_adresse"] = geocode_par_adresse(s, log=log)
+            # OUTIL-PERMIS-FIX-3 (Point 3) — la couche des délais (m10) SUIT la donnée rechargée : trigger
+            # posé + réconciliation pleine depuis `sitadel_permits` (pas un re-pull réseau divergent) →
+            # dépôt/autorisation/délai cohérents avec ce qui est SERVI (les 108 dates désaccordées fermées).
+            from .permit_delais_m10 import ensure_delais_vivants
+            stats["delais"] = ensure_delais_vivants(s, resync=True)
             s.execute(text(
                 "UPDATE ingestion_runs SET finished_at = now(), status = 'ok', "
                 "parcels_count = :n WHERE id = :id"), {"n": stats["upserts"], "id": run_id})

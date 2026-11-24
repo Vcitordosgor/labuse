@@ -223,8 +223,9 @@ type Comparateur = {
 const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'max' | 'min' }[] = [
   // RETOURS-15 B2 (P4) — la colonne « Parcelles à potentiel » (stock) est RETIRÉE : c'est le
   // classement LABUSE, hors périmètre de ce comparateur (décision Vic).
-  { k: 'velocite', head: 'Instruction (mois)', best: 'min',
-    title: 'Instruction — délai médian dépôt→autorisation, en mois (plus bas = plus rapide)' },
+  // OUTIL-PERMIS-FIX-5 (Point 2) — la colonne « Instruction (mois) » (vélocité) est RETIRÉE : le délai
+  // d'instruction n'a jamais été mesuré (dépôt connu à l'année → +4 mois de gonflement médian).
+  // « On ne montre pas un délai faux » (Vic). L'axe reste au classement (poids 0,15), signalé au back.
   { k: 'permis', head: 'Permis (5 ans)',
     title: 'Dynamisme permis — permis SITADEL cumulés sur 5 ans (glissants)' },
   { k: 'deficit_sru', head: 'Déficit SRU (pts)',
@@ -279,6 +280,18 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
     return m
   }, [q.data])
   const arrow = (k: string) => (tri.k === k ? (tri.dir === 'desc' ? ' ↓' : ' ↑') : '')
+  // OUTIL-COMMUNES-FIX-1 (mineur 9) — l'EFFECTIF et la raison du « — » sont visibles dans la cellule
+  // (survol) : un « — » dit « moins de N ventes (n = …) », une valeur dit son n (et la zone pour le
+  // terrain). Plus besoin d'aller chercher la légende pour savoir sur combien de ventes repose un chiffre.
+  const SEUILS: Record<string, number> = { prix_ancien: 100, prix_neuf: 8, prix_terrain_nu: 10 }
+  const UNITE: Record<string, string> = { prix_ancien: 'ventes', prix_neuf: 'ventes VEFA', prix_terrain_nu: 'ventes de terrain nu' }
+  const cellTitle = (k: string, c: Record<string, unknown>): string | undefined => {
+    if (!(k in SEUILS)) return undefined
+    const n = c[`${k}_n`] as number | null | undefined
+    const zone = k === 'prix_terrain_nu' ? (c['prix_terrain_nu_zone'] as string | null) : null
+    if (c[k] == null) return `— : moins de ${SEUILS[k]} ${UNITE[k]}${n != null ? ` (n = ${n})` : ''}`
+    return `n = ${n ?? '—'} ${UNITE[k]}${zone ? ` · zone ${zone}` : ''}`
+  }
   // COMMUNE-124 Lot A — l'accroche (ex-Banner) est fusionnée dans le sous-titre du panneau ; la légende
   // (ex-pied permanent) est repliée sous le bouton « Légende » du panneau (CommunesLegende). Ce moteur
   // ne rend plus QUE le tableau (en-tête collant + rangs qui défilent). Le parent borne la hauteur.
@@ -317,7 +330,7 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
               {O6_COLS.map((col) => {
                 const isBest = best[col.k] != null && Number(c[col.k]) === best[col.k]
                 return (
-                  <span key={col.k} data-o6-cell={col.k}
+                  <span key={col.k} data-o6-cell={col.k} title={cellTitle(col.k, c)}
                     /* RECETTE-1 H6.2 — colonnes de données égales (grid `repeat(6,minmax(72px,1fr))`, corrigé
                        depuis l'ancien gabarit 26px/22px/32px… = « 2e colonne plus large ») ; `whitespace-nowrap`
                        garantit « nombres jamais coupés ». Les en-têtes, eux, peuvent passer sur 2 lignes (leading-tight). */
@@ -347,14 +360,16 @@ export function CommunesLegende() {
   return (
     <div data-o6-legende className="text-[10px] leading-relaxed text-txt-dim">
       <b className="text-txt-mut">Légende :</b>{' '}
-      <b>Instruction</b> = délai médian dépôt→autorisation (mois) ·{' '}
+      {/* OUTIL-PERMIS-FIX-5 (Point 2) — « Instruction = délai médian dépôt→autorisation » RETIRÉ de la
+          légende : colonne supprimée (délai jamais mesuré, dépôt connu à l'année). */}
       <b>Permis 5 ans</b> = permis SITADEL cumulés sur 5 ans ·{' '}
       <b>Déficit SRU</b> = objectif légal − taux de logement social (points) ·{' '}
       <b>€/m² ancien</b> = médiane DVF commune entière (ventes strictes) ·{' '}
       <b>€/m² VEFA</b> = prix VEFA commune observé à l’acte ·{' '}
       <b>€/m² terrain nu</b> = médiane DVF terrain nu par zone PLU (U sinon AU) — le chiffre du promoteur.
-      <span className="mt-0.5 block">Meilleure valeur en <span className="font-semibold text-mint">vert</span> (foncier / rapidité d’instruction).
-        Une donnée absente reste « — », jamais un zéro inventé.</span>
+      {/* OUTIL-PERMIS-FIX-5 (Point 2) — la note « meilleure valeur en vert » disparaît : la seule colonne
+          « mieux = plus bas » était l'instruction (retirée) ; les prix restent neutres (pas de faux signal). */}
+      <span className="mt-0.5 block">Une donnée absente reste « — », jamais un zéro inventé.</span>
       {/* RECETTE-2 (D3) — on DIT le seuil : « — » n'est pas une absence mais une insuffisance de volume. */}
       {/* OUT-COMMUNE-010 — seuil terrain nu = 10 ventes (config terrain_cellule_commune), pas 5. */}
       <span className="mt-0.5 block"><b className="text-txt-mut">« — » = sous le seuil de fiabilité</b> : €/m² neuf sous <b>8 ventes</b> VEFA · €/m² terrain nu sous <b>10 ventes</b> (médiane instable en deçà).</span>

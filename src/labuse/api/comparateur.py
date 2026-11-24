@@ -203,6 +203,13 @@ def _compute(db: Session, poids: dict) -> dict:
         if r.get("deficit_sru") is not None:
             r["deficit_sru"] = round(float(r["deficit_sru"]), 1)
     rows = composite_communes(rows, poids)   # 1.6 — moteur commune_compteurs (comparateur_composite)
+    # OUTIL-PERMIS-FIX-5 (Point 2) — le délai d'instruction n'a jamais été mesuré (dépôt connu à l'année →
+    # +4 mois de gonflement médian) : « on ne montre pas un délai faux » (Vic). On RETIRE la valeur brute du
+    # payload affiché (plus de colonne « Instruction (mois) »). Le composite, lui, est DÉJÀ calculé ci-dessus
+    # (axe velocite, poids 0,15, inchangé) : le classement garde l'axe, SIGNALÉ dans `indicateurs` (libellé).
+    for r in rows:
+        r.pop("velocite", None)
+        r.pop("velocite_n", None)
     return {
         "communes": rows,
         "indicateurs": {k: {"libelle": v[0], "direction": "haut = mieux" if v[1] > 0 else "bas = mieux",
