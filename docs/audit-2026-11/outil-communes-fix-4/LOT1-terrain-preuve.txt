@@ -1,0 +1,37 @@
+=== PREUVE UNIQUE (ACTE_TERRAIN_NU_CTE, lu par tous les lecteurs) ===
+actes terrain nu qualifiés : 10626
+  dont avec un local déclaré   : 0   (attendu 0)
+  dont multi-communes          : 0   (attendu 0)
+Lecteurs embarquant ce CTE (donc 0 dans chacun) :
+  P1 _median_terrain · P2 ligne2_terrain_zone (tableau/fiche/Comparer/Assemblage) ·
+  P3 série baromètre · P4 comparateur_terrain (fiche parcelle/Estimer) · P5 Radar île ·
+  zone.py prix_par_type_zone (Étude de zone) · _median_terrain_commune (bloc commune) ·
+  banc_estimer · dvf_secteur_medianes terrain (fiche §8/Comparatif)
+
+=== AVANT / APRÈS — terrain nu U et AU, 24 communes (médiane €/m² · n) ===
+Commune                  |      U avant |      U après |     AU avant |     AU après
+--------------------------------------------------------------------------------------
+Bras-Panon               |       247·52 |       250·51 |       273·74 |       273·73  ←bouge
+Cilaos                   |        94·77 |        95·76 |       124·29 |       124·28  ←bouge
+Entre-Deux               |       204·73 |       203·72 |        114·9 |        114·9  ←bouge
+L'Étang-Salé             |      309·124 |      304·124 |       370·56 |       370·56  ←bouge
+La Plaine-des-Palmistes  |      129·154 |      129·154 |       116·30 |       116·30
+La Possession            |      322·251 |      322·251 |      409·147 |      409·145  ←bouge
+Le Port                  |      344·155 |      343·150 |       441·10 |       441·10  ←bouge
+Le Tampon                |      209·623 |      208·619 |       149·70 |       151·69  ←bouge
+Les Avirons              |      246·147 |      245·147 |        84·18 |        84·18  ←bouge
+Les Trois-Bassins        |      159·110 |      158·109 |       161·81 |       169·80  ←bouge
+Petite-Île               |      213·258 |      213·257 |       123·12 |       123·12  ←bouge
+Saint-André              |      233·333 |      232·329 |       253·50 |       253·49  ←bouge
+Saint-Benoît             |      189·367 |      188·360 |       161·78 |       161·78  ←bouge
+Saint-Denis              |      298·568 |      298·559 |       270·43 |       270·43  ←bouge
+Saint-Joseph             |      176·375 |      175·374 |       211·41 |       211·41  ←bouge
+Saint-Leu                |      258·335 |      258·335 |       508·65 |       508·65
+Saint-Louis              |      210·391 |      211·387 |      291·140 |      291·140  ←bouge
+Saint-Paul               |      344·726 |      344·724 |      430·174 |      430·174  ←bouge
+Saint-Philippe           |          —·0 |          —·0 |          —·0 |          —·0
+Saint-Pierre             |      304·749 |      304·742 |        163·6 |        163·6  ←bouge
+Sainte-Marie             |      431·388 |      431·385 |        163·3 |        163·3  ←bouge
+Sainte-Rose              |       102·44 |       102·44 |       139·34 |       139·34
+Sainte-Suzanne           |      321·299 |      321·297 |         81·2 |         65·2  ←bouge
+Salazie                  |       143·76 |       143·76 |         80·4 |         64·4  ←bouge
