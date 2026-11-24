@@ -36,6 +36,7 @@ function Frise({ siren }: { siren: string }) {
       {/* SCAN-FIX-1 (bloquant 2) — DEUX listes SÉPARÉES et NOMMÉES. */}
       <p data-frise-foncier className="text-txt-mut">
         <b className="text-txt-hi">Permis sur son foncier</b> : <b className="text-txt">{f.sur_son_foncier.n_operations}</b> opération{f.sur_son_foncier.n_operations > 1 ? 's' : ''} · <b className="text-txt">{f.sur_son_foncier.n_permis}</b> permis · <b className="text-txt">{f.sur_son_foncier.n_logements.toLocaleString('fr-FR')}</b> logements
+        {f.sur_son_foncier.n_logements_dp > 0 && <span className="text-txt-dim"> ({f.sur_son_foncier.n_logements_dp} en déclaration préalable comptés à part)</span>}
         {f.sur_son_foncier.n_logements_annules > 0 && <span className="text-txt-dim"> ({f.sur_son_foncier.n_logements_annules} annulés exclus)</span>}
         {f.sur_son_foncier.part_petitionnaire_inconnu != null && <span className="text-txt-dim"> — pétitionnaire inconnu sur {f.sur_son_foncier.part_petitionnaire_inconnu}% de ces permis</span>}
       </p>
@@ -203,6 +204,12 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
   // pas de compteur, pas de note de bas. `strictVide` gate ces éléments quand le propriétaire ciblé n'a
   // rien construit.
   const strictVide = strict && !!d && d.n_total === 0
+  // SCAN-FIX-2 (A1) + SCAN-FIX-1 — notes du total : logements de DP et d'annulés comptés À PART, ops ambiguës.
+  const notesLgt = d ? [
+    d.n_logements_dp > 0 ? `${d.n_logements_dp.toLocaleString('fr-FR')} logement${d.n_logements_dp > 1 ? 's' : ''} de déclaration préalable comptés à part` : null,
+    d.n_logements_annules > 0 ? `${d.n_logements_annules.toLocaleString('fr-FR')} logement${d.n_logements_annules > 1 ? 's' : ''} de permis annulés exclus` : null,
+    d.n_operations_ambigues > 0 ? `${d.n_operations_ambigues} opération${d.n_operations_ambigues > 1 ? 's' : ''} à propriétaire ambigu` : null,
+  ].filter(Boolean).join(' · ') : ''
 
   return (
     <div data-veille-promoteurs className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1 text-[12.5px]">
@@ -286,8 +293,8 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
           {strict
             ? (strictVide ? null : <>
                 <p className="text-[12px] text-txt"><b>{d.n_total.toLocaleString('fr-FR')}</b> opération{d.n_total > 1 ? 's' : ''} · <b>{d.n_logements_total.toLocaleString('fr-FR')}</b> logements <span className="text-txt-mut">— construit ou en cours{Number.isFinite(anneeDepuis) ? `, permis depuis ${anneeDepuis}` : ''}{d.millesime ? ` · Sitadel au ${fmtDateSitadel(d.millesime)}` : ''}</span></p>
-                {/* SCAN-FIX-1 (bloquants 3-4) — annulés exclus du « construit/en cours » et dits à part ; cas ambigus signalés ; plafond annoncé AUSSI en mode propriétaire. */}
-                {(d.n_logements_annules > 0 || d.n_operations_ambigues > 0) && <p className="text-[10px] leading-snug text-txt-dim">{d.n_logements_annules > 0 ? `${d.n_logements_annules.toLocaleString('fr-FR')} logement${d.n_logements_annules > 1 ? 's' : ''} de permis annulés exclus` : ''}{d.n_logements_annules > 0 && d.n_operations_ambigues > 0 ? ' · ' : ''}{d.n_operations_ambigues > 0 ? `${d.n_operations_ambigues} opération${d.n_operations_ambigues > 1 ? 's' : ''} à propriétaire ambigu (signalée${d.n_operations_ambigues > 1 ? 's' : ''})` : ''}</p>}
+                {/* SCAN-FIX-2 (A1)/SCAN-FIX-1 (bloquants 3-4) — DP et annulés comptés à part ; ambiguës signalées ; plafond annoncé AUSSI en mode propriétaire. */}
+                {notesLgt && <p className="text-[10px] leading-snug text-txt-dim">{notesLgt}</p>}
                 {d.tronquee && <p className="text-[10px] leading-snug text-txt-dim">Les {d.plafond} premières sont affichées : affinez la recherche.</p>}
               </>)
             : <>
@@ -299,7 +306,7 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
                     <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] leading-none text-txt-dim">i</span>
                   </Tip>
                 </p>
-                {(d.n_logements_annules > 0 || d.n_operations_ambigues > 0) && <p className="text-[10px] leading-snug text-txt-dim">{d.n_logements_annules > 0 ? `${d.n_logements_annules.toLocaleString('fr-FR')} logement${d.n_logements_annules > 1 ? 's' : ''} de permis annulés exclus` : ''}{d.n_logements_annules > 0 && d.n_operations_ambigues > 0 ? ' · ' : ''}{d.n_operations_ambigues > 0 ? `${d.n_operations_ambigues} opération${d.n_operations_ambigues > 1 ? 's' : ''} à propriétaire ambigu` : ''}</p>}
+                {notesLgt && <p className="text-[10px] leading-snug text-txt-dim">{notesLgt}</p>}
                 {d.tronquee && <p className="text-[10px] leading-snug text-txt-dim">Les {d.plafond} premières sont affichées : affinez la recherche.</p>}
               </>}
           <div className="flex flex-col gap-1.5">
@@ -321,6 +328,7 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
               const nPermis = carte?.n_permis ?? g.n_permis
               const nLgt = carte?.nb_logements ?? g.nb_logements
               const nAnnules = carte?.nb_logements_annules ?? 0
+              const nDp = carte?.nb_logements_dp ?? 0
               return (
               <div key={gkey} data-vp-promoteur data-vp-siren={g.siren ?? ''} className="flex flex-col gap-1 rounded-lg border border-line-2 bg-surface-2 p-2.5">
                 {/* EN-TÊTE accordéon (toujours visible) : nom + résumé + SIREN + chevron. Fermé par défaut ;
@@ -329,7 +337,7 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
                   aria-expanded={ouvert} className="flex w-full items-start justify-between gap-2 text-left">
                   <span className="flex min-w-0 flex-col gap-1">
                     <b className="truncate text-[12.5px] text-txt-hi">{g.denomination ?? '(propriétaire non nommé)'}</b>
-                    <span className="text-[11px] text-txt-mut">{/* SCAN-FIX-1 (pt 7) — libellé justifié (SIRENE/DGFiP), « Promoteur » jamais par défaut sur le groupe 0. */}{carte?.categorie_label ?? CAT_LABEL[g.categorie] ?? g.categorie} · <b className="text-txt">{nOps}</b> opération{nOps > 1 ? 's' : ''} · <b className="text-txt">{nPermis}</b> permis · <b className="text-txt">{nLgt}</b> logement{nLgt > 1 ? 's' : ''}{nAnnules > 0 ? <span className="text-txt-dim"> · {nAnnules} annulé{nAnnules > 1 ? 's' : ''} exclu{nAnnules > 1 ? 's' : ''}</span> : null}{carte?.ambigu ? <span className="text-st-creuser"> · propriétaire ambigu</span> : null}</span>
+                    <span className="text-[11px] text-txt-mut">{/* SCAN-FIX-1 (pt 7) — libellé justifié (SIRENE/DGFiP), « Promoteur » jamais par défaut sur le groupe 0. */}{carte?.categorie_label ?? CAT_LABEL[g.categorie] ?? g.categorie} · <b className="text-txt">{nOps}</b> opération{nOps > 1 ? 's' : ''} · <b className="text-txt">{nPermis}</b> permis · <b className="text-txt">{nLgt}</b> logement{nLgt > 1 ? 's' : ''}{nDp > 0 ? <span className="text-txt-dim"> · {nDp} en déclaration préalable</span> : null}{nAnnules > 0 ? <span className="text-txt-dim"> · {nAnnules} annulé{nAnnules > 1 ? 's' : ''} exclu{nAnnules > 1 ? 's' : ''}</span> : null}{carte?.ambigu ? <span className="text-st-creuser"> · propriétaire ambigu</span> : null}</span>
                     {g.siren && <span className="truncate font-mono text-[10px] text-txt-off">SIREN <Siren value={g.siren} className="font-mono text-txt-off" /></span>}
                     {g.radar && <span data-vp-radar-cite className="w-fit rounded bg-mint/12 px-1.5 py-px text-[9.5px] font-medium text-mint">annonce neuve Radar rattachée</span>}
                   </span>

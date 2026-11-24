@@ -33,6 +33,10 @@ _TOUS_GROUPES = [0, 5, 6]
 # que leurs parcelles sont CONTIGUËS ET qu'ils sont déposés sur une MÊME PÉRIODE.
 OP_CONTIG_M = 250       # « contiguës » : centroïdes des permis à ≤ 250 m (proxy d'un même îlot d'opération)
 OP_PERIODE_MOIS = 24    # « même période » : dépôts dans une fenêtre glissante de 24 mois
+# SCAN-FIX-2 (M1) — la fenêtre se compte EN JOURS, pas en mois entiers (le contre-audit relevait que le
+# test ignorait le jour du mois : deux dépôts à 1 j d'écart de part et d'autre d'un changement de mois
+# étaient traités à tort comme 1 mois). 24 mois = 730 jours (365,25/12 × 24).
+OP_PERIODE_JOURS = round(OP_PERIODE_MOIS * 365.25 / 12)   # 730
 PLAFOND = 200
 
 
@@ -58,8 +62,9 @@ class _UF:
             self.p[ra] = rb
 
 
-def _mois(d1, d2) -> float:
-    return abs((d1.year - d2.year) * 12 + (d1.month - d2.month)) if d1 and d2 else 1e9
+def _jours(d1, d2) -> float:
+    """SCAN-FIX-2 (M1) — écart EN JOURS entre deux dépôts (compte le jour du mois, pas des mois entiers)."""
+    return abs((d1 - d2).days) if d1 and d2 else 1e9
 
 
 def _haversine_m(lat1, lon1, lat2, lon2) -> float:
@@ -114,7 +119,8 @@ def _permis_proprietaire(db: Session, commune: str | None, depuis: str | None) -
                perm.etat, perm.daact, perm.petitioner_siren, perm.lon, perm.lat, perm.idu_codes,
                r.siren, r.denomination, r.groupe, r.n_parc, r.n_cand, (t.n_top > 1) AS ambigu
         FROM perm JOIN ranked r ON r.id = perm.id AND r.rk = 1
-        JOIN ties t ON t.id = perm.id"""), params).mappings().all()
+        JOIN ties t ON t.id = perm.id
+        ORDER BY perm.id"""), params).mappings().all()   # SCAN-FIX-2 (M2) — ordre STABLE (pas d'ex æquo d'ordre de ligne)
     return [dict(r) for r in rows]
 
 
@@ -144,28 +150,40 @@ def _operations(db: Session, groupes: list[int], commune: str | None, depuis: st
                 if a["lon"] is None or b["lon"] is None:
                     continue
                 if (_haversine_m(a["lat"], a["lon"], b["lat"], b["lon"]) <= OP_CONTIG_M
-                        and _mois(a["date_depot"], b["date_depot"]) <= OP_PERIODE_MOIS):
+                        and _jours(a["date_depot"], b["date_depot"]) <= OP_PERIODE_JOURS):
                     uf.union(i, jx)
         comps: dict[int, list[dict]] = {}
         for i, p in enumerate(permis):
             comps.setdefault(uf.find(i), []).append(p)
         for membres in comps.values():
+            # SCAN-FIX-2 (M2) — ordre TOTAL explicite des membres (plus de dépendance à l'ordre de ligne) :
+            # tout « premier/plus récent » est départagé par permit_id puis id.
+            membres = sorted(membres, key=lambda m: (str(m.get("permit_id") or ""), m["id"]))
             est_annule = lambda m: str(m.get("etat") or "") == "4"
             est_acheve = lambda m: bool((m.get("daact") or "").strip()) or str(m.get("etat") or "") == "6"
+            est_dp = lambda m: (m.get("type") or "") == "DP"
             vivants = [m for m in membres if not est_annule(m)]          # non annulés
             annules = [m for m in membres if est_annule(m)]
             dates = [m["date_depot"] for m in vivants if m["date_depot"]] or \
                     [m["date_depot"] for m in membres if m["date_depot"]]
-            recent = max(vivants or membres, key=lambda m: (m["date_depot"] is not None, m["date_depot"]))
+            # « plus récent » DÉTERMINISTE : date max, départagée par permit_id puis id (M2).
+            recent = max(vivants or membres,
+                         key=lambda m: (m["date_depot"] is not None, m["date_depot"],
+                                        str(m.get("permit_id") or ""), m["id"]))
             lons = [m["lon"] for m in membres if m["lon"] is not None]
             lats = [m["lat"] for m in membres if m["lat"] is not None]
-            nb = sum(int(m["nb_lgt"] or 0) for m in vivants)             # CONSTRUIT OU EN COURS (annulés exclus)
+            # SCAN-FIX-2 (A1) — « construit ou en cours » = logements des permis NON annulés et HORS
+            # déclaration préalable ; les logements de DP sont séparés (comme les annulés), plus fondus.
+            vivants_hors_dp = [m for m in vivants if not est_dp(m)]
+            vivants_dp = [m for m in vivants if est_dp(m)]
+            nb = sum(int(m["nb_lgt"] or 0) for m in vivants_hors_dp)     # CONSTRUIT OU EN COURS (hors annulés, hors DP)
+            nb_dp = sum(int(m["nb_lgt"] or 0) for m in vivants_dp)       # logements de DÉCLARATIONS PRÉALABLES
             nb_annule = sum(int(m["nb_lgt"] or 0) for m in annules)
             annee = max(dates).year if dates else None
             commune_op = recent["commune"]
             idus = sorted({i for m in membres for i in (m["idu_codes"] or [])})
             n_pc = sum(1 for m in membres if (m.get("type") or "") == "PC")
-            n_dp = sum(1 for m in membres if (m.get("type") or "") == "DP")
+            n_dp = sum(1 for m in membres if est_dp(m))
             # ÉTAT DU GROUPE — « travaux achevés » UNIQUEMENT si TOUS les permis non annulés le sont
             # (SCAN-FIX-1 bloquant 3 : un seul achèvement ne qualifie plus tout le groupe). Sinon on dit le détail.
             n_ach = sum(1 for m in vivants if est_acheve(m))
@@ -188,7 +206,8 @@ def _operations(db: Session, groupes: list[int], commune: str | None, depuis: st
             operations.append({
                 "siren": siren, "denomination": membres[0]["denomination"],
                 "categorie": _GROUPE_CAT.get(membres[0]["groupe"], "promoteur"),
-                "commune": commune_op, "nb_logements": nb, "nb_logements_annules": nb_annule,
+                "commune": commune_op, "nb_logements": nb, "nb_logements_dp": nb_dp,
+                "nb_logements_annules": nb_annule,
                 "n_permis": len(membres), "n_permis_pc": n_pc, "n_permis_dp": n_dp,
                 "n_permis_annules": len(annules),
                 "n_sans_petitionnaire": sum(1 for m in membres if not m.get("petitioner_siren")),
@@ -289,7 +308,9 @@ def veille_promoteurs(commune: str | None = Query(None), categorie: str | None =
     if siren:
         s9 = siren.strip()[:9]
         ops = [o for o in ops if (o.get("siren") or "")[:9] == s9]
-    ops.sort(key=lambda o: (o["date_max"] is not None, o["date_max"] or ""), reverse=True)
+    # SCAN-FIX-2 (M2) — tri à ordre TOTAL (date desc, puis siren/commune) : aucun ex æquo d'ordre de ligne.
+    ops.sort(key=lambda o: (o["date_max"] is not None, o["date_max"] or "", o["siren"] or "", o["commune"] or ""),
+             reverse=True)
     n_total = len(ops)
     lim = min(max(limit, 1), PLAFOND)
     tronquee = n_total > lim
@@ -301,28 +322,32 @@ def veille_promoteurs(commune: str | None = Query(None), categorie: str | None =
         g = par_promoteur.setdefault(o["siren"] or "∅", {
             "siren": o["siren"], "denomination": o["denomination"], "categorie": o["categorie"],
             "categorie_label": o.get("categorie_label"), "categorie_justifiee": o.get("categorie_justifiee"),
-            "n_operations": 0, "n_permis": 0, "nb_logements": 0, "nb_logements_annules": 0, "ambigu": False})
+            "n_operations": 0, "n_permis": 0, "nb_logements": 0, "nb_logements_dp": 0,
+            "nb_logements_annules": 0, "ambigu": False})
         g["n_operations"] += 1
         g["n_permis"] += o["n_permis"]
         g["nb_logements"] += o["nb_logements"]
+        g["nb_logements_dp"] += o["nb_logements_dp"]
         g["nb_logements_annules"] += o["nb_logements_annules"]
         g["ambigu"] = g["ambigu"] or o["ambigu"]
     cartes = sorted(par_promoteur.values(),
                     key=lambda c: (-c["n_operations"], -c["nb_logements"], c["siren"] or ""))
     return {
         "n_total": n_total, "n_servi": min(n_total, lim), "tronquee": tronquee, "plafond": PLAFOND,
-        # SCAN-FIX-1 (bloquant 3) — « construit ou en cours » = HORS annulés ; les annulés sont comptés à part.
+        # SCAN-FIX-1 (bloquant 3) + SCAN-FIX-2 (A1) — « construit ou en cours » = HORS annulés ET HORS DP ;
+        # les logements de DP et les annulés sont comptés À PART (plus fondus dans le total de tête).
         "n_logements_total": sum(o["nb_logements"] for o in ops),
+        "n_logements_dp": sum(o["nb_logements_dp"] for o in ops),
         "n_logements_annules": sum(o["nb_logements_annules"] for o in ops),
         "n_operations_ambigues": sum(1 for o in ops if o["ambigu"]),
         "par_promoteur": cartes,     # cartes société calculées sur TOUT (pt 7), pas sur les 200 servies
         "categories": [{"cle": k, "label": v["label"]} for k, v in CATEGORIES.items()],
         "millesime": millesime.isoformat() if millesime else None,
-        "regle": {"contiguite_m": OP_CONTIG_M, "periode_mois": OP_PERIODE_MOIS,
+        "regle": {"contiguite_m": OP_CONTIG_M, "periode_mois": OP_PERIODE_MOIS, "periode_jours": OP_PERIODE_JOURS,
                   "phrase": f"une opération = permis d'un même propriétaire foncier (SIREN), regroupés DE "
                             f"PROCHE EN PROCHE quand leurs parcelles sont à ≤ {OP_CONTIG_M} m (distance "
-                            f"géodésique) et déposés à ≤ {OP_PERIODE_MOIS} mois d'écart ; l'étendue réelle "
-                            f"du groupe (distance et durée max) est affichée par opération"},
+                            f"géodésique) et déposés à ≤ {OP_PERIODE_MOIS} mois ({OP_PERIODE_JOURS} jours) "
+                            f"d'écart ; l'étendue réelle du groupe (distance et durée max) est affichée par opération"},
         "operations": ops[:lim],
         "note": "Attribution par le PROPRIÉTAIRE FONCIER de la parcelle (Scan patrimoine, même SIREN), pas "
                 "par le pétitionnaire — l'open Sitadel n'identifie le pétitionnaire que sur une part des "
@@ -398,6 +423,7 @@ def promoteur_frise(siren: str, db: Session = Depends(get_db)) -> dict:
         "sur_son_foncier": {
             "n_operations": len(ops), "n_permis": n_permis_foncier,
             "n_logements": sum(o["nb_logements"] for o in ops),
+            "n_logements_dp": sum(o["nb_logements_dp"] for o in ops),   # SCAN-FIX-2 (A1) — DP à part
             "n_logements_annules": sum(o["nb_logements_annules"] for o in ops),
             "n_permis_sans_petitionnaire": n_sans_pet,
             "part_petitionnaire_inconnu": round(100 * n_sans_pet / n_permis_foncier) if n_permis_foncier else None,

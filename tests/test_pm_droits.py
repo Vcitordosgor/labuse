@@ -87,6 +87,46 @@ def test_possession_distingue_propriete_gestion_autres(db_session):
     assert tit["titulaires"][0]["siren"] == cbo and tit["titulaires"][0]["droit_code"] == "G"
 
 
+def test_archive_principal_depuis_droits_meme_regle(db_session):
+    """SCAN-FIX-2 (M3) — l'archive d'un millésime dans pm_proprietaires_millesimes est le TITULAIRE
+    PRINCIPAL calculé par la MÊME RÈGLE (ordre_titulaire=1), pas la vieille « 1re ligne ». Sur une parcelle
+    où le propriétaire (P) est X et le gestionnaire (G) est Y, l'archive retient X (comme le millésime servi)
+    → la chronologie Communes ne verra pas de faux changement."""
+    from labuse.ingestion.pm_droits import archive_principal_depuis_droits
+    s = db_session
+    s.commit = lambda: None   # neutralise le commit interne → la transaction du fixture roule en arrière
+    _ddl_droit(s)
+    # 2024 : parcelle à 2 titulaires — X propriétaire (principal), Y gestionnaire (ordre 2).
+    s.execute(text("INSERT INTO parcelle_pm_droit (idu, siren, denomination, groupe, droit_code, "
+                   "droit_label, ordre_titulaire, millesime) VALUES "
+                   "('97499000AR0001','111111111','SCI X',0,'P','Propriétaire',1,'2024'),"
+                   "('97499000AR0001','222222222','SCI Y',0,'G','Gérant',2,'2024')"))
+    archive_principal_depuis_droits(s, "2024", log=lambda *_: None)
+    row = s.execute(text("SELECT siren FROM pm_proprietaires_millesimes WHERE millesime=2024 AND idu='97499000AR0001'")).all()
+    assert len(row) == 1 and row[0][0] == "111111111"   # le PROPRIÉTAIRE, pas le gestionnaire
+
+
+def test_blocs_filtre_siren(db_session):
+    """SCAN-FIX-2 (M4) — la route blocs honore enfin `?siren=` (il était ignoré) : elle ne rend que les
+    blocs du propriétaire demandé, plus toute la liste."""
+    from labuse.api.modules import blocs_liste
+    s = db_session
+    # labuse_test peut porter un parcel_blocs ancien sans `is_public` (schéma persistant) ; la colonne
+    # existe en prod/scanfix. On la garantit dans la transaction (rollback-ée) pour exercer la route.
+    s.execute(text("ALTER TABLE parcel_blocs ADD COLUMN IF NOT EXISTS is_public boolean NOT NULL DEFAULT false"))
+    for key, siren, n in (("452038805:a", "452038805", 5), ("310863592:b", "310863592", 3)):
+        s.execute(text(
+            "INSERT INTO parcel_blocs (bloc_key, siren, denomination, n_parcelles, surface_totale_m2, "
+            " communes, sdp_residuelle_m2, sdp_couverture, zonages, is_public, built_at) "
+            "VALUES (:k,:s,:d,:n, 1000, ARRAY['Patville'], 0, 0, ARRAY['U'], false, now())"),
+            {"k": key, "s": siren, "d": f"SCI {siren}", "n": n})
+    kw = dict(commune=None, surface_min=0, sdp_min=0, n_min=2, inclure_publics=True, limit=200, offset=0, db=s)
+    tout = blocs_liste(siren=None, **kw)
+    cbo = blocs_liste(siren="452038805", **kw)
+    assert tout["total"] == 2
+    assert cbo["total"] == 1 and all(it["siren"] == "452038805" for it in cbo["items"])
+
+
 def test_recherche_compte_recensees_et_annonce_masques(db_session):
     """Le compteur de la recherche = le scan (parcelles recensées via parcelle_pm_droit), U… qualifié."""
     from labuse.api.modules import patrimoine_search

@@ -245,6 +245,27 @@ def archive_2025_courant(session: Session, log=print) -> int:
     return n
 
 
+def archive_principal_depuis_droits(session: Session, millesime: str, log=print) -> int:
+    """SCAN-FIX-2 (M4 de la relecture) — archive dans `pm_proprietaires_millesimes` le TITULAIRE PRINCIPAL
+    d'un millésime calculé par la MÊME RÈGLE que le millésime servi (ordre_titulaire=1 de
+    `parcelle_pm_droit`), et non la vieille table servie « 1re ligne ». Sans quoi la chronologie Communes
+    comparerait un principal 2025 « 1re ligne » à un principal 2026 « propriétaire-first » et afficherait
+    ~1 496 changements ARTEFACTS de règle (aucune cession). Ici les deux bouts sont choisis par la même
+    règle → seuls les VRAIS changements de titulaire subsistent. Idempotent (purge du millésime puis
+    ré-insertion). Suppose `parcelle_pm_droit` chargée pour ce millésime."""
+    m = int(millesime)
+    session.execute(text("DELETE FROM pm_proprietaires_millesimes WHERE millesime = :m"), {"m": m})
+    n = session.execute(text(
+        """INSERT INTO pm_proprietaires_millesimes
+             (millesime, idu, groupe, groupe_label, forme_juridique, denomination, siren, url_source)
+           SELECT :m, idu, groupe, groupe_label, forme_juridique, denomination, siren, url_source
+           FROM parcelle_pm_droit WHERE millesime = :ms AND ordre_titulaire = 1"""),
+        {"m": m, "ms": millesime}).rowcount
+    session.commit()
+    log(f"archive {millesime} (règle principal) → pm_proprietaires_millesimes : {n} parcelles")
+    return n
+
+
 def recompute_principal(session: Session, millesime: str = "2026", log=print) -> dict:
     """FLIP (à exécuter sous fenêtre contrôlée) : recalcule `parcelle_personne_morale` = TITULAIRE
     PRINCIPAL de chaque parcelle (ordre_titulaire = 1 dans parcelle_pm_droit), au millésime donné.

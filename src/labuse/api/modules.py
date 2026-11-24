@@ -1446,6 +1446,7 @@ def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
 
 @router.get("/blocs")
 def blocs_liste(commune: str | None = None,
+                siren: str | None = Query(None, description="SCAN-FIX-2 (M4) — restreindre aux blocs d'UN propriétaire (SIREN)"),
                 surface_min: int = Query(0, ge=0),
                 sdp_min: int = Query(0, ge=0),
                 n_min: int = Query(2, ge=2),
@@ -1457,13 +1458,19 @@ def blocs_liste(commune: str | None = None,
     nombre de parcelles). Les propriétaires de droit public (commune, État, collectivité, EPF/EP,
     SEM — classés par la catégorie juridique de la source, `classify_dgfip`, jamais une liste en dur)
     sont ÉCARTÉS par défaut ; `inclure_publics=true` les rétablit. Le bandeau dit combien sont écartés."""
+    # ROBUSTESSE — appels EN DIRECT (tests) où le défaut `Query()` n'est pas résolu : on retombe sur None.
+    siren = siren if isinstance(siren, str) else None
     if not db.execute(text("SELECT to_regclass('parcel_blocs') IS NOT NULL")).scalar():
         raise HTTPException(503, "blocs non calculés (table absente — lancer `labuse blocs-build`).")
     where = ("WHERE n_parcelles >= :nmin"
              + (" AND :c = ANY(communes)" if commune else "")
+             # SCAN-FIX-2 (M4) — le paramètre `siren` était IGNORÉ (absent de la signature) : il filtre
+             # désormais réellement les blocs du propriétaire (9 chiffres, même SIREN que Scan patrimoine).
+             + (" AND siren = :siren" if siren else "")
              + (" AND surface_totale_m2 >= :surfmin" if surface_min else "")
              + (" AND sdp_residuelle_m2 >= :sdpmin" if sdp_min else ""))
-    params = {"nmin": n_min, "c": commune, "surfmin": surface_min, "sdpmin": sdp_min}
+    params = {"nmin": n_min, "c": commune, "siren": (siren or "").strip()[:9],
+              "surfmin": surface_min, "sdpmin": sdp_min}
     where_f = where + ("" if inclure_publics else " AND is_public = false")
     total = int(db.execute(text(f"SELECT count(*) FROM parcel_blocs {where_f}"), params).scalar() or 0)
     # Combien de blocs publics correspondraient aux mêmes filtres (le bandeau dit combien sont écartés).

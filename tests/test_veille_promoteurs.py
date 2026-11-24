@@ -69,15 +69,36 @@ def test_attribution_deterministe_et_annules_et_pcdp(db_session):
     assert all(o["commune"] != "Loinville" or o["annule"] for o in r1["operations"])
     # l'opération annulée ne compte pas ses logements dans le total construit/en cours
     assert (A, "Loinville") not in ops or ops[(A, "Loinville")]["nb_logements"] == 0
-    # PC vs DP distingués
+    # PC vs DP distingués (compte de permis ET logements — SCAN-FIX-2 A1)
     opDP = ops[(A, "DPville")]
     assert opDP["n_permis_dp"] == 1 and opDP["n_permis_pc"] == 0
+    # A1 — les 3 logements de la DP ne sont PAS dans « construit ou en cours », mais comptés à part
+    assert opDP["nb_logements"] == 0 and opDP["nb_logements_dp"] == 3
+    assert r1["n_logements_dp"] == 3                      # total DP île séparé du total de tête
+    assert all(o["nb_logements_dp"] == 0 for k, o in ops.items() if k != (A, "DPville"))
     # AMBIGU : parcelle ex æquo A/B → signalé ; attribution déterministe au plus petit SIREN (A)
     assert r1["n_operations_ambigues"] >= 1
     opAmb = ops.get((A, "Ambiville"))
     assert opAmb is not None and opAmb["ambigu"] is True
     # par_promoteur calculé sur TOUT (pas sur une page)
     assert any(c["siren"] == A for c in r1["par_promoteur"])
+
+
+def test_fenetre_periode_comptee_en_jours(db_session):
+    """SCAN-FIX-2 (M1) — la fenêtre « même période » se compte EN JOURS (730), pas en mois entiers.
+    Deux dépôts à 735 j (24 mois + 9 j) au MÊME point ne se regroupent PAS (l'ancien calcul par mois les
+    fusionnait à tort : (2022-2020)*12+(1-1)=24 ≤ 24)."""
+    from labuse.api.veille_promoteurs import veille_promoteurs
+    s = db_session
+    _pm(s, "97499000MJ0001", A)
+    _permit(s, "MJ1", ["97499000MJ0001"], "POINT(55.200 -21.050)", 5, date="2020-01-01")
+    _permit(s, "MJ2", ["97499000MJ0001"], "POINT(55.200 -21.050)", 5, date="2022-01-10")   # +735 j
+    r = veille_promoteurs(commune=None, categorie=None, depuis=None, siren=A, limit=200, db=s)
+    assert r["n_total"] == 2, "735 j > 730 → deux opérations (compté en jours, pas 24 mois entiers)"
+    # contrôle : à 700 j, une seule opération.
+    _permit(s, "MJ3", ["97499000MJ0001"], "POINT(55.200 -21.050)", 5, date="2021-12-01")   # 700 j de MJ1
+    r2 = veille_promoteurs(commune=None, categorie=None, depuis=None, siren=A, limit=200, db=s)
+    assert any(o["n_permis"] >= 2 for o in r2["operations"]), "≤ 730 j → regroupés"
 
 
 def test_partition_le_filtre_ne_change_pas_l_attribution(db_session):

@@ -1072,8 +1072,9 @@ export interface OperationPromoteur {
   annee: number | null; etat: string | null; etat_libelle: string | null; lon: number | null; lat: number | null
   idus: string[]; libelle: string; radar_bien_id: number | null; radar_cite: boolean
   programme?: ProgrammeLie | null
-  // SCAN-FIX-1 (bloquants 2-4)
-  nb_logements_annules: number; n_permis_pc: number; n_permis_dp: number; n_permis_annules: number
+  // SCAN-FIX-1 (bloquants 2-4) + SCAN-FIX-2 (A1 : logements DP séparés)
+  nb_logements_dp: number; nb_logements_annules: number
+  n_permis_pc: number; n_permis_dp: number; n_permis_annules: number
   n_sans_petitionnaire: number; span_m: number; span_jours: number; ambigu: boolean; annule: boolean
   // SCAN-FIX-1 (point 7) — catégorie justifiée par une source (SIRENE NAF / groupe DGFiP), sinon neutre.
   categorie_label?: string | null; categorie_justifiee?: boolean | null; categorie_source?: string | null
@@ -1081,11 +1082,11 @@ export interface OperationPromoteur {
 export interface CartePromoteur {
   siren: string | null; denomination: string | null; categorie: string
   categorie_label?: string | null; categorie_justifiee?: boolean | null
-  n_operations: number; n_permis: number; nb_logements: number; nb_logements_annules: number; ambigu: boolean
+  n_operations: number; n_permis: number; nb_logements: number; nb_logements_dp: number; nb_logements_annules: number; ambigu: boolean
 }
 export interface VeillePromoteurs {
   n_total: number; n_servi: number; tronquee: boolean; plafond: number; n_logements_total: number
-  n_logements_annules: number; n_operations_ambigues: number; par_promoteur: CartePromoteur[]
+  n_logements_dp: number; n_logements_annules: number; n_operations_ambigues: number; par_promoteur: CartePromoteur[]
   categories: { cle: string; label: string }[]; millesime: string | null
   regle: { contiguite_m: number; periode_mois: number; phrase: string }
   operations: OperationPromoteur[]; note: string
@@ -1105,7 +1106,7 @@ export interface PromoteurFrise {
   // RETOURS-13 R29 — le chiffre dit ce qu'il compte + activité de pétitionnaire (Sitadel 2013+).
   perimetre_note: string
   // SCAN-FIX-1 (bloquant 2) — deux listes nommées + part pétitionnaire inconnu.
-  sur_son_foncier: { n_operations: number; n_permis: number; n_logements: number; n_logements_annules: number; n_permis_sans_petitionnaire: number; part_petitionnaire_inconnu: number | null; note: string }
+  sur_son_foncier: { n_operations: number; n_permis: number; n_logements: number; n_logements_dp: number; n_logements_annules: number; n_permis_sans_petitionnaire: number; part_petitionnaire_inconnu: number | null; note: string }
   deposes_petitionnaire: { n_permis: number; n_logements: number; note: string }
   petitionnaire: { n_permis: number; n_logements: number; note: string }
   filiales_identifiees: { siren: string; nom: string | null; n_permis: number; n_logements: number }[]

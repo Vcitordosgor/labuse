@@ -267,3 +267,57 @@ Le contre-audit ASTRA les liste déjà ; je les consigne ici sans toucher `04-SC
 ---
 
 *État : LOT 0 ✅ · LOT 1 ✅ · fil fiche ✅ · LOT 2 ✅ · LOT 3 ✅ · LOT 4 ✅ · LOT 5 ✅. Base partagée `labuse` JAMAIS écrite (tout en `labuse_scanfix` ; totaux île par agrégats légers lecture seule). Bascule `recompute_principal` NON appliquée à la base commune/prod — commande fournie. Recharge BODACC dépôts : commande fournie (`labuse ingest-bodacc-depots`), non exécutée.*
+
+---
+
+# OUTIL-SCAN-FIX-2 — reprise après relecture (`relecture-scan-1.md`)
+
+Relecture indépendante : aucun défaut bloquant, 1 à corriger (A1) + 4 mineurs (M1-M4). Corrigés ici.
+
+## A1 — logements de DP séparés de « construit ou en cours »
+`veille_promoteurs.py` : `nb_logements` ne compte plus que les permis NON annulés **ET hors déclaration
+préalable** ; les logements de DP sont servis À PART (`nb_logements_dp` / `n_logements_dp`), comme les
+annulés. Avant : PC+DP fondus dans le total de tête. Après : total « construit ou en cours » = PC seuls ;
+DP comptés séparément (116 à l'île d'après l'audit). Front : « N logements de déclaration préalable comptés
+à part » (cartes, frise, bandeau). Test : `test_veille_promoteurs` (opDP `nb_logements==0`, `nb_logements_dp==3`).
+
+## M1 — fenêtre de période comptée en JOURS, pas en mois entiers
+`veille_promoteurs.py` : `_mois` → `_jours` (`abs((d1-d2).days)`), seuil `OP_PERIODE_JOURS = 730` (24 mois).
+Le jour du mois est désormais pris en compte (le contre-audit : « le test temporel ignore le jour »). Test :
+deux dépôts à 735 j au même point ne se regroupent plus (l'ancien calcul par mois les fusionnait).
+
+## M2 — déterminisme : ORDER BY partout, aucun « premier » sur un ordre non garanti
+`_permis_proprietaire` : `ORDER BY perm.id` final. Dans `_operations` : `membres` trié `(permit_id, id)`,
+`recent` départagé par `(date, permit_id, id)`, tri des opérations à ordre total `(date, siren, commune)`.
+Plus aucune bascule possible de la commune/catégorie/clé-programme d'une opération d'un appel à l'autre.
+
+## M3 — flip 2025→2026 : plus d'« artefact de règle » dans Communes
+`pm_droits.archive_principal_depuis_droits(millesime)` archive le 2025 avec la **MÊME règle** (principal
+propriétaire-first) que le 2026 servi, au lieu de la vieille table « 1re ligne ». La chronologie Communes ne
+compare donc que des titulaires choisis par la même règle. **Preuve (île entière, fichiers officiels 2025+2026,
+SIREN réels)** :
+
+| « Changements de propriétaires » 2025→2026 affichés | Nombre |
+|---|---|
+| **AVANT** (archive 2025 ancienne règle 1re-ligne vs 2026 nouvelle règle) | **2 019** |
+| **APRÈS** (archive 2025 MÊME règle vs 2026) | **963** |
+| Artefacts de règle supprimés | **≈ 1 056** (1 078 mesurés directement sur 2025) |
+
+10 cas (artefact : même parcelle, aucune cession, seul le pick change) :
+`97401000AS0527` 662043116→229740014 · `97402000AB0648` 310895172→219740024 · `97402000AH1895` 828474643→219740024 ·
+`97402000AK1039/43/44` 310895172→219740024 · `97401000AS0753` 662043116→229740014 · `97401000AS1131` 903946176→828065276 ·
+`97402000AH1989` 402063184→219740024 · `97402000AB0652` 310895172→219740024 (1re-ligne → propriétaire-first).
+La séquence prod (`BASCULE-PROD.md`) charge donc `parcelle_pm_droit` **2025 ET 2026** et archive 2025 par la règle.
+
+## M4 — route blocs : le paramètre `siren` honoré
+`modules.py:blocs_liste` : ajout du paramètre `siren` (il était absent → `?siren=` ignoré en silence, 6 357
+blocs rendus). Il filtre désormais `WHERE siren = :siren` (même SIREN que Scan patrimoine). Test :
+`test_blocs_filtre_siren` (2 blocs → `?siren=CBO` en rend 1).
+
+## Item 6 — bascule base commune `labuse` / prod : PRÉPARÉE, NON exécutée
+`scripts/bascule_2026_labuse.py` (`--dry-run`/`--go`) + runbook `BASCULE-PROD.md` : chargement droits
+2025+2026, archive 2025 même règle, flip atomique, recharge BODACC dépôts, recalcul V-score + promotion.
+Impact écrans + 12 témoins de cohérence, durée, rollback : voir `BASCULE-PROD.md`. `labuse` a déjà programmes
+(9) et sirene (155 505) — seul BODACC à rafraîchir. **ARRÊT : Vic choisit le moment.**
+
+*État SCAN-FIX-2 : A1 ✅ · M1 ✅ · M2 ✅ · M3 ✅ (prouvé) · M4 ✅ · bascule prod prête (non exécutée). Base `labuse` toujours jamais écrite.*
