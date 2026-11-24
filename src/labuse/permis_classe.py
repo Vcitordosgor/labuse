@@ -61,6 +61,64 @@ def annule_sql(a: str = "") -> str:
     return f"{a}raw->>'etat' = '{ANNULE_CODE}'"
 
 
+# ── OUTIL-PERMIS-FIX-8 (LOT 1) — LA fonction UNIQUE « cette date de dépôt est-elle AFFICHABLE ? » ──
+# Le contre-audit ASTRA-4 (point 1) : pour 97441626E0304, la fiche écartait correctement le dépôt
+# (DR_DEPOT 01/06/2020, dont l'année CONTREDIT l'AN_DEPOT publié = 2026), mais l'historique parcellaire
+# et le Dossier lisaient la date BRUTE → six ans d'« instruction » fallacieux. Désormais UNE SEULE règle
+# décide, et TOUS les lecteurs l'appellent (fiche, liste, historique parcellaire, fiche parcelle, Dossier).
+#
+# RÈGLE (décisive = « année de la date = année de dépôt du fichier ») : une date de dépôt n'est affichable
+# que si c'est une date PRÉCISE fiable — présente, ANTÉRIEURE à l'autorisation, PAS un 1er janvier (= proxy
+# d'année, non un vrai jour), AN_DEPOT exploitable (4 chiffres) ET année de la date == AN_DEPOT. Sinon
+# (DR_DEPOT = autorisation / postérieur / proxy 01-01 / année contradictoire / absent) → écartée, et rien
+# n'est écrit à sa place. (C'est la validation que la fiche appliquait déjà, extraite ici pour être unique.)
+_DEPOT_COND_TMPL = (
+    "{a}date_depot IS NOT NULL AND {a}date IS NOT NULL AND {a}date_depot < {a}date"
+    " AND NOT (EXTRACT(MONTH FROM {a}date_depot) = 1 AND EXTRACT(DAY FROM {a}date_depot) = 1)"
+    " AND {a}raw->>'an_depot' ~ '^[0-9]{{4}}$'"
+    " AND EXTRACT(YEAR FROM {a}date_depot)::int = ({a}raw->>'an_depot')::int"
+)
+
+
+def depot_affichable_cond_sql(a: str = "s.") -> str:
+    """La CONDITION SQL « cette date de dépôt est affichable » (booléen), `a` = préfixe d'alias de
+    `sitadel_permits` (''/'s.'). Les colonnes lues : `date_depot` (DR_DEPOT), `date` (autorisation),
+    `raw->>'an_depot'` (AN_DEPOT). Le regex garde le cast `::int` (évalué seulement si 4 chiffres)."""
+    return _DEPOT_COND_TMPL.format(a=a)
+
+
+def depot_affichable_sql(a: str = "s.") -> str:
+    """Le CASE SQL qui rend la date de dépôt AFFICHABLE (::date) ou NULL — à utiliser tel quel en SELECT
+    (fiche, historique, frise, Dossier). NULL quand le dépôt est écarté (rien écrit à sa place)."""
+    return f"CASE WHEN {depot_affichable_cond_sql(a)} THEN {a}date_depot::date END"
+
+
+def depot_affichable(date_depot, date_autorisation, an_depot):
+    """Version Python de `depot_affichable_sql` (même règle, pour les tests et les lecteurs Python) :
+    rend la date de dépôt (objet `date`) si elle est affichable, sinon None. Accepte des dates ISO
+    (texte) ou des objets `date`/`datetime`."""
+    import re
+    from datetime import date as _date, datetime as _dt
+
+    def _d(x):
+        if x is None:
+            return None
+        if isinstance(x, _dt):
+            return x.date()
+        if isinstance(x, _date):
+            return x
+        return _date.fromisoformat(str(x)[:10])
+    dep, aut = _d(date_depot), _d(date_autorisation)
+    if dep is None or aut is None or not (dep < aut):
+        return None
+    if dep.month == 1 and dep.day == 1:   # proxy d'année, pas un vrai jour de dépôt
+        return None
+    an = str(an_depot or "")
+    if not re.fullmatch(r"[0-9]{4}", an) or dep.year != int(an):
+        return None
+    return dep
+
+
 def _dormant_sql(a: str, dmax: str, bati: bool = True) -> str:
     """Prédicat SQL « ce permis est DORMANT » (hors priorité achevé, traitée avant dans le CASE).
 

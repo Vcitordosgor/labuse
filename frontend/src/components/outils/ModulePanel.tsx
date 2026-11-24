@@ -508,9 +508,8 @@ function PermitFicheCorps({ permitId, onClose }: { permitId: string; onClose: ()
             return note ? <p className="mt-1 text-[10px] leading-snug text-st-ecartee">{note} — délai d'instruction non calculé.</p> : null
           })()}
           <F label="Achèvement (DAACT)" value={d['date_achevement'] ? fmtDateNum(d['date_achevement'] as string) : null} />
-          {d['delai_instruction'] && (
-            <F label="Délai d'instruction" value={<span className="font-semibold text-mint">{d['delai_instruction']['libelle']}</span>} />
-          )}
+          {/* OUTIL-PERMIS-FIX-8 (LOT 2) — AUCUNE durée d'instruction : le délai n'a jamais été mesuré
+              (dépôt connu à l'année). Les deux dates ci-dessus suffisent, sans calcul entre elles. */}
           <F label="Parcelle(s)" value={<span className="font-mono text-[10px]">{(d['parcelles'] as string[]).join(', ')}</span>} />
           {/* RETOURS-23 (pt 7) — « Voir la parcelle » ouvre la FICHE de la parcelle rattachée (géocodé) ;
               sinon message clair (non géocodé) — jamais un clic mort. */}

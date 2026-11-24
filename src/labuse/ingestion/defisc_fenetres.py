@@ -76,10 +76,12 @@ FROM couple WHERE res/acq BETWEEN 0.2 AND 3.0;
 
 # Dernière acquisition NEUF par parcelle MONO, avec l'année Y, le proxy et l'année d'achèvement (si permis).
 _SELECT_RAW = """
+-- OUTIL-PERMIS-FIX-8 (LOT 3) — achèvement (DAACT) lu DIRECTEMENT de sitadel_permits.raw->>'daact' (la
+-- source), plus de m10_permit_delais.date_achevement (décommissionnée). Valeur identique (left(daact,10)::date).
 WITH ach AS (
-  SELECT pmp.idu, min(md.date_achevement) AS ach FROM p_model_permits pmp
-  JOIN m10_permit_delais md ON md.permit_id = pmp.permit_id
-  WHERE pmp.type = 'PC' AND md.date_achevement IS NOT NULL GROUP BY pmp.idu
+  SELECT pmp.idu, min((left(sp.raw->>'daact',10))::date) AS ach FROM p_model_permits pmp
+  JOIN sitadel_permits sp ON sp.permit_id = pmp.permit_id
+  WHERE pmp.type = 'PC' AND sp.raw->>'daact' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}' GROUP BY pmp.idu
 ),
 muts AS (
   SELECT id_parcelle AS idu, date_mutation::date AS dt, nature_mutation AS nat, type_local AS tl

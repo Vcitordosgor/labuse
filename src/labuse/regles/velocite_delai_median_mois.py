@@ -1,16 +1,21 @@
-"""Fiche de règle — vélocité administrative (délai médian). CIRCUIT-4 (lot 2/3)."""
+"""Fiche de règle — vélocité administrative (délai médian), RETIRÉE (OUTIL-PERMIS-FIX-8). CIRCUIT-4.
+
+La fiche est conservée pour tracer la décision et COUVRIR `indicateurs_communes` (qui produit encore
+le déficit SRU et la pression ZAN). Le délai lui-même n'est plus ni calculé ni servi."""
 from . import FicheRegle, Reference, declarer
 
 declarer(FicheRegle(
     donnees=("velocite_delai_median_mois",),
     formule_codee=(
-        "Médiane (percentile_cont(0.5), interpolation linéaire) de delai_mois sur m10_permit_delais "
-        "WHERE valide AND famille = 'logements' AND delai_mois >= 0, par commune. La même requête "
-        "(_SQL_INDICATEURS) porte aussi le déficit SRU = max(objectif_pct − taux_lls, 0) — "
-        "l'objectif étant celui de la loi SRU (25 %/20 % des résidences principales, données DHUP) "
-        "— et la pression ZAN = conso_2021_2024_m2 ÷ 10 000 (ha, Cerema ENAF)."),
-    entrees=("m10_permit_delais.delai_mois (valide, famille=logements)",
-             "commune_contexte_sru.objectif_pct/taux_lls (DHUP)", "commune_conso_enaf (Cerema)"),
+        "RETIRÉ (OUTIL-PERMIS-FIX-8, LOT 3) — la vélocité (délai médian dépôt→autorisation) n'est PLUS "
+        "ni calculée ni servie : le dépôt n'est connu qu'à l'année (AN_DEPOT → 1er janvier), le délai "
+        "n'a jamais été mesuré, et l'axe sort du score composite ; la couche m10_permit_delais est "
+        "décommissionnée. Règle historique (trace) : médiane percentile_cont(0.5) de delai_mois sur "
+        "m10_permit_delais valide/logements. La requête `indicateurs_communes` (_SQL_INDICATEURS) porte "
+        "ENCORE le déficit SRU = max(objectif_pct − taux_lls, 0) — objectif loi SRU (25 %/20 % des "
+        "résidences principales, DHUP) — et la pression ZAN = conso_2021_2024_m2 ÷ 10 000 (ha, Cerema ENAF)."),
+    entrees=("commune_contexte_sru.objectif_pct/taux_lls (DHUP)", "commune_conso_enaf (Cerema)",
+             "— (ex-m10_permit_delais.delai_mois : retiré, couche décommissionnée)"),
     classe="methode_standard",
     fonction="src/labuse/registre/moteurs/commune.py:indicateurs_communes",
     verdict="conforme",

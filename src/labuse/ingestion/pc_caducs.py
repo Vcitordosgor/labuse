@@ -1,7 +1,9 @@
 """PHASE A cycle 2, volet 2 (badge) — « PC caducs ».
 
-Table ADDITIVE `pc_caducs`, dérivée en LECTURE de Sitadel/m10. Ne touche JAMAIS les tables servies
-(p_model_permits + sitadel_permits + m10_permit_delais + parcels). Signal parcellaire et horodaté :
+Table ADDITIVE `pc_caducs`, dérivée en LECTURE de Sitadel. Ne touche JAMAIS les tables servies
+(p_model_permits + sitadel_permits + parcels). OUTIL-PERMIS-FIX-8 (LOT 3) : l'achèvement vient
+désormais de `sitadel_permits.raw->>'daact'` (plus de `m10_permit_delais`, décommissionnée). Signal
+parcellaire et horodaté :
 # M44 Lot 0 (constaté sur pièces) : pc_caducs NE dépend d'AUCUN run — `_SELECT_RAW` lit les permis
 # et l'univers `parcels`, pas `parcel_p_score_v2`. La mention M31 « run servi q_v7_defisc » était une
 # note fausse (doctrine : une note n'est pas une source). Aligner un run ici est SANS OBJET (0 effet).
@@ -56,12 +58,15 @@ CREATE TABLE IF NOT EXISTS pc_caducs (
 
 # Caduc = octroyé jamais réalisé, Y+4 dépassé. Une parcelle = plusieurs PC → agrégation.
 _SELECT_RAW = """
+-- OUTIL-PERMIS-FIX-8 (LOT 3) — l'achèvement (DAACT) est lu DIRECTEMENT de sitadel_permits.raw->>'daact'
+-- (la source), plus de m10_permit_delais (décommissionnée). `daact` = une date de DAACT présente — même
+-- condition que m10 (date_achevement non nul ⇔ daact au format date).
 WITH pc AS (
   SELECT pmp.idu, EXTRACT(YEAR FROM pmp.date_autorisation)::int AS y,
-         (sp.raw->>'etat') AS etat, (md.date_achevement IS NOT NULL) AS daact
+         (sp.raw->>'etat') AS etat,
+         (sp.raw->>'daact' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}') AS daact
   FROM p_model_permits pmp
   JOIN sitadel_permits sp ON sp.permit_id = pmp.permit_id
-  JOIN m10_permit_delais md ON md.permit_id = pmp.permit_id
   WHERE pmp.type = 'PC' AND pmp.date_autorisation IS NOT NULL),
 parc AS (
   SELECT idu,

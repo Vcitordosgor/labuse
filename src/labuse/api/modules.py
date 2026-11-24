@@ -90,8 +90,10 @@ def ensure_tables(engine) -> None:
         for stmt in sql_statements(DDL):
             if stmt.strip():
                 c.execute(text(stmt))
-    # FIX-C6 (GB-049) — table LUE par /modules/permis (LEFT JOIN), construite à l'ingestion
-    # M10 seulement → créée VIDE ici pour qu'une base neuve ne renvoie plus 500.
+    # FIX-C6 (GB-049) — `m10_permit_delais` était LUE par /modules/permis (LEFT JOIN) → créée vide au
+    # boot pour qu'une base neuve ne renvoie pas 500. OUTIL-PERMIS-FIX-8 (LOT 3) : plus aucun calcul ni
+    # écran ne la lit (axe délai retiré du classement, couche décommissionnée). On garde la seule
+    # création idempotente (table dormante, cible du trigger résiduel) — aucune donnée, aucun lecteur.
     from ..ingestion.permit_delais_m10 import ensure_tables as _m10_ens
     _m10_ens(engine)
 
@@ -738,44 +740,25 @@ _NATURE_LABELS = {"PC": "Permis de construire", "DP": "Déclaration préalable",
 @router.get("/permis/{permit_id}")
 def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
     """Fiche permis cliquable (M10 lot 1.1) : référence, porteur (si PM), nature, lots,
-    surfaces, dates clés (dépôt / autorisation / achèvement) + délai d'instruction, statut."""
-    r = db.execute(text("""
+    surfaces, dates clés (dépôt / autorisation / achèvement), statut.
+
+    OUTIL-PERMIS-FIX-8 — LOT 1 : le dépôt n'est servi que s'il est AFFICHABLE, par LA fonction unique
+    `permis_classe.depot_affichable_sql` (année de la date = AN_DEPOT), la MÊME que l'historique, la
+    liste et le Dossier. LOT 2 : AUCUNE durée d'instruction (plus de calcul dépôt→autorisation, même
+    ici) ; les deux dates restent servies quand elles sont valides, sans rien calculer entre elles."""
+    r = db.execute(text(f"""
         SELECT s.permit_id, s.type, s.commune, s.date::date::text AS date_autorisation,
                s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
                s.raw->>'daact' AS daact, s.raw->>'destination' AS destination,
                s.raw->>'geoloc' AS geoloc,
                s.raw->>'petitioner_name' AS porteur, s.raw->>'petitioner_siren' AS porteur_siren,
                s.idu_codes,
-               -- OUTIL-PERMIS-FIX-4 (Point 4) — le DÉPÔT de la fiche n'est montré que s'il est une DATE
-               -- PRÉCISE FIABLE : `date_depot` (DR_DEPOT) STRICTEMENT antérieure à l'autorisation ET non
-               -- un 1er janvier (= proxy d'ANNÉE, 10 787 cas). Restaient 377 vraies dates précises.
-               -- OUTIL-PERMIS-FIX-6 (Point 1) — + l'ANNÉE du dépôt doit ÊTRE celle déclarée par Sitadel
-               -- (AN_DEPOT) : 10 des 377 la contredisent (ex. 97441626E0304 : dépôt affiché 01/06/2020
-               -- mais AN_DEPOT = 2026 → « 74 mois » fallacieux). Restent 365 dates fiables (délai max 18 m).
-               -- Sinon (DR_DEPOT = autorisation / postérieur / proxy 1er janvier / année incohérente /
-               -- absent) → NI dépôt NI délai.
-               CASE WHEN s.date_depot IS NOT NULL AND s.date IS NOT NULL AND s.date_depot < s.date
-                    AND NOT (EXTRACT(MONTH FROM s.date_depot) = 1 AND EXTRACT(DAY FROM s.date_depot) = 1)
-                    AND s.raw->>'an_depot' ~ '^[0-9]{4}$'
-                    AND EXTRACT(YEAR FROM s.date_depot)::int = (s.raw->>'an_depot')::int
-                    THEN s.date_depot::date::text END AS date_depot,
-               CASE WHEN s.date_depot IS NOT NULL AND s.date IS NOT NULL AND s.date_depot < s.date
-                    AND NOT (EXTRACT(MONTH FROM s.date_depot) = 1 AND EXTRACT(DAY FROM s.date_depot) = 1)
-                    AND s.raw->>'an_depot' ~ '^[0-9]{4}$'
-                    AND EXTRACT(YEAR FROM s.date_depot)::int = (s.raw->>'an_depot')::int
-                    THEN (EXTRACT(YEAR FROM s.date)::int - EXTRACT(YEAR FROM s.date_depot)::int) * 12
-                       + (EXTRACT(MONTH FROM s.date)::int - EXTRACT(MONTH FROM s.date_depot)::int) END AS delai_mois,
+               ({permis_classe.depot_affichable_sql("s.")})::text AS date_depot,
                CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
         FROM sitadel_permits s
         WHERE s.permit_id = :pid"""), {"pid": permit_id}).mappings().first()
     if not r:
         raise HTTPException(404, "Permis introuvable")
-    # OUTIL-PERMIS-FIX-4 (Point 4) — délai affiché UNIQUEMENT si la date de dépôt est fiable (précise,
-    # antérieure à l'autorisation) : jamais « 0 mois » issu d'un DR_DEPOT = date d'autorisation (défaut).
-    delai = None
-    if r["delai_mois"] is not None and r["date_depot"] is not None:
-        delai = {"mois": r["delai_mois"],
-                 "libelle": f"{r['delai_mois']} mois entre dépôt et autorisation"}
     return {
         "permit_id": r["permit_id"], "commune": r["commune"],
         "nature": r["type"], "nature_libelle": _NATURE_LABELS.get(r["type"], r["type"]),
@@ -788,7 +771,8 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
         # fonction PARTAGÉE `miroir.permis_incoherence_note`, plus de la regex de seuil au front.
         "note_incoherence": _miroir.permis_incoherence_note(r["date_depot"], r["date_autorisation"]) or None,
         "date_achevement": r["daact"],
-        "delai_instruction": delai,
+        # OUTIL-PERMIS-FIX-8 (LOT 2) — plus AUCUNE durée d'instruction (le délai n'a jamais été mesuré :
+        # dépôt connu à l'année). Les deux dates ci-dessus suffisent ; rien n'est calculé entre elles.
         # KELFONCIER-FIX-2 (Lot D) — statut par la fonction PARTAGÉE de la fiche (ingestion/permits.py) :
         # l'annulé (état 4) est dit « annulé », plus « Chantier ouvert » (divergence de l'ancien _ETAT_LABELS).
         "statut": etat_libelle({"etat": r["etat"], "daact": r["daact"]}),

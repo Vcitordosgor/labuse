@@ -1,0 +1,31 @@
+run servi : q_v20   ·   24 communes
+
+Commune                score av. rang av.  score ap. rang ap.  Δ rang
+---------------------------------------------------------------------
+Saint-Denis                 49.8        2       52.7        1      ↑1
+Saint-Pierre                54.5        1       52.3        2      ↓1
+Saint-Paul                  47.0        3       49.4        3       →
+Les Trois-Bassins           44.9        4       41.1        4       →
+Petite-Île                  42.6        5       38.3        5       →
+Saint-Leu                   29.3       18       34.5        6     ↑12
+Le Tampon                   33.7       10       33.8        7      ↑3
+Cilaos                      33.0       12       32.9        8      ↑4
+Les Avirons                 32.7       13       32.6        9      ↑4
+Saint-Joseph                31.8       14       31.5       10      ↑4
+Saint-Louis                 31.4       16       30.9       11      ↑5
+Entre-Deux                  37.1        7       30.7       12      ↓5
+Salazie                     36.2        8       29.7       13      ↓5
+Saint-Benoît                33.2       11       26.1       14      ↓3
+L'Étang-Salé                31.4       15       25.2       15       →
+La Possession               25.6       20       24.2       16      ↑4
+Saint-Philippe              37.4        6       24.0       17     ↓11
+Saint-André                 24.8       22       23.0       18      ↑4
+Le Port                     29.6       17       21.6       19      ↓2
+La Plaine-des-Palmistes      34.6        9       20.5       20     ↓11
+Sainte-Marie                22.0       23       20.0       21      ↑2
+Sainte-Rose                 26.2       19       17.5       22      ↓3
+Sainte-Suzanne              25.4       21       16.5       23      ↓2
+Bras-Panon                  19.2       24       16.2       24       →
+
+communes dont le RANG change : 19/24
+poids après (renormalisés, somme=1) : {'stock': 0.3529, 'permis': 0.1765, 'deficit_sru': 0.1765, 'pression_zan': 0.1176, 'prix_neuf': 0.1765}

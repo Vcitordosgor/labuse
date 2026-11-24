@@ -631,3 +631,123 @@ Dormants **854** · m10 **51 125 / 50 960** valides · dmax **30/09/2026** · ra
 ## Fichiers touchés (mandat 7)
 
 `registre/donnees.py` (desc portage), `exports/provenance.py` (ex. périmé), `permis_classe.py` (+`annule_sql`/`ANNULE_CODE`), `ingestion/permits.py` (dynamique exclut annulés + `permis_annules`), `exports/robinet_fiche.py` + `exports/miroir.py` (Dossier dit les annulés à part). Tests : `test_outil_permis_fix1.py` (+2 garde-fous), `test_permits.py` (+1 db). Aucune écriture en base ; aucun changement front.
+
+---
+---
+
+# OUTIL-PERMIS-FIX-8 — contre-audit ASTRA-4 (liste « C'est faux » : 3 points + libellé Petite-Île)
+
+**Contexte.** Le relecteur recontrôle `main` (`3268a174c`) et conclut « non, pas encore à montrer » : les dormants (854), le rayon 500 m, le Bilan sont **clos** (ne bougent pas) ; restent trois « C'est faux » + un libellé mineur. Périmètre strict de ce mandat.
+
+Tout chiffre ci-dessous sort d'un **script commité** dont la **sortie brute** est jointe sous `docs/audit-2026-11/outil-permis-fix-1/fix8/` :
+`scripts/outil_permis_fix8/verif_temoins.py` (LOT 1/2/4, chaîne réelle sur base locale) et `scripts/outil_permis_fix8/lot3_composite_avant_apres.py` (LOT 3, composite recalculé indépendamment).
+
+## LOT 0 — le filet, écrit AVANT (il échoue maintenant)
+
+`tests/test_outil_permis_fix8.py` : **un test par témoin, valeur précise**. Sortie AVANT correctif (`fix8/lot0-AVANT-doivent-echouer.txt`) :
+```
+test_lot0_temoin1_97441626E0304_depot_absent_fiche_et_historique FAILED   (historique = 2020-06-01)
+test_lot0_temoin2_aucune_autorisation_sous_le_libelle_depose      FAILED   (« déposé 03/08/2026 » rendu)
+test_lot0_temoin3_97440226G0018_aucune_duree                      FAILED   (delai = {'mois':1,…})
+test_lot0_temoin4_composite_sans_axe_de_delai                     FAILED   (velocite dans INDICATEURS)
+4 failed
+```
+Commit séparé (`9906ff19b`). Sortie APRÈS correctifs : **4 passed** (`fix8/lot0-APRES-tous-verts.txt`).
+
+## LOT 1 — une seule fonction décide si une date de dépôt est affichable
+
+Nouvelle fonction UNIQUE `permis_classe.depot_affichable_sql()` / `depot_affichable_cond_sql()` + jumelle Python `depot_affichable()`. Règle décisive = **année de la date = AN_DEPOT** (date précise, antérieure à l'autorisation, pas un 1er janvier, AN_DEPOT 4 chiffres, année == AN_DEPOT). C'est la validation que **la fiche** appliquait déjà, **extraite** pour être unique. Quand le dépôt est écarté/absent → **rien n'écrit à sa place**.
+
+**Tous les lecteurs d'une date de dépôt affichée l'appellent désormais :**
+
+| Surface | Fichier | Avant | Après |
+|---|---|---|---|
+| Fiche permis | `api/modules.py` (fiche) | CASE inline | appelle `depot_affichable_sql("s.")` |
+| Historique parcellaire | `api/site_voisinage.py:43` | `date_depot` BRUTE | `depot_affichable_sql("")` |
+| Fiche parcelle (front) | `components/fiche/autour.tsx:44` | repli autorisation sous « déposé » | plus de repli — sinon « autorisé … » |
+| Dossier | `exports/miroir.py:405` (`_r_permis_liste`) | repli autorisation sous « déposé » | plus de repli |
+| Frise / histoire parcelle | `api/moteurs.py` (`histoire_parcelle`) | événement « déposé » sur date brute | gaté : pas de « déposé » si écarté |
+| Liste `/modules/permis` | — | (dépôt déjà retiré FIX-6) | inchangé (aucune date de dépôt) |
+| PDF premium | `api/pdf_premium.py` | lit `historique_site` (déjà gaté) | inchangé (hérite du gate) |
+
+**Balayage des autres lectures de `date_depot` (listées, laissées — hors périmètre point 1).** `accueil.py` (compteurs 7j/30j, max), `api/events.py` + `alertes.py` (veille « nouveau permis sur votre parcelle/zone », clé d'ARRIVÉE), `copilote_v2/*` (migrés, cf. LOT 3), `veille_promoteurs.py`, `faisabilite/marche_commune.py`, `verite_terrain*.py`, `filtres/sources.py` : ce sont des **flux d'activité de dépôt / fenêtres internes**, pas un « dépôt + instruction » affiché dans la fiche/le Dossier — déjà déclarés hors périmètre en FIX-6. Toucher leur clé d'arrivée casserait la détection « nouveau permis » ; non modifiés.
+
+**Preuve (chaîne réelle, `fix8/verif-temoins.txt`), témoin 97441626E0304 :**
+```
+fiche          : date_depot=None  date_autorisation='2026-08-03'  delai_instruction=None
+historique     : date_depot=None  date_autorisation='2026-08-03'
+frise libellés : ['Permis DP autorisé', 'Travaux achevés (DAACT)']   (aucun « déposé »)
+Dossier (rendu): 1 permis sur la parcelle (Sitadel) — DP — autorisé 03/08/2026
+→ '2020' dans le Dossier ? False   'déposé 03/08/2026' ? False
+```
+
+## LOT 2 — plus aucune durée d'instruction, nulle part (y compris la fiche individuelle)
+
+`api/modules.py` (fiche permis) : la colonne `delai_mois` et la clé `delai_instruction` sont **supprimées** ; les deux dates restent servies quand elles sont valides, **sans calcul entre elles**. Front : le bloc « Délai d'instruction » de `ModulePanel.tsx` est retiré.
+
+**Preuve, témoin 97440226G0018** (dépôt 15/02/2026 → autorisation 13/03/2026, 26 jours réels que l'ancienne formule rendait « 1 mois ») :
+```
+fiche : date_depot='2026-02-15'  date_autorisation='2026-03-13'  delai_instruction=None
+```
+
+## LOT 3 — l'axe délai sort du score composite ; m10 ne nourrit plus rien
+
+**Composite.** `registre/moteurs/commune.py` : l'indicateur `velocite` est **retiré d'`INDICATEURS`** et la CTE `velo` (médiane sur `m10_permit_delais`) **supprimée** du SQL. `api/comparateur.py` : paramètre `w_velocite` retiré ; les **5 poids restants sont renormalisés** (somme = 1) et la **méthode affichée** nomme les cinq axes et dit que le délai est retiré. Le score est invariant à l'échelle (division par Σ des poids présents), donc renormaliser rend la formule honnête sans « sur-déplacer » le classement.
+
+**Tableau AVANT / APRÈS, 24 communes** (`fix8/lot3-composite-avant-apres.txt`, run `q_v20`) — extrait de tête :
+```
+Commune                score av. rang av.  score ap. rang ap.  Δ rang
+Saint-Denis                 49.8        2       52.7        1      ↑1
+Saint-Pierre                54.5        1       52.3        2      ↓1
+Saint-Paul                  47.0        3       49.4        3       →
+Saint-Leu                   29.3       18       34.5        6     ↑12
+Saint-Philippe              37.4        6       24.0       17     ↓11
+La Plaine-des-Palmistes     34.6        9       20.5       20     ↓11
+…
+communes dont le RANG change : 19/24
+poids après (renormalisés, somme=1) : stock 0,3529 · permis 0,1765 · deficit_sru 0,1765 · pression_zan 0,1176 · prix_neuf 0,1765
+```
+**Saint-Pierre**, que l'axe délai fictif poussait au rang 1 (axe vélocité normalisé 66,7 relevé par le relecteur), **passe 2ᵉ** une fois le délai retiré ; **Saint-Denis** prend la tête. 19/24 rangs bougent.
+
+**`m10_permit_delais` + son déclencheur — ce que j'en fais (sans écrire dans `labuse`).** Plus AUCUN code ne lit m10 pour un calcul ou un écran :
+- `commune.py` (composite / vélocité) — CTE supprimée ;
+- `copilote_v2/recap.py` (communes actives) et `veilles.py` (« nouveau permis ») — **repointés sur `sitadel_permits`** (date d'autorisation ; la veille dit « autorisé le … », plus de date de dépôt annuelle fictive) ;
+- `ingestion/dvf_prix_neuf.py`, `defisc_fenetres.py`, `pc_caducs.py` — l'**achèvement (DAACT)** est lu **directement** de `sitadel_permits.raw->>'daact'` (valeur identique à `m10.date_achevement`, qui en dérivait) ;
+- `flash/data.py` — m10 retiré de `_NEEDED_TABLES` ;
+- **plus de maintenance** : `permits_sdes.py` (ré-ingestion) n'appelle plus `ensure_delais_vivants`, `fraicheur.py` ne fait plus le `build_delais` hebdo.
+
+La **table physique et son trigger résiduels** en base (hérités des runs précédents) sont **laissés dormants** (zéro lecteur) : je **n'exécute aucun DDL sur `labuse`**. Leur suppression propre est une **migration à passer en prod** (`DROP TRIGGER trg_m10_permit_delais_sync ON sitadel_permits; DROP FUNCTION m10_permit_delais_sync(); DROP TABLE m10_permit_delais;`) — fournie, **non exécutée ici**. Le module `ingestion/permit_delais_m10.py` est conservé (non câblé) comme trace.
+
+**Registre.** `velocite_delai_median_mois` reste déclaré `en_attente` (servi par aucun robinet — `registre.verifier() == []`), reformulé « retiré de l'affichage ET du composite ; couche décommissionnée ». Les fiches de règle `comparateur_composite` (5 axes) et `velocite_delai_median_mois` (RETIRÉE, conservée pour couvrir `indicateurs_communes` qui porte encore SRU/ZAN) sont mises à jour.
+
+## LOT 4 — libellé du Dossier
+
+`exports/miroir.py:733` (`_r_permis_proximite`) : « — dont N annulés, non comptés » → « **· N autres permis annulés, exclus** », et le compte devient « **N permis retenus** » dès qu'il y a des annulés. Preuve (chaîne réelle, `fix8/verif-temoins.txt`) :
+```
+97405000BE1692 · Petite-Île : 16 permis retenus (< 500 m, 24 mois), 9 logements déclarés
+                              (8 permis sans nombre de logements) · 2 autres permis annulés, exclus
+97411000BZ1065 · Saint-Denis : 1 permis (< 500 m, 24 mois), 4 logements
+97424000AB0001 · Cilaos      : 0 permis (< 500 m, 24 mois), 0 logement
+97415000CV1498 · Saint-Paul  : 5 permis (< 500 m, 24 mois), 6 logements déclarés (1 permis sans nombre de logements)
+```
+
+## Non-régression (points déclarés clos — inchangés)
+
+Dormants **854**, rayon Dossier **500 m**, Bilan : non touchés (aucun fichier de ces chaînes modifié hors `miroir._r_permis_proximite` = le libellé mineur demandé). `dmax` **30/09/2026** inchangé. Aucune écriture en base.
+
+## Vérifications (hook)
+
+`registre.verifier() == []` · front `tsc -b` vert · `vitest run` **345/345** · cohérence (base locale) **87/87, aucun écart** · **suite complète non-db : 5037 passed, 2 failed**. LOT 0 : **4/4 verts** après correctif.
+
+**Les deux rouges non-db :**
+- `test_etude_fiable_1::test_r2_deux_analyses_memes_saisies_meme_resultat` — le **flaky étranger connu** (déterminisme d'implantation en étude de zone, hors périmètre permis ; déjà le seul bloqueur de pushs précédents). Aucun fichier de ce mandat ne touche l'étude de zone.
+- `test_reparations1_lot2::test_graphe_exact_dans_les_deux_sens` — **provoqué par LOT 3 puis CORRIGÉ** : en repointant le Copilote (recap/veilles) de `m10` vers `sitadel_permits`, deux arêtes de lecture `sitadel_permits` devenaient non déclarées. **Déclarées** dans `registre/lectures.py` → `lecteurs_non_declares()==[]` et `lectures_perimees()==[]`, test **vert** (4/4).
+
+Après ce correctif, le **seul rouge non-db restant est `test_etude_fiable_1`** (flaky étranger). Conformément à la consigne, **les commits sont gardés en LOCAL** (`fix/outil-permis-1`, non poussé) ; `origin` et `main` intacts. (Rappel : `test_circuit2_lot16::test_chaque_passe_plat_declare_sa_table` — `terrassement_alerte` sans `table`, importé d'un merge `main` — reste rouge mais est **module `db`**, donc hors du hook `-m "not db"` ; vérifié identique sans mes changements.)
+
+## Fichiers touchés (mandat 8)
+
+Back : `permis_classe.py` (+`depot_affichable_sql`/`_cond_sql`/`depot_affichable`), `api/modules.py` (fiche : fonction unique + délai retiré ; boot m10 commenté), `api/site_voisinage.py` (historique), `api/moteurs.py` (frise), `exports/miroir.py` (Dossier : `_r_permis_liste` sans repli + `_r_permis_proximite` libellé), `registre/moteurs/commune.py` (axe vélocité retiré), `api/comparateur.py` (w_velocite retiré, poids renormalisés, méthode), `copilote_v2/recap.py` + `veilles.py` (m10→sitadel_permits), `ingestion/dvf_prix_neuf.py` + `defisc_fenetres.py` + `pc_caducs.py` (DAACT depuis la source), `ingestion/permits_sdes.py` + `fraicheur.py` (maintenance m10 retirée), `flash/data.py` (m10 hors `_NEEDED_TABLES`), `registre/donnees.py` (velocite en_attente reformulé), `regles/comparateur_composite.py` + `regles/velocite_delai_median_mois.py`, `registre/lectures.py` (2 arêtes `sitadel_permits` ← copilote recap/veilles déclarées).
+Front : `components/fiche/autour.tsx` (repli retiré), `components/outils/ModulePanel.tsx` (bloc délai retiré), `components/outils/blocB.tsx` (commentaire).
+Tests : `tests/test_outil_permis_fix8.py` (LOT 0, +4), `test_outil_permis_fix1.py` (5 tests FIX-4/5/6/7 réalignés FIX-8), `test_comparateur.py` + `test_barometre.py` (5 axes). Scripts : `scripts/outil_permis_fix8/{verif_temoins,lot3_composite_avant_apres}.py` + sorties brutes `docs/.../fix8/`.
+**Aucune écriture dans la base `labuse`.**

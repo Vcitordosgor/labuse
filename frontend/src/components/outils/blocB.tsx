@@ -223,9 +223,10 @@ type Comparateur = {
 const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'max' | 'min' }[] = [
   // RETOURS-15 B2 (P4) — la colonne « Parcelles à potentiel » (stock) est RETIRÉE : c'est le
   // classement LABUSE, hors périmètre de ce comparateur (décision Vic).
-  // OUTIL-PERMIS-FIX-5 (Point 2) — la colonne « Instruction (mois) » (vélocité) est RETIRÉE : le délai
+  // OUTIL-PERMIS-FIX-5 puis FIX-8 — la colonne « Instruction (mois) » (vélocité) est RETIRÉE : le délai
   // d'instruction n'a jamais été mesuré (dépôt connu à l'année → +4 mois de gonflement médian).
-  // « On ne montre pas un délai faux » (Vic). L'axe reste au classement (poids 0,15), signalé au back.
+  // « On ne montre pas un délai faux » (Vic). FIX-8 (LOT 3) : l'axe SORT AUSSI du score composite
+  // (poids renormalisés sur les 5 axes restants) — plus aucune trace du délai, ni colonne ni classement.
   { k: 'permis', head: 'Permis (5 ans)',
     title: 'Dynamisme permis — permis SITADEL cumulés sur 5 ans (glissants)' },
   { k: 'deficit_sru', head: 'Déficit SRU (pts)',

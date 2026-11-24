@@ -88,7 +88,8 @@ def test_prix_ancien_source_unique_pdf_vs_comparateur(db_session):
     pa = prix_ancien_communes(db_session)
     assert pa.get("Testville", {}).get("median") == 3000
     # le tableau Communes (comparateur._compute) lit la MÊME fonction → le MÊME chiffre
-    out = comparateur._compute(db_session, {"stock": 0.3, "velocite": 0.15, "permis": 0.15,
+    # OUTIL-PERMIS-FIX-8 (LOT 3) — plus d'axe vélocité : cinq poids.
+    out = comparateur._compute(db_session, {"stock": 0.3, "permis": 0.15,
                                             "deficit_sru": 0.15, "pression_zan": 0.10, "prix_neuf": 0.15})
     tv = next((r for r in out["communes"] if r["commune"] == "Testville"), None)
     assert tv is not None and tv["prix_ancien"] == 3000
