@@ -1,0 +1,40 @@
+        """La mairie a approuvé le PLU révisé le 26/11/2025 (exécutoire le 14/01/2026) : la fiche ne doit
+        plus renvoyer « en révision ». Registre = procédure clôturée (approbation), date 2025-11-26."""
+        from labuse import veille_plu
+        e = veille_plu.entry("97418") or {}
+>       assert e.get("procedure") == "cloturee", f"Sainte-Marie : révision approuvée, obtenu {e.get('procedure')!r}"
+E       AssertionError: Sainte-Marie : révision approuvée, obtenu 'revision_plu'
+E       assert 'revision_plu' == 'cloturee'
+E         
+E         - cloturee
+E         + revision_plu
+
+tests/test_communes_cas_externes.py:179: AssertionError
+_______________________ test_sainte_suzanne_plu_approuve _______________________
+
+    def test_sainte_suzanne_plu_approuve():
+        """La pièce officielle du PLU porte la prescription (28/02/2018) ET l'approbation (29/09/2025) de la
+        MÊME procédure : la fiche ne doit plus renvoyer « en révision ». Registre = clôturée, 2025-09-29."""
+        from labuse import veille_plu
+        e = veille_plu.entry("97420") or {}
+>       assert e.get("procedure") == "cloturee", f"Sainte-Suzanne : révision approuvée, obtenu {e.get('procedure')!r}"
+E       AssertionError: Sainte-Suzanne : révision approuvée, obtenu 'revision_plu'
+E       assert 'revision_plu' == 'cloturee'
+E         
+E         - cloturee
+E         + revision_plu
+
+tests/test_communes_cas_externes.py:188: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_communes_cas_externes.py::test_2023_1315722_local_declare_exclu_du_terrain_nu
+FAILED tests/test_communes_cas_externes.py::test_2023_1315722_absent_de_ses_propres_comparables_IZ0236
+FAILED tests/test_communes_cas_externes.py::test_2022_1639451_multicommune_exclu_de_petite_ile_et_saint_joseph
+FAILED tests/test_communes_cas_externes.py::test_2021_1676912_surface_somme_des_subdivisions_1895m2_280eurm2
+FAILED tests/test_communes_cas_externes.py::test_catnat_jamais_faux_zero_quand_exposition_echoue[Saint-Denis-97411-14]
+FAILED tests/test_communes_cas_externes.py::test_catnat_jamais_faux_zero_quand_exposition_echoue[Saint-Paul-97415-17]
+FAILED tests/test_communes_cas_externes.py::test_catnat_jamais_faux_zero_quand_exposition_echoue[La Plaine-des-Palmistes-97406-9]
+FAILED tests/test_communes_cas_externes.py::test_fallback_risques_catnat_indisponible_pas_zero
+FAILED tests/test_communes_cas_externes.py::test_barometre_cilaos_repond_sous_statement_timeout
+FAILED tests/test_communes_cas_externes.py::test_sainte_marie_plu_approuve - ...
+FAILED tests/test_communes_cas_externes.py::test_sainte_suzanne_plu_approuve
+============================= 11 failed in 33.19s ==============================
