@@ -1,4 +1,9 @@
-"""OUTIL-COMMUNES-FIX-4 LOT 1 — PREUVES du terrain nu (script committé, sortie brute collée au CR).
+"""⚠ OBSOLÈTE (OUTIL-COMMUNES-FIX-5 §1) — ce script applique une borne `BETWEEN 50 AND 4000 €/m²` que la
+fonction SERVIE (`ligne2_terrain_zone`) N'APPLIQUE PAS : ses colonnes « après » divergent de l'écran.
+Utiliser `scripts/communes_fix5_terrain_preuve.py` (appelle la fonction servie, sans borne). Conservé
+uniquement pour la preuve « 0 local / 0 multi-commune » (partie 1), qui reste valable.
+
+OUTIL-COMMUNES-FIX-4 LOT 1 — PREUVES du terrain nu (script committé, sortie brute collée au CR).
 
 1. PREUVE UNIQUE : 0 acte servi par la qualification unique (`ACTE_TERRAIN_NU_CTE`) ne porte de local
    déclaré ni ne touche plus d'une commune — donc 0 dans CHAQUE lecteur (tous embarquent ce CTE).

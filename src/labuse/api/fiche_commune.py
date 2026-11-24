@@ -329,11 +329,28 @@ def _parc_ancien_pct(db: Session, insee: str | None) -> float | None:
 
 
 # ───────────────────────────── C5 — le PLU (statut + document d'urbanisme) ─────────────────────────────
+# FIX-5 (2) — « aucune » n'est PLUS mappé sur « à jour ». 13 communes sans procédure affichaient « PLU à
+# jour » alors que la seule source est le squelette national Sudocuh du 31/12/2024 (≈ 23 mois) : ce
+# n'était pas un fait d'actualité mais l'ABSENCE de procédure dans un relevé ancien. On sert donc
+# « aucune procédure connue au <date de la source> » (calculé de `etat_au`). Aucune commune ne dit « à
+# jour » sur une inférence d'absence. « cloturee » reste « à jour » car adossé à un ACTE d'approbation
+# daté (fait positif, pas une inférence) — Sainte-Marie / Sainte-Suzanne, validés par relecture-3.
 _PLU_STATUT = {
-    "cloturee": "à jour", "aucune": "à jour",
+    "cloturee": "à jour",
     "revision_plu": "en révision", "elaboration_plu": "en élaboration",
     "modification_plu": "en modification",
 }
+
+
+def _fr_date_iso(iso: str | None) -> str | None:
+    """« 2024-12-31 » → « 31/12/2024 » ; None/illisible → None."""
+    if not iso:
+        return None
+    try:
+        from datetime import date
+        return date.fromisoformat(str(iso)).strftime("%d/%m/%Y")
+    except (ValueError, TypeError):
+        return None
 
 
 def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
@@ -363,8 +380,14 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
     # trouvée pour la commune (approbation / opposable GPU / à défaut le squelette Sudocuh 31/12/2024).
     # Un état ancien n'est jamais présenté comme actuel au 24/11/2026 — il est explicitement daté.
     etat_au = e.get("etat_source_date") or veille_plu._meta().get("source_squelette_date")
+    # FIX-5 (2) — « aucune procédure » n'est pas « à jour » : on sert l'absence DATÉE par sa source.
+    if proc == "aucune":
+        _d = _fr_date_iso(etat_au)
+        statut = f"aucune procédure connue au {_d}" if _d else "aucune procédure connue"
+    else:
+        statut = _PLU_STATUT.get(proc, "document local")
     return {
-        "statut": _PLU_STATUT.get(proc, "document local"),
+        "statut": statut,
         "libelle": e.get("stade"),
         "procedure": proc,
         "procedure_sudocuh": procedure_sudocuh,   # COMMUNE-FIX-1 (D12) — révision/modification en cours (Sudocuh)

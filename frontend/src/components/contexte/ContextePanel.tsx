@@ -681,7 +681,7 @@ export function ContextePanel() {
               <GroupeLabel>Les règles</GroupeLabel>
 
               <LigneCarte id="regle-plu" chiffre="statut_plu" ic="§" titre="Urbanisme"
-                sous={`PLU ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${fmtDateNum(d.plu_statut.date_reglement)}` : ''}`}
+                sous={d.plu_statut.statut.startsWith('aucune') ? d.plu_statut.statut : `PLU ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${fmtDateNum(d.plu_statut.date_reglement)}` : ''}`}
                 val={d.plu_statut.statut} badge ton={d.plu_statut.statut === 'RNU' ? 'orange' : 'vert'}>
                 <p className="text-[12px] leading-relaxed text-txt">
                   {d.plu_statut.statut === 'RNU' ? "Pas de PLU opposable : c'est le Règlement National d'Urbanisme qui s'applique."

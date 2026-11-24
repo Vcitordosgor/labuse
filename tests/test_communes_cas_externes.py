@@ -187,3 +187,36 @@ def test_sainte_suzanne_plu_approuve():
     e = veille_plu.entry("97420") or {}
     assert e.get("procedure") == "cloturee", f"Sainte-Suzanne : révision approuvée, obtenu {e.get('procedure')!r}"
     assert e.get("date_acte") == "2025-09-29", f"approbation attendue le 2025-09-29, obtenu {e.get('date_acte')!r}"
+
+
+# ────────────────────── FIX-5 (2) — libellé des communes sans procédure ──────────────────────
+def test_plu_aucune_procedure_pas_a_jour_structurel():
+    """FIX-5 : une commune « sans procédure » ne doit plus être mappée sur « à jour » (le squelette
+    Sudocuh 31/12/2024 ne prouve pas l'absence de procédure LANCÉE depuis). `_fr_date_iso` formate la
+    date de source. Invariant pur (sans base)."""
+    from labuse.api.fiche_commune import _PLU_STATUT, _fr_date_iso
+    assert _PLU_STATUT.get("aucune") != "à jour", "« aucune » ne doit plus donner « à jour »"
+    assert _fr_date_iso("2024-12-31") == "31/12/2024"
+
+
+@pytest.mark.db
+def test_plu_13_sans_procedure_libelle_date():
+    """Les 13 communes « sans procédure » servent « aucune procédure connue au 31/12/2024 » (date de la
+    source Sudocuh), JAMAIS « à jour ». Aucune commune sur source > 12 mois ne dit « à jour » (seules
+    les clôturées — PLU approuvé daté — gardent « à jour »)."""
+    from labuse.db import engine
+    from labuse.api.fiche_commune import plu_statut
+    from labuse import veille_plu
+    sans_proc = [i for i, e in (veille_plu._registre() or {}).items() if e.get("procedure") == "aucune"]
+    assert len(sans_proc) == 13, f"attendu 13 communes sans procédure, obtenu {len(sans_proc)}"
+    with engine().connect() as c:
+        try:
+            c.execute(text("SELECT 1 FROM sudocuh_procedures LIMIT 1"))
+        except Exception:  # noqa: BLE001
+            pytest.skip("table sudocuh_procedures absente")
+        s = Session(bind=c)
+        for insee in sans_proc:
+            nom = (veille_plu.entry(insee) or {}).get("commune")
+            st = plu_statut(s, insee, nom)["statut"]
+            assert st == "aucune procédure connue au 31/12/2024", f"{insee} ({nom}) : « {st} »"
+            assert st != "à jour"
