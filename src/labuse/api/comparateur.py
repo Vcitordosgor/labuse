@@ -72,11 +72,17 @@ def _compute_raw(db: Session) -> dict[str, dict]:
         for fam in ("U", "AU"):
             cell = pz.get(fam) or {}
             if cell.get("calculable") and cell.get("median_eur_m2"):
-                tn = {"eur_m2": cell["median_eur_m2"], "n": cell.get("n"), "zone": fam}
+                tn = {"eur_m2": cell["median_eur_m2"], "n": cell.get("n"), "zone": fam,
+                      "n_multizone": cell.get("n_multizone")}
                 break
         r["prix_terrain_nu"] = tn["eur_m2"] if tn else None
-        r["prix_terrain_nu_n"] = tn["n"] if tn else None
+        r["prix_terrain_nu_n"] = tn["n"] if tn else None       # #9 — effectif ENTRANT dans la médiane
         r["prix_terrain_nu_zone"] = tn["zone"] if tn else None
+        # OUTIL-COMMUNES-FIX-2 #1 — actes multizone (comptés aussi dans l'autre zone) : dit dans le « i ».
+        r["prix_terrain_nu_multizone"] = tn.get("n_multizone") if tn else None
+        # #9 — RNU : le tiret du terrain dit « commune au RNU » (pas « moins de 10 »).
+        from .. import rnu as _rnu
+        r["plu_rnu"] = _rnu.is_rnu_insee(r["insee"])
     return {r["commune"]: r for r in rows}
 
 

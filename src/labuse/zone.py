@@ -679,27 +679,32 @@ def prix_par_type_zone(session: Session, geom_geojson: dict) -> dict:
         m = mediane_bati(session, geom_geojson=geom_geojson, type_local=tl)
         rows.append({"type": slug, "label": label, "base": "bâti", "n": m["n"],
                      "median_eur_m2": m["median"], "periode": m["periode"]})
-    # OUTIL-COMMUNES-FIX-1 (A-1) — ALIGNÉ sur le référentiel terrain nu (`marche_dvf_commune`) : même
-    # DÉFINITION qu'`ligne2_terrain_zone` et consorts — acte sans bâti (`surface_reelle_bati = 0`, pas
-    # « < 20 »), natures Vente + « Vente terrain à bâtir » (plus de `ILIKE 'vente%'` qui laissait entrer la
-    # VEFA/le neuf), et borne €/m² `BORNE_TERRAIN` [50 ; 4 000] (jusque-là ABSENTE). `dvf_mutations` est à la
-    # maille MUTATION (dépendances déjà agrégées) : `surface_reelle_bati = 0` y est l'équivalent exact du
-    # `HAVING sum(bati_p) = 0` de la maille éclatée. MAILLE propre à l'Étude de zone (polygone dessiné,
-    # fenêtre 36 mois cohérente avec maison/appartement) — documentée dans l'inventaire du compte-rendu.
-    from .marche_dvf_commune import BORNE_TERRAIN
+    # OUTIL-COMMUNES-FIX-2 #1 — SOURCE QUI CONTIENT DU TERRAIN NU. `dvf_mutations` (maille mutation) ne
+    # porte AUCUNE vente de terrain nu : ses 31 171 mutations sont TOUTES bâties (type_local non nul) → la
+    # requête terrain y rendait toujours n=0 (l'explication « zéro géométrie en local » du 1ᵉʳ compte rendu
+    # était FAUSSE). On lit désormais `dvf_mutations_parcelle` (la SEULE table avec du terrain nu), qualifiée
+    # sur l'ACTE ENTIER (`sum(bati_p)=0`, surface reconstituée) comme le référentiel, dans le polygone
+    # dessiné (centroïde de parcelle), fenêtre 36 mois, natures Vente+VTB, borne [50 ; 4 000] €/m². Maille
+    # propre à l'Étude de zone (polygone), documentée dans l'inventaire du compte rendu.
+    # OUTIL-COMMUNES-FIX-3 B-1 — QUALIFICATION UNIQUE : l'Étude de zone embarque LE CTE partagé
+    # `ACTE_TERRAIN_NU_CTE` (bâti=0 sur l'acte entier, toutes communes) et JOINT l'appartenance au polygone
+    # (centroïde de parcelle) + la fenêtre 36 mois. Plus de qualification locale parallèle.
+    from .marche_dvf_commune import BORNE_TERRAIN, ACTE_TERRAIN_NU_CTE
     rt = session.execute(text(
-        f"""SELECT count(*) n,
-                   round(percentile_cont(0.5) WITHIN GROUP (ORDER BY r)::numeric) med,
-                   to_char(min(d), 'MM/YYYY') d0, to_char(max(d), 'MM/YYYY') d1
-            FROM (SELECT dm.valeur_fonciere / NULLIF(dm.surface_terrain, 0) AS r, dm.date_mutation AS d
-                  FROM dvf_mutations dm
-                  WHERE dm.geom IS NOT NULL
-                    AND dm.nature_mutation IN ('Vente', 'Vente terrain à bâtir')
-                    AND dm.valeur_fonciere > 0 AND dm.type_local IS NULL
-                    AND dm.surface_terrain >= 100 AND coalesce(dm.surface_reelle_bati, 0) = 0
-                    AND dm.date_mutation >= ({_ANCRE_DVF} - interval '36 months')
-                    AND ST_Contains({z}, ST_Transform(dm.geom, 2975))) q
-            WHERE r BETWEEN {BORNE_TERRAIN[0]} AND {BORNE_TERRAIN[1]}"""),
+        f"""WITH {ACTE_TERRAIN_NU_CTE},
+            inzone AS (
+              SELECT DISTINCT dm.id_mutation
+              FROM dvf_mutations_parcelle dm JOIN parcels p ON p.idu = dm.id_parcelle
+              WHERE dm.nature_mutation IN ('Vente', 'Vente terrain à bâtir')
+                AND dm.date_mutation >= ({_ANCRE_DVF} - interval '36 months')
+                AND ST_Contains({z}, ST_Centroid(p.geom_2975)))
+            SELECT count(*) FILTER (WHERE r BETWEEN {BORNE_TERRAIN[0]} AND {BORNE_TERRAIN[1]}) n,
+                   round(percentile_cont(0.5) WITHIN GROUP (ORDER BY r)
+                     FILTER (WHERE r BETWEEN {BORNE_TERRAIN[0]} AND {BORNE_TERRAIN[1]})::numeric) med,
+                   to_char(min(d) FILTER (WHERE r BETWEEN {BORNE_TERRAIN[0]} AND {BORNE_TERRAIN[1]}), 'MM/YYYY') d0,
+                   to_char(max(d) FILTER (WHERE r BETWEEN {BORNE_TERRAIN[0]} AND {BORNE_TERRAIN[1]}), 'MM/YYYY') d1
+            FROM (SELECT a.val / NULLIF(a.terr_tot, 0) AS r, a.d1 AS d
+                  FROM acte_nu a JOIN inzone USING (id_mutation)) q"""),
         {"zone": json.dumps(geom_geojson)}).mappings().first()
     nt = int(rt["n"] or 0)
     from .dvf_mediane import SEUIL_N
