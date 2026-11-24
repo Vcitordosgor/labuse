@@ -214,6 +214,11 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         WHERE p.idu = ANY(:idus)"""), {"idus": idus, "run": runs.cascade(), "v2run": _v2run(db)}).mappings().all()
     if len(rows) < 2:
         raise HTTPException(404, f"{len(rows)} parcelle(s) trouvée(s) sur {len(idus)}")
+    # OUTIL-ASSEMBLAGE-FIX-2 (LOT 4, pt 6) — identifiants DEMANDÉS mais INTROUVABLES en base : nommés
+    # explicitement (comme /compare), jamais écartés en silence. Le calcul porte sur les parcelles
+    # trouvées ; l'écran dira que la/les introuvable(s) a/ont été écartée(s) du périmètre.
+    _trouves = {r["idu"] for r in rows}
+    introuvables = [i for i in idus if i not in _trouves]
     # OUTIL-ASSEMBLAGE-FIX-1 (LOT 1) — contiguïté en TROIS verdicts (assemblage.py `classer_lien`) :
     # bord cadastral commun MESURÉ (seule vraie mitoyenneté), contact par un point, petit vide cadastral.
     # Deux graphes : `adj_bord` (vrais bords seuls) → « d'un seul tenant » strict ; `adj_all` (tout lien
@@ -325,6 +330,10 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         # portion avec ses règles d'emprise/hauteur/recul) + contraintes retranchées visibles (m²).
         "zones_detail": agg.get("zones_detail"),
         "retranchements": agg.get("retranchements"),
+        # OUTIL-ASSEMBLAGE-FIX-2 (LOT 4, pt 6) — introuvables nommés + nombre DEMANDÉ (l'écran ne dit
+        # plus « N parcelles » quand il en manque) ; (LOT 1) obligation de mixité portée par l'union.
+        "introuvables": introuvables, "n_demandes": len(idus),
+        "mixite": agg.get("mixite"),
         "tronquee": tronquee, "cap": cap,
         # #1 — capacité cumulée RÉELLE (fiche_payload agrégé). SDP-UNIQUE (CHASSE-FIX-1 B-2) :
         # `sdp_combinee_m2` = SDP BÂTI CONSERVÉ (défaut, comme la fiche) ; `sdp_terrain_libere_m2` =

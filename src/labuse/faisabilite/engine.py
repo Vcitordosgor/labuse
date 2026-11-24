@@ -121,6 +121,11 @@ class Hypotheses:
     # l'Art. 2 d'une autre commune (un Estimé emprunté présenté en Sourcé est interdit — boussole).
     commune: str | None = None
     mixite_source_ref: str | None = None
+    # OUTIL-ASSEMBLAGE-FIX-2 (LOT 1/2) — citation AFFICHÉE de la clause (article + page du règlement),
+    # pour que l'écran Assemblage porte l'obligation comme la fiche. Renseignés UNIQUEMENT si le YAML
+    # de la commune les DÉCLARE (jamais empruntés à une autre commune).
+    mixite_article: str | None = None
+    mixite_page: str | None = None
     # M94 — source de la conversion place→m² : renseignée UNIQUEMENT si le YAML de la commune la
     # DÉCLARE au règlement (ex. Cilaos « 1 place = 25 m² »). Sinon place_m2 (=25) est de la MODÉLISATION
     # (Estimé), jamais une norme locale déguisée. Voyage avec la valeur (marquage M-PLU-REF-B).
@@ -159,6 +164,11 @@ class Hypotheses:
         # DÉCLARE (mixite_source_ref) — des nombres recopiés de Saint-Paul ne sont pas un Sourcé.
         _ref = h.get("mixite_source_ref")
         out.mixite_source_ref = _ref.strip() if isinstance(_ref, str) and _ref.strip() else None
+        # OUTIL-ASSEMBLAGE-FIX-2 — citation (article + page), déclarée par la commune seule.
+        for _k in ("mixite_article", "mixite_page"):
+            _v = h.get(_k)
+            if isinstance(_v, str) and _v.strip():
+                setattr(out, _k, _v.strip())
         # M94 — idem pour la conversion place→m² : Sourcé SEULEMENT si le règlement de la commune le dit.
         _pref = h.get("place_m2_source_ref")
         out.place_m2_source_ref = _pref.strip() if isinstance(_pref, str) and _pref.strip() else None

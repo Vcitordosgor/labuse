@@ -56,6 +56,10 @@ class Bilan:
     bandeau: str = _BANDEAU
     # Paramètres bruts pour le recalcul instantané côté fiche (mixité sociale, Décision 3.b).
     calc: dict | None = None
+    # OUTIL-ASSEMBLAGE-FIX-2 (LOT 1) — obligation de mixité STRUCTURÉE (règle, régime, quota, article,
+    # page, produits, borne_haute) pour que l'Assemblage PORTE l'obligation comme la fiche. None quand
+    # la clause ne s'applique pas / bilan non calculable.
+    mixite: dict | None = None
 
 
 def _eur(x: float) -> str:
@@ -614,40 +618,68 @@ def _clause_mixite(eco: dict, hyp: Hypotheses) -> dict:
     s_log = float(hyp.mixite_logements_seuil)
     s_ter = float(hyp.mixite_terrain_seuil_m2)
     s_haut = float(getattr(hyp, "mixite_sdp_seuil_haut_m2", 0.0) or 0.0)
+    _art = getattr(hyp, "mixite_article", None) or hyp.mixite_source_ref
+    _page = getattr(hyp, "mixite_page", None)
+    _quota = float(hyp.pct_lls) if hyp.pct_lls else None
+
+    def _rc(declenchee, regime, critere, detail, produits=None):
+        """Construit le verdict + la citation AFFICHÉE (article/page/quota/produits)."""
+        return {"declenchee": declenchee, "regime": regime, "critere": critere, "detail": detail,
+                "quota_pct": (_quota if declenchee else None),
+                "produits": (produits if declenchee else None),
+                "article": _art, "page": _page, "source": hyp.mixite_source_ref}
 
     if s_haut > 0:   # régime À BANDES (Saint-Paul) — déclenchement sur le PROGRAMME chiffré
-        # Le régime se décide sur la SDP du programme CHIFFRÉ (la SDP et le nombre de logements sont
-        # corrélés ; on n'utilise PAS le compte de logements du scénario silo optimiste, qui n'est pas
-        # le programme chiffré). Le critère TERRAIN (> 6 000 m²) reste un déclencheur réglementaire
-        # indépendant du programme (plein régime).
+        # OUTIL-ASSEMBLAGE-FIX-2 (LOT 2, pt 4) — exclusion ZAC Savane des Tamarins (Art. 2, p. 15 :
+        # « ne s'applique pas dans la ZAC Savane des Tamarins, programme calculé à l'échelle de
+        # l'opération »). Garde codée + citée ; alimentée par `eco["zac_mixite_exclue"]` (aucun périmètre
+        # ZAC publié en donnée ouverte aujourd'hui → inerte sur les parcelles réelles, 0 impact mesuré).
+        if eco.get("zac_mixite_exclue"):
+            return _rc(False, None, None,
+                       f"ZAC Savane des Tamarins — clause non applicable ({_art}, {_page}) : "
+                       "programme de logements aidés calculé à l'échelle de l'opération.")
+        # Le régime se décide sur la SDP du programme CHIFFRÉ. Le critère TERRAIN (> 6 000 m²) reste un
+        # déclencheur réglementaire indépendant (plein régime). OUTIL-ASSEMBLAGE-FIX-2 (LOT 2, pt 3) —
+        # le déclencheur « ≥ 20 logements » de l'Art. 2 (ligne PC) est RÉTABLI : même à SDP < 1 500 m²,
+        # un programme de 20 logements ou plus entre en régime INTERMÉDIAIRE (accession sociale admise) —
+        # c'est le nombre de logements du PROGRAMME chiffré (eco["logements_estimes"]), pas du gabarit.
         if terrain > s_ter:
-            return {"declenchee": True, "regime": "plein", "critere": f"terrain {terrain:.0f} m² > {s_ter:.0f} m²",
-                    "detail": f"terrain ~{terrain:.0f} m² > seuil {s_ter:.0f} m²"}
+            return _rc(True, "plein", f"terrain {terrain:.0f} m² > {s_ter:.0f} m²",
+                       f"terrain ~{terrain:.0f} m² > seuil {s_ter:.0f} m²",
+                       produits="locatif social ou accession sociale")
         if sdp_prog >= s_haut:
-            return {"declenchee": True, "regime": "plein", "critere": f"programme {sdp_prog:.0f} m² ≥ {s_haut:.0f} m²",
-                    "detail": f"programme chiffré ~{sdp_prog:.0f} m² ≥ seuil {s_haut:.0f} m²"}
+            return _rc(True, "plein", f"programme {sdp_prog:.0f} m² ≥ {s_haut:.0f} m²",
+                       f"programme chiffré ~{sdp_prog:.0f} m² ≥ seuil {s_haut:.0f} m²",
+                       produits="logements aidés (LLTS, LLS, PLS)")
         if sdp_prog >= s_sdp:
-            return {"declenchee": True, "regime": "intermediaire",
-                    "critere": f"programme {sdp_prog:.0f} m² dans la bande {s_sdp:.0f}–{s_haut:.0f} m²",
-                    "detail": (f"programme chiffré ~{sdp_prog:.0f} m² dans la bande {s_sdp:.0f}–{s_haut:.0f} m² : "
-                               "accession sociale admise, quota au nombre de logements")}
-        return {"declenchee": False, "regime": None, "critere": None,
-                "detail": (f"programme chiffré ~{sdp_prog:.0f} m² < seuil bas {s_sdp:.0f} m² "
-                           f"({logements:.0f} < {s_log:.0f} logts, terrain {terrain:.0f} ≤ {s_ter:.0f} m²)")}
+            return _rc(True, "intermediaire",
+                       f"programme {sdp_prog:.0f} m² dans la bande {s_sdp:.0f}–{s_haut:.0f} m²",
+                       f"programme chiffré ~{sdp_prog:.0f} m² dans la bande {s_sdp:.0f}–{s_haut:.0f} m² : "
+                       "accession sociale admise, quota au nombre de logements",
+                       produits="logements aidés ou accession sociale (PTZ, PSLA)")
+        if logements >= s_log:
+            return _rc(True, "intermediaire",
+                       f"{logements:.0f} logements ≥ {s_log:.0f} (SDP < {s_haut:.0f} m²)",
+                       f"programme de ~{logements:.0f} logements ≥ {s_log:.0f} (programme {sdp_prog:.0f} m² "
+                       f"< {s_haut:.0f} m²) : accession sociale admise, quota au nombre de logements",
+                       produits="logements aidés ou accession sociale (PTZ, PSLA)")
+        return _rc(False, None, None,
+                   f"programme chiffré ~{sdp_prog:.0f} m² < seuil bas {s_sdp:.0f} m² "
+                   f"({logements:.0f} < {s_log:.0f} logts, terrain {terrain:.0f} ≤ {s_ter:.0f} m²)")
 
     # autres communes : déclenchement HISTORIQUE sur le gabarit (régime plein), logique OU du texte.
     if sdp_gabarit >= s_sdp:
-        return {"declenchee": True, "regime": "plein", "critere": f"SDP {sdp_gabarit:.0f} m² ≥ {s_sdp:.0f} m²",
-                "detail": f"programme SDP ~{sdp_gabarit:.0f} m² ≥ seuil {s_sdp:.0f} m²"}
+        return _rc(True, "plein", f"SDP {sdp_gabarit:.0f} m² ≥ {s_sdp:.0f} m²",
+                   f"programme SDP ~{sdp_gabarit:.0f} m² ≥ seuil {s_sdp:.0f} m²")
     if logements >= s_log:
-        return {"declenchee": True, "regime": "plein", "critere": f"{logements:.0f} logements ≥ {s_log:.0f}",
-                "detail": f"programme ~{logements:.0f} logements ≥ seuil {s_log:.0f}"}
+        return _rc(True, "plein", f"{logements:.0f} logements ≥ {s_log:.0f}",
+                   f"programme ~{logements:.0f} logements ≥ seuil {s_log:.0f}")
     if terrain > s_ter:
-        return {"declenchee": True, "regime": "plein", "critere": f"terrain {terrain:.0f} m² > {s_ter:.0f} m²",
-                "detail": f"terrain ~{terrain:.0f} m² > seuil {s_ter:.0f} m²"}
-    return {"declenchee": False, "regime": None, "critere": None,
-            "detail": (f"programme sous les seuils (SDP {sdp_gabarit:.0f} < {s_sdp:.0f} m², "
-                       f"{logements:.0f} < {s_log:.0f} logts, terrain {terrain:.0f} ≤ {s_ter:.0f} m²)")}
+        return _rc(True, "plein", f"terrain {terrain:.0f} m² > {s_ter:.0f} m²",
+                   f"terrain ~{terrain:.0f} m² > seuil {s_ter:.0f} m²")
+    return _rc(False, None, None,
+               f"programme sous les seuils (SDP {sdp_gabarit:.0f} < {s_sdp:.0f} m², "
+               f"{logements:.0f} < {s_log:.0f} logts, terrain {terrain:.0f} ≤ {s_ter:.0f} m²)")
 
 
 def _fiabilite_prix_neuf(niveau: str | None) -> tuple[str, list[str]]:
@@ -989,13 +1021,28 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
             "clause_declenchee": declenchee,
             "clause_critere": (clause or {}).get("critere"),
             "clause_detail": (clause or {}).get("detail")}
+    # OUTIL-ASSEMBLAGE-FIX-2 (LOT 1) — obligation de mixité STRUCTURÉE, servie à tous les écrans (fiche,
+    # Bilan, Assemblage) : règle, régime, quota, article/page, produits. `borne_haute` = le résultat est
+    # une BORNE HAUTE au prix libre (régime intermédiaire NON chiffré, ou part aidée exclue faute de prix
+    # calibré), PAS le chiffre réglementaire.
+    mixite_obl = None
+    if mixite and clause:
+        mixite_obl = {
+            "servitude": True, "declenchee": declenchee, "regime": regime,
+            "critere": clause.get("critere"), "detail": clause.get("detail"),
+            "quota_pct": clause.get("quota_pct"), "produits": clause.get("produits"),
+            "article": clause.get("article"), "page": clause.get("page"),
+            "source": clause.get("source") or mixite_src,
+            "libelle": (eco.get("mixite_libelle") or "logements aidés"),
+            "borne_haute": bool(declenchee and (intermediaire or exclure_lls)),
+        }
     return Bilan(True, niveau, verdict, prix,
                  {"bas": ca_bas_r, "central": ca_cen_r, "haut": ca_haut_r},
                  # bas borné à 0 pour l'AFFICHAGE (audit O3) ; l'avertissement « charge
                  # foncière négative en bas de fourchette » reste émis quand c'est le cas.
                  {"bas": cf_bas_aff, "central": cf_cen_r, "haut": cf_haut_r,
                   "par_m2_terrain": par_m2},
-                 steps, hypotheses, avert, calc=calc)
+                 steps, hypotheses, avert, calc=calc, mixite=mixite_obl)
 
 
 # ── CALCULETTE DE CHARGE FONCIÈRE (mandat bilan-calculette) ────────────────────────────────

@@ -428,6 +428,9 @@ def _capacite_union(session: Session, parcels: list) -> dict | None:
         "charge_fonciere": (b.charge_fonciere if (b and b.fiable) else None),
         # RETOURS-25 (pt 1) — prix de SORTIE neuf (€/m² habitable) résolu pour ce bilan.
         "prix_sortie_eur_m2": (round(float(_ps["prix"])) if (b and b.fiable and _ps and _ps.get("prix")) else None),
+        # OUTIL-ASSEMBLAGE-FIX-2 (LOT 1) — obligation de mixité (règle/article/page/régime/borne haute),
+        # pour que l'écran Assemblage la PORTE comme la fiche. None si la parcelle n'est pas en SMS.
+        "mixite": (b.mixite if b else None),
     }
 
 
@@ -519,6 +522,8 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
         # visibles (hors zone, zone rouge, emplacement réservé, EBC — en m²).
         "zones_detail": u.get("zones_detail"),
         "retranchements": u.get("retranchements"),
+        # OUTIL-ASSEMBLAGE-FIX-2 (LOT 1) — obligation de mixité portée par le bilan de l'union.
+        "mixite": u.get("mixite"),
         "assiette": "union",
         "emprise_union_m2": u["emprise_m2"],
     }

@@ -122,6 +122,28 @@ describe('ASSEMBLAGE (H5) — étapes, contiguïté, isolées, plus de Courrier'
     expect(r).toContain('Hors zone constructible')
   })
 
+  it('FIX-2 LOT 1 : l\'obligation de mixité (bande intermédiaire) est affichée + « borne haute »', async () => {
+    current = {
+      ...STUDY_OK,
+      mixite: { servitude: true, declenchee: true, regime: 'intermediaire', quota_pct: 30,
+        produits: 'logements aidés ou accession sociale (PTZ, PSLA)', article: 'Art. 2 (zones U1 à U6)',
+        page: 'pp. 14-15', borne_haute: true, critere: 'programme 1 583 m² dans la bande 1 500–1 800 m²' },
+    }
+    renderM16(); await verifier('[data-asm-charge]')
+    const t = document.querySelector('[data-asm-mixite]')?.textContent ?? ''
+    expect(t).toContain('Obligation de mixité sociale')
+    expect(t).toContain('Art. 2'); expect(t).toContain('pp. 14-15'); expect(t).toContain('30%')
+    expect(document.querySelector('[data-asm-mixite-borne]')?.textContent).toContain('borne haute')
+  })
+
+  it('FIX-2 LOT 4 : un identifiant introuvable est nommé (plus de « N parcelles » quand il en manque)', async () => {
+    current = { ...STUDY_OK, n: 3, introuvables: ['97415000ZZ9999'], n_demandes: 4 }
+    renderM16(); await verifier('[data-asm-charge]')
+    const t = document.querySelector('[data-asm-introuvables]')?.textContent ?? ''
+    expect(t).toContain('introuvable'); expect(t).toContain('ZZ9999')
+    expect(t).toContain('4 parcelles demandées'); expect(t).toContain('3 trouvées')
+  })
+
   it('OUTILS-P1-1 (pt 2) : trois lectures « Existant » / « Si conservé » / « Après démolition · ±Δ » ; « · terrain libéré » retiré des lignes', async () => {
     renderM16(); await verifier('[data-asm-charge]')
     const sdpKpi = document.querySelector('[data-asm-kpi="sdp"]') as HTMLElement

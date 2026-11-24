@@ -303,12 +303,13 @@ def test_clause_mixite_regime_a_bandes_saint_paul():
     from labuse.faisabilite.engine import Hypotheses
     h = Hypotheses.charger("Saint-Paul")
     assert h.mixite_sdp_seuil_haut_m2 == 1800.0
-    base = {"sdp_max_m2": 5000, "logements_estimes": 24, "terrain_m2": 3778}   # gabarit/silo élevés
+    base = {"sdp_max_m2": 5000, "logements_estimes": 8, "terrain_m2": 3778}   # gabarit élevé, < 20 logts
     assert _clause_mixite({**base, "sdp_programme_m2": 2000}, h)["regime"] == "plein"
     assert _clause_mixite({**base, "sdp_programme_m2": 1582}, h)["regime"] == "intermediaire"  # trio CV
     r = _clause_mixite({**base, "sdp_programme_m2": 1200}, h)
     assert r["declenchee"] is False
-    # le gabarit élevé (5000) et le silo (24 logts) ne déclenchent PLUS à eux seuls : c'est le programme.
+    # le gabarit élevé (5000) ne déclenche PLUS à lui seul : c'est le programme chiffré (et le nombre
+    # de logements du programme, cf. FIX-2 LOT 2 ≥ 20 logts) — pas le gabarit.
 
 
 def test_clause_mixite_autres_communes_inchangee():

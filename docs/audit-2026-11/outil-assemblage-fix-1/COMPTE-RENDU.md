@@ -233,9 +233,12 @@ retranchées (hors zone, zone rouge, emplacement réservé, EBC) sont servies **
 | CV0724+CV1506+CV1507 | AU3c (mono) | 3 060 | **3 060** | inchangé ✓ |
 | BZ0824+BZ0381 | Uh (mono) | 159 | **159** | inchangé ✓ |
 
-Décomposition DH : U2b 30 673 m² (emprise 17 897, R+5) + U2h 1 501 m² (emprise 1 112, R+3) = **32 174**.
-`surface_constructible` DH = **21 516 m²** = intersection directe dessin ∩ U/AU (ASTRA : 21 516, non
-21 780). Contraintes retranchées rejouées : DH0191+DH0098 **zone rouge 935 m²** (= ASTRA 935) ;
+Décomposition DH (valeurs SERVIES par l'endpoint — `figures_cr.py`) : U2b 30 673 m² (emprise **17 544**,
+R+5) + U2h 1 501 m² (emprise 1 112, R+3) = **32 174**. `surface_constructible` DH **servie = 21 638 m²**
+(part constructible rapportée à la contenance cumulée ; l'intersection directe du dessin ∩ U/AU vaut
+~21 516 m², mesure ASTRA — l'écart ~122 m² tient au référentiel contenance vs dessin, non à un recul).
+[CORRIGÉ FIX-2 LOT 5 — FIX-1 avait noté par erreur 21 516 / 17 897, chiffres d'un diagnostic à recul
+unique superseded ; les valeurs ci-dessus sortent de `figures_cr.py`, sortie brute au rapport FIX-2.] Contraintes retranchées rejouées : DH0191+DH0098 **zone rouge 935 m²** (= ASTRA 935) ;
 EP0971+EP0762 **emplacement réservé 2 386 m²** (= ASTRA 2 386), SDP **1 404** (= ASTRA 1 404). Les
 assemblages mono-zone sont **inchangés** (non-régression) ; un assemblage multizone sans contrôle chiffré
 du relecteur (DH0191+DH0098, U2h/U2d) passe correctement de 2 450 (dominante) à 881 (par zone).

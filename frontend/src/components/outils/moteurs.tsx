@@ -235,6 +235,20 @@ export function M16() {
       )}
       {run.isError && <ErrorState message="Erreur — au moins 2 parcelles valides ?" retry={() => run.mutate()} />}
 
+      {/* OUTIL-ASSEMBLAGE-FIX-2 (LOT 4, pt 6) — identifiant(s) INTROUVABLE(S) nommé(s) : le calcul ne
+          porte QUE sur les parcelles trouvées ; on ne dit plus « N parcelles » quand il en manque. */}
+      {d && Array.isArray(d.introuvables) && d.introuvables.length > 0 && (
+        <div data-asm-introuvables className="flex flex-col gap-1 rounded-lg border border-st-ecartee/50 bg-st-ecartee/[0.09] px-3 py-2 text-[11px] leading-snug text-st-ecartee">
+          <b>{d.introuvables.length} identifiant{d.introuvables.length > 1 ? 's' : ''} introuvable{d.introuvables.length > 1 ? 's' : ''} — écarté{d.introuvables.length > 1 ? 's' : ''} du calcul</b>
+          <div className="flex flex-wrap gap-1">
+            {(d.introuvables as string[]).map((i) => (
+              <span key={i} className="rounded-full border border-st-ecartee/50 px-2 py-0.5 font-mono text-[11px]">{i.slice(8) || i}</span>
+            ))}
+          </div>
+          <span className="text-txt-dim">{d.n_demandes} parcelle{d.n_demandes > 1 ? 's' : ''} demandée{d.n_demandes > 1 ? 's' : ''}, {d.n} trouvée{d.n > 1 ? 's' : ''} — le bilan ci-dessous porte sur ces {d.n}.</span>
+        </div>
+      )}
+
       {/* RECETTE-1 (H5, Vic) — ÉTAPE 2 « Assemblage ». NON contiguës → « pas d'assemblage possible » +
           les parcelles ISOLÉES, RIEN D'AUTRE (deux blocs séparés ne font pas une opération). */}
       {d && !d.relie && (
@@ -314,6 +328,33 @@ export function M16() {
           <p data-asm-maitrise className="rounded-md border border-line-2 bg-surface-2 px-3 py-1.5 text-[10.5px] leading-snug text-txt-dim">
             <b className="text-txt">Hypothèse :</b> le chiffrage suppose la maîtrise de toute l'assiette (acquisition des {d.n} parcelles) et la disparition des limites internes. Propriétaires, accords et faisabilité restent à vérifier.
           </p>
+          {/* OUTIL-ASSEMBLAGE-FIX-2 (LOT 1, pts 1-2) — l'obligation de MIXITÉ portée à l'écran COMME LA
+              FICHE : règle, article, page, part concernée. Et quand le résultat est une BORNE HAUTE
+              (régime intermédiaire / part aidée non chiffrée), on le DIT clairement — ce n'est pas le
+              chiffre réglementaire de l'opération. */}
+          {d.mixite && (d.mixite as any).servitude && (() => {
+            const m = d.mixite as Record<string, any>
+            const cite = [m.article, m.page].filter(Boolean).join(' · ')
+            return (
+              <div data-asm-mixite className={`rounded-lg border px-3 py-2 text-[11px] leading-snug ${m.borne_haute ? 'border-st-creuser/50 bg-st-creuser/[0.09] text-st-creuser' : 'border-line-2 bg-surface-2 text-txt'}`}>
+                <div className="font-medium">Obligation de mixité sociale{cite ? <span className="text-txt-dim"> · {cite}</span> : null}</div>
+                {m.declenchee ? (
+                  <div className="mt-0.5">
+                    {m.regime === 'plein'
+                      ? <>Programme soumis : <b>{m.quota_pct}%</b> {m.produits} ({m.critere}).</>
+                      : <>Programme soumis (régime intermédiaire) : <b>{m.quota_pct}%</b> du nombre de logements en {m.produits} ({m.critere}).</>}
+                  </div>
+                ) : (
+                  <div className="mt-0.5 text-txt-dim">Secteur de mixité sociale — clause non déclenchée sur ce programme ({m.detail}).</div>
+                )}
+                {m.borne_haute && (
+                  <div data-asm-mixite-borne className="mt-1 font-medium">
+                    ⚠ Charge foncière = <b>borne haute</b> (chiffre d'affaires au prix libre). L'obligation d'accession sociale n'est PAS chiffrée (aucun prix d'accession sourcé) : ce n'est pas le résultat réglementaire de l'opération, mais son plafond.
+                  </div>
+                )}
+              </div>
+            )
+          })()}
           {/* RETOURS-26 (pt 1) — `flex flex-col gap-2` : un espace NORMAL (et constant) entre les tuiles et
               « Bilan » — avant, les deux blocs étaient collés, et « Bilan » ouvert empiétait sur les tuiles. */}
           <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
