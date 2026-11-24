@@ -27,7 +27,10 @@ communes:
                              note: "« 22 JUIN 2017 · Modifié le 4 décembre 2024 · PLU APPROUVE » — le lot GPU (millésime 2025-09-17) RE-DÉPOSE ce règlement ; la date du lot n'est PAS la date d'approbation écrite."}],
             procedures: [{type: "révision allégée", source: "relevé relecteur (L'Étang-Salé)"}]}
   "97405": {publication_gpu: "2025-04-17"}
-  "97406": {publication_gpu: "2023-07-21"}
+  "97406": {publication_gpu: "2023-07-21", date_approbation_ecrite: "2013-05-29", edition: "2019 (CODRA)",
+            modifications: [{type: "modification", date: "2019-03-11",
+                             source: "couverture du règlement (vérifié p.1)",
+                             note: "« Approuvé le 29 mai 2013 · Modifié le 11 mars 2019 » — le lot GPU (millésime 2023-05-27) RE-DÉPOSE ce règlement ; la date du lot n'est PAS la date d'approbation écrite."}]}
   "97407": {publication_gpu: "2025-11-18",
             note: "dépôt actif portant annulation partielle (secteur portuaire) + jugement joint"}
   "97408": {publication_gpu: "2026-10-29",
@@ -39,9 +42,9 @@ communes:
                              source: "conseil municipal du 30/06/2026",
                              note: "Beauvallon ~3,5 ha AUp→AUe — ABSENTE du GPU (idurba actif = 2020) ; à vérifier en mairie"}],
             procedures: [{type: "révision générale", date: "2025-06-19", source: "délibération 19/06/2025 (relecteur)"}]}
-  "97411": {publication_gpu: "2026-08-24", edition: "février 2024",
+  "97411": {publication_gpu: "2026-08-24", edition: "février 2024", date_approbation_ecrite: "2024-02",
             procedures: [{type: "révision générale", source: "relevé relecteur (Saint-Denis)"}],
-            note: "Document écrit = Modification simplifiée n°8 du PLU, dossier approuvé FÉVRIER 2024 (couverture, vérifié p.1) ; déposé au GPU le 05/08/2026 (millésime du lot) — la date du lot n'est PAS la date du règlement écrit."}
+            note: "Document écrit = Modification simplifiée n°8 du PLU, dossier approuvé FÉVRIER 2024 (couverture, vérifié p.1 : « DOSSIER APPROUVE FEVRIER 2024 » — mois seul, pas de quantième) ; déposé au GPU le 05/08/2026 (millésime du lot) — la date du lot n'est PAS la date du règlement écrit."}
   "97412": {publication_gpu: "2026-07-02",
             note: "pack GPU : règlement + annexes + données de zonage ; aucun PDF identifié comme plan/règlement graphique"}
   "97413": {note: "PLU 2007 opposable (mairie). Aucun lot téléchargeable renvoyé par le GPU — lien mairie."}
@@ -57,10 +60,14 @@ communes:
   "97419": {publication_gpu: "2019-08-14"}
   "97420": {publication_gpu: "2025-10-20"}
   "97421": {publication_gpu: "2022-10-27"}
-  "97422": {publication_gpu: "2023-10-13",
-            procedures: [{type: "révision générale", source: "relevé relecteur (Le Tampon)"}]}
+  "97422": {publication_gpu: "2023-10-13", date_approbation_ecrite: "2018-12-08",
+            procedures: [{type: "révision générale", source: "relevé relecteur (Le Tampon)"}],
+            note: "Couverture (vérifié p.1) : « Prescrit le 14 avril 2008 · Arrêté le 2 février 2018 · Approuvé le 8 décembre 2018 » ; le lot GPU (millésime 2023-08-11) RE-DÉPOSE ce règlement — la date du lot n'est PAS la date d'approbation écrite."}
   "97423": {publication_gpu: "2023-05-31",
             modifications: [{type: "modification", date: "2022-06-02",
                              source: "couverture du règlement (relecteur)",
                              note: "modifié le 02/06/2022 — l'en-tête ne doit pas masquer cette modification"}]}
-  "97424": {publication_gpu: "2024-04-04"}
+  "97424": {publication_gpu: "2024-04-04", date_approbation_ecrite: "2008-02-06", edition: "2018 (CODRA)",
+            modifications: [{type: "mise à jour", date: "2018-03-05",
+                             source: "couverture du règlement (vérifié p.1)",
+                             note: "« PLU approuvé le 6 février 2008 · Mise à jour du 5 mars 2018 » — le lot GPU (millésime 2024-02-13) RE-DÉPOSE ce règlement ; la date du lot n'est PAS la date d'approbation écrite."}]}

@@ -75,6 +75,13 @@ _HEADER = re.compile(
 # à Saint-Denis) : sinon z_ref=None → repli bannière → zone fausse (13 « Article N.x » étiquetés A).
 _ZONE_FROM_ART = re.compile(r'(?i)(?:ARTICLE)\s+([A-Za-z]{1,4})\s*[-–—.]?\s*\d')
 _ZONE_FROM_ZONE = re.compile(r'(?i)ZONE\s+([0-9A-Za-z]{1,5})')
+# OUTIL-PLU-FIX-8 (LOT 3) — code de zone à CHIFFRE DE TÊTE (zones À URBANISER futures : Le Port
+# « Article 2AU 9 », « Article 1AUindicée 5 »). _ZONE_FROM_ART échoue dessus (il attend la classe en
+# tête, et le n° d'article se perd dans le mot « indicée » → la référence stockée est « Article 2AU » /
+# « Article 1AUindic », sans chiffre d'ancrage). On lit alors la CLASSE+chiffre (2AU, 1AU) — ce motif ne
+# vise QUE les codes à chiffre de tête, donc « Article UB » / « Article Ucv » (classe en tête) ne sont
+# jamais touchés. Une parcelle 1AUm/2AU retrouve ainsi ses articles (candidats [1AU,1AUM] ⊃ « 1AU »).
+_ZONE_FROM_ART_NUM = re.compile(r'(?i)^(?:ARTICLE)\s+([0-9]{1,2}(?:AU|U|A|N))[A-Za-z0-9]*')
 # référence croisée dans la prose juste avant le « titre » : « (voir Article… », « cf. Article… »,
 # « au titre… », « à l'article… » → l'en-tête matché n'est pas un vrai début d'article.
 _CROSSREF_PRE = re.compile(r"(?i)(?:\(|voir|cf\.?|à l['’]|au|du|de la|sous le|présent|dudit|ledit)\s*$")
@@ -192,6 +199,15 @@ _CHROME_PAT = re.compile(
     r"(?i)^\s*(?:r[eè]glement\b|commune d|ville d|mairie\b|plan local|p\.?\s?l\.?\s?u\b"
     r"|plu approuv|[eé]dition\b|modifi[eé] par|dossier approuv|d[eé]partement\b"
     r"|\d{1,2}/\d{1,2}/\d{2,4}[\s,]*$)")
+# OUTIL-PLU-FIX-8 (LOT 2) — chrome d'en-tête/pied COURANT qui échappait à la détection par fréquence
+# (seuil pages/5 non atteint par une partie du document) et polluait l'annexe de Saint-Paul :
+#  · le FIL d'en-tête réduit au numéro de partie nu « Titre 4 » / « Livret 2 » (le vrai titre de section
+#    « TITRE III - DISPOSITIONS… » a du TEXTE après le numéro, il n'est donc PAS visé) — sinon « Titre 4 »
+#    était pris pour un en-tête de section et fragmentait le lexique (p.351-389) en 25 extraits ;
+#  · la CONTINUATION de la liste des dates DCM (« 21/10/2015, 05/10/2017, … et du 27/03/2025. »), suite du
+#    pied « Modifié par DCM du : … » déjà retiré — une ligne faite UNIQUEMENT de dates/« et du »/ponctuation.
+_CHROME_RUNHEAD = re.compile(r"(?i)^\s*(?:titre|livret)\s+\d{1,2}\s*$")
+_CHROME_DATELIST = re.compile(r"(?i)^\s*(?:\d{1,2}/\d{1,2}/\d{2,4}|et|du|[,.\s])+$")
 
 
 def _detect_chrome(pages: list[str]) -> set[str]:
@@ -258,6 +274,11 @@ def _clean_pages(pages: list[str]) -> tuple[list[str], list[str | None]]:
             if n in chrome:
                 continue
             if (top or bottom) and _CHROME_PAT.match(n):   # D3 — chrome qui varie par page
+                continue
+            # OUTIL-PLU-FIX-8 (LOT 2) — fil d'en-tête « Titre 4 » nu + continuation de liste de dates DCM
+            if top and _CHROME_RUNHEAD.match(n):
+                continue
+            if (top or bottom) and _CHROME_DATELIST.match(n) and re.search(r'\d/\d', n):
                 continue
             if _PAGEFOOT.match(n):
                 continue
@@ -386,6 +407,40 @@ def _zone_de_fiche(texte: str) -> str | None:
     return next(iter(cands)) if len(cands) == 1 else None
 
 
+# OUTIL-PLU-FIX-8 (LOT 3) — PRÉAMBULE / tête de chapitre de zone qui n'est PAS formaté en bannière
+# « Zone U2e » et finissait donc SANS zone, injoignable par le filtre de sa zone (Saint-Pierre
+# « Préambule · La zone Ucv correspond au centre-ville… », Le Port « La zone 1AU couvre… », Entre-Deux
+# « La zone Ua correspond au centre bourg », Petite-Île « DISPOSITIONS APPLICABLES À LA ZONE UB »). On
+# n'attribue QUE sur une DÉFINITION de zone (« la zone X est/correspond/couvre… ») ou un « dispositions
+# applicables à la zone X » — JAMAIS sur un simple renvoi (« se reporter au règlement de la zone U ») ni
+# sur un titre « …AUX ZONES À URBANISER » (pas de « à LA zone X »). On prend la PREMIÈRE zone définie.
+_PREAMBULE_DEF = re.compile(
+    r"(?i)\b(?:la|les)\s+zones?\s+([0-9]{0,2}(?:AU|U|A|N)[0-9A-Za-z]{0,6})\b[^.\n]{0,40}?"
+    r"\b(?:est|sont|correspond|couvre|couvrent|comprend|regroupe|concerne|d[ée]signe|"
+    r"a\s+vocation|ont\s+vocation|constitue|est\s+destin[ée]e?)\b")
+_PREAMBULE_APPL = re.compile(
+    r"(?i)dispositions?\s+(?:r[ée]glementaires\s+)?applicables?\s+à\s+la\s+zone\s+"
+    r"([0-9]{0,2}(?:AU|U|A|N)[0-9A-Za-z]{0,6})\b")
+
+
+def _zone_de_preambule(texte: str) -> str | None:
+    """Zone d'un préambule / tête de chapitre de zone (point LOT 3), ou None. Lit les 4 premières lignes
+    non vides (le titre + la 1re phrase de définition)."""
+    head = " ".join([l for l in (texte or "").splitlines() if l.strip()][:4])
+    # un bloc d'ANNEXE qui ÉNUMÈRE des zones (« ANNEXES RELATIVES AUX ZONES NS, NTA ET NTB ») reste COMMUN
+    # (plusieurs zones) — ne jamais l'attribuer à la 1re : c'est le travail de `_zone_de_fiche`, qui a déjà
+    # renvoyé None faute d'UNE seule zone. Sinon on régresse le cas Saint-Benoît Ns/Nta/Ntb (resté commun).
+    if re.search(r'(?i)\bannexes?\b', head):
+        return None
+    for rx in (_PREAMBULE_APPL, _PREAMBULE_DEF):
+        m = rx.search(head)
+        if m:
+            z = _valid_zone(m.group(1))
+            if z:
+                return z
+    return None
+
+
 def _split_articles(path: str) -> tuple[list[dict], bool]:
     """OUTIL-PLU-FIX-3/4 — l'extrait est l'ARTICLE ENTIER : d'un en-tête d'article au suivant, QUEL QUE
     SOIT le nombre de pages, avec ses sous-articles, ses « Toutefois… » et ses exceptions. JAMAIS coupé
@@ -423,11 +478,31 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
     # OUTIL-PLU-FIX-6 (point 2) — un titre de chapitre SANS zone (ANNEXES, DISPOSITIONS GÉNÉRALES,
     # DÉFINITIONS, LEXIQUE, TITRE liminaire) est une FRONTIÈRE de bloc : l'annexe forme son PROPRE bloc
     # (zone None), au lieu d'être avalée par le bloc de zone précédent (Saint-Benoît annexes AU/N → UE).
+    # OUTIL-PLU-FIX-8 (LOT 1) — zone d'un en-tête d'article/zone (pour distinguer un intertitre INTERNE
+    # d'un vrai chapitre) : l'en-tête d'abord, sinon la bannière de sa page.
+    def _head_zone(pos: int, ref: str) -> str | None:
+        zm = _ZONE_FROM_ART.match(ref or "") or _ZONE_FROM_ZONE.match(ref or "")
+        return (_valid_zone(zm.group(1)) if zm else None) or zbanner[page_of(pos) - 1]
+    _hard = sorted(head_ref.items())                 # en-têtes RÉELS (articles/zones), avant resets
+    _hpos = [p for p, _ in _hard]
     reset_at: set[int] = set()
     for m in _RESET_CHAP_M.finditer(flat):
-        if not _is_toc_header(flat, m.start()) and _reset_is_title(_norm(m.group(1))):
-            head_ref[m.start()] = _norm(m.group(1))[:60]
-            reset_at.add(m.start())
+        if _is_toc_header(flat, m.start()) or not _reset_is_title(_norm(m.group(1))):
+            continue
+        # Un titre de reset n'est une FRONTIÈRE DE CHAPITRE que s'il sépare de VRAIS chapitres. S'il tombe
+        # ENTRE DEUX EN-TÊTES D'ARTICLE DE LA MÊME ZONE, c'est un INTERTITRE de l'article (« Définition »,
+        # « Perméabilité »… sous l'article 13 de Saint-Paul), pas un nouveau chapitre : le couper détachait
+        # l'article 13 (zones U1, U2e, U3e, AU5e) et son seuil de 20 % dans un extrait « Définition » SANS
+        # zone (régression introduite dès FIX-6). On ne coupe donc pas dans ce cas.
+        i = bisect.bisect_left(_hpos, m.start())
+        prev = _hard[i - 1] if i > 0 else None
+        nxt = _hard[i] if i < len(_hard) else None
+        if (prev and nxt and re.match(r"(?i)^article\b", prev[1]) and re.match(r"(?i)^article\b", nxt[1])):
+            zp, zn = _head_zone(*prev), _head_zone(*nxt)
+            if zp and zp == zn:
+                continue                             # intertitre interne à l'article → pas une frontière
+        head_ref[m.start()] = _norm(m.group(1))[:60]
+        reset_at.add(m.start())
     # frontières = en-têtes d'article/zone + titres de chapitre sans zone (jamais les frontières de page).
     bounds = sorted(set(head_ref) | {len(flat)})
     head_pos = sorted(head_ref)
@@ -452,9 +527,12 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
                 # bannière de la page de début. Pas de « zone de chapitre » héritée du sommaire.
                 zm = _ZONE_FROM_ART.match(ref or "") or _ZONE_FROM_ZONE.match(ref or "")
                 z_ref = _valid_zone(zm.group(1)) if zm else None
+                if z_ref is None:                 # OUTIL-PLU-FIX-8 (LOT 3) — code à chiffre de tête (2AU, 1AU)
+                    mnum = _ZONE_FROM_ART_NUM.match(ref or "")
+                    z_ref = _valid_zone(mnum.group(1)) if mnum else None
                 zone = z_ref or zbanner[page_of(a) - 1]
         if zone is None:                          # OUTIL-PLU-FIX-7 (point 1) — fiche/annexe zonée → sa zone
-            zone = _zone_de_fiche(texte)
+            zone = _zone_de_fiche(texte) or _zone_de_preambule(texte)   # LOT 3 — préambule de zone
         pg0 = page_of(a)
         lead = len(raw) - len(raw.lstrip())
         pmap = [[0, pg0]]                        # page_map : offset dans `texte` → page PDF
@@ -511,7 +589,29 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
         j = bisect.bisect_right(bounds, a)
         b = bounds[j] if j < len(bounds) else len(flat)
         out.extend(_emit_block(a, b, head_ref[a]))
-    return _fusionne_titres(out), ambigu
+    return _dedup(_fusionne_titres(out)), ambigu
+
+
+def _dedup(pieces: list[dict]) -> list[dict]:
+    """OUTIL-PLU-FIX-8 (LOT 2) — supprime les extraits DOUBLONS octet-pour-octet : le règlement réédite le
+    même article générique dans plusieurs livrets/bassins de vie avec la MÊME étiquette de zone (Saint-Paul
+    « Article 7- » USDU ×4, etc.) → l'utilisateur voyait N fois la même règle sous le même filtre. On garde
+    la 1re occurrence. La clé est (zone, texte) : un texte IDENTIQUE servi sous une AUTRE zone n'est PAS un
+    doublon (filtre différent) et est CONSERVÉ — aucune règle n'est perdue. Les résultats restent dans
+    l'ordre du document."""
+    # La clé NORMALISE les blancs (le même article réédité d'un livret à l'autre diffère parfois d'un
+    # espace / saut de page résiduel : « Article 13- USDU » ×3 = 5256/5254/5254 car. → 1 seul une fois les
+    # blancs réduits). On compare donc sur le texte à blancs normalisés ; un texte SUBSTANTIELLEMENT
+    # différent sous la même (réf,zone) — ex. « Article 7- U1 » 4262 vs 3620 car. — reste DISTINCT, conservé.
+    seen: set[tuple] = set()
+    out: list[dict] = []
+    for e in pieces:
+        k = (e.get("zone"), re.sub(r'\s+', ' ', e.get("texte") or "").strip())
+        if k in seen:
+            continue
+        seen.add(k)
+        out.append(e)
+    return out
 
 
 def _fusionne_titres(pieces: list[dict]) -> list[dict]:
@@ -690,10 +790,40 @@ def _renvoi_cible(zone: str, insee: str | None) -> str | None:
         return None
 
 
-def zone_renvoi_note(zone: str, insee: str | None) -> str | None:
-    """Phrase à afficher quand le filtre d'un secteur ouvre les articles de sa zone de renvoi."""
+def _zone_u_equivalente(zone: str) -> str | None:
+    """OUTIL-PLU-FIX-8 (LOT 3) — zone U « de même indice » d'une zone À URBANISER (clause standard des
+    PLU réunionnais : « pour une zone AU, se reporter au règlement de la zone U de même indice »). On
+    retire le préfixe à chiffre et on remplace la classe AU par U, en gardant l'indice : AUa→Ua,
+    1AUa→Ua, 2AUb→Ub, 1AU3→U3, AUb1→Ub1. None si la zone n'est pas une zone AU."""
+    m = re.match(r'(?i)^\d*AU(.*)$', _norm(zone))
+    return ("U" + m.group(1)) if m else None
+
+
+def zone_renvoi_note(zone: str, insee: str | None, session: Session | None = None) -> str | None:
+    """Phrase à afficher quand le filtre d'un secteur ouvre les articles de sa zone de renvoi. Le renvoi
+    CONFIGURÉ (resolve_zone) prime ; à défaut, le renvoi GÉNÉRIQUE AU→U de même indice est annoncé LORSQU'IL
+    sert réellement (la zone AU n'a pas de chapitre propre mais la zone U de même indice est, elle, servie)."""
     cible = _renvoi_cible(zone, insee)
-    return f"{zone} : le règlement renvoie à {cible}" if cible else None
+    if cible:
+        return f"{zone} : le règlement renvoie à {cible}"
+    if session is not None:
+        ueq = _zone_u_equivalente(zone)
+        if ueq and not _chapitre_propre(session, zone, insee) and zones_apparentees(session, zone, insee):
+            return (f"{zone} (zone à urbaniser) : le règlement renvoie au règlement de la zone {ueq} "
+                    f"de même indice — articles de {ueq} servis ci-dessous.")
+    return None
+
+
+def _chapitre_propre(session: Session, zone: str, insee: str | None) -> bool:
+    """Vrai si la zone a un chapitre PROPRE stocké (un code apparenté AU-DELÀ de la classe nue)."""
+    cands = {c.upper() for c in zone_candidats(zone)} - {_classe_token(zone).upper()}
+    if not cands:
+        return False
+    sql = "SELECT 1 FROM plu_reglement_extrait WHERE zone IS NOT NULL AND upper(zone) = ANY(:z)"
+    params: dict = {"z": sorted(cands)}
+    if insee:
+        sql += " AND insee = :i"; params["i"] = insee
+    return session.execute(text(sql + " LIMIT 1"), params).first() is not None
 
 
 def zones_apparentees(session: Session, zone: str, insee: str | None) -> list[str]:
@@ -709,7 +839,18 @@ def zones_apparentees(session: Session, zone: str, insee: str | None) -> list[st
     if insee:
         sql += " AND insee = :i"; params["i"] = insee
     stored = [z for z in session.execute(text(sql), params).scalars().all() if z]
-    return sorted({z.upper() for z in stored if z.upper() in cands})
+    match = sorted({z.upper() for z in stored if z.upper() in cands})
+    # OUTIL-PLU-FIX-8 (LOT 3) — renvoi GÉNÉRIQUE AU→U « de même indice » : une zone À URBANISER sans
+    # chapitre propre stocké (ni AUa, ni la classe « AU ») ouvre le règlement de la zone U de même indice
+    # (AUa→Ua, 1AU3→U3). Purement ADDITIF et DÉCLENCHÉ UNIQUEMENT quand aucune zone propre ne correspond
+    # → n'affecte ni « A↛AU » (A n'a pas de forme AU), ni les secteurs AU à chapitre propre (Le Port 1AU/
+    # 2AU, Saint-Paul AU3st), ni les renvois configurés (AU3c→U3c, déjà servis ci-dessus).
+    if not match:
+        ueq = _zone_u_equivalente(zone)
+        if ueq:
+            ucands = {c.upper() for c in zone_candidats(ueq)}
+            match = sorted({z.upper() for z in stored if z.upper() in ucands})
+    return match
 
 
 # OUTIL-PLU-FIX-3 (point 8) — un extrait SANS zone qui NOMME une zone/secteur précis (« en zone UA… »,

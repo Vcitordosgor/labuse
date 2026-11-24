@@ -3352,7 +3352,7 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
         communes_list = [r for r in res if r.get("zone") is None]
         res = [r for r in res if r.get("zone") is not None]
     # OUTIL-PLU-FIX-6 (point 1) — si le secteur filtré RENVOIE à une autre zone (AU3c→U3c), on le DIT.
-    renvoi_note = zone_renvoi_note(zone, insee) if (zone and insee) else None
+    renvoi_note = zone_renvoi_note(zone, insee, db) if (zone and insee) else None
     return {"query": q, "insee": insee, "n": len(res), "n_total": n_total,
             "limit": limit, "offset": offset, "message": message,
             "tronque": n_total > len(res) + len(communes_list), "resultats": res,

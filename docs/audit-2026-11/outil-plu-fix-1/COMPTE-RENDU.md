@@ -1,3 +1,213 @@
+# Outil PLU — compte-rendu OUTIL-PLU-FIX-8 (24/11/2026)
+
+> Branche `fix/outil-plu-1`, worktree `~/Desktop/labuse-plu-fix`, base `labuse` (user OS `openclaw`),
+> ports 7480 (API) / 10280 (front). PDF officiels dans `~/Desktop/labuse/data/plu_reglements`.
+> **Tout chiffre ci-dessous sort de `scripts/plu_chiffres.py`** (sortie brute collée §« Chiffres ») —
+> aucun chiffre écrit de mémoire. Lu en entier avant d'agir : `relecture-plu-6.md`, `relecture-plu-5.md`,
+> `audit-outils/01-PLU-ASTRA-2.md`, et les sections FIX-6/FIX-7 ci-dessous. Réingestion du jour :
+> **3302 extraits, 21 communes.**
+
+## LOT 0 — filet de non-régression (AVANT toute correction) — `tests/test_plu_cas_valides.py`
+
+**31 tests, un par cas cité aux relectures 1-6 et aux deux rapports externes** (les 15 non-régressions de
+la relecture-6, piscine Saint-Denis p.22, exception U2e art.13 entier + seuil 20 % p.100, renvois de
+secteur AU3c→U3c / 2AUd→Ud, 48 articles d'Entre-Deux, 3 barèmes imposés « stationn… », date L'Étang-Salé,
+réfs de prose = 0, dédup Possession, Beauvallon AUp, STECAL NTA/NTB, A↛AU, casse/accents, pagination,
+« emprise au sol » expr<mots). Chaque test affirme une **valeur précise** (texte, zone, article, page).
+
+- **Preuve que le filet MORD** (sortie brute) — réingéré sur le code FIX-7 (`7588d8572`), les cas réparés
+  par ce mandat sont **rouges**, dont l'U2e exigé par le mandat :
+  ```
+  FAILED test_u2e_article13_entier_avec_seuil_20pct
+  FAILED test_u2e_article13_pas_de_moignon_definition_sans_zone
+  FAILED test_u2e_article13_famille_toutes_zones_portent_le_20pct
+  FAILED test_zero_doublon_octet_meme_zone
+  FAILED test_le_port_2AU_article_aspect_servi
+  FAILED test_le_port_1AU_2AU_ont_des_articles_propres
+  FAILED test_preambule_saint_pierre_ucv_rattache
+  FAILED test_couverture_plan_zonage_peu_de_zeros
+  8 failed, 23 deselected
+  ```
+- **Après les correctifs (base réingérée)** : `31 passed`. Commit séparé (le filet d'abord).
+
+## LOT 1 — U2e article 13 : l'article redevient ENTIER (seuil 20 % compris)
+
+- **Cause exacte, et correction d'attribution** : la régression n'a PAS été introduite par FIX-7 ni par
+  `_SUBHEAD`/`_subhead_titre` (hypothèse de la relecture-6) — l'article 13 ne fait que 2 pages, sous le
+  seuil des 6 pages du sous-découpage. La vraie règle fautive est la **boucle de frontières
+  `_RESET_CHAP_M`** : elle prend TOUTE ligne « Définition » (mot-clé de `_RESET_CHAP_SRC`) pour une
+  frontière de chapitre SANS zone, y compris l'**intertitre interne** « Définition » sous « 13.1 -
+  Espaces libres ». Preuve par ré-exécution du découpage FIX-5/FIX-6/FIX-7 sur le PDF Saint-Paul :
+  FIX-5 gardait l'article entier (3353 car., zone U2E, 20 %) ; **FIX-6 déjà le coupait** (moignon 143 car.
+  + « Définition » zone None 3207 car. portant le 20 %) ; FIX-7 identique. **La régression date de FIX-6.**
+- **Correctif** (`plu_ingest.py`) : une frontière `_RESET_CHAP_M` est ignorée quand elle tombe **entre deux
+  en-têtes d'article de la MÊME zone** (intertitre interne, pas un nouveau chapitre). Les vraies frontières
+  (ANNEXES, TITRE après le dernier article d'une zone, préambule de la zone suivante) restent coupées.
+- **Les autres articles coupés de la même façon** (ré-exécution du découpage, HEAD FIX-7) :
+  Saint-Paul « Article 13- » en **U1 (p.50), U2e (p.99), U3e (p.156), AU5e (p.265)** + La Plaine
+  « ARTICLE UB 5 » (« Définition Champ d'application », p.141). **5 articles réparés** (chacun retrouve son
+  corps + seuil). Résidu assumé : La Plaine « ARTICLE UB 7 » p.168 — page à extraction DÉGRADÉE (« ARTICLE
+  UB 7 -ARTICLE Ur / 7.1 – Définition / NTATION DES CONSTRUCTIONS… »), non le motif propre de l'article 13.
+- **Résultat** : l'« Article 13- » U2E est servi ENTIER p.99-100 avec le **20 %** ; **8** « Article 13- »
+  portent le 20 % (U1, U2E, U3, U3E, U4, U5, AU5E, U6) ; **0** extrait « Définition » zone NULL à Saint-Paul.
+
+## LOT 2 — doublons : ZÉRO doublon octet, sans perdre une règle
+
+- **Deux causes distinctes** :
+  1. **Chrome d'annexe pris pour des en-têtes** — le fil d'en-tête nu « Titre 4 » / « Titre 5 » + la
+     continuation de la liste de dates DCM (« 21/10/2015, 05/10/2017, … et du 27/03/2025. ») survivaient à
+     la détection par fréquence et fragmentaient le lexique de Saint-Paul en **25 « Titre 4 » + 9 « Titre
+     5 »**. Correctif : `_CHROME_RUNHEAD` + `_CHROME_DATELIST` les retirent → l'annexe s'ancre désormais sur
+     le VRAI titre « TITRE IV GLOSSAIRE GENERAL » (1 bloc), « TITRE V », « TITRE VI PALETTE VÉGÉTALE »…
+  2. **Mêmes articles génériques réédités d'un livret/bassin à l'autre** avec la MÊME zone (USDU ×3-4) —
+     `_dedup` supprime les doublons octet-pour-octet (clé **(zone, texte à blancs normalisés)** : les
+     variantes ne différant que d'un espace/saut de page résiduel sont collées). Un texte **distinct** sous
+     la même (réf,zone) — règle d'un AUTRE bassin — est CONSERVÉ (le supprimer perdrait une règle).
+- **Résultat** (script) : **0 doublon octet-pour-octet** (même zone) dans tout le corpus ; Saint-Paul
+  « hauteur » 87→**69**. Les 6 couples (réf,zone) encore répétés ont des **textes substantiellement
+  distincts** (bassins de vie : « Article 6- » U1 5493 vs 2706 car., etc.) — ce ne sont pas des doublons.
+- Le **« 174 doublons »** de la relecture-6 comptait TOUT texte identique sans égard à la zone : 30 groupes
+  servent le même texte sous des zones DIFFÉRENTES (« Article 5- : il n'est pas fixé de règle » sous 16
+  zones). Les dédupliquer à l'aveugle retirerait l'article d'une zone. Ici, dédoublonnage **par (zone,
+  texte)** : zéro doublon vu sous un filtre, zéro règle perdue.
+
+## LOT 3 — zones injoignables
+
+- **Le Port 1AU/2AU** : les en-têtes à CHIFFRE DE TÊTE (« Article 2AU 9 », « Article 1AUindicée 5 ») que
+  `_ZONE_FROM_ART` ne savait pas lire (chiffre avant la classe, n° d'article noyé dans « indicée ») sont
+  désormais zonés via `_ZONE_FROM_ART_NUM` (classe+chiffre → 2AU, 1AU). **15 articles 1AU + 15 articles
+  2AU** servis ; « Article 2AU 9 — Aspect extérieur » **p.159** sort sous le filtre 2AU.
+- **Préambules de zone rattachés** : `_zone_de_preambule` attribue sa zone au préambule / à la tête de
+  chapitre qui la DÉFINIT (« La zone Ucv correspond… », « Dispositions applicables à la zone UB ») — jamais
+  un simple renvoi (« se reporter au règlement de la zone U ») ni un titre « …AUX ZONES À URBANISER », et
+  jamais une ANNEXE multi-zones (« ANNEXES RELATIVES AUX ZONES NS, NTA ET NTB » reste commune). **21
+  préambules** rattachés (Saint-Pierre Ucv/Ud/Ug/Uf/Us/Up/Ut/Ua/Ue/AU0/A/N, Entre-Deux Ua, Petite-Île UB,
+  Le Port 1AU/2AU…).
+- **Couverture des 21 communes** (script) : sur **701** zones du plan de zonage, **81** étaient sans
+  règlement zoné (toutes des zones À URBANISER). Traitement : renvoi GÉNÉRIQUE **AU→U « de même indice »**
+  (clause standard des PLU réunionnais) dans `zones_apparentees`, **additif et déclenché UNIQUEMENT** quand
+  la zone AU n'a aucun chapitre propre → **injoignables 81 → 4**. Les 4 résidus (Bras-Panon 1AUt,
+  Sainte-Rose/Le Tampon 1AUto, Trois-Bassins 1AUt) sont des zones AU touristiques SANS zone U d'indice
+  correspondant dans le règlement (pas de « Ut »/« Uto » stocké) — résidu BORNÉ et dit, pas un trou muet.
+- **Non-régression prouvée** : `A@La Possession → ['A']` (jamais d'AU), `AU3c → U3c`, `2AUd → Ud` intacts.
+
+## LOT 4 — dates : approbation écrite ≠ millésime du lot, nommées distinctement
+
+Dates d'approbation écrites **relues sur les couvertures PDF** (vérifiées p.1, cf. `plu_chiffres.py` §7) et
+posées en `config/plu_dates_gpu.yaml` (`date_approbation_ecrite`), distinctes du millésime du lot (dépôt
+GPU) : **Saint-Denis** 2024-02 (« DOSSIER APPROUVE FEVRIER 2024 », mois seul) ≠ lot 2026-08-05 ; **La
+Plaine** 2013-05-29 (« Approuvé le 29 mai 2013 · Modifié le 11 mars 2019 ») ≠ 2023-05-27 ; **Le Tampon**
+2018-12-08 ≠ 2023-08-11 ; **Cilaos** 2008-02-06 ≠ 2024-02-13 ; (+ L'Étang-Salé 2017-06-22 déjà fait). Les
+communes dont le lot EST l'approbation active (Saint-Paul 17/12/2025, La Possession, Saint-Louis… :
+modifications récentes réellement déposées) gardent lot = approbation — conforme aux ⚠ de la relecture-6.
+
+## RÈGLE SUR LES CHIFFRES — `scripts/plu_chiffres.py` (sortie brute)
+
+Le « 174 attribuées » de FIX-7 **valait 3** : la bascule 849→675 des sans-zone de FIX-7 venait à ~95 % de
+la **suppression** d'extraits (ré-découpe / réfs de prose supprimées), PAS d'une attribution de zone ;
+seuls **3** extraits recevaient alors une zone par `_zone_de_fiche`. Ici l'attribution réelle est : 3
+(fiche) + 21 (préambule) + 46 (code à chiffre de tête).
+
+```
+
+==============================================================================
+1. CORPUS (base labuse réingérée)
+==============================================================================
+extraits = 3302 · communes servies = 21 · sans zone = 539 · zonés = 2763
+
+==============================================================================
+2. DOUBLONS (LOT 2)
+==============================================================================
+doublons octet-pour-octet (même insee,doc,zone,texte) EN TROP      = 0
+doublons à blancs normalisés (même insee,doc,zone,norm-texte) EN TROP = 0  (cible 0)
+
+Saint-Paul « hauteur » : 69 extraits ; (réf,zone) répétés = 6 couples, 6 en trop
+   Article 10-    N      ×2  (textes distincts à blancs normalisés = 2)
+   Article 11-    N      ×2  (textes distincts à blancs normalisés = 2)
+   Article 13-    U1     ×2  (textes distincts à blancs normalisés = 2)
+   Article 6-     U1     ×2  (textes distincts à blancs normalisés = 2)
+   Article 7-     U1     ×2  (textes distincts à blancs normalisés = 2)
+   TITRE II       None   ×2  (textes distincts à blancs normalisés = 2)
+   → tous les 'répétés' restants ont des textes DISTINCTS (livrets/bassins de vie différents) :
+     ce ne sont pas des doublons, les supprimer perdrait une règle de bassin.
+
+==============================================================================
+3. U2e ARTICLE 13 — ENTIER SOUS SON FILTRE, SEUIL 20 % (LOT 1)
+==============================================================================
+   'Article 13-' zone=U2 p83-87 len=6727 contient_20%=False
+   'Article 13-' zone=U2E p99-100 len=3353 contient_20%=True
+   Saint-Paul : 8 'Article 13-' contiennent le seuil 20 % (zones ['U1', 'U2E', 'U3', 'U3E', 'U4', 'U5', 'AU5E', 'U6'])
+   extraits 'Définition' zone NULL à Saint-Paul (ex-moignons détachés) = 0
+
+==============================================================================
+4. ZONES INJOIGNABLES — COUVERTURE DU PLAN DE ZONAGE (LOT 3)
+==============================================================================
+   97402 Bras-Panon             1 zéro/29 -> ['1AUt']
+   97419 Sainte-Rose            1 zéro/23 -> ['1AUto']
+   97422 Le Tampon              1 zéro/30 -> ['1AUto']
+   97423 Les Trois-Bassins      1 zéro/30 -> ['1AUt']
+   TOTAL zones du plan de zonage (21 communes) = 701 ; injoignables = 4
+
+==============================================================================
+5. LE PORT 1AU/2AU — ARTICLES PROPRES SERVIS (LOT 3)
+==============================================================================
+   zone 1AU : 15 extraits zonés ; apparentées=['1AU']
+   zone 2AU : 15 extraits zonés ; apparentées=['2AU']
+   « aspect » filtre 2AU → articles 2AU servis : [('Article 2AU', 159)]  (dont 'Aspect extérieur' p.159)
+
+==============================================================================
+6. RENVOI GÉNÉRIQUE AU→U & NON-RÉGRESSION (LOT 3)
+==============================================================================
+   A@97408: apparentées=['A'] ; note=None
+   AU3c@97415: apparentées=['AU3', 'U3'] ; note=AU3c : le règlement renvoie à U3c
+   2AUd@97422: apparentées=['UD'] ; note=2AUd : le règlement renvoie à Ud
+   AUa@97401: apparentées=['U'] ; note=AUa (zone à urbaniser) : le règlement renvoie au règlement de la zone Ua de même indice — articles de Ua servis ci-dessous.
+
+==============================================================================
+7. DATES — APPROBATION ÉCRITE ≠ MILLÉSIME DU LOT (LOT 4)
+==============================================================================
+   97401 Les Avirons            approbation=2024-12-06   lot=2024-12-06
+   97402 Bras-Panon             approbation=2026-04-28   lot=2026-04-28
+   97403 Entre-Deux             approbation=2024-09-24   lot=2024-09-24
+   97404 L'Étang-Salé           approbation=2017-06-22   lot=2025-09-17 [écrite≠lot, nommées distinctement]
+   97405 Petite-Île             approbation=2023-06-09   lot=2023-06-09
+   97406 La Plaine-des-Palmistes approbation=2013-05-29   lot=2023-05-27 [écrite≠lot, nommées distinctement]
+   97407 Le Port                approbation=2024-12-09   lot=2024-12-09
+   97408 La Possession          approbation=2026-06-25   lot=2026-06-25
+   97410 Saint-Benoît           approbation=2020-02-06   lot=2020-02-06
+   97411 Saint-Denis            approbation=2024-02      lot=2026-08-05 [écrite≠lot, nommées distinctement]
+   97412 Saint-Joseph           approbation=2025-12-10   lot=2025-12-10
+   97414 Saint-Louis            approbation=2025-12-18   lot=2025-12-18
+   97415 Saint-Paul             approbation=2025-12-17   lot=2025-12-17
+   97416 Saint-Pierre           approbation=2024-06-25   lot=2024-06-25
+   97418 Sainte-Marie           approbation=2025-11-26   lot=2025-11-26
+   97419 Sainte-Rose            approbation=2019-05-04   lot=2019-05-04
+   97420 Sainte-Suzanne         approbation=2025-09-29   lot=2025-09-29
+   97421 Salazie                approbation=2022-05-24   lot=2022-05-24
+   97422 Le Tampon              approbation=2018-12-08   lot=2023-08-11 [écrite≠lot, nommées distinctement]
+   97423 Les Trois-Bassins      approbation=2017-02-21   lot=2017-02-21
+   97424 Cilaos                 approbation=2008-02-06   lot=2024-02-13 [écrite≠lot, nommées distinctement]
+
+==============================================================================
+8. ATTRIBUTION DE ZONE — « 174 » de FIX-7 : d'où venait l'erreur
+==============================================================================
+   zone posée par _zone_de_fiche (fiche/annexe zonée)      = 3
+   zone posée par _zone_de_preambule (préambule de zone)   = 21
+   zone posée par code à chiffre de tête (Le Port 1AU/2AU) = 46
+   → FIX-7 annonçait « ≈174 fiches/annexes attribuées » : FAUX. La bascule 849→675 des
+     sans-zone de FIX-7 venait à ~95 % de la SUPPRESSION d'extraits (ré-découpe/réfs de
+     prose), pas d'une attribution ; seuls 3 extraits recevaient alors une zone (_zone_de_fiche).
+
+PLU_CHIFFRES_DONE
+```
+
+## FIN
+
+Réingestion faite (3302 extraits, 21 communes). Les 31 tests du LOT 0 sont **verts** (sortie brute
+ci-dessus). Poussé sans `--no-verify`. **Pas de fusion dans `main`. API arrêtée.**
+
+---
+
 # Outil PLU — compte-rendu OUTIL-PLU-FIX-7 (24/11/2026)
 
 > Branche `fix/outil-plu-1`, worktree `~/Desktop/labuse-plu-fix`. Base `labuse` (PostGIS, user OS
