@@ -1,6 +1,10 @@
 # Bascule 2026 — base commune `labuse` / prod — RUNBOOK (NON exécuté)
 
-> OUTIL-SCAN-FIX-5. Procédure PRÉPARÉE, **non lancée** sur `labuse`/prod (l'agent ne lance `--go`/`--rollback`
+> **⚠ À LANCER QUAND AUCUNE AUTRE SESSION NE LIT LA BASE.** La procédure **n'est pas atomique de bout en
+> bout** : les étapes [2], [3], [4] committent séparément. Après une interruption, **la base reste modifiée
+> jusqu'au `--rollback`** (explicite, nommant la sauvegarde). Prévoir une fenêtre fermée.
+>
+> OUTIL-SCAN-FIX-5/6. Procédure PRÉPARÉE, **non lancée** sur `labuse`/prod (l'agent ne lance `--go`/`--rollback`
 > que sur `labuse_scanfix`). Script : `scripts/bascule_2026_labuse.py`. Vic choisit la cible et le moment.
 
 ## Périmètre RÉDUIT (décision OUTIL-SCAN-FIX-5)
@@ -20,7 +24,14 @@ classement). Le script ne touche NI le feature store (`p_model_*`), NI `data_sou
 | [3] (effet de bord) | `_touch_source` ferait `UPDATE data_sources.last_sync_at` → **NEUTRALISÉ** (snapshot + restauration dans la même transaction) | `data_sources` : **inchangée** | sans objet |
 | [4] blocs | `blocs.build_blocs` (temp `_blocs_pm` ; lit `parcel_residuel`/`residuel_runs`/`parcel_zone_plu` — non écrits) | `parcel_blocs`, `parcel_bloc_membres` | **OUI** |
 
-→ **6 tables servies écrites, toutes dans `CONCERNEES`.** `data_sources` net-inchangée. Temps droppées. **Rien d'autre.**
+→ **6 tables servies écrites, toutes dans `CONCERNEES`.** Temps droppées. **Rien d'autre.**
+
+**`data_sources` — absence de changement établie par LECTURE DU CODE.** `_touch_source` ne modifie que
+`last_sync_at` de la ligne `BODACC (procédures collectives)` ; le script lit cette valeur avant l'UPSERT et
+la ré-écrit après, dans la **même transaction** → effet net nul. Sur `labuse_scanfix` la table `data_sources`
+est **vide** (ligne BODACC absente) : l'empreinte y est donc **vacante** (0 avant / 0 après) et **ne prouve
+rien**. Cette neutralisation **sera VÉRIFIÉE par empreinte avant/après** (`data_sources.last_sync_at`
+identique) **lors de la bascule réelle sur `labuse`**, où la ligne existe.
 
 ## Procédure (une commande ; une étape qui échoue ARRÊTE, code ≠ 0, jamais « [OK] »)
 
@@ -67,10 +78,17 @@ store de 4,3 M lignes** (retirée avec le V-score).
 
 - **Plus de `DROP/CREATE` du feature store** (V-score retiré) → la collision franche d'avant (scoring/
   `calcul-nuit`/candidat tombant sur « relation does not exist ») **n'existe plus**.
-- [2] : swap `injection_sure` sur `parcelle_personne_morale` — verrou consultatif + bascule en ligne ; un
-  lecteur voit l'ancienne version jusqu'au commit (MVCC), jamais une table vide.
-- [4] `build_blocs` : `DELETE`+`INSERT` de `parcel_blocs`/`parcel_bloc_membres` (verrou d'écriture sur ces
-  deux tables le temps du rebuild) → l'outil Blocs et le pont Scan→Blocs voient les blocs bouger.
+- [2] : `recompute_principal`→`remplacer_servie` exécute EN TÊTE de la transaction
+  `ALTER parcelle_personne_morale ADD COLUMN IF NOT EXISTS droit_code/droit_label`. Sur `labuse` ces
+  colonnes n'existent pas encore → l'ALTER prend un **`AccessExclusiveLock` sur `parcelle_personne_morale`,
+  tenu jusqu'au commit** : **tout lecteur de cette table est BLOQUÉ (en attente) pendant l'étape [2]
+  (quelques secondes)** — il ne « voit » pas l'ancienne version, il attend.
+- [4] `build_blocs`→`ensure_schema` exécute EN TÊTE `ALTER parcel_blocs ADD COLUMN IF NOT EXISTS is_public`.
+  Sur `labuse` la colonne existe déjà (no-op) **mais l'ALTER prend quand même un `AccessExclusiveLock` sur
+  `parcel_blocs`, tenu jusqu'au commit** — donc pendant **TOUT** [4], y compris les **minutes** du
+  `compute_blocs` (self-join spatial), AVANT toute écriture. **Les LECTURES de `parcel_blocs` (outil Blocs,
+  pont Scan→Blocs) sont bloquées pendant toute la reconstruction**, pas seulement les écritures.
+  `parcel_bloc_membres` : `DELETE`+`INSERT` (ROW EXCLUSIVE, lectures non bloquées sur cette table).
 - [0]/`--rollback` : `CREATE TABLE AS` / `DELETE+INSERT` des 6 tables (rotation WAL modérée).
 - **Reco** : fenêtre calme ; les propriétaires/blocs changent en quelques minutes. Le classement servi, lui,
   ne bouge pas (V-score hors bascule).
@@ -81,7 +99,8 @@ store de 4,3 M lignes** (retirée avec le V-score).
 (retire aussi `parcelle_pm_droit` et les colonnes `droit_code/droit_label` créées). Prouvé sur
 `labuse_scanfix`, empreinte **toutes colonnes** : retour **identique à l'AVANT, table par table**, y compris
 après un blocs-build RÉEL (669 blocs / 5 367 membres révertés) et après une interruption dure au milieu de
-n'importe quelle étape. `data_sources` n'étant pas modifiée, il n'y a rien à y restaurer.
+n'importe quelle étape. `data_sources` est neutralisée en [3] (net inchangée par le code ; à vérifier par
+empreinte avant/après lors de la bascule réelle sur `labuse`), il n'y a donc rien à y restaurer.
 
 ## ARRÊT
 
