@@ -1022,26 +1022,22 @@ def _barometre_data(db: Session, insee: str | None = None) -> dict:
     # par mutation comme ligne2_terrain_zone : val / terrain TOTAL de la mutation, jamais val÷un-bout).
     # Échantillon robuste (~600-770 ventes/trim) — contrairement à la VEFA (neuf), trop rare pour une série.
     #
-    # OUTIL-COMMUNES-FIX-1 bloquant 1 — QUALIFICATION SUR L'ACTE ENTIER : on ne garde l'acte que si son
-    # bâti TOTAL est nul (`sum(bati_parc) = 0`), jamais un filtre bâti par parcelle qui laisse passer les
-    # actes mixtes (maison + jardin nu) au prix de l'acte entier. Natures Vente + VTB (M101 B2).
-    terrain = db.execute(text("""
-        WITH parc AS (
-          SELECT m.id_mutation, m.id_parcelle, max(m.valeur_fonciere) AS val, max(m.date_mutation) AS dm,
-                 max(COALESCE(m.surface_terrain, 0)) AS terr_parc,
-                 max(COALESCE(m.surface_reelle_bati, 0)) AS bati_parc
-          FROM dvf_mutations_parcelle m
-          WHERE m.nature_mutation IN ('Vente','Vente terrain à bâtir')
-            AND m.valeur_fonciere > 1000 AND m.date_mutation IS NOT NULL
-            AND date_trunc('quarter', m.date_mutation) < date_trunc('quarter', CURRENT_DATE)
-            AND date_trunc('quarter', m.date_mutation) >= :axis_min   -- RECETTE-1 (H3) — axe commun
-            AND (CAST(:insee AS text) IS NULL OR m.code_commune = :insee)
-          GROUP BY m.id_mutation, m.id_parcelle),
-        tot AS (SELECT id_mutation, sum(terr_parc) AS terr_tot, max(val) AS val, max(dm) AS dm
-                FROM parc GROUP BY id_mutation HAVING sum(bati_parc) = 0 AND sum(terr_parc) > 0)
-        SELECT to_char(date_trunc('quarter', dm), 'YYYY"T"Q') AS trimestre, count(*) AS mutations,
-               round(percentile_cont(0.5) WITHIN GROUP (ORDER BY val / NULLIF(terr_tot, 0)))::int AS median_eur_m2_terrain
-        FROM tot WHERE terr_tot > 0 AND val / NULLIF(terr_tot, 0) BETWEEN 5 AND 5000
+    # OUTIL-COMMUNES-FIX-1 puis FIX-3 B-1/B-2 — QUALIFICATION UNIQUE (`ACTE_TERRAIN_NU_CTE`, bâti=0 sur
+    # l'acte entier TOUTES communes) ; `scope` restreint à la commune (code_commune) et à la fenêtre
+    # trimestrielle, puis JOINT la qualification unique. Plus de qualification inline par code_commune qui
+    # ratait le bâti d'une autre commune de l'acte (B-2).
+    from ..marche_dvf_commune import ACTE_TERRAIN_NU_CTE
+    terrain = db.execute(text(f"""
+        WITH {ACTE_TERRAIN_NU_CTE},
+        scope AS (SELECT DISTINCT m.id_mutation FROM dvf_mutations_parcelle m
+                  WHERE m.nature_mutation IN ('Vente','Vente terrain à bâtir') AND m.date_mutation IS NOT NULL
+                    AND date_trunc('quarter', m.date_mutation) < date_trunc('quarter', CURRENT_DATE)
+                    AND date_trunc('quarter', m.date_mutation) >= :axis_min
+                    AND (CAST(:insee AS text) IS NULL OR m.code_commune = :insee))
+        SELECT to_char(date_trunc('quarter', a.d1), 'YYYY"T"Q') AS trimestre, count(*) AS mutations,
+               round(percentile_cont(0.5) WITHIN GROUP (ORDER BY a.val / NULLIF(a.terr_tot, 0)))::int AS median_eur_m2_terrain
+        FROM acte_nu a JOIN scope USING (id_mutation)
+        WHERE a.terr_tot > 0 AND a.val > 1000 AND a.val / NULLIF(a.terr_tot, 0) BETWEEN 5 AND 5000
         GROUP BY 1 ORDER BY 1 DESC LIMIT 16"""), par).mappings().all()
     # §2 — NEUF : PAS de série (VEFA DVF trop rare : 0-4 ventes/trim récents → une courbe sur 2 points
     # mentirait). On sert la RÉFÉRENCE actuelle. Île : dvf_prix_sortie_neuf. Commune : le moteur UNIQUE
@@ -1089,14 +1085,16 @@ def _barometre_data(db: Session, insee: str | None = None) -> dict:
     dvf_l = [dict(r) for r in dvf]
     terrain_l = [dict(r) for r in terrain]
     permis_l = [dict(r) for r in permis]
-    for s in (dvf_l, terrain_l, permis_l):
-        _marque_partiel(s, "mutations" if s is not permis_l else "permis")
-    # à corriger 5 — COUVERTURE de la série PERMIS : son dernier trimestre est partiel si Sitadel ne
-    # couvre pas tout le trimestre (données arrêtées en août → 2026T3 = 2 mois sur 3), indépendamment du
-    # volume. Le relecteur l'a mesuré : le drapeau était faux pour l'île et Saint-Denis (volume stable).
-    # On ne touche PAS DVF/terrain (ils gardent le heuristique de volume `_marque_partiel`, déjà juste) :
-    # le drapeau d'UNE série ne doit plus être lu pour une AUTRE (Sitadel ≠ DVF).
+    # OUTIL-COMMUNES-FIX-2 #5 — « PARTIEL » = TRIMESTRE INCOMPLET (couverture), PAS « faible volume ».
+    # CHAQUE série porte SA PROPRE marque, lue de la borne de SA source (Sitadel ≠ DVF ventes ≠ DVF
+    # parcelles) : un trimestre est partiel si sa fin dépasse la dernière donnée de la source. On retire
+    # le heuristique de volume (`_marque_partiel`) qui grisait de bons trimestres à faible volume et dont
+    # le drapeau « ancien » était lu pour toute la ligne au front.
     _maj_sit = db.execute(text("SELECT max(date::date) FROM sitadel_permits")).scalar()
+    _maj_dvf = db.execute(text("SELECT max(date_mutation) FROM dvf_mutations")).scalar()
+    _maj_dvfp = db.execute(text("SELECT max(date_mutation) FROM dvf_mutations_parcelle")).scalar()
+    _marque_partiel_couverture(dvf_l, _maj_dvf)
+    _marque_partiel_couverture(terrain_l, _maj_dvfp)
     _marque_partiel_couverture(permis_l, _maj_sit)
     return {"perimetre": (f"{nom} (DVF communal, Sitadel)" if nom
                           else "île entière (24 communes DVF, flux Sitadel régional)"),

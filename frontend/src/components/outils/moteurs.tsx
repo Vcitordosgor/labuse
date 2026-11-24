@@ -761,8 +761,9 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
   const perm = Object.fromEntries((d.permis_trimestres ?? []).map((r: any) => [r.trimestre, r]))
   // union des trimestres (l'ancien porte l'axe de référence), tri chronologique.
   const tris = [...new Set([...ancien.map((r) => r.trimestre), ...Object.keys(terr), ...Object.keys(perm)])].sort()
-  // RECETTE-OUTILS-1 (point 10) — `dernierDvf`/`trousRecents` retirés avec l'encart « Ancien & terrain ».
-  const partiel = new Set(ancien.filter((r) => r.partiel).map((r) => r.trimestre))
+  // OUTIL-COMMUNES-FIX-2 #5 — plus de drapeau « partiel » GLOBAL lu sur la seule série ancien : chaque
+  // cellule porte LA marque de SA série (couverture de SA source), un trimestre incomplet est grisé
+  // colonne par colonne.
   const ancByT = Object.fromEntries(ancien.map((r) => [r.trimestre, r]))
   const th = 'sticky top-0 z-10 bg-bg-3 px-2 py-1.5 text-right font-medium text-txt-dim first:text-left'
   return (
@@ -781,13 +782,14 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
           <tbody>
             {tris.map((t) => {
               const a = ancByT[t] ?? {}; const tn = terr[t] ?? {}; const pe = perm[t] ?? {}
-              const p = partiel.has(t)
+              const part = (r: any) => r?.partiel ? 'opacity-45' : ''
+              const mark = (r: any) => r?.partiel ? <span className="text-st-creuser" title="trimestre incomplet (données non couvertes jusqu'à la fin du trimestre)"> ·part.</span> : null
               return (
-                <tr key={t} className={`border-b border-line ${p ? 'opacity-45' : ''}`}>
-                  <td className="px-2 py-1 font-mono text-txt-dim">{t}{p && <span className="text-st-creuser"> ·partiel</span>}</td>
-                  <td className="px-2 py-1 text-right font-mono text-txt"><b className="text-txt-hi">{fmt(a.median_eur_m2_bati)}</b> <span className="text-txt-off">{a.mutations != null ? `(${fmt(a.mutations)})` : ''}</span></td>
-                  <td className="px-2 py-1 text-right font-mono text-txt"><b className="text-txt-hi">{fmt(tn.median_eur_m2_terrain)}</b> <span className="text-txt-off">{tn.mutations != null ? `(${fmt(tn.mutations)})` : ''}</span></td>
-                  <td className="px-2 py-1 text-right font-mono text-txt-hi">{fmt(pe.permis)}</td>
+                <tr key={t} className="border-b border-line">
+                  <td className="px-2 py-1 font-mono text-txt-dim">{t}</td>
+                  <td className={`px-2 py-1 text-right font-mono text-txt ${part(a)}`}><b className="text-txt-hi">{fmt(a.median_eur_m2_bati)}</b> <span className="text-txt-off">{a.mutations != null ? `(${fmt(a.mutations)})` : ''}</span>{mark(a)}</td>
+                  <td className={`px-2 py-1 text-right font-mono text-txt ${part(tn)}`}><b className="text-txt-hi">{fmt(tn.median_eur_m2_terrain)}</b> <span className="text-txt-off">{tn.mutations != null ? `(${fmt(tn.mutations)})` : ''}</span>{mark(tn)}</td>
+                  <td className={`px-2 py-1 text-right font-mono text-txt-hi ${part(pe)}`}>{fmt(pe.permis)}{mark(pe)}</td>
                 </tr>
               )
             })}
@@ -800,7 +802,7 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
         Méthode
         <Tip garder tip="Ancien : médiane €/m² bâti, ventes strictes DVF (VEFA exclu). Terrain : médiane €/m² terrain nu (bâti=0). Permis : autorisés/trimestre (Sitadel). Volume (n) entre parenthèses."><span className="cursor-help rounded-full border border-line-2 px-1 text-[8px]">i</span></Tip>
       </div>
-      {tris.some((t) => partiel.has(t)) && <p className="mt-0.5 text-[9.5px] text-st-creuser">· dernier trimestre partiel (délai de publication DVF) — grisé, hors tendance.</p>}
+      {(ancien.some((r) => r.partiel) || Object.values(terr).some((r: any) => r?.partiel) || Object.values(perm).some((r: any) => r?.partiel)) && <p className="mt-0.5 text-[9.5px] text-st-creuser">· « part. » = trimestre INCOMPLET pour CETTE série (source non couverte jusqu'à la fin du trimestre) — cellule grisée, hors tendance.</p>}
       {/* RECETTE-OUTILS-1 (point 10) — encart « Ancien & terrain : DVF publié jusqu'au … » retiré. */}
     </div>
   )

@@ -38,6 +38,34 @@ NATURE_TERRAIN_SQL = "dm.nature_mutation IN ('Vente', 'Vente terrain à bâtir')
 BORNE_BATI = (1000, 12000)
 BORNE_TERRAIN = (50, 4000)
 
+#: OUTIL-COMMUNES-FIX-3 (B-1/B-2) — LA QUALIFICATION UNIQUE DU TERRAIN NU. Un acte est une vente de
+#: terrain nu si et seulement si AUCUNE de ses lignes DVF — TOUTES communes confondues — ne porte de
+#: bâti (`sum(bati) = 0` sur l'ACTE ENTIER). La surface terrain et la valeur sont reconstituées sur
+#: l'acte entier (dédoublonnage par couple (mutation, parcelle) : `max` puis `sum`). Natures Vente + VTB.
+#:
+#: TOUS les lecteurs du terrain nu (tableau, fiche commune, Comparer, Assemblage, fiche parcelle, Estimer,
+#: Étude de zone, repère du Bilan, Radar île, série baromètre, banc) EMBARQUENT ce CTE et JOIGNENT dessus
+#: leur périmètre (commune, zone, secteur, rayon, polygone) — UNE SEULE qualification, ZÉRO acte bâti ne
+#: survit nulle part. Avant : trois qualifications divergentes (par `code_commune`, par `JOIN parcels`,
+#: dans zone.py) laissaient fuir ~16 actes à parcelle disparue (B-1) et 6 actes multi-communes (B-2 ;
+#: p.ex. 2021-1677229 : maison 75 m² à Sainte-Marie + 28 m² nus au Tampon). `code_commune` ne voyait que
+#: la commune ; la jointure cadastrale ratait les parcelles disparues ; les deux sont remplacées ici.
+#:
+#: COÛT : scan complet de `dvf_mutations_parcelle` (indispensable pour voir le bâti d'une AUTRE commune) —
+#: le tableau des 24 est CACHÉ (raw_rows), les fiches tolèrent le surcoût (~150 ms).
+ACTE_TERRAIN_NU_CTE = """acte_nu AS (
+  SELECT id_mutation, sum(terr_p) AS terr_tot, max(val) AS val, max(mill) AS mill,
+         min(d0) AS d0, max(d1) AS d1
+  FROM (SELECT id_mutation, id_parcelle,
+               max(COALESCE(surface_reelle_bati, 0)) AS bati_p,
+               max(COALESCE(surface_terrain, 0))     AS terr_p,
+               max(valeur_fonciere) AS val, max(millesime) AS mill,
+               min(date_mutation) AS d0, max(date_mutation) AS d1
+        FROM dvf_mutations_parcelle
+        WHERE nature_mutation IN ('Vente', 'Vente terrain à bâtir')
+        GROUP BY id_mutation, id_parcelle) pp
+  GROUP BY id_mutation HAVING sum(bati_p) = 0 AND sum(terr_p) > 0)"""
+
 #: type_local DVF du type de bien bâti.
 _FRAG = {"maison": "Maison", "appartement": "Appartement"}
 
@@ -94,27 +122,27 @@ def _median_terrain(db: Session, commune: str, seuil: int) -> dict:
     ses parcelles ne porte de bâti (`sum(bati) = 0` sur toute la mutation) — un acte mixte (maison +
     jardin nu) n'en est pas une et ne reçoit JAMAIS le prix de l'acte entier rapporté à la seule
     surface nue (cas 2021-1672641). La surface terrain est RECONSTITUÉE sur toutes les parcelles de
-    l'acte (max par parcelle puis somme par mutation), millésime entier, natures Vente+VTB (M101 B2)."""
+    l'acte (max par parcelle puis somme par mutation), millésime entier, natures Vente+VTB (M101 B2).
+
+    OUTIL-COMMUNES-FIX-2 #1 puis FIX-3 B-1/B-2 — QUALIFICATION UNIQUE (`ACTE_TERRAIN_NU_CTE`) sur l'acte
+    entier TOUTES COMMUNES : ni `JOIN parcels` (ratait la parcelle disparue), ni `code_commune` (ne voyait
+    pas le bâti d'une autre commune de l'acte). On joint la qualification unique à l'appartenance de la
+    commune (une parcelle de l'acte en code_commune)."""
     lo, hi = BORNE_TERRAIN
+    insee = db.execute(text("SELECT left(min(idu), 5) FROM parcels WHERE lower(commune) = lower(:c)"),
+                       {"c": commune}).scalar()
     r = db.execute(text(
-        "WITH parc AS ("   # un enregistrement par (mutation, parcelle) : dédoublonnage DVF
-        "  SELECT dm.id_mutation, dm.id_parcelle, max(dm.valeur_fonciere) AS vf, max(dm.date_mutation) AS d, "
-        "         max(COALESCE(dm.surface_terrain, 0)) AS terr_p, "
-        "         max(COALESCE(dm.surface_reelle_bati, 0)) AS bati_p "
-        "  FROM dvf_mutations_parcelle dm JOIN parcels p ON p.idu = dm.id_parcelle "
-        "  WHERE lower(p.commune) = lower(:c) AND " + NATURE_TERRAIN_SQL + " "
-        "  GROUP BY dm.id_mutation, dm.id_parcelle), "
-        # ACTE ENTIER : on garde la mutation UNIQUEMENT si son bâti total est nul (sum(bati_p)=0).
-        "tot AS (SELECT id_mutation, sum(terr_p) AS terr_tot, max(vf) AS vf, "
-        "               min(d) AS d0, max(d) AS d1 FROM parc GROUP BY id_mutation "
-        "        HAVING sum(bati_p) = 0 AND sum(terr_p) > 0) "
+        "WITH " + ACTE_TERRAIN_NU_CTE + ", "
+        "comm AS (SELECT DISTINCT id_mutation FROM dvf_mutations_parcelle "
+        "         WHERE code_commune = :insee AND " + NATURE_TERRAIN_SQL.replace("dm.", "") + "), "
+        "tot AS (SELECT a.val AS vf, a.terr_tot, a.d0, a.d1 FROM acte_nu a JOIN comm USING (id_mutation)) "
         "SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY vf / NULLIF(terr_tot, 0)) "
         "         FILTER (WHERE vf / NULLIF(terr_tot, 0) BETWEEN :lo AND :hi) AS med, "
         "       count(*) FILTER (WHERE vf / NULLIF(terr_tot, 0) BETWEEN :lo AND :hi) AS n, "
         "       to_char(min(d0), 'YYYY') AS y0, to_char(max(d1), 'YYYY') AS y1, "
         "       to_char(max(d1), 'YYYY-MM-DD') AS mill "
         "FROM tot"),
-        {"c": commune, "lo": lo, "hi": hi}).mappings().first() or {}
+        {"insee": insee, "lo": lo, "hi": hi}).mappings().first() or {}
     n = int(r.get("n") or 0)
     mill = r.get("mill")
     if n < seuil or r.get("med") is None:

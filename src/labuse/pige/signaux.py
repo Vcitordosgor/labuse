@@ -81,25 +81,18 @@ def _radar_medianes(db: Session, commune: str) -> dict:
     return dict(r)
 
 
-# OUTIL-COMMUNES-FIX-1 bloquant 1 — QUALIFICATION SUR L'ACTE ENTIER : `allparc` lit TOUTES les parcelles
-# de l'acte (pour sommer le bâti et reconstituer la surface), `tot` ne garde que les actes sans bâti
-# (`sum(bati_parc) = 0`), `muz` repère les actes touchant une zone U/AU. Plus de filtre bâti par parcelle
-# qui laissait passer les actes mixtes au prix de l'acte entier. Natures Vente + VTB (M101 B2).
-_SQL_TERRAIN_ILE = """
-    WITH allparc AS (
-      SELECT m.id_mutation, m.id_parcelle, max(m.valeur_fonciere) AS val, max(m.millesime) AS mill,
-             max(COALESCE(m.surface_terrain,0)) AS terr_parc, max(COALESCE(m.surface_reelle_bati,0)) AS bati_parc
-      FROM dvf_mutations_parcelle m
-      WHERE m.nature_mutation IN ('Vente','Vente terrain à bâtir')
-      GROUP BY m.id_mutation, m.id_parcelle),
-    tot AS (SELECT id_mutation, sum(terr_parc) AS terr_tot, max(val) AS val, max(mill) AS mill
-            FROM allparc GROUP BY id_mutation HAVING sum(bati_parc) = 0 AND sum(terr_parc) > 0),
+# OUTIL-COMMUNES-FIX-3 B-1 — QUALIFICATION UNIQUE : le Radar « toute l'île » embarque LE CTE partagé
+# `ACTE_TERRAIN_NU_CTE` (bâti=0 sur l'acte entier, toutes communes) et repère via `muz` les actes touchant
+# une zone U/AU. Plus de qualification inline parallèle (la même qu'ici, désormais mutualisée).
+from ..marche_dvf_commune import ACTE_TERRAIN_NU_CTE as _ACTE_NU
+_SQL_TERRAIN_ILE = f"""
+    WITH {_ACTE_NU},
     muz AS (SELECT DISTINCT m.id_mutation FROM dvf_mutations_parcelle m
             JOIN parcel_zone_plu z ON z.idu = m.id_parcelle
             WHERE z.zone_fam IN ('U','AU') AND m.nature_mutation IN ('Vente','Vente terrain à bâtir'))
-    SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY tot.val / NULLIF(tot.terr_tot,0)) AS med,
-           count(*) AS n, max(tot.mill) AS mill
-    FROM muz JOIN tot USING (id_mutation) WHERE tot.terr_tot > 0"""
+    SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY a.val / NULLIF(a.terr_tot,0)) AS med,
+           count(*) AS n, max(a.mill) AS mill
+    FROM muz JOIN acte_nu a USING (id_mutation) WHERE a.terr_tot > 0"""
 
 
 def _dvf_terrain(db: Session, commune: str | None) -> dict:

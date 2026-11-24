@@ -417,10 +417,10 @@ export interface ContexteCommune {
     // RECETTE-PROD-1 (F) — seuil UNIQUE (5, = Radar) : sous ce seuil, ni médian ni écart (demande_sous_seuil)
     demande_seuil_n?: number; demande_sous_seuil?: boolean
     prix_demande_median_eur_m2: number | null; prix_demande_n: number | null
-    ecart_demande_acte_pct: number | null; prix_acte_eur_m2: number | null; source: string
+    ecart_demande_acte_pct: number | null; prix_acte_eur_m2: number | null; prix_acte_n?: number | null; prix_acte_periode?: string | null; source: string
     derniere_collecte?: string | null   // RECETTE-PROD-1 (F) — date du dernier relevé Radar (ISO)
   } | null
-  risques: { ppr_pct: number | null; mouvement_terrain_pct: number | null; catnat_arretes: number; catnat_detail?: { type_peril: string; date_debut: string | null; date_fin: string | null; date_arrete: string | null; code_national: string | null; date_publication_jo: string | null }[]; parc_national: boolean; azi_tri?: { azi: { libelle?: string }[]; tri: { libelle?: string }[]; detail?: string } | null; source: string }
+  risques: { ppr_pct: number | null; mouvement_terrain_pct: number | null; catnat_arretes: number; catnat_perils?: number; catnat_detail?: { type_peril: string; date_debut: string | null; date_fin: string | null; date_arrete: string | null; code_national: string | null; date_publication_jo: string | null }[]; parc_national: boolean; azi_tri?: { azi: { libelle?: string }[]; tri: { libelle?: string }[]; detail?: string } | null; source: string }
   population: {
     habitants: number | null; menages: number | null; niveau_vie_moyen_eur: number | null
     // COMMUNE-FIX-1 (A1) — population LÉGALE INSEE (municipale) : millésime + population totale

@@ -54,15 +54,14 @@ communes:
     confiance: "SOURCE"
   "97404":
     commune: "Étang-Salé"
-    procedure: "cloturee"
-    stade: "approuvee_probable"
-    date_acte: ABSENT
+    procedure: "revision_plu"
+    stade: "prescrite"
+    date_acte: "2022-04-28"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable (17/09/2025)"
+    source: "Sudocuh 31/12/2024 — révision prescrite le 2022-04-28. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-09-17) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
-    confiance: "DEDUIT"
-    raisonnement: "Sudocuh liste une révision prescrite 2022-04-28 MAIS l'opposable M40/GPU est daté 2025-09-17 (postérieur) → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). Non confirmé par la délibération d'approbation elle-même → DEDUIT, hors radar actif."
+    confiance: "SOURCE"
   "97405":
     commune: "Petite-Île"
     procedure: "aucune"
@@ -75,15 +74,14 @@ communes:
     confiance: "SOURCE"
   "97406":
     commune: "Plaine-des-Palmistes"
-    procedure: "cloturee"
-    stade: "approuvee_probable"
-    date_acte: ABSENT
+    procedure: "revision_plu"
+    stade: "prescrite"
+    date_acte: "2015-09-24"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable (27/05/2023)"
+    source: "Sudocuh 31/12/2024 — révision prescrite le 2015-09-24. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2023-05-27) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
-    confiance: "DEDUIT"
-    raisonnement: "Sudocuh liste une révision prescrite 2015-09-24 MAIS l'opposable M40/GPU est daté 2023-05-27 (postérieur) → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). Non confirmé par la délibération d'approbation elle-même → DEDUIT, hors radar actif."
+    confiance: "SOURCE"
   "97407":
     commune: "Port"
     procedure: "aucune"
@@ -127,15 +125,14 @@ communes:
     note: "Sudocuh ne trace pas les modifications (procédure légère) : d'éventuelles modifs postérieures ne sont pas visibles ici — l'absence de procédure LOURDE est datée, les modifs restent à confirmer en mairie (M40)."
   "97411":
     commune: "Saint-Denis"
-    procedure: "cloturee"
-    stade: "approuvee_probable"
-    date_acte: ABSENT
+    procedure: "revision_plu"
+    stade: "prescrite"
+    date_acte: "2024-09-27"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable (23/04/2026)"
+    source: "Sudocuh 31/12/2024 — révision générale prescrite le 2024-09-27. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2026-04-23, document 97411_PLU_20260805) NE PROUVE PAS la clôture — une publication de document n'est pas la délibération d'approbation de la révision ; le GPU donne la procédure EN COURS. On ne déduit plus la clôture ; statut à lever par la délibération d'approbation."
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
-    confiance: "DEDUIT"
-    raisonnement: "Sudocuh liste une révision prescrite 2024-09-27 MAIS l'opposable M40/GPU est daté 2026-04-23 (postérieur) → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). Non confirmé par la délibération d'approbation elle-même → DEDUIT, hors radar actif."
+    confiance: "SOURCE"
   "97412":
     commune: "Saint-Joseph"
     procedure: "aucune"
@@ -158,26 +155,24 @@ communes:
     confiance: "SOURCE"
   "97414":
     commune: "Saint-Louis"
-    procedure: "cloturee"
-    stade: "approuvee_probable"
-    date_acte: ABSENT
+    procedure: "revision_plu"
+    stade: "prescrite"
+    date_acte: "2022-02-25"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable (18/12/2025)"
+    source: "Sudocuh 31/12/2024 — révision prescrite le 2022-02-25. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-12-18) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
-    confiance: "DEDUIT"
-    raisonnement: "Sudocuh liste une révision prescrite 2022-02-25 MAIS l'opposable M40/GPU est daté 2025-12-18 (postérieur) → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). Non confirmé par la délibération d'approbation elle-même → DEDUIT, hors radar actif."
+    confiance: "SOURCE"
   "97415":
     commune: "Saint-Paul"
-    procedure: "cloturee"
-    stade: "approuvee_probable"
-    date_acte: ABSENT
+    procedure: "revision_plu"
+    stade: "prescrite"
+    date_acte: "2021-12-16"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable (17/12/2025)"
+    source: "Sudocuh 31/12/2024 — révision prescrite le 2021-12-16. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-12-17) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
-    confiance: "DEDUIT"
-    raisonnement: "Sudocuh liste une révision prescrite 2021-12-16 MAIS l'opposable M40/GPU est daté 2025-12-17 (postérieur) → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). Non confirmé par la délibération d'approbation elle-même → DEDUIT, hors radar actif."
+    confiance: "SOURCE"
   "97416":
     commune: "Saint-Pierre"
     procedure: "aucune"
@@ -201,15 +196,14 @@ communes:
     note: "Élaboration PLU prescrite il y a 24 ans, commune toujours en RNU, aucun acte postérieur connu — dormante. Au radar (factuel) mais pas de vigilance sursis."
   "97418":
     commune: "Sainte-Marie"
-    procedure: "cloturee"
-    stade: "approuvee_probable"
-    date_acte: ABSENT
+    procedure: "revision_plu"
+    stade: "prescrite"
+    date_acte: "2021-06-03"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable (26/11/2025)"
+    source: "Sudocuh 31/12/2024 — révision prescrite le 2021-06-03. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-11-26) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
-    confiance: "DEDUIT"
-    raisonnement: "Sudocuh liste une révision prescrite 2021-06-03 MAIS l'opposable M40/GPU est daté 2025-11-26 (postérieur) → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). Non confirmé par la délibération d'approbation elle-même → DEDUIT, hors radar actif."
+    confiance: "SOURCE"
   "97419":
     commune: "Sainte-Rose"
     procedure: "aucune"
@@ -222,15 +216,14 @@ communes:
     confiance: "SOURCE"
   "97420":
     commune: "Sainte-Suzanne"
-    procedure: "cloturee"
-    stade: "approuvee_probable"
-    date_acte: ABSENT
+    procedure: "revision_plu"
+    stade: "prescrite"
+    date_acte: "2018-02-28"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable (29/09/2025)"
+    source: "Sudocuh 31/12/2024 — révision prescrite le 2018-02-28. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-09-29) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
     source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
     date_constat: "2026-08-06"
-    confiance: "DEDUIT"
-    raisonnement: "Sudocuh liste une révision prescrite 2018-02-28 MAIS l'opposable M40/GPU est daté 2025-09-29 (postérieur) → la révision a été approuvée depuis (Sudocuh 31/12/2024 périmé). Non confirmé par la délibération d'approbation elle-même → DEDUIT, hors radar actif."
+    confiance: "SOURCE"
   "97421":
     commune: "Salazie"
     procedure: "aucune"

@@ -49,11 +49,21 @@ def test_dvf_une_seule_mediane_meme_table_sur_3_communes():
             assert helper_geom == helper_com, f"{c}: geom {helper_geom} != commune {helper_com}"
 
 
-def test_zone_ne_lit_plus_la_table_eclatee():
-    """E1 — plus aucune requête de zone/marché ne LIT la table éclatée (FROM dvf_mutations_parcelle)."""
+def test_zone_terrain_lit_la_table_avec_terrain_nu_qualifiee():
+    """OUTIL-COMMUNES-FIX-2 #1 puis FIX-3 B-1 — MISE À JOUR de l'ex-garde E1. Le relecteur a établi que
+    `dvf_mutations` (maille mutation) ne porte AUCUN terrain nu (31 171 mutations TOUTES bâties) : la requête
+    terrain de l'Étude de zone y rendait toujours n=0. Le terrain nu DOIT donc lire la SEULE table qui en
+    contient, `dvf_mutations_parcelle` — mais qualifié sur l'ACTE ENTIER. Depuis FIX-3 cette qualification
+    est la fonction UNIQUE `ACTE_TERRAIN_NU_CTE` (que `zone.py` embarque), dont la définition porte le
+    `HAVING sum(bati_p) = 0`. Le BÂTI, lui, passe toujours par `dvf_mediane` (table mutation)."""
     import pathlib
-    src = pathlib.Path(__file__).resolve().parent.parent / "src" / "labuse" / "zone.py"
-    assert "FROM dvf_mutations_parcelle" not in src.read_text(encoding="utf-8")
+    root = pathlib.Path(__file__).resolve().parent.parent / "src" / "labuse"
+    src = (root / "zone.py").read_text(encoding="utf-8")
+    assert "FROM dvf_mutations_parcelle" in src, "le terrain nu doit lire la seule table qui en contient"
+    assert "ACTE_TERRAIN_NU_CTE" in src, "le read terrain nu doit appeler la qualification UNIQUE (FIX-3 B-1)"
+    cte = (root / "marche_dvf_commune.py").read_text(encoding="utf-8")
+    assert "ACTE_TERRAIN_NU_CTE = " in cte and "HAVING sum(bati_p) = 0" in cte, \
+        "la fonction unique doit qualifier sur l'acte entier"
 
 
 def test_cinq_mortes_retiree_avec_motif():
