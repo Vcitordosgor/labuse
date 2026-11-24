@@ -17,7 +17,14 @@ from sqlalchemy import text
 # NB communes-tableau : `prix_ancien` est une COLONNE d'affichage (pas un axe composite) — hors INDICATEURS.
 INDICATEURS = {
     "stock":     ("Stock d'opportunités (brûlantes + chaudes)", +1, 0.30, "run servi", "Sourcé"),
-    "velocite":  ("Vélocité admin (délai médian dépôt→autorisation, mois)", -1, 0.15, "m10 / SITADEL", "Sourcé"),
+    # OUTIL-PERMIS-FIX-5 (Point 2) — le DÉLAI n'a jamais été mesuré : le dépôt n'est connu qu'à l'ANNÉE
+    # (AN_DEPOT → 1er janvier), ce qui gonfle le délai de +4 mois en médiane (mesuré sur 375 permis à vraie
+    # date de dépôt : réel 3 mois vs 1er-janvier 7). « On ne montre pas un délai faux » (Vic) : l'axe est
+    # RETIRÉ DE L'AFFICHAGE partout (colonne, fiche, PDF, Copilote) ; il reste au CLASSEMENT (poids 0,15,
+    # calcul inchangé) — SIGNALÉ ici dans le libellé, avec son poids.
+    "velocite":  ("Vélocité admin (délai dépôt→autorisation) — NON MESURÉ : dépôt connu à l'année ⇒ délai "
+                  "gonflé (+4 mois méd.) ; RETIRÉ de l'affichage, conservé au classement (poids 0,15)",
+                  -1, 0.15, "m10 / SITADEL", "Sourcé"),
     "permis":    ("Dynamisme permis (SITADEL, 5 ans)", +1, 0.15, "SITADEL", "Sourcé"),
     "deficit_sru": ("Déficit SRU (objectif − taux LLS, points)", +1, 0.15, "DHUP", "Sourcé"),
     "pression_zan": ("Pression ZAN (ENAF consommé 2021-2024, ha)", -1, 0.10, "Cerema", "Sourcé"),
@@ -340,12 +347,15 @@ def permis_point_mort(db, commune: str | None, months: int, dmax) -> int:
     from ... import permis_classe
     if not permis_classe.bati_table_existe(db):   # sans la couche mesurée : aucun dormant (jamais un 500)
         return 0
+    # OUTIL-PERMIS-FIX-3 (Point 2) — l'affinage ne peut que RESTREINDRE les 854 : seuil d'âge clampé à
+    # ≥ 36 mois (un « Affiner → 24 m+ » ne doit jamais AJOUTER de dormants).
+    m_dormant = max(int(months), permis_classe.DORMANT_MOIS)
     pred = permis_classe._dormant_sql("s.", ":dmax").replace(
         f"interval '{permis_classe.DORMANT_MOIS} months'", "(:m || ' months')::interval")
     return int(db.execute(text(
         f"SELECT count(*) FROM sitadel_permits s"
         f" WHERE (CAST(:c AS text) IS NULL OR s.commune = :c) AND {pred}"),
-        {"c": commune, "m": months, "dmax": dmax}).scalar() or 0)
+        {"c": commune, "m": m_dormant, "dmax": dmax}).scalar() or 0)
 
 
 # ── piscines (extraction de api/modules.py:prospection_piscines) ────────────────────────────────

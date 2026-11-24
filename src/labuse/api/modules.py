@@ -628,11 +628,15 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
                 " AND (CAST(:c AS text) IS NULL OR commune = :c)"
                 " AND (CAST(:nat AS text) IS NULL OR type = :nat)"),
                 {"c": commune, "nat": nature}).scalar()
+            # OUTIL-PERMIS-FIX-2 (G2) — la fraîcheur de la couche de bâti (qui fonde « aucun bâtiment
+            # détecté ») : date de mesure servie pour le « i » des dormants + signal si la BD TOPO a bougé.
+            from ..faisabilite.viabilisation_build import bati_emprise_fraicheur
             return {"total": sum(parts.values()),
                     "geocodes": sum(int(r["geo"] or 0) for r in rows),
                     "donnees_jusqu_au": dmax.date().isoformat(), "coupure_recent": coupure_recent,
                     "etats": {k: parts.get(k, 0) for k in permis_classe.ETATS},
-                    "sans_date": int(sans_date or 0)}
+                    "sans_date": int(sans_date or 0),
+                    "bati_fraicheur": bati_emprise_fraicheur(db)}
         c = db.execute(text(
             f"""SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
                FROM sitadel_permits
@@ -742,16 +746,27 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
                s.raw->>'geoloc' AS geoloc,
                s.raw->>'petitioner_name' AS porteur, s.raw->>'petitioner_siren' AS porteur_siren,
                s.idu_codes,
-               d.date_depot::text AS date_depot, d.valide AS delai_valide,
-               d.delai_mois, d.date_achevement::text AS date_achevement,
+               -- OUTIL-PERMIS-FIX-4 (Point 4) — le DÉPÔT de la fiche n'est montré que s'il est une DATE
+               -- PRÉCISE FIABLE : `date_depot` (DR_DEPOT) STRICTEMENT antérieure à l'autorisation ET non
+               -- un 1er janvier (= proxy d'ANNÉE, 10 787 cas). Restent 377 vraies dates précises. Sinon
+               -- (DR_DEPOT = autorisation / postérieur / proxy / absent) → NI dépôt NI délai (la couche
+               -- des délais des Communes utilise l'ANNÉE de dépôt, trop imprécise pour une fiche).
+               CASE WHEN s.date_depot IS NOT NULL AND s.date IS NOT NULL AND s.date_depot < s.date
+                    AND NOT (EXTRACT(MONTH FROM s.date_depot) = 1 AND EXTRACT(DAY FROM s.date_depot) = 1)
+                    THEN s.date_depot::date::text END AS date_depot,
+               CASE WHEN s.date_depot IS NOT NULL AND s.date IS NOT NULL AND s.date_depot < s.date
+                    AND NOT (EXTRACT(MONTH FROM s.date_depot) = 1 AND EXTRACT(DAY FROM s.date_depot) = 1)
+                    THEN (EXTRACT(YEAR FROM s.date)::int - EXTRACT(YEAR FROM s.date_depot)::int) * 12
+                       + (EXTRACT(MONTH FROM s.date)::int - EXTRACT(MONTH FROM s.date_depot)::int) END AS delai_mois,
                CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
         FROM sitadel_permits s
-        LEFT JOIN m10_permit_delais d ON d.permit_id = s.permit_id
         WHERE s.permit_id = :pid"""), {"pid": permit_id}).mappings().first()
     if not r:
         raise HTTPException(404, "Permis introuvable")
+    # OUTIL-PERMIS-FIX-4 (Point 4) — délai affiché UNIQUEMENT si la date de dépôt est fiable (précise,
+    # antérieure à l'autorisation) : jamais « 0 mois » issu d'un DR_DEPOT = date d'autorisation (défaut).
     delai = None
-    if r["delai_valide"] and r["delai_mois"] is not None:
+    if r["delai_mois"] is not None and r["date_depot"] is not None:
         delai = {"mois": r["delai_mois"],
                  "libelle": f"{r['delai_mois']} mois entre dépôt et autorisation"}
     return {
@@ -765,7 +780,7 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
         # FRONT-CHIFFRES-2 (F32) — la note d'incohérence dépôt/autorisation (seuil 1 mois) vient de la
         # fonction PARTAGÉE `miroir.permis_incoherence_note`, plus de la regex de seuil au front.
         "note_incoherence": _miroir.permis_incoherence_note(r["date_depot"], r["date_autorisation"]) or None,
-        "date_achevement": r["date_achevement"] or r["daact"],
+        "date_achevement": r["daact"],
         "delai_instruction": delai,
         # KELFONCIER-FIX-2 (Lot D) — statut par la fonction PARTAGÉE de la fiche (ingestion/permits.py) :
         # l'annulé (état 4) est dit « annulé », plus « Chantier ouvert » (divergence de l'ancien _ETAT_LABELS).
@@ -878,12 +893,16 @@ def promesses(commune: str | None = None, months: int = 36,   # OUTIL-PERMIS-FIX
     if count_only:
         from ..registre.moteurs.commune import permis_point_mort
         return {"total": permis_point_mort(db, commune, months, dmax)}
-    # CTE MATERIALIZED = parade au plan « fast-start » de LIMIT/OFFSET-0. DORMANT = la définition UNIQUE
-    # (OUTIL-PERMIS-FIX-1 LOT 2) : PC autorisé, NON annulé (≠4), NON commencé (≠5), sans DAACT, > 3 ans
-    # (ancré sur :dmax), ET aucune parcelle bâtie (emprise mesurée ≥ seuil dans `parcel_bati_emprise`).
-    # La parcelle AFFICHÉE est la MOINS bâtie du permis (celle qui porte l'opportunité). §3 : la géom du
-    # permis est rendue en POINTS CLIQUABLES (payload léger, non-géocodés listés geom NULL).
-    rows = db.execute(text("""
+    # OUTIL-PERMIS-FIX-3 (Point 2) — la liste lit la DÉFINITION UNIQUE (`permis_classe._dormant_sql`),
+    # plus un prédicat recopié : même dormant que la partition, le filtre, le compteur et la fiche commune.
+    # Et l'affinage ne peut QUE RESTREINDRE les 854 : on CLAMPE le seuil d'âge à ≥ 36 mois (DORMANT_MOIS)
+    # — « Affiner → 24 m+ » ne doit jamais AJOUTER de dormants (constat RELECTURE-3 : 1 118 au lieu de 854).
+    m_dormant = max(int(months), permis_classe.DORMANT_MOIS)
+    dormant_pred = permis_classe._dormant_sql("s.", ":dmax").replace(
+        f"interval '{permis_classe.DORMANT_MOIS} months'", "(:m || ' months')::interval")
+    # CTE MATERIALIZED = parade au plan « fast-start » de LIMIT/OFFSET-0. La parcelle AFFICHÉE est la MOINS
+    # bâtie du permis (celle qui porte l'opportunité). §3 : la géom du permis est rendue en POINTS CLIQUABLES.
+    rows = db.execute(text(f"""
         WITH cand AS MATERIALIZED (
             SELECT s.permit_id, s.type, s.date, s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt,
                    p.idu, round(p.surface_m2) AS surface_m2,
@@ -896,23 +915,14 @@ def promesses(commune: str | None = None, months: int = 36,   # OUTIL-PERMIS-FIX
                 JOIN parcel_bati_emprise be ON be.idu = c.idu
                 JOIN parcels pa ON pa.idu = be.idu
                 ORDER BY be.bati_m2 ASC, be.idu ASC LIMIT 1) p ON true
-            WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
-              AND (s.raw->>'etat' IS NULL OR s.raw->>'etat' NOT IN ('4','5','6'))
-              AND s.raw->>'daact' IS NULL
-              AND s.date < :dmax - (:m || ' months')::interval
-              -- OUTIL-PERMIS-FIX-2 (Défaut C) — TOUTES les parcelles retrouvées ET mesurées sans bâti
-              -- (aucune absente de parcel_bati_emprise, aucune ≥ seuil) : même prédicat que permis_classe.
-              AND jsonb_array_length(s.idu_codes) >= 1
-              AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text(s.idu_codes) c2(idu)
-                              LEFT JOIN parcel_bati_emprise be2 ON be2.idu = c2.idu
-                              WHERE be2.idu IS NULL OR be2.bati_m2 >= :seuil)
+            WHERE (CAST(:c AS text) IS NULL OR s.commune = :c) AND {dormant_pred}
         )
         SELECT cand.permit_id, cand.type, cand.date::date::text AS date, cand.etat, cand.nb_lgt,
                cand.idu, cand.surface_m2, cand.g, s2.tier AS statut,
                s2.tier AS tier_v2, s2.rang AS rang_v2
         FROM cand LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = cand.idu AND s2.run_id = :v2run
         ORDER BY cand.date ASC, cand.permit_id ASC LIMIT :lim OFFSET :off"""),
-        {"c": commune, "m": months, "dmax": dmax, "seuil": permis_classe.BATI_SEUIL_M2,
+        {"c": commune, "m": m_dormant, "dmax": dmax,
          "v2run": _v2run(db), "lim": limit, "off": offset}).mappings().all()
     # tri anciens d'abord (= les plus « morts »). total via l'appel count_only parallèle ; ici on déduit
     # has_more du remplissage de la page (une page pleine ⇒ il reste potentiellement des lignes).

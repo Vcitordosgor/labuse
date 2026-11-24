@@ -435,20 +435,9 @@
   <p>Indicateurs à l'échelle de la commune de {{ p.commune }} — pour situer la parcelle dans son
      environnement administratif et foncier. Agrégats publics ; <b>aucune donnée nominative</b>.</p>
 
-  {% if cc.velocite %}
-  <h3>Vélocité administrative — permis de construire</h3>
-  <div class="cartouches">
-    <div class="cartouche"><div class="titre">Délai médian d'instruction (dépôt → autorisation)</div>
-      <div class="valeur">{{ cc.velocite.median_mois }}<small> mois</small></div></div>
-    <div class="cartouche"><div class="titre">Fourchette · dossiers observés</div>
-      <div class="valeur">{{ cc.velocite.p25_mois }}–{{ cc.velocite.p75_mois }}<small> mois · {{ cc.velocite.n }} dossiers</small></div></div>
-  </div>
-  <p style="font-size:8pt;color:var(--txt-mut);margin-top:1.5mm">Sourcé — Sitadel (SDES).
-     <b>À lire avec prudence :</b> ce délai est calculé sur les <b>seuls permis accordés</b> — les dossiers
-     refusés ou encore en instruction ne sont pas comptés, ce qui <b>raccourcit mécaniquement la médiane</b>.
-     C'est donc un <b>minimum optimiste</b>, pas un délai garanti. Médiane robuste, cohortes mûres (dépôts de
-     plus de 12 mois), historique 2013+.</p>
-  {% endif %}
+  {# OUTIL-PERMIS-FIX-5 (Point 2) — section « Vélocité administrative » (délai médian d'instruction) RETIRÉE
+     du PDF : le délai n'a jamais été mesuré (dépôt connu à l'année → +4 mois de gonflement médian).
+     « On ne montre pas un délai faux » (Vic). `cc.velocite` n'est plus produit (cf. flash/data.py). #}
 
   {% if cc.leviers %}
   <h3>Leviers logement social / bailleur</h3>

@@ -1,11 +1,11 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePiegeFocus } from '../../lib/usePiegeFocus'
 import {
   courrierPdf, getCommunes, getCourrierStatut, getFiche, modBailleur,
   modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPermis, modPermisEtats,
-  modPermisFiche, modPromesses, modPromessesCount, modVelocite, postCourrierDemande, postCourrierAdressage,
+  modPermisFiche, modPromesses, modPromessesCount, postCourrierDemande, postCourrierAdressage,
   postCourrierComposer,
 } from '../../lib/api'
 import { AddressAutocomplete } from '../AddressAutocomplete'
@@ -15,7 +15,7 @@ import { TEMPS_MILLESIMES } from '../map/basemaps'
 import { fmtInt, fmtM2, fmtDateNum } from '../../lib/format'
 import { iduComplet, iduCourt, estIdu } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
-import { TOKENS } from '../../lib/tokens'
+// OUTIL-PERMIS-FIX-5 (Point 2) — `TOKENS` n'était utilisé que par le composant M05 (vélocité), supprimé.
 import { carteEtat, etatColor, type PermisEtat, type PermisEtatCarte } from '../../lib/permisEtats'
 import { ChevronSection } from '../panel/ChevronSection'
 import { Tip } from '../Tip'   // MINI-CORRECTIONS-2 (pt 15/16) — infobulles « i » (en-tête permis, états)
@@ -638,7 +638,9 @@ export function M03() {
   useEffect(() => { const s = moduleKey === 'promesses' ? 'mort' : 'cours'; setSeg(s); setMonths(s === 'mort' ? 36 : 240) }, [moduleKey])
 
   const MONTHS_RADAR = [12, 24, 48, 72, 240]   // période d'AFFINAGE (240 = toute la profondeur Sitadel)
-  const MONTHS_PM = [24, 36, 48, 60]   // dormant : 36 = « plus de 3 ans » (défaut à l'ouverture)
+  // OUTIL-PERMIS-FIX-3 (Point 2) — dormant : 36 = « plus de 3 ans » (plancher ET défaut). Plus de « 24 » :
+  // l'affinage ne peut que RESTREINDRE les 854 (le serveur clampe de toute façon à ≥ 36).
+  const MONTHS_PM = [36, 48, 60, 72]
   // OUTIL-PERMIS-FIX-1 (LOT 1) — l'état de cycle fait le tri côté SERVEUR (récent = 24 mois, dormant = 36).
   // La fenêtre `months` n'est plus qu'un AFFINAGE optionnel : par défaut 240 (toute la profondeur) pour
   // que compteur et liste d'un segment portent sur les mêmes identifiants. Dormant garde 36 (son horloge).
@@ -692,6 +694,12 @@ export function M03() {
   const sansPoint = (qEtats.data && qEtats.data.total != null && qEtats.data.geocodes != null)
     ? Math.max(0, qEtats.data.total - qEtats.data.geocodes) : undefined
   const sansDate = qEtats.data?.sans_date
+  // OUTIL-PERMIS-FIX-2 (G2) — la DATE DE MESURE du bâti (qui fonde « aucun bâtiment détecté ») est dite
+  // dans le « i » du segment Dormant ; si la couche est plus vieille que la BD TOPO, on le SIGNALE.
+  const batiFr = qEtats.data?.bati_fraicheur
+  const dormantDefSuffixe = batiFr?.built_at
+    ? ` · bâti mesuré le ${fmtDateNum(batiFr.built_at)}${batiFr.perimee ? ' ⚠ mesure périmée (BD TOPO plus récente)' : ''}`
+    : ''
   const setPermitHover = useApp((s) => s.setPermitHover)
   useEffect(() => () => setPermitHover(null), [setPermitHover])   // nettoyage au démontage
 
@@ -822,7 +830,7 @@ export function M03() {
     // référence (fin des données). « Récent » = 24 mois PARTOUT (plus « 90 derniers jours »). Le dormant
     // dit ce qui est MESURÉ (« aucun bâtiment détecté »), jamais « terrain resté nu » ni « caducité ».
     ['cours', 'Récents', 'recent', radarEntryTotal, 'autorisés depuis 24 mois (fin des données)'],
-    ['mort', 'Permis dormants', 'dormant', pmEntryTotal, 'PC autorisés depuis plus de 3 ans, sans achèvement déclaré (DAACT), aucun bâtiment détecté sur leurs parcelles'],
+    ['mort', 'Permis dormants', 'dormant', pmEntryTotal, `PC autorisés depuis plus de 3 ans, sans achèvement déclaré (DAACT), aucun bâtiment détecté sur leurs parcelles${dormantDefSuffixe}`],
     ['acheve', 'Achevés', 'acheve', acheveEntryTotal, 'travaux déclarés (DAACT)'],
     ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni dormant, ni achevé'],
     ['tous', 'Tous', null, tousEntryTotal, 'toute la base (autorisations)'],
@@ -1184,67 +1192,12 @@ export function M03() {
    Devenu un FILTRE (« Au point mort ») du radar, rendu en points cliquables. Le composant M04 autonome
    est supprimé ; la clé `promesses` résout désormais M03 (filtre pré-actif). Endpoint /promesses vivant. */
 
-/* ───────────────────────────── M05 — VÉLOCITÉ ADMIN ───────────────────────────── */
-// M137-Z — ABSORBÉ dans l'outil « Communes » (fiche commune → tranche p25–p75). Plus câblé au menu ;
-// composant conservé au dépôt (exporté pour rester compilable). Note : le backend ne sert plus
-// `rang_delai` (classement par médiane retiré — délais homogènes) ; ce composant dormant dégrade sans.
-export function M05() {
-  const [nature, setNature] = useState('PC')
-  const q = useQuery({ queryKey: ['m05', nature], queryFn: () => modVelocite(nature || null) })
-  const d = q.data as Record<string, any> | undefined
-  const [sort, setSort] = useState<'n_valide' | 'delai_median_mois'>('delai_median_mois')
-  const rows = useMemo(() => ([...((d?.['communes'] ?? []) as Record<string, any>[])])
-    .sort((a, b) => Number(b[sort] ?? 0) - Number(a[sort] ?? 0)), [d, sort])
-  const natLabel = { PC: 'PC', DP: 'DP', PA: 'PA', PD: 'PD', '': 'toutes natures' }[nature]
-  return (
-    <>
-      <Banner><b>{d?.['indicateur'] ?? 'Délai médian d\'instruction dépôt → autorisation'}</b> ({natLabel},
-        cohortes {String(d?.['cohortes'] ?? '…')}). {d?.['note']}
-        <div className="mt-1 text-mint/70">▲ {d?.['censure']}</div>
-        <div className="mt-1 italic">{d?.['disclaimer']}</div>
-      </Banner>
-      <div className="flex flex-wrap gap-1.5">
-        {NATURES.filter(([v]) => v).map(([v, l]) => (
-          <button key={v} onClick={() => setNature(v)}
-            className={`rounded-full border px-2.5 py-1 text-[11px] ${nature === v ? 'border-mint text-mint' : 'border-line-2 text-txt-mut'}`}>
-            {l}
-          </button>
-        ))}
-        {/* OUTILS-FIX-3 Lot E — lien ⬇ CSV (/modules/velocite?fmt=csv) retiré côté écran ; l'endpoint back reste. */}
-      </div>
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <div className="sticky top-0 grid grid-cols-[1fr_64px_60px] gap-1 bg-surface-1 py-1 text-[11px] tracking-wide text-txt-dim">
-          <span>COMMUNE (ÎLE)</span>
-          {([['delai_median_mois', 'MÉDIANE'], ['n_valide', 'N']] as const).map(([k, l]) => (
-            <button key={k} onClick={() => setSort(k)} className={`text-right transition-colors duration-quick ${sort === k ? 'text-mint' : ''}`}>{l} ↓</button>
-          ))}
-        </div>
-        {rows.map((c) => {
-          const rang = c['rang_delai'] as number | null
-          // rapides (rang bas) en mint, lentes (rang haut) en rouge — repère visuel
-          const rgColor = rang == null ? TOKENS.txtDim : rang <= 5 ? TOKENS.mint : rang >= 20 ? TOKENS.stEcartee : VIOLET
-          const tend = c['tendance'] as string | null
-          const tIcon = tend === 'accelere' ? '↓' : tend === 'ralentit' ? '↑' : tend === 'stable' ? '→' : ''
-          const tColor = tend === 'accelere' ? TOKENS.mint : tend === 'ralentit' ? TOKENS.stEcartee : TOKENS.txtDim
-          return (
-            <div key={c['commune'] as string} className="grid grid-cols-[1fr_64px_60px] gap-1 border-b border-line py-1.5 text-[11px]">
-              <span className="flex min-w-0 items-center gap-1.5 truncate text-txt">
-                {rang != null && <span className="shrink-0 font-mono text-[9px]" style={{ color: rgColor }}>#{rang}</span>}
-                <span className="truncate">{c['commune'] as string}</span>
-                {tIcon && <span className="shrink-0" style={{ color: tColor }} aria-label={`Tendance ${tend}`}>{tIcon}</span>}
-              </span>
-              <span className="text-right font-mono" style={{ color: rgColor }}>{c['delai_median_mois'] == null ? '—' : `${c['delai_median_mois']} m`}</span>
-              <span className="text-right font-mono text-txt-mut">{fmt(c['n_mur'] as number)}</span>
-            </div>
-          )
-        })}
-        <p className="py-2 text-[11px] text-txt-dim">
-          Médiane dépôt→autorisation en mois · N = dossiers mûrs (dépôts &lt; {String(d?.['maturite_cutoff'] ?? '…')}).
-          Survolez une ligne pour l'IQR et les exclusions.</p>
-      </div>
-    </>
-  )
-}
+/* ───────────────────────────── M05 — VÉLOCITÉ ADMIN (SUPPRIMÉ) ───────────────────────────── */
+// OUTIL-PERMIS-FIX-5 (Point 2) — composant SUPPRIMÉ : le délai d'instruction n'a jamais été mesuré
+// (dépôt connu à l'année → +4 mois de gonflement médian). « On ne montre pas un délai faux » (Vic).
+// L'outil était déjà absorbé dans « Communes » et non câblé au menu ; on retire désormais /modules/velocite
+// de TOUT écran (plus de composant, plus d'appel `modVelocite`). L'endpoint back `/modules/velocite`
+// reste dormant, sans consommateur.
 
 /* ───────────────────────────── M06 — MODE BAILLEUR ───────────────────────────── */
 // M137-N (Vic 20/08/2026) — RETIRÉ du produit le 20/08/2026 (DORMANT). Plus câblé au menu (registry +
@@ -2008,9 +1961,10 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // Baromètre retiré du menu → clé 'barometre' ALIASÉE vers Communes (l'onglet Évolution y vit) :
   // aucun lien mort (deep-link/copilote historique). M18 reste importé, réutilisé par cet onglet.
   barometre: Communes,
-  // M137-Z — outil « Communes » : fusion Marché (MU1) · Comparateur (O6) · Vélocité (M05) · Rareté (O9).
-  // Les 4 clés absorbées ('marche', 'o6-comparateur', 'velocite', 'o9-rarete') sont retirées du menu ;
-  // leurs composants (MarcheCommune, O6Comparateur, M05, O9Rarete) restent au dépôt, réutilisés par Communes.
+  // M137-Z — outil « Communes » : fusion Marché (MU1) · Comparateur (O6) · Rareté (O9). La Vélocité (M05)
+  // est SUPPRIMÉE (OUTIL-PERMIS-FIX-5 : délai jamais mesuré, non montré).
+  // Les 3 clés absorbées ('marche', 'o6-comparateur', 'o9-rarete') sont retirées du menu ;
+  // leurs composants (MarcheCommune, O6Comparateur, O9Rarete) restent au dépôt, réutilisés par Communes.
   communes: Communes,
   // M137-P — les 3 outils PLU (simulplu · verif-procedure · plu-annuaire) fusionnés dans le hub « plu ».
   plu: Plu,

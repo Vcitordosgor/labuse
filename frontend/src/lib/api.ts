@@ -407,7 +407,9 @@ export interface ContexteCommune {
   // OUTILS-6 C2 — les chiffres COMMUNS au comparateur des 24 communes (même moteur, même run)
   comparable: {
     ancien_median_eur_m2: number | null; ancien_n: number | null; neuf_eur_m2: number | null; neuf_n: number | null
-    permis_5a: number | null; delai_median_mois: number | null; stock_opportunites_n: number | null; source: string
+    // OUTIL-PERMIS-FIX-5 (Point 2) — `delai_median_mois` retiré : délai jamais mesuré, non montré.
+    // OUTIL-COMMUNES-FIX-1 — `neuf_n` (effectif VEFA à l'écran) conservé (apporté par main).
+    permis_5a: number | null; stock_opportunites_n: number | null; source: string
   } | null
   // OUTILS-6 C5 — les blocs ajoutés, chacun depuis le moteur de son outil d'origine
   marche_annonces: {
@@ -442,7 +444,8 @@ export interface ContexteCommune {
   scot?: { nom: string; date_approbation: string | null; statut: string | null; source: string } | null
   permis_bloc: {
     permis_12m: number; permis_5a: number | null; logements_12m: number | null
-    delai_median_mois: number | null; point_mort: number; source: string
+    // OUTIL-PERMIS-FIX-5 (Point 2) — `delai_median_mois` retiré : délai jamais mesuré, non montré.
+    point_mort: number; source: string
     // KELFONCIER-FIX-1 (Lot C) servis, KELFONCIER-FIX-2 (Lot D) affichés : ventilation PC/PA/DP/PD
     // (autorisés, 12 mois) + annulés (12 mois), même source SITADEL que le chiffre existant.
     permis_type_12m?: Record<string, number>; permis_annules_12m?: number
@@ -1858,7 +1861,9 @@ export const modPermisCount = (months: number, etat?: string | null) =>
 // soustraction). `etats.recent+dormant+acheve+autre = total`. Sert les compteurs d'entrée de l'outil.
 export const modPermisEtats = (months = 240) =>
   j<{ total: number; geocodes: number; donnees_jusqu_au?: string; coupure_recent?: string; sans_date: number;
-      etats: { recent: number; dormant: number; acheve: number; autre: number } }>(
+      etats: { recent: number; dormant: number; acheve: number; autre: number };
+      // OUTIL-PERMIS-FIX-2 (G2) — fraîcheur de la couche de bâti (fonde « aucun bâtiment détecté »).
+      bati_fraicheur?: { perimee: boolean | null; built_at: string | null; note?: string | null } }>(
     `/modules/permis?${cq()}&months=${months}&count_only=true&etats=true`)
 export const modPermisFiche = (permitId: string) =>
   j<Record<string, unknown>>(`/modules/permis/${encodeURIComponent(permitId)}`)
@@ -1869,8 +1874,8 @@ export const modPromesses = (months: number, limit = 1000, offset = 0) =>
   j<Record<string, unknown>>(`/modules/promesses?${cq()}&months=${months}&limit=${limit}&offset=${offset}`)
 export const modPromessesCount = (months: number) =>
   j<{ total: number }>(`/modules/promesses?${cq()}&months=${months}&count_only=true`)
-export const modVelocite = (nature?: string | null) =>
-  j<{ communes: Record<string, unknown>[]; [k: string]: unknown }>(`/modules/velocite${nature ? `?nature=${nature}` : ''}`)
+// OUTIL-PERMIS-FIX-5 (Point 2) — `modVelocite` (GET /modules/velocite) SUPPRIMÉ : plus aucun écran
+// n'appelle le délai d'instruction (jamais mesuré, non montré). L'endpoint back reste dormant.
 // M137-Z — Rareté (horizon ZAN + stock foncier par commune), pour la fiche commune de l'outil Communes.
 export const motRarete = () =>
   j<{ communes: Record<string, unknown>[]; caveat: string; [k: string]: unknown }>('/pipeline-rarete')

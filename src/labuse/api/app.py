@@ -1211,13 +1211,18 @@ def readyz(request: Request, commune: str | None = None):
         # vieux que la couche de voisinage VIVANTE : l'opérateur voit qu'il faut relancer M-VIA (jamais un
         # instantané périmé servi en silence). Avertissement, pas un 503 (l'app reste servie).
         try:
-            from ..faisabilite.viabilisation_build import viabilisation_fraicheur
+            from ..faisabilite.viabilisation_build import bati_emprise_fraicheur, viabilisation_fraicheur
             with session_scope() as _s:
                 _fr = viabilisation_fraicheur(_s)
+                _bfr = bati_emprise_fraicheur(_s)   # OUTIL-PERMIS-FIX-2 (G2) — fraîcheur de la mesure de bâti
             st["viabilisation"] = _fr
+            st["bati_emprise"] = _bfr
+            _acts = list(st.get("actions") or [])
             if _fr.get("perimee"):
-                st["actions"] = list(st.get("actions") or []) + [
-                    "relancer build-parcel-viabilisation (score de voisinage périmé vs couche vive)"]
+                _acts.append("relancer build-parcel-viabilisation (score de voisinage périmé vs couche vive)")
+            if _bfr.get("perimee"):
+                _acts.append("relancer la mesure de bâti (parcel_bati_emprise périmée vs BD TOPO)")
+            st["actions"] = _acts
         except Exception:  # noqa: BLE001 — jamais faire tomber /readyz pour ce signal annexe
             pass
     return JSONResponse(status_code=200 if st.get("ready") else 503, content=st)
