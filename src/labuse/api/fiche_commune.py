@@ -27,6 +27,7 @@ def comparable(db: Session, commune: str) -> dict | None:
         "ancien_median_eur_m2": r.get("prix_ancien"),
         "ancien_n": r.get("prix_ancien_n"),
         "neuf_eur_m2": r.get("prix_neuf"),
+        "neuf_n": r.get("prix_neuf_n"),   # OUTIL-COMMUNES-FIX-1 (à corriger 4) — effectif VEFA à l'écran
         "permis_5a": r.get("permis"),
         "stock_opportunites_n": r.get("stock"),
         "source": "DVF (baromètre commune entière) + SITADEL (autorisations) — "
@@ -105,8 +106,12 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
     pas de sous-type dans nos attributs, on n'invente pas « inondation » — on dit « PPR (risque naturel) »."""
     # CIRCUIT-2 lot 1.6 — la part par couche est calculée par le moteur nommé `commune_compteurs`
     # (id registre ppr_pct) : ce robinet ne calcule plus, il appelle (le total est calculé une fois).
-    from ..registre.moteurs.commune import pct_parcelles_couche
-    tot = db.execute(text("SELECT count(*) FROM parcels WHERE commune = :c"), {"c": commune}).scalar() or 0
+    from ..registre.moteurs.commune import compte_parcelles_commune, pct_parcelles_couche
+    # OUTIL-COMMUNES-FIX-1 (à corriger 8) — DÉNOMINATEUR PPR = le parc VIVANT (exclut les parcelles
+    # disparues du cadastre), LA MÊME base que le bandeau de la fiche (`n_parcelles`). Avant : un
+    # `count(*)` brut sur `parcels` comptait les disparues → Saint-Denis 38 557 au dénominateur du risque
+    # quand le bandeau affiche 38 295 (le lecteur passait de l'un à l'autre). Un seul parc, une seule base.
+    tot = compte_parcelles_commune(db, commune)
 
     def _pct_layer(kind: str, subtype: str | None = None) -> float | None:
         return pct_parcelles_couche(db, commune, kind, tot, subtype)

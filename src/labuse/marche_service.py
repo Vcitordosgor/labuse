@@ -592,21 +592,26 @@ def comparateur_terrain(db: Session, idu: str, *, n_table: int = 8) -> dict:
                 "perimetre": None}
     # Une seule requête COMMUNE-WIDE avec la distance au sujet : le rayon adaptatif est ensuite appliqué
     # en Python (pas de 4 allers-retours SQL). Même dédoublonnage terrain que MARCHE-UNIQUE-1 (NU-E-031).
+    # OUTIL-COMMUNES-FIX-1 bloquant 1 — QUALIFICATION SUR L'ACTE ENTIER : le bâti n'est plus filtré par
+    # parcelle (un acte « maison + jardin nu » n'est pas une vente de terrain nu) ; on agrège TOUTES les
+    # parcelles de l'acte et on ne garde que celles dont le bâti total est nul (`sum(bati_p) = 0`), la
+    # surface terrain étant reconstituée sur l'acte entier. Natures Vente + VTB (M101 B2).
     rows = db.execute(text(
         "WITH p AS (SELECT geom_2975 g, commune FROM parcels WHERE idu = :idu), "
-        "parc AS (SELECT DISTINCT dm.id_mutation, dm.id_parcelle, dm.valeur_fonciere AS vf, "
-        "           dm.date_mutation AS d, "
-        "           max(COALESCE(dm.surface_terrain,0)) OVER (PARTITION BY dm.id_mutation, dm.id_parcelle) AS terr_p, "
-        "           round(ST_Distance(pp.geom_2975, p.g))::int AS dist "
+        "parc AS (SELECT dm.id_mutation, dm.id_parcelle, max(dm.valeur_fonciere) AS vf, "
+        "           max(dm.date_mutation) AS d, "
+        "           max(COALESCE(dm.surface_terrain,0)) AS terr_p, "
+        "           max(COALESCE(dm.surface_reelle_bati,0)) AS bati_p, "
+        "           min(round(ST_Distance(pp.geom_2975, p.g))::int) AS dist "
         "         FROM dvf_mutations_parcelle dm JOIN parcels pp ON pp.idu = dm.id_parcelle, p "
         "         WHERE dm.nature_mutation IN ('Vente', 'Vente terrain à bâtir') "
-        "           AND COALESCE(dm.surface_reelle_bati,0)=0 AND dm.surface_terrain > 0 "
         "           AND dm.date_mutation IS NOT NULL AND dm.id_parcelle <> :idu "
-        "           AND pp.commune = (SELECT commune FROM p)), "
+        "           AND pp.commune = (SELECT commune FROM p) "
+        "         GROUP BY dm.id_mutation, dm.id_parcelle), "
         "t AS (SELECT id_mutation, to_char(min(d), 'YYYY-MM-DD') AS date, "
         "        extract(year FROM min(d))::int AS annee, "
         "        sum(terr_p) AS surf, max(vf) AS vf, min(dist)::int AS dist "
-        "      FROM parc GROUP BY id_mutation) "
+        "      FROM parc GROUP BY id_mutation HAVING sum(bati_p) = 0 AND sum(terr_p) > 0) "
         "SELECT date, annee, round(surf)::int AS surface_m2, round(vf)::int AS prix_eur, "
         "       round(vf / NULLIF(surf,0))::int AS prix_m2, (vf / NULLIF(surf,0)) AS prix_m2_f, "
         "       dist AS distance_m "

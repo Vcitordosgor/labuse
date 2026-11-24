@@ -243,17 +243,36 @@ def etat_corpus_plu(db, millesimes: dict | None = None) -> dict:
         from ...api.modules import _plu_millesimes
         millesimes = _plu_millesimes()
     ing = corpus_status(db)
+    # OUTIL-PLU-FIX-1 (LOT 3) — couverture d'indexation par commune (plu_couverture) : part des pages de
+    # texte atteinte par un extrait + pages en image (non indexables). Affichée à l'écran.
+    cov: dict[str, dict] = {}
+    try:
+        from sqlalchemy import text as _t
+        if db.execute(_t("SELECT to_regclass('plu_couverture')")).scalar():
+            cov = {r["insee"]: dict(r) for r in db.execute(_t(
+                "SELECT insee, pages_total, pages_texte, pages_image, pages_indexees, pct_indexe, "
+                "pct_article, pct_chapitre, peu_structure FROM plu_couverture")).mappings()}
+    except Exception:  # noqa: BLE001
+        cov = {}
     _TYPE_PROC = {"revision_plu": "révision générale", "elaboration_plu": "élaboration", "modification_plu": "modification"}
     out = []
     for insee, c in sorted(millesimes.items()):
         e = ing.get(insee)
         if e:
+            cv = cov.get(insee, {})
             out.append({"insee": insee, "commune": c["commune"], "statut": "servable",
                         "idurba": e["idurba"], "millesime": e["millesime"], "extraits": e["extraits"],
                         "doutes": e["doutes"], "pagination_ambigue": e["pagination_ambigue"],
                         # M137-P — le « PLU intégral » = le pack officiel GPU (.zip) à télécharger ;
                         # aucun PDF n'est stocké en base. document = nom du règlement PDF dans le pack.
-                        "source_url": e.get("source_url"), "document": e.get("documents")})
+                        "source_url": e.get("source_url"), "document": e.get("documents"),
+                        # LOT 2 — pdf_url = règlement écrit direct (.pdf) ; LOT 3 — couverture.
+                        "pdf_url": e.get("pdf_url"),
+                        "pct_indexe": cv.get("pct_indexe"), "pages_image": cv.get("pages_image"),
+                        "pages_texte": cv.get("pages_texte"), "pages_total": cv.get("pages_total"),
+                        # OUTIL-PLU-FIX-4 (critère 3) — part indexée à l'article vs au chapitre + drapeau.
+                        "pct_article": cv.get("pct_article"), "pct_chapitre": cv.get("pct_chapitre"),
+                        "peu_structure": cv.get("peu_structure")})
         elif c["statut"] == "rnu":
             out.append({"insee": insee, "commune": c["commune"], "statut": "rnu", "extraits": 0,
                         "message": "RNU (règlement national d'urbanisme) — pas de règlement communal."})

@@ -635,9 +635,9 @@ def compter_piscines(db: Session, *, commune: str | None = None) -> ToolResult:
 
 def compter_permis(db: Session, *, commune: str | None = None, mois: int = 24) -> ToolResult:
     """FIX-COPILOTE-BATTERIE (Q7) — NOMBRE de permis accordés d'une commune sur une fenêtre (défaut
-    24 mois). `valeur` = le COMPTE (jamais le délai). Outil DISTINCT de `delais_instruction` : la règle
-    « un outil = UNE valeur menée » évite le travers du formuler qui servait le délai à « combien de
-    permis ». Réutilise l'endpoint radar `permis` (fenêtre ancrée sur la fin des données Sitadel)."""
+    24 mois). `valeur` = le COMPTE (jamais le délai). (OUTIL-PERMIS-FIX-5 : l'outil `delais_instruction`
+    est retiré — délai jamais mesuré, non montré ; cet outil reste le COMPTE, distinct par construction.)
+    Réutilise l'endpoint radar `permis` (fenêtre ancrée sur la fin des données Sitadel)."""
     if commune is not None:
         resolue = resoudre_commune(commune)
         if resolue is None:

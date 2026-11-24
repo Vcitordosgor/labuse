@@ -3106,6 +3106,20 @@ def _plu_millesimes() -> dict:
     return yaml.safe_load(p.read_text())["communes"]
 
 
+@_ft.lru_cache(maxsize=1)
+def _plu_dates_gpu() -> dict:
+    """OUTIL-PLU-FIX-1 (LOT 1) — dates distinctes (publication GPU, édition), modifications postérieures
+    et procédures en cours, sourcées du contre-audit (config/plu_dates_gpu.yaml)."""
+    import pathlib
+
+    import yaml
+    p = pathlib.Path(__file__).resolve().parents[3] / "config" / "plu_dates_gpu.yaml"
+    try:
+        return yaml.safe_load(p.read_text()).get("communes", {})
+    except Exception:  # noqa: BLE001
+        return {}
+
+
 @router.get("/plu-annuaire/communes")
 def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
     """M51 — état du corpus par commune : SERVABLE (n extraits), RNU, révision non réconciliée,
@@ -3122,6 +3136,19 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
     res = etat_corpus_plu(db, _plu_millesimes())
     res["n_plu_vigueur"] = res["n_communes"] - res["n_rnu"]
     res["non_servis"] = sorted(c["commune"] for c in res["communes"] if c["statut"] in ("revision", "non_ingere"))
+    # OUTIL-PLU-FIX-1 (LOT 1) — on attache à chaque commune ses dates DISTINCTES (approbation de la
+    # version = date_mairie ; publication GPU ; édition matérielle du PDF), ses actes postérieurs et
+    # l'inventaire des procédures. L'écran dira laquelle il affiche ; l'absence de badge n'est plus lue
+    # comme « aucune procédure ».
+    mil, dates = _plu_millesimes(), _plu_dates_gpu()
+    for c in res["communes"]:
+        dg = dates.get(c["insee"], {})
+        c["date_approbation"] = (mil.get(c["insee"], {}) or {}).get("date_mairie")
+        c["publication_gpu"] = dg.get("publication_gpu")
+        c["edition"] = dg.get("edition")
+        c["modifications"] = dg.get("modifications")
+        c["procedures_inventaire"] = dg.get("procedures")
+        c["note_doc"] = dg.get("note")
     return res
 
 
@@ -3235,6 +3262,7 @@ def plu_titre_corps(verbatim: str) -> tuple[str | None, str]:
 @router.get("/plu-annuaire/search")
 def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = None,
                         limit: int = Query(25, ge=1, le=200),   # FIX-C5
+                        offset: int = Query(0, ge=0),           # OUTIL-PLU-FIX-1 LOT 5 — pagination réelle
                         db: Session = Depends(get_db)) -> dict:
     """M51 — recherche full-text (french) qui SERT DU VERBATIM SOURCÉ : chaque résultat porte
     commune, document, article, PAGE PDF, millésime, lien. Aucun résumé, aucun reformulé. `doute` et
@@ -3244,6 +3272,14 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
     q = (q or "").strip()
     if not q:
         raise HTTPException(400, "Requête vide.")
+    # OUTIL-PLU-FIX-3 (point 9) — synonymes de « recul » RESSERRÉS : seulement ce qui parle
+    # d'IMPLANTATION ou de RETRAIT (plus « limites », trop large). `terms` = mots servant à CITER la page
+    # du mot dans l'article et à rendre l'extrait autour (points 2-3).
+    q_fts = q
+    terms = re.findall(r"[0-9A-Za-zÀ-ÿ]{2,}", q)
+    if re.search(r"(?i)\brecul", q):
+        q_fts = f"{q} OR retrait OR implantation"
+        terms = terms + ["retrait", "implantation"]
     if insee:
         mil = _plu_millesimes().get(insee)
         if mil and mil["statut"] == "rnu":
@@ -3257,14 +3293,18 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                                 f"en mairie (complétion auto à l'approbation, veille M41).") if rev else
                                (f"{nm} : règlement non ingéré (hors corpus) — rien à servir. "
                                 f"Voir /plu-annuaire/communes.")}
-    res = search_reglement(db, q, insee, limit=limit, zone=zone)
-    # OUT-PLU-008 — `n_total` = total des correspondances (sans plafond) ; `affiches` = page servie.
-    # L'écran dit « N affichés sur M » plutôt que de présenter le compte plafonné comme le total.
-    n_total = count_reglement(db, q, insee, zone=zone)
+    res = search_reglement(db, q_fts, insee, limit=limit, zone=zone, offset=offset, terms=terms)
+    # OUT-PLU-008 — `n_total` = total des articles correspondant (sans plafond) ; `n` = page servie.
+    n_total = count_reglement(db, q_fts, insee, zone=zone)
     for r in res:
         r["gpu_consult"] = "https://www.geoportail-urbanisme.gouv.fr/"
-        # RETOURS-23 (pt 6) — titre « en clair » + corps (aperçu sans le titre) pour la carte d'extrait.
-        r["titre"], r["corps"] = plu_titre_corps(r.get("texte_verbatim") or "")
+        # OUTIL-PLU-FIX-3 (points 2-3) — la page CITÉE est celle du mot dans l'article (`page_match`) ;
+        # « p. X-Y » quand l'article court sur plusieurs pages ; le corps est l'extrait AUTOUR du mot,
+        # « Lire tout » montrera l'article entier (texte_verbatim), exceptions comprises.
+        r["page_pdf"] = r.get("page_match") or r.get("page_debut") or r.get("page_pdf")
+        r["titre"], _corps = plu_titre_corps(r.get("texte_verbatim") or "")
+        r["corps"] = r.get("extrait") or _corps
+        r.pop("page_map", None)
         if r.get("pagination_ambigue"):
             r["pagination_note"] = ("pagination du document ambiguë (double numérotation) — la page "
                                     "citée est la PAGE PDF du fichier, pas la page imprimée.")
@@ -3284,10 +3324,34 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                                                 "porte": e.get("porte")})
         except Exception:  # noqa: BLE001
             exceptions_zone = []
+    # OUTIL-PLU-FIX-1 (LOT 5) — le bloc d'exceptions DIT d'où il vient (calibrage LABUSE, pas le texte
+    # indexé) et il est renvoyé MÊME si aucun extrait n'est trouvé (le front l'affiche désormais hors du
+    # bloc « résultats » — un filtre de zone erroné ne masque plus l'exception).
+    exceptions_source = ("Exceptions issues du CALIBRAGE LABUSE (config/plu_destinations), pas du texte "
+                         "indexé — vérifiez au règlement.") if exceptions_zone else None
     # OUT-PLU-008 — `n` = extraits AFFICHÉS (page servie, plafonnée par `limit`), `n_total` = total réel
     # des correspondances. L'écran dit « N affichés sur M » (jamais le compte plafonné pris pour le total).
+    # OUTIL-PLU-FIX-2 (M2) — message explicite quand rien ne correspond (plus seulement le disclaimer).
+    # (M4) — note de PÉRIMÈTRE servie dans le payload (pas seulement dans l'UI) : un consommateur non-UI
+    # doit savoir que la recherche communale ne vérifie pas prescriptions/servitudes/PPR d'une parcelle.
+    message = None
+    if n_total == 0:
+        message = (f"Aucun extrait indexé ne correspond à « {q} »"
+                   + (f" en zone {zone}" if zone else "")
+                   + " — le règlement complet (PDF) peut contenir d'autres passages.")
+    # OUTIL-PLU-FIX-3 (point 8) — sous filtre de zone, on présente À PART les « Dispositions communes »
+    # (articles sans zone propre, qui ne nomment aucune autre zone), jamais mélangées aux articles de
+    # la zone demandée.
+    communes_list: list[dict] = []
+    if zone:
+        communes_list = [r for r in res if r.get("zone") is None]
+        res = [r for r in res if r.get("zone") is not None]
     return {"query": q, "insee": insee, "n": len(res), "n_total": n_total,
-            "tronque": n_total > len(res), "resultats": res,
-            "exceptions_zone": exceptions_zone,
+            "limit": limit, "offset": offset, "message": message,
+            "tronque": n_total > len(res) + len(communes_list), "resultats": res,
+            "dispositions_communes": communes_list,
+            "exceptions_zone": exceptions_zone, "exceptions_source": exceptions_source,
+            "note_perimetre": ("Recherche communale (texte du règlement) : ne vérifie pas, à la parcelle, "
+                               "les prescriptions graphiques, les servitudes (SUP) ni le PPR."),
             "avis": "Verbatim du règlement opposable (source GPU). Vérifiez toujours au document "
                     "(lien) ; ceci n'est pas un conseil juridique."}

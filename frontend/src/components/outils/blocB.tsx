@@ -280,6 +280,18 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
     return m
   }, [q.data])
   const arrow = (k: string) => (tri.k === k ? (tri.dir === 'desc' ? ' ↓' : ' ↑') : '')
+  // OUTIL-COMMUNES-FIX-1 (mineur 9) — l'EFFECTIF et la raison du « — » sont visibles dans la cellule
+  // (survol) : un « — » dit « moins de N ventes (n = …) », une valeur dit son n (et la zone pour le
+  // terrain). Plus besoin d'aller chercher la légende pour savoir sur combien de ventes repose un chiffre.
+  const SEUILS: Record<string, number> = { prix_ancien: 100, prix_neuf: 8, prix_terrain_nu: 10 }
+  const UNITE: Record<string, string> = { prix_ancien: 'ventes', prix_neuf: 'ventes VEFA', prix_terrain_nu: 'ventes de terrain nu' }
+  const cellTitle = (k: string, c: Record<string, unknown>): string | undefined => {
+    if (!(k in SEUILS)) return undefined
+    const n = c[`${k}_n`] as number | null | undefined
+    const zone = k === 'prix_terrain_nu' ? (c['prix_terrain_nu_zone'] as string | null) : null
+    if (c[k] == null) return `— : moins de ${SEUILS[k]} ${UNITE[k]}${n != null ? ` (n = ${n})` : ''}`
+    return `n = ${n ?? '—'} ${UNITE[k]}${zone ? ` · zone ${zone}` : ''}`
+  }
   // COMMUNE-124 Lot A — l'accroche (ex-Banner) est fusionnée dans le sous-titre du panneau ; la légende
   // (ex-pied permanent) est repliée sous le bouton « Légende » du panneau (CommunesLegende). Ce moteur
   // ne rend plus QUE le tableau (en-tête collant + rangs qui défilent). Le parent borne la hauteur.
@@ -318,7 +330,7 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
               {O6_COLS.map((col) => {
                 const isBest = best[col.k] != null && Number(c[col.k]) === best[col.k]
                 return (
-                  <span key={col.k} data-o6-cell={col.k}
+                  <span key={col.k} data-o6-cell={col.k} title={cellTitle(col.k, c)}
                     /* RECETTE-1 H6.2 — colonnes de données égales (grid `repeat(6,minmax(72px,1fr))`, corrigé
                        depuis l'ancien gabarit 26px/22px/32px… = « 2e colonne plus large ») ; `whitespace-nowrap`
                        garantit « nombres jamais coupés ». Les en-têtes, eux, peuvent passer sur 2 lignes (leading-tight). */

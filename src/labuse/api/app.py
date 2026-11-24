@@ -2809,6 +2809,11 @@ def _rafraichir_partages(db: Session, commune: str, payload: dict) -> dict:
 ZAN_SEUIL_ANS = 5              # ZAN — épuisé sous 5 ans → signal
 SEUIL_PPR_PART_PCT = 30.0      # PPR — au-delà de 30 % des parcelles → signal
 # (SRU : taux LLS < objectif · tendance : évolution 12 mois < 0 — seuils intrinsèques, la règle EST la comparaison)
+# OUTIL-COMMUNES-FIX-1 bloquant 3 — la série Cerema ENAF INGÉRÉE : conso 2009-2024 (publiée 12/05/2025),
+# donc fenêtre récente 2021-2024, terme = 2024. À BUMPER quand une série plus récente est ingérée (le
+# signal ZAN DATE l'épuisement à partir de ce terme ; un horizon sans date est trompeur lu plus tard).
+ZAN_SERIE_FIN = 2024
+ZAN_SERIE_LABEL = "Cerema conso 2021-2024"
 
 
 def _zan_horizon_ans(db: Session, insee: str | None) -> float | None:
@@ -2826,21 +2831,62 @@ def _zan_horizon_ans(db: Session, insee: str | None) -> float | None:
     return 0.0 if reste <= 0 else round(reste / float(r["rythme_ha_an"]), 1)
 
 
+def _zan_signal(h: float | None, *, fin: int = ZAN_SERIE_FIN, serie: str = ZAN_SERIE_LABEL) -> dict | None:
+    """OUTIL-COMMUNES-FIX-1 bloquant 3 — le signal ZAN COURT porte le mot « scénario » ET une DATE.
+
+    Avant : « ZAN épuisé dans 1,1 an » — un futur relatif SANS date, trompeur lu en novembre 2026 alors
+    que le calcul était juste au terme de la série (fin 2024). Et le budget = 50 % de la conso 2011-2021
+    est une HYPOTHÈSE comparative (scénario −50 %, loi Climat & Résilience / TRACE), PAS une enveloppe
+    réglementaire opposable attribuée à la commune. On exprime donc l'épuisement en ANNÉE ABSOLUE (terme
+    de la série + horizon), on NOMME le scénario et on DATE la série. Fonction PURE (testable sans base).
+    None si non projetable (`h is None`) ou au-delà du seuil (`h >= ZAN_SEUIL_ANS`)."""
+    if h is None or h >= ZAN_SEUIL_ANS:
+        return None
+    corps = f"solde simulé épuisé vers {fin + int(round(h))}" if h > 0 else "solde simulé déjà dépassé"
+    return {"code": "zan", "ton": "orange",
+            "libelle": f"ZAN — scénario −50 % : {corps} ({serie})"}
+
+
+def _sru_signal(sru: dict | None) -> dict | None:
+    """OUTIL-COMMUNES-FIX-1 bloquant 2 — le signal SRU SUIT LE STATUT officiel, jamais la seule
+    soustraction objectif − taux. Une commune EXEMPTÉE (obligations SRU suspendues sur la période,
+    décret) ou CONFORME ne porte JAMAIS « déficitaire », même si taux < objectif — Cilaos (2,94 / 25)
+    et Saint-Philippe (9,57 / 20) sont EXEMPTÉES et affichaient un faux signal rouge. Le taux, l'objectif,
+    le statut et l'année restent montrés SÉPARÉMENT par la carte SRU de la fiche ; le signal est DATÉ
+    (jamais un « déficitaire » intemporel — on ne prolonge pas l'exemption 2025 sans source). Renvoie le
+    signal (ou None pour exemptée / conforme / donnée absente). Fonction PURE (testable sans base)."""
+    if not sru or sru.get("taux_lls") is None or not sru.get("objectif_pct"):
+        return None
+    statut = (sru.get("statut") or "").strip().lower()
+    taux, obj = float(sru["taux_lls"]), float(sru["objectif_pct"])
+    import re as _re
+    annees = _re.findall(r"(?:19|20)\d{2}", str(sru.get("millesime") or ""))
+    an = f" · SRU {annees[-1]}" if annees else ""
+    # Le STATUT officiel fait foi (M101 B2 / bloquant 2). M3 (relecture) — un statut INATTENDU (nouvelle
+    # valeur de millésime, NULL, faute de frappe) ne doit JAMAIS disparaître en silence NI devenir
+    # « déficitaire » par défaut : on l'affiche « statut inconnu » pour qu'il soit RELU, jamais interprété.
+    if statut == "carencee":
+        return {"code": "sru", "ton": "rouge",
+                "libelle": f"SRU carencée ({taux:.1f} % / {obj:.0f} %){an}".replace(".", ",")}
+    if statut == "deficitaire":
+        return {"code": "sru", "ton": "rouge",
+                "libelle": f"SRU déficitaire ({taux:.1f} % / {obj:.0f} %){an}".replace(".", ",")}
+    if statut in ("exemptee", "conforme"):
+        return None   # statuts BÉNINS connus → aucune alerte (statut daté porté par la carte SRU)
+    return {"code": "sru", "ton": "orange",   # statut HORS référentiel → dit, jamais « déficitaire »
+            "libelle": f"SRU : statut inconnu « {statut or '—'} » ({taux:.1f} % / {obj:.0f} %){an}".replace(".", ",")}
+
+
 def _signaux_commune(db: Session, commune: str, insee: str | None,
                      sru: dict | None, risques: dict | None) -> list[dict]:
     """C2 — les signaux nommés de la commune (règle en constante, n'apparaissent que si VRAIS)."""
     out: list[dict] = []
-    if sru and sru.get("taux_lls") is not None and sru.get("objectif_pct"):
-        taux, obj = float(sru["taux_lls"]), float(sru["objectif_pct"])
-        if taux < obj:                                   # SRU < objectif
-            out.append({"code": "sru", "ton": "rouge",
-                        "libelle": f"SRU déficitaire ({taux:.1f} % / {obj:.0f} %)".replace(".", ",")})
-    h = _zan_horizon_ans(db, insee)
-    if h is not None and h < ZAN_SEUIL_ANS:              # ZAN < 5 ans
-        out.append({"code": "zan", "ton": "orange",
-                    # RECETTE-2 (B5) — « 1,1 an » (singulier sous 2 ans), virgule décimale.
-                    "libelle": (f"ZAN épuisé dans {h:.1f} {'an' if h < 2 else 'ans'}".replace(".", ",") if h > 0
-                                else "enveloppe ZAN déjà dépassée")})
+    s_sru = _sru_signal(sru)
+    if s_sru:
+        out.append(s_sru)
+    s_zan = _zan_signal(_zan_horizon_ans(db, insee))
+    if s_zan:
+        out.append(s_zan)
     ppr = (risques or {}).get("ppr_pct")
     if ppr is not None and float(ppr) > SEUIL_PPR_PART_PCT:   # PPR > 30 % des parcelles
         # RECETTE-PROD-1 (F) — MÊME arrondi (1 décimale) que la section Risques de la fiche commune

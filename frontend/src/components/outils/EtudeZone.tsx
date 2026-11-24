@@ -566,8 +566,10 @@ export function EtudeZone() {
               source="DGFiP (acquisitions PM) · OLL 2024 (loyers, commune) · DGALN/ANCT (dispositifs) · Arcep (fibre, zone)">
               {res.acquisitions_pm && res.acquisitions_pm.n_parcelles > 0 && (
                 <div>
-                  <SectionTitle>Acquisitions récentes (personnes morales)</SectionTitle>
-                  <p className="mt-0.5 text-[11px] text-txt-mut">{nb(res.acquisitions_pm.n_parcelles)} parcelle{res.acquisitions_pm.n_parcelles > 1 ? 's' : ''} acquise{res.acquisitions_pm.n_parcelles > 1 ? 's' : ''} par des PM entre {res.acquisitions_pm.millesime_precedent} et {res.acquisitions_pm.millesime_courant}.</p>
+                  {/* OUTIL-COMMUNES-FIX-1 (à corriger 7) — on nomme le CHANGEMENT de propriétaire entre
+                      deux millésimes (ce que la source établit), jamais un « achat » prouvé. */}
+                  <SectionTitle>Changements de propriétaires (personnes morales)</SectionTitle>
+                  <p className="mt-0.5 text-[11px] text-txt-mut">{nb(res.acquisitions_pm.n_parcelles)} parcelle{res.acquisitions_pm.n_parcelles > 1 ? 's' : ''} dont le propriétaire moral a changé entre {res.acquisitions_pm.millesime_precedent} et {res.acquisitions_pm.millesime_courant} (changement de millésime DGFiP, pas un achat prouvé).</p>
                   <div className="mt-1 flex flex-col gap-1">
                     {res.acquisitions_pm.acquereurs.map((a) => (
                       <div key={a.siren} className="flex items-center justify-between gap-2 text-[11.5px]">

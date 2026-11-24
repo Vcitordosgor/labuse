@@ -230,16 +230,25 @@ def neuf_vefa_commune(session: Session, insee: str) -> dict:
     #     les dépendances (parking) ne diluent plus le €/m² d'une mutation mixte, et une mutation
     #     multi-lots se calcule bien en valeur / SOMME des surfaces habitables (jamais / un seul lot,
     #     jamais éliminée).
+    # OUTIL-COMMUNES-FIX-1 (à corriger 4) — SURFACES RÉPÉTÉES. `dvf_mutations_parcelle` répète chaque
+    # lot bâti par nature_culture : un `sum(surface_reelle_bati)` groupé par mutation comptait le même lot
+    # plusieurs fois (acte 2024-1190924 : les mêmes 130 m² sur AM0318 sur deux lignes de cultures →
+    # dénominateur 716 m² au lieu de 403 → €/m² sous-estimé de ~44 %). On DÉDUPLIQUE d'abord par
+    # (mutation, parcelle, type_local, surface) — MÊME dédoublonnage que `ensure_dvf_views.lignes_dedup`
+    # (un critère, un endroit) — puis on somme les lots d'habitation. (`valeur_fonciere` est constante par
+    # mutation : la mettre dans le DISTINCT ne fragmente pas.)
     row = session.execute(text(f"""
-        WITH mut AS (
-          SELECT id_mutation, max(valeur_fonciere) AS valeur,
-                 sum(COALESCE(surface_reelle_bati,0))
-                   FILTER (WHERE type_local IN ({VEFA_LOTS_HABITATION_SQL})) AS bati
+        WITH lignes AS (
+          SELECT DISTINCT id_mutation, id_parcelle, type_local,
+                 COALESCE(surface_reelle_bati,0) AS bati_l, valeur_fonciere AS valeur
           FROM dvf_mutations_parcelle
           WHERE code_commune = :insee
             AND {VEFA_NATURE_SQL}
-            AND {vefa_fenetre_predicat()}
-          GROUP BY id_mutation)
+            AND {vefa_fenetre_predicat()}),
+        mut AS (
+          SELECT id_mutation, max(valeur) AS valeur,
+                 sum(bati_l) FILTER (WHERE type_local IN ({VEFA_LOTS_HABITATION_SQL})) AS bati
+          FROM lignes GROUP BY id_mutation)
         SELECT count(*) AS n_total,
                count(*) FILTER (WHERE bati > 0 AND valeur > 1000
                                 AND valeur/bati BETWEEN 50 AND 20000) AS n,

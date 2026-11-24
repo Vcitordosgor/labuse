@@ -406,8 +406,9 @@ export interface ContexteCommune {
   } | null
   // OUTILS-6 C2 — les chiffres COMMUNS au comparateur des 24 communes (même moteur, même run)
   comparable: {
-    ancien_median_eur_m2: number | null; ancien_n: number | null; neuf_eur_m2: number | null
+    ancien_median_eur_m2: number | null; ancien_n: number | null; neuf_eur_m2: number | null; neuf_n: number | null
     // OUTIL-PERMIS-FIX-5 (Point 2) — `delai_median_mois` retiré : délai jamais mesuré, non montré.
+    // OUTIL-COMMUNES-FIX-1 — `neuf_n` (effectif VEFA à l'écran) conservé (apporté par main).
     permis_5a: number | null; stock_opportunites_n: number | null; source: string
   } | null
   // OUTILS-6 C5 — les blocs ajoutés, chacun depuis le moteur de son outil d'origine
@@ -829,22 +830,46 @@ export interface PluExtrait {
   // RETOURS-23 (pt 6) — titre « en clair » lu en tête du verbatim + corps (aperçu sans le titre).
   titre?: string | null; corps?: string
   pagination_ambigue: boolean; pagination_note?: string; source_url: string; gpu_consult?: string
+  // OUTIL-PLU-FIX-1 (LOT 2) — lien DIRECT vers le règlement écrit (.pdf), distinct du pack .zip.
+  pdf_url?: string | null
+  // OUTIL-PLU-FIX-3/4 — l'extrait est l'ARTICLE ENTIER ; page_pdf = page du mot ; page_debut/fin =
+  // étendue ; pages_match = TOUTES les pages où une forme du mot apparaît (pluriels compris).
+  page_debut?: number | null; page_fin?: number | null; page_match?: number | null
+  pages_match?: number[] | null; extrait?: string
 }
 export interface PluSearch {
   query: string; insee: string | null; n: number; n_total?: number; tronque?: boolean; resultats: PluExtrait[]; message?: string; avis?: string
+  // OUTIL-PLU-FIX-3 (point 8) — dispositions communes (sans zone) présentées à part sous filtre de zone.
+  dispositions_communes?: PluExtrait[]
+  // OUTIL-PLU-FIX-1 (LOT 5) — pagination réelle (offset) : la page servie et son décalage.
+  limit?: number; offset?: number
   // PLU-EXCEPTIONS-1 — exceptions calibrées de la zone filtrée (verbatim + article/page), sous l'article.
   exceptions_zone?: { regle: string; texte: string; article: string | null; page_pdf: number | null; porte: string | null }[]
+  // OUTIL-PLU-FIX-1 (LOT 5) — provenance DITE du bloc d'exceptions (calibrage, pas texte indexé).
+  exceptions_source?: string | null
+  // OUTIL-PLU-FIX-2 (M4) — note de périmètre servie dans le payload (consommateur non-UI).
+  note_perimetre?: string | null
 }
 export interface PluCommune {
   insee: string; commune: string; statut: string; idurba?: string; millesime?: string
   extraits: number; doutes?: number; pagination_ambigue?: boolean; message?: string
   // M137-P — le « PLU intégral » = pack officiel GPU (.zip) à télécharger (aucun PDF en base).
   source_url?: string | null; document?: string | null
+  // OUTIL-PLU-FIX-1 (LOT 2) — règlement écrit direct (.pdf) ; (LOT 3) — couverture d'indexation.
+  pdf_url?: string | null
+  pct_indexe?: number | null; pages_image?: number | null; pages_texte?: number | null; pages_total?: number | null
+  // OUTIL-PLU-FIX-4 (critère 3) — part indexée à l'article vs au chapitre + drapeau peu structuré.
+  pct_article?: number | null; pct_chapitre?: number | null; peu_structure?: boolean | null
+  // OUTIL-PLU-FIX-1 (LOT 1) — dates DISTINCTES + actes postérieurs + inventaire des procédures (sourcés).
+  date_approbation?: string | null; publication_gpu?: string | null; edition?: string | null
+  modifications?: { type: string; date?: string; source?: string; note?: string }[] | null
+  procedures_inventaire?: { type: string; date?: string; source?: string }[] | null
+  note_doc?: string | null
   // RETOURS-12 O4 — procédure PLU EN COURS (source unique veille_plu) : « révision générale »… ou null.
   procedure_active?: string | null; procedure_date?: string | null
 }
-export const pluAnnuaireSearch = (qy: string, insee?: string, zone?: string) =>
-  j<PluSearch>(`/modules/plu-annuaire/search?q=${encodeURIComponent(qy)}${insee ? `&insee=${insee}` : ''}${zone ? `&zone=${encodeURIComponent(zone)}` : ''}`)
+export const pluAnnuaireSearch = (qy: string, insee?: string, zone?: string, offset = 0) =>
+  j<PluSearch>(`/modules/plu-annuaire/search?q=${encodeURIComponent(qy)}${insee ? `&insee=${insee}` : ''}${zone ? `&zone=${encodeURIComponent(zone)}` : ''}${offset ? `&offset=${offset}` : ''}`)
 export const pluAnnuaireCommunes = () =>
   j<{ n_communes: number; servables: number; n_plu_vigueur: number; non_servis: string[]; n_revision: number; n_rnu: number; n_non_ingere: number
       // RETOURS-12 O4 — compteur RÉCONCILIÉ des procédures PLU en cours (source unique veille_plu).
