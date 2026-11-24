@@ -1,90 +1,86 @@
 # Bascule 2026 — base commune `labuse` / prod — RUNBOOK (NON exécuté)
 
-> OUTIL-SCAN-FIX-3. Séquence PRÉPARÉE, **non lancée** sur `labuse`/prod (l'agent ne lance `--go`/`--rollback`
+> OUTIL-SCAN-FIX-4. Procédure PRÉPARÉE, **non lancée** sur `labuse`/prod (l'agent ne lance `--go`/`--rollback`
 > que sur `labuse_scanfix`). Script : `scripts/bascule_2026_labuse.py`. Vic choisit la cible et le moment.
-> État mesuré de `labuse` (lecture seule) : `programmes`=9 (DÉJÀ là), `sirene_etablissements`=155 505 (DÉJÀ là),
-> `bodacc_depots`=14 078 (à rafraîchir), `parcelle_personne_morale`=82 701 (2025), `parcelle_pm_droit` absente.
+> **Plus AUCUNE étape manuelle** : le script enchaîne TOUT (droits → archive 2025 → flip → BODACC →
+> blocs+membres → recalcul & promotion V-score). `--rollback --sauvegarde <N>` ramène TOUT, run servi compris.
 
-## Sûretés intégrées au script (relecture-scan-2)
+## Sûretés intégrées (relecture-scan-3)
 
-- **Garde-fou de cible** : `--go` et `--rollback` REFUSENT sans `--confirme <base>@<hôte>`, comparé à
-  `current_database()` et à l'hôte réel de la connexion. **Aucune base par défaut.** Avant d'agir : affichage
-  base, hôte, nombre de lignes des 5 tables concernées.
-- **Staging + transaction unique** : les droits 2025 ET 2026 sont chargés dans une TABLE D'ATTENTE
-  (`parcelle_pm_droit_staging`) ; la promotion des droits + l'archive 2025 (même règle) + le flip 2026 passent
-  dans **UNE seule transaction** (`commit=False` partout, un seul `commit` final). **Interruption avant ce commit
-  ⇒ base servie strictement inchangée** (prouvé : interruption dure post-staging → empreintes servies = AVANT).
-- **Sauvegarde complète, non-écrasante** : `--go` copie d'abord les 5 tables concernées
-  (`parcelle_personne_morale`, `pm_proprietaires_millesimes`, `parcelle_pm_droit`, `bodacc_depots`,
-  `parcel_blocs`) dans `_bascule_bak__*` et mémorise le **run V-score servi** (re-servable). Relancer `--go`
-  ne réécrit pas la sauvegarde → un rollback revient toujours à l'AVANT d'origine.
-- **Rollback réel** : `--rollback` restaure les 5 tables depuis la sauvegarde EN UNE transaction (et RETIRE
-  les tables/colonnes créées par la bascule — `parcelle_pm_droit`, colonnes `droit_code/droit_label`). Plus
-  AUCUNE commande SQL à taper. *(L'ancien `TRUNCATE … WHERE false` du runbook précédent était du SQL invalide.)*
+- **Cible par ARGUMENT, zéro environnement.** `--db <url>` est OBLIGATOIRE ; le script ne lit NI
+  `LABUSE_DATABASE_URL`, NI `.env`, NI aucun défaut (`create_engine(url)` direct). `--confirme` est comparé à
+  l'**identité renvoyée par le serveur** : `current_database()` @ `system_identifier` (identité du cluster,
+  IDENTIQUE pour `localhost`/`127.0.0.1`/`::1`/socket) `:` port — insensible à la casse. Un refus
+  **n'imprime jamais** la valeur attendue (sinon il dicterait le `--confirme` qui débloque la prod).
+- **Sauvegardes NUMÉROTÉES & DATÉES, jamais périmées.** Chaque `--go` crée `_bascule_bak__<N>__*` + une ligne
+  au registre `_bascule_sauvegardes`. `--go` REFUSE si une sauvegarde plus ancienne existe, SAUF
+  `--malgre-sauvegarde <N>` (qui la nomme). `--rollback` EXIGE `--sauvegarde <N>`, affiche (numéro, date,
+  lignes) et n'agit que sur celle-là. `--purge-sauvegarde <N>` la supprime une fois la bascule validée.
+- **Staging + transaction unique.** Droits 2025 & 2026 → table d'attente `parcelle_pm_droit_staging` ;
+  promotion droits + archive 2025 + flip = UNE transaction. Interruption avant son commit → servie inchangée.
+- **Sauvegarde COMPLÈTE.** Couvre les 8 tables touchées : `parcelle_personne_morale`,
+  `pm_proprietaires_millesimes`, `parcelle_pm_droit`, `bodacc_depots`, `parcel_blocs`,
+  **`parcel_bloc_membres`**, **`p_score_v2_runs`**, **`parcel_p_score_v2`**, + les **octets exacts** du
+  **label servi** (`config/served_run.txt`). `--rollback` restaure tout EN UNE transaction et **re-sert
+  réellement** le run précédent (réécrit `config/served_run.txt`) puis le **vérifie** (`_served_run_versionne`).
 
-## Séquence
+## Procédure (une commande)
 
 ```bash
-export LABUSE_DATABASE_URL="postgresql+psycopg://openclaw@localhost:5432/labuse"   # local commun ; prod = /etc/labuse/labuse.env
-BIN=.venv/bin/python; S=scripts/bascule_2026_labuse.py
+P=.venv/bin/python; S=scripts/bascule_2026_labuse.py
+U="postgresql+psycopg://<user>@<host>:5432/labuse"       # local commun ; prod = l'URL prod
 
-# Inspection (lecture seule) :
-$BIN $S --empreinte
-$BIN $S --dry-run
+# Inspection (lecture seule ; donne l'identité serveur à mettre dans --confirme) :
+$P $S --db "$U" --empreinte
+$P $S --db "$U" --dry-run
+$P $S --db "$U" --lister-sauvegardes
 
-# 1-3. DONNÉES — staging + transaction unique (le script sauvegarde tout d'abord) :
-$BIN $S --go --confirme labuse@localhost          # adapter base@hôte à la cible réelle
+# BASCULE ENTIÈRE (chaîne droits, archive, flip, BODACC, blocs+membres, recalcul+promotion V-score) :
+$P $S --db "$U" --go --confirme <base>@<system_identifier>:<port>
+#   (si une sauvegarde ancienne existe : ajouter --malgre-sauvegarde <N> OU --purge-sauvegarde <N> d'abord.)
 
-# 4. Rafraîchir les dépôts de comptes BODACC (fait daté ; corrige le retard, ex. 449090075 arrêté 2023) :
-.venv/bin/labuse ingest-bodacc-depots
+# RETOUR ARRIÈRE total (ramène TOUT, run servi inclus) :
+$P $S --db "$U" --rollback --sauvegarde <N> --confirme <base>@<system_identifier>:<port>
 
-# 5. Recalcul V-SCORE derrière le flip (le classement lit parcelle_personne_morale) puis promotion :
-.venv/bin/labuse p-score-v2 --label q_vXX_scan2026 --rebuild
-#   puis promouvoir q_vXX_scan2026 (chaîne golden-promote).
-
-# 6. Reconstruire les blocs (une parcelle multi-titulaire peut changer de bloc) :
-.venv/bin/labuse blocs-build
+# Quand la bascule est validée et stable :
+$P $S --db "$U" --purge-sauvegarde <N> --confirme <base>@<system_identifier>:<port>
 ```
 
 (programmes et sirene_etablissements sont DÉJÀ en base `labuse` → rien à recharger. Base vide : programmes via
-l'admin `/admin/programmes/collecter`+`valider`, sirene via `labuse ingest-sirene-etab`.)
+l'admin `/admin/programmes/collecter`+`valider`, sirene via `labuse ingest-sirene-etab`, avant le `--go`.)
 
 ## Ce que la bascule change (parcelles multi-titulaires : ≈ 2 711 SIREN principaux, 3 989 `groupe`)
 
 | Écran / moteur | Effet |
 |---|---|
-| **Fiche parcelle** | propriétaire affiché = le propriétaire (P), plus la 1re ligne, sur les multi-titulaires ; + « + N autres titulaires ». |
-| **Blocs fonciers** | **rebâtir** (`labuse blocs-build`) : une parcelle multi-titulaire peut changer de bloc. |
-| **Communes — « changements de propriétaires »** | archive 2025 par la MÊME règle → **963** vrais changements affichés, plus **2 019** (≈ 1 056 artefacts de règle supprimés). |
-| **Classement / V-score** | lit `parcelle_personne_morale` → **recalcul V-score obligatoire** (étape 5) + promotion. |
-| **Scan patrimoine / Copilote** | millésime 2026, droits séparés, DP/annulés à part, catégorie NAF ; plus de valorisation. |
+| Fiche parcelle | propriétaire = le propriétaire (P) sur les multi-titulaires ; + « + N autres titulaires ». |
+| Blocs fonciers | `blocs-build` chaîné (reconstruit `parcel_blocs` + `parcel_bloc_membres`). |
+| Communes « changements » | archive 2025 même règle → ≈ 963 vrais changements (≈ 1 056 artefacts retirés). |
+| Classement / V-score | recalcul + **promotion** chaînés ; `config/served_run.txt` → nouveau run. |
+| Scan patrimoine / Copilote | millésime 2026, droits séparés, DP/annulés à part, catégorie NAF, sans valorisation. |
 
-## Les 12 témoins de cohérence (hook)
+## 12 témoins de cohérence (hook)
 
-Marché €/m² (terrain/bâti), **indépendants du propriétaire** → le flip (côté owner) ne crée aucun écart
-1 €/1 m² attendu. **Relancer** `bash scripts/ci/coherence_run.sh` après flip + recalcul V-score : un témoin
-multi-titulaire verra son owner changer **de façon identique sur tous les écrans** (source unique
-`parcelle_personne_morale`) → 0 divergence. Toute divergence = cache d'écran non invalidé, à corriger.
+Marché €/m², indépendants du propriétaire → le flip ne crée aucun écart 1 €/1 m². Relancer
+`bash scripts/ci/coherence_run.sh` après la bascule : un témoin multi-titulaire voit son owner changer
+identiquement sur tous les écrans (source unique) → 0 divergence.
 
-## Durée (ordre de grandeur, base locale)
+## Durée & reproductibilité
 
-0 sauvegarde (5 tables) ~ secondes · 1 téléchargement 2 ZIP (149 Mo ×2) + staging ~ 5-8 min (réseau ; cache
-/tmp réutilisable) · 2 transaction unique (promotion + archive + flip, swap bref) ~ secondes · 4
-`ingest-bodacc-depots` ~ minutes (API) · 5 recalcul V-score ~ **poste long** (minutes-dizaines) · 6 blocs-build
-~ minutes. **Coupure lecteurs** : seulement le commit de la transaction unique (bref ; MVCC → jamais de table
-vide ; les lecteurs voient l'ancien jusqu'au commit).
+Procédure entière mesurée sur `labuse_scanfix` : **≈ 55 s** (hors téléchargement des ZIP, mis en cache
+/tmp). En prod, postes longs : BODACC (`--bodacc-limit 0` = tous les SIREN, minutes, API) et le **recalcul
+V-score réel** (`run_score_v2`, minutes-dizaines). **Reproductibilité** : deux `--go` donnent le même état
+MÉTIER mais des colonnes **volatiles** diffèrent (`id` série, `date_import`=`now()`, `run_id` horodaté) — un
+`diff` naïf verrait des écarts ; la vérité se lit sur les colonnes métier. Le `--rollback`, lui, ré-insère
+le snapshot **à l'octet** (volatiles comprises).
 
-## Rollback
+## Rollback — ce qui revient
 
-- **Avant le commit de la transaction unique** : rien n'a bougé côté servi — il n'y a rien à annuler (la
-  table d'attente peut être laissée ou `DROP TABLE parcelle_pm_droit_staging`).
-- **Après un `--go` réussi** : `$BIN $S --rollback --confirme <base>@<hôte>` — restaure les 5 tables depuis
-  `_bascule_bak__*`, retire `parcelle_pm_droit` et les colonnes `droit_code/droit_label` ajoutées. **Prouvé
-  identique à l'AVANT, table par table** (empreinte = n_lignes + Σ hashtext des colonnes métier).
-- **bodacc_depots** : l'étape 4 (upsert) est couverte par la sauvegarde (restaurée au rollback).
-- **V-score** : le run précédent est MÉMORISÉ par la sauvegarde (`_bascule_bak__meta.vscore_run_servi`) et
-  **re-servable** par la chaîne golden-promote (repointer le run servi). Son nom est affiché par `--rollback`.
-- **parcel_blocs** : restauré par le rollback ; sinon `labuse blocs-build` reconstruit depuis l'état courant.
+`--rollback --sauvegarde <N>` restaure les 8 tables + réécrit `config/served_run.txt` (run précédent
+re-servi **et vérifié**). Couvre donc : données, archive, `bodacc_depots`, `parcel_blocs` **et**
+`parcel_bloc_membres`, le run V-score (`p_score_v2_runs`/`parcel_p_score_v2`) et le **label servi**. Nommer
+la bonne sauvegarde : un `--rollback --sauvegarde 2` après deux bascules ramène à l'état **d'après la 1ʳᵉ**
+(prouvé), pas à l'origine.
 
 ## ARRÊT
 

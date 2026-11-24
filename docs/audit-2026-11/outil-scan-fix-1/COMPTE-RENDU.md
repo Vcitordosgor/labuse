@@ -359,3 +359,35 @@ Empreinte = `(existe, n_lignes, Σ hashtext(colonnes métier))` — hors colonne
 | **f** | mauvaise valeur de `--confirme` (et absence) | **refus, rien écrit** (comparé à `current_database()@hôte`) |
 
 *État SCAN-FIX-3 : 1 ✅ · 2 ✅ · 3 ✅ · 4 ✅ · 5 ✅ · 6 preuves a-f ✅. `labuse` jamais écrite, jamais `--go` ; tout sur `labuse_scanfix`.*
+
+---
+
+# OUTIL-SCAN-FIX-4 — fermer les trous du retour arrière (`relecture-scan-3.md`)
+
+4 points. `labuse` **jamais écrite** ; 7 preuves sur `labuse_scanfix`. Script `scripts/bascule_2026_labuse.py` réécrit ; `BASCULE-PROD.md` à jour. **Empreinte = `count(*)` + `Σ hashtext(ligne ENTIÈRE)` sur TOUTES les colonnes** (volatiles comprises).
+
+## 1 — Sauvegarde numérotée/datée, jamais périmée
+Chaque `--go` crée `_bascule_bak__<N>__*` + une ligne au registre `_bascule_sauvegardes` (numéro, date ISO, cible, label servi). `--go` **refuse** si une sauvegarde plus ancienne existe, sauf `--malgre-sauvegarde <N>` qui la nomme. `--rollback` **exige** `--sauvegarde <N>`, affiche (numéro, date, lignes) et n'agit que sur celle-là. `--purge-sauvegarde <N>` la supprime. → plus de « sauvegarde périmée » qui ramène à un état ancien (le danger du point 1 de la relecture).
+
+## 2 — Cible par argument + identité serveur (plus d'env, plus de chaîne à recopier)
+`--db <url>` **obligatoire** : le script ne lit NI l'environnement NI `.env`, aucun défaut (`create_engine(url)`). `--confirme` comparé à l'**identité renvoyée par le serveur** `current_database()@system_identifier:port`, pas à l'URL. Un refus **n'imprime pas** la valeur attendue.
+
+## 3 — `localhost` = `127.0.0.1` = casse
+L'identité repose sur le **`system_identifier`** du cluster (renvoyé par le serveur, identique quelle que soit la graphie d'hôte) — et non `inet_server_addr()` (qui rend `::1` vs `127.0.0.1`). Prouvé : `…@localhost` et `…@127.0.0.1` → **même identité** `labuse_scanfix@7648954216930168276:5432`. Comparaison en minuscules (insensible à la casse).
+
+## 4 — Procédure ENTIÈRE sous retour arrière (plus d'étape manuelle)
+Le script enchaîne : droits → archive 2025 → flip → **BODACC** → **blocs + `parcel_bloc_membres`** → **recalcul + PROMOTION V-score**. La sauvegarde couvre les **8** tables (dont `parcel_bloc_membres`, `p_score_v2_runs`, `parcel_p_score_v2`) + les **octets exacts** du **label servi** (`config/served_run.txt`). `--rollback` restaure tout et **re-sert réellement** le run précédent (réécrit le fichier) puis le **vérifie** (`_served_run_versionne`). *(Sur la tranche `labuse_scanfix` : `blocs-build` et le vrai `run_score_v2` ne tournent pas — run résiduel servi et features de scoring absents, angle mort de la tranche ; le script les CHAÎNE et reste résilient, et le V-score enregistre un run minimal qui exerce exactement les tables que le rollback doit couvrir. En prod ces deux étapes tournent pour de vrai.)*
+
+## Les SEPT preuves (sur `labuse_scanfix` remise à l'« avant bascule »)
+
+| # | Preuve | Résultat |
+|---|---|---|
+| **a** | AVANT | pm 82 701/`-392862471973` · millés. 28 190/`-1308875661` · droit absente · bodacc absente · blocs 670/`3708096254` · bloc_membres 0 · p_score_v2_runs 0 · parcel_p_score_v2 0 |
+| **b** | procédure entière | sauvegarde #1 → staging → transaction unique (flip 82 701→84 045) → BODACC (chaîné) → blocs (chaîné) → V-score recalcul+**promotion** (`served_run.txt` → run bascule). APRÈS : pm 84 045, millés. 110 891, droit 178 224, p_score_v2_runs 1 |
+| **c** | `--rollback --sauvegarde 1` | **identique à AVANT, table par table, TOUTES colonnes** (pm `-392862471973`, millés. `-1308875661`, droit+bodacc **retirées**, blocs/membres/scores restaurés) ; **run servi RE-SERVI « q_v20 » VÉRIFIÉ** |
+| **d** | deux `--go` puis `--rollback --sauvegarde 2` | revient à l'état **d'APRÈS la 1ʳᵉ** (pm `580154625077`, millés. `121251725507`, p_score_v2_runs `947333443`, run servi « bascule2026_1… ») — **pas l'origine** |
+| **e** | `--go` avec une sauvegarde ancienne (#1) | **REFUS** (« une sauvegarde plus ancienne existe #1 … ») ; débloqué seulement par `--malgre-sauvegarde 1` |
+| **f** | env pointant ailleurs + mauvaise `--confirme` | sans `--db` → refus (env **non lue**) ; env=labuse + `--db`=scanfix → suit `--db` (identité scanfix) ; `--confirme` erroné → **refus, rien écrit, valeur non imprimée** |
+| **g** | durée procédure entière | **≈ 55 s** sur `labuse_scanfix` (ZIP en cache ; en prod BODACC+V-score réels dominent) |
+
+*État SCAN-FIX-4 : 1 ✅ · 2 ✅ · 3 ✅ · 4 ✅ · 7 preuves a-g ✅. `labuse` jamais écrite, jamais `--go`/`--rollback` ; tout sur `labuse_scanfix`.*
