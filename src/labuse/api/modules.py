@@ -628,11 +628,15 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
                 " AND (CAST(:c AS text) IS NULL OR commune = :c)"
                 " AND (CAST(:nat AS text) IS NULL OR type = :nat)"),
                 {"c": commune, "nat": nature}).scalar()
+            # OUTIL-PERMIS-FIX-2 (G2) — la fraîcheur de la couche de bâti (qui fonde « aucun bâtiment
+            # détecté ») : date de mesure servie pour le « i » des dormants + signal si la BD TOPO a bougé.
+            from ..faisabilite.viabilisation_build import bati_emprise_fraicheur
             return {"total": sum(parts.values()),
                     "geocodes": sum(int(r["geo"] or 0) for r in rows),
                     "donnees_jusqu_au": dmax.date().isoformat(), "coupure_recent": coupure_recent,
                     "etats": {k: parts.get(k, 0) for k in permis_classe.ETATS},
-                    "sans_date": int(sans_date or 0)}
+                    "sans_date": int(sans_date or 0),
+                    "bati_fraicheur": bati_emprise_fraicheur(db)}
         c = db.execute(text(
             f"""SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
                FROM sitadel_permits
@@ -742,16 +746,27 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
                s.raw->>'geoloc' AS geoloc,
                s.raw->>'petitioner_name' AS porteur, s.raw->>'petitioner_siren' AS porteur_siren,
                s.idu_codes,
-               d.date_depot::text AS date_depot, d.valide AS delai_valide,
-               d.delai_mois, d.date_achevement::text AS date_achevement,
+               -- OUTIL-PERMIS-FIX-4 (Point 4) — le DÉPÔT de la fiche n'est montré que s'il est une DATE
+               -- PRÉCISE FIABLE : `date_depot` (DR_DEPOT) STRICTEMENT antérieure à l'autorisation ET non
+               -- un 1er janvier (= proxy d'ANNÉE, 10 787 cas). Restent 377 vraies dates précises. Sinon
+               -- (DR_DEPOT = autorisation / postérieur / proxy / absent) → NI dépôt NI délai (la couche
+               -- des délais des Communes utilise l'ANNÉE de dépôt, trop imprécise pour une fiche).
+               CASE WHEN s.date_depot IS NOT NULL AND s.date IS NOT NULL AND s.date_depot < s.date
+                    AND NOT (EXTRACT(MONTH FROM s.date_depot) = 1 AND EXTRACT(DAY FROM s.date_depot) = 1)
+                    THEN s.date_depot::date::text END AS date_depot,
+               CASE WHEN s.date_depot IS NOT NULL AND s.date IS NOT NULL AND s.date_depot < s.date
+                    AND NOT (EXTRACT(MONTH FROM s.date_depot) = 1 AND EXTRACT(DAY FROM s.date_depot) = 1)
+                    THEN (EXTRACT(YEAR FROM s.date)::int - EXTRACT(YEAR FROM s.date_depot)::int) * 12
+                       + (EXTRACT(MONTH FROM s.date)::int - EXTRACT(MONTH FROM s.date_depot)::int) END AS delai_mois,
                CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
         FROM sitadel_permits s
-        LEFT JOIN m10_permit_delais d ON d.permit_id = s.permit_id
         WHERE s.permit_id = :pid"""), {"pid": permit_id}).mappings().first()
     if not r:
         raise HTTPException(404, "Permis introuvable")
+    # OUTIL-PERMIS-FIX-4 (Point 4) — délai affiché UNIQUEMENT si la date de dépôt est fiable (précise,
+    # antérieure à l'autorisation) : jamais « 0 mois » issu d'un DR_DEPOT = date d'autorisation (défaut).
     delai = None
-    if r["delai_valide"] and r["delai_mois"] is not None:
+    if r["delai_mois"] is not None and r["date_depot"] is not None:
         delai = {"mois": r["delai_mois"],
                  "libelle": f"{r['delai_mois']} mois entre dépôt et autorisation"}
     return {
@@ -765,7 +780,7 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
         # FRONT-CHIFFRES-2 (F32) — la note d'incohérence dépôt/autorisation (seuil 1 mois) vient de la
         # fonction PARTAGÉE `miroir.permis_incoherence_note`, plus de la regex de seuil au front.
         "note_incoherence": _miroir.permis_incoherence_note(r["date_depot"], r["date_autorisation"]) or None,
-        "date_achevement": r["date_achevement"] or r["daact"],
+        "date_achevement": r["daact"],
         "delai_instruction": delai,
         # KELFONCIER-FIX-2 (Lot D) — statut par la fonction PARTAGÉE de la fiche (ingestion/permits.py) :
         # l'annulé (état 4) est dit « annulé », plus « Chantier ouvert » (divergence de l'ancien _ETAT_LABELS).
@@ -878,12 +893,16 @@ def promesses(commune: str | None = None, months: int = 36,   # OUTIL-PERMIS-FIX
     if count_only:
         from ..registre.moteurs.commune import permis_point_mort
         return {"total": permis_point_mort(db, commune, months, dmax)}
-    # CTE MATERIALIZED = parade au plan « fast-start » de LIMIT/OFFSET-0. DORMANT = la définition UNIQUE
-    # (OUTIL-PERMIS-FIX-1 LOT 2) : PC autorisé, NON annulé (≠4), NON commencé (≠5), sans DAACT, > 3 ans
-    # (ancré sur :dmax), ET aucune parcelle bâtie (emprise mesurée ≥ seuil dans `parcel_bati_emprise`).
-    # La parcelle AFFICHÉE est la MOINS bâtie du permis (celle qui porte l'opportunité). §3 : la géom du
-    # permis est rendue en POINTS CLIQUABLES (payload léger, non-géocodés listés geom NULL).
-    rows = db.execute(text("""
+    # OUTIL-PERMIS-FIX-3 (Point 2) — la liste lit la DÉFINITION UNIQUE (`permis_classe._dormant_sql`),
+    # plus un prédicat recopié : même dormant que la partition, le filtre, le compteur et la fiche commune.
+    # Et l'affinage ne peut QUE RESTREINDRE les 854 : on CLAMPE le seuil d'âge à ≥ 36 mois (DORMANT_MOIS)
+    # — « Affiner → 24 m+ » ne doit jamais AJOUTER de dormants (constat RELECTURE-3 : 1 118 au lieu de 854).
+    m_dormant = max(int(months), permis_classe.DORMANT_MOIS)
+    dormant_pred = permis_classe._dormant_sql("s.", ":dmax").replace(
+        f"interval '{permis_classe.DORMANT_MOIS} months'", "(:m || ' months')::interval")
+    # CTE MATERIALIZED = parade au plan « fast-start » de LIMIT/OFFSET-0. La parcelle AFFICHÉE est la MOINS
+    # bâtie du permis (celle qui porte l'opportunité). §3 : la géom du permis est rendue en POINTS CLIQUABLES.
+    rows = db.execute(text(f"""
         WITH cand AS MATERIALIZED (
             SELECT s.permit_id, s.type, s.date, s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt,
                    p.idu, round(p.surface_m2) AS surface_m2,
@@ -896,23 +915,14 @@ def promesses(commune: str | None = None, months: int = 36,   # OUTIL-PERMIS-FIX
                 JOIN parcel_bati_emprise be ON be.idu = c.idu
                 JOIN parcels pa ON pa.idu = be.idu
                 ORDER BY be.bati_m2 ASC, be.idu ASC LIMIT 1) p ON true
-            WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
-              AND (s.raw->>'etat' IS NULL OR s.raw->>'etat' NOT IN ('4','5','6'))
-              AND s.raw->>'daact' IS NULL
-              AND s.date < :dmax - (:m || ' months')::interval
-              -- OUTIL-PERMIS-FIX-2 (Défaut C) — TOUTES les parcelles retrouvées ET mesurées sans bâti
-              -- (aucune absente de parcel_bati_emprise, aucune ≥ seuil) : même prédicat que permis_classe.
-              AND jsonb_array_length(s.idu_codes) >= 1
-              AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text(s.idu_codes) c2(idu)
-                              LEFT JOIN parcel_bati_emprise be2 ON be2.idu = c2.idu
-                              WHERE be2.idu IS NULL OR be2.bati_m2 >= :seuil)
+            WHERE (CAST(:c AS text) IS NULL OR s.commune = :c) AND {dormant_pred}
         )
         SELECT cand.permit_id, cand.type, cand.date::date::text AS date, cand.etat, cand.nb_lgt,
                cand.idu, cand.surface_m2, cand.g, s2.tier AS statut,
                s2.tier AS tier_v2, s2.rang AS rang_v2
         FROM cand LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = cand.idu AND s2.run_id = :v2run
         ORDER BY cand.date ASC, cand.permit_id ASC LIMIT :lim OFFSET :off"""),
-        {"c": commune, "m": months, "dmax": dmax, "seuil": permis_classe.BATI_SEUIL_M2,
+        {"c": commune, "m": m_dormant, "dmax": dmax,
          "v2run": _v2run(db), "lim": limit, "off": offset}).mappings().all()
     # tri anciens d'abord (= les plus « morts »). total via l'appel count_only parallèle ; ici on déduit
     # has_more du remplissage de la page (une page pleine ⇒ il reste potentiellement des lignes).
@@ -3096,6 +3106,20 @@ def _plu_millesimes() -> dict:
     return yaml.safe_load(p.read_text())["communes"]
 
 
+@_ft.lru_cache(maxsize=1)
+def _plu_dates_gpu() -> dict:
+    """OUTIL-PLU-FIX-1 (LOT 1) — dates distinctes (publication GPU, édition), modifications postérieures
+    et procédures en cours, sourcées du contre-audit (config/plu_dates_gpu.yaml)."""
+    import pathlib
+
+    import yaml
+    p = pathlib.Path(__file__).resolve().parents[3] / "config" / "plu_dates_gpu.yaml"
+    try:
+        return yaml.safe_load(p.read_text()).get("communes", {})
+    except Exception:  # noqa: BLE001
+        return {}
+
+
 @router.get("/plu-annuaire/communes")
 def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
     """M51 — état du corpus par commune : SERVABLE (n extraits), RNU, révision non réconciliée,
@@ -3112,6 +3136,19 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
     res = etat_corpus_plu(db, _plu_millesimes())
     res["n_plu_vigueur"] = res["n_communes"] - res["n_rnu"]
     res["non_servis"] = sorted(c["commune"] for c in res["communes"] if c["statut"] in ("revision", "non_ingere"))
+    # OUTIL-PLU-FIX-1 (LOT 1) — on attache à chaque commune ses dates DISTINCTES (approbation de la
+    # version = date_mairie ; publication GPU ; édition matérielle du PDF), ses actes postérieurs et
+    # l'inventaire des procédures. L'écran dira laquelle il affiche ; l'absence de badge n'est plus lue
+    # comme « aucune procédure ».
+    mil, dates = _plu_millesimes(), _plu_dates_gpu()
+    for c in res["communes"]:
+        dg = dates.get(c["insee"], {})
+        c["date_approbation"] = (mil.get(c["insee"], {}) or {}).get("date_mairie")
+        c["publication_gpu"] = dg.get("publication_gpu")
+        c["edition"] = dg.get("edition")
+        c["modifications"] = dg.get("modifications")
+        c["procedures_inventaire"] = dg.get("procedures")
+        c["note_doc"] = dg.get("note")
     return res
 
 
@@ -3225,6 +3262,7 @@ def plu_titre_corps(verbatim: str) -> tuple[str | None, str]:
 @router.get("/plu-annuaire/search")
 def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = None,
                         limit: int = Query(25, ge=1, le=200),   # FIX-C5
+                        offset: int = Query(0, ge=0),           # OUTIL-PLU-FIX-1 LOT 5 — pagination réelle
                         db: Session = Depends(get_db)) -> dict:
     """M51 — recherche full-text (french) qui SERT DU VERBATIM SOURCÉ : chaque résultat porte
     commune, document, article, PAGE PDF, millésime, lien. Aucun résumé, aucun reformulé. `doute` et
@@ -3234,6 +3272,14 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
     q = (q or "").strip()
     if not q:
         raise HTTPException(400, "Requête vide.")
+    # OUTIL-PLU-FIX-3 (point 9) — synonymes de « recul » RESSERRÉS : seulement ce qui parle
+    # d'IMPLANTATION ou de RETRAIT (plus « limites », trop large). `terms` = mots servant à CITER la page
+    # du mot dans l'article et à rendre l'extrait autour (points 2-3).
+    q_fts = q
+    terms = re.findall(r"[0-9A-Za-zÀ-ÿ]{2,}", q)
+    if re.search(r"(?i)\brecul", q):
+        q_fts = f"{q} OR retrait OR implantation"
+        terms = terms + ["retrait", "implantation"]
     if insee:
         mil = _plu_millesimes().get(insee)
         if mil and mil["statut"] == "rnu":
@@ -3247,14 +3293,18 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                                 f"en mairie (complétion auto à l'approbation, veille M41).") if rev else
                                (f"{nm} : règlement non ingéré (hors corpus) — rien à servir. "
                                 f"Voir /plu-annuaire/communes.")}
-    res = search_reglement(db, q, insee, limit=limit, zone=zone)
-    # OUT-PLU-008 — `n_total` = total des correspondances (sans plafond) ; `affiches` = page servie.
-    # L'écran dit « N affichés sur M » plutôt que de présenter le compte plafonné comme le total.
-    n_total = count_reglement(db, q, insee, zone=zone)
+    res = search_reglement(db, q_fts, insee, limit=limit, zone=zone, offset=offset, terms=terms)
+    # OUT-PLU-008 — `n_total` = total des articles correspondant (sans plafond) ; `n` = page servie.
+    n_total = count_reglement(db, q_fts, insee, zone=zone)
     for r in res:
         r["gpu_consult"] = "https://www.geoportail-urbanisme.gouv.fr/"
-        # RETOURS-23 (pt 6) — titre « en clair » + corps (aperçu sans le titre) pour la carte d'extrait.
-        r["titre"], r["corps"] = plu_titre_corps(r.get("texte_verbatim") or "")
+        # OUTIL-PLU-FIX-3 (points 2-3) — la page CITÉE est celle du mot dans l'article (`page_match`) ;
+        # « p. X-Y » quand l'article court sur plusieurs pages ; le corps est l'extrait AUTOUR du mot,
+        # « Lire tout » montrera l'article entier (texte_verbatim), exceptions comprises.
+        r["page_pdf"] = r.get("page_match") or r.get("page_debut") or r.get("page_pdf")
+        r["titre"], _corps = plu_titre_corps(r.get("texte_verbatim") or "")
+        r["corps"] = r.get("extrait") or _corps
+        r.pop("page_map", None)
         if r.get("pagination_ambigue"):
             r["pagination_note"] = ("pagination du document ambiguë (double numérotation) — la page "
                                     "citée est la PAGE PDF du fichier, pas la page imprimée.")
@@ -3274,10 +3324,34 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                                                 "porte": e.get("porte")})
         except Exception:  # noqa: BLE001
             exceptions_zone = []
+    # OUTIL-PLU-FIX-1 (LOT 5) — le bloc d'exceptions DIT d'où il vient (calibrage LABUSE, pas le texte
+    # indexé) et il est renvoyé MÊME si aucun extrait n'est trouvé (le front l'affiche désormais hors du
+    # bloc « résultats » — un filtre de zone erroné ne masque plus l'exception).
+    exceptions_source = ("Exceptions issues du CALIBRAGE LABUSE (config/plu_destinations), pas du texte "
+                         "indexé — vérifiez au règlement.") if exceptions_zone else None
     # OUT-PLU-008 — `n` = extraits AFFICHÉS (page servie, plafonnée par `limit`), `n_total` = total réel
     # des correspondances. L'écran dit « N affichés sur M » (jamais le compte plafonné pris pour le total).
+    # OUTIL-PLU-FIX-2 (M2) — message explicite quand rien ne correspond (plus seulement le disclaimer).
+    # (M4) — note de PÉRIMÈTRE servie dans le payload (pas seulement dans l'UI) : un consommateur non-UI
+    # doit savoir que la recherche communale ne vérifie pas prescriptions/servitudes/PPR d'une parcelle.
+    message = None
+    if n_total == 0:
+        message = (f"Aucun extrait indexé ne correspond à « {q} »"
+                   + (f" en zone {zone}" if zone else "")
+                   + " — le règlement complet (PDF) peut contenir d'autres passages.")
+    # OUTIL-PLU-FIX-3 (point 8) — sous filtre de zone, on présente À PART les « Dispositions communes »
+    # (articles sans zone propre, qui ne nomment aucune autre zone), jamais mélangées aux articles de
+    # la zone demandée.
+    communes_list: list[dict] = []
+    if zone:
+        communes_list = [r for r in res if r.get("zone") is None]
+        res = [r for r in res if r.get("zone") is not None]
     return {"query": q, "insee": insee, "n": len(res), "n_total": n_total,
-            "tronque": n_total > len(res), "resultats": res,
-            "exceptions_zone": exceptions_zone,
+            "limit": limit, "offset": offset, "message": message,
+            "tronque": n_total > len(res) + len(communes_list), "resultats": res,
+            "dispositions_communes": communes_list,
+            "exceptions_zone": exceptions_zone, "exceptions_source": exceptions_source,
+            "note_perimetre": ("Recherche communale (texte du règlement) : ne vérifie pas, à la parcelle, "
+                               "les prescriptions graphiques, les servitudes (SUP) ni le PPR."),
             "avis": "Verbatim du règlement opposable (source GPU). Vérifiez toujours au document "
                     "(lien) ; ceci n'est pas un conseil juridique."}

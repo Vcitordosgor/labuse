@@ -223,8 +223,9 @@ type Comparateur = {
 const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'max' | 'min' }[] = [
   // RETOURS-15 B2 (P4) — la colonne « Parcelles à potentiel » (stock) est RETIRÉE : c'est le
   // classement LABUSE, hors périmètre de ce comparateur (décision Vic).
-  { k: 'velocite', head: 'Instruction (mois)', best: 'min',
-    title: 'Instruction — délai médian dépôt→autorisation, en mois (plus bas = plus rapide)' },
+  // OUTIL-PERMIS-FIX-5 (Point 2) — la colonne « Instruction (mois) » (vélocité) est RETIRÉE : le délai
+  // d'instruction n'a jamais été mesuré (dépôt connu à l'année → +4 mois de gonflement médian).
+  // « On ne montre pas un délai faux » (Vic). L'axe reste au classement (poids 0,15), signalé au back.
   { k: 'permis', head: 'Permis (5 ans)',
     title: 'Dynamisme permis — permis SITADEL cumulés sur 5 ans (glissants)' },
   { k: 'deficit_sru', head: 'Déficit SRU (pts)',
@@ -375,14 +376,16 @@ export function CommunesLegende() {
   return (
     <div data-o6-legende className="text-[10px] leading-relaxed text-txt-dim">
       <b className="text-txt-mut">Légende :</b>{' '}
-      <b>Instruction</b> = délai médian dépôt→autorisation (mois) ·{' '}
+      {/* OUTIL-PERMIS-FIX-5 (Point 2) — « Instruction = délai médian dépôt→autorisation » RETIRÉ de la
+          légende : colonne supprimée (délai jamais mesuré, dépôt connu à l'année). */}
       <b>Permis 5 ans</b> = permis SITADEL cumulés sur 5 ans ·{' '}
       <b>Déficit SRU</b> = objectif de référence − taux de logement social (points), communes SOUMISES ; les EXEMPTÉES affichent « exon. » ·{' '}
       <b>€/m² ancien</b> = médiane DVF commune entière (ventes strictes) ·{' '}
       <b>€/m² VEFA</b> = prix VEFA commune observé à l’acte ·{' '}
       <b>€/m² terrain nu</b> = médiane DVF terrain nu par zone PLU (U sinon AU) — le chiffre du promoteur.
-      <span className="mt-0.5 block">Meilleure valeur en <span className="font-semibold text-mint">vert</span> (foncier / rapidité d’instruction).
-        Une donnée absente reste « — », jamais un zéro inventé.</span>
+      {/* OUTIL-PERMIS-FIX-5 (Point 2) — la note « meilleure valeur en vert » disparaît : la seule colonne
+          « mieux = plus bas » était l'instruction (retirée) ; les prix restent neutres (pas de faux signal). */}
+      <span className="mt-0.5 block">Une donnée absente reste « — », jamais un zéro inventé.</span>
       {/* RECETTE-2 (D3) — on DIT le seuil : « — » n'est pas une absence mais une insuffisance de volume. */}
       {/* OUT-COMMUNE-010 — seuil terrain nu = 10 ventes (config terrain_cellule_commune), pas 5. */}
       <span className="mt-0.5 block"><b className="text-txt-mut">« — » = sous le seuil de fiabilité</b> : €/m² neuf sous <b>8 ventes</b> VEFA · €/m² terrain nu sous <b>10 ventes</b> (médiane instable en deçà).</span>

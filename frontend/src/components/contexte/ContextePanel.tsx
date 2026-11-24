@@ -593,9 +593,12 @@ export function ContextePanel() {
               {/* ═══ LA CONSTRUCTION ═══ */}
               <GroupeLabel>La construction</GroupeLabel>
 
+              {/* OUTIL-PERMIS-FIX-5 (Point 2) — le délai médian d'instruction ne s'affiche plus (ni en
+                  valeur de tête de carte, ni en ligne détail) : jamais mesuré (dépôt connu à l'année →
+                  gonflé). « On ne montre pas un délai faux » (Vic). */}
               <LigneCarte id="construire" chiffre="permis_12m_n" ic="▤" titre="Permis et rythme"
                 sous={`${fmt(d.permis_bloc.permis_12m)} permis / 12 mois${d.permis_bloc.logements_12m != null ? ` · ${fmt(d.permis_bloc.logements_12m)} logts` : ''}`}
-                val={d.permis_bloc.delai_median_mois != null ? `${fmtDec(d.permis_bloc.delai_median_mois)} mois` : null}>
+                val={null}>
                 <div className="flex flex-col gap-0.5 text-[12px]">
                   {/* OUTIL-PERMIS-FIX-1 (LOT 6) — l'événement compté est l'AUTORISATION (colonne `date`,
                       ancrée sur la fin des données), PAS le dépôt : « déposés » prêtait à confusion avec le
@@ -614,7 +617,6 @@ export function ContextePanel() {
                   {(d.permis_bloc.permis_annules_12m ?? 0) > 0 && (
                     <RowT lbl="Annulés (12 mois)" val={fmt(d.permis_bloc.permis_annules_12m!)} />
                   )}
-                  {d.permis_bloc.delai_median_mois != null && <RowT lbl="Délai d'instruction médian" val={`${fmtDec(d.permis_bloc.delai_median_mois)} mois`} />}
                   {d.permis_bloc.logements_12m != null && <RowT lbl="Offre engagée" val={`${fmt(d.permis_bloc.logements_12m)} logts / 12 mois`} />}
                   {/* OUTILS-FIX-5 L5 — « Permis dormants » : d.permis_bloc.point_mort sert désormais
                       le MÊME id que l'outil Permis (point_mort_n / permis_point_mort, unifié dans

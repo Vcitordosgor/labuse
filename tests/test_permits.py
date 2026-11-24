@@ -78,3 +78,44 @@ def test_nature_et_dynamique(db_session):
     assert pc["statut"].startswith("autorisé le")
     dp = next(i for i in pm["items"] if i["num"] == "PCN2")
     assert "non résidentiel" in dp["nature"]                # 0 logement → projet non résidentiel
+
+
+def test_dynamique_respecte_le_rayon(db_session):
+    """OUTIL-PERMIS-FIX-3 (Point 1) — ÉCHOUE si le RAYON disparaît du compte `dynamique` (régression du
+    mandat 1 : le Dossier recevait le total de l'île). On sème un permis PROCHE (dans le rayon, 10 logts)
+    ET un permis LOIN (~1 km, 999 logts) : le compte de dynamique ne doit voir QUE le proche."""
+    import json as _j
+    pid = _parcel(db_session, "PMT00200",
+                  "POLYGON((55.30 -21.30,55.301 -21.30,55.301 -21.299,55.30 -21.299,55.30 -21.30))")
+    for num, pt, lgt in (("PCDYN-NEAR", "POINT(55.3005 -21.2995)", 10),   # ~70 m
+                         ("PCDYN-FAR", "POINT(55.320 -21.320)", 999)):     # ~3 km
+        db_session.execute(text(
+            "INSERT INTO sitadel_permits (permit_id,type,date,idu_codes,commune,geom,raw) VALUES "
+            "(:p,'PC', now()-interval '6 months', '[]'::jsonb,'Permia', ST_GeomFromText(:w,4326), CAST(:raw AS jsonb))"),
+            {"p": num, "w": pt, "raw": _j.dumps({"nb_lgt": lgt, "daact": None})})
+    pm = nearby_permits(db_session, pid, radius_m=500, fenetre_mois=24)
+    # SANS le rayon, le lointain (999 logts) gonflerait le compte : le test l'interdit.
+    assert pm["dynamique"]["permis_recents"] == 1
+    assert pm["dynamique"]["logements_recents"] == 10
+
+
+def test_delai_depuis_an_depot_et_fiche_masquee(db_session):
+    """OUTIL-PERMIS-FIX-4 (Points 2-4) — la couche des délais dérive le dépôt de AN_DEPOT (année), PAS de
+    DR_DEPOT (= date d'autorisation, corrompu) ; et la fiche masque dépôt+délai quand le dépôt n'est pas
+    une date précise fiable (DR_DEPOT = autorisation)."""
+    import json as _j
+    from labuse.ingestion.permit_delais_m10 import ensure_delais_vivants
+    # permit DP : AN_DEPOT 2023 (dépôt réel), autorisation 2026-01-15, DR_DEPOT = autorisation (corrompu)
+    db_session.execute(text(
+        "INSERT INTO sitadel_permits (permit_id, type, date, date_depot, idu_codes, commune, raw) VALUES "
+        "('DELAI-AN','DP','2026-01-15','2026-01-15','[]'::jsonb,'Permia',CAST(:raw AS jsonb))"),
+        {"raw": _j.dumps({"an_depot": "2023", "famille": "logements", "nb_lgt": "1"})})
+    ensure_delais_vivants(db_session, resync=True)
+    r = db_session.execute(text(
+        "SELECT date_depot, delai_mois, valide FROM m10_permit_delais WHERE permit_id='DELAI-AN'")).mappings().first()
+    # dépôt = AN_DEPOT-01-01 (2023-01-01), délai = 36 mois + 0 = 36 ; valide (autorisation ≥ dépôt).
+    # (La couche a bien dérivé le dépôt de AN_DEPOT, PAS de date_depot=DR_DEPOT=autorisation=2026-01-15,
+    #  qui aurait donné un délai 0 fallacieux.)
+    assert str(r["date_depot"]) == "2023-01-01" and r["delai_mois"] == 36 and r["valide"] is True
+    db_session.execute(text("DELETE FROM sitadel_permits WHERE permit_id='DELAI-AN'"))
+    db_session.execute(text("DELETE FROM m10_permit_delais WHERE permit_id='DELAI-AN'"))

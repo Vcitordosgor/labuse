@@ -23,16 +23,20 @@ const RAISON: Record<string, string> = {
 // interne devient UN SEUL « Retour » hiérarchique : dans une commune → les 24 communes ; sur la liste
 // → le choix du chemin (onHub). Les anciens « ← Choix PLU » (wrapper Plu) + « ← Les 24 communes » fusionnent.
 export function PluAnnuaire() {
+  const LIMIT = 25
   const [q, setQ] = useState('')
   const [insee, setInsee] = useState('')                     // '' = les 24 communes ; sinon une commune
   const [zone, setZone] = useState('')                       // filtre zone (lien contextuel fiche → recherche)
+  const [page, setPage] = useState(0)                        // OUTIL-PLU-FIX-1 (LOT 5) — page servie (offset)
   const [mode, setMode] = useState<'choix' | 'recherche'>('choix')   // étape 2 : voie choisie
   const pluPrefill = useApp((s) => s.pluPrefill)
   const setPluPrefill = useApp((s) => s.setPluPrefill)
   const communes = useQuery({ queryKey: ['plu-communes'], queryFn: pluAnnuaireCommunes })
-  const m = useMutation({ mutationFn: () => pluAnnuaireSearch(q.trim(), insee || undefined, zone || undefined) })
+  // OUTIL-PLU-FIX-1 (LOT 5) — la recherche pagine RÉELLEMENT par offset : mutate(offset).
+  const m = useMutation({ mutationFn: (off: number = 0) => pluAnnuaireSearch(q.trim(), insee || undefined, zone || undefined, off) })
   const d = m.data
-  const run = () => { if (q.trim().length >= 2) m.mutate() }
+  const run = () => { if (q.trim().length >= 2) { setPage(0); m.mutate(0) } }
+  const goPage = (p: number) => { setPage(p); m.mutate(p * LIMIT) }
 
   // Ouvert depuis une fiche / le Copilote (zone servie) : commune + zone pré-remplies → droit en RECHERCHE.
   useEffect(() => {
@@ -117,6 +121,12 @@ export function PluAnnuaire() {
                   )
                 })}
               </div>
+              {/* OUTIL-PLU-FIX-1 (LOT 1) — l'absence de badge ne vaut PAS « aucune procédure » : le radar
+                  (Sudocuh/registre) n'est pas exhaustif. On le DIT sous la liste. */}
+              <p className="mt-1.5 px-0.5 text-[9px] leading-snug text-txt-dim">
+                Un badge « révision » signale une procédure connue du radar ; son absence ne garantit pas
+                qu’aucune procédure n’est en cours — vérifiez au GPU / en mairie.
+              </p>
             </div>
           )}
         </>
@@ -137,6 +147,9 @@ export function PluAnnuaire() {
       {insee && !servable && (
         <div data-plu-indispo className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11.5px] text-txt-mut">
           <span className="mr-1">🕓</span>{cur?.message ?? 'Règlement non disponible pour cette commune.'}
+          {/* OUTIL-PLU-FIX-1 (LOT 1) — commune en révision dont le PLU opposable existe (Saint-André 2019,
+              Saint-Leu 2007) : on DIT qu'il fait foi et on pointe la mairie, jamais « aucun document ». */}
+          {cur?.note_doc && <p className="mt-1 text-[10.5px] text-txt-dim">{cur.note_doc}</p>}
           {/* RETOURS-14 S3 — le RNU est une VRAIE règle : la carte mène à son texte. */}
           {cur?.statut === 'rnu' && (
             <p className="mt-1.5">
@@ -156,11 +169,9 @@ export function PluAnnuaire() {
       {/* ── ÉTAPE 2 — commune SERVABLE, voie à choisir : PLU intégral / Rechercher ── */}
       {insee && servable && mode === 'choix' && (
         <div data-plu-choix className="flex flex-col gap-2">
-          <a data-plu-integral href={cur?.source_url ?? '#'} target="_blank" rel="noreferrer"
-            className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2.5">
-            <span className="text-[12.5px] font-medium text-mint">Télécharger le PLU intégral (.zip) ↓</span>
-            <span className="text-[10px] leading-snug text-txt-dim">Pack officiel Géoportail de l’Urbanisme — règlement, zonage, annexes{cur?.document ? ` · contient ${cur.document}` : ''}</span>
-          </a>
+          {/* OUTIL-PLU-FIX-2 (C6) — le lien « intégral » est résolu EN DIRECT sur le GPU (comme pour une
+              commune en révision), pas gelé à l'ingestion : si le dépôt actif change, le lien suit. */}
+          <PackIntegral insee={insee} fallback={cur?.source_url ?? undefined} document={cur?.document ?? undefined} />
           <button data-plu-rechercher onClick={() => setMode('recherche')}
             className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-left">
             <span className="text-[12.5px] font-medium text-txt">Rechercher dans le PLU →</span>
@@ -172,14 +183,65 @@ export function PluAnnuaire() {
       {/* ── ÉTAPE 2 — RECHERCHE : la barre + le verbatim sourcé ── */}
       {insee && servable && mode === 'recherche' && (
         <>
-          {/* MINI-CORRECTIONS-2 (pt 14) — encadré « <doc>.pdf · édition … · identifiant · Indexé pour la
-              recherche : N extraits » RETIRÉ (jugé inutile par Vic). L'en-tête « PLU du … » (étape 1)
-              reste. La recherche porte toujours sur le verbatim indexé, dit juste en dessous. */}
+          {/* FUSION MINI-CORRECTIONS-2 × OUTIL-PLU-FIX-1 — l'encadré VERBEUX de pt 14 (nom de fichier +
+              « édition <millésime> » + « Indexé : N extraits ») est bien RETIRÉ (grief Vic : du bruit).
+              Mais le contre-audit EXIGE à l'écran : l'IDENTIFIANT du dépôt actif (idurba), les dates
+              DISTINCTES (approbation / édition / publication, format FR — fini le « édition 17/12/2025 »
+              faux), les actes postérieurs, les procédures, et la PART INDEXÉE. On réintroduit donc un
+              bloc ÉPURÉ, porteur de cette seule information utile — pas l'ancien encadré. */}
+          <div data-plu-doc-etat className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10px] leading-snug text-txt-dim">
+            {cur?.idurba && <span className="font-mono text-[9.5px]">dépôt {cur.idurba}</span>}
+            {/* LOT 1 — dates distinctes, nommées, en français. */}
+            <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              {cur?.date_approbation && <span>version approuvée le <b className="text-txt-mut">{fmtDateNum(cur.date_approbation) ?? cur.date_approbation}</b></span>}
+              {cur?.edition && <span>· édition PDF {cur.edition}</span>}
+              {cur?.publication_gpu && <span>· publiée au GPU le {fmtDateNum(cur.publication_gpu) ?? cur.publication_gpu}</span>}
+            </div>
+            {cur?.modifications && cur.modifications.length > 0 && (
+              <div className="mt-0.5 text-cp-amber">
+                {cur.modifications.map((mo, i) => (
+                  <div key={i}>⚠ {mo.type}{mo.date ? ` du ${fmtDateNum(mo.date) ?? mo.date}` : ''}{mo.note ? ` — ${mo.note}` : ''}</div>
+                ))}
+              </div>
+            )}
+            {cur?.procedures_inventaire && cur.procedures_inventaire.length > 0 && (
+              <div className="mt-0.5">Procédure(s) en cours : {cur.procedures_inventaire.map((p) => p.type).join(', ')} (source : contre-audit).</div>
+            )}
+            {/* LOT 3 — part INDEXÉE + pages en image : l'écran ne laisse plus croire qu'une commune
+                sous-couverte « n'a pas la règle ». */}
+            {cur?.pct_indexe != null && (
+              <div className="mt-0.5">
+                Indexé pour la recherche : ≈ {cur.pct_indexe} % des pages de texte
+                {/* OUTIL-PLU-FIX-4 (critère 3) — part indexée À L'ARTICLE vs AU CHAPITRE, dite séparément. */}
+                {cur.pct_article != null ? <> (dont ≈ {cur.pct_article} % à l’article{cur.pct_chapitre ? `, ${cur.pct_chapitre} % au chapitre` : ''})</> : null}
+                {cur.pages_image ? <> · <b className="text-cp-amber">{cur.pages_image} page{cur.pages_image > 1 ? 's' : ''} en image</b> (non indexée{cur.pages_image > 1 ? 's' : ''})</> : null}
+                {cur?.pagination_ambigue ? ' · pagination à vérifier' : ''}
+                {cur.pct_indexe < 100 ? ' — le reste est dans le PDF intégral.' : '.'}
+              </div>
+            )}
+            {/* OUTIL-PLU-FIX-4 (critère 3) — règlement peu structuré (scanné / en-têtes non détectés) :
+                certains résultats sont servis AU CHAPITRE, pas à l'article. On le DIT à l'écran. */}
+            {cur?.peu_structure && (
+              <div className="mt-0.5 text-cp-amber">⚠ Règlement peu structuré : certains résultats sont donnés par chapitre (et non par article).</div>
+            )}
+            {/* OUTIL-PLU-FIX-2 (C7) — note d'édition (ex. La Possession : texte indexé déc. 2025, lien PDF
+                juin 2026) servie aussi sur une commune SERVABLE, pas seulement en révision. */}
+            {cur?.note_doc && <div className="mt-0.5 text-cp-amber">{cur.note_doc}</div>}
+          </div>
           <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
             {/* RETOURS-15 C1 (P1) — le bouton « ← Voies » est retiré de l'annuaire (demande Vic). */}
             <p className="text-[10.5px] leading-snug text-txt-mut">
               Cherchez dans le règlement de <b className="text-txt">{nomInsee(insee)}</b> — verbatim
               sourcé (article, page, lien), jamais un résumé.
+            </p>
+            {/* OUTIL-PLU-FIX-1 (LOT 6) — mention VISIBLE du périmètre : la recherche porte sur le TEXTE
+                du règlement de la commune ; elle ne vérifie PAS, pour une parcelle donnée, les
+                prescriptions graphiques, les servitudes (SUP) ni le PPR. L'absence de résultat sur un
+                risque ne vaut pas absence du risque. */}
+            <p data-plu-limites className="rounded-md border border-line/60 bg-surface-3/60 px-2 py-1 text-[9.5px] leading-snug text-txt-dim">
+              ⚠ Recherche <b>communale</b> (texte du règlement). Elle ne vérifie pas, à la parcelle, les
+              prescriptions graphiques, les servitudes d’utilité publique ni le PPR — à contrôler sur la
+              fiche parcelle et au document graphique.
             </p>
             <div className="flex gap-2">
               {/* RETOURS-5 T6 — plus d'autoFocus (même correction que « Étudier un bien ») : bord neutre au repos. */}
@@ -207,16 +269,41 @@ export function PluAnnuaire() {
             <ErrorState message="Erreur de recherche." retry={() => run()} />
           )}
 
-          {d?.message && (
+          {/* OUTIL-PLU-FIX-2 (M2) — le 🕓 bandeau de STATUT ne vaut que pour RNU / révision (retour
+              anticipé sans n_total) ; un 0-résultat de recherche (n_total === 0) passe par le bloc
+              « aucun extrait » ci-dessous, qui garde le lien « Ouvrir le règlement ». */}
+          {d?.message && d.n_total == null && (
             <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11.5px] text-txt-mut">
               <span className="mr-1">🕓</span>{d.message}
+            </div>
+          )}
+
+          {/* OUTIL-PLU-FIX-1 (LOT 5) — le bloc d'exceptions est rendu HORS du bloc « résultats » : il
+              s'affiche MÊME sans extrait trouvé (un filtre de zone erroné ne masque plus l'exception),
+              et il DIT sa provenance (calibrage LABUSE, pas le texte indexé). */}
+          {d && d.n_total != null && d.exceptions_zone && d.exceptions_zone.length > 0 && (
+            <div data-plu-exceptions className="rounded-lg border border-amber/40 bg-amber/10 px-3 py-2">
+              <div className="mb-1 text-[11px] font-medium text-amber">
+                Exception{d.exceptions_zone.length > 1 ? 's' : ''} au règlement — zone {zone}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {d.exceptions_zone.map((e, i) => (
+                  <div key={i} className="text-[11px] leading-snug text-txt">
+                    <em>« {e.texte} »</em>
+                    {(e.article || e.page_pdf != null) && (
+                      <span className="text-txt-mut"> — {[e.article, e.page_pdf != null ? `p. ${e.page_pdf}` : null].filter(Boolean).join(' · ')}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {d.exceptions_source && <div className="mt-1 text-[9.5px] text-txt-dim">{d.exceptions_source}</div>}
             </div>
           )}
 
           {/* OUTILS-P1-1 (pt 9) — recherche VIDE sur un document (partiellement) indexé : on le DIT
               honnêtement (« Aucun extrait trouvé dans les documents indexés ») et on offre d'ouvrir le
               règlement intégral — le reste du règlement, non indexé, peut contenir d'autres passages. */}
-          {d && !d.message && d.resultats.length === 0 && (
+          {d && d.n_total != null && d.resultats.length === 0 && (
             <div data-plu-aucun className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11px] leading-snug text-txt-mut">
               <p>Aucun extrait trouvé dans les documents indexés{zone ? <> pour la zone <span className="font-mono text-mint">{zone}</span></> : null}.</p>
               <p className="mt-1 text-[10px] text-txt-dim">La recherche porte sur les articles indexés par LABUSE ; le règlement complet peut contenir d’autres passages.</p>
@@ -227,43 +314,43 @@ export function PluAnnuaire() {
             </div>
           )}
 
-          {d && !d.message && d.resultats.length > 0 && (
+          {d && d.n_total != null && d.resultats.length > 0 && (
             <div data-plu-results className="flex flex-col gap-2">
               <div className="text-[11px] text-txt-mut">
-                {/* OUT-PLU-008 — « N affichés sur M » quand la page est plafonnée (jamais le compte
-                    plafonné pris pour le total des correspondances). */}
-                {d.tronque && d.n_total != null
-                  ? <>{d.n} extrait{d.n > 1 ? 's' : ''} affiché{d.n > 1 ? 's' : ''} sur {d.n_total} — {nomInsee(insee)}</>
+                {/* OUT-PLU-008 + LOT 5 — « X–Y sur M » : le décalage de page est DIT (jamais le compte
+                    plafonné pris pour le total). */}
+                {d.n_total != null && d.n_total > d.n
+                  ? <>Extraits {page * LIMIT + 1}–{page * LIMIT + d.n} sur {d.n_total} — {nomInsee(insee)}</>
                   : <>{d.n} extrait{d.n > 1 ? 's' : ''} — {nomInsee(insee)}</>}
               </div>
-              {/* PLU-EXCEPTIONS-1 — exceptions calibrées de la zone filtrée, sous l'article : le texte
-                  verbatim du règlement + son article/page. Aide à la lecture (aucun calcul). */}
-              {d.exceptions_zone && d.exceptions_zone.length > 0 && (
-                <div data-plu-exceptions className="rounded-lg border border-amber/40 bg-amber/10 px-3 py-2">
-                  <div className="mb-1 text-[11px] font-medium text-amber">
-                    Exception{d.exceptions_zone.length > 1 ? 's' : ''} au règlement — zone {zone}
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    {d.exceptions_zone.map((e, i) => (
-                      <div key={i} className="text-[11px] leading-snug text-txt">
-                        <em>« {e.texte} »</em>
-                        {(e.article || e.page_pdf != null) && (
-                          <span className="text-txt-mut"> — {[e.article, e.page_pdf != null ? `p. ${e.page_pdf}` : null].filter(Boolean).join(' · ')}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+              {/* O7(c) — chaque extrait : titre, aperçu, « Lire tout », sources (page PDF, lien PDF/zip). */}
+              {d.resultats.map((r: PluExtrait, i: number) => (
+                <PluExtraitCard key={i} r={r} premier={i === 0 && page === 0} />
+              ))}
+              {/* OUTIL-PLU-FIX-1 (LOT 5) — pagination : TOUS les résultats sont atteignables (offset réel). */}
+              {d.n_total != null && d.n_total > LIMIT && (
+                <div data-plu-pagination className="flex items-center justify-between gap-2 text-[11px]">
+                  <button disabled={page === 0 || m.isPending} onClick={() => goPage(page - 1)}
+                    className="rounded border border-line-2 px-2 py-1 text-txt-mut disabled:opacity-40 hover:text-txt">← Précédent</button>
+                  <span className="text-txt-dim">page {page + 1} / {Math.ceil(d.n_total / LIMIT)}</span>
+                  <button disabled={(page + 1) * LIMIT >= d.n_total || m.isPending} onClick={() => goPage(page + 1)}
+                    className="rounded border border-line-2 px-2 py-1 text-txt-mut disabled:opacity-40 hover:text-txt">Suivant →</button>
                 </div>
               )}
-              {/* O7(c) — chaque extrait : titre d'article en tête, un aperçu court (≈ 4 lignes) du
-                  verbatim opposable, dépliable « voir l'article entier », puis les sources (page PDF,
-                  archive GPU). Le champ « titre d'article » n'existe pas dans le payload → on affiche
-                  la référence d'article (r.article_ref) comme titre ; l'aperçu est un simple
-                  troncage front (le backend ne renvoie pas d'offset de surlignage). */}
-              {d.resultats.map((r: PluExtrait, i: number) => (
-                <PluExtraitCard key={i} r={r} premier={i === 0} />
-              ))}
               {d.avis && <div className="text-[10px] text-txt-dim">{d.avis}</div>}
+            </div>
+          )}
+
+          {/* OUTIL-PLU-FIX-3 (point 8) — les DISPOSITIONS COMMUNES (articles sans zone propre, communs à
+              toutes les zones) sont présentées À PART, jamais mélangées aux articles de la zone filtrée. */}
+          {d && d.n_total != null && d.dispositions_communes && d.dispositions_communes.length > 0 && (
+            <div data-plu-communes className="flex flex-col gap-2">
+              <div className="mt-1 text-[11px] font-medium text-txt-mut">
+                Dispositions communes (applicables à toutes les zones) — {d.dispositions_communes.length}
+              </div>
+              {d.dispositions_communes.map((r: PluExtrait, i: number) => (
+                <PluExtraitCard key={`c${i}`} r={r} />
+              ))}
             </div>
           )}
         </>
@@ -306,18 +393,46 @@ function PluExtraitCard({ r, premier = false }: { r: PluExtrait; premier?: boole
       {r.doute && (
         <span className="mt-1 inline-block rounded bg-st-ecartee/15 px-1 text-[9.5px] text-st-ecartee">doute — vérifier au PDF</span>
       )}
-      {/* pied une ligne : règlement daté + page · Lire tout ▾ · PDF ↗ */}
+      {/* pied une ligne : règlement daté + PAGE DU MOT (+ étendue de l'article) · Lire tout ▾ · PDF ↗ */}
       <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 border-t border-line/60 pt-1.5 text-[10px] text-txt-dim">
-        <span className="text-txt-mut">Règlement{r.millesime ? ` du ${fmtDateNum(r.millesime)}` : ''} · p. {r.page_pdf}</span>
+        {/* OUTIL-PLU-FIX-3 — p. = page où le mot apparaît ; « article p. X-Y » quand l'article court
+            sur plusieurs pages. « Lire tout » montre l'article ENTIER (exceptions comprises). */}
+        {/* OUTIL-PLU-FIX-4 (point 1) — p. = TOUTES les pages où le mot apparaît (pluriels compris) ;
+            « article p. X-Y » = étendue de l'article. Le lien ouvre la 1re page du mot. */}
+        <span className="text-txt-mut">Règlement{r.millesime ? ` du ${fmtDateNum(r.millesime)}` : ''} · p. {r.pages_match && r.pages_match.length > 1 ? r.pages_match.join(', ') : r.page_pdf}{r.page_debut != null && r.page_fin != null && r.page_fin !== r.page_debut ? ` (article p. ${r.page_debut}-${r.page_fin})` : ''}</span>
         {long && (
           <button data-plu-lire onClick={() => setOuvert((o) => !o)} className="text-mint hover:underline">
-            {ouvert ? 'Réduire ▲' : 'Lire tout ▾'}
+            {ouvert ? 'Réduire ▲' : 'Lire l’article entier ▾'}
           </button>
         )}
-        <a href={r.source_url} target="_blank" rel="noreferrer" className="text-mint hover:underline">PDF ↗</a>
+        {/* OUTIL-PLU-FIX-1 (LOT 2) — un lien « PDF » ouvre un PDF (règlement écrit direct, + ancre
+            #page) ; à défaut on dit clairement que c'est le pack .zip. Plus de « PDF ↗ » qui ouvrait un zip. */}
+        {r.pdf_url
+          ? <a href={`${r.pdf_url}#page=${r.page_pdf}`} target="_blank" rel="noreferrer" className="text-mint hover:underline">règlement PDF ↗ (p. {r.page_pdf})</a>
+          : <a href={r.source_url} target="_blank" rel="noreferrer" className="text-txt-mut hover:underline">pack PLU (.zip) ↗</a>}
         {r.pagination_note && <span className="text-st-creuser">⚠ {r.pagination_note}</span>}
       </div>
     </div>
+  )
+}
+
+// OUTIL-PLU-FIX-2 (C6) — bouton « PLU intégral (.zip) » d'une commune SERVABLE, résolu EN DIRECT sur le
+// GPU (comme PackVigueur) : plus de lien gelé à l'ingestion. On garde le lien stocké en REPLI (GPU
+// injoignable) et on ALERTE si le dépôt actif du GPU a dérivé depuis l'ingestion (idurba différent).
+function PackIntegral({ insee, fallback, document }: { insee: string; fallback?: string; document?: string }) {
+  const pack = useQuery({ queryKey: ['plu-pack', insee], queryFn: () => pluAnnuairePack(insee), staleTime: 300_000 })
+  const p = pack.data
+  const live = p?.disponible && p.url ? p.url : undefined
+  const href = live ?? fallback ?? '#'
+  return (
+    <a data-plu-integral href={href} target="_blank" rel="noreferrer"
+      className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2.5">
+      <span className="text-[12.5px] font-medium text-mint">Télécharger le PLU intégral (.zip) ↓</span>
+      <span className="text-[10px] leading-snug text-txt-dim">
+        Pack officiel Géoportail de l’Urbanisme — règlement, zonage, annexes{document ? ` · contient ${document}` : ''}
+        {live ? ' · lien vérifié en direct' : (pack.isLoading ? ' · vérification du pack actif…' : '')}
+      </span>
+    </a>
   )
 }
 

@@ -59,8 +59,8 @@ export const MODULES: ModuleDef[] = [
   // sont des ALIAS sans carte, placées près de l'outil qui les résout (ordre sans effet sur le menu).
 
   // 1. PLU — M137-P/Q : Annuaire PLU (O13) + « Procédure & changement » unifiés (hub Plu.tsx, 2 voies).
-  // MINI-CORRECTIONS-2 (pt 10) — sous-titres réécrits en UNE ligne, sans « … », sans la police
-  // réduite `descSmall` : chaque phrase dit ce que fait l'outil et tient dans la largeur du menu.
+  // MINI-CORRECTIONS-2 (pt 10) — sous-titres réécrits en UNE ligne, sans « … ». OUTIL-PLU-FIX-1 (LOT 6)
+  // valide cette phrase : honnête (plus de « chaque zone » qui surpromettait une couverture exhaustive).
   { key: 'plu', num: 'O13', group: 'instruire', phare: true,
     label: 'PLU', desc: 'Le règlement d\'urbanisme de chaque commune.' },
 

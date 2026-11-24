@@ -300,11 +300,19 @@ DONNEES: dict[str, Donnee] = {
     "count tiers brûlante+chaude au run servi, par insee",
     moteur="scoring_p_v2", calcul="moteur", fonction="src/labuse/api/comparateur.py:47-50",
     reservoirs=("cosia", "dvf", "sitadel",), portee="run"),
- "velocite_delai_median_mois": C("Vélocité admin (délai médian dépôt→autorisation, mois)", "nombre", "commune",
+ # OUTIL-PERMIS-FIX-5 (Point 2) — le DÉLAI n'a jamais été mesuré : le dépôt n'est connu qu'à l'ANNÉE
+ # (AN_DEPOT → 1er janvier), ce qui gonfle le délai de +4 mois en médiane. « On ne montre pas un délai
+ # faux » (Vic). Le chiffre est RETIRÉ de l'affichage de TOUT robinet (ni colonne, ni fiche, ni PDF, ni
+ # Copilote) → marqué `en_attente` (servi par AUCUN robinet). Il reste CALCULÉ par le moteur, en INTERNE,
+ # comme entrée du score composite du comparateur (axe velocite, poids 0,15, inchangé — cf. INDICATEURS).
+ "velocite_delai_median_mois": C("Vélocité admin (délai dépôt→autorisation) — NON MESURÉ (dépôt à l'année), "
+    "retiré de l'affichage ; entrée interne du composite (poids 0,15)", "nombre", "commune",
     "percentile_cont(0.5) sur m10_permit_delais famille logements",
     moteur="commune_compteurs", calcul="moteur",
     fonction="src/labuse/registre/moteurs/commune.py:indicateurs_communes (CTE velo)",
-    reservoirs=("sitadel",), portee="live"),
+    reservoirs=("sitadel",), portee="live",
+    en_attente="OUTIL-PERMIS-FIX-5 : délai jamais mesuré (dépôt à l'année) — retiré de l'affichage, "
+               "conservé en interne pour le composite ; servi par aucun robinet par décision (Vic)."),
  "permis_5a_n": C("Permis de la commune sur 5 ans (SITADEL)", "nombre", "commune",
     "count sitadel_permits de la commune, fenêtre 5 ans, sans rayon (commune entière)",
     moteur="commune_compteurs", calcul="moteur",
