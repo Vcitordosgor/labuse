@@ -517,7 +517,7 @@ LECTURES: tuple[Lecture, ...] = (
     L("sitadel_permits", "alertes.py", None, None,
       "Fabrique les alertes watch_zones « Permis déposé dans le secteur » (INSERT INTO alertes par ST_Contains) — canal notifications, aucun robinet candidat."),
     L("sitadel_permits", "api/accueil.py", None, None,
-      "Compteurs d'activité « cette semaine » (permis 7j/30j + max date_depot) de la page d'accueil — indicateur d'activité/fraîcheur, pas un chiffre du registre."),
+      "Compteurs d'activité « cette semaine » (permis AUTORISÉS 7j/30j + dernière autorisation intégrée, par date d'autorisation ; OUTIL-PERMIS-FIX-9 : plus sur DR_DEPOT) — indicateur d'activité/fraîcheur, pas un chiffre du registre."),
     L("sitadel_permits", "api/carnet.py", "depots_secteur_n", "fiche_parcelle_autour",
       "Compte des permis rattachés au secteur cadastral (idu_codes LIKE secteur, 24 mois) servi sur la page secteur du carnet."),
     L("sitadel_permits", "api/events.py", None, None,

@@ -64,7 +64,9 @@ _SELECT_RAW = """
 WITH pc AS (
   SELECT pmp.idu, EXTRACT(YEAR FROM pmp.date_autorisation)::int AS y,
          (sp.raw->>'etat') AS etat,
-         (sp.raw->>'daact' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}') AS daact
+         -- `IS TRUE` : un daact ABSENT (regex sur NULL = NULL) devient false, jamais NULL — sinon
+         -- `bool_or(... )`/`NOT realized` propagerait le NULL et un caduc réel serait exclu à tort.
+         (sp.raw->>'daact' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}' IS TRUE) AS daact
   FROM p_model_permits pmp
   JOIN sitadel_permits sp ON sp.permit_id = pmp.permit_id
   WHERE pmp.type = 'PC' AND pmp.date_autorisation IS NOT NULL),

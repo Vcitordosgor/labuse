@@ -128,9 +128,17 @@ def accueil_cette_semaine(db: Session = Depends(get_db)) -> dict:
         except Exception:  # noqa: BLE001
             return None
 
-    permis_7j = scal("SELECT count(*) FROM sitadel_permits WHERE date_depot > now()::date - 7")
-    permis_30j = scal("SELECT count(*) FROM sitadel_permits WHERE date_depot > now()::date - 30") or 0
-    permis_max = scal("SELECT max(date_depot) FROM sitadel_permits")
+    # OUTIL-PERMIS-FIX-9 (point 2) — ces signaux « cette semaine » se fondaient sur DR_DEPOT
+    # (`date_depot`), une colonne CORROMPUE : une date de dépôt fausse (p. ex. 2020 pour un permis
+    # autorisé en 2026) sortait le permis des fenêtres 7 j / 30 j → SOUS-COMPTAGE, et `derniere`
+    # (max date_depot) affichait une date de dépôt brute à l'écran. On se fonde désormais sur la DATE
+    # D'AUTORISATION (`date`, fiable, 100 % présente) : les compteurs comptent les permis AUTORISÉS sur
+    # 7 j / 30 j, `derniere` = dernière autorisation intégrée (même sens que le libellé de l'outil
+    # Permis « dernière autorisation intégrée le … »). Aucune date de dépôt contradictoire ne peut donc
+    # fausser un compte ni s'afficher ici.
+    permis_7j = scal("SELECT count(*) FROM sitadel_permits WHERE date > now()::date - 7")
+    permis_30j = scal("SELECT count(*) FROM sitadel_permits WHERE date > now()::date - 30") or 0
+    permis_max = scal("SELECT max(date) FROM sitadel_permits")
 
     ventes_7j = scal("SELECT count(*) FROM dvf_mutations WHERE date_mutation > now()::date - 7")
     ventes_30j = scal("SELECT count(*) FROM dvf_mutations WHERE date_mutation > now()::date - 30") or 0

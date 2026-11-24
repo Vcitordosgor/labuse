@@ -751,3 +751,54 @@ Back : `permis_classe.py` (+`depot_affichable_sql`/`_cond_sql`/`depot_affichable
 Front : `components/fiche/autour.tsx` (repli retiré), `components/outils/ModulePanel.tsx` (bloc délai retiré), `components/outils/blocB.tsx` (commentaire).
 Tests : `tests/test_outil_permis_fix8.py` (LOT 0, +4), `test_outil_permis_fix1.py` (5 tests FIX-4/5/6/7 réalignés FIX-8), `test_comparateur.py` + `test_barometre.py` (5 axes). Scripts : `scripts/outil_permis_fix8/{verif_temoins,lot3_composite_avant_apres}.py` + sorties brutes `docs/.../fix8/`.
 **Aucune écriture dans la base `labuse`.**
+
+---
+---
+
+# OUTIL-PERMIS-FIX-9 — relecture-permis-5 : une retouche (dépôt brut dans deux canaux de notification)
+
+**Contexte.** La relecture-5 valide les 3 « C'est faux » + Petite-Île comme corrigés sur les surfaces de l'audit (fiche, historique, frise, Dossier, classement). **Un seul reste** : deux canaux de notification affichaient encore la date de dépôt BRUTE sous « déposé le », sans la fonction unique (hors fiche/Dossier). Trois points.
+
+Preuves : `scripts/outil_permis_fix8/verif_fix9_canaux.py` (sortie `fix8/fix9-canaux.txt`) ; filet `fix8/fix9-filet-verts.txt`.
+
+## Point 1 — `alertes.py` (alerte de zone) et `events.py` (veille parcelle suivie) passent par la fonction unique
+
+Les deux canaux construisaient le détail avec `… ' déposé le ' || sp.date_depot` (brut). Désormais, **seul le texte affiché change** : le dépôt passe par `permis_classe.depot_affichable_*`. Écarté (année ≠ AN_DEPOT…), le message dit « **autorisé le …** » (date d'autorisation), comme la veille du Copilote — jamais la date que la fiche rejette.
+
+**La clé qui détecte l'arrivée NE CHANGE PAS** : `alertes.permis_in_zone` garde son `fait_date = date_depot` (la clé d'arrivée/tri qui gouverne la cloche — la changer ferait sonner un fait ancien) et son WHERE (géocodé en zone, `date_depot IS NOT NULL`, `ON CONFLICT`) ; `events` garde `date_depot >= created_at` et la dédup permanente `(idu, permit_id)`. Donc **aucune notification émise deux fois ni perdue** (vérifié par la seconde évaluation = 0 nouvelle / dédup = 1, dans les deux tests du point 3).
+
+**Preuve (témoin + 10 années contradictoires, `fix8/fix9-canaux.txt`)** — détail servi par les deux canaux :
+```
+[année contradictoire] 97441626E0304  an_depot=2026  DR_DEPOT=2020-06-01  autorisé=2026-08-03
+      depot_affichable=None
+      détail : DP 97441626E0304 autorisé le 2026-08-03
+… (10/10 à année contradictoire → « autorisé le … », aucune date brute sous « déposé le »)
+[CONTRÔLE VALIDE] 97440226G0018  an_depot=2026  DR_DEPOT=2026-02-15  → détail : DP … déposé le 2026-02-15
+→ témoins affichant la date brute sous « déposé le » : 0 (attendu 0)
+```
+
+## Point 2 — `accueil.py` : ce qui est affiché, et la base des compteurs
+
+L'endpoint `/accueil/cette-semaine` sert `permis: {n_7j, frais, derniere}`. **Ce qu'il montre exactement** : `n_7j` = nombre de permis sur 7 jours, `frais` = vrai si l'activité 30 jours ≥ 10 (badge, pas un nombre), `derniere` = une DATE (« dernier … »). *(À noter : aucun composant front ne consomme aujourd'hui cet endpoint — seul un robinet le déclare ; mais le payload porte une date, donc on la rend honnête.)*
+
+Avant, les trois lisaient `date_depot` (DR_DEPOT, corrompu). **Oui, une date fausse faussait le compte** : un permis autorisé en 2026 mais à DR_DEPOT 2020 sortait des fenêtres 7/30 j → **sous-comptage** ; une date future l'aurait sur-compté. Et `derniere = max(date_depot)` affichait une date de dépôt brute. **Correctif** : les trois se fondent désormais sur la **date d'AUTORISATION** (`date`, fiable, 100 % présente) — compteurs de permis *autorisés* sur 7/30 j, `derniere` = *dernière autorisation intégrée* (même sens que le libellé de l'outil Permis). Plus aucune date de dépôt contradictoire ne peut fausser un compte ni s'afficher. Même famille alignée : le brief du matin (`events.py`, « nouveaux permis depuis hier » + péremption d'ingestion) passe aussi sur `date`.
+
+## Point 3 — un test par canal
+
+`tests/test_outil_permis_fix8.py` (db) : `test_fix9_alerte_de_zone_ne_montre_pas_de_depot_brut` (témoin 97441626E0304 géocodé en zone → détail « autorisé le 2026-08-03 », ni « 2020 » ni « déposé le » ; 2ᵉ évaluation = 0 → clé d'arrivée intacte) et `test_fix9_veille_parcelle_ne_montre_pas_de_depot_brut` (permis DR_DEPOT récent mais AN_DEPOT contradictoire → « autorisé le … », dédup = 1, aucun doublon). **Filet : 6/6 verts.**
+
+## Vérifications (hook)
+
+`registre.verifier() == []` · graphe circuit : `lecteurs_non_declares()==[]`, `lectures_perimees()==[]` · front `tsc -b` + `vitest` **345/345** · cohérence **87/87, aucun écart** · db des canaux + consommateurs DAACT verts (`test_alertes`, `test_veille2_lot1`, `test_events_bascule`, `test_pc_caducs`, `test_defisc`, `test_prix_sortie1_unique`, `test_outil_permis_fix8` → **tous verts**).
+
+**Régression attrapée et corrigée (effet de bord FIX-8, invisible au hook car db) :** `pc_caducs` lisait `md.date_achevement` ; repointé sur `raw->>'daact'`, le prédicat `(raw->>'daact' ~ regex)` valait **NULL** (et non `false`) quand le DAACT est absent → `NOT realized` propageait le NULL et excluait un caduc réel. Corrigé par `… IS TRUE`. Test `test_pc_caducs` remis au vert (seed du DAACT dans `raw`, la source).
+
+**Rouges restants, étrangers et db-only (hors hook, vérifiés identiques sans mes changements) :** `test_etude_fiable_1` (flaky déterminisme étude de zone) et, par pollution accumulée de la base de test partagée `labuse_test` (`event_log` > 50 notifs `systeme`/jour → plafond « +N autres »), trois tests `test_notifications_m85` + `test_circuit2_lot16::test_chaque_passe_plat_declare_sa_table` (`terrassement_alerte`). Aucun lien avec ce mandat.
+
+Le **seul rouge non-db (hook) reste `test_etude_fiable_1`** → **commits gardés en LOCAL** (`fix/outil-permis-1`, non poussé) ; `origin`/`main` intacts, pas de fusion.
+
+## Fichiers touchés (mandat 9)
+
+Back : `alertes.py` (détail permis_in_zone via fonction unique, `fait_date` inchangé), `api/events.py` (veille parcelle : détail via fonction unique ; brief : base `date`), `api/accueil.py` (compteurs + `derniere` sur `date`), `ingestion/pc_caducs.py` (`IS TRUE` sur le DAACT), `registre/lectures.py` (note accueil).
+Tests : `tests/test_outil_permis_fix8.py` (+2 canaux), `tests/test_pc_caducs.py` (seed DAACT dans `raw`). Script : `scripts/outil_permis_fix8/verif_fix9_canaux.py` + sorties `docs/.../fix8/fix9-*.txt`.
+**Aucune écriture dans la base `labuse`.**
