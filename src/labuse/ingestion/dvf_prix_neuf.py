@@ -66,10 +66,13 @@ CREATE TABLE IF NOT EXISTS dvf_prix_sortie_neuf (
 """
 
 _BUILD = """
+-- OUTIL-PERMIS-FIX-8 (LOT 3) — achèvement (DAACT) lu DIRECTEMENT de sitadel_permits.raw->>'daact' (la
+-- source), plus de m10_permit_delais.date_achevement (décommissionnée). Valeur identique : m10 dérivait
+-- date_achevement = left(daact,10)::date quand daact est une date — même calcul ici.
 WITH ach AS (
-  SELECT pmp.idu, min(md.date_achevement) AS ach FROM p_model_permits pmp
-  JOIN m10_permit_delais md ON md.permit_id = pmp.permit_id
-  WHERE pmp.type = 'PC' AND md.date_achevement IS NOT NULL GROUP BY pmp.idu),
+  SELECT pmp.idu, min((left(sp.raw->>'daact',10))::date) AS ach FROM p_model_permits pmp
+  JOIN sitadel_permits sp ON sp.permit_id = pmp.permit_id
+  WHERE pmp.type = 'PC' AND sp.raw->>'daact' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}' GROUP BY pmp.idu),
 muts AS (
   SELECT id_parcelle idu, date_mutation::date dt, valeur_fonciere val, surface_reelle_bati surf, type_local tl
   FROM dvf_mutations_histo WHERE nature_mutation = 'Vente'

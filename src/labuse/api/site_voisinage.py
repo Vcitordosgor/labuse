@@ -40,10 +40,15 @@ def historique_permis(db: Session, idu: str) -> dict | None:
     # servis à la fiche §4, par la source UNIQUE (ingestion.permits) : avant, la liste ne portait ni
     # libellé de type ni état, et un permis annulé (4 324 en base) était indiscernable d'une autorisation.
     from ..ingestion.permits import _TYPE_LABEL, etat_libelle as _permis_etat, est_annule as _permis_annule
+    from .. import permis_classe  # OUTIL-PERMIS-FIX-8 (LOT 1) — même validation du dépôt que la fiche
     permis = []
-    for r in db.execute(text("""
+    # OUTIL-PERMIS-FIX-8 (LOT 1) — l'historique lisait la date de dépôt BRUTE (DR_DEPOT) : pour
+    # 97441626E0304, « déposé 01/06/2020 » alors que l'AN_DEPOT publié est 2026 (contre-audit ASTRA-4).
+    # Le dépôt passe désormais par LA fonction unique `depot_affichable_sql` (NULL si écarté) — rien
+    # n'est écrit à sa place. L'ORDER BY garde la date brute (tri, pas affichage).
+    for r in db.execute(text(f"""
         SELECT permit_id, type, date::date::text AS date_autorisation,
-               date_depot::date::text AS date_depot, raw
+               ({permis_classe.depot_affichable_sql("")})::text AS date_depot, raw
         FROM sitadel_permits
         WHERE idu_codes ? :idu
         ORDER BY COALESCE(date_depot, date) DESC

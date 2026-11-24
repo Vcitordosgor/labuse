@@ -41,7 +41,10 @@ export function HistoriqueSiteBlock({ f }: { f: Fiche }) {
           return (
             // KELFONCIER-FIX-1 (Lot C) — le TYPE libellé (Permis d'aménager / Déclaration préalable…) et
             // l'ÉTAT sont servis ; un permis ANNULÉ le DIT (rouge), plus jamais confondu avec une autorisation.
-            <li key={i}>{pm.type_label ?? pm.type ?? 'permis'} — déposé {pm.date_depot ? fmtDateNum(pm.date_depot) : (pm.date_autorisation ? fmtDateNum(pm.date_autorisation) : '?')}{pm.date_autorisation ? `, autorisé ${fmtDateNum(pm.date_autorisation)}` : ''}
+            // OUTIL-PERMIS-FIX-8 (LOT 1) — le dépôt vient déjà filtré par le serveur (fonction unique) :
+            // s'il est absent, on NE RECOPIE PLUS l'autorisation sous « déposé » (contre-audit ASTRA-4) —
+            // on dit alors seulement « autorisé … ».
+            <li key={i}>{pm.type_label ?? pm.type ?? 'permis'}{pm.date_depot ? ` — déposé ${fmtDateNum(pm.date_depot)}` : ''}{pm.date_autorisation ? `${pm.date_depot ? ',' : ' —'} autorisé ${fmtDateNum(pm.date_autorisation)}` : ''}
               {pm.annule ? <span className="font-medium text-st-ecartee"> · annulé</span>
                 : pm.etat_libelle && pm.etat_libelle !== 'autorisé' && <span className="text-txt-dim"> · {pm.etat_libelle}</span>}
               {note && <span className="text-st-ecartee"> · {note}</span>}

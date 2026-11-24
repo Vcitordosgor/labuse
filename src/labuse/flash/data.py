@@ -99,7 +99,9 @@ _NEEDED_TABLES = {
     "parcel_residuel_bati", "dryrun_parcel_evaluations", "rpls_commune",
     "filosofi_carreaux_200m", "data_sources",
     # M18 enrichissement Flash — contexte commune (chacune détectée, section omise si absente)
-    "m10_permit_delais", "commune_contexte_sru", "commune_conso_enaf", "parcel_solar",
+    # OUTIL-PERMIS-FIX-8 (LOT 3) — `m10_permit_delais` retiré : plus aucune section Flash ne lit la
+    # couche des délais (bloc vélocité déjà supprimé FIX-5) ; la table est décommissionnée.
+    "commune_contexte_sru", "commune_conso_enaf", "parcel_solar",
     # Mandats pas encore mergés — le jour où ils atterrissent, la section apparaît seule.
     "parcel_vegetation", "parcel_anc",
     # M75 — obligation APER (grand parking) : section omise si la table est absente.

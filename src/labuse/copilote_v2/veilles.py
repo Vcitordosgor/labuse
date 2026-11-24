@@ -100,12 +100,15 @@ def supprimer(db: Session, compte_id: int | None, veille_id: int) -> bool:
 
 # ───────────────────────── ÉVALUATION (SQL pur, ZÉRO modèle) ─────────────────────────
 def _nouveaux_permis(db: Session, commune: str, since) -> list[dict]:
+    # OUTIL-PERMIS-FIX-8 (LOT 3) — lu de `sitadel_permits` (date d'AUTORISATION, toujours présente),
+    # plus de `m10_permit_delais` (décommissionnée) ni de sa date de dépôt annuelle (1er janvier, fausse) :
+    # la veille dit « autorisé le … » — un fait daté fiable, pas un dépôt reconstitué.
     rows = db.execute(text(
-        "SELECT permit_id, date_depot, nature FROM m10_permit_delais "
-        "WHERE commune=:c AND date_depot > :s ORDER BY date_depot DESC LIMIT 100"),
+        "SELECT permit_id, date::date AS d, type AS nature FROM sitadel_permits "
+        "WHERE commune=:c AND date > :s ORDER BY date DESC LIMIT 100"),
         {"c": commune, "s": since}).mappings().all()
     return [{"titre": f"Nouveau permis à {commune}",
-             "detail": f"Déposé le {r['date_depot']}" + (f" — {r['nature']}" if r["nature"] else ""),
+             "detail": f"Autorisé le {r['d']}" + (f" — {r['nature']}" if r["nature"] else ""),
              "ref": r["permit_id"]} for r in rows]
 
 

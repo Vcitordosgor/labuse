@@ -45,13 +45,17 @@ def _seed_parcelle(s, idu):
 
 
 def _seed_pc(s, idu, annee, etat, daact=False):
+    # OUTIL-PERMIS-FIX-8/9 — l'achèvement (DAACT) est lu de sitadel_permits.raw->>'daact' (la source),
+    # plus de m10_permit_delais (décommissionnée) : on sème le DAACT DANS `raw`, comme en production.
+    import json as _json
     pid = f"P-{idu}-{annee}-{etat}"
+    raw = {"etat": etat}
+    if daact:
+        raw["daact"] = f"{annee + 2}-05-01"
     s.execute(text("INSERT INTO p_model_permits (permit_id, idu, type, date_autorisation) VALUES (:p,:i,'PC',:d)"),
               {"p": pid, "i": idu, "d": f"{annee}-05-01"})
     s.execute(text("INSERT INTO sitadel_permits (permit_id, type, raw) VALUES (:p,'PC',CAST(:r AS jsonb))"),
-              {"p": pid, "r": f'{{"etat":"{etat}"}}'})
-    s.execute(text("INSERT INTO m10_permit_delais (permit_id, date_achevement) VALUES (:p,:d)"),
-              {"p": pid, "d": (f"{annee+2}-05-01" if daact else None)})
+              {"p": pid, "r": _json.dumps(raw)})
 
 
 @pytest.mark.db

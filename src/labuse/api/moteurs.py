@@ -489,8 +489,13 @@ def histoire_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
     # l'événement d'autorisation d'un permis annulé s'affichait « autorisé » à l'identique). Source
     # unique : ingestion.permits.est_annule (jamais le code brut).
     from ..ingestion.permits import est_annule as _permis_annule
-    for r in db.execute(text("""
-        SELECT permit_id, type, date::date AS d_autorisation, date_depot,
+    from .. import permis_classe   # OUTIL-PERMIS-FIX-8 (LOT 1) — même validation du dépôt que la fiche
+    # OUTIL-PERMIS-FIX-8 (LOT 1) — la frise datait l'événement « déposé » sur la date BRUTE (DR_DEPOT),
+    # dont l'année peut contredire l'AN_DEPOT publié. `date_depot` passe par LA fonction unique : NULL
+    # si écarté → l'événement « déposé » n'est alors PAS émis (rien à sa place), l'autorisation reste.
+    for r in db.execute(text(f"""
+        SELECT permit_id, type, date::date AS d_autorisation,
+               ({permis_classe.depot_affichable_sql("")}) AS date_depot,
                raw->>'etat' AS etat,
                NULLIF(raw->>'daact', '')::date AS d_daact,
                NULLIF(raw->>'nb_lgt', '') AS nb_lgt, NULLIF(raw->>'surf_hab', '') AS surf_hab

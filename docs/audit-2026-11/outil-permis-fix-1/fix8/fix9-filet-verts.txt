@@ -1,0 +1,7 @@
+tests/test_outil_permis_fix8.py::test_lot0_temoin1_97441626E0304_depot_absent_fiche_et_historique PASSED [ 16%]
+tests/test_outil_permis_fix8.py::test_lot0_temoin2_aucune_autorisation_sous_le_libelle_depose PASSED [ 33%]
+tests/test_outil_permis_fix8.py::test_lot0_temoin3_97440226G0018_aucune_duree PASSED [ 50%]
+tests/test_outil_permis_fix8.py::test_fix9_alerte_de_zone_ne_montre_pas_de_depot_brut PASSED [ 66%]
+tests/test_outil_permis_fix8.py::test_fix9_veille_parcelle_ne_montre_pas_de_depot_brut PASSED [ 83%]
+tests/test_outil_permis_fix8.py::test_lot0_temoin4_composite_sans_axe_de_delai PASSED [100%]
+============================== 6 passed in 4.06s ===============================

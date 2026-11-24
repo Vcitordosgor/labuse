@@ -460,14 +460,27 @@ def evaluer_suivis(db: Session) -> dict:
                 detail=f"Mutation du {m['date_mutation']}{prix} ({m['nature_mutation'] or 'vente'}).",
                 lien=f"/socle/#idu={idu}", dedup=f"suivi:mut:{idu}:{m['id_mutation']}") else 0
         # 2) PERMIS SUR la parcelle (idu_codes contient l'idu) — jamais la proximité (secteur = veille).
-        for p in db.execute(text(
-                "SELECT permit_id, type, date_depot FROM sitadel_permits "
-                "WHERE idu_codes @> to_jsonb(CAST(:idu AS text)) AND date_depot >= :d"),
-                {"idu": idu, "d": depuis}).mappings():
+        # OUTIL-PERMIS-FIX-9 (point 1) — la date de dépôt passe par LA fonction unique (depot_affichable) :
+        # si elle est écartée (année ≠ AN_DEPOT…), on dit « autorisé le … » (date d'autorisation), jamais
+        # la date brute que la fiche rejette. La clé d'arrivée (`date_depot >= :d`) et la dédup permanente
+        # (idu+permit_id) ne changent PAS : aucune notification émise deux fois ni perdue. Concaténation
+        # (pas de f-string) car la condition contient `{4}` (regex de l'année).
+        from .. import permis_classe
+        _permis_q = (
+            "SELECT permit_id, type, (" + permis_classe.depot_affichable_sql("sitadel_permits.")
+            + ")::text AS depot_aff, date::date::text AS d_aut FROM sitadel_permits "
+            "WHERE idu_codes @> to_jsonb(CAST(:idu AS text)) AND date_depot >= :d")
+        for p in db.execute(text(_permis_q), {"idu": idu, "d": depuis}).mappings():
+            if p["depot_aff"]:
+                detail = f"{p['type']} {p['permit_id']} déposé le {p['depot_aff']}."
+            elif p["d_aut"]:
+                detail = f"{p['type']} {p['permit_id']} autorisé le {p['d_aut']}."
+            else:
+                detail = f"{p['type']} {p['permit_id']}."
             out["permis"] += 1 if creer_notification(
                 db, kind="parcelle_suivie", compte_id=cid, source="Permis", idu=idu,
                 titre=f"Nouveau permis sur votre parcelle {court(idu)}",
-                detail=f"{p['type']} {p['permit_id']} déposé le {p['date_depot']}.",
+                detail=detail,
                 lien=f"/socle/#idu={idu}",
                 # #3 — fait UNIQUE (idu, permit_id) : dédup PERMANENTE, un rejeu ne recrée jamais le doublon.
                 dedup=f"suivi:permis:{idu}:{p['permit_id']}", permanent=True) else 0
@@ -1233,11 +1246,14 @@ def brief_matin(db: Session, cid: int | None) -> dict:
         + bf_veille +
         " ORDER BY ts DESC LIMIT 20"), {"c": cid}).mappings().all()
     communes = _mes_communes(db, cid)
-    permis_max = db.execute(text("SELECT max(date_depot) FROM sitadel_permits")).scalar()
+    # OUTIL-PERMIS-FIX-9 (point 2, même famille qu'accueil) — « nouveaux permis depuis hier » et la
+    # fraîcheur d'ingestion se fondent sur la DATE D'AUTORISATION (`date`, fiable), plus sur DR_DEPOT
+    # (`date_depot`, corrompu) : une date de dépôt fausse ne peut plus fausser ce compte ni la péremption.
+    permis_max = db.execute(text("SELECT max(date::date) FROM sitadel_permits")).scalar()
     permis_hier = 0
     if communes:
         permis_hier = db.execute(text(
-            "SELECT count(*) FROM sitadel_permits WHERE date_depot > now()::date - 1 "
+            "SELECT count(*) FROM sitadel_permits WHERE date > now()::date - 1 "
             "AND commune = ANY(:coms)"), {"coms": communes}).scalar() or 0
     donnee_perimee = bool(permis_max and (_today_reunion() - permis_max).days > 2)   # ingestion en attente ? (R2 : jour Réunion)
     # M87 P6 — la barre « N événements depuis hier » et le panneau latéral. Point de lecture UNIQUE :

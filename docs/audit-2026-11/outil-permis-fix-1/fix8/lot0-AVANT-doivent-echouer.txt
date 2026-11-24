@@ -1,0 +1,17 @@
+tests/test_outil_permis_fix8.py::test_lot0_temoin1_97441626E0304_depot_absent_fiche_et_historique FAILED [ 25%]
+tests/test_outil_permis_fix8.py::test_lot0_temoin2_aucune_autorisation_sous_le_libelle_depose FAILED [ 50%]
+tests/test_outil_permis_fix8.py::test_lot0_temoin3_97440226G0018_aucune_duree FAILED [ 75%]
+tests/test_outil_permis_fix8.py::test_lot0_temoin4_composite_sans_axe_de_delai FAILED [100%]
+E       AssertionError: historique parcellaire : même validation que la fiche (dépôt écarté)
+tests/test_outil_permis_fix8.py:51: AssertionError
+E       AssertionError: l'autorisation ne doit jamais être écrite sous « déposé »
+tests/test_outil_permis_fix8.py:61: AssertionError
+E       AssertionError: plus aucune durée d'instruction, même sur la fiche
+tests/test_outil_permis_fix8.py:80: AssertionError
+E       AssertionError: l'axe délai n'est plus un indicateur du composite
+tests/test_outil_permis_fix8.py:88: AssertionError
+FAILED tests/test_outil_permis_fix8.py::test_lot0_temoin1_97441626E0304_depot_absent_fiche_et_historique
+FAILED tests/test_outil_permis_fix8.py::test_lot0_temoin2_aucune_autorisation_sous_le_libelle_depose
+FAILED tests/test_outil_permis_fix8.py::test_lot0_temoin3_97440226G0018_aucune_duree
+FAILED tests/test_outil_permis_fix8.py::test_lot0_temoin4_composite_sans_axe_de_delai
+============================== 4 failed in 4.84s ===============================

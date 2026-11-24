@@ -17,10 +17,12 @@ from ..copilote.interpreteur import interpreter_brief
 
 
 def _communes_actives(db: Session, n: int = 3) -> list[str]:
-    """Les n communes les plus ACTIVES (dépôts de permis récents) — pour une clarification COURTE."""
+    """Les n communes les plus ACTIVES (permis récents) — pour une clarification COURTE.
+    OUTIL-PERMIS-FIX-8 (LOT 3) — lu de `sitadel_permits` (date d'autorisation, toujours présente),
+    plus de `m10_permit_delais` (table décommissionnée) ni de sa date de dépôt annuelle."""
     rows = db.execute(text(
-        "SELECT commune FROM m10_permit_delais WHERE date_depot > now() - interval '3 years' "
-        "GROUP BY commune ORDER BY count(*) DESC LIMIT :n"), {"n": n}).scalars().all()
+        "SELECT commune FROM sitadel_permits WHERE date > now() - interval '3 years' "
+        "AND commune IS NOT NULL GROUP BY commune ORDER BY count(*) DESC LIMIT :n"), {"n": n}).scalars().all()
     return list(rows)
 
 

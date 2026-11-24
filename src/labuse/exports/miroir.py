@@ -412,10 +412,18 @@ def _r_permis_liste(v):
         t = esc(pm.get("type") or "permis")
         dep = pm.get("date_depot")
         aut = pm.get("date_autorisation")
-        dep_txt = esc(_date_permis(dep, depot=True) or _date_permis(aut) or "?")
-        auto = f", autorisé {esc(_date_permis(aut))}" if aut else ""
+        # OUTIL-PERMIS-FIX-8 (LOT 1) — le dépôt vient déjà filtré par la fonction unique (NULL si écarté).
+        # Quand il est absent, on NE RECOPIE PLUS l'autorisation sous « déposé » (contre-audit ASTRA-4,
+        # point 1) : rien n'est écrit à sa place. On dit alors seulement « autorisé … ».
+        dep_txt = _date_permis(dep, depot=True) if dep else None
+        morceaux = []
+        if dep_txt:
+            morceaux.append(f"déposé {esc(dep_txt)}")
+        if aut:
+            morceaux.append(f"autorisé {esc(_date_permis(aut))}")
         note = permis_incoherence_note(dep, aut)   # littéral de confiance (2 valeurs fixes) — pas d'esc
-        lignes.append(f"{t} — déposé {dep_txt}{auto}" + (f" · {note}" if note else ""))
+        ligne = t + (" — " + ", ".join(morceaux) if morceaux else "") + (f" · {note}" if note else "")
+        lignes.append(ligne)
     reste = f" (+{len(v) - 6} autres)" if len(v) > 6 else ""
     return f"{len(v)} permis sur la parcelle (Sitadel) — " + " ; ".join(lignes) + reste
 
@@ -715,14 +723,17 @@ def _r_permis_proximite(v):
     # OUTIL-PERMIS-FIX-6 (Point 3) — on RESTITUE le total de LOGEMENTS déclarés (plus seulement le compte)
     # ET on DIT les permis sans nombre de logements. Le zéro n'est plus masqué (0 permis, 0 logement) :
     # « aucun permis » se distingue d'une donnée indisponible.
-    # OUTIL-PERMIS-FIX-7 (Point 3) — les permis ANNULÉS sont SORTIS du compte (n) et DITS À PART
-    # (« dont N annulé(s), non comptés »), via la règle d'état unique (permis_classe).
+    # OUTIL-PERMIS-FIX-7 puis FIX-8 (LOT 4) — les permis ANNULÉS sont SORTIS du compte (n) et DITS À
+    # PART. Libellé revu (contre-audit ASTRA-4, Petite-Île) : « N permis retenus · M autres permis
+    # annulés, exclus » — plus « dont M annulés, non comptés » (qui invitait à soustraire deux fois).
     if not isinstance(v, dict) or v.get("n") is None:
         return _r_n(v)
     n, r, fen = v.get("n"), v.get("rayon_m"), v.get("fenetre_mois")
     lg, sans, annules = v.get("logements"), v.get("sans_logements"), v.get("annules")
     suff = f" (< {groupe(r)} m, {fen} mois)" if r and fen else ""
-    txt = f"{groupe(n)} permis{suff}"
+    # « retenus » n'apparaît que lorsqu'il y a des annulés à exclure (sinon « N permis » suffit).
+    retenu = (" retenu" + ("s" if (n or 0) >= 2 else "")) if annules else ""
+    txt = f"{groupe(n)} permis{retenu}{suff}"
     if lg is not None:
         mot = "logement" if lg < 2 else "logements"
         if sans:
@@ -731,7 +742,8 @@ def _r_permis_proximite(v):
         else:
             txt += f", {groupe(lg)} {mot}"
     if annules:
-        txt += f" — dont {groupe(annules)} annulé{'s' if annules >= 2 else ''}, non compté{'s' if annules >= 2 else ''}"
+        txt += (f" · {groupe(annules)} autre{'s' if annules >= 2 else ''} permis "
+                f"annulé{'s' if annules >= 2 else ''}, exclu{'s' if annules >= 2 else ''}")
     return esc(txt)
 
 
