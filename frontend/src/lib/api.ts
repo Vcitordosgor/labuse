@@ -864,6 +864,7 @@ export interface PluCommune {
   pct_article?: number | null; pct_chapitre?: number | null; peu_structure?: boolean | null
   // OUTIL-PLU-FIX-1 (LOT 1) — dates DISTINCTES + actes postérieurs + inventaire des procédures (sourcés).
   date_approbation?: string | null; publication_gpu?: string | null; edition?: string | null
+  millesime_lot?: string | null   // OUTIL-PLU-FIX-7 (point 4) — date du dépôt GPU, nommée distinctement
   modifications?: { type: string; date?: string; source?: string; note?: string }[] | null
   procedures_inventaire?: { type: string; date?: string; source?: string }[] | null
   note_doc?: string | null
@@ -2721,6 +2722,7 @@ export interface EtudeStationnementRegimes {
     citation: string | null; applique: boolean; etat: string
     regle_courte?: string | null   // ETUDE-V6-3 (item 3) — règle en clair pour le récap
     source_url?: string | null     // ETUDE-V6-4 (item 3) — lien doc PLU officiel
+    distingue_autres_cas?: boolean  // OUTIL-PLU-FIX-7 (point 2) — le barème distingue d'autres cas (social/opération…)
   }
   plafond_national: {
     categorie: string; reference: string; ratio_plafond: number

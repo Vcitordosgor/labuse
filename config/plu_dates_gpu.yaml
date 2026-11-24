@@ -21,7 +21,10 @@ communes:
   "97401": {publication_gpu: "2024-12-20"}
   "97402": {publication_gpu: "2026-06-30"}
   "97403": {publication_gpu: "2024-10-04"}
-  "97404": {publication_gpu: "2025-12-08",
+  "97404": {publication_gpu: "2025-12-08", date_approbation_ecrite: "2017-06-22", edition: "22 juin 2017",
+            modifications: [{type: "modification", date: "2024-12-04",
+                             source: "couverture du règlement (vérifié p.1)",
+                             note: "« 22 JUIN 2017 · Modifié le 4 décembre 2024 · PLU APPROUVE » — le lot GPU (millésime 2025-09-17) RE-DÉPOSE ce règlement ; la date du lot n'est PAS la date d'approbation écrite."}],
             procedures: [{type: "révision allégée", source: "relevé relecteur (L'Étang-Salé)"}]}
   "97405": {publication_gpu: "2025-04-17"}
   "97406": {publication_gpu: "2023-07-21"}

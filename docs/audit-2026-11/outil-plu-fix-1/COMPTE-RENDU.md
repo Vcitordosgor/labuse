@@ -1,11 +1,81 @@
-# Outil PLU — compte-rendu OUTIL-PLU-FIX-6 (24/11/2026)
+# Outil PLU — compte-rendu OUTIL-PLU-FIX-7 (24/11/2026)
 
 > Branche `fix/outil-plu-1`, worktree `~/Desktop/labuse-plu-fix`. Base `labuse` (PostGIS, user OS
 > `openclaw`). API locale `http://127.0.0.1:7480`, route réelle `/modules/plu-annuaire/…`. PDF officiels
-> dans `~/Desktop/labuse/data/plu_reglements`. Réingestion du jour : **3606 articles, 21 communes servies**
-> (dont **849 extraits sans zone** = dispositions générales / communes / annexes, désormais correctement
-> non étiquetés). **Chaque chiffre est obtenu aujourd'hui par l'API** (ou base↔PDF), avec sa requête. Rejeu :
-> `PYTHONPATH=src ~/Desktop/labuse/.venv/bin/python`, `psql -h localhost -U openclaw -d labuse`.
+> dans `~/Desktop/labuse/data/plu_reglements`. Réingestion du jour : **3420 articles, 21 communes servies**
+> (dont **675 extraits sans zone** = dispositions **réellement communes** ; les fiches/annexes zonées en
+> sont désormais sorties, cf. point 1). **Chaque chiffre est obtenu aujourd'hui par l'API** (ou base↔PDF),
+> avec sa requête. Rejeu : `PYTHONPATH=src ~/Desktop/labuse/.venv/bin/python`, `psql … -d labuse`.
+
+> **Rapport externe `~/Desktop/audit-outils/01-PLU-ASTRA-2.md` LU EN ENTIER** cette fois (il était vide à
+> FIX-6). Sa liste fermée (5 points) + la relecture-5 ont été rejouées point par point. Clos et non rouverts :
+> renvois de secteur, téléchargements, exceptions U2e, casse/accents, pagination, doublons Possession.
+
+## OUTIL-PLU-FIX-7 — réponse à la relecture 5 et au rapport externe
+
+**1. Les étiquettes — fiches/annexes zonées attribuées (point 2 du rapport, résidu) — corrigé.**
+Règle appliquée : *un extrait propre à UNE zone nommée PORTE cette zone ; seul ce qui s'applique à
+plusieurs/toutes reste « commun »* (`_zone_de_fiche`, lecture du TITRE seul — une note citant un secteur
+historique « Nto » ne compte pas). Les **sans-zone passent de 849 à 675** (≈ **174 fiches/annexes zonées
+attribuées**, par commune : La Plaine 22, Saint-Benoît 8, Trois-Bassins 11, Cilaos 6, Le Tampon 5, Saint-Pierre 4…).
+- **La fiche de Beauvallon sort dans le filtre AUp** : `Beauvallon|AUp` (Saint-Benoît) → la fiche
+  « 2. ANNEXES RELATIVES AUX ZONES AU … ZONE AUp Beauvallon » (zone **AUP**) est servie. Les STECAL sont
+  servis par leur zone : Saint-Benoît **NTA**, **NTB**. Le bloc « ANNEXES RELATIVES AUX ZONES NS, NTA ET
+  NTB » (nomme 3 zones) reste commun — correct.
+- **Aucune sur-attribution** : les dispositions générales qui s'appliquent à toute la commune restent `None`
+  (Saint-Denis p.4-24, L'Étang-Salé p.6-14 toujours `None` ; une disposition générale qui MENTIONNE une zone
+  en passant n'est jamais convertie — seul le TITRE d'une FICHE/ANNEXE/STECAL nommant UNE zone l'est).
+
+**2. Le stationnement — famille verbale + barèmes de la fiche (point 3) — corrigé.**
+- *a) Famille de mots, pas deux formes.* FIX-6 ne couvrait que `stationnement(s)` ; `stationner`,
+  `stationnent`… rouvraient la collision `station`. Désormais TOUTE forme désaccentuée commençant par
+  `stationn` exige le radical `\ystationn` (`_FAMILLES_RADICAL`). `q=stationner&insee=97411` → **53**
+  (= `stationnement`), et les pages **136/137/146/147** (stations de mesure/hydrométriques, lues au PDF) **ne
+  sont plus citées** ; aucun vrai résultat de parking perdu (toutes les obligations disent « stationn… »).
+- *b) Barèmes restitués sur la fiche (ÉCRAN seulement, calibrage inchangé).* La fiche affiche désormais la
+  valeur du **logement ordinaire AVEC l'article, la page et la mention que le barème distingue d'autres cas** :
+  Saint-Louis **UA 12.2, p.23** (« 2 places/logement — le barème distingue d'autres cas : 1 social / 0,5
+  public »), Saint-Pierre **Ud6, p.93**, Le Tampon **Ud12.2, p.67**. Nouveau champ `distingue_autres_cas`
+  (dérivé des lignes/conditions du barème, **sans toucher aux valeurs ni aux documents**).
+
+**3. Les dates — approbation écrite ≠ millésime du lot (point 4, résidu) — corrigé.**
+`date_approbation` affichée = la date **écrite dans le règlement** (vérifiée sur pièce) ; le **millésime du
+LOT** (dépôt GPU) est **nommé comme tel**, distinct. **L'Étang-Salé** : couverture « **22 JUIN 2017 ·
+Modifié le 4 décembre 2024 · PLU APPROUVE** » → écran « version approuvée le **22/06/2017** · millésime du lot
+(dépôt GPU) **17/09/2025** », modification 04/12/2024 en réserve. Les 21 communes vérifiées (couverture ↔ lot) :
+lot = approbation écrite pour la plupart (Avirons, Entre-Deux, Petite-Île, Saint-André, Sainte-Marie/Rose/
+Suzanne, Salazie, Trois-Bassins 21/02/2017, Saint-Pierre juin 2024, Saint-Paul version active 17/12/2025) ;
+le lot RE-DÉPOSE un règlement plus ancien pour L'Étang-Salé (traité), Saint-Denis (modif n°8 fév. 2024, déjà
+en note) — le millésime du lot est désormais nommé partout où il diffère.
+
+**4. Ce que FIX-6 avait recassé (découpe aux chiffres romains) — corrigé.**
+Cause réelle : `_RESET_CHAP_M` prenait des **phrases** commençant par annexe/titre/dispositions pour des
+titres de chapitre (« annexe). Cette disposition… », « titre V du présent règlement. ») → ~120 réfs de prose
++ fragmentation. Correctif : *un en-tête est une LIGNE DE TITRE* (`_reset_is_title` : mot-clé suivi de fin de
+ligne / séparateur / numéro / capitale, jamais d'un mot minuscule de prose) ; le sous-découpage ne retient que
+les vraies lignes de titre (`_subhead_titre`) et **dédoublonne** les intertitres récurrents (Saint-Benoît
+« 1) Règles… » ×21 → 1). Résultats : **réfs de prose = 0**, **extraits quasi vides = 0**, **Saint-Paul
+« hauteur » 97 → 87** (0 référence (réf,zone) répétée ; le résidu +1 vs 86 est une section/définition
+distincte légitime, pas un fragment). La piscine de Saint-Denis p.22 reste « XXI. AMÉNAGEMENTS EXTÉRIEURS »,
+l'exception U2e reste entière (Saint-Paul art. 6 U2E p.91-92 avec 6.3 + saillies), les 48 articles d'Entre-Deux
+restent tous séparés (aucune fusion de vrai article).
+
+### Matrice rejouée (n_total API, 24/11) — vs rapport externe (R)
+
+| Commune | stationnement | hauteur | emprise | recul\* | clôture | piscine |
+|---|---|---|---|---|---|---|
+| Saint-Denis (97411) | **53** (R58) | 60 (R58) | 32 (R33) | 84 (R79) | 22 (R19) | 2 = |
+| La Possession (97408) | 19 (R20) | 33 = | 30 (R29) | 62 = | 8 = | 15 = |
+| Saint-Paul (97415) | 48 = | **87** (R86) | 60 = | 139 (R136) | 77 = | 44 = |
+| Le Tampon (97422) | **26** (R31) | 32 (R25) | 37 (R30) | 76 = | 21 = | 8 = |
+| Les Trois-Bassins (97423) | 25 = | 34 = | 10 = | 66 (R67) | 16 = | 12 = |
+| Entre-Deux (97403) | **17** (R21) | 18 (R17) | 19 (R16) | 32 (R45) | 7 (R14) | 6 = |
+
+\* `recul` = recul OR retrait OR implantation. **Les écarts au rapport externe sont explicables, pas des
+régressions** : (a) la colonne *stationnement* BAISSE partout (anti-collision `station`, améliorations
+validées par la relecture-5) ; (b) les cellules défragmentées (Saint-Paul hauteur 97→87, recul 149→139 ;
+Entre-Deux) baissent car le rapport externe comptait des **fragments de prose-reset** aujourd'hui supprimés —
+tous les vrais articles restent atteignables (48/48 à Entre-Deux). Aucune cellule ne cache une perte de règle.
 
 > **Rapport source `~/Desktop/audit-outils/01-PLU-ASTRA-2.md` VIDE** : le fichier ne contient que la ligne
 > `pbpaste > ~/Desktop/audit-outils/01-PLU-ASTRA-2.md` (le collage a échoué). J'ai donc travaillé sur la

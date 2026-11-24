@@ -99,6 +99,25 @@ _RESET_CHAP = re.compile(r"(?i)^\s*" + _RESET_CHAP_SRC)
 _RESET_CHAP_M = re.compile(r"(?im)^[ \t]*(" + _RESET_CHAP_SRC + r".*)$")
 
 
+def _reset_is_title(line: str) -> bool:
+    """OUTIL-PLU-FIX-7 (point 4) — « un en-tête est une LIGNE DE TITRE, pas une phrase ». FIX-6 prenait
+    toute ligne débutant par annexe/titre/dispositions… pour un titre de chapitre, y compris la PROSE
+    (« annexe). Cette disposition ne concerne pas… », « titre V du présent règlement. ») → ~120 réfs
+    bidon. Un VRAI titre : le mot-clé est suivi d'une FIN de ligne, d'un séparateur (– - — :), d'un
+    NUMÉRO ou d'une CAPITALE — jamais d'un mot MINUSCULE (continuation grammaticale de prose). De plus un
+    titre est COURT (≤ 55 car.) ou en CAPITALES."""
+    s = line.strip()
+    m = _RESET_CHAP.match(s)
+    if not m:
+        return False
+    rest = s[m.end():]
+    if re.match(r"\s+[a-zà-ÿ]", rest) and not re.match(r"\s*[:\-–—]", rest):
+        return False                              # mot-clé + mot minuscule, sans séparateur → prose
+    letters = [c for c in s if c.isalpha()]
+    upr = (sum(c.isupper() for c in letters) / len(letters)) if letters else 0.0
+    return len(s) <= 55 or upr >= 0.6
+
+
 def _is_toc_header(flat: str, start: int) -> bool:
     """La ligne de l'en-tête matché porte-t-elle des points de suite (entrée de sommaire) ?"""
     a = flat.rfind("\n", 0, start) + 1
@@ -204,7 +223,7 @@ def _clean_pages(pages: list[str]) -> tuple[list[str], list[str | None]]:
         # OUTIL-PLU-FIX-6 (point 2) — page d'un chapitre SANS zone (dispositions générales/communes,
         # définitions, lexique, annexes, titre liminaire) → réinitialise l'étiquette (stoppe le
         # report de la dernière bannière, qui « fuyait » sur ces pages : Saint-Benoît annexes → UE).
-        reset = any(_RESET_CHAP.match(_norm(x)) for x in lines[:10] if _norm(x))
+        reset = any(_reset_is_title(_norm(x)) for x in lines[:10] if _norm(x))
         # OUTIL-PLU-FIX-6 (point 2) — SOMMAIRE : une page qui liste PLUSIEURS zones (« ZONE UA … ZONE UB
         # … ZONE UC ») n'est pas une page de zone ; on n'en tire AUCUNE bannière (sinon le sommaire
         # d'Étang-Salé p.3 étiquette UA ses dispositions générales p.6-14). On la traite en reset.
@@ -323,6 +342,50 @@ _SUBHEAD = re.compile(
 _BLOC_SEUIL_PAGES = 6                            # au-delà → on tente le sous-découpage
 
 
+def _subhead_titre(line: str) -> bool:
+    """OUTIL-PLU-FIX-7 (point 4) — un sous-titre de re-découpe est une LIGNE DE TITRE : marqueur
+    structurel explicite (SECTION/CHAPITRE), capitales dominantes (« II - DISPOSITIONS COMMUNES… »,
+    « XXI. AMÉNAGEMENTS EXTÉRIEURS ») même longues, ou ligne courte. On écarte les phrases minuscules
+    (« 1) Règles devant être appliquées strictement ») ; les intertitres RÉCURRENTS sont dédoublonnés
+    par l'appelant."""
+    s = line.strip()
+    if not s or len(s) > 90:                       # borne anti-paragraphe
+        return False
+    if re.match(r'(?i)^(section|chapitre|sous-section)\b', s):
+        return True                                # marqueur structurel explicite (même en casse mixte)
+    letters = [c for c in s if c.isalpha()]
+    if not letters:
+        return False
+    upr = sum(c.isupper() for c in letters) / len(letters)
+    return upr >= 0.5 or len(s) <= 35
+
+
+# OUTIL-PLU-FIX-7 (point 1) — une FICHE/ANNEXE propre à UNE zone nommée doit PORTER cette zone (sinon,
+# mise à `None`, elle est injoignable par le filtre de sa zone : la fiche Beauvallon « ZONE AUp » n'était
+# ni dans le filtre AUp ni dans les dispositions communes). On N'attribue QUE pour les fiches/annexes
+# (marqueur) nommant EXACTEMENT UNE zone SECTORIELLE (au-delà de la classe nue) : une disposition
+# générale qui mentionne une zone en passant reste commune.
+_FICHE_MARQUEUR = re.compile(r'(?i)\b(?:fiche\s+annexe|annexe\s+(?:du|de\s+la|relative|des|n°)|stecal)\b')
+_ZONE_NOMMEE = re.compile(r'(?i)\b(?:zones?|secteurs?|stecal)\s+([0-9]{0,2}(?:AU|U|A|N)[0-9A-Za-z]{0,5})\b')
+
+
+def _zone_de_fiche(texte: str) -> str | None:
+    """Zone d'une fiche/annexe zonée (point 1), ou None si ce n'est pas une fiche, ou si elle nomme
+    zéro / plusieurs zones sectorielles distinctes (section couvrant plusieurs zones = reste commune).
+    On ne lit QUE le TITRE (2 premières lignes non vides) : une NOTE citant un secteur historique
+    (« secteur Nto créé en 2006 ») ne doit pas faire croire à plusieurs zones (Saint-Benoît NTA)."""
+    lignes = [l for l in (texte or "").splitlines() if l.strip()][:2]
+    head = " ".join(lignes)
+    if not _FICHE_MARQUEUR.search(head):
+        return None
+    cands = set()
+    for m in _ZONE_NOMMEE.finditer(head):
+        z = _valid_zone(m.group(1))
+        if z and z != zone_candidats(z)[0]:       # sectorielle (≠ classe nue U/AU/A/N)
+            cands.add(z)
+    return next(iter(cands)) if len(cands) == 1 else None
+
+
 def _split_articles(path: str) -> tuple[list[dict], bool]:
     """OUTIL-PLU-FIX-3/4 — l'extrait est l'ARTICLE ENTIER : d'un en-tête d'article au suivant, QUEL QUE
     SOIT le nombre de pages, avec ses sous-articles, ses « Toutefois… » et ses exceptions. JAMAIS coupé
@@ -362,7 +425,7 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
     # (zone None), au lieu d'être avalée par le bloc de zone précédent (Saint-Benoît annexes AU/N → UE).
     reset_at: set[int] = set()
     for m in _RESET_CHAP_M.finditer(flat):
-        if not _is_toc_header(flat, m.start()):
+        if not _is_toc_header(flat, m.start()) and _reset_is_title(_norm(m.group(1))):
             head_ref[m.start()] = _norm(m.group(1))[:60]
             reset_at.add(m.start())
     # frontières = en-têtes d'article/zone + titres de chapitre sans zone (jamais les frontières de page).
@@ -390,6 +453,8 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
                 zm = _ZONE_FROM_ART.match(ref or "") or _ZONE_FROM_ZONE.match(ref or "")
                 z_ref = _valid_zone(zm.group(1)) if zm else None
                 zone = z_ref or zbanner[page_of(a) - 1]
+        if zone is None:                          # OUTIL-PLU-FIX-7 (point 1) — fiche/annexe zonée → sa zone
+            zone = _zone_de_fiche(texte)
         pg0 = page_of(a)
         lead = len(raw) - len(raw.lstrip())
         pmap = [[0, pg0]]                        # page_map : offset dans `texte` → page PDF
@@ -413,7 +478,16 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
             return []
         if e["page_fin"] - e["page_debut"] < _BLOC_SEUIL_PAGES:
             return [e]                           # article normal : entier (D1 préservé)
-        subs = [m.start() for m in _SUBHEAD.finditer(flat, a + 1, b)]
+        # OUTIL-PLU-FIX-7 (point 4) — on ne re-découpe QU'aux vraies LIGNES DE TITRE : capitales dominantes
+        # ou ligne courte. Sinon un intertitre RÉCURRENT minuscule (« 1) Règles devant être appliquées
+        # strictement », Saint-Benoît) fragmentait le bloc 21×. On dédoublonne aussi les titres identiques
+        # (élément de page répété ≠ nouvelle section).
+        subs, seen = [], set()
+        for m in _SUBHEAD.finditer(flat, a + 1, b):
+            hl = _norm(flat[m.start():min(b, m.start() + 90)].splitlines()[0]) if flat[m.start():b].strip() else ""
+            if not _subhead_titre(hl) or hl[:60] in seen:
+                continue
+            seen.add(hl[:60]); subs.append(m.start())
         if not subs:
             return [e]                           # aucun niveau plus fin : laissé entier (signalé)
         cuts = sorted({a} | set(subs) | {b})
@@ -644,22 +718,25 @@ def zones_apparentees(session: Session, zone: str, insee: str | None) -> list[st
 # nomment aucune zone) restent incluses, et sont présentées à part (« Dispositions communes »).
 _ZNAME_SQL = r'\y(zones?|secteurs?)\s+[0-9]{0,2}(AU|U|A|N)[0-9A-Za-z]'
 
-# OUTIL-PLU-FIX-6 (point 3) — collisions de STEMMER : le dictionnaire français de Postgres réduit
-# « stationnement » à « station », qui matche alors « station d'épuration / de potabilisation / de
-# service ». Toutes les VRAIES formes (stationnement(s), stationner, stationne, stationné, stationnant)
-# partagent le radical « stationn » ; les collisions (station, stations) NON. On exige donc ce radical
-# dans le verbatim pour ce mot précis. Règle ciblée sur mot (pas « stem+1 » générique, qui exclurait des
-# flexions légitimes co-radicalées, ex. « implantation » et « implantées » divergent dès « implant »).
-_RADICAUX_SPECIFIQUES = {"stationnement": r'\ystationn', "stationnements": r'\ystationn'}
+# OUTIL-PLU-FIX-6/7 (point 3) — collisions de STEMMER : le dictionnaire français de Postgres réduit TOUTE
+# la famille « stationn… » (stationnement(s), stationner, stationne, stationnent, stationné, stationnant)
+# au radical « station », qui matche alors « station d'épuration / de potabilisation / de mesure /
+# hydrométrique / service ». FIX-6 ne couvrait QUE 2 formes nominales littérales ; « stationner » rouvrait
+# la collision (FIX-7). On traite donc la FAMILLE par PRÉFIXE : tout terme dont la forme désaccentuée
+# commence par « stationn » exige le radical littéral « \ystationn » (les collisions « station(s) »
+# commencent par « station » sans le 2ᵉ n → écartées). Règle par famille, pas « stem+1 » générique (qui
+# exclurait des flexions co-radicalées légitimes, ex. « implantation » et « implantées » divergent dès « implant »).
+_FAMILLES_RADICAL = [("stationn", r'\ystationn')]
 
 
 def _radicaux_requis(terms: list[str] | None) -> list[str]:
-    """Radicaux littéraux à exiger dans le verbatim pour neutraliser les collisions de stemmer."""
+    """Radicaux littéraux à exiger dans le verbatim pour neutraliser les collisions de stemmer (par famille)."""
     out, seen = [], set()
     for t in (terms or []):
-        r = _RADICAUX_SPECIFIQUES.get(_ua1(t))
-        if r and r not in seen:
-            seen.add(r); out.append(r)
+        u = _ua1(t)
+        for pref, rad in _FAMILLES_RADICAL:
+            if u.startswith(pref) and rad not in seen:
+                seen.add(rad); out.append(rad)
     return out
 
 

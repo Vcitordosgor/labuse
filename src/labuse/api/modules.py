@@ -3143,7 +3143,12 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
     mil, dates = _plu_millesimes(), _plu_dates_gpu()
     for c in res["communes"]:
         dg = dates.get(c["insee"], {})
-        c["date_approbation"] = (mil.get(c["insee"], {}) or {}).get("date_mairie")
+        # OUTIL-PLU-FIX-7 (point 4) — la date d'approbation AFFICHÉE est celle ÉCRITE dans le règlement
+        # (quand elle est vérifiée sur pièce et diffère du lot : L'Étang-Salé 22/06/2017 ≠ lot 17/09/2025) ;
+        # le millésime du LOT (= date du dépôt GPU, date_mairie/idurba) est TOUJOURS nommé comme tel.
+        lot = (mil.get(c["insee"], {}) or {}).get("date_mairie")
+        c["date_approbation"] = dg.get("date_approbation_ecrite") or lot
+        c["millesime_lot"] = lot
         c["publication_gpu"] = dg.get("publication_gpu")
         c["edition"] = dg.get("edition")
         c["modifications"] = dg.get("modifications")

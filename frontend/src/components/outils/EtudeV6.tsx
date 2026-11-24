@@ -842,7 +842,7 @@ function StationnementResultat({ regimes, placesActive, commune, zone, mode, niv
       <b className="text-[11px] font-semibold text-txt">Stationnement</b>
       <ol className="mt-2 flex flex-col gap-1.5 text-[11px] text-txt">
         <li className="flex items-start gap-1.5">
-          <span>Le PLU de <b>{commune}</b> (art. {g.article ?? '—'}) exige <b>{regleG}</b>.</span>
+          <span>Le PLU de <b>{commune}</b> (art. {g.article ?? '—'}{g.page_pdf != null ? `, p. ${g.page_pdf}` : ''}) exige <b>{regleG}</b>{g.distingue_autres_cas ? <span className="text-amber"> — valeur du logement ordinaire ; le barème distingue d'autres cas (voir l'article)</span> : null}.</span>
           <LireArticle r={{ article: g.article, page_pdf: g.page_pdf, millesime: g.millesime, citation: g.citation, source_url: g.source_url, commune, zone }} />
         </li>
         {pf ? (
@@ -1069,6 +1069,11 @@ function StationnementRegle({ regimes, lotissement, commune, zone }: { regimes: 
         <p className="mt-1 text-[10px] text-txt-dim">{pluRef(commune, zone, g.article, g.millesime)}</p>
         <p className="mt-0.5 text-[11px] text-txt">{g.regle_courte ?? (g.ratio_par_logement != null ? `${fmtDec(g.ratio_par_logement)} place / logement` : 'barème par typologie')}</p>
         {g.citation && <p className="mt-0.5 text-[9.5px] text-txt-dim">« {g.citation} »</p>}
+        {/* OUTIL-PLU-FIX-7 (point 2) — la valeur affichée est celle du LOGEMENT ORDINAIRE ; on signale que le
+            barème distingue d'autres cas (logement social/aidé, opération, places publiques…) → voir l'article. */}
+        {g.distingue_autres_cas && (
+          <p className="mt-0.5 text-[10px] text-amber">Valeur pour le logement ordinaire — le barème (art. {g.article ?? '—'}{g.page_pdf != null ? `, p. ${g.page_pdf}` : ''}) distingue d'autres cas (logement social/aidé, opération, places publiques…).</p>
+        )}
         {/* ETUDE-V6-4 (item 3) — « Lire l'article » dès l'étape 2 (stationnement). */}
         <LireArticle r={{ article: g.article, page_pdf: g.page_pdf, millesime: g.millesime, citation: g.citation, source_url: g.source_url, commune, zone }} />
       </div>

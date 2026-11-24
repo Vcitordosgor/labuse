@@ -195,6 +195,9 @@ export function PluAnnuaire() {
             <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
               {cur?.date_approbation && <span>version approuvée le <b className="text-txt-mut">{fmtDateNum(cur.date_approbation) ?? cur.date_approbation}</b></span>}
               {cur?.edition && <span>· édition PDF {cur.edition}</span>}
+              {/* OUTIL-PLU-FIX-7 (point 4) — le MILLÉSIME DU LOT (dépôt GPU) est nommé comme tel, distinct de
+                  la date d'approbation ÉCRITE (L'Étang-Salé : approuvé 22/06/2017 ≠ lot 17/09/2025). */}
+              {cur?.millesime_lot && cur.millesime_lot !== cur.date_approbation && <span>· millésime du lot (dépôt GPU) {fmtDateNum(cur.millesime_lot) ?? cur.millesime_lot}</span>}
               {cur?.publication_gpu && <span>· publiée au GPU le {fmtDateNum(cur.publication_gpu) ?? cur.publication_gpu}</span>}
             </div>
             {cur?.modifications && cur.modifications.length > 0 && (
