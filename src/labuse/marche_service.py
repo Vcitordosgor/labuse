@@ -592,26 +592,25 @@ def comparateur_terrain(db: Session, idu: str, *, n_table: int = 8) -> dict:
                 "perimetre": None}
     # Une seule requête COMMUNE-WIDE avec la distance au sujet : le rayon adaptatif est ensuite appliqué
     # en Python (pas de 4 allers-retours SQL). Même dédoublonnage terrain que MARCHE-UNIQUE-1 (NU-E-031).
-    # OUTIL-COMMUNES-FIX-1 bloquant 1 — QUALIFICATION SUR L'ACTE ENTIER : le bâti n'est plus filtré par
-    # parcelle (un acte « maison + jardin nu » n'est pas une vente de terrain nu) ; on agrège TOUTES les
-    # parcelles de l'acte et on ne garde que celles dont le bâti total est nul (`sum(bati_p) = 0`), la
-    # surface terrain étant reconstituée sur l'acte entier. Natures Vente + VTB (M101 B2).
+    # OUTIL-COMMUNES-FIX-1 bloquant 1 puis FIX-3 B-1 — QUALIFICATION UNIQUE (`ACTE_TERRAIN_NU_CTE`). Avant,
+    # ce lecteur qualifiait le terrain nu par `JOIN parcels` (cadastre courant, commune du secteur) : il
+    # LAISSAIT FUIR une parcelle bâtie DISPARUE (2021-1677591) et le bâti d'une AUTRE commune de l'acte
+    # (16 actes bâtis « nus » dans la fiche parcelle / Estimer). On remplace cette qualification par LA
+    # qualification unique (bâti=0 sur l'acte entier, toutes communes) ; la distance au sujet et le
+    # périmètre commune restent gérés par la jointure géographique `dist` (secteur, non qualifiant).
+    from .marche_dvf_commune import ACTE_TERRAIN_NU_CTE
     rows = db.execute(text(
         "WITH p AS (SELECT geom_2975 g, commune FROM parcels WHERE idu = :idu), "
-        "parc AS (SELECT dm.id_mutation, dm.id_parcelle, max(dm.valeur_fonciere) AS vf, "
-        "           max(dm.date_mutation) AS d, "
-        "           max(COALESCE(dm.surface_terrain,0)) AS terr_p, "
-        "           max(COALESCE(dm.surface_reelle_bati,0)) AS bati_p, "
-        "           min(round(ST_Distance(pp.geom_2975, p.g))::int) AS dist "
+        + ACTE_TERRAIN_NU_CTE + ", "
+        "dist AS (SELECT dm.id_mutation, min(round(ST_Distance(pp.geom_2975, p.g))::int) AS dist "
         "         FROM dvf_mutations_parcelle dm JOIN parcels pp ON pp.idu = dm.id_parcelle, p "
         "         WHERE dm.nature_mutation IN ('Vente', 'Vente terrain à bâtir') "
-        "           AND dm.date_mutation IS NOT NULL AND dm.id_parcelle <> :idu "
-        "           AND pp.commune = (SELECT commune FROM p) "
-        "         GROUP BY dm.id_mutation, dm.id_parcelle), "
-        "t AS (SELECT id_mutation, to_char(min(d), 'YYYY-MM-DD') AS date, "
-        "        extract(year FROM min(d))::int AS annee, "
-        "        sum(terr_p) AS surf, max(vf) AS vf, min(dist)::int AS dist "
-        "      FROM parc GROUP BY id_mutation HAVING sum(bati_p) = 0 AND sum(terr_p) > 0) "
+        "           AND dm.id_parcelle <> :idu AND pp.commune = (SELECT commune FROM p) "
+        "         GROUP BY dm.id_mutation), "
+        "t AS (SELECT a.id_mutation, to_char(a.d0, 'YYYY-MM-DD') AS date, "
+        "        extract(year FROM a.d0)::int AS annee, "
+        "        a.terr_tot AS surf, a.val AS vf, dist.dist AS dist "
+        "      FROM acte_nu a JOIN dist USING (id_mutation)) "
         "SELECT date, annee, round(surf)::int AS surface_m2, round(vf)::int AS prix_eur, "
         "       round(vf / NULLIF(surf,0))::int AS prix_m2, (vf / NULLIF(surf,0)) AS prix_m2_f, "
         "       dist AS distance_m "

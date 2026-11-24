@@ -971,26 +971,22 @@ def _barometre_data(db: Session, insee: str | None = None) -> dict:
     # par mutation comme ligne2_terrain_zone : val / terrain TOTAL de la mutation, jamais val÷un-bout).
     # Échantillon robuste (~600-770 ventes/trim) — contrairement à la VEFA (neuf), trop rare pour une série.
     #
-    # OUTIL-COMMUNES-FIX-1 bloquant 1 — QUALIFICATION SUR L'ACTE ENTIER : on ne garde l'acte que si son
-    # bâti TOTAL est nul (`sum(bati_parc) = 0`), jamais un filtre bâti par parcelle qui laisse passer les
-    # actes mixtes (maison + jardin nu) au prix de l'acte entier. Natures Vente + VTB (M101 B2).
-    terrain = db.execute(text("""
-        WITH parc AS (
-          SELECT m.id_mutation, m.id_parcelle, max(m.valeur_fonciere) AS val, max(m.date_mutation) AS dm,
-                 max(COALESCE(m.surface_terrain, 0)) AS terr_parc,
-                 max(COALESCE(m.surface_reelle_bati, 0)) AS bati_parc
-          FROM dvf_mutations_parcelle m
-          WHERE m.nature_mutation IN ('Vente','Vente terrain à bâtir')
-            AND m.valeur_fonciere > 1000 AND m.date_mutation IS NOT NULL
-            AND date_trunc('quarter', m.date_mutation) < date_trunc('quarter', CURRENT_DATE)
-            AND date_trunc('quarter', m.date_mutation) >= :axis_min   -- RECETTE-1 (H3) — axe commun
-            AND (CAST(:insee AS text) IS NULL OR m.code_commune = :insee)
-          GROUP BY m.id_mutation, m.id_parcelle),
-        tot AS (SELECT id_mutation, sum(terr_parc) AS terr_tot, max(val) AS val, max(dm) AS dm
-                FROM parc GROUP BY id_mutation HAVING sum(bati_parc) = 0 AND sum(terr_parc) > 0)
-        SELECT to_char(date_trunc('quarter', dm), 'YYYY"T"Q') AS trimestre, count(*) AS mutations,
-               round(percentile_cont(0.5) WITHIN GROUP (ORDER BY val / NULLIF(terr_tot, 0)))::int AS median_eur_m2_terrain
-        FROM tot WHERE terr_tot > 0 AND val / NULLIF(terr_tot, 0) BETWEEN 5 AND 5000
+    # OUTIL-COMMUNES-FIX-1 puis FIX-3 B-1/B-2 — QUALIFICATION UNIQUE (`ACTE_TERRAIN_NU_CTE`, bâti=0 sur
+    # l'acte entier TOUTES communes) ; `scope` restreint à la commune (code_commune) et à la fenêtre
+    # trimestrielle, puis JOINT la qualification unique. Plus de qualification inline par code_commune qui
+    # ratait le bâti d'une autre commune de l'acte (B-2).
+    from ..marche_dvf_commune import ACTE_TERRAIN_NU_CTE
+    terrain = db.execute(text(f"""
+        WITH {ACTE_TERRAIN_NU_CTE},
+        scope AS (SELECT DISTINCT m.id_mutation FROM dvf_mutations_parcelle m
+                  WHERE m.nature_mutation IN ('Vente','Vente terrain à bâtir') AND m.date_mutation IS NOT NULL
+                    AND date_trunc('quarter', m.date_mutation) < date_trunc('quarter', CURRENT_DATE)
+                    AND date_trunc('quarter', m.date_mutation) >= :axis_min
+                    AND (CAST(:insee AS text) IS NULL OR m.code_commune = :insee))
+        SELECT to_char(date_trunc('quarter', a.d1), 'YYYY"T"Q') AS trimestre, count(*) AS mutations,
+               round(percentile_cont(0.5) WITHIN GROUP (ORDER BY a.val / NULLIF(a.terr_tot, 0)))::int AS median_eur_m2_terrain
+        FROM acte_nu a JOIN scope USING (id_mutation)
+        WHERE a.terr_tot > 0 AND a.val > 1000 AND a.val / NULLIF(a.terr_tot, 0) BETWEEN 5 AND 5000
         GROUP BY 1 ORDER BY 1 DESC LIMIT 16"""), par).mappings().all()
     # §2 — NEUF : PAS de série (VEFA DVF trop rare : 0-4 ventes/trim récents → une courbe sur 2 points
     # mentirait). On sert la RÉFÉRENCE actuelle. Île : dvf_prix_sortie_neuf. Commune : le moteur UNIQUE

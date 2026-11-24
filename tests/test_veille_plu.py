@@ -37,7 +37,16 @@ def test_cible_sert_veille_au_mais_pas_sursis_sans_padd():
 
 
 def test_deduit_et_dormante_ne_servent_rien():
-    assert V.fiche_en_cours("97411000AA0001") is None      # Saint-Denis clôturée DEDUIT
+    # Une procédure DEDUITE ne se sert jamais (cas synthétique). Depuis OUTIL-COMMUNES-FIX-3 B-3, plus
+    # aucune commune réelle n'est DEDUIT : les clôtures déduites d'un opposable postérieur — dont
+    # Saint-Denis, à tort affichée « clôturée » — ont été retirées (cf. test_saint_denis_revision_en_cours).
+    e_deduit = {"commune": "T", "procedure": "revision_plu", "stade": "prescrite", "date_acte": "2024-01-01",
+                "source": "x", "date_constat": "2026-08-06", "confiance": "DEDUIT", "raisonnement": "test"}
+    assert V.procedure_active(e_deduit) is False
+    assert V.sursis_arme(e_deduit) is False
+    # Saint-Denis : sa révision est désormais EN COURS (SOURCE) et SE SERT (ne se déduit plus clôturée).
+    assert V.fiche_en_cours("97411000AA0001") is not None
+    # dormante → aucune vigilance servie (Saint-Philippe)
     assert V.vigilance_veille_au("97417000AA0001") is None  # Saint-Philippe dormante
     assert V.vigilance_sursis("97417000AA0001") is None
 

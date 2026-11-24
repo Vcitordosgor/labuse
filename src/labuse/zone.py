@@ -686,31 +686,25 @@ def prix_par_type_zone(session: Session, geom_geojson: dict) -> dict:
     # sur l'ACTE ENTIER (`sum(bati_p)=0`, surface reconstituée) comme le référentiel, dans le polygone
     # dessiné (centroïde de parcelle), fenêtre 36 mois, natures Vente+VTB, borne [50 ; 4 000] €/m². Maille
     # propre à l'Étude de zone (polygone), documentée dans l'inventaire du compte rendu.
-    from .marche_dvf_commune import BORNE_TERRAIN
+    # OUTIL-COMMUNES-FIX-3 B-1 — QUALIFICATION UNIQUE : l'Étude de zone embarque LE CTE partagé
+    # `ACTE_TERRAIN_NU_CTE` (bâti=0 sur l'acte entier, toutes communes) et JOINT l'appartenance au polygone
+    # (centroïde de parcelle) + la fenêtre 36 mois. Plus de qualification locale parallèle.
+    from .marche_dvf_commune import BORNE_TERRAIN, ACTE_TERRAIN_NU_CTE
     rt = session.execute(text(
-        f"""WITH cand AS (
+        f"""WITH {ACTE_TERRAIN_NU_CTE},
+            inzone AS (
               SELECT DISTINCT dm.id_mutation
               FROM dvf_mutations_parcelle dm JOIN parcels p ON p.idu = dm.id_parcelle
               WHERE dm.nature_mutation IN ('Vente', 'Vente terrain à bâtir')
                 AND dm.date_mutation >= ({_ANCRE_DVF} - interval '36 months')
-                AND ST_Contains({z}, ST_Centroid(p.geom_2975))),
-            acte AS (
-              SELECT id_mutation, sum(bati_p) AS bati_tot, sum(terr_p) AS terr_tot,
-                     max(val) AS val, max(d) AS d
-              FROM (SELECT id_mutation, id_parcelle,
-                           max(COALESCE(surface_reelle_bati,0)) AS bati_p,
-                           max(COALESCE(surface_terrain,0)) AS terr_p,
-                           max(valeur_fonciere) AS val, max(date_mutation) AS d
-                    FROM dvf_mutations_parcelle
-                    WHERE id_mutation IN (SELECT id_mutation FROM cand)
-                    GROUP BY id_mutation, id_parcelle) pp
-              GROUP BY id_mutation HAVING sum(bati_p) = 0 AND sum(terr_p) > 0)
+                AND ST_Contains({z}, ST_Centroid(p.geom_2975)))
             SELECT count(*) FILTER (WHERE r BETWEEN {BORNE_TERRAIN[0]} AND {BORNE_TERRAIN[1]}) n,
                    round(percentile_cont(0.5) WITHIN GROUP (ORDER BY r)
                      FILTER (WHERE r BETWEEN {BORNE_TERRAIN[0]} AND {BORNE_TERRAIN[1]})::numeric) med,
                    to_char(min(d) FILTER (WHERE r BETWEEN {BORNE_TERRAIN[0]} AND {BORNE_TERRAIN[1]}), 'MM/YYYY') d0,
                    to_char(max(d) FILTER (WHERE r BETWEEN {BORNE_TERRAIN[0]} AND {BORNE_TERRAIN[1]}), 'MM/YYYY') d1
-            FROM (SELECT val / NULLIF(terr_tot, 0) AS r, d FROM acte) q"""),
+            FROM (SELECT a.val / NULLIF(a.terr_tot, 0) AS r, a.d1 AS d
+                  FROM acte_nu a JOIN inzone USING (id_mutation)) q"""),
         {"zone": json.dumps(geom_geojson)}).mappings().first()
     nt = int(rt["n"] or 0)
     from .dvf_mediane import SEUIL_N

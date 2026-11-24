@@ -111,31 +111,25 @@ def ligne2_terrain_zone(db: Session, commune: str) -> dict:
     # posé PAR PARCELLE et la zone AVANT de reconstituer la vente — un acte « maison + jardin nu »
     # survivait comme terrain nu (cas 2021-1672641). On ne garde que les actes dont le bâti total est nul.
     #
-    # OUTIL-COMMUNES-FIX-2 #1 — QUALIFIER AVANT TOUTE JOINTURE CADASTRALE. La jointure `parcels` rattachait
-    # au cadastre COURANT avant de chercher le bâti : une parcelle bâtie DISPARUE du cadastre (absente de
-    # `parcels`) échappait à la somme et faisait passer le reste de l'acte pour du terrain nu
-    # (cas 2021-1677591 : maison 50 m² sur AV0527, absente de `parcels`, à Saint-Denis). Désormais on lit
-    # TOUTES les lignes DVF de l'acte via `code_commune = :insee` (indépendant du cadastre), on somme bâti
-    # ET terrain de l'acte entier, puis on rattache la zone (parcel_zone_plu). Saint-Denis U 288→285 sur
-    # 604 actes (610 → 604). Scan unique (LEFT JOIN zone), ~65 ms. `n` = actes ENTRANT réellement dans la
-    # médiane (ratio non nul), jamais le comptage brut (612 affiché pour 610 utilisés).
+    # OUTIL-COMMUNES-FIX-2 #1 puis FIX-3 B-1/B-2 — QUALIFICATION UNIQUE SUR L'ACTE ENTIER, TOUTES COMMUNES.
+    # FIX-2 qualifiait par `code_commune` (indépendant du cadastre — réglait la parcelle disparue), mais ne
+    # voyait pas le bâti d'une AUTRE commune (acte 2021-1677229 : maison 75 m² à Sainte-Marie + 28 m² nus au
+    # Tampon → gardé à tort). Désormais LA qualification unique `ACTE_TERRAIN_NU_CTE` (sum(bati)=0 sur TOUTES
+    # les lignes DVF de l'acte, toutes communes) ; on y JOINT l'appartenance de zone de la commune. Le Tampon
+    # 203/658 → 202/657 (acte 2021-1677229 exclu) ; SD 285/604, SP 271/879 inchangés. `n` = actes entrant
+    # dans la médiane (ratio non nul).
+    from ..marche_dvf_commune import ACTE_TERRAIN_NU_CTE
     insee = db.execute(text("SELECT left(min(idu), 5) FROM parcels WHERE commune = :c"),
                        {"c": commune}).scalar()
-    rows = db.execute(text("""
-        WITH base AS (
-          SELECT m.id_mutation, m.id_parcelle, max(m.valeur_fonciere) AS val, max(m.millesime) AS mill,
-                 max(COALESCE(m.surface_terrain,0)) AS terr_parc,
-                 max(COALESCE(m.surface_reelle_bati,0)) AS bati_parc,
-                 bool_or(z.zone_fam = 'U')  AS z_u,
-                 bool_or(z.zone_fam = 'AU') AS z_au
-          FROM dvf_mutations_parcelle m
-          LEFT JOIN parcel_zone_plu z ON z.idu = m.id_parcelle AND z.zone_fam IN ('U','AU')
-          WHERE m.code_commune = :insee AND m.nature_mutation IN ('Vente','Vente terrain à bâtir')
-          GROUP BY m.id_mutation, m.id_parcelle),
-        tot AS (SELECT id_mutation, sum(terr_parc) AS terr_tot, max(val) AS val, max(mill) AS mill,
-                       bool_or(z_u) AS has_u, bool_or(z_au) AS has_au
-                FROM base GROUP BY id_mutation
-                HAVING sum(bati_parc) = 0 AND sum(terr_parc) > 0)
+    rows = db.execute(text(f"""
+        WITH {ACTE_TERRAIN_NU_CTE},
+        zm AS (SELECT m.id_mutation, bool_or(z.zone_fam = 'U') AS has_u, bool_or(z.zone_fam = 'AU') AS has_au
+               FROM dvf_mutations_parcelle m
+               JOIN parcel_zone_plu z ON z.idu = m.id_parcelle AND z.zone_fam IN ('U','AU')
+               WHERE m.code_commune = :insee AND m.nature_mutation IN ('Vente','Vente terrain à bâtir')
+               GROUP BY m.id_mutation),
+        tot AS (SELECT a.val, a.terr_tot, a.mill, zm.has_u, zm.has_au
+                FROM acte_nu a JOIN zm USING (id_mutation))
         SELECT 'U' AS zone_fam,
                percentile_cont(0.5) WITHIN GROUP (ORDER BY val / NULLIF(terr_tot,0)) AS med,
                count(*) FILTER (WHERE val / NULLIF(terr_tot,0) IS NOT NULL) AS n,

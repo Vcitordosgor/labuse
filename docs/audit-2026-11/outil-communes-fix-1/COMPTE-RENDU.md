@@ -567,3 +567,81 @@ pas le numéro de lot ici mais répète chaque lot une fois par nature_culture :
 Tests ajoutés : `tests/test_communes_fix2.py` (db — valeurs exactes 285/604, 72,5 %, 14/21, VEFA 4 878,
 Étude de zone terrain > 0, mutation 2021-1677591 écartée ; skip sur base de test vide, comme les voisins).
 Valeurs toutes reproduites en direct sur la base locale.
+
+---
+
+# OUTIL-COMMUNES-FIX-3 — réponse à la relecture 2 (`relecture-communes-2.md`)
+
+La relecture 2 valide les six points de FIX-2 et demande trois corrections. Périmètre = cette liste fermée.
+
+## B-1 — une seule fonction qualifie le terrain nu, tous les lecteurs l'appellent
+La relecture a trouvé que `comparateur_terrain` (fiche parcelle §Marché + Estimer) n'avait pas reçu le
+correctif : 16 actes avec bâti y passaient encore, dont 2021-1677591. **Trois** qualifications parallèles
+coexistaient (`code_commune`, `JOIN parcels`, logique `zone.py`).
+
+Correctif : une **constante SQL unique** `ACTE_TERRAIN_NU_CTE` (dans `marche_dvf_commune.py`) qualifie l'acte
+sur son bâti **global** (toutes lignes DVF, toutes communes) — `HAVING sum(bati_p)=0 AND sum(terr_p)>0`.
+Tous les lecteurs *live* l'embarquent désormais :
+
+| Lecteur | Fonction | Écrans servis |
+|---|---|---|
+| P1 | `_median_terrain` (`marche_dvf_commune.py`) | repère communal (Radar, PDF/Dossier) |
+| P2 | `ligne2_terrain_zone` (`faisabilite/marche_commune.py`) | **tableau**, fiche commune, Comparer, Assemblage |
+| P3 | séries trimestrielles (`api/moteurs.py`) | baromètre |
+| P4 | `comparateur_terrain` (`marche_service.py`) | **fiche parcelle §Marché, Estimer** |
+| P5 | Radar île (`pige/signaux.py`) | repère île |
+| — | `prix_par_type_zone` (`zone.py`) | Étude de zone |
+
+Preuve structurelle (sans base) : `test_une_seule_qualification_terrain_nu_partout` vérifie que chacun de
+ces fichiers référence `ACTE_TERRAIN_NU_CTE`/`acte_nu`.
+Preuve par **requête unique** (`test_zero_acte_bati_dans_chaque_lecteur`) : **0** acte servi par la
+qualification unique ne porte de bâti sur son acte entier. `comparateur_terrain` sur la parcelle de
+2021-1677591 : médiane 633, n=8, l'acte bâti exclu.
+
+## B-2 — fuite entre communes
+Un acte se qualifie désormais sur **toutes** ses lignes DVF, quelle que soit la commune. Six actes
+multi-communes portaient une partie bâtie hors de la commune analysée et passaient à tort :
+
+| id_mutation | bâti (commune) | portion nue (commune) |
+|---|---|---|
+| 2021-1677229 | maison 75 m² (Sainte-Marie) | 28 m² (Le Tampon) |
+| 2021-1681480 | bâti (Saint-Pierre) | nu (Entre-Deux) |
+| 2022-1640617 | bâti (Saint-Denis) | nu (Sainte-Marie) |
+| 2023-1314986 | bâti (Saint-Louis) | nu (Les Avirons) |
+| 2024-1189447 | bâti (Le Tampon) | nu (La Plaine-des-Palmistes) |
+| 2025-1268873 | bâti (Saint-Denis) | nu (Sainte-Marie) |
+
+Résultat : **Le Tampon zone U = 202 sur 657** (et non 203/658) — conforme au relecteur.
+
+## B-3 — Saint-Denis : révision affichée « clôturée » alors que le GPU la donne en cours
+La règle fautive était : « PLU opposable postérieur à la prescription ⇒ révision clôturée ». Un opposable
+postérieur **ne prouve pas** la clôture d'une révision générale. Sept communes portaient cette **clôture
+DÉDUITE** d'une simple publication de document : Étang-Salé, La Plaine-des-Palmistes, Saint-Denis,
+Saint-Louis, Saint-Paul, Sainte-Marie, Sainte-Suzanne. Toutes repassées en
+`revision_plu`/`prescrite`/`confiance SOURCE` (date de prescription, note de source corrigée). Les 23 autres
+communes vérifiées par la même comparaison : aucune autre clôture déduite ne subsiste
+(`test_plus_aucune_cloture_deduite_d_un_document`). Saint-Denis affiche désormais la révision **en cours**
+(`test_saint_denis_revision_en_cours`).
+
+## Preuves chiffrées demandées
+- **Cinq médianes du relecteur externe** (direct + `test_cinq_medianes_du_relecteur`) :
+  Saint-Denis 285/604 · Saint-Paul 271/879 · Saint-Pierre 300/780 · Le Tampon 202/657 · Cilaos 88/92.
+- **0 acte avec bâti dans chacun des lecteurs**, requête unique : **0**.
+- **Trois parcelles — prix du terrain nu avant/après** (fiche parcelle = Estimer, `comparateur_terrain`) :
+
+  | Parcelle | avant → après | note |
+  |---|---|---|
+  | 97411000BZ1065 (St-Denis) | 568 → 568 | fuite SD (ratio ~26) hors bornes d'affichage |
+  | 97411000AV0312 (St-Denis, près 2021-1677591) | 228 → 228 | idem, repère inchangé |
+  | 97422000BT1426 (Le Tampon, près 2021-1677229) | 181 → **179** | acte multi-communes retiré (−2 €/m²) |
+
+## Chiffres de documents validés qui bougent
+- **Estimer / fiche parcelle §Marché** (`comparateur_terrain`) : le repère terrain bouge **uniquement**
+  pour les parcelles dont le secteur contenait un acte-fuite dans les bornes d'affichage — ex. Le Tampon
+  BT1426 **181 → 179 €/m²** (−2). Inchangé ailleurs (fuites hors bornes).
+- **Bilan — repère de secteur** (cache `dvf_secteur_medianes`) : **inchangé**. Ce cache était déjà qualifié
+  acte-entier global (jugé « sain » par le relecteur) ; ce lot ne le touche pas.
+- **Dossier/PDF — repère communal** (`_median_terrain`, P1) : qualification désormais unifiée ; valeurs
+  communales identiques aux cinq médianes ci-dessus.
+
+Tests ajoutés : `tests/test_communes_fix3.py` (structurels sans base + db valeurs, skip sur base vide).
