@@ -1,49 +1,49 @@
 #!/usr/bin/env python
-"""OUTIL-SCAN-FIX-4 — bascule 2026 SÛRE, PROCÉDURE ENTIÈRE sous retour arrière.
+"""OUTIL-SCAN-FIX-5 — bascule 2026, PÉRIMÈTRE RÉDUIT. Le V-score (recalcul + promotion) NE FAIT PLUS
+PARTIE de cette bascule (chantier du nouveau classement). Le script ne touche NI le feature store, NI
+`data_sources`, NI `p_score_v2_runs`/`parcel_p_score_v2`, NI `config/served_run.txt`/`served_manifest.json`.
 
 L'agent ne lance JAMAIS --go/--rollback sur la base commune `labuse`. Tout se prouve sur `labuse_scanfix`.
 
-Sûretés (relecture-scan-3, points 1-4) :
-  1. SAUVEGARDE NUMÉROTÉE/DATÉE, jamais périmée. Chaque --go crée `_bascule_bak__<N>__*` (N = numéro de
-     bascule) + une ligne au registre `_bascule_sauvegardes`. --go REFUSE si une sauvegarde plus ancienne
-     existe, SAUF `--malgre-sauvegarde <N>` qui la nomme. --rollback EXIGE `--sauvegarde <N>`, affiche
-     (numéro, date, lignes) et n'agit QUE sur celle-là. `--purge-sauvegarde <N>` la supprime.
-  2. CIBLE PAR ARGUMENT. `--db <url>` OBLIGATOIRE : le script ne lit NI l'environnement NI `.env`, et n'a
-     AUCUN défaut. `--confirme` est comparé à l'IDENTITÉ RENVOYÉE PAR LE SERVEUR
-     (`current_database()` + `inet_server_addr()` + `inet_server_port()`), pas à une chaîne d'URL. En cas de
-     refus, le script N'IMPRIME PAS la valeur attendue.
-  3. localhost == 127.0.0.1 == casse : la comparaison porte sur l'identité SERVEUR (même serveur → même
-     réponse), normalisée en minuscules.
-  4. PROCÉDURE ENTIÈRE enchaînée par le script (plus aucune étape manuelle) : droits → archive 2025 →
-     flip → BODACC → blocs(+membres) → recalcul & PROMOTION V-score. La sauvegarde couvre TOUT, y compris
-     `parcel_bloc_membres`, `p_score_v2_runs`, `parcel_p_score_v2` et le LABEL SERVI (`config/served_run.txt`).
-     --rollback RE-SERT réellement le run précédent (réécrit le fichier) et le VÉRIFIE.
+PÉRIMÈTRE (seules tables SERVIES écrites — liste exhaustive, par étape) :
+  [1] droits 2025+2026  → `parcelle_pm_droit` (via table d'attente `parcelle_pm_droit_staging`, temp, droppée)
+  [2] archive 2025 + flip → `pm_proprietaires_millesimes`, `parcelle_personne_morale`
+      (+ colonnes droit_code/droit_label ; swap `injection_sure` via temp `…__inj_staging`, droppée)
+  [3] BODACC             → `bodacc_depots`  (le « touch » de fraîcheur `data_sources` est NEUTRALISÉ :
+                           snapshot + restauration dans la MÊME transaction → data_sources inchangée)
+  [4] blocs              → `parcel_blocs`, `parcel_bloc_membres`  (temp `_blocs_pm`, droppée)
+  → 6 tables servies, TOUTES dans CONCERNEES (sauvegarde + --rollback les couvrent).
+
+SÛRETÉS (relecture-scan-3/4) :
+  • Cible par ARGUMENT `--db <url>` (zéro env/.env/défaut) ; `--confirme` = identité SERVEUR
+    `current_database()@system_identifier:port` (localhost=127.0.0.1=::1=casse) ; refus n'imprime pas la valeur.
+  • Sauvegardes NUMÉROTÉES/DATÉES `_bascule_bak__<N>__*` + registre `_bascule_sauvegardes` ; --go refuse une
+    sauvegarde ancienne (sauf --malgre-sauvegarde N) ; --rollback exige --sauvegarde N ; --purge-sauvegarde N.
+  • Staging + TRANSACTION UNIQUE pour [2]. Toute étape qui ÉCHOUE ARRÊTE la procédure (code ≠ 0) et dit
+    « --rollback --sauvegarde N » ; JAMAIS de « [OK] » après un échec.
 
 Usage :
     P=.venv/bin/python; S=scripts/bascule_2026_labuse.py; U=postgresql+psycopg://user@host:5432/base
-    $P $S --db "$U" --lister-sauvegardes
-    $P $S --db "$U" --empreinte
-    $P $S --db "$U" --dry-run
-    $P $S --db "$U" --go       --confirme base@127.0.0.1:5432 [--malgre-sauvegarde N] [--bodacc-limit K]
-    $P $S --db "$U" --rollback --sauvegarde N --confirme base@127.0.0.1:5432
-    $P $S --db "$U" --purge-sauvegarde N --confirme base@127.0.0.1:5432
+    $P $S --db "$U" --empreinte | --dry-run | --lister-sauvegardes
+    $P $S --db "$U" --go       --confirme base@<system_identifier>:<port> [--malgre-sauvegarde N] [--bodacc-limit K]
+    $P $S --db "$U" --rollback --sauvegarde N --confirme base@<system_identifier>:<port>
+    $P $S --db "$U" --purge-sauvegarde N --confirme base@<system_identifier>:<port>
 """
 from __future__ import annotations
 
 import datetime as _dt
+import os
 import sys
-from pathlib import Path
 
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 CONCERNEES = ["parcelle_personne_morale", "pm_proprietaires_millesimes", "parcelle_pm_droit",
-              "bodacc_depots", "parcel_blocs", "parcel_bloc_membres",
-              "p_score_v2_runs", "parcel_p_score_v2"]
+              "bodacc_depots", "parcel_blocs", "parcel_bloc_membres"]
 BAK = "_bascule_bak__"
 REGISTRE = "_bascule_sauvegardes"
 STAGING = "parcelle_pm_droit_staging"
-SERVED_FILE = Path(__file__).resolve().parents[1] / "config" / "served_run.txt"
 
 
 # ───────────────────────── identité & empreinte ─────────────────────────
@@ -59,7 +59,7 @@ def _colonnes(session, t: str) -> list[str]:
 
 def _empreinte(session, t: str) -> tuple:
     """(existe, n_lignes, checksum) — checksum = Σ hashtext(ligne ENTIÈRE) : TOUTES les colonnes
-    (volatiles comprises : id, date_import…). Indépendant de l'ordre ; capture tout."""
+    (volatiles comprises). Indépendant de l'ordre ; capture tout."""
     if not _existe(session, t):
         return (False, 0, 0)
     n, chk = session.execute(text(
@@ -68,27 +68,17 @@ def _empreinte(session, t: str) -> tuple:
 
 
 def _identite_serveur(session) -> str:
-    """Ce que le SERVEUR répond, indépendamment de la GRAPHIE d'hôte côté client :
-    `current_database()` @ `system_identifier` (identité du cluster, renvoyée par le serveur —
-    IDENTIQUE pour localhost, 127.0.0.1, ::1, socket…) : `inet_server_addr()` NE convient PAS (rend
-    ::1 vs 127.0.0.1 selon la connexion). + port. Normalisée en minuscules (insensible à la casse)."""
+    """Identité RENVOYÉE PAR LE SERVEUR, indépendante de la graphie d'hôte côté client :
+    `current_database()` @ `system_identifier` (cluster — identique localhost/127.0.0.1/::1/socket) `:` port.
+    `inet_server_addr()` NE convient PAS (rend ::1 vs 127.0.0.1). Minuscules (insensible à la casse)."""
     base, sysid, port = session.execute(text(
         "SELECT current_database(), (SELECT system_identifier FROM pg_control_system()), "
         "       COALESCE(inet_server_port()::text, 'local')")).first()
     return f"{base}@{sysid}:{port}".lower()
 
 
-def _label_servi() -> str | None:
-    if not SERVED_FILE.exists():
-        return None
-    for ln in SERVED_FILE.read_text(encoding="utf-8").splitlines():
-        if ln.strip() and not ln.strip().startswith("#"):
-            return ln.strip()
-    return None
-
-
 def _affiche_etat(session, titre: str) -> None:
-    print(f"\n── {titre} — serveur {_identite_serveur(session)} · label servi « {_label_servi()} » ──")
+    print(f"\n── {titre} — serveur {_identite_serveur(session)} ──")
     for t in CONCERNEES:
         ex, n, chk = _empreinte(session, t)
         print(f"   {t:30} {'(absente)' if not ex else f'{n:>8} lignes  checksum={chk}'}")
@@ -97,41 +87,37 @@ def _affiche_etat(session, titre: str) -> None:
 def _exige_confirme(session, confirme: str | None, action: str) -> None:
     ident = _identite_serveur(session)
     if not confirme or confirme.strip().lower() != ident:
-        # Point 2 : on n'imprime PAS l'identité attendue (sinon le refus dicte la valeur à recopier).
-        print(f"\n✗ {action} REFUSÉ — `--confirme` absent ou ne correspond pas à l'identité du serveur "
-              f"(base@adresse:port renvoyée par le serveur). Vérifie la cible avec --empreinte/--dry-run "
-              f"(lecture seule) puis recommence. Rien écrit.")
+        print(f"\n✗ {action} REFUSÉ — `--confirme` absent ou ≠ identité du serveur "
+              f"(base@system_identifier:port). Lis-la avec --empreinte/--dry-run (lecture seule) puis "
+              f"recommence. Rien écrit.")
         sys.exit(2)
 
 
 # ───────────────────────── sauvegardes numérotées ─────────────────────────
 def _ensure_registre(session) -> None:
     session.execute(text(
-        f'CREATE TABLE IF NOT EXISTS "{REGISTRE}" (numero int PRIMARY KEY, date_iso text, '
-        f'cible text, label_servi text)'))
+        f'CREATE TABLE IF NOT EXISTS "{REGISTRE}" (numero int PRIMARY KEY, date_iso text, cible text)'))
 
 
 def _sauvegardes(session) -> list[dict]:
     if not _existe(session, REGISTRE):
         return []
     return [dict(r) for r in session.execute(text(
-        f'SELECT numero, date_iso, cible, label_servi FROM "{REGISTRE}" ORDER BY numero')).mappings()]
+        f'SELECT numero, date_iso, cible FROM "{REGISTRE}" ORDER BY numero')).mappings()]
 
 
 def _lister(session) -> None:
-    sv = _sauvegardes(session)
     print(f"\n── Sauvegardes sur {_identite_serveur(session)} ──")
+    sv = _sauvegardes(session)
     if not sv:
         print("   (aucune)")
     for s in sv:
         pm = _empreinte(session, f"{BAK}{s['numero']}__parcelle_personne_morale")
-        print(f"   #{s['numero']}  {s['date_iso']}  cible={s['cible']}  label_servi={s['label_servi']}  "
+        print(f"   #{s['numero']}  {s['date_iso']}  cible={s['cible']}  "
               f"parcelle_personne_morale={pm[1]} lignes")
 
 
 def _sauvegarder(session, numero: int, log=print) -> None:
-    """Copie TOUTES les tables concernées dans `_bascule_bak__<N>__*` + note les tables absentes et le
-    LABEL SERVI (config/served_run.txt). Daté, numéroté, jamais écrasé."""
     _ensure_registre(session)
     session.execute(text(f'DROP TABLE IF EXISTS "{BAK}{numero}__meta"'))
     session.execute(text(f'CREATE TABLE "{BAK}{numero}__meta" (cle text, valeur text)'))
@@ -143,58 +129,44 @@ def _sauvegarder(session, numero: int, log=print) -> None:
         else:
             session.execute(text(f'INSERT INTO "{BAK}{numero}__meta" VALUES (:k, :v)'),
                             {"k": f"absente:{t}", "v": "1"})
-    label = _label_servi()
-    session.execute(text(f'INSERT INTO "{BAK}{numero}__meta" VALUES (:k, :v)'),
-                    {"k": "label_servi", "v": label or ""})
-    # OCTETS EXACTS du fichier du run servi (config/served_run.txt) → restaurés tels quels au rollback
-    # (dépôt propre, même le commentaire). `served_manifest.json` n'est PAS touché par la promotion.
-    session.execute(text(f'INSERT INTO "{BAK}{numero}__meta" VALUES (:k, :v)'),
-                    {"k": "served_run_txt",
-                     "v": SERVED_FILE.read_text(encoding="utf-8") if SERVED_FILE.exists() else ""})
-    session.execute(text(f'INSERT INTO "{REGISTRE}" (numero, date_iso, cible, label_servi) '
-                         f'VALUES (:n, :d, :c, :l)'),
+    session.execute(text(f'INSERT INTO "{REGISTRE}" (numero, date_iso, cible) VALUES (:n, :d, :c)'),
                     {"n": numero, "d": _dt.datetime.now().isoformat(timespec="seconds"),
-                     "c": _identite_serveur(session), "l": label or ""})
+                     "c": _identite_serveur(session)})
     session.commit()
-    log(f"   label servi mémorisé : « {label} » (re-servi au rollback)")
 
 
-# ───────────────────────── V-score : recalcul + promotion ─────────────────────────
-def _ecrire_label_servi(label: str) -> None:
-    SERVED_FILE.write_text(f"# run V-score servi (point de vérité versionné) — écrit par la bascule\n{label}\n",
-                           encoding="utf-8")
-
-
-def _vscore_recalcul_et_promotion(session, run_label: str, log=print) -> None:
-    """Prod : vrai `run_score_v2` (features complètes). Tranche (features de scoring absentes) : enregistre
-    un run MINIMAL dans p_score_v2_runs (parcel_p_score_v2 reste tel quel) — ce qui exerce EXACTEMENT les
-    tables que --rollback doit couvrir. Dans les DEUX cas : PROMOTION = écrire le label servi."""
+def _arret_echec(session, numero: int, etape: str, exc: Exception) -> None:
+    """Une étape a ÉCHOUÉ : on ANNULE la transaction en cours, on dit quoi faire, on sort en ERREUR.
+    JAMAIS de « [OK] » après ça."""
     try:
-        from labuse.scoring.p_v2.pipeline import run_score_v2
-        run_score_v2(session, run_id=run_label, rebuild=True, snapshot=False)
-        session.commit()
-        log(f"   V-score recalculé (run_score_v2) : {run_label}")
-    except Exception as exc:  # noqa: BLE001 — tranche sans features : run minimal (preuve de couverture)
         session.rollback()
-        n = int(session.execute(text("SELECT count(*) FROM parcel_p_score_v2")).scalar() or 0)
-        session.execute(text(
-            "INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256, n_parcelles) "
-            "VALUES (:r, 'bascule-2026', 'recalcul-reel-en-prod', :n) ON CONFLICT (run_id) DO NOTHING"),
-            {"r": run_label, "n": n})
-        session.commit()
-        log(f"   V-score : features absentes ({type(exc).__name__}) → run MINIMAL enregistré ({run_label}).")
-    _ecrire_label_servi(run_label)
-    log(f"   PROMOTION : label servi → « {run_label} » (config/served_run.txt)")
+    except Exception:  # noqa: BLE001
+        pass
+    print(f"\n✗ ÉCHEC à l'étape « {etape} » : {type(exc).__name__}: {str(exc)[:200]}")
+    print(f"  La base servie peut être partiellement modifiée (étapes déjà committées). REVIENS EN ARRIÈRE :")
+    print(f"      --rollback --sauvegarde {numero} --confirme <identité>")
+    sys.exit(1)
+
+
+def _crash_si_demande(etape: str, log) -> None:
+    if _arg(sys.argv[1:], "--_crash-at") == etape:
+        log(f"\n[_crash-at {etape}] interruption DURE (kill simulé) au milieu de l'étape. Rien committé ici.")
+        os._exit(137)
+
+
+def _fail_si_demande(etape: str) -> None:
+    if _arg(sys.argv[1:], "--_fail-at") == etape:
+        raise RuntimeError(f"échec forcé (--_fail-at {etape}) pour la preuve du point 2")
 
 
 # ───────────────────────── GO ─────────────────────────
-def go(session, confirme, malgre: int | None, bodacc_limit: int, log=print) -> None:
+def go(session, confirme, malgre, bodacc_limit, log=print) -> None:
     _exige_confirme(session, confirme, "--go")
     existantes = _sauvegardes(session)
     if existantes and malgre != existantes[-1]["numero"]:
         print(f"\n✗ --go REFUSÉ — une sauvegarde plus ancienne existe (#{existantes[-1]['numero']}, "
               f"{existantes[-1]['date_iso']}). Relance avec --malgre-sauvegarde {existantes[-1]['numero']} "
-              f"pour la conserver, ou --purge-sauvegarde {existantes[-1]['numero']} pour la supprimer.")
+              f"(la conserver) ou --purge-sauvegarde {existantes[-1]['numero']} (la supprimer).")
         sys.exit(2)
     numero = (existantes[-1]["numero"] + 1) if existantes else 1
 
@@ -203,74 +175,99 @@ def go(session, confirme, malgre: int | None, bodacc_limit: int, log=print) -> N
     _sauvegarder(session, numero, log)
 
     from labuse.ingestion import pm_droits, pm_millesimes
-    log("\n[1] chargement des droits 2025 + 2026 dans la table d'attente (staging) …")
-    session.execute(text(f'DROP TABLE IF EXISTS "{STAGING}"'))
-    pm_droits.ensure_table(session, STAGING, commit=False)
-    pm_droits.ingest_droits(session, pm_millesimes.fetch_974_csv(2025), "2025", table=STAGING, commit=False, log=log)
-    pm_droits.ingest_droits(session, pm_droits.fetch_974_csv(), "2026", table=STAGING, commit=False, log=log)
-    session.commit()   # staging isolée ; servie INCHANGÉE.
 
-    if "--_stop-after-staging" in sys.argv:
-        import os
-        log("\n[_stop-after-staging] interruption dure AVANT la transaction unique. Servie inchangée.")
-        os._exit(99)
-
-    log("\n[2] TRANSACTION UNIQUE : promotion droits → archive 2025 (même règle) → flip 2026 …")
-    cols = [c for c in _colonnes(session, STAGING) if c != "id"]
-    cl = ", ".join(f'"{c}"' for c in cols)
-    pm_droits.ensure_table(session, "parcelle_pm_droit", commit=False)
-    session.execute(text('DELETE FROM parcelle_pm_droit'))
-    session.execute(text(f'INSERT INTO parcelle_pm_droit ({cl}) SELECT {cl} FROM "{STAGING}"'))
-    pm_droits.archive_principal_depuis_droits(session, "2025", commit=False, log=log)
-    pm_droits.recompute_principal(session, "2026", commit=False, log=log)
-    session.commit()   # ← seul point de bascule des tables servies.
-    session.execute(text(f'DROP TABLE IF EXISTS "{STAGING}"')); session.commit()
-
-    log(f"\n[3] BODACC — dépôts de comptes (fait daté) {'(limite %d)' % bodacc_limit if bodacc_limit else '(tous)'} …")
+    # [1] droits → table d'attente (servie INCHANGÉE ; interruption ici = rien côté servi).
     try:
+        log("\n[1] droits 2025 + 2026 → table d'attente (staging) …")
+        session.execute(text(f'DROP TABLE IF EXISTS "{STAGING}"'))
+        pm_droits.ensure_table(session, STAGING, commit=False)
+        pm_droits.ingest_droits(session, pm_millesimes.fetch_974_csv(2025), "2025", table=STAGING, commit=False, log=log)
+        pm_droits.ingest_droits(session, pm_droits.fetch_974_csv(), "2026", table=STAGING, commit=False, log=log)
+        session.commit()
+        _crash_si_demande("staging", log)
+        _fail_si_demande("droits")
+    except SystemExit:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        _arret_echec(session, numero, "droits (staging)", exc)
+
+    # [2] TRANSACTION UNIQUE : promotion droits + archive 2025 + flip.
+    try:
+        log("\n[2] TRANSACTION UNIQUE : promotion droits → archive 2025 (même règle) → flip 2026 …")
+        cols = [c for c in _colonnes(session, STAGING) if c != "id"]
+        cl = ", ".join(f'"{c}"' for c in cols)
+        pm_droits.ensure_table(session, "parcelle_pm_droit", commit=False)
+        session.execute(text('DELETE FROM parcelle_pm_droit'))
+        session.execute(text(f'INSERT INTO parcelle_pm_droit ({cl}) SELECT {cl} FROM "{STAGING}"'))
+        pm_droits.archive_principal_depuis_droits(session, "2025", commit=False, log=log)
+        _crash_si_demande("flip", log)   # au milieu de la transaction, AVANT le commit → MVCC annule tout
+        pm_droits.recompute_principal(session, "2026", commit=False, log=log)
+        _fail_si_demande("flip")
+        session.commit()                 # ← seul point de bascule des tables [2]
+        session.execute(text(f'DROP TABLE IF EXISTS "{STAGING}"')); session.commit()
+    except SystemExit:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        _arret_echec(session, numero, "archive+flip", exc)
+
+    # [3] BODACC — écrit bodacc_depots ; le touch data_sources est NEUTRALISÉ (snapshot+restore, même txn).
+    try:
+        log(f"\n[3] BODACC — dépôts {'(limite %d)' % bodacc_limit if bodacc_limit else '(tous)'} …")
         from labuse.ingestion import bodacc
+        avant_ds = session.execute(text(
+            "SELECT last_sync_at FROM data_sources WHERE name = :n"), {"n": bodacc.SOURCE_NAME}).scalar()
         sirens = bodacc.distinct_sirens(session)
         if bodacc_limit:
             sirens = sirens[:bodacc_limit]
-        r = bodacc.ingest_bodacc_depots(session, sirens); session.commit()
-        log(f"   bodacc_depots : {r.get('depots')} dépôts / {r.get('sirens_queried')} SIREN")
-    except Exception as exc:  # noqa: BLE001 — API indisponible / tranche : étape tracée, procédure poursuit
-        session.rollback(); log(f"   BODACC non chargé ({type(exc).__name__}: {str(exc)[:80]}) — couvert par la sauvegarde.")
-
-    log("\n[4] BLOCS — reconstruction parcel_blocs + parcel_bloc_membres …")
-    try:
-        from labuse import blocs
-        rb = blocs.build_blocs(session); session.commit()
-        log(f"   blocs : {rb.get('n_blocs', '?')} blocs")
+        r = bodacc.ingest_bodacc_depots(session, sirens)
+        # RESTAURE data_sources à sa valeur d'avant → le script ne CHANGE PAS data_sources.
+        session.execute(text("UPDATE data_sources SET last_sync_at = :v WHERE name = :n"),
+                        {"v": avant_ds, "n": bodacc.SOURCE_NAME})
+        _crash_si_demande("bodacc", log)
+        _fail_si_demande("bodacc")
+        session.commit()
+        log(f"   bodacc_depots : {r.get('depots')} dépôts / {r.get('sirens_queried')} SIREN (data_sources inchangée)")
+    except SystemExit:
+        raise
     except Exception as exc:  # noqa: BLE001
-        session.rollback(); log(f"   blocs-build échoué ({type(exc).__name__}: {str(exc)[:80]}).")
+        _arret_echec(session, numero, "bodacc", exc)
 
-    log("\n[5] V-SCORE — recalcul + promotion …")
-    run_label = f"bascule2026_{numero}_{_dt.date.today().isoformat()}"
-    _vscore_recalcul_et_promotion(session, run_label, log)
+    # [4] BLOCS — parcel_blocs + parcel_bloc_membres (une transaction).
+    try:
+        log("\n[4] BLOCS — parcel_blocs + parcel_bloc_membres …")
+        from labuse import blocs
+        rb = blocs.build_blocs(session)
+        _crash_si_demande("blocs", log)
+        _fail_si_demande("blocs")
+        session.commit()
+        log(f"   blocs : {rb.get('n_blocs')} blocs / {rb.get('n_membres')} membres")
+    except SystemExit:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        _arret_echec(session, numero, "blocs", exc)
 
     _affiche_etat(session, "APRÈS bascule")
-    log(f"\n[OK] procédure entière terminée (sauvegarde #{numero}). Retour arrière : "
-        f"--rollback --sauvegarde {numero} --confirme <identité>.")
+    log(f"\n[OK] procédure terminée (sauvegarde #{numero}). Retour arrière : "
+        f"--rollback --sauvegarde {numero} --confirme <identité>. "
+        f"(Le recalcul & la promotion du V-score NE font PAS partie de cette bascule — chantier séparé.)")
 
 
-# ───────────────────────── ROLLBACK ─────────────────────────
-def rollback(session, numero: int | None, confirme, log=print) -> None:
+# ───────────────────────── ROLLBACK / PURGE ─────────────────────────
+def rollback(session, numero, confirme, log=print) -> None:
     _exige_confirme(session, confirme, "--rollback")
     if numero is None:
-        print("\n✗ --rollback REFUSÉ — nomme la sauvegarde : --sauvegarde <N> (voir --lister-sauvegardes)."); sys.exit(2)
+        print("\n✗ --rollback REFUSÉ — nomme la sauvegarde : --sauvegarde <N> (--lister-sauvegardes)."); sys.exit(2)
     sv = {s["numero"]: s for s in _sauvegardes(session)}
     if numero not in sv:
         print(f"\n✗ --rollback REFUSÉ — sauvegarde #{numero} inconnue. Disponibles : {sorted(sv)}."); sys.exit(2)
     s = sv[numero]
     pm = _empreinte(session, f"{BAK}{numero}__parcelle_personne_morale")
     print(f"\n── ROLLBACK vers la sauvegarde #{numero} — date {s['date_iso']} · cible {s['cible']} · "
-          f"label servi « {s['label_servi']} » · parcelle_personne_morale {pm[1]} lignes ──")
+          f"parcelle_personne_morale {pm[1]} lignes ──")
     _affiche_etat(session, "AVANT rollback")
     meta = {r[0]: r[1] for r in session.execute(text(f'SELECT cle, valeur FROM "{BAK}{numero}__meta"')).all()}
     absentes = {k.split(":", 1)[1] for k in meta if k.startswith("absente:")}
-
-    log("\n[rollback] restauration des tables (UNE transaction) …")
+    log("\n[rollback] restauration des tables concernées (UNE transaction) …")
     for t in CONCERNEES:
         if t in absentes:
             session.execute(text(f'DROP TABLE IF EXISTS "{t}"'))
@@ -285,26 +282,10 @@ def rollback(session, numero: int | None, confirme, log=print) -> None:
             log(f"   {t} : restaurée depuis #{numero}")
     session.execute(text(f'DROP TABLE IF EXISTS "{STAGING}"'))
     session.commit()
-
-    # RE-SERVIR réellement le run précédent : réécrit config/served_run.txt avec ses OCTETS EXACTS d'avant
-    # (dépôt propre), puis VÉRIFIE que le lecteur du run servi (`_served_run_versionne`) rend bien le label.
-    label = meta.get("label_servi") or ""
-    contenu = meta.get("served_run_txt")
-    if contenu:
-        SERVED_FILE.write_text(contenu, encoding="utf-8")
-    elif SERVED_FILE.exists() and not label:
-        SERVED_FILE.unlink()
-    from labuse.scoring import score_v_constants as sc
-    relu = sc._served_run_versionne() if SERVED_FILE.exists() else None
-    ok = (relu == (label or None))
-    log(f"[rollback] run servi RE-SERVI « {relu} » (attendu « {label or None} ») → "
-        f"{'VÉRIFIÉ' if ok else 'ÉCART !'}")
-    if not ok:
-        print("✗ rollback : la re-serve du run V-score ne se vérifie pas."); sys.exit(1)
     _affiche_etat(session, "APRÈS rollback")
 
 
-def purge(session, numero: int | None, confirme, log=print) -> None:
+def purge(session, numero, confirme, log=print) -> None:
     _exige_confirme(session, confirme, "--purge-sauvegarde")
     if numero is None:
         print("\n✗ --purge-sauvegarde REFUSÉ — nomme la sauvegarde : --purge-sauvegarde <N>."); sys.exit(2)
@@ -328,22 +309,29 @@ def main() -> None:
     confirme = _arg(args, "--confirme")
     numero = _arg(args, "--sauvegarde") or _arg(args, "--purge-sauvegarde")
     numero = int(numero) if numero and str(numero).isdigit() else None
-    malgre = _arg(args, "--malgre-sauvegarde")
-    malgre = int(malgre) if malgre and str(malgre).isdigit() else None
-    bodacc_limit = _arg(args, "--bodacc-limit")
-    bodacc_limit = int(bodacc_limit) if bodacc_limit and str(bodacc_limit).isdigit() else 0
+    malgre = _arg(args, "--malgre-sauvegarde"); malgre = int(malgre) if malgre and str(malgre).isdigit() else None
+    bodacc_limit = _arg(args, "--bodacc-limit"); bodacc_limit = int(bodacc_limit) if bodacc_limit and str(bodacc_limit).isdigit() else 0
 
     eng = create_engine(url)
-    with Session(eng) as s:
+    try:
+        s = Session(eng)
+        s.execute(text("SELECT 1"))          # provoque la connexion ICI pour cadrer l'erreur
+    except OperationalError as exc:
+        # Point 6 (relecture-4 n°10) — base/serveur injoignable → message cadré, pas de traceback brut.
+        msg = str(exc.orig).splitlines()[0] if exc.orig else str(exc).splitlines()[0]
+        print(f"✗ connexion impossible à la base passée en --db : {msg}\n"
+              f"  Vérifie l'URL --db (base/hôte/port/droits). Rien fait."); sys.exit(2)
+    with s:
         if "--lister-sauvegardes" in args:
             _lister(s); return
         if "--empreinte" in args:
             _affiche_etat(s, "EMPREINTE (lecture seule)"); return
         if "--dry-run" in args:
             _affiche_etat(s, "DRY-RUN (lecture seule — rien écrit)")
-            print("\n[dry-run] --go : [0] sauvegarde #N datée → [1] staging droits 2025+2026 → [2] UNE "
-                  "transaction {promotion droits · archive 2025 · flip} → [3] BODACC → [4] blocs(+membres) "
-                  "→ [5] recalcul+promotion V-score. --rollback --sauvegarde N restaure TOUT, run servi compris.")
+            print("\n[dry-run] --go : [0] sauvegarde #N → [1] staging droits 2025+2026 → [2] UNE "
+                  "transaction {promotion droits · archive 2025 · flip} → [3] BODACC (data_sources "
+                  "neutralisée) → [4] blocs(+membres). Une étape qui échoue ARRÊTE (code≠0, pas de « [OK] »). "
+                  "Le V-score (recalcul/promotion) n'est PAS dans cette bascule.")
             return
         if "--go" in args:
             go(s, confirme, malgre, bodacc_limit); return

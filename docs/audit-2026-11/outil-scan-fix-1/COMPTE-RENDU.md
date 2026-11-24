@@ -391,3 +391,42 @@ Le script enchaîne : droits → archive 2025 → flip → **BODACC** → **bloc
 | **g** | durée procédure entière | **≈ 55 s** sur `labuse_scanfix` (ZIP en cache ; en prod BODACC+V-score réels dominent) |
 
 *État SCAN-FIX-4 : 1 ✅ · 2 ✅ · 3 ✅ · 4 ✅ · 7 preuves a-g ✅. `labuse` jamais écrite, jamais `--go`/`--rollback` ; tout sur `labuse_scanfix`.*
+
+---
+
+# OUTIL-SCAN-FIX-5 — réduire le périmètre de la bascule (`relecture-scan-4.md`)
+
+**DÉCISION appliquée : le recalcul et la promotion du V-score SORTENT du script et de la procédure** (chantier du nouveau classement). Le code qui touchait le feature store, `data_sources`, `p_score_v2_runs`, `parcel_p_score_v2`, `config/served_run.txt`, `served_manifest.json` est **RETIRÉ** (pas désactivé par option). `labuse` jamais écrite ; tout prouvé sur `labuse_scanfix`.
+
+## 1 — Périmètre : liste exhaustive des tables écrites (lue dans le code) + couverture
+| Étape | Tables SERVIES écrites | Dans la sauvegarde ? |
+|---|---|---|
+| [1] droits | `parcelle_pm_droit` (via `…_staging` temp) | **OUI** |
+| [2] archive+flip | `pm_proprietaires_millesimes`, `parcelle_personne_morale` (+ `droit_code/label`) | **OUI** |
+| [3] BODACC | `bodacc_depots` ; `data_sources` **neutralisée** (snapshot+restore, même txn → inchangée) | **OUI** |
+| [4] blocs | `parcel_blocs`, `parcel_bloc_membres` (temp `_blocs_pm`) | **OUI** |
+
+→ **6 tables = `CONCERNEES`** ; tout le reste (feature store, p_score, served files) n'est **plus touché**. Vérifié : `config/served_run.txt` reste propre après un `--go` (le script n'y écrit plus).
+
+## 2 — Une étape qui échoue ARRÊTE (code ≠ 0, « --rollback », jamais « [OK] »)
+Chaque étape est encadrée : exception → `rollback()` de la transaction + message « ✗ ÉCHEC à l'étape X » + « --rollback --sauvegarde N » + `sys.exit(1)`. Les `except … continue` qui avalaient blocs/V-score sont **supprimés**. Prouvé (point 2) : `--_fail-at {droits, flip, bodacc, blocs}` → **exit 1, message, aucun « [OK] »** (4/4).
+
+## 3 — blocs-build RÉEL dans la preuve
+`labuse_scanfix` manquait l'environnement résiduel (`residuel_runs` vide, `parcel_residuel` vide). **Copié en lecture seule depuis `labuse`** (léger) : `residuel_runs` **2 lignes** (run servi `run_seq=17`) + `parcel_residuel` servi **5 998 lignes** (parcelles de la tranche ; `parcel_residuel` est une VUE dans `labuse`, une table dans `labuse_scanfix`). Résultat : `build_blocs` tourne **pour de vrai** → **669 blocs / 5 367 membres** écrits dans `parcel_blocs`+`parcel_bloc_membres`.
+
+## 6 — `--db` vers une base inconnue : message cadré
+Connexion forcée tôt (`SELECT 1`) sous `try/except OperationalError` → « ✗ connexion impossible à la base passée en --db : … database "…" does not exist. Vérifie l'URL --db. Rien fait. » **Aucun traceback brut.**
+
+## Les PREUVES (sur `labuse_scanfix`, empreinte = `count` + `Σ hashtext(ligne ENTIÈRE)`, TOUTES colonnes)
+
+| # | Preuve | Résultat |
+|---|---|---|
+| **a** | AVANT | pm 82 701/`-53120849433` · millés. 28 190/`-1308875661` · droit absente · bodacc 0 · parcel_blocs 670/`3708096254` · parcel_bloc_membres 0 |
+| **b** | procédure entière, **blocs-build RÉEL** | [2] flip 82 701→84 045 · [3] BODACC (data_sources inchangée) · [4] **blocs 669 / membres 5 367** · « [OK] » ; durée **≈ 40 s** |
+| **c** | `--rollback --sauvegarde 1` | **identique à AVANT, table par table, toutes colonnes** (blocs 669→670/`3708096254`, membres 5 367→0, droit retirée) |
+| **pt 2** | `--_fail-at` chaque étape | **exit 1 · « ÉCHEC à l'étape X » · « --rollback --sauvegarde 1 » · aucun « [OK] »** (droits/flip/bodacc/blocs) |
+| **pt 4** | `--_crash-at` (os._exit) chaque étape puis `--rollback` | empreintes **= AVANT** (toutes colonnes) pour staging/flip/bodacc/blocs — y compris quand [2]/[3] avaient committé |
+| **pt 6** | `--db` base inconnue | message cadré, pas de traceback |
+| **durée** | procédure entière | **≈ 40 s** (tranche ; sur `labuse` ~10-20 min, BODACC+blocs, **sans** le feature store 4,3 M du V-score retiré) |
+
+*État SCAN-FIX-5 : V-score retiré du script ✅ · périmètre 6 tables prouvé ✅ · échec→arrêt ✅ · blocs-build réel ✅ · interruptions→AVANT ✅ · `--db` inconnu cadré ✅. `labuse` jamais écrite, jamais `--go`/`--rollback`.*
