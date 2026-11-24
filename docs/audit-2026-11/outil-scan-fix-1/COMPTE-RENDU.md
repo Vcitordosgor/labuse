@@ -301,7 +301,9 @@ SIREN réels)** :
 |---|---|
 | **AVANT** (archive 2025 ancienne règle 1re-ligne vs 2026 nouvelle règle) | **2 019** |
 | **APRÈS** (archive 2025 MÊME règle vs 2026) | **963** |
-| Artefacts de règle supprimés | **≈ 1 056** (1 078 mesurés directement sur 2025) |
+| Artefacts de règle supprimés à l'écran Communes | **1 056** (= 2 019 − 963) |
+
+*(Correction SCAN-FIX-3 point 5 — l'effet PUR-RÈGLE sur 2025, mesuré directement = **1 480** si on compte TOUS les identifiants (y compris pseudo-SIREN `U…`), dont **1 078** sur des parcelles à deux SIREN 9-chiffres — les seules que Communes affiche comme un changement. Le compte-rendu SCAN-FIX-2 citait 1 078 ; la relecture mesurait 1 480. Les deux sont justes, à périmètres différents ; le delta écran reste 1 056.)*
 
 10 cas (artefact : même parcelle, aucune cession, seul le pick change) :
 `97401000AS0527` 662043116→229740014 · `97402000AB0648` 310895172→219740024 · `97402000AH1895` 828474643→219740024 ·
@@ -321,3 +323,39 @@ Impact écrans + 12 témoins de cohérence, durée, rollback : voir `BASCULE-PRO
 (9) et sirene (155 505) — seul BODACC à rafraîchir. **ARRÊT : Vic choisit le moment.**
 
 *État SCAN-FIX-2 : A1 ✅ · M1 ✅ · M2 ✅ · M3 ✅ (prouvé) · M4 ✅ · bascule prod prête (non exécutée). Base `labuse` toujours jamais écrite.*
+
+---
+
+# OUTIL-SCAN-FIX-3 — rendre la bascule sûre (`relecture-scan-2.md`)
+
+5 points de sûreté de la procédure de bascule, tous traités. Base commune `labuse` **jamais écrite, jamais `--go`** ; tout prouvé sur `labuse_scanfix`. Script réécrit : `scripts/bascule_2026_labuse.py` ; runbook : `BASCULE-PROD.md`.
+
+## 1 — Rollback réel (`--rollback`), plus aucune commande SQL à la main
+L'ancien runbook donnait `TRUNCATE … WHERE false` = **SQL invalide** (TRUNCATE n'a pas de clause WHERE). Remplacé par `--rollback` : restaure les 5 tables concernées depuis les sauvegardes `_bascule_bak__*` EN UNE transaction, retire les tables/colonnes créées par la bascule (`parcelle_pm_droit`, colonnes `droit_code/droit_label`). Prouvé (c/e) : empreintes identiques à l'AVANT, table par table.
+
+## 2 — Garde-fou de cible (`--confirme <base>@<hôte>`)
+`--go` et `--rollback` refusent sans `--confirme`, comparé à `current_database()` + hôte réel de la connexion ; **aucune base par défaut** ; affichage base/hôte/nombre de lignes avant d'agir. Prouvé (f) : sans `--confirme`, et avec une valeur erronée, → refus, rien écrit.
+
+## 3 — Atomicité : staging + UNE transaction (le runbook dit le vrai)
+Les droits 2025 et 2026 sont chargés dans une **table d'attente** `parcelle_pm_droit_staging` ; la promotion des droits + l'archive 2025 (même règle) + le flip 2026 passent dans **UNE seule transaction** (`ingest_droits`/`archive_principal_depuis_droits`/`recompute_principal` reçoivent `commit=False` ; un seul `commit` final). Prouvé (d) : interruption dure APRÈS le staging, AVANT la transaction → tables servies **strictement = AVANT**. Le runbook n'affirme plus « transactionnel » pour la séquence entière : il décrit staging + une transaction.
+
+## 4 — Sauvegarde complète + run V-score re-servable
+`--go` sauvegarde les **5** tables que la bascule touche (parcelle_personne_morale, pm_proprietaires_millesimes, parcelle_pm_droit, **bodacc_depots**, **parcel_blocs**) et mémorise le **run V-score servi** (`_bascule_bak__meta.vscore_run_servi`, re-servable, nommé par `--rollback`). Sauvegarde **non-écrasante** (go relancé ne perd pas l'AVANT d'origine).
+
+## 5 — Chiffre « 1 078 » corrigé
+Effet pur-règle sur 2025 mesuré directement = **1 480** (tous identifiants, dont `U…`), dont **1 078** sur parcelles à deux SIREN 9-chiffres (seules affichées par Communes). Delta écran Communes inchangé : 2 019 − 963 = **1 056**. Compte-rendu M3 corrigé ci-dessus. Requête : `scripts/`… reconstruction `PM_2025_974.csv` firstline vs règle.
+
+## Les SIX preuves (sur `labuse_scanfix` remise à l'état « avant bascule »)
+
+Empreinte = `(existe, n_lignes, Σ hashtext(colonnes métier))` — hors colonnes volatiles (id, date_import…), donc stable aux rechargements.
+
+| # | Preuve | Résultat |
+|---|---|---|
+| **a** | empreintes AVANT | pm 82 701/ck=103795558738 · millésimes 28 190/ck=202297417894 · droit absente · bodacc absente · blocs 670/ck=25714965274 |
+| **b** | bascule complète, contrôles verts | staging 2025 (82 701) + 2026 (84 045) → transaction unique {promotion · archive 2025 · flip} ; « injection servie 82 701→84 045 » ; APRÈS pm 84 045, millésimes 110 891, droit 178 224 |
+| **c** | `--rollback` → empreintes = AVANT | **identiques table par table** (pm 103795558738, millésimes 202297417894, droit absente, bodacc absente, blocs 25714965274) |
+| **d** | interruption dure au milieu du chargement | tables servies **= AVANT** (checksums identiques) ; seule la table d'attente écrite (178 224 lignes) |
+| **e** | deux `--go` de suite | état final **identique** (mêmes checksums ; sauvegarde préservée) ; rollback → AVANT d'origine |
+| **f** | mauvaise valeur de `--confirme` (et absence) | **refus, rien écrit** (comparé à `current_database()@hôte`) |
+
+*État SCAN-FIX-3 : 1 ✅ · 2 ✅ · 3 ✅ · 4 ✅ · 5 ✅ · 6 preuves a-f ✅. `labuse` jamais écrite, jamais `--go` ; tout sur `labuse_scanfix`.*

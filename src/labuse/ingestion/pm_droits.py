@@ -135,9 +135,12 @@ def fetch_974_csv(dest_dir: str | Path = "/tmp/dgfip_pm_2026") -> Path:
     return csv_path
 
 
-def ensure_table(session: Session) -> None:
+def ensure_table(session: Session, table: str = "parcelle_pm_droit", commit: bool = True) -> None:
+    # `table` paramétrable (tables d'ATTENTE de la bascule : « …_staging ») ; index/contrainte suffixés
+    # par le nom de table pour éviter toute collision d'objet.
+    suf = table.replace("parcelle_pm_droit", "pm_droit")
     session.execute(text(
-        "CREATE TABLE IF NOT EXISTS parcelle_pm_droit ("
+        f'CREATE TABLE IF NOT EXISTS "{table}" ('
         " id bigserial PRIMARY KEY,"
         " idu varchar(14) NOT NULL,"
         " siren varchar(20), denomination varchar(200), forme_juridique varchar(20),"
@@ -145,10 +148,11 @@ def ensure_table(session: Session) -> None:
         " droit_code varchar(4), droit_label varchar(80), ordre_titulaire smallint,"
         " millesime varchar(8), source varchar(120), url_source text,"
         " date_import timestamptz NOT NULL DEFAULT now(),"
-        " CONSTRAINT uq_pm_droit UNIQUE (millesime, idu, siren, droit_code))"))
-    session.execute(text("CREATE INDEX IF NOT EXISTS ix_pm_droit_idu ON parcelle_pm_droit(idu)"))
-    session.execute(text("CREATE INDEX IF NOT EXISTS ix_pm_droit_siren ON parcelle_pm_droit(siren)"))
-    session.commit()
+        f' CONSTRAINT uq_{suf} UNIQUE (millesime, idu, siren, droit_code))'))
+    session.execute(text(f'CREATE INDEX IF NOT EXISTS ix_{suf}_idu ON "{table}"(idu)'))
+    session.execute(text(f'CREATE INDEX IF NOT EXISTS ix_{suf}_siren ON "{table}"(siren)'))
+    if commit:
+        session.commit()
 
 
 def _sniff_header(txt: str) -> list[str]:
@@ -160,15 +164,15 @@ def _sniff_header(txt: str) -> list[str]:
 
 
 def ingest_droits(session: Session, csv_path: str | Path, millesime: str = "2026",
-                  log=print) -> dict:
-    """Charge 974 ENTIER → `parcelle_pm_droit`, TOUS titulaires et TOUS droits conservés.
-    Dédoublonnage par (idu, siren, droit_code) seulement (les répétitions de SUF sont fusionnées,
-    les droits et titulaires distincts sont GARDÉS). `ordre_titulaire` = rang de priorité du droit
-    sur la parcelle (1 = principal). Idempotent : purge du millésime puis réinsertion."""
-    ensure_table(session)
+                  table: str = "parcelle_pm_droit", commit: bool = True, log=print) -> dict:
+    """Charge 974 ENTIER → `table` (défaut `parcelle_pm_droit` ; la bascule charge d'abord une table
+    d'ATTENTE), TOUS titulaires et TOUS droits conservés. Dédoublonnage par (idu, siren, droit_code)
+    seulement. `ordre_titulaire` = rang de priorité du droit sur la parcelle (1 = principal).
+    Idempotent : purge du millésime puis réinsertion. `commit=False` → laisse l'appelant valider."""
+    ensure_table(session, table, commit=False)
     txt = _decode(Path(csv_path).read_bytes())
     _sniff_header(txt)
-    session.execute(text("DELETE FROM parcelle_pm_droit WHERE millesime = :m"), {"m": millesime})
+    session.execute(text(f'DELETE FROM "{table}" WHERE millesime = :m'), {"m": millesime})
     reader = csv.reader(io.StringIO(txt), delimiter=";")
     next(reader, None)
     seen: set[tuple[str, str, str]] = set()
@@ -202,7 +206,7 @@ def ingest_droits(session: Session, csv_path: str | Path, millesime: str = "2026
     def flush():
         if batch:
             session.execute(text(
-                """INSERT INTO parcelle_pm_droit
+                f"""INSERT INTO "{table}"
                      (idu, siren, denomination, forme_juridique, groupe, groupe_label,
                       droit_code, droit_label, ordre_titulaire, millesime, source, url_source)
                    VALUES (:idu,:s,:d,:f,:g,:gl,:dc,:dl,:ord,:m,:src,:url)"""), batch)
@@ -221,7 +225,8 @@ def ingest_droits(session: Session, csv_path: str | Path, millesime: str = "2026
             if len(batch) >= 5000:
                 flush()
     flush()
-    session.commit()
+    if commit:
+        session.commit()
     n_droits = sum(len(v) for v in lignes.values())
     log(f"parcelle_pm_droit {millesime} : {n_lignes} lignes 974 → {len(lignes)} parcelles, "
         f"{n_droits} (parcelle,titulaire,droit) distincts")
@@ -245,7 +250,7 @@ def archive_2025_courant(session: Session, log=print) -> int:
     return n
 
 
-def archive_principal_depuis_droits(session: Session, millesime: str, log=print) -> int:
+def archive_principal_depuis_droits(session: Session, millesime: str, commit: bool = True, log=print) -> int:
     """SCAN-FIX-2 (M4 de la relecture) — archive dans `pm_proprietaires_millesimes` le TITULAIRE PRINCIPAL
     d'un millésime calculé par la MÊME RÈGLE que le millésime servi (ordre_titulaire=1 de
     `parcelle_pm_droit`), et non la vieille table servie « 1re ligne ». Sans quoi la chronologie Communes
@@ -261,12 +266,13 @@ def archive_principal_depuis_droits(session: Session, millesime: str, log=print)
            SELECT :m, idu, groupe, groupe_label, forme_juridique, denomination, siren, url_source
            FROM parcelle_pm_droit WHERE millesime = :ms AND ordre_titulaire = 1"""),
         {"m": m, "ms": millesime}).rowcount
-    session.commit()
+    if commit:
+        session.commit()
     log(f"archive {millesime} (règle principal) → pm_proprietaires_millesimes : {n} parcelles")
     return n
 
 
-def recompute_principal(session: Session, millesime: str = "2026", log=print) -> dict:
+def recompute_principal(session: Session, millesime: str = "2026", commit: bool = True, log=print) -> dict:
     """FLIP (à exécuter sous fenêtre contrôlée) : recalcule `parcelle_personne_morale` = TITULAIRE
     PRINCIPAL de chaque parcelle (ordre_titulaire = 1 dans parcelle_pm_droit), au millésime donné.
     Conserve l'invariante « une ligne par idu » (garde-fou bascule_gardes vert) et ajoute
@@ -291,7 +297,8 @@ def recompute_principal(session: Session, millesime: str = "2026", log=print) ->
 
     remplacer_servie(session, table="parcelle_personne_morale", charger_staging=charger_staging,
                      preparer=preparer, a_geometrie=False, dedup_cols=["idu"], log=log)
-    session.commit()
+    if commit:
+        session.commit()
     n = int(session.execute(text("SELECT count(*) FROM parcelle_personne_morale")).scalar() or 0)
     log(f"recompute principal {millesime} : {n} parcelles (1 ligne/idu)")
     return {"millesime": millesime, "parcelles": n}
