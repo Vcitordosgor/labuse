@@ -164,8 +164,14 @@ def compute_medianes_secteur(session: Session) -> dict:
           FROM typees t JOIN dvf_mutations_parcelle d ON d.id_mutation = t.id_mutation
           WHERE t.type_bien <> 'terrain'      -- FIX-4 LOT 1 : le terrain vient du CTE unique (2ᵉ INSERT)
         )
-        SELECT secteur, type_bien, count(*),
-               percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur)::int,
+        -- FIX-7 LOT 1 — l'effectif `n_ventes` des MAISONS / APPARTEMENTS compte les ventes DANS les
+        -- bornes (celles qui fondent la médiane €/m²), pas le total des actes (AT/AB : 7 utilisées sur 8
+        -- → sous le seuil de 8). Même règle que le terrain (FIX-6) et la VEFA. `mediane_valeur` suit la
+        -- même population. ('autre' n'a pas de médiane €/m² → n_ventes 0, médianes NULL : non diffusé.)
+        SELECT secteur, type_bien,
+               count(*) FILTER (WHERE prix_m2 IS NOT NULL AND prix_m2 BETWEEN 50 AND 20000),
+               percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur)
+                 FILTER (WHERE prix_m2 IS NOT NULL AND prix_m2 BETWEEN 50 AND 20000)::int,
                percentile_cont(0.5) WITHIN GROUP (ORDER BY prix_m2)
                  FILTER (WHERE prix_m2 IS NOT NULL AND prix_m2 BETWEEN 50 AND 20000)::int,
                :fenetre,

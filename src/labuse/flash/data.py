@@ -633,11 +633,13 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
             out["derniere_mutation"] = {**dict(last),
                                         "date": dm.strftime("%d/%m/%Y") if dm else None}
     if "dvf_secteur_medianes" in avail:
-        sect = db.execute(text(
-            "SELECT type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre "
-            "FROM dvf_secteur_medianes WHERE secteur = substring(:idu FROM 1 FOR 10) "
-            "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()
-        out["secteur"] = [dict(s) for s in sect]
+        # FIX-7 LOT 1 — la fiche parcelle (bloc Marché) lit le prix de section par la fonction UNIQUE
+        # `prix_sections` (seuil de diffusion appliqué) : mediane_prix_m2 = None sous le seuil (plus de
+        # 133 €/m² sur 1 vente en tête du bloc Marché de CD). Mêmes clés qu'avant pour le front.
+        from ..dvf_secteur import prix_sections
+        out["secteur"] = [{"type_bien": p["type_bien"], "n_ventes": p["n_ventes"],
+                           "mediane_valeur": p["mediane_valeur"], "mediane_prix_m2": p["mediane_prix_m2"],
+                           "fenetre": p["fenetre"]} for p in prix_sections(db, idu[:10])]
         # EXPORTS-1 (1.3) : ces médianes sont un indicateur SECONDAIRE (grain secteur cadastral),
         # étiquetées comme telles — la tête de fiche et la synthèse = sector_price parcelle.
         out["secteur_etiquette"] = "médianes du secteur cadastral — indicateur secondaire"

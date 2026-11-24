@@ -36,16 +36,14 @@ def _terrain_section(db: Session, idu: str) -> dict | None:
     (§Marché, `app.py` `_q_v2_fiche`). ETUDIER-BIEN-2 Lot B : UNE seule méthode « terrain nu
     secteur » partout — on abandonne le rayon géographique de l'ancien `_terrain_local` (qui
     divergeait de la fiche, cf. ETUDIER-BIEN-1 §c). None sous le seuil (jamais inventé)."""
-    row = db.execute(text(
-        "SELECT mediane_prix_m2, n_ventes, fenetre FROM dvf_secteur_medianes "
-        "WHERE secteur = substring(:idu FROM 1 FOR 10) "
-        "  AND type_bien IN ('terrain', 'terrain à bâtir') "
-        "ORDER BY n_ventes DESC NULLS LAST LIMIT 1"),
-        {"idu": idu}).mappings().first()
-    if not row or row["mediane_prix_m2"] is None or (row["n_ventes"] or 0) < SEUIL_N:
+    # FIX-7 LOT 1 — même fonction UNIQUE que tous les lecteurs (`prix_section`, seuil de diffusion
+    # appliqué) : plus de lecture directe de la table ni de seuil réécrit ici.
+    from ..dvf_secteur import prix_section
+    p = prix_section(db, idu[:10], "terrain")
+    if not p["assez"]:
         return None
-    return {"eur_m2": round(float(row["mediane_prix_m2"])), "n": row["n_ventes"],
-            "millesime": row["fenetre"], "rayon_m": None,
+    return {"eur_m2": round(float(p["prix_m2"])), "n": p["n"],
+            "millesime": p["fenetre"], "rayon_m": None,
             "perimetre": "terrain nu · section cadastrale", "distribution": None}
 
 

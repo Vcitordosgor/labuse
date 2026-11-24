@@ -3,8 +3,6 @@
 import { fmtDateNum } from './format'
 
 export function bandeauEtatPluSous(etatAuIso?: string | null): string {
-  // LOT 0 (filet) : implémentation COURANTE (sans date) — corrigée au LOT 3.
-  void etatAuIso
-  void fmtDateNum
-  return 'GPU · Sudocuh'
+  // LOT 3 : la case « État du PLU » du grand bandeau porte la DATE de la dernière pièce connue.
+  return etatAuIso ? `au ${fmtDateNum(etatAuIso)}` : 'GPU · Sudocuh'
 }

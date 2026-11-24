@@ -1120,22 +1120,22 @@ def _prix_bati_local(session: Session, idu: str) -> dict | None:
     préséance SECTEUR → repli COMMUNE (même logique de préséance que le mode A ;
     le niveau retenu est tracé et étiqueté). Seuil d'effectif LU de la config
     (M103 P1 — seuils_effectif.mode_b_prix_local, plus jamais en dur). None si aucun prix."""
+    # FIX-7 LOT 1 — lecture via la fonction UNIQUE `prix_section` / `medianes_sections_commune` (plus de
+    # SELECT direct). Le Bilan mode B garde SON seuil de fiabilité (`mode_b_prix_local` = 3) : il le passe
+    # en paramètre — le seuil GRAND PUBLIC (8) ne s'applique pas au mode B. Comportement inchangé.
+    import statistics
+
+    from ..dvf_secteur import medianes_sections_commune, prix_section
     from ..marche_service import seuil_effectif_local
     n_min = seuil_effectif_local("mode_b_prix_local", 3)
-    r = session.execute(text(
-        "SELECT max(mediane_prix_m2) AS prix FROM dvf_secteur_medianes "
-        "WHERE secteur = :s AND type_bien IN ('maison','appartement') AND n_ventes >= :n"),
-        {"s": idu[:10], "n": n_min}).mappings().first()
-    if r and r["prix"]:
-        return {"prix_m2": float(r["prix"]), "niveau": "secteur",
+    sec = [prix_section(session, idu[:10], t, seuil=n_min)["prix_m2"] for t in ("maison", "appartement")]
+    sec = [p for p in sec if p is not None]
+    if sec:
+        return {"prix_m2": float(max(sec)), "niveau": "secteur",
                 "libelle": f"médiane DVF maison/appartement du secteur (n ≥ {n_min})"}
-    r = session.execute(text(
-        "SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY mediane_prix_m2) AS prix "
-        "FROM dvf_secteur_medianes WHERE left(secteur, 5) = :c "
-        "AND type_bien IN ('maison','appartement') AND n_ventes >= :n"),
-        {"c": idu[:5], "n": n_min}).mappings().first()
-    if r and r["prix"]:
-        return {"prix_m2": float(r["prix"]), "niveau": "commune",
+    meds = medianes_sections_commune(session, idu[:5], ("maison", "appartement"), seuil=n_min)
+    if meds:
+        return {"prix_m2": float(statistics.median(meds)), "niveau": "commune",
                 "libelle": "médiane DVF maison/appartement de la commune (repli — pas assez "
                            "de ventes au secteur)"}
     return None
@@ -1146,22 +1146,19 @@ def _prix_terrain_local(session: Session, idu: str) -> dict | None:
     (secteur → repli commune) mais type_bien='terrain'. Seuil d'effectif LU de la config (M103
     P1). Sert UNIQUEMENT la comparaison « terrain nu au prix du secteur » (jamais le calcul
     réhab, qui reste sur la SHAB). None si aucune médiane terrain locale."""
+    # FIX-7 LOT 1 — même fonction UNIQUE que le bâti, type 'terrain', seuil mode B (3) conservé.
+    import statistics
+
+    from ..dvf_secteur import medianes_sections_commune, prix_section
     from ..marche_service import seuil_effectif_local
     n_min = seuil_effectif_local("mode_b_prix_local", 3)
-    r = session.execute(text(
-        "SELECT max(mediane_prix_m2) AS prix FROM dvf_secteur_medianes "
-        "WHERE secteur = :s AND type_bien = 'terrain' AND n_ventes >= :n"),
-        {"s": idu[:10], "n": n_min}).mappings().first()
-    if r and r["prix"]:
-        return {"prix_m2": float(r["prix"]), "niveau": "secteur",
+    p = prix_section(session, idu[:10], "terrain", seuil=n_min)
+    if p["prix_m2"] is not None:
+        return {"prix_m2": float(p["prix_m2"]), "niveau": "secteur",
                 "libelle": f"médiane DVF terrain du secteur (n ≥ {n_min})"}
-    r = session.execute(text(
-        "SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY mediane_prix_m2) AS prix "
-        "FROM dvf_secteur_medianes WHERE left(secteur, 5) = :c "
-        "AND type_bien = 'terrain' AND n_ventes >= :n"),
-        {"c": idu[:5], "n": n_min}).mappings().first()
-    if r and r["prix"]:
-        return {"prix_m2": float(r["prix"]), "niveau": "commune",
+    meds = medianes_sections_commune(session, idu[:5], ("terrain",), seuil=n_min)
+    if meds:
+        return {"prix_m2": float(statistics.median(meds)), "niveau": "commune",
                 "libelle": "médiane DVF terrain de la commune (repli)"}
     return None
 
