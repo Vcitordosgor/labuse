@@ -14,9 +14,10 @@ Doctrine (un critère, un endroit) :
     expropriation (hors marché de gré à gré). Le TERRAIN nu retient `Vente` + `Vente terrain à bâtir`
     (un acte VTB sans bâti EST une vente de terrain nu — arbitrage M101 B2).
   · MULTI-PARCELLES / DÉPENDANCES — le bâti lit `dvf_mutations` (grain MUTATION : une mutation = une
-    ligne, dépendances déjà agrégées). Le terrain lit `dvf_mutations_parcelle` et DÉDOUBLONNE par
-    mutation (surface = `max()` par (mutation, parcelle) puis `sum()` par mutation) — jamais la somme
-    des lignes répétées (NU-E-031).
+    ligne, dépendances déjà agrégées). Le terrain lit `dvf_mutations_parcelle` : surface d'une parcelle =
+    SOMME de ses subdivisions DISTINCTES (couple distinct (nature_culture, surface_terrain)) puis `sum()`
+    par mutation — ni la plus grande ligne (`max`, qui perdait une subdivision : ET0142 1 895→1 195 m²,
+    FIX-4 LOT 1.c), ni la somme des lignes répétées par `type_local` (NU-E-031, qui gonflait).
   · FENÊTRE — le millésime géo-DVF ENTIER disponible (2021-2025 figé), ancré sur `max(date_mutation)`
     de la commune pour la fraîcheur servie ; pas de `now()` glissant (NU-E-033).
   · NEUF — médiane VEFA dédiée (`mediane_neuf_commune`), UN SEUL libellé « neuf (VEFA) » (NU-B-003).
@@ -38,33 +39,57 @@ NATURE_TERRAIN_SQL = "dm.nature_mutation IN ('Vente', 'Vente terrain à bâtir')
 BORNE_BATI = (1000, 12000)
 BORNE_TERRAIN = (50, 4000)
 
-#: OUTIL-COMMUNES-FIX-3 (B-1/B-2) — LA QUALIFICATION UNIQUE DU TERRAIN NU. Un acte est une vente de
-#: terrain nu si et seulement si AUCUNE de ses lignes DVF — TOUTES communes confondues — ne porte de
-#: bâti (`sum(bati) = 0` sur l'ACTE ENTIER). La surface terrain et la valeur sont reconstituées sur
-#: l'acte entier (dédoublonnage par couple (mutation, parcelle) : `max` puis `sum`). Natures Vente + VTB.
+#: OUTIL-COMMUNES-FIX-3 (B-1/B-2) puis FIX-4 (LOT 1) — LA QUALIFICATION UNIQUE DU TERRAIN NU. Un acte est
+#: une vente de terrain nu si et seulement si, sur son ACTE ENTIER (toutes ses lignes DVF, TOUTES communes
+#: confondues) :
+#:   (0) aucune ligne ne porte de bâti mesuré      — `sum(bati) = 0` ;
+#:   (a) aucune ligne ne DÉCLARE de local, même sans surface — `bool_or(type_local IS NOT NULL) = false`.
+#:       FIX-4 LOT 1.a : un « Local industriel. commercial ou assimilé » / une dépendance sans surface
+#:       bâtie renseignée (surface_reelle_bati NULL→0) passait l'ancien `sum(bati)=0` ; 83 actes avec
+#:       local déclaré étaient certifiés « terrain nu » (témoin 2023-1315722 : local sur IZ0236) ;
+#:   (b) l'acte ne porte que sur UNE commune — `count(DISTINCT code_commune) = 1`. FIX-4 LOT 1.b : un acte
+#:       réparti sur deux communes (témoin 2022-1639451 : 465 m² à Petite-Île + 485 m² à Saint-Joseph)
+#:       entrait dans les DEUX populations ; il est désormais écarté PARTOUT.
+#: La surface terrain est reconstituée sur l'acte entier comme la SOMME DES SUBDIVISIONS DISTINCTES de
+#: chaque parcelle (FIX-4 LOT 1.c) : DVF répète la ligne d'une parcelle par `type_local` (même surface) et
+#: la subdivise par `nature_culture` (surfaces différentes). On prend donc le couple DISTINCT
+#: (nature_culture, surface_terrain) par parcelle puis on SOMME — jamais la plus grande ligne (`max`, qui
+#: perdait les subdivisions : témoin 2021-1676912, ET0142 = 1 195 m² « sols » + 700 m² « terres » = 1 895 m²
+#: cadastraux, servi 1 195 → 444 €/m² au lieu de 280), ni la somme des lignes répétées (NU-E-031, qui
+#: gonflait la surface). La valeur est la `valeur_fonciere` de l'acte (constante, `max`). Natures Vente + VTB.
 #:
-#: TOUS les lecteurs du terrain nu (tableau, fiche commune, Comparer, Assemblage, fiche parcelle, Estimer,
-#: Étude de zone, repère du Bilan, Radar île, série baromètre, banc) EMBARQUENT ce CTE et JOIGNENT dessus
-#: leur périmètre (commune, zone, secteur, rayon, polygone) — UNE SEULE qualification, ZÉRO acte bâti ne
-#: survit nulle part. Avant : trois qualifications divergentes (par `code_commune`, par `JOIN parcels`,
-#: dans zone.py) laissaient fuir ~16 actes à parcelle disparue (B-1) et 6 actes multi-communes (B-2 ;
-#: p.ex. 2021-1677229 : maison 75 m² à Sainte-Marie + 28 m² nus au Tampon). `code_commune` ne voyait que
-#: la commune ; la jointure cadastrale ratait les parcelles disparues ; les deux sont remplacées ici.
+#: TOUS les lecteurs du terrain nu (tableau, fiche commune, Comparer/section, Assemblage, fiche parcelle,
+#: Estimer, Étude de zone, repère du Bilan, Radar île, série baromètre, banc) EMBARQUENT ce CTE et JOIGNENT
+#: dessus leur périmètre (commune, zone, secteur, rayon, polygone) — UNE SEULE qualification, ZÉRO acte
+#: bâti / avec local / multi-communes ne survit nulle part.
 #:
-#: COÛT : scan complet de `dvf_mutations_parcelle` (indispensable pour voir le bâti d'une AUTRE commune) —
-#: le tableau des 24 est CACHÉ (raw_rows), les fiches tolèrent le surcoût (~150 ms).
+#: COÛT : scan complet de `dvf_mutations_parcelle` (indispensable pour voir le bâti/local d'une AUTRE
+#: commune de l'acte) ~250 ms — le tableau des 24 est CACHÉ (raw_rows), les fiches tolèrent le surcoût. Les
+#: lecteurs qui restreignent à une commune AVANT la jointure matérialisent leur `scope` (sinon le planner
+#: re-scanne la table en boucle imbriquée : baromètre Cilaos 200 s → 0,2 s, FIX-4 LOT 4).
 ACTE_TERRAIN_NU_CTE = """acte_nu AS (
   SELECT id_mutation, sum(terr_p) AS terr_tot, max(val) AS val, max(mill) AS mill,
          min(d0) AS d0, max(d1) AS d1
   FROM (SELECT id_mutation, id_parcelle,
-               max(COALESCE(surface_reelle_bati, 0)) AS bati_p,
-               max(COALESCE(surface_terrain, 0))     AS terr_p,
-               max(valeur_fonciere) AS val, max(millesime) AS mill,
-               min(date_mutation) AS d0, max(date_mutation) AS d1
-        FROM dvf_mutations_parcelle
-        WHERE nature_mutation IN ('Vente', 'Vente terrain à bâtir')
+               sum(terr_sub)        AS terr_p,    -- somme des subdivisions DISTINCTES de la parcelle
+               max(bati_p)          AS bati_p,    -- bâti mesuré (0 sur tout l'acte = pas de bâti)
+               bool_or(a_local)     AS a_local,   -- un local déclaré quelque part sur la parcelle
+               max(cc) AS cc, max(val) AS val, max(mill) AS mill,
+               min(d0) AS d0, max(d1) AS d1
+        FROM (SELECT id_mutation, id_parcelle, code_commune AS cc, nature_culture,
+                     COALESCE(surface_terrain, 0) AS terr_sub,
+                     max(COALESCE(surface_reelle_bati, 0)) AS bati_p,
+                     bool_or(type_local IS NOT NULL)       AS a_local,
+                     max(valeur_fonciere) AS val, max(millesime) AS mill,
+                     min(date_mutation) AS d0, max(date_mutation) AS d1
+              FROM dvf_mutations_parcelle
+              WHERE nature_mutation IN ('Vente', 'Vente terrain à bâtir')
+              GROUP BY id_mutation, id_parcelle, code_commune, nature_culture,
+                       COALESCE(surface_terrain, 0)) sub
         GROUP BY id_mutation, id_parcelle) pp
-  GROUP BY id_mutation HAVING sum(bati_p) = 0 AND sum(terr_p) > 0)"""
+  GROUP BY id_mutation
+  HAVING sum(bati_p) = 0 AND bool_or(a_local) = false
+     AND sum(terr_p) > 0 AND count(DISTINCT cc) = 1)"""
 
 #: type_local DVF du type de bien bâti.
 _FRAG = {"maison": "Maison", "appartement": "Appartement"}

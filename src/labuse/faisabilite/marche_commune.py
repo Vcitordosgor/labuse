@@ -453,29 +453,29 @@ def _median_bati_commune(db: Session, commune: str, frag: str | None, *,
 
 
 def _median_terrain_commune(db: Session, commune: str, *, mois: int = 12) -> tuple[int | None, int]:
-    """Médiane €/m² du TERRAIN NU de la commune (dvf_mutations_parcelle, ventes sans bâti), fenêtre
-    glissante `mois`. Dédoublonnage par COUPLE (mutation, parcelle). n = nombre de ventes.
+    """Médiane €/m² du TERRAIN NU de la commune (`dvf_mutations_parcelle`), fenêtre glissante `mois`
+    ancrée sur la dernière vente de la commune. n = nombre d'actes. Sert le bloc « Marché de la commune »
+    (fiche commune, Radar vs-marché, PDF).
 
-    CHIRURGICAL-FIX-1 (LOT J, complément dvf) — `dvf_mutations_parcelle` republie/duplique la même
-    ligne (jusqu'à 327 copies d'un couple) : un `sum(surface_terrain)` BRUT groupé par mutation comptait
-    le terrain d'un couple autant de fois qu'il est répété → `st` gonflé, `vf/st` (€/m²) sous-estimé
-    (mesuré : 19/24 communes voyaient leur médiane bouger, jusqu'à 27,5 €/m²). On prend UNE surface de
-    terrain par couple (`max … OVER (PARTITION BY mutation, parcelle)` + `DISTINCT`) avant de sommer.
-
-    OUTIL-COMMUNES-FIX-1 bloquant 1 — QUALIFICATION SUR L'ACTE ENTIER : on ne garde l'acte que si son
-    bâti TOTAL est nul (`sum(bati_p) = 0`), jamais un filtre bâti par parcelle. Natures Vente + VTB."""
+    FIX-4 LOT 1 — QUALIFICATION UNIQUE. Ce lecteur portait une COPIE inline de la règle (`max … OVER` par
+    couple + `sum(bati_p)=0`), divergente de `ACTE_TERRAIN_NU_CTE` : elle laissait passer le local déclaré
+    sans surface et les actes multi-communes, et prenait la plus grande ligne au lieu de la somme des
+    subdivisions distinctes. On embarque désormais LE CTE partagé (rules 0/a/b/c) et on y joint
+    l'appartenance à la commune (`scope`, matérialisé) + la fenêtre glissante sur la date de l'acte."""
+    insee = db.execute(text("SELECT left(min(idu), 5) FROM parcels WHERE lower(commune)=lower(:c)"),
+                       {"c": commune}).scalar()
+    from ..marche_dvf_commune import ACTE_TERRAIN_NU_CTE
     row = db.execute(text(
-        "WITH mx AS (SELECT max(date_mutation) d FROM dvf_mutations WHERE lower(commune)=lower(:c)), "
-        "par AS (SELECT DISTINCT dm.id_mutation, dm.id_parcelle, dm.valeur_fonciere vf, "
-        "          max(COALESCE(dm.surface_terrain,0)) OVER (PARTITION BY dm.id_mutation, dm.id_parcelle) terr_p, "
-        "          max(COALESCE(dm.surface_reelle_bati,0)) OVER (PARTITION BY dm.id_mutation, dm.id_parcelle) bati_p "
-        "        FROM dvf_mutations_parcelle dm JOIN parcels p ON p.idu = dm.id_parcelle, mx "
-        "        WHERE lower(p.commune)=lower(:c) AND dm.nature_mutation IN ('Vente','Vente terrain à bâtir') "
-        "          AND dm.date_mutation > mx.d - make_interval(months => :mois) AND dm.date_mutation <= mx.d), "
-        "t AS (SELECT id_mutation, max(vf) vf, sum(terr_p) st FROM par GROUP BY id_mutation "
-        "      HAVING sum(bati_p) = 0 AND sum(terr_p) > 0) "
-        "SELECT round(percentile_cont(0.5) WITHIN GROUP (ORDER BY vf/NULLIF(st,0)))::int, count(*) "
-        "FROM t WHERE vf/NULLIF(st,0) BETWEEN 50 AND 4000"), {"c": commune, "mois": mois}).first()
+        f"WITH {ACTE_TERRAIN_NU_CTE}, "
+        "mx AS (SELECT max(date_mutation) d FROM dvf_mutations WHERE lower(commune)=lower(:c)), "
+        "scope AS MATERIALIZED (SELECT DISTINCT m.id_mutation FROM dvf_mutations_parcelle m "
+        "        WHERE m.code_commune = :insee AND m.nature_mutation IN ('Vente','Vente terrain à bâtir')), "
+        "t AS (SELECT a.val vf, a.terr_tot st FROM acte_nu a JOIN scope USING (id_mutation), mx "
+        "      WHERE a.d1 > mx.d - make_interval(months => :mois) AND a.d1 <= mx.d) "
+        "SELECT round(percentile_cont(0.5) WITHIN GROUP (ORDER BY vf/NULLIF(st,0)) "
+        "         FILTER (WHERE vf/NULLIF(st,0) BETWEEN 50 AND 4000))::int, "
+        "       count(*) FILTER (WHERE vf/NULLIF(st,0) BETWEEN 50 AND 4000) "
+        "FROM t"), {"c": commune, "insee": insee, "mois": mois}).first()
     return (row[0] if row else None), (int(row[1]) if row and row[1] else 0)
 
 

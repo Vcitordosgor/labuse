@@ -277,5 +277,10 @@ def test_dvf_lecteurs_prix_dedoublonnent_par_couple():
     assert "SELECT DISTINCT id_mutation, type_local, surface_reelle_bati" in bilan
     # p_model_mut_l2 : s_bati sommé sur la CTE dédoublonnée `ded`
     assert "WITH ded AS (" in pmodel and "FROM ded" in pmodel
-    # _median_terrain_commune : une surface de terrain par couple (max OVER PARTITION) avant somme
-    assert "OVER (PARTITION BY dm.id_mutation, dm.id_parcelle)" in marche
+    # OUTIL-COMMUNES-FIX-4 LOT 1 — `_median_terrain_commune` ne porte plus de dédoublonnage inline : il
+    # embarque la qualification UNIQUE `ACTE_TERRAIN_NU_CTE`, qui reconstitue la surface par SOMME des
+    # subdivisions DISTINCTES (couple (nature_culture, surface_terrain)) — plus de copie divergente.
+    assert "ACTE_TERRAIN_NU_CTE" in marche, "marche_commune doit déléguer à la qualification unique"
+    cte = (_SRC / "marche_dvf_commune.py").read_text()
+    assert "nature_culture" in cte and "GROUP BY id_mutation, id_parcelle, code_commune, nature_culture" in cte, \
+        "la surface du terrain nu = somme des subdivisions distinctes dans le CTE unique"

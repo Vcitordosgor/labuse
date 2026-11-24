@@ -1,0 +1,22 @@
+rootdir: /Users/openclaw/Desktop/labuse-communes-fix
+configfile: pyproject.toml
+plugins: timeout-2.4.0, platformdirs-4.12.3, anyio-4.14.2
+collecting ... collected 11 items
+
+tests/test_communes_cas_externes.py::test_2023_1315722_local_declare_exclu_du_terrain_nu PASSED [  9%]
+tests/test_communes_cas_externes.py::test_2023_1315722_absent_de_ses_propres_comparables_IZ0236 PASSED [ 18%]
+tests/test_communes_cas_externes.py::test_2022_1639451_multicommune_exclu_de_petite_ile_et_saint_joseph PASSED [ 27%]
+tests/test_communes_cas_externes.py::test_2021_1676912_surface_somme_des_subdivisions_1895m2_280eurm2 PASSED [ 36%]
+tests/test_communes_cas_externes.py::test_catnat_jamais_faux_zero_quand_exposition_echoue[Saint-Denis-97411-14] PASSED [ 45%]
+tests/test_communes_cas_externes.py::test_catnat_jamais_faux_zero_quand_exposition_echoue[Saint-Paul-97415-17] PASSED [ 54%]
+tests/test_communes_cas_externes.py::test_catnat_jamais_faux_zero_quand_exposition_echoue[La Plaine-des-Palmistes-97406-9] PASSED [ 63%]
+tests/test_communes_cas_externes.py::test_fallback_risques_catnat_indisponible_pas_zero PASSED [ 72%]
+tests/test_communes_cas_externes.py::test_barometre_cilaos_repond_sous_statement_timeout PASSED [ 81%]
+tests/test_communes_cas_externes.py::test_sainte_marie_plu_approuve PASSED [ 90%]
+tests/test_communes_cas_externes.py::test_sainte_suzanne_plu_approuve PASSED [100%]
+
+============================== 11 passed in 3.26s ==============================
+=== plu_statut etat_au ===
+Sainte-Marie: statut='à jour' libelle='approuvée' date_reglement='2025-11-26' etat_au='2026-01-14'
+Saint-Denis: statut='en révision' libelle='prescrite' date_reglement='2024-09-27' etat_au='2026-04-23'
+Cilaos: statut='à jour' libelle='aucune' date_reglement=None etat_au='2024-12-31'
