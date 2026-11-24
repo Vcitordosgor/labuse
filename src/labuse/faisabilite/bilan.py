@@ -593,25 +593,60 @@ def compute_bilan_servi(session: Session, parcel_id: int, fz=None) -> tuple["Bil
 
 def _clause_mixite(eco: dict, hyp: Hypotheses) -> dict:
     """Déclenchement de la clause de mixité (Art. 2 règlement PLU) selon le PROGRAMME estimé.
-    Logique OU du texte : SDP ≥ seuil OU logements ≥ seuil OU terrain > seuil. Renvoie l'état
-    (déclenchée + critère atteint) pour pondérer le CA et l'AFFICHER au promoteur."""
-    sdp = float(eco.get("sdp_max_m2") or 0.0)
+
+    OUTIL-ASSEMBLAGE-FIX-1 (LOT 3) — deux régimes selon que la commune DÉCLARE un seuil HAUT
+    (`mixite_sdp_seuil_haut_m2` ; Saint-Paul : 1 800 m²) :
+
+    · commune à RÉGIME À BANDES (seuil haut présent) — le déclenchement porte sur le PROGRAMME
+      RÉELLEMENT CHIFFRÉ (`sdp_programme_m2` = surface vendable ÷ rendement), JAMAIS le gabarit
+      théorique. `regime = "plein"` si programme ≥ seuil haut (ou logements/terrain au-dessus de leur
+      seuil) → quota LLS pondéré ; `regime = "intermediaire"` si seuil bas ≤ programme < seuil haut →
+      accession sociale admise, quota au nombre de logements (NON chiffré, faute de calibrage : on ne
+      fabrique pas de prix) ; sinon non déclenchée.
+    · autre commune (pas de seuil haut) — comportement HISTORIQUE INCHANGÉ : déclenchement sur le
+      gabarit (`sdp_max_m2`), régime `plein`, logique OU du texte (SDP OU logements OU terrain).
+    """
+    sdp_gabarit = float(eco.get("sdp_max_m2") or 0.0)
+    sdp_prog = float(eco.get("sdp_programme_m2") or 0.0)
     logements = float(eco.get("logements_estimes") or 0.0)
     terrain = float(eco.get("terrain_m2") or 0.0)
     s_sdp = float(hyp.mixite_sdp_seuil_m2)
     s_log = float(hyp.mixite_logements_seuil)
     s_ter = float(hyp.mixite_terrain_seuil_m2)
-    if sdp >= s_sdp:
-        return {"declenchee": True, "critere": f"SDP {sdp:.0f} m² ≥ {s_sdp:.0f} m²",
-                "detail": f"programme SDP ~{sdp:.0f} m² ≥ seuil {s_sdp:.0f} m²"}
+    s_haut = float(getattr(hyp, "mixite_sdp_seuil_haut_m2", 0.0) or 0.0)
+
+    if s_haut > 0:   # régime À BANDES (Saint-Paul) — déclenchement sur le PROGRAMME chiffré
+        # Le régime se décide sur la SDP du programme CHIFFRÉ (la SDP et le nombre de logements sont
+        # corrélés ; on n'utilise PAS le compte de logements du scénario silo optimiste, qui n'est pas
+        # le programme chiffré). Le critère TERRAIN (> 6 000 m²) reste un déclencheur réglementaire
+        # indépendant du programme (plein régime).
+        if terrain > s_ter:
+            return {"declenchee": True, "regime": "plein", "critere": f"terrain {terrain:.0f} m² > {s_ter:.0f} m²",
+                    "detail": f"terrain ~{terrain:.0f} m² > seuil {s_ter:.0f} m²"}
+        if sdp_prog >= s_haut:
+            return {"declenchee": True, "regime": "plein", "critere": f"programme {sdp_prog:.0f} m² ≥ {s_haut:.0f} m²",
+                    "detail": f"programme chiffré ~{sdp_prog:.0f} m² ≥ seuil {s_haut:.0f} m²"}
+        if sdp_prog >= s_sdp:
+            return {"declenchee": True, "regime": "intermediaire",
+                    "critere": f"programme {sdp_prog:.0f} m² dans la bande {s_sdp:.0f}–{s_haut:.0f} m²",
+                    "detail": (f"programme chiffré ~{sdp_prog:.0f} m² dans la bande {s_sdp:.0f}–{s_haut:.0f} m² : "
+                               "accession sociale admise, quota au nombre de logements")}
+        return {"declenchee": False, "regime": None, "critere": None,
+                "detail": (f"programme chiffré ~{sdp_prog:.0f} m² < seuil bas {s_sdp:.0f} m² "
+                           f"({logements:.0f} < {s_log:.0f} logts, terrain {terrain:.0f} ≤ {s_ter:.0f} m²)")}
+
+    # autres communes : déclenchement HISTORIQUE sur le gabarit (régime plein), logique OU du texte.
+    if sdp_gabarit >= s_sdp:
+        return {"declenchee": True, "regime": "plein", "critere": f"SDP {sdp_gabarit:.0f} m² ≥ {s_sdp:.0f} m²",
+                "detail": f"programme SDP ~{sdp_gabarit:.0f} m² ≥ seuil {s_sdp:.0f} m²"}
     if logements >= s_log:
-        return {"declenchee": True, "critere": f"{logements:.0f} logements ≥ {s_log:.0f}",
+        return {"declenchee": True, "regime": "plein", "critere": f"{logements:.0f} logements ≥ {s_log:.0f}",
                 "detail": f"programme ~{logements:.0f} logements ≥ seuil {s_log:.0f}"}
     if terrain > s_ter:
-        return {"declenchee": True, "critere": f"terrain {terrain:.0f} m² > {s_ter:.0f} m²",
+        return {"declenchee": True, "regime": "plein", "critere": f"terrain {terrain:.0f} m² > {s_ter:.0f} m²",
                 "detail": f"terrain ~{terrain:.0f} m² > seuil {s_ter:.0f} m²"}
-    return {"declenchee": False, "critere": None,
-            "detail": (f"programme sous les seuils (SDP {sdp:.0f} < {s_sdp:.0f} m², "
+    return {"declenchee": False, "regime": None, "critere": None,
+            "detail": (f"programme sous les seuils (SDP {sdp_gabarit:.0f} < {s_sdp:.0f} m², "
                        f"{logements:.0f} < {s_log:.0f} logts, terrain {terrain:.0f} ≤ {s_ter:.0f} m²)")}
 
 
@@ -738,21 +773,28 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     # de la commune servie la DÉCLARE (mixite_source_ref) ; sinon défaut → jamais l'Art. 2 d'une
     # autre commune (un Estimé emprunté ne se présente pas en Sourcé).
     mixite_src = hyp.mixite_source_ref or "Estimé — seuils de mixité par défaut (Saint-Paul)"
-    # Clause de mixité : déclenchée seulement si le PROGRAMME estimé franchit un seuil de l'Art. 2.
-    clause = _clause_mixite(eco, hyp) if mixite else None
+    # Clause de mixité : déclenchée seulement si le PROGRAMME franchit un seuil de l'Art. 2.
+    # OUTIL-ASSEMBLAGE-FIX-1 (LOT 3) — pour la commune à régime à bandes, le déclenchement porte sur le
+    # PROGRAMME CHIFFRÉ (surface vendable ÷ rendement), pas le gabarit théorique. On l'injecte ici (le
+    # cœur dispose de `surf` = surface vendable et du rendement) ; les autres communes l'ignorent.
+    _eco_clause = {**eco, "sdp_programme_m2": (surf / hyp.coef_rendement if hyp.coef_rendement else surf)}
+    clause = _clause_mixite(_eco_clause, hyp) if mixite else None
     declenchee = bool(clause and clause["declenchee"])
-    # Pondération du CA = clause déclenchée ET 30 % posé ET prix LLS calibré (jamais de prix fictif).
-    pondere = declenchee and p_lls > 0 and prix_lls > 0
-    # COMPARER-2 §2 — clause déclenchée MAIS prix LLS non calibré (ni secteur ni saisi) : on n'invente
-    # pas un prix LLS et on ne valorise pas la part aidée au plein prix marché. On l'EXCLUT du CA (LLS
-    # non chiffré) et on le DIT — jamais un 0 silencieux ni un plein prix trompeur.
-    exclure_lls = declenchee and p_lls > 0 and not (prix_lls > 0)
+    regime = (clause or {}).get("regime")
+    intermediaire = declenchee and regime == "intermediaire"   # bande 1500–1800 : quota non chiffré
+    # Pondération du CA = clause déclenchée en PLEIN régime ET 30 % posé ET prix LLS calibré (jamais de
+    # prix fictif). La bande intermédiaire (accession sociale, quota au nombre de logements) n'est PAS
+    # chiffrée faute de calibrage — CA au prix marché, dit à l'écran (on ne fabrique pas de pondération).
+    pondere = declenchee and regime == "plein" and p_lls > 0 and prix_lls > 0
+    # COMPARER-2 §2 — clause PLEINE déclenchée MAIS prix LLS non calibré : on n'invente pas un prix LLS
+    # et on ne valorise pas la part aidée au plein prix marché. On l'EXCLUT du CA (LLS non chiffré).
+    exclure_lls = declenchee and regime == "plein" and p_lls > 0 and not (prix_lls > 0)
     if pondere:
         _px = lambda x: (1.0 - p_lls) * float(x) + p_lls * prix_lls  # noqa: E731
     elif exclure_lls:
         _px = lambda x: (1.0 - p_lls) * float(x)                     # noqa: E731 — part LLS retirée du CA
     else:
-        _px = lambda x: float(x)                                      # noqa: E731
+        _px = lambda x: float(x)                                      # noqa: E731 — bande interm. / non déclenchée
     ca_bas, ca_cen, ca_haut = surf * _px(q1), surf * _px(med), surf * _px(q3)
     if mixite:
         lib_sms = eco.get("mixite_libelle") or "logements aidés"
@@ -767,14 +809,31 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
             steps.append(Step("Clause de mixité sociale — non déclenchée",
                               clause["detail"], "pas de quota LLS sur ce programme",
                               mixite_src, prov="derive"))
+        elif intermediaire:
+            # OUTIL-ASSEMBLAGE-FIX-1 (LOT 3) — bande intermédiaire (Saint-Paul, 1500–1800 m²) : le
+            # règlement admet l'accession sociale et raisonne au nombre de logements ; le quota n'est
+            # PAS le 30 % LLS du plein régime et n'est pas calibré → on ne fabrique pas de pondération,
+            # le CA reste au prix marché et on le DIT (réserve). C'est ce qui réconcilie le trio CV :
+            # son programme chiffré (~1 583 m²) tombe dans cette bande, pas dans le plein régime.
+            steps.append(Step("Clause de mixité — bande intermédiaire (accession sociale)",
+                              f"{clause['detail']} — quota en accession sociale / au nombre de logements, "
+                              "non chiffré (hors 30 % LLS du plein régime)",
+                              "CA au prix marché (part aidée non chiffrée)",
+                              mixite_src, prov="estimee"))
+            avert.append(
+                f"Clause de mixité DÉCLENCHÉE en bande intermédiaire ({clause['critere']}) : le règlement "
+                "y admet l'accession sociale et raisonne au nombre de logements (pas le 30 % LLS du plein "
+                f"régime ≥ {hyp.mixite_sdp_seuil_haut_m2:.0f} m²). Quota non calibré → impact non chiffré, "
+                f"CA présenté au prix marché. Source : {mixite_src}.")
         elif pondere:
             # COMPARER-2 §2 — le prix LLS AFFICHÉ est celui RÉELLEMENT utilisé (prix_lls résolu par
-            # secteur), plus jamais `hyp.prix_m2_lls` (le placeholder 0 brut, qui faisait lire « ×0 »
-            # alors que le CA était calculé au prix de secteur).
-            steps.append(Step("CA pondéré — clause de mixité DÉCLENCHÉE",
-                              f"{clause['detail']} · prix mixé = (1−{p_lls:.0%})×prix DVF + "
-                              f"{p_lls:.0%}×{prix_lls:.0f} €/m² (LLS)",
-                              f"{_px(med):.0f} €/m² (médiane pondérée)",
+            # secteur), plus jamais `hyp.prix_m2_lls` (le placeholder 0 brut, qui faisait lire « ×0 »).
+            # OUTIL-ASSEMBLAGE-FIX-1 (LOT 3) — on AFFICHE les trois prix et leurs parts : libre, aidé,
+            # pondéré (le relecteur voyait 4 730 à l'écran mais le calcul utilisait 4 181 sans le dire).
+            steps.append(Step("CA pondéré — clause de mixité DÉCLENCHÉE (plein régime)",
+                              f"{clause['detail']} · prix libre {med:g} €/m² × {1 - p_lls:.0%} + prix aidé "
+                              f"{prix_lls:.0f} €/m² (LLS) × {p_lls:.0%}",
+                              f"{_px(med):.0f} €/m² pondéré (libre {med:g} · aidé {prix_lls:.0f} · part aidée {p_lls:.0%})",
                               f"{mixite_src} · pct_lls / prix_m2_lls", prov="estimee"))
         elif exclure_lls:  # COMPARER-2 §2 — prix LLS non calibré → part LLS EXCLUE du CA, dit clairement
             steps.append(Step("CA — part LLS exclue (non chiffrée)",

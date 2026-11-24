@@ -237,7 +237,7 @@ export function M16() {
 
       {/* RECETTE-1 (H5, Vic) — ÉTAPE 2 « Assemblage ». NON contiguës → « pas d'assemblage possible » +
           les parcelles ISOLÉES, RIEN D'AUTRE (deux blocs séparés ne font pas une opération). */}
-      {d && !d.contigu && (
+      {d && !d.relie && (
         <div data-asm-pas-possible className="flex flex-col gap-2 rounded-lg border border-st-ecartee/50 bg-st-ecartee/[0.09] px-3 py-2.5 text-[11.5px] leading-snug text-st-ecartee">
           <b>Pas d'assemblage possible : ces parcelles ne se touchent pas.</b>
           {(d.isolees as string[] | undefined)?.length ? (
@@ -253,14 +253,42 @@ export function M16() {
         </div>
       )}
 
-      {/* ÉTAPE 2 — assemblage CONTIGU : l'en-tête (N contiguës · surface totale) puis le résultat. */}
-      {d && d.contigu && (
+      {/* ÉTAPE 2 — assiette RELIÉE (d'un bloc) : l'en-tête puis le résultat. OUTIL-ASSEMBLAGE-FIX-1
+          (LOT 1) — « contiguës » n'est dit QUE pour de vrais bords partagés (tenant_unique) ; reliée
+          par un contact ponctuel ou un petit vide → on le DIT et on réserve le chiffrage. */}
+      {d && d.relie && (
         <>
           {/* RETOURS-25 (pt 1) — « · surface totale … » retiré de cet en-tête (la surface vit UNE SEULE
               fois dans la tuile « Surface d'assiette » ci-dessous). */}
-          <p data-asm-contigu className="text-[11.5px] text-mint">
-            <b className="tnum">{d.n}</b> parcelle{d.n > 1 ? 's' : ''} contiguë{d.n > 1 ? 's' : ''}
-          </p>
+          {d.tenant_unique ? (
+            <p data-asm-contigu className="text-[11.5px] text-mint">
+              <b className="tnum">{d.n}</b> parcelle{d.n > 1 ? 's' : ''} contiguë{d.n > 1 ? 's' : ''}
+            </p>
+          ) : (
+            <p data-asm-contigu data-asm-lien-faible className="text-[11.5px] text-st-creuser">
+              <b className="tnum">{d.n}</b> parcelle{d.n > 1 ? 's' : ''} reliée{d.n > 1 ? 's' : ''} — <b>pas d'un seul tenant</b>
+            </p>
+          )}
+          {/* Détail de chaque lien : bord commun mesuré (longueur), contact par un point, petit vide. */}
+          {Array.isArray(d.liens) && d.liens.length > 0 && (
+            <ul data-asm-liens className="flex flex-col gap-0.5 text-[10.5px] leading-snug text-txt-dim">
+              {(d.liens as Record<string, any>[]).map((ln, k) => (
+                <li key={k} data-asm-lien={ln.type}>
+                  <span className="font-mono">{(ln.a as string).slice(8)}–{(ln.b as string).slice(8)}</span>{' '}
+                  {ln.type === 'bord'
+                    ? <>bord commun <b className="text-mint">{fmt(ln.longueur_bord_m)} m</b></>
+                    : ln.type === 'point'
+                      ? <span className="text-st-creuser">contact par un point (aucun bord commun)</span>
+                      : <span className="text-st-creuser">petit vide cadastral <b>{(ln.vide_m as number).toFixed(2)} m</b></span>}
+                </li>
+              ))}
+            </ul>
+          )}
+          {d.tenant_avertissement && (
+            <p data-asm-tenant-avert className="rounded-lg border border-st-creuser/50 bg-st-creuser/[0.09] px-3 py-2 text-[10.5px] leading-snug text-st-creuser">
+              {d.tenant_avertissement as string}
+            </p>
+          )}
           {d.tronquee && <p className="text-[10.5px] text-st-creuser">Assiette limitée aux {fmt(d.cap)} premières parcelles.</p>}
           {/* RETOURS-25 (pt 1) — chips « d'un seul tenant » + « N interlocuteurs » RETIRÉES : doublons
               (« contiguës » dit déjà le seul tenant ; les interlocuteurs sont dans « approche propriétaire »). */}
@@ -279,6 +307,13 @@ export function M16() {
             )
           })()}
 
+          {/* OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 6) — l'HYPOTHÈSE de maîtrise foncière est dite AVANT le
+              résultat : le chiffrage suppose la maîtrise de TOUTE l'assiette (acquisition de toutes les
+              parcelles) et la disparition des limites internes. L'outil ne vérifie ni propriétaire unique
+              ni accord. */}
+          <p data-asm-maitrise className="rounded-md border border-line-2 bg-surface-2 px-3 py-1.5 text-[10.5px] leading-snug text-txt-dim">
+            <b className="text-txt">Hypothèse :</b> le chiffrage suppose la maîtrise de toute l'assiette (acquisition des {d.n} parcelles) et la disparition des limites internes. Propriétaires, accords et faisabilité restent à vérifier.
+          </p>
           {/* RETOURS-26 (pt 1) — `flex flex-col gap-2` : un espace NORMAL (et constant) entre les tuiles et
               « Bilan » — avant, les deux blocs étaient collés, et « Bilan » ouvert empiétait sur les tuiles. */}
           <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
@@ -307,6 +342,49 @@ export function M16() {
                       </div>
                     )}
                   </div>
+                  {/* OUTIL-ASSEMBLAGE-FIX-1 (LOT 2) — capacité PAR ZONE : chaque portion avec ses règles
+                      (emprise au sol après recul, hauteur en niveaux, recul limites/voie), puis sommée.
+                      Affiché seulement quand l'assiette est à cheval sur plusieurs zones (sinon redondant). */}
+                  {Array.isArray(d.zones_detail) && (d.zones_detail as any[]).filter((z) => z.constructible).length > 1 && (
+                    <div data-asm-zones className="rounded-md bg-surface-3 px-2 py-1.5">
+                      <div className="text-[9px] text-txt-dim">Capacité par zone (règles propres à chaque portion)</div>
+                      <table className="mt-1 w-full text-[10px] text-txt">
+                        <thead><tr className="text-txt-dim">
+                          <th className="text-left font-normal">Zone</th>
+                          <th className="text-right font-normal">emprise</th>
+                          <th className="text-right font-normal">niv.</th>
+                          <th className="text-right font-normal">recul</th>
+                          <th className="text-right font-normal">SDP</th>
+                        </tr></thead>
+                        <tbody>
+                          {(d.zones_detail as Record<string, any>[]).map((z, k) => (
+                            <tr key={k} data-asm-zone={z.zone} className={z.constructible ? '' : 'text-txt-dim'}>
+                              <td className="text-left font-mono">{z.zone}</td>
+                              <td className="tnum text-right">{fmt(z.emprise_m2)} m²</td>
+                              <td className="tnum text-right">{z.niveaux ?? '—'}</td>
+                              <td className="tnum text-right">{z.recul_limites_m ?? '—'} m{z.recul_voirie_m != null && z.recul_voirie_m !== z.recul_limites_m ? ` · voie ${z.recul_voirie_m} m` : ''}</td>
+                              <td className="tnum text-right font-semibold">{fmt(z.sdp_m2)} m²</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div className="mt-0.5 text-[8.5px] leading-tight text-txt-dim">
+                        Recul limites séparatives appliqué au contour ; le recul sur voie s'ajoute sur la façade sur rue (bord non identifiable au cadastre).
+                      </div>
+                    </div>
+                  )}
+                  {/* LOT 2 — contraintes RETRANCHÉES visibles (ce que l'assiette contient, en m²). */}
+                  {d.retranchements && (((d.retranchements as any).hors_zone_m2 > 0) || ((d.retranchements as any).ppr_rouge_m2 > 0) || ((d.retranchements as any).emplacement_reserve_m2 > 0) || ((d.retranchements as any).ebc_m2 > 0)) && (
+                    <div data-asm-retranche className="rounded-md border border-amber/40 bg-amber/[0.07] px-2 py-1.5 text-[9.5px] leading-snug text-amber">
+                      <div className="text-[9px] text-txt-dim">Contraintes sur l'assiette (déduites de la capacité)</div>
+                      <ul className="mt-0.5 flex flex-col gap-0.5">
+                        {(d.retranchements as any).hors_zone_m2 > 0 && <li>Hors zone constructible : {fmt((d.retranchements as any).hors_zone_m2)} m²</li>}
+                        {(d.retranchements as any).ppr_rouge_m2 > 0 && <li>Zone rouge du PPR : {fmt((d.retranchements as any).ppr_rouge_m2)} m²</li>}
+                        {(d.retranchements as any).emplacement_reserve_m2 > 0 && <li>Emplacement réservé : {fmt((d.retranchements as any).emplacement_reserve_m2)} m²</li>}
+                        {(d.retranchements as any).ebc_m2 > 0 && <li>Espace boisé classé : {fmt((d.retranchements as any).ebc_m2)} m²</li>}
+                      </ul>
+                    </div>
+                  )}
                   {/* OUTILS-P1-1 (pt 2) — TROIS LECTURES ancrées sur l'existant, au lieu d'empiler
                       « Reconstruction » SOUS « Bâti conservé » (qui se lisait comme une sous-ligne) :
                       • « Existant · N m² » — la surface de plancher déjà bâtie ;
@@ -319,13 +397,26 @@ export function M16() {
                       {d.sdp_existante_totale_m2 != null
                         ? <b className="tnum whitespace-nowrap">{fmt(d.sdp_existante_totale_m2)} m²</b>
                         : <span className="text-txt-dim">non mesuré</span>}
+                      {/* OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 4) — existant PARTIEL : total sur une partie
+                          seulement des parcelles (≥1 sans bâti mesuré) — distinct d'un zéro mesuré ; aucun
+                          ajout précis n'en est déduit. */}
+                      {d.existant_partiel && (
+                        <span data-asm-existant-partiel className="ml-1 text-[10px] text-st-creuser">
+                          (partiel — {d.existant_mesurees} parcelle{d.existant_mesurees > 1 ? 's' : ''} mesurée{d.existant_mesurees > 1 ? 's' : ''} sur {d.n})
+                        </span>
+                      )}
                     </div>
                     {/* MINI-CORRECTIONS-2 (pt 21) — plus de texte coloré hors charte (le vert/orange
                         signalaient à tort une opinion sur un simple CHIFFRE estimé) : le nombre est en
                         texte normal, « estimé » passe par le BADGE habituel (neutre). */}
                     <div data-asm-sdp-conserve className="mt-0.5 flex flex-wrap items-baseline gap-x-1 text-[11px] leading-tight text-txt">
-                      <span className="text-txt-dim">Si conservé · </span>
-                      {d.sdp_bati_conserve_m2 > 0
+                      {/* OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 4) — « Si conservé » dit ce qu'il mesure : le
+                          plancher constructible EN GARDANT le bâti existant (capacité − existant). Quand
+                          l'existant est PARTIEL, ce « + » n'est pas fiable (existant sous-estimé) → on le dit. */}
+                      <span className="text-txt-dim" title="Plancher constructible en conservant le bâti existant (capacité − existant)">Si conservé · </span>
+                      {d.existant_partiel
+                        ? <span className="text-st-creuser">ajout non déterminé (existant partiel)</span>
+                        : d.sdp_bati_conserve_m2 > 0
                         ? <><b className="tnum whitespace-nowrap text-txt-hi">+{fmt(d.sdp_bati_conserve_m2)} m²{d.sdp_conserve_estimation ? ' *' : ''}</b> <Badge ton="neutre">estimé</Badge></>
                         : <span className="text-txt-dim">aucun ajout estimé</span>}
                     </div>
@@ -406,26 +497,22 @@ export function M16() {
                     {d.terrain_zone_eur_m2 != null && (
                       <div>
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-txt-dim">Marché de la zone</span>
+                          {/* OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 5) — on NOMME la zone du repère (« marché de
+                              la zone Uh ») et sa règle de choix ; ce repère de terrain nu n'entre PAS dans
+                              la charge foncière (qui part du prix de SORTIE, ligne au-dessus). */}
+                          <span className="text-txt-dim">Marché du terrain nu{d.terrain_zone_zone ? <> · zone <span className="font-mono text-txt">{String(d.terrain_zone_zone)}</span></> : ''}</span>
                           <span className="text-txt">{fmt(d.terrain_zone_eur_m2)} €/m²</span>
                         </div>
-                        {/* OUTILS-LOT-4 (pt 7) — « fiab. » écrit en toutes lettres : « fiabilité ». */}
-                        <div className="text-right text-[9px] leading-tight text-txt-dim">DVF · fiabilité {String(d.terrain_zone_fiabilite ?? '—')}</div>
+                        <div className="text-right text-[9px] leading-tight text-txt-dim">
+                          DVF · fiabilité {String(d.terrain_zone_fiabilite ?? '—')}{d.terrain_zone_n != null ? <> · {fmt(d.terrain_zone_n)} ventes</> : ''}{d.zones_mixtes ? ' · zone la plus représentée' : ''}
+                        </div>
                       </div>
                     )}
-                    {/* RETOURS-27 (pt 7) — « Prix connu pour 1 parcelle sur 4 » sur UNE SEULE ligne (phrase
-                        continue, plus de libellé/valeur séparés par justify-between). */}
-                    {/* MINI-CORRECTIONS-2 (pt 21 suite) — réserve de couverture du prix : plus d'orange hors
-                        charte, texte normal ; le « i » habituel porte la réserve (prix connu sur une partie
-                        seulement des parcelles). */}
-                    <p data-asm-chiffrables className="flex items-center gap-1 text-[11px] text-txt-dim">
-                      <span>Prix connu pour <span className="text-txt">{d.n_chiffrables} parcelle{d.n_chiffrables > 1 ? 's' : ''} sur {d.n}</span></span>
-                      {d.n_chiffrables < d.n && (
-                        <Tip garder tip="Le bilan n'utilise le prix observé que pour les parcelles où il est connu ; pour les autres, la charge foncière est estimée. À lire comme un ordre de grandeur.">
-                          <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] leading-none text-txt-dim">i</span>
-                        </Tip>
-                      )}
-                    </p>
+                    {/* OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 5) — « Prix connu pour N parcelle sur M » RETIRÉ :
+                        ce compteur valait 1 dès que l'union avait un CA (jamais un décompte de parcelles au
+                        prix d'achat connu) — et son infobulle était fausse. Le bilan à rebours part du prix
+                        de SORTIE de l'union (une assiette) ; sa réserve d'estimation est dans le « i » du
+                        Bilan et la note « UNION ». On ne sert plus un chiffre qui ne mesure rien. */}
                   </div>
                 </details>
               </>
@@ -439,14 +526,16 @@ export function M16() {
           <div data-asm-proprio className={`rounded-lg border px-3 py-1.5 text-[11px] ${d.tous_personnes_morales ? 'border-mint/40 bg-mint/[0.06]' : 'border-line-2 bg-surface-2'}`}>
             {/* RETOURS-28/29 (Assemblage) — pluriel résolu sans « (s) » ; RETOURS-29 : « 0 personne morale »
                 n'est PAS affiché (on ne montre la part PM que si > 0). */}
+            {/* OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 6) — on compte les PERSONNES MORALES identifiées et on
+                QUALIFIE les parcelles restantes (« sans personne morale identifiée »), jamais « N
+                particuliers » : plusieurs parcelles peuvent appartenir au même propriétaire, aucun
+                particulier n'est nommé. */}
             {d.tous_personnes_morales ? (
-              <span className="text-mint">✓ Approche simplifiée — {d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''}, aucun particulier</span>
+              <span className="text-mint">✓ Approche simplifiée — {d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''} identifiée{d.n_personnes_morales > 1 ? 's' : ''} ; toutes les parcelles rattachées</span>
             ) : (
               <span className="text-txt-mut">
-                {d.n_personnes_morales > 0 && <>{d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''} · </>}
-                {/* MINI-CORRECTIONS-2 (pt 21 suite) — plus d'orange hors charte sur un simple décompte :
-                    « N propriétaires particuliers » en texte normal (la bordure neutre du bloc suffit). */}
-                <b className="text-txt">{d.n_particuliers} propriétaire{d.n_particuliers > 1 ? 's' : ''} particulier{d.n_particuliers > 1 ? 's' : ''}</b>
+                {d.n_personnes_morales > 0 && <>{d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''} identifiée{d.n_personnes_morales > 1 ? 's' : ''} · </>}
+                <b className="text-txt">{(d.n_parcelles_sans_pm ?? d.n_particuliers)} parcelle{(d.n_parcelles_sans_pm ?? d.n_particuliers) > 1 ? 's' : ''} sans personne morale identifiée</b>
               </span>
             )}
             {/* RECETTE-4 — noms des personnes morales EN ENTIER (plusieurs lignes si besoin) : plus de troncature (break-words). */}

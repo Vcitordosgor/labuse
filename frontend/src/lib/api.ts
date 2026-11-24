@@ -1727,7 +1727,10 @@ export interface CompareRow {
   prix_secteur_bati_m2?: number | null
 }
 export const getCompare = (idus: string[]) =>
-  j<{ count: number; parcels: CompareRow[] }>(`/compare?idus=${encodeURIComponent(idus.join(','))}`)
+  // OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 7) — `echecs` (trouvées mais fiche non calculable, ex. DH0098)
+  // s'ajoute à `ignores` (introuvables) : l'écran nomme TOUT identifiant écarté, jamais en silence.
+  j<{ count: number; parcels: CompareRow[]; ignores?: string[]; echecs?: string[]; tronques?: string[]; doublons?: string[] }>(
+    `/compare?idus=${encodeURIComponent(idus.join(','))}`)
 
 // M54-EXPO-2 A6 — marque blanche (logo + libellés) relue par GET, uploadée en body brut.
 export interface Marque { raison_sociale: string; coordonnees: string; mention: string; has_logo: boolean; logo_data_uri?: string }

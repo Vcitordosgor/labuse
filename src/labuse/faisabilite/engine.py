@@ -107,6 +107,12 @@ class Hypotheses:
     mixite_sdp_seuil_m2: float = 1500.0       # « SDP ≥ 1 500 m² » (bornes 1500/1800 du texte)
     mixite_logements_seuil: float = 20.0      # « programme de 20 logements ou plus »
     mixite_terrain_seuil_m2: float = 6000.0   # « terrain d'habitation de plus de 6 000 m² »
+    # OUTIL-ASSEMBLAGE-FIX-1 (LOT 3) — seuil HAUT du régime À BANDES : quand la commune le DÉCLARE
+    # (Saint-Paul : 1 800 m², Art. 2 règlement PLU pp. 106-107), la clause se déclenche sur le PROGRAMME
+    # chiffré (pas le gabarit) et distingue le plein régime (≥ seuil haut → quota LLS) de la bande
+    # intermédiaire (seuil bas–seuil haut → accession sociale, quota au nombre de logements). 0 = pas de
+    # régime à bandes → déclenchement HISTORIQUE sur le gabarit (autres communes, inchangées).
+    mixite_sdp_seuil_haut_m2: float = 0.0
     # --- Provenance D'AFFICHAGE (M-N P1-13, n'altère AUCUN calcul) ---
     # commune servie (traçabilité) et RÉFÉRENCE SOURCÉE des seuils de mixité : renseignée UNIQUEMENT
     # si le YAML de la commune la DÉCLARE explicitement (`mixite_source_ref`, ex. « Art. 2 règlement

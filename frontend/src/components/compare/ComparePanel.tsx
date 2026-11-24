@@ -309,6 +309,22 @@ export function ComparePanel() {
                 hint={<>Les parcelles demandées n'ont pas de fiche comparable (hors périmètre ou introuvables). Retirez-en une (✕) ou choisissez-en d'autres.</>} />
             </div>
           )}
+          {/* OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 7) — identifiants DEMANDÉS mais non rendus, nommés par
+              cause : échec de calcul (trouvée, fiche non calculable — ex. DH0098), introuvable, au-delà
+              de 3, doublon. Plus jamais une colonne manquante en silence. */}
+          {(() => {
+            const ec = (q.data?.echecs ?? []), ig = (q.data?.ignores ?? []), tr = (q.data?.tronques ?? []), db = (q.data?.doublons ?? [])
+            if (ec.length + ig.length + tr.length + db.length === 0) return null
+            const chip = (i: string) => <span key={i} className="rounded-full border border-amber/50 px-2 py-0.5 font-mono text-[11px] text-amber">{i.slice(8) || i}</span>
+            return (
+              <div data-compare-ecartees className="mb-2 flex flex-col gap-1.5 rounded-lg border border-amber/40 bg-amber/[0.07] px-3 py-2 text-[11px] leading-snug text-amber">
+                {ec.length > 0 && <div className="flex flex-wrap items-center gap-1"><b>Non comparée(s) — fiche non calculable :</b> {ec.map(chip)}</div>}
+                {ig.length > 0 && <div className="flex flex-wrap items-center gap-1"><b>Introuvable(s) :</b> {ig.map(chip)}</div>}
+                {tr.length > 0 && <div className="flex flex-wrap items-center gap-1"><b>Au-delà de 3 (non affichée) :</b> {tr.map(chip)}</div>}
+                {db.length > 0 && <div className="flex flex-wrap items-center gap-1"><b>Doublon(s) retiré(s) :</b> {db.map(chip)}</div>}
+              </div>
+            )
+          })()}
           {/* RECETTE-2 (D6) — table-fixed : les 3 colonnes de données se partagent la largeur à ÉGALITÉ et
               tiennent dans l'overlay (jamais de défilement horizontal) ; le texte long passe à la ligne
               dans sa cellule (whitespace-nowrap retiré plus bas). */}

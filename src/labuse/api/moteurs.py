@@ -190,7 +190,7 @@ class AssemblageIn(BaseModel):
 def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
     from types import SimpleNamespace
 
-    from ..assemblage import ADJ_BUFFER_M, aggregate_assiette
+    from ..assemblage import aggregate_assiette, verdicts_contiguite
     from ..faisabilite.marche_commune import prix_terrain_nu_zone
     cap = _moteurs_cap("assemblage_max_parcelles", 30)   # M137-O : plafond EN CONFIG, plus jamais en dur
     demandes = [i.strip().upper() for i in body.idus if i.strip()]
@@ -214,24 +214,38 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         WHERE p.idu = ANY(:idus)"""), {"idus": idus, "run": runs.cascade(), "v2run": _v2run(db)}).mappings().all()
     if len(rows) < 2:
         raise HTTPException(404, f"{len(rows)} parcelle(s) trouvée(s) sur {len(idus)}")
-    # contiguïté : graphe des adjacences (contact cadastral ADJ_BUFFER_M — MÊME seuil que la détection
-    # assemblage.py, plus de 1 m ad hoc) → l'assiette est-elle d'un seul tenant ?
+    # OUTIL-ASSEMBLAGE-FIX-1 (LOT 1) — contiguïté en TROIS verdicts (assemblage.py `classer_lien`) :
+    # bord cadastral commun MESURÉ (seule vraie mitoyenneté), contact par un point, petit vide cadastral.
+    # Deux graphes : `adj_bord` (vrais bords seuls) → « d'un seul tenant » strict ; `adj_all` (tout lien
+    # ≤ ADJ_BUFFER_M) → assiette RELIÉE (gate du chiffrage). Une assiette reliée par un point ou un vide
+    # est chiffrée mais n'est PAS annoncée « contiguë »/« d'un seul tenant » (le calcul fusionne les
+    # polygones réels SANS combler le vide — audit ASTRA bloquant 1).
     ids = [r["id"] for r in rows]
-    pairs = db.execute(text("""
-        SELECT a.id AS a, b.id AS b FROM parcels a JOIN parcels b
-          ON a.id < b.id AND ST_DWithin(a.geom_2975, b.geom_2975, :buf)
-        WHERE a.id = ANY(:ids) AND b.id = ANY(:ids)"""), {"ids": ids, "buf": ADJ_BUFFER_M}).all()
-    adj: dict[int, set[int]] = {i: set() for i in ids}
-    for a, b in pairs:
-        adj[a].add(b)
-        adj[b].add(a)
-    seen, stack = {ids[0]}, [ids[0]]
-    while stack:
-        for nb in adj[stack.pop()]:
-            if nb not in seen:
-                seen.add(nb)
-                stack.append(nb)
-    contigu = len(seen) == len(ids)
+    idu_of = {r["id"]: r["idu"] for r in rows}
+    vc = verdicts_contiguite(db, ids)
+    relie = vc["relie"]                          # assiette d'un bloc (gate du chiffrage) ; sinon isolées
+    tenant_unique = vc["tenant_unique"]          # d'un seul tenant : vrais bords partout
+    contigu = vc["contigu"]                      # « contiguës » = STRICTEMENT les vrais bords partagés
+    lien_faible = vc["lien_faible"]              # reliée mais par ≥1 point/vide → chiffrage à réserver
+    seen_all = {i for i in ids if i not in vc["isolees_ids"]}
+    # liens LISIBLES (idu + verdict + mesure), pour que l'écran dise chaque contact par son nom.
+    liens_affiches = [{"a": idu_of[ln["a"]], "b": idu_of[ln["b"]], "type": ln["type"],
+                       "longueur_bord_m": ln["longueur_bord_m"], "vide_m": ln["vide_m"]} for ln in vc["liens"]]
+    # avertissement de tenant quand l'assiette n'est pas d'un seul tenant (reliée par point/vide seulement).
+    _faibles = [ln for ln in liens_affiches if ln["type"] in ("point", "vide")]
+    tenant_avertissement = None
+    if lien_faible and _faibles:
+        _desc = []
+        for ln in _faibles:
+            pa, pb = ln["a"][8:], ln["b"][8:]
+            if ln["type"] == "point":
+                _desc.append(f"{pa}–{pb} : contact par un point (aucun bord commun)")
+            else:
+                _desc.append(f"{pa}–{pb} : petit vide cadastral de {ln['vide_m']:.2f} m")
+        tenant_avertissement = (
+            "Assiette NON d'un seul tenant — " + " ; ".join(_desc)
+            + ". Le chiffrage fusionne les polygones réels sans combler ce vide : traiter comme des "
+            "parcelles reliées, pas comme une opération d'un seul tenant.")
     # PRIVACY (B) : personne morale = dénomination + SIREN (public) ; particulier = JAMAIS nommé.
     def _proprio(r: dict) -> dict:
         if r["denomination"]:
@@ -272,10 +286,18 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
     from collections import Counter
     zc = Counter((c, z) for c, z in agg["zones"] if c and z)
     terrain_zone = None
+    zone_marche = None            # OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 5) — la zone d'où vient le repère
     zones_mixtes = len({z for _, z in zc}) > 1
     if zc:
         (commune_dom, zone_dom), _ = zc.most_common(1)[0]
+        zone_marche = zone_dom
         terrain_zone = prix_terrain_nu_zone(db, commune_dom, zone_dom)
+    # OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 4) — existant PARTIEL : au moins une parcelle sans bâti mesuré
+    # (son existant est inconnu, pas zéro) → le total d'existant est PARTIEL et aucun « ajout » précis
+    # ne doit en être déduit. On le DIT ; distinct d'un existant mesuré à zéro.
+    _exist_par = agg.get("sdp_existante_par_parcelle") or {}
+    existant_partiel = any(v is None for v in _exist_par.values())
+    existant_mesurees = sum(1 for v in _exist_par.values() if v is not None)
     # #3 — le SCORE reste calculé mais DORMANT (jamais servi à l'écran : doctrine M120, pas de
     # « qualité N/100 »). Conservé pour un tri éventuel ; l'écran montre les FAITS qu'il agrégeait.
     # « sans potentiel » = aucune capacité MÊME terrain libéré (brute ≤ 0) ou tout étage 0 — sinon on
@@ -286,14 +308,23 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
                   + (10 if tous_pm else 0) + 25 * min(1, sdp_libere / 3000)))
     return {
         "n": len(rows), "contigu": contigu,
-        # RECETTE-1 (H5, Vic) — les parcelles ISOLÉES (hors du bloc d'un seul tenant de la 1ʳᵉ parcelle) :
-        # l'étape 2 les nomme quand « pas d'assemblage possible » (elles ne se touchent pas).
-        "isolees": [r["idu"] for r in rows if r["id"] not in seen],
+        # OUTIL-ASSEMBLAGE-FIX-1 (LOT 1) — verdicts de contiguïté distincts :
+        # `contigu`/`tenant_unique` = vrais bords partout ; `relie` = assiette d'un bloc (gate du
+        # chiffrage, inclut point/vide) ; `lien_faible` = reliée mais par ≥1 contact ponctuel/petit vide.
+        "relie": relie, "tenant_unique": tenant_unique, "lien_faible": lien_faible,
+        "liens": liens_affiches, "tenant_avertissement": tenant_avertissement,
+        # RECETTE-1 (H5, Vic) — les parcelles ISOLÉES (hors du bloc relié de la 1ʳᵉ parcelle, > tolérance
+        # cadastrale) : l'étape 2 les nomme quand « pas d'assemblage possible » (elles ne se touchent pas).
+        "isolees": [r["idu"] for r in rows if r["id"] not in seen_all],
         "surface_totale_m2": agg["surface_cumulee_m2"],
         # NU-G-007 — part de l'assiette EN ZONE CONSTRUCTIBLE + % hors zone (alignés sur l'Étude du même
         # assemblage) : la SDP combinée est bornée à cette part, le % hors zone est DIT à l'écran.
         "surface_constructible_m2": agg.get("surface_constructible_m2"),
         "pct_hors_zone": agg.get("pct_hors_zone"),
+        # OUTIL-ASSEMBLAGE-FIX-1 (LOT 2) — capacité calculée ZONE PAR ZONE : décomposition (chaque
+        # portion avec ses règles d'emprise/hauteur/recul) + contraintes retranchées visibles (m²).
+        "zones_detail": agg.get("zones_detail"),
+        "retranchements": agg.get("retranchements"),
         "tronquee": tronquee, "cap": cap,
         # #1 — capacité cumulée RÉELLE (fiche_payload agrégé). SDP-UNIQUE (CHASSE-FIX-1 B-2) :
         # `sdp_combinee_m2` = SDP BÂTI CONSERVÉ (défaut, comme la fiche) ; `sdp_terrain_libere_m2` =
@@ -303,6 +334,10 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         "sdp_terrain_libere_m2": sdp_libere,
         "sdp_existante_totale_m2": agg["sdp_existante_totale_m2"],
         "sdp_conserve_estimation": agg["conserve_estimation"],
+        # LOT 4 (pt 4) — existant PARTIEL (≥1 parcelle sans bâti mesuré) : le total est partiel, aucun
+        # ajout précis n'en est déduit ; distinct d'un existant mesuré à zéro.
+        "existant_partiel": existant_partiel,
+        "existant_mesurees": existant_mesurees,
         "sdp_max_seule_m2": sdp_max_seule,                       # meilleure seule BRUTE
         "sdp_max_seule_conserve_m2": sdp_max_seule_conserve,     # meilleure seule CONSERVÉE
         "gain_ratio": gain_ratio, "gain_pct": gain_pct,          # gain par défaut = base conservée
@@ -321,12 +356,19 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
                     "suppose la DÉMOLITION du bâti existant. Accords, propriétaires et faisabilité "
                     "restent à vérifier.",
         # #2 — valorisation (référentiel unique prix terrain nu de zone)
+        # LOT 4 (pt 5) — on NOMME la zone du repère et sa règle de choix (zone la plus représentée en
+        # nombre de parcelles ; départage au 1ᵉʳ groupe) : ce repère n'entre PAS dans la charge foncière.
         "terrain_zone_eur_m2": (terrain_zone or {}).get("eur_m2"),
         "terrain_zone_fiabilite": (terrain_zone or {}).get("fiabilite"),
         "terrain_zone_n": (terrain_zone or {}).get("n"), "zones_mixtes": zones_mixtes,
-        # B — approche propriétaire (privacy)
-        "proprietaires_pm": owners_pm, "n_proprietaires": len(owners_pm) + n_particuliers,
-        "n_personnes_morales": len(owners_pm), "n_particuliers": n_particuliers,
+        "terrain_zone_zone": zone_marche,
+        # B — approche propriétaire (privacy) — LOT 4 (pt 6) : on compte les PERSONNES MORALES identifiées
+        # et on QUALIFIE les parcelles restantes (« sans personne morale identifiée »), sans inventer un
+        # nombre de particuliers distincts (plusieurs parcelles peuvent appartenir au même propriétaire).
+        "proprietaires_pm": owners_pm,
+        "n_personnes_morales": len(owners_pm),
+        "n_parcelles_sans_pm": n_particuliers,     # = nb de parcelles sans PM identifiée (jamais « N particuliers »)
+        "n_particuliers": n_particuliers,          # (compat ascendante — ne plus présenter comme des particuliers distincts)
         "tous_personnes_morales": tous_pm,
         # C — indivision : NON détectable en base (aucune structure de propriété physique en open data)
         "indivision_detectable": False,

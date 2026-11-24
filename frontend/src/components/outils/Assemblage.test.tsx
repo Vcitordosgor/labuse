@@ -12,7 +12,12 @@ const IDUS = ['97415000CT1917', '97415000CT2565', '97415000CT3327']
 const STUDY_OK = {
   // CHASSE-FIX-1 (B-2) — SDP-UNIQUE : `sdp_combinee_m2`/`sdp_bati_conserve_m2` = SDP bâti conservé
   // (défaut, comme la fiche) ; `sdp_terrain_libere_m2` = table rase (démolition supposée), dite à côté.
-  n: 3, contigu: true, isolees: [], surface_totale_m2: 14111,
+  // OUTIL-ASSEMBLAGE-FIX-1 (LOT 1) — `relie` = assiette d'un bloc (gate du chiffrage), `tenant_unique`
+  // = vrais bords partout (« contiguës »). `contigu` reste l'alias strict (= tenant_unique).
+  n: 3, contigu: true, relie: true, tenant_unique: true, lien_faible: false, tenant_avertissement: null,
+  liens: [{ a: '97415000CT1917', b: '97415000CT2565', type: 'bord', longueur_bord_m: 24.3, vide_m: null },
+          { a: '97415000CT2565', b: '97415000CT3327', type: 'bord', longueur_bord_m: 18.1, vide_m: null }],
+  isolees: [], surface_totale_m2: 14111,
   sdp_combinee_m2: 11065, sdp_bati_conserve_m2: 11065, sdp_terrain_libere_m2: 12800,
   sdp_existante_totale_m2: 1735, sdp_conserve_estimation: false,
   sdp_max_seule_m2: 10726, sdp_max_seule_conserve_m2: 9000,
@@ -24,8 +29,8 @@ const STUDY_OK = {
     sdp_residuelle_m2: [200, 100, 9000][k], sdp_existante_m2: [17, 22, 1726][k],
     tier_v2: 'neutre', etage0: false, proprio: { type: k === 0 ? 'personne_morale' : 'particulier', denomination: 'SEDRE', siren: '1' } })),
 }
-// NON contigu : le backend sert contigu=false + la liste des parcelles isolées (hors du bloc d'un seul tenant).
-const STUDY_KO = { ...STUDY_OK, contigu: false, isolees: ['97415000CT3327'] }
+// NON reliée : le backend sert relie=false + la liste des parcelles isolées (hors du bloc d'un seul tenant).
+const STUDY_KO = { ...STUDY_OK, contigu: false, relie: false, tenant_unique: false, isolees: ['97415000CT3327'], liens: [] }
 
 let current: Record<string, any> = STUDY_OK
 function mockFetch() {
@@ -80,6 +85,41 @@ describe('ASSEMBLAGE (H5) — étapes, contiguïté, isolées, plus de Courrier'
     // « rien d'autre » : aucun bilan (KPI/charge) quand l'assiette n'est pas d'un seul tenant.
     expect(document.querySelector('[data-asm-kpi="surface"]')).toBeFalsy()
     expect(document.querySelector('[data-asm-charge]')).toBeFalsy()
+  })
+
+  it('LOT 1 : reliée par contact ponctuel/petit vide → « pas d\'un seul tenant » + liens mesurés + caveat, bilan chiffré', async () => {
+    current = {
+      ...STUDY_OK, contigu: false, tenant_unique: false, lien_faible: true,
+      liens: [{ a: '97415000CT1917', b: '97415000CT2565', type: 'bord', longueur_bord_m: 24.3, vide_m: null },
+              { a: '97415000CT2565', b: '97415000CT3327', type: 'point', longueur_bord_m: 0, vide_m: null }],
+      tenant_avertissement: 'Assiette NON d\'un seul tenant — CT2565–CT3327 : contact par un point (aucun bord commun). Le chiffrage fusionne les polygones réels sans combler ce vide.',
+    }
+    renderM16(); await verifier('[data-asm-charge]')
+    expect(document.querySelector('[data-asm-lien-faible]')?.textContent).toContain("pas d'un seul tenant")
+    const liens = document.querySelector('[data-asm-liens]')?.textContent ?? ''
+    expect(liens).toContain('24') ; expect(liens).toContain('contact par un point')
+    expect(document.querySelector('[data-asm-tenant-avert]')?.textContent).toContain("NON d'un seul tenant")
+    // le chiffrage est présent MAIS réservé (pas bloqué comme une assiette isolée).
+    expect(document.querySelector('[data-asm-charge]')).toBeTruthy()
+    expect(document.querySelector('[data-asm-pas-possible]')).toBeFalsy()
+  })
+
+  it('LOT 2 : capacité par zone (table des portions) + contraintes retranchées en m²', async () => {
+    current = {
+      ...STUDY_OK,
+      zones_detail: [
+        { zone: 'U2b', fam: 'U', surface_m2: 19475, emprise_m2: 17897, recul_limites_m: 3, recul_voirie_m: 4, sdp_m2: 30673, niveaux: 5, constructible: true },
+        { zone: 'U2h', fam: 'U', surface_m2: 2041, emprise_m2: 1112, recul_limites_m: 4, recul_voirie_m: 4, sdp_m2: 1501, niveaux: 3, constructible: true },
+      ],
+      retranchements: { hors_zone_m2: 193, ppr_rouge_m2: 458, emplacement_reserve_m2: 0, ebc_m2: 0 },
+    }
+    renderM16(); await verifier('[data-asm-charge]')
+    const t = (document.querySelector('[data-asm-zones]')?.textContent ?? '').replace(/\s/g, '')
+    expect(t).toContain('U2b'); expect(t).toContain('U2h')
+    expect(t).toContain('30673'); expect(t).toContain('1501')   // SDP par zone (niveaux 5 vs 3)
+    const r = (document.querySelector('[data-asm-retranche]')?.textContent ?? '').replace(/ | /g, ' ')
+    expect(r).toContain('Zone rouge du PPR'); expect(r).toContain('458')
+    expect(r).toContain('Hors zone constructible')
   })
 
   it('OUTILS-P1-1 (pt 2) : trois lectures « Existant » / « Si conservé » / « Après démolition · ±Δ » ; « · terrain libéré » retiré des lignes', async () => {

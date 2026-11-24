@@ -8637,7 +8637,7 @@ def assemblage_study(idus: str, db: Session = Depends(get_db)) -> dict:
     capacité cumulée (SDP / logements) et bilan cumulé, par AGRÉGATION des faisabilités
     par parcelle. Vérifie la contiguïté (mitoyenneté) — jamais d'assemblage fabriqué.
     `idus` = liste séparée par des virgules (cap à 8)."""
-    from ..assemblage import ADJ_BUFFER_M, aggregate_assiette
+    from ..assemblage import aggregate_assiette, verdicts_contiguite
     idu_list = [s.strip() for s in idus.split(",") if s.strip()][:8]
     for i in idu_list:
         _check_idu(i)
@@ -8649,16 +8649,18 @@ def assemblage_study(idus: str, db: Session = Depends(get_db)) -> dict:
     if len(parcels) < 2:
         raise HTTPException(404, "Parcelles introuvables.")
     ids = [p.id for p in parcels]
-    # Contiguïté : l'union des parcelles (tamponnées d'une demi-largeur d'adjacence) doit former
-    # UN seul bloc connexe. Sinon, ce n'est pas un assemblage mitoyen.
-    contigu = bool(db.execute(text(
-        "SELECT ST_NumGeometries(ST_Union(ST_Buffer(geom_2975, :b))) = 1 "
-        "FROM parcels WHERE id = ANY(:ids)"), {"b": ADJ_BUFFER_M / 2.0, "ids": ids}).scalar())
+    # OUTIL-ASSEMBLAGE-FIX-1 (LOT 1) — contiguïté en TROIS verdicts (MÊME moteur que l'écran,
+    # `verdicts_contiguite`) : `contigu` STRICT = vrais bords partagés partout ; `relie` = assiette
+    # d'un bloc (inclut contact ponctuel/petit vide) ; `lien_faible` = reliée mais pas d'un seul tenant.
+    # Plus de buffer-union qui confondait un contact ponctuel avec une vraie mitoyenneté.
+    vc = verdicts_contiguite(db, ids)
+    contigu = vc["contigu"]
     agg = aggregate_assiette(db, parcels)   # capacité + bilan cumulés (source unique)
     return {
         "idus": [p.idu for p in parcels],
         "n_parcelles": len(parcels),
-        "contigu": contigu,
+        "contigu": contigu, "relie": vc["relie"], "tenant_unique": vc["tenant_unique"],
+        "lien_faible": vc["lien_faible"],
         "surface_cumulee_m2": agg["surface_cumulee_m2"],
         # NU-G-007 — part de l'assiette EN ZONE CONSTRUCTIBLE + % hors zone (alignés sur le
         # `bilan_surfacique` de l'Étude) : la SDP est bornée à cette part, le % hors zone est DIT.
@@ -9883,10 +9885,17 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
     # NU5-FIX-1 (A-O5) — IDU demandés mais non rendus : introuvables (ignores), surnuméraires
     # (tronques, au-delà de 3), doublons retirés. L'écran les affiche (« X non trouvée(s), Y au-delà
     # de la limite de 3 ») au lieu d'une table silencieusement plus courte.
+    # OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 7) — un IDU RÉSOLU (pid trouvé) mais qui échoue au build de sa
+    # fiche (HTTPException/exception) était retiré de `parcels` ET exclu de `ignores` (condition
+    # `pid_of.get(i) is None`) → omission SILENCIEUSE (ex. DH0098, dont fiche et Bilan donnent pourtant
+    # 1 491 m²). On distingue désormais `introuvable` (pid absent) de `echec_calcul` (pid présent, fiche
+    # non calculable) : TOUT identifiant demandé non rendu est nommé.
     _rendus = {r.get("idu") for r in out}
-    ignores = [i for i in ids if i not in _rendus and pid_of.get(i) is None]
+    non_rendus = [i for i in ids if i not in _rendus]
+    ignores = [i for i in non_rendus if pid_of.get(i) is None]          # introuvables (contrat historique)
+    echecs = [i for i in non_rendus if pid_of.get(i) is not None]       # trouvés mais fiche non calculable
     return {"count": len(out), "parcels": out, "demandes": _bruts,
-            "ignores": ignores, "tronques": tronques, "doublons": _doublons,
+            "ignores": ignores, "echecs": echecs, "tronques": tronques, "doublons": _doublons,
             "limite": 3}
 
 
