@@ -441,8 +441,13 @@ export function ContextePanel() {
                   {/* COHERENCE-FIX-1 (lot E) — l'étiquette du back (« Population légale 2023 (INSEE) ») :
                       la source et SON année, jamais un chiffre daté sans date. */}
                   {(d.population.habitants_etiquette || d.population.habitants_millesime) && <p className="-mt-0.5 mb-0.5 text-[10px] text-txt-dim">{d.population.habitants_etiquette ?? `Population municipale légale INSEE · millésime ${d.population.habitants_millesime}`}{d.population.habitants_pop_totale != null ? ` · population totale ${fmt(d.population.habitants_pop_totale)}` : ''}</p>}
-                  {d.population.menages != null && <RowT lbl="Ménages (résidences principales)" val={fmt(d.population.menages)} />}
-                  {d.population.niveau_vie_moyen_eur != null && <RowT lbl="Niveau de vie moyen (Filosofi)" val={`${fmt(d.population.niveau_vie_moyen_eur)} €/an`} />}
+                  {/* OUTIL-COMMUNES-FIX-2 #6 — la valeur servie EST le compte de résidences principales du RP
+                      (base légale), pas la série INSEE « ménages » (non ingérée) : on la nomme pour ce
+                      qu'elle est, sans l'appeler « ménages ». */}
+                  {d.population.menages != null && <RowT lbl="Résidences principales (RP)" val={fmt(d.population.menages)} />}
+                  {/* #6 — le niveau de vie Filosofi vient d'une AGRÉGATION GÉOGRAPHIQUE locale (dépend du
+                      rattachement des parcelles), pas de la valeur communale officielle INSEE : on le dit. */}
+                  {d.population.niveau_vie_moyen_eur != null && <RowT lbl="Niveau de vie moyen (Filosofi, agrégat local)" val={`${fmt(d.population.niveau_vie_moyen_eur)} €/an`} />}
                   {d.population.logements != null && <RowT lbl="Logements" val={`${fmt(d.population.logements)}${d.population.vacants != null ? ` · ${fmt(d.population.vacants)} vacants (${fmtDec(d.population.vacance_pct)} %)` : ''}`} />}
                   {/* DONNEES-1 lot 2.4 — âge du parc (RP2022) : part construit avant 1991 = stock ancien. */}
                   {d.population.parc_ancien_pct != null && <RowT lbl="Parc construit avant 1991" val={`${fmtDec(d.population.parc_ancien_pct)} %`} />}
@@ -562,7 +567,9 @@ export function ContextePanel() {
                                 SÉPARÉMENT avec leur nature/effectif : demandé = annonces Radar (tous types,
                                 statuts mêlés, relevé en continu) ; acté = ancien DVF commune entière. */}
                             <RowT lbl="Prix demandé médian (annonces, Radar)" val={sous ? libSeuil : (ma!.prix_demande_median_eur_m2 != null ? `${fmt(ma!.prix_demande_median_eur_m2)} €/m²${ma!.prix_demande_n != null ? ` · n ${fmt(ma!.prix_demande_n)}` : ''}` : '—')} />
-                            <RowT lbl="Prix acté médian (ancien, DVF commune)" val={ma!.prix_acte_eur_m2 != null ? `${fmt(ma!.prix_acte_eur_m2)} €/m²` : '—'} />
+                            {/* OUTIL-COMMUNES-FIX-2 #5 — le prix acté porte SON effectif et SA période, à
+                                côté du prix demandé (deux populations différentes, l'écart reste indicatif). */}
+                            <RowT lbl="Prix acté médian (ancien, DVF commune)" val={ma!.prix_acte_eur_m2 != null ? `${fmt(ma!.prix_acte_eur_m2)} €/m²${ma!.prix_acte_n != null ? ` · n ${fmt(ma!.prix_acte_n)}` : ''}${ma!.prix_acte_periode ? ` · ${ma!.prix_acte_periode}` : ''}` : '—'} />
                             <RowT lbl="Écart demandé / acté (indicatif)" strong={!sous && ma!.ecart_demande_acte_pct != null}
                               val={sous ? libSeuil : (ma!.ecart_demande_acte_pct != null ? `${ma!.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(ma!.ecart_demande_acte_pct)} %` : '—')} />
                             {!sous && ma!.ecart_demande_acte_pct != null && (
@@ -650,10 +657,15 @@ export function ContextePanel() {
                   {/* OUTILS-P1-1 (pt 6) — l'horizon devient un SCÉNARIO « au rythme observé » (couleur
                       alignée sur le signal ZAN, seuil 5 ans), avec son HYPOTHÈSE (le rythme de consommation)
                       et ses ANNÉES dit juste dessous : une PROJECTION, pas une échéance réglementaire. */}
-                  <RowT lbl="Scénario au rythme observé" val={r?.['horizon_epuisement_ans'] != null ? `${fmtAns(r['horizon_epuisement_ans'])} avant épuisement` : '—'}
+                  {/* OUTIL-COMMUNES-FIX-2 #5 — la CARTE DÉTAILLÉE porte la DATE DE DÉPART du scénario (terme
+                      de la série Cerema 2021-2024, ≈ 1ᵉʳ janvier 2024) et l'épuisement en ANNÉE ABSOLUE :
+                      plus de « 1,1 an avant épuisement » sans date, qui se lisait comme un futur en 2026. */}
+                  <RowT lbl="Scénario au rythme observé (base fin 2024)" val={r?.['horizon_epuisement_ans'] != null
+                      ? (Number(r['horizon_epuisement_ans']) <= 0 ? 'déjà dépassé' : `${fmtAns(r['horizon_epuisement_ans'])} → vers ${2024 + Math.round(Number(r['horizon_epuisement_ans']))}`)
+                      : '—'}
                     ton={r?.['horizon_epuisement_ans'] != null ? (r['horizon_epuisement_ans'] <= 0 ? 'rouge' : r['horizon_epuisement_ans'] < 5 ? 'orange' : 'vert') : undefined} strong />
                   {r?.['horizon_epuisement_ans'] != null && (
-                    <p data-zan-hypothese className="text-[10px] leading-snug text-txt-dim">Projection, pas une échéance réglementaire : au rythme observé{r?.['rythme_conso_ha_an'] != null ? ` de ${fmtV(r['rythme_conso_ha_an'], ' ha/an')}` : ''}, le budget ZAN restant serait consommé en {fmtAns(r['horizon_epuisement_ans'])}.</p>
+                    <p data-zan-hypothese className="text-[10px] leading-snug text-txt-dim">Projection datée (à partir du terme de la série Cerema 2021-2024, ≈ 1ᵉʳ janvier 2024), pas une échéance réglementaire : au rythme observé{r?.['rythme_conso_ha_an'] != null ? ` de ${fmtV(r['rythme_conso_ha_an'], ' ha/an')}` : ''}, le budget ZAN restant serait consommé {Number(r['horizon_epuisement_ans']) <= 0 ? 'dès avant 2025' : `vers ${2024 + Math.round(Number(r['horizon_epuisement_ans']))}`}.</p>
                   )}
                 </div>
                 <Source nom={`Cadastre DGFiP · ${d.densifiables?.source ?? 'analyse LABUSE'} · Consommation ENAF Cerema (estimé)`} />
@@ -691,7 +703,9 @@ export function ContextePanel() {
                     </p>
                   )
                 })()}
-                {d.foncier?.repartition_zonage && (() => {
+                {/* OUTIL-COMMUNES-FIX-2 #3 — sous RNU, PAS de rubrique « Zones du PLU » : la commune n'a pas
+                    de PLU local (Saint-Philippe affichait à tort 621 ha en N). On masque le zonage. */}
+                {d.foncier?.repartition_zonage && d.plu_statut.statut !== 'RNU' && (() => {
                   const f = d.foncier.repartition_zonage.familles
                   return (
                     <div className="mt-2 border-t border-line pt-2">
@@ -709,12 +723,19 @@ export function ContextePanel() {
                   )
                 })()}
                 <div className="mt-2 flex flex-col gap-0.5 border-t border-line pt-2 text-[12px]">
-                  {d.plh ? (
+                  {d.plh ? (() => {
+                    // OUTIL-COMMUNES-FIX-2 #6 — un PLH dont la période est passée est dit ÉCHU (avec ses
+                    // années), jamais présenté au présent (Saint-Philippe : PLH 2018-2023 échu).
+                    const finPlh = Number((/(\d{4})\s*$/.exec(d.plh.periode) ?? [])[1])
+                    const echu = finPlh > 0 && finPlh < new Date().getFullYear()
+                    const suffixe = d.plh.periode ? ` (${d.plh.periode}${echu ? ' — échu' : ''})` : ''
+                    return (
                     <>
-                      <RowT lbl={`PLH ${d.epci ?? ''} — objectif`} val={d.plh.obj_logements_an != null ? `${fmt(d.plh.obj_logements_an)} logts/an` : '—'} />
+                      <RowT lbl={`PLH ${d.epci ?? ''} — objectif${suffixe}`} val={d.plh.obj_logements_an != null ? `${fmt(d.plh.obj_logements_an)} logts/an` : '—'} />
                       {d.plh.part_sociale_pct != null && <RowT lbl="Part sociale visée" val={`${Number(d.plh.part_sociale_pct).toLocaleString('fr-FR')} %`} />}
                     </>
-                  ) : (
+                    )
+                  })() : (
                     <p data-plh-sans-objet className="text-[12px] text-txt-mut">Aucun programme local de l'habitat recensé pour l'intercommunalité {d.epci ?? ''}.</p>
                   )}
                 </div>
@@ -741,7 +762,9 @@ export function ContextePanel() {
                   )}
                   {/* COMMUNE-FIX-1 (D10) — taux communal de la taxe d'aménagement (même source que l'outil Taxe). */}
                   <div className="flex flex-col gap-0.5 text-[12px]">
-                    <RowT lbl="Taxe d'aménagement (part communale)" val={d.taxe_amenagement?.part_communale_pct != null ? `${fmtDec(d.taxe_amenagement.part_communale_pct)} %` : 'non déterminée'} />
+                    {/* OUTIL-COMMUNES-FIX-2 #6 — le MILLÉSIME de la taxe d'aménagement est affiché (son
+                        maintien en vigueur n'est pas garanti au-delà). */}
+                    <RowT lbl={`Taxe d'aménagement (part communale)${d.taxe_amenagement?.millesime ? ` — ${d.taxe_amenagement.millesime}` : ''}`} val={d.taxe_amenagement?.part_communale_pct != null ? `${fmtDec(d.taxe_amenagement.part_communale_pct)} %` : 'non déterminée'} />
                   </div>
                   {d.fiscalite?.perime && (
                     <p data-fiscalite-perime className="mt-1 text-[11px] text-st-creuser">Donnée ingérée il y a plus d'un an — à rafraîchir (fichier REI annuel).</p>
@@ -784,7 +807,9 @@ export function ContextePanel() {
                   <RowT lbl="PPR (risque naturel)" val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % des parcelles` : '—'} />
                   {/* RECETTE-PROD-1 (F) — dire DE QUOI : part des parcelles exposées à l'aléa. */}
                   <RowT lbl="Mouvement de terrain" val={d.risques.mouvement_terrain_pct != null ? `${fmtDec(d.risques.mouvement_terrain_pct)} % des parcelles` : '—'} />
-                  <RowT lbl="Arrêtés CatNat" val={fmt(d.risques.catnat_arretes)} />
+                  {/* OUTIL-COMMUNES-FIX-2 #3 — on DISTINGUE les arrêtés (par date d'arrêté) des entrées par
+                      péril (un arrêté couvre plusieurs périls) : Saint-Denis 14 arrêtés / 21 périls. */}
+                  <RowT lbl="Arrêtés CatNat (distincts)" val={`${fmt(d.risques.catnat_arretes)}${d.risques.catnat_perils != null && d.risques.catnat_perils !== d.risques.catnat_arretes ? ` · ${fmt(d.risques.catnat_perils)} entrées par péril` : ''}`} />
                   {d.risques.catnat_detail?.length ? (
                     /* RECETTE-2 (B2) — chaque arrêté sur DEUX lignes : libellé pleine largeur, puis
                        « JJ/MM/AAAA → JJ/MM/AAAA · code » (plus de libellé coupé mot par mot, plus de
@@ -800,8 +825,10 @@ export function ContextePanel() {
                                 a.code_national].filter(Boolean).join(' · ')}</div>
                         </div>
                       ))}
-                      {d.risques.catnat_arretes > 6 ? (
-                        <div className="text-[11px] text-txt-dim">et {d.risques.catnat_arretes - 6} autre{d.risques.catnat_arretes - 6 > 1 ? 's' : ''}…</div>
+                      {/* #3 — le « et N autres » compte sur la LISTE affichée (entrées par péril), pas sur
+                          le nombre d'arrêtés distincts (sinon le reste était faux). */}
+                      {d.risques.catnat_detail.length > 6 ? (
+                        <div className="text-[11px] text-txt-dim">et {d.risques.catnat_detail.length - 6} autre{d.risques.catnat_detail.length - 6 > 1 ? 's' : ''}…</div>
                       ) : null}
                     </div>
                   ) : null}

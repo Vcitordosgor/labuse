@@ -52,6 +52,7 @@ def marche_annonces(db: Session, commune: str) -> dict | None:
     demande_n = (row.get("prix_m2_bati") or {}).get("n")
     cmp = comparable(db, commune) or {}
     acte = cmp.get("ancien_median_eur_m2")
+    acte_n = cmp.get("ancien_n")   # OUTIL-COMMUNES-FIX-2 #5 — effectif des ACTES, à côté du prix demandé
     biens = int(row.get("actives") or 0)
     # NU5-FIX-1 (E-5) — l'écart demandé/acté était calculé sur `prix_demande_n` (annonces avec prix
     # bâti), une population DIFFÉRENTE des « biens en vente » affichés : +66 % sur 7 annonces alors que
@@ -74,6 +75,8 @@ def marche_annonces(db: Session, commune: str) -> dict | None:
         "prix_demande_n": demande_n,
         "ecart_demande_acte_pct": ecart,
         "prix_acte_eur_m2": acte,
+        "prix_acte_n": acte_n,        # #5 — effectif des ventes actées (DVF commune entière)
+        "prix_acte_periode": "DVF commune entière (ventes strictes)",
         "derniere_collecte": derniere,
         "source": "Radar LABUSE (annonces relevées) · écart mesuré contre le baromètre DVF commune entière.",
     }
@@ -91,10 +94,14 @@ def _pct_ppr_mvt(db: Session, commune: str, total_parcelles: int) -> float | Non
     `mouvement_terrain_pct` déjà couvert par sa fiche de règle, pas un nouveau moteur.)"""
     if not total_parcelles:
         return None
+    # OUTIL-COMMUNES-FIX-2 #3 — même population au numérateur qu'au dénominateur (parc VIVANT) : sinon le
+    # repli PPR i+mvt de Saint-Denis dépasse aussi le dénominateur vivant (72,7 au lieu de 72,5 %).
+    from ..cadastre_disparue import filtre_vivant_sql
+    vivant = filtre_vivant_sql(db, "p")
     n = db.execute(text(
         "SELECT count(DISTINCT p.idu) FROM parcels p JOIN spatial_layers sl ON sl.kind = 'ppr' "
         "AND sl.attrs->>'risque' ILIKE :r AND ST_Intersects(p.geom_2975, sl.geom_2975) "
-        "WHERE p.commune = :c"), {"r": "%MOUVEMENT%", "c": commune}).scalar() or 0
+        "WHERE p.commune = :c" + vivant), {"r": "%MOUVEMENT%", "c": commune}).scalar() or 0
     return round(100.0 * n / total_parcelles, 1)
 
 
@@ -116,8 +123,15 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
     def _pct_layer(kind: str, subtype: str | None = None) -> float | None:
         return pct_parcelles_couche(db, commune, kind, tot, subtype)
 
-    catnat = (db.execute(text("SELECT count(*) FROM catnat_arretes WHERE insee = :i"),
-                         {"i": insee}).scalar() or 0) if insee else 0
+    # OUTIL-COMMUNES-FIX-2 #3 — DISTINGUER arrêtés et périls. `catnat_arretes` porte UNE ligne par
+    # (commune, péril) d'un même arrêté CatNat : `count(*)` mélangeait les deux. Un ARRÊTÉ est identifié
+    # par sa date de publication (`date_arrete`) et couvre plusieurs périls. On sert les DEUX comptes :
+    # Saint-Denis 14 arrêtés / 21 entrées par péril ; Cilaos 11 / 16 ; Saint-Philippe 18 / 21.
+    _cn = db.execute(text(
+        "SELECT count(DISTINCT date_arrete) AS arretes, count(*) AS perils "
+        "FROM catnat_arretes WHERE insee = :i"), {"i": insee}).mappings().first() if insee else None
+    catnat = int((_cn or {}).get("arretes") or 0)          # arrêtés DISTINCTS
+    catnat_perils = int((_cn or {}).get("perils") or 0)    # entrées par péril
     # SOURCES-4 lot 1 — le détail des arrêtés dormait dans `catnat_arretes` (seul le COMPTE était
     # servi). On surface la liste : le péril, les trois dates (début/fin/arrêté) et le code national
     # + la date de publication au JO (jusque-là seulement dans `raw`). 12 plus récents — la fiche dit
@@ -177,7 +191,8 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
         # E-2 — provenance honnête : True = lu du zonage PPR i+mvt (aléa études mvt non cartographié
         # par la DEAL pour cette commune), False = aléa études réglementaire zoné (cas normal).
         "mouvement_terrain_repli_ppr": mvt_repli,
-        "catnat_arretes": int(catnat),
+        "catnat_arretes": int(catnat),           # #3 — arrêtés DISTINCTS (par date d'arrêté)
+        "catnat_perils": int(catnat_perils),      # #3 — entrées par péril (≥ arrêtés)
         "catnat_detail": catnat_detail,   # SOURCES-4 lot 1 — arrêtés détaillés (péril, dates, code national)
         "parc_national": bool(parc),
         "azi_tri": azi_tri,

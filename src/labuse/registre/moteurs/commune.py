@@ -143,13 +143,20 @@ def pct_parcelles_couche(db, commune: str, kind: str, total_parcelles: int,
     d'événements BDMvt Géorisques source 36 — une notion distincte, non réglementaire.)"""
     if not total_parcelles:
         return None
+    # OUTIL-COMMUNES-FIX-2 #3 — NUMÉRATEUR ET DÉNOMINATEUR SUR LES MÊMES PARCELLES. Le total fourni est
+    # le parc VIVANT (disparues exclues) ; le numérateur comptait LUI toutes les parcelles (disparues
+    # incluses) → des taux > 100 % (mesuré : 15/24 communes pour le mouvement de terrain ; Cilaos 100,1 %,
+    # Saint-Philippe 100,2 %). On applique le MÊME filtre vivant au numérateur. Saint-Denis PPR : 27 763 /
+    # 38 295 = 72,5 % (et plus 72,7 %).
+    from ...cadastre_disparue import filtre_vivant_sql
+    vivant = filtre_vivant_sql(db, "p")
     clause = "sl.kind = :k" + (" AND sl.subtype = :st" if subtype else "")
     params = {"k": kind, "c": commune}
     if subtype:
         params["st"] = subtype
     n = db.execute(text(
         "SELECT count(DISTINCT p.idu) FROM parcels p JOIN spatial_layers sl ON " + clause +
-        " AND ST_Intersects(p.geom_2975, sl.geom_2975) WHERE p.commune = :c"),
+        " AND ST_Intersects(p.geom_2975, sl.geom_2975) WHERE p.commune = :c" + vivant),
         params).scalar() or 0
     return round(100.0 * n / total_parcelles, 1)
 
