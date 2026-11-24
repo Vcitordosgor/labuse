@@ -49,6 +49,17 @@ BATI_SEUIL_M2 = 10
 #: les quatre états de la partition (somme = total). Ordre d'affichage géré par le front.
 ETATS = ("recent", "dormant", "acheve", "autre")
 
+#: code ETAT_DAU d'un permis ANNULÉ (= la MÊME règle que ingestion.permits.est_annule et que le CASE
+#: d'état ci-dessous, qui exclut '4' du dormant). Un seul littéral, ici.
+ANNULE_CODE = "4"
+
+
+def annule_sql(a: str = "") -> str:
+    """Prédicat SQL « ce permis est ANNULÉ » (ETAT_DAU=4) — jumelle SQL de `est_annule` (Python), LA
+    règle unique de l'outil (pas une nouvelle). `a` = préfixe d'alias ('' ou 's.'). `etat` NULL/absent
+    → NON annulé. Pour « non annulé » qui compte aussi les NULL : `NOT COALESCE((annule_sql), false)`."""
+    return f"{a}raw->>'etat' = '{ANNULE_CODE}'"
+
 
 def _dormant_sql(a: str, dmax: str, bati: bool = True) -> str:
     """Prédicat SQL « ce permis est DORMANT » (hors priorité achevé, traitée avant dans le CASE).

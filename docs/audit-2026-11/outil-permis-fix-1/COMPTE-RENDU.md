@@ -594,3 +594,40 @@ Dormants **854** (île) · m10 **51 125** lignes (**50 960** valides) · `dmax` 
 ## Fichiers touchés (mandat 6)
 
 Back : `api/modules.py` (liste sans dépôt/délai, fiche année==AN_DEPOT, `/velocite` supprimé), `bilan/reperes.py` (repère Sitadel supprimé), `ingestion/permits.py` (`permis_sans_logements`), `exports/robinet_fiche.py` + `exports/miroir.py` (Dossier : zéro restitué + logements + réserve), `api/fiche_commune.py` (docstring). Config : `declarations/bilan/postes.yaml` (repère retiré, defaut:6 gardé). Front : `components/outils/ModulePanel.tsx` (badge délai liste retiré), `components/fiche/BilanEcran.tsx` (bouton retiré). Tests : `test_outil_permis_fix1.py` (+6), `test_api.py` (/velocite → 404). **Le `flash/` reverté** (mauvais document). Aucune écriture en base.
+
+---
+
+# OUTIL-PERMIS-FIX-7 — relecture 4 : 3 retouches
+
+**Contexte.** Le relecteur (relecture-permis-4, commit `91ccf2d94`) conclut **« OUI, on peut fusionner »**. Restaient 2 descriptions de catalogue périmées + 1 réserve signalée (annulés comptés dans le Dossier). Trois retouches, rien d'autre.
+
+## Point 1 — `donnees.py` : description de la durée de portage
+
+`duree_portage_saisi_mois` disait « pré-remplie par le délai d'instruction médian + 20 mois de chantier ». Ce pré-remplissage **n'existe plus** (le délai n'est jamais mesuré ; `BilanEcran.tsx` ne pose plus de valeur). Corrigé → « **saisie client (aucune valeur pré-remplie)** » (`calcul="passe_plat"`, `moteur=None` : déjà cohérent).
+
+## Point 2 — `provenance.py` : exemple périmé + balayage
+
+`provenance.py:165` donnait encore l'exemple « ~9 mois + 20 mois de chantier » pour ce pré-remplissage. Corrigé (exemple remplacé par prix de sortie DVF / taxe légale). **Balayage de tout le dépôt** (`20 mois`, `délai d'instruction médian`, `pré-rempli*`, `portage`×`instruction`/`chantier`) : **aucune autre phrase** ne décrit ce pré-remplissage ni un délai d'instruction mesuré — les autres `pré-rempli` sont des pré-remplissages légitimes et vivants (courrier SPF, programme Faisabilité, pièces DVF…), hors sujet.
+
+## Point 3 — Dossier « permis à proximité » : annulés hors compte
+
+`nearby_permits` comptait les permis **annulés** dans « à proximité » (réserve signalée par le relecteur). Désormais ils **sortent du compte** (n, logements, sans-nb) et sont **dits à part** : « — dont N annulé(s), non compté(s) ». Règle d'état **UNIQUE** (nouveau helper `permis_classe.annule_sql` = `raw->>'etat' = '4'`, ETAT_DAU=4, jumelle SQL de `est_annule` — **pas une nouvelle règle**). `nearby_permits.dynamique` expose `permis_annules` ; `_c_permis` le porte ; `miroir._r_permis_proximite` le rend. Les `etat` NULL comptent comme non annulés (`NOT COALESCE((annule_sql), false)`).
+
+Preuve (texte du Dossier = requête SQL directe, base vive) :
+
+| Parcelle | Direct (n hors annulés / logts / sans-nb / annulés) | Texte du Dossier |
+|---|---|---|
+| `97405000BE1692` · Petite-Île (**2 annulés**) | 16 / 9 / 8 / **2** | « 16 permis (< 500 m, 24 mois), 9 logements déclarés (8 permis sans nombre de logements) — **dont 2 annulés, non comptés** » |
+| `97411000BZ1065` · Saint-Denis | 1 / 4 / 0 / 0 | « 1 permis (< 500 m, 24 mois), 4 logements » |
+| `97424000AB0001` · Cilaos | 0 / 0 / 0 / 0 | « 0 permis (< 500 m, 24 mois), 0 logement » |
+| `97415000CV1498` · Saint-Paul | 5 / 6 / 1 / 0 | « 5 permis…, 6 logements déclarés (1 permis sans nombre de logements) » |
+
+BE1692 : avant (annulés inclus) 18/11 → après **16**, logements 11→9, + « dont 2 annulés, non comptés ». Test db ajouté (`test_permits.py::test_dynamique_exclut_les_annules`) : seed 1 autorisé (3 logts) + 1 annulé (code 4, 5 logts) proches → `permis_recents=1`, `logements_recents=3`, `permis_annules=1`.
+
+## Non-régression
+
+Dormants **854** · m10 **51 125 / 50 960** valides · dmax **30/09/2026** · rayon Dossier **500 m** (`test_dynamique_respecte_le_rayon`). Inchangés.
+
+## Fichiers touchés (mandat 7)
+
+`registre/donnees.py` (desc portage), `exports/provenance.py` (ex. périmé), `permis_classe.py` (+`annule_sql`/`ANNULE_CODE`), `ingestion/permits.py` (dynamique exclut annulés + `permis_annules`), `exports/robinet_fiche.py` + `exports/miroir.py` (Dossier dit les annulés à part). Tests : `test_outil_permis_fix1.py` (+2 garde-fous), `test_permits.py` (+1 db). Aucune écriture en base ; aucun changement front.

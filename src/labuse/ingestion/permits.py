@@ -305,14 +305,23 @@ def nearby_permits(session, parcel_id: int, radius_m: float = 300.0, limit: int 
              for r in rows]
 
     # Dynamique de secteur : nb d'autorisations géolocalisées dans le rayon, fenêtre en MOIS.
+    # OUTIL-PERMIS-FIX-7 (Point 3) — les permis ANNULÉS (ETAT_DAU=4) SORTENT du compte « à proximité » et
+    # sont dits À PART (« dont N annulé(s), non comptés »), via la règle d'état UNIQUE (permis_classe),
+    # jamais une nouvelle. `non_annule` compte aussi les `etat` NULL (COALESCE → non annulé).
+    from .. import permis_classe
+    _annule = permis_classe.annule_sql("s.")
+    _non_annule = f"NOT COALESCE(({_annule}), false)"
     dyn = session.execute(
         text(
-            """WITH p AS (SELECT centroid FROM parcels WHERE id = :pid)
-               SELECT count(*) AS n,
-                      coalesce(sum(NULLIF(s.raw->>'nb_lgt','')::int), 0) AS logts,
-                      -- OUTIL-PERMIS-FIX-6 (Point 3) — permis du rayon SANS nombre de logements déclaré :
-                      -- le total devient un « déclaré » partiel, à DIRE en réserve (Dossier).
-                      count(*) FILTER (WHERE NULLIF(s.raw->>'nb_lgt','') IS NULL) AS sans_lgt
+            f"""WITH p AS (SELECT centroid FROM parcels WHERE id = :pid)
+               SELECT count(*) FILTER (WHERE {_non_annule}) AS n,
+                      coalesce(sum(NULLIF(s.raw->>'nb_lgt','')::int)
+                               FILTER (WHERE {_non_annule}), 0) AS logts,
+                      -- OUTIL-PERMIS-FIX-6 (Point 3) — permis (NON annulés) du rayon SANS nombre de logements
+                      -- déclaré : le total devient un « déclaré » partiel, à DIRE en réserve (Dossier).
+                      count(*) FILTER (WHERE NULLIF(s.raw->>'nb_lgt','') IS NULL AND {_non_annule}) AS sans_lgt,
+                      -- OUTIL-PERMIS-FIX-7 (Point 3) — annulés comptés à part (sortis de n/logts/sans).
+                      count(*) FILTER (WHERE {_annule}) AS annules
                FROM sitadel_permits s, p
                WHERE s.geom IS NOT NULL
                  -- OUTIL-PERMIS-FIX-3 (Point 1) — RÉGRESSION RÉTABLIE : le RAYON (:r mètres, EPSG 2975)
@@ -338,6 +347,8 @@ def nearby_permits(session, parcel_id: int, radius_m: float = 300.0, limit: int 
                           "logements_recents": int(dyn["logts"]) if dyn else 0,
                           # OUTIL-PERMIS-FIX-6 (Point 3) — permis du rayon sans nombre de logements.
                           "permis_sans_logements": int(dyn["sans_lgt"]) if dyn else 0,
+                          # OUTIL-PERMIS-FIX-7 (Point 3) — permis annulés du rayon (hors compte, dits à part).
+                          "permis_annules": int(dyn["annules"]) if dyn else 0,
                           "annees": round(mois_dyn / 12, 1), "fenetre_mois": mois_dyn,
                           # couverture : ne jamais lire « calme » sans la qualifier.
                           "couverture_pct": couverture_pct, "geolocalises": geoloc, "total": total,

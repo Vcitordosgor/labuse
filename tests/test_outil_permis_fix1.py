@@ -299,3 +299,30 @@ def test_fix6_point3_dossier_ligne_permis_honnete():
     # 3) le miroir rend logements déclarés + la réserve « sans nombre de logements »
     mir = _src("src/labuse/exports/miroir.py")
     assert "sans nombre de logements" in mir and "logement" in mir
+
+
+def test_fix7_point1_2_descriptions_portage_corrigees():
+    """OUTIL-PERMIS-FIX-7 (Points 1-2) — les descriptions périmées du pré-remplissage du portage par le
+    délai d'instruction sont corrigées (catalogue + provenance) : plus de « délai médian + 20 mois »."""
+    don = _src("src/labuse/registre/donnees.py")
+    i = don.index('"duree_portage_saisi_mois"')
+    bloc = don[i:i + 600]
+    assert "pré-remplie par le délai" not in bloc and "20 mois" not in bloc
+    assert "saisie client" in bloc
+    prov = _src("src/labuse/exports/provenance.py")
+    assert "9 mois + 20 mois de chantier" not in prov or "retiré" in prov  # l'ex. périmé n'est plus donné tel quel
+
+
+def test_fix7_point3_dossier_exclut_annules_via_permis_classe():
+    """OUTIL-PERMIS-FIX-7 (Point 3) — les permis ANNULÉS sortent du compte « à proximité » du Dossier et
+    sont dits à part, via la règle d'état UNIQUE (permis_classe.annule_sql), pas une nouvelle règle."""
+    from labuse import permis_classe
+    assert hasattr(permis_classe, "annule_sql")
+    assert permis_classe.annule_sql("s.") == "s.raw->>'etat' = '4'"   # ETAT_DAU=4, règle unique
+    perm = _src("src/labuse/ingestion/permits.py")
+    assert "permis_classe.annule_sql" in perm                 # nearby_permits réutilise la règle
+    assert '"permis_annules"' in perm                         # annulés comptés à part
+    rf = _src("src/labuse/exports/robinet_fiche.py")
+    assert '"annules":' in rf                                 # l'extracteur porte le nombre d'annulés
+    mir = _src("src/labuse/exports/miroir.py")
+    assert "annulé" in mir and "non compté" in mir            # dits à part dans le Dossier
