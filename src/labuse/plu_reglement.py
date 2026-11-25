@@ -151,7 +151,28 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
                 from .faisabilite.zonage import _insee as _insee_de
                 from .implantation.regles import charger as _charger_bareme
                 _b = _charger_bareme(_insee_de(rules.bassin), rules.code).stationnement
-                entry["conditions"] = [{"texte": c} for c in (getattr(_b, "conditions", None) or ())]
+                conds = []
+                # OUTIL-PLU-FIX-11 (LOT 3) — les lignes TYPÉES du tableau (logement social, locatif aidé,
+                # hébergement, étudiant…) sont des CONDITIONS à part entière, pas seulement le ratio de base.
+                # L'audit les citait explicitement (SL « logements sociaux → 1 place/logt », SP « 1 place
+                # pour les logements locatifs sociaux ») ; on les restitue depuis le barème servi.
+                for lg in (getattr(_b, "lignes", None) or ()):
+                    dest = getattr(lg, "destination", None)
+                    if dest not in ("social", "locatif_aide", "senior", "etudiant", "hebergement"):
+                        continue
+                    lib = (getattr(lg, "libelle", None) or dest).strip()
+                    p = getattr(lg, "places", None)
+                    # logement (locatif) social : ratio CANONIQUE « N place / logement » (on retire le
+                    # parenthétique redondant « (1/logt) ») pour une ligne lisible et vérifiable.
+                    if dest in ("social", "locatif_aide") and p is not None:
+                        base = re.sub(r"\s*\([^)]*\)\s*$", "", lib).strip()
+                        n = int(p) if float(p).is_integer() else p
+                        conds.append({"texte": f"{base} : {n} place / logement"})
+                    else:
+                        conds.append({"texte": lib})
+                conds += [{"texte": c} for c in (getattr(_b, "conditions", None) or ())]
+                _vus: set[str] = set()                # dédoublonne (ex. 2 lignes « hébergement » identiques)
+                entry["conditions"] = [c for c in conds if not (c["texte"] in _vus or _vus.add(c["texte"]))]
                 if not ref and getattr(_b, "article", None):
                     ref = f"Art. {_b.article}" + (f" · p.{_b.page_pdf}" if _b.page_pdf is not None else "")
                     entry["reference"] = ref
