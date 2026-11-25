@@ -592,7 +592,10 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     # L'esquisse est toujours « à vérifier », jamais « exploitable ».
     from ..faisabilite.surface_retenue import surface_a_retenir
     _gf = payload.get("_garde_fiche") or {}
-    _est_rapide = _gf.get("sdp_max_m2") or _gf.get("sdp_fiche_m2")
+    # ETUDE-AUDIT-FIX-1 (relecture pt4) — la « surface à retenir » d'une étude SUR TERRAIN NU se base sur
+    # l'estimation TERRAIN NU de l'ASSIETTE (sdp_max_m2, désormais sommée sur toutes les parcelles), JAMAIS
+    # sur le plancher résiduel AVEC bâti existant (`sdp_fiche_m2`) : on retire ce repli trompeur.
+    _est_rapide = _gf.get("sdp_max_m2")
     _scn_sdp = (retenu.get("resume") or {}).get("sdp_m2") if kmax else None
     _ech, _mot = _plan_en_echec(retenu) if kmax else (False, None)
     _sar = surface_a_retenir(_est_rapide, _scn_sdp, plan_en_echec=_ech, motif_echec=_mot)

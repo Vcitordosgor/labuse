@@ -2433,13 +2433,22 @@ def _attach_garde_fiche(db: Session, payload: dict, idus) -> None:
     try:
         from ..faisabilite.potentiel_batir import potentiel_batir
         pot = potentiel_batir(db, idus[0])
-        gf = {"sdp_fiche_m2": pot.get("sdp_restante_m2"), "motif_fiche": pot.get("motif")}
+        # ETUDE-AUDIT-FIX-1 (relecture pt4) — la « surface à retenir » et la SDP fiche portent sur
+        # l'ASSIETTE ENTIÈRE (terrain nu), pas la 1ʳᵉ parcelle : l'esquisse est dessinée sur l'assiette
+        # FUSIONNÉE, on ne peut pas la comparer à l'estimation d'une seule parcelle (Étang-Salé : 483 m²
+        # pour AW0099 seule face à 2 730 m² dessinés sur les 4 parcelles). On SOMME chaque parcelle ;
+        # une parcelle non calculable est ignorée.
+        _resid = [potentiel_batir(db, i).get("sdp_restante_m2") for i in idus]
+        _resid = [r for r in _resid if isinstance(r, (int, float))]
+        gf = {"sdp_fiche_m2": round(sum(_resid), 1) if _resid else None, "motif_fiche": pot.get("motif")}
         # CAPACITE-1 (LOT C) — l'ESTIMATION RAPIDE (table rase, moteur analytique) sert de base à
         # « surface à retenir ». On la lit via la MÊME fonction que le Dossier (table rase LIVE), pour
         # que les deux documents concordent même sur une parcelle bâtie (colonne de run partielle).
         try:
             from ..faisabilite.surface_retenue import estimation_rapide_m2
-            gf["sdp_max_m2"] = estimation_rapide_m2(db, idus[0])
+            _ests = [estimation_rapide_m2(db, i) for i in idus]
+            _ests = [e for e in _ests if isinstance(e, (int, float))]
+            gf["sdp_max_m2"] = round(sum(_ests), 1) if _ests else None
         except Exception:  # noqa: BLE001
             gf["sdp_max_m2"] = None
         # CAPACITE-1 (D4) — l'occupation SUPPOSÉE du Dossier (le « 45 % » : emprise constructible ×
