@@ -87,7 +87,8 @@ const ETAPES = [
 
 function verdictTon(v: string): 'vert' | 'ambre' | 'rouge' {
   if (v.startsWith('Exploitable')) return 'vert'
-  if (v.startsWith('À compléter')) return 'ambre'
+  // ETUDE-AUDIT-FIX-1 LOT 1 — « À vérifier » (réserve d'honnêteté) et « À compléter » = ambre, pas rouge.
+  if (v.startsWith('À compléter') || v.startsWith('À vérifier')) return 'ambre'
   return 'rouge'
 }
 function etatTon(r: string): 'vert' | 'ambre' | 'rouge' | 'neutre' {
@@ -311,7 +312,9 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
         {/* ETUDE-V6-3 (items 6/7) — bandeau : verdict + LE facteur limitant (même phrase partout). Plus d'onglets. */}
         <div className="flex flex-wrap items-center gap-2.5 border-b border-line-2 px-4 py-3">
           <span className="text-[12px] text-txt-dim">Verdict de l'étude</span>
-          <Badge ton={verdictTon(resultat.verdict ?? '')}>{resultat.verdict}</Badge>
+          {/* ETUDE-AUDIT-FIX-1 LOT 1 (défaut 1) — verdict AFFICHÉ posé par la source unique (identique au
+              PDF) ; repli sur le verdict brut du payload si non annoté. */}
+          <Badge ton={verdictTon(active?.verdict_affiche ?? resultat.verdict ?? '')}>{active?.verdict_affiche ?? resultat.verdict}</Badge>
           {limitePhrase && <span className="text-[11px] text-txt-mut">· ce qui limite : <b className="text-txt">{limitePhrase}</b></span>}
           {/* ETUDE-FIABLE-1 (LOT C2) — parcelle bâtie : l'étude suppose le terrain libéré. */}
           {resultat.terrain_suppose_libere && <span data-terrain-libere className="rounded border border-line-2 bg-surface-2 px-1.5 py-0.5 text-[10px] text-txt-dim">Terrain supposé libéré</span>}
@@ -322,6 +325,17 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
         {resultat.recherche && resultat.recherche.etat !== 'complete' && resultat.recherche.note && (
           <div data-recherche-etat={resultat.recherche.etat} className="mx-4 mt-2 rounded-md border border-amber/50 bg-amber-bg px-3 py-2 text-[11px] text-amber">
             <b>{resultat.recherche.etat === 'partielle' ? 'Recherche partielle' : 'Recherche non aboutie'}</b> — {resultat.recherche.note}
+          </div>
+        )}
+
+        {/* ETUDE-AUDIT-FIX-1 LOT 1 (défaut 1) — les RÉSERVES, MÊMES qu'au PDF (« À vérifier avant de
+            retenir ce programme »), posées par la source unique serveur. Écran et PDF ne divergent plus. */}
+        {active && !active.absente && (active.reserves?.length ?? 0) > 0 && (
+          <div data-reserves className="mx-4 mt-2 rounded-md border border-amber/50 bg-amber-bg px-3 py-2 text-[11px] text-amber">
+            <b>À vérifier avant de retenir ce programme</b>
+            <ul className="mt-1 list-disc pl-4">
+              {active.reserves!.map((r, i) => <li key={i}>{r}</li>)}
+            </ul>
           </div>
         )}
 

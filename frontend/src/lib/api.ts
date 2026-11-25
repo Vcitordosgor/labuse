@@ -2780,6 +2780,11 @@ export interface EtudeVariante extends EtudeScenario {
   absente?: boolean
   raison?: string | null
   verdict: string
+  // ETUDE-AUDIT-FIX-1 LOT 1 (défaut 1) — verdict AFFICHÉ + réserves POSÉS par la source unique serveur
+  // (`implantation.verdict_etude`), lus à l'identique par l'écran et le PDF. Fin du verdict divergent.
+  verdict_affiche?: string
+  verdict_classe?: 'ok' | 'cp' | 'no'
+  reserves?: string[]
   // ETUDE-V6-7 (item 4) — en sous-sol, comment le sol libéré est utilisé (phrase chiffrée).
   sol_libere_note?: string | null
   // ETUDE-V6-7 (suite) — déviation du prorata exact pour tenir dans les places du −1 (phrase chiffrée).

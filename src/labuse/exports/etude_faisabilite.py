@@ -159,39 +159,21 @@ def _statut_classe(s: str) -> str:
 
 
 def _gardes_honnete(payload: dict, retenu: dict) -> list:
-    """EXPORTS-FIX-3 LOT 3 (#5a/#5b, relecture) — GARDE-FOU D'HONNÊTETÉ, sans toucher au moteur : raisons
-    de rétrograder le verdict affiché de « Exploitable » à « À vérifier ».
-      (a) le plancher du scénario dépasse la capacité SERVIE par la fiche (Dossier/Comparatif/pré-dossier) ;
-      (b) le barème de stationnement de la zone n'est pas servi (places non vérifiées).
-    Renvoie une liste de phrases (vide = rien à signaler)."""
-    raisons = []
-    sdp_f = (payload.get("_garde_fiche") or {}).get("sdp_fiche_m2")
-    sdp_e = (retenu.get("resume") or {}).get("sdp_m2")
-    if isinstance(sdp_f, (int, float)) and isinstance(sdp_e, (int, float)) and sdp_e > sdp_f + 1:
-        raisons.append(f"Le plancher de cette étude ({_grp(sdp_e)} m²) dépasse la capacité servie par la "
-                       f"fiche ({_grp(sdp_f)} m², surface de plancher résiduelle) : à confronter avant de "
-                       "retenir ce programme — ce document n'est donc pas « exploitable » en l'état.")
-    if _bareme_stationnement_absent(payload):
-        raisons.append("La règle de stationnement de cette zone existe au PLU mais n'est pas ingérée "
-                       "par LABUSE : le nombre de places n'est pas vérifié (stationnement non vérifié).")
-    return raisons
+    """ETUDE-AUDIT-FIX-1 LOT 1 (défaut 1) — les RÉSERVES qui rétrogradent « Exploitable » → « À vérifier »,
+    calculées par la SOURCE UNIQUE `implantation.verdict_etude` (lue aussi par l'écran). La comparaison de
+    capacité se fait désormais sur TERRAIN NU (meilleure capacité du moteur, bâti supposé démoli), et NON
+    contre le plancher résiduel d'une parcelle avec son bâti existant — fin du verdict divergent à l'export."""
+    from ..implantation import verdict_etude as _ve
+    return _ve.reserves_etude(payload, retenu)
 
 
 def _bareme_stationnement_absent(payload: dict) -> bool:
     """CAPACITE-1 (B4) — le barème de stationnement de la zone n'est pas servi par LABUSE : le nombre
     de places n'est PAS calculé (un « 0 » afficherait « 0 place exigée », faux : c'est NON vérifié).
-    Détection extraite de `_gardes_honnete` (b) pour l'afficher « stationnement non vérifié » partout."""
-    reg = (payload.get("stationnement_regimes") or {}).get("general") or {}
-    # ETUDE-STATIONNEMENT-FIX-2 (LOT 4) — SOURCE UNIQUE de « le barème existe-t-il » : le drapeau `validee`
-    # (le MÊME que celui qui déclenche l'affichage de la citation validée plus loin dans le document). On ne
-    # re-dérive plus l'absence depuis ratio/regle_courte : un barème « par m² de SDP » ou « par typologie »
-    # n'a pas de ratio par logement et était déclaré ABSENT tout en montrant sa citation validée en page
-    # suivante (HT0538/Ud : 1 place / 75 m²). Repli sur l'ancienne heuristique pour les payloads sans `validee`.
-    if "validee" in reg:
-        return not bool(reg.get("validee"))
-    _art = _art_label(reg.get("article"))
-    return (reg.get("ratio_par_logement") is None and not reg.get("regle_courte")
-            and not str(_art or "").upper().startswith("L151"))
+    Détection extraite de `_gardes_honnete` (b) pour l'afficher « stationnement non vérifié » partout.
+    ETUDE-AUDIT-FIX-1 LOT 1 — délègue à la SOURCE UNIQUE `implantation.verdict_etude`."""
+    from ..implantation import verdict_etude as _ve
+    return _ve.bareme_stationnement_absent(payload)
 
 
 def scenario_etude_persiste(db, idu: str) -> dict | None:
@@ -566,7 +548,11 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     _ret_log = (retenu.get("resume") or {}).get("logements") or kmax
     # EXPORTS-FIX-3 LOT 3 (#5a/#5b, relecture) — garde-fou d'honnêteté : si le plancher dépasse la fiche
     # ou si le barème de stationnement n'est pas servi, le verdict affiché n'est JAMAIS « exploitable ».
-    _gardes = _gardes_honnete(payload, retenu)
+    # ETUDE-AUDIT-FIX-1 LOT 1 — réserves = celles POSÉES sur la variante par la source unique
+    # (identiques à l'écran) ; repli sur un calcul direct si le payload n'est pas annoté.
+    _gardes = retenu.get("reserves")
+    if _gardes is None:
+        _gardes = _gardes_honnete(payload, retenu)
     _stat_nv = _bareme_stationnement_absent(payload)   # CAPACITE-1 (B4) — barème non servi
     statio_lbl = _stationnement_label(retenu, e)
     if n_dem is not None:
@@ -655,17 +641,13 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     # ETUDE-STATIONNEMENT-FIX-3 (LOT 1 #3) — le statut affiché est celui du CALCUL COURANT : le VERDICT GLOBAL
     # du scénario (`verdict`, qui déclasse « Exploitable » dès qu'un contrôle À CONFIRMER bloquant tombe), et
     # non le `statut_etude` (aveugle aux À confirmer). Les 3 témoins passent de « Exploitable » à « À compléter ».
-    _vg = str(retenu.get("verdict") or "")
-    if _gardes:
-        _statut_aff, stc = "À vérifier", "cp"
-    elif _vg.startswith("Exploitable"):
-        _statut_aff, stc = "Exploitable", "ok"
-    elif _vg.startswith("Impossible"):
-        _statut_aff, stc = "Impossible", "no"
-    elif _vg:
-        _statut_aff, stc = "À compléter", "cp"      # « À compléter » (À confirmer bloquant, échec, etc.)
-    else:                                            # repli : ancien statut de scénario
-        _statut_aff, stc = _statut_court(retenu["statut_etude"]), _statut_classe(retenu["statut_etude"])
+    # ETUDE-AUDIT-FIX-1 LOT 1 — le verdict AFFICHÉ est celui POSÉ sur la variante par la source unique
+    # (identique à l'écran) ; repli sur le calcul partagé si le payload n'est pas annoté.
+    _statut_aff = retenu.get("verdict_affiche")
+    stc = retenu.get("verdict_classe")
+    if not _statut_aff:
+        from ..implantation import verdict_etude as _ve
+        _statut_aff, stc, _gardes = _ve.verdict_affiche(payload, retenu)
     # CAPACITE-1 (B4) — colonne « Places » : quand le barème n'est pas servi, « 0 » ment (ce n'est pas
     # « 0 place exigée » mais NON calculé) → « stationnement non vérifié », partout dans le tableau (`_stat_nv`).
     def _places_cell(v) -> str:

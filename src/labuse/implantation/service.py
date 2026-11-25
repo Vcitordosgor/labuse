@@ -29,6 +29,7 @@ from .conventions import avec_surcharges, charger as charger_conventions
 from .controles import (A_CONFIRMER, ECHOUE, NON_APPLICABLE, NON_EFFECTUE, REUSSI,
                         verdict_global)
 from .regles import quantifier_surface_m2
+from .verdict_etude import annoter as annoter_verdicts_affiches
 
 OBJECTIFS = {"equilibre", "plus_logements", "plus_surface", "plus_simple"}
 
@@ -1476,7 +1477,7 @@ def etudier_payload(session, entree: dict) -> dict:
         except Exception:  # noqa: BLE001 — la capacité réduite est un bonus, jamais bloquante
             logging.getLogger("labuse").exception("étude v6 : passage stationnement réduit impossible")
 
-    return {
+    _payload = {
         "moteur": {"livrable": "IMPLANTATION-2",
                    "version_conventions": conv.version, "etiquette": conv.etiquette,
                    "crs_dessin": "EPSG:2975", "crs_carte": "EPSG:4326"},
@@ -1566,3 +1567,7 @@ def etudier_payload(session, entree: dict) -> dict:
         # ex. UA Étang-Salé, elles passent par un contrôle vérifié et ne figurent plus ici).
         "regles_non_verifiees": _regles_non_verifiees(ref_scn.regles),
     }
+    # ETUDE-AUDIT-FIX-1 LOT 1 (défaut 1) — verdict AFFICHÉ + réserves posés UNE fois sur le payload
+    # (variantes), lus à l'identique par l'écran et le PDF. Fin des verdicts divergents à l'export.
+    annoter_verdicts_affiches(_payload)
+    return _payload
