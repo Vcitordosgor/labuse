@@ -909,8 +909,37 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                                "accès supposé sur l'arête la plus longue", A_CONFIRMER,
                                detail="classement de la limite « voie » non établi — accès à confirmer"))
 
+    # ETUDE-AUDIT-FIX-1 LOT 4 (défaut 4) — obligation de sol À DEUX VOLETS (ex. Saint-André UC 13.1 :
+    # 40 % d'ESPACES LIBRES DONT au moins la moitié PERMÉABLE). Quand elle est servie, on émet DEUX
+    # contrôles DISTINCTS, libellés comme l'article, au lieu de comparer toute la perméabilité au seuil 40 %.
+    el = getattr(regles, "espaces_libres", None)
     r = regles.pleine_terre
-    if r.validee and r.valeur is not None:
+    if isinstance(el, dict) and el.get("pct") is not None:
+        _art = el.get("article")
+        _cit = el.get("citation")
+        _lib = f" ({_art})" if _art else ""
+        pct_el = float(el["pct"])
+        frac = float(el.get("part_permeable_fraction") or 0.5)
+        req_el = contenance * pct_el / 100.0
+        req_perm = req_el * frac
+        # (1) ESPACES LIBRES — surface NON bâtie MESURÉE (place disponible) : Réussi/Échoué franc.
+        if cap.pleine_terre_m2 >= req_el - 1e-6:
+            out.append(ControleReg(
+                f"Espaces libres{_lib}", f"≥ {req_el:.0f} m² ({pct_el:.0f} % de l'unité foncière)",
+                f"surface libre {cap.pleine_terre_m2:.0f} m²", REUSSI, _cit,
+                detail=f"écart {cap.pleine_terre_m2 - req_el:+.0f} m²"))
+        else:
+            out.append(ControleReg(
+                f"Espaces libres{_lib}", f"≥ {req_el:.0f} m² ({pct_el:.0f} % de l'unité foncière)",
+                f"surface libre {cap.pleine_terre_m2:.0f} m²", ECHOUE, _cit,
+                f"écart {cap.pleine_terre_m2 - req_el:+.0f} m² (place insuffisante)"))
+        # (2) PART PERMÉABLE — au moins la moitié des espaces libres : caractère perméable à confirmer au projet.
+        out.append(ControleReg(
+            f"Part perméable{_lib}",
+            f"≥ {req_perm:.0f} m² (au moins la moitié des espaces libres, soit {pct_el * frac:.0f} % du terrain)",
+            f"à prélever sur {cap.pleine_terre_m2:.0f} m² d'espaces libres", A_CONFIRMER, _cit,
+            detail="au moins la moitié des espaces libres doit être perméable ; ce caractère se confirme au projet"))
+    elif r.validee and r.valeur is not None:
         requis = contenance * r.valeur / 100.0
         assez = cap.pleine_terre_m2 >= requis - 1e-6
         # ETUDE-STATIONNEMENT-FIX-5 (point 4) — « Réussi » est réservé à ce qui est MESURÉ. La surface libre

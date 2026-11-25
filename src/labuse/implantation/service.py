@@ -499,11 +499,20 @@ def _regles_affichables(sd: dict) -> list[dict]:
     return out
 
 
+def _plu_doc_url(insee: str) -> Optional[str]:
+    """ETUDE-AUDIT-FIX-1 LOT 4 (défaut 10) — URL du PDF du RÈGLEMENT OFFICIEL (méta du document calibré),
+    pour un lien profond « Lire l'article » à la BONNE PAGE (vs l'ancien viewer Géoportail sans page)."""
+    from ..faisabilite.zonage import reglement_source
+    return (reglement_source(insee) or {}).get("url")
+
+
 def _decore_regles(lignes: list[dict], source_url: Optional[str], millesime: Optional[str]) -> list[dict]:
     """ETUDE-V6-4 (item 3) — chaque règle porte le lien du document PLU officiel et son millésime, pour que
-    « Lire l'article » affiche l'extrait exact (texte, article, page, millésime) avec le lien, partout."""
+    « Lire l'article » affiche l'extrait exact (texte, article, page, millésime) avec le lien, partout.
+    ETUDE-AUDIT-FIX-1 LOT 4 (défaut 10) — le lien pointe la BONNE PAGE du PDF officiel (`#page=N`)."""
     for l in lignes:
-        l.setdefault("source_url", source_url)
+        pg = l.get("page_pdf")
+        l.setdefault("source_url", f"{source_url}#page={pg}" if (source_url and pg) else source_url)
         l.setdefault("millesime", millesime)
     return lignes
 
@@ -1495,9 +1504,11 @@ def etudier_payload(session, entree: dict) -> dict:
             "commune": t.commune, "millesime": _plu_millesime(session, t.insee),
             # ETUDE-V6-4 (item 3) — lien doc officiel + millésime portés sur CHAQUE règle (« Lire l'article »
             # partout : étapes 1/2, stationnement, contrôles, annexe PDF).
-            "source_url": _plu_source_url(session, t.insee),
+            # ETUDE-AUDIT-FIX-1 LOT 4 (défaut 10) — lien vers le PDF du règlement officiel (par page), plus
+            # le viewer Géoportail générique sans page.
+            "source_url": _plu_doc_url(t.insee),
             "lignes": _decore_regles(_regles_affichables(sd0),
-                                     _plu_source_url(session, t.insee), _plu_millesime(session, t.insee)),
+                                     _plu_doc_url(t.insee), _plu_millesime(session, t.insee)),
         },
         "terrain": {
             "contenance_totale_m2": sd0["terrain"]["contenance_totale_m2"],

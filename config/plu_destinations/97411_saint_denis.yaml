@@ -875,10 +875,13 @@ zones:
           statut: valide
         voie:
           formule: 'Voies d’une emprise de 12 m ou plus : les constructions seront implantées soit à l’alignement, soit à 4 m minimum de l''alignement. Voies d’une emprise de moins de 12 m : les constructions seront implantées à 4 m minimum de l''alignement. Voies d’une emprise de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l''alignement.'
-          min_m: 3
+          # ETUDE-AUDIT-FIX-1 LOT 4 (défaut 5) — recul par DÉFAUT = 4 m (cas « voie < 12 m », couvrant la
+          # voirie urbaine courante). Les 3 m sont l'EXCEPTION réservée aux voies < 3,50 m ; la largeur de voie
+          # n'étant pas connue du moteur, on applique 4 m (l'exception reste listée dans `exceptions`).
+          min_m: 4
           article: Article Ui.6
           page_pdf: 54
-          citation: 'Voies d’une emprise de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l''alignement.'
+          citation: 'Voies d’une emprise de moins de 12 m : les constructions seront implantées à 4 m minimum de l''alignement (3 m seulement pour une voie de moins de 3,50 m).'
           statut: valide
           exceptions:
           - texte: 'Voies d''une emprise de moins de 12 m : les constructions seront implantées à 4 m minimum de l''alignement. Voies d''une emprise de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l''alignement.'

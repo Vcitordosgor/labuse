@@ -134,11 +134,23 @@ def _regles_plu_resume(session, insee: str, commune: Optional[str], zone: Option
         extraits = _extraits_plu(session, insee, zone)
         lignes = None
         if rz is not None:
+            # ETUDE-AUDIT-FIX-1 LOT 4 (défaut 10) — « Lire l'article » ouvre le RÈGLEMENT OFFICIEL du bon
+            # millésime à la BONNE PAGE : on construit le lien profond depuis la méta du document (URL du
+            # PDF officiel + offset) et la page de l'article, et non le lien générique de plu_reglement_extrait
+            # (Géoportail « recherche par commune »). Repli sur le lien de la table si la méta manque.
+            from ..faisabilite.zonage import reglement_source as _reglement_source
+            _src = _reglement_source(commune or insee) or {}
+            _base_url = _src.get("url")
+            _offset = int(_src.get("offset") or 0)
+
             def _ligne(nom, valeur, unite, article, page, citation):
                 ex = extraits.get(article or "") or {}
+                pg = page or ex.get("page_pdf")
+                url = (f"{_base_url}#page={pg + _offset}" if (_base_url and pg)
+                       else (_base_url or ex.get("source_url")))
                 return {"nom": nom, "valeur": valeur, "unite": unite, "article": article,
-                        "page_pdf": page or ex.get("page_pdf"), "commune": commune, "zone": zone,
-                        "millesime": millesime, "citation": citation, "source_url": ex.get("source_url")}
+                        "page_pdf": pg, "commune": commune, "zone": zone,
+                        "millesime": millesime, "citation": citation, "source_url": url}
             lignes = []
             for nom, r in (("Hauteur à l'égout", rz.hauteur_egout), ("Hauteur au faîtage", rz.hauteur_faitage),
                            ("Emprise au sol (CES)", rz.emprise_ces), ("Recul sur voie", rz.recul_voie),

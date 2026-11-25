@@ -449,17 +449,21 @@ def test_sous_sol_sol_libere_explique(session_reelle):
 
 
 @pytest.mark.reel
-def test_lire_article_lien_geoportail_urbanisme(session_reelle):
-    """ETUDE-V6-7 (item 9) — « Lire l'article » pointe vers le règlement officiel sur le GÉOPORTAIL DE
-    L'URBANISME (geoportail-urbanisme.gouv.fr), construit depuis l'idurba du PLU calibré. Pour Étang-Salé
-    (idurba servi), chaque règle porte cette URL ; « non disponible en lien direct » seulement sans document."""
-    from labuse.implantation.service import etudier_payload, _plu_gpu_url
-    url = _plu_gpu_url(session_reelle, "97404")
-    assert url and "geoportail-urbanisme.gouv.fr" in url and "97404" in url
+def test_lire_article_lien_reglement_officiel_bonne_page(session_reelle):
+    """ETUDE-AUDIT-FIX-1 LOT 4 (défaut 10) — « Lire l'article » ouvre le RÈGLEMENT OFFICIEL (PDF) du bon
+    millésime à la BONNE PAGE (`…reglement….pdf#page=N`), plus le viewer Géoportail générique sans page.
+    Pour Étang-Salé, chaque règle porte le lien du document + sa page ; la hauteur à l'égout → page 19."""
+    from labuse.implantation.service import etudier_payload, _plu_doc_url
+    doc = _plu_doc_url("97404")
+    assert doc and "reglement" in doc.lower() and doc.lower().endswith(".pdf")
     p = etudier_payload(session_reelle, {"idus": _ETANG, "type_projet": "etudiante", "stationnement": "aerien",
                                           "programme": {"mode": "saisi", "lignes": _MIX}})
-    assert p["regles"]["source_url"] == url
-    assert all(l.get("source_url") == url for l in p["regles"]["lignes"])
+    assert p["regles"]["source_url"] == doc
+    for l in p["regles"]["lignes"]:
+        url = l.get("source_url") or ""
+        assert url.startswith(doc)
+        if l.get("page_pdf"):
+            assert url == f"{doc}#page={l['page_pdf']}"
 
 
 @pytest.mark.reel

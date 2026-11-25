@@ -384,6 +384,16 @@ zones:
           page_pdf: 43
           citation: Au minimum 40% de la superficie totale de l'unite fonciere doit etre traite en espace libre dont au moins la moitie en espace permeable.
           statut: valide
+      # ETUDE-AUDIT-FIX-1 LOT 4 (défaut 4) — UC 13.1 porte DEUX obligations : 40 % d'espaces libres DONT au
+      # moins la moitié perméable. Servi ainsi, le moteur émet DEUX contrôles distincts (espaces libres +
+      # part perméable), au lieu de comparer toute la perméabilité à un seuil unique de 40 %.
+      espaces_libres:
+        pct: 40.0
+        part_permeable_fraction: 0.5
+        article: UC 13.1
+        page_pdf: 43
+        citation: Au minimum 40% de la superficie totale de l'unite fonciere doit etre traite en espace libre dont au moins la moitie en espace permeable.
+        statut: valide
       mixite:
         seuil_m2: 2000
         seuil_type: surface_plancher
