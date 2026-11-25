@@ -102,6 +102,34 @@ def _looks_cross_ref(flat: str, start: int) -> bool:
     return bool(_CROSSREF_PRE.search(pre))
 
 
+# OUTIL-PLU-FIX-10 (LOT 2) — puce de liste : • ▪ ◦ · ‣ ∙, tiret/astérisque, et les puces Wingdings de
+# la zone d'usage privé (U+F000–F0FF) que sèment les PDF de règlement.
+_BULLET = "•▪◦·‣∙-*"
+_PUCE_SEULE = re.compile(r"^[ \t" + _BULLET + r"\-]+$")
+
+
+def _looks_list_item(flat: str, start: int) -> bool:
+    """OUTIL-PLU-FIX-10 (LOT 2) — un « ZONE X » qui est un ÉLÉMENT DE LISTE (valeur énumérée dans un
+    article), pas un titre de chapitre. Signature : la LIGNE PRÉCÉDENTE n'est qu'une puce (Sainte-Marie,
+    8.2 : « …limitée à : / • / Zone UA : / ▪ / 15,00 mètres… »). Prenait « Zone UA » pour un chapitre et
+    coupait l'article U8 juste avant ses hauteurs. Les vrais titres « ZONE UA » sont précédés d'un saut
+    de page, d'une fin de phrase ou d'un autre titre — jamais d'une puce nue."""
+    ls = flat.rfind("\n", 0, start)                     # début de la ligne de l'en-tête
+    if ls < 0:
+        return False
+    # ligne non vide précédente
+    j = ls
+    while j > 0:
+        pstart = flat.rfind("\n", 0, j)
+        line = flat[pstart + 1: j]
+        if line.strip():
+            return bool(_PUCE_SEULE.match(line)) and line.strip() != ""
+        j = pstart
+        if pstart < 0:
+            break
+    return False
+
+
 # OUTIL-PLU-FIX-6 (point 2, Saint-Denis) — une ligne de SOMMAIRE (« ZONE N …………… 119 ») n'est pas un
 # en-tête de chapitre : sinon elle absorbe les dispositions générales qui la suivent et les étiquette
 # « N ». On reconnaît les points de suite (table des matières).
@@ -514,7 +542,10 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
     # générales et les étiquette N).
     heads = [m for m in _HEADER.finditer(flat)
              if not _looks_cross_ref(flat, m.start()) and _valid_header(_norm(m.group(1)))
-             and not _is_toc_header(flat, m.start())]
+             and not _is_toc_header(flat, m.start())
+             # OUTIL-PLU-FIX-10 (LOT 2) — « Zone UA : » énuméré sous une puce (valeur de hauteur) n'est
+             # PAS un titre de chapitre : ne pas couper l'article (Sainte-Marie U8).
+             and not (_norm(m.group(1)).upper().startswith("ZONE") and _looks_list_item(flat, m.start()))]
     head_ref = {m.start(): _norm(m.group(1)) for m in heads}
     # OUTIL-PLU-FIX-6 (point 2) — un titre de chapitre SANS zone (ANNEXES, DISPOSITIONS GÉNÉRALES,
     # DÉFINITIONS, LEXIQUE, TITRE liminaire) est une FRONTIÈRE de bloc : l'annexe forme son PROPRE bloc
@@ -988,6 +1019,66 @@ def zones_apparentees(session: Session, zone: str, insee: str | None) -> list[st
 # nomment aucune zone) restent incluses, et sont présentées à part (« Dispositions communes »).
 _ZNAME_SQL = r'\y(zones?|secteurs?)\s+[0-9]{0,2}(AU|U|A|N)[0-9A-Za-z]'
 
+# OUTIL-PLU-FIX-10 (LOT 2) — un article MUTUALISÉ (étiquette de famille « U ») qui énumère dans son barème
+# un ENSEMBLE PRÉCIS de secteurs (« Zone UA : 15 m · Zone UB : 12 m… ») ne régit QUE ces secteurs. Le
+# règlement de Sainte-Marie tient DEUX « Article U8 » : l'un pour UA/UB/UC/UD (p.22), l'autre pour
+# UEa/UEm/UEp/UR/UEc/UT (p.35). Sous le filtre UA, seul le premier doit sortir (l'article PROPRE à UA) —
+# le second concerne d'autres zones. On lit l'ensemble énuméré et on écarte l'article si la zone filtrée
+# n'y figure pas (ni elle, ni un de ses sous-secteurs).
+_ENUM_ZONE = re.compile(r'(?i)(?:zones?|secteurs?)\s+([0-9]{0,2}(?:AU|U|A|N)[0-9A-Za-z]{0,5})')
+_ART_NUM = re.compile(r'(?i)(?:article|art\.?)\s*[0-9A-Za-zÀ-ÿ]*?\s*[-–—.]?\s*(\d{1,2})\b')
+
+
+def _zones_enumerees(texte: str) -> set[str]:
+    """Secteurs explicitement énumérés dans le barème d'un article (codes valides, en MAJ)."""
+    out = set()
+    for m in _ENUM_ZONE.finditer(texte or ""):
+        z = _valid_zone(m.group(1))
+        if z:
+            out.add(z)
+    return out
+
+
+def _art_num(ref: str | None) -> int | None:
+    m = _ART_NUM.search(ref or "")
+    return int(m.group(1)) if m else None
+
+
+def _couvre_zone(row, zf: str) -> bool:
+    """L'article `row` (zone, article_ref, texte_verbatim) régit-il la zone filtrée `zf` (MAJ) ? VRAI s'il
+    est étiqueté exactement zf, OU s'il énumère zf (ou un secteur apparenté) dans son barème."""
+    if (row["zone"] or "").upper() == zf:
+        return True
+    enum = _zones_enumerees(row["texte_verbatim"] or "")
+    return any(e == zf or e.startswith(zf) or zf.startswith(e) for e in enum)
+
+
+def _filtre_scope(rows: list, zone: str | None, zones_ok: list[str] | None) -> list:
+    """OUTIL-PLU-FIX-10 (LOT 2) — ARTICLES CONCURRENTS : le règlement de Sainte-Marie tient DEUX « Article
+    U8 », l'un énumérant UA/UB/UC/UD, l'autre UEa/UEm/…/UT. Sous le filtre UA, seul le premier (qui régit
+    UA) doit sortir. Règle : on écarte un article qui énumère des secteurs SANS la zone filtrée UNIQUEMENT
+    s'il existe un AUTRE article DU MÊME NUMÉRO qui, lui, régit la zone — sinon on garde (article unique :
+    exception interne, renvoi, disposition générale). Ne s'applique pas au chapitre « AU indicée » (renvoi
+    géré article par article, LOT 1)."""
+    if not zone or zones_ok == ["AUINDICEE"] or len(rows) < 2:
+        return rows
+    zf = _norm(zone).upper()
+    # numéros d'article pour lesquels un extrait SERVI régit explicitement la zone filtrée
+    couvre_par_num: dict[int, bool] = {}
+    for r in rows:
+        n = _art_num(r["article_ref"])
+        if n is not None and _couvre_zone(r, zf):
+            couvre_par_num[n] = True
+    out = []
+    for r in rows:
+        n = _art_num(r["article_ref"])
+        enum = _zones_enumerees(r["texte_verbatim"] or "")
+        hors = bool(enum) and not _couvre_zone(r, zf)
+        if hors and n is not None and couvre_par_num.get(n):
+            continue                                   # article concurrent du même n° régit la zone → écarté
+        out.append(r)
+    return out
+
 # OUTIL-PLU-FIX-6/7 (point 3) — collisions de STEMMER : le dictionnaire français de Postgres réduit TOUTE
 # la famille « stationn… » (stationnement(s), stationner, stationne, stationnent, stationné, stationnant)
 # au radical « station », qui matche alors « station d'épuration / de potabilisation / de mesure /
@@ -1133,18 +1224,24 @@ def search_reglement(session: Session, q: str, insee: str | None = None, limit: 
     AUTOUR du mot (`extrait`). `page_debut`/`page_fin` donnent « p. X-Y ». `offset` pagine réellement."""
     zones_ok = zones_apparentees(session, zone, insee) if zone else None
     where, params = _search_where(q, insee, zones_ok, bool(zone), terms)
-    params["lim"] = limit
-    params["off"] = max(0, offset)
-    rows = session.execute(text(f"""
+    base = f"""
         SELECT insee, commune, idurba, to_char(millesime,'YYYY-MM-DD') AS millesime, document,
                zone, article_ref, page_pdf, page_debut, page_fin, page_map, texte_verbatim, doute,
                doute_motif, pagination_ambigue, source_url, pdf_url,
                ts_rank(tsv, websearch_to_tsquery('fr_unaccent', :q)) AS rang
         FROM plu_reglement_extrait
         WHERE {' AND '.join(where)}
-        ORDER BY rang DESC, insee, page_pdf, id
-        LIMIT :lim OFFSET :off
-    """), params).mappings().all()
+        ORDER BY rang DESC, insee, page_pdf, id"""
+    if zone:
+        # OUTIL-PLU-FIX-10 (LOT 2) — le filtre « articles concurrents » a besoin de TOUS les extraits d'un
+        # même numéro ; on récupère donc l'ensemble (borné à la commune+zone, petit), on écarte les articles
+        # d'autres secteurs, PUIS on pagine en Python. Requête île/zone-libre : pagination SQL inchangée.
+        rows = session.execute(text(base), params).mappings().all()
+        rows = _filtre_scope(list(rows), zone, zones_ok)[offset: offset + limit]
+    else:
+        params["lim"] = limit
+        params["off"] = max(0, offset)
+        rows = session.execute(text(base + "\n        LIMIT :lim OFFSET :off"), params).mappings().all()
     out = []
     for r in rows:
         d = dict(r)
@@ -1162,6 +1259,12 @@ def count_reglement(session: Session, q: str, insee: str | None = None,
     pour que l'écran dise « N affichés sur M » et non le simple compte de la page servie."""
     zones_ok = zones_apparentees(session, zone, insee) if zone else None
     where, params = _search_where(q, insee, zones_ok, bool(zone), terms)
+    if zone:
+        # même filtre « articles concurrents » que search_reglement → compte COHÉRENT avec l'affiché.
+        rows = session.execute(text(
+            f"SELECT zone, article_ref, texte_verbatim FROM plu_reglement_extrait "
+            f"WHERE {' AND '.join(where)}"), params).mappings().all()
+        return len(_filtre_scope(list(rows), zone, zones_ok))
     return int(session.execute(text(
         f"SELECT count(*) FROM plu_reglement_extrait WHERE {' AND '.join(where)}"),
         params).scalar() or 0)
