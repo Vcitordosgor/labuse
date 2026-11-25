@@ -179,8 +179,14 @@ def _bandeau_garde_fou(garde_fou: dict | None) -> str:
     identifié comme celui d'un PROGRAMME SAISI, non vérifié par LABUSE."""
     gf = garde_fou or {}
     alertes = gf.get("alertes") or []
+    # OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — la mention de mixité (même source que l'écran) voyage avec le
+    # garde-fou : un document remis au promoteur ne porte plus un chiffre de charge sans sa réserve.
+    _mx = gf.get("mixite_note")
+    _mx_html = (f'<div class="mixite" style="border:1.5px solid #1d4ed8;background:#eff6ff;'
+                f'border-radius:6px;padding:8px 12px;margin:8px 0;color:#1e3a8a;font-size:10.5px">'
+                f'<strong>Mixité sociale —</strong> {esc(_mx)}</div>') if _mx else ""
     if not alertes:
-        return ""
+        return _mx_html
     lignes = "".join(f"<li>{esc(a)}</li>" for a in alertes)
     # CHIRURGICAL-FIX-1 (LOT M 3) — un Bilan livré SANS programme (l'outil le produit de lui-même, sur
     # une parcelle écartée) dit « Aucun programme », PAS « Programme saisi par l'utilisateur ».
@@ -198,7 +204,7 @@ def _bandeau_garde_fou(garde_fou: dict | None) -> str:
         f'<div style="font-weight:700;margin-bottom:3px">{esc(titre)}</div>'
         f'<ul style="margin:4px 0 0 18px;padding:0">{lignes}</ul>'
         f'<div style="margin-top:5px;font-size:10.5px">{esc(bas)}</div></div>'
-    )
+    ) + _mx_html
 
 
 def construire_html(

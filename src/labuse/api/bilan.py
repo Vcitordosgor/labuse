@@ -478,6 +478,36 @@ def _refuser_si_ca_nul(r, autorise_sans_ca: bool = False) -> None:
             422, "Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.")
 
 
+def _mixite_note(db: Session, idu: str) -> str | None:
+    """OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — mention de mixité pour le Bilan PDF/Excel, lue à la MÊME source
+    que l'écran (`compute_bilan_servi(...).mixite`) : plus un chiffre de charge dans un document remis
+    au promoteur sans sa réserve (« borne haute » quand l'accession sociale n'est pas chiffrée)."""
+    from ..faisabilite.bilan import compute_bilan_servi
+    row = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
+    if not row:
+        return None
+    try:
+        b, _ = compute_bilan_servi(db, row["id"])
+    except Exception:  # noqa: BLE001 — jamais un bloqueur d'export
+        return None
+    m = b.mixite if (b and getattr(b, "mixite", None)) else None
+    if not isinstance(m, dict) or not m.get("servitude"):
+        return None
+    cite = " · ".join(x for x in (m.get("article"), m.get("page")) if x)
+    # OUTIL-ASSEMBLAGE-FIX-3 (relecture-2) — libellé exact selon l'origine : règle de ZONE (Saint-Denis)
+    # vs secteur SMS (Saint-Paul). On ne dit « servitude/secteur » que pour un vrai secteur SMS.
+    _amont = "Obligation de mixité du règlement de zone" if m.get("origine") == "zone_reglement" \
+        else "Secteur de mixité sociale"
+    if not m.get("declenchee"):
+        return f"{_amont} — clause non déclenchée sur ce programme ({cite})."
+    q = m.get("quota_pct")
+    note = (f"Obligation de mixité : {int(q)} % " if q else "Obligation de mixité : ") \
+        + (m.get("produits") or "logements aidés") + (f" ({cite})" if cite else "")
+    if m.get("borne_haute"):
+        note += " — charge foncière = BORNE HAUTE (CA au prix libre, accession sociale non chiffrée)."
+    return note
+
+
 @router.get("/bilan/{idu}.pdf")
 def bilan_pdf(
     idu: str, request: Request, doc_id: int = Query(...), db: Session = Depends(get_db)
@@ -496,6 +526,7 @@ def bilan_pdf(
     _gf = _rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp, postes_saisis=set(corps.postes),
                                programme_saisi=bool(corps.produits) or bool(corps.programme.sdp),
                                suv_saisie=sum(p.suv or 0.0 for p in corps.produits))
+    _gf["mixite_note"] = _mixite_note(db, idu)   # OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — même source que l'écran
     _refuser_si_ca_nul(r, autorise_sans_ca=bool(_gf.get("alertes")))
     # DOCS-1 — carte de situation sur la couverture du Bilan (best-effort : jamais un bloqueur).
     try:
@@ -544,6 +575,7 @@ def bilan_xlsx(
     _gf = _rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp, postes_saisis=set(corps.postes),
                                programme_saisi=bool(corps.produits) or bool(corps.programme.sdp),
                                suv_saisie=sum(p.suv or 0.0 for p in corps.produits))
+    _gf["mixite_note"] = _mixite_note(db, idu)   # OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — même source que l'écran
     _refuser_si_ca_nul(Moteur().calculer(e), autorise_sans_ca=bool(_gf.get("alertes")))
     octets = classeur_bilan_bytes(e, titre=f"Bilan — {idu}", garde_fou=_gf)
     return Response(

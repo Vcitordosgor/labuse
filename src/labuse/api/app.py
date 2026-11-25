@@ -8265,25 +8265,34 @@ def parcel_export_pdf(idu: str, db: Session = Depends(get_db)) -> Response:
 
 
 def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_demande: float | None) -> dict | None:
-    """Recalcule la charge foncière (moteur) pour l'export PDF — None si non calculable."""
-    from ..faisabilite.bilan import compute_calculette, resolve_prix_sortie_servi
-    from ..faisabilite.db import parcel_faisabilite
-    from .. import marche_service          # MANDAT_DVF-B — point d'appel UNIQUE (plus de sector_price direct)
+    """Recalcule la charge foncière (moteur) pour l'export PDF — None si non calculable.
+
+    OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — le PDF premium recalculait SANS contexte (`contexte_eco` absent) :
+    la clause de mixité n'était jamais évaluée → pour une parcelle en plein régime, la décote 30 % LLS
+    était PERDUE (chiffre du PDF > chiffre servi de la fiche), et la réserve « borne haute » n'apparaissait
+    pas. On part désormais du CONTEXTE SERVI (`contexte_bilan_servi` : secteur, prix de sortie neuf,
+    hypothèses calibrées, éco mixité/pluvial, règle de zone) — MÊME source que la fiche/Bilan/Comparer.
+    Seuls coût / marge restent des saisies promoteur."""
+    from ..faisabilite.bilan import compute_calculette, contexte_bilan_servi
     row = db.execute(text("SELECT id, round(surface_m2) AS s FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
     if not row:
         return None
+    cx = contexte_bilan_servi(db, row["id"])
+    if not cx:
+        return None
+    from ..faisabilite.db import parcel_faisabilite
     fz = parcel_faisabilite(db, row["id"])
     shab = (fz[1].fourchette or {}).get("shab_vendable_m2") if fz else None
     if not shab:
         return None
-    # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — prix de sortie NEUF via le point partagé
-    # (plus jamais sector_price/existant) ; non calculable (social-dominant) → None (pas de charge).
-    ps = resolve_prix_sortie_servi(db, row["id"])
-    if ps["non_calculable"]:
+    ps = cx["ps"]
+    if ps.get("non_calculable"):
         return None
-    prix = marche_service.marche_dvf(db, idu, profil=marche_service.DVF_BANQUIER_ADAPTATIF)
-    prix = {**prix, "q1": ps["prix"], "median": ps["prix"], "q3": ps["prix"]}   # prix de sortie NEUF
-    res = compute_calculette(float(shab), float(row["s"] or 0), prix, cout, marge, prix_demande)
+    prix = {"q1": ps["prix"], "median": ps["prix"], "q3": ps["prix"], "fiabilite": "fiable",
+            "fiable": True, "type_prix": "prix de sortie neuf (servi)", "n": 0, "n_exclus": 0}
+    res = compute_calculette(float(shab), float(row["s"] or 0), prix, cout, marge, prix_demande,
+                             base_params=cx["base_params"], contexte_eco=cx["eco"],
+                             prix_neuf=ps, hyp=cx["hyp"])   # contexte SERVI → décote + mixité comme la fiche
     return res if res.get("calculable") else None
 
 
@@ -9510,6 +9519,10 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
                               else (res.get("sdp_residuelle_m2") if res.get("disponible") else None)),
         "sous_densite": res.get("sous_densite") if res.get("disponible") else None,
         "charge_fonciere_m2": cf.get("par_m2_terrain"),
+        # OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — l'obligation de mixité (règle/article/page/régime/borne haute),
+        # LUE À LA MÊME SOURCE que l'écran (`fa["bilan"]["mixite"]`, issu de `compute_bilan_servi`), pour
+        # que le Comparatif/PDF/Excel portent la mention — plus un chiffre de charge sans sa réserve.
+        "mixite": _bilan.get("mixite"),
         # EXPORTS-FIX-3 LOT 2 (#7) — un bilan n'est affiché QUE s'il peut dire ses hypothèses et la
         # surface à laquelle il se rapporte : on sert les hypothèses du bilan (fa.bilan.hypotheses) +
         # la base (par m² de terrain). Sans elles, le rendu n'affiche pas la charge foncière.

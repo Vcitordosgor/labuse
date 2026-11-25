@@ -89,17 +89,24 @@ def classeur_bilan(
     _gf_statiques = [a for a in (_gf.get("alertes") or [])
                      if "dépasse la surface à retenir" not in a
                      and "supérieure à la surface de plancher" not in a]
-    if _gf_statiques:
+    # OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — la mention de mixité (même source que l'écran, portée par le
+    # garde-fou) accompagne la charge foncière dans l'Excel remis au promoteur ; non recalculée ici.
+    _mx = _gf.get("mixite_note")
+    if _gf_statiques or _mx:
         # CHIRURGICAL-FIX-1 (LOT M 3) — même libellé que le PDF : « Aucun programme » quand le Bilan est
         # livré sans programme (parcelle écartée), « Programme saisi » quand l'utilisateur en a saisi un.
-        if _gf.get("programme_saisi", True):
+        if _gf_statiques and _gf.get("programme_saisi", True):
             _txt = ("Programme saisi — non vérifié par LABUSE : " + " ; ".join(_gf_statiques)
                     + " Les chiffres ci-dessous découlent de cette saisie.")
-        else:
+        elif _gf_statiques:
             # CHIRURGICAL-FIX-1 (LOT N 3) — même texte que le PDF (reprend la distinction du Dossier).
             from .reperes import bandeau_sans_programme
             _titre, _bas = bandeau_sans_programme(_gf)
             _txt = f"{_titre} : " + (" ; ".join(_gf_statiques) + " " if _gf_statiques else "") + _bas
+        else:
+            _txt = ""
+        if _mx:
+            _txt = (_txt + "  " if _txt else "") + f"Mixité sociale — {_mx}"
         c = ws.cell(2, 1, _txt)
         c.font = Font(bold=True, color="7C2D12")
         c.fill = PatternFill("solid", fgColor="FFF7ED")

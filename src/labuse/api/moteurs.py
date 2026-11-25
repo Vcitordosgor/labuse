@@ -212,13 +212,25 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
         WHERE p.idu = ANY(:idus)"""), {"idus": idus, "run": runs.cascade(), "v2run": _v2run(db)}).mappings().all()
-    if len(rows) < 2:
-        raise HTTPException(404, f"{len(rows)} parcelle(s) trouvée(s) sur {len(idus)}")
     # OUTIL-ASSEMBLAGE-FIX-2 (LOT 4, pt 6) — identifiants DEMANDÉS mais INTROUVABLES en base : nommés
     # explicitement (comme /compare), jamais écartés en silence. Le calcul porte sur les parcelles
     # trouvées ; l'écran dira que la/les introuvable(s) a/ont été écartée(s) du périmètre.
     _trouves = {r["idu"] for r in rows}
     introuvables = [i for i in idus if i not in _trouves]
+    # OUTIL-ASSEMBLAGE-FIX-3 (LOT 4) — même quand TOUT (ou tout sauf une) est introuvable, le 404 NOMME
+    # les identifiants fautifs au lieu d'un « 0 trouvée(s) sur N » muet : la promesse « introuvable nommé »
+    # est tenue dans TOUS les cas, pas seulement quand ≥ 2 parcelles restent valides. Le détail est un
+    # objet structuré (introuvables + trouvées + compteurs) que le front liste tel quel.
+    if len(rows) < 2:
+        _manque = ", ".join(introuvables) if introuvables else "aucun"
+        raise HTTPException(404, {
+            "message": (f"{len(rows)} parcelle(s) trouvée(s) sur {len(idus)} — "
+                        f"il faut au moins 2 parcelles valides. Introuvable(s) : {_manque}."),
+            "introuvables": introuvables,
+            "trouvees": sorted(_trouves),
+            "n_demandes": len(idus),
+            "n_trouvees": len(rows),
+        })
     # OUTIL-ASSEMBLAGE-FIX-1 (LOT 1) — contiguïté en TROIS verdicts (assemblage.py `classer_lien`) :
     # bord cadastral commun MESURÉ (seule vraie mitoyenneté), contact par un point, petit vide cadastral.
     # Deux graphes : `adj_bord` (vrais bords seuls) → « d'un seul tenant » strict ; `adj_all` (tout lien

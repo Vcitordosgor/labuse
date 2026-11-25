@@ -3,7 +3,7 @@ import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable P
 import { useEffect, useState } from 'react'
 import { ListPaginationFooter } from '../ListPagination'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-MUSCLER-1 B1 — entrée par parcelle (omnibox)
-import { addProfile, getCommunes, getMoteursConfig, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
+import { ApiError, addProfile, getCommunes, getMoteursConfig, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
@@ -233,7 +233,29 @@ export function M16() {
           {run.isPending ? 'Vérification…' : `Vérifier l'assemblage (${msel.length})`}
         </Bouton>
       )}
-      {run.isError && <ErrorState message="Erreur — au moins 2 parcelles valides ?" retry={() => run.mutate()} />}
+      {/* OUTIL-ASSEMBLAGE-FIX-3 (LOT 4) — erreur « moins de 2 valides » : on NOMME les introuvables (lues
+          dans le détail structuré du 404), au lieu d'un message générique. La promesse « introuvable nommé »
+          est tenue même quand TOUT est introuvable (cas où l'API lève 404 avant tout calcul). */}
+      {run.isError && (() => {
+        const _e = run.error as ApiError | undefined
+        const _do = (_e?.detailObj && typeof _e.detailObj === 'object') ? _e.detailObj as Record<string, any> : null
+        const _intr = Array.isArray(_do?.introuvables) ? _do!.introuvables as string[] : []
+        if (_intr.length > 0) {
+          return (
+            <div data-asm-introuvables-err className="flex flex-col gap-1 rounded-lg border border-st-ecartee/50 bg-st-ecartee/[0.09] px-3 py-2 text-[11px] leading-snug text-st-ecartee">
+              <b>{_intr.length} identifiant{_intr.length > 1 ? 's' : ''} introuvable{_intr.length > 1 ? 's' : ''} — pas d'assemblage possible</b>
+              <div className="flex flex-wrap gap-1">
+                {_intr.map((i) => (
+                  <span key={i} className="rounded-full border border-st-ecartee/50 px-2 py-0.5 font-mono text-[11px]">{i.slice(8) || i}</span>
+                ))}
+              </div>
+              <span className="text-txt-dim">{_do?.n_demandes ?? _intr.length} parcelle{(_do?.n_demandes ?? _intr.length) > 1 ? 's' : ''} demandée{(_do?.n_demandes ?? _intr.length) > 1 ? 's' : ''}, {_do?.n_trouvees ?? 0} trouvée{(_do?.n_trouvees ?? 0) > 1 ? 's' : ''} — il faut au moins 2 parcelles valides.</span>
+              <button onClick={() => run.mutate()} className="mt-1 self-start text-[11px] underline">Réessayer</button>
+            </div>
+          )
+        }
+        return <ErrorState message={_e?.detail || 'Erreur — au moins 2 parcelles valides ?'} retry={() => run.mutate()} />
+      })()}
 
       {/* OUTIL-ASSEMBLAGE-FIX-2 (LOT 4, pt 6) — identifiant(s) INTROUVABLE(S) nommé(s) : le calcul ne
           porte QUE sur les parcelles trouvées ; on ne dit plus « N parcelles » quand il en manque. */}

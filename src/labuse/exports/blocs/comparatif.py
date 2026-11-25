@@ -112,6 +112,31 @@ def _eur_m2(r, k):
     return f"{x} €/m²" if x else None
 
 
+def _mixite_txt(r):
+    """OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — obligation de mixité à côté de la charge, MÊME source que
+    l'écran (`r["mixite"]`, issu de `compute_bilan_servi`). N'apparaît que si la charge est présentable
+    (bilan avec hypothèses). Dit le quota, l'article/la page, et la réserve « borne haute » le cas échéant."""
+    if not (r.get("charge_fonciere_m2") is not None and r.get("bilan_hypotheses")):
+        return None
+    m = r.get("mixite")
+    if not isinstance(m, dict) or not m.get("servitude"):
+        return None
+    cite = " · ".join(x for x in (m.get("article"), m.get("page")) if x)
+    # OUTIL-ASSEMBLAGE-FIX-3 (relecture-2) — règle de ZONE (Saint-Denis) vs secteur SMS (Saint-Paul).
+    _amont = "Obligation de mixité du règlement de zone" if m.get("origine") == "zone_reglement" \
+        else "Secteur de mixité sociale"
+    if not m.get("declenchee"):
+        return esc(f"{_amont} — clause non déclenchée sur ce programme" + (f" ({cite})" if cite else ""))
+    quota = m.get("quota_pct")
+    base = f"Obligation : {int(quota)} % " if quota else "Obligation : "
+    base += esc(m.get("produits") or "logements aidés")
+    if cite:
+        base += f" ({cite})"
+    if m.get("borne_haute"):
+        base += " — charge = <strong>borne haute</strong> (CA au prix libre, accession sociale non chiffrée)"
+    return base
+
+
 def _terrain_prix_ventes(r):
     """DOCS-COHERENCE-1 (recette Vic) — MÊME règle et MÊME seuil que le Dossier §8 : sous le seuil
     d'échantillon, « — (N ventes, échantillon insuffisant) » et le chiffre €/m² DISPARAÎT ; au-dessus,
@@ -222,6 +247,10 @@ _LIGNES = [
         + (" — bilan déficitaire : à ces hypothèses, le foncier ne se paie pas"
            if (r.get("charge_fonciere_m2") or 0) < 0 else ""))
         if (r.get("charge_fonciere_m2") is not None and r.get("bilan_hypotheses")) else None)),
+    # OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — l'obligation de mixité portée à CÔTÉ de la charge (même source que
+    # l'écran) : plus jamais un chiffre de charge sans sa réserve (« borne haute » quand l'accession
+    # sociale n'est pas chiffrée). Affichée seulement quand la charge l'est (bilan présentable).
+    ("Mixité sociale", "s", lambda r: _mixite_txt(r)),
     # RISQUES ET CONTRAINTES
     # OUTILS-P1-1 (pt 3) — statistique de SECTEUR préfixée « Secteur : » (comme à l'écran).
     ("Assainissement", "s", lambda r: (f"Secteur : {esc(r.get('assainissement'))}"

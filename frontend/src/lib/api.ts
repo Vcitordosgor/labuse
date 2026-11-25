@@ -44,10 +44,14 @@ export const commune = () => useApp.getState().commune
 export class ApiError extends Error {
   status: number
   detail?: string
-  constructor(url: string, status: number, detail?: string) {
+  // OUTIL-ASSEMBLAGE-FIX-3 (LOT 4) — on conserve le `detail` BRUT (objet) en plus du message : l'écran
+  // Assemblage y lit la liste `introuvables` du 404 tout-introuvable pour la nommer, pas seulement le texte.
+  detailObj?: unknown
+  constructor(url: string, status: number, detail?: string, detailObj?: unknown) {
     super(detail || `${url} → HTTP ${status}`)
     this.status = status
     this.detail = detail
+    this.detailObj = detailObj
   }
 }
 
@@ -62,7 +66,7 @@ async function j<T>(url: string, init?: RequestInit): Promise<T> {
     const detail = (await r.json().catch(() => null))?.detail
     const detailStr = typeof detail === 'string' ? detail
       : (detail && typeof detail === 'object' && typeof detail.message === 'string' ? detail.message : undefined)
-    throw new ApiError(url, r.status, detailStr)
+    throw new ApiError(url, r.status, detailStr, detail)
   }
   return r.json() as Promise<T>
 }
