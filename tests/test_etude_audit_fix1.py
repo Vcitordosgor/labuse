@@ -214,3 +214,52 @@ def test_defaut_10_lire_article_lien_officiel_bon_millesime_bonne_page(session_r
     assert "reglement" in url.lower() and ".pdf" in url.lower(), (
         f"le lien doit viser le PDF du règlement officiel, pas un portail générique : {url!r}")
     assert "#page=" in url, f"le lien doit pointer la bonne page : {url!r}"
+
+
+# ---------------------------------------------------- relecture : aucune implantation (pas de repli 1 logt)
+def test_relecture_message_aucune_implantation_nomme_la_contrainte_dominante():
+    """Source unique `moteur.message_aucune_implantation` : « Aucune implantation trouvée avec ces
+    hypothèses », nombre de candidats EXAMINÉS, et la contrainte qui en écarte le plus (la largeur /
+    l'allée de 5 m l'emporte sur la hauteur). Fonction pure — aucun accès base."""
+    from types import SimpleNamespace
+
+    from labuse.implantation.moteur import message_aucune_implantation
+
+    cand = (
+        [SimpleNamespace(faisable=False,
+                         motif="dégagement d'allée ≥ 5.0 m au droit des places; aucun module implantable")] * 40
+        + [SimpleNamespace(faisable=False, motif="dépasse la hauteur")] * 5
+        + [SimpleNamespace(faisable=True, motif="")] * 1)
+    msg = message_aucune_implantation(SimpleNamespace(candidats=cand))
+    assert msg.startswith("Aucune implantation trouvée avec ces hypothèses"), msg
+    assert "46 candidats examinés" in msg, msg
+    assert "largeur insuffisante pour le bâtiment et l'allée de 5 m" in msg, msg
+    assert "hauteur" not in msg.lower(), f"la hauteur (5 écartés) ne doit pas l'emporter sur la largeur (40) : {msg!r}"
+
+
+def test_relecture_saint_denis_senior_aucune_implantation_pas_de_un_logement(session_reelle):
+    """Saint-Denis Ui, résidence senior : le meilleur candidat faisable est dégénéré (1 logement R+0).
+    L'Étude ne se replie PLUS dessus → aucune capacité, statut « À compléter », message honnête (écran
+    ET PDF), et le PDF se rend (il ne lève plus « aucun scénario »)."""
+    from labuse.exports import etude_faisabilite as ef
+    from labuse.implantation.service import etudier_payload
+
+    s = session_reelle
+    _skip_si_absent(s, _DL)
+    data = {"idus": _DL, "type_projet": "senior", "stationnement": "aerien", "terrain": "libere",
+            "programme": {"mode": "saisi", "lignes": [{"type": "T2", "nombre": 22, "surface_m2": 56}]}}
+    payload = etudier_payload(s, data)
+    assert payload.get("aucune_implantation") is True, "le repli dégénéré « 1 logement R+0 » n'a pas été neutralisé"
+    assert payload.get("capacite_maximale") is None, f"aucune capacité ne doit être servie : {payload.get('capacite_maximale')!r}"
+    assert payload.get("statut_global") == "À compléter" and payload.get("verdict") == "À compléter", (
+        f"statut/verdict attendus « À compléter » : {payload.get('statut_global')!r}/{payload.get('verdict')!r}")
+    assert not [v for v in (payload.get("variantes") or []) if not v.get("absente")], "aucune variante dessinée attendue"
+    msg = payload.get("message") or ""
+    assert msg.startswith("Aucune implantation trouvée avec ces hypothèses"), msg
+    assert "candidats examinés" in msg and "allée de 5 m" in msg, msg
+    # le PDF se rend (ne lève plus) et ne mentionne AUCUNE capacité « 1 logement »
+    rendu = ef.rendu_etude(payload, genere_le="25/11/2026", scenario_ref=None)
+    assert rendu["retenu_ref"] is None
+    html = rendu["html"]
+    assert "Aucune implantation trouvée avec ces hypothèses" in html, "message absent du PDF"
+    assert "1 logement" not in html, "le PDF ne doit plus afficher « 1 logement » (capacité dégénérée)"

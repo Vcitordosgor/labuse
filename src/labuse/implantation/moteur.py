@@ -786,6 +786,45 @@ def limite_capacite(scenario, regles) -> Optional[str]:
     return " ; ".join(raisons) or None
 
 
+def message_aucune_implantation(scenario) -> str:
+    """ETUDE-AUDIT-FIX-1 (relecture) — message honnête quand aucune implantation CRÉDIBLE n'a été trouvée
+    (le meilleur candidat « faisable » est dégénéré : ≤ 1 logement, une barre réduite à un module). Plutôt
+    que de se replier sur « 1 logement R+0 », on chiffre les candidats EXAMINÉS et on nomme la contrainte
+    qui en écarte le PLUS souvent, lue dans la trace (chaque candidat écarté compte une fois par famille)."""
+    from collections import Counter
+    cand = (getattr(scenario, "candidats", None) or []) if scenario is not None else []
+    n = len(cand)
+    familles: Counter = Counter()
+    for c in cand:
+        if getattr(c, "faisable", False) or not getattr(c, "motif", ""):
+            continue
+        vues: set = set()
+        for mo in c.motif.split(";"):
+            mo = mo.strip().lower()
+            if not mo:
+                continue
+            if ("allée" in mo or "allee" in mo or "dégagement" in mo or "degagement" in mo
+                    or "module" in mo or "largeur" in mo or "⊆ assiette" in mo or "places/" in mo):
+                vues.add("largeur insuffisante pour le bâtiment et l'allée de 5 m")
+            elif "chevauchement" in mo:
+                vues.add("espacement insuffisant entre les bâtiments")
+            elif "hauteur" in mo:
+                vues.add("hauteur réglementaire insuffisante pour un étage")
+            elif "stationnement" in mo:
+                vues.add("stationnement aérien impossible sur cette assiette")
+            elif "distance" in mo:
+                vues.add("distance réglementaire entre constructions")
+        for f in vues:
+            familles[f] += 1
+    base = "Aucune implantation trouvée avec ces hypothèses"
+    if n and familles:
+        return (f"{base} — {n} candidats examinés ; "
+                f"contrainte la plus fréquente : {familles.most_common(1)[0][0]}.")
+    if n:
+        return f"{base} — {n} candidats examinés."
+    return f"{base}."
+
+
 # ------------------------------------------------------------------ ETUDE-V6-2 (Lot 2)
 def _best_faisable(faisables):
     """Le candidat FAISABLE maximal (plus de logements, puis moins de bâtiments, moins de niveaux).

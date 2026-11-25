@@ -1236,9 +1236,66 @@ def _annexe(payload: dict, retenu: dict) -> str:
 from labuse.implantation.planche import numero_etude   # noqa: E402,F401
 
 
+def _p1_aucune(payload: dict, numero: str) -> str:
+    """ETUDE-AUDIT-FIX-1 (relecture) — page de synthèse quand AUCUNE implantation crédible n'a été trouvée.
+    On ne « se replie » plus sur « 1 logement en R+0 » : le document dit honnêtement « Aucune implantation
+    trouvée avec ces hypothèses » (nombre de candidats examinés + contrainte dominante, dans le message
+    serveur), statut « À compléter », SANS aucune capacité. Les règles du PLU restent données ensuite
+    (contexte utile). MÊME message qu'à l'écran — source unique `payload["message"]`."""
+    e = payload["entrees"]
+    t = payload["terrain"]
+    type_lbl = _type_projet_label(e.get("type_projet"))
+    demande = (payload.get("programme_saisi") or {}).get("demande")
+    _dem_str = _mix_str(demande) if isinstance(demande, dict) else ""
+    rech = payload.get("recherche") or {}
+    tiles = [
+        (_m2(t.get("contenance_totale_m2")), "Contenance cadastrale"),
+        (_m2(t.get("zone_implantation_m2")), "Zone d'implantation (après reculs)"),
+        (str(rech.get("candidats_examines") or 0), "Candidats examinés"),
+    ]
+    tiles_html = "".join('<div class="tile"><div class="v">%s</div><div class="l">%s</div></div>'
+                         % (v, l) for v, l in tiles)
+    _dem_line = ((f'<p class="note">Programme demandé : {esc(type_lbl)}'
+                  + (f' — {esc(_dem_str)}' if _dem_str else '') + '.</p>') if demande else '')
+    return (
+        '<div class="cover">'
+        f'<div class="kicker">LABUSE · Document n° '
+        f'<span style="text-transform:none">{esc(numero)}</span></div>'
+        f'<h1>Étude de faisabilité — {esc(t.get("commune") or e.get("commune") or "")} · '
+        f'parcelles {esc(_refs_parcelles(payload))}</h1>'
+        f'<p class="idu">{_m2(t.get("contenance_totale_m2"))} · zone {esc(e.get("zone") or "")} · '
+        f'{esc(type_lbl)} · stationnement {esc(_stationnement_label({}, e))}</p>'
+        + ('<p class="note"><b>Terrain supposé libéré</b> — la parcelle porte du bâti existant, supposé démoli pour cette étude.</p>'
+           if payload.get("terrain_suppose_libere") else '')
+        + ('<p class="note"><b>Périmètre de l\'étude : logement.</b> Un éventuel commerce (en rez-de-chaussée '
+           'par exemple) n\'est pas étudié — ses surfaces, son stationnement et ses accès propres sont à '
+           'vérifier séparément.</p>')
+        + f'<div class="verdict warn"><b>{esc(payload.get("message") or "Aucune implantation trouvée avec ces hypothèses.")}</b></div>'
+        + _dem_line
+        + '<div class="ef-status"><div><b>Statut de l\'étude</b>À compléter — aucune implantation n\'a pu '
+          'être dessinée sous ces hypothèses ; une étude d\'architecte est recommandée.</div></div>'
+        + f'<div class="ef-synth">{tiles_html}</div>'
+        + f'<div class="aside rose">{esc(_WARN)}</div>'
+        '</div>')
+
+
 def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = None) -> dict:
     """payload (/modules/etude) → {html, numero, retenu_ref}. HTML prêt pour `rendu.render_pdf`.
     Lève ValueError si aucun scénario (le document n'a rien à montrer)."""
+    # ETUDE-AUDIT-FIX-1 (relecture) — aucune implantation crédible (le seul candidat « faisable » était
+    # dégénéré) : on NE lève PAS, on rend un document HONNÊTE (message « Aucune implantation trouvée avec ces
+    # hypothèses » + statut « À compléter », jamais de capacité) suivi des règles du PLU. MÊME verdict qu'à
+    # l'écran (le payload ne porte ni scénario ni capacité).
+    if payload.get("aucune_implantation"):
+        numero = _numero_document(payload)
+        refs = _refs_parcelles(payload)
+        cart = Cartouche(
+            doc_title=f"LABUSE — Étude de faisabilité · {payload['terrain'].get('commune') or ''}",
+            doc_ref=f"{refs} · {numero}", doc_foot=FOOT_LIGNE)
+        corps = (f"<style>{_STYLE}</style>" + _p1_aucune(payload, numero)
+                 + _p3_regles(payload, None) + _annexe_reglement(payload))
+        html = _virgule_sortie(page_html("Étude de faisabilité", cart, corps))
+        return {"html": html, "numero": numero, "retenu_ref": None}
     retenu = scenario_retenu(payload, scenario_ref)
     if retenu is None:
         # ETUDE-STATIONNEMENT-FIX-6 (point 1, option A) — aérien SANS plan mais variante SOUS-SOL disponible :

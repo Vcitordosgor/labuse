@@ -1195,7 +1195,9 @@ def libelle_recherche(*, etat: str, candidats_examines: int, candidats_prevus: i
     if etat == "complete":
         return None
     if etat == "non_aboutie":
-        return "Recherche non aboutie — aucune implantation trouvée sur cette assiette."
+        # le libellé « Recherche non aboutie » est déjà posé par l'écran et le PDF : la note ne porte QUE le
+        # détail (sinon doublon « Recherche non aboutie — Recherche non aboutie — … »).
+        return "aucune implantation réglementaire n'a été trouvée sur cette assiette (recherche menée jusqu'au bout)."
     n, tot = int(candidats_examines or 0), int(candidats_prevus or 0)
     base = f"Recherche partielle · {n} sur {tot} candidats examinés"
     if logements_dessines:
@@ -1378,6 +1380,33 @@ def etudier_payload(session, entree: dict) -> dict:
             confrontation = {"demande_logements": dem_tot, "capacite_maximale_logements": cap_tot,
                              "tient": dem_tot <= cap_tot, "reserve_logements": cap_tot - dem_tot}
 
+    # ETUDE-AUDIT-FIX-1 (relecture) — le MEILLEUR candidat « faisable » est DÉGÉNÉRÉ : ≤ 1 logement pour un
+    # programme collectif (une barre réduite à un seul module, le plus souvent sans place faute de largeur pour
+    # l'allée de 5 m). Ce n'est PAS une implantation crédible. L'Étude ne se replie plus sur « 1 logement R+0 » :
+    # on efface la capacité, les scénarios et les variantes, et on dit honnêtement « Aucune implantation trouvée
+    # avec ces hypothèses » (nombre de candidats examinés + contrainte dominante, lue dans la trace). Statut
+    # « À compléter », jamais de capacité affichée. Le LOTISSEMENT, lui, peut légitimement dessiner un seul lot :
+    # on l'exclut de cette règle.
+    aucune_implantation = False
+    if (type_projet != "lotissement" and capacite_maximale is not None
+            and (capacite_maximale.get("logements") or 0) <= 1):
+        aucune_implantation = True
+        message = moteur_mod.message_aucune_implantation(scn_max)
+        capacite_maximale = None
+        facteurs_limitants = []
+        confrontation = None
+        depassement = None
+        scenarios = []
+        scenarios_pub = []
+        variantes = [(role, None, message) for role, _s, _raison in variantes]
+        for v in variantes_pub:
+            v["absente"] = True
+            v["resume"] = None
+            # la variante « votre programme » porte le message complet (N candidats + contrainte dominante) ;
+            # les autres rôles gardent leur raison « non proposée » propre.
+            if v.get("role") == "votre_programme" or v.get("ref") == "votre_programme":
+                v["raison"] = message
+
     # IMPLANTATION-4 (planche plan masse) — UN SEUL SVG par scénario, le même à l'écran et dans le PDF,
     # DESSINÉ depuis la géométrie (contexte cadastre/bâti/voies + TN LiDAR chargé UNE fois pour l'assiette).
     # Robuste : toute panne de contexte/dessin laisse `planche_svg` vide (l'écran retombe sur le plan
@@ -1423,7 +1452,10 @@ def etudier_payload(session, entree: dict) -> dict:
             except Exception:
                 pub["coupe_svg"] = ""
 
-    if scenarios_pub:
+    if aucune_implantation:
+        # ETUDE-AUDIT-FIX-1 — aucune implantation crédible : statut « À compléter », jamais une capacité.
+        statut_global = "À compléter"
+    elif scenarios_pub:
         statut_global = scenarios_pub[0]["statut_etude"]
     elif demande:
         statut_global = "ne tient pas"
@@ -1465,8 +1497,9 @@ def etudier_payload(session, entree: dict) -> dict:
     # déjà traitée là), on ne conclut PAS à une « Impossible pour cause établie » (qui dirait une interdiction
     # du PLU) : la recherche n'a simplement trouvé aucun plan sous ces hypothèses (assiette trop étroite,
     # reculs, stationnement). Cas des assemblages dont la part d'habitat (UB) est une bande étroite.
-    verdict = next((v["verdict"] for v in variantes_pub if not v.get("absente")),
-                   "Aucun plan trouvé sous ces hypothèses")
+    verdict = ("À compléter" if aucune_implantation
+               else next((v["verdict"] for v in variantes_pub if not v.get("absente")),
+                         "Aucun plan trouvé sous ces hypothèses"))
     # ETUDE-STATIONNEMENT-FIX-5 (point 3) — UN SEUL message, cohérent avec le titre : quand le verdict est
     # « Aucun plan trouvé sous ces hypothèses », le message ne doit PLUS commencer par « simulation impossible »
     # (le titre et le texte se contredisaient). On ne garde que la RAISON, capitalisée.
@@ -1608,6 +1641,10 @@ def etudier_payload(session, entree: dict) -> dict:
         "statut_global": statut_global,
         "verdict": verdict,
         "message": message,
+        # ETUDE-AUDIT-FIX-1 (relecture) — True quand aucune implantation crédible n'a été trouvée (le seul
+        # candidat « faisable » était dégénéré) : l'écran et le PDF affichent LE message (ci-dessus), jamais
+        # une capacité « 1 logement R+0 ». Source unique lue par les deux rendus.
+        "aucune_implantation": aucune_implantation,
         "scenarios": scenarios_pub,
         "variantes": variantes_pub,
         "depassement": depassement,
