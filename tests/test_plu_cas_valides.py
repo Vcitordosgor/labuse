@@ -160,27 +160,10 @@ def test_preambules_zones_reattaches_count(sess):
             f"le préambule de {zone} ne définit pas « la zone {lbl} »"
 
 
-def test_couverture_plan_zonage_liste_nominative(sess):
-    """RELECTURE-7 §4 (durci) : sur les 21 communes, CHAQUE zone du plan de zonage a ≥1 résultat sous son
-    filtre. On affirme la LISTE NOMINATIVE des zones injoignables (et non « ≤ 4 ») : après FIX-9
-    (Sainte-Rose 1AUto→AUTO ; Bras-Panon/Trois-Bassins AUt→Ua/Ub ; Le Tampon AUto→Ucto par renvoi texte),
-    elle doit être VIDE. Un nouveau trou ferait échouer le test en le NOMMANT."""
-    import pathlib
-
-    import yaml
-    mil = yaml.safe_load((pathlib.Path(__file__).resolve().parents[1] / "config" / "plu_millesimes.yaml")
-                         .read_text())["communes"]
-    servables = {k for k, v in mil.items() if v.get("statut") in ("a_jour", "annule_partiel")}
-    rows = sess.execute(text("SELECT right(attrs->>'partition',5) insee, attrs->>'libelle' lib "
-                             "FROM spatial_layers WHERE kind='plu_gpu_zone' "
-                             "AND attrs->>'partition' LIKE 'DU_%' GROUP BY 1,2")).all()
-    from collections import defaultdict
-    zbyc = defaultdict(set)
-    for r in rows:
-        if r.insee in servables and r.lib:
-            zbyc[r.insee].add(r.lib)
-    zeros = sorted((i, z) for i in zbyc for z in zbyc[i] if not P.zones_apparentees(sess, z, i))
-    assert zeros == [], f"zones du plan injoignables (devrait être vide) : {zeros}"
+# OUTIL-PLU-FIX-10 (LOT 0) — RETIRÉ : test_couverture_plan_zonage_liste_nominative (« chaque zone donne
+# au moins un résultat », dit « 701 sur 701 » dans l'audit). C'est CE critère qui a produit les erreurs :
+# il validait qu'une zone renvoyée EN BLOC vers le règlement d'une AUTRE zone « donne un résultat », alors
+# qu'elle a son propre article. Le nouveau critère (par zone ET par article) vit dans test_plu_fix10_lot0.
 
 
 def test_renvoi_generique_AUa_vers_U(sess):
