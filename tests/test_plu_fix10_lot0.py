@@ -147,33 +147,51 @@ def test_p5_saint_paul_usdu_stationnement_livrets_200_246_306(sess):
 
 # ─────────────── Point 6 (à corriger) — barèmes stationnement sur la fiche parcelle ───────────────
 
-def test_p6_fiche_saint_louis_stationnement_conditions_article_page(sess):
-    """97414000DK0208 (Saint-Louis, UA) : le barème sert 2 places/logement AVEC les conditions du tableau
-    (logement social : 1 place ; part publique : 0,5 place/logement pour les opérations > 10 logements),
-    l'article (UA 12.2) ET un lien profond vers la p.23."""
+def _stat_fiche(sess, idu, commune, zone):
     from labuse.api.app import _reglement_plu_block
-    b = _reglement_plu_block(sess, "97414000DK0208", "Saint-Louis")
-    z = next(x for x in b["zones"] if x["zone"] == "UA")
-    stat = next(r for r in z["regles_valeurs"] if r.get("cle") == "stationnement")
-    cond = " ".join(str(c.get("texte", c)) for c in (stat.get("conditions") or []))
-    assert "logement social" in cond.lower() or "0,5" in cond or "10 logements" in cond, \
-        f"SL : conditions du tableau UA 12.2 absentes du barème ({stat.get('conditions')})"
-    assert stat.get("reference") and "12.2" in stat["reference"], f"SL : référence UA 12.2 absente ({stat.get('reference')})"
-    assert "#page=23" in (stat.get("url") or ""), f"SL : lien p.23 absent ({stat.get('url')})"
+    b = _reglement_plu_block(sess, idu, commune)
+    z = next(x for x in b["zones"] if x["zone"] == zone)
+    return next(r for r in z["regles_valeurs"] if r.get("cle") == "stationnement")
 
 
-def test_p6_fiche_saint_pierre_stationnement_article_page_lien(sess):
-    """97416000HT0538 (Saint-Pierre, Ud) : 1 place/75 m² servi AVEC référence d'article, les conditions
-    (logement locatif social, lotissement individuel) et un lien profond vers la p.93."""
-    from labuse.api.app import _reglement_plu_block
-    b = _reglement_plu_block(sess, "97416000HT0538", "Saint-Pierre")
-    z = next(x for x in b["zones"] if x["zone"] == "Ud")
-    stat = next(r for r in z["regles_valeurs"] if r.get("cle") == "stationnement")
-    assert stat.get("reference"), f"SP : référence d'article absente ({stat.get('reference')})"
-    assert "#page=93" in (stat.get("url") or ""), f"SP : lien p.93 absent ({stat.get('url')})"
-    cond = " ".join(str(c.get("texte", c)) for c in (stat.get("conditions") or []))
-    assert "social" in cond.lower() or "lotissement" in cond.lower(), \
-        f"SP : conditions (LLS / lotissement) absentes ({stat.get('conditions')})"
+def test_p6_fiche_saint_louis_bareme_article_page(sess):
+    """FIX-11 (réécrit, non permissif) — 97414000DK0208 (Saint-Louis, UA) : le barème sert « 2 places /
+    logement », la référence contient « UA 12.2 » et le lien profond pointe la p.23."""
+    stat = _stat_fiche(sess, "97414000DK0208", "Saint-Louis", "UA")
+    assert "2 places" in str(stat.get("valeur")), f"SL : valeur de base ({stat.get('valeur')})"
+    assert stat.get("reference") and "UA 12.2" in stat["reference"], f"SL : référence ({stat.get('reference')})"
+    assert "#page=23" in (stat.get("url") or ""), f"SL : lien p.23 ({stat.get('url')})"
+
+
+def test_p6_fiche_saint_louis_ligne_logement_social(sess):
+    """FIX-11 point 3 — la fiche de Saint-Louis UA porte EXPLICITEMENT la ligne du tableau p.23
+    « logement social : 1 place / logement » dans ses conditions (et non seulement la part publique)."""
+    stat = _stat_fiche(sess, "97414000DK0208", "Saint-Louis", "UA")
+    conds = [str(c.get("texte", c)).lower() for c in (stat.get("conditions") or [])]
+    social = [c for c in conds if ("logement social" in c or "logements sociaux" in c)]
+    assert social, f"SL : aucune condition ne nomme le logement social ({stat.get('conditions')})"
+    assert any("1 place" in c for c in social), \
+        f"SL : la ligne logement social ne porte pas « 1 place » ({social})"
+
+
+def test_p6_fiche_saint_pierre_bareme_article_page(sess):
+    """FIX-11 (réécrit, non permissif) — 97416000HT0538 (Saint-Pierre, Ud) : barème « 1 place / 75 m² »,
+    référence « Ud6 », lien profond p.93."""
+    stat = _stat_fiche(sess, "97416000HT0538", "Saint-Pierre", "Ud")
+    assert "75 m²" in str(stat.get("valeur")), f"SP : valeur de base ({stat.get('valeur')})"
+    assert stat.get("reference") and "Ud6" in stat["reference"].replace(" ", ""), f"SP : référence ({stat.get('reference')})"
+    assert "#page=93" in (stat.get("url") or ""), f"SP : lien p.93 ({stat.get('url')})"
+
+
+def test_p6_fiche_saint_pierre_ligne_logement_locatif_social(sess):
+    """FIX-11 point 3 — la fiche de Saint-Pierre Ud porte EXPLICITEMENT la ligne p.93 du logement locatif
+    social (« 1 place pour les logements locatifs sociaux ») dans ses conditions."""
+    stat = _stat_fiche(sess, "97416000HT0538", "Saint-Pierre", "Ud")
+    conds = [str(c.get("texte", c)).lower() for c in (stat.get("conditions") or [])]
+    social = [c for c in conds if ("locatif" in c and "social" in c) or "logements sociaux" in c
+              or "logement social" in c]
+    assert social, f"SP : aucune condition ne nomme le logement (locatif) social ({stat.get('conditions')})"
+    assert any("place" in c for c in social), f"SP : la ligne sociale ne porte pas de ratio ({social})"
 
 
 # ─────────────── Points 7-8 (à corriger) — dates & avertissements ───────────────
@@ -207,3 +225,64 @@ def test_p8_beauvallon_evolution_non_integree_signalee(sess):
     by = {c["insee"]: c for c in plu_annuaire_communes(sess)["communes"]}
     note = (by["97410"].get("note_doc") or "") + " " + str(by["97410"].get("modifications") or "")
     assert "beauvallon" in note.lower(), f"Saint-Benoît : évolution Beauvallon non signalée ({note!r})"
+
+
+# ═══════════════ RELECTURE-PLU-8 (FIX-11) — liste fermée (3 points) ═══════════════
+
+# ─── Point 1 (bloquant) — Saint-Denis Up.10 : les valeurs de hauteur sont DANS l'article 10 ───
+
+def test_fix11_p1_saint_denis_Up10_contient_16m_11m(sess):
+    """RELECTURE-8 §1 — sous UP, « hauteur » sert l'Article Up.10 (p.34) qui DOIT contenir les hauteurs
+    maximales du secteur : Upr 16 m et Upi 11 m. Sur FIX-10 l'extrait s'arrêtait à « …dans le secteur : »
+    (530 car.) sans aucune valeur — elles étaient rattachées à tort à l'article SUIVANT Up.11."""
+    rows = P.search_reglement(sess, "hauteur", insee="97411", zone="Up", terms=["hauteur"], limit=30)
+    a10 = [r for r in rows if "Up.10" in (r["article_ref"] or "")]
+    assert a10, "UP : Article Up.10 (hauteur) absent des résultats"
+    txt = a10[0]["texte_verbatim"] or ""
+    assert "16 m" in txt and "11 m" in txt, \
+        f"Up.10 ne contient pas 16 m / 11 m (len={len(txt)}) — valeurs toujours détachées"
+    assert "Upr" in txt and "Upi" in txt, "Up.10 ne nomme pas les secteurs Upr/Upi"
+
+
+def test_fix11_p1_saint_denis_Up11_ne_contient_pas_les_hauteurs(sess):
+    """Corollaire : les 16 m / 11 m ne doivent PLUS figurer dans l'Article Up.11 (Aspect extérieur, p.35),
+    où ils avaient migré."""
+    rows = sess.execute(text(
+        "SELECT texte_verbatim FROM plu_reglement_extrait WHERE insee='97411' "
+        "AND article_ref ILIKE 'Article Up.11%'")).scalars().all()
+    assert rows, "Up.11 introuvable"
+    for t in rows:
+        assert not ("16 m" in (t or "") and "11 m" in (t or "")), \
+            "Up.11 contient encore les hauteurs 16 m / 11 m (elles appartiennent à Up.10)"
+
+
+# ─── Point 2 — l'article PROPRE à la zone passe avant celui d'une zone sœur ───
+
+def _premier_zone(sess, insee, zone, q):
+    rows = P.search_reglement(sess, q, insee=insee, zone=zone, terms=[q], limit=20)
+    zoned = [r for r in rows if r["zone"]]
+    return zoned[0] if zoned else None
+
+
+def test_fix11_p2_avirons_UE_stationnement_article_propre_premier(sess):
+    """RELECTURE-8 §2 — Les Avirons UE : « stationnement » doit servir EN PREMIER l'Article UE 12 (p.24),
+    propre à UE, et non l'Article U 12 (p.16) du chapitre mutualisé « ZONES UA, UB, UC et UD »."""
+    r = _premier_zone(sess, "97401", "UE", "stationnement")
+    assert r and r["zone"] == "UE" and "UE 12" in (r["article_ref"] or ""), \
+        f"Avirons UE : 1er résultat = {r and (r['zone'], r['article_ref'], r['page_debut'])} (attendu UE 12 p.24)"
+
+
+def test_fix11_p2_salazie_UT_stationnement_article_propre_premier(sess):
+    """RELECTURE-8 §2 — Salazie UT : « stationnement » doit servir EN PREMIER l'Article UT 12 (p.26),
+    et non l'Article U 12 (p.17) du chapitre « ZONES UA, UB et UC »."""
+    r = _premier_zone(sess, "97421", "UT", "stationnement")
+    assert r and r["zone"] == "UT" and "UT 12" in (r["article_ref"] or ""), \
+        f"Salazie UT : 1er résultat = {r and (r['zone'], r['article_ref'], r['page_debut'])} (attendu UT 12 p.26)"
+
+
+def test_fix11_p2_petite_ile_UEa_hauteur_article_propre_premier(sess):
+    """RELECTURE-8 §2 — Petite-Île UEa : « hauteur » doit servir EN PREMIER l'Article UEa.10 (p.62, 7 m),
+    propre à UEa, et non l'Article UE.10 (p.56) de la zone UE."""
+    r = _premier_zone(sess, "97405", "UEa", "hauteur")
+    assert r and r["zone"] == "UEA" and "UEa.10" in (r["article_ref"] or ""), \
+        f"Petite-Île UEa : 1er résultat = {r and (r['zone'], r['article_ref'], r['page_debut'])} (attendu UEa.10 p.62)"
