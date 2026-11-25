@@ -689,6 +689,11 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         # ETUDE-FIABLE-1 (LOT C2) — parcelle bâtie : « Terrain supposé libéré », à côté du résultat.
         + ('<p class="note"><b>Terrain supposé libéré</b> — la parcelle porte du bâti existant, supposé démoli pour cette étude.</p>'
            if payload.get("terrain_suppose_libere") else '')
+        # ETUDE-AUDIT-FIX-1 LOT 5 (défaut 7) — périmètre explicite : l'étude porte sur le LOGEMENT ; un
+        # éventuel commerce n'est pas étudié. MÊME phrase qu'à l'écran.
+        + ('<p class="note"><b>Périmètre de l\'étude : logement.</b> Un éventuel commerce (en rez-de-chaussée '
+           'par exemple) n\'est pas étudié — ses surfaces, son stationnement et ses accès propres sont à '
+           'vérifier séparément.</p>')
         + _au_html
         + f'<div class="{vclass}">{esc(txt)}</div>'
         # CAPACITE-1 (LOT C) — la « surface à retenir » (règle unique) + l'écart chiffré expliqué (C3).

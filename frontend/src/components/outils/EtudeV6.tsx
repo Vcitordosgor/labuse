@@ -69,11 +69,14 @@ function pluRef(commune?: string | null, zone?: string | null, article?: string 
     article ? `art. ${article}` : null, millesime ? `millésime ${millesime}` : null].filter(Boolean).join(' · ')
 }
 
-type ProjetKey = 'etudiante' | 'senior' | 'social' | 'lotissement'
+type ProjetKey = 'etudiante' | 'senior' | 'social' | 'collectif' | 'lotissement'
 const PROJETS: { key: ProjetKey; label: string; desc: string }[] = [
   { key: 'etudiante', label: 'Résidence étudiante', desc: 'Studios et petits logements pour étudiants' },
   { key: 'senior', label: 'Résidence senior', desc: 'Logements adaptés pour personnes âgées' },
   { key: 'social', label: 'Logement social', desc: 'Programme locatif social ou assimilé' },
+  // ETUDE-AUDIT-FIX-1 LOT 5 (défaut 7) — collectif ORDINAIRE (logement libre) : stationnement selon le
+  // PLU (règle générale + plafond L151-35/36). Le commerce n'est pas étudié (phrase écran + PDF).
+  { key: 'collectif', label: 'Collectif', desc: 'Logement libre en immeuble collectif (hors commerce)' },
   { key: 'lotissement', label: 'Lotissement', desc: 'Division foncière en lots destinés à bâtir' },
 ]
 // Lot C — le vrai type est transmis au moteur : l'implantation reste collective (le lotissement =
@@ -320,6 +323,12 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
           {limitePhrase && <span className="text-[11px] text-txt-mut">· ce qui limite : <b className="text-txt">{limitePhrase}</b></span>}
           {/* ETUDE-FIABLE-1 (LOT C2) — parcelle bâtie : l'étude suppose le terrain libéré. */}
           {resultat.terrain_suppose_libere && <span data-terrain-libere className="rounded border border-line-2 bg-surface-2 px-1.5 py-0.5 text-[10px] text-txt-dim">Terrain supposé libéré</span>}
+        </div>
+
+        {/* ETUDE-AUDIT-FIX-1 LOT 5 (défaut 7) — périmètre explicite : cette étude porte sur le LOGEMENT ;
+            un éventuel commerce n'est pas étudié. Même phrase qu'au PDF. */}
+        <div data-perimetre-commerce className="mx-4 mt-2 rounded-md border border-line-2 bg-surface-1 px-3 py-2 text-[10.5px] text-txt-dim">
+          <b className="text-txt">Périmètre de l'étude : logement.</b> Un éventuel commerce (en rez-de-chaussée par exemple) n'est pas étudié — ses surfaces, son stationnement et ses accès propres sont à vérifier séparément.
         </div>
 
         {/* ETUDE-FIABLE-1 (LOT B5) — état de la recherche : rien si complète, bandeau ambre si partielle /
