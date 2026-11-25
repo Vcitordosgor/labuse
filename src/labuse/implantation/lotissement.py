@@ -432,19 +432,20 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
                          "jardins_privatifs_m2": jardins_privatifs, "communs_m2": communs,
                          "ces_pct": ces_pct, "resultat": "Réussi" if pt_ok else "Échoué", "article": pt_article},
         "controles": [controle_pt],
-        # BILAN SURFACIQUE CLOS (Lot E) : assiette = lots + voirie + communs + PPR rouge + EBC + hors-zone
-        # (part non U/AU + marges clippées), sans double comptabilisation. Clos par construction.
-        "bilan_surfacique": (lambda hz, som: {
-            "assiette_m2": round(assiette.area, 1), "lots_m2": round(sum(aires), 1), "voirie_m2": voirie_m2,
-            "communs_m2": communs, "ppr_rouge_m2": round(terrain.ppr_rouge_m2, 1), "ebc_m2": ebc_m2,
-            "hors_zone_m2": hz, "somme_m2": round(som, 1), "ecart_m2": round(som - assiette.area, 1),
-            "clos": abs(som - assiette.area) <= 0.02 * assiette.area,
-            # ETUDE-AUDIT-FIX-1 LOT 3 (défaut 3) — VERROU : aire d'intersection lots × voirie. Les lots étant
-            # découpés hors voirie (shapely difference), elle vaut 0 — la desserte n'est plus comptée vendable.
+        # BILAN SURFACIQUE (Lot E) : assiette = lots + voirie + communs + PPR rouge + EBC + hors-zone.
+        # ETUDE-AUDIT-FIX-1 (relecture pt8) — l'écart AFFICHÉ est désormais celui des COMPOSANTS ARRONDIS
+        # (ce que le lecteur additionne) vs l'assiette, et non « somme non arrondie − assiette » (qui vaut ≈ 0
+        # par construction, les communs/hors-zone étant des résidus) : un reliquat d'arrondi (ex. −1,1 m²)
+        # est désormais DIT, pas masqué par un « écart 0 » tautologique. « Clos » = reliquat ≤ 0,5 m².
+        "bilan_surfacique": (lambda al, vo, co, pr, eb, hz: (lambda somme, assi: {
+            "assiette_m2": assi, "lots_m2": al, "voirie_m2": vo, "communs_m2": co,
+            "ppr_rouge_m2": pr, "ebc_m2": eb, "hors_zone_m2": hz, "somme_m2": somme,
+            "ecart_m2": round(somme - assi, 1), "clos": abs(somme - assi) <= 0.5,
+            # VERROU (défaut 3) : aire d'intersection lots × voirie — 0 par découpe (shapely difference).
             "lots_voirie_intersection_m2": lots_voirie_inter_m2,
-        })(round(max(0.0, assiette.area - net.area - terrain.ppr_rouge_m2 - ebc_m2), 1),
-           sum(aires) + voirie_m2 + communs + terrain.ppr_rouge_m2 + ebc_m2
-           + max(0.0, assiette.area - net.area - terrain.ppr_rouge_m2 - ebc_m2)),
+        })(round(al + vo + co + pr + eb + hz, 1), round(assiette.area, 1)))(
+            round(sum(aires), 1), voirie_m2, communs, round(terrain.ppr_rouge_m2, 1), ebc_m2,
+            round(max(0.0, assiette.area - net.area - terrain.ppr_rouge_m2 - ebc_m2), 1)),
         "stationnement": {"par_lot": places_par_lot, "article": stat_article, "servie": stat_servie,
                           "total_lots": places_lots, "visiteurs_estimes": places_visiteurs,
                           "note": _stat_note},
