@@ -184,16 +184,18 @@ def test_sainte_rose_1AUto_relie_au_chapitre_AUTO(sess):
     assert any(r["zone"] == "AUTO" for r in rows), "le filtre 1AUto ne sert pas le chapitre AUTO"
 
 
-def test_les_3_autres_AU_renvoient_par_le_texte(sess):
-    """FIX-9 (point 1) : les 3 autres zones ex-« introuvables » ne sont PAS des trous — leur règlement
-    renvoie DANS LE TEXTE à une zone U servie (vérifié PDF : Bras-Panon AUt→Ua p.80, Trois-Bassins
-    AUt→Ub p.66-70, Le Tampon AUto→Ucto p.86-89). Chacune doit donc servir des articles sous son filtre."""
-    cas = [("97402", "1AUt", "UA"), ("97423", "1AUt", "UB"), ("97422", "1AUto", "UC")]
-    for insee, plan, attendu in cas:
-        app = P.zones_apparentees(sess, plan, insee)
-        assert attendu in app, f"{insee} {plan} : apparentées={app}, attendu ⊇ {{{attendu}}}"
-        assert P.count_reglement(sess, "hauteur", insee=insee, zone=plan, terms=["hauteur"]) > 0, \
-            f"{insee} {plan} ne sert aucun article de hauteur"
+def test_zones_AU_indicees_servent_leur_chapitre_propre(sess):
+    """OUTIL-PLU-FIX-10 (LOT 1) — RÉVISÉ (ancien test_les_3_autres_AU_renvoient_par_le_texte, qui encodait
+    l'ancien critère « renvoi en bloc vers Ua/Ub »). Nouveau critère : une zone AU indicée sert SON PROPRE
+    chapitre « AU indicée » (où chaque article porte sa règle ou son renvoi exprès), jamais la hauteur
+    d'une autre zone. Le Tampon AUto n'a PAS de chapitre « AU indicée » → renvoie bien à Ucto (texte)."""
+    for insee, plan in (("97402", "1AUt"), ("97423", "1AUt")):
+        assert P.zones_apparentees(sess, plan, insee) == ["AUINDICEE"], \
+            f"{insee} {plan} : {P.zones_apparentees(sess, plan, insee)} (attendu [AUINDICEE])"
+        assert P.count_reglement(sess, "hauteur", insee=insee, zone=plan, terms=["hauteur"]) > 0
+    # Le Tampon AUto : pas de chapitre AU indicée → renvoi texte vers la zone Uc (Ucto)
+    app = P.zones_apparentees(sess, "1AUto", "97422")
+    assert "UC" in app, f"Le Tampon 1AUto : apparentées={app}"
 
 
 def test_le_tampon_pas_de_lignes_doublees(sess):

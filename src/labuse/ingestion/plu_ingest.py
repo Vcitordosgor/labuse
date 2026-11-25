@@ -82,6 +82,16 @@ _ZONE_FROM_ZONE = re.compile(r'(?i)ZONE\s+([0-9A-Za-z]{1,5})')
 # vise QUE les codes à chiffre de tête, donc « Article UB » / « Article Ucv » (classe en tête) ne sont
 # jamais touchés. Une parcelle 1AUm/2AU retrouve ainsi ses articles (candidats [1AU,1AUM] ⊃ « 1AU »).
 _ZONE_FROM_ART_NUM = re.compile(r'(?i)^(?:ARTICLE)\s+([0-9]{1,2}(?:AU|U|A|N))[A-Za-z0-9]*')
+# OUTIL-PLU-FIX-10 (LOT 1) — chapitre GÉNÉRIQUE « ZONE AU indicée » (Bras-Panon, Saint-Louis,
+# Trois-Bassins, Cilaos) : un seul chapitre « AU indicée » tient les articles de TOUTES les zones AU
+# indicées de la commune (AUt, AUec, AUa…), chaque article donnant la règle PROPRE d'une zone (ex.
+# AUindicée 10.2 : AUt 8 m/10 m aux Trois-Bassins ; AUec 18 m à Bras-Panon) OU un renvoi EXPRÈS
+# (« Pour la zone AUt, se reporter au règlement de la zone Ub »). Sans étiquette ces articles tombaient
+# en zone NULL et le filtre AUt servait À TORT la hauteur d'Ub. On les étiquette AUINDICEE (sentinelle,
+# jamais une zone de plan) pour les servir comme articles PROPRES sous les filtres AU indicés.
+# N'ATTRAPE PAS « Article 1AUindicée » (Le Port, Saint-Joseph : code de zone à chiffre de tête, déjà
+# correctement zoné 1AU/AUST) — ancré sur « ARTICLE/ZONE AU indic… » (AU en tête de mot, sans chiffre).
+_AUINDICEE_ART = re.compile(r'(?i)^(?:ARTICLE|ZONE)\s+AU\s*indic')
 # référence croisée dans la prose juste avant le « titre » : « (voir Article… », « cf. Article… »,
 # « au titre… », « à l'article… » → l'en-tête matché n'est pas un vrai début d'article.
 _CROSSREF_PRE = re.compile(r"(?i)(?:\(|voir|cf\.?|à l['’]|au|du|de la|sous le|présent|dudit|ledit)\s*$")
@@ -564,6 +574,10 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
                 zone = z_ref or zbanner[page_of(a) - 1]
         if zone is None:                          # OUTIL-PLU-FIX-7 (point 1) — fiche/annexe zonée → sa zone
             zone = _zone_de_fiche(texte) or _zone_de_preambule(texte)   # LOT 3 — préambule de zone
+        # OUTIL-PLU-FIX-10 (LOT 1) — article du chapitre « ZONE AU indicée » → sentinelle AUINDICEE
+        # (prime sur toute bannière, ex. Cilaos dont la bannière AUST fuyait sur ces articles).
+        if ref and _AUINDICEE_ART.search(_norm(ref)):
+            zone = "AUINDICEE"
         pg0 = page_of(a)
         lead = len(raw) - len(raw.lstrip())
         pmap = [[0, pg0]]                        # page_map : offset dans `texte` → page PDF
@@ -874,6 +888,11 @@ def zone_renvoi_note(zone: str, insee: str | None, session: Session | None = Non
     """Phrase à afficher quand le filtre d'un secteur ouvre les articles de sa zone de renvoi. Le renvoi
     CONFIGURÉ (resolve_zone) prime ; à défaut, le renvoi GÉNÉRIQUE AU→U de même indice est annoncé LORSQU'IL
     sert réellement (la zone AU n'a pas de chapitre propre mais la zone U de même indice est, elle, servie)."""
+    # OUTIL-PLU-FIX-10 (LOT 1) — zone AU indicée sectorielle servie par son chapitre générique propre.
+    if (insee and _AU_SECTEUR.match(_norm(zone)) and session is not None
+            and not _chapitre_propre(session, zone, insee) and _a_chapitre_auindicee(session, insee)):
+        return (f"{zone} : articles du chapitre « AU indicée » du règlement — chaque article donne la "
+                f"règle propre à {zone} ou renvoie expressément à une autre zone (indiqué dans le texte).")
     cible = _renvoi_cible(zone, insee, session)
     if cible:
         return f"{zone} : le règlement renvoie à {cible}"
@@ -906,10 +925,33 @@ def _chapitre_propre(session: Session, zone: str, insee: str | None) -> bool:
     return session.execute(text(sql + " LIMIT 1"), params).first() is not None
 
 
+# OUTIL-PLU-FIX-10 (LOT 1) — zone AU INDICÉE sectorielle : classe AU (préfixe de phase optionnel) SUIVIE
+# d'un secteur (AUt, AUec, 1AUa…). Les AU « nus » (AU, 1AU, 2AU — Le Port, Petite-Île) sont exclus : ils
+# ont leur propre chapitre, pas le chapitre générique « AU indicée ».
+_AU_SECTEUR = re.compile(r'(?i)^\d*AU.+')
+
+
+def _a_chapitre_auindicee(session: Session, insee: str | None) -> bool:
+    """La commune a-t-elle le chapitre générique « ZONE AU indicée » (sentinelle AUINDICEE) ?"""
+    sql = "SELECT 1 FROM plu_reglement_extrait WHERE upper(zone) = 'AUINDICEE'"
+    params: dict = {}
+    if insee:
+        sql += " AND insee = :i"; params["i"] = insee
+    return session.execute(text(sql + " LIMIT 1"), params).first() is not None
+
+
 def zones_apparentees(session: Session, zone: str, insee: str | None) -> list[str]:
     """Zones STOCKÉES à servir pour le filtre `zone` : la zone et ses ANCÊTRES de famille (le règlement
     commun — JAMAIS les secteurs frères : AU3c ne ramène pas AU3st), PLUS la cible du RENVOI réglementaire
     (AU3c→U3c, 2AUd→Ud) et ses ancêtres. Appariement EXACT sur l'ensemble (aucun wildcard de classe)."""
+    # OUTIL-PLU-FIX-10 (LOT 1) — une zone AU INDICÉE sectorielle (AUt, AUec, AUa…) SANS chapitre propre,
+    # dans une commune dotée du chapitre générique « AU indicée », sert CE chapitre comme articles PROPRES
+    # (chaque article y porte la règle de la zone ou son renvoi exprès). On NE rabat PLUS en bloc vers la
+    # zone U (c'est l'erreur de la hauteur AUt→Ub des Trois-Bassins) : le renvoi, quand il existe, est
+    # DANS le texte de l'article servi, article par article.
+    if (insee and _AU_SECTEUR.match(_norm(zone)) and session is not None
+            and not _chapitre_propre(session, zone, insee) and _a_chapitre_auindicee(session, insee)):
+        return ["AUINDICEE"]
     cands = {c.upper() for c in zone_candidats(zone)}
     cible = _renvoi_cible(zone, insee, session)
     if cible:
