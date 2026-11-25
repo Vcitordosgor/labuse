@@ -1,0 +1,17 @@
+[32m✓ base locale OK (run résiduel servi = 17) — suite de cohérence lancée…[0m
+........................................................................ [ 82%]
+...............                                                          [100%]
+=============================== warnings summary ===============================
+tests/coherence_ecrans/test_temoins.py: 11 warnings
+  /Users/openclaw/Desktop/labuse-communes-fix/src/labuse/faisabilite/exposition.py:71: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    aspect = a.read(1).astype("float64")
+
+tests/coherence_ecrans/test_temoins.py: 11 warnings
+  /Users/openclaw/Desktop/labuse-communes-fix/src/labuse/faisabilite/exposition.py:73: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    slope = s.read(1).astype("float64")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+87 passed, 22 warnings in 1392.49s (0:23:12)
+[32m✓ cohérence : aucun écart (1 €/1 m²) sur les témoins.[0m

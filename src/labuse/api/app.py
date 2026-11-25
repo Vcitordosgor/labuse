@@ -5173,10 +5173,12 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
                         "valeur": _dv["valeur"], "prix_m2_bati": _dv["prix_m2_bati"],
                         "prix_m2_terrain": _dv["prix_m2_terrain"],
                         "multi_parcelles": _dv["multi_parcelles"], "n_parcelles": _dv["n_parcelles"]}
-    dvf_secteur = [dict(r) for r in db.execute(text(
-        "SELECT type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre "
-        "FROM dvf_secteur_medianes WHERE secteur = substring(:idu FROM 1 FOR 10) "
-        "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()]
+    # FIX-7 LOT 1 — prix de section via la fonction UNIQUE `prix_sections` (seuil de diffusion appliqué) :
+    # plus aucune lecture directe de dvf_secteur_medianes ici (mediane_prix_m2 = None sous le seuil).
+    from ..dvf_secteur import prix_sections
+    dvf_secteur = [{"type_bien": p["type_bien"], "n_ventes": p["n_ventes"], "mediane_valeur": p["mediane_valeur"],
+                    "mediane_prix_m2": p["mediane_prix_m2"], "fenetre": p["fenetre"]}
+                   for p in prix_sections(db, idu[:10])]
     # EXPORTS-REBRANCHEMENT-1 lot 0 — la fenêtre STOCKÉE porte encore « (millésimes géo-DVF
     # disponibles) » (jargon de source, interdit côté client depuis PAGE-SOURCES-1 18/09) :
     # normalisée AU SERVICE en « ventes 2021-2025 » ; la constante d'ingestion (dvf_marche.FENETRE)
@@ -9465,6 +9467,9 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # ventes, même règle que le Dossier §8) : une médiane fondée sur moins de 8 ventes n'est pas assez
     # fiable → on ne la SERT PAS (None). Le NOMBRE de ventes reste servi (l'écran/PDF dit « échantillon
     # insuffisant » au lieu d'un prix trompeur).
+    # FIX-6 LOT 1 — `prix_terrain_n` (= `n_ventes` du cache de section) compte désormais les ventes DANS
+    # les bornes de prix (celles qui fondent la médiane), plus le total des actes : le seuil ci-dessous
+    # est donc franchi par les vraies ventes utilisées (97415000CD : 1 vente dans les bornes → None).
     from ..dvf_mediane import SEUIL_N as _SEUIL_N
     if prix_terrain is not None and prix_terrain_n is not None and int(prix_terrain_n) < _SEUIL_N:
         prix_terrain = None

@@ -11,7 +11,8 @@ from sqlalchemy import text
 from labuse.api import comparateur as c
 
 
-DEF = {"stock": 0.30, "velocite": 0.15, "permis": 0.15, "deficit_sru": 0.15,
+# OUTIL-PERMIS-FIX-8 (LOT 3) — l'axe vélocité (délai) est RETIRÉ du composite : cinq axes.
+DEF = {"stock": 0.30, "permis": 0.15, "deficit_sru": 0.15,
        "pression_zan": 0.10, "prix_neuf": 0.15}
 
 
@@ -30,12 +31,14 @@ def test_direction_stock_haut_mieux():
     assert hi["normalise"]["stock"] == 100.0 and lo["normalise"]["stock"] == 0.0
 
 
-def test_direction_velocite_bas_mieux():
-    # délai plus court (bas) → mieux → normalisé plus haut
-    rows = c._normalize([_row(velocite=6), _row(velocite=18)], DEF)
-    court = next(r for r in rows if r["velocite"] == 6)
-    long = next(r for r in rows if r["velocite"] == 18)
-    assert court["normalise"]["velocite"] == 100.0 and long["normalise"]["velocite"] == 0.0
+def test_direction_pression_zan_bas_mieux():
+    # OUTIL-PERMIS-FIX-8 — l'axe vélocité est retiré ; on vérifie la direction « bas = mieux » sur
+    # la pression ZAN (direction -1) : moins de consommation d'espace (bas) → mieux → normalisé plus haut.
+    rows = c._normalize([_row(pression_zan=5), _row(pression_zan=50)], DEF)
+    bas = next(r for r in rows if r["pression_zan"] == 5)
+    haut = next(r for r in rows if r["pression_zan"] == 50)
+    assert bas["normalise"]["pression_zan"] == 100.0 and haut["normalise"]["pression_zan"] == 0.0
+    assert "velocite" not in bas["normalise"]       # l'axe délai n'existe plus
 
 
 def test_axe_manquant_reste_null_et_renormalise():
@@ -69,5 +72,7 @@ def test_compute_24_communes_et_composite(db_session):
     out = c._compute(s, DEF)
     assert "communes" in out and "indicateurs" in out
     assert out["indicateurs"]["stock"]["direction"] == "haut = mieux"
-    assert out["indicateurs"]["velocite"]["direction"] == "bas = mieux"
+    assert out["indicateurs"]["pression_zan"]["direction"] == "bas = mieux"
+    assert "velocite" not in out["indicateurs"]        # OUTIL-PERMIS-FIX-8 — axe délai retiré
     assert "COMMODITÉ" in out["methode"]
+    assert out["poids_total"] == 1.0                    # cinq poids renormalisés (somme = 1)

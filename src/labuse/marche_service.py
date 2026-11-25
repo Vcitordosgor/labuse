@@ -581,7 +581,8 @@ def comparateur_terrain(db: Session, idu: str, *, n_table: int = 8) -> dict:
     """ANNONCE-5-FIX + ESTIMER-2 (D-3) — le repère €/m² de TERRAIN NU du secteur ET les ventes les plus
     proches, par rayon ADAPTATIF 500→1000→1500 m puis repli COMMUNE (comme le bâti). Agrège par mutation
     (une mutation = une vente ; terrain total = somme des parcelles dédoublonnées, distance = la plus
-    proche de la parcelle sujet), exclut la parcelle sujet, borne [50 ; 20 000] €/m², trim des 5 %
+    proche de la parcelle sujet), exclut l'ACTE du sujet (toute mutation qui a touché la parcelle, pas
+    seulement sa ligne — FIX-4 LOT 1.d), borne [50 ; 20 000] €/m², trim des 5 %
     extrêmes dès que l'échantillon le permet. Renvoie médiane + quartiles + n + périmètre retenu (rayon
     ou commune) + les 8 comparables. `median` None seulement si la COMMUNE n'a aucune vente de terrain."""
     import statistics
@@ -598,9 +599,14 @@ def comparateur_terrain(db: Session, idu: str, *, n_table: int = 8) -> dict:
     # (16 actes bâtis « nus » dans la fiche parcelle / Estimer). On remplace cette qualification par LA
     # qualification unique (bâti=0 sur l'acte entier, toutes communes) ; la distance au sujet et le
     # périmètre commune restent gérés par la jointure géographique `dist` (secteur, non qualifiant).
+    # FIX-4 LOT 1.d — l'acte du bien ÉTUDIÉ ne figure JAMAIS dans ses propres comparables. Exclure la
+    # seule parcelle sujet (`id_parcelle <> :idu`) ne suffisait pas : un acte multi-parcelles (p.ex.
+    # 2023-1315722 : IZ0236 + IZ0237) revenait à distance 0 par SA SECONDE parcelle. On écarte donc
+    # TOUTE mutation qui a touché la parcelle sujet (`sujet`), pas seulement la ligne de cette parcelle.
     from .marche_dvf_commune import ACTE_TERRAIN_NU_CTE
     rows = db.execute(text(
         "WITH p AS (SELECT geom_2975 g, commune FROM parcels WHERE idu = :idu), "
+        "sujet AS (SELECT DISTINCT id_mutation FROM dvf_mutations_parcelle WHERE id_parcelle = :idu), "
         + ACTE_TERRAIN_NU_CTE + ", "
         "dist AS (SELECT dm.id_mutation, min(round(ST_Distance(pp.geom_2975, p.g))::int) AS dist "
         "         FROM dvf_mutations_parcelle dm JOIN parcels pp ON pp.idu = dm.id_parcelle, p "
@@ -610,7 +616,8 @@ def comparateur_terrain(db: Session, idu: str, *, n_table: int = 8) -> dict:
         "t AS (SELECT a.id_mutation, to_char(a.d0, 'YYYY-MM-DD') AS date, "
         "        extract(year FROM a.d0)::int AS annee, "
         "        a.terr_tot AS surf, a.val AS vf, dist.dist AS dist "
-        "      FROM acte_nu a JOIN dist USING (id_mutation)) "
+        "      FROM acte_nu a JOIN dist USING (id_mutation) "
+        "      WHERE a.id_mutation NOT IN (SELECT id_mutation FROM sujet)) "
         "SELECT date, annee, round(surf)::int AS surface_m2, round(vf)::int AS prix_eur, "
         "       round(vf / NULLIF(surf,0))::int AS prix_m2, (vf / NULLIF(surf,0)) AS prix_m2_f, "
         "       dist AS distance_m "

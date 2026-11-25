@@ -1,0 +1,15 @@
+=== PYTEST filet (rouge attendu) ===
+>       assert e.get("etat_source_date") == "2025-11-27", \
+            f"dernière pièce attendue le 2025-11-27, obtenu {e.get('etat_source_date')!r}"
+E       AssertionError: dernière pièce attendue le 2025-11-27, obtenu '2023-05-27'
+E       assert '2023-05-27' == '2025-11-27'
+E         
+E         - 2025-11-27
+E         + 2023-05-27
+
+tests/test_communes_fix6.py:77: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_communes_fix6.py::test_section_iz_effectif_14_pas_18 - Asse...
+FAILED tests/test_communes_fix6.py::test_section_cd_aucun_prix - AssertionErr...
+FAILED tests/test_communes_fix6.py::test_plaine_des_palmistes_revision_datee_27_11_2025
+============================== 3 failed in 2.10s ===============================

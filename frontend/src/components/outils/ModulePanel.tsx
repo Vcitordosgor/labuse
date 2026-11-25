@@ -36,7 +36,7 @@ import { M16 } from './moteurs'
 // M137-Z — outil « Communes » (fusion Marché·Comparateur·Vélocité·Rareté). O6Comparateur, O9Rarete et
 // MarcheCommune ne sont plus montés ici directement : Communes les réutilise.
 import { Communes } from './Communes'
-import { MODULES, VIOLET } from './registry'
+import { MODULES } from './registry'
 // M137-P/Q — outil PLU UNIFIÉ : le hub monte 2 voies — PluAnnuaire et ProcedureChangement (qui
 // réutilise VerifProcedure + M15/simulplu).
 import { Plu } from './Plu'
@@ -508,9 +508,8 @@ function PermitFicheCorps({ permitId, onClose }: { permitId: string; onClose: ()
             return note ? <p className="mt-1 text-[10px] leading-snug text-st-ecartee">{note} — délai d'instruction non calculé.</p> : null
           })()}
           <F label="Achèvement (DAACT)" value={d['date_achevement'] ? fmtDateNum(d['date_achevement'] as string) : null} />
-          {d['delai_instruction'] && (
-            <F label="Délai d'instruction" value={<span className="font-semibold text-mint">{d['delai_instruction']['libelle']}</span>} />
-          )}
+          {/* OUTIL-PERMIS-FIX-8 (LOT 2) — AUCUNE durée d'instruction : le délai n'a jamais été mesuré
+              (dépôt connu à l'année). Les deux dates ci-dessus suffisent, sans calcul entre elles. */}
           <F label="Parcelle(s)" value={<span className="font-mono text-[10px]">{(d['parcelles'] as string[]).join(', ')}</span>} />
           {/* RETOURS-23 (pt 7) — « Voir la parcelle » ouvre la FICHE de la parcelle rattachée (géocodé) ;
               sinon message clair (non géocodé) — jamais un clic mort. */}
@@ -1158,7 +1157,8 @@ export function M03() {
                   (état_libelle) qui DÉBORDAIENT sont retirées de la ligne ; la précision du géocodage passe
                   dans la BULLE du point sur la carte. On garde le point de couleur d'état (à gauche) et le
                   badge « Sans DAACT » du mode Dormant (information propre, pas un débordement). */}
-              {!pointMort && i['delai_mois'] != null && <span style={{ color: VIOLET }}>{String(i['delai_mois'])} m</span>}
+              {/* OUTIL-PERMIS-FIX-6 (Point 1) — le « N m » (délai) de la ligne est RETIRÉ : la couche m10
+                  datait le dépôt au 1er janvier (AN_DEPOT) → délai fictif. On ne montre pas un délai faux. */}
               {pointMort && <span data-permis-badge-mort className="whitespace-nowrap rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>}
             </span>
           </button>

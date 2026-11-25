@@ -115,6 +115,11 @@ def compute_medianes_secteur(session: Session) -> dict:
         conn.execute(text("ALTER TABLE dvf_secteur_medianes ADD COLUMN IF NOT EXISTS millesime_dvf date"))
 
     def charger(conn, staging):
+        # BÂTI (maison / appartement) + « autre », par secteur cadastral. Le TERRAIN est désormais
+        # produit SÉPARÉMENT par la qualification unique (2ᵉ INSERT ci-dessous) — ici on EXCLUT donc
+        # type_bien='terrain' (sa règle inline « bati=0 » laissait passer le local déclaré sans surface
+        # et les actes multi-communes ; cf. FIX-4 LOT 1). Un acte terrain-candidat non qualifié (local
+        # déclaré) ne tombe pas dans « autre » : il n'est pas priçable, il n'alimente aucune médiane.
         conn.execute(text(
         f"""
         INSERT INTO "{staging}"
@@ -157,14 +162,52 @@ def compute_medianes_secteur(session: Session) -> dict:
         secteurs AS (                   -- la mutation compte dans chaque secteur touché
           SELECT DISTINCT substring(d.id_parcelle FROM 1 FOR 10) AS secteur, t.*
           FROM typees t JOIN dvf_mutations_parcelle d ON d.id_mutation = t.id_mutation
+          WHERE t.type_bien <> 'terrain'      -- FIX-4 LOT 1 : le terrain vient du CTE unique (2ᵉ INSERT)
         )
-        SELECT secteur, type_bien, count(*),
-               percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur)::int,
+        -- FIX-7 LOT 1 — l'effectif `n_ventes` des MAISONS / APPARTEMENTS compte les ventes DANS les
+        -- bornes (celles qui fondent la médiane €/m²), pas le total des actes (AT/AB : 7 utilisées sur 8
+        -- → sous le seuil de 8). Même règle que le terrain (FIX-6) et la VEFA. `mediane_valeur` suit la
+        -- même population. ('autre' n'a pas de médiane €/m² → n_ventes 0, médianes NULL : non diffusé.)
+        SELECT secteur, type_bien,
+               count(*) FILTER (WHERE prix_m2 IS NOT NULL AND prix_m2 BETWEEN 50 AND 20000),
+               percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur)
+                 FILTER (WHERE prix_m2 IS NOT NULL AND prix_m2 BETWEEN 50 AND 20000)::int,
                percentile_cont(0.5) WITHIN GROUP (ORDER BY prix_m2)
                  FILTER (WHERE prix_m2 IS NOT NULL AND prix_m2 BETWEEN 50 AND 20000)::int,
                :fenetre,
                (SELECT max(date_mutation) FROM dvf_mutations_parcelle)   -- NU-E-032 : millésime source
         FROM secteurs GROUP BY secteur, type_bien
+        """), {"fenetre": FENETRE})
+        # TERRAIN NU par secteur — FIX-4 LOT 1 : MÊME qualification unique que tous les lecteurs du
+        # terrain nu (`ACTE_TERRAIN_NU_CTE` : bâti=0, aucun local déclaré, une seule commune, surface =
+        # somme des subdivisions distinctes). L'acte compte dans CHAQUE secteur cadastral qu'il touche
+        # (`sect`). Lu par la fiche §8 / le Comparatif (`dvf_parcelle.secteur`) → plus de prix de section
+        # admettant le local du témoin (2023-1315722, section IZ). Même borne/millésime que ci-dessus.
+        from ..marche_dvf_commune import ACTE_TERRAIN_NU_CTE
+        conn.execute(text(
+        f"""
+        INSERT INTO "{staging}"
+          (secteur, type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre, millesime_dvf)
+        WITH {ACTE_TERRAIN_NU_CTE},
+        sect AS (SELECT DISTINCT substring(dm.id_parcelle FROM 1 FOR 10) AS secteur, dm.id_mutation
+                 FROM dvf_mutations_parcelle dm
+                 WHERE dm.nature_mutation IN ('Vente', 'Vente terrain à bâtir'))
+        -- FIX-6 LOT 1 — l'EFFECTIF `n_ventes` (et `mediane_valeur`) ne comptent QUE les ventes qui
+        -- entrent dans la médiane €/m² (ratio DANS les bornes [50 ; 20 000]), comme `mediane_prix_m2`.
+        -- Avant : `count(*)` comptait TOUS les actes de la section → effectif faux (IZ 18 au lieu de 14)
+        -- et seuil de diffusion franchi à tort (Comparer servait un prix fondé sur 1 vente, CD = 133/13).
+        -- Le seuil appliqué par Comparer (api/app.py) porte sur ce `n_ventes` → désormais correct.
+        SELECT s.secteur, 'terrain',
+               count(*) FILTER (WHERE a.val / NULLIF(a.terr_tot, 0) BETWEEN 50 AND 20000),
+               percentile_cont(0.5) WITHIN GROUP (ORDER BY a.val)
+                 FILTER (WHERE a.val / NULLIF(a.terr_tot, 0) BETWEEN 50 AND 20000)::int,
+               percentile_cont(0.5) WITHIN GROUP (ORDER BY a.val / NULLIF(a.terr_tot, 0))
+                 FILTER (WHERE a.val / NULLIF(a.terr_tot, 0) BETWEEN 50 AND 20000)::int,
+               :fenetre,
+               (SELECT max(date_mutation) FROM dvf_mutations_parcelle)
+        FROM sect s JOIN acte_nu a USING (id_mutation)
+        WHERE a.val > 1000 AND a.terr_tot > 0
+        GROUP BY s.secteur
         """), {"fenetre": FENETRE})
 
     injection_sure.remplacer_servie(

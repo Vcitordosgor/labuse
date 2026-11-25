@@ -202,29 +202,31 @@ def _compute(db: Session, poids: dict) -> dict:
     """Cœur testable : assemble les indicateurs par commune, normalise, compose. `poids` = dict d'axes→poids."""
     rows = [dict(r) for r in raw_rows(db).values()]
     for r in rows:   # arrondis lisibles (les valeurs brutes restent la vérité)
-        if r.get("velocite") is not None:
-            r["velocite"] = round(float(r["velocite"]), 1)
         if r.get("pression_zan") is not None:
             r["pression_zan"] = round(float(r["pression_zan"]), 1)
         if r.get("deficit_sru") is not None:
             r["deficit_sru"] = round(float(r["deficit_sru"]), 1)
     rows = composite_communes(rows, poids)   # 1.6 — moteur commune_compteurs (comparateur_composite)
-    # OUTIL-PERMIS-FIX-5 (Point 2) — le délai d'instruction n'a jamais été mesuré (dépôt connu à l'année →
-    # +4 mois de gonflement médian) : « on ne montre pas un délai faux » (Vic). On RETIRE la valeur brute du
-    # payload affiché (plus de colonne « Instruction (mois) »). Le composite, lui, est DÉJÀ calculé ci-dessus
-    # (axe velocite, poids 0,15, inchangé) : le classement garde l'axe, SIGNALÉ dans `indicateurs` (libellé).
-    for r in rows:
-        r.pop("velocite", None)
-        r.pop("velocite_n", None)
+    # OUTIL-PERMIS-FIX-8 (LOT 3) — l'axe DÉLAI (vélocité) a été RETIRÉ du composite (le délai n'a jamais
+    # été mesuré ; FIX-5 l'avait seulement caché, le contre-audit ASTRA-4 le refuse au classement). Les
+    # CINQ poids restants sont RENORMALISÉS (somme ramenée à 1) pour que la formule affichée dise
+    # exactement ce qu'elle contient. Le score lui-même est invariant à l'échelle (composite_communes
+    # divise déjà par la somme des poids présents) : renormaliser ne change donc pas le rang, il rend la
+    # pondération honnête à la lecture.
+    poids_total = sum(poids.values()) or 1.0
+    poids_norm = {k: round(w / poids_total, 4) for k, w in poids.items()}
     return {
         "communes": rows,
         "indicateurs": {k: {"libelle": v[0], "direction": "haut = mieux" if v[1] > 0 else "bas = mieux",
-                            "poids": poids.get(k), "source": v[3], "nature": v[4]}
+                            "poids": poids_norm.get(k), "source": v[3], "nature": v[4]}
                         for k, v in INDICATEURS.items()},
-        "poids_total": round(sum(poids.values()), 3),
-        "methode": ("Composite de COMMODITÉ (non calibré) : chaque indicateur normalisé min-max [0-100] selon sa "
-                    "direction, moyenne pondérée des axes présents (poids renormalisés si une donnée manque). "
-                    "La pondération est réglable via les paramètres w_* ; les valeurs brutes restent la référence."),
+        "poids_total": round(sum(poids_norm.values()), 3),   # = 1,0 (poids renormalisés)
+        "methode": ("Composite de COMMODITÉ (non calibré) sur CINQ axes — stock, dynamisme permis, déficit "
+                    "SRU, pression ZAN, prix de sortie neuf. L'axe délai d'instruction (vélocité) est RETIRÉ "
+                    "(jamais mesuré). Chaque indicateur est normalisé min-max [0-100] selon sa direction ; "
+                    "le composite est la moyenne pondérée des axes présents, les poids étant renormalisés "
+                    "(somme = 1 ; un axe manquant ne pénalise pas). Pondération réglable via les paramètres "
+                    "w_* ; les valeurs brutes restent la référence."),
         "avertissement": "Aide à la comparaison, pas un score de rendement ; un axe manquant reste null (jamais 0).",
     }
 
@@ -232,12 +234,14 @@ def _compute(db: Session, poids: dict) -> dict:
 @router.get("")
 def comparateur_communes(
     db: Session = Depends(get_db),
-    w_stock: float = Query(0.30, ge=0, le=1), w_velocite: float = Query(0.15, ge=0, le=1),
+    w_stock: float = Query(0.30, ge=0, le=1),
     w_permis: float = Query(0.15, ge=0, le=1), w_deficit_sru: float = Query(0.15, ge=0, le=1),
     w_pression_zan: float = Query(0.10, ge=0, le=1), w_prix_neuf: float = Query(0.15, ge=0, le=1),
 ) -> dict:
-    """Tableau « où investir » : une ligne par commune, indicateurs sourcés + composite à pondération réglable."""
-    poids = {"stock": w_stock, "velocite": w_velocite, "permis": w_permis,
+    """Tableau « où investir » : une ligne par commune, indicateurs sourcés + composite à pondération
+    réglable. OUTIL-PERMIS-FIX-8 (LOT 3) — plus de `w_velocite` : l'axe délai est retiré du composite."""
+    # CINQ axes (l'axe délai/vélocité est retiré). Les poids sont renormalisés à la lecture (cf. _compute).
+    poids = {"stock": w_stock, "permis": w_permis,
              "deficit_sru": w_deficit_sru, "pression_zan": w_pression_zan, "prix_neuf": w_prix_neuf}
     # BLOC B (B1.4) : cache TTL 1 h par jeu de pondérations (mêmes raisons/rythme que le
     # carnet O7 : les indicateurs suivent les crons quotidiens ; single-flight anti-stampede).

@@ -56,11 +56,19 @@ def test_geste_trimestriel_vide_apres_curation_et_detecte_vieillissement():
     reg = V._registre()
     # juste après la curation initiale (today = date_constat) → rien à re-vérifier
     assert V.a_reverifier(reg, datetime.date(2026, 8, 6)) == []
-    # +45 j : seuls les radars ACTIFS (seuil 30 j) sortent, pas les 90 j
+    # +45 j : seuls les radars ACTIFS (seuil 30 j) sortent, pas les 90 j. (Au moins les révisions dont le
+    # dernier constat reste au 2026-08-06 — Étang-Salé, Saint-Denis, Saint-Louis, Saint-Paul.)
     r45 = V.a_reverifier(reg, datetime.date(2026, 9, 20))
     assert r45 and all(x["seuil"] == 30 and x["actif"] for x in r45)
-    # +106 j : tout le monde sort
-    assert len(V.a_reverifier(reg, datetime.date(2026, 11, 20))) == 24
+    # +106 j : tout le monde sort SAUF les entrées fraîchement re-constatées le 2026-11-24 (date_constat
+    # postérieure au 2026-11-20 → pas encore dues) : PLU approuvés (Sainte-Marie/Sainte-Suzanne) et
+    # révisions re-datées d'une pièce récente (Plaine 27/11/2025, Saint-Leu 18/11/2026, Saint-André
+    # 09/09/2025, Trois-Bassins mai 2025). Robuste : calculé du registre, pas un compte figé.
+    recentes = {i for i, e in reg.items() if e.get("date_constat") == "2026-11-24"}
+    due = V.a_reverifier(reg, datetime.date(2026, 11, 20))
+    due_insee = {x["insee"] for x in due}
+    assert due_insee.isdisjoint(recentes), f"communes fraîchement recurées dues à tort : {due_insee & recentes}"
+    assert len(due) == len(reg) - len(recentes), f"attendu {len(reg) - len(recentes)}, obtenu {len(due)}"
 
 
 def test_sursis_s_arme_quand_padd_source():

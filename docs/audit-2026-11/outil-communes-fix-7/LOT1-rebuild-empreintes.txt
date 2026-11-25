@@ -1,0 +1,4 @@
+EMPREINTE_AVANT_FIX7 : lignes=2354 checksum=-19351249823
+REBUILD @23:18 Indian/Reunion -> lignes=2354 secteurs=848 ventes=36463
+EMPREINTE_APRES_FIX7  : lignes=2354 checksum=-18091543399
+rollback test (TEMP copie) -> 2354 / -19351249823 OK

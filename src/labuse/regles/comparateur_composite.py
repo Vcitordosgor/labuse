@@ -9,7 +9,7 @@ declarer(FicheRegle(
         "dégénérée (max = min) → 50 neutre. Composite = Σ(poids_k × norm_k) ÷ Σ(poids des axes "
         "PRÉSENTS) — renormalisation pour ne pas pénaliser une donnée manquante — arrondi 0,1 ; "
         "rang = tri décroissant."),
-    entrees=("indicateurs_communes (stock, velocite, permis, deficit_sru, pression_zan, prix_neuf)",
+    entrees=("indicateurs_communes (stock, permis, deficit_sru, pression_zan, prix_neuf)",
              "poids (réglables, défauts INDICATEURS)"),
     classe="methode_standard",
     fonction="src/labuse/registre/moteurs/commune.py:composite_communes",
@@ -23,9 +23,10 @@ declarer(FicheRegle(
                  "X_scaled = X_std * (max - min) + min » — la même transformation min-max, ici "
                  "portée sur [0;100] avec inversion pour les axes « plus bas = mieux »."),
         lu_le="2026-09-06"),
-    choix=("Poids par défaut (0,30 stock · 0,15 vélocité · 0,15 permis · 0,15 SRU · 0,10 ZAN · "
-           "0,15 prix neuf), inversion de direction et renormalisation des poids présents : "
-           "conventions LABUSE du comparateur, réglables à l'écran."),
+    choix=("Poids par défaut (0,30 stock · 0,15 permis · 0,15 SRU · 0,10 ZAN · 0,15 prix neuf) — "
+           "l'axe vélocité (délai) est RETIRÉ (OUTIL-PERMIS-FIX-8, jamais mesuré) ; les cinq poids "
+           "restants sont renormalisés (somme = 1). Inversion de direction et renormalisation des "
+           "poids présents : conventions LABUSE du comparateur, réglables à l'écran."),
     exemple_temoin="tests/regles/test_comparateur_composite.py::test_composite_temoin",
     valide_par="cc",
     verifie_le="2026-09-06",

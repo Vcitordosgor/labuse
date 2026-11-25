@@ -101,27 +101,26 @@ def charger(engine):
             WHERE d.surface_reelle_bati >= 20 AND d.valeur_fonciere > 0
               AND d.nature_mutation = 'Vente' AND d.geom IS NOT NULL
               AND d.type_local ILIKE ANY(ARRAY['%MAISON%','%APPARTEMENT%'])""")).mappings().all()]
-        # pool TERRAIN NU géo-DVF, par parcelle (centroïde 2975), dédoublonné terrain par mutation.
-        # OUTIL-COMMUNES-FIX-1 bloquant 1 — QUALIFICATION SUR L'ACTE ENTIER : on agrège TOUTES les
-        # parcelles de l'acte et on ne garde que les actes sans bâti (`sum(bati_p) = 0`), jamais un filtre
-        # bâti par parcelle qui laisse passer les actes mixtes au prix de l'acte entier.
-        out["terr"] = [dict(r) for r in c.execute(sa.text("""
-          WITH parc AS (
-            SELECT dm.id_mutation, dm.id_parcelle, max(dm.valeur_fonciere) AS vf,
-                   max(dm.date_mutation::date) AS d, left(dm.id_parcelle,5) AS insee,
-                   max(COALESCE(dm.surface_terrain,0)) AS terr_p,
-                   max(COALESCE(dm.surface_reelle_bati,0)) AS bati_p,
-                   avg(ST_X(ST_Transform(pp.centroid,2975))) AS x, avg(ST_Y(ST_Transform(pp.centroid,2975))) AS y
+        # pool TERRAIN NU géo-DVF, par parcelle (centroïde 2975).
+        # FIX-4 LOT 1 — QUALIFICATION UNIQUE : le banc portait une COPIE inline (`max` par couple +
+        # `sum(bati_p)=0`, GROUP BY (mutation, insee) qui DÉDOUBLAIT un acte multi-communes en une
+        # observation par commune). Il embarque désormais LE CTE partagé `ACTE_TERRAIN_NU_CTE` (rules
+        # 0/a/b/c : pas de bâti, pas de local déclaré, une seule commune, surface = somme des subdivisions
+        # distinctes) ; le centroïde de l'acte reste la moyenne des centroïdes de ses parcelles.
+        from ..marche_dvf_commune import ACTE_TERRAIN_NU_CTE
+        out["terr"] = [dict(r) for r in c.execute(sa.text(f"""
+          WITH {ACTE_TERRAIN_NU_CTE},
+          geo AS (
+            SELECT dm.id_mutation, left(min(dm.id_parcelle),5) AS insee,
+                   avg(ST_X(ST_Transform(pp.centroid,2975))) AS x,
+                   avg(ST_Y(ST_Transform(pp.centroid,2975))) AS y
             FROM dvf_mutations_parcelle dm JOIN parcels pp ON pp.idu = dm.id_parcelle
             WHERE dm.nature_mutation IN ('Vente','Vente terrain à bâtir')
-              AND dm.date_mutation IS NOT NULL
-            GROUP BY dm.id_mutation, dm.id_parcelle, left(dm.id_parcelle,5)),
-          t AS (SELECT id_mutation, insee, min(d) AS d, sum(terr_p) AS surf, max(vf) AS vf,
-                       avg(x) AS x, avg(y) AS y
-                FROM parc GROUP BY id_mutation, insee
-                HAVING sum(bati_p) = 0 AND sum(terr_p) > 0)
-          SELECT id_mutation AS mid, insee, d, (vf / NULLIF(surf,0)) AS prix_m2, x, y
-          FROM t WHERE vf / NULLIF(surf,0) BETWEEN :lo AND :hi""",
+            GROUP BY dm.id_mutation)
+          SELECT a.id_mutation AS mid, g.insee, a.d0::date AS d,
+                 (a.val / NULLIF(a.terr_tot,0)) AS prix_m2, g.x, g.y
+          FROM acte_nu a JOIN geo USING (id_mutation)
+          WHERE a.terr_tot > 0 AND a.val / NULLIF(a.terr_tot,0) BETWEEN :lo AND :hi""",
             ).bindparams(lo=BORNES_TERR[0], hi=BORNES_TERR[1])).mappings().all()]
         # sujets : centroïde 2975, commune, surface parcelle
         idus = sorted({r["idu"] for r in out["univers"]})

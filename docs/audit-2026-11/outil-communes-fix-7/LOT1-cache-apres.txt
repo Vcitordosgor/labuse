@@ -1,0 +1,7 @@
+seuil de diffusion = 8
+Les Avirons 97401000AT maison : n=7 · prix_m2=None · assez=False (attendu n=7, prix None)
+La Possession 97408000AB maison : n=7 · prix_m2=None · assez=False (attendu n=7, prix None)
+CD terrain : n=1 · prix=None (inchangé FIX-6 : n=1, pas de prix)
+empreinte APRÈS : lignes=2354 checksum=-18091543399
+cache maison/appart n_ventes == ventes dans les bornes ? divergences=0 sur 1229 lignes (0 attendu)
+sections maison/appart dont l'effectif CHANGE : 92 ; dont PERDENT leur prix servi (n≥8→<8) : 2

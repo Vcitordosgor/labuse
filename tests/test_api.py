@@ -502,12 +502,10 @@ def test_outils_commune_ne_crashent_pas(client):
     assert r.status_code == 200, r.text[:200]
     assert "caveat" in r.json()   # le caveat monte à l'écran
 
-    # Vélocité — plus de rang_delai (correction 2) ; l'homogénéité est DITE ; tranche p25-p75.
+    # OUTIL-PERMIS-FIX-6 (Point 2) — l'endpoint /modules/velocite est SUPPRIMÉ (délai jamais mesuré,
+    # plus aucun lecteur après FIX-5) : il répond désormais 404.
     r = client.get("/modules/velocite")
-    assert r.status_code == 200, r.text[:200]
-    v = r.json()
-    assert "communes_homogenes" in v and "tranche" in v["indicateur"].lower()
-    assert all("rang_delai" not in c for c in v["communes"])   # le classement par médiane a disparu
+    assert r.status_code == 404, r.text[:200]
 
     # Baromètre — le plafond DIT (correction 3) : « les N premières sur M ».
     r = client.get("/moteurs/barometre")

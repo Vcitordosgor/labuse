@@ -100,9 +100,12 @@ def _carnet(secteur: str, db: Session) -> dict:
     # prix DVF (médianes sectorielles) + prix de sortie neuf
     prix = {}
     if _has(db, "dvf_secteur_medianes"):
-        prix = {r["type_bien"]: {"mediane_prix_m2": r["mediane_prix_m2"], "n": r["n_ventes"]} for r in db.execute(text(
-            "SELECT type_bien, mediane_prix_m2, n_ventes FROM dvf_secteur_medianes WHERE secteur = :s"),
-            {"s": secteur}).mappings()}
+        # FIX-7 LOT 1 — le Carnet publiait le prix de section SANS le seuil (133 €/m² sur 1 vente à CD).
+        # Il passe désormais par la fonction UNIQUE `prix_sections` (seuil de diffusion appliqué) :
+        # mediane_prix_m2 = None sous le seuil (« pas assez de ventes »).
+        from ..dvf_secteur import prix_sections
+        prix = {p["type_bien"]: {"mediane_prix_m2": p["mediane_prix_m2"], "n": p["n_ventes"]}
+                for p in prix_sections(db, secteur)}
     # RETOURS-11F M1 — le NEUF (VEFA) ne se sert qu'au grain COMMUNE (doctrine : un grain plus fin n'est
     # pas servable, cf. profil neuf_vefa) : on route vers le MÊME moteur live que la fiche/carte/comparateur
     # (`neuf_vefa_commune`), plus le précalcul secteur `dvf_prix_sortie_neuf` (divergent, plus fin que servable).

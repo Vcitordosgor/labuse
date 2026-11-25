@@ -210,20 +210,33 @@ def compute_alertes(session: Session, commune: str, cid: int | None) -> dict[str
         {"c": commune, "cid": cid}).mappings().all()
 
     # 2 · PERMIS déposés dans le secteur (géocodage SITADEL direct — symétrique du suivi parcelle)
+    # OUTIL-PERMIS-FIX-9 (point 1) — seul le TEXTE affiché (`detail`) change : on n'y écrit JAMAIS une date
+    # de dépôt BRUTE sous « déposé le ». Le dépôt passe par LA fonction unique (depot_affichable) ; écarté
+    # (année ≠ AN_DEPOT…), on dit « autorisé le … » (date d'autorisation), comme la veille du Copilote.
+    # `fait_date` reste `date_depot` (= la clé d'ARRIVÉE/tri qui gouverne la cloche : ne pas la changer,
+    # sinon un fait ancien sonnerait). La clé de détection (géocodé en zone, date_depot non nul,
+    # ON CONFLICT) est INCHANGÉE : aucune alerte émise deux fois ni perdue. `.format` (pas f-string) car
+    # la condition contient `{4}` (regex de l'année).
+    from . import permis_classe
+    _cond = permis_classe.depot_affichable_cond_sql("sp.")
+    _aff = permis_classe.depot_affichable_sql("sp.")
     permis = session.execute(
-        text(f"""INSERT INTO alertes (kind, zone_id, compte_id, source_ref, label, payload, detected_at)
+        text("""INSERT INTO alertes (kind, zone_id, compte_id, source_ref, label, payload, detected_at)
                 SELECT 'permis_in_zone', z.id, z.compte_id, sp.permit_id,
                        'Permis déposé dans « ' || z.name || ' »',
-                       jsonb_build_object('fait_date', sp.date_depot, 'type', sp.type, 'zone', z.name,
+                       jsonb_build_object('fait_date', sp.date_depot,
+                                          'type', sp.type, 'zone', z.name,
                                           'detail', coalesce(sp.type, 'Permis') || ' ' || sp.permit_id ||
-                                                    ' déposé le ' || sp.date_depot),
+                                                    CASE WHEN {cond} THEN ' déposé le ' || sp.date_depot::date::text
+                                                         WHEN sp.date IS NOT NULL THEN ' autorisé le ' || sp.date::date::text
+                                                         ELSE '' END),
                        now()
                 FROM watch_zones z
                 JOIN sitadel_permits sp ON sp.geom IS NOT NULL AND ST_Contains(z.geom, sp.geom)
                 WHERE z.commune = :c AND z.compte_id IS NOT DISTINCT FROM :cid
                   AND sp.permit_id IS NOT NULL AND sp.date_depot IS NOT NULL
                 ON CONFLICT DO NOTHING
-                {ret}"""),
+                {ret}""".format(aff=_aff, cond=_cond, ret=ret)),
         {"c": commune, "cid": cid}).mappings().all()
 
     # 3 · PROCÉDURES BODACC sur le propriétaire (personne morale) d'une parcelle du secteur

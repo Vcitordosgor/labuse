@@ -417,10 +417,12 @@ export interface ContexteCommune {
     // RECETTE-PROD-1 (F) — seuil UNIQUE (5, = Radar) : sous ce seuil, ni médian ni écart (demande_sous_seuil)
     demande_seuil_n?: number; demande_sous_seuil?: boolean
     prix_demande_median_eur_m2: number | null; prix_demande_n: number | null
-    ecart_demande_acte_pct: number | null; prix_acte_eur_m2: number | null; prix_acte_n?: number | null; prix_acte_periode?: string | null; source: string
+    ecart_demande_acte_pct: number | null; prix_acte_eur_m2: number | null; prix_acte_n?: number | null; prix_acte_periode?: string | null; prix_acte_periode_dates?: [string, string] | null; source: string
     derniere_collecte?: string | null   // RECETTE-PROD-1 (F) — date du dernier relevé Radar (ISO)
   } | null
-  risques: { ppr_pct: number | null; mouvement_terrain_pct: number | null; catnat_arretes: number; catnat_perils?: number; catnat_detail?: { type_peril: string; date_debut: string | null; date_fin: string | null; date_arrete: string | null; code_national: string | null; date_publication_jo: string | null }[]; parc_national: boolean; azi_tri?: { azi: { libelle?: string }[]; tri: { libelle?: string }[]; detail?: string } | null; source: string }
+  // FIX-4 LOT 3 — catnat_arretes/catnat_perils/parc_national peuvent être null = INDISPONIBLE (bloc en
+  // échec), distinct de 0/false (valeur réelle). Le front affiche « indisponible » sur null.
+  risques: { ppr_pct: number | null; mouvement_terrain_pct: number | null; catnat_arretes: number | null; catnat_perils?: number | null; catnat_detail?: { type_peril: string; date_debut: string | null; date_fin: string | null; date_arrete: string | null; code_national: string | null; date_publication_jo: string | null }[]; parc_national: boolean | null; azi_tri?: { azi: { libelle?: string }[]; tri: { libelle?: string }[]; detail?: string } | null; source: string }
   population: {
     habitants: number | null; menages: number | null; niveau_vie_moyen_eur: number | null
     // COMMUNE-FIX-1 (A1) — population LÉGALE INSEE (municipale) : millésime + population totale
@@ -436,16 +438,22 @@ export interface ContexteCommune {
   }
   plu_statut: {
     statut: string; libelle: string | null; procedure?: string | null; date_reglement: string | null
+    etat_au?: string | null   // FIX-4 LOT 2 — « état au … » : date de la pièce la plus récente
+    // FIX-7 LOT 2 — objet de la dernière pièce (révision générale / modif / allégée) + date de notre vérif
+    piece_objet?: string | null; date_constat?: string | null
     confiance?: string | null; recherche_verbatim: boolean; source: string | null
+    // FIX-6 LOT 4 — citation affichée (collectivité + date) + lien, sans la note interne du registre
+    source_citation?: string | null; source_url?: string | null
     // COMMUNE-FIX-1 (D12) — procédure PLU en cours au dernier relevé Sudocuh
     procedure_sudocuh?: { document: string | null; etat: string | null; prescription: string | null; millesime: string | null } | null
   }
   // GEOPF-3 — SCOT (planification supra-communale, GPU) : nom + date d'approbation. null = hors périmètre.
   scot?: { nom: string; date_approbation: string | null; statut: string | null; source: string } | null
   permis_bloc: {
-    permis_12m: number; permis_5a: number | null; logements_12m: number | null
+    // FIX-4 LOT 3 — permis_12m / point_mort null = INDISPONIBLE (bloc en échec), jamais 0 menteur.
+    permis_12m: number | null; permis_5a: number | null; logements_12m: number | null
     // OUTIL-PERMIS-FIX-5 (Point 2) — `delai_median_mois` retiré : délai jamais mesuré, non montré.
-    point_mort: number; source: string
+    point_mort: number | null; source: string
     // KELFONCIER-FIX-1 (Lot C) servis, KELFONCIER-FIX-2 (Lot D) affichés : ventilation PC/PA/DP/PD
     // (autorisés, 12 mois) + annulés (12 mois), même source SITADEL que le chiffre existant.
     permis_type_12m?: Record<string, number>; permis_annules_12m?: number
@@ -477,9 +485,10 @@ export interface ContexteCommune {
     frr: { classement: 'totalite' | 'partie' | 'hors'; libelle: string; source_ref: string; lien: string }
     avertissement?: string | null
   } | null
+  // FIX-6 LOT 4 — compteurs techniques : null = indisponible (source en échec), jamais 0 menteur.
   outils: {
-    permis_en_cours: number; permis_point_mort: number; densifiables: number
-    radar_biens: number; scan_pm: number; solaire_piscines: number
+    permis_en_cours: number | null; permis_point_mort: number | null; densifiables: number | null
+    radar_biens: number | null; scan_pm: number | null; solaire_piscines: number | null
   }
   // M36 Lot D : le compteur du tier haut EN DUR (même point de calcul que /communes)
   classement: { tiers_hauts: number; dossiers: number; libelle: string; source: string } | null

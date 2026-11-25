@@ -1,0 +1,40 @@
+_____________ test_2023_1315722_local_declare_exclu_du_terrain_nu ______________
+    def test_2023_1315722_local_declare_exclu_du_terrain_nu():
+        """IZ0236 porte un « Local industriel. commercial ou assimilé » SANS surface bâtie renseignée.
+        Un acte qui DÉCLARE un local n'est pas une vente de terrain nu, même sans surface → EXCLU."""
+>           assert _acte_nu(c, "2023-1315722") is None, \
+E           AssertionError: 2023-1315722 déclare un local → ne doit PAS être qualifié terrain nu
+E           assert {'terr_tot': 80.0, 'val': 20000.0} is None
+tests/test_communes_cas_externes.py:52: AssertionError
+            temoin = [x for x in cmps if x.get("surface_m2") == 80 and x.get("prix_m2") == 250]
+>           assert not temoin, f"l'acte du sujet (80 m², 250 €/m²) reparaît dans ses comparables : {temoin}"
+E           AssertionError: l'acte du sujet (80 m², 250 €/m²) reparaît dans ses comparables : [{'date': '04/2023', 'type': 'Terrain', 'surface_m2': 80, 'prix_eur': 20000, 'prix_m2': 250, 'distance_m': 0}]
+E           assert not [{'date': '04/2023', 'distance_m': 0, 'prix_eur': 20000, 'prix_m2': 250, ...}]
+tests/test_communes_cas_externes.py:70: AssertionError
+______ test_2022_1639451_multicommune_exclu_de_petite_ile_et_saint_joseph ______
+    def test_2022_1639451_multicommune_exclu_de_petite_ile_et_saint_joseph():
+            assert communes == 2, "le témoin doit bien porter sur deux communes"
+>           assert _acte_nu(c, "2022-1639451") is None, \
+E           AssertionError: 2022-1639451 est multi-communes → écarté partout (Petite-Île ET Saint-Joseph)
+E           assert {'terr_tot': 950.0, 'val': 60000.0} is None
+tests/test_communes_cas_externes.py:87: AssertionError
+_______ test_2021_1676912_surface_somme_des_subdivisions_1895m2_280eurm2 _______
+    def test_2021_1676912_surface_somme_des_subdivisions_1895m2_280eurm2():
+        DISTINCTES. La contenance cadastrale confirme 1 895 m². Le prix du terrain nu divise la valeur
+            assert row is not None, "2021-1676912 est une vente de terrain nu (aucun bâti, aucun local)"
+>           assert round(row["terr_tot"]) == 1895, f"surface attendue 1 895 m², obtenue {row['terr_tot']}"
+E           AssertionError: surface attendue 1 895 m², obtenue 1195.0
+E           assert 1195 == 1895
+tests/test_communes_cas_externes.py:105: AssertionError
+commune = 'Saint-Denis', insee = '97411', attendu = 14
+    @pytest.mark.parametrize("commune,insee,attendu", [
+    def test_catnat_jamais_faux_zero_quand_exposition_echoue(monkeypatch, commune, insee, attendu):
+        """Le nombre d'arrêtés CatNat est FACTUEL (table source) et INDÉPENDANT du calcul d'exposition
+        le statement_timeout de l'API), la fiche doit TOUJOURS servir le vrai compte d'arrêtés — jamais le
+            raise RuntimeError("statement_timeout simulé (scan PPR/mvt)")
+                pytest.skip(f"aucun arrêté CatNat en base pour {insee}")
+            assert src == attendu, f"la table source doit porter {attendu} arrêtés distincts ({commune})"
+>       raise RuntimeError("statement_timeout simulé (scan PPR/mvt)")
+E       RuntimeError: statement_timeout simulé (scan PPR/mvt)
+tests/test_communes_cas_externes.py:123: RuntimeError
+commune = 'Saint-Paul', insee = '97415', attendu = 17
