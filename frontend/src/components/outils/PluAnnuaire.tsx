@@ -2,6 +2,16 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { pluAnnuaireSearch, pluAnnuaireCommunes, pluAnnuairePack, type PluExtrait } from '../../lib/api'
 import { fmtDateNum } from '../../lib/format'
+
+// OUTIL-PLU-FIX-10 (LOT 5, point 7) — une couverture peut ne porter que le MOIS (« DOSSIER APPROUVE
+// FEVRIER 2024 » à Saint-Denis, « juin 2024 » à Saint-Pierre) : on ne fabrique jamais un quantième. Un
+// « YYYY-MM » est rendu « février 2024 » et DIT sans jour ; un « YYYY-MM-DD » garde la date complète.
+const _MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+function approbationLabel(d: string): { phrase: string; sansJour: boolean } {
+  const m = /^(\d{4})-(\d{2})$/.exec(d)
+  if (m) return { phrase: `approuvée en ${_MOIS[+m[2] - 1] ?? m[2]} ${m[1]}`, sansJour: true }
+  return { phrase: `approuvée le ${fmtDateNum(d) ?? d}`, sansJour: false }
+}
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
@@ -111,12 +121,23 @@ export function PluAnnuaire() {
                       <span className="min-w-0 flex-1 text-[11.5px] font-medium text-txt">{c.commune}</span>
                       {/* UN SEUL badge, UN MOT (« révision »), à droite, sur une ligne — le détail
                           (prescription, règlement non servi) vit dans le title + la note ambre. */}
+                      {/* OUTIL-PLU-FIX-10 (LOT 5, point 8) — le badge de la LISTE reflète la MÊME information
+                          que le détail : une procédure connue (veille OU inventaire contre-audit) OU une
+                          évolution postérieure non intégrée. Sinon Saint-Benoît / La Possession / Saint-Pierre
+                          / Le Tampon portaient une procédure DANS le détail et AUCUN badge dans la liste. */}
+                      {(() => {
+                        const proc = c.procedure_active || c.procedures_inventaire?.[0]?.type
+                        const evo = !proc && (c.modifications?.length ?? 0) > 0
+                        return (
                       <span className="flex shrink-0 items-center gap-1 whitespace-nowrap">
-                        {c.procedure_active
-                          ? <span data-plu-procedure={c.insee} className="whitespace-nowrap rounded bg-cp-amber/15 px-1 font-mono text-[8px] text-cp-amber">{(c.procedure_active || '').split(' ')[0]}</span>
+                        {proc
+                          ? <span data-plu-procedure={c.insee} title={proc} className="whitespace-nowrap rounded bg-cp-amber/15 px-1 font-mono text-[8px] text-cp-amber">{proc.split(' ')[0]}</span>
+                          : evo
+                          ? <span data-plu-evolution={c.insee} title="évolution postérieure connue, non intégrée au lot GPU" className="whitespace-nowrap rounded bg-cp-amber/15 px-1 font-mono text-[8px] text-cp-amber">évolution</span>
                           : !ok && <span className="whitespace-nowrap font-mono text-[8px] text-cp-amber">
                               {c.statut === 'rnu' ? 'RNU' : 'non servi'}</span>}
                       </span>
+                        ) })()}
                     </button>
                   )
                 })}
@@ -175,7 +196,10 @@ export function PluAnnuaire() {
           <button data-plu-rechercher onClick={() => setMode('recherche')}
             className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-left">
             <span className="text-[12.5px] font-medium text-txt">Rechercher dans le PLU →</span>
-            <span className="text-[10px] leading-snug text-txt-dim">Le verbatim opposable (article, page, lien), jamais un résumé</span>
+            {/* OUTIL-PLU-FIX-10 (LOT 5, point 8) — on ne promet plus « le verbatim opposable » : le texte
+                servi est celui du LOT publié au Géoportail (daté), pas nécessairement l'état opposable du
+                jour (une évolution communale postérieure peut ne pas y être intégrée — cf. doc-état). */}
+            <span className="text-[10px] leading-snug text-txt-dim">Le texte du règlement publié au Géoportail{(cur?.millesime_lot || cur?.publication_gpu) ? `, lot du ${fmtDateNum(cur.millesime_lot || cur.publication_gpu!) ?? (cur.millesime_lot || cur.publication_gpu)}` : ''} (article, page, lien) — jamais un résumé</span>
           </button>
         </div>
       )}
@@ -193,7 +217,9 @@ export function PluAnnuaire() {
             {cur?.idurba && <span className="font-mono text-[9.5px]">dépôt {cur.idurba}</span>}
             {/* LOT 1 — dates distinctes, nommées, en français. */}
             <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              {cur?.date_approbation && <span>version approuvée le <b className="text-txt-mut">{fmtDateNum(cur.date_approbation) ?? cur.date_approbation}</b></span>}
+              {cur?.date_approbation && (() => { const a = approbationLabel(cur.date_approbation); return (
+                <span>version <b className="text-txt-mut">{a.phrase}</b>{a.sansJour && <span className="text-txt-dim"> (jour non précisé en couverture)</span>}</span>
+              ) })()}
               {cur?.edition && <span>· édition PDF {cur.edition}</span>}
               {/* OUTIL-PLU-FIX-7 (point 4) — le MILLÉSIME DU LOT (dépôt GPU) est nommé comme tel, distinct de
                   la date d'approbation ÉCRITE (L'Étang-Salé : approuvé 22/06/2017 ≠ lot 17/09/2025). */}
