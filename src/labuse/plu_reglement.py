@@ -140,8 +140,25 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
             libelle = "Surface perméable et pleine terre"
             etat = "texte"
         ref = src.get(skey)
-        out.append({"cle": cle, "libelle": libelle, "valeur": txt, "etat": etat,
-                    "reference": ref, "url": _url(ref), "exceptions": _exc(cle)})
+        entry = {"cle": cle, "libelle": libelle, "valeur": txt, "etat": etat,
+                 "reference": ref, "url": _url(ref), "exceptions": _exc(cle)}
+        # OUTIL-PLU-FIX-10 (LOT 4) — barème de stationnement sur la fiche parcelle : on SERT les CONDITIONS
+        # du tableau (logement social, part publique, lotissement individuel…), l'ARTICLE et la PAGE, avec
+        # un lien profond — même quand la source d'article n'est pas portée par `sources` (barème par m² de
+        # SDP : Saint-Pierre Ud6 p.93). Source UNIQUE = le même `BaremeStationnement` que l'Étude applique.
+        if cle == "stationnement":
+            try:
+                from .faisabilite.zonage import _insee as _insee_de
+                from .implantation.regles import charger as _charger_bareme
+                _b = _charger_bareme(_insee_de(rules.bassin), rules.code).stationnement
+                entry["conditions"] = [{"texte": c} for c in (getattr(_b, "conditions", None) or ())]
+                if not ref and getattr(_b, "article", None):
+                    ref = f"Art. {_b.article}" + (f" · p.{_b.page_pdf}" if _b.page_pdf is not None else "")
+                    entry["reference"] = ref
+                    entry["url"] = _url(ref)              # lien profond (#page) via la même logique d'offset
+            except Exception:  # noqa: BLE001 — enrichissement d'affichage, jamais bloquant
+                entry.setdefault("conditions", [])
+        out.append(entry)
     return out
 
 

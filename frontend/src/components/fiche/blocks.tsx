@@ -143,6 +143,9 @@ export function ReglementPluBlock({ rp, tcsp }: { rp: ReglementPlu; tcsp?: { sta
             <Tuiles cols={z.regles_valeurs.length >= 5 ? 3 : 2}
               items={z.regles_valeurs.map((rv): Tuile => {
                 const exc = (rv.exceptions ?? []) as PluException[]
+                // OUTIL-PLU-FIX-10 (LOT 4) — conditions du barème (logement social, part publique, lotissement) :
+                // on les porte dans l'infobulle de la tuile, à côté des exceptions.
+                const conds = (rv.conditions ?? []) as { texte: string }[]
                 // FICHE-ORFEVRERIE-1 (Lot A, pt 3) — jamais un « — » muet. Une règle SERVIE (chiffre /
                 // texte / formule calculée) se montre (abrégée). « non réglementé » (état 'absent', mais
                 // la zone EST calibrée → l'article a été lu) se DIT en toutes lettres (gris) et se
@@ -169,9 +172,11 @@ export function ReglementPluBlock({ rp, tcsp }: { rp: ReglementPlu; tcsp?: { sta
                   ton: reglee ? undefined : 'gris',
                   // PLU-EXCEPTIONS-1 — la tuile porte un point d'exception + un « i » qui ouvre le
                   // texte (verbatim), l'article et la page. Une règle sans exception n'affiche rien.
-                  marque: exc.length > 0 || undefined,
+                  marque: exc.length > 0 || conds.length > 0 || undefined,
                   info: exc.length > 0
                     ? <InfoI aria={`Exception au règlement — ${rv.libelle}`} tip={<ExceptionTip regle={rv.libelle} exceptions={exc} />} />
+                    : conds.length > 0
+                    ? <InfoI aria={`Conditions du barème — ${rv.libelle}`} tip={<div className="flex flex-col gap-1">{rv.reference && <div className="text-txt-mut">{rv.reference.replace(/\s*\((PLU|GPU)[^)]*\)/i, '').trim()}</div>}{conds.map((c, k) => <div key={k}>· {c.texte}</div>)}</div>} />
                     : tcspSous
                     ? <InfoI aria="Plafond TCSP" tip={`Station de ${tcsp!.mode ?? 'transport collectif en site propre'} « ${tcsp!.station} » à ${tcsp!.distance_m} m : à moins de 800 m d'une gare ou d'une station de transport public guidé / en site propre, le PLU ne peut pas exiger plus d'une place de stationnement par logement (0,5 pour le logement social) — art. L151-34 à L151-36 du code de l'urbanisme (loi n° 2025-1129). Reste à instruire la qualité de la desserte.`} />
                     : undefined,

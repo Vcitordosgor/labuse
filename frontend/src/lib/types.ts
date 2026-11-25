@@ -920,7 +920,10 @@ export interface ReglementZone {
   // PLU-EXCEPTIONS-1 — exception au règlement d'une règle (cf. PluException plus bas).
   regles_valeurs?: { cle: string; libelle: string; valeur: string | null; etat: string; reference: string | null; url: string | null
     // PLU-EXCEPTIONS-1 — exceptions au règlement de la règle (texte verbatim + article + page + porte).
-    exceptions?: PluException[] }[]
+    exceptions?: PluException[]
+    // OUTIL-PLU-FIX-10 (LOT 4) — conditions du tableau de stationnement (logement social, part publique,
+    // lotissement individuel…) non réductibles à un nombre, servies sur la fiche sous le barème.
+    conditions?: { texte: string }[] }[]
   annuaire?: { insee: string | null; zone: string | null } | null   // M51 — deep-link outil O13
   note: string | null
   // DESTINATIONS-1 (X4.2) — ligne « Destinations » de la zone : résumé + dépliable 23 sous-destinations
