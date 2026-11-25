@@ -70,15 +70,19 @@ def verdict_affiche(payload: dict, retenu: dict) -> tuple[str, str, list[str]]:
     vg = str(retenu.get("verdict") or "")
     if reserves:
         return "À vérifier", "cp", reserves
+    # ETUDE-AUDIT-FIX-1 (relecture pt3) — on GARDE le libellé ENTIER du moteur (« Exploitable sous
+    # hypothèses », « Impossible pour cause établie »…) : « sous hypothèses » signale lui-même la réserve.
+    # Le raccourcir en « Exploitable » faisait disparaître cette mention (écran : « Exploitable sous
+    # hypothèses » → « Exploitable »).
     if vg.startswith("Exploitable"):
-        return "Exploitable", "ok", reserves
+        return vg, "ok", reserves
     if vg.startswith("Impossible"):
-        return "Impossible", "no", reserves
+        return vg, "no", reserves
     if vg:
-        return "À compléter", "cp", reserves
+        return vg, "cp", reserves
     st = str(retenu.get("statut_etude") or "")
     if st.startswith("exploitable"):
-        return "Exploitable", "ok", reserves
+        return "Exploitable sous hypothèses", "ok", reserves
     if st == "à compléter":
         return "À compléter", "cp", reserves
     if st == "ne tient pas":
