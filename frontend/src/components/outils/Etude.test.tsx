@@ -42,6 +42,10 @@ const PAYLOAD = (scenarios: any[], extra: Partial<Record<string, any>> = {}) => 
 function mockFetch(payload: any) {
   global.fetch = vi.fn(async (url: string) => {
     const u = String(url)
+    // ETUDE-AUDIT-FIX-1 LOT 2 — l'étude est ASYNCHRONE : POST /async rend {study_id, etat}, GET /job
+    // rend {etat:'pret', payload}. On sert « pret » tout de suite (le polling n'a rien à attendre ici).
+    if (u.includes('/modules/etude/async')) return { ok: true, json: async () => ({ study_id: 'EF-test', etat: 'pret' }) }
+    if (u.includes('/modules/etude/job/')) return { ok: true, json: async () => ({ etat: 'pret', payload }) }
     if (u.includes('/modules/etude')) return { ok: true, json: async () => payload }
     if (u.includes('/moteurs/config')) return { ok: true, json: async () => ({ assemblage_max_ecran: 8 }) }
     return { ok: true, json: async () => ({}) }
