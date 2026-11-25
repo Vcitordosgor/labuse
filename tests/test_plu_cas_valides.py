@@ -96,27 +96,30 @@ def test_u2e_article6_reste_entier(sess):
 # ─────────────────────────── LOT 2 — doublons ───────────────────────────
 
 def test_zero_doublon_octet_meme_zone(sess):
-    """RELECTURE-6 §3 : 0 doublon octet-pour-octet (à blancs normalisés) sous une même (insee,doc,zone).
-    Les textes DISTINCTS partageant une (réf,zone) — règles de bassins différents — sont légitimes."""
-    rows = sess.execute(text("SELECT insee,document,zone,"
+    """RELECTURE-6 §3 — RÉVISÉ FIX-10 (LOT 3) : 0 doublon octet-pour-octet sous une même
+    (insee,doc,zone,LIVRET). Le LIVRET entre dans la clé : les articles d'une zone RÉÉDITÉS d'un bassin de
+    vie à l'autre (Saint-Paul Usdu p.200/246/306) sont désormais CONSERVÉS (accessibles avec leur livret et
+    leur page) — ce ne sont plus des doublons à supprimer, mais la vraie structure du document."""
+    rows = sess.execute(text("SELECT insee,document,zone,livret,"
                              "md5(regexp_replace(texte_verbatim,'\\s+',' ','g')) h "
                              "FROM plu_reglement_extrait")).all()
     from collections import Counter
-    c = Counter((r.insee, r.document, r.zone, r.h) for r in rows)
+    c = Counter((r.insee, r.document, r.zone, r.livret, r.h) for r in rows)
     extra = sum(v - 1 for v in c.values() if v > 1)
-    assert extra == 0, f"{extra} doublon(s) octet-pour-octet (même zone) subsistent"
+    assert extra == 0, f"{extra} doublon(s) octet-pour-octet (même zone+livret) subsistent"
 
 
 def test_saintpaul_hauteur_pas_de_doublon_identique(sess):
-    """RELECTURE-6 §3 : sous « hauteur » à Saint-Paul, aucun couple (réf,zone) ne contient 2 extraits de
-    TEXTE identique (les répétitions restantes sont des bassins de vie distincts)."""
+    """RELECTURE-6 §3 — RÉVISÉ FIX-10 : sous « hauteur » à Saint-Paul, aucun couple (réf,zone,LIVRET) ne
+    contient 2 extraits de TEXTE identique. Les répétitions d'un bassin de vie à l'autre sont légitimes
+    (livret distinct) ; seul un vrai doublon DANS un même livret serait anormal."""
     rows = sess.execute(text(
-        "SELECT article_ref, zone, count(*) c, "
+        "SELECT article_ref, zone, livret, count(*) c, "
         "count(DISTINCT md5(regexp_replace(texte_verbatim,'\\s+',' ','g'))) d "
         "FROM plu_reglement_extrait WHERE insee='97415' "
-        "AND tsv @@ websearch_to_tsquery('fr_unaccent','hauteur') GROUP BY 1,2 HAVING count(*)>1")).all()
-    identiques = [(r.article_ref, r.zone, r.c, r.d) for r in rows if r.c != r.d]
-    assert not identiques, f"doublons identiques servis sous hauteur : {identiques}"
+        "AND tsv @@ websearch_to_tsquery('fr_unaccent','hauteur') GROUP BY 1,2,3 HAVING count(*)>1")).all()
+    identiques = [(r.article_ref, r.zone, r.livret, r.c, r.d) for r in rows if r.c != r.d]
+    assert not identiques, f"doublons identiques servis sous hauteur (même livret) : {identiques}"
 
 
 # ─────────────────────────── LOT 3 — zones joignables ───────────────────────────

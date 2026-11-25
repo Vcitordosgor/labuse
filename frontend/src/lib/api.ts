@@ -839,6 +839,10 @@ export interface PluExtrait {
   // OUTIL-PLU-FIX-9 (point 4) — un article générique servi à l'identique sous plusieurs zones est
   // regroupé à l'affichage : zones_concernees = toutes les zones où CETTE règle s'applique.
   zones_concernees?: string[] | null
+  // OUTIL-PLU-FIX-10 (LOT 3) — Saint-Paul réédite les articles d'une zone par bassin de vie (livret) :
+  // livret = le bassin de CET extrait ; livrets = toutes les rééditions {livret, page} de la même règle.
+  livret?: string | null
+  livrets?: { livret: string | null; page_pdf?: number | null; page_debut?: number | null; page_fin?: number | null }[]
 }
 export interface PluSearch {
   query: string; insee: string | null; n: number; n_total?: number; tronque?: boolean; resultats: PluExtrait[]; message?: string; avis?: string

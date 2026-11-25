@@ -3322,17 +3322,27 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
     # (Saint-Paul sans filtre : AU1/AU3ST/AU4ST/AU5ST/AU6ST…) n'apparaît qu'UNE fois, avec la liste des
     # zones concernées (`zones_concernees`). La règle reste servable pour CHAQUE zone (rien n'est retiré de
     # la base ; le filtre d'une zone précise la ressert seule).
+    # OUTIL-PLU-FIX-10 (LOT 3) — un même article RÉÉDITÉ par LIVRET (Saint-Paul Usdu : La Plaine p.200,
+    # La Saline p.246, Guillaume p.306) reste accessible : on l'affiche UNE fois mais on JOINT la liste
+    # (`livrets`) de ses rééditions {livret, page} pour que le lecteur retrouve le bassin de son terrain.
     import re as _re_grp
     _vus: dict[str, dict] = {}
     _group: list[dict] = []
+
+    def _liv_entry(r: dict) -> dict:
+        return {"livret": r.get("livret"), "page_pdf": r.get("page_match") or r.get("page_debut"),
+                "page_debut": r.get("page_debut"), "page_fin": r.get("page_fin")}
     for r in res:
         k = _re_grp.sub(r"\s+", " ", (r.get("texte_verbatim") or "")).strip()
         if k and k in _vus:
             g = _vus[k]
             if r.get("zone") and r["zone"] not in g["zones_concernees"]:
                 g["zones_concernees"].append(r["zone"])
+            if r.get("livret") and all(e["livret"] != r.get("livret") for e in g["livrets"]):
+                g["livrets"].append(_liv_entry(r))
         else:
             r["zones_concernees"] = [r["zone"]] if r.get("zone") else []
+            r["livrets"] = [_liv_entry(r)] if r.get("livret") else []
             _vus[k] = r
             _group.append(r)
     for g in _group:

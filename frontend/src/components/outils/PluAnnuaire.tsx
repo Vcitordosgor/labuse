@@ -399,9 +399,16 @@ function PluExtraitCard({ r, premier = false }: { r: PluExtrait; premier?: boole
           {r.zones_concernees && r.zones_concernees.length > 1
             ? <span className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[9.5px] text-txt-mut">zones {r.zones_concernees.join(', ')}</span>
             : r.zone && <span className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[9.5px] text-txt-mut">zone {r.zone}</span>}
+          {/* OUTIL-PLU-FIX-10 (LOT 3) — bassin de vie (livret) de l'extrait, quand le règlement en a. */}
+          {r.livret && <span className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[9.5px] text-txt-mut">{r.livret}</span>}
           <span className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[9.5px] text-txt-mut">{r.commune}</span>
         </div>
       </div>
+      {/* OUTIL-PLU-FIX-10 (LOT 3) — même règle rééditée dans d'autres bassins de vie : on les cite tous
+          (nom du livret + page) pour que le lecteur retrouve le livret de son terrain. */}
+      {r.livrets && r.livrets.length > 1 && (
+        <div className="mt-1 text-[10px] text-txt-mut">Aussi dans : {r.livrets.map((l) => `${l.livret ?? 'livret'} (p. ${l.page_pdf ?? l.page_debut})`).join(' · ')}</div>
+      )}
       {/* titre « en clair », deux lignes au plus */}
       {r.titre && <p className="mt-1 line-clamp-2 text-[12px] font-medium leading-snug text-txt-hi">{r.titre}</p>}
       {/* aperçu 3 lignes (corps, sans le titre) ; déplié → verbatim complet */}

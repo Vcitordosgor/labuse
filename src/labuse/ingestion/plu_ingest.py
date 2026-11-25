@@ -47,6 +47,10 @@ ALTER TABLE plu_reglement_extrait ADD COLUMN IF NOT EXISTS page_fin   int;
 -- OUTIL-PLU-FIX-3 — page_map = [[offset_dans_texte, page_pdf], …] : situe le mot cité à sa page réelle
 -- dans un article multi-pages (l'article n'est plus coupé par page).
 ALTER TABLE plu_reglement_extrait ADD COLUMN IF NOT EXISTS page_map jsonb;
+-- OUTIL-PLU-FIX-10 (LOT 3) — livret/bassin de vie du règlement de Saint-Paul : les mêmes articles d'une
+-- zone (Usdu…) sont RÉÉDITÉS par bassin (La Plaine–Bois de Nèfles p.200, La Saline p.246, Guillaume
+-- p.306). On garde CHAQUE réédition (accessible avec son livret et sa page), au lieu de les dédoublonner.
+ALTER TABLE plu_reglement_extrait ADD COLUMN IF NOT EXISTS livret text;
 CREATE INDEX IF NOT EXISTS ix_plu_extrait_tsv    ON plu_reglement_extrait USING gin(tsv);
 CREATE INDEX IF NOT EXISTS ix_plu_extrait_insee  ON plu_reglement_extrait(insee);
 CREATE INDEX IF NOT EXISTS ix_plu_extrait_doc    ON plu_reglement_extrait(insee, document);
@@ -64,7 +68,12 @@ _HEADER = re.compile(
     # OUTIL-PLU-FIX-6 (point 2, La Possession) — un en-tête peut suivre une FIN DE PHRASE sur la même
     # ligne : « …Sans objet. ARTICLE UB 10 - … » (extraction PDF qui colle la suite) → sinon UB 10 est
     # fondu dans UB 9. On ancre en DÉBUT DE LIGNE ou juste après « . ».
-    r'(?m)(?:^[ \t]*|(?<=\.)[ \t]+)('
+    # OUTIL-PLU-FIX-10 (LOT 3) — …ni point ni saut de ligne : le PDF de Saint-Paul colle l'en-tête à la
+    # phrase précédente (« …augmentée d'un mètre maximum Article 11- \n Aspect extérieur… ») → l'article 11
+    # de Usdu était fondu dans l'article 10. On accepte aussi un en-tête collé à un MOT, à la condition
+    # STRICTE que ce soit la forme numérotée « Article <n>- » (tiret) — jamais un « article 11 » de prose
+    # (minuscule, exclu par la casse) ; les renvois « voir/cf. Article… » restent écartés par _looks_cross_ref.
+    r'(?m)(?:^[ \t]*|(?<=\.)[ \t]+|(?<=[a-zà-ÿ])[ \t]+(?=(?:ARTICLE|Article)\s+\d+\s*[-–—]))('
     # OUTIL-PLU-FIX-5 (Saint-Benoît) — séparateur zone→numéro : espace, point, tiret court/en-dash/em-dash
     # (« Article U – 4. Hauteur » n'était pas détecté → 47 en-têtes perdus, commune entière sans article).
     r'(?:ARTICLE|Article)\s+[A-Za-z]{0,4}\s*[-–—.]?\s*\d+[A-Za-z0-9.\-]*'
@@ -196,6 +205,30 @@ _PAGEFOOT = re.compile(r'(?i)^\s*(?:page\s+\d{1,3}(?:\s+sur\s+\d{1,3})?|\d{1,3}\
 
 def _norm(s: str) -> str:
     return re.sub(r'\s+', ' ', s).strip()
+
+
+# OUTIL-PLU-FIX-10 (LOT 3) — livret/bassin de vie dans le fil d'en-tête (Saint-Paul) :
+# « …/ Titre 2 – Livret 4 – Bassin de vie La Plaine – Bois de Nèfles ». On garde le libellé parlant
+# (« Livret 4 – Bassin de vie … » ou, à défaut, « Livret N »).
+_LIVRET = re.compile(r'(?i)(Livret\s+\d+(?:\s*[-–—]\s*Bassin de vie\s+[^/]+?)?|Bassin de vie\s+[^/]+?)\s*$')
+
+
+def _livret_par_page(pages: list[str]) -> list[str | None]:
+    """Livret/bassin de vie de chaque page (lu dans le fil d'en-tête), forward-fill. None si la commune
+    n'a pas de livrets (cas général)."""
+    out: list[str | None] = []
+    last: str | None = None
+    for t in pages:
+        cur = None
+        for l in t.splitlines()[:6]:
+            m = _LIVRET.search(_norm(l))
+            if m:
+                cur = _norm(m.group(1))
+                break
+        if cur:
+            last = cur
+        out.append(cur or last)
+    return out
 
 
 def _valid_zone(z: str | None) -> str | None:
@@ -527,6 +560,7 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
     pages = _pages(path)
     ambigu = _pagination_ambigue(pages)       # détecté sur le texte brut (numéros imprimés)
     clean, zbanner = _clean_pages(pages)
+    livrets = _livret_par_page(pages)         # OUTIL-PLU-FIX-10 (LOT 3) — bassin de vie par page (Saint-Paul)
     starts, buf, pos = [], [], 0
     for i, t in enumerate(clean):
         starts.append((pos, i + 1)); buf.append(t); pos += len(t)
@@ -621,6 +655,7 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
         net = len(re.sub(r'\s', '', texte))
         return {"article_ref": ref, "zone": zone, "page_pdf": pg0,
                 "page_debut": pg0, "page_fin": page_of(b - 1), "page_map": pmap,
+                "livret": livrets[pg0 - 1] if 0 < pg0 <= len(livrets) else None,
                 "texte": texte, "doute": net < 25,
                 "doute_motif": "extrait quasi vide — page peut-être illisible/scannée, à vérifier au PDF" if net < 25 else None}
 
@@ -679,10 +714,14 @@ def _dedup(pieces: list[dict]) -> list[dict]:
     # espace / saut de page résiduel : « Article 13- USDU » ×3 = 5256/5254/5254 car. → 1 seul une fois les
     # blancs réduits). On compare donc sur le texte à blancs normalisés ; un texte SUBSTANTIELLEMENT
     # différent sous la même (réf,zone) — ex. « Article 7- U1 » 4262 vs 3620 car. — reste DISTINCT, conservé.
+    # OUTIL-PLU-FIX-10 (LOT 3) — le LIVRET entre dans la clé : les articles d'une zone RÉÉDITÉS d'un bassin
+    # de vie à l'autre (Saint-Paul : Usdu « Article 12- » à La Plaine p.200, La Saline p.246, Guillaume
+    # p.306) ne sont PLUS dédoublonnés — chacun reste accessible avec son livret et sa page. Le doublon
+    # octet-pour-octet DANS un même livret (vraie redite d'extraction) reste supprimé.
     seen: set[tuple] = set()
     out: list[dict] = []
     for e in pieces:
-        k = (e.get("zone"), re.sub(r'\s+', ' ', e.get("texte") or "").strip())
+        k = (e.get("zone"), e.get("livret"), re.sub(r'\s+', ' ', e.get("texte") or "").strip())
         if k in seen:
             continue
         seen.add(k)
@@ -769,11 +808,11 @@ def ingest_reglement(session: Session, *, insee: str, commune: str, idurba: str,
         session.execute(text("""
             INSERT INTO plu_reglement_extrait
               (insee, commune, idurba, millesime, document, zone, article_ref, page_pdf,
-               page_debut, page_fin, page_map, texte_verbatim, doute, doute_motif, pagination_ambigue,
+               page_debut, page_fin, page_map, livret, texte_verbatim, doute, doute_motif, pagination_ambigue,
                source_url, pdf_url, fetched_at, tsv)
             VALUES
               (:insee, :commune, :idurba, :millesime, :document, :zone, :article_ref, :page_pdf,
-               :page_debut, :page_fin, CAST(:page_map AS jsonb), :texte, :doute, :doute_motif, :ambigu,
+               :page_debut, :page_fin, CAST(:page_map AS jsonb), :livret, :texte, :doute, :doute_motif, :ambigu,
                :url, :pdf_url, :fetched_at,
                to_tsvector('fr_unaccent',
                  coalesce(:article_ref,'') || ' ' || coalesce(:zone,'') || ' ' || :texte))
@@ -782,6 +821,7 @@ def ingest_reglement(session: Session, *, insee: str, commune: str, idurba: str,
                "page_pdf": e["page_pdf"], "page_debut": e.get("page_debut", e["page_pdf"]),
                "page_fin": e.get("page_fin", e["page_pdf"]),
                "page_map": _json.dumps(e.get("page_map") or [[0, e["page_pdf"]]]),
+               "livret": e.get("livret"),
                "texte": e["texte"], "doute": e["doute"],
                "doute_motif": e["doute_motif"], "ambigu": ambigu, "url": source_url,
                "pdf_url": pdf_url, "fetched_at": fetched_at})
@@ -1226,7 +1266,7 @@ def search_reglement(session: Session, q: str, insee: str | None = None, limit: 
     where, params = _search_where(q, insee, zones_ok, bool(zone), terms)
     base = f"""
         SELECT insee, commune, idurba, to_char(millesime,'YYYY-MM-DD') AS millesime, document,
-               zone, article_ref, page_pdf, page_debut, page_fin, page_map, texte_verbatim, doute,
+               zone, article_ref, page_pdf, page_debut, page_fin, page_map, livret, texte_verbatim, doute,
                doute_motif, pagination_ambigue, source_url, pdf_url,
                ts_rank(tsv, websearch_to_tsquery('fr_unaccent', :q)) AS rang
         FROM plu_reglement_extrait
