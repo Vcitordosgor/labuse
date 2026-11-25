@@ -51,6 +51,10 @@ ALTER TABLE plu_reglement_extrait ADD COLUMN IF NOT EXISTS page_map jsonb;
 -- zone (Usdu…) sont RÉÉDITÉS par bassin (La Plaine–Bois de Nèfles p.200, La Saline p.246, Guillaume
 -- p.306). On garde CHAQUE réédition (accessible avec son livret et sa page), au lieu de les dédoublonner.
 ALTER TABLE plu_reglement_extrait ADD COLUMN IF NOT EXISTS livret text;
+-- OUTIL-PLU-FIX-11 (LOT 2) — secteurs régis par un chapitre MUTUALISÉ dont la bannière énumère plusieurs
+-- zones (« ZONES UA, UB, UC et UD » → « UA,UB,UC,UD »). L'étiquette `zone` ne garde que le préfixe « U » ;
+-- cette colonne permet de NE PAS servir cet article sous une zone sœur (UE) qui a son propre article.
+ALTER TABLE plu_reglement_extrait ADD COLUMN IF NOT EXISTS secteurs text;
 CREATE INDEX IF NOT EXISTS ix_plu_extrait_tsv    ON plu_reglement_extrait USING gin(tsv);
 CREATE INDEX IF NOT EXISTS ix_plu_extrait_insee  ON plu_reglement_extrait(insee);
 CREATE INDEX IF NOT EXISTS ix_plu_extrait_doc    ON plu_reglement_extrait(insee, document);
@@ -262,6 +266,17 @@ def _banner_zone(expr: str) -> str | None:
     return _valid_zone(pref) or codes[0]
 
 
+def _banner_secteurs(expr: str) -> list[str]:
+    """OUTIL-PLU-FIX-11 (LOT 2) — TOUS les secteurs énumérés par une bannière de CHAPITRE MUTUALISÉ
+    (« ZONES UA, UB, UC et UD » → [UA,UB,UC,UD]). `_banner_zone` n'en garde que le préfixe commun (« U »),
+    perdant quels secteurs le chapitre régit ; `_filtre_scope` ne pouvait donc pas savoir que « Article U 12 »
+    ne concerne PAS UE. On renvoie la liste complète (codes valides, MAJ) — vide si moins de 2 secteurs."""
+    toks = [t for t in re.split(r'[\s/,]+|\bà\b|\bet\b|à', expr) if t.strip()]
+    codes = [c for c in (_valid_zone(t) for t in toks) if c]
+    uniq = list(dict.fromkeys(codes))
+    return uniq if len(uniq) >= 2 else []
+
+
 # OUTIL-PLU-FIX-3 (D3) — en-tête/pied COURANT qui VARIE d'une page à l'autre (le « / Titre 2 – Livret 1
 # – Bassin de vie X » change de livret en livret → la détection par fréquence le rate). On le reconnaît
 # aussi par son DÉBUT DE LIGNE : « Règlement… », « Commune de… », « Ville de… », « Mairie… », « Plan
@@ -294,16 +309,24 @@ def _detect_chrome(pages: list[str]) -> set[str]:
     return {l for l, n in c.items() if n >= thr and len(l) > 3}
 
 
-def _clean_pages(pages: list[str]) -> tuple[list[str], list[str | None]]:
+_SBANNER_UNSET = object()   # page sans bannière → hérite du chapitre courant (forward-fill)
+
+
+def _clean_pages(pages: list[str]) -> tuple[list[str], list[str | None], list[list[str] | None]]:
     """Retire de chaque page le « chrome » (en-têtes/pieds courants — constants OU variables par page,
-    D3 —, bannière de zone, n° de page) et renvoie (pages nettoyées, zone de bannière par page). Le
-    texte servi est ainsi celui du règlement, sans en-têtes/pieds répétés."""
+    D3 —, bannière de zone, n° de page) et renvoie (pages nettoyées, zone de bannière par page,
+    secteurs régis par page). Le texte servi est ainsi celui du règlement, sans en-têtes/pieds répétés.
+    OUTIL-PLU-FIX-11 (LOT 2) — `sbanner` = la LISTE des secteurs d'un chapitre mutualisé (« ZONES UA, UB,
+    UC et UD » → [UA,UB,UC,UD]), forward-fill comme zbanner : permet de savoir que « Article U 12 » ne
+    régit pas UE."""
     chrome = _detect_chrome(pages)
     clean: list[str] = []
     zbanner: list[str | None] = []
+    sbanner_raw: list = []
     resets: list[bool] = []
     for t in pages:
         cur: str | None = None
+        scur = _SBANNER_UNSET          # secteurs du chapitre vus sur CETTE page (sentinelle = aucun)
         kept: list[str] = []
         lines = t.splitlines()
         nlines = len(lines)
@@ -341,6 +364,11 @@ def _clean_pages(pages: list[str]) -> tuple[list[str], list[str | None]]:
                 if bz:
                     if not sommaire and not _is_toc_header(n, 0):   # pas une ligne de sommaire (points de conduite)
                         cur = cur or bz
+                        # secteurs du chapitre : ≥2 → on les mémorise ; sinon chapitre mono-zone → on CLÔT
+                        # le contexte multi-secteur (le chapitre UE ne régit plus UA/UB/UC/UD).
+                        if scur is _SBANNER_UNSET:
+                            secs = _banner_secteurs(mb.group(1))
+                            scur = secs if secs else []
                     continue
             if n in chrome:
                 continue
@@ -356,19 +384,27 @@ def _clean_pages(pages: list[str]) -> tuple[list[str], list[str | None]]:
             kept.append(l)
         clean.append("\n".join(kept))
         zbanner.append(cur)
+        sbanner_raw.append(scur)
     # OUTIL-PLU-FIX-1 (LOT 4) — forward-fill : certains PLU ne portent le code de zone qu'UNE fois, au
     # titre de chapitre (Saint-Denis « Zone Uavap » p.26), pas en bandeau de chaque page → la zone doit
     # PERSISTER jusqu'au chapitre suivant. Le remplissage ne part JAMAIS vers l'arrière : les pages
     # avant le 1er titre (dispositions générales, sommaire) restent sans étiquette.
     last: str | None = None
+    sbanner: list[list[str] | None] = []
+    last_s: list[str] | None = None
     for i in range(len(zbanner)):
         if resets[i]:                      # chapitre sans zone → on cesse de reporter la bannière
             last = None
+            last_s = None
         if zbanner[i] is not None:
             last = zbanner[i]
         elif last is not None:
             zbanner[i] = last
-    return clean, zbanner
+        # secteurs régis : même forward-fill ; une bannière mono-zone ([]) CLÔT le contexte multi-secteur.
+        if sbanner_raw[i] is not _SBANNER_UNSET:
+            last_s = sbanner_raw[i] or None
+        sbanner.append(last_s)
+    return clean, zbanner, sbanner
 
 
 def zone_candidats(zone: str) -> list[str]:
@@ -394,14 +430,21 @@ def zone_candidats(zone: str) -> list[str]:
     return list(seen)
 
 
-def _dedup_double_draw(page) -> str:
+def _dedup_double_draw(page, sort: bool = False) -> str:
     """OUTIL-PLU-FIX-9 (point 3) — certains PDF rendent les TITRES en « fausse graisse » = le texte est
     DESSINÉ DEUX FOIS À LA MÊME POSITION. `get_text()` (texte brut) rend alors la ligne EN DOUBLE
     consécutif (« 10.1 - Définition\\n10.1 - Définition » — Le Tampon : 521 lignes sur 116 pages). On
     retire le doublon consécutif UNIQUEMENT quand ce texte n'occupe qu'UNE ordonnée sur la page (dessin
     EN PLACE) ; une valeur de TABLEAU répétée sur plusieurs lignes (« RECOMMANDÉ », « 100 % ») occupe
-    PLUSIEURS ordonnées et reste intacte — aucune règle n'est perdue."""
-    plain = page.get_text()
+    PLUSIEURS ordonnées et reste intacte — aucune règle n'est perdue.
+
+    OUTIL-PLU-FIX-11 (LOT 1) — `sort` (ordre de POSITION haut→bas) rattache les cellules d'un TABLEAU de
+    valeurs à leur article : Saint-Denis Up.10 « Hauteur » rend « Upr 16 m / Upi 11 m » APRÈS le titre de
+    l'article SUIVANT dans l'ordre brut, collant les valeurs au mauvais article. Le tri est RÉSERVÉ aux
+    règlements où ce défaut existe (identifiés par le scan `plu_fix10_scan_tronques.py`, motif
+    « valeurs-fuitees ») : appliqué partout il DÉRÈGLE la détection d'en-têtes d'autres communes (Saint-Paul
+    livrets, Le Port) dont l'ordre naturel était correct."""
+    plain = page.get_text(sort=sort)
     ys: dict[str, set] = {}
     for b in page.get_text("dict").get("blocks", []):
         for ln in b.get("lines", []):
@@ -425,9 +468,19 @@ def _dedup_double_draw(page) -> str:
     return res + "\n" if plain.endswith("\n") else res
 
 
+# OUTIL-PLU-FIX-11 (LOT 1) — règlements à lire en ORDRE DE POSITION (tableaux de valeurs dont les cellules
+# fuient vers l'article suivant dans l'ordre brut). Liste établie par le scan `plu_fix10_scan_tronques.py`
+# (motif « valeurs-fuitees ») et VÉRIFIÉE sans régression commune par commune. Les autres sont lus en ordre
+# naturel (le tri y déréglerait la détection d'en-têtes — Saint-Paul livrets, Le Port).
+_SORT_INSEE = {"97411"}        # Saint-Denis (Up.10 Hauteur : « Upr 16 m / Upi 11 m »)
+
+
 def _pages(path: str) -> list[str]:
+    import os as _os
+    insee = _os.path.basename(path)[:5]
+    sort = insee in _SORT_INSEE
     d = fitz.open(path)
-    return [_dedup_double_draw(d[i]) for i in range(d.page_count)]
+    return [_dedup_double_draw(d[i], sort=sort) for i in range(d.page_count)]
 
 
 def _pagination_ambigue(pages: list[str]) -> bool:
@@ -559,7 +612,7 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
     import bisect
     pages = _pages(path)
     ambigu = _pagination_ambigue(pages)       # détecté sur le texte brut (numéros imprimés)
-    clean, zbanner = _clean_pages(pages)
+    clean, zbanner, sbanner = _clean_pages(pages)
     livrets = _livret_par_page(pages)         # OUTIL-PLU-FIX-10 (LOT 3) — bassin de vie par page (Saint-Paul)
     starts, buf, pos = [], [], 0
     for i, t in enumerate(clean):
@@ -653,9 +706,13 @@ def _split_articles(path: str) -> tuple[list[dict], bool]:
                 if off >= 0 and p != pmap[-1][1]:
                     pmap.append([off, p])
         net = len(re.sub(r'\s', '', texte))
+        _secs = sbanner[pg0 - 1] if 0 < pg0 <= len(sbanner) else None
         return {"article_ref": ref, "zone": zone, "page_pdf": pg0,
                 "page_debut": pg0, "page_fin": page_of(b - 1), "page_map": pmap,
                 "livret": livrets[pg0 - 1] if 0 < pg0 <= len(livrets) else None,
+                # OUTIL-PLU-FIX-11 (LOT 2) — secteurs régis par le chapitre mutualisé (bannière retirée),
+                # pour que `_filtre_scope` sache qu'un « Article U 12 » ne concerne pas UE.
+                "secteurs": ",".join(_secs) if _secs else None,
                 "texte": texte, "doute": net < 25,
                 "doute_motif": "extrait quasi vide — page peut-être illisible/scannée, à vérifier au PDF" if net < 25 else None}
 
@@ -808,11 +865,11 @@ def ingest_reglement(session: Session, *, insee: str, commune: str, idurba: str,
         session.execute(text("""
             INSERT INTO plu_reglement_extrait
               (insee, commune, idurba, millesime, document, zone, article_ref, page_pdf,
-               page_debut, page_fin, page_map, livret, texte_verbatim, doute, doute_motif, pagination_ambigue,
+               page_debut, page_fin, page_map, livret, secteurs, texte_verbatim, doute, doute_motif, pagination_ambigue,
                source_url, pdf_url, fetched_at, tsv)
             VALUES
               (:insee, :commune, :idurba, :millesime, :document, :zone, :article_ref, :page_pdf,
-               :page_debut, :page_fin, CAST(:page_map AS jsonb), :livret, :texte, :doute, :doute_motif, :ambigu,
+               :page_debut, :page_fin, CAST(:page_map AS jsonb), :livret, :secteurs, :texte, :doute, :doute_motif, :ambigu,
                :url, :pdf_url, :fetched_at,
                to_tsvector('fr_unaccent',
                  coalesce(:article_ref,'') || ' ' || coalesce(:zone,'') || ' ' || :texte))
@@ -821,7 +878,7 @@ def ingest_reglement(session: Session, *, insee: str, commune: str, idurba: str,
                "page_pdf": e["page_pdf"], "page_debut": e.get("page_debut", e["page_pdf"]),
                "page_fin": e.get("page_fin", e["page_pdf"]),
                "page_map": _json.dumps(e.get("page_map") or [[0, e["page_pdf"]]]),
-               "livret": e.get("livret"),
+               "livret": e.get("livret"), "secteurs": e.get("secteurs"),
                "texte": e["texte"], "doute": e["doute"],
                "doute_motif": e["doute_motif"], "ambigu": ambigu, "url": source_url,
                "pdf_url": pdf_url, "fetched_at": fetched_at})
@@ -1084,39 +1141,62 @@ def _art_num(ref: str | None) -> int | None:
     return int(m.group(1)) if m else None
 
 
-def _couvre_zone(row, zf: str) -> bool:
-    """L'article `row` (zone, article_ref, texte_verbatim) régit-il la zone filtrée `zf` (MAJ) ? VRAI s'il
-    est étiqueté exactement zf, OU s'il énumère zf (ou un secteur apparenté) dans son barème."""
+def _secteurs_regis(row) -> set[str]:
+    """Secteurs qu'un article régit explicitement : ceux énumérés dans son barème (texte) ∪ ceux de la
+    BANNIÈRE de son chapitre mutualisé (colonne `secteurs`, OUTIL-PLU-FIX-11 LOT 2 — « ZONES UA, UB,
+    UC et UD » retirée du corps à l'ingestion)."""
+    out = _zones_enumerees(row["texte_verbatim"] or "")
+    sec = row.get("secteurs") if hasattr(row, "get") else None
+    if sec:
+        out |= {s.strip().upper() for s in str(sec).split(",") if s.strip()}
+    return out
+
+
+def _propre_a(row, zf: str) -> bool:
+    """L'article est-il PROPRE à la zone filtrée `zf` (et non un simple ancêtre de famille) ? VRAI s'il est
+    étiqueté exactement zf, OU si son barème/bannière nomme zf ou un SOUS-secteur de zf (UAb sous UA).
+    N'est PAS « propre » un article d'ANCÊTRE (U pour UE, UE pour UEa) : son code est un préfixe de zf."""
     if (row["zone"] or "").upper() == zf:
         return True
-    enum = _zones_enumerees(row["texte_verbatim"] or "")
-    return any(e == zf or e.startswith(zf) or zf.startswith(e) for e in enum)
+    return any(e == zf or e.startswith(zf) for e in _secteurs_regis(row))
 
 
 def _filtre_scope(rows: list, zone: str | None, zones_ok: list[str] | None) -> list:
-    """OUTIL-PLU-FIX-10 (LOT 2) — ARTICLES CONCURRENTS : le règlement de Sainte-Marie tient DEUX « Article
-    U8 », l'un énumérant UA/UB/UC/UD, l'autre UEa/UEm/…/UT. Sous le filtre UA, seul le premier (qui régit
-    UA) doit sortir. Règle : on écarte un article qui énumère des secteurs SANS la zone filtrée UNIQUEMENT
-    s'il existe un AUTRE article DU MÊME NUMÉRO qui, lui, régit la zone — sinon on garde (article unique :
-    exception interne, renvoi, disposition générale). Ne s'applique pas au chapitre « AU indicée » (renvoi
-    géré article par article, LOT 1)."""
+    """OUTIL-PLU-FIX-10/11 (LOT 2) — ARTICLE PROPRE AVANT ARTICLE DE ZONE SŒUR/ANCÊTRE. Quand, pour un même
+    NUMÉRO d'article, il existe un extrait PROPRE à la zone filtrée (étiqueté zf, ou dont le barème/bannière
+    nomme zf ou un sous-secteur), on ÉCARTE les extraits NON propres du même numéro qui ne sont là que par
+    héritage de famille :
+      · article d'un ANCÊTRE (code préfixe de zf : « U 12 » sous UE, « UE.10 » sous UEa) — FIX-11 ;
+      · article de SECTEURS disjoints (le 2ᵉ « Article U8 » UEa…/UT sous UA à Sainte-Marie) — FIX-10.
+    Sinon on garde tout (article unique : exception interne, renvoi AU3c→U3, disposition commune, La
+    Possession UBc←UB sans article UBc propre). Ne s'applique pas au chapitre « AU indicée » (LOT 1)."""
     if not zone or zones_ok == ["AUINDICEE"] or len(rows) < 2:
         return rows
     zf = _norm(zone).upper()
-    # numéros d'article pour lesquels un extrait SERVI régit explicitement la zone filtrée
-    couvre_par_num: dict[int, bool] = {}
+    propre_par_num: dict[int, bool] = {}          # un extrait PROPRE à zf existe pour ce n° d'article
     for r in rows:
         n = _art_num(r["article_ref"])
-        if n is not None and _couvre_zone(r, zf):
-            couvre_par_num[n] = True
+        if n is not None and _propre_a(r, zf):
+            propre_par_num[n] = True
+
+    def _ancetre(r) -> bool:
+        za = (r["zone"] or "").upper()
+        return bool(za) and za != zf and zf.startswith(za)   # code de r = préfixe strict de zf
+
     out = []
     for r in rows:
         n = _art_num(r["article_ref"])
-        enum = _zones_enumerees(r["texte_verbatim"] or "")
-        hors = bool(enum) and not _couvre_zone(r, zf)
-        if hors and n is not None and couvre_par_num.get(n):
-            continue                                   # article concurrent du même n° régit la zone → écarté
+        if n is not None and propre_par_num.get(n) and not _propre_a(r, zf) and (
+                _ancetre(r) or bool(_secteurs_regis(r))):
+            continue                                   # extrait non propre éclipsé par l'article propre
         out.append(r)
+    # OUTIL-PLU-FIX-11 (LOT 2) — « l'article propre passe TOUJOURS avant celui d'une zone sœur » : quand la
+    # zone a son PROPRE chapitre (≥1 article ÉTIQUETÉ zf), on classe ses articles propres AVANT ceux d'un
+    # ancêtre/une sœur, même d'un AUTRE numéro (un « Article Um.2 » d'usage ne doit pas coiffer « Uma.12 »
+    # sur « stationnement »). Partition STABLE (le rang FTS est conservé dans chaque groupe). Sans chapitre
+    # propre (zone servie par sa famille : Ub1→U), aucun reclassement — l'article de famille est légitime.
+    if any((r["zone"] or "").upper() == zf and _art_num(r["article_ref"]) is not None for r in out):
+        out = [r for r in out if _propre_a(r, zf)] + [r for r in out if not _propre_a(r, zf)]
     return out
 
 # OUTIL-PLU-FIX-6/7 (point 3) — collisions de STEMMER : le dictionnaire français de Postgres réduit TOUTE
@@ -1266,7 +1346,7 @@ def search_reglement(session: Session, q: str, insee: str | None = None, limit: 
     where, params = _search_where(q, insee, zones_ok, bool(zone), terms)
     base = f"""
         SELECT insee, commune, idurba, to_char(millesime,'YYYY-MM-DD') AS millesime, document,
-               zone, article_ref, page_pdf, page_debut, page_fin, page_map, livret, texte_verbatim, doute,
+               zone, article_ref, page_pdf, page_debut, page_fin, page_map, livret, secteurs, texte_verbatim, doute,
                doute_motif, pagination_ambigue, source_url, pdf_url,
                ts_rank(tsv, websearch_to_tsquery('fr_unaccent', :q)) AS rang
         FROM plu_reglement_extrait
@@ -1302,7 +1382,7 @@ def count_reglement(session: Session, q: str, insee: str | None = None,
     if zone:
         # même filtre « articles concurrents » que search_reglement → compte COHÉRENT avec l'affiché.
         rows = session.execute(text(
-            f"SELECT zone, article_ref, texte_verbatim FROM plu_reglement_extrait "
+            f"SELECT zone, article_ref, secteurs, texte_verbatim FROM plu_reglement_extrait "
             f"WHERE {' AND '.join(where)}"), params).mappings().all()
         return len(_filtre_scope(list(rows), zone, zones_ok))
     return int(session.execute(text(

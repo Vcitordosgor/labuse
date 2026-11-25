@@ -1,10 +1,15 @@
-"""OUTIL-PLU-FIX-10 (LOT 2) — scan des ARTICLES COUPÉS dans les 21 communes servies.
+"""OUTIL-PLU-FIX-10/11 (LOT 2 / LOT 1) — scan des ARTICLES COUPÉS dans les 21 communes servies.
 
 Cherche tout extrait dont le texte VERBATIM se termine par un signe de troncature :
   · deux-points « : » (une énumération annoncée mais vide → la suite a été détachée) ;
   · une puce nue (•, ▪, ◦, ·, ‣, tiret) — un item de liste commencé sans contenu ;
   · un mot TRONQUÉ (dernier « mot » collé à une césure, ou ligne finissant par une préposition/
     article : « à », « de », « du », « en », « le »… — la phrase continue hors de l'extrait).
+
+OUTIL-PLU-FIX-11 (LOT 1) — ajoute le cas « VALEURS FUITÉES » : un article dont le TITRE annonce une règle
+chiffrée (hauteur, emprise, gabarit, stationnement, espaces libres) mais dont le corps ne contient AUCUN
+chiffre (mètre, %, place), ALORS QUE l'article SUIVANT de la même commune en contient (les valeurs ont
+migré vers l'article d'après — défaut Saint-Denis Up.10). C'est le motif « valeurs-fuitees ».
 
 Chaque cas est une coupure potentielle d'article. Sortie BRUTE triée par commune. `--strict` ne garde
 que les deux-points / puce (les plus sûrs). DSN via LABUSE_PLU_CORPUS_DSN.
@@ -47,6 +52,29 @@ def _fin_tronquee(texte: str, strict: bool) -> str | None:
     return None
 
 
+# OUTIL-PLU-FIX-11 (LOT 1) — article dont le titre annonce une règle CHIFFRÉE.
+_TITRE_CHIFFRE = re.compile(r"(?i)hauteur|emprise|gabarit|stationnement|espaces? libres?|implantation|"
+                            r"coefficient|pleine terre|aires? de")
+_NOMBRE_UNITE = re.compile(r"(?i)\d[\d ,\.]*\s*(?:m\b|mètre|m²|%|place|niveau|étage|logement)")
+
+
+def _valeurs_fuitees(rows: list) -> list:
+    """Article dont le TITRE annonce une règle chiffrée mais dont le corps n'a AUCUN chiffre, alors que
+    l'article SUIVANT de la même commune en contient (valeurs migrées — Saint-Denis Up.10)."""
+    out = []
+    for i, r in enumerate(rows):
+        ref = r["article_ref"] or ""
+        if not _TITRE_CHIFFRE.search(ref):
+            continue
+        if _NOMBRE_UNITE.search(r["texte_verbatim"] or ""):
+            continue                                   # l'article porte ses chiffres → OK
+        nxt = rows[i + 1] if i + 1 < len(rows) else None
+        if nxt and nxt["insee"] == r["insee"] and _NOMBRE_UNITE.search(nxt["texte_verbatim"] or ""):
+            out.append((r["insee"], r["commune"], r["zone"], ref, r["page_debut"], r["page_fin"],
+                        "valeurs-fuitees", f"→ chiffres dans {nxt['article_ref']}"))
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--strict", action="store_true")
@@ -61,6 +89,7 @@ def main() -> int:
         if motif:
             hits.append((r["insee"], r["commune"], r["zone"], r["article_ref"],
                          r["page_debut"], r["page_fin"], motif, (r["texte_verbatim"] or "")[-60:]))
+    hits += _valeurs_fuitees(list(rows))
     by_comm: dict[str, int] = {}
     for h in hits:
         by_comm[h[0]] = by_comm.get(h[0], 0) + 1
