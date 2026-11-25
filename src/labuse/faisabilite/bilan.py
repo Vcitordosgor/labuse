@@ -552,7 +552,16 @@ def contexte_bilan_servi(session: Session, parcel_id: int, fz=None) -> dict | No
                 # Savane des Tamarins sur la géographie = zone AU3st (et elle seule).
                 "commune": ctx.commune,
                 "zac_mixite_exclue": _zac_savane_tamarins(ctx.commune, ctx.zone),
+                # OUTIL-ASSEMBLAGE-FIX-5 (LOT 1) — zones U4a/U4b/U4c : exclusion ZAC Marie Caze / Sans Souci
+                # NON exemptable (pas de périmètre dans le zonage) → avertissement sur les déclenchées.
+                "zac_avert_u4": _zac_marie_caze_sans_souci(ctx.commune, ctx.zone),
                 "places_par_logt": (rules.places_par_logement() if rules else None)})
+    # OUTIL-ASSEMBLAGE-FIX-5 (LOT 2) — Usdu : page de mixité du LIVRET rattaché par la géographie
+    # (la zone n'a pas de numéro de livret dans son nom) ; aucune page si rattachement à cheval.
+    if (ctx.commune or "").strip().lower().startswith("saint-paul") and (ctx.zone or "").strip() == "Usdu":
+        eco["zone_mixite"] = {"article": None, "page": _usdu_livret_page(session, parcel_id),
+                              "page_pdf": None, "seuil_logements": None, "quota_pct": None,
+                              "produits": None, "citation": None}
     bp = {k: r["value"] for k, r in bpmod.resolve(session, secteur).items()}
     bp["prix_m2_neuf"] = ps["prix"]
     return {"secteur": secteur, "hyp": hyp, "ps": ps, "eco": eco, "base_params": bp}
@@ -598,7 +607,16 @@ def compute_bilan_servi(session: Session, parcel_id: int, fz=None) -> tuple["Bil
                 # Savane des Tamarins sur la géographie = zone AU3st (et elle seule).
                 "commune": ctx.commune,
                 "zac_mixite_exclue": _zac_savane_tamarins(ctx.commune, ctx.zone),
+                # OUTIL-ASSEMBLAGE-FIX-5 (LOT 1) — zones U4a/U4b/U4c : exclusion ZAC Marie Caze / Sans Souci
+                # NON exemptable (pas de périmètre dans le zonage) → avertissement sur les déclenchées.
+                "zac_avert_u4": _zac_marie_caze_sans_souci(ctx.commune, ctx.zone),
                 "places_par_logt": (rules.places_par_logement() if rules else None)})
+    # OUTIL-ASSEMBLAGE-FIX-5 (LOT 2) — Usdu : page de mixité du LIVRET rattaché par la géographie
+    # (la zone n'a pas de numéro de livret dans son nom) ; aucune page si rattachement à cheval.
+    if (ctx.commune or "").strip().lower().startswith("saint-paul") and (ctx.zone or "").strip() == "Usdu":
+        eco["zone_mixite"] = {"article": None, "page": _usdu_livret_page(session, parcel_id),
+                              "page_pdf": None, "seuil_logements": None, "quota_pct": None,
+                              "produits": None, "citation": None}
     bp = {k: r["value"] for k, r in bpmod.resolve(session, secteur).items()}
     bp["prix_m2_neuf"] = ps["prix"]
     b = compute_bilan(float(shab), float(ctx.surface_m2 or 0),
@@ -700,6 +718,50 @@ def _zac_savane_tamarins(commune: str | None, zone: str | None) -> bool:
             and (zone or "").strip() == "AU3st")
 
 
+#: OUTIL-ASSEMBLAGE-FIX-5 (LOT 1) — zones du livret 4 (La Plaine – Bois de Nèfles, Art. 2 PDF pp.168-169)
+#: dont le texte exclut la clause dans « la ZAC Marie Caze et la ZAC Sans Souci … calculé à l'échelle de
+#: l'opération ». Contrairement à Savane des Tamarins (= zone AU3st), AUCUNE de ces deux ZAC n'a de zone
+#: ni de secteur dédié dans le zonage : Marie Caze n'existe que comme OAP 4.2 (orientation, pas une zone),
+#: Sans Souci n'a aucun périmètre. On ne peut donc pas exempter sur la géographie → les parcelles
+#: DÉCLENCHÉES de ces zones portent un avertissement nommé (décision Vic, zonage strict).
+_SP_ZAC_AVERT_ZONES = {"U4a", "U4b", "U4c"}
+
+
+def _zac_marie_caze_sans_souci(commune: str | None, zone: str | None) -> bool:
+    return (bool(commune) and (commune or "").strip().lower().startswith("saint-paul")
+            and (zone or "").strip() in _SP_ZAC_AVERT_ZONES)
+
+
+#: OUTIL-ASSEMBLAGE-FIX-5 (LOT 2) — marge de rattachement d'une parcelle Usdu à un livret : si une 2e zone
+#: d'un AUTRE livret est à moins de cette distance de la plus proche, la parcelle est à cheval entre deux
+#: bassins → rattachement écarté (aucune page citée).
+_USDU_MARGE_M = 50.0
+
+
+def _usdu_livret_page(session, parcel_id: int) -> str | None:
+    """OUTIL-ASSEMBLAGE-FIX-5 (LOT 2) — la zone « Usdu » de Saint-Paul est répétée dans plusieurs livrets
+    de bassin (articles Usdu relevés pp. 139/200/246/306) et son nom ne porte pas de numéro de livret. On
+    rattache la parcelle à son bassin via la zone à livret (U1-6/AU1-6) la PLUS PROCHE (polygones
+    plu_gpu_zone) et on cite la page de mixité de CE livret. Rattachement ÉCARTÉ (→ aucune page) si la
+    parcelle est à cheval entre deux livrets (2e livret distinct à moins de `_USDU_MARGE_M`)."""
+    from sqlalchemy import text as _t
+    rows = session.execute(_t(
+        """
+        WITH liv AS (
+          SELECT geom_2975 g, substring(attrs->>'libelle' from '^A?U([1-6])')::int AS livret
+          FROM spatial_layers
+          WHERE kind='plu_gpu_zone' AND commune='Saint-Paul' AND attrs->>'libelle' ~ '^A?U[1-6]'
+        ), p AS (SELECT geom_2975 g FROM parcels WHERE id = :pid)
+        SELECT liv.livret, min(ST_Distance(p.g, liv.g)) AS d
+        FROM liv, p GROUP BY liv.livret ORDER BY d
+        """), {"pid": parcel_id}).all()
+    if not rows or rows[0].livret is None:
+        return None
+    if len(rows) >= 2 and (rows[1].d - rows[0].d) < _USDU_MARGE_M:   # à cheval entre deux livrets
+        return None
+    return _SP_LIVRET_PAGE.get(rows[0].livret)
+
+
 def _clause_mixite(eco: dict, hyp: Hypotheses) -> dict:
     """Déclenchement de la clause de mixité (Art. 2 règlement PLU) selon le PROGRAMME estimé.
 
@@ -774,10 +836,13 @@ def _clause_mixite(eco: dict, hyp: Hypotheses) -> dict:
         # 156 parcelles) par les context builders — et elle seule. La citation (article/page) suit le livret.
         if eco.get("zac_mixite_exclue"):
             _cite = ", ".join(x for x in (_art, _page) if x)
+            # OUTIL-ASSEMBLAGE-FIX-5 (LOT 3) — le règlement (p. 107) pose que la ZAC a son PROPRE programme
+            # de logements aidés, calculé à l'échelle de l'opération ; aucun pourcentage propre n'est fixé
+            # dans les pièces disponibles (pas de dossier ZAC ni d'OAP « Savane ») → non chiffré ici.
             return _rc(False, None, None,
-                       f"ZAC Savane des Tamarins — clause non applicable"
-                       f"{(' (' + _cite + ')') if _cite else ''} : "
-                       "programme de logements aidés calculé à l'échelle de l'opération.")
+                       f"ZAC Savane des Tamarins — clause générale non applicable"
+                       f"{(' (' + _cite + ')') if _cite else ''} : la ZAC a son PROPRE programme de "
+                       "logements aidés, calculé à l'échelle de l'opération — non chiffré ici.")
         # Le régime se décide sur la SDP du programme CHIFFRÉ. Le critère TERRAIN (> 6 000 m²) reste un
         # déclencheur réglementaire indépendant (plein régime). OUTIL-ASSEMBLAGE-FIX-2 (LOT 2, pt 3) —
         # le déclencheur « ≥ 20 logements » de l'Art. 2 (ligne PC) est RÉTABLI : même à SDP < 1 500 m²,
@@ -1043,6 +1108,20 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
         # Art. 2 PDF p. 107). L'exemption est désormais posée SUR LA GÉOGRAPHIE (`eco["zac_mixite_exclue"]`
         # armé pour AU3st par les context builders, qui déclenche la branche d'exemption de `_clause_mixite`)
         # et ne contamine donc plus les parcelles U3/AU3c hors ZAC.
+        # OUTIL-ASSEMBLAGE-FIX-5 (LOT 1) — zones U4a/U4b/U4c (livret 4) : le règlement (Art. 2, PDF
+        # pp. 168-169) exclut la clause dans la ZAC Marie Caze et la ZAC Sans Souci, mais AUCUNE des deux
+        # n'a de zone/secteur dédié dans le zonage (Marie Caze n'existe que comme OAP 4.2, Sans Souci n'a
+        # aucun périmètre) : on NE PEUT PAS exempter sur la géographie. La clause s'applique donc (pas de
+        # décote retirée, aucun euro bougé), mais on DIT la réserve — sur ces zones seulement, et seulement
+        # quand elle est déclenchée.
+        if declenchee and eco.get("zac_avert_u4") and not eco.get("zac_mixite_exclue"):
+            avert.append(
+                "Exclusion ZAC possible — le règlement de la zone (Art. 2, p. 168-169) exclut cette "
+                "obligation dans la ZAC Marie Caze et la ZAC Sans Souci (programme de logements aidés "
+                "calculé à l'échelle de l'opération). Le périmètre de ces ZAC n'est pas disponible dans le "
+                "zonage (Marie Caze n'existe que comme OAP 4.2, Sans Souci n'a aucun périmètre publié) : si "
+                "cette parcelle est incluse dans l'une d'elles, l'obligation ne s'applique pas — à vérifier "
+                "auprès de la commune.")
     # Coût de construction rapporté à la SURFACE DE PLANCHER. Coût au m² piloté par secteur
     # (cout_construction_m2_sdp) si calibré ; sinon fourchette YAML bas/haut.
     # M128-3-§1 : la SDP RETENUE au bilan = vendable retenu ÷ rendement (coef_rendement, SOURCE UNIQUE
