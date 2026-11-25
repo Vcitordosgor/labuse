@@ -676,11 +676,24 @@ def _plu_source_url(session, insee: str) -> Optional[str]:
     return _plu_gpu_url(session, insee)
 
 
-def _regle_stationnement_courte(b) -> Optional[str]:
+def _regle_stationnement_courte(b, destination: str = "collectif") -> Optional[str]:
     """ETUDE-V6-3 (item 3) — la règle de stationnement en clair et courte. Par logement → « N place/logt » ;
-    par typologie → « p pl. Tx–Ty » par tranche de pièces (Tn = n pièces principales)."""
+    par typologie → « p pl. Tx–Ty » par tranche de pièces (Tn = n pièces principales).
+    ETUDE-AUDIT-FIX-1 (relecture) — on décrit la ligne RÉELLEMENT APPLIQUÉE par le calcul : celle de la
+    `destination` (social, individuel…) si le barème porte une ligne dédiée, sinon la ligne collectif. Une
+    seule source : l'affichage = ce que `capacite.places_pour(..., destination=…)` retient."""
     if not b.validee:
         return None
+    # ligne dédiée à la destination (ex. UA 2.7.3 « social » : 1 place/logement à plat), sinon collectif.
+    # `has_destination` peut manquer sur un barème synthétique (tests) → repli collectif, sûr.
+    _has = getattr(b, "has_destination", None)
+    _dest = destination if (callable(_has) and _has(destination)) else "collectif"
+    if _dest != "collectif":
+        _base = [lg for lg in b.lignes if (lg.destination or "collectif") == _dest
+                 and lg.role == "base" and lg.places is not None]
+        if len(_base) == 1 and _base[0].pieces_min is None and _base[0].pieces_max is None:
+            _p = _base[0].places
+            return f"{f'{_p:g}'.replace('.', ',')} place{'s' if _p >= 2 else ''} / logement"
     def nb(x):
         return f"{x:g}".replace(".", ",")
     if b.mode == "par_logement" and b.flat_places is not None:
@@ -705,7 +718,7 @@ def _regle_stationnement_courte(b) -> Optional[str]:
     # portent leur condition de seuil ; les lignes de base, leur tranche de pièces (Tn = n pièces principales).
     parts = []
     for lg in b.lignes:
-        if lg.destination and lg.destination != "collectif":
+        if (lg.destination or "collectif") != _dest:
             continue
         _pm = getattr(lg, "par_m2", None)   # ligne « 1 place / N m² de SDP » : places est None (FIX-5 : NE PLUS
         #                                     la formater comme un par-logement → crash AH0853/Trois-Bassins)
@@ -755,6 +768,10 @@ def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, i
     pour une destination L151-34, le PLAFOND NATIONAL L151-35 « sous condition d'éligibilité » (À confirmer).
     On ne préremplit jamais un ratio réduit comme s'il était la règle du PLU."""
     b = regles.stationnement
+    # ETUDE-AUDIT-FIX-1 (relecture) — la règle AFFICHÉE doit être celle APPLIQUÉE : on résout la destination
+    # du calcul (social, individuel…) comme `capacite` et on décrit SA ligne (une seule source).
+    from .regles import DESTINATION_PAR_PROJET
+    _dest_calc = DESTINATION_PAR_PROJET.get(type_projet, "collectif")
     general = {
         "mode": b.mode, "validee": b.validee,
         "ratio_par_logement": b.flat_places if b.mode == "par_logement" else None,
@@ -763,8 +780,9 @@ def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, i
         "source_url": _plu_source_url(session, insee),
         "citation": b.citation, "applique": True,
         "etat": ("règle vérifiée" if b.validee else "document manquant — à confirmer"),
-        # ETUDE-V6-3 (item 3) — la RÈGLE en clair (ex. « 1 pl. T1–T2 · 1,5 pl. T3–T4 ») pour le récap.
-        "regle_courte": _regle_stationnement_courte(b),
+        # ETUDE-V6-3 (item 3) — la RÈGLE en clair, pour la DESTINATION réellement appliquée (ex. social :
+        # « 1 place / logement » ; collectif : « 1 pl. T1–T2 ; 1,5 pl. T3–T4 »).
+        "regle_courte": _regle_stationnement_courte(b, _dest_calc),
         # ETUDE-STATIONNEMENT-FIX-9 (point 3) — bornes de surface (seuils) pour l'affichage décimal près d'un seuil.
         "bornes_surface_m2": (b.bornes_surface_m2() if hasattr(b, "bornes_surface_m2") else []),
         # OUTIL-PLU-FIX-7 (point 2) — ÉCRAN SEULEMENT : le barème du PLU distingue d'AUTRES cas (logement
