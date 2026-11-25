@@ -1297,8 +1297,12 @@ def rendu_lotissement(payload: dict, *, genere_le: str) -> dict:
         doc_title=f"LABUSE — Lotissement · {commune}",
         doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
         doc_foot=FOOT_LIGNE)
-    lignes = "".join(f"<tr><td>Lot {i}</td><td class='n'>{fr(s)} m²</td></tr>"
-                     for i, s in enumerate(tl["surfaces_m2"], 1))
+    # ETUDE-AUDIT-FIX-1 LOT 3 (défaut 6) — le tableau PDF porte le NUMÉRO du polygone du plan (tl["lots"]),
+    # jamais une surface triée réaffectée à un autre numéro. Repli sur surfaces_m2 (déjà en ordre de polygone).
+    _rows_lots = tl.get("lots") or [{"numero": i, "surface_m2": s}
+                                     for i, s in enumerate(tl["surfaces_m2"], 1)]
+    lignes = "".join(f"<tr><td>Lot {l['numero']}</td><td class='n'>{fr(l['surface_m2'])} m²</td></tr>"
+                     for l in _rows_lots)
     racc = "".join(f"<tr><td>{r['reseau']}</td><td class='n'>{'non vérifié' if r['distance_m'] is None else fr(r['distance_m'])+' m'}</td></tr>"
                    for r in lot["raccordements"])
     # ETUDE-V6-6 (item 1) — article de règle servie ou « règle non servie » ; (item 2) — raison si 0 lot.

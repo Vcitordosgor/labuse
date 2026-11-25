@@ -240,7 +240,9 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
 
   const contiguOk = sel.length > 0 && !!v?.contiguite.ok
   const peutContinuer1 = contiguOk && !valide.isFetching
-  const peutAnalyser = contiguOk && !!projet && totalLogts > 0
+  // ETUDE-AUDIT-FIX-1 LOT 3 (défaut 9) — un LOTISSEMENT s'analyse avec T1–T4 à zéro : les logements futurs
+  // y sont INFORMATIFS (la faisabilité dépend de la division en lots), on n'exige donc pas de programme.
+  const peutAnalyser = contiguOk && !!projet && (totalLogts > 0 || projet === 'lotissement')
 
   function reset() { setStep(1); setSel([]); setProjet(null); setNb({ T1: 0, T2: 0, T3: 0, T4: 0 }); resetHyp(); analyse.reset(); setRouvrirActif(false) }
   function resetHyp() { setHyp({ surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '', stationnement: 'aerien', niveauxSousSol: 1, lotCible: '', voirie: '' }) }
@@ -746,8 +748,10 @@ function LotissementResultat({ lot, hypothese, boutonPdf, pdfErreur, studyId, ed
         <div className="rounded-lg border border-line-2 bg-surface-2 p-3">
           <b className="text-[11px] font-semibold text-txt">Tableau des lots — accès {tl.acces}</b>
           <div className="mt-1.5 grid grid-cols-6 gap-1 text-[10.5px] sm:grid-cols-8">
-            {tl.surfaces_m2.map((s, i) => (
-              <span key={i} className="rounded border border-line-2 bg-surface-1 px-1.5 py-1 text-center"><b className="text-txt">#{i + 1}</b> <span className="text-txt-dim">{fmtInt(s)}</span></span>
+            {/* ETUDE-AUDIT-FIX-1 LOT 3 (défaut 6) — on affiche le NUMÉRO du polygone du plan (tl.lots),
+                plus un index de surfaces triées. Repli sur surfaces_m2 (déjà en ordre de polygone). */}
+            {(tl.lots ?? tl.surfaces_m2.map((s, i) => ({ numero: i + 1, surface_m2: s }))).map((l) => (
+              <span key={l.numero} className="rounded border border-line-2 bg-surface-1 px-1.5 py-1 text-center"><b className="text-txt">#{l.numero}</b> <span className="text-txt-dim">{fmtInt(l.surface_m2)}</span></span>
             ))}
           </div>
         </div>

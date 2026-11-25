@@ -212,8 +212,19 @@ def _pave_reseau(net: BaseGeometry, lot_cible: float, w: float, recul: float = 0
         u_spine = _rect(origin, u, v, 0, L, (W - w) / 2, (W + w) / 2)
         heads = _retournement(net, origin, u, v, L, W, w, "I", u_spine, u_spine)
     voirie = unary_union([rn] + heads) if heads else rn
-    if heads:
-        lots = [g for g in lots if g.intersection(voirie).area < 0.15 * g.area]
+    # ETUDE-AUDIT-FIX-1 LOT 3 (défaut 3) — les lots sont DÉCOUPÉS hors de la voirie ET de l'aire de
+    # retournement (différence géométrique), plus seulement filtrés par un seuil de chevauchement :
+    # l'intersection lot/voirie devient NULLE par construction, et le bilan des surfaces se recalcule
+    # sur ces lots découpés (plus de double comptabilisation de la desserte dans les lots vendables).
+    decoupes = []
+    for g in lots:
+        d = g.difference(voirie)
+        if d.is_empty:
+            continue
+        d = d if d.geom_type == "Polygon" else max(d.geoms, key=lambda x: x.area)
+        if d.area >= 120.0:                      # même seuil « bâtissable » que _accepter
+            decoupes.append(d)
+    lots = decoupes
     config_label = label + (" + aire de retournement" if heads else "")
     return lots, voirie, config_label, bool(heads), prof_laterale
 
@@ -283,22 +294,48 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
     # calcul de la profondeur disponible pour une voie latérale (profondeur = largeur − voirie − recul).
     recul_lat = float(regles.recul_separatives.valeur or 0.0) if regles.recul_separatives.validee else 3.0
 
+    # ETUDE-AUDIT-FIX-1 LOT 3 (défaut 8) — LARGEUR DE VOIRIE sous le minimum du PLU (voie à créer) de la
+    # commune de l'assiette : on NE DÉCOUPE PAS, et on le DIT avec l'article. La valeur est LUE de la règle
+    # calibrée (`regles.voie_creation.largeur_min_m`), jamais en dur ; zone non calibrée → pas de garde
+    # (« non vérifié » : le découpage se fait, la source de largeur reste « hypothèse »).
+    _vc = getattr(regles, "voie_creation", None)
+    voirie_min_m = (float(_vc["largeur_min_m"]) if isinstance(_vc, dict)
+                    and _vc.get("largeur_min_m") is not None else None)
+    voirie_sous_minimum = voirie_min_m is not None and voirie_largeur_m < voirie_min_m - 1e-6
+
     # ETUDE-V6-6 (item 2) — on ne lève JAMAIS : si l'assiette est trop petite, ou si aucun lot n'est
     # dessinable après la voirie, on renvoie un résultat qui DIT pourquoi et ce qui le permettrait.
     trop_petit = net.is_empty or net.area < 400
     prof_laterale = None
-    if trop_petit:
+    if voirie_sous_minimum:
+        lots, voirie, voie_label, impasse = [], None, "aucune (voirie sous le minimum du PLU)", False
+    elif trop_petit:
         lots, voirie, voie_label, impasse = [], None, "aucune (assiette trop petite)", False
     else:
         lots, voirie, voie_label, impasse, prof_laterale = _pave_reseau(
             net, lot_cible_m2, voirie_largeur_m, recul=recul_lat)
-    aires = sorted(round(g.area, 1) for g in lots)
+    # ETUDE-AUDIT-FIX-1 LOT 3 (défaut 6) — les surfaces RESTENT dans l'ordre des polygones (= numéro du
+    # plan), elles ne sont PLUS triées : le tableau n'affecte plus la surface d'un lot au numéro d'un autre.
+    aires = [round(g.area, 1) for g in lots]
     nb = len(lots)
     voirie_m2 = round(voirie.area, 1) if voirie is not None else 0.0
+    # ETUDE-AUDIT-FIX-1 LOT 3 (défaut 3) — contrôle : les lots découpés hors voirie n'empiètent plus dessus.
+    lots_voirie_inter_m2 = (round(sum(g.intersection(voirie).area for g in lots), 2)
+                            if (voirie is not None and lots) else 0.0)
     raison = remede = None
     if nb == 0:
         apres_voirie = round(max(0.0, net.area - voirie_m2), 1)
-        if trop_petit:
+        if voirie_sous_minimum:
+            _art = (_vc or {}).get("article")
+            _lm = f"{voirie_min_m:.2f}".replace(".", ",")
+            _lv = f"{voirie_largeur_m:.2f}".rstrip("0").rstrip(".").replace(".", ",")
+            raison = (f"Largeur de voirie insuffisante : {_lv} m est inférieure au minimum du PLU pour une "
+                      f"voie à créer ({_lm} m" + (f" — {_art}" if _art else "") + "). Aucun découpage n'est "
+                      "proposé à cette largeur.")
+            remede = (f"Portez la largeur de voirie à au moins {_lm} m"
+                      + (f" ({_art})" if _art else "") + ", ou desservez les lots par un accès direct sur la "
+                      "voie existante plutôt qu'une voirie interne à créer.")
+        elif trop_petit:
             raison = (f"Assiette constructible trop petite pour un lotissement : {net.area:.0f} m² nets "
                       f"(après zone, PPR, EBC) ne suffisent pas à des lots de {lot_cible_m2:.0f} m² plus une voirie.")
         elif prof_laterale is not None and prof_laterale < LOT_PROFONDEUR_MIN_M:
@@ -312,8 +349,9 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
             raison = (f"Aucun lot de {lot_cible_m2:.0f} m² n'est dessinable : après la voirie de desserte "
                       f"({voirie_m2:.0f} m²), il reste {apres_voirie:.0f} m² sur {net.area:.0f} m² nets — "
                       f"insuffisant pour la profondeur et la façade d'un lot à cette taille.")
-        remede = ("Réduisez la taille de lot visée (hypothèse modifiable), ou desservez les lots par un accès "
-                  "direct sur la voie existante plutôt qu'une voirie interne, ou étudiez une assiette plus grande.")
+        if not voirie_sous_minimum:   # le remède « voirie sous minimum » est déjà posé ci-dessus
+            remede = ("Réduisez la taille de lot visée (hypothèse modifiable), ou desservez les lots par un accès "
+                      "direct sur la voie existante plutôt qu'une voirie interne, ou étudiez une assiette plus grande.")
     # PLEINE TERRE = jardins privatifs (lot − future emprise au CES de la zone) + espaces verts communs.
     jardins_privatifs = round(sum(aires) * (1.0 - ces_pct / 100.0), 1)
     communs = round(max(0.0, net.area - sum(aires) - voirie_m2), 1)
@@ -370,16 +408,26 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
         "tableau_lots": {
             "nombre": nb,
             "surface_moyenne_m2": round(sum(aires) / nb, 1) if nb else None,
-            "surface_min_m2": aires[0] if aires else None,
-            "surface_max_m2": aires[-1] if aires else None,
+            "surface_min_m2": min(aires) if aires else None,
+            "surface_max_m2": max(aires) if aires else None,
             "surfaces_m2": aires,
+            # ETUDE-AUDIT-FIX-1 LOT 3 (défaut 6) — tableau PORTE le numéro du polygone du plan (écran+PDF+GeoJSON
+            # lisent le MÊME couple numéro↔surface) ; le numéro est celui du GeoJSON (enumerate(lots, 1)).
+            "lots": [{"numero": i, "surface_m2": a} for i, a in enumerate(aires, 1)],
             "acces": "sur voirie de desserte créée" if voirie is not None else "accès à préciser",
         },
         "voirie_m2": voirie_m2,
         "voirie_largeur_m": voirie_largeur_m,
         "voirie_config": voie_label,
-        "voirie_largeur_source": ("Largeur = hypothèse (aucune largeur de voirie n'est servie au PLU pour "
-                                  f"cette zone) : chaussée {voirie_largeur_m:.0f} m, trottoir à prévoir (Estimé)."),
+        # ETUDE-AUDIT-FIX-1 LOT 3 (défaut 8) — si le PLU sert une largeur MINIMALE de voie à créer, on la DIT
+        # (article), sinon on reste sur l'hypothèse « non vérifié ». La chaussée dessinée respecte ce minimum.
+        "voirie_largeur_source": (
+            (f"Largeur minimale de voie à créer servie au PLU : {f'{voirie_min_m:.2f}'.replace('.', ',')} m"
+             + (f" ({(_vc or {}).get('article')})" if (_vc or {}).get('article') else "")
+             + f" ; chaussée dessinée {voirie_largeur_m:.0f} m (trottoir à prévoir).")
+            if voirie_min_m is not None else
+            ("Largeur = hypothèse (aucune largeur de voirie n'est servie au PLU pour "
+             f"cette zone) : chaussée {voirie_largeur_m:.0f} m, trottoir à prévoir (Estimé).")),
         "pleine_terre": {"exigee_pct": pt_pct, "exigee_m2": pt_requis, "estimee_m2": pt_totale,
                          "jardins_privatifs_m2": jardins_privatifs, "communs_m2": communs,
                          "ces_pct": ces_pct, "resultat": "Réussi" if pt_ok else "Échoué", "article": pt_article},
@@ -391,6 +439,9 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
             "communs_m2": communs, "ppr_rouge_m2": round(terrain.ppr_rouge_m2, 1), "ebc_m2": ebc_m2,
             "hors_zone_m2": hz, "somme_m2": round(som, 1), "ecart_m2": round(som - assiette.area, 1),
             "clos": abs(som - assiette.area) <= 0.02 * assiette.area,
+            # ETUDE-AUDIT-FIX-1 LOT 3 (défaut 3) — VERROU : aire d'intersection lots × voirie. Les lots étant
+            # découpés hors voirie (shapely difference), elle vaut 0 — la desserte n'est plus comptée vendable.
+            "lots_voirie_intersection_m2": lots_voirie_inter_m2,
         })(round(max(0.0, assiette.area - net.area - terrain.ppr_rouge_m2 - ebc_m2), 1),
            sum(aires) + voirie_m2 + communs + terrain.ppr_rouge_m2 + ebc_m2
            + max(0.0, assiette.area - net.area - terrain.ppr_rouge_m2 - ebc_m2)),

@@ -2707,6 +2707,8 @@ export interface EtudeLotissement {
   tableau_lots: {
     nombre: number; surface_moyenne_m2: number | null; surface_min_m2: number | null
     surface_max_m2: number | null; surfaces_m2: number[]; acces: string
+    // ETUDE-AUDIT-FIX-1 LOT 3 (défaut 6) — couple numéro↔surface du polygone du plan (= GeoJSON).
+    lots?: { numero: number; surface_m2: number }[]
   }
   voirie_m2: number; voirie_largeur_m: number; voirie_config: string; voirie_largeur_source: string
   pleine_terre: {
