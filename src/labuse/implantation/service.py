@@ -1302,6 +1302,15 @@ def etudier_payload(session, entree: dict) -> dict:
                       else _variante_absente(role, raison))
                      for role, s, raison in variantes]
 
+    # ETUDE-AUDIT-FIX-1 (relecture pt5) — en LOGEMENT SOCIAL, la mixité (quota de logements aidés, L151-36)
+    # est satisfaite PAR NATURE (le programme est 100 % aidé) : on le signale, et le compteur « logements
+    # aidés imposés » n'a pas de sens (il imposerait un sous-quota dans un programme déjà 100 % aidé). Les
+    # autres types ne changent pas. L'affichage (écran + PDF) lit ce drapeau.
+    for _v in variantes_pub:
+        _pg = _v.get("programme") if not _v.get("absente") else None
+        if isinstance(_pg, dict):
+            _pg["mixite_satisfaite_social"] = (type_projet == "social")
+
     # ETUDE-V6-7 (item 2) — le DÉPASSEMENT parle du PLAN DESSINÉ (« votre programme »), pas d'un optimum par
     # type pris sur des scénarios différents : « tiennent » = la typologie réellement dessinée (vérité unique).
     if depassement and demande:

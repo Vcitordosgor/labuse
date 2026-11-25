@@ -353,7 +353,13 @@ def _stationnement_3lignes(payload: dict, retenu: dict) -> str:
                   f"selon la règle {'retenue' if _is_loi else 'du PLU'}.")
     mix_html = ""
     mx = next((l for l in payload["regles"].get("lignes", []) if "mixit" in (l.get("nom") or "").lower()), None)
-    if mx and mx.get("valeur") is not None:
+    # ETUDE-AUDIT-FIX-1 (relecture pt5) — en logement social, la mixité est SATISFAITE PAR NATURE (100 % aidé) :
+    # on l'écrit, sans compteur « aidés imposés ».
+    if retenu.get("programme", {}).get("mixite_satisfaite_social"):
+        _art = _art_label((mx or {}).get("article")) if mx else None
+        mix_html = (f'<p><b>Mixité sociale</b>{f" (art. {esc(_art)})" if _art else ""} : satisfaite, programme '
+                    '100 % logement aidé.</p>')
+    elif mx and mx.get("valeur") is not None:
         aides = retenu.get("programme", {}).get("logements_aides_imposes")
         appl = retenu.get("programme", {}).get("mixite_applicable")
         etat = (f"Applicable : {int(aides)} logements aidés imposés." if appl and aides is not None
@@ -621,8 +627,13 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     haut = next((l for l in payload["regles"]["lignes"] if "égout" in (l.get("nom") or "")
                  or "hauteur" in (l.get("nom") or "").lower()), None)
     aides = retenu["programme"].get("logements_aides_imposes")
-    aides_txt = (str(aides) if retenu["programme"].get("mixite_applicable") and aides is not None
-                 else "sans objet")
+    # ETUDE-AUDIT-FIX-1 (relecture pt5) — en social, pas de compteur « aidés imposés » : « 100 % aidé ».
+    if retenu["programme"].get("mixite_satisfaite_social"):
+        aides_txt, aides_label = "100 % aidé", "Mixité sociale"
+    else:
+        aides_txt = (str(aides) if retenu["programme"].get("mixite_applicable") and aides is not None
+                     else "sans objet")
+        aides_label = "Logements aidés imposés"
     places_imp = retenu["stationnement"].get("places_imposees")
     tiles = [
         (_m2(t.get("contenance_totale_m2")), "Contenance cadastrale"),
@@ -630,7 +641,7 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         ((f"{_grp(haut['valeur'])} {esc(str(haut.get('unite') or 'm'))}") if haut and haut.get("valeur") is not None else "—",
          # DOCS-COHERENCE-1 (F9) — « Hauteur à l'égout », jamais « Hauteur (hauteur à l'égout) ».
          esc((haut['nom'][:1].upper() + haut['nom'][1:]) if haut and haut.get('nom') else "Hauteur")),
-        (aides_txt, "Logements aidés imposés"),
+        (aides_txt, aides_label),
         (str(places_imp) if places_imp is not None else "—", "Places imposées"),
         (str(cc.get("a_confirmer", 0)), "Contrôles à confirmer"),
         (str(cc["non_effectue"]), "Contrôles non effectués"),
@@ -1072,7 +1083,14 @@ def _p7_capacite(payload: dict, retenu: dict) -> str:
         prows.append(f'<tr><td class="k">{esc(x)}</td><td class="num">{int(pt[x])}</td>'
                      f'<td class="num">{vcell}</td><td class="num">{_m2(shab.get(x))}</td>'
                      f'<td class="n"><span class="chip e">Estimé</span></td></tr>')
-    if prog.get("mixite_applicable") and prog.get("logements_aides_imposes") is not None:
+    # ETUDE-AUDIT-FIX-1 (relecture pt5) — en social, mixité satisfaite par nature : « 100 % aidé », pas un
+    # sous-quota « dont X aidés ».
+    if prog.get("mixite_satisfaite_social"):
+        prows.append('<tr><td class="k">Dont logements aidés</td>'
+                     f'<td class="num">{int(sum(pt.values()))}</td>'
+                     '<td class="num" colspan="2">programme 100 % aidé (mixité satisfaite par nature)</td>'
+                     '<td class="n"><span class="chip s">Sourcé</span></td></tr>')
+    elif prog.get("mixite_applicable") and prog.get("logements_aides_imposes") is not None:
         prows.append(f'<tr><td class="k">Dont logements aidés</td>'
                      f'<td class="num">{int(prog["logements_aides_imposes"])}</td>'
                      f'<td class="num" colspan="2">quota PLU appliqué au programme</td>'

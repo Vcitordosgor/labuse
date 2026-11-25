@@ -2584,6 +2584,8 @@ export interface EtudeScenario {
     sdp_aidee_imposee_m2: number | null
     // ETUDE-V6-7 (item 2) — surface tenue = Σ (logements DESSINÉS × surface) ; source unique écran/PDF.
     surface_tenue_m2?: number | null
+    // ETUDE-AUDIT-FIX-1 (relecture pt5) — true en logement social : mixité satisfaite par nature (100 % aidé).
+    mixite_satisfaite_social?: boolean | null
   }
   distribution_niveaux: Array<{ niveau: number; par_type: Record<string, number>; sdp_m2: number }>
   stationnement: {

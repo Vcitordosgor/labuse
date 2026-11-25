@@ -394,7 +394,8 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
                   mode={active.stationnement?.mode ?? 'aerien'} niveaux={active.stationnement?.niveaux_sous_sol ?? 1}
                   mixite={{ regle: resultat.regles.lignes.find((l) => /mixit/i.test(l.nom)) ?? null,
                             applicable: active.programme.mixite_applicable, aides: active.programme.logements_aides_imposes,
-                            sdp_aidee: active.programme.sdp_aidee_imposee_m2 }} />
+                            sdp_aidee: active.programme.sdp_aidee_imposee_m2,
+                            satisfaite_social: active.programme.mixite_satisfaite_social }} />
               )}
               {/* ETUDE-V6-3 (item 9) — détail des surfaces : sol restant, emprise mobilisable, SDP autorisée (+ rampe sous-sol). */}
               <DetailSurfaces v={active} />
@@ -859,7 +860,7 @@ function StationnementResultat({ regimes, placesActive, commune, zone, mode, niv
   regimes: EtudeStationnementRegimes
   placesActive: number; commune?: string | null; zone?: string | null
   mode: 'aerien' | 'sous_sol'; niveaux?: number
-  mixite?: { regle: EtudeRegle | null; applicable: boolean | null; aides: number | null; sdp_aidee: number | null } | null
+  mixite?: { regle: EtudeRegle | null; applicable: boolean | null; aides: number | null; sdp_aidee: number | null; satisfaite_social?: boolean | null } | null
 }) {
   const lieu = mode === 'sous_sol' ? `au sous-sol (${(niveaux ?? 1) >= 2 ? 'niveaux −1 et −2' : 'niveau −1'})` : 'en aérien (au sol)'
   const g = regimes.general, pf = regimes.plafond_national
@@ -879,7 +880,14 @@ function StationnementResultat({ regimes, placesActive, commune, zone, mode, niv
         )}
         <li className="text-txt">LABUSE a dessiné <b>{fmtInt(placesActive)} places</b> {lieu} selon la règle du PLU.</li>
       </ol>
-      {mixite?.regle && (
+      {/* ETUDE-AUDIT-FIX-1 (relecture pt5) — en social, mixité satisfaite par nature (100 % aidé), sans
+          compteur « aidés imposés ». */}
+      {mixite?.satisfaite_social ? (
+        <div data-mixite className="mt-2 border-t border-line-2 pt-2 text-[10.5px] text-txt">
+          <span><b>Mixité sociale</b>{mixite.regle?.article ? ` (art. ${mixite.regle.article})` : ''} : satisfaite, programme 100 % logement aidé.</span>
+          {mixite.regle && <LireArticle r={{ article: mixite.regle.article, page_pdf: mixite.regle.page_pdf, millesime: mixite.regle.millesime, citation: mixite.regle.citation, source_url: mixite.regle.source_url, commune, zone }} />}
+        </div>
+      ) : mixite?.regle && (
         <div data-mixite className="mt-2 border-t border-line-2 pt-2 text-[10.5px] text-txt">
           <span><b>Mixité sociale</b> (art. {mixite.regle.article ?? '—'}) : {fmtDec(mixite.regle.valeur)} % de logements aidés{mixite.regle.seuil_m2 != null ? ` au-delà de ${fmtDec(mixite.regle.seuil_m2)} m² de SDP` : ''}.</span>
           <LireArticle r={{ article: mixite.regle.article, page_pdf: mixite.regle.page_pdf, millesime: mixite.regle.millesime, citation: mixite.regle.citation, source_url: mixite.regle.source_url, commune, zone }} />
