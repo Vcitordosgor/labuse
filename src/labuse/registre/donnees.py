@@ -300,19 +300,20 @@ DONNEES: dict[str, Donnee] = {
     "count tiers brûlante+chaude au run servi, par insee",
     moteur="scoring_p_v2", calcul="moteur", fonction="src/labuse/api/comparateur.py:47-50",
     reservoirs=("cosia", "dvf", "sitadel",), portee="run"),
- # OUTIL-PERMIS-FIX-5 (Point 2) — le DÉLAI n'a jamais été mesuré : le dépôt n'est connu qu'à l'ANNÉE
- # (AN_DEPOT → 1er janvier), ce qui gonfle le délai de +4 mois en médiane. « On ne montre pas un délai
- # faux » (Vic). Le chiffre est RETIRÉ de l'affichage de TOUT robinet (ni colonne, ni fiche, ni PDF, ni
- # Copilote) → marqué `en_attente` (servi par AUCUN robinet). Il reste CALCULÉ par le moteur, en INTERNE,
- # comme entrée du score composite du comparateur (axe velocite, poids 0,15, inchangé — cf. INDICATEURS).
- "velocite_delai_median_mois": C("Vélocité admin (délai dépôt→autorisation) — NON MESURÉ (dépôt à l'année), "
-    "retiré de l'affichage ; entrée interne du composite (poids 0,15)", "nombre", "commune",
-    "percentile_cont(0.5) sur m10_permit_delais famille logements",
+ # OUTIL-PERMIS-FIX-5 puis FIX-8 — le DÉLAI n'a jamais été mesuré : le dépôt n'est connu qu'à l'ANNÉE
+ # (AN_DEPOT → 1er janvier), ce qui gonfle le délai de +4 mois en médiane. FIX-5 l'avait retiré de
+ # l'affichage mais LAISSÉ peser 0,15 au classement ; FIX-8 (LOT 3, contre-audit ASTRA-4) le SORT du
+ # composite. Le chiffre n'est donc NI affiché NI calculé : la couche `m10_permit_delais` est
+ # décommissionnée (table dormante, zéro lecteur). Déclaré `en_attente` (servi par aucun robinet),
+ # conservé comme trace de la décision — jamais une donnée servie.
+ "velocite_delai_median_mois": C("Vélocité admin (délai dépôt→autorisation) — NON MESURÉ (dépôt à l'année) : "
+    "retiré de l'affichage ET du classement (axe sorti du composite, FIX-8)", "nombre", "commune",
+    "ex-médiane m10_permit_delais (couche décommissionnée — plus calculée)",
     moteur="commune_compteurs", calcul="moteur",
-    fonction="src/labuse/registre/moteurs/commune.py:indicateurs_communes (CTE velo)",
+    fonction="src/labuse/registre/moteurs/commune.py:indicateurs_communes (délai retiré)",
     reservoirs=("sitadel",), portee="live",
-    en_attente="OUTIL-PERMIS-FIX-5 : délai jamais mesuré (dépôt à l'année) — retiré de l'affichage, "
-               "conservé en interne pour le composite ; servi par aucun robinet par décision (Vic)."),
+    en_attente="OUTIL-PERMIS-FIX-8 : délai jamais mesuré — retiré de l'affichage ET du composite ; "
+               "couche m10 décommissionnée ; servi par aucun robinet, non calculé (décision Vic)."),
  "permis_5a_n": C("Permis de la commune sur 5 ans (SITADEL)", "nombre", "commune",
     "count sitadel_permits de la commune, fenêtre 5 ans, sans rayon (commune entière)",
     moteur="commune_compteurs", calcul="moteur",
@@ -960,8 +961,9 @@ DONNEES: dict[str, Donnee] = {
     domaine_source="régimes de TVA du questionnaire (renvoi expert-comptable)",
     table="(saisie client — questionnaire du Financier)"),
  "duree_portage_saisi_mois": C("Durée de portage (saisi)", "mois", "parcelle",
-    "durée de portage en mois — écran 4, pré-remplie par le délai d'instruction médian + 20 mois "
-    "de chantier",
+    # OUTIL-PERMIS-FIX-7 (Point 1) — l'ancien pré-remplissage du portage par un délai d'instruction a été
+    # retiré (le délai n'est jamais mesuré) : c'est une SAISIE CLIENT pure, sans valeur proposée.
+    "durée de portage en mois — écran 4, saisie client (aucune valeur pré-remplie)",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/bilan.py (écran 4)",
     reservoirs=(), portee="projet", table="(saisie client — questionnaire du Financier)"),
  "apport_saisi_eur": C("Apport (saisi)", "€", "parcelle",

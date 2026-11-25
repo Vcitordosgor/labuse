@@ -1,0 +1,30 @@
+
+============================================================================================
+LOT 1 — 97441626E0304 (DP ; AN_DEPOT=2026 ; DR_DEPOT=01/06/2020 ; autorisé 03/08/2026)
+============================================================================================
+  fiche          : date_depot=None  date_autorisation='2026-08-03'  delai_instruction=None
+  historique     : date_depot=None  date_autorisation='2026-08-03'
+  frise libellés : ['Permis DP autorisé', 'Travaux achevés (DAACT)']  (aucun « déposé » attendu)
+  Dossier (rendu): 1 permis sur la parcelle (Sitadel) — DP — autorisé 03/08/2026
+  → '2020' dans le Dossier ? False   'déposé 03/08/2026' ? False
+
+============================================================================================
+LOT 2 — 97440226G0018 (DP ; dépôt 15/02/2026 → autorisation 13/03/2026 ; 26 jours réels)
+============================================================================================
+  fiche          : date_depot='2026-02-15'  date_autorisation='2026-03-13'  delai_instruction=None
+
+============================================================================================
+LOT 4 — Dossier « permis à proximité » (nearby_permits → _c_permis → _r_permis_proximite)
+============================================================================================
+  97405000BE1692 · Petite-Île (2 annulés)
+      brut   : n=16 logts=9 sans=8 annulés=2
+      Dossier: 16 permis retenus (&lt; 500 m, 24 mois), 9 logements déclarés (8 permis sans nombre de logements) · 2 autres permis annulés, exclus
+  97411000BZ1065 · Saint-Denis
+      brut   : n=1 logts=4 sans=0 annulés=0
+      Dossier: 1 permis (&lt; 500 m, 24 mois), 4 logements
+  97424000AB0001 · Cilaos
+      brut   : n=0 logts=0 sans=0 annulés=0
+      Dossier: 0 permis (&lt; 500 m, 24 mois), 0 logement
+  97415000CV1498 · Saint-Paul
+      brut   : n=5 logts=6 sans=1 annulés=0
+      Dossier: 5 permis (&lt; 500 m, 24 mois), 6 logements déclarés (1 permis sans nombre de logements)

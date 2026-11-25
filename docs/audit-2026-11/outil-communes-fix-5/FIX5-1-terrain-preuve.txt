@@ -1,0 +1,32 @@
+seuil d'effectif cellule servie = 10  (APRÈS = ligne2_terrain_zone servie ; — = cellule sous le seuil, non servie)
+Commune                  |      U avant |      U servi |     AU avant |     AU servi
+--------------------------------------------------------------------------------------
+Bras-Panon               |       237·57 |       240·56 |       273·75 |       273·74  ←bouge
+Cilaos                   |        88·92 |        87·92 |        90·33 |        90·33  ←bouge
+Entre-Deux               |       200·76 |       199·75 |        (—·9) |        (—·9)  ←bouge
+L'Étang-Salé             |      292·135 |      289·135 |       370·56 |       370·56  ←bouge
+La Plaine-des-Palmistes  |      123·173 |      125·168 |       100·41 |       100·41  ←bouge
+La Possession            |      302·264 |      306·262 |      409·147 |      409·145  ←bouge
+Le Port                  |      303·181 |      307·174 |       435·12 |       435·12  ←bouge
+Le Tampon                |      202·657 |      202·653 |       151·76 |       153·74  ←bouge
+Les Avirons              |      240·154 |      239·154 |        84·20 |        84·20  ←bouge
+Les Trois-Bassins        |      149·122 |      147·121 |       158·85 |       159·84  ←bouge
+Petite-Île               |      201·287 |      201·285 |        56·23 |        66·22  ←bouge
+Saint-André              |      226·360 |      225·354 |       252·53 |       253·52  ←bouge
+Saint-Benoît             |      184·386 |      184·376 |       160·80 |       160·80  ←bouge
+Saint-Denis              |      285·604 |      287·594 |       269·46 |       269·46  ←bouge
+Saint-Joseph             |      171·395 |      170·393 |        88·57 |        92·55  ←bouge
+Saint-Leu                |      218·381 |      218·380 |       506·66 |       508·65  ←bouge
+Saint-Louis              |      207·414 |      207·411 |      288·144 |      288·144  ←bouge
+Saint-Paul               |      271·879 |      271·872 |      401·188 |      401·188  ←bouge
+Saint-Philippe           |        (—·0) |        (—·0) |        (—·0) |        (—·0)
+Saint-Pierre             |      300·780 |      300·772 |        (—·8) |        (—·8)  ←bouge
+Sainte-Marie             |      431·421 |      431·416 |        (—·4) |        (—·3)  ←bouge
+Sainte-Rose              |        99·50 |        99·50 |       139·35 |       139·35
+Sainte-Suzanne           |      318·314 |      318·312 |        (—·2) |        (—·2)  ←bouge
+Salazie                  |       135·87 |       135·87 |        (—·7) |        (—·7)
+
+=== CONTRÔLE : fonction servie == écran (relecture-3) ===
+Saint-Denis U : servi 287·594  attendu 287·594  OK
+Saint-Paul U : servi 271·872  attendu 271·872  OK
+Le Tampon U : servi 202·653  attendu 202·653  OK

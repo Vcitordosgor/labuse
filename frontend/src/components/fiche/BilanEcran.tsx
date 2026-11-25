@@ -221,7 +221,7 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
   const suvTot = res?.produits_totaux.suv ?? null
   const lotsTot = res?.produits_totaux.lots ?? null
   const faisa = modele.reperes_publics['faisabilite'] ?? null
-  const sitadel = modele.reperes_publics['sitadel'] ?? null
+  // OUTIL-PERMIS-FIX-6 (Point 2) — repère 'sitadel' (délai d'instruction) retiré du Bilan : non lu.
 
   // G7 — repères de l'en-tête et des tuiles.
   const nSource = (res?.lignes ?? []).filter((l) => l.etat === 'source').length
@@ -393,19 +393,13 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
             <table className="w-full text-[13px]">
               <tbody>
                 {(modele.calendrier ?? []).map((c) => (
-                  // DOCS-COHERENCE-1 (G5) — align-top (le repère Sitadel sur 2 lignes ne décale plus le
-                  // champ) + unité « mois » (cohérent « en mois après le compromis »), plus de « J+ ».
+                  // DOCS-COHERENCE-1 (G5) — align-top + unité « mois » (cohérent « en mois après le
+                  // compromis »), plus de « J+ ».
                   <tr key={c.id} className="border-b border-line last:border-0 align-top">
-                    <td className="py-1 pl-3 text-txt-mut">{c.libelle}
-                      {c.repere === 'sitadel' && sitadel && (
-                        <div className="text-[11px] text-txt-dim">repère Sitadel ·{' '}
-                          <button className="text-mint underline" title={sitadel.source}
-                            onClick={() => { majCalendrier(c.id, (entrees.calendrier['depot_pc'] ?? 0) + Math.round(sitadel.valeur)); bump() }}>
-                            {Math.round(sitadel.valeur)} mois
-                          </button>
-                        </div>
-                      )}
-                    </td>
+                    {/* OUTIL-PERMIS-FIX-6 (Point 2) — le bouton de délai d'instruction proposé est RETIRÉ :
+                        ce délai n'a jamais été mesuré (dépôt daté à l'année). Le promoteur saisit lui-même
+                        son délai dans le champ ci-contre, sans valeur proposée. */}
+                    <td className="py-1 pl-3 text-txt-mut">{c.libelle}</td>
                     <td className="py-1 pr-3 text-right">
                       <span className="inline-flex items-center gap-1">
                         <span className="text-[11px] text-txt-dim">+</span>

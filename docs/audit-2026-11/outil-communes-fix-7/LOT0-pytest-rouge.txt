@@ -1,0 +1,168 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0
+rootdir: /Users/openclaw/Desktop/labuse-communes-fix
+configfile: pyproject.toml
+plugins: timeout-2.4.0, platformdirs-4.12.3, anyio-4.14.2
+collected 8 items
+
+tests/test_communes_fix7.py FFFFFFFF                                     [100%]
+
+=================================== FAILURES ===================================
+______________________ test_carnet_cd_terrain_aucun_prix _______________________
+
+    @pytest.mark.db
+    def test_carnet_cd_terrain_aucun_prix():
+        """Carnet de la section CD de Saint-Paul : 1 vente dans les bornes → le prix de terrain (133 €/m²)
+        ne doit PAS être diffusé (sous le seuil de 8). Même seuil que Comparer, appliqué au Carnet."""
+        from labuse.db import engine
+        with engine().connect() as c:
+            _skip_sans_cache(c)
+            prix = _carnet_prix(c, "97415000CD")
+            terr = prix.get("terrain") or {}
+>           assert terr.get("mediane_prix_m2") is None, \
+                f"CD terrain : 1 vente < seuil → aucun prix diffusé, obtenu {terr.get('mediane_prix_m2')}"
+E           AssertionError: CD terrain : 1 vente < seuil → aucun prix diffusé, obtenu 133
+E           assert 133 is None
+E            +  where 133 = <built-in method get of dict object at 0x137d7f280>('mediane_prix_m2')
+E            +    where <built-in method get of dict object at 0x137d7f280> = {'mediane_prix_m2': 133, 'n': 1}.get
+
+tests/test_communes_fix7.py:48: AssertionError
+________ test_carnet_maison_section_sous_seuil[97401000AT-Les Avirons] _________
+
+secteur = '97401000AT', commune = 'Les Avirons'
+
+    @pytest.mark.db
+    @pytest.mark.parametrize("secteur,commune", [("97401000AT", "Les Avirons"), ("97408000AB", "La Possession")])
+    def test_carnet_maison_section_sous_seuil(secteur, commune):
+        """Maisons par section : l'effectif = les ventes UTILISÉES dans la médiane (dans les bornes), pas le
+        total des actes. AT et AB ont 7 ventes utilisées sur 8 → sous le seuil de 8 → AUCUN prix de maison."""
+        from labuse.db import engine
+        with engine().connect() as c:
+            _skip_sans_cache(c)
+            maison = (_carnet_prix(c, secteur).get("maison") or {})
+>           assert maison.get("mediane_prix_m2") is None, \
+                f"{commune} {secteur} : 7 ventes utilisées < 8 → aucun prix de maison, obtenu {maison.get('mediane_prix_m2')}"
+E           AssertionError: Les Avirons 97401000AT : 7 ventes utilisées < 8 → aucun prix de maison, obtenu 3905
+E           assert 3905 is None
+E            +  where 3905 = <built-in method get of dict object at 0x1172f8840>('mediane_prix_m2')
+E            +    where <built-in method get of dict object at 0x1172f8840> = {'mediane_prix_m2': 3905, 'n': 8}.get
+
+tests/test_communes_fix7.py:61: AssertionError
+_______ test_carnet_maison_section_sous_seuil[97408000AB-La Possession] ________
+
+secteur = '97408000AB', commune = 'La Possession'
+
+    @pytest.mark.db
+    @pytest.mark.parametrize("secteur,commune", [("97401000AT", "Les Avirons"), ("97408000AB", "La Possession")])
+    def test_carnet_maison_section_sous_seuil(secteur, commune):
+        """Maisons par section : l'effectif = les ventes UTILISÉES dans la médiane (dans les bornes), pas le
+        total des actes. AT et AB ont 7 ventes utilisées sur 8 → sous le seuil de 8 → AUCUN prix de maison."""
+        from labuse.db import engine
+        with engine().connect() as c:
+            _skip_sans_cache(c)
+            maison = (_carnet_prix(c, secteur).get("maison") or {})
+>           assert maison.get("mediane_prix_m2") is None, \
+                f"{commune} {secteur} : 7 ventes utilisées < 8 → aucun prix de maison, obtenu {maison.get('mediane_prix_m2')}"
+E           AssertionError: La Possession 97408000AB : 7 ventes utilisées < 8 → aucun prix de maison, obtenu 2624
+E           assert 2624 is None
+E            +  where 2624 = <built-in method get of dict object at 0x137dcd000>('mediane_prix_m2')
+E            +    where <built-in method get of dict object at 0x137dcd000> = {'mediane_prix_m2': 2624, 'n': 8}.get
+
+tests/test_communes_fix7.py:61: AssertionError
+_________________ test_fonction_unique_prix_section_cd_terrain _________________
+
+    @pytest.mark.db
+    def test_fonction_unique_prix_section_cd_terrain():
+        """La fonction UNIQUE `prix_section` (LOT 1) — celle que la fiche parcelle, Comparer, le Carnet et le
+        Bilan appellent tous — applique le seuil : CD terrain (1 vente) → pas de prix (assez=False). Rouge
+        maintenant (la fonction n'existe pas), vert au LOT 1."""
+        from labuse.db import engine
+>       from labuse.dvf_secteur import prix_section   # n'existe qu'après le LOT 1
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ModuleNotFoundError: No module named 'labuse.dvf_secteur'
+
+tests/test_communes_fix7.py:71: ModuleNotFoundError
+_____ test_revision_derniere_piece_identifiee[97413-Saint-Leu-2026-11-18] ______
+
+insee = '97413', commune = 'Saint-Leu', attendu = '2026-11-18'
+
+    @pytest.mark.parametrize("insee,commune,attendu", [
+        ("97413", "Saint-Leu", "2026-11-18"),
+        ("97409", "Saint-André", "2025-09-09"),
+    ])
+    def test_revision_derniere_piece_identifiee(insee, commune, attendu):
+        """La date de « dernière pièce » d'une révision générale porte une pièce officielle identifiée
+        ultérieure, pas le squelette 31/12/2024 : Saint-Leu 18/11/2026, Saint-André 09/09/2025 (sans base)."""
+        from labuse import veille_plu
+        e = veille_plu.entry(insee) or {}
+>       assert e.get("etat_source_date") == attendu, \
+            f"{commune} : dernière pièce attendue {attendu}, obtenu {e.get('etat_source_date')!r}"
+E       AssertionError: Saint-Leu : dernière pièce attendue 2026-11-18, obtenu None
+E       assert None == '2026-11-18'
+E        +  where None = <built-in method get of dict object at 0x137dccbc0>('etat_source_date')
+E        +    where <built-in method get of dict object at 0x137dccbc0> = {'commune': 'Saint-Leu', 'confiance': 'SOURCE', 'date_acte': '2022-05-17', 'date_constat': '2026-08-06', ...}.get
+
+tests/test_communes_fix7.py:89: AssertionError
+___ test_revision_derniere_piece_identifiee[97409-Saint-Andr\xe9-2025-09-09] ___
+
+insee = '97409', commune = 'Saint-André', attendu = '2025-09-09'
+
+    @pytest.mark.parametrize("insee,commune,attendu", [
+        ("97413", "Saint-Leu", "2026-11-18"),
+        ("97409", "Saint-André", "2025-09-09"),
+    ])
+    def test_revision_derniere_piece_identifiee(insee, commune, attendu):
+        """La date de « dernière pièce » d'une révision générale porte une pièce officielle identifiée
+        ultérieure, pas le squelette 31/12/2024 : Saint-Leu 18/11/2026, Saint-André 09/09/2025 (sans base)."""
+        from labuse import veille_plu
+        e = veille_plu.entry(insee) or {}
+>       assert e.get("etat_source_date") == attendu, \
+            f"{commune} : dernière pièce attendue {attendu}, obtenu {e.get('etat_source_date')!r}"
+E       AssertionError: Saint-André : dernière pièce attendue 2025-09-09, obtenu None
+E       assert None == '2025-09-09'
+E        +  where None = <built-in method get of dict object at 0x137dcd680>('etat_source_date')
+E        +    where <built-in method get of dict object at 0x137dcd680> = {'commune': 'Saint-André', 'confiance': 'SOURCE', 'date_acte': '2022-06-22', 'date_constat': '2026-08-06', ...}.get
+
+tests/test_communes_fix7.py:89: AssertionError
+_____________________ test_revision_trois_bassins_mai_2025 _____________________
+
+    def test_revision_trois_bassins_mai_2025():
+        """Les Trois-Bassins : PADD de concertation de mai 2025 (sans base)."""
+        from labuse import veille_plu
+        e = veille_plu.entry("97423") or {}
+>       assert (e.get("etat_source_date") or "").startswith("2025-05"), \
+            f"Les Trois-Bassins : dernière pièce attendue en mai 2025, obtenu {e.get('etat_source_date')!r}"
+E       AssertionError: Les Trois-Bassins : dernière pièce attendue en mai 2025, obtenu None
+E       assert False
+E        +  where False = <built-in method startswith of str object at 0x1011eb298>('2025-05')
+E        +    where <built-in method startswith of str object at 0x1011eb298> = (None or '').startswith
+E        +      where None = <built-in method get of dict object at 0x137dcd6c0>('etat_source_date')
+E        +        where <built-in method get of dict object at 0x137dcd6c0> = {'commune': 'Trois-Bassins', 'confiance': 'SOURCE', 'date_acte': '2022-06-02', 'date_constat': '2026-08-06', ...}.get
+
+tests/test_communes_fix7.py:97: AssertionError
+____________________ test_plaine_lien_source_domaine_vivant ____________________
+
+    def test_plaine_lien_source_domaine_vivant():
+        """Le lien de la citation de La Plaine-des-Palmistes ne pointe plus vers www.plaine-des-palmistes.re
+        (domaine dont la résolution échoue). (sans base)"""
+        from labuse import veille_plu
+        url = (veille_plu.entry("97406") or {}).get("source_url") or ""
+>       assert "plaine-des-palmistes.re" not in url, \
+            f"lien Plaine toujours sur le domaine mort : {url!r}"
+E       AssertionError: lien Plaine toujours sur le domaine mort : 'https://www.plaine-des-palmistes.re/urbanisme/'
+E       assert 'plaine-des-palmistes.re' not in 'https://www...e/urbanisme/'
+E         
+E         'plaine-des-palmistes.re' is contained here:
+E           https://www.plaine-des-palmistes.re/urbanisme/
+
+tests/test_communes_fix7.py:106: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_communes_fix7.py::test_carnet_cd_terrain_aucun_prix - Asser...
+FAILED tests/test_communes_fix7.py::test_carnet_maison_section_sous_seuil[97401000AT-Les Avirons]
+FAILED tests/test_communes_fix7.py::test_carnet_maison_section_sous_seuil[97408000AB-La Possession]
+FAILED tests/test_communes_fix7.py::test_fonction_unique_prix_section_cd_terrain
+FAILED tests/test_communes_fix7.py::test_revision_derniere_piece_identifiee[97413-Saint-Leu-2026-11-18]
+FAILED tests/test_communes_fix7.py::test_revision_derniere_piece_identifiee[97409-Saint-Andr\xe9-2025-09-09]
+FAILED tests/test_communes_fix7.py::test_revision_trois_bassins_mai_2025 - As...
+FAILED tests/test_communes_fix7.py::test_plaine_lien_source_domaine_vivant - ...
+============================== 8 failed in 9.68s ===============================

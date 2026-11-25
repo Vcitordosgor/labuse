@@ -90,8 +90,10 @@ def ensure_tables(engine) -> None:
         for stmt in sql_statements(DDL):
             if stmt.strip():
                 c.execute(text(stmt))
-    # FIX-C6 (GB-049) — table LUE par /modules/permis (LEFT JOIN), construite à l'ingestion
-    # M10 seulement → créée VIDE ici pour qu'une base neuve ne renvoie plus 500.
+    # FIX-C6 (GB-049) — `m10_permit_delais` était LUE par /modules/permis (LEFT JOIN) → créée vide au
+    # boot pour qu'une base neuve ne renvoie pas 500. OUTIL-PERMIS-FIX-8 (LOT 3) : plus aucun calcul ni
+    # écran ne la lit (axe délai retiré du classement, couche décommissionnée). On garde la seule
+    # création idempotente (table dormante, cible du trigger résiduel) — aucune donnée, aucun lecteur.
     from ..ingestion.permit_delais_m10 import ensure_tables as _m10_ens
     _m10_ens(engine)
 
@@ -646,7 +648,9 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
             {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun}).mappings().first()
         return {"total": int(c["n"] or 0), "geocodes": int(c["geo"] or 0),
                 "donnees_jusqu_au": dmax.date().isoformat(), "coupure_recent": coupure_recent}
-    # M10 : jointure sur la date de dépôt + délai d'instruction rapatriés (m10_permit_delais)
+    # OUTIL-PERMIS-FIX-6 (Point 1) — la LISTE ne sert PLUS le dépôt ni le délai : la couche m10 date le
+    # dépôt au 1er janvier de l'année (AN_DEPOT), un dépôt FICTIF qui gonflait le délai (ex. « 13 m »,
+    # « 8 m »). « On ne montre pas un délai faux » (Vic). Plus de jointure m10, plus de colonne depot/délai.
     # LISTE paginée (plafond levé côté client par « voir plus » — offset).
     rows = db.execute(text(f"""
         SELECT s.permit_id, s.type, s.date::date::text AS date, s.commune,
@@ -654,10 +658,8 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
                s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
                s.raw->>'geoloc' AS geoloc,   -- RETOURS-14 S5.1 : la liste DIT la localisation approximative
                ({etat_cycle_s}) AS etat_cycle,   -- OUTIL-PERMIS-FIX-1 : état de cycle (couleur unique)
-               d.date_depot::text AS depot, CASE WHEN d.valide THEN d.delai_mois END AS delai_mois,
                CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
         FROM sitadel_permits s
-        LEFT JOIN m10_permit_delais d ON d.permit_id = s.permit_id
         WHERE (CAST(:c AS text) IS NULL OR s.commune = :c)
           AND (CAST(:nat AS text) IS NULL OR s.type = :nat)
           AND s.date >= :dmax - (:m || ' months')::interval{eps}
@@ -713,7 +715,7 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         # par le `_ETAT_LABELS` local qui DIVERGEAIT (il rendait l'état 4 « Chantier ouvert » alors que
         # 4 = ANNULÉ ; KELFONCIER-FIX-1 Lot C avait déjà corrigé la fiche). Le front en fait une pastille
         # 3 tons : autorisé / travaux commencés / achevés → vert, annulé → rouge. `etat` (code) reste servi.
-        "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "commune", "depot", "delai_mois",
+        "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "commune",
                                         "etat", "nb_lgt", "surf_hab", "geoloc", "etat_cycle")},
                    "etat_libelle": etat_libelle({"etat": r["etat"], "daact": r["daact"]}),
                    "annule": est_annule({"etat": r["etat"], "daact": r["daact"]}),
@@ -738,37 +740,25 @@ _NATURE_LABELS = {"PC": "Permis de construire", "DP": "Déclaration préalable",
 @router.get("/permis/{permit_id}")
 def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
     """Fiche permis cliquable (M10 lot 1.1) : référence, porteur (si PM), nature, lots,
-    surfaces, dates clés (dépôt / autorisation / achèvement) + délai d'instruction, statut."""
-    r = db.execute(text("""
+    surfaces, dates clés (dépôt / autorisation / achèvement), statut.
+
+    OUTIL-PERMIS-FIX-8 — LOT 1 : le dépôt n'est servi que s'il est AFFICHABLE, par LA fonction unique
+    `permis_classe.depot_affichable_sql` (année de la date = AN_DEPOT), la MÊME que l'historique, la
+    liste et le Dossier. LOT 2 : AUCUNE durée d'instruction (plus de calcul dépôt→autorisation, même
+    ici) ; les deux dates restent servies quand elles sont valides, sans rien calculer entre elles."""
+    r = db.execute(text(f"""
         SELECT s.permit_id, s.type, s.commune, s.date::date::text AS date_autorisation,
                s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
                s.raw->>'daact' AS daact, s.raw->>'destination' AS destination,
                s.raw->>'geoloc' AS geoloc,
                s.raw->>'petitioner_name' AS porteur, s.raw->>'petitioner_siren' AS porteur_siren,
                s.idu_codes,
-               -- OUTIL-PERMIS-FIX-4 (Point 4) — le DÉPÔT de la fiche n'est montré que s'il est une DATE
-               -- PRÉCISE FIABLE : `date_depot` (DR_DEPOT) STRICTEMENT antérieure à l'autorisation ET non
-               -- un 1er janvier (= proxy d'ANNÉE, 10 787 cas). Restent 377 vraies dates précises. Sinon
-               -- (DR_DEPOT = autorisation / postérieur / proxy / absent) → NI dépôt NI délai (la couche
-               -- des délais des Communes utilise l'ANNÉE de dépôt, trop imprécise pour une fiche).
-               CASE WHEN s.date_depot IS NOT NULL AND s.date IS NOT NULL AND s.date_depot < s.date
-                    AND NOT (EXTRACT(MONTH FROM s.date_depot) = 1 AND EXTRACT(DAY FROM s.date_depot) = 1)
-                    THEN s.date_depot::date::text END AS date_depot,
-               CASE WHEN s.date_depot IS NOT NULL AND s.date IS NOT NULL AND s.date_depot < s.date
-                    AND NOT (EXTRACT(MONTH FROM s.date_depot) = 1 AND EXTRACT(DAY FROM s.date_depot) = 1)
-                    THEN (EXTRACT(YEAR FROM s.date)::int - EXTRACT(YEAR FROM s.date_depot)::int) * 12
-                       + (EXTRACT(MONTH FROM s.date)::int - EXTRACT(MONTH FROM s.date_depot)::int) END AS delai_mois,
+               ({permis_classe.depot_affichable_sql("s.")})::text AS date_depot,
                CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
         FROM sitadel_permits s
         WHERE s.permit_id = :pid"""), {"pid": permit_id}).mappings().first()
     if not r:
         raise HTTPException(404, "Permis introuvable")
-    # OUTIL-PERMIS-FIX-4 (Point 4) — délai affiché UNIQUEMENT si la date de dépôt est fiable (précise,
-    # antérieure à l'autorisation) : jamais « 0 mois » issu d'un DR_DEPOT = date d'autorisation (défaut).
-    delai = None
-    if r["delai_mois"] is not None and r["date_depot"] is not None:
-        delai = {"mois": r["delai_mois"],
-                 "libelle": f"{r['delai_mois']} mois entre dépôt et autorisation"}
     return {
         "permit_id": r["permit_id"], "commune": r["commune"],
         "nature": r["type"], "nature_libelle": _NATURE_LABELS.get(r["type"], r["type"]),
@@ -781,7 +771,8 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
         # fonction PARTAGÉE `miroir.permis_incoherence_note`, plus de la regex de seuil au front.
         "note_incoherence": _miroir.permis_incoherence_note(r["date_depot"], r["date_autorisation"]) or None,
         "date_achevement": r["daact"],
-        "delai_instruction": delai,
+        # OUTIL-PERMIS-FIX-8 (LOT 2) — plus AUCUNE durée d'instruction (le délai n'a jamais été mesuré :
+        # dépôt connu à l'année). Les deux dates ci-dessus suffisent ; rien n'est calculé entre elles.
         # KELFONCIER-FIX-2 (Lot D) — statut par la fonction PARTAGÉE de la fiche (ingestion/permits.py) :
         # l'annulé (état 4) est dit « annulé », plus « Chantier ouvert » (divergence de l'ancien _ETAT_LABELS).
         "statut": etat_libelle({"etat": r["etat"], "daact": r["daact"]}),
@@ -1646,105 +1637,13 @@ def piscine_pas_une(body: PasUnePiscineIn, request: Request, db: Session = Depen
     return {"ok": True, "idu": body.idu, "corrigees_total": n}
 
 
-# ───────────────────────── M05 — VÉLOCITÉ ADMIN ─────────────────────────
-# M10 : le VRAI délai d'instruction dépôt→autorisation, en MÉDIANE (robuste aux outliers).
-# La date de dépôt (DR_DEPOT) manquait de `sitadel_permits` ; M10 l'a rapatriée de la source
-# SDES/Dido dans la table additive `m10_permit_delais` (cf. ingestion.permit_delais_m10).
-#
-# HONNÊTETÉ (3 limites consignées, exposées telles quelles au client) :
-#  1. CENSURE STRUCTURELLE : le fichier Sitadel ne contient QUE des dossiers ACCORDÉS
-#     (0 dossier « déposé non tranché ») → le « taux de dossiers en cours » n'est PAS
-#     observable ici. La médiane est conditionnelle à « a fini par être autorisé ».
-#  2. SURVIE DES COHORTES RÉCENTES : un dépôt récent instruit lentement n'est pas encore
-#     visible (biais à la baisse) → la médiane de tête EXCLUT les 12 derniers mois de dépôts
-#     (cohortes non mûres), séparément comptés (`en_cours_estime` = non mesurable → null).
-#  3. QUALITÉ SOURCE : DR_DEPOT est au MOIS (délai en mois, pas en jours) et ~15 % des lignes
-#     ont dépôt > autorisation (erreur de saisie) → EXCLUES (`valide=false`), taux affiché.
-# Indicateur HISTORIQUE, pas une promesse de délai futur (disclaimer).
-
-_VELOCITE_MATURITE_MOIS = 12  # cohortes de dépôt < (dernier dépôt − 12 mois) = « mûres »
-
-
-@router.get("/velocite")
-def velocite(fmt: str = "json", nature: str | None = None, db: Session = Depends(get_db)):
-    # borne de maturité : dernier mois de dépôt observé − 12 mois (au-delà = cohorte non mûre)
-    cutoff = db.execute(text(
-        "SELECT (max(date_depot) - make_interval(months => :m))::date "
-        "FROM m10_permit_delais WHERE valide"), {"m": _VELOCITE_MATURITE_MOIS}).scalar()
-    rows = db.execute(text("""
-        SELECT commune,
-          count(*) FILTER (WHERE valide) AS n_valide,
-          count(*) FILTER (WHERE valide AND date_depot <= :cutoff) AS n_mur,
-          count(*) FILTER (WHERE valide AND date_depot > :cutoff) AS n_recent_exclu,
-          count(*) FILTER (WHERE NOT valide AND date_depot IS NOT NULL
-                             AND date_autorisation IS NOT NULL) AS n_exclus_qualite,
-          round(percentile_cont(0.5) WITHIN GROUP (ORDER BY delai_mois)
-                FILTER (WHERE valide AND date_depot <= :cutoff)) AS delai_median_mois,
-          round(percentile_cont(0.25) WITHIN GROUP (ORDER BY delai_mois)
-                FILTER (WHERE valide AND date_depot <= :cutoff)) AS delai_p25_mois,
-          round(percentile_cont(0.75) WITHIN GROUP (ORDER BY delai_mois)
-                FILTER (WHERE valide AND date_depot <= :cutoff)) AS delai_p75_mois
-        FROM m10_permit_delais
-        WHERE (CAST(:nat AS text) IS NULL OR nature = :nat)
-        GROUP BY commune HAVING count(*) FILTER (WHERE valide) > 0
-        ORDER BY n_valide DESC"""),
-        {"cutoff": cutoff, "nat": nature}).mappings().all()
-    data = [dict(r) for r in rows]
-    # M137-Z — plus de CLASSEMENT par médiane (le `rang_delai` disparaît) : avec des médianes de 8-9
-    # mois PARTOUT et un IQR ~6 mois, l'écart inter-communes est du BRUIT servi comme une info (audit
-    # AUDIT_OUTILS_COMMUNE §2.2). On MESURE l'homogénéité et on la DIT ; on sert la TRANCHE p25-p75.
-    meds = [c["delai_median_mois"] for c in data if c["delai_median_mois"] is not None]
-    spread = (max(meds) - min(meds)) if meds else None
-    homogene = spread is not None and spread <= 3   # écart des médianes ≤ 3 mois = communes semblables
-    # Point 39 — TENDANCE : médiane des cohortes ANCIENNES vs RÉCENTES (coupe au milieu de la période).
-    trend = {r["commune"]: r for r in db.execute(text("""
-        WITH mid AS (SELECT (min(date_depot) + (max(date_depot) - min(date_depot)) / 2) AS m
-                     FROM m10_permit_delais WHERE valide AND date_depot <= :cutoff)
-        SELECT commune,
-          round(percentile_cont(0.5) WITHIN GROUP (ORDER BY delai_mois)
-                FILTER (WHERE date_depot < (SELECT m FROM mid))) AS med_ancien,
-          round(percentile_cont(0.5) WITHIN GROUP (ORDER BY delai_mois)
-                FILTER (WHERE date_depot >= (SELECT m FROM mid))) AS med_recent,
-          count(*) FILTER (WHERE date_depot < (SELECT m FROM mid)) AS n_a,
-          count(*) FILTER (WHERE date_depot >= (SELECT m FROM mid)) AS n_r
-        FROM m10_permit_delais
-        WHERE valide AND date_depot <= :cutoff AND (CAST(:nat AS text) IS NULL OR nature = :nat)
-        GROUP BY commune"""), {"cutoff": cutoff, "nat": nature}).mappings()}
-    for c in data:
-        t = trend.get(c["commune"])
-        tend = None
-        if t and t["n_a"] and t["n_r"] and t["n_a"] >= 8 and t["n_r"] >= 8 \
-                and t["med_ancien"] is not None and t["med_recent"] is not None:
-            diff = float(t["med_recent"]) - float(t["med_ancien"])
-            tend = "accelere" if diff <= -1 else "ralentit" if diff >= 1 else "stable"
-        c["tendance"] = tend
-    # période de couverture = années d'AUTORISATION (le fichier Sitadel des dossiers accordés)
-    an = db.execute(text(
-        "SELECT min(extract(year FROM date_autorisation))::int lo, "
-        "max(extract(year FROM date_autorisation))::int hi "
-        "FROM m10_permit_delais WHERE valide")).mappings().first()
-    if fmt == "csv":
-        buf = io.StringIO()
-        w = csv.DictWriter(buf, fieldnames=list(data[0].keys()))
-        w.writeheader()
-        w.writerows(data)
-        return Response(buf.getvalue(), media_type="text/csv",
-                        headers={"Content-Disposition": 'attachment; filename="velocite_admin.csv"'})
-    return {
-        "indicateur": "Délai d'instruction dépôt → autorisation (tranche p25–p75)",
-        "unite": "mois", "nature": nature, "cohortes": f"{an['lo']}–{an['hi']}",
-        "maturite_cutoff": cutoff.isoformat() if cutoff else None,
-        # M137-Z — l'homogénéité DITE : les communes se ressemblent, ne pas les classer sur la médiane.
-        "communes_homogenes": homogene, "ecart_medianes_mois": spread,
-        "note_homogeneite": ("Les délais se ressemblent d'une commune à l'autre (écart des médianes "
-                             f"≈ {spread} mois) : pas de classement, la commune ne fait pas la différence."
-                             if homogene else None),
-        "note": ("Tranche p25–p75 (pas une médiane seule) : la moitié des dossiers y tombe. Dépôts des 12 "
-                 "derniers mois exclus (cohortes non mûres, biais de survie). Lignes dépôt>autorisation exclues."),
-        "censure": ("Source Sitadel = dossiers ACCORDÉS uniquement : refusés et en cours "
-                    "d'instruction non observables → taux de dossiers en cours non mesurable ici."),
-        "disclaimer": "Indicateur HISTORIQUE (2013+), pas une promesse de délai futur.",
-        "communes": data}
+# ───────────────────────── M05 — VÉLOCITÉ ADMIN (SUPPRIMÉ) ─────────────────────────
+# OUTIL-PERMIS-FIX-6 (Point 2) — l'endpoint GET /modules/velocite est SUPPRIMÉ : le délai d'instruction
+# par commune (médiane dépôt→autorisation) n'a jamais été mesuré (dépôt daté à l'ANNÉE, AN_DEPOT), et
+# « on ne montre pas un délai faux » (Vic). Il n'avait plus AUCUN lecteur après OUTIL-PERMIS-FIX-5
+# (composant front M05 + helper modVelocite supprimés, outil Copilote delais_instruction retiré) :
+# ni écran, ni PDF, ni Copilote, ni robinet. Rien à rediriger. La table `m10_permit_delais` reste (elle
+# alimente, EN INTERNE, l'axe du score composite des Communes — cf. commune.indicateurs_communes).
 
 
 # ───────────────────────── M07 — FONCIER FANTÔME ─────────────────────────
@@ -3143,7 +3042,12 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
     mil, dates = _plu_millesimes(), _plu_dates_gpu()
     for c in res["communes"]:
         dg = dates.get(c["insee"], {})
-        c["date_approbation"] = (mil.get(c["insee"], {}) or {}).get("date_mairie")
+        # OUTIL-PLU-FIX-7 (point 4) — la date d'approbation AFFICHÉE est celle ÉCRITE dans le règlement
+        # (quand elle est vérifiée sur pièce et diffère du lot : L'Étang-Salé 22/06/2017 ≠ lot 17/09/2025) ;
+        # le millésime du LOT (= date du dépôt GPU, date_mairie/idurba) est TOUJOURS nommé comme tel.
+        lot = (mil.get(c["insee"], {}) or {}).get("date_mairie")
+        c["date_approbation"] = dg.get("date_approbation_ecrite") or lot
+        c["millesime_lot"] = lot
         c["publication_gpu"] = dg.get("publication_gpu")
         c["edition"] = dg.get("edition")
         c["modifications"] = dg.get("modifications")
@@ -3268,7 +3172,7 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
     commune, document, article, PAGE PDF, millésime, lien. Aucun résumé, aucun reformulé. `doute` et
     `pagination_ambigue` sont RENDUS. `insee` absent = île entière. RNU / commune non ingérée =
     réponse honnête."""
-    from ..ingestion.plu_ingest import corpus_status, count_reglement, search_reglement
+    from ..ingestion.plu_ingest import corpus_status, count_reglement, search_reglement, zone_renvoi_note
     q = (q or "").strip()
     if not q:
         raise HTTPException(400, "Requête vide.")
@@ -3293,9 +3197,14 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                                 f"en mairie (complétion auto à l'approbation, veille M41).") if rev else
                                (f"{nm} : règlement non ingéré (hors corpus) — rien à servir. "
                                 f"Voir /plu-annuaire/communes.")}
-    res = search_reglement(db, q_fts, insee, limit=limit, zone=zone, offset=offset, terms=terms)
     # OUT-PLU-008 — `n_total` = total des articles correspondant (sans plafond) ; `n` = page servie.
-    n_total = count_reglement(db, q_fts, insee, zone=zone)
+    n_total = count_reglement(db, q_fts, insee, zone=zone, terms=terms)
+    # OUTIL-PLU-FIX-9 (point 4) — le REGROUPEMENT À L'AFFICHAGE (ci-dessous) doit voir TOUS les extraits
+    # identiques ENSEMBLE, pas seulement la page courante (les 7 « Article 10- » de Saint-Paul sont
+    # dispersés dans le classement). On récupère donc l'ensemble des correspondances (plafond 1000 de
+    # sécurité), on regroupe, PUIS on pagine la liste regroupée.
+    fetch = min(n_total, 1000) if n_total else limit
+    res = search_reglement(db, q_fts, insee, limit=fetch, zone=zone, offset=0, terms=terms)
     for r in res:
         r["gpu_consult"] = "https://www.geoportail-urbanisme.gouv.fr/"
         # OUTIL-PLU-FIX-3 (points 2-3) — la page CITÉE est celle du mot dans l'article (`page_match`) ;
@@ -3308,6 +3217,28 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
         if r.get("pagination_ambigue"):
             r["pagination_note"] = ("pagination du document ambiguë (double numérotation) — la page "
                                     "citée est la PAGE PDF du fichier, pas la page imprimée.")
+    # REGROUPEMENT : un même article générique (« Article 10- ») servi à l'identique sous plusieurs zones
+    # (Saint-Paul sans filtre : AU1/AU3ST/AU4ST/AU5ST/AU6ST…) n'apparaît qu'UNE fois, avec la liste des
+    # zones concernées (`zones_concernees`). La règle reste servable pour CHAQUE zone (rien n'est retiré de
+    # la base ; le filtre d'une zone précise la ressert seule).
+    import re as _re_grp
+    _vus: dict[str, dict] = {}
+    _group: list[dict] = []
+    for r in res:
+        k = _re_grp.sub(r"\s+", " ", (r.get("texte_verbatim") or "")).strip()
+        if k and k in _vus:
+            g = _vus[k]
+            if r.get("zone") and r["zone"] not in g["zones_concernees"]:
+                g["zones_concernees"].append(r["zone"])
+        else:
+            r["zones_concernees"] = [r["zone"]] if r.get("zone") else []
+            _vus[k] = r
+            _group.append(r)
+    for g in _group:
+        g["zones_concernees"] = sorted(z for z in g["zones_concernees"] if z)
+    n_brut = len(res)                              # extraits bruts (avant regroupement d'affichage)
+    n_group = len(_group)                          # entrées distinctes après regroupement
+    res = _group[offset: offset + limit]           # pagination SUR la liste regroupée
     # PLU-EXCEPTIONS-1 — quand la recherche est cadrée sur une zone (ouverture depuis la fiche/Copilote),
     # on joint les exceptions CALIBRÉES de cette zone (verbatim + article + page) pour les afficher SOUS
     # l'article. Aide à la lecture : n'entre dans aucun calcul (Lot C).
@@ -3346,10 +3277,14 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
     if zone:
         communes_list = [r for r in res if r.get("zone") is None]
         res = [r for r in res if r.get("zone") is not None]
+    # OUTIL-PLU-FIX-6 (point 1) — si le secteur filtré RENVOIE à une autre zone (AU3c→U3c), on le DIT.
+    renvoi_note = zone_renvoi_note(zone, insee, db) if (zone and insee) else None
     return {"query": q, "insee": insee, "n": len(res), "n_total": n_total,
+            "n_extraits": n_brut,       # OUTIL-PLU-FIX-9 — total d'extraits bruts (avant regroupement)
+            "n_groupes": n_group,       # total d'entrées distinctes après regroupement d'affichage
             "limit": limit, "offset": offset, "message": message,
-            "tronque": n_total > len(res) + len(communes_list), "resultats": res,
-            "dispositions_communes": communes_list,
+            "tronque": n_group > offset + len(res), "resultats": res,
+            "dispositions_communes": communes_list, "renvoi_note": renvoi_note,
             "exceptions_zone": exceptions_zone, "exceptions_source": exceptions_source,
             "note_perimetre": ("Recherche communale (texte du règlement) : ne vérifie pas, à la parcelle, "
                                "les prescriptions graphiques, les servitudes (SUP) ni le PPR."),

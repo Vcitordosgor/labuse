@@ -80,11 +80,13 @@ CREATE TABLE IF NOT EXISTS score_e (
 # disparaît (il n'existait que dans le précalcul divergent) : niveau_prix = commune |
 # ile_validee | ile_sans_operation. Repli île = médiane des médianes communales LIVE (même
 # règle MANDAT COUVERTURE PRIX : jamais servi aux communes social-dominantes).
-_SELECT_RAW = """
-WITH med AS (
-  SELECT secteur,
-         max(mediane_prix_m2) FILTER (WHERE type_bien='terrain' AND n_ventes >= :nt) AS terrain
-  FROM dvf_secteur_medianes GROUP BY secteur),
+# FIX-7 LOT 1 — le terrain par secteur (prix probable du scoring) lit la table via la SOURCE UNIQUE
+# `dvf_secteur.TERRAIN_PAR_SECTEUR_SQL` (seuil `:nt` du scoring) : plus aucun `FROM dvf_secteur_medianes`
+# écrit ici.
+from ..dvf_secteur import TERRAIN_PAR_SECTEUR_SQL as _TERRAIN_SECTEUR
+
+_SELECT_RAW = f"""
+WITH med AS ({_TERRAIN_SECTEUR}),
 neuf_com AS (SELECT key AS cle, value::float AS prix_m2_neuf
              FROM jsonb_each_text(CAST(:neuf_live AS jsonb))),
 neuf_ile AS (SELECT CAST(:neuf_ile AS float) AS prix_m2_neuf)

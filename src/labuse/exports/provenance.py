@@ -162,8 +162,9 @@ def nombres_ancres(valeurs: dict[str, Valeur], ctx: dict | None = None) -> dict[
         for x in _scalaires(ctx.get("revente")):
             _poser_argent(x, "prix_revente_saisi_eur")
         # chaque hypothèse résolue EST une donnée *_saisi_*/prefill du registre : sa valeur ET la
-        # source (qui justifie un pré-remplissage, ex. « ~9 mois + 20 mois de chantier ») sont
-        # rattachées à son id.
+        # source (qui justifie un pré-remplissage, ex. le prix de sortie DVF ou une taxe légale) sont
+        # rattachées à son id. (OUTIL-PERMIS-FIX-7 : l'ex. « ~9 mois + 20 mois de chantier » est retiré —
+        # le pré-remplissage du portage par un délai d'instruction n'existe plus, c'est une saisie client.)
         for fid, d in (ctx.get("resolved") or {}).items():
             if isinstance(d, dict):
                 for x in _scalaires(d.get("valeur")):

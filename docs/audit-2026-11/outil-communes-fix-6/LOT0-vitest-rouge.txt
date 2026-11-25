@@ -1,0 +1,21 @@
+
+- 15
++ 6
+
+ ❯ src/lib/catnat.test.ts:11:36
+      9|   })
+     10|   it('Saint-Denis : 21 entrées, 6 affichées → 15 autres', () => {
+     11|     expect(catnatReste(21, 12, 6)).toBe(15)
+       |                                    ^
+     12|   })
+     13|   it('total inconnu (null) → repli sur la longueur de liste', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  19:31:21
+   Duration  1.03s (transform 21ms, setup 142ms, import 9ms, tests 6ms, environment 777ms)
+
+VITEST_DONE

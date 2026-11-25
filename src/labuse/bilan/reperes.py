@@ -381,30 +381,10 @@ def reperes_publics(db: Session, idu: str, sourcee: dict) -> dict[str, dict]:
         if fais:
             out["faisabilite"] = fais
 
-    # Sitadel — délai médian dépôt → autorisation (PC) de la commune
-    if commune:
-
-        def _sitadel():
-            row = db.execute(
-                text(
-                    "SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY delai_mois) "
-                    "FROM m10_permit_delais WHERE commune = :c AND nature = 'PC' "
-                    "AND valide AND delai_mois IS NOT NULL"
-                ),
-                {"c": commune},
-            ).scalar()
-            if row is None:
-                return None
-            m = round(float(row))
-            return {
-                "valeur": float(m),
-                "label": f"Sitadel : {m} mois dépôt → PC",
-                "source": "Sitadel — délai médian dépôt→autorisation (PC) de la commune",
-            }
-
-        sit = _sans_poison(db, _sitadel)
-        if sit:
-            out["sitadel"] = sit
+    # OUTIL-PERMIS-FIX-6 (Point 2) — le repère Sitadel du délai d'instruction (médiane) est RETIRÉ : ce
+    # délai n'a jamais été mesuré (dépôt daté à l'ANNÉE → gonflé). « On ne montre pas un délai faux »
+    # (Vic). Le promoteur saisit lui-même son délai dans le calendrier, sans valeur proposée. La clé
+    # sitadel des repères publics n'est donc plus produite (cf. BilanEcran.tsx : bouton retiré).
 
     # Coût de construction de référence (€/m² SDP) — calibrage par commune
     def _cout():

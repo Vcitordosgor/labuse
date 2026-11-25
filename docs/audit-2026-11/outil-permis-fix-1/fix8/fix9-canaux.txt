@@ -1,0 +1,38 @@
+=== Détail servi par les deux canaux (alerte de zone + veille parcelle) ===
+
+  [CONTRÔLE VALIDE] 97440226G0018  an_depot=2026  DR_DEPOT=2026-02-15  autorisé=2026-03-13
+      depot_affichable='2026-02-15'
+      détail : DP 97440226G0018 déposé le 2026-02-15
+  [année contradictoire] 97440913A0154  an_depot=2013  DR_DEPOT=2014-01-16  autorisé=2014-02-20
+      depot_affichable=None
+      détail : PC 97440913A0154 autorisé le 2014-02-20
+  [année contradictoire] 97440924A0017  an_depot=2024  DR_DEPOT=2025-09-16  autorisé=2025-09-30
+      depot_affichable=None
+      détail : PC 97440924A0017 autorisé le 2025-09-30
+  [année contradictoire] 97441120A0159  an_depot=2020  DR_DEPOT=2019-11-23  autorisé=2020-11-24
+      depot_affichable=None
+      détail : PC 97441120A0159 autorisé le 2020-11-24
+  [année contradictoire] 9744121230261  an_depot=2012  DR_DEPOT=2013-02-14  autorisé=2013-03-21
+      depot_affichable=None
+      détail : PC 9744121230261 autorisé le 2013-03-21
+  [année contradictoire] 97441419A0344  an_depot=2019  DR_DEPOT=2020-12-22  autorisé=2020-12-23
+      depot_affichable=None
+      détail : PC 97441419A0344 autorisé le 2020-12-23
+  [année contradictoire] 97441617A0624  an_depot=2017  DR_DEPOT=2018-02-07  autorisé=2018-02-08
+      depot_affichable=None
+      détail : PC 97441617A0624 autorisé le 2018-02-08
+  [année contradictoire] 97441624A0416  an_depot=2024  DR_DEPOT=2025-01-15  autorisé=2025-01-16
+      depot_affichable=None
+      détail : PC 97441624A0416 autorisé le 2025-01-16
+  [année contradictoire] 97441626E0304  an_depot=2026  DR_DEPOT=2020-06-01  autorisé=2026-08-03
+      depot_affichable=None
+      détail : DP 97441626E0304 autorisé le 2026-08-03
+  [année contradictoire] 97442215A0381  an_depot=2015  DR_DEPOT=2014-10-07  autorisé=2015-11-19
+      depot_affichable=None
+      détail : PC 97442215A0381 autorisé le 2015-11-19
+  [année contradictoire] 97442222A0372  an_depot=2022  DR_DEPOT=2023-01-25  autorisé=2023-01-26
+      depot_affichable=None
+      détail : PC 97442222A0372 autorisé le 2023-01-26
+
+→ témoins à année contradictoire affichant la date brute sous « déposé le » : 0 (attendu 0)
+→ contrôle 97440226G0018 : dépôt affiché = '2026-02-15' (attendu 2026-02-15)

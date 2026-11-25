@@ -541,12 +541,15 @@ class EvalContext:
         secteur = idu[:10]
         if secteur in self._dvf_sector:
             return self._dvf_sector[secteur]
-        r = self.session.execute(text(
-            "SELECT mediane_prix_m2, n_ventes, fenetre FROM dvf_secteur_medianes "
-            "WHERE secteur = :s AND type_bien = 'terrain'"), {"s": secteur}).mappings().first()
-        out = ({"median_eur_m2": float(r["mediane_prix_m2"]) if r["mediane_prix_m2"] is not None else None,
-                "n_ventes": int(r["n_ventes"] or 0), "fenetre": r["fenetre"]}
-               if r else None)
+        # FIX-7 LOT 1 — lecture via la fonction UNIQUE `prix_section` (plus de SELECT direct). `seuil=0` :
+        # la cascade reçoit la médiane BRUTE + l'effectif ; son propre plancher (phase2 : n<3 → échantillon
+        # insuffisant, [3;5[ → fragile) décide de la diffusion. Le seuil de diffusion grand public (8) ne
+        # s'applique PAS au scoring interne.
+        from ..dvf_secteur import prix_section
+        p = prix_section(self.session, secteur, "terrain", seuil=0)
+        out = ({"median_eur_m2": float(p["prix_m2"]) if p["prix_m2"] is not None else None,
+                "n_ventes": p["n"], "fenetre": p["fenetre"]}
+               if p["n"] or p["prix_m2"] is not None else None)
         self._dvf_sector[secteur] = out
         return out
 

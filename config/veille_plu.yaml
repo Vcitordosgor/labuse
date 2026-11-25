@@ -21,6 +21,10 @@ meta:
   source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
   date_constat_initial: "2026-08-06"
   cadence: "annuelle (Sudocuh) ; curation trimestrielle (registre) ; radar actif = 30 j"
+  # FIX-4 LOT 2 — date de la pièce du SQUELETTE (Sudocuh). « état au … » par défaut quand une entrée ne
+  # porte pas de pièce plus récente (`etat_source_date`). Sert à dater l'état servi : aucun état ancien
+  # n'est présenté comme actuel au 24/11/2026 — il porte la date de sa source.
+  source_squelette_date: "2024-12-31"
 communes:
   "97401":
     commune: "Avirons"
@@ -58,9 +62,11 @@ communes:
     stade: "prescrite"
     date_acte: "2022-04-28"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 — révision prescrite le 2022-04-28. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-09-17) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
-    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    source: "Révision générale du PLU prescrite le 2022-04-28 (Sudocuh 31/12/2024). Dernière pièce DATÉE connue de LABUSE : approbation de la RÉVISION ALLÉGÉE n°1 le 17/09/2025 (délibération, GPU) — objet DISTINCT de la révision générale, qui reste en cours (non approuvée). Le lien ouvre la page municipale de la délibération ; le PDF y est téléchargeable."
+    source_url: "https://www.letangsale.fr/mes-acces-rapides/telechargements/l-urbanisme/1382-franchissement-de-la-ravine-deschenez-revision-allegee-n-1-du-plan-local-de-lurbanisme-approuvee-le-17-septembre-2025"
     date_constat: "2026-08-06"
+    etat_source_date: "2025-09-17"
+    piece_objet: "approbation de la révision allégée n°1 (≠ révision générale, encore en cours)"
     confiance: "SOURCE"
   "97405":
     commune: "Petite-Île"
@@ -78,9 +84,11 @@ communes:
     stade: "prescrite"
     date_acte: "2015-09-24"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 — révision prescrite le 2015-09-24. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2023-05-27) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
-    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
-    date_constat: "2026-08-06"
+    source: "Révision générale du PLU EN COURS — pièce municipale du 27/11/2025 (Ville de La Plaine-des-Palmistes) confirmant la révision en cours (approbation ultérieure annoncée, non réalisée). Prescription 2015-09-24 (Sudocuh). Le domaine municipal historique (plaine-des-palmistes.re) ne répond plus ; le lien ouvre la page PLU du nouveau site communal, qui liste la révision générale en cours (pièce du 27/11/2025 à demander en mairie)."
+    source_url: "https://www.ville-plainedespalmistes.fr/plan-local-urbanisme/"
+    date_constat: "2026-11-24"
+    etat_source_date: "2025-11-27"
+    piece_objet: "révision générale en cours — pièce municipale du 27/11/2025 (à retrouver sur la page PLU de la commune via le lien, ou en mairie : le domaine historique ne répond plus)"
     confiance: "SOURCE"
   "97407":
     commune: "Port"
@@ -108,9 +116,11 @@ communes:
     stade: "prescrite"
     date_acte: "2022-06-22"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (prescription)"
-    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
-    date_constat: "2026-08-06"
+    source: "Révision générale du PLU prescrite le 2022-06-22. Dernière pièce connue de LABUSE : avis délibéré de la MRAe (n° 2025AREU7) sur le PROJET DE RÉVISION, le 09/09/2025. Stade de procédure de la révision générale."
+    source_url: "https://www.mrae.developpement-durable.gouv.fr/IMG/pdf/2025areu7_rev_plu_saint_andre.pdf"
+    date_constat: "2026-11-24"
+    etat_source_date: "2025-09-09"
+    piece_objet: "avis de la MRAe sur le projet de révision générale (n° 2025AREU7)"
     confiance: "SOURCE"
   "97410":
     commune: "Saint-Benoît"
@@ -129,9 +139,11 @@ communes:
     stade: "prescrite"
     date_acte: "2024-09-27"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 — révision générale prescrite le 2024-09-27. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2026-04-23, document 97411_PLU_20260805) NE PROUVE PAS la clôture — une publication de document n'est pas la délibération d'approbation de la révision ; le GPU donne la procédure EN COURS. On ne déduit plus la clôture ; statut à lever par la délibération d'approbation."
-    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    source: "Révision générale du PLU prescrite le 2024-09-27. Dernière pièce DATÉE connue de LABUSE : document opposable au GPU 97411_PLU_20260805, approuvé le 05/08/2026 (date portée par la fiche-document du GPU) ; LABUSE ne certifie PAS que ce document soit la dernière pièce de la RÉVISION GÉNÉRALE (publication GPU ≠ acte de procédure daté). Révision donnée EN COURS. Le lien ouvre la fiche-document GPU (identifiant 97411_PLU_20260805)."
+    source_url: "https://www.geoportail-urbanisme.gouv.fr/document/by-id/eee143f619882c020cfb0fbd52e178b7"
     date_constat: "2026-08-06"
+    etat_source_date: "2026-08-05"
+    piece_objet: "document opposable au GPU (rattachement à la révision générale non certifié)"
     confiance: "SOURCE"
   "97412":
     commune: "Saint-Joseph"
@@ -149,9 +161,11 @@ communes:
     stade: "prescrite"
     date_acte: "2022-05-17"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (prescription)"
-    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
-    date_constat: "2026-08-06"
+    source: "Révision générale du PLU prescrite le 2022-05-17. Dernière pièce connue de LABUSE : avis de la COMMISSION D'ENQUÊTE (défavorable) sur le projet de RÉVISION GÉNÉRALE, le 18/11/2026. Stade important de la procédure ; ne vaut pas décision finale de la commune. Le lien ouvre le PDF des conclusions motivées de la commission d'enquête (site municipal)."
+    source_url: "https://www.saintleu.re/pdf/plu/2026/enquete-publique/conclusions-motivees-et-avis-de-la-commission.pdf"
+    date_constat: "2026-11-24"
+    etat_source_date: "2026-11-18"
+    piece_objet: "avis (défavorable) de la commission d'enquête sur la révision générale"
     confiance: "SOURCE"
   "97414":
     commune: "Saint-Louis"
@@ -159,9 +173,11 @@ communes:
     stade: "prescrite"
     date_acte: "2022-02-25"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 — révision prescrite le 2022-02-25. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-12-18) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
-    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    source: "Révision générale du PLU prescrite le 2022-02-25. Dernière pièce DATÉE connue de LABUSE : dossier du 18/12/2025 relatif à la MODIFICATION SIMPLIFIÉE n°5 — objet DISTINCT de la révision générale, qui reste en cours (la mairie distingue expressément les deux procédures). Le lien ouvre le dossier PDF de la MS n°5 (délibération DCM n°191 du 18/12/2025)."
+    source_url: "https://saintlouis.re/images/pdf/PLU/ANNEXE%20DCM%20N191_DOSSIER%20MS%20DU%20PLU%20N5%20suite%20retour%20PPA_SP.pdf"
     date_constat: "2026-08-06"
+    etat_source_date: "2025-12-18"
+    piece_objet: "modification simplifiée n°5 (≠ révision générale, encore en cours)"
     confiance: "SOURCE"
   "97415":
     commune: "Saint-Paul"
@@ -169,9 +185,11 @@ communes:
     stade: "prescrite"
     date_acte: "2021-12-16"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 — révision prescrite le 2021-12-16. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-12-17) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
-    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
+    source: "Révision générale du PLU prescrite le 2021-12-16. Dernière pièce DATÉE connue de LABUSE : document opposable au GPU 97415_PLU_20251217 du 17/12/2025 ; LABUSE ne certifie PAS que ce document soit la dernière pièce de la RÉVISION GÉNÉRALE (publication GPU ≠ acte de procédure daté). Révision donnée EN COURS. Le lien ouvre la fiche-document GPU (identifiant 97415_PLU_20251217)."
+    source_url: "https://www.geoportail-urbanisme.gouv.fr/document/by-id/0f717dab1a17e973d81fe6b5ea79fe22"
     date_constat: "2026-08-06"
+    etat_source_date: "2025-12-17"
+    piece_objet: "document opposable au GPU (rattachement à la révision générale non certifié)"
     confiance: "SOURCE"
   "97416":
     commune: "Saint-Pierre"
@@ -196,13 +214,14 @@ communes:
     note: "Élaboration PLU prescrite il y a 24 ans, commune toujours en RNU, aucun acte postérieur connu — dormante. Au radar (factuel) mais pas de vigilance sursis."
   "97418":
     commune: "Sainte-Marie"
-    procedure: "revision_plu"
-    stade: "prescrite"
-    date_acte: "2021-06-03"
+    procedure: "cloturee"
+    stade: "approuvée"
+    date_acte: "2025-11-26"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 — révision prescrite le 2021-06-03. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-11-26) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
-    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
-    date_constat: "2026-08-06"
+    source: "PLU révisé APPROUVÉ par délibération du conseil municipal le 26/11/2025, exécutoire le 14/01/2026 (mairie de Sainte-Marie / GPU). La révision prescrite le 2021-06-03 est donc CLÔTURÉE par un acte d'approbation (plus seulement un opposable GPU). Le lien ouvre le PDF de la délibération d'approbation (acte 974-219740180-20251126)."
+    source_url: "https://www.ville-saintemarie.re/wp-content/uploads/2026/03/99_DE-974-219740180-20251126-25104-DE-1-1_1.pdf"
+    date_constat: "2026-11-24"
+    etat_source_date: "2026-01-14"
     confiance: "SOURCE"
   "97419":
     commune: "Sainte-Rose"
@@ -216,13 +235,14 @@ communes:
     confiance: "SOURCE"
   "97420":
     commune: "Sainte-Suzanne"
-    procedure: "revision_plu"
-    stade: "prescrite"
-    date_acte: "2018-02-28"
+    procedure: "cloturee"
+    stade: "approuvée"
+    date_acte: "2025-09-29"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 — révision prescrite le 2018-02-28. OUTIL-COMMUNES-FIX-3 B-3 : l'opposable GPU postérieur (2025-09-29) NE PROUVE PAS la clôture ; on ne déduit plus l'approbation (statut à confirmer par la délibération d'approbation)."
-    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
-    date_constat: "2026-08-06"
+    source: "La pièce officielle du PLU au GPU porte ENSEMBLE la prescription (28/02/2018) et l'APPROBATION (29/09/2025) de la MÊME procédure de révision : elle est donc CLÔTURÉE par un acte d'approbation (plus seulement un opposable GPU). Le lien ouvre le règlement PLU hébergé par le GPU (97420_reglement_20250929), dont la page de garde relie prescription et approbation."
+    source_url: "https://data.geopf.fr/annexes/gpu/documents/DU_97420/9ced5f687357ee837e1ecfe079f0ced1/97420_reglement_20250929.pdf"
+    date_constat: "2026-11-24"
+    etat_source_date: "2025-09-29"
     confiance: "SOURCE"
   "97421":
     commune: "Salazie"
@@ -250,9 +270,11 @@ communes:
     stade: "prescrite"
     date_acte: "2022-06-02"
     debat_padd: ABSENT
-    source: "Sudocuh 31/12/2024 (prescription)"
-    source_url: "https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400"
-    date_constat: "2026-08-06"
+    source: "Révision générale du PLU prescrite le 2022-06-02. Dernière pièce connue de LABUSE : présentation du projet de PADD pour les réunions publiques de concertation de la RÉVISION, en mai 2025 (pièce municipale). Stade de concertation de la révision générale. Le lien ouvre le PDF de la présentation PADD (réunions publiques de mai 2025, site documentaire communal)."
+    source_url: "https://docs.trois-bassins.re/urbanisme/PLU/REVISION/PADD/Support_PLU_TroisBassins_PADD_R%c3%a9unions%20publiques_Mai_2025.pdf"
+    date_constat: "2026-11-24"
+    etat_source_date: "2025-05-01"
+    piece_objet: "présentation du PADD de la révision générale (concertation, mai 2025)"
     confiance: "SOURCE"
   "97424":
     commune: "Cilaos"

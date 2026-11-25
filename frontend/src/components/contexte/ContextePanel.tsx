@@ -3,6 +3,8 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { getCommuneAcquisitions, getContexteCommune, motMarcheCommune, motRarete } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
 import { fmtDateNum, fmtAns } from '../../lib/format'   // RECETTE-2 (B2/B5/B6) — dates JJ/MM/AAAA, « 1,1 an »
+import { catnatReste } from '../../lib/catnat'   // FIX-6 LOT 3 — « et N autres » sur le total source
+import { bandeauEtatPluSous } from '../../lib/plu'   // FIX-7 LOT 3 — case « État du PLU » datée
 import { Trace } from '../../lib/trace'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
@@ -22,12 +24,9 @@ function sentenceCase(s: string): string {
   return low.charAt(0).toLocaleUpperCase('fr-FR') + low.slice(1)
 }
 
-// RECETTE-PROD-1 (F) — toute date ISO « ( AAAA-MM-JJ) » (avec espace parasite) → « (JJ/MM/AAAA) ».
-// La source de vérité (config/veille_plu.yaml) est corrigée, mais le contexte est caché : ce normaliseur
-// garantit l'affichage français immédiat quel que soit l'état du cache.
-function normDatesFr(s?: string | null): string {
-  return (s ?? '').replace(/\(\s*(\d{4})-(\d{2})-(\d{2})\)/g, (_m, y, mo, d) => `(${d}/${mo}/${y})`)
-}
+// OUTIL-COMMUNES-FIX-6 LOT 4 — `normDatesFr` RETIRÉ : la carte Urbanisme n'affiche plus la chaîne `source`
+// brute du registre (qui portait la note interne « OUTIL-COMMUNES-FIX-… ») mais `source_citation` servie
+// (collectivité + date, déjà formatée côté API) + le lien `source_url`.
 
 // RECETTE-PROD-1 (F) — `ton` optionnel : colore la valeur selon la tension (vert/orange/rouge), au lieu
 // du vert systématique de `strong`. Sert à aligner « Horizon d'épuisement » sur le signal ZAN (alerte).
@@ -330,7 +329,8 @@ export function ContextePanel() {
                   { v: `${fmt(d.permis_bloc?.permis_12m)}`, n: 'Permis / an', s: 'SITADEL' },
                   { v: d.comparable?.ancien_median_eur_m2 != null ? `${fmt(d.comparable.ancien_median_eur_m2)} €/m²` : '—', n: 'Prix ancien', s: 'DVF' },
                   { v: tendPct != null ? `${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %` : '—', n: 'Tendance 12 m', s: 'DVF' },
-                  { v: d.plu_statut?.statut ?? '—', n: 'État du PLU', s: 'GPU · Sudocuh' },
+                  // OUTIL-COMMUNES-FIX-7 LOT 3 — la case « État du PLU » porte la DATE de la dernière pièce.
+                  { v: d.plu_statut?.statut ?? '—', n: 'État du PLU', s: bandeauEtatPluSous(d.plu_statut?.etat_au) },
                   // COMMUNE-FIX-2 — surface cadastrale de la commune (même grandeur que l'en-tête).
                   { v: d.foncier?.surface_ha != null ? `${fmt(d.foncier.surface_ha)} ha` : '—', n: 'Surface', s: 'Cadastre' },
                   // COMMUNE-FIX-2 — sigle de l'intercommunalité (CINOR, TCO…) ; le nom long est déjà sous le titre.
@@ -568,8 +568,10 @@ export function ContextePanel() {
                                 statuts mêlés, relevé en continu) ; acté = ancien DVF commune entière. */}
                             <RowT lbl="Prix demandé médian (annonces, Radar)" val={sous ? libSeuil : (ma!.prix_demande_median_eur_m2 != null ? `${fmt(ma!.prix_demande_median_eur_m2)} €/m²${ma!.prix_demande_n != null ? ` · n ${fmt(ma!.prix_demande_n)}` : ''}` : '—')} />
                             {/* OUTIL-COMMUNES-FIX-2 #5 — le prix acté porte SON effectif et SA période, à
-                                côté du prix demandé (deux populations différentes, l'écart reste indicatif). */}
-                            <RowT lbl="Prix acté médian (ancien, DVF commune)" val={ma!.prix_acte_eur_m2 != null ? `${fmt(ma!.prix_acte_eur_m2)} €/m²${ma!.prix_acte_n != null ? ` · n ${fmt(ma!.prix_acte_n)}` : ''}${ma!.prix_acte_periode ? ` · ${ma!.prix_acte_periode}` : ''}` : '—'} />
+                                côté du prix demandé (deux populations différentes, l'écart reste indicatif).
+                                FIX-4 LOT 5 — la PÉRIODE est désormais des DATES RÉELLES (du … au …), plus la
+                                seule maille « DVF commune entière » sans aucune date. */}
+                            <RowT lbl="Prix acté médian (ancien, DVF commune)" val={ma!.prix_acte_eur_m2 != null ? `${fmt(ma!.prix_acte_eur_m2)} €/m²${ma!.prix_acte_n != null ? ` · n ${fmt(ma!.prix_acte_n)}` : ''}${ma!.prix_acte_periode_dates ? ` · du ${ma!.prix_acte_periode_dates[0]} au ${ma!.prix_acte_periode_dates[1]}` : ''}${ma!.prix_acte_periode ? ` · ${ma!.prix_acte_periode}` : ''}` : '—'} />
                             <RowT lbl="Écart demandé / acté (indicatif)" strong={!sous && ma!.ecart_demande_acte_pct != null}
                               val={sous ? libSeuil : (ma!.ecart_demande_acte_pct != null ? `${ma!.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(ma!.ecart_demande_acte_pct)} %` : '—')} />
                             {!sous && ma!.ecart_demande_acte_pct != null && (
@@ -659,8 +661,12 @@ export function ContextePanel() {
                       et ses ANNÉES dit juste dessous : une PROJECTION, pas une échéance réglementaire. */}
                   {/* OUTIL-COMMUNES-FIX-2 #5 — la CARTE DÉTAILLÉE porte la DATE DE DÉPART du scénario (terme
                       de la série Cerema 2021-2024, ≈ 1ᵉʳ janvier 2024) et l'épuisement en ANNÉE ABSOLUE :
-                      plus de « 1,1 an avant épuisement » sans date, qui se lisait comme un futur en 2026. */}
-                  <RowT lbl="Scénario au rythme observé (base fin 2024)" val={r?.['horizon_epuisement_ans'] != null
+                      plus de « 1,1 an avant épuisement » sans date, qui se lisait comme un futur en 2026.
+                      OUTIL-COMMUNES-FIX-4 LOT 5 — UNE SEULE date de départ : le libellé disait « base fin
+                      2024 » quand l'hypothèse et le calcul (2024 + ans) partent du 1ᵉʳ janvier 2024 (reste
+                      ZAN mesuré au terme de la série 2021-2024). Sur ~1,1 an, un an d'écart changeait le
+                      sens : on aligne le libellé sur le 1ᵉʳ janvier 2024 (sans toucher au chiffre servi). */}
+                  <RowT lbl="Scénario au rythme observé (base 1ᵉʳ janvier 2024)" val={r?.['horizon_epuisement_ans'] != null
                       ? (Number(r['horizon_epuisement_ans']) <= 0 ? 'déjà dépassé' : `${fmtAns(r['horizon_epuisement_ans'])} → vers ${2024 + Math.round(Number(r['horizon_epuisement_ans']))}`)
                       : '—'}
                     ton={r?.['horizon_epuisement_ans'] != null ? (r['horizon_epuisement_ans'] <= 0 ? 'rouge' : r['horizon_epuisement_ans'] < 5 ? 'orange' : 'vert') : undefined} strong />
@@ -674,14 +680,27 @@ export function ContextePanel() {
               {/* ═══ LES RÈGLES ═══ */}
               <GroupeLabel>Les règles</GroupeLabel>
 
+              {/* OUTIL-COMMUNES-FIX-6 LOT 2 — pour une commune EN RÉVISION, le bandeau (et le détail) portent
+                  la date de la DERNIÈRE PIÈCE de procédure (etat_au), pas celle de la PRESCRIPTION
+                  (date_reglement, souvent ancienne). La Plaine-des-Palmistes : 27/11/2025, pas 24/09/2015. */}
+              {(() => {
+                const _revision = d.plu_statut.statut.startsWith('en ')
+                const _bandeauDate = _revision ? d.plu_statut.etat_au : d.plu_statut.date_reglement
+                return (
               <LigneCarte id="regle-plu" chiffre="statut_plu" ic="§" titre="Urbanisme"
-                sous={`PLU ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${fmtDateNum(d.plu_statut.date_reglement)}` : ''}`}
+                sous={d.plu_statut.statut.startsWith('aucune') ? d.plu_statut.statut : `PLU ${d.plu_statut.statut}${_bandeauDate ? ` · ${fmtDateNum(_bandeauDate)}` : ''}`}
                 val={d.plu_statut.statut} badge ton={d.plu_statut.statut === 'RNU' ? 'orange' : 'vert'}>
                 <p className="text-[12px] leading-relaxed text-txt">
                   {d.plu_statut.statut === 'RNU' ? "Pas de PLU opposable : c'est le Règlement National d'Urbanisme qui s'applique."
                     : d.plu_statut.statut === 'à jour' ? `Le PLU est opposable${d.plu_statut.date_reglement ? ` (approuvé le ${fmtDateNum(d.plu_statut.date_reglement)})` : ''}.`
+                      : _revision ? `Document local — ${d.plu_statut.statut}${d.plu_statut.piece_objet ? ` · ${d.plu_statut.piece_objet}` : ''}.`
                       : `Document local — ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${fmtDateNum(d.plu_statut.date_reglement)}` : ''}.`}
                 </p>
+                {/* OUTIL-COMMUNES-FIX-4/7 LOT 2 — l'état porte la date de sa pièce. Libellé « dernière pièce
+                    connue de LABUSE », avec la date de notre dernière vérification (date_constat). */}
+                {d.plu_statut.etat_au && (
+                  <p className="mt-1 text-[11px] text-txt-dim">Dernière pièce connue de LABUSE le {fmtDateNum(d.plu_statut.etat_au)}{d.plu_statut.date_constat ? ` — vérifié le ${fmtDateNum(d.plu_statut.date_constat)}` : ''}.</p>
+                )}
                 {/* COMMUNE-FIX-1 (D12) — procédure PLU en cours au dernier relevé Sudocuh (révision, modification…). */}
                 {d.plu_statut.procedure_sudocuh?.etat && (
                   <p className="mt-1 text-[11px] leading-relaxed text-txt-mut">
@@ -739,8 +758,13 @@ export function ContextePanel() {
                     <p data-plh-sans-objet className="text-[12px] text-txt-mut">Aucun programme local de l'habitat recensé pour l'intercommunalité {d.epci ?? ''}.</p>
                   )}
                 </div>
-                <Source nom={`${normDatesFr(d.plu_statut.source) || 'GPU'} · Zonage PLU (GPU) · PLH (EPCI)`} />
+                {/* OUTIL-COMMUNES-FIX-6 LOT 4 — la ligne de source montre au promoteur la COLLECTIVITÉ, la
+                    DATE de la pièce et le LIEN (source_citation + source_url servis), plus jamais la note
+                    interne « OUTIL-COMMUNES-FIX-… » du registre. */}
+                <Source nom={`${d.plu_statut.source_citation || 'GPU'} · Zonage PLU (GPU) · PLH (EPCI)`} url={d.plu_statut.source_url} />
               </LigneCarte>
+                )
+              })()}
 
               {/* Fiscalité et dispositifs — taxes + zonages + QPV/ORT (creux dits). */}
               {(() => {
@@ -804,12 +828,17 @@ export function ContextePanel() {
                 val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % en PPR` : (d.risques.parc_national ? 'Parc National' : null)}
                 badge={d.risques.ppr_pct != null} ton="orange">
                 <div className="flex flex-col gap-0.5 text-[12px]">
-                  <RowT lbl="PPR (risque naturel)" val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % des parcelles` : '—'} />
+                  {/* FIX-4 LOT 3 — l'EXPOSITION (PPR/mvt) vient de scans spatiaux qui peuvent être
+                      indisponibles (statement_timeout sur les grosses communes) : on affiche alors
+                      « indisponible », jamais « — » qui se lit comme 0 %. */}
+                  <RowT lbl="PPR (risque naturel)" val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % des parcelles` : 'indisponible'} />
                   {/* RECETTE-PROD-1 (F) — dire DE QUOI : part des parcelles exposées à l'aléa. */}
-                  <RowT lbl="Mouvement de terrain" val={d.risques.mouvement_terrain_pct != null ? `${fmtDec(d.risques.mouvement_terrain_pct)} % des parcelles` : '—'} />
+                  <RowT lbl="Mouvement de terrain" val={d.risques.mouvement_terrain_pct != null ? `${fmtDec(d.risques.mouvement_terrain_pct)} % des parcelles` : 'indisponible'} />
                   {/* OUTIL-COMMUNES-FIX-2 #3 — on DISTINGUE les arrêtés (par date d'arrêté) des entrées par
-                      péril (un arrêté couvre plusieurs périls) : Saint-Denis 14 arrêtés / 21 périls. */}
-                  <RowT lbl="Arrêtés CatNat (distincts)" val={`${fmt(d.risques.catnat_arretes)}${d.risques.catnat_perils != null && d.risques.catnat_perils !== d.risques.catnat_arretes ? ` · ${fmt(d.risques.catnat_perils)} entrées par péril` : ''}`} />
+                      péril (un arrêté couvre plusieurs périls) : Saint-Denis 14 arrêtés / 21 périls.
+                      FIX-4 LOT 3 — catnat_arretes null = INDISPONIBLE (bloc en échec), jamais « 0 »
+                      (qui se confondrait avec une commune réellement sans arrêté). */}
+                  <RowT lbl="Arrêtés CatNat (distincts)" val={d.risques.catnat_arretes == null ? 'indisponible' : `${fmt(d.risques.catnat_arretes)}${d.risques.catnat_perils != null && d.risques.catnat_perils !== d.risques.catnat_arretes ? ` · ${fmt(d.risques.catnat_perils)} entrées par péril` : ''}`} />
                   {d.risques.catnat_detail?.length ? (
                     /* RECETTE-2 (B2) — chaque arrêté sur DEUX lignes : libellé pleine largeur, puis
                        « JJ/MM/AAAA → JJ/MM/AAAA · code » (plus de libellé coupé mot par mot, plus de
@@ -825,11 +854,15 @@ export function ContextePanel() {
                                 a.code_national].filter(Boolean).join(' · ')}</div>
                         </div>
                       ))}
-                      {/* #3 — le « et N autres » compte sur la LISTE affichée (entrées par péril), pas sur
-                          le nombre d'arrêtés distincts (sinon le reste était faux). */}
-                      {d.risques.catnat_detail.length > 6 ? (
-                        <div className="text-[11px] text-txt-dim">et {d.risques.catnat_detail.length - 6} autre{d.risques.catnat_detail.length - 6 > 1 ? 's' : ''}…</div>
-                      ) : null}
+                      {/* OUTIL-COMMUNES-FIX-6 LOT 3 — le « et N autres » se calcule sur le TOTAL de la
+                          source (catnat_perils), pas sur la liste tronquée à 12 (sinon « et 6 autres »
+                          alors qu'il en reste 18). Helper pur `catnatReste`. */}
+                      {(() => {
+                        const reste = catnatReste(d.risques.catnat_perils, d.risques.catnat_detail.length, 6)
+                        return reste > 0 ? (
+                          <div className="text-[11px] text-txt-dim">et {reste} autre{reste > 1 ? 's' : ''}…</div>
+                        ) : null
+                      })()}
                     </div>
                   ) : null}
                   {d.risques.azi_tri && (d.risques.azi_tri.azi?.length || d.risques.azi_tri.tri?.length) ? (
@@ -842,7 +875,7 @@ export function ContextePanel() {
                   ) : d.risques.azi_tri ? (
                     <RowT lbl="Inondation (AZI / TRI)" val="aucun document recensé (GASPAR)" />
                   ) : null}
-                  <RowT lbl="Aire d'adhésion Parc National" val={d.risques.parc_national ? 'oui' : 'non'} />
+                  <RowT lbl="Aire d'adhésion Parc National" val={d.risques.parc_national == null ? 'indisponible' : (d.risques.parc_national ? 'oui' : 'non')} />
                 </div>
                 <Source nom={d.risques.source} />
               </LigneCarte>

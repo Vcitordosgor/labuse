@@ -65,11 +65,39 @@ def _chiffres(p: dict) -> dict:
     }
 
 
-def test_r2_deux_analyses_memes_saisies_meme_resultat(session_reelle):
-    """R2 — deux analyses de suite, mêmes saisies → résultat IDENTIQUE (le temps n'arbitre plus)."""
+def test_r2_deux_analyses_memes_saisies_meme_resultat(session_reelle, monkeypatch):
+    """R2 — deux analyses de suite, mêmes saisies → résultat IDENTIQUE (le temps n'arbitre plus).
+
+    R2 vérifie le DÉTERMINISME (mêmes saisies → même résultat), PAS le filet temps (ça, c'est R3). Deux
+    entrées de la machine faisaient diverger deux analyses pourtant identiques ; on neutralise les DEUX
+    DANS CE SEUL TEST (jamais en production), pour que le test juge le déterminisme du calcul et non l'état
+    de la machine :
+
+    1. Le filet TEMPS `LABUSE_ETUDE_GRILLE_GARDE_FOU_S` coupe la grille à des INSTANTS différents selon la
+       charge : sous charge, les deux analyses examinent un nombre de candidats DIFFÉRENT (« N candidats
+       écartés » diverge). On porte le filet très haut via la variable d'env EXISTANTE (comme R3 le force à
+       1 s dans l'autre sens) → la grille examine TOUJOURS les N candidats prévus.
+    2. Le relief LiDAR (`terrain._pente_lidar`) complète les trous du raster local par un appel RÉSEAU IGN
+       (`_completer_ign`, httpx, timeout 20 s, dégradation SILENCIEUSE). Sous charge l'appel aboutit pour
+       une analyse et expire pour l'autre → `pente` diffère → le contrôle « implantation étagée » apparaît
+       d'un côté seulement. On neutralise CET APPEL RÉSEAU (no-op) : la pente ne dépend plus que du raster
+       EN BASE, déterministe. (Le défaut PRODUIT — un résultat qui dépend de la charge — reste ouvert,
+       chantier « capacité maximale » ; ici on fiabilise seulement le test.)
+
+    Aucun changement de comportement en production — seuls l'environnement et les dépendances externes de ce
+    test sont neutralisés, et l'env est restauré (monkeypatch) en fin de test."""
+    from labuse import config
+    from labuse.faisabilite import profil_altimetrique
     from labuse.implantation.service import etudier_payload
-    p1 = etudier_payload(session_reelle, _cfg_andre())
-    p2 = etudier_payload(session_reelle, _cfg_andre())
+
+    monkeypatch.setenv("LABUSE_ETUDE_GRILLE_GARDE_FOU_S", "86400")   # (1) filet neutralisé : le temps n'arbitre plus
+    monkeypatch.setattr(profil_altimetrique, "_completer_ign", lambda pts: None)  # (2) zéro réseau IGN : pente déterministe
+    config.get_settings.cache_clear()
+    try:
+        p1 = etudier_payload(session_reelle, _cfg_andre())
+        p2 = etudier_payload(session_reelle, _cfg_andre())
+    finally:
+        config.get_settings.cache_clear()
     assert json.dumps(p1, sort_keys=True, default=str) == json.dumps(p2, sort_keys=True, default=str)
     # et la recherche est COMPLÈTE (nombre de candidats déterministe, pas coupée par le temps)
     assert (p1.get("recherche") or {}).get("etat") == "complete"

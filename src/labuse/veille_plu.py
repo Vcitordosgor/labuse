@@ -205,7 +205,13 @@ def synthese_commune(insee: str | None) -> dict | None:
     if e["procedure"] == "aucune":
         etat = f"Aucune procédure PLU lourde connue au {e['date_constat']} (dernier constat)."
     elif e["procedure"] == "cloturee":
-        etat = f"Procédure Sudocuh sans suite connue — clôture probable (confiance {e['confiance']})."
+        # FIX-4 LOT 2 — une clôture par ACTE D'APPROBATION (stade='approuvée', ex. Sainte-Marie /
+        # Sainte-Suzanne) est dite comme telle et datée ; une clôture simplement déduite d'une absence
+        # de suite Sudocuh reste prudente (« clôture probable »).
+        if e.get("stade") == "approuvée":
+            etat = f"PLU révisé APPROUVÉ le {e['date_acte']} (délibération d'approbation) — opposable."
+        else:
+            etat = f"Procédure Sudocuh sans suite connue — clôture probable (confiance {e['confiance']})."
     elif e.get("stade") == "prescrite_dormante":
         etat = f"Élaboration prescrite le {e['date_acte']} — dormante (aucun acte postérieur connu)."
     else:

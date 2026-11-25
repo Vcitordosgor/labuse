@@ -15,16 +15,14 @@ from sqlalchemy import text
 # Indicateur → (libellé, direction, poids par défaut, source, nature).
 # direction +1 = plus haut « mieux pour investir » ; -1 = plus bas mieux (on inverse à la normalisation).
 # NB communes-tableau : `prix_ancien` est une COLONNE d'affichage (pas un axe composite) — hors INDICATEURS.
+# OUTIL-PERMIS-FIX-8 (LOT 3) — l'axe VÉLOCITÉ (délai dépôt→autorisation) est RETIRÉ DU COMPOSITE. Le
+# délai n'a jamais été mesuré (dépôt connu à l'ANNÉE, AN_DEPOT → 1er janvier ⇒ gonflé +4 mois méd.) :
+# FIX-5 l'avait retiré de l'AFFICHAGE mais LAISSÉ peser 0,15 au classement — le contre-audit ASTRA-4
+# (point 3) le refuse. L'axe sort donc du score ; les CINQ poids restants sont renormalisés (somme
+# ramenée à 1, cf. api/comparateur._compute). La table `m10_permit_delais` ne nourrit plus aucun calcul
+# ni écran (décommissionnée — cf. compte-rendu FIX-8).
 INDICATEURS = {
     "stock":     ("Stock d'opportunités (brûlantes + chaudes)", +1, 0.30, "run servi", "Sourcé"),
-    # OUTIL-PERMIS-FIX-5 (Point 2) — le DÉLAI n'a jamais été mesuré : le dépôt n'est connu qu'à l'ANNÉE
-    # (AN_DEPOT → 1er janvier), ce qui gonfle le délai de +4 mois en médiane (mesuré sur 375 permis à vraie
-    # date de dépôt : réel 3 mois vs 1er-janvier 7). « On ne montre pas un délai faux » (Vic) : l'axe est
-    # RETIRÉ DE L'AFFICHAGE partout (colonne, fiche, PDF, Copilote) ; il reste au CLASSEMENT (poids 0,15,
-    # calcul inchangé) — SIGNALÉ ici dans le libellé, avec son poids.
-    "velocite":  ("Vélocité admin (délai dépôt→autorisation) — NON MESURÉ : dépôt connu à l'année ⇒ délai "
-                  "gonflé (+4 mois méd.) ; RETIRÉ de l'affichage, conservé au classement (poids 0,15)",
-                  -1, 0.15, "m10 / SITADEL", "Sourcé"),
     "permis":    ("Dynamisme permis (SITADEL, 5 ans)", +1, 0.15, "SITADEL", "Sourcé"),
     "deficit_sru": ("Déficit SRU (objectif − taux LLS, points)", +1, 0.15, "DHUP", "Sourcé"),
     "pression_zan": ("Pression ZAN (ENAF consommé 2021-2024, ha)", -1, 0.10, "Cerema", "Sourcé"),
@@ -37,9 +35,8 @@ stock AS (
   SELECT left(s.parcelle_id, 5) AS insee,
          count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')) AS n
   FROM parcel_p_score_v2 s WHERE s.run_id = :run GROUP BY 1),
-velo AS (
-  SELECT commune, percentile_cont(0.5) WITHIN GROUP (ORDER BY delai_mois) AS mois, count(*) AS n
-  FROM m10_permit_delais WHERE valide AND famille = 'logements' AND delai_mois >= 0 GROUP BY 1),
+-- OUTIL-PERMIS-FIX-8 (LOT 3) — la CTE `velo` (médiane de délai sur m10_permit_delais) est SUPPRIMÉE :
+-- l'axe vélocité sort du composite et m10 ne nourrit plus aucun calcul (table décommissionnée).
 permis AS (
   SELECT commune, count(*) AS n FROM sitadel_permits
   WHERE date >= (CURRENT_DATE - INTERVAL '5 years') GROUP BY 1),
@@ -51,12 +48,11 @@ zan AS (SELECT insee, conso_2021_2024_m2 / 10000.0 AS ha FROM commune_conso_enaf
 -- mesuré Saint-Paul 97415 : précalc 4 730 vs live 5 003) mais du MÊME moteur live `neuf_vefa_commune`
 -- que la fiche et la carte, calculé en Python dans `raw_rows` (fiche = table = carte, à l'euro près).
 SELECT b.insee, b.commune,
-       stock.n AS stock, velo.mois AS velocite, velo.n AS velocite_n, permis.n AS permis,
+       stock.n AS stock, permis.n AS permis,
        sru.deficit AS deficit_sru, sru.statut AS sru_statut,
        zan.ha AS pression_zan
 FROM base b
 LEFT JOIN stock ON stock.insee = b.insee
-LEFT JOIN velo ON velo.commune = b.commune
 LEFT JOIN permis ON permis.commune = b.commune
 LEFT JOIN sru ON sru.insee = b.insee
 LEFT JOIN zan ON zan.insee = b.insee
@@ -65,8 +61,9 @@ ORDER BY b.commune;
 
 
 def indicateurs_communes(db, run: str | None) -> list[dict]:
-    """velocite_delai_median_mois · permis_5a_n (+ socle stock/SRU/ZAN du comparateur) — les
-    indicateurs bruts par commune, en UNE requête (extraction du `_SQL` d'api/comparateur.py)."""
+    """permis_5a_n (+ socle stock/SRU/ZAN du comparateur) — les indicateurs bruts par commune, en UNE
+    requête (extraction du `_SQL` d'api/comparateur.py). OUTIL-PERMIS-FIX-8 (LOT 3) : plus de vélocité
+    (axe délai retiré du composite ; m10 décommissionnée)."""
     return [dict(r) for r in db.execute(text(_SQL_INDICATEURS), {"run": run}).mappings().all()]
 
 
