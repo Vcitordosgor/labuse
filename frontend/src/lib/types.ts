@@ -245,6 +245,8 @@ export interface ModeB extends Indisponible {
   terrain_nu?: { valeur_eur: number; valeur_libelle: string; prix_m2: number; surface_m2: number
     // FIX-PRIX-ET-OPPORTUNITES (lot 1) — fourchette ±30 % + mention d'incertitude (backtest VT2).
     valeur_bas_eur?: number; valeur_haut_eur?: number; valeur_fourchette_libelle?: string; incertitude?: string
+    // OUTIL-COMMUNES-FIX-8 — effectif (nb de ventes) servi à côté du prix de section (3-7 ventes), étiqueté « Estimé ».
+    effectif?: number | null
     niveau: string; libelle: string; etiquette: string } | null
   porte_par_terrain?: boolean
   // M101 A2 : la PORTE du mode B — pourquoi cette parcelle est « bâtie », en français lisible

@@ -940,7 +940,9 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
             // d'incertitude mesurée (backtest VT2) en title. Repli sur l'ancien libellé si absent.
             <p data-mode-b-terrain-nu style={{ margin: 0, fontSize: 10.5, color: '#8FA69A' }} title={mb.terrain_nu.incertitude}>
               terrain nu au prix du secteur : <b style={{ color: 'var(--txt-hi)' }}>~{mb.terrain_nu.valeur_fourchette_libelle ?? mb.terrain_nu.valeur_libelle}</b>{' '}
-              <span style={{ fontSize: 10 }}>({fmtInt(mb.terrain_nu.prix_m2)} €/m² × {fmtInt(mb.terrain_nu.surface_m2)} m² · Estimé, fourchette ±{FOURCHETTE_DEMI_LARGEUR_PCT} %)</span>
+              {/* OUTIL-COMMUNES-FIX-8 (2) — l'EFFECTIF (nb de ventes utilisées) est affiché à côté du prix et
+                  de « Estimé », pour que le lecteur voie sur combien de ventes repose ce prix de section. */}
+              <span style={{ fontSize: 10 }}>({fmtInt(mb.terrain_nu.prix_m2)} €/m² × {fmtInt(mb.terrain_nu.surface_m2)} m²{mb.terrain_nu.effectif != null ? ` · ${mb.terrain_nu.effectif} vente${mb.terrain_nu.effectif > 1 ? 's' : ''}` : ''} · Estimé, fourchette ±{FOURCHETTE_DEMI_LARGEUR_PCT} %)</span>
             </p>
           )}
           {mb.porte_par_terrain && (

@@ -1128,16 +1128,20 @@ def _prix_bati_local(session: Session, idu: str) -> dict | None:
     from ..dvf_secteur import medianes_sections_commune, prix_section
     from ..marche_service import seuil_effectif_local
     n_min = seuil_effectif_local("mode_b_prix_local", 3)
-    sec = [prix_section(session, idu[:10], t, seuil=n_min)["prix_m2"] for t in ("maison", "appartement")]
-    sec = [p for p in sec if p is not None]
-    if sec:
-        return {"prix_m2": float(max(sec)), "niveau": "secteur",
-                "libelle": f"médiane DVF maison/appartement du secteur (n ≥ {n_min})"}
+    # FIX-8 (2) — on expose l'EFFECTIF RÉEL (nb de ventes utilisées), pas seulement le seuil « n ≥ 3 » :
+    # le prix de section à 3-7 ventes doit porter son effectif à côté de l'étiquette « Estimé ».
+    cands = [(g["prix_m2"], g["n"]) for g in
+             (prix_section(session, idu[:10], t, seuil=n_min) for t in ("maison", "appartement"))
+             if g["prix_m2"] is not None]
+    if cands:
+        prix, n = max(cands)   # le type le plus cher du secteur (comportement inchangé)
+        return {"prix_m2": float(prix), "n": n, "niveau": "secteur",
+                "libelle": f"médiane DVF maison/appartement du secteur — {n} vente{'s' if n > 1 else ''}"}
     meds = medianes_sections_commune(session, idu[:5], ("maison", "appartement"), seuil=n_min)
     if meds:
-        return {"prix_m2": float(statistics.median(meds)), "niveau": "commune",
-                "libelle": "médiane DVF maison/appartement de la commune (repli — pas assez "
-                           "de ventes au secteur)"}
+        return {"prix_m2": float(statistics.median(meds)), "n": len(meds), "niveau": "commune",
+                "libelle": f"médiane DVF maison/appartement de la commune — {len(meds)} sections "
+                           "(repli : pas assez de ventes au secteur)"}
     return None
 
 
@@ -1154,12 +1158,13 @@ def _prix_terrain_local(session: Session, idu: str) -> dict | None:
     n_min = seuil_effectif_local("mode_b_prix_local", 3)
     p = prix_section(session, idu[:10], "terrain", seuil=n_min)
     if p["prix_m2"] is not None:
-        return {"prix_m2": float(p["prix_m2"]), "niveau": "secteur",
-                "libelle": f"médiane DVF terrain du secteur (n ≥ {n_min})"}
+        # FIX-8 (2) — EFFECTIF RÉEL dans le libellé (ex. « — 7 ventes »), pas le seuil « n ≥ 3 ».
+        return {"prix_m2": float(p["prix_m2"]), "n": p["n"], "niveau": "secteur",
+                "libelle": f"médiane DVF terrain du secteur — {p['n']} vente{'s' if p['n'] > 1 else ''}"}
     meds = medianes_sections_commune(session, idu[:5], ("terrain",), seuil=n_min)
     if meds:
-        return {"prix_m2": float(statistics.median(meds)), "niveau": "commune",
-                "libelle": "médiane DVF terrain de la commune (repli)"}
+        return {"prix_m2": float(statistics.median(meds)), "n": len(meds), "niveau": "commune",
+                "libelle": f"médiane DVF terrain de la commune — {len(meds)} sections (repli)"}
     return None
 
 
@@ -1292,6 +1297,7 @@ def compute_mode_b(session: Session, idu: str, *,
             "incertitude": _fr["mention"],
             "prix_m2": round(px_terrain["prix_m2"]), "surface_m2": round(float(surface_parcelle)),
             "niveau": px_terrain["niveau"], "libelle": px_terrain["libelle"],
+            "effectif": px_terrain.get("n"),   # FIX-8 (2) — nb de ventes utilisées, à côté de « Estimé »
             "etiquette": "Estimé",
         }
     porte_par_terrain = bool(terrain_nu and terrain_nu["valeur_eur"] > achat_max)
@@ -1349,6 +1355,7 @@ def compute_mode_b(session: Session, idu: str, *,
             "prix_sortie": {
                 "prix_m2": round(px["prix_m2"]),
                 "niveau": px["niveau"], "libelle": px["libelle"],
+                "effectif": px.get("n"),   # FIX-8 (2) — nb de ventes utilisées (le libellé le porte déjà)
                 "etiquette": "Sourcé (DVF)",
                 # M59-P1 (Q3) — périmètre DIT (pas d'harmonisation des moteurs, juste l'honnêteté) :
                 # le mode B lit des médianes sectorielles pré-agrégées, SANS rayon adaptatif (≠ le
