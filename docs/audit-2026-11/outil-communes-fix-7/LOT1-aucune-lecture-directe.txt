@@ -1,0 +1,18 @@
+=== grep: FROM dvf_secteur_medianes (hors tests/docs) ===
+src/labuse/dvf_secteur.py:43:        "SELECT n_ventes, mediane_prix_m2, mediane_valeur, fenetre FROM dvf_secteur_medianes "
+src/labuse/dvf_secteur.py:56:        "SELECT type_bien, n_ventes, mediane_prix_m2, mediane_valeur, fenetre FROM dvf_secteur_medianes "
+src/labuse/dvf_secteur.py:71:        "SELECT mediane_prix_m2 FROM dvf_secteur_medianes WHERE left(secteur, 5) = :c "
+src/labuse/dvf_secteur.py:78:#: `FROM dvf_secteur_medianes` ailleurs). Sous-requête réutilisable : terrain par secteur, seuil `:nt`.
+src/labuse/dvf_secteur.py:81:  FROM dvf_secteur_medianes GROUP BY secteur"""
+src/labuse/ingestion/dvf_marche.py:220:        "SELECT count(*), count(DISTINCT secteur), sum(n_ventes) FROM dvf_secteur_medianes")).one()
+src/labuse/ingestion/score_e.py:84:# `dvf_secteur.TERRAIN_PAR_SECTEUR_SQL` (seuil `:nt` du scoring) : plus aucun `FROM dvf_secteur_medianes`
+src/labuse/api/app.py:2321:        conds.append("EXISTS (SELECT 1 FROM dvf_secteur_medianes dm WHERE dm.secteur = left(p.idu, 10)"
+
+CLASSEMENT :
+ · dvf_secteur.py (×4+1 commentaire) = LA fonction unique (prix_section / prix_sections /
+   medianes_sections_commune / TERRAIN_PAR_SECTEUR_SQL). TOUT prix de section passe ici.
+ · dvf_marche.py:220 = builder (ÉCRIT la table) + count de contrôle post-écriture — pas un prix lu.
+ · score_e.py:84 = COMMENTAIRE ; la requête utilise la constante du module (plus de SQL direct).
+ · app.py:2321 = EXISTS (la parcelle a-t-elle des données de section ?) — existence, aucun prix lu.
+=> Aucun lecteur ne lit un PRIX de section hors de dvf_secteur.py. Lecteurs routés : Comparer (via la
+   liste gatée), fiche parcelle (flash + app), Carnet, mon-secteur, cascade (scoring), Bilan mode B.

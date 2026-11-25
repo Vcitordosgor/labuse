@@ -439,6 +439,8 @@ export interface ContexteCommune {
   plu_statut: {
     statut: string; libelle: string | null; procedure?: string | null; date_reglement: string | null
     etat_au?: string | null   // FIX-4 LOT 2 — « état au … » : date de la pièce la plus récente
+    // FIX-7 LOT 2 — objet de la dernière pièce (révision générale / modif / allégée) + date de notre vérif
+    piece_objet?: string | null; date_constat?: string | null
     confiance?: string | null; recherche_verbatim: boolean; source: string | null
     // FIX-6 LOT 4 — citation affichée (collectivité + date) + lien, sans la note interne du registre
     source_citation?: string | null; source_url?: string | null

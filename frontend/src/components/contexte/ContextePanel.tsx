@@ -4,6 +4,7 @@ import { getCommuneAcquisitions, getContexteCommune, motMarcheCommune, motRarete
 import { TOKENS } from '../../lib/tokens'
 import { fmtDateNum, fmtAns } from '../../lib/format'   // RECETTE-2 (B2/B5/B6) — dates JJ/MM/AAAA, « 1,1 an »
 import { catnatReste } from '../../lib/catnat'   // FIX-6 LOT 3 — « et N autres » sur le total source
+import { bandeauEtatPluSous } from '../../lib/plu'   // FIX-7 LOT 3 — case « État du PLU » datée
 import { Trace } from '../../lib/trace'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
@@ -328,7 +329,8 @@ export function ContextePanel() {
                   { v: `${fmt(d.permis_bloc?.permis_12m)}`, n: 'Permis / an', s: 'SITADEL' },
                   { v: d.comparable?.ancien_median_eur_m2 != null ? `${fmt(d.comparable.ancien_median_eur_m2)} €/m²` : '—', n: 'Prix ancien', s: 'DVF' },
                   { v: tendPct != null ? `${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %` : '—', n: 'Tendance 12 m', s: 'DVF' },
-                  { v: d.plu_statut?.statut ?? '—', n: 'État du PLU', s: 'GPU · Sudocuh' },
+                  // OUTIL-COMMUNES-FIX-7 LOT 3 — la case « État du PLU » porte la DATE de la dernière pièce.
+                  { v: d.plu_statut?.statut ?? '—', n: 'État du PLU', s: bandeauEtatPluSous(d.plu_statut?.etat_au) },
                   // COMMUNE-FIX-2 — surface cadastrale de la commune (même grandeur que l'en-tête).
                   { v: d.foncier?.surface_ha != null ? `${fmt(d.foncier.surface_ha)} ha` : '—', n: 'Surface', s: 'Cadastre' },
                   // COMMUNE-FIX-2 — sigle de l'intercommunalité (CINOR, TCO…) ; le nom long est déjà sous le titre.
@@ -691,14 +693,13 @@ export function ContextePanel() {
                 <p className="text-[12px] leading-relaxed text-txt">
                   {d.plu_statut.statut === 'RNU' ? "Pas de PLU opposable : c'est le Règlement National d'Urbanisme qui s'applique."
                     : d.plu_statut.statut === 'à jour' ? `Le PLU est opposable${d.plu_statut.date_reglement ? ` (approuvé le ${fmtDateNum(d.plu_statut.date_reglement)})` : ''}.`
-                      : _revision ? `Document local — ${d.plu_statut.statut}${d.plu_statut.etat_au ? ` · dernière pièce le ${fmtDateNum(d.plu_statut.etat_au)}` : ''}.`
+                      : _revision ? `Document local — ${d.plu_statut.statut}${d.plu_statut.piece_objet ? ` · ${d.plu_statut.piece_objet}` : ''}.`
                       : `Document local — ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${fmtDateNum(d.plu_statut.date_reglement)}` : ''}.`}
                 </p>
-                {/* OUTIL-COMMUNES-FIX-4 LOT 2 — l'état porte la DATE DE SA SOURCE (« état au … ») : un état
-                    ancien n'est jamais présenté comme actuel, il est daté par la pièce la plus récente
-                    (approbation / opposable GPU / à défaut squelette Sudocuh). */}
+                {/* OUTIL-COMMUNES-FIX-4/7 LOT 2 — l'état porte la date de sa pièce. Libellé « dernière pièce
+                    connue de LABUSE », avec la date de notre dernière vérification (date_constat). */}
                 {d.plu_statut.etat_au && (
-                  <p className="mt-1 text-[11px] text-txt-dim">État au {fmtDateNum(d.plu_statut.etat_au)} (pièce la plus récente trouvée) — vérification trimestrielle.</p>
+                  <p className="mt-1 text-[11px] text-txt-dim">Dernière pièce connue de LABUSE le {fmtDateNum(d.plu_statut.etat_au)}{d.plu_statut.date_constat ? ` — vérifié le ${fmtDateNum(d.plu_statut.date_constat)}` : ''}.</p>
                 )}
                 {/* COMMUNE-FIX-1 (D12) — procédure PLU en cours au dernier relevé Sudocuh (révision, modification…). */}
                 {d.plu_statut.procedure_sudocuh?.etat && (

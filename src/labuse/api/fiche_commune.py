@@ -393,13 +393,19 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
     # recopiée de `source` (gardé brut pour l'admin).
     _coll = f"Ville de {commune}" if commune else "Commune"
     _au = _fr_date_iso(etat_au)
+    # FIX-7 LOT 2 — pour une révision, la citation nomme l'OBJET de la pièce (`piece_objet` : révision
+    # générale, ou modification/révision allégée dont l'objet est précisé quand le rattachement à la
+    # révision générale n'est pas certifié). « dernière pièce connue de LABUSE » + date de vérification.
+    piece_objet = e.get("piece_objet")
     if proc == "aucune":
         source_citation = f"SuDocUH (planification nationale) — relevé au {_au}" if _au else "SuDocUH (planification nationale)"
     elif proc == "cloturee":
         _ap = _fr_date_iso(None if e.get("date_acte") in (None, "ABSENT") else e.get("date_acte"))
         source_citation = f"{_coll} — PLU approuvé le {_ap}" if _ap else f"{_coll} — PLU approuvé"
     elif proc in ("revision_plu", "elaboration_plu", "modification_plu"):
-        source_citation = f"{_coll} — {statut}, pièce la plus récente au {_au}" if _au else f"{_coll} — {statut}"
+        _obj = piece_objet or statut
+        source_citation = (f"{_coll} — {_obj} — dernière pièce connue de LABUSE au {_au}" if _au
+                           else f"{_coll} — {_obj}")
     else:
         source_citation = _coll
     return {
@@ -409,10 +415,12 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
         "procedure_sudocuh": procedure_sudocuh,   # COMMUNE-FIX-1 (D12) — révision/modification en cours (Sudocuh)
         "date_reglement": None if e.get("date_acte") in (None, "ABSENT") else e.get("date_acte"),
         "etat_au": etat_au,   # FIX-4 LOT 2 — date de la pièce la plus récente établissant cet état
+        "piece_objet": piece_objet,   # FIX-7 LOT 2 — objet de la dernière pièce (révision générale ou autre)
+        "date_constat": e.get("date_constat"),   # FIX-7 LOT 2 — date de notre dernière vérification
         "confiance": e.get("confiance"),
         "recherche_verbatim": True,
         "source": e.get("source"),              # BRUT (admin/registre) — jamais affiché au promoteur
-        "source_citation": source_citation,     # FIX-6 LOT 4 — affiché : collectivité + date
+        "source_citation": source_citation,     # FIX-6 LOT 4 — affiché : collectivité + objet + date
         "source_url": e.get("source_url"),       # FIX-6 LOT 4 — lien vers la pièce
     }
 

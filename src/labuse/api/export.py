@@ -99,8 +99,10 @@ def fiche_markdown(fiche: dict) -> str:
                       f"- hors valeur du terrain — le foncier{_fonc} s'ajoute à ce montant"]
         tn = mb.get("terrain_nu")
         if tn:
+            _ntn = tn.get("effectif")   # OUTIL-COMMUNES-FIX-8 (2) — effectif à côté de « Estimé » (3-7 ventes)
+            _vtn_n = f" · {_ntn} vente{'s' if (_ntn or 0) > 1 else ''}" if _ntn else ""
             lines += [f"- terrain nu au prix du secteur : ~{tn['valeur_libelle']} "
-                      f"({tn['prix_m2']} €/m² × {tn['surface_m2']} m² · Estimé)"]
+                      f"({tn['prix_m2']} €/m² × {tn['surface_m2']} m²{_vtn_n} · Estimé)"]
         if mb.get("porte_par_terrain"):
             lines += ["- **À ces hypothèses, la valeur de cette parcelle est portée par le "
                       "terrain, pas par le bâti.**"]
@@ -250,8 +252,10 @@ def fiche_html(fiche: dict) -> str:
                     f"<p class='disc'>hors valeur du terrain — le foncier{_fonc} s'ajoute à ce montant</p>")
         tn = mb.get("terrain_nu")
         if tn:
+            _ntn = tn.get("effectif")   # OUTIL-COMMUNES-FIX-8 (2) — effectif à côté de « Estimé » (3-7 ventes)
+            _vtn_n = f" · {_ntn} vente{'s' if (_ntn or 0) > 1 else ''}" if _ntn else ""
             tete += (f"<p class='disc'>terrain nu au prix du secteur : ~{html.escape(tn['valeur_libelle'])} "
-                     f"({tn['prix_m2']} €/m² × {tn['surface_m2']} m² · Estimé)</p>")
+                     f"({tn['prix_m2']} €/m² × {tn['surface_m2']} m²{_vtn_n} · Estimé)</p>")
         if mb.get("porte_par_terrain"):
             tete += ("<p><strong>À ces hypothèses, la valeur de cette parcelle est portée par le "
                      "terrain, pas par le bâti.</strong></p>")

@@ -1,0 +1,27 @@
+97401 Les Avirons              [200] https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400
+97402 Bras-Panon               [200] https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400
+97403 Entre-Deux               [200] https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400
+97404 L'Étang-Salé             [200] https://www.geoportail-urbanisme.gouv.fr/
+97405 Petite-Île               [200] https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400
+97406 La Plaine-des-Palmistes  [200] https://www.geoportail-urbanisme.gouv.fr/
+97407 Le Port                  [200] https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400
+97408 La Possession            [200] https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400
+97409 Saint-André              [200] https://www.mrae.developpement-durable.gouv.fr/
+97410 Saint-Benoît             [200] https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400
+97411 Saint-Denis              [200] https://www.geoportail-urbanisme.gouv.fr/
+97412 Saint-Joseph             [200] https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400
+97413 Saint-Leu                [200] https://www.geoportail-urbanisme.gouv.fr/
+97414 Saint-Louis              [200] https://www.geoportail-urbanisme.gouv.fr/
+97415 Saint-Paul               [200] https://www.geoportail-urbanisme.gouv.fr/
+97416 Saint-Pierre             [200] https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400
+97417 Saint-Philippe           statut='RNU'                              lien=— (aucun)
+97418 Sainte-Marie             [200] https://www.ville-saintemarie.re/urbanisme/
+97419 Sainte-Rose              [200] https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400
+97420 Sainte-Suzanne           [200] https://www.geoportail-urbanisme.gouv.fr/
+97421 Salazie                  [200] https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400
+97422 Le Tampon                [200] https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400
+97423 Les Trois-Bassins        [200] https://www.geoportail-urbanisme.gouv.fr/
+97424 Cilaos                   [200] https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400
+
+=== LIENS QUI NE S'OUVRENT PAS ===
+aucun — les 24 liens répondent (ou RNU sans lien).
