@@ -53,9 +53,9 @@ communes:
   "97415": {publication_gpu: "2026-03-09", edition: "mars 2026",
             procedures: [{type: "révision générale", source: "relevé relecteur (Saint-Paul)"}],
             note: "PLU initial approuvé le 27/09/2012 ; version active approuvée le 17/12/2025 ; édition PDF mars 2026 ; publiée au GPU le 09/03/2026"}
-  "97416": {publication_gpu: "2024-07-16", edition: "juin 2024",
+  "97416": {publication_gpu: "2024-07-16", edition: "juin 2024", date_approbation_ecrite: "2024-06",
             procedures: [{type: "modification n°1", source: "enquête publique en cours — clôture le 30/10/2026"}],
-            note: "Version d'approbation juin 2024 (couverture, vérifié p.1) ; modification n°1 à l'enquête publique jusqu'au 30/10/2026 — non encore approuvée, donc non opposable et non servie."}
+            note: "Version d'approbation juin 2024 (couverture, vérifié p.1 : MOIS seul, pas de quantième) ; modification n°1 à l'enquête publique jusqu'au 30/10/2026 — non encore approuvée, donc non opposable et non servie."}
   "97418": {publication_gpu: "2026-03-09"}
   "97419": {publication_gpu: "2019-08-14"}
   "97420": {publication_gpu: "2025-10-20"}
