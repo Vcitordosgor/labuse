@@ -1168,6 +1168,41 @@ def _etat_recherche(*, garde_fou: bool, complete: bool, a_un_resultat: bool) -> 
     return "complete"
 
 
+def libelle_recherche(*, etat: str, candidats_examines: int, candidats_prevus: int,
+                      logements_dessines: int | None) -> Optional[str]:
+    """ETUDE-AUDIT-FIX-1 LOT 2 (défaut 2) — SOURCE UNIQUE du libellé d'état de recherche, lu À L'IDENTIQUE
+    par l'écran et le PDF. Une recherche interrompue dit « recherche partielle · n sur N candidats » (N =
+    150 par défaut) et NE PARLE JAMAIS de maximum : le chiffre servi est le MEILLEUR trouvé à ce stade, pas
+    un plafond. None si complète (rien à signaler)."""
+    if etat == "complete":
+        return None
+    if etat == "non_aboutie":
+        return "Recherche non aboutie — aucune implantation trouvée sur cette assiette."
+    n, tot = int(candidats_examines or 0), int(candidats_prevus or 0)
+    base = f"Recherche partielle · {n} sur {tot} candidats examinés"
+    if logements_dessines:
+        return (base + f" — meilleure implantation trouvée à ce stade : {logements_dessines} logements "
+                "(le calcul s'est arrêté avant d'examiner tous les candidats ; relancez pour poursuivre).")
+    return base + " — aucune implantation trouvée à ce stade ; relancez pour poursuivre la recherche."
+
+
+def valider_entree_etude(entree: dict) -> None:
+    """ETUDE-AUDIT-FIX-1 LOT 2 — validations BON MARCHÉ (sans base) de l'entrée d'une étude, pour un refus
+    IMMÉDIAT (400) au lancement async comme à la route sync : nombre de parcelles, objectif, type. Mêmes
+    règles et mêmes messages que le début d'`etudier_payload`. Lève ValueError sur entrée refusée."""
+    idus = [str(i).strip() for i in (entree.get("idus") or []) if str(i).strip()]
+    if not idus:
+        raise ValueError("au moins une parcelle est requise")
+    if len(idus) > 8:
+        raise ValueError("8 parcelles maximum (comme l'Assemblage)")
+    objectif = entree.get("objectif") or "equilibre"
+    if objectif not in OBJECTIFS:
+        raise ValueError(f"objectif inconnu : {objectif}")
+    type_projet = entree.get("type_projet") or "collectif"
+    if type_projet not in _TYPES_PROJET:
+        raise ValueError(f"type de projet inconnu : {type_projet}")
+
+
 # ------------------------------------------------------------------ point d'entrée
 def etudier_payload(session, entree: dict) -> dict:
     """Payload d'étude servi par l'API. `entree` = {idus, type_projet, objectif, programme,
@@ -1386,14 +1421,11 @@ def etudier_payload(session, entree: dict) -> dict:
         "grille_simplifiee": bool(_reduite),
         "garde_fou_temps": bool(_garde_fou),
         "logements_dessines": _n_dessines,
-        # libellé prêt à afficher (écran + PDF lisent le MÊME texte) ; None si complète (rien à signaler).
-        "note": (None if _etat == "complete"
-                 else "Recherche non aboutie — aucune implantation trouvée sur cette assiette." if _etat == "non_aboutie"
-                 else f"Recherche partielle · {_n_dessines} logements dessinés — calcul interrompu par le "
-                      "garde-fou de temps (assiette lourde) ; la capacité réelle peut être supérieure."
-                 if _n_dessines else
-                 "Recherche partielle — calcul interrompu par le garde-fou de temps (assiette lourde) avant "
-                 "qu'une implantation ait été trouvée ; une recherche plus longue peut en trouver une."),
+        # ETUDE-AUDIT-FIX-1 LOT 2 (défaut 2) — libellé SOURCE UNIQUE (« n sur 150 », jamais « maximum »).
+        "note": libelle_recherche(etat=_etat,
+                                  candidats_examines=getattr(terrain, "grille_candidats_examines", 0),
+                                  candidats_prevus=getattr(terrain, "grille_candidats_prevus", 0),
+                                  logements_dessines=_n_dessines),
     }
     grille_note = None
     if _reduite:

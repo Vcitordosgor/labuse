@@ -2818,11 +2818,36 @@ export interface EtudeIn {
 // garde-fou front est relevé à 150 s pour rester STRICTEMENT AU-DESSUS de la borne (sinon le navigateur
 // abandonnerait avant que le serveur ait rendu son 503 honnête). Aligné avec Caddy/nginx (150 s).
 export const ETUDE_FETCH_TIMEOUT_MS = 150_000
-export const postEtude = (body: EtudeIn) =>
-  j<EtudePayload>('/modules/etude', {
+
+// ETUDE-AUDIT-FIX-1 LOT 2 (défaut 2) — l'étude est ASYNCHRONE : on LANCE (retour immédiat), puis on ATTEND
+// par POLLING (l'écran montre l'animation de l'app) sans aucun timeout de requête → plus de 503. Le résultat
+// est ENREGISTRÉ en révision : récupérable même si le client quitte la page (rouvrir par configuration).
+export const postEtudeAsync = (body: EtudeIn) =>
+  j<{ study_id: string; etat: 'pret' | 'en_cours' }>('/modules/etude/async', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-    signal: AbortSignal.timeout(ETUDE_FETCH_TIMEOUT_MS),
   })
+export const getEtudeJob = (studyId: string) =>
+  j<{ etat: 'pret' | 'en_cours' | 'echec' | 'inconnu'; payload?: EtudePayload; message?: string }>(
+    `/modules/etude/job/${encodeURIComponent(studyId)}`)
+
+const ETUDE_POLL_MS = 2000
+const ETUDE_POLL_MAX = 450   // ~15 min de sécurité (le moteur s'auto-borne bien avant)
+
+export const postEtude = async (body: EtudeIn): Promise<EtudePayload> => {
+  const start = await postEtudeAsync(body)
+  if (start.etat === 'pret') {
+    const r = await getEtudeJob(start.study_id)
+    if (r.etat === 'pret' && r.payload) return r.payload
+  }
+  for (let i = 0; i < ETUDE_POLL_MAX; i++) {
+    await new Promise((res) => setTimeout(res, ETUDE_POLL_MS))
+    const r = await getEtudeJob(start.study_id)
+    if (r.etat === 'pret' && r.payload) return r.payload
+    if (r.etat === 'echec') throw new ApiError('/modules/etude/job', 503, r.message || "L'étude n'a pas pu être calculée. Relancez.")
+    if (r.etat === 'inconnu') await postEtudeAsync(body)   // le job a disparu (redémarrage worker) → relancer
+  }
+  throw new ApiError('/modules/etude/job', 504, "L'étude prend trop de temps. Relancez — sur une assiette très lourde, essayez moins de parcelles.")
+}
 
 // ETUDE-FIABLE-1 (LOT B2) — ROUVRIR une étude : relit la révision ENREGISTRÉE pour cette configuration,
 // SANS recalcul (le moteur n'est pas appelé ; le serveur empreinte le study_id). 404 si aucune révision.

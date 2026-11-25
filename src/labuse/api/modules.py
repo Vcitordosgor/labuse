@@ -2232,9 +2232,18 @@ def _tuer_processus(p: "multiprocessing.Process") -> None:
         p.join(1.0)
 
 
-def _dans_processus(fn, args: tuple):
-    """Exécute `fn(*args)` dans un processus séparé « spawn », borné à `etude_timeout_s`. Rend le résultat,
-    ou lève HTTPException(503) à la borne APRÈS avoir tué l'enfant, ou ré-élève l'exception de l'enfant."""
+def _etude_async_timeout_s() -> float:
+    """ETUDE-AUDIT-FIX-1 LOT 2 — borne de SÉCURITÉ du calcul EN TÂCHE DE FOND (anti-zombie), large : le
+    moteur s'auto-borne déjà (150 candidats + budget de temps) et rend un résultat PARTIEL bien avant. Le
+    client ne subit plus cette borne (il attend par polling, jamais de 503)."""
+    import os
+    return float(os.environ.get("LABUSE_ETUDE_ASYNC_TIMEOUT_S", "900"))
+
+
+def _dans_processus(fn, args: tuple, timeout_s: float | None = None):
+    """Exécute `fn(*args)` dans un processus séparé « spawn », borné à `timeout_s` (défaut `etude_timeout_s`).
+    Rend le résultat, ou lève HTTPException(503) à la borne APRÈS avoir tué l'enfant, ou ré-élève
+    l'exception de l'enfant."""
     # FIX-NU3-3 (K-CHG-03) — PLAFOND de processus d'étude simultanés : on prend une place dans la file
     # AVANT de spawner. File pleine (aucune place libérée dans le délai) → 503 honnête, sans spawner
     # (la RAM ne sature pas, fiche/carte restent réactives). La place est tenue pendant tout le calcul.
@@ -2250,7 +2259,7 @@ def _dans_processus(fn, args: tuple):
     p.start()
     try:
         try:
-            statut, charge = q.get(timeout=_etude_timeout_s())
+            statut, charge = q.get(timeout=(timeout_s if timeout_s is not None else _etude_timeout_s()))
         except _queue.Empty:
             # borne dépassée : on TUE l'enfant (le calcul s'arrête vraiment, pas de thread/processus fantôme)
             raise HTTPException(503, detail=_ETUDE_TROP_LOURDE)
@@ -2266,6 +2275,41 @@ def _dans_processus(fn, args: tuple):
 def _etudier_borne(data: dict) -> dict:
     idus = [str(i).strip() for i in (data.get("idus") or []) if str(i).strip()]
     return _dans_processus(_worker_etude, (data, idus))
+
+
+# ETUDE-AUDIT-FIX-1 LOT 2 (défaut 2) — CALCUL EN TÂCHE DE FOND. Le lancement rend la main TOUT DE SUITE :
+# un thread détaché calcule l'étude dans un sous-processus tuable (GIL libre pour l'API) et ENREGISTRE la
+# révision (clé = study_id). L'écran attend par POLLING (animation de l'app) ; le résultat reste
+# récupérable même si le client quitte la page (il est en base, relu par study_id / config). Plus de 503.
+# Registre en mémoire du worker : il ne porte QUE l'état transitoire (en cours / échec) ; la VÉRITÉ du
+# résultat est la révision persistée (cross-worker). Un study_id disparaît du registre dès la révision écrite.
+import threading as _threading  # noqa: E402
+
+_ETUDE_JOBS: dict[str, dict] = {}
+_ETUDE_JOBS_LOCK = _threading.Lock()
+
+
+def _etude_job_echec_message(exc: BaseException) -> str:
+    if isinstance(exc, HTTPException):
+        det = exc.detail
+        if isinstance(det, dict) and det.get("message"):
+            return str(det["message"])
+    return ("L'étude n'a pas pu être calculée. Relancez — sur une assiette très lourde, essayez moins "
+            "de parcelles.")
+
+
+def _lancer_etude_fond(data: dict, idus: list[str], study_id: str) -> None:
+    """Thread détaché : calcule l'étude (sous-processus tuable) → la révision est écrite par `_worker_etude`.
+    Succès → on retire le study_id du registre (le polling lira la révision). Échec → état « echec » consigné
+    (le client le lira par polling, jamais un 503)."""
+    try:
+        _dans_processus(_worker_etude, (data, idus), timeout_s=_etude_async_timeout_s())
+        with _ETUDE_JOBS_LOCK:
+            _ETUDE_JOBS.pop(study_id, None)
+    except BaseException as exc:  # noqa: BLE001 — tout échec du fond est consigné, jamais propagé en 503 client
+        logging.getLogger("labuse").exception("étude de faisabilité : calcul de fond en échec")
+        with _ETUDE_JOBS_LOCK:
+            _ETUDE_JOBS[study_id] = {"etat": "echec", "message": _etude_job_echec_message(exc)}
 
 
 def _attach_au_ouverture(db: Session, payload: dict, idus) -> None:
@@ -2538,6 +2582,56 @@ def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     return out
+
+
+@router.post("/etude/async")
+def etude_async(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
+    """ETUDE-AUDIT-FIX-1 LOT 2 (défaut 2) — LANCE l'étude et REND LA MAIN TOUT DE SUITE (jamais de 503). Si
+    la révision existe déjà (même configuration), on la sert immédiatement (« pret » + payload). Sinon on
+    démarre le calcul EN TÂCHE DE FOND (thread détaché → sous-processus tuable, révision enregistrée à la
+    fin) et on renvoie « en_cours » + le study_id ; l'écran attend par /etude/job/{study_id}. ValueError
+    (entrée invalide) → 400."""
+    for idu in (body.idus or []):
+        idu = _check_idu(idu)
+    data = body.model_dump()
+    idus = [str(i).strip() for i in (data.get("idus") or []) if str(i).strip()]
+    from ..implantation import revisions as revisions_mod
+    from ..implantation.service import _study_id, valider_entree_etude
+    # ETUDE-AUDIT-FIX-1 LOT 2 — on VALIDE l'entrée AVANT de lancer (comme la route sync) : une entrée
+    # refusée (>8 parcelles, type/objectif inconnu, aucune parcelle) rend un 400 IMMÉDIAT, jamais un job
+    # de fond qui échouerait silencieusement.
+    try:
+        valider_entree_etude(data)
+        study_id = _study_id(data)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    if revisions_mod.charger(db, study_id) is not None:
+        return {"study_id": study_id, "etat": "pret"}
+    with _ETUDE_JOBS_LOCK:
+        deja = _ETUDE_JOBS.get(study_id)
+        if not (deja and deja.get("etat") == "en_cours"):
+            _ETUDE_JOBS[study_id] = {"etat": "en_cours"}
+            _threading.Thread(target=_lancer_etude_fond, args=(data, idus, study_id),
+                              name=f"etude-{study_id}", daemon=True).start()
+    return {"study_id": study_id, "etat": "en_cours"}
+
+
+@router.get("/etude/job/{study_id}")
+def etude_job(study_id: str, db: Session = Depends(get_db)) -> dict:
+    """ETUDE-AUDIT-FIX-1 LOT 2 (défaut 2) — ÉTAT d'un calcul lancé par /etude/async. « pret » + payload dès
+    que la révision est écrite (récupérable même après avoir quitté la page) ; « en_cours » tant qu'il
+    tourne ; « echec » + message si le calcul a échoué ; « inconnu » si ni révision ni job (→ relancer)."""
+    from ..implantation import revisions as revisions_mod
+    payload = revisions_mod.charger(db, study_id)
+    if payload is not None:
+        return {"etat": "pret", "payload": payload}
+    with _ETUDE_JOBS_LOCK:
+        job = _ETUDE_JOBS.get(study_id)
+    if job and job.get("etat") == "echec":
+        return {"etat": "echec", "message": job.get("message")}
+    if job and job.get("etat") == "en_cours":
+        return {"etat": "en_cours"}
+    return {"etat": "inconnu"}
 
 
 @router.get("/etude/revision/{study_id}")
