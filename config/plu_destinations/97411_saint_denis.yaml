@@ -2013,6 +2013,16 @@ zones:
     sous_destinations: {}
   AUj:
     regles:
+      # OUTIL-ASSEMBLAGE-FIX-4 (LOT 4) — même clause de mixité « 30 logements collectif → 15 % sociaux
+      # et/ou intermédiaires » que les 6 zones U, vérifiée au PDF 97411 : Article AUj.2, p. 91.
+      mixite:
+        seuil_logements: 30
+        quota_pct: 15
+        portee: zone
+        article: Article AUj.2
+        page_pdf: 91
+        citation: les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+        statut: valide
       hauteur:
         faitage:
           m: 13.0
@@ -2102,6 +2112,15 @@ zones:
         citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent un minimum de15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   AUm:
     regles:
+      # OUTIL-ASSEMBLAGE-FIX-4 (LOT 4) — clause de mixité identique, vérifiée au PDF 97411 : Article AUm.2, p. 97.
+      mixite:
+        seuil_logements: 30
+        quota_pct: 15
+        portee: zone
+        article: Article AUm.2
+        page_pdf: 97
+        citation: les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+        statut: valide
       hauteur:
         faitage:
           m: 10.0
@@ -2214,6 +2233,15 @@ zones:
         citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   AUh:
     regles:
+      # OUTIL-ASSEMBLAGE-FIX-4 (LOT 4) — clause de mixité identique, vérifiée au PDF 97411 : Article AUh.2, p. 101.
+      mixite:
+        seuil_logements: 30
+        quota_pct: 15
+        portee: zone
+        article: Article AUh.2
+        page_pdf: 101
+        citation: les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+        statut: valide
       hauteur:
         faitage:
           m: 7.0

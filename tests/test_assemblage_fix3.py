@@ -64,31 +64,11 @@ def test_lot2_page_vient_de_la_zone_pas_du_defaut_commune():
     assert c["page"] != "pp. 14-15"
 
 
-# ───────────────────────── LOT 5 — exclusion ZAC extraite + « non vérifiable » ─────────────────────────
-
-class _FakeRules:
-    """`rules` minimal pour `_zone_mixite_regle` : porte un leaf `mixite` (forme plu_zonage)."""
-    def __init__(self, mixite):
-        self.mixite = mixite
-
-
-def test_lot5_zone_mixite_extrait_les_zac_exclues():
-    from labuse.faisabilite.bilan import _zone_mixite_regle
-    # commune/zone à None → on reste sur le leaf `rules.mixite` (pas d'accès base), on teste l'extraction.
-    leaf = {"article": "Art. 2", "page_pdf": 106,
-            "condition": "programme ≥ 1 800 m² → 30 % aidés ; non applicable dans la ZAC Savane des Tamarins"}
-    zm = _zone_mixite_regle(None, None, _FakeRules(leaf))
-    assert zm is not None
-    assert zm["zac_exclusions"] == ["Savane des Tamarins"]
-
-
-def test_lot5_deux_zac_exclues_toutes_nommees():
-    from labuse.faisabilite.bilan import _zone_mixite_regle
-    leaf = {"article": "Art. 2", "page_pdf": 50,
-            "condition": "mixité … ; ne s'applique pas dans la ZAC Marie Caze et la ZAC Sans Souci "
-                         "(calcul à l'échelle de l'opération)"}
-    zm = _zone_mixite_regle(None, None, _FakeRules(leaf))
-    assert zm["zac_exclusions"] == ["Marie Caze", "Sans Souci"]
+# ───────────────────────── LOT 5 (FIX-3) — SUPERSÉDÉ par OUTIL-ASSEMBLAGE-FIX-4 ─────────────────────────
+# L'approche FIX-3 (avertissement « exclusion ZAC non vérifiable » déduit du TEXTE de la zone) est
+# remplacée par FIX-4 : le périmètre de la ZAC Savane des Tamarins EST connu (= la zone AU3st), l'exemption
+# est posée sur la géographie, et l'avertissement « non vérifiable » est retiré. Ces comportements sont
+# désormais figés dans tests/test_assemblage_fix4.py (LOT 2). Les anciens tests de FIX-3 sont donc retirés.
 
 
 def _prix_fiable():
@@ -96,29 +76,6 @@ def _prix_fiable():
             "type_prix": "prix observé", "n": 10, "n_exclus": 0, "n_doublons": 0,
             "periode": ("2022", "2026"), "radius_m": 500, "secteur": "Saint-Paul",
             "min": 3500.0, "max": 5500.0}
-
-
-def test_lot5_exclusion_non_verifiable_dite_quand_pas_de_perimetre():
-    """Clause déclenchée + ZAC exclue dans le texte + AUCUN périmètre armé → avertissement explicite."""
-    hyp = Hypotheses.charger("Saint-Paul")
-    eco = {"mixite": True, "mixite_libelle": "logements aidés",
-           "zone_mixite": {"article": "Art. 2", "page": "pp. 106-107",
-                           "zac_exclusions": ["Savane des Tamarins"]},
-           "sdp_programme_m2": 2000.0, "logements_estimes": 25, "terrain_m2": 500.0, "sdp_max_m2": 2000.0}
-    b = compute_bilan(1000.0, 500.0, _prix_fiable(), hyp, contexte_eco=eco)
-    assert any("Exclusion ZAC non vérifiable" in a for a in b.avertissements)
-    assert any("Savane des Tamarins" in a for a in b.avertissements)
-
-
-def test_lot5_perimetre_arme_exclut_la_clause_sans_avertissement():
-    """Si un périmètre ZAC est armé (`zac_mixite_exclue`), la clause est écartée (pas d'avertissement « non vérifiable »)."""
-    hyp = Hypotheses.charger("Saint-Paul")
-    eco = {"mixite": True, "zac_mixite_exclue": True,
-           "zone_mixite": {"article": "Art. 2", "page": "pp. 106-107",
-                           "zac_exclusions": ["Savane des Tamarins"]},
-           "sdp_programme_m2": 2000.0, "logements_estimes": 25, "terrain_m2": 500.0, "sdp_max_m2": 2000.0}
-    b = compute_bilan(1000.0, 500.0, _prix_fiable(), hyp, contexte_eco=eco)
-    assert not any("Exclusion ZAC non vérifiable" in a for a in b.avertissements)
 
 
 # ───────────────────────── LOT 1 — source unique : Calculette & Comparatif portent la mixité ─────────────────────────

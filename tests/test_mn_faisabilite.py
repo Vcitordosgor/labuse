@@ -67,8 +67,11 @@ def test_mixite_source_art2_seulement_si_declaree():
     assert _src_mixite(None) == "Art. 2 règlement PLU"
     assert _src_mixite("Saint-Paul") == "Art. 2 règlement PLU"
     for commune in ("Saint-Denis", "Le Tampon", "Communefictive"):
+        # OUTIL-ASSEMBLAGE-FIX-4 (LOT 3) — le défaut (commune sans source déclarée) est un ESTIMÉ, et ne
+        # nomme plus « (Saint-Paul) » : « Estimé — seuils de mixité non calibrés pour … ».
         assert "Art. 2" not in _src_mixite(commune)
-        assert "défaut" in _src_mixite(commune)
+        assert "Estimé" in _src_mixite(commune)
+        assert "Saint-Paul" not in _src_mixite(commune)
 
 
 # ── P2-47 — fiabilité et disponibilité du bilan viennent du prix NEUF ─────────────────────────

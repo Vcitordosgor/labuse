@@ -548,6 +548,10 @@ def contexte_bilan_servi(session: Session, parcel_id: int, fz=None) -> dict | No
                 "terrain_m2": ctx.surface_m2, "pente_pct": ctx.contraintes.pente_pct,
                 "niveaux_max": fr.get("niveaux_max"),
                 "zone_mixite": _zone_mixite_regle(ctx.commune, ctx.zone, rules),
+                # OUTIL-ASSEMBLAGE-FIX-4 (LOT 3) commune servie (source affichée) ; (LOT 2) exemption ZAC
+                # Savane des Tamarins sur la géographie = zone AU3st (et elle seule).
+                "commune": ctx.commune,
+                "zac_mixite_exclue": _zac_savane_tamarins(ctx.commune, ctx.zone),
                 "places_par_logt": (rules.places_par_logement() if rules else None)})
     bp = {k: r["value"] for k, r in bpmod.resolve(session, secteur).items()}
     bp["prix_m2_neuf"] = ps["prix"]
@@ -590,6 +594,10 @@ def compute_bilan_servi(session: Session, parcel_id: int, fz=None) -> tuple["Bil
                 # OUTIL-ASSEMBLAGE-FIX-3 — règle de mixité de la ZONE (page par livret + obligation de
                 # zone type Saint-Denis Uavap). Source unique lue par `_clause_mixite`.
                 "zone_mixite": _zone_mixite_regle(ctx.commune, ctx.zone, rules),
+                # OUTIL-ASSEMBLAGE-FIX-4 (LOT 3) commune servie (source affichée) ; (LOT 2) exemption ZAC
+                # Savane des Tamarins sur la géographie = zone AU3st (et elle seule).
+                "commune": ctx.commune,
+                "zac_mixite_exclue": _zac_savane_tamarins(ctx.commune, ctx.zone),
                 "places_par_logt": (rules.places_par_logement() if rules else None)})
     bp = {k: r["value"] for k, r in bpmod.resolve(session, secteur).items()}
     bp["prix_m2_neuf"] = ps["prix"]
@@ -645,25 +653,51 @@ def _zone_mixite_regle(commune: str | None, zone: str | None, rules) -> dict | N
                         leaf = log
         except Exception:  # noqa: BLE001 — l'absence de transcription ne casse pas le bilan
             pass
-    if not _ok(leaf):
+    # OUTIL-ASSEMBLAGE-FIX-4 (LOT 1) — à Saint-Paul, l'Art. 2 de mixité est RÉPÉTÉ à l'identique dans
+    # chaque livret de bassin de vie, à une page connue (vérifiée au PDF 97415). La page AFFICHÉE vient
+    # donc du LIVRET de la zone (chiffre après U/AU : 1→pp.14-15, 2→p.67, 3→pp.106-107, 4→p.168, 5→p.214,
+    # 6→p.274), MÊME pour les zones « sans leaf » (armées par un secteur SMS) — fin du repli commune-wide
+    # « pp. 14-15 ». Si la zone n'appartient à aucun des 6 livrets (N/A/Usdu…), aucune page n'est citée.
+    _sp = bool(commune) and (commune or "").strip().lower().startswith("saint-paul")
+    sp_page = _saint_paul_mixite_page(zone) if _sp else None
+    if not _ok(leaf) and not sp_page:
         return None
-    # OUTIL-ASSEMBLAGE-FIX-3 (LOT 5) — EXCLUSIONS ZAC citées dans le texte de la zone (« non applicable
-    # dans la ZAC Savane des Tamarins », « ne s'applique pas dans la ZAC Marie Caze et la ZAC Sans Souci »).
-    # On en extrait les NOMS : le bilan dira que l'exclusion n'est PAS vérifiable faute de périmètre ZAC
-    # publié en donnée ouverte (aucune couche ZAC « Savane des Tamarins » en base — contrôle 24/11).
-    _txt = (str(leaf.get("condition") or "") + " " + str(leaf.get("citation") or ""))
-    zac_exclusions = []
-    if _re.search(r"zac", _txt, _re.I) and _re.search(r"non\s+applicable|ne\s+s['’]applique\s+pas|excepté", _txt, _re.I):
-        # un nom de ZAC = un mot Capitalisé, suivi de mots Capitalisés ou de particules de nom
-        # (de/des/du/d') — on s'arrête donc à « et », « dans », « (», « ZAC » (séparateur de la ZAC suivante).
-        for mm in _re.finditer(r"ZAC\s+([A-ZÉÈÀ][\w'’\-]*(?:\s+(?:de[s]?|du|d['’]|[A-ZÉÈÀ][\w'’\-]*))*)", _txt):
-            nom = mm.group(1).strip(" .;,")
-            if nom and nom not in zac_exclusions:
-                zac_exclusions.append(nom)
-    return {"article": leaf.get("article"), "page": _page(leaf.get("citation"), leaf.get("page_pdf")),
-            "page_pdf": leaf.get("page_pdf"), "seuil_logements": leaf.get("seuil_logements"),
-            "quota_pct": leaf.get("quota_pct"), "produits": leaf.get("produits"),
-            "citation": leaf.get("citation"), "zac_exclusions": zac_exclusions}
+    if _ok(leaf):
+        # Saint-Paul : la page du livret FAIT AUTORITÉ (page de l'Art. 2, pas celle d'une sous-destination) ;
+        # ailleurs (Saint-Denis…) : la page du leaf (ex. Uavap.2 p. 27).
+        page = sp_page if _sp else _page(leaf.get("citation"), leaf.get("page_pdf"))
+        return {"article": leaf.get("article"), "page": page,
+                "page_pdf": leaf.get("page_pdf"), "seuil_logements": leaf.get("seuil_logements"),
+                "quota_pct": leaf.get("quota_pct"), "produits": leaf.get("produits"),
+                "citation": leaf.get("citation")}
+    # Saint-Paul sans leaf (zone armée par un secteur SMS) : page du livret seule ; l'article reste
+    # l'Art. 2 commune-wide (repli `hyp.mixite_article`), ce qui est le règlement de Saint-Paul.
+    return {"article": None, "page": sp_page, "page_pdf": None, "seuil_logements": None,
+            "quota_pct": None, "produits": None, "citation": None}
+
+
+#: OUTIL-ASSEMBLAGE-FIX-4 (LOT 1) — page de l'Art. 2 de mixité par LIVRET de bassin de vie de Saint-Paul,
+#: VÉRIFIÉE dans le PDF officiel 97415_reglement_20251217 : livret 1 (Saint-Paul centre) la clause couvre
+#: pp. 14-15 ; livret 2 (Saint-Gilles) p. 67 ; livret 3 (Plateau Caillou) pp. 106-107 ; livret 4 (La
+#: Plaine – Bois de Nèfles) p. 168 ; livret 5 (La Saline) p. 214 ; livret 6 (Guillaume) p. 274.
+_SP_LIVRET_PAGE = {1: "pp. 14-15", 2: "p. 67", 3: "pp. 106-107", 4: "p. 168", 5: "p. 214", 6: "p. 274"}
+
+
+def _saint_paul_mixite_page(zone: str | None) -> str | None:
+    """Page de l'Art. 2 de mixité du LIVRET de la zone de Saint-Paul (le chiffre après U/AU donne le
+    bassin de vie). None si la zone n'est dans aucun des 6 livrets (N/A/Usdu…) → aucune page citée."""
+    import re as _re
+    m = _re.match(r"^A?U([1-6])", (zone or "").strip())
+    return _SP_LIVRET_PAGE.get(int(m.group(1))) if m else None
+
+
+def _zac_savane_tamarins(commune: str | None, zone: str | None) -> bool:
+    """OUTIL-ASSEMBLAGE-FIX-4 (LOT 2) — périmètre de la ZAC Savane des Tamarins = la zone PLU `AU3st` de
+    Saint-Paul (156 parcelles en base ; l'Art. 2 p. 107 : « Ces dispositions ne s'appliquent pas dans la
+    ZAC Savane des Tamarins »). Les parcelles de CETTE zone — et elles seules — sont exemptées de la clause
+    (programme de logements aidés calculé à l'échelle de l'opération)."""
+    return (bool(commune) and (commune or "").strip().lower().startswith("saint-paul")
+            and (zone or "").strip() == "AU3st")
 
 
 def _clause_mixite(eco: dict, hyp: Hypotheses) -> dict:
@@ -689,20 +723,30 @@ def _clause_mixite(eco: dict, hyp: Hypotheses) -> dict:
     s_log = float(hyp.mixite_logements_seuil)
     s_ter = float(hyp.mixite_terrain_seuil_m2)
     s_haut = float(getattr(hyp, "mixite_sdp_seuil_haut_m2", 0.0) or 0.0)
-    # OUTIL-ASSEMBLAGE-FIX-3 (LOT 2) — la citation AFFICHÉE (article + page) vient de la ZONE de la
-    # parcelle (`eco["zone_mixite"]`, lue du YAML par zone / vérifiée au PDF), pas d'une page commune-wide :
-    # l'Art. 2 est répété par livret de bassin (U1 p. 14, U3/AU3 p. 106…). Repli sur l'hypothèse commune.
+    # OUTIL-ASSEMBLAGE-FIX-3/4 (LOT 2/1) — la citation AFFICHÉE (article + page) vient de la ZONE de la
+    # parcelle (`eco["zone_mixite"]`, page du LIVRET à Saint-Paul, vérifiée au PDF). FIX-4 LOT 1 : PLUS de
+    # repli `hyp.mixite_page` (« pp. 14-15 » commune-wide) — si la zone n'a pas de page connue, on n'en
+    # cite AUCUNE plutôt qu'une fausse. L'article garde le repli commune (Art. 2 de la commune servie).
     _zm = eco.get("zone_mixite") or {}
-    _art = _zm.get("article") or getattr(hyp, "mixite_article", None) or hyp.mixite_source_ref
-    _page = _zm.get("page") or getattr(hyp, "mixite_page", None)
+    _commune = eco.get("commune")
+    _art = _zm.get("article") or getattr(hyp, "mixite_article", None)
+    _page = _zm.get("page")   # FIX-4 LOT 1 — aucune page inventée (fin du repli commune-wide « pp. 14-15 »)
     _quota = float(hyp.pct_lls) if hyp.pct_lls else None
+    # OUTIL-ASSEMBLAGE-FIX-4 (LOT 3) — la source AFFICHÉE cite le règlement de SA commune. Une obligation
+    # de ZONE (Saint-Denis : `seuil_logements` + article) cite « Règlement du PLU de {commune} — {article} »,
+    # jamais le barème « par défaut (Saint-Paul) » d'une autre commune.
+    if _zm.get("seuil_logements") and _zm.get("article"):
+        _src = (f"Règlement du PLU de {_commune} — {_zm['article']}" if _commune
+                else f"Règlement du PLU — {_zm['article']}")
+    else:
+        _src = hyp.mixite_source_ref
 
     def _rc(declenchee, regime, critere, detail, produits=None, quota=None):
-        """Construit le verdict + la citation AFFICHÉE (article/page/quota/produits)."""
+        """Construit le verdict + la citation AFFICHÉE (article/page/quota/produits/source)."""
         return {"declenchee": declenchee, "regime": regime, "critere": critere, "detail": detail,
                 "quota_pct": ((quota if quota is not None else _quota) if declenchee else None),
                 "produits": (produits if declenchee else None),
-                "article": _art, "page": _page, "source": hyp.mixite_source_ref}
+                "article": _art, "page": _page, "source": _src}
 
     # OUTIL-ASSEMBLAGE-FIX-3 (LOT 3) — obligation de mixité portée par la ZONE (pas par un secteur SMS),
     # forme « nombre de logements » : Saint-Denis Uavap.2 (p. 27) « 30 logements collectif et plus →
@@ -724,13 +768,15 @@ def _clause_mixite(eco: dict, hyp: Hypotheses) -> dict:
                    f"programme de ~{logements:.0f} logements < seuil {s_log_zone:.0f} (habitat collectif)")
 
     if s_haut > 0:   # régime À BANDES (Saint-Paul) — déclenchement sur le PROGRAMME chiffré
-        # OUTIL-ASSEMBLAGE-FIX-2 (LOT 2, pt 4) — exclusion ZAC Savane des Tamarins (Art. 2, p. 15 :
-        # « ne s'applique pas dans la ZAC Savane des Tamarins, programme calculé à l'échelle de
-        # l'opération »). Garde codée + citée ; alimentée par `eco["zac_mixite_exclue"]` (aucun périmètre
-        # ZAC publié en donnée ouverte aujourd'hui → inerte sur les parcelles réelles, 0 impact mesuré).
+        # OUTIL-ASSEMBLAGE-FIX-4 (LOT 2) — exemption ZAC Savane des Tamarins (Art. 2, PDF p. 107 : « Ces
+        # dispositions ne s'appliquent pas dans la ZAC Savane des Tamarins où le programme de logements
+        # aidés est calculé à l'échelle de l'opération »). Armée pour la zone AU3st (périmètre de la ZAC,
+        # 156 parcelles) par les context builders — et elle seule. La citation (article/page) suit le livret.
         if eco.get("zac_mixite_exclue"):
+            _cite = ", ".join(x for x in (_art, _page) if x)
             return _rc(False, None, None,
-                       f"ZAC Savane des Tamarins — clause non applicable ({_art}, {_page}) : "
+                       f"ZAC Savane des Tamarins — clause non applicable"
+                       f"{(' (' + _cite + ')') if _cite else ''} : "
                        "programme de logements aidés calculé à l'échelle de l'opération.")
         # Le régime se décide sur la SDP du programme CHIFFRÉ. Le critère TERRAIN (> 6 000 m²) reste un
         # déclencheur réglementaire indépendant (plein régime). OUTIL-ASSEMBLAGE-FIX-2 (LOT 2, pt 3) —
@@ -901,9 +947,15 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     mixite, pluvial = bool(eco.get("mixite")) or _zone_oblig, bool(eco.get("pluvial"))
     p_lls = min(1.0, max(0.0, float(hyp.pct_lls) / 100.0))
     # M-N P1-13 — source AFFICHÉE des seuils de mixité : la référence Sourcée SEULEMENT si le YAML
-    # de la commune servie la DÉCLARE (mixite_source_ref) ; sinon défaut → jamais l'Art. 2 d'une
-    # autre commune (un Estimé emprunté ne se présente pas en Sourcé).
-    mixite_src = hyp.mixite_source_ref or "Estimé — seuils de mixité par défaut (Saint-Paul)"
+    # de la commune servie la DÉCLARE (mixite_source_ref) ; sinon défaut.
+    # OUTIL-ASSEMBLAGE-FIX-4 (LOT 3) — le défaut ne nomme PLUS « (Saint-Paul) » quand il est servi hors de
+    # Saint-Paul (c'était trompeur sur un document d'une autre commune) : il dit que les seuils sont estimés
+    # et non calibrés pour LA commune servie. Les obligations de zone (Saint-Denis) portent, elles, leur
+    # propre source « Règlement du PLU de {commune} » posée dans `_clause_mixite` (clause.source).
+    _commune_srv = (eco.get("commune") or "").strip()
+    mixite_src = hyp.mixite_source_ref or (
+        f"Estimé — seuils de mixité non calibrés pour {_commune_srv}" if _commune_srv
+        else "Estimé — seuils de mixité non calibrés pour cette commune")
     # Clause de mixité : déclenchée seulement si le PROGRAMME franchit un seuil de l'Art. 2.
     # OUTIL-ASSEMBLAGE-FIX-1 (LOT 3) — pour la commune à régime à bandes, le déclenchement porte sur le
     # PROGRAMME CHIFFRÉ (surface vendable ÷ rendement), pas le gabarit théorique. On l'injecte ici (le
@@ -986,20 +1038,11 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                 f"Secteur de mixité sociale ({lib_sms}) — programme au-dessus des seuils estimés "
                 f"({clause['critere']}). Taux de logements aidés non calibré pour cette commune "
                 f"(seuils : {mixite_src}) → impact non chiffré.")
-        # OUTIL-ASSEMBLAGE-FIX-3 (LOT 5) — EXCLUSION ZAC NON VÉRIFIABLE. Le texte de la zone exclut la
-        # clause dans certaines ZAC (Savane des Tamarins, Marie Caze, Sans Souci…), mais AUCUN périmètre
-        # ZAC n'est publié en donnée ouverte (contrôle base 24/11 : seuls des POI/arrêts homonymes). Tant
-        # que `eco["zac_mixite_exclue"]` n'est pas armé par un périmètre, on ne PEUT PAS vérifier si la
-        # parcelle est dans la ZAC : on le DIT (ni silence, ni exclusion abusive) au lieu d'appliquer la
-        # clause comme si de rien n'était. Quand déclenchée seulement — sinon l'exclusion est sans objet.
-        _zm_excl = (eco.get("zone_mixite") or {}).get("zac_exclusions") or []
-        if declenchee and _zm_excl and not eco.get("zac_mixite_exclue"):
-            _noms = ", ".join(f"ZAC {n}" for n in _zm_excl)
-            avert.append(
-                f"Exclusion ZAC non vérifiable : le règlement de la zone exclut cette obligation dans "
-                f"{_noms} (programme calculé à l'échelle de l'opération), mais aucun périmètre de ZAC "
-                "n'est publié en donnée ouverte — impossible de confirmer si la parcelle y est incluse. "
-                "Si elle l'est, la clause ne s'applique pas ; à vérifier auprès de la commune.")
+        # OUTIL-ASSEMBLAGE-FIX-4 (LOT 2) — l'avertissement « exclusion ZAC non vérifiable » est RETIRÉ : le
+        # périmètre de la ZAC Savane des Tamarins EST connu (= la zone PLU AU3st, 156 parcelles en base,
+        # Art. 2 PDF p. 107). L'exemption est désormais posée SUR LA GÉOGRAPHIE (`eco["zac_mixite_exclue"]`
+        # armé pour AU3st par les context builders, qui déclenche la branche d'exemption de `_clause_mixite`)
+        # et ne contamine donc plus les parcelles U3/AU3c hors ZAC.
     # Coût de construction rapporté à la SURFACE DE PLANCHER. Coût au m² piloté par secteur
     # (cout_construction_m2_sdp) si calibré ; sinon fourchette YAML bas/haut.
     # M128-3-§1 : la SDP RETENUE au bilan = vendable retenu ÷ rendement (coef_rendement, SOURCE UNIQUE

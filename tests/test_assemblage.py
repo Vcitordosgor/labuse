@@ -255,14 +255,17 @@ def test_fix2_cv_affiche_obligation_mixite():
 
 
 def test_fix2_bande_1500_1800_porte_regle_article_page():
-    """Point 1 : une parcelle en bande 1 500–1 800 → la clause porte la RÈGLE (quota %, article, page)."""
+    """Point 1 : une parcelle en bande 1 500–1 800 → la clause porte la RÈGLE (quota %, article, page).
+    OUTIL-ASSEMBLAGE-FIX-4 (LOT 1) : la page vient de la ZONE (`zone_mixite`, page du livret) — plus de
+    repli commune-wide « pp. 14-15 » ; on fournit donc le `zone_mixite` comme le fait le contexte servi."""
     from labuse.faisabilite.bilan import _clause_mixite
     from labuse.faisabilite.engine import Hypotheses
     h = Hypotheses.charger("Saint-Paul")
     c = _clause_mixite({"sdp_max_m2": 3000, "sdp_programme_m2": 1600, "logements_estimes": 8,
-                        "terrain_m2": 2000}, h)
+                        "terrain_m2": 2000,
+                        "zone_mixite": {"article": "Art. 2 (zones U1 à U6)", "page": "pp. 106-107"}}, h)
     assert c["regime"] == "intermediaire"
-    assert c.get("quota_pct") == 30 and "2" in str(c.get("article") or "") and c.get("page")
+    assert c.get("quota_pct") == 30 and "2" in str(c.get("article") or "") and c.get("page") == "pp. 106-107"
 
 
 def test_fix2_vingt_logements_sous_1500_declenche():
