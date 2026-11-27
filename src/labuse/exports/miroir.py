@@ -1477,7 +1477,7 @@ _COVER_TUILES = [
     # à l'Estimer sur la même parcelle. Les « vigilances » (notion plus large : servitudes, sols, SUP…)
     # gardent leur propre libellé en §5 (ligne « Vigilances », n_vigilances) et ne s'affichent jamais
     # sous « Risques ». Rendu spécialement dans la boucle (valeur lue sur la fiche, pas via `valeurs`).
-    ("n_hazards", "Risques", lambda v: esc("aucun aléa" if not v else f"{int(v)} aléa{'s' if v > 1 else ''}")),
+    ("n_hazards", "Aléas naturels", lambda v: esc("aucun aléa" if not v else f"{int(v)} aléa{'s' if v > 1 else ''}")),
     ("sdp_residuelle_m2", "SDP restante (bâti conservé)", lambda v: fmt_m2(v)),
 ]
 

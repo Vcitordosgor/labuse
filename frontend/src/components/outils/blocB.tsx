@@ -1,3 +1,4 @@
+import { useContraintesParcelle } from '../../lib/contraintesParcelle'
 /** BLOC B · Partie 2 — les outils O sans écran (verdict Vic sur maquettes docs/mockups/).
  *  Chaque module vit dans le shell violet du registre ; tokens seulement, wording boussole
  *  (Sourcé/Estimé, « non couvert » dit — jamais un faux RAS). */
@@ -26,22 +27,6 @@ function Banner({ children }: { children: React.ReactNode }) {
 
 /* ───────────── O5 — SERVITUDES INVISIBLES (S46) ───────────── */
 
-type Servitudes = {
-  idu: string; n: number; synthese: string
-  servitudes: { categorie: string; effet: string; source: string; date: string | null; redhibitoire?: boolean }[]
-  // OUTILS-P0-1 (#2) — chaque famille prend un état parmi quatre ; l'écran rend trois listes dérivées :
-  //  · verifie = « Aucune intersection détectée » (source dont la couverture de la commune est démontrée) ;
-  //  · couverture_inconnue = « Couverture inconnue » (rien remonté mais couverture non démontrée) ;
-  //  · lecture_indisponible = « Lecture indisponible » (lecture échouée — ex. radar PLU en panne).
-  verifie?: string[]
-  couverture_inconnue?: string[]
-  lecture_indisponible?: string[]
-  plu_radar_ok?: boolean
-  // RETOURS-27 (pt 2) — procédure PLU en cours (carte dédiée) ; null si aucune n'est servie.
-  procedure_plu?: { libelle: string; stade?: string | null; source?: string | null; date?: string | null; date_constat?: string | null } | null
-  non_couvert: string[]
-}
-
 export function O5Servitudes() {
   const { selectedIdu, select, focusParcelle } = useApp()
   const [idu, setIdu] = useState(selectedIdu ?? '')
@@ -60,11 +45,7 @@ export function O5Servitudes() {
   // (PERMIS-CHECK-2) : `select(null)` AVANT `focusParcelle` — la carte cible `selectedIdu ?? focusIdu`,
   // une sélection périmée masquerait sinon le focus posé par la barre.
   const allerA = (id: string) => { select(null); focusParcelle(id); setIdu(id) }
-  const q = useQuery({
-    queryKey: ['o5', idu],
-    queryFn: () => jfetch<Servitudes>(`/servitudes-invisibles/${idu.trim()}`),
-    enabled: idu.trim().length === 14,
-  })
+  const q = useContraintesParcelle(idu)
   const d = q.data
   return (
     <>
@@ -81,16 +62,11 @@ export function O5Servitudes() {
               des voies » catégories 2 et 4) ne font plus DEUX cartes identiques mais UNE, qui liste ses
               effets (« catégorie 2 · catégorie 4 »). Dédoublonne aussi les effets strictement identiques. */}
           {(() => {
-            const groupes = Object.values((d.servitudes as { categorie: string; effet: string; source?: string; date?: string; redhibitoire?: boolean }[])
-              .reduce((acc, s) => {
-                const g = acc[s.categorie] ?? (acc[s.categorie] = { categorie: s.categorie, source: s.source, date: s.date, effets: [] as string[], redhibitoire: false })
-                if (s.effet && !g.effets.includes(s.effet)) g.effets.push(s.effet)
-                // PPR-UNIQUE-1 (D-035) — une contrainte rédhibitoire (zone rouge PPR = interdiction)
-                // teinte sa carte en rouge et remonte en tête, au lieu d'une carte grise indistincte.
-                if (s.redhibitoire) g.redhibitoire = true
-                return acc
-              }, {} as Record<string, { categorie: string; source?: string; date?: string; effets: string[]; redhibitoire: boolean }>))
-              .sort((a, b) => Number(b.redhibitoire) - Number(a.redhibitoire))
+            const groupes = d.groupes.map(([premiere, ...autres]) => ({
+              ...premiere,
+              effets: [...new Set([premiere, ...autres].map(a => a.effet).filter(Boolean))],
+              redhibitoire: [premiere, ...autres].some(a => a.redhibitoire),
+            }))
             return (<>
               {/* OUTILS-REFONTE-1 (9a) — compteur « N contrainte(s) relevée(s) sur la parcelle ». */}
               <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">

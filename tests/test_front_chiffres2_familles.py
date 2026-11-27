@@ -282,11 +282,11 @@ def test_f03_permis_coupure_et_sommeil_servis():
 def test_f01e_risque_synthese_servie():
     """F01e — la SYNTHÈSE du niveau de risque des aléas (« rédhibitoire »/« fort ») n'est plus
     dérivée au front en inspectant les niveaux : le back la décide (`_aleas_block` → `synthese`,
-    moteur qui ordonne la sévérité) et la tuile Risques lit `f.aleas?.synthese`. (Le repli
+    moteur qui ordonne la sévérité) et la section des aléas lit `f.aleas?.synthese`. (Le repli
     « vigilance(s) »/« rien à signaler », lui, reste un décompte inhérent = présentation.)"""
     app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
     assert '"synthese": synthese' in app
-    fi = (SRC / "components/fiche/Fiche.tsx").read_text(encoding="utf-8")
+    fi = (SRC / "components/fiche/risques.tsx").read_text(encoding="utf-8")
     assert "f.aleas?.synthese === 'redhibitoire'" in fi and "f.aleas?.synthese === 'fort'" in fi
     assert ".test(a.niveau" not in fi, "niveau d'aléa réinspecté au front pour la synthèse (F01e)"
 

@@ -978,7 +978,7 @@ export interface PotentielABatir {
 }
 
 export interface PotentielTransformation extends Indisponible {
-  niveau: 'fort' | 'modere' | 'faible' | 'nul' | 'indetermine' | 'differe' | 'exclu'
+  niveau: 'fort' | 'modere' | 'faible' | 'nul' | 'indetermine' | 'differe' | 'exclu' | 'ppr_partiel'
   libelle: string
   // CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — surface (contenance) QU'A UTILISÉE le run pour la SDP, la
   // surface cadastrale actuelle, et une note datée si elles divergent (jamais de ratio vif/gelé muet).

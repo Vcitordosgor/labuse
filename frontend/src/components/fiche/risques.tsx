@@ -1,14 +1,5 @@
-/**
- * fiche/risques.tsx — RETOURS-11F4 (découpe de Fiche.tsx, section F6).
- * « Risques et protections », restructurée (cible F6) :
- *  - compteur VRAI (nombre de couches réellement évaluées = vigilances + « sans objet »),
- *  - VIGILANCES D'ABORD, marquées d'une puce ambre ; les « rien à signaler » repliés
- *    (« N couches sans objet — déplier ») pour ne plus noyer les vraies alertes,
- *  - SUP (PM1/AC1/I4/EL7…) rapatriées d'Urbanisme via l'onglet backend (served_cascade `_ONGLET`),
- *    servies par famille dans le libellé,
- *  - ligne HT la plus proche = une CONTRAINTE (distance), seuil de pertinence appliqué en amont (F0).
- * Auto-suffisante : re-dérive ses lignes depuis `f.lines`. Cycle-free (n'importe que primitives).
- */
+/** Risques réglementaires du diagnostic, puis détail des couches environnementales de la fiche. */
+import type { ContraintesParcelle } from '../../lib/contraintesParcelle'
 import type { Fiche } from '../../lib/types'
 import { IC, RefDrawer, Line, GroupLabel, FactNote } from './primitives'
 import { Badge } from '../ui/Badge'
@@ -22,25 +13,29 @@ const ALEA_CRAN: Record<string, 1 | 2 | 3> = { faible: 1, modéré: 2, modere: 2
 const aleaCran = (niveau: string | null | undefined, redhibitoire: boolean): 0 | 1 | 2 | 3 =>
   redhibitoire ? 3 : (niveau ? (ALEA_CRAN[niveau.toLowerCase()] ?? 1) : 0)
 
-export function RisquesSection({ f }: { f: Fiche; idu: string }) {
+export function RisquesSection({ f, contraintes, etat }: {
+  f: Fiche
+  contraintes?: ContraintesParcelle
+  etat: string
+}) {
+  const groupes = contraintes?.groupes
+  const n = groupes?.length
+  const resume = n == null ? etat : `${n} contrainte${n > 1 ? 's relevées' : ' relevée'}`
+
   const lignes = f.lines.filter((l) => l.onglet === 'risques')
-  // FICHE-ORFEVRERIE-1 (Lot D, pt 29) — le BASSIN VERSANT est un CONTEXTE hydrographique, pas une
-  // vigilance (pas une contrainte opposable) : il sort des vigilances (bandeau/badge passent à 3) et
-  // devient une ligne d'information. Il reste compté parmi les couches évaluées.
+  // Le bassin versant est présenté à part comme contexte hydrographique.
   const vigilancesAll = lignes.filter((l) => l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE')
   const bassinVersant = vigilancesAll.find((l) => l.layer === 'bassin_versant') ?? null
   const vigilances = vigilancesAll.filter((l) => l.layer !== 'bassin_versant')
   const inconnues = lignes.filter((l) => l.result === 'UNKNOWN')
   const sansObjet = lignes.filter((l) => l.result === 'PASS')
-  // compteur VRAI : toutes les couches réellement évaluées (vigilance + info + sans objet + inconnu).
-  const evaluees = vigilances.length + sansObjet.length + inconnues.length + (bassinVersant ? 1 : 0)
   // FICHE-1 lot 3 — les ALÉAS en détail (f.aleas) remplacent les lignes brutes « risques » (layer
   // 'risques') : nature, niveau, part, référence PPR. Les AUTRES vigilances (accès, sol, SUP…)
-  // restent affichées telles quelles. Même moteur que Pièges et risques (cascade servie).
+  // restent affichées telles quelles.
   const aleas = f.aleas?.liste ?? []
   // NU-3-J#4 / NU-G-014 — le COMPTE d'aléas affiché = familles DISTINCTES (`n_hazards`), le MÊME
   // compteur que l'outil « Estimer » et le PDF ; la liste détaillée garde ses lignes par niveau.
-  const nHazards = f.aleas?.n_hazards ?? aleas.length
+  const nHazards = f.aleas?.n_hazards
   const sols = f.sols
   // FICHE-ORFEVRERIE-1 (Lot B, pt 14) — les SERVITUDES d'utilité publique (SUP, layer 'sup') vivent
   // UNE fois, en §Urbanisme (« Dispositifs et périmètres ») : ici on ne les répète pas, on RENVOIE.
@@ -48,33 +43,33 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
   const aUneSup = vigilances.some((l) => l.layer === 'sup')
   return (
     <RefDrawer id="risques" icon={IC.risques} name="Risques et environnement"
-      context={`${evaluees} couche${evaluees > 1 ? 's' : ''} évaluée${evaluees > 1 ? 's' : ''}`}
-      value={vigilances.length === 0
-        ? <Badge ton="vert">rien à signaler</Badge>
-        : <Badge ton="ambre">{vigilances.length} vigilance{vigilances.length > 1 ? 's' : ''}</Badge>}>
-      {/* FICHE-FIX-4 (Lot G) — la barre « N couches ▬▬▬ » en tête (micro) est RETIRÉE : doublon du
-          sous-titre « N couches évaluées ». */}
+      context="Pièges et risques"
+      value={<Badge ton={n ? 'ambre' : 'neutre'}>{resume}</Badge>}>
       <div className="flex flex-col gap-3">
         {/* FICHE-FIX-4 (Lot G) — Verdict LISIBLE : l'aléa dominant (nature + niveau + part) puis le
             fait marquant (ancien site industriel CASIAS). Réagence des faits servis, aucun recalcul. */}
         {(() => {
           const dom = aleas.find((a) => a.niveau) ?? aleas[0]
           const cs = sols?.casias
-          const reponse = vigilances.length === 0 ? 'Rien à signaler'
-            : dom ? `${fmtAlea(dom.nature)}${dom.niveau ? ` ${fmtIntensite(dom.niveau)}` : ''}${dom.part_pct != null ? ` sur ${dom.part_pct} %` : ''}`
-            : `${vigilances.length} vigilance${vigilances.length > 1 ? 's' : ''}`
           const ctx = [
+            f.aleas?.synthese === 'redhibitoire' ? 'Aléa rédhibitoire' : f.aleas?.synthese === 'fort' ? 'Aléa fort' : null,
+            dom ? `${fmtAlea(dom.nature)}${dom.niveau ? ' ' + fmtIntensite(dom.niveau) : ''}${dom.part_pct != null ? ' sur ' + dom.part_pct + ' %' : ''}` : null,
             cs ? `ancien site industriel ${cs.sur_place ? 'sur la parcelle' : `à ${cs.distance_m} m`}` : null,
-            nHazards > 1 ? `${nHazards} aléas au total` : null,
+            nHazards != null && nHazards > 1 ? `${nHazards} aléas au total` : null,
           ].filter(Boolean).join(' · ') || undefined
-          return <Verdict ton={vigilances.length === 0 ? 'vert' : 'ambre'} reponse={reponse} contexte={ctx} />
+          return <Verdict ton={n ? 'ambre' : 'gris'} reponse={`Pièges et risques · ${resume}`} contexte={ctx} />
         })()}
+        {!!groupes?.length && <ul className="list-disc pl-5 text-xs">{groupes.map(([alerte]) =>
+          <li key={alerte.categorie}>{alerte.categorie}</li>)}</ul>}
+        {!!contraintes?.lecture_indisponible?.length && <FactNote>Lecture indisponible · {contraintes.lecture_indisponible.join(', ')}</FactNote>}
+        {!!contraintes?.couverture_inconnue?.length && <FactNote>Couverture inconnue · {contraintes.couverture_inconnue.join(', ')}</FactNote>}
+        {!!contraintes?.non_couvert?.length && <FactNote>Non couvert · {contraintes.non_couvert.join(', ')}</FactNote>}
         {/* FICHE-1 lot 3 — ALÉAS : nature · niveau (Jauge3, 3 crans) · part de la parcelle · réf PPR.
             Les aléas sans niveau (PPR — zone bleue) portent une pastille au lieu des crans. Références
-            PPR + sources consolidées en note (aucune donnée perdue). Compte n_vigilances au-dessus. */}
+            PPR + sources consolidées en note (aucune donnée perdue). */}
         {aleas.length > 0 && (
           <div data-aleas-detail>
-            <GroupLabel>Aléas ({nHazards})</GroupLabel>
+            <GroupLabel>Aléas naturels{nHazards != null ? ` (${nHazards})` : ''}</GroupLabel>
             {aleas.map((a, i) => a.niveau != null || a.redhibitoire ? (
               <Jauge3 key={i} niveau={aleaCran(a.niveau, a.redhibitoire)}
                 label={<>{fmtAlea(a.nature)}{a.niveau ? <small className="ml-1 text-txt-mut"> niveau {fmtIntensite(a.niveau)}</small> : null}{a.redhibitoire && <Badge ton="ambre" className="ml-1.5">rédhibitoire</Badge>}</>}
@@ -278,10 +273,6 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
             </div>
           </details>
         )}
-        {lignes.length === 0 && <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
-        {/* RECETTE-PROD-1 (A3) — bouton « Pièges & risques » RETIRÉ : l'outil ne fait que relire les
-            MÊMES couches que cette section (aléas, PPR, bruit, pente, SUP…), il n'apporte aucune
-            information absente → règle Vic « un bouton n'est gardé que s'il ajoute du neuf ». */}
       </div>
     </RefDrawer>
   )

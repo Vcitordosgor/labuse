@@ -1,3 +1,4 @@
+import { useContraintesParcelle } from '../../lib/contraintesParcelle'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
@@ -497,6 +498,9 @@ export function Fiche({ idu }: { idu: string }) {
   const [iaOuvert, setIaOuvert] = useState<'aucun' | 'question'>('aucun')
   useEffect(() => { setIaOuvert('aucun') }, [idu])  // eslint-disable-line react-hooks/exhaustive-deps
   const { data: f, isLoading, isError, error, refetch } = useQuery({ queryKey: ['fiche', idu], queryFn: () => getFiche(idu) })
+  const contraintes = useContraintesParcelle(idu)
+  const nbContraintes = contraintes.data?.groupes.length
+  const etatContraintes = contraintes.isLoading ? 'Chargement…' : 'Indisponible'
   // RECETTE-8 W22 — l'exposition (orientation + pente) remplace la vue mer dans la tête de fiche.
   // Calcul lazy (MNT RGE ALTI + gdaldem ~0,5 s) : la tuile affiche « … » puis la valeur.
   const expo = useQuery({ queryKey: ['exposition', idu], queryFn: () => getParcelExposition(idu),
@@ -709,7 +713,7 @@ export function Fiche({ idu }: { idu: string }) {
   // cascade (moteur zone_servie, famille via labuse_zone_famille sur le subtype GPU) : même valeur
   // que le Pré-dossier et la garde SDP résiduelle. Le front ne dérive plus par regex sur le libellé.
   const zoneFamille = f?.reglement_plu?.zone_famille ?? null
-  const reglesSdp = f?.potentiel_transformation?.sdp_residuelle_m2
+  const reglesSdp = f?.surface_incertaine ? null : f?.potentiel_transformation?.sdp_residuelle_m2
   // RECETTE-PROD-1 (A1) — LECTURE UNIQUE DU BÂTI pour toute la fiche (tuile, Bâti, Urbanisme, Potentiel) :
   // même règle que BatiBlock (leBien.tsx:58). Sinon la fiche disait « bâti présent » / « bâti conservé »
   // (dérivés de reglesSdp>0) sur une parcelle que ses propres badges déclarent terrain nu (nb=0, emprise=0).
@@ -736,6 +740,17 @@ export function Fiche({ idu }: { idu: string }) {
   // ce qui corrige les libellés-collision (cf. CHANGEMENTS.csv). `null` (famille inconnue) ≠ non
   // constructible : on ne barre pas une parcelle dont la zone n'est pas publiée.
   const nonConstructible = f?.reglement_plu?.constructible_neuf === false
+  const motifSdpAbsente = f?.surface_incertaine ? 'surface incertaine'
+    : f?.potentiel_transformation?.niveau === 'ppr_partiel' ? 'à étudier hors zone rouge'
+    : 'capacité non chiffrée'
+  const tuileSdp = {
+    v: reglesSdp == null ? '—' : `${fmtInt(reglesSdp)} m²`,
+    s: reglesSdp == null ? motifSdpAbsente : reglesSdp === 0 ? 'pas de potentiel résiduel'
+      : bati ? 'bâti conservé' : 'terrain libre',
+    vide: reglesSdp == null,
+    i: f?.surface_incertaine ? f.surface_incertaine_libelle ?? 'Surface du terrain incertaine.'
+      : f?.potentiel_transformation?.libelle ?? 'Surface de plancher restant à bâtir en conservant les bâtiments existants.',
+  }
   // CHIRURGICAL-FIX-1 (LOT A / LOT H pt 10) — le VERDICT servi (potentiel_a_batir) prime sur la seule
   // famille de zone : une parcelle en zone U mais non retenue pour une AUTRE raison (habitat interdit,
   // zone rouge) ne doit PAS afficher « PLU · constructible » dans la tuile Zone — le libellé
@@ -1000,17 +1015,6 @@ export function Fiche({ idu }: { idu: string }) {
           // (« RGE ALTI · 25 % »). La bande verbale (modérée/forte) reste au tiroir Terrain.
           const pentePct = pente != null ? Math.round(Math.tan(pente * Math.PI / 180) * 100) : null
           const penteSous = pentePct != null ? `RGE ALTI · ${pentePct} %` : 'RGE ALTI'
-          // FIX-P-1 (P-02 / J#4) — la tuile « Risques » compte les ALÉAS DISTINCTS (`aleas.n_hazards`,
-          // fonction unique `distinct_hazards`), le MÊME compteur et le MÊME mot (« aléa ») que l'outil
-          // « Estimer » et le Dossier PDF — fin de « 5 vigilances » ici vs « 2 aléas » à l'Estimer. Les
-          // VIGILANCES (notion plus large : servitudes, sols, SUP…) gardent leur libellé propre dans la
-          // section §5 « Risques et environnement » (badge « N vigilances ») et ne s'affichent jamais ici.
-          const nHazards = f.aleas?.n_hazards ?? 0
-          // FRONT-CHIFFRES-2 (F01e) — la synthèse aléa (« rédhibitoire »/« fort ») est DÉCIDÉE au back
-          // (aleas.synthese, moteur qui ordonne la sévérité) ; le front n'inspecte plus les niveaux.
-          const risqueNiveau = f.aleas?.synthese === 'redhibitoire' ? 'aléa rédhibitoire'
-            : f.aleas?.synthese === 'fort' ? 'aléa fort'
-            : nHazards > 0 ? `aléa${nHazards > 1 ? 's' : ''}` : 'rien à signaler'
           type Tuile = { l: string; v: string; s?: string; i?: string; vide?: boolean }
           const tuiles: Tuile[] = [
             (() => {
@@ -1031,7 +1035,7 @@ export function Fiche({ idu }: { idu: string }) {
               // détail « Dessin du plan » (qui reste dans l'infobulle « i » et dans la section Terrain).
               const sous = cadastre ? 'Cadastre' : 'Plan cadastral'
               const info = cadastre
-                ? 'Surface mesurée sur le plan cadastral. Elle diffère souvent un peu de la contenance inscrite au cadastre, qui est celle de l’acte.'
+                ? 'Contenance inscrite au cadastre (DGFiP).'
                 : 'Contenance cadastrale indisponible : surface mesurée sur le contour du plan cadastral (géométrie).'
               return { l: 'Surface', v: st != null ? fmtM2(st) : '—', s: sous, vide: st == null, i: info } as Tuile
             })(),
@@ -1053,16 +1057,10 @@ export function Fiche({ idu }: { idu: string }) {
               return { l: 'Exposition', v, s, vide: !orient,
                 i: 'Orientation du versant de la parcelle (Nord, Sud-Est…), calculée sur le modèle d’altitude RGE ALTI (IGN) dans une fenêtre autour du centroïde. La PENTE affichée est celle de l’emprise (tuile « Pente ») — l’exposition n’en montre pas une seconde. Remplace la « vue mer » (abandonnée). « — » : relief non disponible sur la parcelle.' } as Tuile
             })(),
-            { l: 'Risques', v: nHazards > 0 ? `${nHazards}` : '—', s: risqueNiveau, vide: nHazards === 0,
-              i: 'Aléas naturels distincts sur la parcelle (inondation, mouvement de terrain, submersion…) — le même compteur que l’outil « Estimer » et le Dossier. Les vigilances réglementaires plus larges (servitudes, sols, SUP…) sont détaillées dans « Risques et environnement ».' },
-            // CONTENANCE-1 (garde-fou) : surface incertaine → aucune capacité affichée.
-            f.surface_incertaine
-              ? { l: 'SDP restante', v: '—', s: 'surface incertaine', vide: true,
-                  i: 'Capacité non calculée : la surface du terrain est indéterminée (le plan et le cadastre ne concordent pas).' } as Tuile
-              : { l: 'SDP restante', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
-              s: reglesSdp != null && reglesSdp > 0 ? (bati ? 'bâti conservé' : 'terrain libre') : (nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
-              vide: !(reglesSdp != null && reglesSdp > 0),
-              i: 'Surface de plancher constructible qui reste à bâtir EN GARDANT les bâtiments existants (le bâti existant est déjà déduit) — ce n’est pas du terrain libre. Pour la capacité après démolition, voir l’outil Faisabilité (« terrain libéré »). « — » : zone non constructible ou plus de potentiel.' },
+            { l: 'Pièges et risques', v: nbContraintes == null ? '—' : nf(nbContraintes),
+              s: nbContraintes == null ? etatContraintes : nbContraintes > 1 ? 'contraintes relevées' : 'contrainte relevée',
+              vide: nbContraintes == null, i: 'Chaque catégorie de contrainte relevée sur la parcelle est comptée une fois, comme dans l’outil Pièges et risques.' },
+            { l: 'SDP restante', ...tuileSdp },
           ]
           return (
             <div className="stats" data-bandeau-chiffres>
@@ -1468,10 +1466,6 @@ export function Fiche({ idu }: { idu: string }) {
           // Taxe foncière → §7 Fiscalité (TFPB part communale, REI DGFiP) — désormais en Tuile (Lot I).
           const tfpb = f.fiscalite?.tfpb_commune_pct
           // SDP restante → §10 Potentiel (potentiel résiduel autorisé par le PLU).
-          const tuileSdp = { v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
-            s: reglesSdp != null && reglesSdp > 0 ? (bati ? 'bâti conservé' : 'terrain libre') : (nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
-            vide: !(reglesSdp != null && reglesSdp > 0),
-            i: 'Surface de plancher constructible qui reste à bâtir EN GARDANT les bâtiments existants (le bâti existant est déjà déduit) — ce n’est pas du terrain libre. Pour la capacité après démolition, voir l’outil Faisabilité (« terrain libéré »). « — » : zone non constructible ou plus de potentiel.' }
           // ChiffreDissous — présente une ex-tuile d'en-tête comme un fait de section (label · valeur ·
           // sous-titre · « i » source), grammaire FactRow. Reporté verbatim des 6 tuiles (RECETTE-8 W11).
           const ChiffreDissous = ({ l, t }: { l: string; t: { v: string; s?: string; vide?: boolean; i: string } }) => (
@@ -2011,7 +2005,7 @@ export function Fiche({ idu }: { idu: string }) {
             </RefDrawer>
 
             {/* ⑤ RISQUES ET ENVIRONNEMENT — aléas, sols, vigilances, SUP, lignes HT/MT → risques.tsx. */}
-            <div style={{ order: ordreSection('risques') }}><RisquesSection f={f} idu={idu} /></div>
+            <div style={{ order: ordreSection('risques') }}><RisquesSection f={f} contraintes={contraintes.data} etat={etatContraintes} /></div>
 
             {/* ⑥ RÉSEAUX ET DESSERTE — fibre, accès + transport, gestionnaires, viabilisation (+ solaire),
                 axes et nuisances → reseaux.tsx. */}
@@ -2156,7 +2150,7 @@ export function Fiche({ idu }: { idu: string }) {
                   const inconstructible = !!f.au_ouverture?.bloquant || nonConstructible
                   // FICHE-FIX-5 (Lot J) — le panneau se replie dès que la SDP résiduelle est 0, QUELLE
                   // QUE SOIT la cause (destination interdite, terrain exigu, densité atteinte…).
-                  const sdpNulle = !(reglesSdp != null && reglesSdp > 0)
+                  const sdpNulle = reglesSdp === 0
                   const pourquoi = f.au_ouverture?.motif
                     || (zoneFamille === 'A' ? 'Zone agricole — construction de logements non autorisée.'
                       : zoneFamille === 'N' ? 'Zone naturelle — construction non autorisée.'
@@ -2192,7 +2186,7 @@ export function Fiche({ idu }: { idu: string }) {
                       <Verdict ton={inconstructible ? 'rouge' : (reglesSdp != null && reglesSdp > 0 ? 'vert' : 'ambre')}
                         reponse={inconstructible
                           ? `Construction neuve non autorisée${reglesZone ? ` en ${reglesZone}` : ''}`
-                          : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP constructible restante${bati ? ' · bâti conservé' : ''}` : 'Pas de SDP restante exploitable')}
+                          : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP constructible restante${bati ? ' · bâti conservé' : ''}` : sdpNulle ? 'Pas de SDP restante exploitable' : f.potentiel_transformation?.libelle ?? motifSdpAbsente)}
                         contexte={!inconstructible && fo?.niveaux ? `capacité ${fo.niveaux}` : undefined} />
                       <ChiffreDissous l="SDP restante" t={tuileSdp} />
                       {/* FICHE-ORFEVRERIE-1 (Lot B, pt 16) — « Prix de sortie retenu » : une LIGNE du
