@@ -81,7 +81,8 @@ def test_flash_sources_noms_resolvent_et_attribuent_la_bonne_date(db_session):
         finally:
             D._SECTION_SOURCES.pop()
         sonde = next((o for o in out if o["source"] == "SONDE MP"), None)
-        assert sonde and sonde["millesime"] == mill        # le millésime AMONT remonte PAR NOM
+        from labuse.millesime_source import libelle_date_source
+        assert sonde and sonde["millesime"] == libelle_date_source(mill)
 
 
 # ── P2-66 — flash : le bloc marché porte une étiquette de MÉTHODE (PUR) ──

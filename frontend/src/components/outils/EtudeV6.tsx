@@ -394,7 +394,7 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg border border-line-2 bg-surface-2 p-3 transition-colors hover:border-mint/40">
                   <p className="text-[9px] uppercase tracking-wide text-txt-dim">Logements</p>
-                  <div className="font-display text-[22px] font-bold leading-none text-txt-hi">{descriptionMax ? fmtInt(active.resume?.logements ?? 0) : <>{fmtInt(mTiennent)} <span className="text-[13px] text-txt-mut">/ {fmtInt(nDem)}</span></>}</div>
+                  <div className="font-display text-[22px] font-bold leading-none text-txt-hi">{descriptionMax ? fmtInt(active.resume?.logements) : <>{fmtInt(mTiennent)} <span className="text-[13px] text-txt-mut">/ {fmtInt(nDem)}</span></>}</div>
                   <p className="mt-0.5 text-[9.5px] text-txt-dim">{descriptionMax ? 'dessinés sur le plan retenu' : 'tenus / demandés'}</p>
                 </div>
                 <div className="rounded-lg border border-line-2 bg-surface-2 p-3 transition-colors hover:border-mint/40">

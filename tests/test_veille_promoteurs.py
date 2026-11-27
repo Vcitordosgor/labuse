@@ -23,14 +23,14 @@ def _pm(db, idu, siren, groupe=0):
 def _permit(db, pid, idus, wkt, nb_lgt, *, typ="PC", etat="2", daact=None, petitioner=None,
             commune="Patville", date="2024-03-01"):
     import json
-    raw = {"nb_lgt": str(nb_lgt), "etat": etat}
+    raw = {"nb_lgt": str(nb_lgt), "etat": etat, "an_depot": date[:4]}
     if daact:
         raw["daact"] = daact
     if petitioner:
         raw["petitioner_siren"] = petitioner
     db.execute(text(
-        "INSERT INTO sitadel_permits (permit_id, type, idu_codes, commune, geom, raw, date_depot) "
-        "VALUES (:p,:t, CAST(:iducodes AS jsonb), :c, ST_GeomFromText(:w,4326), CAST(:raw AS jsonb), :d)"),
+        "INSERT INTO sitadel_permits (permit_id, type, idu_codes, commune, geom, raw, date_depot, date) "
+        "VALUES (:p,:t, CAST(:iducodes AS jsonb), :c, ST_GeomFromText(:w,4326), CAST(:raw AS jsonb), :d, CAST(:d AS date) + 30)"),
         {"p": pid, "t": typ, "iducodes": json.dumps(idus), "c": commune, "w": wkt,
          "raw": json.dumps(raw), "d": date})
 

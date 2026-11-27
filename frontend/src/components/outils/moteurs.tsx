@@ -366,7 +366,7 @@ export function M16() {
             const cite = [m.article, m.page].filter(Boolean).join(' · ')
             // OUTIL-ASSEMBLAGE-FIX-8 (LOT 2 / « mieux » 1) — à Saint-Paul (secteur SMS), on affiche le
             // DÉNOMINATEUR : 30 % de la SDP affectée aux logements, arrondi supérieur en nombre de logements.
-            const log = Number(m.logements) || 0
+            const log = m.logements == null ? null : Number(m.logements)
             const denom = (m.origine === 'secteur_sms' && m.quota_pct)
               ? `30 % de la SDP affectée aux logements, arrondi supérieur en nombre de logements (Art. 2 p. 106)${log ? ` — soit ≈ ${Math.ceil(m.quota_pct / 100 * log)} sur ${Math.round(log)} logements` : ''}.`
               : null

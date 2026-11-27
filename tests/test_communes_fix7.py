@@ -8,7 +8,7 @@ correction : rouges maintenant, verts une fois les LOTS 1-3 livrés.
       97401000AT (Les Avirons) et 97408000AB (La Possession) : 7 ventes de maison utilisées sur 8 → sous
       le seuil → AUCUN prix de maison (le bâti comptait tous les actes au lieu des ventes utilisées).
   · révisions — date de la dernière pièce IDENTIFIÉE de la révision générale :
-      Saint-Leu 18/11/2026 (avis commission d'enquête), Saint-André 09/09/2025 (avis MRAe),
+      Saint-Leu 18/11/2026 (avis commission d'enquête), Saint-André 03/10/2025 (avis MRAe),
       Les Trois-Bassins mai 2025 (PADD de concertation). (3 dates servies encore au 31/12/2024.)
   · Plaine-des-Palmistes : le lien de source ne pointe plus vers le domaine mort www.plaine-des-palmistes.re.
 
@@ -79,23 +79,21 @@ def test_fonction_unique_prix_section_cd_terrain():
 
 @pytest.mark.parametrize("insee,commune,attendu", [
     ("97413", "Saint-Leu", "2026-11-18"),
-    ("97409", "Saint-André", "2025-09-09"),
+    ("97409", "Saint-André", "2025-10-03"),
 ])
 def test_revision_derniere_piece_identifiee(insee, commune, attendu):
     """La date de « dernière pièce » d'une révision générale porte une pièce officielle identifiée
-    ultérieure, pas le squelette 31/12/2024 : Saint-Leu 18/11/2026, Saint-André 09/09/2025 (sans base)."""
+    ultérieure, pas le squelette 31/12/2024 : Saint-Leu 18/11/2026, Saint-André 03/10/2025 (sans base)."""
     from labuse import veille_plu
     e = veille_plu.entry(insee) or {}
     assert e.get("etat_source_date") == attendu, \
         f"{commune} : dernière pièce attendue {attendu}, obtenu {e.get('etat_source_date')!r}"
 
 
-def test_revision_trois_bassins_mai_2025():
-    """Les Trois-Bassins : PADD de concertation de mai 2025 (sans base)."""
+def test_revision_trois_bassins_debat_padd():
     from labuse import veille_plu
-    e = veille_plu.entry("97423") or {}
-    assert (e.get("etat_source_date") or "").startswith("2025-05"), \
-        f"Les Trois-Bassins : dernière pièce attendue en mai 2025, obtenu {e.get('etat_source_date')!r}"
+    e = veille_plu.entry("97423")
+    assert e["etat_source_date"] == e["debat_padd_tenu"] == "2025-09-04"
 
 
 def test_plaine_lien_source_domaine_vivant():

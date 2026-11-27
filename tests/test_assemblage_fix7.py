@@ -73,6 +73,7 @@ def _comparatif_pdf_text(db, idus: list[str]) -> str:
 # AB0006 (Saint-Denis Uavap, scénario servi ~39 logts → clause déclenchée 15 %),
 # BZ0824 (Saint-Denis Uh, scénario servi sous le seuil → non déclenchée mais article/page cités),
 # CP1639 (Saint-Paul AU3st — OUTIL-ASSEMBLAGE-FIX-9 : zone à urbaniser FERMÉE, plus d'exemption ZAC).
+@pytest.mark.reel
 def test_comparatif_pdf_porte_la_mixite_du_moteur(db):
     txt = _comparatif_pdf_text(db, ["97411000AB0006", "97411000BZ0824", "97415000CP1639"])
 
@@ -91,6 +92,7 @@ def test_comparatif_pdf_porte_la_mixite_du_moteur(db):
     assert "Savane" not in txt, "l'exemption ZAC retirée ne doit plus apparaître pour CP1639 (AU3st)"
 
 
+@pytest.mark.reel
 def test_comparatif_pdf_ne_laisse_plus_la_ligne_mixite_vide(db):
     """La ligne « Mixité sociale » ne doit plus être un simple « — » quand le moteur connaît une
     obligation présentable (charge foncière servie). AB0006 (Saint-Denis) porte l'obligation 15 %."""

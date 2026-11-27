@@ -402,7 +402,7 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
     # COMMUNE-FIX-1 (D12) — la PROCÉDURE PLU EN COURS au dernier relevé Sudocuh (révision, modification,
     # élaboration…), avec son millésime : le fait producteur brut, daté, à côté du statut déduit.
     procedure_sudocuh = None
-    if insee:
+    if insee and db.scalar(text("SELECT to_regclass('sudocuh_procedures') IS NOT NULL")):
         row = db.execute(text(
             "SELECT du_en_cours, etat_detaille, to_char(prescription_proc, 'DD/MM/YYYY') AS prescription, "
             "       to_char(millesime_date, 'DD/MM/YYYY') AS millesime "

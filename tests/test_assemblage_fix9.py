@@ -40,6 +40,7 @@ def _pid(db, idu):
     return db.execute(text("SELECT id FROM parcels WHERE idu=:i"), {"i": idu}).scalar()
 
 
+@pytest.mark.reel
 def test_zone_au_fermee_sans_capacite_parcelle_seule(db):
     from labuse.faisabilite.bilan import compute_bilan_servi
     from labuse.faisabilite.db import parcel_faisabilite
@@ -51,6 +52,7 @@ def test_zone_au_fermee_sans_capacite_parcelle_seule(db):
         assert not (getattr(b, "ca", None) or {}).get("central")   # aucun CA
 
 
+@pytest.mark.reel
 def test_zone_au_fermee_sans_capacite_union(db):
     from labuse.assemblage import aggregate_assiette
     parcels = db.execute(text("SELECT id, idu, round(COALESCE(contenance_m2, surface_m2)) AS surface_m2, "
@@ -60,6 +62,7 @@ def test_zone_au_fermee_sans_capacite_union(db):
     assert u is None or not (u.get("sdp_combinee_m2") or 0)   # union : 0 aussi
 
 
+@pytest.mark.reel
 def test_bilan_dit_capacite_non_calculee_zone_fermee(db):
     from labuse.faisabilite.potentiel_batir import potentiel_batir
     pb = potentiel_batir(db, CP1639)
@@ -69,6 +72,7 @@ def test_bilan_dit_capacite_non_calculee_zone_fermee(db):
     assert "zone à urbaniser fermée" in motif.lower()
 
 
+@pytest.mark.reel
 def test_ct1253_construit_sur_la_portion_u3c_reelle(db):
     # CT1253 a une VRAIE portion U3c (13,5 %) : elle construit dessus (capacité réduite, pas 0).
     from labuse.faisabilite.db import parcel_faisabilite
@@ -78,6 +82,7 @@ def test_ct1253_construit_sur_la_portion_u3c_reelle(db):
     assert sdp and 0 < sdp < 11000   # sur U3c, plus les 11 294 m² fantômes de toute l'assiette
 
 
+@pytest.mark.reel
 def test_zone_ouverte_inchangee(db):
     # CV1498 (AU3c OUVERTE) garde sa capacité — le correctif ne touche QUE les zones fermées.
     from labuse.faisabilite.db import parcel_faisabilite
@@ -86,11 +91,12 @@ def test_zone_ouverte_inchangee(db):
     assert (pf[1].fourchette or {}).get("surface_plancher_m2")
 
 
-def test_exemption_zac_savane_retiree(db):
+def test_exemption_zac_savane_retiree():
     from labuse.faisabilite.bilan import _zac_savane_tamarins
     assert _zac_savane_tamarins("Saint-Paul", "AU3st") is False
 
 
+@pytest.mark.reel
 def test_cv1498_repere_nomme_les_deux_chiffres(db):
     # CV1498 : reconstruction (live) 5 992 m² · résiduel après existant (servi) 5 949 m² ; l'écart (43 m²)
     # EST un existant (bâti COSIA ~45 m², pas BDTOPO). On vérifie la LOGIQUE du libellé du repère (le rendu

@@ -134,7 +134,7 @@ def test_reconciliation_ppr_partiel_arme_quand_run_perime(monkeypatch):
                     return self_inner
                 def all(self_inner):
                     return [{"idu": "X", "pid": 1, "sdp_raw": 0, "resid_cause": "redhibitoire",
-                             "constr_label": None, "au_classe": None,
+                             "constr_label": None, "au_classe": None, "codes_au": [],
                              "zone_fam": "U", "zone_lib": "Uh"}]
             return _R()
 

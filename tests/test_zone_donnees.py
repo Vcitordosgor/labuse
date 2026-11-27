@@ -42,18 +42,18 @@ def _fixtures(tmp_path):
     return f"file://{geo}", f"file://{stock}"
 
 
-def test_lot1_sirene_jointure_diffusion_position(tmp_path):
+def test_lot1_sirene_jointure_diffusion_position(tmp_path, db_session):
     geo_url, stock_url = _fixtures(tmp_path)
-    with session_scope() as s:
-        seed_sources.seed(s)
-        ensure_tables(s)
-        s.execute(text("DELETE FROM sirene_etablissements WHERE siret LIKE '9000000000%'"))
-        r = build_sirene_etablissements(s, geo_url=geo_url, stock_url=stock_url)
-        rows = {x["siret"]: dict(x) for x in s.execute(text(
-            "SELECT siret, naf, denomination, adresse, diffusible, tranche_effectif, qualite_xy, iris, "
-            " date_creation, date_dernier_traitement, round(ST_X(geom)::numeric,4) lon, round(ST_Y(geom)::numeric,4) lat "
-            "FROM sirene_etablissements WHERE siret LIKE '9000000000%'")).mappings()}
-        s.execute(text("DELETE FROM sirene_etablissements WHERE siret LIKE '9000000000%'"))
+    s = db_session
+    seed_sources.seed(s)
+    ensure_tables(s)
+    s.execute(text("DELETE FROM sirene_etablissements"))
+    r = build_sirene_etablissements(s, geo_url=geo_url, stock_url=stock_url)
+    rows = {x["siret"]: dict(x) for x in s.execute(text(
+        "SELECT siret, naf, denomination, adresse, diffusible, tranche_effectif, qualite_xy, iris, "
+        " date_creation, date_dernier_traitement, round(ST_X(geom)::numeric,4) lon, round(ST_Y(geom)::numeric,4) lat "
+        "FROM sirene_etablissements WHERE siret LIKE '9000000000%'")).mappings()}
+    s.execute(text("DELETE FROM sirene_etablissements WHERE siret LIKE '9000000000%'"))
     # 974 ACTIFS seuls : le fermé (F) et le hors-974 sont écartés
     assert set(rows) == {"90000000000011", "90000000000022"}
     a = rows["90000000000011"]

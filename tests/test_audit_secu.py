@@ -963,7 +963,7 @@ def test_signaler_global_capture_le_contexte(app_client):
 def test_retour_reponse_template_19_passe_repondu(app_client, monkeypatch):
     """COMPTE-2 (Lot 7) — répondre à un signalement envoie le template 19 par la file et passe le
     retour « répondu ». Un retour anonyme (sans compte) → 422 (pas d'adresse)."""
-    monkeypatch.setattr("labuse.brevo.envoyer_template",
+    monkeypatch.setattr("labuse.mail.envoyer_template",
                         lambda to, key, params: {"envoye": True, "message_id": "<r19>"})
     from labuse import mailfile
     from labuse.api.dashboard import ensure_tables as _dash_ens

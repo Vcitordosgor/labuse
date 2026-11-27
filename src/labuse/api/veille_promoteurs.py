@@ -31,6 +31,8 @@ _TOUS_GROUPES = [0, 5, 6]
 # ── SECTEUR-2 (T2) — RÈGLE DE REGROUPEMENT EN OPÉRATIONS (en constantes, documentée) ──────────────
 # Deux permis appartiennent à la MÊME opération s'ils partagent le MÊME propriétaire moral (SIREN) ET
 # que leurs parcelles sont CONTIGUËS ET qu'ils sont déposés sur une MÊME PÉRIODE.
+from .. import permis_classe
+
 OP_CONTIG_M = 250       # « contiguës » : centroïdes des permis à ≤ 250 m (proxy d'un même îlot d'opération)
 OP_PERIODE_MOIS = 24    # « même période » : dépôts dans une fenêtre glissante de 24 mois
 # SCAN-FIX-2 (M1) — la fenêtre se compte EN JOURS, pas en mois entiers (le contre-audit relevait que le
@@ -38,6 +40,11 @@ OP_PERIODE_MOIS = 24    # « même période » : dépôts dans une fenêtre glis
 # étaient traités à tort comme 1 mois). 24 mois = 730 jours (365,25/12 × 24).
 OP_PERIODE_JOURS = round(OP_PERIODE_MOIS * 365.25 / 12)   # 730
 PLAFOND = 200
+NOTE_SOURCE = (
+    "Attribution par le PROPRIÉTAIRE FONCIER de la parcelle (Scan patrimoine, même SIREN), pas "
+                "par le pétitionnaire — l'open Sitadel n'identifie le pétitionnaire que sur une part des "
+                "permis. Voir la frise d'un propriétaire pour « permis qu'elle a déposés » vs « sur son foncier »."
+)
 
 
 def get_db():
@@ -87,16 +94,19 @@ def _permis_proprietaire(db: Session, commune: str | None, depuis: str | None) -
     plusieurs SIREN ex æquo au nombre de parcelles (cas à signaler). Porte aussi le pétitionnaire déclaré
     (`petitioner_siren`), le type (PC/DP…), l'état et la DAACT — pour distinguer déposé/foncier, PC/DP,
     annulé, achevé."""
+
     where = ["(s.raw->>'nb_lgt') ~ '^[0-9]+$'", "(s.raw->>'nb_lgt')::int >= 1", "s.geom IS NOT NULL"]
     params: dict = {}
     if commune:
         where.append("s.commune = :commune"); params["commune"] = commune
     if depuis:
-        where.append("s.date_depot >= :depuis"); params["depuis"] = depuis
+        where.append(permis_classe.depot_depuis_cond_sql("s.")); params["depuis"] = depuis
     w = " AND ".join(where)
     rows = db.execute(text(f"""
         WITH perm AS (
-          SELECT s.id, s.permit_id, s.commune, s.date_depot, s.type,
+          SELECT s.id, s.permit_id, s.commune, {permis_classe.depot_date_sql("s.")} AS date_regroupement, s.type,
+                 {permis_classe.depot_jour_connu_sql("s.")} AS depot_jour_connu,
+                 s.raw->>'petitioner_name' AS petitioner_name,
                  (s.raw->>'nb_lgt')::int AS nb_lgt, s.raw->>'etat' AS etat, s.raw->>'daact' AS daact,
                  NULLIF(s.raw->>'petitioner_siren', '') AS petitioner_siren,
                  ST_X(ST_Centroid(s.geom)) AS lon, ST_Y(ST_Centroid(s.geom)) AS lat, s.idu_codes
@@ -115,8 +125,8 @@ def _permis_proprietaire(db: Session, commune: str | None, depuis: str | None) -
           FROM own WINDOW w AS (PARTITION BY id ORDER BY n_parc DESC, groupe ASC NULLS LAST, siren ASC)
         ),
         ties AS (SELECT id, count(*) FILTER (WHERE n_parc = max_parc) AS n_top FROM ranked GROUP BY id)
-        SELECT perm.id, perm.permit_id, perm.commune, perm.date_depot, perm.type, perm.nb_lgt,
-               perm.etat, perm.daact, perm.petitioner_siren, perm.lon, perm.lat, perm.idu_codes,
+        SELECT perm.id, perm.permit_id, perm.commune, perm.date_regroupement, perm.type, perm.nb_lgt,
+               perm.etat, perm.daact, perm.depot_jour_connu, perm.petitioner_name, perm.petitioner_siren, perm.lon, perm.lat, perm.idu_codes,
                r.siren, r.denomination, r.groupe, r.n_parc, r.n_cand, (t.n_top > 1) AS ambigu
         FROM perm JOIN ranked r ON r.id = perm.id AND r.rk = 1
         JOIN ties t ON t.id = perm.id
@@ -150,7 +160,7 @@ def _operations(db: Session, groupes: list[int], commune: str | None, depuis: st
                 if a["lon"] is None or b["lon"] is None:
                     continue
                 if (_haversine_m(a["lat"], a["lon"], b["lat"], b["lon"]) <= OP_CONTIG_M
-                        and _jours(a["date_depot"], b["date_depot"]) <= OP_PERIODE_JOURS):
+                        and _jours(a["date_regroupement"], b["date_regroupement"]) <= OP_PERIODE_JOURS):
                     uf.union(i, jx)
         comps: dict[int, list[dict]] = {}
         for i, p in enumerate(permis):
@@ -164,11 +174,11 @@ def _operations(db: Session, groupes: list[int], commune: str | None, depuis: st
             est_dp = lambda m: (m.get("type") or "") == "DP"
             vivants = [m for m in membres if not est_annule(m)]          # non annulés
             annules = [m for m in membres if est_annule(m)]
-            dates = [m["date_depot"] for m in vivants if m["date_depot"]] or \
-                    [m["date_depot"] for m in membres if m["date_depot"]]
+            dates = [m["date_regroupement"] for m in vivants if m["date_regroupement"]] or \
+                    [m["date_regroupement"] for m in membres if m["date_regroupement"]]
             # « plus récent » DÉTERMINISTE : date max, départagée par permit_id puis id (M2).
             recent = max(vivants or membres,
-                         key=lambda m: (m["date_depot"] is not None, m["date_depot"],
+                         key=lambda m: (m["date_regroupement"] is not None, m["date_regroupement"],
                                         str(m.get("permit_id") or ""), m["id"]))
             lons = [m["lon"] for m in membres if m["lon"] is not None]
             lats = [m["lat"] for m in membres if m["lat"] is not None]
@@ -203,7 +213,17 @@ def _operations(db: Session, groupes: list[int], commune: str | None, depuis: st
                 for jx in range(i + 1, len(pts)):
                     span_m = max(span_m, _haversine_m(pts[i][0], pts[i][1], pts[jx][0], pts[jx][1]))
             span_jours = (max(dates) - min(dates)).days if len(dates) >= 2 else 0
+            petitionnaires = [{"nom": nom, "siren": identifiant} for nom, identifiant in dict.fromkeys(
+                (m["petitioner_name"], m["petitioner_siren"]) for m in membres if m.get("petitioner_name"))]
+            jour_connu = all(m.get("depot_jour_connu") for m in membres)
             operations.append({
+                "petitionnaires": petitionnaires,
+                "petitionnaire_nom": petitionnaires[0]["nom"] if len(petitionnaires) == 1 else None,
+                "petitionnaire_siren": petitionnaires[0]["siren"] if len(petitionnaires) == 1 else None,
+                "proprietaire_cadastral_nom": membres[0]["denomination"],
+                "proprietaire_cadastral_siren": siren,
+                "depot_jour_connu": jour_connu,
+                "depot_a_confirmer": not jour_connu,
                 "siren": siren, "denomination": membres[0]["denomination"],
                 "categorie": _GROUPE_CAT.get(membres[0]["groupe"], "promoteur"),
                 "commune": commune_op, "nb_logements": nb, "nb_logements_dp": nb_dp,
@@ -314,7 +334,7 @@ def veille_promoteurs(commune: str | None = Query(None), categorie: str | None =
     n_total = len(ops)
     lim = min(max(limit, 1), PLAFOND)
     tronquee = n_total > lim
-    millesime = db.execute(text("SELECT max(date_depot) FROM sitadel_permits")).scalar()
+    millesime = db.execute(text(f"SELECT max({permis_classe.depot_date_sql()}) FROM sitadel_permits s")).scalar()
     # SCAN-FIX-1 (bloquant 4, pt 7) — CARTES PAR PROMOTEUR calculées sur TOUTES les opérations (jamais sur
     # les seules 200 servies) : le front ne sous-compte plus. Agrégat déterministe trié.
     par_promoteur: dict[str, dict] = {}
@@ -349,9 +369,7 @@ def veille_promoteurs(commune: str | None = Query(None), categorie: str | None =
                             f"géodésique) et déposés à ≤ {OP_PERIODE_MOIS} mois ({OP_PERIODE_JOURS} jours) "
                             f"d'écart ; l'étendue réelle du groupe (distance et durée max) est affichée par opération"},
         "operations": ops[:lim],
-        "note": "Attribution par le PROPRIÉTAIRE FONCIER de la parcelle (Scan patrimoine, même SIREN), pas "
-                "par le pétitionnaire — l'open Sitadel n'identifie le pétitionnaire que sur une part des "
-                "permis. Voir la frise d'un propriétaire pour « permis qu'elle a déposés » vs « sur son foncier ».",
+        "note": NOTE_SOURCE,
     }
 
 
@@ -401,7 +419,7 @@ def promoteur_frise(siren: str, db: Session = Depends(get_db)) -> dict:
     petit = db.execute(text(
         "SELECT count(*) AS n, sum(NULLIF(raw->>'nb_lgt','')::int) AS lgt "
         "FROM sitadel_permits WHERE raw->>'petitioner_siren' = :s "
-        "  AND COALESCE(date_depot, date) >= DATE '2013-01-01'"), {"s": siren}).mappings().first()   # CHASSE-FIX-1 (C40) : le « (2013+) » annoncé est appliqué
+        f"  AND {permis_classe.evenement_date_sql('')} >= DATE '2013-01-01'"), {"s": siren}).mappings().first()   # CHASSE-FIX-1 (C40) : le « (2013+) » annoncé est appliqué
     filles = db.execute(text(
         "SELECT d.siren, count(s.id) AS n, sum(NULLIF(s.raw->>'nb_lgt','')::int) AS lgt, "
         "       max(s.raw->>'petitioner_name') AS nom "

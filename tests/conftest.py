@@ -250,6 +250,8 @@ def engine():
         # UNIQUE anc_service.statut_anc s'auto-garde désormais sur table absente → « Absent » (un état),
         # jamais un 500. La matérialiser casserait le test d'omission. « selon le cas » : garde-source,
         # pas fixture (mesuré).
+        from labuse.scoring.score_labuse_combine import ensure_schema as ensure_score_labuse
+        ensure_score_labuse(_c)
         # carreau Filosofi (contexte marché fiche) + parc social RPLS : tables vides suffisent
         # (les requêtes fiche tolèrent 0 ligne → panneau « data-gap », jamais une erreur).
         _c.execute(text(

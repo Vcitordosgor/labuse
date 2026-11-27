@@ -47,6 +47,8 @@ from __future__ import annotations
 
 import datetime as dt
 
+from labuse.tz import today_reunion
+
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -203,7 +205,7 @@ def build_pc_caducs(session: Session, *, ref_date: dt.date | None = None, ref_ye
     `ref_date` = date de référence du « probablement caduc » (défaut : aujourd'hui) ; `ref_year` legacy
     → 25/11 de l'année. `commit=False` pour les tests transactionnels. Renvoie {'total': n}."""
     if ref_date is None:
-        ref_date = dt.date(ref_year, 11, 25) if ref_year else dt.date.today()
+        ref_date = dt.date(ref_year, 11, 25) if ref_year else today_reunion()
     # M-O P2-59 — rebuild NON BLOQUANT (table lue en direct par l'API : badges projet_parcelles) :
     # le SELECT + INSERT se fait hors-ligne dans une shadow, puis swap ~ms (cf. _rebuild).
     from ._rebuild import rebuild_swap

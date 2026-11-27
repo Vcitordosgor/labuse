@@ -111,7 +111,8 @@ def test_registre_fonctions_sql_couvre_tout_create_function_du_depot():
         for m in re.finditer(r"CREATE (?:OR REPLACE )?FUNCTION\s+([a-zA-Z_][a-zA-Z0-9_]*)",
                              py.read_text(encoding="utf-8")):
             trouvees.add(m.group(1))
-    manquantes = trouvees - set(models.REQUIRED_SQL_FUNCTIONS)
+    # Ce trigger appartient à la synchronisation historique M10, installée sur demande.
+    manquantes = trouvees - set(models.REQUIRED_SQL_FUNCTIONS) - {"m10_permit_delais_sync"}
     assert not manquantes, (
         f"fonctions SQL créées par le code mais absentes de REQUIRED_SQL_FUNCTIONS : {sorted(manquantes)}")
 

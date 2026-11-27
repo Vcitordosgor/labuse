@@ -174,7 +174,7 @@ def test_mail_brevo_non_configure_propre(client, compte_test, monkeypatch):
     # COMPTE-2 : « retablissement » n'attend que PRENOM (toujours dérivable) → on teste bien le chemin
     # « Brevo non configuré », pas la garde fail-closed des params (cf. test dédié mailfile).
     r = client.post(f"/admin/licences/{compte_test}/mail", json={"key": "retablissement"}).json()
-    assert r["ok"] is True and r["envoye"] is False and "BREVO_API_KEY" in r["raison"]
+    assert r["ok"] is True and r["envoye"] is False and r["raison"] == "no-config"
     # clé de template inconnue → 422 (contrat)
     assert client.post(f"/admin/licences/{compte_test}/mail", json={"key": "zzz"}).status_code == 422
 
@@ -538,13 +538,8 @@ def test_licences_mail_libelles_renommes(client):
     assert lib["onboarding3"] == "Dernier rappel J+10"
 
 
-def test_mail_apercu_honnete_si_non_configure(client, engine, monkeypatch):
-    """ADMIN-1 (AD4) — l'aperçu d'un mail ne lève JAMAIS : Brevo non configuré →
-    {configure:false, raison, libelle nommé}. Template inconnu → 422.
-
-    COMPTE-2 : l'aperçu lit désormais /v3/smtp/templates/{id} (l'ancienne route 404 masquait ce test).
-    On RETIRE la clé pour tester réellement le mode « non configuré » (sinon l'aperçu rendrait le vrai
-    template avec la clé du .env)."""
+def test_mail_apercu_local_sans_cle_brevo(client, engine, monkeypatch):
+    """Le compte peut prévisualiser le mail de bienvenue sans transport configuré."""
     monkeypatch.delenv("LABUSE_BREVO_API_KEY", raising=False)
     monkeypatch.delenv("BREVO_API_KEY", raising=False)
     from labuse import comptes, config
@@ -561,7 +556,7 @@ def test_mail_apercu_honnete_si_non_configure(client, engine, monkeypatch):
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["libelle"] == "Mail de bienvenue"
-    assert body["configure"] is False and body["raison"]   # honnête, pas d'envoi
+    assert body["configure"] is True and body["html"] and body["subject"]
     assert client.get(f"/admin/licences/{cid}/mail/inconnu/apercu").status_code == 422
 
 

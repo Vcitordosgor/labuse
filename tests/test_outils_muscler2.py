@@ -70,13 +70,12 @@ def test_histoire_familles_mailles_et_tri(db_session):
     _dfi(db_session, "97499000ZZ0001", "HIST0001", "2019-03-04")
     out = histoire_parcelle("HIST0001", db_session)
     familles = [f["famille"] for f in out["faits"]]
-    assert familles == ["vente", "proprietaire", "permis", "permis", "decoupe"]  # tri décroissant
+    assert familles == ["vente", "proprietaire", "permis", "decoupe"]  # tri décroissant
     par_fam = {f["famille"]: f for f in out["faits"]}
     # maille jour (vente, découpe, autorisation) / année (dépôt 01/01) / millésime (propriétaire)
     assert par_fam["vente"]["maille"] == "jour" and par_fam["vente"]["date"] == "2023-05-12"
     assert par_fam["decoupe"]["maille"] == "jour" and par_fam["decoupe"]["annee"] == 2019
-    depot = next(f for f in out["faits"] if f["famille"] == "permis" and "déposé" in f["libelle"])
-    assert depot["maille"] == "annee" and depot["date"] == "2021"          # jamais « 01/01/2021 »
+    assert not any("déposé" in f["libelle"] for f in out["faits"] if f["famille"] == "permis")
     auto = next(f for f in out["faits"] if f["famille"] == "permis" and "autorisé" in f["libelle"])
     assert auto["maille"] == "jour" and auto["date"] == "2021-06-10"
     prop = par_fam["proprietaire"]

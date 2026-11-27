@@ -38,6 +38,10 @@ _ALLOWLIST_AFFICHAGE = (
 # aucun appel réseau (ces lignes ne portent aucun motif HTTP, donc restent hors `fautes_reseau`). Chaque
 # entrée = (chemin relatif EXACT, fragment EXACT de la ligne tolérée). Une seule ligne par fragment.
 _ALLOWLIST_LIGNES = (
+    # Exemples statiques de la prévisualisation du courriel.
+    ("src/labuse/mails_contenu.py", '"titre": "Terrain, La Montagne"'),
+    ("src/labuse/mails_contenu.py", '"titre": "Terrain, Sainte-Clotilde"'),
+    ("src/labuse/mails_contenu.py", '"titre": "Terrain, Le Brûlé"'),
     # VALIDATION : refuse un lien hors Leboncoin avant toute lecture (test de domaine, pas une requête).
     ("src/labuse/pige/api.py", '"leboncoin." not in url.lower()'),
     # AFFICHAGE : invite quand l'URL n'est pas un lien d'annonce Leboncoin (erreur url_invalide, back).

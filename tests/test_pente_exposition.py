@@ -35,7 +35,7 @@ def test_pente_forte_soft_flag_pas_exclusion(cascade_live_layers):
     out = evaluate_parcels([pid], db_session, persist=False)[0]
     v = next((x for x in out.verdicts if x.layer_name == "pente"), None)
     assert v and v.result == CascadeVerdict.SOFT_FLAG and v.severity == Severity.MOYEN
-    assert "pente forte" in v.detail.lower()
+    assert "pente très forte" in v.detail.lower()
     assert not any(x.is_hard_exclude() for x in out.verdicts)   # jamais une exclusion
 
 

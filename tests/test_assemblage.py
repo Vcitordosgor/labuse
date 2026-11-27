@@ -241,6 +241,7 @@ def _endpoint_app(idus):
         return endpoint(AssemblageIn(idus=idus), db=s)
 
 
+@pytest.mark.reel
 def test_fix2_cv_affiche_obligation_mixite():
     """Point 1-2 : l'écran Assemblage doit PORTER l'obligation de mixité du trio CV (bande
     intermédiaire) et dire que le +178 261 € est une BORNE HAUTE (accession non chiffrée)."""
@@ -289,6 +290,7 @@ def test_fix2_zac_savane_des_tamarins_exclue():
     assert "ZAC" in str(c.get("detail") or "") or "Savane" in str(c.get("detail") or "")
 
 
+@pytest.mark.reel
 def test_fix2_identifiant_introuvable_nomme():
     """Point 6 : 4 identifiants dont 1 introuvable → l'endpoint NOMME l'écarté (comme /compare)."""
     out = _endpoint_app(["97415000CV0724", "97415000CV1506", "97415000CV1507", "97415000ZZ9999"])

@@ -57,10 +57,10 @@ def test_chaine_veille_vers_cloche_et_regroupement(db_session):
     db_session.execute(text("DELETE FROM event_log WHERE kind='veille'"))   # base de test propre
     vid = veilles.creer(db_session, compte_id=None, type_="permis", commune="Test-Ville")["id"]
     assert vid
-    db_session.execute(text("DELETE FROM m10_permit_delais WHERE commune='Test-Ville'"))
+    db_session.execute(text("DELETE FROM sitadel_permits WHERE commune='Test-Ville'"))
     for i in range(400):
         db_session.execute(text(
-            "INSERT INTO m10_permit_delais (permit_id, commune, date_depot) "
+            "INSERT INTO sitadel_permits (permit_id, commune, date) "
             "VALUES (:p, 'Test-Ville', now()::date)"), {"p": f"PC-{i:04d}"})
     out = veilles.evaluer_toutes(db_session)
     # _nouveaux_permis borne à 100 (LIMIT) : 400 injectés → 100 récupérés — mais l'invariant qui
@@ -98,16 +98,18 @@ def test_prefs_defauts_et_override(db_session):
     assert p["veille_zone"]["email"] and p["parcelle_suivie"]["cloche"]
     assert p["maintenance"]["verrou"] and p["maintenance"]["email"]
     assert "marche" not in p                                                    # marché n'est plus un type
-    events.set_pref(db_session, 55, "veille_zone", cloche=False, email=False)
-    p2 = events.prefs_compte(db_session, 55)
+    cid = db_session.execute(text("INSERT INTO comptes (nom, plan) VALUES ('Test notifications', 'pro') RETURNING id")).scalar_one()
+    events.set_pref(db_session, cid, "veille_zone", cloche=False, email=False)
+    p2 = events.prefs_compte(db_session, cid)
     assert not p2["veille_zone"]["cloche"] and not p2["veille_zone"]["email"]   # override
 
 
 @pytest.mark.db
 def test_desabonner_coupe_desactivables_garde_maintenance(db_session):
     _ensure(db_session)
-    events.desabonner_email(db_session, 56)
-    p = events.prefs_compte(db_session, 56)
+    cid = db_session.execute(text("INSERT INTO comptes (nom, plan) VALUES ('Test notifications', 'pro') RETURNING id")).scalar_one()
+    events.desabonner_email(db_session, cid)
+    p = events.prefs_compte(db_session, cid)
     # e-mail coupé sur les DÉSACTIVABLES, mais maintenance reste ON (conséquences réelles) ; cloche intacte.
     assert not p["parcelle_suivie"]["email"] and not p["veille_zone"]["email"]
     assert p["maintenance"]["email"] is True
@@ -186,7 +188,7 @@ def test_chaine_suivi_parcelle_bout_en_bout(db_session):
     idu = "97411000AB0001"
     db_session.execute(text("DELETE FROM event_log WHERE idu=:i"), {"i": idu})
     db_session.execute(text("INSERT INTO watched_parcels (idu, compte_id, created_at) VALUES (:i, NULL, now()-interval '1 day')"), {"i": idu})
-    db_session.execute(text("INSERT INTO sitadel_permits (permit_id, type, idu_codes, date_depot) "
+    db_session.execute(text("INSERT INTO sitadel_permits (permit_id, type, idu_codes, date) "
                             "VALUES ('PC-X','PC', to_jsonb(ARRAY[:i]), now()::date)"), {"i": idu})
     out = events.evaluer_suivis(db_session)
     assert out["permis"] == 1

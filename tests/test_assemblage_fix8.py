@@ -48,6 +48,7 @@ def _mk(prods, sdp=None):
 
 # ─────────────── LOT 1 — seuls les logements comptent, note véridique, écran ───────────────
 
+@pytest.mark.reel
 def test_lot1_commerces_ne_declenchent_pas_la_mixite(db):
     from labuse.api.bilan import _mixite_note
     # 24 logts + 8 commerces : 24 < 30 → clause NON déclenchée (les commerces ne comptent pas).
@@ -59,12 +60,14 @@ def test_lot1_commerces_ne_declenchent_pas_la_mixite(db):
     assert "15 %" not in note and "15%" not in note
 
 
+@pytest.mark.reel
 def test_lot1_35_logements_declenchent(db):
     from labuse.api.bilan import _mixite_note
     note = _mixite_note(db, AB0006_SD, _mk([{"libelle": "Logements", "lots": 35, "suv": 2500, "prix_ttc_m2_suv": 4000}]))
     assert note and "15 %" in note
 
 
+@pytest.mark.reel
 def test_lot1_part_aidee_chiffree_quand_prix_saisi(db):
     from labuse.api.bilan import _mixite_note, _mixite_structuree
     corps = _mk([
@@ -77,6 +80,7 @@ def test_lot1_part_aidee_chiffree_quand_prix_saisi(db):
     assert s and s["borne_haute"] is False
 
 
+@pytest.mark.reel
 def test_lot1_borne_haute_nomme_la_part_manquante(db):
     from labuse.api.bilan import _mixite_structuree
     s = _mixite_structuree(db, AB0006_SD, _mk([{"libelle": "Logements libres", "lots": 35, "suv": 2500, "prix_ttc_m2_suv": 4000}]))
@@ -84,6 +88,7 @@ def test_lot1_borne_haute_nomme_la_part_manquante(db):
     assert s["charge_reserve"] and "logement" in s["charge_reserve"].lower()
 
 
+@pytest.mark.reel
 def test_lot1_ecran_de_saisie_porte_la_mixite(db):
     # L'écran appelle /bilan/{idu}/calcul ; la réponse doit porter res.mixite (note non vide).
     from labuse.api.bilan import calculer_bilan
@@ -98,6 +103,7 @@ def _pid(db, idu):
     return db.execute(text("SELECT id FROM parcels WHERE idu=:i"), {"i": idu}).scalar()
 
 
+@pytest.mark.reel
 def test_lot2_avert_zac_voyage_dans_la_note_bilan(db):
     from labuse.api.bilan import _mixite_note
     # AH0022 (U4a) déclenchée → la note du Bilan porte l'avert d'exclusion ZAC Marie Caze / Sans Souci.
@@ -105,6 +111,7 @@ def test_lot2_avert_zac_voyage_dans_la_note_bilan(db):
     assert note and "Marie Caze" in note and "Sans Souci" in note
 
 
+@pytest.mark.reel
 def test_lot2_saint_denis_jamais_accession_sociale(db):
     from labuse.faisabilite.bilan import compute_bilan_servi
     b, _ = compute_bilan_servi(db, _pid(db, AB0006_SD))
@@ -114,6 +121,7 @@ def test_lot2_saint_denis_jamais_accession_sociale(db):
     assert "sociaux et/ou intermédiaires" in joined or "aidé" in joined.lower()
 
 
+@pytest.mark.reel
 def test_lot2_fiche_porte_la_clause_pour_saint_paul(db):
     from labuse.api.app import _mixite_fiche_block
     from labuse.faisabilite.zonage import resolve_zone  # noqa: F401  (import de cohérence)
@@ -122,6 +130,7 @@ def test_lot2_fiche_porte_la_clause_pour_saint_paul(db):
         assert fb and fb.get("statut") == "valide" and fb.get("quota_pct") == 30.0, (idu, zone, fb)
 
 
+@pytest.mark.reel
 def test_lot2_denominateur_saint_paul_dans_la_note(db):
     from labuse.api.bilan import _mixite_note
     note = _mixite_note(db, CV1498_SP, _mk([{"libelle": "Logements", "lots": 35, "suv": 2500, "prix_ttc_m2_suv": 4500}]))
@@ -130,6 +139,7 @@ def test_lot2_denominateur_saint_paul_dans_la_note(db):
 
 # ─────────────── LOT 4 — le bord court est un lien `bord_court` (vide_m null) : l'écran doit le gérer ───────────────
 
+@pytest.mark.reel
 def test_lot4_bord_court_est_un_type_distinct_sans_vide(db):
     from labuse.assemblage import liens_assiette
     liens = liens_assiette(db, [_pid(db, CV1134), _pid(db, CV1381)])
@@ -142,6 +152,7 @@ def test_lot4_bord_court_est_un_type_distinct_sans_vide(db):
 
 # ─────────────── LOT 5 — motif « zone rouge » faux (DH0119 en PPR bleu) + comparatif ───────────────
 
+@pytest.mark.reel
 def test_lot5_dh0119_motif_pas_zone_rouge_sans_ppr_rouge(db):
     from labuse.faisabilite.potentiel_batir import potentiel_batir
     pb = potentiel_batir(db, DH0119_SP)
@@ -150,6 +161,7 @@ def test_lot5_dh0119_motif_pas_zone_rouge_sans_ppr_rouge(db):
     assert "zone rouge" not in motif.lower() or "hors zone rouge" in motif.lower()
 
 
+@pytest.mark.reel
 def test_lot5_vraie_zone_rouge_conserve_le_motif(db):
     # Non-régression : une parcelle réellement ≥ 95 % en PPR rouge garde « Zone rouge du PPR ».
     from labuse.faisabilite.potentiel_batir import potentiel_batir
@@ -157,7 +169,7 @@ def test_lot5_vraie_zone_rouge_conserve_le_motif(db):
     assert "Zone rouge du PPR" in (pb.get("motif") or "")
 
 
-def test_lot5_comparatif_capacite_non_calculee(db):
+def test_lot5_comparatif_capacite_non_calculee():
     from labuse.exports.blocs.comparatif import rendu
     rows = [{"idu": "97415000DH0120", "constructible": False,
              "verdict_motif": "Zone non constructible — naturelle", "zone": "N", "surface_m2": 1000},
@@ -170,6 +182,7 @@ def test_lot5_comparatif_capacite_non_calculee(db):
 
 # ─────────────── LOT 6 — surfaces effectivement retranchées (brut + effectif) ───────────────
 
+@pytest.mark.reel
 def test_lot6_retranchement_effectif_a_cote_du_brut(db):
     from labuse.assemblage import aggregate_assiette
     from sqlalchemy import text as _t

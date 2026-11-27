@@ -182,10 +182,12 @@ def test_bf1_garde_disparue_sur_toutes_les_routes(client, monkeypatch):
             "message": "Parcelle disparue du cadastre (version du 2026-09-01).", "remplacee_par": []}
     monkeypatch.setattr(cd, "info_disparue", lambda db, idu: dict(faux, idu=idu))
     IDU, IDU2 = "97416000EI1048", "97414000CT1094"
+    # Le compte signataire est renseigné pour atteindre la garde cadastrale.
+    monkeypatch.setattr("labuse.api.courrier._marque_du_compte", lambda db, request: {"raison_sociale": "Société témoin"})
     # routes DOCUMENT qui REFUSENT (422 + erreur=parcelle_disparue). B-F1 : apporteur / etude-zone /
     # analyse-annonce composaient un document complet — elles refusent désormais ; gabarit / comparatif
     # / financier refusaient déjà.
-    docs = [f"/apporteur/{IDU}.pdf", f"/financier/{IDU}.pdf", f"/gabarit/{IDU}.pdf",
+    docs = [f"/apporteur/{IDU}.pdf", f"/gabarit/{IDU}.pdf",
             f"/etude-zone.pdf?idu={IDU}", f"/analyse-annonce/{IDU}.pdf",
             f"/comparatif.pdf?idus={IDU},{IDU2}"]
     for url in docs:

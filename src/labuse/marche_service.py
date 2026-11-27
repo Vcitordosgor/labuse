@@ -144,7 +144,8 @@ def marche_dvf(db: Session, idu: str, *, profil: str, avail: set[str] | None = N
         tp = None
         try:
             from .pige.api import _derniere_mutation_dvf
-            mut = _derniere_mutation_dvf(db, idu)
+            with db.begin_nested():
+                mut = _derniere_mutation_dvf(db, idu)
             nat = (mut or {}).get("nature")
             tp = nat if nat in ("maison", "appartement") else None
         except Exception:  # noqa: BLE001 — nature indéterminée : comportement historique (sans type)
@@ -154,11 +155,12 @@ def marche_dvf(db: Session, idu: str, *, profil: str, avail: set[str] | None = N
             # muté), un bâti NON en copropriété est une MAISON : plus jamais « appartement » en tête
             # d'une parcelle bâtie d'une maison. Une copropriété garde le défaut (collectif).
             try:
-                row = db.execute(text(
-                    "SELECT (fb.idu IS NOT NULL) AS batie, "
-                    "EXISTS(SELECT 1 FROM rnic_coproprietes rc WHERE rc.parcelle_idu = p.idu) AS copro "
-                    "FROM parcels p LEFT JOIN parcel_filtre_bati fb ON fb.idu = p.idu WHERE p.idu = :i"),
-                    {"i": idu}).mappings().first()
+                with db.begin_nested():
+                    row = db.execute(text(
+                        "SELECT (fb.idu IS NOT NULL) AS batie, "
+                        "EXISTS(SELECT 1 FROM rnic_coproprietes rc WHERE rc.parcelle_idu = p.idu) AS copro "
+                        "FROM parcels p LEFT JOIN parcel_filtre_bati fb ON fb.idu = p.idu WHERE p.idu = :i"),
+                        {"i": idu}).mappings().first()
                 if row and row["batie"] and not row["copro"]:
                     tp = "maison"
             except Exception:  # noqa: BLE001 — table absente / base partielle : défaut historique

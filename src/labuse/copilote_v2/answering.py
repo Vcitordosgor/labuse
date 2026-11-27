@@ -131,8 +131,6 @@ CATALOGUE = [
      "Chaque fait porte sa source (cadastre / PLU / RNIC / DGFiP).", "params": {"idu": "str 14 car."}},
     {"nom": "stats_commune", "desc": "Contexte d'une commune : taux de logement social (SRU), statut SRU, "
      "nombre de logements, part de propriétaires.", "params": {"commune": "str"}},
-    {"nom": "delais_instruction", "desc": "DÉLAI médian d'instruction d'une commune (dépôt→autorisation, "
-     "Sitadel). Pour « quel délai / combien de temps / vélocité d'instruction ».", "params": {"commune": "str"}},
     {"nom": "compter_permis", "desc": "NOMBRE de permis accordés d'une commune sur une fenêtre de N mois "
      "(défaut 24). Pour « combien de permis (accordés/délivrés) à X », « permis sur 24 mois ». C'est un "
      "COMPTE, pas un délai.", "params": {"commune": "str", "mois": "int (défaut 24)"}},
@@ -192,8 +190,7 @@ RÈGLES :
   (rouge) » → evenement=true ; « en zone U / AU / A / N » → zonage (ex. "U"). Ces critères sont
   APPLIQUÉS (ne les mets JAMAIS dans criteres_non_appliques).
 - « Combien de permis (accordés/délivrés) à X » → outil compter_permis (le COMPTE ; extrais `mois` si
-  une fenêtre est dite : « sur 24 mois » → mois=24, « sur 12 mois » → mois=12). « Quel DÉLAI d'instruction
-  à X » → delais_instruction. Ne CONFONDS PAS le compte (compter_permis) et le délai (delais_instruction).
+  une fenêtre est dite : « sur 24 mois » → mois=24, « sur 12 mois » → mois=12). Le délai d'instruction est indisponible.
 - REFUS (mets "tool":null et "refus" à la bonne valeur, "args":{{}}) :
   · "proprietaire_pp" : on demande l'identité/nom/adresse du PROPRIÉTAIRE d'une parcelle (personne
     physique — donnée non ouverte). NB : « quelles parcelles possède [société] » n'est PAS un refus
@@ -476,7 +473,6 @@ _ARG_SPEC = {
     "parcelles_par_entreprise": {"q": str},
     "fiche_parcelle": {"idu": str},
     "stats_commune": {"commune": str},
-    "delais_instruction": {"commune": str},
     "compter_permis": {"commune": str, "mois": int},
     "marche": {"commune": str},
     "compter_piscines": {"commune": str},

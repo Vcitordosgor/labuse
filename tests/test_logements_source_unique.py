@@ -40,6 +40,7 @@ def _lire(rel: str) -> str:
 #: SEULS fichiers autorisés à nommer les champs logements d'`estimate_capacity` dans du CODE
 #: (hors commentaires) — chacun pour une raison écrite, AUCUN n'affiche un nombre :
 _LECTEURS_AUTORISES = {
+    "src/labuse/assemblage.py",  # pondération interne du seuil de mixité par portion
     "src/labuse/faisabilite/engine.py",          # PRODUCTEUR (les champs restent pour les calculs)
     "src/labuse/exports/robinet_fiche.py",       # accesseur UNIQUE (_fourchette_logements, présence)
     "src/labuse/faisabilite/scenarios.py",       # garde interne « rien à bâtir » (aucun affichage)

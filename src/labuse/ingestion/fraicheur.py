@@ -576,16 +576,6 @@ def run_derives(session: Session, *, hebdo: bool = False, commit: bool = True, l
     if out["dpe_reveil"]["franchi"]:
         log_fn(f"⚑ RÉVEIL DPE : critère franchi ({out['dpe_reveil']['n']} ≥ {SEUIL_REVEIL_DPE}) — "
                "le badge en réserve peut être réinstruit (cf. A1_DPE_CADRAGE).")
-    if hebdo:
-        from . import permit_delais_m10
-        try:
-            out["m10_delais"] = permit_delais_m10.build_delais(session, log=log_fn)
-        except Exception as exc:  # noqa: BLE001 — hebdo réseau (SDES) : isolé comme les autres
-            if not commit:
-                raise
-            session.rollback()
-            out["m10_delais"] = {"erreur": f"{type(exc).__name__}: {exc}"}
-            log_fn(f"⚠ dérivé m10_delais ÉCHOUÉ (isolé) : {exc}")
     if commit:
         session.commit()                               # dpe_reveil (fraicheur_etat) + reliquat éventuel
     log_fn(f"dérivés rafraîchis : {list(out)}")

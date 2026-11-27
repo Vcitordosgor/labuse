@@ -1043,12 +1043,16 @@ def _sync_crm_projet_statut(db: Session, pid: int, statut: str, now: datetime, c
                         "AND compte_id IS NOT DISTINCT FROM :cid"),
                    {"pid": pid, "now": now, "cid": cid})
     elif statut == "actif":
-        db.execute(text("UPDATE pipeline_entries SET archived_at = NULL, archive_par_projet_at = NULL, updated_at = :now "
+        from . import crm_columns
+        keys = crm_columns.col_keys(db, cid)
+        cible = _RETENUE_CRM_STATUS if _RETENUE_CRM_STATUS in keys else crm_columns.default_status(db, cid)
+        db.execute(text("UPDATE pipeline_entries SET archived_at = NULL, archive_par_projet_at = NULL, "
+                        "status = CASE WHEN status = ANY(:keys) THEN status ELSE :cible END, updated_at = :now "
                         "WHERE projet_id = :pid AND archived_at = archive_par_projet_at "
                         "AND NOT EXISTS (SELECT 1 FROM projet_parcelles pp WHERE pp.projet_id = :pid "
                         "AND pp.parcel_id = pipeline_entries.parcel_id AND pp.statut <> 'retenue') "
                         "AND compte_id IS NOT DISTINCT FROM :cid"),
-                   {"pid": pid, "now": now, "cid": cid})
+                   {"pid": pid, "now": now, "cid": cid, "keys": keys, "cible": cible})
 
 
 def _projet_or_404(db: Session, pid: int, cid: int | None) -> models.Projet:

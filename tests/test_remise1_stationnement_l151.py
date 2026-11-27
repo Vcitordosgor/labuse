@@ -31,7 +31,7 @@ def _bareme(flat=2.0, validee=True, mode="par_logement"):
 
 
 def _regles(bareme=None):
-    return SimpleNamespace(stationnement=bareme or _bareme())
+    return SimpleNamespace(zone="UA", stationnement=bareme or _bareme())
 
 
 @pytest.fixture

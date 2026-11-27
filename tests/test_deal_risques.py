@@ -2,6 +2,9 @@
 construction requête fetch_layer (P1/P2). Mock WFS/HTTP, ZÉRO réseau/base."""
 from __future__ import annotations
 
+import pytest
+from unittest.mock import MagicMock
+
 from labuse.ingestion import layers_ingest
 from labuse.ingestion.layers_ingest import _normalise_alea, _prop
 
@@ -47,8 +50,11 @@ def _alea(degre, code_degre):
 def test_ppr_zone_subtype_degre(monkeypatch):
     feats = [_ppr("INTERDICTION", "R1"), _ppr("INTERDICTION", "R2"),
              _ppr("PRESCRIPTION", "B2"), _ppr("PRESCRIPTION", "rB2")]
+    session = MagicMock()
+    session.execute.return_value.scalar.return_value = False
+    monkeypatch.setattr(layers_ingest, "_rafraichir_derives_risque", lambda *args: None)
     inserted, calls = _install(monkeypatch, {"PPR_APPROUVE": feats})
-    n = layers_ingest.ingest_ppr_zone(None, (0, 0, 1, 1), "Saint-Denis", 1, {}, "97411")
+    n = layers_ingest.ingest_ppr_zone(session, (0, 0, 1, 1), "Saint-Denis", 1, {layers_ingest.KIND_SOURCE["ppr"]: 1}, "97411")
     assert n == 4
     assert all(i["kind"] == "ppr" for i in inserted)
     subtypes = [i["subtype"] for i in inserted]
@@ -59,21 +65,24 @@ def test_ppr_zone_subtype_degre(monkeypatch):
     assert calls[0]["exp_filter"] == "CODE_INSEE = '97411'"   # filtre WFS bien passé
 
 
-def test_ppr_zone_ignore_sans_degre_ou_geom(monkeypatch):
-    feats = [_ppr("INTERDICTION", "R1"),
-             {"geometry": _GEOM, "properties": {"DEGRE": ""}},                 # pas de degré
-             {"geometry": None, "properties": {"DEGRE": "PRESCRIPTION"}}]      # pas de géométrie
-    inserted, _ = _install(monkeypatch, {"PPR_APPROUVE": feats})
-    n = layers_ingest.ingest_ppr_zone(None, (0, 0, 1, 1), "Saint-Denis", 1, {}, "97411")
-    assert n == 1
+@pytest.mark.parametrize("geom,degre", [(None, "INTERDICTION"), (_GEOM, "")])
+def test_zonage_incomplet_preserve_la_couche(monkeypatch, geom, degre):
+    feat = {"geometry": geom, "properties": {"CODE_INSEE": "97411", "DEGRE": degre}}
+    inserted, _ = _install(monkeypatch, {"PPR_APPROUVE": [feat]})
+    session = MagicMock()
+    with pytest.raises(ValueError, match="géométrie ou degré absent"):
+        layers_ingest.ingest_ppr_zone(session, None, "Saint-Denis", 1, {}, "97411")
+    session.execute.assert_not_called()
+    assert not inserted
 
 
-def test_ppr_zone_fallback_pm1_si_zero_deal(monkeypatch):
-    inserted, _ = _install(monkeypatch, {"PPR_APPROUVE": []})                  # DEAL ne renvoie rien
-    monkeypatch.setattr(layers_ingest, "ingest_ppr_sup",
-                        lambda session, bbox, commune, run_id, sids: 7)
-    n = layers_ingest.ingest_ppr_zone(None, (0, 0, 1, 1), "Cilaos", 1, {}, "97414")
-    assert n == 7 and inserted == []          # repli PM1 appelé, aucune insertion DEAL
+def test_zonage_vide_preserve_la_couche(monkeypatch):
+    inserted, _ = _install(monkeypatch, {"PPR_APPROUVE": []})
+    session = MagicMock()
+    with pytest.raises(ValueError, match="Zonage PPR DEAL vide"):
+        layers_ingest.ingest_ppr_zone(session, None, "Cilaos", 1, {}, "97414")
+    session.execute.assert_not_called()
+    assert not inserted
 
 
 # ── Aléas : normalisation niveau + résiduel + lecture casse mixte ─────────────
@@ -89,9 +98,14 @@ def test_normalise_alea_mapping():
 
 def test_georisque_alea_insert(monkeypatch):
     inond = [_alea("FAIBLE", "1"), _alea("FORT", "3"), _alea("RESIDUEL_FORT", "rD3")]
-    inserted, calls = _install(monkeypatch, {"ALEA_INONDATION": inond, "ALEA_MOUVEMENT_TERRAIN": []})
-    n = layers_ingest.ingest_georisque_alea(None, (0, 0, 1, 1), "Saint-Denis", 1, {}, "97411")
-    assert n == 3
+    inserted, calls = _install(monkeypatch, {"ALEA_INONDATION": inond, "ALEA_MOUVEMENT_TERRAIN": [_alea("FORT", "3")]})
+    session = MagicMock()
+    session.execute.return_value.scalar.return_value = False
+    monkeypatch.setattr(layers_ingest, "_rafraichir_derives_risque", lambda *args: None)
+    n = layers_ingest.ingest_georisque_alea(session, None, "Saint-Denis", 1,
+                                           {layers_ingest.KIND_SOURCE["georisque_alea"]: 1}, "97411")
+    assert n == 4 and inserted[-1]["subtype"] == "mouvement_terrain"
+    inserted = inserted[:3]
     assert all(i["kind"] == "georisque_alea" and i["subtype"] == "inondation" for i in inserted)
     assert [(i["attrs"]["niveau"], i["attrs"]["residuel"]) for i in inserted] == \
            [("faible", False), ("fort", False), ("fort", True)]
@@ -103,7 +117,8 @@ def test_georisque_alea_insert(monkeypatch):
     assert [c["typename"] for c in calls] == [
         "ALEA_INONDATION", "ALEA_MOUVEMENT_TERRAIN",
         "Alea_submersion_marine", "Alea_submersion_marine__changement_climatique"]
-    assert all(c["exp_filter"] == "code_insee = '97411'" for c in calls)
+    assert "97400" in calls[0]["exp_filter"]
+    assert all(c["exp_filter"] == "code_insee = '97411'" for c in calls[1:])
 
 
 # ── P3 : _prop insensible à la casse (PPR MAJ vs ALEA mixte) ──────────────────

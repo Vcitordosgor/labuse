@@ -91,16 +91,15 @@ def test_persist_millesime_dvf_horizon_calcule(db_session):
     _ensure_millesime_cols(s)
     s.execute(text("INSERT INTO data_sources (name, category, status) VALUES "
                    "('DVF / valeurs foncières', 'marche', 'ok') ON CONFLICT (name) DO NOTHING"))
-    s.execute(text("CREATE TABLE IF NOT EXISTS dvf_mutations_parcelle "
-                   "(id_mutation text NOT NULL, date_mutation date, id_parcelle varchar(14), millesime smallint)"))
-    s.execute(text("INSERT INTO dvf_mutations_parcelle (id_mutation, date_mutation, id_parcelle, millesime) "
-                   "VALUES ('m1','2025-12-31','97400000AA0001',2025),('m2','2024-06-01','97400000AA0002',2024)"))
+    s.execute(text("INSERT INTO dvf_mutations (date_mutation, geom) VALUES "
+                   "('2025-12-31',ST_SetSRID(ST_Point(55,-21),4326)),"
+                   "('2024-06-01',ST_SetSRID(ST_Point(55,-21),4326))"))
     rendu = f.persist_millesime(s, only="dvf", commit=False)
     assert len(rendu) == 1 and rendu[0]["source"] == "dvf"
     row = s.execute(text("SELECT source_horizon_at, source_cadence, source_millesime, prochain_millesime_at "
                          "FROM data_sources WHERE name = 'DVF / valeurs foncières'")).one()
     assert str(row[0]) == "2025-12-31"          # horizon = max(date_mutation), calculé
-    assert row[1] == "semestriel" and "géo-DVF" in row[2] and str(row[3]) == "2026-10-01"
+    assert row[1] == "semestriel" and "géo-DVF" in row[2] and str(row[3]) == f.SOURCES["dvf"]["prochain"]
 
 
 @pytest.mark.db
@@ -127,23 +126,16 @@ def test_dvf_detection_no_op_si_lastmod_connu(db_session, monkeypatch):
     """On ne retélécharge JAMAIS ce qu'on a : lastmod identique → no-op (aucun DELETE/reload)."""
     s = db_session
 
-    class FakeResp:
-        status_code = 200
-        headers = {"last-modified": "Wed, 01 Apr 2026 10:00:00 GMT"}
-
-    class FakeClient:
-        def __init__(self, **kw): ...
-        def __enter__(self): return self
-        def __exit__(self, *a): ...
-        def head(self, url): return FakeResp()
-
-    monkeypatch.setattr(f.httpx, "Client", FakeClient)
+    from labuse.ingestion import dvf_etalab
+    res = dvf_etalab.Ressource("2026-S1", 2026, 1, "https://example.invalid/dvf",
+                               "version-test", None)
+    monkeypatch.setattr(dvf_etalab, "lister_ressources", lambda **kw: ([res], None))
     # 1er check : tout est « nouveau »
     c1 = f.check_dvf_livraison(s)
     assert c1["n"] >= 1
     # on enregistre l'état (comme le ferait refresh_dvf) puis re-check → no-op
     for m in c1["modifies"]:
-        f._etat_set(s, f"dvf:lastmod:{m['annee']}", m["lastmod"])
+        f._etat_set(s, f"dvf:res:{m['token']}", m["version"])
     c2 = f.check_dvf_livraison(s)
     assert c2["n"] == 0
 

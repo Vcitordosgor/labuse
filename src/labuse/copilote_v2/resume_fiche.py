@@ -471,7 +471,7 @@ def _quel_champ(message: str) -> tuple[str, str] | None:
         return "casias_statut", "Pollution des sols (CASIAS)"
     if "assainissement" in m and ("collectif" in m or "raccord" in m):
         return "assainissement_collectif", "Assainissement"
-    if "ecole" in m and any(k in m for k in ("proche", "distance", "proximite")):
+    if "ecole" in m.split() and any(k in m for k in ("proche", "distance", "proximite")):
         return "ecole_premier_degre", "École du premier degré"
     if "toit" in m and any(k in m for k in ("orientation", "azimut", "exposition")):
         return "pans_orientation_deg", "Orientation des pans de toiture"

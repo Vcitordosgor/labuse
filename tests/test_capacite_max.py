@@ -39,10 +39,10 @@ def test_exports_portent_la_mention_capacite():
 def test_fiche_et_gabarit_portent_la_mention():
     assert "capaciteMax" in _lire("frontend/src/components/fiche/constructibilite.tsx")
     assert "SDP max" in _lire("frontend/src/components/fiche/constructibilite.tsx")
-    # RETOURS-28 — le Gabarit porte la mention en PHRASE LITTÉRALE validée (plus l'import `capaciteMax`) :
-    # « les permis délivrés utilisent environ la moitié de ce maximum (médiane sur 6 601 permis) ».
-    _gab = _lire("frontend/src/components/outils/Gabarit.tsx")
-    assert "moitié de ce maximum" in _gab and "6 601 permis" in _gab
+    # Le gabarit affiche l'emprise au sol. Le ratio de SDP des permis ne s'y applique pas.
+    gabarit = _lire("frontend/src/components/outils/Gabarit.tsx")
+    assert 'label="Emprise maximale" value={res.plafondEmpriseM2}' in gabarit
+    assert "CAPACITE_MAX_MENTION" not in gabarit
     # RETOURS-28/29 — le Comparatif a RETIRÉ la ligne « Logements possibles ». CAPACITE-1 (B1) : la
     # capacité de reconstruction est une ESTIMATION (occupation du gabarit = hypothèse), jamais un
     # « maximum réglementaire » — le titre de la ligne « Plancher possible · reconstruction » le dit.

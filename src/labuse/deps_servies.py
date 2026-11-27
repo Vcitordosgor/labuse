@@ -23,7 +23,7 @@ MODULES_TIERS_SERVIS: tuple[str, ...] = (
     "PIL", "anthropic", "anyio", "argon2", "brotli", "certifi", "cv2", "dotenv", "duckdb",
     "fastapi", "fitz", "fpdf", "geoalchemy2", "httpx", "jinja2", "joblib", "jsonschema",
     "markupsafe", "numpy", "openpyxl", "pandas", "psycopg", "pydantic", "pydantic_settings",
-    "pypdf", "pyproj", "qrcode", "rasterio", "requests", "scipy", "shapefile", "shapely",
+    "affine", "pypdf", "pyproj", "qrcode", "rasterio", "requests", "scipy", "shapefile", "shapely",
     "sklearn", "sqlalchemy", "starlette", "stripe", "typer", "uvicorn", "weasyprint", "yaml",
 )
 

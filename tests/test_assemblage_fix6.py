@@ -75,6 +75,7 @@ def _pdftotext(octets: bytes) -> str:
 
 # ───────────────── LOT 1 — note de mixité du Bilan = programme SAISI ─────────────────
 
+@pytest.mark.reel
 def test_lot1_note_bilan_suit_les_logements_saisis(db):
     """AB0006 : 24 logts saisis < 30 → clause NON déclenchée (le scénario auto à 39 ne décide plus) ;
     BZ0824 : 35 logts saisis ≥ 30 → clause déclenchée."""
@@ -89,6 +90,7 @@ def test_lot1_note_bilan_suit_les_logements_saisis(db):
     assert "non déclenchée" not in note35.lower()
 
 
+@pytest.mark.reel
 def test_lot1_pdf_bilan_ne_porte_plus_la_borne_haute_a_24_logements(db):
     """Preuve par le document : le PDF du Bilan de 24 logts sur AB0006 ne contient plus « BORNE HAUTE »."""
     from labuse.api.bilan import _mixite_note
@@ -107,6 +109,7 @@ def test_lot1_pdf_bilan_ne_porte_plus_la_borne_haute_a_24_logements(db):
     assert "15 %" not in txt
 
 
+@pytest.mark.reel
 def test_lot1_fiche_porte_la_clause_uavap_de_saint_denis(db):
     """La fiche (bloc `reglement_plu.mixite`) montre la clause Uavap.2 que le moteur connaît — avant,
     elle lisait `resolve_zone().mixite` (absent de plu_zonage pour Uavap) → « aucune clause validée »."""
@@ -133,6 +136,7 @@ def _assemblage(db, idus):
     return assemblage(AssemblageIn(idus=idus), db)
 
 
+@pytest.mark.reel
 def test_lot2_8CV_plein_regime_nomme_LLTS_LLS_PLS_pas_accession_seule(db):
     d = _assemblage(db, HUIT_CV)
     m = d["mixite"]
@@ -166,6 +170,7 @@ def test_lot2_reorder_clause_est_euro_neutre_single_parcelle():
                 assert regime == attendu, (sdp, terr, logt, regime, attendu)
 
 
+@pytest.mark.reel
 def test_lot2_multizone_teste_la_somme_des_logements(db):
     """Le nombre de logements comparé aux seuils 20/30 = somme de TOUTES les portions (comme les surfaces)."""
     from labuse.assemblage import _capacite_union
@@ -186,7 +191,7 @@ def test_lot2_multizone_teste_la_somme_des_logements(db):
 
 # ───────────────── LOT 3 — Saint-Denis : 10 zones, libellé « logements sociaux et/ou intermédiaires » ─────────────────
 
-def test_lot3_dix_zones_portent_la_clause_dont_Up(db):
+def test_lot3_dix_zones_portent_la_clause_dont_Up():
     from labuse.faisabilite.bilan import _zone_mixite_regle
     from labuse.faisabilite.zonage import resolve_zone
     zones = ["Uavap", "Up", "Ud", "Ui", "Uj", "Um", "Uh", "AUj", "AUm", "AUh"]
@@ -196,6 +201,7 @@ def test_lot3_dix_zones_portent_la_clause_dont_Up(db):
         assert mr is not None and mr.get("seuil_logements") == 30 and mr.get("quota_pct") == 15, z
 
 
+@pytest.mark.reel
 def test_lot3_note_borne_haute_ne_dit_pas_accession_sociale_a_saint_denis(db):
     """La réserve « borne haute » d'une obligation Saint-Denis ne doit pas parler d'« accession sociale »
     (c'est « logements sociaux et/ou intermédiaires »)."""
@@ -208,6 +214,7 @@ def test_lot3_note_borne_haute_ne_dit_pas_accession_sociale_a_saint_denis(db):
 
 # ───────────────── LOT 4 — avert Marie Caze / Sans Souci transmis à l'Assemblage ─────────────────
 
+@pytest.mark.reel
 def test_lot4_assemblage_U4_transmet_lavert_marie_caze(db):
     """AH0022 + AH1402 (zone U4a) déclenche 30 % ; l'avertissement Marie Caze / Sans Souci du moteur
     individuel voyage avec `mixite` jusqu'à l'Assemblage."""
@@ -224,6 +231,7 @@ def test_lot4_assemblage_U4_transmet_lavert_marie_caze(db):
     ("97415000CV1134", "97415000CV1381", 0.34),
     ("97415000CV1334", "97415000CV1435", 0.48),
 ])
+@pytest.mark.reel
 def test_lot5_bord_court_nest_pas_un_point(db, a, b, longueur):
     from labuse.assemblage import liens_assiette
     db.rollback()
@@ -235,6 +243,7 @@ def test_lot5_bord_court_nest_pas_un_point(db, a, b, longueur):
     assert ln.get("a_verifier") is True                 # signalé « à vérifier »
 
 
+@pytest.mark.reel
 def test_lot5_message_tenant_decrit_le_segment_pas_aucun_bord(db):
     from labuse.api.moteurs import assemblage, AssemblageIn
     db.rollback()
@@ -246,6 +255,7 @@ def test_lot5_message_tenant_decrit_le_segment_pas_aucun_bord(db):
 
 # ───────────────── LOT 6 — surface en zone constructible = géométrie de l'union ─────────────────
 
+@pytest.mark.reel
 def test_lot6_surface_constructible_est_la_geometrie_de_lunion(db):
     """Trio DH : l'écran annonce la surface géométrique de l'union en U/AU (21 516 m²), pas la contenance
     mise à l'échelle (21 638 m²) — ou il dit laquelle il affiche."""
@@ -255,6 +265,7 @@ def test_lot6_surface_constructible_est_la_geometrie_de_lunion(db):
 
 # ───────────────── LOT 7 — reconstruction 0 m² → « non calculée » quand pas de capacité ─────────────────
 
+@pytest.mark.reel
 def test_lot7_item_sans_capacite_dit_non_calculee(db):
     """DH0120 n'a pas de capacité → la ligne d'Assemblage ne dit plus « reconstruction 0 m² » mais
     marque l'absence (sdp None), pour que l'écran écrive « non calculée »."""
@@ -266,6 +277,7 @@ def test_lot7_item_sans_capacite_dit_non_calculee(db):
 
 # ───────────────── LOT 8 — libellés (zone AU → famille, particulier → sans PM) ─────────────────
 
+@pytest.mark.reel
 def test_lot8_marche_terrain_nu_nomme_la_famille_de_zone(db):
     """Le repère de marché du terrain nu porte sur la FAMILLE AU de la commune (median AU toutes
     sous-zones), pas la sous-zone AU3c : l'écran le nomme « zones AU de {commune} »."""

@@ -646,7 +646,11 @@ LECTURES: tuple[Lecture, ...] = (
     #    (dvf_mutations, désormais délégué à moteurs.prix_ancien_communes) a été retirée en regard.
     L("parcels", "bilan/reperes.py", "surface_parcelle_m2", "outil_etudier_bien",
       "BILAN-1 sources_parcelle : _surface lit COALESCE(contenance_m2, surface_m2) pour le « terrain » Sourcé du Bilan (CONTENANCE-1, contenance|dessin comme la fiche/les calculs) + _parcelle résout idu→id/commune — même surface que surface_parcelle_m2 ; le Bilan n'a pas de robinet propre, rattaché au plus proche (outil Étudier le bien d'où il s'ouvre)."),
-    L("dvf_mutations", "bilan/reperes.py", "prix_achat_historique_eur", "pdf_dossier_expert",
+    L("parcels", "api/exposition_commune.py", None, None,
+      "Sélection des parcelles de la commune pour établir leur exposition."),
+    L("plu_reglement_extrait", "api/servitudes.py", None, None,
+      "Résolution du document de règlement pour la consultation des servitudes."),
+    L("dvf_mutations_parcelle", "bilan/reperes.py", "prix_achat_historique_eur", "pdf_dossier_expert",
       "BILAN-1 _prix_achat_dvf : dernière mutation DVF de la parcelle (valeur_fonciere + date, dvf_mutations_parcelle par IDU) servie en INFO hors-calcul « Dernier prix DVF » du Bilan — même donnée que prix_achat_historique_eur (dernière mutation) ; le Bilan n'ayant pas de robinet, rattaché au plus proche (pdf_dossier_expert porte ce chiffre)."),
     L("pm_dirigeants", "api/app.py", "dirigeant_pm_signal", "outil_scan_patrimoine",
       "_pm_dirigeant : dirigeant AÎNÉ (nom + âge, personne physique datée la plus ancienne au RNE INPI) servi à la ligne « Dirigeant » de la fiche §1 Identité — même donnée RNE que le signal dirigeant du Scan patrimoine (seul robinet portant dirigeant_pm_signal) ; la fiche n'a pas de robinet dédié, rattachée au plus proche."),

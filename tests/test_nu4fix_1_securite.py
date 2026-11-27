@@ -119,6 +119,8 @@ def _routes_mutantes_hors_admin() -> list[str]:
 
 
 def _classe(p: str) -> str | None:
+    if p == "/gabarit/{idu}.pdf":  # rendu du projet fourni, soumis au quota du compte
+        return "tenant"
     if p in _PUBLIQUES:
         return "publique"
     if p in _GLOBAL_ADMIN_EXACTS:

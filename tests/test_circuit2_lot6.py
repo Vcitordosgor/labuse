@@ -78,11 +78,16 @@ def test_collectes_attachent_les_valeurs_registre():
     assert "dict[str, Valeur]" in collecte, "la collecte rend {id → Valeur}, rien d'autre"
 
 
-def test_sources_des_pdf_sans_millesime():
-    """EXPORTS-REBRANCHEMENT-1 lot 2 (doctrine PAGE-SOURCES-1 18/09) : le bloc Sources des PDF
-    n'imprime PLUS de millésime — noms de sources et producteurs seuls, aucune date en dur."""
-    src = (RACINE / "src/labuse/exports/blocs/sources.py").read_text()
-    assert "millesime']}" not in src and 'millesime"]}' not in src, "plus de millésime imprimé"
-    # aucune année gravée dans le bloc
-    import re
-    assert not re.search(r"\b(19|20)\d{2}\b", src), "aucun millésime en dur dans le bloc Sources"
+def test_sources_du_pdf_reprennent_le_millesime_de_la_fiche():
+    from types import SimpleNamespace
+
+    from labuse.exports.blocs.sources import corps_sources
+
+    def rendu(millesime):
+        source = {"nom": "Source témoin", "fournisseur": "Producteur", "millesime": millesime}
+        return corps_sources({"run_label_servi": SimpleNamespace(
+            valeur=[source], reservoirs={"Source témoin": millesime})})
+
+    assert "Producteur — édition témoin" in rendu("édition témoin")
+    sans_date = rendu(None)
+    assert "Producteur" in sans_date and "édition témoin" not in sans_date
