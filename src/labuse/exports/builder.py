@@ -473,7 +473,7 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
             doc_foot=_FOOT["dossier"].format(au=au))
         html = page_html(label, cart, corps)
         return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart,
-                           contexte={"adresse": adresse})
+                           contexte={"adresse": adresse, "facteurs_plancher": miroir.facteurs_plancher(f, valeurs)})
     blocs = DOCUMENTS[document]
     ids = sorted({cid for b in blocs for cid in b.IDS})
     valeurs = collecte(db, idu, ids, fiche=f)

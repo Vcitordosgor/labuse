@@ -1671,6 +1671,24 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         '</div>')
 
 
+def facteurs_plancher(fiche: dict, valeurs: dict[str, Valeur]) -> tuple[int, int, int] | None:
+    """Facteurs affichés pour la surface de plancher estimée."""
+    surface = valeurs.get("surface_plancher_m2")
+    potentiel = fiche.get("potentiel_transformation") or {}
+    calcul = potentiel.get("calcul") or {}
+    try:
+        emprise = float(potentiel.get("emprise_constructible_m2") or calcul.get("emprise_constructible_m2"))
+        niveaux = float(potentiel.get("niveaux_max") or calcul.get("niveaux_max"))
+        if surface is None or emprise <= 0 or niveaux <= 0:
+            return None
+        occupation = round(100 * float(surface.valeur) / (emprise * niveaux))
+        if occupation > 0:
+            return round(emprise), int(niveaux), occupation
+    except (TypeError, ValueError, OverflowError):
+        pass
+    return None
+
+
 def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = "") -> str:
     """Le corps du Dossier : les 11 sections de la fiche, depuis les déclarations. L'en-tête de
     tuiles vit désormais dans la page de garde (cover_dossier) ; la clôture §12 (limites + sources)
@@ -1801,16 +1819,9 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                 # L'occupation est l'inverse exact de la formule du moteur (sdp = emprise × occupation ×
                 # niveaux) : lue des valeurs DÉJÀ servies, aucune donnée nouvelle, aucun run. L'occupation
                 # est l'unique maillon non réglementaire (hypothèse de modélisation), c'est dit.
-                _pt = (fiche.get("potentiel_transformation") or {})
-                _cal = (_pt.get("calcul") or {})
-                _emp = _pt.get("emprise_constructible_m2") or _cal.get("emprise_constructible_m2")
-                _niv = _pt.get("niveaux_max") or _cal.get("niveaux_max")
-                try:
-                    _occ = (round(100 * float(v.valeur) / (float(_emp) * float(_niv)))
-                            if (_emp and _niv) else None)
-                except (TypeError, ValueError, ZeroDivisionError):
-                    _occ = None
-                if _emp and _niv and _occ:
+                facteurs = facteurs_plancher(fiche, valeurs)
+                if facteurs:
+                    _emp, _niv, _occ = facteurs
                     html += ('<span class="note" style="display:block">estimation : '
                              f'~{round(float(_emp))} m² d\'emprise × {_occ} % d\'occupation '
                              f'(hypothèse, pas une règle du PLU) × {int(_niv)} niveaux — '

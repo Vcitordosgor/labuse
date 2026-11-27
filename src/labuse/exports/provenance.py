@@ -44,7 +44,7 @@ _REF_AVANT = re.compile(r"(?:art\.?|L\.?|R\.?|D\.?|n°|numéro|référence|réf\
 #: cadastrales courtes, articles de loi. Chaque motif est neutralisé (blanc de même longueur).
 _STRUCTURE = [
     re.compile(r"\b\d{14}\b"),                       # IDU cadastral (97411000AV0110)
-    re.compile(r"\b[A-Z]{2}-\d{8}-[0-9A-Z]{3,14}\b"),  # n° de rapport (DP-20260909-97415000BO0852 ; E4)
+    re.compile(r"\b[A-Z]{2}-\d{8}-[0-9A-Z]{3,14}(?:-[0-9A-F]{4})?\b"),  # n° de rapport (DP-20260909-97415000BO0852 ; E4)
     re.compile(r"\b\d{1,2}/\d{1,2}/\d{2,4}\b"),      # date jj/mm/aaaa
     re.compile(r"\b\d{4}-\d{2}-\d{2}\b"),            # date aaaa-mm-jj
     re.compile(r"\b\d{4}[_-]T[1-4]\b"),              # millésime trimestriel (2026_T1)
@@ -149,6 +149,8 @@ def nombres_ancres(valeurs: dict[str, Valeur], ctx: dict | None = None) -> dict[
     # (données `projet` du registre) — chaque poste chiffré est rattaché à `charge_fonciere_eur`
     # (la donnée-tête du bilan) faute d'un id propre par poste ; la liste blanche porte la raison.
     if ctx:
+        for facteur in ctx.get("facteurs_plancher") or ():
+            ancres.setdefault(float(facteur), "surface_plancher_m2")
         # le bilan à rebours (charge_fonciere_eur et sa décomposition : CA, coûts, marge, charge
         # supportable, grille de sensibilité) — dérivé des surfaces (registre) et des hypothèses
         # SAISIES (données `projet` du registre) ; imprimé en €/k€, signé.

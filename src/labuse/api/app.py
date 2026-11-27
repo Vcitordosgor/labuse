@@ -7331,6 +7331,22 @@ def _mixite_fiche_block(db: Session, commune: str | None, zone: str | None) -> d
                 "produits": (_prod if isinstance(_prod, list) else None),
                 "article": reg.get("article"), "page_pdf": reg.get("page_pdf"),
                 "citation": reg.get("citation")}
+    # OUTIL-ASSEMBLAGE-FIX-8 (LOT 2) — commune à RÉGIME SECTEUR SMS (Saint-Paul : seuil haut 1 800 m²,
+    # quota 30 % portés par les HYPOTHÈSES de la commune, pas par un leaf par zone). `_zone_mixite_regle`
+    # y porte l'article/la page/la citation mais PAS de quota structuré → la fiche affichait « Aucune
+    # clause » alors que le bilan cite 30 % (audit bloquant 2). On construit ici la MÊME clause que le
+    # bilan : quota = pct_lls, seuil = seuil haut, produits LLTS/LLS/PLS, source = article/page/citation
+    # de la zone. Gardé aux zones réellement en livret de mixité (reg non None : U1–U6/AU1–AU6).
+    if reg:
+        from ..faisabilite.engine import Hypotheses
+        hyp = Hypotheses.charger(commune)
+        s_haut = float(getattr(hyp, "mixite_sdp_seuil_haut_m2", 0.0) or 0.0)
+        if s_haut > 0 and hyp.pct_lls:
+            return {"statut": "valide", "quota_pct": float(hyp.pct_lls),
+                    "seuil_logements": None, "seuil_m2": s_haut,
+                    "produits": ["LLTS", "LLS", "PLS"],
+                    "article": reg.get("article") or getattr(hyp, "mixite_article", None),
+                    "page_pdf": reg.get("page_pdf"), "citation": reg.get("citation")}
     return mx   # inchangé (None / propose) pour les zones sans clause validée
 
 

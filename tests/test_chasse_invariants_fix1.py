@@ -124,10 +124,11 @@ def test_lot2_cascade_exclut_le_rouge_majoritaire_en_union():
     """E-03/E-11 — la cascade écarte (HARD_EXCLUDE) les témoins ≥ 50 % rouge EN UNION, et NE touche
     pas une parcelle voisine sans rouge majoritaire (pas de faux positif)."""
     from labuse.cascade.pipeline import evaluate_parcels
-    exclure = ["97401000AK0138", "97401000AM1179"]       # 65 %, 92 %
+    exclure = ["97401000AM1179"]  # 92 %
+    partielle = "97401000AK0138"  # 65 %, tenant hors rouge admis et desservi
     garder = "97401000AI1157"
     with app_session() as s:
-        ids = _ids_for(s, [*exclure, garder])
+        ids = _ids_for(s, [*exclure, partielle, garder])
         if len(ids) < 3:
             pytest.skip("témoins PPR rouge absents de la base")
         outcomes = {o.parcel_id: o for o in evaluate_parcels(list(ids.values()), s, persist=False)}
@@ -136,6 +137,9 @@ def test_lot2_cascade_exclut_le_rouge_majoritaire_en_union():
             he = [v for v in o.verdicts if v.layer_name == "risques" and v.is_hard_exclude()]
             assert he, f"{idu} devrait être écartée (PPR rouge ≥ 50 % en union)"
             assert "PPR zone rouge" in he[0].detail and "%" in he[0].detail
+        risques = [v for v in outcomes[ids[partielle]].verdicts if v.layer_name == "risques"]
+        assert not any(v.is_hard_exclude() for v in risques)
+        assert any("65 %" in v.detail and "hors rouge" in v.detail for v in risques)
         o_g = outcomes[ids[garder]]
         assert not any(v.layer_name == "risques" and v.is_hard_exclude() for v in o_g.verdicts)
 
