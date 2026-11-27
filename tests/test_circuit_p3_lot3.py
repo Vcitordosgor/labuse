@@ -72,7 +72,10 @@ def _coherence(circ: dict) -> list[str]:
     #    exactement une ligne À faire, et réciproquement. « sonde en panne » (signal technique) et
     #    « jamais vérifiée » (gris) ne portent pas de geste : hors de cette réciprocité. ──
     _ = {r["id"] for r in circ["reservoirs"] if _ko_res(r)}   # (compat : ko toujours calculable)
-    actionnables = {r["id"] for r in circ["reservoirs"] if r["etat"][1] in ("nouvelle version", "échue")}
+    from labuse import autonomie
+    actionnables = {r["id"] for r in circ["reservoirs"] if r["etat"][1] == "échue"
+                    or (r["etat"][1] == "nouvelle version" and
+                        autonomie.classe_source(r["nom"], r.get("categorie"))[0] == "B")}
     ids_af_res = set()
     for li in circ.get("a_faire", {}).get("lignes", []):
         cible = li.get("cible") or {}

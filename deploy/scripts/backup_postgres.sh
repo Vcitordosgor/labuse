@@ -31,7 +31,11 @@ command -v pg_dump >/dev/null || { echo "✗ pg_dump introuvable (postgresql-cli
 
 mkdir -p "$BACKUP_DIR"
 TS="$(date +%Y%m%d-%H%M%S)"
+# Sérialise la rotation et réserve un nom distinct pour deux exécutions dans la même seconde.
+exec 9>"$BACKUP_DIR/.rotation.lock"
+flock -n 9 || { echo "Sauvegarde déjà en cours" >&2; exit 1; }
 OUT="$BACKUP_DIR/labuse-${DB}-${TS}.dump"
+if [ -e "$OUT" ]; then OUT="$BACKUP_DIR/labuse-${DB}-${TS}-$$.dump"; fi
 
 # VP-002 (mandat VPS 27/08) — dump LEAN : la DATA des tables reconstructibles (dryrun/
 # entraînement, ~16 Go, jamais saisies par l'utilisateur) est EXCLUE — schéma conservé,
@@ -108,6 +112,8 @@ ensure_space() {
     done
 }
 ensure_space
+PARTIAL=$(mktemp "$BACKUP_DIR/.dump-en-cours.XXXXXX")
+trap 'rm -f -- "$PARTIAL"' EXIT
 
 echo "▶ [$(date '+%F %T')] pg_dump $DB (lean) → $OUT"
 # J+2 (incident 22/07 : un échec d'auth laissait un dump de 0 octet, silencieux jusqu'au pull) :
@@ -127,11 +133,11 @@ BACKOFF_S="${LABUSE_BACKUP_BACKOFF_S:-180}"
 dump_once() {
     # shellcheck disable=SC2086 — $EXCLUDES / $EXCLUDE_TABLES sont des listes d'options construites ci-dessus.
     pg_dump -Fc --no-owner --lock-wait-timeout="$LOCK_WAIT" "$EXCLUDE_SCHEMAS" $EXCLUDES $EXCLUDE_TABLES \
-        -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB" -f "$OUT"
+        -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB" -f "$PARTIAL"
 }
 attempt=1
 until dump_once; do
-    rm -f -- "$OUT"
+    rm -f -- "$PARTIAL"
     if [ "$attempt" -ge "$RETRIES" ]; then
         echo "✗ pg_dump A ÉCHOUÉ après $RETRIES tentative(s) — dump supprimé, rien de corrompu ne reste" >&2
         exit 1
@@ -140,12 +146,12 @@ until dump_once; do
     attempt=$((attempt + 1))
     sleep "$BACKOFF_S"
 done
-if [ ! -s "$OUT" ] || ! pg_restore --list "$OUT" >/dev/null 2>&1; then
-    rm -f -- "$OUT"
+if [ ! -s "$PARTIAL" ] || ! pg_restore --list "$PARTIAL" >/dev/null 2>&1; then
+    rm -f -- "$PARTIAL"
     echo "✗ dump vide ou illisible (pg_restore --list) — supprimé, échec bruyant" >&2
     exit 1
 fi
-SIZE="$(du -h "$OUT" | cut -f1)"
+SIZE="$(du -h "$PARTIAL" | cut -f1)"
 echo "✓ Sauvegarde OK ($SIZE)"
 
 # OPS-NUIT-1 (mandat Vic) — GARDE ANTI-RÉTRÉCISSEMENT : « un dump plus petit de 30 % que le précédent
@@ -158,19 +164,21 @@ echo "✓ Sauvegarde OK ($SIZE)"
 # SUSPECT- (hors du glob → il ne peut pas se faire passer pour la dernière bonne sauvegarde) et le
 # script échoue BRUYAMMENT → le job backup-postgres pose un incident (mail résumé du matin).
 SEUIL_PCT="${LABUSE_BACKUP_MIN_PCT:-70}"
-REF="$(ls -1t "$BACKUP_DIR"/labuse-"${DB}"-*.dump 2>/dev/null | grep -vxF "$OUT" | head -1)"
+REF="${EXIST[0]:-}"
 if [ -n "$REF" ]; then
-    NEW_KB=$(du -k "$OUT" | cut -f1)
+    NEW_KB=$(du -k "$PARTIAL" | cut -f1)
     REF_KB=$(du -k "$REF" | cut -f1)
     if [ "$REF_KB" -gt 0 ] && [ "$(( NEW_KB * 100 / REF_KB ))" -lt "$SEUIL_PCT" ]; then
         SUSPECT="$BACKUP_DIR/SUSPECT-$(basename "$OUT")"
-        mv -f -- "$OUT" "$SUSPECT"
+        mv -- "$PARTIAL" "$SUSPECT"
         echo "✗ GARDE ANTI-RÉTRÉCISSEMENT : le dump neuf ($((NEW_KB/1024)) Mo) fait moins de ${SEUIL_PCT} % du" >&2
         echo "  dernier bon ($((REF_KB/1024)) Mo, $(basename "$REF")) — ROTATION ANNULÉE, les bons dumps sont" >&2
         echo "  CONSERVÉS. Suspect mis de côté : $(basename "$SUSPECT") (à examiner, PAS servi comme sauvegarde)." >&2
         exit 1
     fi
 fi
+
+mv -- "$PARTIAL" "$OUT"
 
 # --- Rotation : supprime les dumps de CE script au-delà des KEEP plus récents ---
 mapfile -t OLD < <(ls -1t "$BACKUP_DIR"/labuse-"${DB}"-*.dump 2>/dev/null | tail -n +"$((KEEP + 1))")

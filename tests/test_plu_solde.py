@@ -19,6 +19,7 @@ def articles(code):
     return plu._split_articles(str(pdf))[0]
 
 
+@pytest.mark.reel
 def test_plaine_glyphes_imprimes_dans_le_dossier_de_2023():
     rows = articles("97406")
     row = next(a for a in rows if a["article_ref"] == "ARTICLE UB 12" and a["page_debut"] == 147)
@@ -27,6 +28,7 @@ def test_plaine_glyphes_imprimes_dans_le_dossier_de_2023():
     assert not any(a["zone"] == "UR" and 118 <= a["page_debut"] <= 149 for a in rows)
 
 
+@pytest.mark.reel
 def test_plaine_le_plan_de_zonage_ne_fait_pas_partie_de_la_hauteur():
     rows = articles("97406")
     assert all(not a["zone"] for a in rows if 169 <= a["page_debut"] <= 176)
@@ -35,6 +37,7 @@ def test_plaine_le_plan_de_zonage_ne_fait_pas_partie_de_la_hauteur():
     assert any(a["page_debut"] >= 169 and "plan de zonage modifié" in a["texte"].lower() for a in rows)
 
 
+@pytest.mark.reel
 def test_saint_denis_intitule_a_urbaniser():
     rows = articles("97411")
     assert not any(a["zone"] == "A" and 106 <= a["page_debut"] <= 111 for a in rows)
@@ -42,6 +45,7 @@ def test_saint_denis_intitule_a_urbaniser():
                for a in rows)
 
 
+@pytest.mark.reel
 def test_sainte_suzanne_chapitre_au_et_rubriques_urbaines():
     rows = articles("97420")
     assert not any(a["zone"] and (a["article_ref"] or "").startswith("Section ") for a in rows)
@@ -52,6 +56,7 @@ def test_sainte_suzanne_chapitre_au_et_rubriques_urbaines():
         assert "Se reporter au règlement" in indexed[num-1]["texte"]
 
 
+@pytest.mark.reel
 def test_tampon_deux_articles_avec_la_fin_de_phrase():
     rows = articles("97422")
     trois = next(a for a in rows if a["article_ref"] == "ARTICLE Ue3")
@@ -61,6 +66,7 @@ def test_tampon_deux_articles_avec_la_fin_de_phrase():
     assert quatre["page_debut"] == quatre["page_fin"] == 74 and "Alimentation en eau potable" in quatre["texte"]
 
 
+@pytest.mark.reel
 def test_trois_bassins_fiches_patrimoniales_distinctes_du_chapitre_n():
     rows = articles("97423")
     assert all(a["page_fin"] <= 94 for a in rows if a["zone"] == "N")
@@ -77,6 +83,7 @@ def test_inventaire_et_rapport_modificatif_ne_sont_pas_des_regles_communes():
             assert not plu._filtre_scope([card], zones[0], zones)
 
 
+@pytest.mark.reel
 def test_les_26_fiches_de_patrimoine_ne_fusionnent_pas_les_adresses():
     rows = [a for a in articles("97423") if 96 <= a["page_debut"] <= 108 and "ADRESSE POSTALE" in a["texte"]]
     assert len(rows) == 26

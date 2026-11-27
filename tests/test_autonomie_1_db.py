@@ -76,7 +76,7 @@ def test_controler_run_cable_les_mesures_reelles():
     with app_session() as s:
         candidat, precedent = _deux_runs(s)
         m = jobs_impl._mesures_run(s, candidat, precedent)
-    base = dict(m, manifeste_present=True, coherence_ecarts=0, coherence_erreurs=0,
+    base = dict(m, manifeste_present=True, coherence_frais=True, coherence_ecarts=0, coherence_erreurs=0,
                 comptes_precedent=m["comptes_parcelles"], copro_actionnables=0, rouge_actionnables=0,
                 paliers_change=0)
     assert autonomie.controler_run(base, palier_delta_max_pct=3.0).ok is True

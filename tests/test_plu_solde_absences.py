@@ -29,6 +29,7 @@ def test_possession_up_rattachement_incertain(monkeypatch):
     assert "Up" in c["texte"] and "rattachement non établi" in c["texte"]
 
 
+@pytest.mark.reel
 def test_article_12_des_trois_bassins_rend_les_deux_renvois():
     a = next(a for a in articles("97423") if a["article_ref"] == "ARTICLE AUINDICEE 12")
     assert a["page_debut"] == a["page_fin"] == 69
@@ -70,6 +71,7 @@ def test_lien_vers_le_bareme_vise_par_article_12(monkeypatch, zone, cible, page)
     assert c["renvoi_article"] == {"article": cible + " 12", "page": page, "url": url + f"#page={page}"}
 
 
+@pytest.mark.reel
 def test_saint_denis_annexe_des_captages_distincte_du_chapitre_n():
     rows = articles("97411")
     n13 = next(r for r in rows if r["article_ref"] == "Article N.13")
