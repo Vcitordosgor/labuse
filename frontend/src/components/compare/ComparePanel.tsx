@@ -20,7 +20,7 @@ import { Tip } from '../Tip'   // RETOURS-29 — détail d'une contrainte au cli
 
 // lignes du tableau (libellé, valeur) — resserrées : les doublons fiche (Capacité, CA estimé) retirés ;
 // ajoutés : prix terrain nu/zone (M79) + contrainte majeure explicite.
-// O9(d) — `num` + `best` permettent de surligner en vert la meilleure valeur de la ligne (front-side,
+// O9(d) — `num` + `best` permettent de surligner en vert la Valeur la plus favorable sur ce seul critère (front-side,
 // comme la table Communes) : `best:'hi'` = la plus grande gagne (surface, capacité), `best:'lo'` = la
 // plus basse gagne (charge foncière = moins cher). Les lignes booléennes/texte n'ont pas de gagnant.
 // `title` (O9-c) = infobulle définissant la ligne au survol du libellé.
@@ -49,9 +49,11 @@ const CAUSE_COURT: Record<string, string> = {
 }
 const causeCourt = (c?: string | null): string | null => {
   if (!c) return null
-  if (c.startsWith('zone_non_constructible') || c.startsWith('zone_non_resolue')) return 'zone non constructible'
+  if (c.startsWith('zone_non_resolue')) return 'zonage à vérifier'
+  if (c.startsWith('zone_non_constructible')) return 'zone non constructible'
   // CHIRURGICAL-FIX-1 (E112a) — une cause « code:ZONE » (ex. « habitat_interdit:UE ») était rendue
   // brute « habitat interdit:UE » (deux-points + code). On écrit la cause EN CLAIR, zone entre parenthèses.
+  if (c.startsWith('hors_classement:')) return c.slice('hors_classement:'.length)
   const [head, zone] = c.split(':')
   const libelle = CAUSE_COURT[head] ?? head.replace(/_/g, ' ')
   return zone ? `${libelle} (zone ${zone})` : libelle
@@ -66,24 +68,23 @@ const ROWS: Row[] = [
   // TERRAIN
   { label: 'Surface', prov: 'source', bar: true, best: 'hi', num: (r) => r.surface_m2 ?? null,
     val: (r) => r.surface_m2 != null ? `${fmtInt(r.surface_m2)} m²` : '—' },
-  { label: 'Bâti existant', prov: 'source', best: 'lo', num: (r) => r.bati_existant_pct ?? null,
-    val: (r) => r.bati_existant_pct == null ? '—' : r.bati_existant_pct <= 0 ? 'aucun' : `${fmtInt(r.bati_existant_pct)} % du terrain`,
+  { label: 'Bâti existant', prov: 'source', best: 'lo', num: (r) => r.bati_etat === 'non_mesure' ? null : r.bati_existant_pct ?? null,
+    val: (r) => r.bati_etat === 'non_mesure' ? 'Bâti détecté, à vérifier' : r.bati_etat === 'nu' ? 'aucun' : r.bati_existant_pct == null ? '—' : r.bati_existant_pct <= 0 ? 'aucun' : `${fmtInt(r.bati_existant_pct)} % du terrain`,
     title: 'Part du terrain déjà couverte par le bâti (emprise au sol / surface) — plus bas = plus de place à bâtir.' },
   { label: 'Propriétaire', prov: 'source', val: (r) => PROPRIO[r.proprietaire as string] ?? '—',
     title: 'Public / personne morale / succession / indivision / particulier — issu du fichier DGFiP.' },
   // URBANISME
-  { label: 'Hauteur autorisée', prov: 'source', best: 'hi', num: (r) => r.gabarit_niveaux_max ?? null,
-    val: (r) => r.gabarit_niveaux_max != null ? `R+${Math.max(0, r.gabarit_niveaux_max - 1)}${r.gabarit_combles ? ' + combles' : ''}` : '—',
-    title: '« + combles » = niveau de combles aménageables sous un toit dont le faîtage domine l\'égout d\'au moins 1,80 m.' },
+  { label: 'Hauteur autorisée', prov: 'source', val: (r) => r.hauteur_reglement || 'Règle à vérifier' },
   // OUTILS-P1-1 (pt 3) — « PLU sans plafond d'emprise » SEULEMENT si une règle est identifiée (silence
   // prouvé du règlement) ; sinon « Règle non renseignée » (on ne sait pas). Plus de « non réglementée »
   // qui confondait les deux.
   { label: 'Emprise au sol maximale', prov: 'source', best: 'hi', num: (r) => r.emprise_ces_pct ?? null,
-    val: (r) => r.emprise_ces_pct != null ? `${fmtInt(r.emprise_ces_pct)} %`
+    val: (r) => r.emprise_ces_detail ?? (r.emprise_ces_pct != null ? `${fmtInt(r.emprise_ces_pct)} %`
       : r.emprise_ces_etat === 'sans_plafond' ? 'PLU sans plafond d\'emprise'
-      : 'Règle non renseignée',
+      : 'Règle non renseignée'),
     title: 'Emprise au sol maximale fixée par le règlement de la zone (CES). « PLU sans plafond d\'emprise » = le règlement ne fixe pas de plafond (silence prouvé) ; « Règle non renseignée » = aucune règle d\'emprise identifiée pour la zone.' },
   // POTENTIEL CONSTRUCTIBLE
+  { label: 'Capacité du projet', prov: 'estime', val: (r) => r.lecture_capacite || 'Capacité non calculée' },
   { label: 'Plancher possible · bâti conservé', prov: 'estime', bar: true, best: 'hi', num: (r) => r.sdp_residuelle_m2 ?? null,
     val: (r) => {
       if (r.sdp_residuelle_m2 != null && r.sdp_residuelle_m2 > 0) return `${fmtInt(r.sdp_residuelle_m2)} m²`
@@ -95,11 +96,12 @@ const ROWS: Row[] = [
   { label: 'Plancher possible · reconstruction', prov: 'estime', bar: true, best: 'hi', num: (r) => r.sdp_max_m2 ?? null,
     val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—',
     title: 'Surface de plancher estimée, terrain libéré (après démolition du bâti existant) — estimation : emprise × occupation (hypothèse) × niveaux, pas un maximum réglementaire.' },
+  { label: 'Surface à retenir', prov: 'estime', val: (r) => r.surface_a_retenir?.phrase || '—' },
   { label: 'Part du gabarit déjà occupée', prov: 'estime', best: 'lo', num: (r) => r.taux_emprise_pct ?? null,
     val: (r) => fmtTauxEmprise(r.taux_emprise_pct),
     title: 'Bâti existant ÷ emprise constructible (plus bas = plus de marge à bâtir). Au-delà de 100 % : « Saturé ».' },
   { label: 'Charge foncière', prov: 'estime', bar: true, best: 'hi', num: (r) => r.charge_fonciere_m2 ?? null,
-    val: (r) => r.charge_fonciere_m2 != null ? `${fmtInt(r.charge_fonciere_m2)} €/m²` : '—',
+    val: (r) => r.charge_fonciere_m2 != null ? `${fmtInt(r.charge_fonciere_m2)} €/m² de terrain${r.capacite_a_verifier ? " · capacité à vérifier" : ""}` : '—',
     title: 'Charge foncière supportable ramenée au m² de terrain — plus haut = plus intéressant (négatif = l\'opération ne dégage rien pour le foncier).' },
   // RISQUES ET CONTRAINTES
   // OUTILS-P1-1 (pt 3) — statistique de SECTEUR (zonage d'assainissement par secteur, pas un
@@ -129,8 +131,9 @@ type Section = typeof SECTIONS[number]
 const SECTION_OF: Record<string, Section> = {
   'Surface': 'Terrain', 'Bâti existant': 'Terrain', 'Propriétaire': 'Terrain',
   'Hauteur autorisée': 'Urbanisme', 'Emprise au sol maximale': 'Urbanisme',
+  'Capacité du projet': 'Potentiel constructible',
   'Plancher possible · bâti conservé': 'Potentiel constructible', 'Plancher possible · reconstruction': 'Potentiel constructible',
-  'Part du gabarit déjà occupée': 'Potentiel constructible', 'Charge foncière': 'Potentiel constructible',
+  'Surface à retenir': 'Potentiel constructible', 'Part du gabarit déjà occupée': 'Potentiel constructible', 'Charge foncière': 'Potentiel constructible',
   'Assainissement': 'Risques et contraintes', 'Contraintes relevées': 'Risques et contraintes',
 }
 
@@ -142,13 +145,12 @@ function contrainteCourt(c: string): string {
 
 // CHIRURGICAL-FIX-1 (E112b) — une même contrainte (même libellé COURT) pouvait apparaître plusieurs
 // fois (un aléa par niveau : « Aléa mouvement de terrain » ×3, « Aléa inondation » ×2…). On
-// DÉDOUBLONNE par le libellé affiché : une puce par contrainte distincte (la 1re infobulle complète
-// est conservée), et le compteur suit le nombre de puces distinctes.
+// Chaque détail distinct reste accessible, même quand deux aléas ont le même intitulé court.
 function dedupContraintes(cs: string[]): string[] {
   const vus = new Set<string>()
   const out: string[] = []
   for (const c of cs) {
-    const k = contrainteCourt(c)
+    const k = c.trim()
     if (!vus.has(k)) { vus.add(k); out.push(c) }
   }
   return out
@@ -242,9 +244,10 @@ export function CompareModule() {
 // ── LE TABLEAU (surimpression plein écran) — contenu/colonnes INCHANGÉS (mandat point 4).
 export function ComparePanel() {
   const { compareIdus, removeFromCompare, select, setCompareOpen } = useApp()
-  const { ouvrir, enCours } = useOuvrirDocument()   // RECETTE-OUTILS-1 (point 21) — export = doc Comparatif
+  const { ouvrir, enCours, erreur } = useOuvrirDocument()   // RECETTE-OUTILS-1 (point 21) — export = doc Comparatif
   const q = useQuery({ queryKey: ['compare', compareIdus.join(',')], queryFn: () => getCompare(compareIdus), enabled: compareIdus.length > 0 })
   const parcels = q.data?.parcels ?? []
+  const count = parcels.length
 
   // OUTILS-FIX-3 Lot E — l'export CSV du tableau (bouton + générateur client `exporterCsv`) est RETIRÉ
   // (décision Vic 06/09 : aucun export CSV dans l'app pour l'instant). Aucune capacité back touchée —
@@ -266,18 +269,19 @@ export function ComparePanel() {
           chaque libellé et chaque valeur tiennent sur UNE ligne à 1440 px (whitespace-nowrap plus bas). */}
       <div className="floating flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden">
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-          {/* RETOURS-29 (maquette 15) — titre + sous-titre « ● meilleure valeur de la ligne ». */}
+          {/* RETOURS-29 (maquette 15) — titre + sous-titre « ● Valeur la plus favorable sur ce seul critère ». */}
           <div className="min-w-0">
-            <p className="text-sm font-medium text-txt-hi">Comparer {compareIdus.length} parcelle{compareIdus.length > 1 ? 's' : ''}</p>
-            <p className="flex items-center gap-1 text-[10.5px] text-txt-dim"><span className="text-mint">●</span> meilleure valeur de la ligne</p>
+            <p className="text-sm font-medium text-txt-hi">{q.isSuccess ? `${count} parcelle${count > 1 ? 's comparées' : ' comparée'}` : 'Comparaison de parcelles'}</p>
+            <p className="flex items-center gap-1 text-[10.5px] text-txt-dim"><span className="text-mint">●</span> Valeur la plus favorable sur ce seul critère</p>
           </div>
           <div className="flex items-center gap-3 text-[11px]">
             {/* RECETTE-OUTILS-1 (point 21 / T6) — « Exporter en PDF » = le document « Comparatif » de Docs
                 (même générateur back `/comparatif.pdf`). Requiert ≥ 2 parcelles. */}
             <Bouton niveau="secondaire" ton="vert" data-compare-export
-              disabled={enCours != null || compareIdus.length < 2}
-              onClick={() => ouvrir(docComparatifUrl(compareIdus), 'comparatif')}>
-              Exporter en PDF
+              disabled={enCours != null || !q.isSuccess || count < 2}
+              onClick={() => ouvrir(docComparatifUrl(parcels.map((r) => r.idu)), 'comparatif', undefined,
+                `Comparatif - ${parcels.map((r) => r.idu).join(' - ')}.pdf`)}>
+              {enCours ? 'Génération du PDF…' : 'Exporter en PDF'}
             </Bouton>
             {/* RECETTE-OUTILS-1 (point 19) — « Retour à la carte » et « Tout vider » retirés : seule la
                 croix ferme le tableau (et ramène à la carte). */}
@@ -285,6 +289,7 @@ export function ComparePanel() {
           </div>
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-3">
+          {erreur && <p role="alert" className="mb-2 text-amber">{erreur}</p>}
           {compareIdus.length === 0 && (
             <div data-compare-vide>
               <EmptyState title="Aucune parcelle à comparer."
@@ -303,12 +308,31 @@ export function ComparePanel() {
               <ErrorState message="Comparaison indisponible — réessayez." retry={() => q.refetch()} />
             </div>
           )}
-          {compareIdus.length > 0 && !q.isPending && !q.isError && parcels.length === 0 && (
+          {compareIdus.length > 0 && !q.isPending && !q.isError && parcels.length === 0 && !Object.keys(q.data?.capacites_sans_fiche ?? {}).length && (
             <div data-compare-aucune className="p-4">
               <EmptyState title="Aucune donnée à comparer pour ces parcelles."
                 hint={<>Les parcelles demandées n'ont pas de fiche comparable (hors périmètre ou introuvables). Retirez-en une (✕) ou choisissez-en d'autres.</>} />
             </div>
           )}
+          {/* OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 7) — identifiants DEMANDÉS mais non rendus, nommés par
+              cause : échec de calcul (trouvée, fiche non calculable — ex. DH0098), introuvable, au-delà
+              de 3, doublon. Plus jamais une colonne manquante en silence. */}
+          {(() => {
+            const ec = (q.data?.echecs ?? []), ig = (q.data?.ignores ?? []), tr = (q.data?.tronques ?? []), db = (q.data?.doublons ?? [])
+            if (ec.length + ig.length + tr.length + db.length === 0) return null
+            const chip = (i: string) => <span key={i} className="rounded-full border border-amber/50 px-2 py-0.5 font-mono text-[11px] text-amber">{i}</span>
+            return (
+              <div data-compare-ecartees className="mb-2 flex flex-col gap-1.5 rounded-lg border border-amber/40 bg-amber/[0.07] px-3 py-2 text-[11px] leading-snug text-amber">
+                {ec.length > 0 && <div className="flex flex-wrap items-center gap-1"><b>Non comparée(s) — fiche non calculable :</b> {ec.map(chip)}</div>}
+                {Object.entries(q.data?.capacites_sans_fiche ?? {}).map(([idu, lecture]) => (
+                  <p key={idu}><b>{idu}</b> · {lecture}</p>
+                ))}
+                {ig.length > 0 && <div className="flex flex-wrap items-center gap-1"><b>Introuvable(s) :</b> {ig.map(chip)}</div>}
+                {tr.length > 0 && <div className="flex flex-wrap items-center gap-1"><b>Au-delà de 3 (non affichée) :</b> {tr.map(chip)}</div>}
+                {db.length > 0 && <div className="flex flex-wrap items-center gap-1"><b>Doublon(s) retiré(s) :</b> {db.map(chip)}</div>}
+              </div>
+            )
+          })()}
           {/* RECETTE-2 (D6) — table-fixed : les 3 colonnes de données se partagent la largeur à ÉGALITÉ et
               tiennent dans l'overlay (jamais de défilement horizontal) ; le texte long passe à la ligne
               dans sa cellule (whitespace-nowrap retiré plus bas). */}
@@ -318,7 +342,7 @@ export function ComparePanel() {
                 <tr>
                   {/* RETOURS-29 — en-tête de la colonne libellé : « N parcelles · commune ». */}
                   <th scope="col" className="w-[190px] p-2 align-bottom text-left text-[10px] font-normal text-txt-dim">
-                    {compareIdus.length} parcelle{compareIdus.length > 1 ? 's' : ''}{parcels[0]?.commune ? ` · ${parcels[0].commune}` : ''}
+                    Critère
                   </th>
                   {/* colonne dédiée aux badges « sourcé »/« estimé », entre le libellé et les valeurs. */}
                   <th scope="col" className="w-[58px] p-2" />
@@ -330,10 +354,14 @@ export function ComparePanel() {
                         <span className="font-mono text-[11px] font-semibold tracking-tight text-txt-hi">{r.idu}</span>
                         <button onClick={() => removeFromCompare(r.idu)} aria-label="Retirer" className="shrink-0 text-[11px] text-txt-dim hover:text-st-ecartee">✕</button>
                       </div>
-                      <p className="mt-0.5 break-words text-[10.5px] font-normal text-txt">{r.adresse ?? r.commune ?? '—'}</p>
+                      <p className="mt-0.5 break-words text-[10.5px] font-normal text-txt">{r.adresse || r.commune || '—'}</p>
                       <p className="mt-0.5 text-[10px] font-normal text-txt-dim">
                         {[r.zone, r.surface_m2 != null ? `${fmtInt(r.surface_m2)} m²` : null].filter(Boolean).join(' · ') || '—'}
                       </p>
+                      {r.zonage_detail && <p className="text-amber">Répartition du terrain · {r.zonage_detail}. Règles affichées pour la zone dominante.</p>}
+                      {r.cause?.startsWith('hors_classement:') && <p className="text-amber">{r.cause_libelle}</p>}
+                      {r.constructible === false && !r.lecture_capacite && <p className="text-amber">Non constructible · {r.verdict_motif || r.cause_libelle || 'Voir la fiche'}</p>}
+                      {r.au_ouverture && <p className="text-amber">{[r.au_ouverture.statut, r.au_ouverture.motif].filter(Boolean).join(' · ')}</p>}
                       <button data-compare-fiche onClick={() => select(r.idu)} className="mt-1 text-[10.5px] font-medium text-mint hover:underline">Ouvrir la fiche →</button>
                     </th>
                   ))}
@@ -350,29 +378,39 @@ export function ComparePanel() {
                         <td colSpan={2 + parcels.length} className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[.1em] text-mint">{sec}</td>
                       </tr>
                       {secRows.map((row) => {
-                        const winners = bestIdx(row, parcels)     // gagnant unique (ou aucun)
-                        const bmax = barMax(row, parcels)         // max > 0 pour la largeur des barres
+                        const masque = (r: CompareRow) => row.label !== 'Capacité du projet' && ((r.constructible === false || r.au_ouverture?.bloquant) && (sec === 'Potentiel constructible' || row.label === 'Hauteur autorisée'))
+                          || (row.label === 'Charge foncière' && !r.bilan_hypotheses?.length)
+                        const visible = { ...row, num: (r: CompareRow) => masque(r) ? null : row.num?.(r) ?? null }
+                        const winners = bestIdx(visible, parcels)     // gagnant unique (ou aucun)
+                        const bmax = barMax(visible, parcels)         // max > 0 pour la largeur des barres
                         return (
                           <tr key={row.label} className="border-t border-line">
                             <td className="break-words p-2 align-top text-[10.5px] text-txt-dim">
                               {row.title
-                                ? <span className="cursor-help border-b border-dotted border-line-2">{row.label}</span>
+                                ? <Tip garder tip={row.title}><span tabIndex={0} className="cursor-help border-b border-dotted border-line-2">{row.label}</span></Tip>
                                 : row.label}
                             </td>
                             {/* badge de provenance dans SA colonne (entre libellé et valeurs). */}
                             <td className="p-2 align-top"><ProvBadge prov={row.prov} /></td>
                             {parcels.map((r, i) => {
                               const win = winners.has(i)
-                              const v = row.num ? row.num(r) : null
+                              const v = visible.num(r)
                               const barW = row.bar && bmax > 0 && v != null && v > 0 ? Math.max(4, Math.round((v / bmax) * 100)) : 0
                               return (
                                 <td key={r.idu} className="border-l border-line p-2 align-top">
                                   <div className="flex items-baseline gap-1">
                                     {win && <span aria-hidden className="text-[10px] text-mint">●</span>}
                                     <span className={`break-words ${win ? 'font-semibold text-mint' : 'text-txt'}`}>
-                                      {row.render ? row.render(r) : row.val(r)}
+                                      {masque(r) ? '—' : row.render ? row.render(r) : row.val(r)}
                                     </span>
                                   </div>
+                                  {row.label === 'Charge foncière' && !masque(r) && r.charge_fonciere_m2 != null && <>
+                                    {r.mixite?.detail && <p>{[r.mixite.detail, r.mixite.article, r.mixite.page].filter(Boolean).join(' · ')}</p>}
+                                    {r.mixite?.borne_haute && <p className="text-amber">Borne haute · part aidée à chiffrer</p>}
+                                    <details className="mt-1 text-[11px]"><summary>Hypothèses du bilan</summary>
+                                      <ul>{r.bilan_hypotheses?.map((h) => <li key={h}>{h}</li>)}</ul>
+                                    </details>
+                                  </>}
                                   {row.bar && barW > 0 && (
                                     <div className="mt-1.5 h-[2px] w-full max-w-[180px] overflow-hidden rounded-full bg-line-2">
                                       <div className={`h-full rounded-full ${win ? 'bg-mint' : 'bg-txt-ghost'}`} style={{ width: `${barW}%` }} />

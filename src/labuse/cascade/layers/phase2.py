@@ -40,8 +40,13 @@ class DvfLayer(Layer):
         phi = float(params.get("price_hi_eur_m2", 325))
         wl = float(params.get("w_liquidity", 0.5))
         wp = float(params.get("w_price", 0.5))
-        n_floor = int(params.get("min_ventes_plancher", 3))    # < plancher → aucun prix affiché
-        n_fiable = int(params.get("min_ventes_fiable", 5))     # [plancher, fiable) → prix + fragilité
+        # OUTIL-COMMUNES-FIX-10 LOT 1 — SEUIL UNIQUE de diffusion = `dvf_secteur.seuil_section()` (8),
+        # le MÊME que la fiche, le Carnet et Comparer. L'ancien plancher de 3 (avec bande « fragile »
+        # 3-7) diffusait un prix ET un « contexte de marché favorable » sous le seuil public : le run
+        # servait alors « 50 €/m² · 6 ventes · favorable » sur une section à 1 vente (ASTRA-7 §1).
+        # Sous le seuil : échantillon insuffisant, AUCUN prix, AUCUN qualificatif, AUCUN bonus.
+        from ...dvf_secteur import seuil_section
+        seuil = seuil_section()
 
         sec = ctx.dvf_sector_terrain(parcel.idu)
         if not sec or not sec.get("median_eur_m2"):
@@ -50,17 +55,14 @@ class DvfLayer(Layer):
         em2 = sec["median_eur_m2"]
         fen = sec.get("fenetre") or "période n/d"
 
-        # Plancher dur : une médiane sur < 3 ventes n'est pas une médiane (RAPPORT_M79 Q6 : erreur
-        # médiane > 55 % à n≤2). On DIT « échantillon insuffisant », jamais un chiffre présenté robuste.
-        if n < n_floor:
+        # Seuil public de diffusion (8) : sous le seuil on DIT « échantillon insuffisant », jamais un
+        # chiffre ni un qualificatif de marché (cohérent fiche / Carnet / Comparer).
+        if n < seuil:
             return passed(self.name,
                           f"Prix médian terrain : échantillon insuffisant ({n} vente(s) dans le secteur).",
                           source=SRC_DVF)
 
-        # Libellé nommé : le client sait sur quoi porte la médiane sans ouvrir la doc. Entre plancher
-        # et seuil fiable, le chiffre s'affiche AVEC sa mention de fragilité (jamais caché — Vic).
-        fragile = "" if n >= n_fiable else " — échantillon fragile (~28 % d'erreur médiane)"
-        detail = (f"Prix médian terrain {em2:,.0f} €/m² — {n} ventes, secteur cadastral, {fen}{fragile}."
+        detail = (f"Prix médian terrain {em2:,.0f} €/m² — {n} ventes, secteur cadastral, {fen}."
                   .replace(",", " "))
 
         # magnitude = mélange borné liquidité (n ventes du secteur) + niveau de prix TERRAIN.

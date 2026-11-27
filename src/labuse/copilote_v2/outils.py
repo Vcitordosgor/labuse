@@ -351,6 +351,16 @@ def parcelles_par_entreprise(db: Session, *, q: str) -> ToolResult:
 
 
 # ───────────────────────── fiche_parcelle ─────────────────────────
+def copro_sur_parcelle(fiche: dict) -> tuple[bool | None, list[dict]]:
+    copros = fiche.get("coproprietes") or []
+    directes = [c for c in copros if c.get("rattachement") in ("cadastre", "geocode")]
+    if directes:
+        return True, directes
+    if not copros and (fiche.get("score_v2") or {}).get("copro") is False:
+        return False, []
+    return None, []
+
+
 def fiche_parcelle(db: Session, *, idu: str) -> ToolResult:
     """Données d'UNE parcelle via `_q_v2_fiche` (verdict/zonage/risques LUS, jamais recalculés)."""
     from fastapi import HTTPException
@@ -376,14 +386,7 @@ def fiche_parcelle(db: Session, *, idu: str) -> ToolResult:
     # Le drapeau fiable est `score_v2.copro` (CHASSE-4 : `p_model_ext_copro` = TOUTES les parcelles,
     # faux signal) ; le répertoire RNIC (`coproprietes`) le CONFIRME. Ni l'un ni l'autre servi → None
     # (« inconnu », JAMAIS « non » par défaut) : sans donnée, on ne tranche pas (Règle à graver).
-    sv2 = f.get("score_v2") or {}
-    copros_rnic = f.get("coproprietes") or []
-    if "copro" in sv2:
-        copro = bool(sv2.get("copro")) or bool(copros_rnic)
-    elif copros_rnic:
-        copro = True
-    else:
-        copro = None
+    copro, _ = copro_sur_parcelle(f)
     # NU-E-046 — PROPRIÉTAIRE PERSONNE MORALE : la dénomination publique (DGFiP/SIREN) si présente,
     # None si aucune PM connue (le propriétaire personne physique n'est JAMAIS servi — donnée fermée).
     pm = f.get("proprietaire_moral") or {}
@@ -793,7 +796,7 @@ def regles_plu_zone(db: Session, *, idu: str | None = None, commune: str | None 
     citations = {k: src[k] for k in ("hauteur", "emprise", "recul_voirie", "recul_limites") if src.get(k)}
     # une source affichée au client : la zone + la commune + l'état de calibrage (sinon l'article le plus
     # précis disponible). Le millésime du règlement si connu.
-    meta = reglement_source(commune) or {}
+    meta = reglement_source(commune, zone) or {}
     etat = "règles calibrées" if r.calibree else "estimation générique (PLU non calibré pour cette zone)"
     source = f"PLU {commune} — zone {zone} ({etat})"
     return ToolResult("regles_plu_zone",

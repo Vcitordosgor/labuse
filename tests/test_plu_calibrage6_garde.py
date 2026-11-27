@@ -67,6 +67,8 @@ def test_engine_regle_non_validee_non_calculable():
     assert f.constructible is False
     assert f.cause == "regle_plu_non_validee"
     assert f.fourchette["logements_au_sol"] == (0, 0)
+    from labuse.faisabilite.residuel import _cause_indisponible
+    assert _cause_indisponible(None, 1, f) == ("regle_plu_non_validee:U1", None)
     assert not f.steps          # aucun step de calcul émis (rien n'a été calculé)
 
 

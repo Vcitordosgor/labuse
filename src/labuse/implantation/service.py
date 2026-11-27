@@ -28,7 +28,9 @@ from . import rendu as rendu_mod
 from .conventions import avec_surcharges, charger as charger_conventions
 from .controles import (A_CONFIRMER, ECHOUE, NON_APPLICABLE, NON_EFFECTUE, REUSSI,
                         verdict_global)
+from .programme_maximum import ProgrammeMaximum
 from .regles import quantifier_surface_m2
+from .verdict_etude import annoter as annoter_verdicts_affiches
 
 OBJECTIFS = {"equilibre", "plus_logements", "plus_surface", "plus_simple"}
 
@@ -498,11 +500,20 @@ def _regles_affichables(sd: dict) -> list[dict]:
     return out
 
 
+def _plu_doc_url(insee: str, zone: str | None = None) -> Optional[str]:
+    """ETUDE-AUDIT-FIX-1 LOT 4 (défaut 10) — URL du PDF du RÈGLEMENT OFFICIEL (méta du document calibré),
+    pour un lien profond « Lire l'article » à la BONNE PAGE (vs l'ancien viewer Géoportail sans page)."""
+    from ..faisabilite.zonage import reglement_source
+    return (reglement_source(insee, zone) or {}).get("url")
+
+
 def _decore_regles(lignes: list[dict], source_url: Optional[str], millesime: Optional[str]) -> list[dict]:
     """ETUDE-V6-4 (item 3) — chaque règle porte le lien du document PLU officiel et son millésime, pour que
-    « Lire l'article » affiche l'extrait exact (texte, article, page, millésime) avec le lien, partout."""
+    « Lire l'article » affiche l'extrait exact (texte, article, page, millésime) avec le lien, partout.
+    ETUDE-AUDIT-FIX-1 LOT 4 (défaut 10) — le lien pointe la BONNE PAGE du PDF officiel (`#page=N`)."""
     for l in lignes:
-        l.setdefault("source_url", source_url)
+        pg = l.get("page_pdf")
+        l.setdefault("source_url", f"{source_url}#page={pg}" if (source_url and pg) else source_url)
         l.setdefault("millesime", millesime)
     return lignes
 
@@ -636,7 +647,10 @@ def _tcsp_sous_rayon(session, idus: list[str]) -> tuple[bool, Optional[int]]:
     return (d is not None and d < _RAYON_TCSP_M), (int(d) if d is not None else None)
 
 
-def _plu_millesime(session, insee: str) -> Optional[str]:
+def _plu_millesime(session, insee: str, zone: str | None = None) -> Optional[str]:
+    from ..plu.destinations import reglement_meta
+    if zone and (reglement_meta(insee) or {}).get("documents_par_zone"):
+        return (reglement_meta(insee, zone) or {}).get("millesime")
     from sqlalchemy import text
     try:
         m = session.execute(text("SELECT max(millesime) FROM plu_reglement_extrait WHERE insee = :i"),
@@ -660,17 +674,33 @@ def _plu_gpu_url(session, insee: str) -> Optional[str]:
     return f"https://www.geoportail-urbanisme.gouv.fr/document/{idurba}" if idurba else None
 
 
-def _plu_source_url(session, insee: str) -> Optional[str]:
+def _plu_source_url(session, insee: str, zone: str | None = None) -> Optional[str]:
     """ETUDE-V6-7 (item 9) — lien « Lire l'article » = le document sur le Géoportail de l'urbanisme (source
     officielle), remplace l'ancien lien de téléchargement geopf. La page figure dans le texte « p. N »."""
+    from ..plu.destinations import reglement_meta
+    if (reglement_meta(insee) or {}).get("documents_par_zone"):
+        return _plu_doc_url(insee, zone)
     return _plu_gpu_url(session, insee)
 
 
-def _regle_stationnement_courte(b) -> Optional[str]:
+def _regle_stationnement_courte(b, destination: str = "collectif") -> Optional[str]:
     """ETUDE-V6-3 (item 3) — la règle de stationnement en clair et courte. Par logement → « N place/logt » ;
-    par typologie → « p pl. Tx–Ty » par tranche de pièces (Tn = n pièces principales)."""
+    par typologie → « p pl. Tx–Ty » par tranche de pièces (Tn = n pièces principales).
+    ETUDE-AUDIT-FIX-1 (relecture) — on décrit la ligne RÉELLEMENT APPLIQUÉE par le calcul : celle de la
+    `destination` (social, individuel…) si le barème porte une ligne dédiée, sinon la ligne collectif. Une
+    seule source : l'affichage = ce que `capacite.places_pour(..., destination=…)` retient."""
     if not b.validee:
         return None
+    # ligne dédiée à la destination (ex. UA 2.7.3 « social » : 1 place/logement à plat), sinon collectif.
+    # `has_destination` peut manquer sur un barème synthétique (tests) → repli collectif, sûr.
+    _has = getattr(b, "has_destination", None)
+    _dest = destination if (callable(_has) and _has(destination)) else "collectif"
+    if _dest != "collectif":
+        _base = [lg for lg in b.lignes if (lg.destination or "collectif") == _dest
+                 and lg.role == "base" and lg.places is not None]
+        if len(_base) == 1 and _base[0].pieces_min is None and _base[0].pieces_max is None:
+            _p = _base[0].places
+            return f"{f'{_p:g}'.replace('.', ',')} place{'s' if _p >= 2 else ''} / logement"
     def nb(x):
         return f"{x:g}".replace(".", ",")
     if b.mode == "par_logement" and b.flat_places is not None:
@@ -695,7 +725,7 @@ def _regle_stationnement_courte(b) -> Optional[str]:
     # portent leur condition de seuil ; les lignes de base, leur tranche de pièces (Tn = n pièces principales).
     parts = []
     for lg in b.lignes:
-        if lg.destination and lg.destination != "collectif":
+        if (lg.destination or "collectif") != _dest:
             continue
         _pm = getattr(lg, "par_m2", None)   # ligne « 1 place / N m² de SDP » : places est None (FIX-5 : NE PLUS
         #                                     la formater comme un par-logement → crash AH0853/Trois-Bassins)
@@ -745,28 +775,23 @@ def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, i
     pour une destination L151-34, le PLAFOND NATIONAL L151-35 « sous condition d'éligibilité » (À confirmer).
     On ne préremplit jamais un ratio réduit comme s'il était la règle du PLU."""
     b = regles.stationnement
+    # ETUDE-AUDIT-FIX-1 (relecture) — la règle AFFICHÉE doit être celle APPLIQUÉE : on résout la destination
+    # du calcul (social, individuel…) comme `capacite` et on décrit SA ligne (une seule source).
+    from .regles import DESTINATION_PAR_PROJET
+    _dest_calc = DESTINATION_PAR_PROJET.get(type_projet, "collectif")
     general = {
         "mode": b.mode, "validee": b.validee,
         "ratio_par_logement": b.flat_places if b.mode == "par_logement" else None,
-        "article": b.article, "page_pdf": b.page_pdf, "millesime": _plu_millesime(session, insee),
+        "article": b.article, "page_pdf": b.page_pdf, "millesime": _plu_millesime(session, insee, regles.zone),
         # ETUDE-V6-4 (item 3) — lien doc officiel pour « Lire l'article » dans le bloc stationnement.
-        "source_url": _plu_source_url(session, insee),
+        "source_url": _plu_source_url(session, insee, regles.zone),
         "citation": b.citation, "applique": True,
         "etat": ("règle vérifiée" if b.validee else "document manquant — à confirmer"),
-        # ETUDE-V6-3 (item 3) — la RÈGLE en clair (ex. « 1 pl. T1–T2 · 1,5 pl. T3–T4 ») pour le récap.
-        "regle_courte": _regle_stationnement_courte(b),
+        # ETUDE-V6-3 (item 3) — la RÈGLE en clair, pour la DESTINATION réellement appliquée (ex. social :
+        # « 1 place / logement » ; collectif : « 1 pl. T1–T2 ; 1,5 pl. T3–T4 »).
+        "regle_courte": _regle_stationnement_courte(b, _dest_calc),
         # ETUDE-STATIONNEMENT-FIX-9 (point 3) — bornes de surface (seuils) pour l'affichage décimal près d'un seuil.
         "bornes_surface_m2": (b.bornes_surface_m2() if hasattr(b, "bornes_surface_m2") else []),
-        # OUTIL-PLU-FIX-7 (point 2) — ÉCRAN SEULEMENT : le barème du PLU distingue d'AUTRES cas (logement
-        # social/aidé, senior, étudiant, opération, seuils publics…) au-delà de la valeur « logement
-        # ordinaire » affichée. On le SIGNALE (la fiche renvoie alors à l'article + page), sans changer le
-        # calibrage : Saint-Louis UA 12.2 (1 social / 2 autres / 0,5 public), Saint-Pierre Ud6 (locatif social).
-        "distingue_autres_cas": bool(
-            len(getattr(b, "lignes", ()) or ()) > 1
-            or (getattr(b, "conditions", ()) or ())
-            or any(getattr(l, "role", None) == "operation"
-                   or getattr(l, "destination", None) not in (None, "collectif", "individuel", "logement")
-                   for l in (getattr(b, "lignes", ()) or ()))),
     }
     sous_rayon, dist = _tcsp_sous_rayon(session, idus)
     cat = _L15134.get(type_projet)
@@ -836,8 +861,8 @@ def stationnement_payload(session, idus: list[str], type_projet: str) -> dict:
             # (item 3) — lien doc officiel + millésime pour « Lire l'article » dès cette étape.
             "mixite": ({"quota_pct": mx.quota_pct, "seuil_m2": mx.seuil_m2, "article": mx.article,
                         "page_pdf": mx.page_pdf, "citation": mx.citation,
-                        "source_url": _plu_source_url(session, terrain.insee),
-                        "millesime": _plu_millesime(session, terrain.insee)} if mx.validee else None)}
+                        "source_url": _plu_source_url(session, terrain.insee, regles.zone),
+                        "millesime": _plu_millesime(session, terrain.insee, regles.zone)} if mx.validee else None)}
 
 
 # ------------------------------------------------------------------ ETUDE-V6-2 (Lot 4) : jauge d'enveloppe
@@ -1158,10 +1183,30 @@ def _etat_recherche(*, garde_fou: bool, complete: bool, a_un_resultat: bool) -> 
     return "complete"
 
 
-# ------------------------------------------------------------------ point d'entrée
-def etudier_payload(session, entree: dict) -> dict:
-    """Payload d'étude servi par l'API. `entree` = {idus, type_projet, objectif, programme,
-    stationnement, terrain, hypotheses}. Lève ValueError sur entrée invalide (→ 400 côté route)."""
+def libelle_recherche(*, etat: str, candidats_examines: int, candidats_prevus: int,
+                      logements_dessines: int | None) -> Optional[str]:
+    """ETUDE-AUDIT-FIX-1 LOT 2 (défaut 2) — SOURCE UNIQUE du libellé d'état de recherche, lu À L'IDENTIQUE
+    par l'écran et le PDF. Une recherche interrompue dit « recherche partielle · n sur N candidats » (N =
+    150 par défaut) et NE PARLE JAMAIS de maximum : le chiffre servi est le MEILLEUR trouvé à ce stade, pas
+    un plafond. None si complète (rien à signaler)."""
+    if etat == "complete":
+        return None
+    if etat == "non_aboutie":
+        # le libellé « Recherche non aboutie » est déjà posé par l'écran et le PDF : la note ne porte QUE le
+        # détail (sinon doublon « Recherche non aboutie — Recherche non aboutie — … »).
+        return "aucune implantation réglementaire n'a été trouvée sur cette assiette (recherche menée jusqu'au bout)."
+    n, tot = int(candidats_examines or 0), int(candidats_prevus or 0)
+    base = f"Recherche partielle · {n} sur {tot} candidats examinés"
+    if logements_dessines:
+        return (base + f" — meilleure implantation trouvée à ce stade : {logements_dessines} logements "
+                "(le calcul s'est arrêté avant d'examiner tous les candidats).")
+    return base + " — aucune implantation trouvée à ce stade."
+
+
+def valider_entree_etude(entree: dict) -> None:
+    """ETUDE-AUDIT-FIX-1 LOT 2 — validations BON MARCHÉ (sans base) de l'entrée d'une étude, pour un refus
+    IMMÉDIAT (400) au lancement async comme à la route sync : nombre de parcelles, objectif, type. Mêmes
+    règles et mêmes messages que le début d'`etudier_payload`. Lève ValueError sur entrée refusée."""
     idus = [str(i).strip() for i in (entree.get("idus") or []) if str(i).strip()]
     if not idus:
         raise ValueError("au moins une parcelle est requise")
@@ -1170,13 +1215,25 @@ def etudier_payload(session, entree: dict) -> dict:
     objectif = entree.get("objectif") or "equilibre"
     if objectif not in OBJECTIFS:
         raise ValueError(f"objectif inconnu : {objectif}")
-    # ETUDE-V6 (Lot C) — 4 destinations ouvrent (ou non) un régime de stationnement réduit (L151-34/35).
-    # L'implantation reste collective (le lotissement = division, Lot D) ; seul le STATIONNEMENT dépend
-    # du type : le barème PLU GÉNÉRAL s'applique toujours ; un plafond national ne s'affiche que « sous
-    # condition d'éligibilité ». On n'écrit jamais « 1 place/logt » comme règle du PLU si elle ne l'est pas.
     type_projet = entree.get("type_projet") or "collectif"
     if type_projet not in _TYPES_PROJET:
         raise ValueError(f"type de projet inconnu : {type_projet}")
+    programme = entree.get("programme") or {}
+    if programme.get("mode") == "maximum":
+        if type_projet == "lotissement":
+            raise ValueError("Le maximum de logements concerne les projets de logements collectifs.")
+        ProgrammeMaximum.lire(programme)
+
+
+
+# ------------------------------------------------------------------ point d'entrée
+def etudier_payload(session, entree: dict) -> dict:
+    """Payload d'étude servi par l'API. `entree` = {idus, type_projet, objectif, programme,
+    stationnement, terrain, hypotheses}. Lève ValueError sur entrée invalide (→ 400 côté route)."""
+    valider_entree_etude(entree)
+    idus = [str(i).strip() for i in (entree.get("idus") or []) if str(i).strip()]
+    objectif = entree.get("objectif") or "equilibre"
+    type_projet = entree.get("type_projet") or "collectif"
     stationnement = entree.get("stationnement") or "aerien"
     terrain_mode = entree.get("terrain") or "libere"
     # ETUDE-V6-7 (item 3) — le sous-sol est limité à UN SEUL niveau (on retire « 2 niveaux » : une 2ᵉ nappe
@@ -1215,6 +1272,14 @@ def etudier_payload(session, entree: dict) -> dict:
     programme = entree.get("programme")
     demande: dict[str, int] = {}
     repartition = None
+    maximum = None
+    if programme and programme.get("mode") == "maximum":
+        maximum = ProgrammeMaximum.lire(programme)
+        repartition = _entrelacer(maximum.parts)
+        objectif = "plus_logements"
+        _, _, surfaces = _programme_vers_demande(programme)
+        if surfaces:
+            conv = avec_surcharges(conv, surfaces=surfaces)
     if isinstance(programme, dict) and programme.get("mode") == "saisi":
         demande, repartition, surfaces = _programme_vers_demande(programme)
         if surfaces:                      # les surfaces saisies surchargent aussi les modules
@@ -1230,7 +1295,7 @@ def etudier_payload(session, entree: dict) -> dict:
             session=session, idus=idus, objectif=objectif, conv=conv,
             programme=demande or None, repartition=repartition, max_scenarios=3,
             stationnement_mode=stationnement, niveaux_sous_sol=niveaux_sous_sol,
-            type_projet=type_projet,   # DOCS-COHERENCE-1 (F6) — plafond L151-35/36 appliqué si + restrictif que le PLU
+            type_projet=type_projet, maximum=maximum,   # DOCS-COHERENCE-1 (F6) — plafond L151-35/36 appliqué si + restrictif que le PLU
         )
     except moteur_mod.EtudeHorsPerimetre as exc:
         return _payload_hors_perimetre(session, idus, entree, exc)
@@ -1256,6 +1321,15 @@ def etudier_payload(session, entree: dict) -> dict:
     variantes_pub = [(_variante_public(role, s, terrain, conv, regles, demande) if s is not None
                       else _variante_absente(role, raison))
                      for role, s, raison in variantes]
+
+    # ETUDE-AUDIT-FIX-1 (relecture pt5) — en LOGEMENT SOCIAL, la mixité (quota de logements aidés, L151-36)
+    # est satisfaite PAR NATURE (le programme est 100 % aidé) : on le signale, et le compteur « logements
+    # aidés imposés » n'a pas de sens (il imposerait un sous-quota dans un programme déjà 100 % aidé). Les
+    # autres types ne changent pas. L'affichage (écran + PDF) lit ce drapeau.
+    for _v in variantes_pub:
+        _pg = _v.get("programme") if not _v.get("absente") else None
+        if isinstance(_pg, dict):
+            _pg["mixite_satisfaite_social"] = (type_projet == "social")
 
     # ETUDE-V6-7 (item 2) — le DÉPASSEMENT parle du PLAN DESSINÉ (« votre programme »), pas d'un optimum par
     # type pris sur des scénarios différents : « tiennent » = la typologie réellement dessinée (vérité unique).
@@ -1290,11 +1364,12 @@ def etudier_payload(session, entree: dict) -> dict:
             "surface_stationnement_m2": cmax.surface_stationnement_m2,
             "stationnement_mode": cmax.stationnement_mode,
             # ETUDE-V6-3 (item 11) — libellé propre (l'écran préfixe « répartition … », pas de doublon).
-            "repartition": ("de votre demande" if demande else "équilibrée (proposée)"),
+            "repartition": (maximum.description() if maximum else "de votre demande" if demande else "équilibrée (proposée)"),
             # ETUDE-FIABLE-1 (LOT C1) — ce n'est PAS un maximum réglementaire : c'est la MEILLEURE
             # capacité que la recherche déterministe a TROUVÉE sous ces hypothèses (profondeur, étage,
             # stationnement, répartition). Deux demandes de même répartition donnent la même valeur.
-            "note": ("Meilleure capacité trouvée avec ces hypothèses sous cette répartition — indépendante "
+            "note": ("Meilleure implantation trouvée avec la composition choisie." if maximum else
+                     "Meilleure capacité trouvée avec ces hypothèses sous cette répartition — indépendante "
                      "du NOMBRE demandé (deux demandes de même répartition donnent la même valeur). "
                      "La demande y est ensuite confrontée."),
         }
@@ -1305,6 +1380,35 @@ def etudier_payload(session, entree: dict) -> dict:
             cap_tot = capacite_maximale["logements"]
             confrontation = {"demande_logements": dem_tot, "capacite_maximale_logements": cap_tot,
                              "tient": dem_tot <= cap_tot, "reserve_logements": cap_tot - dem_tot}
+
+    # ETUDE-AUDIT-FIX-1 (relecture) — le MEILLEUR candidat « faisable » est DÉGÉNÉRÉ : ≤ 1 logement pour un
+    # programme collectif (une barre réduite à un seul module, le plus souvent sans place faute de largeur pour
+    # l'allée de 5 m). Ce n'est PAS une implantation crédible. L'Étude ne se replie plus sur « 1 logement R+0 » :
+    # on efface la capacité, les scénarios et les variantes, et on dit honnêtement « Aucune implantation trouvée
+    # avec ces hypothèses » (nombre de candidats examinés + contrainte dominante, lue dans la trace). Statut
+    # « À compléter », jamais de capacité affichée. Le LOTISSEMENT, lui, peut légitimement dessiner un seul lot :
+    # on l'exclut de cette règle.
+    aucune_implantation = bool(maximum and scn_max is None)
+    if aucune_implantation:
+        message = "Aucune implantation trouvée avec la composition et les hypothèses choisies."
+    if (type_projet != "lotissement" and capacite_maximale is not None
+            and (capacite_maximale.get("logements") or 0) <= 1):
+        aucune_implantation = True
+        message = moteur_mod.message_aucune_implantation(scn_max)
+        capacite_maximale = None
+        facteurs_limitants = []
+        confrontation = None
+        depassement = None
+        scenarios = []
+        scenarios_pub = []
+        variantes = [(role, None, message) for role, _s, _raison in variantes]
+        for v in variantes_pub:
+            v["absente"] = True
+            v["resume"] = None
+            # la variante « votre programme » porte le message complet (N candidats + contrainte dominante) ;
+            # les autres rôles gardent leur raison « non proposée » propre.
+            if v.get("role") == "votre_programme" or v.get("ref") == "votre_programme":
+                v["raison"] = message
 
     # IMPLANTATION-4 (planche plan masse) — UN SEUL SVG par scénario, le même à l'écran et dans le PDF,
     # DESSINÉ depuis la géométrie (contexte cadastre/bâti/voies + TN LiDAR chargé UNE fois pour l'assiette).
@@ -1351,7 +1455,10 @@ def etudier_payload(session, entree: dict) -> dict:
             except Exception:
                 pub["coupe_svg"] = ""
 
-    if scenarios_pub:
+    if aucune_implantation:
+        # ETUDE-AUDIT-FIX-1 — aucune implantation crédible : statut « À compléter », jamais une capacité.
+        statut_global = "À compléter"
+    elif scenarios_pub:
         statut_global = scenarios_pub[0]["statut_etude"]
     elif demande:
         statut_global = "ne tient pas"
@@ -1376,14 +1483,11 @@ def etudier_payload(session, entree: dict) -> dict:
         "grille_simplifiee": bool(_reduite),
         "garde_fou_temps": bool(_garde_fou),
         "logements_dessines": _n_dessines,
-        # libellé prêt à afficher (écran + PDF lisent le MÊME texte) ; None si complète (rien à signaler).
-        "note": (None if _etat == "complete"
-                 else "Recherche non aboutie — aucune implantation trouvée sur cette assiette." if _etat == "non_aboutie"
-                 else f"Recherche partielle · {_n_dessines} logements dessinés — calcul interrompu par le "
-                      "garde-fou de temps (assiette lourde) ; la capacité réelle peut être supérieure."
-                 if _n_dessines else
-                 "Recherche partielle — calcul interrompu par le garde-fou de temps (assiette lourde) avant "
-                 "qu'une implantation ait été trouvée ; une recherche plus longue peut en trouver une."),
+        # ETUDE-AUDIT-FIX-1 LOT 2 (défaut 2) — libellé SOURCE UNIQUE (« n sur 150 », jamais « maximum »).
+        "note": libelle_recherche(etat=_etat,
+                                  candidats_examines=getattr(terrain, "grille_candidats_examines", 0),
+                                  candidats_prevus=getattr(terrain, "grille_candidats_prevus", 0),
+                                  logements_dessines=_n_dessines),
     }
     grille_note = None
     if _reduite:
@@ -1396,8 +1500,9 @@ def etudier_payload(session, entree: dict) -> dict:
     # déjà traitée là), on ne conclut PAS à une « Impossible pour cause établie » (qui dirait une interdiction
     # du PLU) : la recherche n'a simplement trouvé aucun plan sous ces hypothèses (assiette trop étroite,
     # reculs, stationnement). Cas des assemblages dont la part d'habitat (UB) est une bande étroite.
-    verdict = next((v["verdict"] for v in variantes_pub if not v.get("absente")),
-                   "Aucun plan trouvé sous ces hypothèses")
+    verdict = ("À compléter" if aucune_implantation
+               else next((v["verdict"] for v in variantes_pub if not v.get("absente")),
+                         "Aucun plan trouvé sous ces hypothèses"))
     # ETUDE-STATIONNEMENT-FIX-5 (point 3) — UN SEUL message, cohérent avec le titre : quand le verdict est
     # « Aucun plan trouvé sous ces hypothèses », le message ne doit PLUS commencer par « simulation impossible »
     # (le titre et le texte se contredisaient). On ne garde que la RAISON, capitalisée.
@@ -1476,14 +1581,15 @@ def etudier_payload(session, entree: dict) -> dict:
         except Exception:  # noqa: BLE001 — la capacité réduite est un bonus, jamais bloquante
             logging.getLogger("labuse").exception("étude v6 : passage stationnement réduit impossible")
 
-    return {
+    _payload = {
         "moteur": {"livrable": "IMPLANTATION-2",
                    "version_conventions": conv.version, "etiquette": conv.etiquette,
                    "crs_dessin": "EPSG:2975", "crs_carte": "EPSG:4326"},
         "entrees": {
             "idus": idus, "commune": t.commune, "insee": t.insee, "zone": ref_scn.regles.zone,
             "type_projet": type_projet, "objectif": objectif,
-            "programme_mode": "saisi" if demande else "propose",
+            "programme_mode": "maximum" if maximum else "saisi" if demande else "propose",
+            "programme_maximum": maximum.description() if maximum else None,
             "stationnement": stationnement, "terrain": terrain_mode,
             # ETUDE-V6-5 — niveau(x) de sous-sol CHOISI (1 par défaut ; sans objet en aérien).
             "niveaux_sous_sol": (niveaux_sous_sol if stationnement == "sous_sol" else None),
@@ -1491,12 +1597,14 @@ def etudier_payload(session, entree: dict) -> dict:
         "regles": {
             "zone": ref_scn.regles.zone, "insee": ref_scn.regles.insee,
             # ETUDE-V6-3 (item 2) — toute règle affichée commence par « PLU de [commune] · zone [X] · … · millésime ».
-            "commune": t.commune, "millesime": _plu_millesime(session, t.insee),
+            "commune": t.commune, "millesime": _plu_millesime(session, t.insee, ref_scn.regles.zone),
             # ETUDE-V6-4 (item 3) — lien doc officiel + millésime portés sur CHAQUE règle (« Lire l'article »
             # partout : étapes 1/2, stationnement, contrôles, annexe PDF).
-            "source_url": _plu_source_url(session, t.insee),
+            # ETUDE-AUDIT-FIX-1 LOT 4 (défaut 10) — lien vers le PDF du règlement officiel (par page), plus
+            # le viewer Géoportail générique sans page.
+            "source_url": _plu_doc_url(t.insee, ref_scn.regles.zone),
             "lignes": _decore_regles(_regles_affichables(sd0),
-                                     _plu_source_url(session, t.insee), _plu_millesime(session, t.insee)),
+                                     _plu_doc_url(t.insee, ref_scn.regles.zone), _plu_millesime(session, t.insee, ref_scn.regles.zone)),
         },
         "terrain": {
             "contenance_totale_m2": sd0["terrain"]["contenance_totale_m2"],
@@ -1537,6 +1645,10 @@ def etudier_payload(session, entree: dict) -> dict:
         "statut_global": statut_global,
         "verdict": verdict,
         "message": message,
+        # ETUDE-AUDIT-FIX-1 (relecture) — True quand aucune implantation crédible n'a été trouvée (le seul
+        # candidat « faisable » était dégénéré) : l'écran et le PDF affichent LE message (ci-dessus), jamais
+        # une capacité « 1 logement R+0 ». Source unique lue par les deux rendus.
+        "aucune_implantation": aucune_implantation,
         "scenarios": scenarios_pub,
         "variantes": variantes_pub,
         "depassement": depassement,
@@ -1566,3 +1678,7 @@ def etudier_payload(session, entree: dict) -> dict:
         # ex. UA Étang-Salé, elles passent par un contrôle vérifié et ne figurent plus ici).
         "regles_non_verifiees": _regles_non_verifiees(ref_scn.regles),
     }
+    # ETUDE-AUDIT-FIX-1 LOT 1 (défaut 1) — verdict AFFICHÉ + réserves posés UNE fois sur le payload
+    # (variantes), lus à l'identique par l'écran et le PDF. Fin des verdicts divergents à l'export.
+    annoter_verdicts_affiches(_payload)
+    return _payload

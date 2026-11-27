@@ -44,7 +44,7 @@ def _point(lon, lat) -> dict | None:
 
 # ───────────────────────── parsing (pur, sans réseau) ─────────────────────────
 
-def parse_sol_pollue(subtype: str, item: dict) -> dict | None:
+def parse_sol_pollue(subtype: str, item: dict, insee: str | None = None) -> dict | None:
     """Objet /ssp (casias, instruction ou sis) → dict couche. None si pas de géométrie
     (inexploitable pour un croisement spatial ; on ne fabrique pas de point).
 
@@ -54,6 +54,10 @@ def parse_sol_pollue(subtype: str, item: dict) -> dict | None:
     geom = item.get("geom")
     if not isinstance(geom, dict) or not geom.get("coordinates"):
         return None
+    if insee and insee.startswith("974"):
+        from shapely.geometry import box, shape
+        if not box(55.05, -21.60, 56.00, -20.65).intersects(shape(geom)):
+            return None
     return {
         "kind": "sol_pollue", "subtype": subtype,
         "name": item.get("nom_etablissement") or item.get("nom"),
@@ -173,7 +177,7 @@ def parse_icpe(item: dict) -> dict | None:
 def _iter_parsed(connector: GeorisquesConnector, insee: str) -> Iterator[dict]:
     """Itère TOUS les objets parsés des 3 couches pour une commune (casias+instruction, cavités, ICPE)."""
     for subtype, item in connector.sites_pollues(insee):
-        p = parse_sol_pollue(subtype, item)
+        p = parse_sol_pollue(subtype, item, insee)
         if p:
             yield p
     for item in connector.cavites(insee):
@@ -244,7 +248,7 @@ def ingest_sols_pollues_commune(session: Session, insee: str, commune: str, run_
     session.execute(text("DELETE FROM spatial_layers WHERE commune=:c AND kind='sol_pollue'"), {"c": commune})
     n = 0
     for subtype, item in connector.sites_pollues(insee):
-        p = parse_sol_pollue(subtype, item)
+        p = parse_sol_pollue(subtype, item, insee)
         if p:
             _insert_layer(session, "sol_pollue", p["subtype"], p["name"], p["geometry"],
                           sid, commune, run_id, p["attrs"])

@@ -1,10 +1,11 @@
+import { actesParParcelle, adressePermis, agePermis, surfacesPermis } from '../../lib/permisAffichage'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useRef, useState } from 'react'
 import { usePiegeFocus } from '../../lib/usePiegeFocus'
 import {
   courrierPdf, getCommunes, getCourrierStatut, getFiche, modBailleur,
-  modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPermis, modPermisEtats,
+  modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPermis, modPermisCommunes, modPermisEtats,
   modPermisFiche, modPromesses, modPromessesCount, postCourrierDemande, postCourrierAdressage,
   postCourrierComposer,
 } from '../../lib/api'
@@ -246,18 +247,22 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
           {/* RECETTE-OUTILS-2 (R19) — millésime MAJIC et « Dépôt de comptes » ne sont PLUS des lignes en
               tête (elles poussaient la liste des parcelles hors champ) : regroupées EN PIED de l'accordéon
               « Chiffres clés » (fermé par défaut), plus bas. */}
-          {/* signaux d'APPROCHE : BODACC (procédure) + INPI (société absente du registre = succession /
-              sommeil probable). Libellés FACTUELS — jamais « fantôme ». */}
-          {d['bodacc'] != null && (
-            <div className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">
-              ● BODACC — {(d['bodacc'] as Record<string, string>)['type_procedure']}
-            </div>
-          )}
-          {d['inpi_sans_dirigeant'] === true && (
-            <div data-m02-inpi className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] text-st-creuser">
-              ● Aucun dirigeant au registre INPI — succession ou société en sommeil probable (signal d'approche). À vérifier au registre.
-            </div>
-          )}
+          {/* SCAN-FIX-1 (bloquant 5) — FAIT DATÉ, jamais une interprétation sur une absence locale. L'avis
+              BODACC porte SA DATE et SA NATURE (ouverture vs clôture) : une procédure CLÔTURÉE ne se montre
+              plus comme un risque en cours (ton neutre), une procédure ouverte garde l'alerte. Le signal
+              « aucun dirigeant au registre INPI → succession/sommeil » est RETIRÉ (reposait sur une absence
+              dans la base locale, mis en défaut par le contre-audit). */}
+          {d['bodacc'] != null && (() => {
+            const b = d['bodacc'] as { type_procedure?: string; date_annonce?: string }
+            const cloturee = /clôtur|cloture|clôtur|fin de|radiation/i.test(b.type_procedure ?? '')
+            const dte = b.date_annonce ? fmtDateNum(b.date_annonce) : null
+            return (
+              <div data-m02-bodacc className={`rounded-lg border px-3 py-2 text-[11px] ${cloturee ? 'border-line-2 bg-surface-3 text-txt-mut' : 'border-st-ecartee/40 bg-st-ecartee/10 text-st-ecartee'}`}>
+                ● BODACC — {b.type_procedure ?? 'procédure'}{dte ? <> · <b>{cloturee ? 'clôturée' : 'publié'} le {dte}</b></> : null}
+                {cloturee && <span className="text-txt-dim"> (procédure close — fait historique)</span>}
+              </div>
+            )
+          })()}
           {/* RECETTE-OUTILS-2 (R19) — le nom du propriétaire n'apparaît qu'UNE fois : en fusion (Scan
               patrimoine), l'encart du haut le porte déjà → on NE le répète plus ici. Hors fusion (M02
               seul, dormant), on le garde. */}
@@ -298,20 +303,45 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
                 {fmt(d['n_recensees'] as number)} recensées (fichiers fonciers DGFiP), dont {fmt(d['n_rattachees'] as number)} rattachées au cadastre — {fmt((d['n_recensees'] as number) - (d['n_rattachees'] as number))} sans géométrie cadastrale (hors carte).
               </p>
             )}
+            {/* SCAN-FIX-1 (bloquant 1, pt 7) — VENTILATION PAR DROIT DGFiP : la propriété (P/U/N), la
+                gestion (G/mandat/syndic) et les autres droits (bailleur à construction, emphytéote…) sont
+                DISTINGUÉES, dans les comptes comme dans la liste. Un SIREN seulement gestionnaire n'est
+                plus compté « propriétaire » (contre-audit §1 : CBO gestionnaire/mandataire sur 14). */}
+            {d['par_droit'] != null && (() => {
+              const pd = d['par_droit'] as Record<string, { label: string; recensees: number; rattachees: number; surface_rattachee_m2: number }>
+              return (
+                <div data-m02-par-droit className="grid grid-cols-3 gap-2 px-2.5 pb-2">
+                  {(['propriete', 'gestion', 'autres'] as const).map((k) => pd[k] && (
+                    <div key={k} data-m02-droit={k} className="min-w-0 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5">
+                      <div className="num-key tabular-nums text-[15px] text-mint">{fmt(pd[k].recensees)}</div>
+                      <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{pd[k].label}</div>
+                      <div className="mt-0.5 text-[9.5px] leading-tight text-txt-dim">{fmtM2(pd[k].surface_rattachee_m2)} rattachée</div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
             {/* RECETTE-OUTILS-2 (R19) — EN PIED de l'accordéon : les trois lignes de contexte (nature de
                 la donnée, millésime des fichiers fonciers, dépôt de comptes) autrefois en tête, qui
                 mangeaient la hauteur de la liste. Repliées par défaut avec les chiffres. */}
             <div className="flex flex-col gap-1 border-t border-line px-2.5 pb-2.5 pt-2 text-[10px] leading-snug text-txt-dim">
               <p>Parcelles détenues (fichiers fonciers DGFiP) — c’est ce qu’il possède, pas ce qu’il construit.</p>
+              {/* SCAN-FIX-1 (pt 7) — l'en-tête dit le PÉRIMÈTRE : ce SIREN SEUL, filiales non comprises. */}
+              {d['perimetre'] != null && (
+                <p data-m02-perimetre>Périmètre : {String((d['perimetre'] as { libelle?: string }).libelle ?? 'ce SIREN seul — filiales non comprises')}.</p>
+              )}
               {d['millesime_majic'] && (
                 <p data-m02-millesime>Fichiers fonciers DGFiP · situation {String(d['millesime_majic'])}</p>
               )}
               {d['depot_comptes'] != null && (
                 <p data-m02-depot>
                   Dépôt de comptes — {(() => {
-                    const dc = d['depot_comptes'] as { annee: number | null; depuis_ans: number | null; muet?: boolean }
-                    if (dc.muet) return `aucun dépôt depuis ${dc.depuis_ans} ans (société en sommeil probable)`
-                    return `dernier exercice déposé : ${dc.annee ?? '—'}`
+                    // SCAN-FIX-1 (bloquant 5) — FAIT DATÉ seulement : « dernier dépôt publié le… / dernier
+                    // exercice déposé : AAAA ». Plus de « société en sommeil probable » (silence ≠ sommeil).
+                    const dc = d['depot_comptes'] as { annee: number | null; depuis_ans: number | null; parution?: string | null }
+                    const pub = dc.parution ? fmtDateNum(dc.parution) : null
+                    if (dc.annee == null && !pub) return 'aucun dépôt de comptes publié à ce jour'
+                    return `dernier exercice déposé : ${dc.annee ?? '—'}${pub ? ` · publié le ${pub}` : ''}`
                   })()}
                 </p>
               )}
@@ -390,7 +420,10 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
                     l'adresse BAN, même source que la fiche §3). Silencieux si 0. */}
                 <Row idu={idu} hoverFull
                   sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`
-                    + (Number(i['n_etablissements']) > 0 ? ` · occupé par ${fmt(i['n_etablissements'] as number)} établissement${Number(i['n_etablissements']) > 1 ? 's' : ''}` : '')}
+                    + (Number(i['n_etablissements']) > 0 ? ` · occupé par ${fmt(i['n_etablissements'] as number)} établissement${Number(i['n_etablissements']) > 1 ? 's' : ''}` : '')
+                    /* SCAN-FIX-1 (bloquant 1) — droit DGFiP affiché par parcelle quand ce n'est PAS la propriété
+                       simple (P) : « gérant/mandataire », « bailleur à construction »… → la liste distingue. */
+                    + (i['droit_code'] && i['droit_code'] !== 'P' ? ` · ${String(i['droit_label'] || i['droit_code'])}` : '')}
                   fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
                     ['Patrimoine', `${d['n_parcelles']} parcelles · SDP restante ${fmt(d['sdp_residuelle_m2'] as number)} m²`]]} />
               </div>
@@ -422,25 +455,20 @@ const NATURES = [['PC', 'PC'], ['DP', 'DP'], ['PA', 'PA'], ['PD', 'PD'], ['', 'T
 // CONTENU de la fiche permis — PARTAGÉ entre la modale (bloc « permis à proximité » de la fiche
 // parcelle) et le PANNEAU DE DROITE (outil Permis, RETOURS-23 pt 7). Ne porte QUE le contenu ; chaque
 // hôte fournit sa coque (modale centrée OU panneau latéral) et son `onClose`.
-function PermitFicheCorps({ permitId, onClose }: { permitId: string; onClose: () => void }) {
-  const q = useQuery({ queryKey: ['permis-fiche', permitId], queryFn: () => modPermisFiche(permitId) })
+function PermitFicheCorps({ permitId, nature, onClose }: { permitId: string; nature?: string; onClose: () => void }) {
+  const [choix, setChoix] = useState<string>()
+  const typeActe = nature ?? choix
+  const q = useQuery({ queryKey: ['permis-fiche', permitId, typeActe], queryFn: () => modPermisFiche(permitId, typeActe) })
   const d = q.data as Record<string, any> | undefined
   const select = useApp((s) => s.select)      // « Voir la parcelle » ouvre la fiche parcelle
-  const setFlyTo = useApp((s) => s.setFlyTo)
   // OUTILS-FIX-2 A4 — pont Permis → Scan patrimoine (SIREN du porteur → m02Prefill, consommé par ScanPatrimoine).
   const setModule = useApp((s) => s.setModule)
   const setM02Prefill = useApp((s) => s.setM02Prefill)
   const pushOutilRetour = useApp((s) => s.pushOutilRetour)   // OUTILS-FIX-3 Lot D — fil de retour
   // géom du permis (centroïde parcelle) : présente ssi géocodé ; sinon on ne peut pas localiser.
   const geom = d?.['geom'] as { coordinates?: [number, number] } | null | undefined
-  const parcelle = (d?.['parcelles'] as string[] | undefined)?.[0]
-  // RETOURS-23 (pt 7) — « Voir la parcelle » OUVRE SA FICHE (select → panneau de droite), et recentre
-  // la carte si le permis est géocodé. Ferme la fiche permis (la fiche parcelle prend le relais).
-  const voirParcelle = () => {
-    if (parcelle && parcelle.length === 14) select(parcelle)
-    if (geom?.coordinates) setFlyTo({ center: geom.coordinates, zoom: 18 })
-    onClose()
-  }
+  const parcelles = (d?.parcelles ?? []) as string[]
+  const voirParcelle = (idu: string) => { select(idu); onClose() }
   const F = ({ label, value }: { label: string; value: React.ReactNode }) =>
     value == null || value === '' ? null : (
       <div className="flex justify-between gap-3 border-b border-line py-1.5 text-[11px]">
@@ -464,7 +492,15 @@ function PermitFicheCorps({ permitId, onClose }: { permitId: string; onClose: ()
           </p>
         </div>
       )}
-      {d && (
+      {d?.choix && <div>
+        <p>Choisir une autorisation · {permitId}</p>
+        {d.choix.map((acte: { nature: string; date: string; parcelles: string[] }) => (
+          <button key={acte.nature} onClick={() => setChoix(acte.nature)} className="block py-2 text-mint">
+            {acte.nature} · {fmtDateNum(acte.date)} · {acte.parcelles.join(', ')}
+          </button>
+        ))}
+      </div>}
+      {d && !d.choix && (
         <>
           <div className="mb-2 flex items-start justify-between gap-2">
             <div>
@@ -488,14 +524,15 @@ function PermitFicheCorps({ permitId, onClose }: { permitId: string; onClose: ()
               source SITADEL n'exposerait qu'un SIRET. */}
           {d['porteur_siren'] && (
             <Bouton niveau="secondaire" ton="vert" data-permis-scan-patrimoine
-              onClick={() => { setM02Prefill(String(d['porteur_siren']).replace(/\D/g, '').slice(0, 9)); setModule('patrimoine'); onClose(); pushOutilRetour({ module: 'permis', label: 'Permis', restore: { permitToOpen: permitId } }) }}
+              onClick={() => { setM02Prefill(String(d['porteur_siren']).replace(/\D/g, '').slice(0, 9)); setModule('patrimoine'); onClose(); pushOutilRetour({ module: 'permis', label: 'Permis', restore: { permitToOpen: { id: permitId, nature: typeActe } } }) }}
               className="mt-1.5 w-full">
               Scan patrimoine du porteur →</Bouton>
           )}
           {/* OUTIL-PERMIS-FIX-1 (LOT 4) — le champ est alimenté par NB_LGT_TOT_CREES (logements créés),
               pas des « lots » (un lot ≠ un logement). Le libellé dit ce qui est mesuré. */}
           <F label="Logements créés" value={d['nb_lots']} />
-          <F label="Surface habitable" value={d['surface_hab_m2'] != null ? `${fmt(d['surface_hab_m2'])} m²` : null} />
+          {surfacesPermis(d).map(s => <F key={s.label} label={s.label} value={s.valeur} />)}
+          <F label="Adresse des travaux" value={adressePermis(d.adresse)} />
           {d['geoloc_note'] && <p className="mt-1 text-[10px] leading-snug text-txt-dim">Position : {String(d['geoloc_note'])}.</p>}
           {/* OUTILS-P1-1 LOT3b (pt 1) — dates au format FR JJ/MM/AAAA (jamais AAAA-MM-JJ à l'écran). */}
           <F label="Date de dépôt" value={d['date_depot'] ? fmtDateNum(d['date_depot'] as string) : null} />
@@ -510,14 +547,11 @@ function PermitFicheCorps({ permitId, onClose }: { permitId: string; onClose: ()
           <F label="Achèvement (DAACT)" value={d['date_achevement'] ? fmtDateNum(d['date_achevement'] as string) : null} />
           {/* OUTIL-PERMIS-FIX-8 (LOT 2) — AUCUNE durée d'instruction : le délai n'a jamais été mesuré
               (dépôt connu à l'année). Les deux dates ci-dessus suffisent, sans calcul entre elles. */}
-          <F label="Parcelle(s)" value={<span className="font-mono text-[10px]">{(d['parcelles'] as string[]).join(', ')}</span>} />
-          {/* RETOURS-23 (pt 7) — « Voir la parcelle » ouvre la FICHE de la parcelle rattachée (géocodé) ;
-              sinon message clair (non géocodé) — jamais un clic mort. */}
-          {geom?.coordinates ? (
-            <Bouton niveau="secondaire" ton="vert" data-permis-localiser onClick={voirParcelle} className="mt-3 w-full">
-              Voir la parcelle
-            </Bouton>
-          ) : (
+          {parcelles.map(idu => <Bouton key={idu} niveau="secondaire" ton="vert" data-permis-localiser
+            onClick={() => voirParcelle(idu)} className="mt-1 w-full">
+            Voir la parcelle {iduCourt(idu)}
+          </Bouton>)}
+          {!geom?.coordinates && (
             <div data-permis-nongeocode className="mt-3 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] leading-snug text-st-creuser">
               <b>Permis non géocodé</b> — son adresse n'a pas pu être rattachée à une parcelle du
               cadastre, il ne peut pas être localisé sur la carte.
@@ -531,7 +565,7 @@ function PermitFicheCorps({ permitId, onClose }: { permitId: string; onClose: ()
 }
 
 /** Fiche permis en MODALE — bloc « permis à proximité » de la fiche parcelle (PermitsProximityBlock). */
-export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose: () => void }) {
+export function PermitDrawer({ permitId, nature, onClose }: { permitId: string; nature?: string; onClose: () => void }) {
   // FIX-NU3-2 (M-A04) — rôle dialog + piège focus + Échap.
   const drawerRef = useRef<HTMLDivElement | null>(null)
   usePiegeFocus(true, drawerRef, onClose)
@@ -540,7 +574,7 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
       <div ref={drawerRef} role="dialog" aria-modal="true" aria-label="Fiche du permis"
         className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-mint/40 bg-surface-1 p-4 shadow-elev-3 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}>
-        <PermitFicheCorps permitId={permitId} onClose={onClose} />
+        <PermitFicheCorps permitId={permitId} nature={nature} onClose={onClose} />
       </div>
     </div>
   )
@@ -556,13 +590,13 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
 // servies. Écrit le filtre commune GLOBAL (`setCommune`) — le même que lisent déjà `modPermis` /
 // `modPromesses` via `cq()` : un seul état, aucune divergence liste/carte.
 function CommunePermisSelect({ value, onChange }: { value: string | null; onChange: (c: string | null) => void }) {
-  const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
+  const communes = useQuery({ queryKey: ['permis-communes'], queryFn: modPermisCommunes, staleTime: 300_000 })
   return (
     <Select data-permis-commune value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}
       wrapClassName="w-full"
       className="w-full rounded-lg border border-line-2 bg-surface-3 pl-2 py-1 text-[11px] text-txt focus:outline-none">
-      <option value="">Toutes les communes</option>
-      {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
+      <option value="">{communes.isLoading ? 'Chargement des communes…' : 'Toutes les communes'}</option>
+      {(communes.data ?? []).map((c) => <option key={c} value={c}>{c}</option>)}
     </Select>
   )
 }
@@ -616,17 +650,18 @@ export function M03() {
   // RETOURS-23 (suite, pt 1) — ouvrir la bulle permis depuis la LISTE : on surligne la ligne, on recentre
   // la carte sur le permis (sa parcelle rattachée) et on ouvre la bulle AU CENTRE (`centre=true`, ancre
   // auto) ; MÊME bulle que le clic carte, jamais coupée.
-  const ouvrirPermisBulle = (id: string) => {
-    setPermisOuvert(id)
+  const [ficheSansCarte, setFicheSansCarte] = useState<{ id: string; nature?: string } | null>(null)
+  const ouvrirPermisBulle = (id: string, nature?: string, parcelle?: [number, number]) => {
     const m = (window as unknown as { __labuse_map?: any }).__labuse_map
-    if (!m) return
-    modPermisFiche(id).then((f: Record<string, any>) => {
-      const c = (f?.['geom'] as { coordinates?: [number, number] } | null)?.coordinates
-      if (c) { m.easeTo({ center: c, zoom: Math.max(m.getZoom?.() ?? 15, 17), duration: 600 }); ouvrirBullePermis(m, id, c, true) }
-      else { ouvrirBullePermis(m, id, m.getCenter(), true) }   // non géocodé : bulle au centre courant
-    }).catch(() => { /* fiche indisponible : la bulle le dira */ ouvrirBullePermis(m, id, m.getCenter(), true) })
+    if (m) ouvrirBullePermis(m, id, parcelle ?? m.getCenter(), !parcelle, nature)
+    else setFicheSansCarte({ id, nature })
   }
-  useEffect(() => { if (permitToOpen) { ouvrirPermisBulle(permitToOpen); setPermitToOpen(null) } }, [permitToOpen, setPermitToOpen])   // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!permitToOpen) return
+    if (typeof permitToOpen === 'string') ouvrirPermisBulle(permitToOpen)
+    else ouvrirPermisBulle(permitToOpen.id, permitToOpen.nature)
+    setPermitToOpen(null)
+  }, [permitToOpen, setPermitToOpen])
   // nettoie la bulle quand on quitte l'outil Permis.
   useEffect(() => () => { fermerBullePermis(); setPermisOuvert(null) }, [])   // eslint-disable-line react-hooks/exhaustive-deps
   // la clé d'ouverture (radar `permis` vs filtre `promesses`) fixe le MODE d'entrée + la fenêtre par
@@ -652,8 +687,8 @@ export function M03() {
   // RETOURS-11 (T4) — pagination par 200 partout (doctrine SOCLE) : plus de pages de 300/1000.
   const RADAR_PAGE = 200
   const qRadar = useInfiniteQuery({
-    queryKey: ['m03', months, nature, commune, etatSeg],
-    queryFn: ({ pageParam }) => modPermis(months, nature || null, RADAR_PAGE, pageParam as number, etatSeg),
+    queryKey: ['m03', months, nature, commune, etatSeg, geoFiltre],
+    queryFn: ({ pageParam }) => modPermis(months, nature || null, RADAR_PAGE, pageParam as number, etatSeg, geoFiltre),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * RADAR_PAGE : undefined,
     enabled: !pointMort,
@@ -665,8 +700,8 @@ export function M03() {
   // (le bug F2 : aucun point mort en « Tous »). Décoré ici, une seule source de vérité.
   const pmMonths = pointMort ? months : 36
   const qPm = useInfiniteQuery({
-    queryKey: ['m04', pmMonths, commune],
-    queryFn: ({ pageParam }) => modPromesses(pmMonths, PM_PAGE, pageParam as number),
+    queryKey: ['m04', pmMonths, commune, geoFiltre],
+    queryFn: ({ pageParam }) => modPromesses(pmMonths, PM_PAGE, pageParam as number, geoFiltre),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * PM_PAGE : undefined,
     // OUTIL-PERMIS-FIX-1 (LOT 5) — la liste DORMANTE (lourde) ne se charge QUE sur le segment Dormant.
@@ -675,7 +710,7 @@ export function M03() {
     enabled: pointMort,
   })
   // total point mort (COUNT ~4 s) DÉCOUPLÉ : arrive en parallèle, ne bloque pas la 1re page
-  const qPmCount = useQuery({ queryKey: ['m04-count', pmMonths, commune], queryFn: () => modPromessesCount(pmMonths), staleTime: 60_000, enabled: pointMort })
+  const qPmCount = useQuery({ queryKey: ['m04-count', pmMonths, commune, geoFiltre], queryFn: () => modPromessesCount(pmMonths, geoFiltre), staleTime: 60_000, enabled: pointMort })
 
   // OUTIL-PERMIS-FIX-1 (LOT 1) — UNE SEULE requête PARTITION sert les cinq compteurs d'entrée, chacun
   // COMPTÉ par le serveur depuis la définition UNIQUE (`permis_classe`). Plus de 4 appels + soustraction
@@ -750,7 +785,7 @@ export function M03() {
   const radarEtat = serveurEtat
   const _feat = (i: Record<string, any>, etat: PermisEtatCarte) => ({ type: 'Feature' as const, geometry: i['geom'],
     // RECETTE-1 (H2) — commune + précision géocodage portées à la feature → lues par la BULLE (MapView).
-    properties: { kind: 'permis', etat, permit_id: i['permit_id'], label: `${i['type']} ${i['date']}`,
+    properties: { kind: 'permis', etat, permit_id: i['permit_id'], nature: i['type'], label: `${i['type']} ${i['date']}`,
       commune: i['commune'] ?? null, geoloc: i['geoloc'] ?? null } })
   // PERMIS-CHECK-2 pt 1 — parcelle CIBLÉE : la carte montre EXACTEMENT les permis de la parcelle
   // (/modules/parcelle-permis, ≤ 200 m, géolocalisés), INDÉPENDAMMENT du filtre d'état — sinon la
@@ -758,13 +793,12 @@ export function M03() {
   // (constat BZ1065 : 11 permis annoncés, 0 point car tous > 24 mois et « Récent » actif). Couleur =
   // récence PROPRE du permis (récent ≤ 24 m vert, sinon gris), jamais le segment. Ces permis portent
   // `nature` (pas `type`) → feature dédiée. Hors ciblage, la carte garde le radar/point mort habituel.
-  const parcelPermisItems = (parcelIdu
-    ? (((qParcelPermis.data as Record<string, any> | undefined)?.['items'] ?? []) as Record<string, any>[])
-    : []).filter((i) => i['geom'])
+  const familleParcelle = actesParParcelle(perim ? qParcelPermis.data : undefined)
+  const parcelPermisItems = familleParcelle.tous
   const featParcelle = (i: Record<string, any>) => ({ type: 'Feature' as const, geometry: i['geom'],
     // RECETTE-1 (H2.4) — couleur = ÉTAT du permis (récent/achevé/autre), comme le radar (plus recent/gris).
     properties: { kind: 'permis', etat: carteEtat(perimClasse(i)),
-      permit_id: i['permit_id'], label: `${i['nature'] ?? ''} ${i['date']}`.trim(),
+      permit_id: i['permit_id'], nature: i['nature'], label: `${i['nature'] ?? ''} ${i['date']}`.trim(),
       commune: i['commune'] ?? null, geoloc: i['geoloc'] ?? null } })   // RECETTE-1 (H2) — pour la bulle
   // RECETTE-1 (H2.4) — compteurs par état DANS les 200 m + filtre + liste scopés au périmètre.
   // OUTIL-PERMIS-FIX-1 (LOT 3) — le mode parcelle a DÉSORMAIS un segment Dormant (serveur `etats`).
@@ -775,17 +809,8 @@ export function M03() {
         .map((i) => ({ ...i, type: i['nature'] }))
     : []
   // compteurs = la partition SERVIE (comptée sur les permis dessinables), pas une reclassification front.
-  const perimEtats = ((qParcelPermis.data as Record<string, any> | undefined)?.['etats'] ?? {}) as Record<string, number>
-  // OUTIL-PERMIS-FIX-2 (Défaut F) — « Tous » = le COUNT EXACT c200 servi par l'API (jamais la longueur du
-  // payload ≤ 500, qui sous-comptait une parcelle à > 500 permis dans les 200 m).
-  const perimC200 = ((qParcelPermis.data as Record<string, any> | undefined)?.['c200'] as number | undefined)
-  const perimCounts = {
-    tous: perimC200 ?? parcelPermisItems.length,
-    recent: perimEtats['recent'] ?? 0,
-    dormant: perimEtats['dormant'] ?? 0,
-    acheve: perimEtats['acheve'] ?? 0,
-    autre: perimEtats['autre'] ?? 0,
-  }
+  const perimCounts = { tous: parcelPermisItems.length, recent: 0, dormant: 0, acheve: 0, autre: 0 }
+  for (const acte of parcelPermisItems) perimCounts[perimClasse(acte)]++
   const items = perim ? perimItems : radarListItems
   // OUTIL-PERMIS-FIX-1 (LOT 3) — la BANDE des 200 m est le TAMPON RÉEL servi par le back (200 m autour de
   // la LIMITE de la parcelle, `buffer_200m`), plus un cercle autour du centroïde : pour une grande
@@ -801,7 +826,7 @@ export function M03() {
     // OUTIL-PERMIS-FIX-1 (LOT 5) — carte peinte depuis l'`etat_cycle` SERVI (même couleur par permis,
     // quel que soit le filtre). En périmètre : tampon 200 m réel + permis des 200 m colorés par état.
     featureCollection(perim
-      ? [...(perimBuffer ? [perimBuffer] : []), ...perimItems.map(featParcelle)]
+      ? [...(perimBuffer ? [perimBuffer] : []), ...perimItems.filter(i => i.geom).map(featParcelle)]
       : [...carteRadar.map((i) => _feat(i, carteEtat(radarEtat(i)))), ...cartePm.map((i) => _feat(i, 'dormant'))]),
     // O17 (i) — `geoFiltre` ; pt 1 — `parcelIdu`/données ; H2.4 — `seg` pour re-peindre le périmètre.
     [seg, pointMort, tous, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone, geoFiltre, parcelIdu, qParcelPermis.dataUpdatedAt])
@@ -823,7 +848,7 @@ export function M03() {
     ['mort', 'Permis dormants', 'dormant', perimCounts.dormant, 'PC > 3 ans, sans achèvement déclaré, aucun bâtiment détecté'],
     ['acheve', 'Achevés', 'acheve', perimCounts.acheve, 'travaux déclarés (DAACT)'],
     ['autre', 'Autres', 'autre', perimCounts.autre, 'ni récent, ni dormant, ni achevé'],
-    ['tous', 'Tous', null, perimCounts.tous, 'dans les 200 m'],
+    ['tous', 'Tous', null, perimCounts.tous, 'sur la parcelle et à 200 m autour'],
   ] as const) : ([
     // OUTIL-PERMIS-FIX-1 (LOT 6) — chaque état dit l'ÉVÉNEMENT (autorisation), la fenêtre et la date de
     // référence (fin des données). « Récent » = 24 mois PARTOUT (plus « 90 derniers jours »). Le dormant
@@ -836,7 +861,7 @@ export function M03() {
   ] as const))
   const actE = ETATS.find((e) => e[0] === seg) ?? ETATS[0]
   // résumé « Filtrer par état » replié : l'état actif + son compte (« Tous — 50 544 »).
-  const resumeEtat = `${actE[1]} — ${actE[3] != null ? fmt(actE[3]) : '…'}`
+  const resumeEtat = `${actE[1]} — ${total != null ? fmt(total) : '…'}`
   // résumé « Affiner » replié : les filtres actifs, ou « aucun filtre » quand tout est au défaut.
   // OUTIL-PERMIS-FIX-1 (LOT 1) — défaut = 240 pour TOUT segment non-dormant (l'état fait la fenêtre au
   // serveur ; cliquer un segment réapplique 240, cf. choisirSeg) ; dormant garde 36.
@@ -881,7 +906,7 @@ export function M03() {
           // (MapView) ; si une fiche est restée ouverte sur une parcelle A (clic carte/liste), elle MASQUAIT
           // le focus B demandé ici → la carte ne bougeait pas (constat Vic). On lève la sélection stale pour
           // que la barre RECENTRE TOUJOURS sur la parcelle choisie, qu'une fiche soit ouverte ou non.
-          onSelect={(sel) => { if (sel.idu) { const c = iduComplet(sel.idu); select(null); focusParcelle(c); setParcelIdu(c); setSeg('tous') } else setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }}
+          onSelect={(sel) => { if (sel.idu) { const c = iduComplet(sel.idu); select(null); focusParcelle(c); setParcelIdu(c); setSeg('tous'); setBloc('liste') } else setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }}
           // RETOURS-15 B1 — « le mot effacer disparaît ; vider le champ suffit » : vider la barre lève la
           // parcelle ciblée (et donc le bloc de proximité et les points de la carte).
           onClear={() => setParcelIdu(null)}
@@ -890,7 +915,7 @@ export function M03() {
             // RETOURS-12 O12.2 — IDU cadastral complet (14 car.) → la carte ZOOME et DÉLIMITE la parcelle
             // (focusParcelle, même geste que O1/J1) EN PLUS de chercher ses permis (O17 g).
             // pt 2 — `select(null)` d'abord : le focus barre prime sur une fiche stale (cf. onSelect).
-            if (v.length === 14 && estIdu(v)) { select(null); focusParcelle(v); setParcelIdu(v); setSeg('tous'); return }
+            if (v.length === 14 && estIdu(v)) { select(null); focusParcelle(v); setParcelIdu(v); setSeg('tous'); setBloc('liste'); return }
             // sinon une référence Sitadel compacte → fiche permis
             if (/^[0-9][0-9a-z]{6,}$/i.test(v)) ouvrirPermisBulle(v)
           }} />
@@ -899,55 +924,18 @@ export function M03() {
         {permisOwner && (
           <div className="mt-1.5">
             <OwnerParcelles siren={permisOwner.siren} nom={permisOwner.nom}
-              onPick={(idu) => { const c = iduComplet(idu); select(null); focusParcelle(c); setParcelIdu(c); setSeg('tous'); setPermisOwner(null) }}
+              onPick={(idu) => { const c = iduComplet(idu); select(null); focusParcelle(c); setParcelIdu(c); setSeg('tous'); setBloc('liste'); setPermisOwner(null) }}
               onChanger={() => setPermisOwner(null)} />
           </div>
         )}
-        {/* PERMIS-CHECK-1 P2 — parcelle CIBLÉE : phrase de résultat, TOUJOURS affichée. Le compte vient de
-            /modules/parcelle-permis (permis autorisés géolocalisés ≤ 200 m, source du signal viabilisation),
-            non fenêtré → N = profondeur MAX de l'outil (max(MONTHS_RADAR) = 240 m = toute la profondeur
-            Sitadel servie). 0 → phrase honnête datée ; ≥ 1 → le compte, puis le client clique les points. */}
-        {parcelIdu && qParcelPermis.data && (() => {
-          // PERMIS-CHECK-2 pt 1 — le compte affiché = les permis DESSINABLES (avec géom), pour que la
-          // phrase et la carte ne se contredisent jamais : « X permis » ⇒ X points cliquables à l'écran.
-          // La source ne renvoie que du géolocalisé ≤ 200 m ; `nonLoc` (rare) est dit à part. Le libellé
-          // dit « à moins de 200 m » (et non « sur cette parcelle ») : ce sont les permis du voisinage
-          // ≤ 200 m — la même assiette que le signal viabilisation (constat BZ1065 : 0 permis LITTÉRALEMENT
-          // sur la parcelle, 11 dans les 200 m).
-          const items = (((qParcelPermis.data as Record<string, any>)['items'] ?? []) as Record<string, any>[])
-          const loc = items.filter((i) => i['geom']).length
-          const nonLoc = items.length - loc
-          const nonLocTxt = nonLoc > 0 ? ` (${fmt(nonLoc)} non localisé${nonLoc > 1 ? 's' : ''}, sans point sur la carte)` : ''
-          const vide = items.length === 0
-          const ton = loc === 0 ? 'border-st-creuser/40 bg-st-creuser/10 text-st-creuser' : 'border-mint/50 bg-mint/10 text-mint'
-          // RECETTE-1 (H2, Vic) — la phrase de résultat n'est PLUS un accordéon : le compte ET le détail
-          // (« cliquez les points » / « sur les N derniers mois ») s'affichent ensemble, en clair, sans
-          // chevron ni repli. (Remplace l'accordéon RETOURS-15 B1.) Vider le champ la lève (onClear).
-          const titre = vide
-            ? <>Aucun permis à moins de 200 m de <span className="font-mono">{iduCourt(parcelIdu)}</span></>
-            : loc === 0
-              ? <><b className="tnum">{fmt(nonLoc)}</b> permis à moins de 200 m de <span className="font-mono">{iduCourt(parcelIdu)}</span>, non localisés</>
-              : <><b className="tnum">{fmt(loc)}</b> permis à moins de 200 m de <span className="font-mono">{iduCourt(parcelIdu)}</span></>
-          return (
-            <>
-              <div data-permis-parcelle-resultat {...(loc === 0 ? { 'data-permis-parcelle-vide': '1' } : {})}
-                className={`mt-1 rounded-lg border px-3 py-2 text-[11px] leading-snug ${ton}`}>
-                <span>{titre} — </span>
-                {vide
-                  /* OUT-PERMIS-011 — /modules/parcelle-permis n'est PAS fenêtré : il rend tous les permis
-                     géolocalisés ≤ 200 m, sur TOUTE la profondeur Sitadel. L'ancien « 240 derniers mois »
-                     (max(MONTHS_RADAR) = 20 ans) se lisait comme un faux fenêtrage. */
-                  ? <>sur toute la profondeur Sitadel servie{donneesJusquAu ? ` (dernière autorisation intégrée le ${fmtDateNum(donneesJusquAu)})` : ''}.</>
-                  : loc === 0
-                    ? <>aucun point à afficher.</>
-                    : <>cliquez les points sur la carte{nonLocTxt}.</>}
-              </div>
-              {/* MINI-CORRECTIONS-2 (pt 11) — lien « Réinitialiser les filtres » RETIRÉ : la parcelle de
-                  référence se vide par la croix de sa carte de sélection, et l'état revient à son défaut
-                  depuis le sélecteur « Filtrer par état ». Plus de « Réinitialiser… » dans l'outil. */}
-            </>
-          )
-        })()}
+        {parcelIdu && qParcelPermis.data && (
+          <div data-permis-parcelle-resultat className="mt-1 rounded-lg border border-line px-3 py-2 text-[11px]">
+            <b>{iduCourt(parcelIdu)}</b> · {familleParcelle.directs.length} permis sur cette parcelle
+            {' · '}{qParcelPermis.data.indisponible ? 'Voisinage indisponible' :
+              `${familleParcelle.voisins.length} autre${familleParcelle.voisins.length > 1 ? 's' : ''} à 200 m ou moins`}
+          </div>
+        )}
+
       </div>
 
       {/* RETOURS-17 W2 — BLOC TOTAL en tête : le total sort des chips (constat Vic 05/09 : « 50k » lu
@@ -1082,7 +1070,7 @@ export function M03() {
           <p data-permis-pied className="shrink-0 px-2 pt-2 text-[11px] text-txt-dim">
             {perim
               /* RECETTE-1 (H2.4) — en périmètre : le compte est celui des permis dans les 200 m. */
-              ? <>{fmt(perimItems.length)} dans les 200 m de <span className="font-mono">{iduCourt(parcelIdu!)}</span></>
+              ? <>{fmt(perimItems.length)} sur la parcelle et aux alentours de <span className="font-mono">{iduCourt(parcelIdu!)}</span></>
               : pointMort
               ? <>{fmt(cartePm.length)} permis dormants sur la carte{total != null && loaded < total
                   ? <> · <span data-permis-plafond>les {fmt(loaded)} plus anciens chargés — zoomez pour affiner</span></> : ''}</>
@@ -1104,17 +1092,20 @@ export function M03() {
             )
           })()}
 
+          {pointMort && !perim && qPmCount.data?.sources && <p data-permis-origines className="px-2 text-[11px] text-txt-mut">
+            {qPmCount.data.sources.map(s => `${fmt(s.nombre)} · ${s.libelle}`).join(' / ')}
+          </p>}
           {pointMort && qPm.isLoading && <Squelette bloc className="py-8" />}
 
           {/* RETOURS-15 U4 — la liste ne déborde JAMAIS en largeur : elle défile verticalement seule. */}
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden px-2 py-2">
-        {items.map((i, k) => {
+        {items.map((i) => {
+          const actif = permisOuvert?.id === i['permit_id'] && permisOuvert?.nature === i['type']
           // R6 — items sur UNE ligne : pastille · type · date · logements/surface · commune, puis le badge
           // d'état À DROITE de la même ligne. Pastille VERTE (en cours) / ROUGE (point mort) = même code que
           // la carte. Le badge point mort porte l'ANCIENNETÉ CALCULÉE (« Sans DAACT · X ans ») : c'est elle
           // qui mesure la dormance, donc l'intérêt. Année depuis la date d'autorisation (AAAA-…).
-          const an = Number(String(i['date'] ?? '').slice(0, 4))
-          const ans = an ? new Date().getFullYear() - an : null
+          const ans = agePermis(i['date'])
           // O17 (b) — commune si connue ; à défaut la section-parcelle (IDU rattaché). Jamais un « — » nu.
           const commuLbl = (i['commune'] as string) || ''
           const iduLbl = i['idu'] ? iduCourt(i['idu'] as string) : ''
@@ -1127,11 +1118,11 @@ export function M03() {
             acheve: 'Achevé — travaux déclarés terminés (DAACT).',
             autre: 'Autre — ni récent, ni dormant, ni achevé (autre nature, permis non rattaché, ou période intermédiaire).' }[et]
           return (
-          <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} data-point-mort={pointMort ? '1' : '0'} data-permis-row-etat={et}
-            data-permis-actif={permisOuvert === (i['permit_id'] as string) ? '1' : undefined}
-            onClick={() => ouvrirPermisBulle(i['permit_id'] as string)}
+          <button key={`${i['type']}-${i['permit_id']}`} data-permis-row data-geocode={i['geom'] ? '1' : '0'} data-point-mort={pointMort ? '1' : '0'} data-permis-row-etat={et}
+            data-permis-actif={actif ? '1' : undefined}
+            onClick={() => ouvrirPermisBulle(i['permit_id'], i['type'], i.sur_parcelle ? i.geom?.coordinates : undefined)}
             onMouseEnter={() => i['geom'] && setPermitHover(i['geom'])} onMouseLeave={() => setPermitHover(null)}
-            className={`flex w-full items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${permisOuvert === (i['permit_id'] as string) ? 'border-mint bg-mint/10' : `border-line-2 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}`}>
+            className={`flex w-full items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${actif ? 'border-mint bg-mint/10' : `border-line-2 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}`}>
             {/* RETOURS-11 R6 — puce sur UNE seule ligne (moitié moins haute) : pastille · type · date ·
                 lgt/surface · commune (tronquée) à gauche, badge d'état (Autorisé / Sans DAACT / non géocodé)
                 aligné À DROITE de la MÊME ligne (avant : le badge décrochait sur une 2ᵉ ligne). */}
@@ -1147,6 +1138,7 @@ export function M03() {
             {i['nb_lgt'] != null && <b className="shrink-0 tnum text-txt">{String(i['nb_lgt'])} lgt{Number(i['nb_lgt']) > 1 ? 's' : ''}</b>}
             {pointMort && i['surface_m2'] != null && <span className="shrink-0 tnum text-txt-dim">{fmt(i['surface_m2'] as number)} m²</span>}
             {/* commune / parcelle en clair — tronquée pour laisser la place au badge. */}
+            {perim && <span className="text-txt-mut">{i.sur_parcelle ? 'Sur la parcelle' : `${i.distance_m} m`}</span>}
             {gaucheL2 && <span className="min-w-0 truncate text-txt-mut">{gaucheL2}</span>}
             {/* badges poussés à droite, sur la même ligne. RETOURS-16 V2 — la puce de LOCALISATION
                 passe EN PREMIER (elle s'affiche en entier, jamais tronquée — constat Vic « puce
@@ -1183,7 +1175,8 @@ export function M03() {
           </div>
         </BlocAccordeon>
       </div>
-      {/* RECETTE-OUTILS-1 (points 6 & 7) — plus de drawer/modal permis : la fiche vit en bulle sur la carte. */}
+      {ficheSansCarte && <PermitDrawer permitId={ficheSansCarte.id} nature={ficheSansCarte.nature}
+        onClose={() => setFicheSansCarte(null)} />}
     </div>
   )
 }
@@ -1317,7 +1310,7 @@ export function M08() {
     // (avant : seule l'épingle était posée → aucune fiche, ou la fiche fantôme d'un outil précédent).
     useApp.getState().select(c)
     if (coords) { setFlyTo({ center: coords, zoom: 18 }); return }
-    try { const f = await getFiche(c); if (f.coords) setFlyTo({ center: f.coords, zoom: 18 }) } catch { /* parcelle recentrée au mieux */ }
+    try { const f = await getFiche(c); if (useApp.getState().tempsPinIdu === c && f.coords) setFlyTo({ center: f.coords, zoom: 18 }) } catch { /* parcelle recentrée au mieux */ }
   }
   // parcelPrefill (fiche « 1950 », Copilote) → désigne la parcelle (source carte).
   useEffect(() => {
@@ -1326,7 +1319,7 @@ export function M08() {
   // RECETTE-OUTILS-2 (R1) — clic carte : MapView appelle `select(idu)` → on l'adopte comme les autres
   // outils à parcelle (setIdu + épingle + fiche). Le garde `selectedIdu !== idu` évite toute boucle.
   useEffect(() => {
-    if (selectedIdu && selectedIdu !== idu) void designer(selectedIdu, 'carte')
+    if (!parcelPrefill && selectedIdu && selectedIdu !== idu) void designer(selectedIdu, 'carte')
   }, [selectedIdu])   // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => setTempsPinIdu(null), [])   // eslint-disable-line react-hooks/exhaustive-deps
   // RECETTE-1 (F3) — Réinitialiser : vide la parcelle épinglée + rend les deux entrées + remet l'année ancienne au défaut.
@@ -1352,29 +1345,19 @@ export function M08() {
         <p className="text-[11px] text-txt-mut">Accès direct depuis toute fiche : bouton « 1950 ».</p>
       ) : (
       <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
-        <p className="label-caps text-[9.5px]">L'année à revoir (avant)</p>
+        <p className="label-caps text-[9.5px]">Vue ancienne</p>
         {/* RETOURS-15 C2 (P16) — une rangée de Chip par millésime (lisible, sans troncature : flex-wrap),
             le millésime actif en vert plein (Chip on). « Aujourd'hui » est la borne « après » verrouillée. */}
         <div data-temps-frise className="mt-2 flex flex-wrap gap-1.5">
-          {TEMPS_MILLESIMES.map((m) => {
-            // libellé COURT : « 1950 », « 1980 », « 2000 »… ; les cartes anciennes (SCAN 50 / EduGéo)
-            // gardent leur année + « (carte) » pour ne pas se confondre avec l'ortho de la même décennie.
-            const carte = m.an.startsWith('scan') || m.an.startsWith('edugeo')
-            const court = m.an.replace('scan', '').replace('edugeo', '')
-            return (
-              <Chip key={m.key} data-cmp-left={m.key} on={cmpLeft === m.key} ton="vert"
-                aria-label={m.label} onClick={() => setCmpLeft(m.key)}>
-                {court}{carte ? ' (carte)' : ''}
-              </Chip>
-            )
-          })}
-          <Chip data-cmp-aujourdhui on disabled ton="vert" aria-label="Aujourd'hui (verrouillé)">Aujourd'hui</Chip>
+          {TEMPS_MILLESIMES.map((m) => (
+            <Chip key={m.key} data-cmp-left={m.key} on={cmpLeft === m.key} ton="vert"
+              aria-label={m.label} onClick={() => setCmpLeft(m.key)}>{m.label}</Chip>
+          ))}
         </div>
         <p className="mt-2 text-[11px] text-txt">
-          <span className="text-mint">{TEMPS_MILLESIMES.find((m) => m.key === cmpLeft)?.label ?? '—'}</span>
-          <span className="text-txt-dim"> vs </span>Aujourd'hui{/* F7 (OUTILS-3) — mention « 🔒 après fixe » retirée : sans sens pour le client. */}
+          À droite · <span data-cmp-aujourdhui>Ortho Express 2025 (IGN)</span>
         </p>
-        <p className="mt-2 text-[10.5px] text-txt-dim">Glissez la poignée au centre de la carte pour révéler l'un ou l'autre.</p>
+        <p className="mt-2 text-[10.5px] text-txt-dim">Glissez la poignée ou utilisez les flèches du clavier. Le contour blanc situe la parcelle actuelle sur les deux vues.</p>
       </div>
       )}
     </>
@@ -1461,13 +1444,12 @@ export function M09() {
   const [dest, setDest] = useState<Dest[]>([])
   // CONNEXIONS-2 Lot 4 (KO-6) — rattachement de la demande à la piste d'origine (courrier depuis le CRM).
   const [rattach, setRattach] = useState<{ pipeline_entry_id: number; projet_id: number | null } | null>(null)
-  const [modele, setModele] = useState('auto')
-  const [corps, setCorps] = useState('')
   const [demande, setDemande] = useState<{ id: number; rang_compte?: number; reference?: string; statut: string; n: number; communes: string | null } | null>(null)
   const [pdfBusy, setPdfBusy] = useState(false)
   const [pdfErr, setPdfErr] = useState<string | null>(null)
   // OUTILS-S2 Lot B — un pli « à l'occupant » n'atteint personne sur un terrain nu ou sans adresse :
   // l'ajout est REFUSÉ et l'on renvoie au Courrier SPF (identification du propriétaire via la fiche).
+  const [ajoutsEnCours, setAjoutsEnCours] = useState(0)
   const [ajoutBloque, setAjoutBloque] = useState<{ idu: string; code: string; motif: string } | null>(null)
   const select = useApp((s) => s.select)
 
@@ -1475,9 +1457,9 @@ export function M09() {
   // recule d'une étape tant qu'on n'est pas à l'étape 1, puis ferme l'outil / revient à l'outil de départ.
   const setOutilSousRetour = useApp((s) => s.setOutilSousRetour)
   useEffect(() => {
-    setOutilSousRetour(step > 1 ? () => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s)) : null)
+    setOutilSousRetour(step > 1 && !demande ? () => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s)) : null)
     return () => setOutilSousRetour(null)
-  }, [step, setOutilSousRetour])
+  }, [step, demande, setOutilSousRetour])
 
   // Enrichit commune + surface depuis la fiche (cache partagé) une fois le destinataire retenu.
   const _enrichir = (id: string) => {
@@ -1490,11 +1472,12 @@ export function M09() {
   // terrain nu / sans adresse (aucun occupant joignable) bloque l'ajout avec un message + renvoi SPF.
   // L'opposition n'est PAS bloquée ici (traitée au dépôt, étape 3). Adressage indisponible → repli : on
   // ajoute sans blocage (jamais un faux blocage sur une panne réseau).
-  const AJOUT_REFUSE = new Set(['nu', 'sans_adresse', 'sans_canal', 'inconnue'])
+  const AJOUT_REFUSE = new Set(['nu', 'sans_adresse', 'sans_canal', 'inconnue', 'disparue'])
   const ajouter = (raw: string) => {
     const id = iduComplet(raw).toUpperCase()
     if (id.length < 10 || dest.some((d) => d.idu === id)) return
     setAjoutBloque(null)
+    setAjoutsEnCours((n) => n + 1)
     postCourrierAdressage([id])
       .then((r) => {
         const res = r.resolutions[0]
@@ -1503,6 +1486,7 @@ export function M09() {
         } else _enrichir(id)
       })
       .catch(() => _enrichir(id))
+      .finally(() => setAjoutsEnCours((n) => n - 1))
   }
   const retirer = (id: string) => setDest((prev) => prev.filter((d) => d.idu !== id))
 
@@ -1542,16 +1526,18 @@ export function M09() {
   // APERÇU (lecture seule) du 1ᵉʳ destinataire — même texte que le PDF. « Ne pas reformuler » (Vic).
   const apercu = useQuery({ queryKey: ['courrier-apercu', dest[0]?.idu], enabled: step === 2 && !!dest[0],
     queryFn: () => postCourrierComposer(dest[0].idu) })
-  useEffect(() => {
-    if (apercu.data) { setCorps(apercu.data.recto); setModele(`auto-${apercu.data.ouverture}`) }
-  }, [apercu.data])
+  const corps = apercu.data?.recto ?? ''
+  const modele = apercu.data?.ouverture ? `auto-${apercu.data.ouverture}` : 'auto'
   // COURRIER-2 Lot 2 — adressage résolu (destinataire + adresse d'envoi + bien + motif de blocage).
   const iduKey = dest.map((d) => d.idu).join(',')
   const adressage = useQuery({ queryKey: ['courrier-adressage', iduKey], enabled: step === 3 && dest.length > 0,
     queryFn: () => postCourrierAdressage(dest.map((d) => d.idu)) })
   const resolutions = adressage.data?.resolutions ?? []
   const bloquees = resolutions.filter((r) => r.bloque)
-  const depotBloque = resolutions.length > 0 && bloquees.length > 0
+  const adresses = new Set(resolutions.map((r) => r.idu))
+  const complet = resolutions.length === dest.length && dest.every((d) => adresses.has(d.idu))
+  const depotBloque = bloquees.length > 0
+  const depotPossible = adressage.isSuccess && !adressage.isFetching && complet && !depotBloque
   const envoyer = useMutation({
     mutationFn: () => postCourrierDemande(dest.map((d) => d.idu), corps, modele, recapCommunes(), rattach ?? undefined),
     onSuccess: (d) => { setDemande(d); qc.invalidateQueries({ queryKey: ['courrier-demandes'] }); qc.invalidateQueries({ queryKey: ['pipeline'] }) },
@@ -1636,18 +1622,18 @@ export function M09() {
               <span className="text-st-ecartee">⛔ {iduCourt(ajoutBloque.idu)} — </span>
               {ajoutBloque.code === 'nu'
                 ? 'Terrain nu, aucun occupant à qui écrire'
-                : ajoutBloque.code === 'inconnue' ? 'Parcelle inconnue'
+                : ['inconnue', 'disparue'].includes(ajoutBloque.code) ? ajoutBloque.motif
                 : 'Aucune adresse d’envoi (aucun occupant joignable)'}
-              {ajoutBloque.code !== 'inconnue' && <> — passez par le <b className="text-txt-mut">Courrier SPF</b> pour identifier le propriétaire.</>}
-              {ajoutBloque.code !== 'inconnue' && (
+              {!['inconnue', 'disparue'].includes(ajoutBloque.code) && <> — passez par le <b className="text-txt-mut">Courrier SPF</b> pour identifier le propriétaire.</>}
+              {!['inconnue', 'disparue'].includes(ajoutBloque.code) && (
                 <button data-courrier-spf-lien onClick={() => select(ajoutBloque.idu)}
                   className="mt-1 block text-mint hover:underline">Ouvrir la fiche (Courrier SPF) →</button>
               )}
             </div>
           )}
           <p className="text-[10px] text-txt-dim">{dest.length} destinataire{dest.length > 1 ? 's' : ''} — un courrier par parcelle.</p>
-          <Bouton niveau="primaire" ton="vert" data-courrier-next onClick={() => dest.length && setStep(2)} disabled={dest.length === 0}
-            className="mt-auto">Relire ›</Bouton>
+          <Bouton niveau="primaire" ton="vert" data-courrier-next onClick={() => dest.length && setStep(2)} disabled={dest.length === 0 || ajoutsEnCours > 0}
+            className="mt-auto">{ajoutsEnCours ? 'Vérification des destinataires…' : 'Relire ›'}</Bouton>
         </div>
       )}
 
@@ -1658,6 +1644,7 @@ export function M09() {
             parcelle — un courrier par destinataire, adapté à ses faits. Aperçu du 1ᵉʳ destinataire :
           </p>
           {apercu.isLoading && <Squelette lignes={4} />}
+          {apercu.isError && <ErrorState message="Impossible de charger la lettre." retry={() => apercu.refetch()} />}
           {apercu.data && (
             <>
               <div data-courrier-apercu className="min-h-[160px] flex-1 overflow-auto whitespace-pre-wrap rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-[11px] leading-snug text-txt">
@@ -1676,7 +1663,7 @@ export function M09() {
           )}
           {/* RETOURS-23 (pt 1) — « ← Retour » interne retiré : le bouton unique du haut recule d'une étape. */}
           <div className="flex gap-2">
-            <Bouton niveau="primaire" ton="vert" data-courrier-next onClick={() => setStep(3)} disabled={!apercu.data || corps.trim().length < 10}
+            <Bouton niveau="primaire" ton="vert" data-courrier-next onClick={() => setStep(3)} disabled={!apercu.isSuccess || !apercu.data.ouverture || corps.trim().length < 10}
               className="flex-1">Vérifier l'envoi ›</Bouton>
           </div>
         </div>
@@ -1694,6 +1681,9 @@ export function M09() {
               Aucune substitution silencieuse : un blocage (nu / sans adresse / opposition) porte son motif. */}
           <div data-courrier-adressage className="flex flex-col gap-1.5">
             {adressage.isLoading && <Squelette lignes={2} />}
+            {(adressage.isError || (adressage.isSuccess && !complet)) && (
+              <ErrorState message="La vérification des destinataires est incomplète." retry={() => adressage.refetch()} />
+            )}
             {resolutions.map((r) => (
               <div key={r.idu} data-courrier-resolution={r.idu}
                 className={`rounded-lg border px-3 py-2 text-[11px] ${r.bloque ? 'border-st-ecartee/50 bg-st-ecartee/[0.06]' : 'border-line-2 bg-surface-2'}`}>
@@ -1745,7 +1735,7 @@ export function M09() {
           {!demande ? (
             // OUTILS-P1-1 (pt 10) — le bouton dit ce qui se passe VRAIMENT : on DÉPOSE une demande d'envoi
             // (LABUSE la traite à la main), on n'envoie pas le courrier d'un clic.
-            <Bouton niveau="primaire" ton="vert" data-courrier-demander onClick={() => envoyer.mutate()} disabled={envoyer.isPending || depotBloque || adressage.isLoading}>
+            <Bouton niveau="primaire" ton="vert" data-courrier-demander onClick={() => envoyer.mutate()} disabled={envoyer.isPending || !depotPossible}>
               {envoyer.isPending ? 'Dépôt de la demande…' : depotBloque ? 'Dépôt bloqué — voir les motifs' : "Déposer une demande d'envoi"}</Bouton>
           ) : (
             // OUTILS-1 A4/B6 — la confirmation porte la RÉFÉRENCE de la demande et renvoie vers le suivi.
@@ -1772,7 +1762,7 @@ export function M09() {
               <span className="mt-1.5 block text-[10.5px] text-txt-dim">Retrouvez vos demandes dans <b className="text-txt-mut">Projets → Mes courriers</b>.</span>
             </div>
           )}
-          {envoyer.isError && <ErrorState message="La demande n'a pas pu être transmise — réessayez." retry={() => envoyer.mutate()} />}
+          {envoyer.isError && <ErrorState message="La demande n'a pas pu être transmise — réessayez." retry={depotPossible ? () => envoyer.mutate() : undefined} />}
 
           {/* aperçu PDF de RELECTURE (secondaire) — corps rempli pour le 1er destinataire */}
           <Bouton niveau="lien" data-courrier-pdf onClick={apercuPdf} disabled={pdfBusy || dest.length === 0} className="self-start">

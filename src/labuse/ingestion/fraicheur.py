@@ -366,9 +366,11 @@ def persist_millesime(session: Session, only: str | None = None, *, commit: bool
         if names:                                # noms EXACTS (plus de pattern % : aucun fan-out)
             session.execute(text(
                 "UPDATE data_sources SET source_horizon_at = :h, source_cadence = :c, "
-                "source_millesime = :m, prochain_millesime_at = :p, updated_at = now() "
+                "source_millesime = CASE WHEN :cle = 'dvf' AND source_millesime LIKE "
+                "'géo-DVF Etalab — millésime %' THEN source_millesime ELSE :m END, "
+                "prochain_millesime_at = :p, updated_at = now() "
                 "WHERE name = ANY(:names)"),
-                {"h": horizon, "c": s.get("cadence_norme"), "m": s.get("millesime"),
+                {"h": horizon, "cle": key, "c": s.get("cadence_norme"), "m": s.get("millesime"),
                  "p": s.get("prochain"), "names": names})
         rendu.append({"source": key, "ds_names": names, "horizon": str(horizon) if horizon else None,
                       "cadence": s.get("cadence_norme"), "millesime": s.get("millesime"),
@@ -399,15 +401,27 @@ def check_dvf_livraison(session: Session, *, http_get=None) -> dict:
             "last_update": last_update, "ressources": ressources}
 
 
+def _millesime_dvf(session: Session, dernier: str | None, *, commit: bool) -> None:
+    persist_millesime(session, only="dvf", commit=False)
+    if dernier:
+        session.execute(text(
+            "UPDATE data_sources SET source_millesime=:m WHERE name='DVF / valeurs foncières'"),
+            {"m": f"géo-DVF Etalab — millésime {dernier} + DGFiP 2014–2020"})
+    if commit:
+        session.commit()
+
+
 def refresh_dvf(session: Session, *, commit: bool = True, log_fn=print, http_get=None) -> dict:
     """Refresh DVF INCRÉMENTAL au FORMAT ETALAB ACTUEL : seules les PÉRIODES dont la ressource a changé
     sont rechargées. Chaque fichier `full-AAAA[-sN]` est full-France : on filtre le 974, on agrège PAR
     MUTATION (même agrégat que le legacy), on SUPPRIME la fenêtre de dates de la période puis on
     réinsère (idempotent, SANS doublon ; un double run = le même état). L'HISTORIQUE est conservé :
     `dvf_mutations_histo` (≤ 2020) n'est jamais touché ; les périodes hors fenêtre amont restent en base."""
-    from . import dvf_etalab
+    from . import dvf_etalab, dvf_periode
     from .layers_ingest import _geo_dvf_aggregate, insert_muts
 
+    # Les lectures et écritures d'une publication, caches compris, partagent la transaction de l'appelant.
+    session.execute(text("SELECT pg_advisory_xact_lock(hashtext('labuse_refresh_dvf'))"))
     check = check_dvf_livraison(session, http_get=http_get)
     par_token = {r.token: r for r in check["ressources"]}
     if not check["modifies"]:
@@ -416,7 +430,7 @@ def refresh_dvf(session: Session, *, commit: bool = True, log_fn=print, http_get
         # ventes servies (persist_millesime lit désormais max(date_mutation) de dvf_mutations) : la mention
         # ne doit pas rester figée en attendant une nouvelle livraison (cause du « ventes jusqu'au
         # 31/12/2025 » : persist_millesime n'était rejoué qu'à un rechargement, et sur la mauvaise table).
-        persist_millesime(session, only="dvf", commit=commit)
+        _millesime_dvf(session, check["dernier_millesime"], commit=commit)
         return {"recharges": [], "no_op": True, "dernier_millesime": check["dernier_millesime"]}
     recharges = []
     # la version (segment horodaté) n'est gravée qu'APRÈS un rechargement RÉUSSI de sa période.
@@ -428,7 +442,10 @@ def refresh_dvf(session: Session, *, commit: bool = True, log_fn=print, http_get
             "SELECT count(*) FROM dvf_mutations WHERE date_mutation::date BETWEEN :d AND :f"),
             {"d": debut, "f": fin}).scalar()
         lignes = dvf_etalab.lignes_974(res, http_get=http_get)
+        detail = dvf_periode.actualiser(session, res, lignes)
         muts = _geo_dvf_aggregate(lignes)
+        if n_avant and not muts:
+            raise ValueError(f"{res.token} ne contient aucune mutation comparable malgré le stock existant")
         # purge de la FENÊTRE exacte avant réinsertion (pas de doublon ni de trou) ; on ne supprime
         # que si l'amont a réellement renvoyé des mutations 974 (jamais remplacer du réel par du vide).
         if muts:
@@ -439,21 +456,20 @@ def refresh_dvf(session: Session, *, commit: bool = True, log_fn=print, http_get
         else:
             n = 0
         reussis.append((res.token, res.version))
-        recharges.append({"token": res.token, "avant": n_avant, "apres": n,
+        recharges.append({"token": res.token, "avant": n_avant, "apres": n, **detail,
                           "ajoutees": max(0, n - (n_avant or 0))})
         log_fn(f"DVF {res.token} : ressource {res.version} — {n_avant} → {n} mutations 974")
+    from .dvf_marche import compute_medianes_secteur
+    from .dvf_prix_neuf import build_prix_neuf
+    compute_medianes_secteur(session)
+    build_prix_neuf(session, commit=False, log=log_fn)
     for token, version in reussis:
         _etat_set(session, f"dvf:res:{token}", version)
     session.execute(text(
         "UPDATE data_sources SET last_sync_at = now() WHERE name = 'DVF / valeurs foncières'"))
     # CORRECTIFS-1 E3 — magasin VIVANT des millésimes (data_sources.source_millesime / horizon) à la
     # fin de l'ingestion ; FRAICHEUR-FIX-1 — le millésime amont servi suit le dernier fichier publié.
-    persist_millesime(session, only="dvf", commit=False)
-    session.execute(text(
-        "UPDATE data_sources SET source_millesime = :m WHERE name = 'DVF / valeurs foncières'"),
-        {"m": f"géo-DVF Etalab — millésime {check['dernier_millesime']}"})
-    if commit:
-        session.commit()
+    _millesime_dvf(session, check["dernier_millesime"], commit=commit)
     return {"recharges": recharges, "no_op": False, "dernier_millesime": check["dernier_millesime"]}
 
 
@@ -560,9 +576,16 @@ def run_derives(session: Session, *, hebdo: bool = False, commit: bool = True, l
     if out["dpe_reveil"]["franchi"]:
         log_fn(f"⚑ RÉVEIL DPE : critère franchi ({out['dpe_reveil']['n']} ≥ {SEUIL_REVEIL_DPE}) — "
                "le badge en réserve peut être réinstruit (cf. A1_DPE_CADRAGE).")
-    # OUTIL-PERMIS-FIX-8 (LOT 3) — le build hebdo de `m10_permit_delais` est RETIRÉ : la couche des
-    # délais est décommissionnée (délai d'instruction jamais mesuré, axe retiré du classement). Plus
-    # aucun calcul ni écran ne la lit ; la table résiduelle est dormante (suppression = migration prod).
+    if hebdo:
+        from . import permit_delais_m10
+        try:
+            out["m10_delais"] = permit_delais_m10.build_delais(session, log=log_fn)
+        except Exception as exc:  # noqa: BLE001 — hebdo réseau (SDES) : isolé comme les autres
+            if not commit:
+                raise
+            session.rollback()
+            out["m10_delais"] = {"erreur": f"{type(exc).__name__}: {exc}"}
+            log_fn(f"⚠ dérivé m10_delais ÉCHOUÉ (isolé) : {exc}")
     if commit:
         session.commit()                               # dpe_reveil (fraicheur_etat) + reliquat éventuel
     log_fn(f"dérivés rafraîchis : {list(out)}")

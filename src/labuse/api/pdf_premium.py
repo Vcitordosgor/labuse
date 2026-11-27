@@ -1053,6 +1053,24 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                  f"Prix demande {_e(ach.get('prix_demande_eur'))} : TROP CHER "
                  f"(ecart {_e(ach.get('ecart_eur'))}, {ach.get('ecart_pct')} %)")
             pdf.multi_cell(pdf.w - 28, 4, v, new_x="LMARGIN", new_y="NEXT")
+        # OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — obligation de mixité portée par CE bilan (même source
+        # `compute_bilan` que la fiche/Bilan via `_calculette_for_pdf` : décote comprise dans le chiffre
+        # ci-dessus) : la charge foncière ne paraît JAMAIS sans sa réserve (régime intermédiaire = borne
+        # haute, accession sociale non chiffrée). Avant, cette section n'affichait ni mixité ni réserve.
+        mx = calc.get("mixite") or {}
+        if mx.get("declenchee"):
+            pdf.ln(0.6)
+            pdf.set_font("inter", size=7.5)
+            pdf.set_text_color(*(RED if mx.get("borne_haute") else TXT1))
+            _cite = " · ".join(x for x in (mx.get("article"), mx.get("page")) if x)
+            _q = f"{round(mx['quota_pct'])} % " if mx.get("quota_pct") else ""
+            _prod = mx.get("produits") or mx.get("libelle") or "logements aidés"
+            _ligne = f"Mixité sociale ({_cite}) : {_q}{_prod} imposés." if _cite else \
+                     f"Mixité sociale : {_q}{_prod} imposés."
+            if mx.get("borne_haute"):
+                _ligne += (" Résultat en BORNE HAUTE : part sociale/accession non chiffrée (prix aidé non "
+                           "calibré), la charge ci-dessus est au prix libre — plafond, pas le montant réglementaire.")
+            pdf.multi_cell(pdf.w - 28, 4, _ligne, new_x="LMARGIN", new_y="NEXT")
         pdf.ln(0.3)
         pdf.set_font("inter", size=7)
         pdf.set_text_color(*TXT_DIM)

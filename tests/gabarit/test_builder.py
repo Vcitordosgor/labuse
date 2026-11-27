@@ -150,7 +150,11 @@ def test_multizone_1_constructible_servie(monkeypatch):
                         lambda s, pid: ([_rec("Uc", 80)], [_rec("N", 17)], [("Nr", 3.0)]))
     monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
     monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid, **kw: _fake_limites())
-    b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")
+    # Le dessin entier fait 1 250 m² pour 1 000 m² cadastraux.
+    # Le morceau construit dans _rec fait 500 m² dessinés.
+    b = B.build_gabarit_input(FakeSession({**_PARCEL, "dessin_m2": 1250}, _PPR_NONE), "x")
+    assert b.input.parcel.areaM2 == 400
+    assert b.raccordement["parcelle"]["contour_entier"]
     assert b.blocking == []
     assert b.raccordement["multizone"]["servie_sur"].startswith("Uc")
     assert any("Nr non retenue" in x for x in b.raccordement.get("bandes_ignorees", []))

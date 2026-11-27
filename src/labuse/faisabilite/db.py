@@ -845,6 +845,63 @@ def _pct_constructible(ctx: ParcelContext) -> float | None:
                if p.get("fam") in FAMILLES_CONSTRUCTIBLES)
 
 
+# OUTIL-ASSEMBLAGE-FIX-9 (LOT 3) — surface U/AU réelle des SEULES sous-zones RÉELLEMENT constructibles
+# (`:codes`), mesurée par CODE de zone (token du libellé GPU, comme assemblage._TOK_ZONE). Sert à
+# EXCLURE les zones à urbaniser FERMÉES (AU*st, `constructible_neuf=False`) de la portion bâtissable :
+# le chemin UNION (estimate_capacity par zone) les zéro déjà ; le chemin SOLO comptait toute la famille
+# U/AU (AU fermée comprise) et appliquait les règles d'un éclat U constructible à TOUTE l'assiette
+# (CP1639 : AU3st 99,95 % + éclat U3c 7 m² → 11 299 m² fantômes). Une seule règle pour les deux moteurs.
+_UAU_CONSTR_REELLE = text("""
+WITH p AS (SELECT commune, geom_2975 AS g, ST_Area(geom_2975) AS a FROM parcels WHERE id = :pid),
+uau AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(z.geom_2975, p.g))) AS u
+        FROM spatial_layers z, p
+        WHERE z.kind = :zkind AND z.commune = p.commune
+          AND COALESCE(NULLIF(rtrim(split_part(btrim(z.attrs->>'libelle'), ' ', 1), ':'), ''),
+                       rtrim(split_part(btrim(z.name), ' ', 1), ':')) = ANY(:codes)
+          AND ST_Intersects(z.geom_2975, p.g)),
+inter AS (SELECT ST_Intersection(uau.u, p.g) AS g FROM uau, p WHERE uau.u IS NOT NULL)
+SELECT COALESCE((SELECT ST_Area(g) FROM inter), 0.0)                       AS uau_m2,
+       (SELECT a FROM p)                                                   AS parc_m2,
+       COALESCE((SELECT ST_Area(ST_Buffer(g, -:erode)) FROM inter), 0.0)   AS uau_erode_m2
+""")
+
+
+def _uau_constructible_reelle(session: Session, parcel_id: int, ctx: ParcelContext) -> tuple[float, float, float]:
+    """OUTIL-ASSEMBLAGE-FIX-9 (LOT 3) — (m², %, m² érodé) de la portion U/AU réellement CONSTRUCTIBLE,
+    en EXCLUANT les zones à urbaniser fermées (`constructible_neuf=False`) et l'habitat interdit. Même
+    verdict de zone que le moteur d'union (`estimate_capacity`) : une zone fermée ne compte pas comme
+    assiette bâtissable. (0,0,0) si aucune sous-zone constructible."""
+    codes = []
+    for p in (ctx.zone_parts or []):
+        if p.get("fam") not in FAMILLES_CONSTRUCTIBLES:
+            continue
+        r = resolve_zone(p.get("zone"), ctx.commune)
+        if r is not None and r.constructible_neuf and r.habitat != "interdit":
+            codes.append(p.get("zone"))
+    if not codes:
+        return 0.0, 0.0, 0.0
+    zonage = _layer_params("zonage_plu_gpu")
+    row = session.execute(_UAU_CONSTR_REELLE, {
+        "pid": parcel_id,
+        "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
+        "codes": list(dict.fromkeys(codes)),
+        "erode": ERODE_RUBAN_M,
+    }).one()
+    m2 = float(row.uau_m2 or 0.0)
+    parc = float(row.parc_m2 or 0.0)
+    pct = (100.0 * m2 / parc) if parc > 0 else 0.0
+    return m2, pct, float(row.uau_erode_m2 or 0.0)
+
+
+def _contient_au_fermee(ctx: ParcelContext) -> bool:
+    for part in ctx.zone_parts:
+        if part.get("fam") == "AU":
+            regle = resolve_zone(part["zone"], ctx.commune)
+            if regle is not None and not regle.constructible_neuf:
+                return True
+    return False
+
+
 def parcel_faisabilite(session: Session, parcel_id: int,
                        hyp_overrides: dict | None = None,
                        legacy_union: bool = True) -> tuple[ParcelContext, Faisabilite] | None:
@@ -899,7 +956,12 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             # parcelle constructible (ex. 97408000BI0351 : éclat « UB » de 0,09 m² → 24 437 m² de
             # plancher fantôme). On mesure l'aire réelle ; sous 50 m², la parcelle reste sa zone
             # dominante (non constructible) — aucune capacité sans surface réelle en U/AU.
-            uau_m2, uau_pct, uau_erode = _uau_reelle(session, parcel_id)
+            # La surface fermée ne peut ni franchir le seuil de 50 m² ni alimenter le bilan.
+            dominante_fermee = ctx.zone_fam == "AU" and rules is not None and not rules.constructible_neuf
+            if dominante_fermee or _contient_au_fermee(ctx):
+                uau_m2, uau_pct, uau_erode = _uau_constructible_reelle(session, parcel_id, ctx)
+            else:
+                uau_m2, uau_pct, uau_erode = _uau_reelle(session, parcel_id)
             ctx.uau_reelle = {"m2": uau_m2, "pct": uau_pct, "erode_m2": uau_erode,
                               "sous_zone": alt.code}
             if not _uau_gate_actif() or _uau_portion_reelle(uau_m2, uau_erode):
@@ -914,6 +976,11 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             # sinon : éclat U/AU < 50 m² OU RUBAN (vide après érosion de 3 m) → `rules` reste la zone
             # dominante (A/N) non constructible ; estimate_capacity rendra « non constructible en zone
             # <dominante> » (jamais un chiffre sur une portion non bâtissable).
+    elif len(ctx.zone_parts) > 1 and _contient_au_fermee(ctx):
+        # Dominante ouverte : ses règles restent applicables sur la seule portion bâtissable.
+        sous_zone_uau_m2, pct, erode = _uau_constructible_reelle(session, parcel_id, ctx)
+        ctx.uau_reelle = {"m2": sous_zone_uau_m2, "pct": pct, "erode_m2": erode,
+                          "sous_zone": rules.code}
     # MOTEUR-VERITE-FIX-1 LOT 4 (V3) — SECTEUR D'HABITAT d'une zone A/N : avant de fermer (« zone
     # non constructible » / hors PLU), on lit la calibration des destinations. Si l'habitat NEUF y
     # est admis sous conditions avec un PLAFOND de surface de plancher (Aba, Arh, Nrh… — jamais le
@@ -2009,6 +2076,14 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
                     "fiable": b.fiable, "fiabilite": b.fiabilite, "verdict": b.verdict,
                     "prix_dvf": b.prix_dvf, "comparables": (b.prix_dvf or {}).get("comparables"),
                     "ca": b.ca, "charge_fonciere": b.charge_fonciere,
+                    # OUTIL-ASSEMBLAGE-FIX-7 — l'obligation de mixité du moteur (règle, taux, article,
+                    # page, régime, borne haute, avertissements ZAC) doit voyager dans le dict `bilan`
+                    # que lit le COMPARATIF (`compare()` → `_compare_row` → `_mixite_txt`). Sans cette
+                    # clé, `compare()` posait `mixite=None` et la ligne « Mixité sociale » du PDF
+                    # comparatif valait « — » alors que `compute_bilan_servi().mixite` est renseigné
+                    # (audit bloquant 2, moitié comparatif). Même objet `b.mixite` que la fiche
+                    # (`/modules/faisabilite`), l'écran Assemblage et le Bilan — source unique.
+                    "mixite": getattr(b, "mixite", None),
                     "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur,
                                "source": s.source, "prov": s.prov} for s in b.steps],
                     "hypotheses": b.hypotheses, "avertissements": b.avertissements, "bandeau": b.bandeau,

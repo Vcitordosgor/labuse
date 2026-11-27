@@ -1,0 +1,6 @@
+  ✓ purge 97423 : 164 extrait(s) supprimé(s)
+  ✓ 97423 97423_reglement_20220602.pdf : 156 extraits article
+  ✓ 97423 Les Trois-Bassins : 1 document(s), 156 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 156 extraits · 21 communes en base
+REINGEST_DONE

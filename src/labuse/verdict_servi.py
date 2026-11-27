@@ -193,6 +193,9 @@ def _avertissement_non_constructible(constr_label, au_classe, resid_cause,
     if au_classe in AU_CLASSES_DIFFEREES:
         return f"Zone AU non ouverte à l'urbanisation{z} — rien à bâtir tant qu'elle n'est pas ouverte."
     if resid_cause is not None:
+        from .faisabilite.engine import cause_certaine, cause_libelle
+        if not cause_certaine(resid_cause) and not str(resid_cause).startswith("assiette_a_verifier"):
+            return cause_libelle(resid_cause) or "Analyse incomplète — capacité à vérifier."
         if str(resid_cause).startswith("zone_non_constructible"):
             return f"Zone non constructible{z} — rien à bâtir."
         if str(resid_cause).startswith("terrain_exigu"):

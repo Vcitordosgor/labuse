@@ -1,0 +1,27 @@
+        """Témoin veille — suivi posé le 01/01/2026. 9744012520010 (autorisé 24/10/2025) ne doit PAS être
+        notifié ; 97441626E0304 (autorisé 03/08/2026) doit l'être. ÉCHOUE maintenant : la sélection se fait
+        # autorisé 24/10/2025, faux dépôt 09/03/2026 (an_depot 2025, postérieur à l'autorisation → écarté)
+        # autorisé 03/08/2026, dépôt brut 2020 (année contredit an_depot 2026 → écarté)
+>       assert f"suivi:permis:{idu}:{pid_recent}" in notifies, "l'autorisation 2026 doit entrer dans le suivi"
+E       AssertionError: l'autorisation 2026 doit entrer dans le suivi
+E       assert 'suivi:permis:97401000AD0701:97441626E0304' in {'suivi:permis:97401000AD0701:9744012520010'}
+tests/test_outil_permis_fix12.py:95: AssertionError
+>       assert (r1, r2, n) == (1, 0, 1), f"attendu (1,0,1), obtenu ({r1},{r2},{n})"
+E       AssertionError: attendu (1,0,1), obtenu (0,0,0)
+E       assert (0, 0, 0) == (1, 0, 1)
+tests/test_outil_permis_fix12.py:118: AssertionError
+        produire une alerte « Permis autorisé ». ÉCHOUE maintenant : le WHERE exige `date_depot IS NOT NULL`."""
+>       assert row is not None, "le permis géolocalisé sans dépôt mais autorisé doit être éligible"
+E       AssertionError: le permis géolocalisé sans dépôt mais autorisé doit être éligible
+E       assert None is not None
+tests/test_outil_permis_fix12.py:138: AssertionError
+        """Témoin 97441521G0020 — alerte ENREGISTRÉE à l'ancien format (« Permis déposé » / 2021-01-01).
+        La migration la réécrit sur l'événement réellement daté (« autorisé » / 2021-03-26) SANS réémettre
+E       ImportError: cannot import name 'alertes_migration' from 'labuse' (/Users/openclaw/Desktop/labuse-permis-fix/src/labuse/__init__.py)
+tests/test_outil_permis_fix12.py:149: ImportError
+PASSED tests/test_outil_permis_fix12.py::test_lot3_route_accueil_et_filtre_servent_les_caducs
+FAILED tests/test_outil_permis_fix12.py::test_lot1_veille_parcelle_selectionne_sur_l_evenement
+FAILED tests/test_outil_permis_fix12.py::test_lot1_veille_dedup_par_identifiant_pas_par_date
+FAILED tests/test_outil_permis_fix12.py::test_lot1_alerte_zone_eligible_sans_depot_avec_autorisation
+FAILED tests/test_outil_permis_fix12.py::test_lot2_migration_corrige_sans_reemettre_et_rollback
+4 failed, 1 passed in 3.66s

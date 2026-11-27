@@ -419,6 +419,7 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
   border-bottom-color: #0F1A14;
 }
 .labuse-popup .maplibregl-popup-close-button { display: none; }
+.labuse-popup-permis .maplibregl-popup-close-button { display: block; color: var(--txt-hi); width: 26px; height: 26px; }
 /* RETOURS-19 Y4 — barre de défilement : style UNIQUE défini ici pour toute l'app (panneau Cartes, listes
    déroulantes, panneau d'outil, page Sources…). Le pouce passe en VERT OPAQUE au survol, transition douce. */
 ::-webkit-scrollbar { width: 8px; height: 8px; }

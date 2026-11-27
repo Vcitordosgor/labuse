@@ -59,12 +59,20 @@ def build_scot(session: Session, log=lambda *_: None) -> dict:
         p = f.get("properties") or {}
         title = (p.get("title") or "SCOT")[:255]
         partition = p.get("partition")
-        approuve = bool(p.get("approved"))
+        approved_gpu = p.get("approved")
+        approuve = bool(approved_gpu)
+        modification_grand_sud = (partition == "scot_259741080" and
+                                  (p.get("gpu_timestamp") or "")[:10] == "2024-09-17")
+        if modification_grand_sud:
+            approuve = True
         attrs = {"title": title, "partition": partition, "approuve": approuve,
                  "date_approbation": dates.get(partition),
                  "gpu_timestamp": p.get("gpu_timestamp"),
                  "statut": "approuvé" if approuve else "en projet",
                  "source": "Géoportail de l'urbanisme (GPU) — wfs_scot"}
+        if modification_grand_sud:
+            attrs.update(approved_gpu=approved_gpu, modification_simplifiee_approuvee_le="2024-09-02",
+                         source_statut="https://smepgrandsud.re/approbation-de-la-modification-simplifiee-du-scot/")
         session.execute(text(
             """INSERT INTO spatial_layers (kind, subtype, name, geom, attrs, data_source_id, commune)
                VALUES (:k, :s, :nm,

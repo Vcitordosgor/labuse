@@ -62,9 +62,10 @@ communes:
     stade: "prescrite"
     date_acte: "2022-04-28"
     debat_padd: ABSENT
-    source: "Révision générale du PLU prescrite le 2022-04-28 (Sudocuh 31/12/2024). Dernière pièce DATÉE connue de LABUSE : approbation de la RÉVISION ALLÉGÉE n°1 le 17/09/2025 (délibération, GPU) — objet DISTINCT de la révision générale, qui reste en cours (non approuvée). Le lien ouvre la page municipale de la délibération ; le PDF y est téléchargeable."
+    source: "Révision générale du PLU prescrite le 2022-04-28 (Sudocuh 31/12/2024). FIX-13 LOT 2 : débat sur les orientations du PADD de la révision générale NON TROUVÉ dans une pièce ouvrable (recherche site letangsale.fr + presse 25/11/2026) — la pièce récente est la RÉVISION ALLÉGÉE n°1, procédure qui ne rouvre pas le débat du PADD. Dernière pièce DATÉE connue de LABUSE : approbation de la RÉVISION ALLÉGÉE n°1 le 17/09/2025 (délibération, GPU) — objet DISTINCT de la révision générale, qui reste en cours (non approuvée). Le lien ouvre la page municipale de la délibération ; le PDF y est téléchargeable."
     source_url: "https://www.letangsale.fr/mes-acces-rapides/telechargements/l-urbanisme/1382-franchissement-de-la-ravine-deschenez-revision-allegee-n-1-du-plan-local-de-lurbanisme-approuvee-le-17-septembre-2025"
     date_constat: "2026-08-06"
+    debat_recherche_le: "2026-11-25"   # FIX-14 LOT 6 — DATE de la recherche infructueuse du débat PADD (distincte du constat général)
     etat_source_date: "2025-09-17"
     piece_objet: "approbation de la révision allégée n°1 (≠ révision générale, encore en cours)"
     confiance: "SOURCE"
@@ -84,12 +85,45 @@ communes:
     stade: "prescrite"
     date_acte: "2015-09-24"
     debat_padd: ABSENT
-    source: "Révision générale du PLU EN COURS — pièce municipale du 27/11/2025 (Ville de La Plaine-des-Palmistes) confirmant la révision en cours (approbation ultérieure annoncée, non réalisée). Prescription 2015-09-24 (Sudocuh). Le domaine municipal historique (plaine-des-palmistes.re) ne répond plus ; le lien ouvre la page PLU du nouveau site communal, qui liste la révision générale en cours (pièce du 27/11/2025 à demander en mairie)."
+    debat_padd_tenu: "2018-03-01"
+    source: "Révision générale du PLU prescrite le 24/09/2015 (DCM40-240915). FIX-13 LOT 2 (pièce OUVERTE, délib. du 18/10/2019 p.2) : le PADD « a été débattu en conseil municipal dans sa séance du 1er mars 2018 » (debat_padd_tenu=2018-03-01) — ANTÉRIEUR au retrait de la délibération d'arrêt du projet (13/07/2022) ; fait daté, n'arme pas le sursis. FIX-11 LOT 2 : chronologie OUVERTE par LABUSE — prescription 2015, avis MRAe 2020AREU2 (05/02/2020), retrait de la délibération d'arrêt (13/07/2022, avis MRAe 2022ACREU2), puis APPROBATION des modalités de concertation additionnelles de la révision (DCM3 du 28/09/2022, id 974-219740065-20220928-DCM3-28092022-DE) = DERNIER ACTE de la révision générale. Pour information, une modification n°3 (art. L.153-36, DCM04 du 27/05/2023) est une procédure DISTINCTE. Mention d'avancement : dossier DCM32-271125 (27/11/2025). CONTRÔLE 25/11/2026 des 8 communes en révision (site + MRAe) : seules La Plaine (28/09/2022) et Les Trois-Bassins (débat PADD 04/09/2025) portent un acte postérieur à l'affiché ; les 6 autres n'ont rien de postérieur."
     source_url: "https://www.ville-plainedespalmistes.fr/plan-local-urbanisme/"
-    date_constat: "2026-11-24"
-    etat_source_date: "2025-11-27"
-    piece_objet: "révision générale en cours — pièce municipale du 27/11/2025 (à retrouver sur la page PLU de la commune via le lien, ou en mairie : le domaine historique ne répond plus)"
+    date_constat: "2026-11-25"
+    etat_source_date: "2022-09-28"
+    piece_objet: "révision générale (prescrite le 24/09/2015) — dernier acte : approbation des modalités de concertation additionnelles le 28/09/2022 (DCM3) ; chronologie détaillée en fiche"
     confiance: "SOURCE"
+    # OUTIL-COMMUNES-FIX-10 LOT 3 — chronologie servie à la fiche. `nature` : « acte » (acte de
+    # procédure daté) vs « avancement » (simple mention, ne vaut ni acte ni approbation). Chaque pièce
+    # a été OUVERTE (HTTP 200, jeton vérifié) avant d'être citée — cf. scripts/communes_fix10_plaine_liens.py.
+    chronologie:
+      - date: "2015-09-24"
+        nature: "acte"
+        objet: "Prescription de la révision générale du PLU (délibération DCM40-240915)"
+        source_url: "https://www.ville-plainedespalmistes.fr/PLU/juillet2018/deliberations/DCM40-240915%20-%20Evolution%20du%20Plan%20Local%20d%e2%80%99Urbanisme%20(PLU)%20-%20Prescription%20de%20la%20r%c3%a9vision%20g%c3%a9n%c3%a9rale%20du%20PLU.pdf"
+      - date: "2018-03-01"
+        nature: "acte"
+        objet: "Débat sur les orientations générales du PADD tenu en conseil municipal (consigné p.2 de la délibération d'arrêt du 18/10/2019) — ANTÉRIEUR au retrait de l'arrêt du projet (13/07/2022) ; fait daté, n'arme pas le sursis"
+        source_url: "https://www.ville-plainedespalmistes.fr/dcm/2019/18-10-19/DCM15-181019%20-%20R%C3%A9vision%20du%20PLU%20%283%29.pdf#page=2"
+      - date: "2020-02-05"
+        nature: "acte"
+        objet: "Avis délibéré de la MRAe n° 2020AREU2 sur le projet de révision générale (18 p.)"
+        source_url: "https://www.mrae.developpement-durable.gouv.fr/IMG/pdf/avi_2020areu2__rev_generale_plu_plaine_des_palmistes.pdf"
+      - date: "2022-07-13"
+        nature: "acte"
+        objet: "Retrait par le conseil municipal de la délibération arrêtant le projet (consigné par l'avis MRAe n° 2022ACREU2)"
+        source_url: "https://www.mrae.developpement-durable.gouv.fr/IMG/pdf/2022acreu2_modif_plu_la_plaine_des_palmistes.pdf"
+      - date: "2022-09-28"
+        nature: "acte"
+        objet: "Approbation des modalités de concertation additionnelles de la révision générale (délibération DCM3, id 974-219740065-20220928-DCM3-28092022-DE) — DERNIER ACTE de la révision générale"
+        source_url: "https://www.ville-plainedespalmistes.fr/dcm/2022/28-09-2022/DCM03-280922_Revision%20PLU%20-%20Approbation%20des%20modalites%20de%20concertation%20additionnelles.PDF"
+      - date: "2023-05-27"
+        nature: "acte"
+        objet: "Approbation de la modification n°3 (art. L.153-36, délibération DCM04) — procédure DISTINCTE de la révision générale, pour information"
+        source_url: "https://www.ville-plainedespalmistes.fr/dcm/2023/27-05-2023/DCM04-270523%20-%20Evolution%20du%20PLU-Approbation%20de%20la%20modification%203.PDF"
+      - date: "2025-11-27"
+        nature: "avancement"
+        objet: "Mention d'avancement — dossier DCM32-271125 (dispositifs contractuels de développement territorial) ; évoque la révision en cours, ne vaut NI acte de procédure NI approbation"
+        source_url: "https://www.ville-plainedespalmistes.fr/dcm/2025/27112025/Aff32-271125_Etat%20d'avancement%20des%20dispositifs%20contractuels%20en%20matiere%20de%20developpement%20territorial_Optimized.PDF"
   "97407":
     commune: "Port"
     procedure: "aucune"
@@ -113,15 +147,34 @@ communes:
   "97409":
     commune: "Saint-André"
     procedure: "revision_plu"
-    stade: "prescrite"
+    stade: "arrêté"
     date_acte: "2022-06-22"
+    date_arret: "2025-07-02"
     debat_padd: ABSENT
-    source: "Révision générale du PLU prescrite le 2022-06-22. Dernière pièce connue de LABUSE : avis délibéré de la MRAe (n° 2025AREU7) sur le PROJET DE RÉVISION, le 09/09/2025. Stade de procédure de la révision générale."
-    source_url: "https://www.mrae.developpement-durable.gouv.fr/IMG/pdf/2025areu7_rev_plu_saint_andre.pdf"
-    date_constat: "2026-11-24"
-    etat_source_date: "2025-09-09"
-    piece_objet: "avis de la MRAe sur le projet de révision générale (n° 2025AREU7)"
+    debat_padd_tenu: "2023-04-19"
+    source: "Révision générale du PLU prescrite le 22/06/2022. FIX-13 LOT 1 (pièces OUVERTES et lues) : projet ARRÊTÉ par délibération du Conseil Municipal du 02/07/2025 (DCM250702_003, « reprise du document de PLU arrêté au 18/12/2024 ») ; débat sur les orientations générales du PADD tenu en conseil municipal le 19/04/2023 (DCM20230419/002, visa p.2 de l'arrêt). Dernière pièce connue de LABUSE = AVIS DE LA RÉGION RÉUNION (personne publique associée) sur le projet de révision générale, rendu en Commission Permanente du 03/10/2025 (publié au recueil le 10/10/2025), FAVORABLE SOUS RÉSERVES — c'est une CONSULTATION, distincte d'une approbation du PLU. RÉFÉRENCE : DCP2025_0684 (vérifié en ouvrant le recueil, p.180 identification « AVIS DE LA RÉGION RÉUNION SUR LE PROJET DE RÉVISION GÉNÉRALE DU PLU DE SAINT-ANDRÉ », p.182 décision ; 0683 = Appui AGORAH au SAR, 0685 = participation ADIL — la session FIX-12 avait écrit 0685 SANS ouvrir le recueil). Recueil accessible à la nouvelle URL regionreunion.com/wp-content/uploads/2026/07/. Contrôle PPA 25/11/2026 : seule Saint-André porte un avis PPA postérieur à l'affiché."
+    source_url: "https://www.regionreunion.com/wp-content/uploads/2026/07/recueil_deliberations_cperma_du_03102025.pdf#page=182"
+    date_constat: "2026-11-25"
+    etat_source_date: "2025-10-03"
+    piece_objet: "avis de la Région Réunion (personne publique associée) sur le projet de révision générale — consultation, favorable sous réserves (Commission Permanente du 03/10/2025, publié 10/10/2025, réf. DCP2025_0684)"
     confiance: "SOURCE"
+    chronologie:
+      - date: "2023-04-19"
+        nature: "acte"
+        objet: "Débat sur les orientations générales du PADD tenu en conseil municipal (délibération DCM20230419/002, visa p.2 de l'arrêt) — fait daté ; n'arme pas le sursis à statuer (décision discrétionnaire du maire, non constatée)"
+        source_url: "https://www.saint-andre.re/wp-content/uploads/2025/07/DCM250702_003-tampon.pdf#page=2"
+      - date: "2025-07-02"
+        nature: "acte"
+        objet: "Arrêt du projet de révision générale du PLU (délibération du Conseil Municipal DCM250702_003) — reprise du document de PLU arrêté au 18/12/2024"
+        source_url: "https://www.saint-andre.re/wp-content/uploads/2025/07/DCM250702_003-tampon.pdf"
+      - date: "2025-09-09"
+        nature: "acte"
+        objet: "Avis délibéré de la MRAe (n° 2025AREU7) sur le projet de révision générale"
+        source_url: "https://www.mrae.developpement-durable.gouv.fr/IMG/pdf/2025areu7_rev_plu_saint_andre.pdf"
+      - date: "2025-10-03"
+        nature: "acte"
+        objet: "Avis de la Région Réunion (PPA) sur le projet de révision générale — CONSULTATION, FAVORABLE SOUS RÉSERVES (Commission Permanente du 03/10/2025, publié 10/10/2025, réf. DCP2025_0684 ; distinct d'une approbation). Recueil officiel ouvrable : identification p.180, décision p.182."
+        source_url: "https://www.regionreunion.com/wp-content/uploads/2026/07/recueil_deliberations_cperma_du_03102025.pdf#page=180"
   "97410":
     commune: "Saint-Benoît"
     procedure: "aucune"
@@ -139,11 +192,12 @@ communes:
     stade: "prescrite"
     date_acte: "2024-09-27"
     debat_padd: ABSENT
-    source: "Révision générale du PLU prescrite le 2024-09-27. Dernière pièce DATÉE connue de LABUSE : document opposable au GPU 97411_PLU_20260805, approuvé le 05/08/2026 (date portée par la fiche-document du GPU) ; LABUSE ne certifie PAS que ce document soit la dernière pièce de la RÉVISION GÉNÉRALE (publication GPU ≠ acte de procédure daté). Révision donnée EN COURS. Le lien ouvre la fiche-document GPU (identifiant 97411_PLU_20260805)."
+    source: "Révision générale (n°2) du PLU prescrite le 2024-09-27. FIX-13 LOT 2 : débat sur les orientations du PADD NON TROUVÉ dans une pièce ouvrable (recherche site saintdenis.re + presse 25/11/2026 ; révision générale n°2 récente). Dernière pièce DATÉE connue de LABUSE : document opposable au GPU 97411_PLU_20260805, approuvé le 05/08/2026 (date portée par la fiche-document du GPU) ; LABUSE ne certifie PAS que ce document soit la dernière pièce de la RÉVISION GÉNÉRALE (publication GPU ≠ acte de procédure daté). Révision donnée EN COURS. Le lien ouvre la fiche-document GPU (identifiant 97411_PLU_20260805)."
     source_url: "https://www.geoportail-urbanisme.gouv.fr/document/by-id/eee143f619882c020cfb0fbd52e178b7"
     date_constat: "2026-08-06"
     etat_source_date: "2026-08-05"
     piece_objet: "document opposable au GPU (rattachement à la révision générale non certifié)"
+    debat_recherche_le: "2026-11-25"   # FIX-14 LOT 6 — DATE de la recherche infructueuse du débat PADD
     confiance: "SOURCE"
   "97412":
     commune: "Saint-Joseph"
@@ -158,38 +212,76 @@ communes:
   "97413":
     commune: "Saint-Leu"
     procedure: "revision_plu"
-    stade: "prescrite"
+    # FIX-14 LOT 5 — l'enquête publique est TERMINÉE (clôture 09/10/2026) et la commission d'enquête a
+    # rendu son avis (défavorable, 18/11/2026). Le stade « enquête publique » (en cours) était dépassé :
+    # on sert le stade RÉEL, factuel, sans préjuger de la décision municipale (synthese_commune).
+    stade: "avis commission"
     date_acte: "2022-05-17"
+    date_arret: "2025-12-11"
+    date_enquete_fin: "2026-10-09"       # clôture de l'enquête publique (PV commission : « du 1er septembre au 9 octobre 2026 »)
+    avis_commission: "défavorable"       # sens de l'avis de la commission d'enquête (conclusions p.6)
+    avis_commission_date: "2026-11-18"   # « A Saint-Pierre, le 18 novembre 2026 » (signature des conclusions)
     debat_padd: ABSENT
-    source: "Révision générale du PLU prescrite le 2022-05-17. Dernière pièce connue de LABUSE : avis de la COMMISSION D'ENQUÊTE (défavorable) sur le projet de RÉVISION GÉNÉRALE, le 18/11/2026. Stade important de la procédure ; ne vaut pas décision finale de la commune. Le lien ouvre le PDF des conclusions motivées de la commission d'enquête (site municipal)."
+    debat_padd_tenu: "2024-09-24"
+    source: "Révision générale du PLU prescrite le 2022-05-17. FIX-13 (pièces OUVERTES) : débat sur les orientations générales du PADD tenu en conseil municipal le 24/09/2024 (délib. CM n° 02/24092024, objet « DÉBAT SUR LES ORIENTATIONS GÉNÉRALES DU PADD ») ; projet ARRÊTÉ le 11/12/2025 (délib. n° 03/11122025, recitée dans l'avis Région) ; enquête publique menée (arrêté municipal n° 579/2026/DAD du 29/06/2026). AVIS des personnes publiques, chacun avec SON auteur et SON sens (FIX-13 LOT 5) : la RÉGION a émis un avis DÉFAVORABLE (DCP2026_0080, Commission Permanente du 27/02/2026, recueil p.231 : « d'émettre un avis défavorable au projet de révision générale du PLU de Saint-Leu ») ; l'ÉTAT un avis FAVORABLE assorti de quatre réserves (rapporté p.6 de la synthèse de la commission) ; la COMMISSION D'ENQUÊTE un avis DÉFAVORABLE le 18/11/2026 (conclusions p.6 : « la commission d'enquête émet un avis défavorable »). Stades importants ; ne valent pas décision finale de la commune."
     source_url: "https://www.saintleu.re/pdf/plu/2026/enquete-publique/conclusions-motivees-et-avis-de-la-commission.pdf"
-    date_constat: "2026-11-24"
+    date_constat: "2026-11-25"
     etat_source_date: "2026-11-18"
-    piece_objet: "avis (défavorable) de la commission d'enquête sur la révision générale"
+    piece_objet: "avis (défavorable) de la commission d'enquête sur la révision générale, le 18/11/2026"
     confiance: "SOURCE"
+    chronologie:
+      - date: "2024-09-24"
+        nature: "acte"
+        objet: "Débat sur les orientations générales du PADD tenu en conseil municipal (délib. CM n° 02/24092024) — fait daté ; n'arme pas le sursis à statuer"
+        source_url: "https://www.saintleu.re/pdf/plu/revision/5-annexes/5.1-deliberations/deliberation-prescription-plu.pdf#page=1"
+      - date: "2026-02-27"
+        nature: "acte"
+        objet: "AVIS de la RÉGION RÉUNION (PPA) — DÉFAVORABLE au projet de révision générale (délibération DCP2026_0080, Commission Permanente du 27/02/2026)"
+        source_url: "https://www.regionreunion.com/wp-content/uploads/2026/07/recueil_deliberations_cperma_du_27_fevrier_2026.pdf#page=231"
+      - date: "2026-11-18"
+        nature: "acte"
+        objet: "AVIS de la COMMISSION D'ENQUÊTE — DÉFAVORABLE, le 18/11/2026. La synthèse (p.6) rappelle le sens de chaque personne publique : l'ÉTAT a rendu un avis FAVORABLE assorti de quatre réserves, la RÉGION un avis DÉFAVORABLE."
+        source_url: "https://www.saintleu.re/pdf/plu/2026/enquete-publique/conclusions-motivees-et-avis-de-la-commission.pdf#page=6"
   "97414":
     commune: "Saint-Louis"
     procedure: "revision_plu"
     stade: "prescrite"
     date_acte: "2022-02-25"
     debat_padd: ABSENT
-    source: "Révision générale du PLU prescrite le 2022-02-25. Dernière pièce DATÉE connue de LABUSE : dossier du 18/12/2025 relatif à la MODIFICATION SIMPLIFIÉE n°5 — objet DISTINCT de la révision générale, qui reste en cours (la mairie distingue expressément les deux procédures). Le lien ouvre le dossier PDF de la MS n°5 (délibération DCM n°191 du 18/12/2025)."
+    debat_padd_tenu: "2024-10-29"
+    source: "Révision générale du PLU prescrite le 2022-02-25. FIX-13 LOT 2 (pièce OUVERTE) : débat sur les orientations générales du PADD tenu en conseil municipal le 29/10/2024 — PV de la séance, p.65 : « Article 1 - De prendre acte de la tenue ce jour, au sein du Conseil municipal, du débat portant sur les orientations générales du projet d'aménagement et de développement durable (PADD) du projet de révision du PLU » ; fait daté, n'arme PAS le sursis. Dernière pièce DATÉE connue de LABUSE : dossier du 18/12/2025 relatif à la MODIFICATION SIMPLIFIÉE n°5 — objet DISTINCT de la révision générale, qui reste en cours (la mairie distingue expressément les deux procédures). Le lien ouvre le dossier PDF de la MS n°5 (délibération DCM n°191 du 18/12/2025)."
     source_url: "https://saintlouis.re/images/pdf/PLU/ANNEXE%20DCM%20N191_DOSSIER%20MS%20DU%20PLU%20N5%20suite%20retour%20PPA_SP.pdf"
-    date_constat: "2026-08-06"
+    date_constat: "2026-11-25"
     etat_source_date: "2025-12-18"
-    piece_objet: "modification simplifiée n°5 (≠ révision générale, encore en cours)"
+    piece_objet: "modification simplifiée n°5 (≠ révision générale, encore en cours) ; débat PADD de la révision tenu le 29/10/2024"
     confiance: "SOURCE"
+    # FIX-14 LOT 5 — le MÊME PV du 29/10/2024 (p.65) porte DEUX décisions : art. 1 (prendre acte du
+    # débat PADD) et art. 2 (AUTORISER la maire à surseoir à statuer, L.424-1). L'art. 2 est un fait
+    # SERVABLE à côté de « aucune décision de sursis connue pour cette parcelle » : les deux coexistent.
+    # Vérifié en ouvrant le PV (pdftotext p.65) : « Article 2 - D'autoriser Madame le Maire à surseoir
+    # à statuer, dans les conditions et délai prévus à l'article L.424-1 du Code de l'Urbanisme ».
+    sursis_autorise:
+      date: "2024-10-29"
+      article: "art. 2"
+      base_legale: "art. L.424-1 du Code de l'urbanisme"
+      source_url: "https://saintlouis.re/images/DCM-2024/DCM-18-12-24-14/03_0%20ANNEXE%20DCM%20N%C2%B0160_PV%20DE%20LA%20SEANCE%20DU%2029%2010%202024_SP.pdf#page=65"
+    chronologie:
+      - date: "2024-10-29"
+        nature: "acte"
+        objet: "Débat sur les orientations générales du PADD tenu en conseil municipal (PV du 29/10/2024, p.65) — article 1 : débat du PADD ; article 2 : autorisation donnée au maire de surseoir à statuer"
+        source_url: "https://saintlouis.re/images/DCM-2024/DCM-18-12-24-14/03_0%20ANNEXE%20DCM%20N%C2%B0160_PV%20DE%20LA%20SEANCE%20DU%2029%2010%202024_SP.pdf#page=65"
   "97415":
     commune: "Saint-Paul"
     procedure: "revision_plu"
     stade: "prescrite"
     date_acte: "2021-12-16"
     debat_padd: ABSENT
-    source: "Révision générale du PLU prescrite le 2021-12-16. Dernière pièce DATÉE connue de LABUSE : document opposable au GPU 97415_PLU_20251217 du 17/12/2025 ; LABUSE ne certifie PAS que ce document soit la dernière pièce de la RÉVISION GÉNÉRALE (publication GPU ≠ acte de procédure daté). Révision donnée EN COURS. Le lien ouvre la fiche-document GPU (identifiant 97415_PLU_20251217)."
+    source: "Révision générale du PLU prescrite le 2021-12-16. FIX-13 LOT 2 : débat sur les orientations du PADD NON TROUVÉ dans une pièce ouvrable — la page officielle mairie-saintpaul.re/revision-generale-du-plu ne mentionne aucune date de débat PADD (consultée le 25/11/2026). Dernière pièce DATÉE connue de LABUSE : document opposable au GPU 97415_PLU_20251217 du 17/12/2025 ; LABUSE ne certifie PAS que ce document soit la dernière pièce de la RÉVISION GÉNÉRALE (publication GPU ≠ acte de procédure daté). Révision donnée EN COURS. Le lien ouvre la fiche-document GPU (identifiant 97415_PLU_20251217)."
     source_url: "https://www.geoportail-urbanisme.gouv.fr/document/by-id/0f717dab1a17e973d81fe6b5ea79fe22"
     date_constat: "2026-08-06"
     etat_source_date: "2025-12-17"
     piece_objet: "document opposable au GPU (rattachement à la révision générale non certifié)"
+    debat_recherche_le: "2026-11-25"   # FIX-14 LOT 6 — DATE de la recherche infructueuse du débat PADD
     confiance: "SOURCE"
   "97416":
     commune: "Saint-Pierre"
@@ -270,11 +362,12 @@ communes:
     stade: "prescrite"
     date_acte: "2022-06-02"
     debat_padd: ABSENT
-    source: "Révision générale du PLU prescrite le 2022-06-02. Dernière pièce connue de LABUSE : présentation du projet de PADD pour les réunions publiques de concertation de la RÉVISION, en mai 2025 (pièce municipale). Stade de concertation de la révision générale. Le lien ouvre le PDF de la présentation PADD (réunions publiques de mai 2025, site documentaire communal)."
-    source_url: "https://docs.trois-bassins.re/urbanisme/PLU/REVISION/PADD/Support_PLU_TroisBassins_PADD_R%c3%a9unions%20publiques_Mai_2025.pdf"
-    date_constat: "2026-11-24"
-    etat_source_date: "2025-05-01"
-    piece_objet: "présentation du PADD de la révision générale (concertation, mai 2025)"
+    debat_padd_tenu: "2025-09-04"
+    source: "Révision générale du PLU prescrite le 2022-06-02. FIX-11 LOT 2 : acte POSTÉRIEUR trouvé (contrôle 25/11/2026) — DÉBAT sur les orientations du PADD en conseil municipal du 04/09/2025 (affaire 2.2 ; PV approuvé au CM du 06/11/2025), plus récent que les réunions publiques de concertation de mai 2025. C'est la dernière pièce de la révision générale. FIX-12 LOT 2 : ce débat est consigné comme FAIT DATÉ (debat_padd_tenu=2025-09-04, servi au radar « débat PADD tenu le … ») mais n'ARME PAS le sursis à statuer (debat_padd reste ABSENT ; le sursis L.153-11 est une décision discrétionnaire du maire, jamais servie par LABUSE sur la seule tenue d'un débat). Contrôle PPA 25/11/2026 (Région/État/MRAe) : les pièces postérieures trouvées (MRAe 2025AREU6 du 09/09/2025, avis État 09/10/2025, avis Région D2025/16966 du 07/11/2025) portent TOUTES sur la mise en compatibilité / déclaration de projet du secteur des Zattes (Littoral Sud), procédure DISTINCTE de la révision générale — donc sans effet sur la dernière pièce de la révision."
+    source_url: "https://docs.trois-bassins.re/arretes-delibarations/CM/2025/06-11-2025/AR-Proc%C3%A8s%20Verbal_04092025_v2_compressed.pdf"
+    date_constat: "2026-11-25"
+    etat_source_date: "2025-09-04"
+    piece_objet: "débat sur les orientations du PADD en conseil municipal (04/09/2025) de la révision générale"
     confiance: "SOURCE"
   "97424":
     commune: "Cilaos"

@@ -126,9 +126,14 @@ def test_idor_crm_columns_cloison(app_client):
         _purge(ea, eb)
 
 
-def test_idor_courrier_demande_cloison_et_admin_403(app_client):
+def test_idor_courrier_demande_cloison_et_admin_403(app_client, monkeypatch):
     """Courrier — la demande de A n'est pas dans la timeline de B ; la route admin de
     changement de statut refuse un client (403) et ne touche pas la demande de A."""
+    monkeypatch.setattr("labuse.api.courrier._marque_du_compte",
+                        lambda db, request: {"raison_sociale": "Agence Test"})
+    # Ce test isole les comptes avec une parcelle fictive supposée adressable.
+    monkeypatch.setattr("labuse.courrier_adressage.resoudre_destinataire",
+                        lambda db, idu: {"bloque": False})
     ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
     _compte_actif(ea); _compte_actif(eb)
     try:

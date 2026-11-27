@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { entreesInitiales, type BilanDepuisEtude } from './BilanEcran'
+import { render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BilanEcran, entreesInitiales, type BilanDepuisEtude } from './BilanEcran'
 import type { BilanModele } from '../../lib/api'
 
 // IMPLANTATION-4 (LOT B) — le pré-remplissage du Bilan :
@@ -28,4 +30,26 @@ describe('LOT B — pré-remplissage du Bilan', () => {
     expect(e.produits[0].libelle).toContain('T2×20')   // la répartition par type est reportée dans le libellé
     expect(e.programme.terrain).toBe(1000)             // le terrain Sourcé reste pré-rempli, inchangé
   })
+})
+
+it('affiche le motif de capacité non calculée sans déclarer toute construction interdite', async () => {
+  const motif = 'Capacité non calculée — zone dominante Nco. La portion ouverte mesure 2 m².'
+  const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } })
+  client.setQueryData(['bilan-modele', 'AB1745'], {
+    ...MODELE, sourcee: { ...MODELE.sourcee, non_constructible_motif: motif },
+  })
+  render(<QueryClientProvider client={client}><BilanEcran idu="AB1745" onClose={() => {}} /></QueryClientProvider>)
+  await screen.findByText(/zone dominante Nco/)
+  expect(screen.queryAllByText(/Parcelle non constructible|aucun programme ne peut y être porté/i)).toHaveLength(0)
+  expect(screen.getByText(motif)).toBeVisible()
+})
+
+it('permet de remettre le constat à vérifier sans inventer un programme de vente', async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } })
+  client.setQueryData(['bilan-modele', 'ZZ9812'], {
+    ...MODELE, sourcee: { ...MODELE.sourcee, export_constat: true, capacite_a_verifier: true, lecture_capacite: 'Capacité à vérifier' },
+  })
+  render(<QueryClientProvider client={client}><BilanEcran idu="ZZ9812" onClose={() => {}} /></QueryClientProvider>)
+  expect(await screen.findByRole('button', { name: 'Exporter en PDF' })).toBeEnabled()
+  expect(screen.getByRole('button', { name: 'Exporter en Excel' })).toBeEnabled()
 })

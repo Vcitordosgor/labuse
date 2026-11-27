@@ -20,7 +20,7 @@ import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
 import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 
-const CAT_LABEL: Record<string, string> = { promoteur: 'Promoteur', bailleur: 'Bailleur social', sem: 'SEM' }
+const CAT_LABEL: Record<string, string> = { promoteur: 'Société privée', bailleur: 'Bailleur social', sem: 'SEM' }
 
 function Frise({ siren }: { siren: string }) {
   const q = useQuery({ queryKey: ['promoteur-frise', siren], queryFn: () => getPromoteurFrise(siren) })
@@ -33,13 +33,18 @@ function Frise({ siren }: { siren: string }) {
       {/* RETOURS-13 R29 — le chiffre DIT ce qu'il compte (parcelles encore possédées) ; l'activité
           de pétitionnaire (permis au nom de la société + filiales identifiées par la gérance INPI)
           complète — jamais un total gonflé sans méthode. */}
-      <p className="text-txt-mut"><b className="text-txt">{f.n_operations}</b> opération{f.n_operations > 1 ? 's' : ''} · <b className="text-txt">{f.n_logements.toLocaleString('fr-FR')}</b> logements <span className="text-txt-dim">— {f.perimetre_note}</span></p>
-      {f.petitionnaire && f.petitionnaire.n_permis > 0 && (
-        <p data-frise-petitionnaire className="mt-0.5 text-[10.5px] text-txt-mut">
-          En pétitionnaire : <b className="text-txt">{f.petitionnaire.n_permis}</b> permis{f.petitionnaire.n_logements > 0 && <> · <b className="text-txt">{f.petitionnaire.n_logements.toLocaleString('fr-FR')}</b> logements</>} <span className="text-txt-dim">({f.petitionnaire.note})</span>
-          {(f.filiales_identifiees?.length ?? 0) > 0 && <> · +{f.filiales_identifiees.reduce((s, x) => s + x.n_permis, 0)} permis via {f.filiales_identifiees.length} filiale{f.filiales_identifiees.length > 1 ? 's' : ''} identifiée{f.filiales_identifiees.length > 1 ? 's' : ''} ({f.filiales_identifiees.map((x) => x.nom ?? x.siren).join(', ')})</>}
-        </p>
-      )}
+      {/* SCAN-FIX-1 (bloquant 2) — DEUX listes SÉPARÉES et NOMMÉES. */}
+      <p data-frise-foncier className="text-txt-mut">
+        <b className="text-txt-hi">Permis sur son foncier</b> : <b className="text-txt">{f.sur_son_foncier.n_operations}</b> opération{f.sur_son_foncier.n_operations > 1 ? 's' : ''} · <b className="text-txt">{f.sur_son_foncier.n_permis}</b> permis · <b className="text-txt">{f.sur_son_foncier.n_logements.toLocaleString('fr-FR')}</b> logements
+        {f.sur_son_foncier.n_logements_dp > 0 && <span className="text-txt-dim"> ({f.sur_son_foncier.n_logements_dp} en déclaration préalable comptés à part)</span>}
+        {f.sur_son_foncier.n_logements_annules > 0 && <span className="text-txt-dim"> ({f.sur_son_foncier.n_logements_annules} annulés exclus)</span>}
+        {f.sur_son_foncier.part_petitionnaire_inconnu != null && <span className="text-txt-dim"> — pétitionnaire inconnu sur {f.sur_son_foncier.part_petitionnaire_inconnu}% de ces permis</span>}
+      </p>
+      <p data-frise-deposes className="mt-0.5 text-[10.5px] text-txt-mut">
+        <b className="text-txt-hi">Permis qu'elle a déposés</b> (pétitionnaire) : <b className="text-txt">{f.deposes_petitionnaire.n_permis}</b> permis{f.deposes_petitionnaire.n_logements > 0 && <> · <b className="text-txt">{f.deposes_petitionnaire.n_logements.toLocaleString('fr-FR')}</b> logements</>}
+        {(f.filiales_identifiees?.length ?? 0) > 0 && <> · +{f.filiales_identifiees.reduce((s, x) => s + x.n_permis, 0)} via {f.filiales_identifiees.length} filiale{f.filiales_identifiees.length > 1 ? 's' : ''} ({f.filiales_identifiees.map((x) => x.nom ?? x.siren).join(', ')})</>}
+        {f.deposes_petitionnaire.n_permis === 0 && <span className="text-txt-dim"> — aucun pétitionnaire identifié dans l'open Sitadel</span>}
+      </p>
       {/* frise par année (opérations, logements) */}
       <div className="mt-1.5 flex flex-col gap-1">
         {f.frise.map((a) => (
@@ -199,17 +204,24 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
   // pas de compteur, pas de note de bas. `strictVide` gate ces éléments quand le propriétaire ciblé n'a
   // rien construit.
   const strictVide = strict && !!d && d.n_total === 0
+  // SCAN-FIX-2 (A1) + SCAN-FIX-1 — notes du total : logements de DP et d'annulés comptés À PART, ops ambiguës.
+  const notesLgt = d ? [
+    d.n_logements_dp > 0 ? `${d.n_logements_dp.toLocaleString('fr-FR')} logement${d.n_logements_dp > 1 ? 's' : ''} de déclaration préalable comptés à part` : null,
+    d.n_logements_annules > 0 ? `${d.n_logements_annules.toLocaleString('fr-FR')} logement${d.n_logements_annules > 1 ? 's' : ''} de permis annulés exclus` : null,
+    d.n_operations_ambigues > 0 ? `${d.n_operations_ambigues} opération${d.n_operations_ambigues > 1 ? 's' : ''} à propriétaire ambigu` : null,
+  ].filter(Boolean).join(' · ') : ''
 
   return (
     <div data-veille-promoteurs className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1 text-[12.5px]">
       {/* MINI-CORRECTIONS-2 (pt 20) — titre + explication masqués quand l'onglet Construction est vide. */}
       {!strictVide && (
         <div>
-          <h2 className="font-display text-base font-bold text-txt-hi">{strict ? 'Ce qu\'ils construisent' : 'Veille promoteurs'}</h2>
-          {/* RETOURS-23 (pt 15) — en mode général, la phrase « Ce que les promoteurs, bailleurs sociaux et
-              SEM CONSTRUISENT… Données Sitadel au … » est RETIRÉE (demande Vic). Le sous-titre « strict »
-              (un propriétaire ciblé) reste. */}
-          {strict && <p className="mt-0.5 text-[11.5px] text-txt-mut">Uniquement les opérations de ce propriétaire (groupes de permis contigus, même période).</p>}
+          {/* SCAN-FIX-1 (bloquant 2) — plus de titre « ce qu'ils construisent » sur une attribution PAR LE
+              FONCIER : le titre dit honnêtement que ce sont les permis SUR SON FONCIER (propriétaire du
+              terrain), pas forcément déposés par elle. La frise sépare « déposés » vs « sur son foncier ». */}
+          <h2 className="font-display text-base font-bold text-txt-hi">{strict ? 'Permis sur son foncier' : 'Veille promoteurs'}</h2>
+          {/* RETOURS-23 (pt 15) — en mode général, la phrase générale est RETIRÉE (Vic). Sous-titre strict reste. */}
+          {strict && <p className="mt-0.5 text-[11.5px] text-txt-mut">Opérations sur les parcelles dont ce propriétaire est le PROPRIÉTAIRE FONCIER (groupes de permis proches, même période) — pas nécessairement déposées par lui. Voir la frise pour « permis qu'il a déposés ».</p>}
         </div>
       )}
 
@@ -279,17 +291,23 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
       {d && (
         <>
           {strict
-            ? (strictVide ? null : <p className="text-[12px] text-txt"><b>{d.n_total.toLocaleString('fr-FR')}</b> opération{d.n_total > 1 ? 's' : ''} · <b>{d.n_logements_total.toLocaleString('fr-FR')}</b> logements <span className="text-txt-mut">— construit ou en cours{Number.isFinite(anneeDepuis) ? `, permis depuis ${anneeDepuis}` : ''}{d.millesime ? ` · Sitadel au ${fmtDateSitadel(d.millesime)}` : ''}</span></p>)
+            ? (strictVide ? null : <>
+                <p className="text-[12px] text-txt"><b>{d.n_total.toLocaleString('fr-FR')}</b> opération{d.n_total > 1 ? 's' : ''} · <b>{d.n_logements_total.toLocaleString('fr-FR')}</b> logements <span className="text-txt-mut">— construit ou en cours{Number.isFinite(anneeDepuis) ? `, permis depuis ${anneeDepuis}` : ''}{d.millesime ? ` · Sitadel au ${fmtDateSitadel(d.millesime)}` : ''}</span></p>
+                {/* SCAN-FIX-2 (A1)/SCAN-FIX-1 (bloquants 3-4) — DP et annulés comptés à part ; ambiguës signalées ; plafond annoncé AUSSI en mode propriétaire. */}
+                {notesLgt && <p className="text-[10px] leading-snug text-txt-dim">{notesLgt}</p>}
+                {d.tronquee && <p className="text-[10px] leading-snug text-txt-dim">Les {d.plafond} premières sont affichées : affinez la recherche.</p>}
+              </>)
             : <>
-                {/* MINI-CORRECTIONS-2 (pt 18) — compteur « N opérations · N logements » sur UNE ligne +
-                    « i » portant la définition d'une opération ; le message de plafond ne s'affiche
-                    QUE lorsque le plafond est atteint (sinon rien). */}
+                {/* MINI-CORRECTIONS-2 (pt 18) — compteur « N opérations · N logements » sur UNE ligne + « i »
+                    (définition réelle, étendue). SCAN-FIX-1 — annulés exclus + dits ; ambiguës signalées. */}
                 <p className="flex items-center gap-1.5 text-[11px] text-txt-dim">
                   <span><b className="text-txt-mut">{d.n_total.toLocaleString('fr-FR')}</b> opérations · <b className="text-txt-mut">{d.n_logements_total.toLocaleString('fr-FR')}</b> logements</span>
+                  {(d.n_depots_a_confirmer ?? 0) > 0 && <span>· dépôt à confirmer pour {d.n_depots_a_confirmer} opération{d.n_depots_a_confirmer === 1 ? '' : 's'} (jour inconnu)</span>}
                   <Tip garder tip={`${d.regle.phrase}.`}>
                     <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] leading-none text-txt-dim">i</span>
                   </Tip>
                 </p>
+                {notesLgt && <p className="text-[10px] leading-snug text-txt-dim">{notesLgt}</p>}
                 {d.tronquee && <p className="text-[10px] leading-snug text-txt-dim">Les {d.plafond} premières sont affichées : affinez la recherche.</p>}
               </>}
           <div className="flex flex-col gap-1.5">
@@ -304,6 +322,14 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
             {promoteurs.map((g, i) => {
               const gkey = g.siren ?? `∅${i}`
               const ouvert = openGroupes.has(gkey)
+              // SCAN-FIX-1 (pt 7) — compteurs de la carte = TOTAUX de la société (par_promoteur, calculé sur
+              // TOUTES ses opérations), jamais la somme des seules opérations servies dans la page (≤ 200).
+              const carte = (d.par_promoteur ?? []).find((c) => (c.siren ?? '') === (g.siren ?? ''))
+              const nOps = carte?.n_operations ?? g.ops.length
+              const nPermis = carte?.n_permis ?? g.n_permis
+              const nLgt = carte?.nb_logements ?? g.nb_logements
+              const nAnnules = carte?.nb_logements_annules ?? 0
+              const nDp = carte?.nb_logements_dp ?? 0
               return (
               <div key={gkey} data-vp-promoteur data-vp-siren={g.siren ?? ''} className="flex flex-col gap-1 rounded-lg border border-line-2 bg-surface-2 p-2.5">
                 {/* EN-TÊTE accordéon (toujours visible) : nom + résumé + SIREN + chevron. Fermé par défaut ;
@@ -311,8 +337,9 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
                 <button data-vp-promoteur-toggle onClick={() => basculerGroupe(gkey)}
                   aria-expanded={ouvert} className="flex w-full items-start justify-between gap-2 text-left">
                   <span className="flex min-w-0 flex-col gap-1">
-                    <b className="truncate text-[12.5px] text-txt-hi">{g.denomination ?? '(propriétaire non nommé)'}</b>
-                    <span className="text-[11px] text-txt-mut">{CAT_LABEL[g.categorie] ?? g.categorie} · <b className="text-txt">{g.ops.length}</b> opération{g.ops.length > 1 ? 's' : ''} · <b className="text-txt">{g.n_permis}</b> permis · <b className="text-txt">{g.nb_logements}</b> logement{g.nb_logements > 1 ? 's' : ''}</span>
+                    <span className="text-[10px] text-txt-mut">Propriétaire cadastral</span>
+                    <b className="truncate text-[12.5px] text-txt-hi">{g.denomination ?? 'nom inconnu'}</b>
+                    <span className="text-[11px] text-txt-mut">{/* SCAN-FIX-1 (pt 7) — libellé justifié (SIRENE/DGFiP), « Promoteur » jamais par défaut sur le groupe 0. */}{carte?.categorie_label ?? CAT_LABEL[g.categorie] ?? g.categorie} · <b className="text-txt">{nOps}</b> opération{nOps > 1 ? 's' : ''} · <b className="text-txt">{nPermis}</b> permis · <b className="text-txt">{nLgt}</b> logement{nLgt > 1 ? 's' : ''}{nDp > 0 ? <span className="text-txt-dim"> · {nDp} en déclaration préalable</span> : null}{nAnnules > 0 ? <span className="text-txt-dim"> · {nAnnules} annulé{nAnnules > 1 ? 's' : ''} exclu{nAnnules > 1 ? 's' : ''}</span> : null}{carte?.ambigu ? <span className="text-st-creuser"> · propriétaire ambigu</span> : null}</span>
                     {g.siren && <span className="truncate font-mono text-[10px] text-txt-off">SIREN <Siren value={g.siren} className="font-mono text-txt-off" /></span>}
                     {g.radar && <span data-vp-radar-cite className="w-fit rounded bg-mint/12 px-1.5 py-px text-[9.5px] font-medium text-mint">annonce neuve Radar rattachée</span>}
                   </span>
@@ -328,7 +355,12 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
                           {/* OUTILS-FIX-4 A3 — date Sit@del : année seule si seule l'année est connue (fmtDateSitadel),
                               plus jamais un « 01/01/2024 » qui ment sur la précision. A4 — le nombre nu final était
                               le CODE d'état Sit@del brut (etat_dau) : on affiche son LIBELLÉ servi (autorisé/achevé). */}
-                          <span className="text-[10.5px] text-txt">{o.commune} · <b className="text-txt-hi">{o.nb_logements}</b> lgt · {o.n_permis} permis{o.date_max ? ` · ${fmtDateSitadel(o.date_max)}` : ''}{o.etat_libelle ? ` · ${o.etat_libelle}` : ''}</span>
+                          <span className="text-[10.5px] text-txt">{o.commune} · <b className="text-txt-hi">{o.nb_logements}</b> lgt · {o.n_permis} permis{o.date_max ? ` · ${fmtDateSitadel(o.date_max)}` : ''}{o.etat_libelle ? ` · ${o.etat_libelle}` : ''}{o.depot_jour_connu === false ? <span className="text-txt-dim"> · jour de dépôt inconnu</span> : null}</span>
+                          {/* OUTIL-PERMIS-FIX-16 (LOT 4) — PÉTITIONNAIRE que Sitadel nomme (le demandeur), distinct
+                              du propriétaire cadastral (l'en-tête du groupe). Affiché seulement s'il est identifié. */}
+                          {(o.petitionnaires ?? (o.petitionnaire_nom ? [{ nom: o.petitionnaire_nom, siren: o.petitionnaire_siren }] : [])).map(pet => (
+                            <span key={pet.siren ?? pet.nom} data-vp-petitionnaire className="text-[10px] text-txt-mut">Pétitionnaire (Sitadel) · <b className="text-txt">{pet.nom}</b>{pet.siren ? <> · SIREN {pet.siren}</> : null}</span>
+                          ))}
                           {o.idus[0] && (
                             <button data-vp-parcelle onClick={() => select(iduComplet(o.idus[0]))}
                               className="block truncate text-left font-mono text-[10px] text-mint hover:underline">{o.idus[0]} →</button>

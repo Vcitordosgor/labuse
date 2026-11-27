@@ -14,6 +14,8 @@ export function EcranOrdinateur() {
       <p className="max-w-[360px] text-sm leading-relaxed text-txt-mut">
         Ouvrez <span className="font-medium text-mint">app.labuse.immo</span> depuis votre ordinateur.
       </p>
+      <a href={window.location.pathname + '?outil=gabarit'}
+        className="rounded border border-mint px-4 py-2 text-mint">Ouvrir le Gabarit</a>
       <a href="mailto:contact@labuse.immo?subject=Contact%20LABUSE"
         className="mt-1 text-sm font-medium text-mint hover:underline">
         Contact

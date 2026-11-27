@@ -1,0 +1,30 @@
+surface: couche_reperes_er_saint_andre
+nom: Emplacements réservés de Saint-André — repères indicatifs
+categorie: couche
+parent: null
+route: /map/tiles/plu_repere_er/{z}/{x}/{y}.pbf
+rendu: carte
+donnees:
+  - quoi: zonage_plu_couche
+    ou: { rang: 10, etat: replie, section: "Zonage réglementaire" }
+    comment:
+      libelle: Emplacements réservés de Saint-André — repères indicatifs
+      format: liste
+      i: "Chaque point situe un numéro imprimé sur le plan communal de 2019 ou sur l’annexe municipale de 2023 pour les emplacements modifiés. Le numéro et son objet figurent au registre de septembre 2023. Consulter la planche pour l’emprise précise et les parcelles concernées."
+    carte:
+      kind: plu_repere_er
+      agregat: false
+      famille: urbanisme
+      geometrie: point
+      zoom_min: 12
+      rang_carte: 84
+      style: { couleur: "#FFD369", rayon: 5.5, epaisseur: 1.3, trait: "#392A03", opacite: 0.92 }
+      legende: Numéros portés aux plans communaux, positions indicatives
+      popup:
+        - { champ: name, libelle: "Repère indicatif" }
+        - { champ: objet, libelle: "Objet du registre communal" }
+        - { champ: secteur, libelle: "Secteur" }
+        - { champ: planche, libelle: "Plan municipal" }
+        - { champ: portee, libelle: "Localisation" }
+        - { champ: source_url, libelle: "Planche municipale" }
+    statut_juridique: informatif

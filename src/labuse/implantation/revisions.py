@@ -25,7 +25,7 @@ from sqlalchemy import text
 _log = logging.getLogger("labuse")
 
 # Version du MOTEUR stockée avec la révision (trace : quelle logique a produit ces chiffres).
-MOTEUR_VERSION = "etude-fiable-1"
+MOTEUR_VERSION = "etude-stationnement-bandes-3"
 
 _DDL = """
 CREATE TABLE IF NOT EXISTS etude_revisions (
@@ -76,8 +76,10 @@ def charger(session, study_id: str) -> Optional[dict]:
     if not study_id:
         return None
     try:
-        row = session.execute(text(
-            "SELECT payload FROM etude_revisions WHERE study_id = :sid"), {"sid": study_id}).first()
+        with session.begin_nested():
+            row = session.execute(text(
+                "SELECT payload FROM etude_revisions WHERE study_id = :sid AND moteur_version = :version"),
+                {"sid": study_id, "version": MOTEUR_VERSION}).first()
     except Exception:  # noqa: BLE001 — table absente / base nue : chemin historique (recalcul)
         return None
     if not row or row[0] is None:

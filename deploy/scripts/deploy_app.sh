@@ -197,7 +197,8 @@ ssh -o BatchMode=yes "$HOST" 'sudo -u labuse bash -c "
 
 echo "── 4. systemd (unit versionnée) ──"
 ssh -o BatchMode=yes "$HOST" 'sudo install -o root -g root -m 644 /opt/labuse/app/deploy/systemd/labuse.service /etc/systemd/system/labuse.service
-sudo systemctl daemon-reload'
+sudo install -o root -g root -m 644 /opt/labuse/app/deploy/systemd/labuse-exonerations.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now labuse-exonerations.timer'
 
 # ── DONNEES-ETAT-FIX-2 (Lot 0) — CRONTAB REPOSÉ + VÉRIFIÉ À CHAQUE DÉPLOIEMENT ───────────────
 # Le SEUL vrai déploiement passe ICI (la prod n'a pas de clone git → deploy_vps.sh ne tourne jamais ;

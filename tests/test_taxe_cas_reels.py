@@ -74,3 +74,79 @@ def test_cas5_taux_communal_manquant():
     assert r["part_departementale_eur"] == 1115.0
     assert r["total_eur"] is None
     assert r["taux_communal_manquant"] is True
+
+
+def test_extension_residence_principale():
+    # Sur 30 m² créés, seuls 20 bénéficient encore de l'abattement.
+    r = calculer(surface_taxable_m2=30, surface_existante_m2=80,
+                 residence_principale=True, taux_communal_pct=5)
+    assert r["assiette_eur"] == 17840
+    assert r["total_eur"] == 1338
+    assert calculer(surface_taxable_m2=3, surface_existante_m2=150)["assiette_eur"] == 0
+
+
+def test_stationnement_seul_et_forfait_local():
+    import pytest
+    for tarif in (2928, 4000, 5857):
+        r = calculer(stationnement_ext_places=2, forfait_stationnement_eur=tarif,
+                     taux_communal_pct=5)
+        assert r["assiette_eur"] == 2 * tarif
+        assert r["total_eur"] == round(2 * tarif * .075, 2)
+    with pytest.raises(ValueError):
+        calculer(stationnement_ext_places=2, forfait_stationnement_eur=5858)
+
+
+def test_sources_taux_public_et_manuel():
+    public = dict(taux_communal_public_pct=5, taux_communal_public_maj_at="2026-10-10")
+    assert calculer(**public)["taux_communal_maj_at"] == "2026-10-10"
+    r = calculer(**public, taux_communal_pct=0, taux_departemental_pct=1)
+    assert r["taux_communal_maj_at"] is None
+    assert r["part_departementale_confirmee"] is False
+
+
+def test_route_http_extension_et_stationnement():
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from labuse.api.app import get_db, taxe_amenagement
+
+    app = FastAPI()
+    app.get("/outils/taxe-amenagement")(taxe_amenagement)
+    app.dependency_overrides[get_db] = lambda: None
+    client = TestClient(app)
+    url = "/outils/taxe-amenagement"
+    projet = dict(surface_taxable_m2=30, surface_existante_m2=80, residence_principale=True,
+                  stationnement_ext_places=2, forfait_stationnement_eur=4000, taux_communal_pct=5)
+    r = client.get(url, params=projet)
+    assert r.status_code == 200
+    assert r.json()["total_eur"] == 1938
+    assert client.get(url, params={**projet, "forfait_stationnement_eur": 6000}).status_code == 422
+
+
+def test_programme_mixte_et_exonerations_par_part():
+    from labuse.taxe_amenagement import LotTaxe
+    lots = [LotTaxe(nombre=2, surface=60, regime="rp"),
+            LotTaxe(nombre=1, surface=140, regime="ptz"),
+            LotTaxe(nombre=1, surface=80, regime="social")]
+    r = calculer(lots=lots, commune_projet="97403", taux_communal_pct=5, stationnement_ext_places=1)
+    # 60 + (50 + 40) + 40 équivalents m², plus une place.
+    assert r["assiette_eur"] == 190 * 892 + 2928
+    assert r["exonerations_locales"]["base_exoneree_communale"] == (8 + 40) * 892
+    assert r["part_communale_eur"] == round((142 * 892 + 2928) * .05, 2)
+    assert r["part_departementale_eur"] == round(r["assiette_eur"] * .025, 2)
+    assert r["rap_eur"] == round(r["assiette_eur"] * .004, 2)
+    ailleurs = calculer(lots=lots, commune_projet="97415", taux_communal_pct=5)
+    assert ailleurs["exonerations_locales"]["base_exoneree_communale"] == 0
+
+
+def test_programme_seuil_global_et_monument():
+    from labuse.taxe_amenagement import LotTaxe
+    r = calculer(lots=[LotTaxe(nombre=2, surface=4, regime="plein", monument=True)],
+                 commune_projet="97403", taux_communal_pct=5, piscine_m2=20)
+    assert r["part_communale_eur"] == 251
+    assert r["assiette_eur"] == 8 * 892 + 20 * 251
+
+
+def test_ptz_extension_fraction_hors_abattement():
+    r = calculer(surface_taxable_m2=30, surface_existante_m2=80, residence_principale=True,
+                 ptz=True, commune_projet="97403", taux_communal_pct=5)
+    assert r["exonerations_locales"]["base_exoneree_communale"] == 2 * 892

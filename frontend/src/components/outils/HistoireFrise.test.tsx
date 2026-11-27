@@ -64,7 +64,7 @@ describe('HistoireFrise — les faits datés sous le comparateur', () => {
     // pont C4 → Permis sur CE permis, fil de retour empilé (FIX-3)
     fireEvent.click(document.querySelector('[data-histoire-pont-permis]')!)
     const st = useApp.getState()
-    expect(st.permitToOpen).toBe('PC974TEST1')
+    expect(st.permitToOpen).toEqual({ id: 'PC974TEST1', nature: 'PC' })
     expect(st.module).toBe('permis')
     expect(st.outilRetour.at(-1)?.module).toBe('temps')
     expect(st.outilRetour.at(-1)?.restore?.parcelPrefill).toBe('97499000TE0001')

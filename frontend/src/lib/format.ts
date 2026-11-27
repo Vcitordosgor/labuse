@@ -97,9 +97,22 @@ export const fmtDate = (d: string | Date | null | undefined): string => {
     : dt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: TZ_REUNION })
 }
 
-/** date numérique compacte (tables) : 12/07/2026, en heure de La Réunion */
+/** OUTIL-COMMUNES-FIX-10 LOT 2 — mois français, pour les dates de précision VARIABLE (pièces PLU). */
+const _MOIS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+  'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'] as const
+
+/** date numérique compacte (tables) : 12/07/2026, en heure de La Réunion.
+ *  OUTIL-COMMUNES-FIX-10 LOT 2 — PRÉCISION HONNÊTE : une date connue au MOIS (« 2025-05 ») s'affiche
+ *  « mai 2025 », à l'ANNÉE (« 2025 ») « 2025 » — JAMAIS un 1er du mois/de l'an fabriqué. Point UNIQUE :
+ *  tout l'écran passe ici, donc la correction vaut partout (bandeau, carte Urbanisme, « dernière pièce »…). */
 export const fmtDateNum = (d: string | Date | null | undefined): string => {
   if (!d) return '—'
+  if (typeof d === 'string') {
+    const m = /^(\d{4})-(\d{2})$/.exec(d)
+    if (m) return `${_MOIS_FR[Number(m[2]) - 1]} ${m[1]}`
+    const y = /^(\d{4})$/.exec(d)
+    if (y) return y[1]
+  }
   const dt = typeof d === 'string' ? new Date(d) : d
   return Number.isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('fr-FR', { timeZone: TZ_REUNION })
 }
@@ -315,7 +328,7 @@ export const fmtAns = (n: number | null | undefined, p = 1): string => {
 
 /** RECETTE-2 (T6) — intensité d'aléa : plus de code brut (`tres_fort` → « très fort »). */
 const INTENSITE: Record<string, string> = {
-  tres_faible: 'très faible', faible: 'faible', moyen: 'moyen', modere: 'modéré', moyennement_fort: 'moyennement fort',
+  negligeable: 'négligeable', eleve: 'élevé', tres_eleve: 'très élevé', tres_faible: 'très faible', faible: 'faible', moyen: 'moyen', modere: 'modéré', moyennement_fort: 'moyennement fort',
   fort: 'fort', tres_fort: 'très fort', nul: 'nul', inconnu: 'inconnu',
 }
 export const fmtIntensite = (v: string | null | undefined): string =>

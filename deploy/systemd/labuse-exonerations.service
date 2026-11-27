@@ -1,0 +1,16 @@
+[Unit]
+Description=Synchronisation des exonérations fiscales DGFiP pour La Réunion
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=labuse
+Group=labuse
+StateDirectory=labuse-taxe
+WorkingDirectory=/opt/labuse/app
+ExecStart=/opt/labuse/venv/bin/python -m labuse.ingestion.exonerations_delta
+TimeoutStartSec=6min
+NoNewPrivileges=true
+ProtectSystem=strict
+PrivateTmp=true

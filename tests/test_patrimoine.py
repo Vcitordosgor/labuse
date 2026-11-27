@@ -36,10 +36,12 @@ def _seed(db, idu, wkt, siren, denom, tier="a_creuser", zone_fam="U"):
 
 def test_patrimoine_search_ne_leve_pas(db_session):
     from labuse.api.modules import patrimoine_search
-    assert patrimoine_search("x", db=db_session) == []          # < 2 car. → vide, jamais une exception
+    vide = patrimoine_search("x", db=db_session)                # < 2 car. → objet vide, jamais une exception
+    assert vide["resultats"] == [] and vide["total"] == 0 and vide["masques"] == 0
     _seed(db_session, "97499000PA0001", _WKT[0], "111222333", "SCI PATCO ALPHA")
     out = patrimoine_search("PATCO", db=db_session)             # ne lève pas
-    assert any(r["siren"] == "111222333" and r["n"] >= 1 for r in out)
+    assert any(r["siren"] == "111222333" and r["n"] >= 1 for r in out["resultats"])
+    assert out["total"] >= 1 and out["masques"] == 0            # SCAN-FIX-1 (pt 8) — masqués annoncés
 
 
 def test_patrimoine_hors_ecartees_par_vous(db_session, monkeypatch):
@@ -85,10 +87,11 @@ def test_patrimoine_ne_leve_pas_et_ménage_vestiges(db_session, monkeypatch):
     assert out["siren"] == s and out["n_parcelles"] == 2
     # #2 — l'agrégat dit l'ACTIONNABLE + SDP RÉSIDUELLE (renommé, plus « SDP totale »)
     assert out["n_actionnables"] == 2 and "sdp_residuelle_m2" in out and "sdp_totale_m2" not in out
-    # #3 — la clé valorisation existe (None si pas de DVF terrain en base de test — jamais une exception)
-    assert "valorisation_nu_eur" in out
-    # #4 — signal INPI : aucun dirigeant seedé → société absente du registre
-    assert out["inpi_sans_dirigeant"] is True
+    # #3 — SCAN-FIX-1 (point 9) : la valorisation est RETIRÉE de la réponse servie (ni au client ni au Copilote).
+    assert "valorisation_nu_eur" not in out and "n_valorisables" not in out
+    # #4 — SCAN-FIX-1 (bloquant 5) : le signal « aucun dirigeant au registre INPI » est RETIRÉ (il
+    # reposait sur une absence locale) → toujours False, remplacé par les faits datés (dépôt, BODACC).
+    assert out["inpi_sans_dirigeant"] is False
     # #5 — assiette contiguë détectée dans le portefeuille (2 parcelles mitoyennes)
     assert set(out["assiette_contigue"]) == {"97499000PB0001", "97499000PB0002"}
     # LE MÉNAGE — matrice morte retirée du payload ET des items ; statut (doublon tier_v2) retiré
@@ -111,13 +114,11 @@ def test_patrimoine_entreprise_sans_foncier_pas_de_signal_inpi(db_session, monke
     assert out["inpi_sans_dirigeant"] is False                                # plus de faux signal
 
 
-def test_patrimoine_signal_inpi_sur_proprietaire_resolu(db_session, monkeypatch):
-    """OUTILS-FIX-3 B3 — le signal RESTE pour une entreprise RÉSOLUE (≥ 1 parcelle + raison sociale)
-    sans dirigeant au registre : c'est le vrai « foncier fantôme ». Avec un dirigeant seedé, il tombe."""
+def test_patrimoine_signal_inpi_retire_meme_sur_proprietaire_resolu(db_session, monkeypatch):
+    """SCAN-FIX-1 (bloquant 5) — le signal « aucun dirigeant au registre INPI → succession / sommeil »
+    est RETIRÉ, y compris pour une entreprise RÉSOLUE sans dirigeant local : l'absence de ligne
+    pm_dirigeants est une absence dans la base locale, pas un fait. Toujours False désormais."""
     monkeypatch.setattr("labuse.api.app._score_v2_run_id", lambda _db: Q_A_RUN_LABEL)
     from labuse.api.modules import patrimoine
     _seed(db_session, "97499000FZ0001", _WKT[0], "121212121", "SCI FONCIER FANTOME")
-    assert patrimoine(siren="121212121", limit=200, offset=0, db=db_session)["inpi_sans_dirigeant"] is True
-    db_session.execute(text(
-        "INSERT INTO pm_dirigeants (siren, nom) VALUES ('121212121', 'DUPONT')"))
     assert patrimoine(siren="121212121", limit=200, offset=0, db=db_session)["inpi_sans_dirigeant"] is False

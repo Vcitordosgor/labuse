@@ -42,6 +42,16 @@ describe('format partagé de la fiche', () => {
     expect(fmtDateNum(null)).toBe('—')
   })
 
+  // OUTIL-COMMUNES-FIX-10 LOT 2 — précision VARIABLE honnête : un mois seul (« 2025-05 ») ou une année
+  // seule (« 2025 ») ne s'affiche JAMAIS en 1er du mois/de l'an fabriqué (carte Urbanisme, bandeau…).
+  it('date au MOIS → « mai 2025 » (jamais 01/05/2025)', () => {
+    expect(fmtDateNum('2025-05')).toBe('mai 2025')
+    expect(fmtDateNum('2025-12')).toBe('décembre 2025')
+  })
+  it('date à l\'ANNÉE → « 2025 » (jamais 01/01/2025)', () => {
+    expect(fmtDateNum('2025')).toBe('2025')
+  })
+
   it('date SIRENE 1900 = inconnue → n.c.', () => {
     expect(fmtDateSirene('1900-01-01')).toBe('n.c.')
     expect(fmtDateSirene('2005-10-01')).toBe('01/10/2005')

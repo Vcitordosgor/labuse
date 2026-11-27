@@ -94,7 +94,10 @@ def ingest_rnb(session, *, insee_list: list[str] | None = None, limit: int = 100
     total, par_commune = 0, {}
     with httpx.Client(headers={"User-Agent": "labuse (kampusreunion@gmail.com)"}) as client:
         for insee in insee_list:
-            n, url, params = 0, API, {"insee_code": insee, "limit": limit}
+            n, url, params = 0, API, {
+                "insee_code": insee, "limit": limit,
+                "status": "constructed,notUsable,demolished",
+            }
             while url:
                 d = _page(client, url, params)
                 params = None            # le curseur `next` porte déjà tout
@@ -162,7 +165,8 @@ def rattacher(session, *, seuil_pct: float = 30.0, log_fn=print) -> dict:
                        (100.0 * ST_Area(ST_Intersection(r.shape_2975, b.geom_2975))
                         / NULLIF(ST_Area(b.geom_2975), 0))::real AS pct
                 FROM rnb_batiments r
-                WHERE r.is_active AND r.shape_2975 && b.geom_2975
+                WHERE r.is_active AND r.statut IS DISTINCT FROM 'demolished'
+                  AND r.shape_2975 && b.geom_2975
                   AND ST_Intersects(r.shape_2975, b.geom_2975)
                 ORDER BY ST_Area(ST_Intersection(r.shape_2975, b.geom_2975)) DESC
                 LIMIT 1) m ON true
@@ -188,7 +192,8 @@ def rattacher(session, *, seuil_pct: float = 30.0, log_fn=print) -> dict:
         FROM parcels p
         LEFT JOIN LATERAL (
             SELECT r.rnb_id FROM rnb_batiments r
-            WHERE r.is_active AND r.shape_2975 && p.geom_2975
+            WHERE r.is_active AND r.statut IS DISTINCT FROM 'demolished'
+                  AND r.shape_2975 && p.geom_2975
               AND ST_Intersects(r.shape_2975, p.geom_2975)
             ORDER BY ST_Area(ST_Intersection(r.shape_2975, p.geom_2975)) DESC
             LIMIT 1) m ON true

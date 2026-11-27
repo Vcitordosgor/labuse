@@ -103,7 +103,8 @@ def _latest_parquet(dataset_id: str, title_contains: str, title_excludes: tuple[
 
 
 def build_sirene_etablissements(session: Session, *, geo_url: str | None = None,
-                                stock_url: str | None = None, log=lambda *_: None) -> dict:
+                                stock_url: str | None = None, schema_pret: bool = False,
+                                log=lambda *_: None) -> dict:
     """Joint le fichier géo INSEE et StockEtablissement (974, actifs) via DuckDB et charge la table.
     `geo_url`/`stock_url` permettent d'injecter des fichiers de test locaux ; sinon on résout les
     derniers parquets publiés sur data.gouv."""
@@ -112,7 +113,8 @@ def build_sirene_etablissements(session: Session, *, geo_url: str | None = None,
     from ..referentiel_communes import CORRECTIONS_INSEE_HERITEES
     from .run_all import REUNION_COMMUNES
 
-    ensure_tables(session)
+    if not schema_pret:
+        ensure_tables(session)
     sid = session.execute(text("SELECT id FROM data_sources WHERE name = :n"), {"n": SOURCE_NAME}).scalar()
     # Noms canoniques : le code est la vérité (REUNION_COMMUNES), commune_conso_enaf par-dessus
     # (mêmes noms en pratique ; le repli évite un `commune` NULL si la table n'est pas chargée).

@@ -136,6 +136,16 @@ export function ReglementPluBlock({ rp, tcsp }: { rp: ReglementPlu; tcsp?: { sta
             : undefined}>
             Règlement — zone <Trace id="zone_plu_famille"><span>{z.zone}</span></Trace>{aCheval && pct(z.part) ? <span className="text-txt-dim"> · {pct(z.part)} de la parcelle</span> : null}
           </GroupLabel>
+          {z.calibree && z.annuaire?.insee === '97409' && z.note && (
+            <div className="mb-2 text-[12px] leading-snug text-txt-mut">
+              <p>{z.note}</p>
+              <a className="f-ref" href="https://www.saint-andre.re/wp-content/uploads/2023/10/Affaire-12-Annexe3.pdf" target="_blank" rel="noreferrer">Registre municipal</a>
+              {' · '}
+              <a className="f-ref" href="https://www.saint-andre.re/conseil-municipal-du-22-septembre-2023/" target="_blank" rel="noreferrer">Plan et délibération</a>
+              {' · '}
+              <a className="f-ref" href="https://www.saint-andre.re/approbation-du-nouveau-plan-local-durbanisme/" target="_blank" rel="noreferrer">Plans de 2019</a>
+            </div>
+          )}
           {z.regles_valeurs && z.regles_valeurs.length > 0 ? (
             // FICHE-FIX-5 (Lot E) — tuiles SANS troncature : libellé court (Hauteur · Emprise · Recul
             // voie · Recul limites · Pleine terre · Stationnement), valeur courte (« 10 m », « 50 % »,
@@ -143,6 +153,9 @@ export function ReglementPluBlock({ rp, tcsp }: { rp: ReglementPlu; tcsp?: { sta
             <Tuiles cols={z.regles_valeurs.length >= 5 ? 3 : 2}
               items={z.regles_valeurs.map((rv): Tuile => {
                 const exc = (rv.exceptions ?? []) as PluException[]
+                // OUTIL-PLU-FIX-10 (LOT 4) — conditions du barème (logement social, part publique, lotissement) :
+                // on les porte dans l'infobulle de la tuile, à côté des exceptions.
+                const conds = (rv.conditions ?? []) as { texte: string }[]
                 // FICHE-ORFEVRERIE-1 (Lot A, pt 3) — jamais un « — » muet. Une règle SERVIE (chiffre /
                 // texte / formule calculée) se montre (abrégée). « non réglementé » (état 'absent', mais
                 // la zone EST calibrée → l'article a été lu) se DIT en toutes lettres (gris) et se
@@ -157,21 +170,25 @@ export function ReglementPluBlock({ rp, tcsp }: { rp: ReglementPlu; tcsp?: { sta
                 // plafond légal qui s'impose au PLU (L151-36, loi 2025-1129 — au plus 1 place/logement).
                 const estStationnement = shortReglLabel(rv.libelle) === 'Stationnement'
                 const tcspSous = estStationnement && tcspPlafond
+                const reference = rv.reference?.replace(/\s*\((PLU|GPU)[^)]*\)/i, '').replace(/^Zone \S+ /, '').replace(/\bp\.(\d)/g, 'p. $1').trim()
                 return {
                   label: shortReglLabel(rv.libelle),
                   valeur,
                   // FICHE-ORFEVRERIE-1 (Lot C, pts 21 & 22) — plus de « (PLU » tronqué : on retire le
                   // parenthétique « (PLU, calibrage validé) » proprement (au lieu de couper au 1ᵉʳ virgule),
                   // et on normalise « p.68 » → « p. 68 » (espace).
-                  sous: tcspSous
-                    ? `plafond TCSP ≤ 800 m (${tcsp!.distance_m} m)`
-                    : rv.reference ? (rv.reference.replace(/\s*\((PLU|GPU)[^)]*\)/i, '').replace(/^Zone \S+ /, '').replace(/\bp\.(\d)/g, 'p. $1').trim() || undefined) : undefined,
+                  sous: estStationnement && rv.url && reference
+                    ? <>{tcspSous && <span>plafond TCSP ≤ 800 m ({tcsp!.distance_m} m) · </span>}
+                        <a className="f-ref" href={rv.url} target="_blank" rel="noreferrer">{reference}</a></>
+                    : tcspSous ? `plafond TCSP ≤ 800 m (${tcsp!.distance_m} m)` : reference,
                   ton: reglee ? undefined : 'gris',
                   // PLU-EXCEPTIONS-1 — la tuile porte un point d'exception + un « i » qui ouvre le
                   // texte (verbatim), l'article et la page. Une règle sans exception n'affiche rien.
-                  marque: exc.length > 0 || undefined,
+                  marque: exc.length > 0 || conds.length > 0 || undefined,
                   info: exc.length > 0
                     ? <InfoI aria={`Exception au règlement — ${rv.libelle}`} tip={<ExceptionTip regle={rv.libelle} exceptions={exc} />} />
+                    : conds.length > 0
+                    ? <InfoI aria={`Conditions du barème — ${rv.libelle}`} tip={<div className="flex flex-col gap-1">{rv.reference && <div className="text-txt-mut">{rv.reference.replace(/\s*\((PLU|GPU)[^)]*\)/i, '').trim()}</div>}{conds.map((c, k) => <div key={k}>· {c.texte}</div>)}</div>} />
                     : tcspSous
                     ? <InfoI aria="Plafond TCSP" tip={`Station de ${tcsp!.mode ?? 'transport collectif en site propre'} « ${tcsp!.station} » à ${tcsp!.distance_m} m : à moins de 800 m d'une gare ou d'une station de transport public guidé / en site propre, le PLU ne peut pas exiger plus d'une place de stationnement par logement (0,5 pour le logement social) — art. L151-34 à L151-36 du code de l'urbanisme (loi n° 2025-1129). Reste à instruire la qualité de la desserte.`} />
                     : undefined,
@@ -185,7 +202,7 @@ export function ReglementPluBlock({ rp, tcsp }: { rp: ReglementPlu; tcsp?: { sta
             <>
               {/* RECETTE-PROD-1 (A1) — la note « zones agricoles et naturelles non indexées » ne doit
                   s'afficher QU'EN zone A/N (elle apparaissait sur Ub, zone U). Garde sur la famille servie. */}
-              {z.note && (rp.zone_famille === 'A' || rp.zone_famille === 'N') && <p className="text-[12px] leading-snug text-txt-mut">{z.note}</p>}
+              {z.note && (!z.calibree || z.annuaire?.insee !== '97409') && (rp.zone_famille === 'A' || rp.zone_famille === 'N') && <p className="text-[12px] leading-snug text-txt-mut">{z.note}</p>}
               {z.articles.length > 0 && (
                 <ul className="mt-1 flex flex-col gap-0.5">
                   {z.articles.slice(0, 6).map((a, j) => (

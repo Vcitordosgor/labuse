@@ -160,7 +160,7 @@ def test_readyz_public_mais_reduit_sans_session(client, auth_actif):
     js = r.json()
     # COMPTE-3 (Lot 2) — mode réduit : état des liens de mails mais NOM D'HÔTE SEUL (jamais l'URL
     # complète, ni schema/data/couches). Rien de sensible ne fuit à une sonde anonyme.
-    assert set(js) == {"ready", "checked_at", "mail_liens"}
+    assert set(js) == {"ready", "checked_at", "mail_liens", "code_rev"}
     assert set(js["mail_liens"]) == {"host", "ok"}                  # host + verdict, pas l'URL complète
     assert "base_url" not in js["mail_liens"] and "avert" not in js["mail_liens"]
     _ouvrir_session_admin(client)

@@ -1,13 +1,13 @@
 """K3 (rattrapage KelFoncier) — CALCULETTE de la taxe d'aménagement.
 
-Formule PUBLIQUE (code de l'urbanisme). Assiette = surface taxable × valeur forfaitaire au m²
+Formule publique (code général des impôts). Assiette = surface taxable × valeur forfaitaire au m²
 (+ forfaits d'installations : piscine, PV au sol, stationnement extérieur, éoliennes) ;
 abattement de 50 % sur les 100 premiers m² d'une résidence principale et sur les logements aidés ;
 taxe = assiette × (part communale + part départementale).
 
-DOCTRINE : aucun taux inventé. Le taux COMMUNAL vient des délibérations (ni en base ni devinable) →
+DOCTRINE : aucun taux inventé. Le taux COMMUNAL vient des délibérations (source DGFiP / DELTA) →
 si absent, `taux_communal_pct=None` et le total N'EST PAS calculé (l'appelant dit « taux communal non
-renseigné, à saisir »). Le taux départemental sert le plafond légal 2,5 %, étiqueté « à confirmer ».
+renseigné, à saisir »). Le taux départemental du 974 est fourni par la configuration datée.
 Les valeurs forfaitaires viennent d'une config DATÉE et SOURCÉE (config/taxe_amenagement.yaml).
 
 Résultat DÉTAILLÉ ligne par ligne : un promoteur doit pouvoir vérifier chaque ligne, pas juste un total.
@@ -15,6 +15,9 @@ Résultat DÉTAILLÉ ligne par ligne : un promoteur doit pouvoir vérifier chaqu
 from __future__ import annotations
 
 from datetime import date, datetime
+from typing import Literal
+
+from pydantic import BaseModel, Field, ConfigDict
 
 from sqlalchemy import text
 
@@ -145,7 +148,7 @@ def taux_secteur(db, idu: str | None, *, today: date | None = None) -> dict | No
     depuis = _fr_date(delib)
     millesime = "Secteur à taux majoré"
     if depuis:
-        millesime += f" en vigueur depuis le {depuis} (délibération communale)"
+        millesime += f" au {depuis} (délibération communale — référence datée, maintien non vérifié)"
     return {"part_communale_pct": float(row[0]), "source": row[1],
             "delib_date": delib.isoformat() if delib else None,
             "maj_at": maj_d.isoformat() if maj_d else None,
@@ -165,9 +168,18 @@ def taux_parcelle(db, idu: str | None, *, today: date | None = None) -> dict | N
     return taux_communal_public(db, str(idu)[:5], today=today)
 
 
-def config() -> dict:
+def config(idu: str | None = None) -> dict:
     """La config datée (valeurs forfaitaires + plafonds + source/année) — servie telle quelle à l'UI."""
-    return load_yaml_config("taxe_amenagement")
+    from .ingestion.exonerations_delta import releve
+    cfg = load_yaml_config("taxe_amenagement")
+    actuel = releve()
+    if not actuel or actuel["annee"] != cfg["meta"]["annee"]:
+        return cfg
+    votes = {k: v for k, v in actuel.items() if k not in ("secteurs", "formules_locales")}
+    if idu in actuel["secteurs"]:
+        votes["communes"] = {**votes["communes"], idu[:5]: actuel["secteurs"][idu]}
+    return {**cfg, "exonerations_locales": votes,
+            "formules_locales": actuel.get("formules_locales", cfg["formules_locales"])}
 
 
 def _eur(x: float) -> float:
@@ -204,9 +216,40 @@ _RAP_SOURCE = ("redevance d'archéologie préventive — 0,40 % de l'assiette de
                "(CGI, gestion DGFiP depuis l'ordonnance 2022-883 ; fait générateur art. 1635 quater F)")
 
 
+class LotTaxe(BaseModel):
+    """Logements identiques, surfaces par logement, annexes comprises."""
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    nombre: int = Field(ge=1, le=100_000)
+    surface: float = Field(gt=0, le=1_000_000)
+    existant: float = Field(default=0, ge=0, le=1_000_000)
+    regime: Literal["rp", "ptz", "social", "plai", "plein"]
+    monument: bool = False
+
+
+class SurfaceCategorie(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    categorie: str
+    surface: float = Field(gt=0, le=1_000_000)
+    surface_principale: float | None = Field(None, gt=0, le=1_000_000)
+
+
+class ProgrammeTaxe(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    lots: list[LotTaxe] | None = Field(None, min_length=1, max_length=200)
+    surfaces: list[SurfaceCategorie] = Field(min_length=1, max_length=200)
+
+
 def calculer(
     *,
+    lots: list[LotTaxe] | None = None,
+    surfaces: list[SurfaceCategorie] | None = None,
+    terrain_rehabilite: bool = False,
+    commune_projet: str | None = None,
+    idu_projet: str | None = None,
+    ptz: bool = False,
+    monument: bool = False,
     surface_taxable_m2: float = 0.0,
+    surface_existante_m2: float = 0.0,
     residence_principale: bool = False,
     logement_aide: bool = False,
     nb_logements: int | None = None,
@@ -215,6 +258,7 @@ def calculer(
     piscine_m2: float = 0.0,
     pv_sol_m2: float = 0.0,
     stationnement_ext_places: int = 0,
+    forfait_stationnement_eur: int | None = None,
     eoliennes_mats: int = 0,
     taux_communal_pct: float | None = None,
     taux_departemental_pct: float | None = None,
@@ -222,16 +266,22 @@ def calculer(
     taux_communal_public_source: str | None = None,
     taux_communal_public_millesime: str | None = None,
     taux_communal_public_delib_date: str | None = None,
+    taux_communal_public_maj_at: str | None = None,
     taux_communal_public_perime: bool | None = None,
     taux_communal_secteur_majore: bool = False,
 ) -> dict:
     """Renvoie le détail LIGNE PAR LIGNE + total (None si le taux communal manque)."""
-    cfg = config()
+    cfg = config(idu_projet) if idu_projet else config()
     vf = float(cfg["valeur_forfaitaire_m2"]["hors_idf"])   # La Réunion = hors IdF
     ab = cfg["abattement"]
     fo = cfg["forfaits"]
     taux = cfg["taux"]
     _station_max = fo.get("stationnement_ext_place_max_delib")
+    tarif_stationnement = fo["stationnement_ext_place"]
+    if forfait_stationnement_eur is not None:
+        if not tarif_stationnement <= forfait_stationnement_eur <= _station_max:
+            raise ValueError("Forfait de stationnement hors du barème annuel.")
+        tarif_stationnement = forfait_stationnement_eur
     if taux_departemental_pct is None:
         taux_departemental_pct = taux.get("part_departementale_defaut")
 
@@ -257,7 +307,51 @@ def calculer(
 
     # 1) surface de construction : valeur forfaitaire, avec abattement 50 % (100 premiers m² par logement RP / aidé).
     surf = max(0.0, float(surface_taxable_m2 or 0))
-    if surf > 0 and seuil_exo and surf <= seuil_exo:
+    regles = cfg["exonerations_locales"]
+    commune = regles["communes"].get(commune_projet, {})
+    departement = regles["departement"] if commune_projet and commune_projet.startswith("974") else {}
+    reductions = [0.0, 0.0]
+    formules = cfg["formules_locales"]
+    terrain = formules["terrain"]["vote"] if terrain_rehabilite else None
+    base_hors_departement = 0.0
+    surface_projet = (surf + surface_exoneree_m2 + sum(l.surface * l.nombre for l in lots or [])
+                      + sum(l.surface for l in surfaces or []))
+    def appliquer_exonerations(base, base_ptz=0, social=False, historique=False, categorie=None,
+                               communale_seule=False):
+        for index, votes in enumerate((commune, departement)):
+            if index == 1 and communale_seule:
+                continue
+            # Sur une même surface, une exonération ne se cumule pas avec elle-même.
+            reductions[index] += max(
+                base * votes.get("social", 0) if social else 0,
+                base * votes.get("monument", 0) if historique else 0,
+                base_ptz * votes.get("ptz", 0),
+                base * max(votes.get(categorie, 0), votes.get(terrain, 0)),
+            ) / 100
+
+    if lots:
+        nb_rp = sum(lot.nombre for lot in lots if lot.regime in ("rp", "ptz"))
+        nb_logements_precise, msg_nb_logements = True, None
+        assiette_surf = 0.0
+        regimes = {"rp": "résidence principale", "ptz": "résidence principale avec PTZ",
+                   "social": "logement social aidé", "plai": "PLAI / LLTS", "plein": "au taux plein"}
+        for lot in lots:
+            reduite = 0.0
+            if lot.regime in ("rp", "ptz"):
+                reduite = min(lot.surface, max(0, plafond_rp - lot.existant))
+            elif lot.regime == "social":
+                reduite = lot.surface
+            pleine = lot.surface - reduite
+            base = lot.nombre * vf * (pleine + reduite * (1 - ab["taux_pct"] / 100))
+            if surface_projet <= seuil_exo or lot.regime == "plai":
+                base = 0.0
+            assiette_surf += base
+            appliquer_exonerations(base, lot.nombre * pleine * vf if base and lot.regime == "ptz" else 0,
+                                   lot.regime == "social", lot.monument)
+            lignes.append({"poste": regimes[lot.regime],
+                           "detail": f"{lot.nombre} × {lot.surface:g} m², dont {reduite:g} m² à valeur réduite par logement",
+                           "assiette_eur": _eur(base)})
+    elif surf > 0 and seuil_exo and surface_projet <= seuil_exo:
         # RV2-V2 — exonération de PLEIN DROIT des petites surfaces (CGI art. 1635 quater D, 10°) :
         # une construction « inférieure OU ÉGALE à 5 m² » de surface taxable n'est pas soumise à la
         # part surface (borne INCLUSIVE : à 5 m² pile l'exonération s'applique — BOFiP BOI-IF-TU-10-20-30-160).
@@ -273,7 +367,7 @@ def calculer(
             abattue, pleine = surf, 0.0
         elif residence_principale:
             # 100 premiers m² de CHAQUE logement à −50 % (E-A1) : plafond = 100 × nombre de logements.
-            abattue = min(surf, plafond_rp * nb_rp)
+            abattue = min(surf, max(0.0, plafond_rp * nb_rp - surface_existante_m2))
             pleine = surf - abattue
         taux_ab = float(ab["taux_pct"]) / 100.0
         assiette_surf = pleine * vf + abattue * vf * (1 - taux_ab)
@@ -284,9 +378,39 @@ def calculer(
                            f"{'s' if nb_rp > 1 else ''})")
             else:
                 detail += f" (dont {abattue:g} m² à −{ab['taux_pct']}%)"
+        if residence_principale and not logement_aide and surface_existante_m2:
+            detail += f" ; {surface_existante_m2:g} m² existants pris en compte pour le plafond"
         lignes.append({"poste": "Surface de construction", "detail": detail, "assiette_eur": _eur(assiette_surf)})
     else:
         assiette_surf = 0.0
+
+    if not lots and surf > 0 and surface_projet > seuil_exo:
+        appliquer_exonerations(assiette_surf, pleine * vf if ptz and residence_principale and not logement_aide else 0,
+                               logement_aide, monument)
+
+    for local in surfaces or []:
+        formule = formules[local.categorie]
+        valeur = vf * (1 - ab["taux_pct"] / 100) if formule.get("abattement") else vf
+        base = local.surface * valeur if surface_projet > seuil_exo else 0.0
+        eligible = local.surface <= formule.get("seuil_surface_inclusif", float("inf"))
+        if "seuil_principal_exclusif" in formule:
+            eligible = local.surface_principale < formule["seuil_principal_exclusif"]
+        communale_seule = formule.get("communale_seule", False)
+        if communale_seule:
+            base_hors_departement += base
+        appliquer_exonerations(base, categorie=formule["vote"] if eligible else None,
+                               communale_seule=communale_seule)
+        assiette_surf += base
+        detail = f"{local.surface:g} m² × {valeur:g} €/m²"
+        if not eligible:
+            detail += " · exonération locale inapplicable à cette surface"
+        elif base:
+            detail += f" · exonération votée : commune {commune.get(formule['vote'], 0):g} %"
+            if not communale_seule:
+                detail += f", département {departement.get(formule['vote'], 0):g} %"
+        if communale_seule:
+            detail += " · part communale uniquement pour la taxe d’aménagement"
+        lignes.append({"poste": formule["label"], "detail": detail, "assiette_eur": _eur(base)})
 
     # 1 bis) surface EXONÉRÉE de plein droit (CGI 1635 quater D) — locaux agricoles, PLAI,
     # reconstruction à l'identique. 0 € d'assiette, mais une ligne qui NOMME le motif et son article
@@ -309,10 +433,11 @@ def calculer(
     assiette_forfaits = (
         _forfait("Piscine", piscine_m2, fo["piscine_m2"], "m²")
         + _forfait("Panneaux photovoltaïques au sol", pv_sol_m2, fo["panneau_pv_sol_m2"], "m²")
-        + _forfait("Stationnement extérieur", stationnement_ext_places, fo["stationnement_ext_place"], "place(s)")
+        + _forfait("Stationnement extérieur", stationnement_ext_places, tarif_stationnement, "place(s)")
         + _forfait("Éolienne(s) (mât > 12 m)", eoliennes_mats, fo["eolienne_mat"], "mât(s)")
     )
 
+    appliquer_exonerations(assiette_forfaits)
     assiette = _eur(assiette_surf + assiette_forfaits)
 
     # 3) parts communale + départementale.
@@ -329,8 +454,8 @@ def calculer(
         if taux_communal_public_pct is not None:
             ecart_saisi_public = _eur(float(taux_communal_pct) - float(taux_communal_public_pct))
     taux_manquant = taux_communal_pct is None
-    part_com = None if taux_manquant else _eur(assiette * float(taux_communal_pct) / 100.0)
-    part_dep = None if taux_departemental_pct is None else _eur(assiette * float(taux_departemental_pct) / 100.0)
+    part_com = None if taux_manquant else _eur((assiette - _eur(reductions[0])) * float(taux_communal_pct) / 100.0)
+    part_dep = None if taux_departemental_pct is None else _eur((assiette - _eur(base_hors_departement + reductions[1])) * float(taux_departemental_pct) / 100.0)
     total = None if (part_com is None or part_dep is None) else _eur((part_com or 0) + (part_dep or 0))
 
     # 4) TAXE-FIX-1 point 2 — redevance d'archéologie préventive : 0,40 % de la MÊME assiette
@@ -339,12 +464,9 @@ def calculer(
 
     # CHASSE-CALCULS-FIX-1 Lot 2 (E-A2) — ce que le barème ne couvre pas (servi à l'outil ET au PDF).
     _non_couvert = [s for s in (
-        "Exonérations facultatives votées par la commune (abris de jardin ≤ 20 m², commerces de "
-        "détail < 400 m², etc. — CGI art. 1635 quater E) : non appliquées ici — à vérifier dans la "
-        "délibération de la commune.",
         (f"Stationnement extérieur au tarif majoré sur délibération (jusqu'à {int(_station_max):g} "
-         f"€/place au lieu de {int(fo['stationnement_ext_place']):g}) : non appliqué sauf saisie."
-         ) if _station_max else None,
+         f"€/place au lieu de {int(fo['stationnement_ext_place']):g}) : calcul au forfait national."
+         ) if _station_max and forfait_stationnement_eur is None else None,
         "Hors barème : taxe d'aménagement à taux majoré sectoriel (au-delà des secteurs ingérés), "
         "versement pour sous-densité (VSD) et participations d'urbanisme (PVR/PFAC).",
     ) if s]
@@ -357,9 +479,14 @@ def calculer(
         "valeur_forfaitaire_m2": vf,
         "lignes": lignes,
         "assiette_eur": assiette,
+        "exonerations_locales": {"commune": commune, "departement": departement,
+                                 "releve_le": regles["releve_le"], "source": regles["source"],
+                                 "base_exoneree_communale": _eur(reductions[0]),
+                                 "base_exoneree_departementale": _eur(reductions[1])},
         "taux_communal_pct": taux_communal_pct,
         "taux_departemental_pct": taux_departemental_pct,
-        "part_departementale_confirmee": bool(taux.get("part_departementale_confirmee_974")),
+        "part_departementale_confirmee": bool(taux.get("part_departementale_confirmee_974")
+                                              and taux_departemental_pct == taux.get("part_departementale_defaut")),
         "part_communale_eur": part_com,
         "part_departementale_eur": part_dep,
         "total_eur": total,
@@ -383,6 +510,7 @@ def calculer(
                                     if taux_source == "public" else None),
         "taux_communal_delib_date": (taux_communal_public_delib_date
                                      if taux_source == "public" else None),
+        "taux_communal_maj_at": taux_communal_public_maj_at if taux_source == "public" else None,
         "taux_communal_perime": (bool(taux_communal_public_perime)
                                  if taux_source == "public" else None),
         # TAXE-FIX-1 point 3 — le taux servi vient-il d'un secteur à taux majoré ? (public seulement)

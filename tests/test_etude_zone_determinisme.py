@@ -65,10 +65,24 @@ def test_etude_de_zone_deux_appels_identiques():
                 "population": Z.population_zone(db, geom),
                 "emplois": Z.emplois_zone(db, geom),
                 "marche": Z.marche_zone(db, geom),
-                "dynamique": Z.dynamique_zone(db, geom),
+                "dynamique": Z.zone_demain(db, geom),
             }
 
         a = _un_passage()
         b = _un_passage()
     # comparaison sérialisée (ordre des clés indifférent) — strictement identique.
     assert json.dumps(a, sort_keys=True, default=str) == json.dumps(b, sort_keys=True, default=str)
+
+
+def test_document_zone_distingue_effectifs_ouverts_absents_et_inconnus():
+    from labuse.exports.blocs.etude_zone import _economie, _tuiles
+
+    emplois = {"postes_min": 10000, "postes_max": 0, "postes_max_ouvert": True,
+               "n_etablissements": 2, "n_avec_tranche": 1, "n_sans_tranche": 1}
+    assert "Au moins 10 000" in _economie({"emplois": emplois})
+    assert "Effectif inconnu" in _economie({"emplois": {**emplois, "n_avec_tranche": 0}})
+    assert "indisponible" in _economie({"emplois": emplois, "emplois_couverture": "non_couverte"})
+    resume = _tuiles({"population": {"revenu_median_eur": 18000},
+                      "marche": {"prix_m2_median_bati": 2000, "prix_ancien": {"median": 9999}}}, 0.5)
+    assert "Niveau de vie moyen" in resume and "0,5 km" in resume
+    assert "2 000" in resume and "9 999" not in resume

@@ -91,6 +91,23 @@ describe('O5 — quatre états, plus de « vérifié » sans preuve', () => {
     expect(document.body.textContent).toContain('Inconstructible (partie rouge)')
   })
 
+  it('classement inconnu, emprise et règlement propres à chaque effet', async () => {
+    const geometry = { type: 'Point', coordinates: [55.5, -21.1] }
+    const url = 'https://example.org/reglement.pdf'
+    mockFetch(servitudesPayload({ servitudes: [{
+      categorie: 'Risque naturel', effet: 'Code de zone à confirmer', source: 'DEAL',
+      statut: 'a_verifier', redhibitoire: true, geometries: [geometry], reglements: [url],
+    }] }))
+    const screen = renderO5()
+    await screen.findByText('Classement PPR à vérifier')
+    expect(screen.queryByText(/Inconstructible/)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Voir la zone sur la carte' }))
+    expect(useApp.getState().moduleMap.extra).toMatchObject({ features: [{ geometry }] })
+    expect(screen.getByRole('link', { name: 'Ouvrir le règlement' }).getAttribute('href')).toBe(url)
+    screen.unmount()
+    expect(useApp.getState().moduleMap.extra).toBeNull()
+  })
+
   it('zone blanche (tout inconnu) : pas de section « Aucune intersection détectée », une « Couverture inconnue »', async () => {
     const dix = ['Sols pollués', 'Bruit', 'Assainissement', 'ICPE', 'Monuments et sites', 'ER / EBC',
       'Préemption', 'Eau et zones humides', 'Espaces naturels', 'Risques naturels']

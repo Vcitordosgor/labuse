@@ -1,0 +1,7 @@
+/Users/openclaw/Desktop/labuse-plu-fix
+fix/outil-plu-1
+473c6a98a PLU FIX-15 lot D — préciser les trois barèmes de stationnement en fiche
+9044fa0ab PLU FIX-15 lot B — isoler les chapitres, colonnes et annexes, documenter le stationnement absent
+9225dc4eb PLU FIX-15 reprise — rejouer les tests historiques et figer les nouveaux échecs
+cac55b070 PLU FIX-15 lot F — sourcer les Zattes, La Possession et les livrets de Saint-Paul
+dc764b84a PLU FIX-15 lot E — distinguer approbation écrite, modification et dépôt

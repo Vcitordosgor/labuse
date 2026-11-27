@@ -311,7 +311,7 @@ export function Kanban() {
   // M137 — archivage réversible : confirmation avant d'archiver, panneau pour consulter/restaurer.
   const [pendingArchive, setPendingArchive] = useState<PipelineEntry | null>(null)
   const [showArchived, setShowArchived] = useState(false)
-  const [editingEntry, setEditingEntry] = useState<PipelineEntry | null>(null)   // M137 — écran d'édition de carte
+  const [editingEntryId, setEditingEntryId] = useState<number | null>(null)   // M137 — écran d'édition de carte
   const [editToNotes, setEditToNotes] = useState(false)                           // RETOURS-17 — ouvert via « Note » → section Notes
   const [search, setSearch] = useState('')                                        // GB-027 — recherche CRM
   const archived = useQuery({ queryKey: ['pipeline-archived'], queryFn: getArchivedPipeline, enabled: showArchived })
@@ -321,7 +321,7 @@ export function Kanban() {
   // Le drag-drop reste possible vers toute colonne visible ; pour une colonne hors fenêtre, on
   // pagine d'abord. Choix consigné au rapport (mandat : « pas une barre horizontale »).
   const COLS_PAR_VUE = 5
-  const [winStart, setWinStart] = useState(0)
+  const [winStart, setWinStart] = useState<number | null>(null)
   // M13-B3 : plus AUCUN window.prompt/confirm — ajout inline + dialogue de réinitialisation en DA.
   const [adding, setAdding] = useState(false)
   const [newColLabel, setNewColLabel] = useState('')
@@ -354,7 +354,10 @@ export function Kanban() {
       if (ctx?.prev) qc.setQueryData(['pipeline'], ctx.prev)
       setToast("Archivage échoué — la carte est toujours là.")
     },
-    onSuccess: () => setToast('Carte archivée — restaurable dans « Archivées ».'),
+    onSuccess: () => {
+      setToast('Carte archivée. Pour la restaurer, ouvrez la fiche parcelle et ajoutez-la au CRM.')
+      qc.invalidateQueries({ queryKey: ['pipeline-parcel'] })
+    },
     onSettled: () => {
       setPendingArchive(null)
       qc.invalidateQueries({ queryKey: ['pipeline'] })
@@ -394,7 +397,7 @@ export function Kanban() {
       if (ctx?.prev) qc.setQueryData(['pipeline'], ctx.prev)
       setToast('Édition échouée — vos changements ne sont pas enregistrés.')
     },
-    onSuccess: () => { setEditingEntry(null); setToast('Carte mise à jour.') },
+    onSuccess: () => { setEditingEntryId(null); setToast('Carte mise à jour.') },
     onSettled: () => qc.invalidateQueries({ queryKey: ['pipeline'] }),
   })
   // M12 LOT H — mutations colonnes (invalident meta + pipeline : le remap de cartes est visible)
@@ -431,26 +434,6 @@ export function Kanban() {
   }
 
   const cols = meta.data?.columns ?? []
-  // Fenêtre paginée (QA-46) : quand il y a plus de COLS_PAR_VUE colonnes, on n'en montre qu'une
-  // tranche. maxStart = dernier décalage laissant une fenêtre pleine ; start est borné.
-  const paginated = cols.length > COLS_PAR_VUE
-  const maxStart = Math.max(0, cols.length - COLS_PAR_VUE)
-  const start = Math.min(winStart, maxStart)
-  const visibleCols = paginated ? cols.slice(start, start + COLS_PAR_VUE) : cols
-  // CHASSE-APP-FIX-2 (point 6) — déplacer une carte vers une colonne HORS fenêtre (menu « Déplacer
-  // vers… ») la faisait disparaître de l'écran : il fallait paginer à la main pour la retrouver. On
-  // fait désormais DÉFILER la fenêtre jusqu'à la colonne de destination après le déplacement.
-  const revealCol = (status: string) => {
-    const idx = cols.findIndex((c) => c.key === status)
-    if (idx < 0 || !paginated) return
-    setWinStart((s) => {
-      const cur = Math.min(s, maxStart)
-      if (idx < cur) return idx
-      if (idx > cur + COLS_PAR_VUE - 1) return Math.min(maxStart, idx - COLS_PAR_VUE + 1)
-      return cur
-    })
-  }
-  const moveAndReveal = (id: number, status: string) => { move.mutate({ id, status }); revealCol(status) }
   // GB-027 — RECHERCHE CRM (nom, commune, IDU, société), insensible à la CASSE et aux ACCENTS. Les
   // entrées sont déjà toutes chargées → simple filtre client, aucun aller-retour serveur.
   const fold = (s: unknown) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
@@ -459,8 +442,35 @@ export function Kanban() {
     e.idu, e.parcel?.commune, e.projet?.nom, e.prospection?.contact_nom,
     e.proprietaire_public?.type === 'personne_morale' ? e.proprietaire_public.denomination : '',
   ].some((f) => fold(f).includes(q))
-  const byCol = (key: string) => (entries.data ?? []).filter((e) => e.status === key && matchSearch(e))
+  const allEntries = entries.data ?? []
+  const matchingEntries = q ? allEntries.filter(matchSearch) : allEntries
+  const byCol = (key: string) => matchingEntries.filter((entry) => entry.status === key)
   const cardCount = (key: string) => byCol(key).length
+  // Fenêtre paginée (QA-46) : quand il y a plus de COLS_PAR_VUE colonnes, on n'en montre qu'une
+  // tranche. maxStart = dernier décalage laissant une fenêtre pleine ; start est borné.
+  const paginated = cols.length > COLS_PAR_VUE
+  const maxStart = Math.max(0, cols.length - COLS_PAR_VUE)
+  const editingEntry = entries.data?.find((entry) => entry.id === editingEntryId)
+  const matchingStages = new Set(q ? matchingEntries.map((entry) => entry.status) : [])
+  const firstMatch = q ? cols.findIndex((col) => matchingStages.has(col.key)) : 0
+  const start = Math.min(winStart ?? Math.max(0, firstMatch), maxStart)
+  const visibleCols = paginated ? cols.slice(start, start + COLS_PAR_VUE) : cols
+  // CHASSE-APP-FIX-2 (point 6) — déplacer une carte vers une colonne HORS fenêtre (menu « Déplacer
+  // vers… ») la faisait disparaître de l'écran : il fallait paginer à la main pour la retrouver. On
+  // fait désormais DÉFILER la fenêtre jusqu'à la colonne de destination après le déplacement.
+  const revealCol = (status: string) => {
+    const idx = cols.findIndex((c) => c.key === status)
+    if (idx < 0 || !paginated) return
+    setWinStart((s) => {
+      const cur = Math.min(s ?? start, maxStart)
+      if (idx < cur) return idx
+      if (idx > cur + COLS_PAR_VUE - 1) return Math.min(maxStart, idx - COLS_PAR_VUE + 1)
+      return cur
+    })
+  }
+  const moveAndReveal = (id: number, status: string) => {
+    move.mutate({ id, status }, { onSuccess: () => revealCol(status) })
+  }
   // NU-F-010 — le dialogue de suppression lit le compteur NON filtré par la recherche. `/pipeline` ne
   // sert que les cartes actives (archived_at IS NULL) → ce compte est EXACTEMENT celui de la garde
   // backend `_cards_in` (NU-F-009). Sans ça, une recherche masquant les cartes faisait croire « 0 carte
@@ -499,23 +509,24 @@ export function Kanban() {
         {/* H (M12) : barre d'édition des colonnes (personnaliser/ajouter/réinitialiser). */}
         <div className="flex shrink-0 items-center gap-2">
           {/* GB-027 — recherche CRM (nom, commune, IDU, société), accents insensibles, filtre client. */}
-          <input value={search} onChange={(ev) => setSearch(ev.target.value)} type="search"
+          <input value={search} onChange={(ev) => { setSearch(ev.target.value); setWinStart(null) }} type="search"
             placeholder="Rechercher (nom, commune, IDU…)" aria-label="Rechercher dans le CRM"
             className="w-44 rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt placeholder:text-txt-dim focus:outline-none" />
           {/* QA-46 (M13-C) : pagination par FLÈCHES (plus de défilement horizontal). Les flèches
               n'apparaissent que si toutes les colonnes ne tiennent pas dans la fenêtre. */}
-          {paginated && !editMode && (
+          {q && <span role="status" className="text-xs text-txt-mut">{matchingEntries.length} résultat{matchingEntries.length > 1 ? 's' : ''}</span>}
+          {paginated && (
             <span className="flex shrink-0 items-center gap-1.5">
               {/* DA-FIX-4 verif (task 2) — icônes du kanban en Bouton icone 32. */}
               <Bouton icone niveau="secondaire" ton="vert"
-                onClick={() => setWinStart((s) => Math.max(0, Math.min(s, maxStart) - 1))}
+                onClick={() => setWinStart(Math.max(0, start - 1))}
                 disabled={start === 0}
                 aria-label="Colonnes précédentes">‹</Bouton>
               <span className="whitespace-nowrap font-mono text-[10.5px] text-txt-mut">
                 {start + 1}–{Math.min(start + COLS_PAR_VUE, cols.length)} / {cols.length}
               </span>
               <Bouton icone niveau="secondaire" ton="vert"
-                onClick={() => setWinStart((s) => Math.min(maxStart, Math.min(s, maxStart) + 1))}
+                onClick={() => setWinStart(Math.min(maxStart, start + 1))}
                 disabled={start >= maxStart}
                 aria-label="Colonnes suivantes">›</Bouton>
             </span>
@@ -620,8 +631,8 @@ export function Kanban() {
                   <Card key={e.id} e={e} onDragStart={() => setDragId(e.id)}
                     newEvents={evCount.data?.par_parcelle[e.idu] ?? 0}
                     onArchive={() => setPendingArchive(e)}
-                    onEdit={() => { setEditToNotes(false); setEditingEntry(e) }}
-                    onEditNote={() => { setEditToNotes(true); setEditingEntry(e) }}
+                    onEdit={() => { setEditToNotes(false); setEditingEntryId(e.id) }}
+                    onEditNote={() => { setEditToNotes(true); setEditingEntryId(e.id) }}
                     columns={meta.data?.columns ?? []}
                     onMove={(status) => moveAndReveal(e.id, status)} />
                 ))}
@@ -668,9 +679,9 @@ export function Kanban() {
           meta={meta.data}
           saving={patch.isPending}
           focusNotes={editToNotes}
-          onCancel={() => setEditingEntry(null)}
+          onCancel={() => setEditingEntryId(null)}
           onSave={(body) => patch.mutate({ id: editingEntry.id, body })}
-          onMove={(status) => { moveAndReveal(editingEntry.id, status); setEditingEntry((c) => c ? { ...c, status } : c) }}
+          onMove={(status) => moveAndReveal(editingEntry.id, status)}
         />
       )}
       {/* M137 — confirmation avant ARCHIVAGE (réversible, mais on prévient : la carte quitte le tableau). */}
@@ -681,8 +692,8 @@ export function Kanban() {
             <h3 className="font-display text-sm font-bold text-txt-hi">Archiver cette carte</h3>
             <p className="mt-2 text-[12px] text-txt-mut">
               <span className="font-mono text-txt">{pendingArchive.idu.slice(8)}</span> quitte le tableau
-              mais n'est <b>pas supprimée</b> : notes et prospection saisies sont conservées et
-              restaurables depuis « Archivées ».
+              avec ses notes et sa prospection conservées. Pour la restaurer, ouvrez sa fiche
+              parcelle et choisissez une colonne dans « + CRM ».
             </p>
             <div className="mt-4 flex justify-end gap-2">
               <Bouton niveau="lien" onClick={() => setPendingArchive(null)}>Annuler</Bouton>

@@ -96,11 +96,20 @@ def test_proprietaire_absent_unknown():
 # point unique) : le stub fournit désormais `dvf_sector`, et le libellé servi porte « terrain / ventes /
 # secteur cadastral » (plus « mutation … rayon »). Les scénarios exercent la logique M79 réelle.
 def test_dvf_secteur_terrain_contexte_positif():
-    # n≥5 (fiable) + prix dans la fourchette favorable (plo=150/phi=325) → magnitude > 0 → POSITIVE.
-    v = DvfLayer().evaluate(P, _Ctx(dvf_sector={"n_ventes": 6, "median_eur_m2": 300,
+    # OUTIL-COMMUNES-FIX-10 LOT 1 — diffusion (et bonus « contexte favorable ») RÉSERVÉE à n≥8 (seuil
+    # public, fonction unique) : prix dans la fourchette favorable (plo=150/phi=325) → magnitude>0 → POSITIVE.
+    v = DvfLayer().evaluate(P, _Ctx(dvf_sector={"n_ventes": 10, "median_eur_m2": 300,
                                                 "fenetre": "2021-2025"}), {})
     assert v.result == CascadeVerdict.POSITIVE
     assert "terrain" in v.detail.lower() and "300" in v.detail
+
+
+def test_dvf_secteur_terrain_sous_seuil_pas_de_bonus():
+    # FIX-10 LOT 1 — 6 ventes (< 8) : plus de prix, plus de « favorable », plus de bonus (PASS).
+    v = DvfLayer().evaluate(P, _Ctx(dvf_sector={"n_ventes": 6, "median_eur_m2": 300,
+                                                "fenetre": "2021-2025"}), {})
+    assert v.result == CascadeVerdict.PASS
+    assert "échantillon insuffisant" in v.detail and "favorable" not in v.detail.lower()
 
 
 def test_dvf_aucune_vente_terrain_pass():

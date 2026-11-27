@@ -47,46 +47,34 @@ def gabarit_svg(result: Any, *, width: int = 340, height: int = 250) -> Optional
     def g(name):
         return getattr(result, name, None) if not isinstance(result, dict) else result.get(name)
 
-    contour = g("contourGeoJSON")
+    contour = ((g("raccordement") or {}).get("parcelle") or {}).get("contour_entier") or g("contourGeoJSON")
     zone = g("zoneImplantationGeoJSON")
     retrait = g("retraitsGeoJSON")
     excl = g("exclusionsGeoJSON")
     bati = g("batiExistantGeoJSON")   # EXPORTS-FIX-1 F5 — bâti existant (fait contextuel, GABARIT-6 P4)
 
-    PAD = 8
-    # DOCS-DA-1 — la LÉGENDE n'est plus DANS le SVG (texte minuscule en repli Verdana qui débordait) :
-    # elle est rendue en HTML sous la figure (thème, ≥ 10,5 px, s'enroule). On ne réserve donc plus qu'un
-    # mince bandeau bas.
-    LEG = 8
-    W, H = width, height
-    plot_h = H - LEG
-    minx = miny = 1e18
-    maxx = maxy = -1e18
-    for geom in (contour, zone, retrait, excl, bati):
-        for r in _rings(geom):
-            for pt in r:
-                x, y = pt[0], pt[1]
-                minx, miny = min(minx, x), min(miny, y)
-                maxx, maxy = max(maxx, x), max(maxy, y)
-    if minx > maxx:
+    from ._geom import _tf, METRIC_EPSG, WGS84_EPSG
+    transform = _tf(WGS84_EPSG, METRIC_EPSG)
+    def metric_rings(geom):
+        return [[transform.transform(p[0], p[1]) for p in ring] for ring in _rings(geom)]
+
+    layers = [metric_rings(geom) for geom in (contour, zone, retrait, excl, bati)]
+    points = [p for rings in layers for ring in rings for p in ring]
+    if not points:
         return None
-    sx = (W - 2 * PAD) / max(maxx - minx, 1e-9)
-    sy = (plot_h - 2 * PAD) / max(maxy - miny, 1e-9)
-    s = min(sx, sy)
-    # centrage horizontal
-    off_x = (W - (maxx - minx) * s) / 2.0
+    xs, ys = zip(*points)
+    minx, maxx, miny, maxy = min(xs), max(xs), min(ys), max(ys)
+    W, H = width, height
+    plot_h = H - 24
+    scale = min((W - 16) / max(maxx - minx, 1e-9), (plot_h - 16) / max(maxy - miny, 1e-9))
+    def path(rings):
+        def project(x, y):
+            px = W / 2 + (x - (minx + maxx) / 2) * scale
+            py = plot_h / 2 - (y - (miny + maxy) / 2) * scale
+            return f"{px:.1f},{py:.1f}"
+        return "".join("M" + "L".join(project(x, y) for x, y in ring) + "Z" for ring in rings if ring)
 
-    def px(x): return off_x + (x - minx) * s
-    def py(y): return plot_h - PAD - (y - miny) * s   # flip : latitude vers le haut
-
-    def path(geom):
-        d = ""
-        for r in _rings(geom):
-            if not r:
-                continue
-            d += "M" + "L".join(f"{px(x):.1f},{py(y):.1f}" for x, y in ((p[0], p[1]) for p in r)) + "Z"
-        return d
-
+    contour, zone, retrait, excl, bati = layers
     # DOCS-DA-1 — font-family Inter héritée par tous les <text> (plus de repli Verdana, 3ᵉ famille).
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
              f'role="img" aria-label="Plan de la zone d\'implantation réglementaire" '
@@ -113,6 +101,13 @@ def gabarit_svg(result: Any, *, width: int = 340, height: int = 250) -> Optional
         (C_ZONE, "Zone d'implantation", zone), (C_RETRAIT, "Retraits", retrait),
         (C_BATI, "Bâti existant", bati), (C_EXCL, "Exclusion réglementaire (PPR rouge / SUP)", excl),
         (C_CONTOUR, "Contour cadastral", contour)) if present]
+    import math
+    cible = W / (4 * scale)
+    ordre = 10 ** math.floor(math.log10(cible))
+    metres = max(x * ordre for x in (1, 2, 5) if x * ordre <= cible)
+    parts.append(f'<path d="M8 {H-6}h{metres*scale:.2f}" stroke="{C_CONTOUR}" stroke-width="2"/>'
+                 f'<text x="8" y="{H-10}" font-size="10">{metres:g} m</text>'
+                 f'<text x="{W-8}" y="{H-8}" text-anchor="end" font-size="10">↑ Nord grille · EPSG:2975</text>')
     parts.append("</svg>")
     parts.append(_legende_html(
         "Zone d'implantation réglementaire (schéma — pas un plan de masse).", leg))
@@ -145,14 +140,17 @@ _COS, _SIN = math.cos(_ISO), math.sin(_ISO)
 
 
 def _bati_features(fc) -> list[tuple[dict, float]]:
-    """(geometry, hauteur_m) par bâtiment ; hauteur manquante → 3 m (comme l'extrusion de l'outil)."""
+    """Hauteur propre à chaque bâtiment. Une hauteur inconnue laisse son empreinte au sol."""
     out: list[tuple[dict, float]] = []
     for f in (fc or {}).get("features", []) if isinstance(fc, dict) else []:
         geom = f.get("geometry")
         if not geom:
             continue
-        h = (f.get("properties") or {}).get("hauteur_m")
-        out.append((geom, float(h) if isinstance(h, (int, float)) and h > 0 else 3.0))
+        props = f.get("properties") or {}
+        h = props.get("hauteur_bdtopo_m")
+        if h is None and props.get("h_source") == "bdtopo":
+            h = props.get("hauteur_m")
+        out.append((geom, float(h) if isinstance(h, (int, float)) and h > 0 else 0.0))
     return out
 
 
@@ -231,7 +229,7 @@ def gabarit_svg_3d(result: Any, *, width: int = 560, height: int = 380) -> Optio
     def g(name):
         return getattr(result, name, None) if not isinstance(result, dict) else result.get(name)
 
-    contour = g("contourGeoJSON")
+    contour = ((g("raccordement") or {}).get("parcelle") or {}).get("contour_entier") or g("contourGeoJSON")
     zone = g("zoneImplantationGeoJSON")
     haut = g("hauteurReglementaireM")
     batis = _bati_features(g("batiExistantGeoJSON"))
@@ -244,12 +242,12 @@ def gabarit_svg_3d(result: Any, *, width: int = 560, height: int = 380) -> Optio
     # gros que ce que les règles autorisent.
     zone_env = zone
     zone_m2, plaf_m2 = g("zoneImplantationM2"), g("plafondEmpriseM2")
-    if isinstance(zone_m2, (int, float)) and isinstance(plaf_m2, (int, float)) and 0 < plaf_m2 < zone_m2:
+    if g("empriseSupplementaireM2") is not None:
+        zone_env = g("exempleEmpriseGeoJSON")
+        if not zone_env:
+            return None
+    elif isinstance(zone_m2, (int, float)) and isinstance(plaf_m2, (int, float)) and 0 < plaf_m2 < zone_m2:
         zone_env = _emprise_env(zone, float(plaf_m2))
-    # bâti existant au-dessus de la hauteur autorisée ? (faîtage réglementaire vs hauteur mesurée)
-    bati_h_max = max((h for _, h in batis), default=0.0)
-    bati_depasse = bool(batis) and bati_h_max > float(haut) + 0.5
-
     # repère local en MÈTRES, centré sur la parcelle (pour que les hauteurs soient à l'échelle du plan)
     pts = [(p[0], p[1]) for geom in (contour, zone) for r in _rings(geom) for p in r]
     lon0 = sum(p[0] for p in pts) / len(pts)
@@ -303,20 +301,22 @@ def gabarit_svg_3d(result: Any, *, width: int = 560, height: int = 380) -> Optio
         """Prisme : murs (triés arrière→avant) + toit. Renvoie (frags, depth représentatif)."""
         frags = []
         reps = []
-        for r in _rings(geom):
-            ring = [(p[0], p[1]) for p in r]
+        walls = []
+        roof = []
+        for ring in _rings(geom):
             if len(ring) < 3:
                 continue
-            reps.append(sum(depth(x, y) for x, y in ring) / len(ring))
-            walls = []
-            for i in range(len(ring) - 1):
-                a, b = ring[i], ring[i + 1]
-                quad = [P(a[0], a[1], 0), P(b[0], b[1], 0), P(b[0], b[1], h), P(a[0], a[1], h)]
-                walls.append(((depth(a[0], a[1]) + depth(b[0], b[1])) / 2.0, quad))
-            for _, quad in sorted(walls, key=lambda w: w[0]):   # arrière (petit) d'abord
-                frags.append(poly(quad, wall_fill, "0.92", stroke, "0.5"))
-            top = [P(x, y, h) for x, y in ring]
-            frags.append(poly(top, top_fill, "0.85", stroke, "0.8"))
+            reps.append(sum(depth(p[0], p[1]) for p in ring) / len(ring))
+            for a, b in zip(ring, ring[1:]):
+                if h > 0:
+                    quad = [P(*a[:2], 0), P(*b[:2], 0), P(*b[:2], h), P(*a[:2], h)]
+                    walls.append(((depth(*a[:2]) + depth(*b[:2])) / 2, quad))
+            top = [P(*p[:2], h) for p in ring]
+            roof.append("M" + "L".join(f"{x:.1f},{y:.1f}" for x, y in top) + "Z")
+        for _, quad in sorted(walls, key=lambda wall: wall[0]):
+            frags.append(poly(quad, wall_fill, "0.92", stroke, "0.5"))
+        frags.append(f'<path d="{"".join(roof)}" fill="{top_fill}" fill-opacity="0.85" '
+                     f'fill-rule="evenodd" stroke="{stroke}" stroke-width="0.8"/>')
         return "".join(frags), (max(reps) if reps else 0.0)
 
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" '
@@ -336,14 +336,9 @@ def gabarit_svg_3d(result: Any, *, width: int = 560, height: int = 380) -> Optio
     for frag, d in sorted(vols, key=lambda v: v[1]):
         parts.append(frag)
     # légende R16 — DOCS-DA-1 : rendue en HTML sous le SVG (thème, ≥ 10,5 px), plus DANS le dessin.
-    alerte = ""
-    if bati_depasse:
-        _hm = f"{bati_h_max:g}".replace(".", ",")   # décimale à la virgule (« 10,3 m »)
-        _hr = f"{haut:g}".replace(".", ",")
-        alerte = f"Le bâti existant dépasse la hauteur autorisée ({_hm} m mesurés / {_hr} m autorisés)."
-    leg = [(C_ZONE, f"Enveloppe réglementaire — plafond d'emprise (hauteur {f'{haut:g}'.replace('.', ',')} m)")]
+    leg = [(C_ZONE, f"Exemple d’implantation dans la zone disponible (hauteur {f'{haut:g}'.replace('.', ',')} m)")]
     if batis:
         leg.append(("#7c828a", "Bâti existant"))
     parts.append("</svg>")
-    parts.append(_legende_html("Volume indicatif — terrain supposé plat.", leg, alerte=alerte))
+    parts.append(_legende_html("Volume indicatif — terrain supposé plat.", leg))
     return "".join(parts)

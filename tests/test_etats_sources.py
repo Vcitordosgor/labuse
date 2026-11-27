@@ -136,3 +136,19 @@ def test_compteurs_derives_de_la_meme_liste(db_session, engine):
     pilotage_nouvelle_version = sum(1 for e in etats if e["etat"] == "nouvelle_version")
     catalogue_nouvelle_version = sum(1 for e in etats if e["etat"] == "nouvelle_version")
     assert pilotage_nouvelle_version == catalogue_nouvelle_version == cpt["nouvelle_version"]
+
+
+def test_catalogue_conserve_edition_verifiee_du_producteur(db_session):
+    from labuse.ingestion import seed_sources
+
+    seed_sources.seed(db_session)
+    db_session.execute(text(
+        "UPDATE data_sources SET source_millesime='situation 2026', "
+        "source_horizon_at='2026-01-01',last_sync_at=now() "
+        "WHERE name='DGFiP — parcelles des personnes morales'"))
+    seed_sources.seed(db_session)
+    edition, horizon = db_session.execute(text(
+        "SELECT source_millesime,source_horizon_at FROM data_sources "
+        "WHERE name='DGFiP — parcelles des personnes morales'")).one()
+    assert edition == "situation 2026"
+    assert horizon.isoformat() == "2026-01-01"

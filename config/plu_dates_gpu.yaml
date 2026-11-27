@@ -10,7 +10,7 @@
 # devinée. Les procédures reprennent les révisions générales / allégées relevées par le relecteur ; le
 # compteur de l'annuaire reste, lui, la source unique veille_plu (non modifiée).
 #
-# date_approbation = date d'approbation de la VERSION active (= date_mairie de plu_millesimes).
+# date_approbation_ecrite et derniere_modification_couverture proviennent de la couverture du PDF.
 # publication_gpu  = date de publication du lot au Géoportail de l'Urbanisme.
 # edition          = date d'édition matérielle du PDF (couverture), format libre.
 # modifications    = actes postérieurs à l'approbation (type/date/source/note).
@@ -18,24 +18,24 @@
 meta:
   source: "contre-audit relecteur 01-PLU-ASTRA.md (22/11/2026)"
 communes:
-  "97401": {publication_gpu: "2024-12-20"}
-  "97402": {publication_gpu: "2026-06-30"}
-  "97403": {publication_gpu: "2024-10-04"}
-  "97404": {publication_gpu: "2025-12-08", date_approbation_ecrite: "2017-06-22", edition: "22 juin 2017",
+  "97401": {date_approbation_ecrite: "2024-12-06", publication_gpu: "2024-12-20"}
+  "97402": {note: "La couverture indique une déclaration de projet emportant mise en compatibilité approuvée le 28/04/2026.", date_approbation_ecrite: "2019-11-30", publication_gpu: "2026-06-30"}
+  "97403": {date_approbation_ecrite: "2024-09-24", publication_gpu: "2024-10-04"}
+  "97404": {derniere_modification_couverture: "2024-12-04", publication_gpu: "2025-12-08", date_approbation_ecrite: "2017-06-22", edition: "22 juin 2017",
             modifications: [{type: "modification", date: "2024-12-04",
                              source: "couverture du règlement (vérifié p.1)",
                              note: "« 22 JUIN 2017 · Modifié le 4 décembre 2024 · PLU APPROUVE » — le lot GPU (millésime 2025-09-17) RE-DÉPOSE ce règlement ; la date du lot n'est PAS la date d'approbation écrite."}],
             procedures: [{type: "révision allégée", source: "relevé relecteur (L'Étang-Salé)"}]}
-  "97405": {publication_gpu: "2025-04-17"}
-  "97406": {publication_gpu: "2023-07-21", date_approbation_ecrite: "2013-05-29", edition: "2019 (CODRA)",
+  "97405": {date_approbation_ecrite: "2023-06-09", publication_gpu: "2025-04-17"}
+  "97406": {derniere_modification_couverture: "2019-03-11", publication_gpu: "2023-07-21", date_approbation_ecrite: "2013-05-29", edition: "2019 (CODRA)",
             modifications: [{type: "modification", date: "2019-03-11",
                              source: "couverture du règlement (vérifié p.1)",
                              note: "« Approuvé le 29 mai 2013 · Modifié le 11 mars 2019 » — le lot GPU (millésime 2023-05-27) RE-DÉPOSE ce règlement ; la date du lot n'est PAS la date d'approbation écrite."}]}
-  "97407": {publication_gpu: "2025-11-18",
+  "97407": {derniere_modification_couverture: "2024-01-30", date_approbation_ecrite: "2018-10-02", publication_gpu: "2025-11-18",
             note: "dépôt actif portant annulation partielle (secteur portuaire) + jugement joint"}
-  "97408": {publication_gpu: "2026-10-29",
+  "97408": {derniere_modification_couverture: "2025-12-17", date_approbation_ecrite: "2019-06-12", publication_gpu: "2026-10-29",
             procedures: [{type: "révision allégée", source: "relevé relecteur (La Possession)"}],
-            note: "Texte indexé = édition déc. 2025 (sur pièce) ; le lien « PDF ↗ » ouvre l'édition active juin 2026 (texte identique sur l'échantillon vérifié, pagination des ancres #page à confirmer entre éditions)."}
+            note: "Règlement écrit du dépôt 97408_PLU_20260625, publié au Géoportail le 29/10/2026."}
   "97409": {note: "PLU 2019 opposable (mairie). Aucun lot téléchargeable renvoyé par le GPU — lien mairie."}
   "97410": {publication_gpu: "2020-09-22",
             modifications: [{type: "modification", date: "2026-06-30",
@@ -45,28 +45,30 @@ communes:
   "97411": {publication_gpu: "2026-08-24", edition: "février 2024", date_approbation_ecrite: "2024-02",
             procedures: [{type: "révision générale", source: "relevé relecteur (Saint-Denis)"}],
             note: "Document écrit = Modification simplifiée n°8 du PLU, dossier approuvé FÉVRIER 2024 (couverture, vérifié p.1 : « DOSSIER APPROUVE FEVRIER 2024 » — mois seul, pas de quantième) ; déposé au GPU le 05/08/2026 (millésime du lot) — la date du lot n'est PAS la date du règlement écrit."}
-  "97412": {publication_gpu: "2026-07-02",
+  "97412": {edition: "décembre 2025", derniere_modification_couverture: "2025-12-10", date_approbation_ecrite: "2019-06-26", publication_gpu: "2026-07-02",
             note: "pack GPU : règlement + annexes + données de zonage ; aucun PDF identifié comme plan/règlement graphique"}
   "97413": {note: "PLU 2007 opposable (mairie). Aucun lot téléchargeable renvoyé par le GPU — lien mairie."}
-  "97414": {publication_gpu: "2026-07-22",
+  "97414": {derniere_modification_couverture: "2025-07-09", date_approbation_ecrite: "2014-03-11", publication_gpu: "2026-07-22",
             procedures: [{type: "révision générale", source: "relevé relecteur (Saint-Louis)"}]}
-  "97415": {publication_gpu: "2026-03-09", edition: "mars 2026",
+  "97415": {derniere_modification_couverture: "2025-03-27", date_approbation_ecrite: "2012-09-27", publication_gpu: "2026-03-09", edition: "mars 2026",
             procedures: [{type: "révision générale", source: "relevé relecteur (Saint-Paul)"}],
-            note: "PLU initial approuvé le 27/09/2012 ; version active approuvée le 17/12/2025 ; édition PDF mars 2026 ; publiée au GPU le 09/03/2026"}
-  "97416": {publication_gpu: "2024-07-16", edition: "juin 2024",
+            note: "PLU initial approuvé le 27/09/2012 ; édition PDF mars 2026 ; publiée au GPU le 09/03/2026"}
+  "97416": {publication_gpu: "2024-07-16", edition: "juin 2024", date_approbation_ecrite: "2024-06",
             procedures: [{type: "modification n°1", source: "enquête publique en cours — clôture le 30/10/2026"}],
-            note: "Version d'approbation juin 2024 (couverture, vérifié p.1) ; modification n°1 à l'enquête publique jusqu'au 30/10/2026 — non encore approuvée, donc non opposable et non servie."}
-  "97418": {publication_gpu: "2026-03-09"}
-  "97419": {publication_gpu: "2019-08-14"}
-  "97420": {publication_gpu: "2025-10-20"}
-  "97421": {publication_gpu: "2022-10-27"}
+            note: "Version d'approbation juin 2024 (couverture, vérifié p.1 : MOIS seul, pas de quantième) ; modification n°1 à l'enquête publique jusqu'au 30/10/2026 — non encore approuvée, donc non opposable et non servie."}
+  "97418": {date_approbation_ecrite: "2025-11-26", publication_gpu: "2026-03-09"}
+  "97419": {date_approbation_ecrite: "2019-05-04", publication_gpu: "2019-08-14"}
+  "97420": {date_approbation_ecrite: "2025-09-29", publication_gpu: "2025-10-20"}
+  "97421": {date_approbation_ecrite: "2022-05-24", publication_gpu: "2022-10-27"}
   "97422": {publication_gpu: "2023-10-13", date_approbation_ecrite: "2018-12-08",
             procedures: [{type: "révision générale", source: "relevé relecteur (Le Tampon)"}],
             note: "Couverture (vérifié p.1) : « Prescrit le 14 avril 2008 · Arrêté le 2 février 2018 · Approuvé le 8 décembre 2018 » ; le lot GPU (millésime 2023-08-11) RE-DÉPOSE ce règlement — la date du lot n'est PAS la date d'approbation écrite."}
-  "97423": {publication_gpu: "2023-05-31",
+  "97423": {derniere_modification_couverture: "2022-06-02", date_approbation_ecrite: "2017-02-21", publication_gpu: "2023-05-31",
             modifications: [{type: "modification", date: "2022-06-02",
-                             source: "couverture du règlement (relecteur)",
-                             note: "modifié le 02/06/2022 — l'en-tête ne doit pas masquer cette modification"}]}
+                             source: "Couverture du règlement, p. 1"}, {type: "mise en compatibilité", date: "2026-08-27",
+                             source: "Conseil municipal, point 2.6, p. 2",
+                             url: "https://docs.trois-bassins.re/arretes-delibarations/CM/2026/27AOUT2026/LISTE-DES-DELIBERATIONS-EXAMINEES_CM_27082026.pdf#page=2",
+                             note: "Secteur des Zattes – Littoral Sud. Déclaration de projet approuvée à la majorité. Date d’entrée en vigueur non établie par cette pièce."}]}
   "97424": {publication_gpu: "2024-04-04", date_approbation_ecrite: "2008-02-06", edition: "2018 (CODRA)",
             modifications: [{type: "mise à jour", date: "2018-03-05",
                              source: "couverture du règlement (vérifié p.1)",

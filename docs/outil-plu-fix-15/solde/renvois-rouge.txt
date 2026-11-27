@@ -1,0 +1,30 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert 'rattachement...t, à vérifier' == 'renvoi à la ...dicée (p. 75)'
+      
+      - renvoi à la zone Ub dans le chapitre AU indicée (p. 75)
+      + rattachement non établi dans le règlement écrit, à vérifier
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde_absences.py:96: AssertionError: assert 'rattachement...t, à vérifier' == 'renvoi à la ...dicée (p. 75)'
+E   AssertionError: assert ('ARTICLE AUINDICEE 2' == 'ARTICLE AUINDICEE 12'
+      
+      - ARTICLE AUINDICEE 12
+      ?                   -
+      + ARTICLE AUINDICEE 2)
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde_absences.py:109: AssertionError: assert ('ARTICLE AUINDICEE 2' == 'ARTICLE AUINDICEE 12'
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_plu_solde_absences.py::test_plaine_carte_ub_explique_le_renvoi_imprime_page_75
+FAILED tests/test_plu_solde_absences.py::test_trois_bassins_priorise_le_bareme_au_mot_incident
+2 failed, 16 deselected, 5 warnings in 5.25s

@@ -9,6 +9,25 @@ def test_lint_registre_reel_passe():
     assert V.lint() == []
 
 
+def test_communes_en_procedure_actives_seulement():
+    """OUTIL-COMMUNES-FIX-9 LOT D — DÉPLACÉ ICI depuis test_simulplu.py (module marqué `db`, donc
+    invisible au hook `-m "not db"`). Test PUR (registre seul, aucune base) : le radar remonte TOUTES
+    les procédures actives servies (SOURCE, révision/élaboration, non dormantes) et RIEN d'autre.
+    Robuste à l'ajout d'une nouvelle révision (superset), mais casse si une dormante / clôturée /
+    « aucune » fuit, ou si une des révisions générales connues disparaît."""
+    items = V.communes_en_procedure()
+    insees = {it["insee"] for it in items}
+    # les 8 révisions générales SOURCE prescrites (non dormantes) remontent toutes
+    assert {"97404", "97406", "97409", "97411", "97413", "97414", "97415", "97423"} <= insees
+    # exclusions dures : Saint-Philippe dormante, Sainte-Marie / Sainte-Suzanne clôturées, communes « aucune »
+    assert "97417" not in insees
+    assert not ({"97418", "97420", "97405", "97407", "97408", "97422"} & insees)
+    # le radar est le point de calcul unique = exactement les entrées `procedure_active` du registre
+    assert insees == {i for i, e in V._registre().items() if V.procedure_active(e)}
+    for it in items:                       # chaque item porte son type, sa date et son état (sans DB)
+        assert it["type"] and it["date_acte"] and it["etat"]
+
+
 def test_lint_refuse_entree_incomplete():
     bad = {"97499": {"commune": "X", "procedure": "revision_plu"}}  # champs manquants
     errs = V.lint(bad)
@@ -60,11 +79,11 @@ def test_geste_trimestriel_vide_apres_curation_et_detecte_vieillissement():
     # dernier constat reste au 2026-08-06 — Étang-Salé, Saint-Denis, Saint-Louis, Saint-Paul.)
     r45 = V.a_reverifier(reg, datetime.date(2026, 9, 20))
     assert r45 and all(x["seuil"] == 30 and x["actif"] for x in r45)
-    # +106 j : tout le monde sort SAUF les entrées fraîchement re-constatées le 2026-11-24 (date_constat
-    # postérieure au 2026-11-20 → pas encore dues) : PLU approuvés (Sainte-Marie/Sainte-Suzanne) et
-    # révisions re-datées d'une pièce récente (Plaine 27/11/2025, Saint-Leu 18/11/2026, Saint-André
-    # 09/09/2025, Trois-Bassins mai 2025). Robuste : calculé du registre, pas un compte figé.
-    recentes = {i for i, e in reg.items() if e.get("date_constat") == "2026-11-24"}
+    # +106 j : tout le monde sort SAUF les entrées fraîchement re-constatées APRÈS le 2026-11-20
+    # (date_constat postérieure → pas encore dues) : PLU approuvés (Sainte-Marie/Sainte-Suzanne) et
+    # révisions re-vérifiées récemment (Saint-André, Saint-Leu, Trois-Bassins au 2026-11-24 ; La Plaine
+    # au 2026-11-25). Robuste : calculé du registre vs le MÊME seuil que `a_reverifier`, pas une date figée.
+    recentes = {i for i, e in reg.items() if (e.get("date_constat") or "") > "2026-11-20"}
     due = V.a_reverifier(reg, datetime.date(2026, 11, 20))
     due_insee = {x["insee"] for x in due}
     assert due_insee.isdisjoint(recentes), f"communes fraîchement recurées dues à tort : {due_insee & recentes}"

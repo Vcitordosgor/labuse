@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { banAutocomplete, deleteLogo, getCommunes, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markEventRead, modPatrimoineSearch, parcelAt, patchDigestFrequence, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
 import { estIdu, estSectionNumero, iduComplet, normSectionNumero, ilYA, fmtDateLong } from '../../lib/format'
 import { communePastille, trierCommunes } from '../../lib/communes'
@@ -83,12 +83,20 @@ export function Omnibox() {
   // projet du compte · commune · adresse. Nom et SIREN ouvrent Scan patrimoine à l'ÉTAT 2 (propriétaire
   // posé, via setM02Prefill) ; un projet ouvre le projet (setOpenProjet). La résolution propriétaire
   // RÉUTILISE la recherche self-contained de Scan patrimoine (modPatrimoineSearch) — pas une 4e impl.
-  const { select, setView, commune, setToast, setM02Prefill, setModule } = useApp()
+  const { focusParcelle, setView, commune, setToast, setM02Prefill, setModule } = useApp()
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
   const ouvrirScan = (siren: string) => { setM02Prefill(siren); setModule('patrimoine') }
   // M55-B point 3 : la recherche « lancée » (loupe ou Entrée sans suggestion) doit se VOIR —
   // spinner sobre dans le bouton pendant la résolution ; l'état vide reste le toast honnête.
   const [searching, setSearching] = useState(false)
+
+  const revision = useRef(0)
+  useEffect(() => () => { revision.current++ }, [])
+  const annulerRecherche = () => { revision.current++; setSearching(false) }
+  const ouvrirParcelle = (idu: string) => {
+    setView('cartes')
+    focusParcelle(idu, { fiche: true })
+  }
 
   // raccourci « / » → focus de l'omnibox (le kbd a disparu mais le raccourci reste, pratique)
   useEffect(() => {
@@ -114,11 +122,12 @@ export function Omnibox() {
   //  3. sinon la parcelle la PLUS PROCHE, avec sa distance indiquée (parcelAt la sert désormais —
   //     point BAN sur voirie/hors cadastre). On n'affiche plus « aucune adresse/aucune parcelle »
   //     tant que la base n'est pas vide (cas où idu ET parcelle la plus proche sont absents).
-  const onPickAddress = async (sel: AddressSelection) => {
-    if (sel.idu) { setView('cartes'); select(sel.idu); return }
+  const ouvrirAdresse = async (sel: AddressSelection, demande: number) => {
+    if (sel.idu) { ouvrirParcelle(sel.idu); return }
     const at = await parcelAt(sel.lon, sel.lat).catch(() => null)
+    if (revision.current !== demande) return
     if (at?.idu) {
-      setView('cartes'); select(at.idu)
+      ouvrirParcelle(at.idu)
       if (at.distance_m != null && at.distance_m > 0) {
         setToast(`« ${sel.label} » — pas de parcelle exactement à ce point ; ouverture de la plus proche (${Math.round(at.distance_m)} m).`)
       }
@@ -132,6 +141,7 @@ export function Omnibox() {
   // serait géocodé en une parcelle au lieu d'ouvrir le périmètre de la commune — écart assumé.)
   const onEnterRaw = async (raw: string) => {
     if (!raw) return
+    const demande = ++revision.current
     setSearching(true)
     try {
       const val = raw.trim()
@@ -141,9 +151,16 @@ export function Omnibox() {
       if (estIdu(val)) {
         const idu = iduComplet(dg.toUpperCase())
         const localHit = geo.data?.features.find((f) => String(f.properties?.idu ?? '').toUpperCase() === idu)
-        if (localHit) { setView('cartes'); select(idu); return }
+        if (localHit) { ouvrirParcelle(idu); return }
         const rem = await searchParcels(idu, { ileEntiere: true }).catch(() => [])
-        if (rem[0]) { setView('cartes'); select(rem[0].idu); return }
+        if (revision.current !== demande) return
+        const exacte = rem.find((r) => iduComplet(r.idu).toUpperCase() === idu)
+        if (exacte) { ouvrirParcelle(exacte.idu); return }
+        if (idu.length === 14 && /[A-Z]/.test(idu)) {
+          setToast(`Aucune parcelle « ${idu} » trouvée.`)
+          return
+        }
+        if (rem[0]) { ouvrirParcelle(rem[0].idu); return }
       }
 
       // 2. SIREN (9) / SIRET (14) → Scan patrimoine à l'état 2 (propriétaire posé)
@@ -158,10 +175,11 @@ export function Omnibox() {
         const needle = normSectionNumero(val)
         const cands = (await searchParcels(needle, { ileEntiere: true }).catch(() => []))
           .filter((r) => iduComplet(r.idu).toUpperCase().endsWith(needle))
-        if (cands.length === 1) { setView('cartes'); select(cands[0].idu); return }
+        if (revision.current !== demande) return
+        if (cands.length === 1) { ouvrirParcelle(cands[0].idu); return }
         if (cands.length > 1) {
           const daccord = commune ? cands.find((c) => c.commune === commune) : undefined
-          if (daccord) { setView('cartes'); select(daccord.idu); return }
+          if (daccord) { ouvrirParcelle(daccord.idu); return }
           const comms = [...new Set(cands.map((c) => c.commune))]
           setToast(`« ${val.toUpperCase()} » existe dans ${comms.length} communes (${comms.slice(0, 4).join(', ')}${comms.length > 4 ? '…' : ''}) — ouvrez la commune, puis ressaisissez la référence.`)
           return
@@ -172,7 +190,8 @@ export function Omnibox() {
 
       // 3. NOM de propriétaire → Scan patrimoine état 2 (réutilise la recherche de Scan patrimoine)
       if (/[a-zA-Zà-ÿ]/.test(val)) {
-        const owners = await modPatrimoineSearch(val).catch(() => [])
+        const owners = await modPatrimoineSearch(val).then(r => r.resultats).catch(() => [])
+        if (revision.current !== demande) return
         if (owners[0]) { ouvrirScan(owners[0].siren); return }
       }
 
@@ -186,18 +205,20 @@ export function Omnibox() {
         const idu = String(f.properties?.idu ?? '').toUpperCase()
         return idu.includes(qn) || idu.slice(8).includes(qn)
       })
-      if (hit) { setView('cartes'); select(String(hit.properties?.idu)); return }
+      if (hit) { ouvrirParcelle(String(hit.properties?.idu)); return }
       const remote = await searchParcels(qn, { ileEntiere: true }).catch(() => [])
-      if (remote[0]) { setView('cartes'); select(remote[0].idu); return }
+      if (revision.current !== demande) return
+      if (remote[0]) { ouvrirParcelle(remote[0].idu); return }
 
       // 7. ADRESSE libre → 1re suggestion interne → parcelle
       if (/[a-zA-Zà-ÿ]/.test(val)) {
         const feats = await banAutocomplete(val).catch(() => [])
-        if (feats[0]) { await onPickAddress({ label: feats[0].label, lon: feats[0].lon, lat: feats[0].lat, idu: feats[0].idu }); return }
+        if (revision.current !== demande) return
+        if (feats[0]) { await ouvrirAdresse({ label: feats[0].label, lon: feats[0].lon, lat: feats[0].lat, idu: feats[0].idu }, demande); return }
       }
       setToast(`Aucun résultat (IDU, SIREN, propriétaire ou adresse) pour « ${val} »`)
     } finally {
-      setSearching(false)
+      if (revision.current === demande) setSearching(false)
     }
   }
 
@@ -211,7 +232,6 @@ export function Omnibox() {
       {/* DA §10 — LA LOUPE EST DANS LE CHAMP (leading). Elle reste cliquable (lance la recherche
           sur le texte courant) ; pendant la résolution elle devient un spinner sobre (M55-B). */}
       <button
-        disabled={searching}
         onClick={() => {
           const el = document.querySelector<HTMLInputElement>('[data-omnibox]')
           if (el) onEnterRaw(el.value.trim())
@@ -230,7 +250,8 @@ export function Omnibox() {
       </button>
       <AddressAutocomplete
         data-omnibox
-        onSelect={onPickAddress}
+        onTextChange={annulerRecherche}
+        onSelect={(sel) => ouvrirAdresse(sel, ++revision.current)}
         onEnterRaw={onEnterRaw}
         // RECETTE-2 S5 (décision Vic) — l'omnibox propose les grammaires QUI ATTERRISSENT :
         // adresse, référence cadastrale, propriétaire (PM) et SIREN. « commune » et « projet »

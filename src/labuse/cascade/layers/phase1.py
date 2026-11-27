@@ -674,7 +674,10 @@ class RisquesLayer(Layer):
         def _interdit(i) -> bool:
             a = i.attrs or {}
             return est_interdit_ligne(i.subtype, a.get("code_degre"), a.get("code_risque"))
-        inters = [i for i in ctx.intersections(parcel.id, kind_ppr) if i.coverage > 0]
+        # Une assiette PM1 délimite une servitude. Seules les zones du règlement
+        # entrent dans le calcul PPR, y compris en présence d'une ancienne copie PM1.
+        inters = [i for i in ctx.intersections(parcel.id, kind_ppr)
+                  if i.coverage > 0 and str((i.attrs or {}).get("suptype") or "").strip().upper() != "PM1"]
 
         # CHASSE-INVARIANTS-FIX-1 Lot 2 (E-03/E-11) — le PPR ROUGE se juge sur l'UNION des polygones
         # INTERDICTION, JAMAIS polygone par polygone : plusieurs rouges < 50 % chacun mais ≥ 50 %
@@ -791,10 +794,23 @@ class RisquesLayer(Layer):
         for i in ctx.intersections(parcel.id, kind_alea):
             if i.coverage <= 0:
                 continue
-            niveau = (i.attrs or {}).get("niveau", "moyen")
+            attrs = i.attrs or {}
+            niveau = attrs.get("niveau", "moyen")
+            alea_type = attrs.get("type") or i.subtype or "naturel"
+            classe = attrs.get("classe") or niveau
+            source_document = attrs.get("document")
+            date = attrs.get("date_pac")
+            contexte = (f" Carte d’aléa, document {source_document}." if source_document else "")
+            if date:
+                contexte += f" Porter à connaissance du {date}."
+            if niveau == "negligeable":
+                verdicts.append(passed(self.name, f"Aléa {alea_type} — niveau négligeable.{contexte}",
+                                       source=SRC_DEAL_PPR))
+                continue
             sev = Severity(sev_map.get(niveau, niveau if niveau in ("faible", "moyen", "fort") else "moyen"))
-            alea_type = (i.attrs or {}).get("type", i.subtype or "aléa")
-            verdicts.append(soft_flag(self.name, f"Aléa {alea_type} — niveau {niveau}.", sev, source=SRC_GEORISQUES))
+            libelle = {"tres_fort": "très fort", "tres_eleve": "très élevé", "eleve": "élevé"}.get(classe, niveau)
+            verdicts.append(soft_flag(self.name, f"Aléa {alea_type} — niveau {libelle}.{contexte}",
+                                      sev, source=SRC_DEAL_PPR))
 
         # CHASSE-FIX-1 (C22) — une famille non couverte sur la commune est DITE non couverte
         # (unknown), jamais fondue dans un « Aucun risque ».

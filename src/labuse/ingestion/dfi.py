@@ -24,7 +24,7 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-PARQUET_URL = "https://dataeng-open.s3.rbx.io.cloud.ovh.net/dfi/dfi.parquet"
+PARQUET_URL = "https://data-pipeline-open.s3.sbg.io.cloud.ovh.net/dfi/dfi.parquet"
 SOURCE_NAME = "DFI — documents de filiation informatisés (DGFiP)"
 
 DDL = """

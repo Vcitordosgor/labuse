@@ -1,0 +1,5 @@
+EMPREINTE AVANT : {'count': 0, 'hash': 0}
+SAUVEGARDE : pc_caducs_bak_fix15__20261125_225822 (0 ligne(s))
+build_pc_caducs -> {'total': 4440}
+EMPREINTE APRÈS : {'count': 4440, 'hash': 68959539096}
+ATTENDU 4440 : OK

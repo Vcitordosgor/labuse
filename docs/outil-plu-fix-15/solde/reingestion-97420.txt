@@ -1,0 +1,6 @@
+  ✓ purge 97420 : 90 extrait(s) supprimé(s)
+  ✓ 97420 97420_reglement_20250929.pdf : 99 extraits article
+  ✓ 97420 Sainte-Suzanne : 1 document(s), 99 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 99 extraits · 21 communes en base
+REINGEST_DONE

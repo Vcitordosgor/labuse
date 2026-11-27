@@ -588,12 +588,10 @@ def test_distance_seuil_grand_batiment():
                                  min_m_grand_batiment=6.0, seuil_logements_grand_batiment=5,
                                  article="Ua8.2", citation="…")
 
-    class _Cap:
-        niveaux = 2
     class _Conv:
         hauteur_etage_m = 3.0
-    req5, lib5, _ = C._distance_requise(dc, _Cap(), _Conv(), max_logts_bati=5)
-    req6, lib6, _ = C._distance_requise(dc, _Cap(), _Conv(), max_logts_bati=6)
+    req5, lib5, _ = C.distance_requise(dc, 2, _Conv(), max_logts_bati=5)
+    req6, lib6, _ = C.distance_requise(dc, 2, _Conv(), max_logts_bati=6)
     assert req5 == 3.0 and "aucun bâtiment > 5" in lib5
     assert req6 == 6.0 and "6 logements > 5" in lib6
 

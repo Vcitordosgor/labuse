@@ -161,6 +161,7 @@ class Settings(BaseSettings):
     pilot_commune_insee: str = "97415"
     pilot_commune_name: str = "Saint-Paul"
 
+    mnt5m_path: str = "data/mnt5m/reunion.tif"
     config_dir: str = "config"
     http_timeout_s: float = 20.0
 
@@ -168,6 +169,7 @@ class Settings(BaseSettings):
     # lu par la scène 3D du Gabarit. Construit par scripts/gabarit_3d_fond.py ; hors-git (data/*).
     # Absent → la scène se dégrade (terrain en lacune), jamais une erreur. LABUSE_MNT1M_COG_PATH.
     mnt1m_cog_path: str = "data/mnt1m/fond_1m.tif"
+    mnt5m_path: str = "data/mnt5m/reunion.tif"
 
     # RADAR (pige) — répertoire PRIVÉ des captures : hors racine publique, jamais servi par le web,
     # inclus au backup (mandat RADAR V0 §2). Surchargé par LABUSE_PIGE_CAPTURES_DIR en dev/tests.
@@ -522,6 +524,10 @@ class Settings(BaseSettings):
         p = Path(self.mnt1m_cog_path)
         return p if p.is_absolute() else _repo_root() / p
 
+    @property
+    def mnt5m_file(self) -> Path:
+        return _repo_root() / self.mnt5m_path
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
@@ -590,6 +596,16 @@ def load_yaml_config(name: str) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"Config {name} : racine YAML attendue = mapping, obtenu {type(data)}")
     return data
+
+
+def approbation_couverture_plu(insee: str) -> str | None:
+    """Date de la couverture, au jour ou au mois selon la précision de la pièce."""
+    try:
+        communes = load_yaml_config("plu_dates_gpu").get("communes", {})
+    except FileNotFoundError:
+        return None
+    date = communes.get(insee, {}).get("date_approbation_ecrite")
+    return "/".join(reversed(date.split("-"))) if date else None
 
 
 def cascade_rules() -> dict[str, Any]:

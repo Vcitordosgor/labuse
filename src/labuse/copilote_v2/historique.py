@@ -35,6 +35,10 @@ ALTER TABLE copilote_messages ADD COLUMN IF NOT EXISTS payload jsonb;
 -- SEUL espace partagé (un visiteur lisait la mémoire d'un autre). On grave le `sujet` (jeton de
 -- SESSION, `protection.sujet_de` : « s:<hash cookie> » ou « ip:<hash> ») ; la cloison anonyme se fait
 -- DÉSORMAIS sur ce sujet, jamais sur NULL nu. Comptes connectés : sujet NULL, cloison par compte_id.
+ALTER TABLE copilote_messages ADD COLUMN IF NOT EXISTS reponse jsonb;
+ALTER TABLE copilote_messages ADD COLUMN IF NOT EXISTS request_id uuid;
+CREATE INDEX IF NOT EXISTS ix_copilote_msg_request ON copilote_messages (request_id) WHERE request_id IS NOT NULL;
+ALTER TABLE copilote_conversations ADD COLUMN IF NOT EXISTS contexte_depuis timestamptz;
 ALTER TABLE copilote_conversations ADD COLUMN IF NOT EXISTS sujet varchar(24);
 CREATE INDEX IF NOT EXISTS ix_copilote_conv_sujet ON copilote_conversations (sujet, updated_at DESC);
 """
@@ -58,16 +62,34 @@ def _titre(message: str) -> str:
     return (t[:57] + "…") if len(t) > 58 else (t or "Nouvelle conversation")
 
 
+class ConversationIntrouvable(Exception):
+    """Le fil demandé est absent du périmètre de la session."""
+
+
+def reponse_enregistree(db, request_id, compte_id, sujet):
+    """Sérialise les répétitions de la même demande et relit uniquement la réponse du titulaire."""
+    db.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:k, 0))"), {"k": str(request_id)})
+    row = db.execute(text(
+        "SELECT m.texte, m.intent, m.reponse, c.id FROM copilote_messages m "
+        "JOIN copilote_conversations c ON c.id=m.conversation_id "
+        "WHERE m.request_id=:k AND " + _cloison()),
+        {"k": request_id, "c": compte_id, "s": sujet}).mappings().first()
+    if row:
+        return {**(row["reponse"] or {}), "text": row["texte"], "intent": row["intent"],
+                "conversation_id": row["id"]}
+    return None
+
+
 def enregistrer(db: Session, *, compte_id: int | None, conversation_id: int | None,
                 message: str, reponse: dict, payload: dict | None = None,
-                sujet: str | None = None) -> int | None:
+                sujet: str | None = None, request_id=None) -> int | None:
     """Journalise un tour (message client + réponse Copilote). Crée la conversation au 1er tour
     (titre = 1re demande). `payload` (M102-B1) = contexte d'interprétation du tour (intent +
     params du routeur), relu par fil(). `sujet` (lot 6) = jeton de session anonyme (grave la cloison
     hors compte). Retourne l'id de conversation."""
     import json
     try:
-        db.execute(text(DDL))
+        from ..config import get_settings
         cid = conversation_id
         if cid is None:
             cid = db.execute(text(
@@ -76,19 +98,27 @@ def enregistrer(db: Session, *, compte_id: int | None, conversation_id: int | No
                 {"c": compte_id, "s": (sujet if compte_id is None else None),
                  "t": _titre(message), "r": reponse.get("run_id")}).scalar()
         else:
-            db.execute(text("UPDATE copilote_conversations c SET updated_at = now() "
-                            "WHERE c.id = :i AND " + _cloison("c")),
-                       {"i": cid, "c": compte_id, "s": sujet})
+            cid = db.execute(text("UPDATE copilote_conversations c SET contexte_depuis = CASE "
+                            "WHEN updated_at < now()-make_interval(mins => :ttl) THEN now() "
+                            "ELSE contexte_depuis END, updated_at = now() "
+                            "WHERE c.id = :i AND " + _cloison("c") + " RETURNING id"),
+                       {"i": cid, "c": compte_id, "s": sujet,
+                        "ttl": get_settings().copilote_v2_contexte_ttl_minutes}).scalar()
+            if cid is None:
+                raise ConversationIntrouvable
         db.execute(text("INSERT INTO copilote_messages (conversation_id, role, texte, intent) "
-                        "VALUES (:i, 'client', :t, NULL)"), {"i": cid, "t": message[:2000]})
-        db.execute(text("INSERT INTO copilote_messages (conversation_id, role, texte, intent, payload) "
-                        "VALUES (:i, 'copilote', :t, :n, CAST(:p AS jsonb))"),
-                   {"i": cid, "t": (reponse.get("text") or "")[:4000], "n": reponse.get("intent"),
+                        "VALUES (:i, 'client', :t, NULL)"), {"i": cid, "t": message})
+        db.execute(text("INSERT INTO copilote_messages (conversation_id, role, texte, intent, payload, reponse, request_id) "
+                        "VALUES (:i, 'copilote', :t, :n, CAST(:p AS jsonb), CAST(:r AS jsonb), :k)"),
+                   {"i": cid, "k": request_id, "t": reponse.get("text") or "", "n": reponse.get("intent"),
+                    "r": json.dumps({k: v for k, v in reponse.items() if k not in ("text", "intent")}, default=str),
                     "p": json.dumps(payload, ensure_ascii=False) if payload else None})
         return cid
+    except ConversationIntrouvable:
+        raise
     except Exception:
         db.rollback()
-        return conversation_id
+        return None
 
 
 def fil(db: Session, compte_id: int | None, conversation_id: int,
@@ -105,6 +135,7 @@ def fil(db: Session, compte_id: int | None, conversation_id: int,
             "JOIN copilote_conversations c ON c.id = m.conversation_id "
             "WHERE m.conversation_id = :i AND " + _cloison("c") + " "
             "  AND c.updated_at >= now() - make_interval(mins => :ttl) "
+            "AND (c.contexte_depuis IS NULL OR m.ts >= c.contexte_depuis) "
             "ORDER BY m.ts DESC, m.id DESC LIMIT :n"),
             {"i": conversation_id, "c": compte_id, "s": sujet, "ttl": int(ttl_minutes),
              "n": int(max_tours) * 2}).mappings().all()
@@ -120,14 +151,17 @@ def fil(db: Session, compte_id: int | None, conversation_id: int,
     return history, prior
 
 
-def lister(db: Session, compte_id: int | None, limite: int = 40, sujet: str | None = None) -> list[dict]:
+def lister(db: Session, compte_id: int | None, limite: int = 40, sujet: str | None = None,
+           avant=None, avant_id: int = 0) -> list[dict]:
     """Les missions passées du compte (titre auto, date, statut) — pour rouvrir. Cloison lot 6 :
     compte connecté par compte_id, visiteur anonyme par sujet de session (jamais le NULL partagé)."""
     rows = db.execute(text(
         "SELECT c.id, c.titre, c.statut, c.run_id, c.updated_at, "
         "  (SELECT count(*) FROM copilote_messages m WHERE m.conversation_id = c.id) AS n_messages "
         "FROM copilote_conversations c WHERE " + _cloison("c") + " "
-        "ORDER BY c.updated_at DESC LIMIT :l"), {"c": compte_id, "s": sujet, "l": limite}).mappings().all()
+        "AND (CAST(:avant AS timestamptz) IS NULL OR (c.updated_at, c.id) < (:avant, :avant_id)) "
+        "ORDER BY c.updated_at DESC, c.id DESC LIMIT :l"),
+        {"c": compte_id, "s": sujet, "l": limite, "avant": avant, "avant_id": avant_id}).mappings().all()
     return [dict(r) for r in rows]
 
 
@@ -135,13 +169,14 @@ def charger(db: Session, compte_id: int | None, conversation_id: int, sujet: str
     """Restaure une conversation (ses messages, et le run_id si mission RECHERCHE à rejouer).
     Cloison lot 6 : un id étranger (autre compte OU autre session anonyme) → None → 404."""
     conv = db.execute(text(
-        "SELECT c.id, c.titre, c.statut, c.run_id, c.created_at FROM copilote_conversations c "
+        "SELECT c.id, c.titre, c.statut, c.run_id, c.created_at, c.updated_at FROM copilote_conversations c "
         "WHERE c.id = :i AND " + _cloison("c")),
         {"i": conversation_id, "c": compte_id, "s": sujet}).mappings().first()
     if not conv:
         return None
     msgs = db.execute(text(
-        "SELECT role, texte, intent, ts FROM copilote_messages WHERE conversation_id = :i ORDER BY ts"),
+        "SELECT role, texte, intent, ts, to_jsonb(m)->'reponse' AS reponse FROM copilote_messages m "
+        "WHERE conversation_id = :i ORDER BY ts, id"),
         {"i": conversation_id}).mappings().all()
     return {**dict(conv), "messages": [dict(m) for m in msgs]}
 

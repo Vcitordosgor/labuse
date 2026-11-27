@@ -1,0 +1,11 @@
+=== REPRODUCTION — fixture id>snapshot, labuse_test PARTAGÉE, 2 suites entrelacées ===
+  suite A : max(id) au départ = 0
+  suite B : max(id) au départ = 0
+  suite A insère son compte -> id 62518
+  suite B insère son compte -> id 62519  (B tourne ENCORE)
+  … suite A TERMINE la première : DELETE comptes WHERE id > 0
+  → compte de la suite B (id 62519) encore présent ? False  (attendu False = EFFACÉ par A)
+  → compte de la suite A (id 62518) encore présent ? False
+
+CONCLUSION : OUI, le risque est réel — la fin de session d'une suite efface les lignes qu'une
+autre suite partageant labuse_test vient de créer (id > photo commune).

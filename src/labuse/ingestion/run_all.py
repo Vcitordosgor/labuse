@@ -58,7 +58,7 @@ def _commune_bbox(session: Session, name: str) -> tuple[float, float, float, flo
 
 def purge_commune(session: Session, name: str) -> None:
     """Efface les données d'une commune (reprise propre, idempotence). Atomique avec l'ingestion."""
-    session.execute(text("DELETE FROM spatial_layers WHERE commune = :c"), {"c": name})
+    session.execute(text("DELETE FROM spatial_layers WHERE commune = :c AND kind NOT IN ('ppr','georisque_alea')"), {"c": name})
     session.execute(text("DELETE FROM dvf_mutations WHERE commune = :c"), {"c": name})
     # parcels : ON DELETE CASCADE → cascade_results / parcel_evaluations / parcel_source_results
     session.execute(text("DELETE FROM parcels WHERE commune = :c"), {"c": name})

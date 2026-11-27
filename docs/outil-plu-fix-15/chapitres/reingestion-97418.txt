@@ -1,0 +1,6 @@
+  ✓ purge 97418 : 62 extrait(s) supprimé(s)
+  ✓ 97418 97418_reglement_20251126.pdf : 79 extraits article · PAGINATION AMBIGUË
+  ✓ 97418 Sainte-Marie : 1 document(s), 79 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 79 extraits · 21 communes en base
+REINGEST_DONE

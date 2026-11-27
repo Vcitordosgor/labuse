@@ -1,0 +1,28 @@
+base = labuse_test (contrôlée) · event_log à compte NULL = 296
+
+=== AVANT ===
+  comptes            43511
+  event_log          658
+  ops_incidents      115
+  watch_zones        93
+  watched_parcels    88
+  veilles            419
+  saved_searches     383
+  notif_prefs        1542
+
+=== SUPPRIMÉ ===
+  comptes (+ filles CASCADE : event_log/watch_zones/watched_parcels/veilles/saved_searches/notif_prefs à compte non nul) : 43511 comptes
+  event_log (compte NULL — `systeme`/zone)                                : 296
+  ops_incidents                                                           : 115
+
+=== APRÈS ===
+  comptes            0
+  event_log          0
+  ops_incidents      0
+  watch_zones        0
+  watched_parcels    0
+  veilles            0
+  saved_searches     0
+  notif_prefs        0
+
+✓ backlog labuse_test purgé (base de test uniquement). La conftest empêche la ré-accumulation.

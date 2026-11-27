@@ -1,0 +1,93 @@
+zattes DOCUMENT dépôt 97423_PLU_20220602
+Approbation indiquée en couverture le 21/02/2017
+Dernière modification en couverture le 02/06/2022
+· millésime du lot (dépôt GPU) 02/06/2022
+· publiée au GPU le 31/05/2023
+⚠ modification du 02/06/2022
+⚠ mise en compatibilité du 27/08/2026 — Secteur des Zattes – Littoral Sud. Déclaration de projet approuvée à la majorité. Date d’entrée en vigueur non établie par cette pièce. Conseil municipal, point 2.6, p. 2
+Opposabilité SOUS RÉSERVE de cet acte postérieur (vérifiez en mairie l'état en vigueur).
+Indexé pour la recherche : ≈ 100 % des pages de texte (dont ≈ 89 % à l’article, 11 % au chapitre) · 5 pages en image (non indexées). [
+  'https://docs.trois-bassins.re/arretes-delibarations/CM/2026/27AOUT2026/LISTE-DES-DELIBERATIONS-EXAMINEES_CM_27082026.pdf#page=2'
+]
+possession DOCUMENT dépôt 97408_PLU_20260625
+Approbation indiquée en couverture le 12/06/2019
+Dernière modification en couverture le 17/12/2025
+· millésime du lot (dépôt GPU) 25/06/2026
+· publiée au GPU le 29/10/2026
+Procédure(s) en cours : révision allégée (source : contre-audit).
+Indexé pour la recherche : ≈ 100 % des pages de texte (dont ≈ 96 % à l’article, 4 % au chapitre) · 58 pages en image (non indexées).
+Règlement écrit du dépôt 97408_PLU_20260625, publié au Géoportail le 29/10/2026. Règlement écrit ↗ [
+  'https://data.geopf.fr/annexes/gpu/documents/DU_97408/77244f114938a3230afb98948d9498bc/97408_reglement_20260625.pdf'
+]
+port DOCUMENT dépôt 97407_PLU_20241209
+Approbation indiquée en couverture le 02/10/2018
+Dernière modification en couverture le 30/01/2024
+· millésime du lot (dépôt GPU) 09/12/2024
+· publiée au GPU le 18/11/2025
+Indexé pour la recherche : ≈ 100 % des pages de texte (dont ≈ 71 % à l’article, 29 % au chapitre).
+dépôt actif portant annulation partielle (secteur portuaire) + jugement joint Règlement écrit ↗ [
+  'https://data.geopf.fr/annexes/gpu/documents/DU_97407/8cdd92497a52e883eddd7330b3836873/97407_reglement_20241209.pdf'
+]
+louis-date DOCUMENT dépôt 97414_PLU_20251218
+Approbation indiquée en couverture le 11/03/2014
+Dernière modification en couverture le 09/07/2025
+· millésime du lot (dépôt GPU) 18/12/2025
+· publiée au GPU le 22/07/2026
+Procédure(s) en cours : révision générale (source : contre-audit).
+Indexé pour la recherche : ≈ 100 % des pages de texte (dont ≈ 100 % à l’article) · 3 pages en image (non indexées). []
+etang CARTE UA 2.7
+zone UA
+L'Étang-Salé
+
+Ua
+
+UA 2.7 – STATIONNEMENTS
+
+
+2.6.1 – Conditions générales
+Le stationnement des véhicules doit être assuré en dehors des voies publiques, sur leur terrain
+d’assiette.
+2.7.2 - Dimensions des places
+Les dimensions des places doi …
+
+Règl
+tampon INFOBULLE Art. Ud12.2 · p.67
+· logement locatif prêt aidé : une place au maximum par logement
+· foyer/résidence sociale (1 place pour 3)
+· résidence (1 place pour 3)
+· dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots) LIEN [ 'Art. Ud12.2 · p. 67' ]
+louis INFOBULLE Art. UA 12.2 · p.23
+· logement social : 1 place / logement
+· résidence personnes âgées (1 pour 3)
+· pour les opérations de plus de 10 logements, 0,5 place de stationnement public par logement LIEN [ 'Art. UA 12.2 · p. 23' ]
+saint-pierre DATE PLU
+i
+Approbation en couverture · 06/2024
+document
+pierre INFOBULLE Art. Ud6 · p.93
+· logement locatif social : 1 place / logement
+· hébergement (0,3 place par hébergement)
+· 0,5 place par parcelle pour les lotissements d'habitat individuel (espaces communs)
+· Haie paysagère (≥ 1,50 m) et voie piétonne au pourtour des aires de stationnement (Ud5.1, p. 92) — aménagement du plan NON modélisé par le moteur, à vérifier. LIEN [ 'Art. Ud6 · p. 93' ]
+saint-pierre href https://data.geopf.fr/annexes/gpu/documents/DU_97416/6c6320c68195297390a319acb951dc4b/97416_reglement_20240625.pdf#page=93
+cilaos CARTE rattachement non établi dans le règlement écrit, à vérifier
+entre-deux CARTE règle de la zone mère
+paul CARTE Livret 3 – Bassin de vie Plateau Caillou (p. 139)
+livrets [
+  [
+    'Livret 3 – Bassin de vie Plateau Caillou (p. 139)',
+    'https://data.geopf.fr/annexes/gpu/documents/DU_97415/0f717dab1a17e973d81fe6b5ea79fe22/97415_reglement_20251217.pdf#page=139'
+  ],
+  [
+    'Livret 4 – Bassin de vie La Plaine – Bois de Nèfles (p. 200)',
+    'https://data.geopf.fr/annexes/gpu/documents/DU_97415/0f717dab1a17e973d81fe6b5ea79fe22/97415_reglement_20251217.pdf#page=200'
+  ],
+  [
+    'Livret 5 – Bassin de vie La Saline (p. 246)',
+    'https://data.geopf.fr/annexes/gpu/documents/DU_97415/0f717dab1a17e973d81fe6b5ea79fe22/97415_reglement_20251217.pdf#page=246'
+  ],
+  [
+    'Livret 6 – Bassin de vie Guillaume (p. 306)',
+    'https://data.geopf.fr/annexes/gpu/documents/DU_97415/0f717dab1a17e973d81fe6b5ea79fe22/97415_reglement_20251217.pdf#page=306'
+  ]
+]

@@ -8,7 +8,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react'
  * labuse.immo). Mêmes durées, mêmes amortissements, même battement d'ailes.
  *
  * Trois règles :
- *  — une fois par session, pas à chaque navigation ;
+ *  — à chaque chargement complet, jamais sur une navigation interne ;
  *  — « animations réduites » dans le système → on passe directement à l'app ;
  *  — un clic ou une touche écourte l'animation.
  *
@@ -76,12 +76,8 @@ export function LogoIntro({ onFini }: { onFini?: () => void }) {
     const W = window.innerWidth
     const H = window.innerHeight
 
-    // Où l'oiseau va se ranger : le logo du rail, mesuré à l'écran.
-    const cible = document.querySelector<HTMLElement>('[data-logo-cible]')
-    const r = cible?.getBoundingClientRect()
-    const FIN_X = r ? r.left + r.width / 2 : 35
-    const FIN_Y = r ? r.top + r.height / 2 : 28
-    const FIN_L = r && r.width > 8 ? r.width : 40
+    // Le rail peut arriver après l’intro. Mesurer sa position au décollage.
+    let cible: DOMRect | undefined
 
     // Tailles relatives à la fenêtre, reprises des proportions de la vidéo.
     const AU_REPOS = clamp(W * 0.18, 190, 520)
@@ -106,11 +102,15 @@ export function LogoIntro({ onFini }: { onFini?: () => void }) {
         l = AU_REPOS
         amp = 34 * d
       } else {
+        cible ??= document.querySelector('[data-logo-cible]')?.getBoundingClientRect()
+        const finX = cible ? cible.left + cible.width / 2 : 35
+        const finY = cible ? cible.top + cible.height / 2 : 28
+        const finL = cible && cible.width > 8 ? cible.width : 40
         const v = clamp((t - DECOLLAGE) / VOL, 0, 1)
         const u = ease(v)
-        cx = lerp(W / 2, FIN_X, u)
-        cy = lerp(POSE_Y, FIN_Y, u)
-        l = lerp(AU_REPOS, FIN_L, u)
+        cx = lerp(W / 2, finX, u)
+        cy = lerp(POSE_Y, finY, u)
+        l = lerp(AU_REPOS, finL, u)
         amp = 26 * Math.sin(Math.PI * v) // un seul coup d'aile, pour repartir
       }
 

@@ -9,7 +9,6 @@ import { SourceDrawer } from './components/fiche/SourceDrawer'
 import { Header } from './components/header/Header'
 import { LeftPanel } from './components/panel/LeftPanel'
 import { Rail, OutilsPanel } from './components/Rail'   // RETOURS-18 (pt 5) — panneau Outils sous l'en-tête
-import { LogoIntro, useOuvertureUneFois } from './components/LogoIntro'
 import { filtersFromHash, filtersToHash, hasOpinion, resumeCriteres } from './lib/filters'
 import { CLIENT } from './lib/strings'
 import { SCORE_TIP } from './lib/status'
@@ -298,10 +297,6 @@ function titreVueA11y(view: string, module: string | null): string {
 
 export default function App() {
   const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen, contexteCommune, setContexteCommune, togglePanel, setTuyauActives, toggleTuyau, setModuleMap, etudeIdus } = useApp()
-  // feat/ouverture — le voile d'ouverture (oiseau LABUSE) monté AU-DESSUS de l'app ; `montre` est vrai
-  // une fois par session (jeton sessionStorage, pas à chaque navigation interne), `fini` le retire.
-  // L'app se charge DERRIÈRE le voile.
-  const [montre, fini] = useOuvertureUneFois()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   // RECETTE-10 — + setContexteCommune / togglePanel / setFilters exposés pour piloter les captures
@@ -460,6 +455,18 @@ export default function App() {
   }, [filters, zone, module, commune, verdict, view, selectedIdu])
 
 
+  // La fiche est chargée à la demande. Échap fonctionne dès la sélection,
+  // même si son composant ou ses données ne sont pas encore arrivés.
+  useEffect(() => {
+    if (!selectedIdu || view === 'sources' || view === 'radar' || view === 'admin') return
+    const fermer = (event: KeyboardEvent) => {
+      const s = useApp.getState()
+      if (event.key === 'Escape' && !event.defaultPrevented && !s.sourceLine && !s.tool) s.fermerFicheParcelle()
+    }
+    window.addEventListener('keydown', fermer)
+    return () => window.removeEventListener('keydown', fermer)
+  }, [selectedIdu, view])
+
   // DASHBOARD-V1 — la Tour de contrôle est PLEIN ÉCRAN (maquette : son propre rail + sections),
   // elle remplace tout le shell client ; « Ouvrir l'app cliente → » (pied de rail admin) revient.
   if (view === 'admin') {
@@ -480,8 +487,6 @@ export default function App() {
       <a href="#contenu" className="skip-link">Aller au contenu principal</a>
       {/* NU5-FIX-1 (C-F4) — bannière de consentement aux cookies. */}
       <CookieConsent />
-      {/* feat/ouverture — l'ouverture (oiseau) par-dessus l'app, retirée à la fin de l'animation. */}
-      {montre && <LogoIntro onFini={fini} />}
       {/* CIRCUIT-1 lot 7.2 — le tiroir de trace (un seul, admin, invisible traçage éteint). */}
       <TraceTiroir />
       <Rail />
@@ -548,7 +553,9 @@ export default function App() {
               CARTE-VITESSE-2 lot B : Fiche (tout son arbre constructibilité/faisabilité) chargée à
               la demande — overlay, fallback null (la fiche a ses propres squelettes internes). */}
           {selectedIdu && view !== 'sources' && view !== 'radar' && (
-            <Suspense fallback={null}><Fiche idu={selectedIdu} /></Suspense>
+            <div className={view === 'cartes' && module === 'gabarit' ? 'hidden md:contents' : 'contents'}>
+              <Suspense fallback={null}><Fiche idu={selectedIdu} /></Suspense>
+            </div>
           )}
           {contexteCommune && <Suspense fallback={null}><ContextePanel /></Suspense>}
           <SourceDrawer />

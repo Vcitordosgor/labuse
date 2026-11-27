@@ -1,12 +1,14 @@
+import { useApp } from './store/useApp'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App'
+import { LogoIntro, useOuvertureUneFois } from './components/LogoIntro'
+import { Chargement } from './components/Loading'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { EcranOrdinateur } from './components/EcranOrdinateur'
-import { estAppareilMobile } from './lib/appareil'
+import { bureau } from './chargerBureau'
 import { installFocusModality } from './lib/focusModality'
-import { _setServedRun, fetchServedRun, getSources, getSourcesCouverture, is429, SOURCE } from './lib/api'
+import { _setServedRun, fetchServedRun, is429, SOURCE } from './lib/api'
 // CORRECTIFS-1 C7 — polices AUTO-HÉBERGÉES (@fontsource, bundlées par Vite) : plus aucun appel à
 // Google Fonts (ni au runtime, ni au build). Poids = ceux chargés auparavant.
 import '@fontsource/inter/400.css'
@@ -60,51 +62,43 @@ const qc = new QueryClient({
   },
 })
 
-// FINITIONS-2 (P4) — PRÉ-CACHE de la page Sources. /sources recalcule la fraîcheur LIVE côté serveur
-// (1–5 s) ; on lance sa requête (et celle de la couverture) DÈS le boot, en tâche de fond, avec la
-// MÊME clé + staleTime que SourcesPage. Quand l'utilisateur ouvre « Sources » (nav secondaire, après
-// avoir exploré la carte), la donnée est déjà en cache → la page s'affiche d'un coup, sans spinner ni
-// saut. Échec silencieux : si le pré-cache n'a pas abouti à temps, SourcesPage retombe sur son
-// isLoading/isError normal.
-function _lancerPrefetch(): void {
-  qc.prefetchQuery({ queryKey: ['sources'], queryFn: getSources, staleTime: 5 * 60_000 }).catch(() => {})
-  qc.prefetchQuery({ queryKey: ['sources-couverture'], queryFn: getSourcesCouverture, staleTime: 5 * 60_000 }).catch(() => {})
+const root = ReactDOM.createRoot(document.getElementById('root')!)
+const runPret = fetchServedRun()
+  .then((r) => _setServedRun(r?.run))
+  .catch(() => { /* Le run du bundle sert de repli. */ })
+
+const entreeAdmin = new URLSearchParams(window.location.hash.slice(1)).get('admin') === '1'
+
+function Bureau({ children }: { children: React.ReactNode }) {
+  const [montre, fini] = useOuvertureUneFois()
+  const admin = useApp((s) => s.view === 'admin')
+  return <>
+    {montre && !entreeAdmin && !admin && <LogoIntro onFini={fini} />}
+    {children}
+  </>
 }
 
-function _rendre(): void {
-  // RETOURS-21 — drapeau de modalité (souris/clavier) posé sur <html> avant le rendu : la feuille de
-  // styles supprime tout focus visible au clic et ne garde le contour vert qu'au clavier.
-  installFocusModality()
-  // CHARGEMENT-1 (point 6) — téléphone/tablette : l'app NE s'ouvre PAS. Un écran unique renvoie vers
-  // l'ordinateur ; aucune autre page (ni App, ni admin) n'est montée. Décidé ici, avant tout le reste.
-  if (estAppareilMobile()) {
-    ReactDOM.createRoot(document.getElementById('root')!).render(
+installFocusModality()
+if (!bureau) {
+  void runPret.then(() => {
+    root.render(
       <React.StrictMode><EcranOrdinateur /></React.StrictMode>,
     )
-    return
+  })
+} else {
+  function rendreBureau(contenu: React.ReactNode) {
+    root.render(
+      <React.StrictMode>
+        <ErrorBoundary>
+          <QueryClientProvider client={qc}><Bureau>{contenu}</Bureau></QueryClientProvider>
+        </ErrorBoundary>
+      </React.StrictMode>,
+    )
   }
-  if (SOURCE) _lancerPrefetch()
-  ReactDOM.createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
-      <ErrorBoundary>
-        {SOURCE
-          ? (
-            <QueryClientProvider client={qc}>
-              <App />
-            </QueryClientProvider>
-          )
-          : <RunNonConfigure />}
-      </ErrorBoundary>
-    </React.StrictMode>,
-  )
+  rendreBureau(<Chargement variant="bloc" label="Chargement de l’application" />)
+  void Promise.all([bureau, runPret]).then(([{ default: App }]) => {
+    rendreBureau(SOURCE ? <App /> : <RunNonConfigure />)
+  }).catch(() => {
+    rendreBureau(<p role="alert">Impossible de charger l’application. Rechargez la page pour réessayer.</p>)
+  })
 }
-
-// ALGO-FIX-1 (point 4) — au DÉMARRAGE, on lit le run servi VIVANT (/config/run = runs.current())
-// et on aligne `SOURCE` dessus : le run n'est plus figé au build (VITE_RUN_LABEL n'est que le repli).
-// Après une bascule, un simple rechargement suffit — plus de `npm run build` pour cesser d'épingler
-// l'ancien run. Échec réseau : on garde la valeur du bundle (repli) et on démarre quand même (la
-// garde « run non configuré » ne s'affiche que si les DEUX — vivant ET bundle — sont vides).
-fetchServedRun()
-  .then((r) => _setServedRun(r?.run))
-  .catch(() => { /* backend injoignable : on garde le run du bundle (repli) */ })
-  .finally(() => { _rendre() })

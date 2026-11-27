@@ -1,23 +1,26 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useApp } from '../../store/useApp'
 import { PluAnnuaire } from './PluAnnuaire'
+import { VerifProcedure } from './VerifProcedure'
 
-// RECETTE-OUTILS-2 (R4) — la voie « Procédure & changement » est SUPPRIMÉE (décision Vic : le
-// simulateur d'ouverture est une ANALOGIE — densité médiane des zones U appliquée à une zone AU —,
-// pas une information fiable). L'outil PLU n'a donc plus qu'une voie : l'Annuaire, ouvert DIRECTEMENT
-// (plus de hub à 2 cartes). Les anciens deep-links (pluVue 'procedure'/'changement', fiche/Copilote)
-// retombent sans 404 sur l'Annuaire. L'info « procédure PLU en cours » (Sudocuh) reste servie sur la
-// fiche commune et la fiche parcelle (hors de cet outil). Le composant ProcedureChangement et les
-// endpoints back restent au dépôt, simplement non câblés ici.
+// RECETTE-OUTILS-2 (R4) — l'ancien SIMULATEUR D'OUVERTURE (« Procédure & changement », analogie
+// densité médiane) est retiré : il n'était pas fiable. L'Annuaire reste la voie par défaut.
+// OUTIL-COMMUNES-FIX-13 LOT 3 — MAIS le bouton « Vérif procédure » de la fiche (Fiche.tsx:1927) pose
+// pluVue='procedure' : il doit ouvrir l'OUTIL DE VÉRIFICATION (radar sourcé, point de calcul unique —
+// stade / débat PADD / sursis), PAS l'Annuaire. L'audit ASTRA-10 n°3 arrivait sur « PLU — Le règlement
+// d'urbanisme… » (l'Annuaire) : le deep-link était silencieusement jeté. On AIGUILLE désormais sur
+// VerifProcedure (amorcé sur selectedIdu = la commune de la parcelle). On fige la vue à l'ouverture
+// puis on NEUTRALISE le drapeau au store, pour que la prochaine ouverture par le menu reparte sur
+// l'Annuaire (défaut). Le simulateur (ProcedureChangement) reste au dépôt, non câblé.
 export function Plu() {
   const pluVue = useApp((s) => s.pluVue)
   const setPluVue = useApp((s) => s.setPluVue)
-  // on consomme l'ancien contrat (procedure/changement/annuaire) sans effet : tout mène à l'Annuaire.
-  useEffect(() => { if (pluVue) setPluVue(null) }, [pluVue, setPluVue])
+  const [vue] = useState(pluVue)   // vue demandée à l'ouverture (déduite du deep-link du bouton)
+  useEffect(() => { if (pluVue) setPluVue(null) }, [])   // consommé une fois
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-      <PluAnnuaire />
+      {vue === 'procedure' ? <VerifProcedure /> : <PluAnnuaire />}
     </div>
   )
 }

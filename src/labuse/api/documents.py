@@ -145,6 +145,15 @@ def _pdf_response(res, document: str, *, marque: bool = True) -> Response:
 
 @router.get("/gabarit/{idu}.pdf")
 def gabarit_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
+    return _rapport_gabarit(idu, request, db)
+
+
+@router.post("/gabarit/{idu}.pdf")
+def gabarit_pdf_projet(idu: str, sommets: list[tuple[float, float]], request: Request, db: Session = Depends(get_db)) -> Response:
+    return _rapport_gabarit(idu, request, db, sommets)
+
+
+def _rapport_gabarit(idu, request, db, sommets=None):
     """Le Gabarit, sortie seule de l'enveloppe réglementaire. 422 + message si « Calcul incomplet »."""
     from ..exports import builder
     from ..quota import porte_export
@@ -157,7 +166,7 @@ def gabarit_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Re
         raise HTTPException(status_code=422, detail={
             "erreur": "parcelle_disparue", "message": _cd.phrase_disparue(_disp)})
     try:
-        res = builder.construire_gabarit(db, idu)
+        res = builder.construire_gabarit(db, idu, sommets=sommets) if sommets is not None else builder.construire_gabarit(db, idu)
     except builder.DocumentNonEtablissable as exc:
         # DOCS-1 (décision Vic) — sur une parcelle inconstructible (zone N/A fermée, habitat interdit,
         # zone rouge de PPR), le Gabarit rend un DOCUMENT de refus propre (comme l'Étude), JAMAIS un 422
@@ -254,9 +263,20 @@ def comparatif_pdf(idus: str, request: Request, db: Session = Depends(get_db)) -
     try:
         from .app import compare as _compare_fn
         data = _compare_fn(idus=",".join(ids), db=db)
+        lignes = data.get("parcels") or []
+        lectures = data.get("capacites_sans_fiche") or {}
+        presents = {r["idu"] for r in lignes} | set(lectures)
+        ids = list(dict.fromkeys(i for i in ids if i in presents))
+        ecartes = (data.get("ignores") or []) + [i for i in data.get("echecs") or [] if i not in lectures] + (data.get("doublons") or [])
+        if len(ids) < 2:
+            raise HTTPException(422, "Deux parcelles distinctes et comparables sont requises. "
+                                + "Parcelles écartées : " + ", ".join(ecartes))
+        if ecartes:
+            _note_limite = " ".join(filter(None, (_note_limite, "Parcelles écartées : " + ", ".join(ecartes))))
         # DOCS-1 — carte de situation de la parcelle de tête sur la couverture du Comparatif.
         _map = builder._plan_situation_html(db, ids[0]) if ids else ""
-        res = builder.construire_comparatif(ids, data.get("parcels") or [],
+        res = builder.construire_comparatif(ids, lignes,
+                                            capacites_sans_fiche=lectures,
                                             note_limite=_note_limite, map_html=_map)
     except HTTPException:
         raise

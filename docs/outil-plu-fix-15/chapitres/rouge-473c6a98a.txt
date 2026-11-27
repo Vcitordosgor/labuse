@@ -1,0 +1,65 @@
+FFFFFFFFFF                                                               [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert 'J' == 'X'
+      
+      - X
+      + J
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_chapitres.py:43: AssertionError: assert 'J' == 'X'
+E   AssertionError: assert 'J' == 'X'
+      
+      - X
+      + J
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_chapitres.py:43: AssertionError: assert 'J' == 'X'
+E   AssertionError: assert 'J' == 'X'
+      
+      - X
+      + J
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_chapitres.py:43: AssertionError: assert 'J' == 'X'
+E   AssertionError: assert 'J' == 'X'
+      
+      - X
+      + J
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_chapitres.py:43: AssertionError: assert 'J' == 'X'
+E   assert False
+     +  where False = all(<generator object test_filtre_conserve_seulement_le_chapitre_pdf.<locals>.<genexpr> at 0x105826180>)
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_chapitres.py:57: assert False
+E   assert False
+     +  where False = all(<generator object test_filtre_conserve_seulement_le_chapitre_pdf.<locals>.<genexpr> at 0x150cec200>)
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_chapitres.py:57: assert False
+E   assert False
+     +  where False = all(<generator object test_filtre_conserve_seulement_le_chapitre_pdf.<locals>.<genexpr> at 0x150cee340>)
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_chapitres.py:57: assert False
+E   assert False
+     +  where False = all(<generator object test_filtre_conserve_seulement_le_chapitre_pdf.<locals>.<genexpr> at 0x150cee260>)
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_chapitres.py:57: assert False
+E   assert False
+     +  where False = all(<generator object test_joseph_limites_et_hauteur_indicee.<locals>.<genexpr> at 0x106268e10>)
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_chapitres.py:65: assert False
+E   assert not True
+     +  where True = any(<generator object test_port_articles_et_dispositions_generales.<locals>.<genexpr> at 0x105b6f780>)
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_chapitres.py:75: assert not True
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_plu_chapitres.py::test_mesure_refuse_une_carte_etrangere_meme_annoncee_propre[97405-1AU-ARTICLE 1AUZ.10-1AU-104]
+FAILED tests/test_plu_chapitres.py::test_mesure_refuse_une_carte_etrangere_meme_annoncee_propre[97405-1AUz-ARTICLE 1AU.10-1AU-94]
+FAILED tests/test_plu_chapitres.py::test_mesure_refuse_une_carte_etrangere_meme_annoncee_propre[97418-UC1-Article U8-U-35]
+FAILED tests/test_plu_chapitres.py::test_mesure_refuse_une_carte_etrangere_meme_annoncee_propre[97418-UEm-Article U9-U-22]
+FAILED tests/test_plu_chapitres.py::test_filtre_conserve_seulement_le_chapitre_pdf[97405-1AU-pages0-94-104]
+FAILED tests/test_plu_chapitres.py::test_filtre_conserve_seulement_le_chapitre_pdf[97405-1AUz-pages1-104-94]
+FAILED tests/test_plu_chapitres.py::test_filtre_conserve_seulement_le_chapitre_pdf[97418-UC1-pages2-21-34]
+FAILED tests/test_plu_chapitres.py::test_filtre_conserve_seulement_le_chapitre_pdf[97418-UEm-pages3-34-21]
+FAILED tests/test_plu_chapitres.py::test_joseph_limites_et_hauteur_indicee - ...
+FAILED tests/test_plu_chapitres.py::test_port_articles_et_dispositions_generales
+10 failed, 5 warnings in 9.46s

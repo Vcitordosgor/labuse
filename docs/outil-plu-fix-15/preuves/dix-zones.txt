@@ -1,0 +1,20 @@
+97402 Ua 97402000AH0248 200 Art. UA 12.2 · p.22 (PLU, calibrage validé) barème selon le type de logement et la taille de l'opération — voir l'article UA 12.2 https://data.geopf.fr/annexes/gpu/documents/DU_97402/66ba6a474f15ca68cd0ed773752b5d0a/97402_reglement_20260428.pdf#page=22
+['logement aidé : une place au maximum par logement', 'foyer/résidence (1 pour 3)', 'résidence (1 pour 3)']
+97402 Ub 97402000AH0038 200 Art. UB 12.2 · p.35 (PLU, calibrage validé) barème selon le type de logement et la taille de l'opération — voir l'article UB 12.2 https://data.geopf.fr/annexes/gpu/documents/DU_97402/66ba6a474f15ca68cd0ed773752b5d0a/97402_reglement_20260428.pdf#page=35
+['logement aidé : une place au maximum par logement', 'foyer/résidence (1 pour 3)', 'résidence (1 pour 3)']
+97402 Uc 97402000AB0060 200 Art. UC 12.2 · p.49 (PLU, calibrage validé) barème selon le type de logement et la taille de l'opération — voir l'article UC 12.2 https://data.geopf.fr/annexes/gpu/documents/DU_97402/66ba6a474f15ca68cd0ed773752b5d0a/97402_reglement_20260428.pdf#page=49
+['logement aidé : une place au maximum par logement', 'foyer/résidence (1 pour 3)', 'résidence (1 pour 3)']
+97403 Ua 97403000AP0027 200 Art. U12 · p.27 (PLU, calibrage validé) 2 places / logement https://data.geopf.fr/annexes/gpu/documents/DU_97403/b6ba5771ca53558bd57148f7382b9346/97403_reglement_20240924.pdf#page=27
+['prêt aidé : une place au maximum par logement']
+97403 Ub 97403000AL0482 200 Art. U12 · p.27 (PLU, calibrage validé) 2 places / logement https://data.geopf.fr/annexes/gpu/documents/DU_97403/b6ba5771ca53558bd57148f7382b9346/97403_reglement_20240924.pdf#page=27
+['prêt aidé : une place au maximum par logement']
+97414 UB 97414000EL2458 200 Art. UB 12.2 · p.37 (PLU, calibrage validé) 2 places / logement https://data.geopf.fr/annexes/gpu/documents/DU_97414/74e23183063d4dc8af009e9f0a826ca6/97414_reglement_20251218.pdf#page=37
+['logement social : 1 place / logement', 'résidence personnes âgées (1 pour 3)', 'pour les opérations de plus de 10 logements, 0,5 place de stationnement public par logement']
+97414 UC 97414000CP0581 200 Art. UC 12.2 · p.52 (PLU, calibrage validé) 2 places / logement https://data.geopf.fr/annexes/gpu/documents/DU_97414/74e23183063d4dc8af009e9f0a826ca6/97414_reglement_20251218.pdf#page=52
+['logement social : 1 place / logement', 'résidence personnes âgées (1 pour 3)', 'pour les opérations de plus de 10 logements, 0,5 place de stationnement public par logement']
+97422 Ua 97422000BD0773 200 Art. Ua12.2 · p.22 (PLU, calibrage validé) barème selon le type de logement et la taille de l'opération — voir l'article Ua 12.2 https://data.geopf.fr/annexes/gpu/documents/DU_97422/3bd1b9d43addd334e64405c82343c405/97422_reglement_20230811.pdf#page=22
+['logement locatif prêt aidé : une place au maximum par logement', 'foyer/résidence sociale (1 place pour 3)', 'résidence (1 place pour 3)', "dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)"]
+97418 UA 97418000AC0220 200 Art. U13 - 13.2 · p.26 (PLU, calibrage validé) barème selon le type de logement et la taille de l'opération — voir l'article U 13 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=26
+['prêt aidé : une place au maximum par logement', 'hébergement (1 pour 3)']
+97418 UB 97418000AE0051 200 Art. U13 - 13.2 · p.26 (PLU, calibrage validé) barème selon le type de logement et la taille de l'opération — voir l'article U 13 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=26
+['prêt aidé : une place au maximum par logement', 'hébergement (1 pour 3)']

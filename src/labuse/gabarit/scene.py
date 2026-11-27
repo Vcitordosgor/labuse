@@ -20,6 +20,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from time import monotonic
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
@@ -50,13 +51,28 @@ def _step_faces(largeur_m: float, hauteur_m: float, pas: float) -> int:
 _COTE_3D_MAX_POINTS = 40000
 
 
+def _empreintes_metriques(batis, ox, oy):
+    """Reconstitue les emprises en 2975, cours intérieures comprises."""
+    from shapely.affinity import translate
+    from shapely.geometry import Polygon
+    for bati in batis or []:
+        for sub in bati.get("empreinte") or []:
+            if len(sub.get("ext") or []) < 3:
+                continue
+            g = Polygon(sub["ext"], sub.get("trous") or [])
+            if not g.is_valid:
+                g = g.buffer(0)
+            if not g.is_empty:
+                yield translate(g, ox, oy)
+
+
 def _cote_3d_sol_degage(sampler, cadastre, batis, ox: float, oy: float):
     """Cote HAUTE/BASSE de la vue 3D, lues dans le SOL 0,5 m sur les MÊMES positions que les sommets du
     maillage (centres de pixels natifs) → identiques aux cotes d'avant le LOT 5, quel que soit l'allègement.
     Sur SOL DÉGAGÉ (intérieur cadastre, hors emprise bâtie — un élément couvert ne porte pas de cote).
     Rend {'haut':[xl,yl,z], 'bas':[xl,yl,z]} en repère local, ou None. Travail borné (sous-échantillonnage
     PIXEL-ALIGNÉ pour les très grandes parcelles → la grille reste un sous-ensemble de celle des sommets)."""
-    from shapely.geometry import Point, Polygon
+    from shapely.geometry import Point
     from shapely.ops import unary_union
     from shapely.prepared import prep
     m = sampler.m
@@ -65,10 +81,9 @@ def _cote_3d_sol_degage(sampler, cadastre, batis, ox: float, oy: float):
     except Exception:  # noqa: BLE001
         return None
     pb = None
-    polys = [Polygon([(x + ox, y + oy) for x, y in sub["ext"]])
-             for b in (batis or []) for sub in (b.get("empreinte") or []) if len(sub.get("ext") or []) >= 3]
+    polys = list(_empreintes_metriques(batis, ox, oy))
     if polys:
-        u = unary_union([g for g in polys if g.is_valid or g.buffer(0).is_valid])
+        u = unary_union(polys)
         if not u.is_empty:
             pb = prep(u)
     minx, miny, maxx, maxy = cadastre.bounds
@@ -115,11 +130,9 @@ def _sol_sans_bosses_couvertes(surf, batis, ox: float, oy: float):
     pente), et le raccord reste propre (on ramène à la valeur du plan, pas à un niveau unique). Fit robuste :
     une 2ᵉ passe écarte les points d'anneau nettement au-dessus du plan (bâti/structure voisine)."""
     import numpy as np
-    from shapely.geometry import Point, Polygon
+    from shapely.geometry import Point
     from shapely.prepared import prep
-    polys = [Polygon([(x + ox, y + oy) for x, y in sub["ext"]])
-             for b in (batis or []) for sub in (b.get("empreinte") or []) if len(sub.get("ext") or [])>= 3]
-    polys = [g for g in polys if g.is_valid and not g.is_empty]
+    polys = list(_empreintes_metriques(batis, ox, oy))
     if not polys:
         return surf.a
     a, pas = surf.a, surf.pas
@@ -190,57 +203,94 @@ def _valide(f) -> Optional[float]:
 class _Surface:
     """Fenêtre NATIVE du MNT (tableau + géoréférence), source du maillage et de la couverture."""
 
-    def __init__(self, arr, ox: float, oy: float, pas: float):
+    def __init__(self, arr, ox: float, oy: float, pas: float, chemin=None):
+        self.chemin = chemin
         import numpy as np
         self.a = np.asarray(arr, dtype="float64")
         self.a[(self.a <= -1000.0) | ~np.isfinite(self.a)] = np.nan
         self.ox, self.oy, self.pas = ox, oy, pas
         self.ny, self.nx = self.a.shape
 
+    def contient_altitudes(self, minx, miny, maxx, maxy):
+        import numpy as np
+        c0 = max(0, math.floor((minx - self.ox) / self.pas))
+        c1 = min(self.nx, math.ceil((maxx - self.ox) / self.pas))
+        r0 = max(0, math.floor((self.oy - maxy) / self.pas))
+        r1 = min(self.ny, math.ceil((self.oy - miny) / self.pas))
+        return r0 < r1 and c0 < c1 and np.isfinite(self.a[r0:r1, c0:c1]).any()
+
 
 def charger_surface(minx: float, miny: float, maxx: float, maxy: float,
                     marge: float = 170.0) -> Optional[_Surface]:
     """Lit la fenêtre du MNT couvrant [minx,maxx]×[miny,maxy] + marge, SNAPPÉE sur les pixels natifs
     (décalages entiers) → l'altitude en un point ne dépend PAS du cadrage de la fenêtre."""
-    ds = _cog()
-    if ds is None:
-        return None
+    return _lire_fond_local(get_settings().mnt1m_cog_file, 1.0, minx, miny, maxx, maxy, marge)
+
+
+def _lire_fond_local(path, pas, minx, miny, maxx, maxy, marge):
+    """Lecture native, bornée à l'emprise du raster, avec son masque de validité."""
+    import numpy as np
+    import rasterio
     from rasterio.windows import Window
+    if not path.is_file():
+        return None
     try:
-        r0, c0 = ds.index(minx - marge, maxy + marge, op=math.floor)   # coin haut-gauche (pixel entier)
-        r1, c1 = ds.index(maxx + marge, miny - marge, op=math.ceil)    # coin bas-droit
-        row_off, col_off = min(r0, r1), min(c0, c1)
-        h, w = abs(r1 - r0) + 1, abs(c1 - c0) + 1
-        win = Window(col_off, row_off, w, h)
-        arr = ds.read(1, window=win, boundless=True, fill_value=_NODATA)
-        tr = ds.window_transform(win)                                  # aligné sur la grille native
-        return _Surface(arr, tr.c, tr.f, tr.a)
-    except Exception:  # noqa: BLE001
+        with rasterio.open(path) as ds:
+            tr = ds.transform
+            if (ds.crs is None or ds.crs.to_epsg() != 2975 or tr.a != pas or tr.e != -pas
+                    or tr.b != 0 or tr.d != 0):
+                return None
+            r0, c0 = ds.index(minx - marge, maxy + marge)
+            r1, c1 = ds.index(maxx + marge, miny - marge, op=math.ceil)
+            r0, c0 = max(0, r0), max(0, c0)
+            r1, c1 = min(ds.height, r1 + 1), min(ds.width, c1 + 1)
+            if r1 <= r0 or c1 <= c0:
+                return None
+            window = Window(c0, r0, c1 - c0, r1 - r0)
+            arr = ds.read(1, window=window, masked=True).astype("float64").filled(np.nan)
+            tr = ds.window_transform(window)
+            surface = _Surface(arr, tr.c, tr.f, tr.a, path)
+            return surface if surface.contient_altitudes(minx, miny, maxx, maxy) else None
+    except (OSError, ValueError):
         return None
 
 
 def charger_surface_sol(db, minx: float, miny: float, maxx: float, maxy: float, marge: float = 170.0):
-    """GABARIT-3D-3 (LOT 2) — surface du SOL servie : LiDAR HD 0,5 m (copie locale OU appel WMS court),
-    REPLI sur le fond 1 m si le service ne répond pas et qu'aucune copie n'existe. Rend (_Surface|None,
-    meta) où `meta` DIT ce qui est réellement servi : maille, date d'acquisition lue dans la donnée,
-    source ('lidar_05m'/'copie'/'fond_1m'), repli. Jamais d'écran cassé, jamais un relief inventé."""
+    """Sélectionne le LiDAR à 0,5 m puis les fonds locaux à 1 m et 5 m selon leur couverture.
+
+    La métadonnée identifie la source effectivement servie et la date de mesure si elle est connue.
+    """
     from . import sol
     chemin, source = sol.obtenir_fenetre(minx, miny, maxx, maxy, marge)
     if chemin is not None:
         try:
-            a, ox, oy, pas = sol.lire_tif(chemin)
-            return _Surface(a, ox, oy, pas), {
-                "maille_m": sol.RES, "acquisition": sol.acquisition(db, minx, miny, maxx, maxy),
-                "acquisition_produit": "dalle LiDAR HD",
-                "source": source, "repli": False, "message": None}
+            a, ox, oy, pas = sol.lire_tif(chemin, sol._fenetre(minx, miny, maxx, maxy, marge))
+            surface = _Surface(a, ox, oy, pas, chemin)
+            if surface.contient_altitudes(minx, miny, maxx, maxy):
+                return surface, {
+                    "maille_m": pas, "acquisition": sol.acquisition(db, minx, miny, maxx, maxy),
+                    "acquisition_produit": "dalle LiDAR HD",
+                    "source": source, "repli": False, "message": None}
         except Exception:  # noqa: BLE001 — copie illisible → repli 1 m
             pass
     surf = charger_surface(minx, miny, maxx, maxy, marge=marge)
+    if surf is None:
+        large = _lire_fond_local(get_settings().mnt5m_file, 5.0, minx, miny, maxx, maxy, marge)
+        if large is not None:
+            return large, {
+                "maille_m": 5.0, "acquisition": None, "acquisition_produit": "RGE ALTI IGN",
+                "source": "rge_alti_5m", "repli": True,
+                "message": "Relief général à 5 m. Les marches, petits talus et seuils nécessitent un levé sur place.",
+            }
     fm = _fond_meta()
-    d = fm.get("acquisition_date")
+    dates = set()
+    for fenetre in fm.get("acquisition") or []:
+        bbox = fenetre.get("bbox") or []
+        if len(bbox) == 4 and bbox[0] < maxx and bbox[2] > minx and bbox[1] < maxy and bbox[3] > miny:
+            dates.update(m["fin"] for m in fenetre.get("missions") or [] if m.get("fin"))
     return surf, {
-        "maille_m": 1.0, "acquisition": ({"min": str(d), "max": str(d), "n": 1} if d else None),
-        "acquisition_produit": "fond 1 m (RGE ALTI)",
+        "maille_m": 1.0, "acquisition": ({"min": min(dates), "max": max(dates), "n": len(dates)} if dates and surf else None),
+        "acquisition_produit": fm["produit"] if surf else None,
         "source": "fond_1m", "repli": True,
         "message": ("Relief fin (0,5 m) indisponible — repli sur le relief 1 m." if surf
                     else "Relief indisponible pour cette parcelle.")}
@@ -310,8 +360,9 @@ def _polys_local(geom, ox: float, oy: float) -> list[dict]:
     for p in polys:
         if p.is_empty or p.geom_type != "Polygon":
             continue
-        ext = [[round(x - ox, 2), round(y - oy, 2)] for x, y in p.exterior.coords]
-        trous = [[[round(x - ox, 2), round(y - oy, 2)] for x, y in r.coords] for r in p.interiors]
+        # Les bandes minces et les cours peuvent disparaître si chaque sommet est arrondi séparément.
+        ext = [[x - ox, y - oy] for x, y in p.exterior.coords]
+        trous = [[[x - ox, y - oy] for x, y in r.coords] for r in p.interiors]
         out.append({"ext": ext, "trous": trous})
     return out
 
@@ -544,6 +595,35 @@ def _batiment_coupe(sampler, ligne, axe, b) -> list[dict]:
     return out
 
 
+def _pente_max(profil, parcelle_spans, bati_spans):
+    import numpy as np
+    from ._geom import soustraire_intervalles
+
+    largeur = _PENTE_FENETRE_M
+    obstacles = [(a - 1, b + 1) for a, b in bati_spans]
+    libres = [segment for parcelle in parcelle_spans for segment in soustraire_intervalles(parcelle, obstacles)]
+    meilleur = -1.0
+    depart = None
+    for run in _runs(profil):
+        distances = np.array([p["d"] for p in run])
+        z = np.array([p["z"] for p in run])
+        for a, b in libres:
+            debut, fin = max(a, distances[0]), min(b, distances[-1]) - largeur
+            if fin < debut:
+                continue
+            # Entre deux sommets le profil est linéaire. Le maximum est atteint à une
+            # borne du domaine ou quand une extrémité de la fenêtre passe par un sommet.
+            candidats = np.unique(np.clip(np.r_[debut, fin, distances, distances - largeur], debut, fin))
+            ecarts = np.abs(np.interp(candidats + largeur, distances, z) - np.interp(candidats, distances, z))
+            indice = int(ecarts.argmax())
+            if ecarts[indice] > meilleur:
+                meilleur, depart = float(ecarts[indice]), float(candidats[indice])
+    if depart is None:
+        return {"disponible": False}
+    return {"disponible": True, "pente_pct": round(100 * meilleur / largeur, 1),
+            "d0": round(depart, 2), "d1": round(depart + largeur, 2)}
+
+
 def _indicateurs(profil, parcelle_spans, bati_spans, voie) -> dict:
     """Pente entre limites (signée) + amplitude séparément ; pente max sur 5 m ENTIERS dans un seul
     tronçon valide, dans la parcelle, HORS emprise bâtie élargie de 1 m, deux bornes exposées ;
@@ -560,34 +640,7 @@ def _indicateurs(profil, parcelle_spans, bati_spans, voie) -> dict:
                                "pente_pct": round(100 * dz / dd, 1) if dd > 0 else None,
                                "sens": "montée" if dz > 0.05 else ("descente" if dz < -0.05 else "plat"),
                                "amplitude_m": round(max(alts) - min(alts), 2)})
-    # pente max sur 5 m ENTIERS (fenêtre en DISTANCE ; profil à pas irrégulier après franchissement)
-    def _dans(d, spans):
-        return any(a - 1e-6 <= d <= b + 1e-6 for a, b in spans)
-    bati_elargi = [[a - 1.0, b + 1.0] for a, b in bati_spans]
-    W = _PENTE_FENETRE_M
-    runs = [(r[0]["d"], r[-1]["d"]) for r in _runs(profil)]   # tronçons continus couverts
-    pmax = {"disponible": False}
-    for i, pi in enumerate(profil):
-        d0, zi = pi["d"], pi["z"]
-        d1 = d0 + W
-        if zi is None or d1 > profil[-1]["d"] + 1e-6:
-            continue
-        if not any(a - 1e-6 <= d0 and d1 <= b + 1e-6 for a, b in runs):   # ENTIÈREMENT dans UN tronçon
-            continue
-        fenetre = [p for p in profil if d0 - 1e-6 <= p["d"] <= d1 + 1e-6]
-        if any(p["z"] is None for p in fenetre):          # 5 m entiers valides
-            continue
-        if not (_dans(d0, parcelle_spans) and _dans(d1, parcelle_spans)):
-            continue
-        if any(_dans(p["d"], bati_elargi) for p in fenetre):   # hors emprise bâtie ±1 m
-            continue
-        z1 = _z_interp(profil, d1)
-        if z1 is None:
-            continue
-        s = abs(z1 - zi) / W
-        if not pmax.get("disponible") or s > pmax["pente_pct"] / 100:
-            pmax = {"disponible": True, "pente_pct": round(s * 100, 1),
-                    "d0": round(d0, 2), "d1": round(d1, 2)}
+    pmax = _pente_max(profil, parcelle_spans, bati_spans)
     pente_acces = None
     if voie and voie.get("etablie") and parcelle_spans:
         d_voie = voie["intersection_d"]
@@ -679,6 +732,7 @@ class Scene:
     contour_cadastral: list = field(default_factory=list)
     contour_gabarit: list = field(default_factory=list)
     zone_implantation: list = field(default_factory=list)
+    exemple_emprise: list = field(default_factory=list)
     reculs: list = field(default_factory=list)
     exclusions: list = field(default_factory=list)
     batiments: list = field(default_factory=list)
@@ -731,6 +785,8 @@ def _regles_servies(gr) -> dict:
         return None if s is None else {k: getattr(s, k, None)
                                        for k in ("document", "zone", "article", "versionDate", "provider")}
     return {"surfaceParcelleM2": gr.surfaceParcelleM2, "zoneImplantationM2": gr.zoneImplantationM2,
+            "batiConserveM2": gr.batiConserveM2, "empriseSupplementaireM2": gr.empriseSupplementaireM2,
+            "surfacesContinuesM2": gr.surfacesContinuesM2,
             "batiDeduitM2": gr.batiDeduitM2, "plafondEmpriseM2": gr.plafondEmpriseM2,
             "plafondEmpriseStatus": gr.plafondEmpriseStatus, "hauteurReglementaireM": gr.hauteurReglementaireM,
             "hauteurBase": gr.hauteurBase, "hauteurEstimee": gr.hauteurEstimee, "hauteurStatus": gr.hauteurStatus,
@@ -742,29 +798,39 @@ def _hash_scene(scene: "Scene") -> str:
     """Identifiant = hachage de la scène RÉELLEMENT SÉRIALISÉE (tout sauf l'identifiant lui-même) :
     adresse, contours, reculs, exclusions, bâti, terrain (sommets), règles, coupes, métadonnées."""
     payload = {k: v for k, v in scene.to_dict().items() if k != "scene_id"}
+    # Une copie locale de la même fenêtre LiDAR produit les mêmes coupes.
+    if payload["meta"].get("sol_source") == "copie":
+        payload["meta"] = {**payload["meta"], "sol_source": "lidar_05m"}
     return hashlib.sha1(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()[:12]
 
 
+_SCENE_TTL_S = 300
 _MEMO: dict = {}        # scène construite UNE FOIS (clé : idu + signature du fond), lue par tous
 
 
 def build_scene(db, idu: str, use_cache: bool = True) -> Scene:
-    """Construit la scène (déterministe, mémoïsée). Lit le GabaritResult SERVI + le MNT 1 m."""
-    p = get_settings().mnt1m_cog_file
-    sig = (idu, str(p), p.stat().st_mtime if p.exists() else 0)
-    if use_cache and sig in _MEMO:
-        return _MEMO[sig]
+    """Construit la scène à partir du gabarit servi et du relief disponible."""
+    settings = get_settings()
+    fonds = (settings.mnt1m_cog_file, settings.mnt5m_file)
+    sig = (idu, tuple((p, p.stat().st_mtime_ns if p.is_file() else None) for p in fonds))
+    cached = _MEMO.get(sig) if use_cache else None
+    if cached and monotonic() - cached[0] < _SCENE_TTL_S:
+        return cached[1]
     scene = _build_scene(db, idu)
     if use_cache:
         if len(_MEMO) > 32:
             _MEMO.clear()
-        _MEMO[sig] = scene
+        _MEMO[sig] = (monotonic(), scene)
     return scene
 
 
 def _build_scene(db, idu: str) -> Scene:
     from ..api.gabarit import gabarit_detail
-    gr = gabarit_detail(idu, db)
+    return scene_pour_gabarit(db, idu, gabarit_detail(idu, db))
+
+
+def scene_pour_gabarit(db, idu: str, gr) -> Scene:
+    """Construit le relief avec les emprises du résultat réglementaire fourni."""
     fond_meta = _fond_meta()
     adresse = _adresse(db, idu)
     try:                                   # commune (en-tête de la visionneuse)
@@ -800,12 +866,15 @@ def _build_scene(db, idu: str) -> Scene:
                  "acquisition_n": (acq["n"] if acq else None),                 # >1 → plage (plusieurs acquisitions)
                  "acquisition_produit": sol_meta.get("acquisition_produit"),   # d'où vient la date
                  "sol_source": sol_meta["source"], "sol_repli": sol_meta["repli"], "sol_message": sol_meta["message"]}
+    if surf:
+        fond_meta.update(produit=sol_meta["acquisition_produit"], resolution_m=surf.pas,
+                         disponible=True)
     sampler = _Sampler(surf, bounds_1m) if surf else None
 
     terrain, coupes, axes_plan, coupes_etat = {}, [], [], []
     couverture = 0.0
     faces_1m, cadre_local = {}, []
-    batis = _batiments(gr, sampler, ox, oy) if sampler else []
+    batis = _batiments(gr, sampler, ox, oy)
     if sampler is not None:
         couverture = _couverture_parcelle(sampler, ref)
         # axes + coupes d'abord (l'échantillonneur couvre parcelle + abords, voie comprise)
@@ -857,7 +926,7 @@ def _build_scene(db, idu: str) -> Scene:
         step_faces = _step_faces(cmaxx - cminx, cmaxy - cminy, surf.pas)
         # le maillage 3D n'affiche PAS les bosses d'éléments couverts (varangue) : aplaties au sol voisin.
         # La coupe et les cotes gardent le sol RÉEL (elles lisent `surf`/`sampler`, pas `a_faces`).
-        a_faces = _sol_sans_bosses_couvertes(surf, batis, ox, oy)
+        a_faces = _sol_sans_bosses_couvertes(surf, batis, ox, oy) if surf.pas <= 1 else surf.a
         mesh_faces = TerrainMesh(a_faces, surf.ox, surf.oy, surf.pas, step=step_faces)
         faces_1m = mesh_faces.faces(ox, oy, bounds=cadre)       # faces servies = cadre (coupées net), allégées
         maille_3d = round(surf.pas * step_faces, 2)
@@ -868,6 +937,10 @@ def _build_scene(db, idu: str) -> Scene:
                    "maille_3d_m": maille_3d, "cotes_3d": cote_3d,
                    "origin_2975": [ox, oy]}       # origine locale (EPSG:2975) → reconstruit la bbox absolue (photo IGN)
 
+    for coupe in coupes:
+        coupe["surface_disponible_m2"] = gr.zoneImplantationM2 if gr.status == "ok" else None
+        coupe["maille_m"] = surf.pas
+        coupe["produit_sol"] = sol_meta["acquisition_produit"]
     for b in batis:
         b.pop("geom", None)
 
@@ -878,6 +951,7 @@ def _build_scene(db, idu: str) -> Scene:
     scene = Scene(
         idu=idu, scene_id="", etat=etat, disponible=disponible, adresse=adresse, origine_2975=[ox, oy],
         contour_cadastral=_polys_local(cadastre, ox, oy), contour_gabarit=_polys_local(contour, ox, oy),
+        exemple_emprise=_polys_local(_geom_2975(gr.exempleEmpriseGeoJSON), ox, oy),
         zone_implantation=_polys_local(zone, ox, oy), reculs=_polys_local(reculs, ox, oy),
         exclusions=_polys_local(excl, ox, oy), batiments=batis, terrain=terrain,
         regles=_regles_servies(gr), coupes=coupes, axes_plan={a["label"]: a for a in axes_plan},

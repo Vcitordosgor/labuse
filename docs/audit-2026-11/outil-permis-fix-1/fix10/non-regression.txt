@@ -1,0 +1,19 @@
+=== Dormants (île, prédicat unique permis_classe._dormant_sql) ===
+  dormants : 854 (attendu 854)
+=== Caducs (pc_caducs, build LECTURE SEULE — commit=False puis rollback) ===
+  parcelles PC probablement caduques : 4836 (build=4836) (attendu 4 836)
+=== Rayon 500 m — BZ1065 (nearby_permits, 500 m / 24 mois) ===
+  permis_recents=1 logements_recents=4 (attendu 1 permis / 4 logements)
+=== Score composite des 24 communes (5 axes, poids renormalisés — FIX-10 n'y touche pas) ===
+     1. Saint-Denis      57.4
+     2. Saint-Pierre     56.4
+     3. Saint-Paul       54.6
+     4. Petite-Île       36.1
+     5. Le Tampon        34.7
+  tête du classement : Saint-Denis (attendu Saint-Denis — cf. audit).
+  NB : la valeur absolue du score suit la MISE À JOUR MARCHÉ apportée par le merge origin/main (marche_service/dvf_marche/commune), PAS par FIX-10 (git diff bilan+composite = vide).
+=== Bilan BZ1065 — inchangé par FIX-10 (preuve STRUCTURELLE) ===
+  FIX-10 ne modifie AUCUN fichier du Bilan : `git diff origin/main..HEAD -- src/labuse/bilan
+  declarations/bilan` est VIDE → les totaux de l'auditeur (8 115 036,80 / 12 288 000,00 /
+  3 709 265,62 €) sont inchangés par construction. La cohérence moteur=PDF=Excel reste tenue par
+  tests/test_bilan_recette.py (vert). (On n'importe pas de module de test ici : cf. test_deps_declared.)

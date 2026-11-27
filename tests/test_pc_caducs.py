@@ -15,14 +15,24 @@ from labuse.ingestion import pc_caducs as pcz
 # ───────────────────────── wording (pur) ─────────────────────────
 
 def test_row_wording_non_accusatoire():
-    r = pcz._row("97411000AB0001", 2019, 2)
-    assert r["caduc_depuis"] == 2022
-    assert r["court"] == "PC autorisé 2019 · jamais commencé · caduc probable"
+    import datetime as _dt
+    # OUTIL-PERMIS-FIX-13 — _row(idu, date d'autorisation, n, ref_date) ; échéance par DATE.
+    r = pcz._row("97411000AB0001", _dt.date(2019, 5, 1), 2, _dt.date(2026, 11, 25))
+    assert r is not None
+    assert r["y"] == 2019 and r["caduc_depuis"] == 2022          # échéance 2019-05-01 + 3 ans = 2022
+    assert r["court"] == "PC autorisé le 2019-05-01 · aucun commencement déclaré · caducité probable depuis le 2022-05-01"
     assert "Sourcé" in r["detail"] and "Estimé" in r["detail"]
-    assert "×1,6" in r["detail"]
+    assert "×1,6" in r["detail"] and "seules données Sitadel" in r["detail"]
+    assert "art. R.424-17" in r["detail"]                        # base légale citée
     # JAMAIS un jugement du propriétaire, jamais une date de vente
     for mot in ("échec", "abandon", "renoncement", "faute", "vendra"):
         assert mot not in r["detail"].lower()
+
+
+def test_row_non_caduc_si_echeance_future():
+    import datetime as _dt
+    # PC autorisé 06/11/2022 → décret 2025-461 : validité 5 ans → échéance 2027 → PAS caduc en 2026.
+    assert pcz._row("97401000AM0036", _dt.date(2022, 11, 6), 1, _dt.date(2026, 11, 25)) is None
 
 
 # ───────────────────────── construction DB ─────────────────────────
@@ -31,9 +41,8 @@ _WKT = "POLYGON((55.45 -20.9,55.451 -20.9,55.451 -20.901,55.45 -20.901,55.45 -20
 
 
 def _ensure_sources(s):
-    s.execute(text("CREATE TABLE IF NOT EXISTS p_model_permits (permit_id varchar(64), idu text, type varchar(8), date_autorisation date)"))
-    s.execute(text("CREATE TABLE IF NOT EXISTS sitadel_permits (id bigserial, permit_id varchar(64), type varchar(8), raw jsonb)"))
-    s.execute(text("CREATE TABLE IF NOT EXISTS m10_permit_delais (permit_id varchar(64), date_achevement date)"))
+    s.execute(text("CREATE TABLE IF NOT EXISTS sitadel_permits (id bigserial, permit_id varchar(64), "
+                   "type varchar(8), date timestamptz, idu_codes jsonb, raw jsonb)"))
 
 
 def _seed_parcelle(s, idu):
@@ -45,17 +54,16 @@ def _seed_parcelle(s, idu):
 
 
 def _seed_pc(s, idu, annee, etat, daact=False):
-    # OUTIL-PERMIS-FIX-8/9 — l'achèvement (DAACT) est lu de sitadel_permits.raw->>'daact' (la source),
-    # plus de m10_permit_delais (décommissionnée) : on sème le DAACT DANS `raw`, comme en production.
+    # OUTIL-PERMIS-FIX-13 — la reconstruction lit DIRECTEMENT sitadel_permits : date d'autorisation
+    # SOURCE (`date`) + explosion de `idu_codes` (plus de table dérivée p_model_permits). DAACT dans `raw`.
     import json as _json
     pid = f"P-{idu}-{annee}-{etat}"
     raw = {"etat": etat}
     if daact:
         raw["daact"] = f"{annee + 2}-05-01"
-    s.execute(text("INSERT INTO p_model_permits (permit_id, idu, type, date_autorisation) VALUES (:p,:i,'PC',:d)"),
-              {"p": pid, "i": idu, "d": f"{annee}-05-01"})
-    s.execute(text("INSERT INTO sitadel_permits (permit_id, type, raw) VALUES (:p,'PC',CAST(:r AS jsonb))"),
-              {"p": pid, "r": _json.dumps(raw)})
+    s.execute(text("INSERT INTO sitadel_permits (permit_id, type, date, idu_codes, raw) "
+                   "VALUES (:p,'PC',:d,CAST(:i AS jsonb),CAST(:r AS jsonb))"),
+              {"p": pid, "d": f"{annee}-05-01", "i": _json.dumps([idu]), "r": _json.dumps(raw)})
 
 
 @pytest.mark.db
@@ -76,9 +84,9 @@ def test_build_caduc_vs_realise_vs_annule(db_session):
         "SELECT idu, pc_annee, caduc_depuis, statut_autorisation, statut_caducite, libelle_court "
         "FROM pc_caducs WHERE idu = ANY(:ids)"), {"ids": [A, B, C, D]}).mappings().all()}
     assert set(rows) == {A}                                        # seul l'AUTORISÉ jamais commencé
-    assert rows[A]["pc_annee"] == 2018 and rows[A]["caduc_depuis"] == 2021
+    assert rows[A]["pc_annee"] == 2018 and rows[A]["caduc_depuis"] == 2021   # échéance 2018-05-01 + 3 ans
     assert rows[A]["statut_autorisation"] == "Sourcé" and rows[A]["statut_caducite"] == "Estimé"
-    assert "jamais commencé · caduc probable" in rows[A]["libelle_court"]
+    assert "aucun commencement déclaré · caducité probable depuis le" in rows[A]["libelle_court"]
 
 
 @pytest.mark.db
@@ -107,7 +115,7 @@ def test_build_idempotent(db_session):
 
 @pytest.mark.db
 def test_recent_pc_non_caduc(db_session):
-    # PC 2024 autorisé : Y+4 non dépassé (ref 2026) → PAS caduc.
+    # PC autorisé 01/05/2024 : décret 2025-461 (délivré ≤ 28/05/2024) → validité 5 ans → échéance 2029 → PAS caduc.
     s = db_session
     _ensure_sources(s)
     A = "97499000ZE0005"

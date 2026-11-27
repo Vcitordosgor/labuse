@@ -27,10 +27,9 @@ def test_sniff_header_leve_sur_schema_divergent():
 
 
 def test_les_millesimes_sont_adresses():
-    # 2019-2020 ajoutés par M3.5 lot A ; 2025 ajouté KF-2 L3 (publié en amont) → panel 7 points
-    # 01/01/2019 → 01/01/2025 complet dans la table versionnée.
-    assert sorted(MILLESIME_ATTACHMENTS) == [2019, 2020, 2021, 2022, 2023, 2024, 2025]
+    assert sorted(MILLESIME_ATTACHMENTS) == list(range(2019, 2027))
     for a in MILLESIME_ATTACHMENTS.values():
         assert "parcelles" in a and a.endswith("zip")
     assert url_millesime(2024).startswith("https://data.economie.gouv.fr/")
     assert "situation_2025" in MILLESIME_ATTACHMENTS[2025]
+    assert url_millesime(2026).endswith("fichiers_des_parcelles_dpts_61_a_976_situation_2026zip")

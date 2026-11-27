@@ -807,7 +807,7 @@ def _r_iris(v, val: Valeur):
     t = tuiles([(groupe(v["habitants"]),
                  "habitants" + (f", {groupe(v['menages'])} ménages" if v.get("menages") is not None else "")),
                 (fmt_pct(v["part_60_plus_pct"]), "de 60 ans et plus")
-                if v.get("part_60_plus_pct") is not None else ("", ""),
+                if v.get("part_60_plus_pct") is not None else (fmt_pct(v["part_65_plus_pct"]), "de 65 ans et plus") if v.get("part_65_plus_pct") is not None else ("", ""),
                 (fmt_pct(v["part_locataires_pct"]), "de locataires")
                 if v.get("part_locataires_pct") is not None else ("", "")])
     lignes = ""
@@ -1445,9 +1445,47 @@ def _renvoi_financier() -> str:
         "construction.</p>", variante="projet")
 
 
-def _bloc_reglement(valeurs: dict[str, Valeur]) -> str:
+def _bloc_procedure_plu(fiche: dict | None) -> str:
+    """OUTIL-COMMUNES-FIX-14 LOT 2 — restitue dans le Dossier la PROCÉDURE PLU en cours (stade, débat
+    PADD, sursis), lue du MÊME champ que la fiche parcelle (`fiche['radar_procedure']`, point de calcul
+    unique `veille_plu`). Avant ce correctif, la date du débat ne suivait pas jusqu'au PDF remis au
+    client. Rien si la commune n'est pas en procédure servie (radar_procedure absent). Jamais l'issue."""
+    rp = (fiche or {}).get("radar_procedure")
+    if not isinstance(rp, dict):
+        return ""
+    syn = rp.get("synthese") or {}
+    etat = syn.get("etat")
+    if not etat:
+        return ""
+    lignes = [f"<strong>Procédure PLU en cours</strong> — {esc(_fr_dates(str(etat)))}"]
+    sursis = rp.get("sursis")
+    sa = syn.get("sursis_autorise")
+    tenu = syn.get("debat_padd_tenu")
+    cherche = syn.get("debat_recherche_le")
+    if isinstance(sursis, dict) and sursis.get("texte"):
+        lignes.append(f"Sursis à statuer — {esc(_fr_dates(str(sursis['texte'])))}")
+    elif tenu and isinstance(sa, dict):
+        _d = sa.get("date_fr") or _fr_dates(str(sa.get("date") or ""))
+        lignes.append(f"Débat PADD tenu le {esc(_fr_dates(str(tenu)))}. Le conseil a autorisé le maire "
+                      f"à surseoir à statuer (délibération du {esc(str(_d))}, {esc(str(sa.get('article') or 'art. 2'))}) "
+                      "— aucune décision de sursis connue pour cette parcelle.")
+    elif tenu:
+        lignes.append(f"Débat PADD tenu le {esc(_fr_dates(str(tenu)))} — sursis à statuer non armé "
+                      "(décision discrétionnaire du maire, non constatée).")
+    elif cherche:
+        lignes.append(f"Pièce du débat PADD non retrouvée lors de la recherche du "
+                      f"{esc(_fr_dates(str(cherche)))} — pas de sursis servi.")
+    if rp.get("veille_au"):
+        lignes.append(f"Veille AU — {esc(_fr_dates(str(rp['veille_au'])))}")
+    body = "".join(f'<p style="margin:2pt 0">{l}</p>' for l in lignes)
+    return aside(body, "")
+
+
+def _bloc_reglement(valeurs: dict[str, Valeur], fiche: dict | None = None) -> str:
     """Les extraits du règlement (règles calibrées + destinations + drapeau Q12 + renvoi GPU) —
-    le rendu historique du bloc zonage, réutilisé tel quel (mêmes gardes de mots interdits)."""
+    le rendu historique du bloc zonage, réutilisé tel quel (mêmes gardes de mots interdits).
+    FIX-14 LOT 2 — suivi de la PROCÉDURE PLU (stade / débat PADD / sursis) quand la commune est en
+    révision (même champ que la fiche)."""
     from .blocs.zonage import _destinations, _regles
     v = valeurs.get("reglement_plu_bloc")
     z = (v.valeur if v else None) or {}
@@ -1461,6 +1499,7 @@ def _bloc_reglement(valeurs: dict[str, Valeur]) -> str:
     if z.get("idurba"):
         corps += note(f"Règlement complet : {z['idurba']} sur le Géoportail de l'urbanisme. "
                       "Les valeurs ci-dessus sont une aide à la lecture ; le règlement fait foi.")
+    corps += _bloc_procedure_plu(fiche)
     return corps
 
 
@@ -1738,7 +1777,7 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                     esc("voir l'Étude de faisabilité"), ""))
                 continue
             if l.quoi == "reglement_plu_bloc":
-                blocs_pleins.append(f'<div data-quoi="reglement_plu_bloc">{_bloc_reglement(valeurs)}</div>')
+                blocs_pleins.append(f'<div data-quoi="reglement_plu_bloc">{_bloc_reglement(valeurs, fiche)}</div>')
                 continue
             if l.quoi in _RENDEURS_BLOC:
                 if l.quoi == "dvf_parcelle_liste":   # EXPORTS-FIX-1 C8 — caveat Terrain en zone A/N

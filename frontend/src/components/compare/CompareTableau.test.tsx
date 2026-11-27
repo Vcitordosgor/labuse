@@ -47,3 +47,27 @@ describe('COMPARER — le tableau ne se réduit jamais à la barre de titre (MIN
     expect(container.querySelector('table')).toBeNull()
   })
 })
+
+it('compte les colonnes rendues et réserve le PDF à deux parcelles exploitables', async () => {
+  getCompareMock.mockResolvedValue({
+    parcels: [{ idu: IDUS[0], emprise_ces_detail: 'Selon la superficie de l’unité foncière' }],
+    ignores: [IDUS[1]], echecs: [IDUS[2]],
+  })
+  const { container, findByText } = renderQC(<ComparePanel />)
+  await findByText('1 parcelle comparée')
+  expect(container.querySelector('[data-compare-export]')).toBeDisabled()
+  expect(container.querySelector('[data-compare-ecartees]')).toHaveTextContent(IDUS[1])
+  expect(container.querySelector('[data-compare-ecartees]')).toHaveTextContent(IDUS[2])
+  expect(container).toHaveTextContent('Selon la superficie de l’unité foncière')
+})
+
+it('rend visibles les parts de zonage et la clause sociale sans ouvrir les hypothèses', async () => {
+  getCompareMock.mockResolvedValue({ parcels: [
+    { idu: IDUS[0], zone: 'A', zonage_detail: 'A 70 % · N 27,6 % · Usdu 2,4 %' },
+    { idu: IDUS[1], charge_fonciere_m2: 50, bilan_hypotheses: ['Programme collectif'],
+      mixite: { detail: '15 % de logements aidés', article: 'Article Uavap.2', page: 'p. 27', borne_haute: true } },
+  ] })
+  const { findByText } = renderQC(<ComparePanel />)
+  expect(await findByText(/Usdu 2,4 %/)).toBeVisible()
+  expect(await findByText(/15 % de logements aidés · Article Uavap.2 · p. 27/)).toBeVisible()
+})

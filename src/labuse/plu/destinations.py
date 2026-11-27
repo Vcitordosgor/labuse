@@ -132,12 +132,16 @@ def _doc(commune: str) -> dict | None:
     return _load_yaml(str(p)) if p else None
 
 
-def reglement_meta(commune: str) -> dict | None:
+def reglement_meta(commune: str, zone: str | None = None) -> dict | None:
     """Métadonnée `meta` du règlement de la commune (document, url, millésime, édition), ou None si
     non calibrée. Point d'accès PUBLIC pour que les surfaces (fiche règlement) ne lisent jamais le
     dossier de calibration directement."""
     doc = _doc(commune)
-    return (doc.get("meta") or {}) if doc else None
+    if not doc:
+        return None
+    meta = doc.get("meta") or {}
+    annexe = (meta.get("documents_par_zone") or {}).get(_norm_zone(zone or ""))
+    return {**meta, **annexe} if annexe else meta
 
 
 def _millesimes() -> dict:
@@ -183,7 +187,7 @@ def scot_daac(commune: str) -> dict | None:
 # ---------------------------------------------------------------------------
 
 
-def etat_commune(commune: str) -> dict:
+def etat_commune(commune: str, zone: str | None = None) -> dict:
     """État de calibration destinations d'une commune :
       calibree (millésime lu == millésime servi) · a_relire (nouvelle version de PLU
       servie depuis la lecture) · rnu (calibrée sur le RNU) · non_calibree.
@@ -232,12 +236,13 @@ def etat_commune(commune: str) -> dict:
                               f"au catalogue ({idurba_servi}) — calibration à jour")
         else:
             etat = "a_relire"
+    meta = reglement_meta(commune, zone) or meta
     return {"etat": etat, "insee": meta.get("insee") or insee,
             "commune": meta.get("commune") or commune,
             "millesime": meta.get("millesime"), "lu_le": meta.get("lu_le"),
             "document": meta.get("document"), "url": meta.get("url"),
             "document_gpu": idurba_lu, "document_gpu_servi": idurba_servi,
-            "note": note_catalogue,
+            "note": note_catalogue or meta.get("note_locale"),
             "zones": sorted((doc.get("zones") or {}).keys())}
 
 
@@ -307,7 +312,7 @@ def verdict(commune: str, zone: str, sous_destination: str) -> dict:
     """
     if sous_destination not in SOUS_DESTINATIONS:
         raise ValueError(f"sous-destination inconnue : {sous_destination!r}")
-    ec = etat_commune(commune)
+    ec = etat_commune(commune, zone)
     lib = SOUS_DESTINATIONS[sous_destination][1]
     base = {"commune": ec.get("commune") or commune, "zone": zone,
             "sous_destination": sous_destination, "libelle": lib,
@@ -384,7 +389,7 @@ def _phrase(v: dict) -> str:
 
 def zone_destinations(commune: str, zone: str) -> dict:
     """Table complète des 23 sous-destinations pour une zone (fiche parcelle, X4.2)."""
-    ec = etat_commune(commune)
+    ec = etat_commune(commune, zone)
     lignes = [verdict(commune, zone, sd) for sd in SOUS_DESTINATIONS]
     return {"commune": ec.get("commune") or commune, "zone": zone,
             "etat_calibration": ec["etat"], "millesime": ec.get("millesime"),

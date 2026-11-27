@@ -47,7 +47,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
   if (factual) {
     return (
       // RECETTE-1 R32 — survol vert opaque (hover-fill) sur les lignes du listing, comme le reste de l'app.
-      <button onClick={() => focusParcelle(p.idu, { fiche: true })}
+      <button aria-pressed={on} onClick={() => focusParcelle(p.idu, { fiche: true })}
         className={`hover-fill relative flex w-full shrink-0 items-center overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 px-4 text-left ${
           on ? 'border-mint' : 'border-line-2'}`}>
         <div className="min-w-0 flex-1">
@@ -61,7 +61,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
     )
   }
   return (
-    <button
+    <button aria-pressed={on}
       onClick={() => focusParcelle(p.idu, { fiche: true })}
       className={`hover-fill relative flex w-full shrink-0 items-center overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 pl-4 pr-3 text-left ${
         on ? 'border-mint' : 'border-line-2'}`}
@@ -416,7 +416,7 @@ function AnalyseCard({ p, communeLabel }: { p: ParcelProps & { commune?: string 
   const on = selectedIdu === p.idu
   const nc = p.bande === 'NC'
   return (
-    <button onClick={() => focusParcelle(p.idu, { fiche: true })}
+    <button aria-pressed={on} onClick={() => focusParcelle(p.idu, { fiche: true })}
       className={`hover-fill relative flex w-full shrink-0 items-start overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 pl-4 pr-3 text-left ${on ? 'border-mint' : 'border-line-2'}`}>
       {bm && <span className="absolute left-0 top-0 h-full w-[3px]" style={{ background: bm.color }} />}
       <div className="min-w-0 flex-1">

@@ -44,50 +44,96 @@ function avecIduMono(t: string): ReactNode {
     IDU_RE.test(p) && p.length === 14 ? <span key={i} className="font-mono">{p}</span> : <span key={i}>{p}</span>)
 }
 
-type Tour = { q: string; r: CopiloteV2Reponse; echec?: boolean }
+type Tour = { q: string; r: CopiloteV2Reponse; echec?: boolean; requestId?: string }
 type Sujet = { idu: string; commune: string | null; zone: string | null; surface: string | null }
 
 export function CopiloteView() {
   const [saisie, setSaisie] = useState('')          // UN seul champ : accueil ET fil
   const [fil, setFil] = useState<Tour[]>([])
   const [dispatching, setDispatching] = useState(false)
+  const [questionEnCours, setQuestionEnCours] = useState('')
+  const [suiteListe, setSuiteListe] = useState(false)
   const [missions, setMissions] = useState<CopiloteMission[]>([])
   const [retentionJours, setRetentionJours] = useState(30)
   const [convId, setConvId] = useState<number | null>(null)
   const [projetForm, setProjetForm] = useState<{ prefill: Record<string, unknown> } | null>(null)
+  const tiroirRef = useRef<HTMLDialogElement>(null)
+  const menuRef = useRef<HTMLButtonElement>(null)
   const [menuOpen, setMenuOpen] = useState(false)   // mobile : tiroir des conversations
   const champRef = useRef<HTMLTextAreaElement | null>(null)
   const basRef = useRef<HTMLDivElement | null>(null)
 
-  const rafraichirMissions = () => copiloteV2Missions()
-    .then((d) => { setMissions(d.missions); setRetentionJours(d.retention_jours) }).catch(() => {})
+  const restaurerFocus = useRef(false)
+  useEffect(() => {
+    if (dispatching && restaurerFocus.current && document.activeElement === document.body) {
+      champRef.current?.focus()
+    }
+    restaurerFocus.current = false
+  }, [dispatching])
+
+  const navigation = useRef(0)
+  const requeteListe = useRef(0)
+  const [listeEtat, setListeEtat] = useState<'chargement' | 'prete' | 'erreur'>('chargement')
+  const [avis, setAvis] = useState('')
+  const [ouverture, setOuverture] = useState(false)
+  const [expiration, setExpiration] = useState<number | null>(null)
+  const [expire, setExpire] = useState(false)
+  const rafraichirMissions = async (suite = false) => {
+    const requete = ++requeteListe.current
+    try {
+      const d = await copiloteV2Missions(suite ? missions[missions.length - 1] : undefined)
+      if (requete !== requeteListe.current) return
+      setMissions(avant => suite ? [...avant, ...d.missions.filter(m => !avant.some(a => a.id === m.id))] : d.missions)
+      setSuiteListe(!!d.suite)
+      setRetentionJours(d.retention_jours)
+      setListeEtat('prete')
+    } catch {
+      if (requete === requeteListe.current) setListeEtat('erreur')
+    }
+  }
+  useEffect(() => {
+    if (expiration === null) { setExpire(false); return }
+    const delai = expiration - Date.now()
+    setExpire(delai <= 0)
+    if (delai <= 0) return
+    const timer = window.setTimeout(() => setExpire(true), delai)
+    return () => window.clearTimeout(timer)
+  }, [expiration])
   useEffect(() => { void rafraichirMissions() }, [])
 
   // M78 · dispatch : le routeur décide, la réponse rejoint le fil. Le contexte SUIT (conversation_id
   // envoyé → le serveur recharge les derniers tours : une question de suite s'applique à la parcelle
   // du fil sans la répéter).
-  const interroger = async (msg: string) => {
+  const interroger = async (msg: string, reprise?: Tour) => {
     const m = msg.trim()
-    if (!m || dispatching) return
+    if (!m || dispatching || ouverture) return
+    const generation = navigation.current
+    restaurerFocus.current = document.activeElement === champRef.current
     setDispatching(true)
-    setSaisie('')
+    setQuestionEnCours(m)
+    if (!reprise) setSaisie('')
+    const requestId = reprise?.requestId ?? crypto.randomUUID()
+    const afficher = (tour: Tour) => setFil(f => reprise ? f.map(t => t === reprise ? tour : t) : [...f, tour])
     try {
-      const r = await copiloteV2Ask(m, { conversation_id: convId })
-      if (r.conversation_id != null) setConvId(r.conversation_id)
+      const r = await copiloteV2Ask(m, { conversation_id: convId, request_id: requestId })
       void rafraichirMissions()
+      if (generation !== navigation.current) return
+      setExpiration(r.contexte_ttl_minutes != null ? Date.now() + r.contexte_ttl_minutes * 60000 : null)
+      if (r.conversation_id != null) setConvId(r.conversation_id)
       // M113 — le parcours projet guidé : le serveur ne crée JAMAIS directement ; il renvoie le
       // préremplissage compris et le front ouvre le formulaire (qui protège par construction).
       if (r.projet_form) { setProjetForm(r.projet_form); return }
-      setFil((f) => [...f, { q: m, r }])
+      afficher({ q: m, r })
     } catch (e) {
+      if (generation !== navigation.current) return
       // FIX-COPILOTE F3 — un 429 (plafond quotidien) porte un message CLAIR du serveur, affiché verbatim,
       // SANS bouton Réessayer (ça repart à minuit). Autre échec → tour récupérable (bouton Réessayer).
       const quota = is429(e)
       const echec = (quota
         ? { text: (e as ApiError).detail ?? 'Limite quotidienne du Copilote atteinte — elle repart à minuit.', intent: null, erreur: true }
         : { text: 'Je n’ai pas pu traiter votre demande — le service ne répond pas. Réessayez dans un instant.', intent: null, erreur: true }) as CopiloteV2Reponse
-      setFil((f) => [...f, { q: m, r: echec, echec: !quota }])
-    } finally { setDispatching(false) }
+      afficher({ q: m, r: echec, echec: !quota, requestId })
+    } finally { if (generation === navigation.current) setDispatching(false) }
   }
   const soumettre = () => void interroger(saisie)
 
@@ -95,31 +141,48 @@ export function CopiloteView() {
   useEffect(() => { basRef.current?.scrollIntoView({ block: 'end' }) }, [fil.length, dispatching])
 
   const nouveauFil = () => {
+    navigation.current++
+    setOuverture(false); setDispatching(false); setAvis(''); setExpiration(null)
     setFil([]); setConvId(null); setProjetForm(null); setSaisie('')
     champRef.current?.focus()
   }
 
   // §2b — rouvrir une conversation passée : restaure le FIL COMPLET (inline).
   const rouvrir = async (m: CopiloteMission) => {
+    if (m.id === convId && !ouverture) return
+    const generation = ++navigation.current
+    setDispatching(false); setOuverture(true); setAvis('')
     try {
       const conv = await copiloteV2Mission(m.id)
+      if (generation !== navigation.current) return
+      setExpiration(conv.contexte_ttl_minutes != null ? Date.parse(conv.updated_at) + conv.contexte_ttl_minutes * 60000 : null)
       setConvId(conv.id); setProjetForm(null); setSaisie('')
       const tours: Tour[] = []
       let question: string | null = null
       for (const x of conv.messages) {
         if (x.role === 'client') question = x.texte
         else if (question != null) {
-          tours.push({ q: question, r: { text: x.texte, intent: (x.intent as CopiloteV2Reponse['intent']) ?? null } })
+          tours.push({ q: question, r: { ...x.reponse, text: x.texte, intent: (x.intent as CopiloteV2Reponse['intent']) ?? null } })
           question = null
         }
       }
       setFil(tours)
-    } catch { /* silencieux — l'historique ne casse pas l'écran */ }
+    } catch {
+      if (generation === navigation.current) setAvis("Impossible d’ouvrir cette conversation. Sélectionnez-la pour réessayer.")
+    } finally {
+      if (generation === navigation.current) setOuverture(false)
+    }
   }
 
   const supprimerConv = async (m: CopiloteMission) => {
-    try { await copiloteV2MissionSupprimer(m.id) } catch { /* la liste se recale au rafraîchissement */ }
-    if (m.id === convId) nouveauFil()
+    const generation = navigation.current
+    try {
+      const resultat = await copiloteV2MissionSupprimer(m.id)
+      if (!resultat.ok) throw new Error()
+      if (generation === navigation.current && m.id === convId) nouveauFil()
+    } catch {
+      if (generation === navigation.current) setAvis("La suppression a échoué. Votre conversation est conservée à l’écran.")
+    }
     void rafraichirMissions()
   }
 
@@ -135,8 +198,11 @@ export function CopiloteView() {
         const val = (lbl: string) => rf.tuiles?.find((x) => x.libelle === lbl)?.valeur ?? null
         riche = { idu: rf.idu, commune: rf.commune ?? null, zone: val('Zone PLU'), surface: val('Surface') }
       }
-      const pid = t.r.prefill_idu || (t.q.match(IDU_RE)?.[0] ?? null)
-      if (pid && pid.length === 14) iduSeul = pid
+      const pid = t.r.prefill_idu || t.r.voie?.idu || (t.q.match(IDU_RE)?.[0] ?? null)
+      if (pid && pid.length === 14 && !rf?.idu) {
+        iduSeul = pid
+        if (riche?.idu !== pid) riche = null
+      }
     }
     if (riche) return riche
     if (iduSeul) return { idu: iduSeul, commune: null, zone: null, surface: null }
@@ -149,6 +215,20 @@ export function CopiloteView() {
   const { entretienDirect, clearEntretienDirect } = useApp()
   const setView = useApp((s) => s.setView)
   const setOpenProjet = useApp((s) => s.setOpenProjet)
+  useEffect(() => {
+    const tiroir = tiroirRef.current
+    if (!menuOpen || !tiroir) return
+    tiroir.showModal()
+    tiroir.querySelector<HTMLButtonElement>('button')?.focus()
+    const bureau = window.matchMedia('(min-width: 768px)')
+    const fermerSurBureau = () => { if (bureau.matches) setMenuOpen(false) }
+    bureau.addEventListener('change', fermerSurBureau)
+    return () => {
+      bureau.removeEventListener('change', fermerSurBureau)
+      tiroir.close()
+      menuRef.current?.focus()
+    }
+  }, [menuOpen])
   // GB-031/GB-039 — Échap : ferme d'abord le tiroir mobile, sinon rend le focus d'un champ non vide,
   // sinon ferme le Copilote (retour à la carte).
   useEffect(() => {
@@ -180,16 +260,16 @@ export function CopiloteView() {
   // RETOURS-18 (pt 15) — plus de TRAIT GRIS au-dessus de la zone d'écriture (border-t retiré), zone
   // REMONTÉE (padding haut réduit).
   const champ = (
-    <div data-copilote-champ className="bg-cp-bg/80 px-4 pb-3.5 pt-1.5 md:px-6">
+    <div data-copilote-champ className="bg-cp-bg/80 px-1 sm:px-4 pb-3.5 pt-1.5 md:px-6">
       {/* RETOURS-21 — plus d'anneau de focus (`focus-within:border`/`shadow`) : règle de focus unique. */}
       <div className="mx-auto flex max-w-[840px] items-end gap-2.5 rounded-xl border border-cp-ia-border bg-cp-card/60 py-2 pl-[16px] pr-2">
         <textarea ref={champRef} data-copilote-saisie rows={1} value={saisie}
           onChange={(e) => setSaisie(e.target.value)} onKeyDown={onChamp}
           aria-label="Votre message au Copilote"
           placeholder={enFil ? 'Continuez la conversation…' : 'Écrivez comme à un collègue…'}
-          className="max-h-32 min-h-[24px] flex-1 resize-none bg-transparent py-1.5 text-[14px] leading-normal text-cp-txt outline-none placeholder:text-cp-faint" />
-        <button data-copilote-envoyer onClick={soumettre} disabled={!saisie.trim() || dispatching}
-          className="shrink-0 rounded-lg bg-cp-ia px-5 py-2.5 text-[13px] font-medium text-cp-ia-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-50">
+          className="min-w-0 max-h-32 min-h-[24px] flex-1 resize-none bg-transparent py-1.5 text-[14px] leading-normal text-cp-txt outline-none placeholder:text-cp-faint" />
+        <button data-copilote-envoyer onClick={soumettre} disabled={!saisie.trim() || dispatching || ouverture}
+          className="shrink-0 rounded-lg bg-cp-ia px-2 sm:px-5 py-2.5 text-[13px] font-medium text-cp-ia-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-50">
           {dispatching ? '…' : 'Envoyer'}
         </button>
       </div>
@@ -208,7 +288,7 @@ export function CopiloteView() {
     // (`justify-center`, `gap-6` = écart normal entre exemples et champ) : plus de grand vide noir en
     // haut (justify-end retiré). La zone de texte vit DANS ce bloc pour l'accueil (le champ pinné en
     // bas ne s'affiche plus qu'en conversation).
-    <div data-accueil className="flex min-h-full flex-col items-center justify-center gap-6 px-6 py-10">
+    <div data-accueil className="flex min-h-full flex-col items-center justify-start gap-4 px-2 py-3 md:justify-center md:gap-6 md:px-6 md:py-10">
       <div className="w-full max-w-[760px] text-center">
         {/* RETOURS-18 (pt 15) — le « C » (pastille), le « Bonjour. » et le sous-titre sont RETIRÉS :
             il ne reste que le titre « Sur quoi on travaille ? », au-dessus des suggestions. */}
@@ -227,7 +307,7 @@ export function CopiloteView() {
           ))}
         </div>
       </div>
-      <div className="w-full max-w-[840px]">{champ}</div>
+      <div className="order-first w-full max-w-[840px] md:order-last">{champ}</div>
     </div>
   )
 
@@ -243,7 +323,7 @@ export function CopiloteView() {
           <div className="max-w-[92%] self-start">
             <ReponseInline v2={t.r} />
             {t.echec && i === fil.length - 1 && !dispatching && (
-              <button data-fil-reessayer onClick={() => void interroger(t.q)}
+              <button data-fil-reessayer onClick={() => void interroger(t.q, t)}
                 className="mt-2 rounded-lg border border-cp-amber/40 bg-cp-amber/10 px-3.5 py-1.5 font-display text-[12px] font-semibold text-cp-amber hover:bg-cp-amber/15">
                 Réessayer
               </button>
@@ -251,7 +331,10 @@ export function CopiloteView() {
           </div>
         </div>
       ))}
-      {dispatching && <div className="max-w-[92%] self-start"><TraitementEnCours /></div>}
+      {dispatching && <>
+        {fil[fil.length - 1]?.q !== questionEnCours && <p className="self-end rounded-xl bg-cp-ia/15 px-4 py-2">{questionEnCours}</p>}
+        <div className="max-w-[92%] self-start"><TraitementEnCours /></div>
+      </>}
       <div ref={basRef} />
     </div>
   )
@@ -267,22 +350,34 @@ export function CopiloteView() {
 
   return (
     <div data-copilote className="flex min-h-0 w-full flex-1 overflow-hidden bg-cp-bg font-sans text-[13px] text-cp-txt" style={FOND}>
-      <ConversationsSidebar conversations={missions} activeId={convId} retentionJours={retentionJours}
+      <ConversationsSidebar conversations={missions} activeId={convId} retentionJours={retentionJours} listeEtat={listeEtat} onRecharger={() => void rafraichirMissions()} onSuite={suiteListe ? () => void rafraichirMissions(true) : undefined}
         onNouvelle={nouveauFil} onOuvrir={rouvrir} onSupprimer={supprimerConv} />
 
       {/* Mobile : la liste des conversations devient un tiroir (menu). */}
       {menuOpen && (
-        <div className="fixed inset-0 z-40 flex md:hidden">
+        <dialog ref={tiroirRef} aria-label="Conversations" onCancel={(e) => { e.preventDefault(); setMenuOpen(false) }}
+          onKeyDown={(e) => {
+            if (e.key !== 'Tab') return
+            const boutons = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'))
+              .filter((bouton) => bouton.getClientRects().length > 0)
+            const premier = boutons[0], dernier = boutons[boutons.length - 1]
+            if (e.shiftKey && document.activeElement === premier) { e.preventDefault(); dernier?.focus() }
+            if (!e.shiftKey && document.activeElement === dernier) { e.preventDefault(); premier?.focus() }
+          }}
+          className="fixed inset-0 m-0 flex h-full max-h-none w-full max-w-none border-0 bg-transparent p-0 text-inherit">
           <div className="absolute inset-0 bg-black/55" onClick={() => setMenuOpen(false)} />
           <div className="relative z-10 bg-cp-bg">
-            <ConversationsSidebar mobile conversations={missions} activeId={convId} retentionJours={retentionJours}
+            <ConversationsSidebar mobile conversations={missions} activeId={convId} retentionJours={retentionJours} listeEtat={listeEtat} onRecharger={() => void rafraichirMissions()} onSuite={suiteListe ? () => void rafraichirMissions(true) : undefined}
               onNouvelle={nouveauFil} onOuvrir={rouvrir} onSupprimer={supprimerConv}
               onFermerMenu={() => setMenuOpen(false)} />
           </div>
-        </div>
+        </dialog>
       )}
 
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        {avis && <p role="alert" className="px-4 py-2 text-cp-amber">{avis}</p>}
+        {ouverture && <p role="status" className="px-4 py-2">Ouverture de la conversation…</p>}
+        {expire && <p role="status" className="px-4 py-2 text-cp-amber">Le contexte de cette conversation a expiré. Précisez à nouveau la parcelle ou la commune dans votre question.</p>}
         {/* En-tête du fil (desktop) : titre = la première question ; à droite, le contexte parcelle
             quand elle est le sujet (IDU · commune · zone · surface — ce que les réponses portent). */}
         {enFil && (
@@ -300,7 +395,7 @@ export function CopiloteView() {
         )}
         {/* Barre mobile : bouton d'ouverture du tiroir + titre/contexte compacts. */}
         <div className="flex min-w-0 items-center gap-3 border-b border-cp-line px-4 py-2.5 md:hidden">
-          <button data-conv-menu onClick={() => setMenuOpen(true)} aria-label="Ouvrir les conversations"
+          <button ref={menuRef} data-conv-menu onClick={() => setMenuOpen(true)} aria-label="Ouvrir les conversations"
             className="shrink-0 rounded-lg border border-cp-line px-2.5 py-1.5 text-[14px] leading-none text-cp-muted hover:text-cp-txt">☰</button>
           <div className="min-w-0 flex-1">
             {enFil ? (

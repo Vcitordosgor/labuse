@@ -27,14 +27,12 @@ from sqlalchemy.orm import Session
 
 from .. import constants
 from ..config import get_settings
+from . import iris_rp_2023
 
 SOURCE_NAME = "INSEE RP2022 — bases IRIS (logement, population)"
-URL_LOGEMENT = "https://www.insee.fr/fr/statistiques/fichier/8647012/base-ic-logement-2022_csv.zip"
-URL_POPULATION = ("https://www.insee.fr/fr/statistiques/fichier/8647014/"
-                  "base-ic-evol-struct-pop-2022_csv.zip")
-# DOCS-1 (décision Vic) — pas de parenthèses DANS le millésime : il est affiché entre parenthèses
-# par les documents (« … habitants (RP2022 …) ») → des parens internes donnaient un « )) ».
-MILLESIME = "RP2022, parution 16/10/2025, géographie 01/01/2024"
+URL_LOGEMENT = iris_rp_2023.LOGEMENT
+URL_POPULATION = iris_rp_2023.POPULATION
+MILLESIME = "RP2023, parution 15/10/2026, géographie 01/01/2025"
 
 #: colonnes INSEE retenues (base logement) → colonne de la table
 _LOG_COLS = {
@@ -78,6 +76,8 @@ def ensure_tables(engine) -> None:
         for stmt in DDL.strip().split(";"):
             if stmt.strip():
                 cx.execute(text(stmt))
+        for colonne in iris_rp_2023.NOUVELLES_COLONNES:
+            cx.execute(text(f"ALTER TABLE iris_rp ADD COLUMN IF NOT EXISTS {colonne} double precision"))
 
 
 def _lire_zip_csv(client: httpx.Client, url: str) -> list[dict]:
@@ -97,6 +97,23 @@ def _num(v):
         return None
 
 
+def _anciennes_bases(client, url_logement, url_population, millesime):
+    rows_log = [r for r in _lire_zip_csv(client, url_logement) if (r.get("COM") or "").startswith("974")]
+    rows_pop = [r for r in _lire_zip_csv(client, url_population) if (r.get("COM") or "").startswith("974")]
+    valeurs = []
+    pop_par_iris = {r["IRIS"]: r for r in rows_pop}
+    for r in rows_log:
+        iris = r["IRIS"]
+        vals: dict = {"iris": iris, "insee": r["COM"], "millesime": millesime}
+        for src, dst in _LOG_COLS.items():
+            vals[dst] = _num(r.get(src))
+        p = pop_par_iris.get(iris) or {}
+        for src, dst in _POP_COLS.items():
+            vals[dst] = _num(p.get(src))
+        valeurs.append(vals)
+    return valeurs
+
+
 def ingest_iris_rp(session: Session, *, url_logement: str = URL_LOGEMENT,
                    url_population: str = URL_POPULATION, millesime: str = MILLESIME,
                    client: httpx.Client | None = None, log=print) -> dict:
@@ -111,21 +128,15 @@ def ingest_iris_rp(session: Session, *, url_logement: str = URL_LOGEMENT,
                                headers={"User-Agent": constants.USER_AGENT},
                                follow_redirects=True)
     try:
-        rows_log = [r for r in _lire_zip_csv(c, url_logement) if (r.get("COM") or "").startswith("974")]
-        rows_pop = [r for r in _lire_zip_csv(c, url_population) if (r.get("COM") or "").startswith("974")]
+        if url_logement == URL_LOGEMENT and url_population == URL_POPULATION:
+            valeurs = iris_rp_2023.telecharger(c, url_logement, url_population, millesime)
+        else:
+            valeurs = _anciennes_bases(c, url_logement, url_population, millesime)
     finally:
         if own:
             c.close()
-    pop_par_iris = {r["IRIS"]: r for r in rows_pop}
     n = 0
-    for r in rows_log:
-        iris = r["IRIS"]
-        vals: dict = {"iris": iris, "insee": r["COM"], "millesime": millesime}
-        for src, dst in _LOG_COLS.items():
-            vals[dst] = _num(r.get(src))
-        p = pop_par_iris.get(iris) or {}
-        for src, dst in _POP_COLS.items():
-            vals[dst] = _num(p.get(src))
+    for vals in valeurs:
         cols = list(vals)
         session.execute(text(
             f"INSERT INTO iris_rp ({', '.join(cols)}, maj_at) "
@@ -137,7 +148,7 @@ def ingest_iris_rp(session: Session, *, url_logement: str = URL_LOGEMENT,
     session.flush()
     d = session.execute(text(
         "SELECT count(DISTINCT insee), count(*) FILTER (WHERE pop IS NULL) FROM iris_rp")).one()
-    log(f"  IRIS RP2022 : {n} IRIS · {d[0]} communes · {d[1]} sans volet population")
+    log(f"  IRIS {millesime} : {n} IRIS · {d[0]} communes · {d[1]} sans volet population")
     return {"iris": n, "communes": int(d[0]), "sans_pop": int(d[1])}
 
 
@@ -153,8 +164,9 @@ def _derives(r: dict) -> dict:
         "vacance_pct": pct(r.get("logvac"), r.get("log")),
         "part_bati_avant_1990_pct": pct(anciens if r.get("ach_tot") else None, r.get("ach_tot")),
         "taille_menages": taille,
-        "part_60_plus_pct": pct(((r.get("pop_6074") or 0) + (r.get("pop_75p") or 0))
-                                if r.get("pop") else None, r.get("pop")),
+        "part_60_plus_pct": pct(r["pop_6074"] + r["pop_75p"], r.get("pop"))
+                            if r.get("pop_6074") is not None and r.get("pop_75p") is not None else None,
+        "part_65_plus_pct": pct(r.get("pop_65p"), r.get("pop")),
         "part_locataires_pct": pct(r.get("rp_loc"), r.get("rp")),
         "part_hlm_pct": pct(r.get("rp_lochlmv"), r.get("rp")),
     }
@@ -191,7 +203,7 @@ def quartiers_commune(session: Session, insee: str) -> dict | None:
     """L'AFFINAGE par quartier d'une commune : n IRIS, vacance min/max/médiane (maille DITE).
     Ne remplace jamais la vérité communale (commune_insee_logement)."""
     rows = session.execute(text(
-        "SELECT iris, logvac, log FROM iris_rp WHERE insee = :i AND log > 0"),
+        "SELECT iris, logvac, log, millesime FROM iris_rp WHERE insee = :i AND log > 0"),
         {"i": insee}).mappings().all()
     if not rows:
         return None
@@ -201,4 +213,5 @@ def quartiers_commune(session: Session, insee: str) -> dict | None:
         return None
     return {"n_iris": len(rows), "vacance_min_pct": vac[0], "vacance_max_pct": vac[-1],
             "vacance_mediane_pct": vac[len(vac) // 2],
-            "source": "INSEE RP2022 par IRIS — l'affinage par quartier de la vérité communale"}
+            "source": "Insee, recensement par IRIS — " + ", ".join(
+                sorted({r["millesime"] for r in rows if r["millesime"]}))}

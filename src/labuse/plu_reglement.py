@@ -140,8 +140,61 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
             libelle = "Surface perméable et pleine terre"
             etat = "texte"
         ref = src.get(skey)
-        out.append({"cle": cle, "libelle": libelle, "valeur": txt, "etat": etat,
-                    "reference": ref, "url": _url(ref), "exceptions": _exc(cle)})
+        entry = {"cle": cle, "libelle": libelle, "valeur": txt, "etat": etat,
+                 "reference": ref, "url": _url(ref), "exceptions": _exc(cle)}
+        # OUTIL-PLU-FIX-10 (LOT 4) — barème de stationnement sur la fiche parcelle : on SERT les CONDITIONS
+        # du tableau (logement social, part publique, lotissement individuel…), l'ARTICLE et la PAGE, avec
+        # un lien profond — même quand la source d'article n'est pas portée par `sources` (barème par m² de
+        # SDP : Saint-Pierre Ud6 p.93). Source UNIQUE = le même `BaremeStationnement` que l'Étude applique.
+        if cle == "stationnement":
+            try:
+                from .faisabilite.zonage import _insee as _insee_de
+                from .implantation.regles import charger as _charger_bareme
+                insee = _insee_de(rules.bassin)
+                _b = _charger_bareme(insee, rules.code).stationnement
+                conds = []
+                # OUTIL-PLU-FIX-11 (LOT 3) — les lignes TYPÉES du tableau (logement social, locatif aidé,
+                # hébergement, étudiant…) sont des CONDITIONS à part entière, pas seulement le ratio de base.
+                # L'audit les citait explicitement (SL « logements sociaux → 1 place/logt », SP « 1 place
+                # pour les logements locatifs sociaux ») ; on les restitue depuis le barème servi.
+                for lg in (getattr(_b, "lignes", None) or ()):
+                    dest = getattr(lg, "destination", None)
+                    if dest not in ("social", "locatif_aide", "senior", "etudiant", "hebergement"):
+                        continue
+                    lib = (getattr(lg, "libelle", None) or dest).strip()
+                    p = getattr(lg, "places", None)
+                    # logement (locatif) social : ratio CANONIQUE « N place / logement » (on retire le
+                    # parenthétique redondant « (1/logt) ») pour une ligne lisible et vérifiable.
+                    if dest in ("social", "locatif_aide") and p is not None:
+                        base = re.sub(r"\s*\([^)]*\)\s*$", "", lib).strip()
+                        n = int(p) if float(p).is_integer() else p
+                        if re.search(r"\bmax(?:imum)?\b", lib, re.I):
+                            plafond = "une place" if n == 1 else f"{n} places"
+                            conds.append({"texte": f"{base} : {plafond} au maximum par logement"})
+                        else:
+                            conds.append({"texte": f"{base} : {n} place / logement"})
+                    else:
+                        conds.append({"texte": lib})
+                if insee == "97403" and _b.visiteurs and _b.visiteurs_social:
+                    # U12.2 p. 27 : le lot est une unité de tranche uniquement pour les autres logements.
+                    for libelle, ligne, lots in (
+                        ("Logement locatif aidé", _b.visiteurs_social, False),
+                        ("Autres logements", _b.visiteurs, True),
+                    ):
+                        tranche = f"{ligne.par_logements} logements"
+                        if lots:
+                            tranche += f" ou {ligne.par_logements} lots"
+                        conds.append({"texte": f"{libelle} : {ligne.places:g} place visiteur par tranche de {tranche}"})
+                conds += [{"texte": c} for c in (getattr(_b, "conditions", None) or ())]
+                _vus: set[str] = set()                # dédoublonne (ex. 2 lignes « hébergement » identiques)
+                entry["conditions"] = [c for c in conds if not (c["texte"] in _vus or _vus.add(c["texte"]))]
+                if not ref and getattr(_b, "article", None):
+                    ref = f"Art. {_b.article}" + (f" · p.{_b.page_pdf}" if _b.page_pdf is not None else "")
+                    entry["reference"] = ref
+                    entry["url"] = _url(ref)              # lien profond (#page) via la même logique d'offset
+            except Exception:  # noqa: BLE001 — enrichissement d'affichage, jamais bloquant
+                entry.setdefault("conditions", [])
+        out.append(entry)
     return out
 
 
@@ -165,7 +218,7 @@ def resolve_reglement(commune: str | None, zone_code: str | None,
                     + (f" Réf. document : {idurba}." if idurba else ""),
         }
 
-    src = _zonage.reglement_source(commune) or {}
+    src = _zonage.reglement_source(commune, zone_code) or {}
     base_url = src.get("url")
     offset = int(src.get("offset") or 0)      # regles portent page_pdf (page PDF réelle) → 0
     rules = _zonage.resolve_zone(zone_code, commune)
@@ -205,7 +258,7 @@ def resolve_reglement(commune: str | None, zone_code: str | None,
         # M57-P1 (Q3) : le repli est LÉGITIME (calibration par TYPE de zone ; A/N n'ont pas
         # d'articles indexés dans le corpus M51). Condition INCHANGÉE ; seul le libellé est
         # reformulé — il ne doit pas laisser croire à un manque de couverture de la commune.
-        "note": None if calibree else
+        "note": src.get("note_locale") if calibree else
                 "Le règlement des zones agricoles et naturelles n'est pas indexé article "
                 "par article dans LABUSE. Consultez le document complet.",
     }

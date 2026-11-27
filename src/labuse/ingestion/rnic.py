@@ -24,12 +24,14 @@ from __future__ import annotations
 
 import csv
 import json
+import re
+import unicodedata
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-SOURCE_NAME = "RNIC — copropriétés (ANAH)"
-URL_STABLE = "https://www.data.gouv.fr/fr/datasets/r/132ed35f-db38-48d9-a31f-3dd7a0942cd9"
+SOURCE_NAME = "RNIC — registre national des copropriétés (Anah)"
+URL_STABLE = "https://www.data.gouv.fr/fr/datasets/r/3ea8e2c3-0038-464a-b17e-cd5c91f65ce2"
 
 #: clés du CSV RNIC identifiant le représentant légal — purgées de `raw` si syndic non pro
 #: (personne physique potentielle : on garde le TYPE, jamais le nom — mandat Wave copro).
@@ -68,15 +70,72 @@ def _int(v) -> int | None:
         return None
 
 
+# Champs introduits par le nouveau format Anah. Les anciens noms restent le contrat des fiches.
+_CHAMPS_ANAH = {
+    "numero_immatriculation": "numero_d_immatriculation",
+    "nom_usage_copropriete": "nom_d_usage_de_la_copropriete",
+    "adresse_reference": "adresse_de_reference",
+    "commune_adresse": "commune_adresse_de_reference",
+    "nombre_total_lots": "nombre_total_de_lots",
+    "nombre_lots_habitation": "nombre_de_lots_a_usage_d_habitation",
+    "nombre_lots_stationnement": "nombre_de_lots_de_stationnement",
+    "nombre_lots_habitation_bureaux_commerces": "nombre_total_de_lots_a_usage_d_habitation_de_bureaux_ou_de_comm",
+    "periode_construction": "periode_de_construction",
+    "type_syndic": "type_de_syndic_benevole_professionnel_non_connu",
+    "raison_sociale_representant_legal": "raison_sociale_du_representant_legal",
+    "siret_representant_legal": "siret_du_representant_legal",
+    "longitude": "long",
+    "latitude": "lat",
+    "mandat_en_cours": "mandat_en_cours_dans_la_copropriete",
+}
+
+
+def _nom_commune(nom: str) -> str:
+    sans_accents = "".join(c for c in unicodedata.normalize("NFKD", nom.lower())
+                           if not unicodedata.combining(c))
+    developpe = re.sub(r"\bst\b", "saint", re.sub(r"\bste\b", "sainte", sans_accents))
+    return re.sub(r"[^a-z]", "", developpe)
+
+
+def _ligne_anah(row: dict, noms: dict, postaux: dict, codes: set) -> dict:
+    # Dans l'export 2026 « code_officiel_commune » peut contenir un code POSTAL, y compris
+    # un code valide pour une autre commune. Préférer le nom, puis la parcelle et la BAN.
+    officiel = row.get("code_officiel_commune")
+    insee = noms.get(_nom_commune(row.get("nom_officiel_commune") or ""))
+    insee = insee or noms.get(_nom_commune(row.get("commune_adresse") or ""))
+    if not insee and row.get("code_insee_parcelle_1") in codes:
+        insee = row["code_insee_parcelle_1"]
+    insee = insee or postaux.get(row.get("code_postal_adresse")) or postaux.get(officiel)
+    if not insee:
+        raise ValueError("Commune RNIC 974 non rapprochée du référentiel")
+    # Ces colonnes identifiantes supplémentaires ne sont pas consommées par la fiche.
+    normalisee = {_CHAMPS_ANAH.get(k, k): v for k, v in row.items()
+                  if k not in ("identification_representant_legal", "commune_representant_legal")}
+    normalisee["code_commune_amont"] = officiel
+    normalisee["code_officiel_commune"] = insee
+    return normalisee
+
+
 def _charger_csv_974(session, staging, csv_path: str) -> int:
     """Remplit la STAGING `rnic_coproprietes` depuis le CSV national filtré sur le 974 (RGPD inclus).
     Retourne le nombre de lignes 974 lues. `staging` a la clé primaire (LIKE … INCLUDING ALL) → le
     `ON CONFLICT` dédoublonne par immatriculation comme sur la table servie (keep-first)."""
     n = 0
     with open(csv_path, newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
+        reader = csv.DictReader(f)
+        nouveau_format = "numero_immatriculation" in (reader.fieldnames or [])
+        if nouveau_format:
+            from .run_all import REUNION_COMMUNES
+            noms = {_nom_commune(n): i for i, n in REUNION_COMMUNES}
+            codes = set(noms.values())
+            postaux = dict(session.execute(text(
+                "SELECT code_postal, min(insee) FROM adresses WHERE code_postal IS NOT NULL "
+                "GROUP BY code_postal HAVING count(DISTINCT insee)=1")).all())
+        for row in reader:
             if row.get("code_officiel_departement") != "974":
                 continue
+            if nouveau_format:
+                row = _ligne_anah(row, noms, postaux, codes)
             idus = [row.get(f"reference_cadastrale_{i}") for i in (1, 2, 3)]
             idus = [i.strip() for i in idus if i and len(i.strip()) == 14]
             lon, lat = row.get("long"), row.get("lat")
@@ -106,7 +165,7 @@ def _charger_csv_974(session, staging, csv_path: str) -> int:
                 "snom": (row.get("raison_sociale_du_representant_legal") or None) if pro else None,
                 "ssiret": ((row.get("siret_du_representant_legal") or "")[:14] or None) if pro else None,
                 "mandat": (row.get("mandat_en_cours_dans_la_copropriete") or "").lower()
-                          in ("oui", "true", "1"),
+                          in ("oui", "true", "1", "mandat en cours"),
                 "idus": json.dumps(idus), "lon": lon or "", "lat": lat or "",
                 "raw": json.dumps({k: v for k, v in row.items()
                                    if v and (pro or k not in _CLES_REPRESENTANT)},

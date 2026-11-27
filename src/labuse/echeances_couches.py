@@ -29,7 +29,6 @@ REVUE_JOURS = 730
 #: Clé = fragment du NOM de la source (ILIKE). Ces assertions l'emportent sur tout texte amont.
 HORIZONS_CURES: dict[str, date] = {
     "Ravines — domaine public fluvial": date(2006, 8, 21),   # DPF, arrêté 06-3077
-    "GéoLittoral": date(2018, 1, 1),                          # trait de côte / érosion (Cerema)
     "EDF Réunion — lignes moyenne tension": date(2020, 2, 1),  # HTA — géométrie 02/2020 (≠ publication 2025)
     "Parc National de La Réunion": date(2021, 1, 1),
     "cartes de bruit stratégiques": date(2022, 1, 1),         # CBS
@@ -39,7 +38,7 @@ HORIZONS_CURES: dict[str, date] = {
 }
 
 #: Archives FIGÉES (aucune nouvelle édition amont attendue) : jamais d'échéance.
-_ARCHIVE_RE = re.compile(r"géoréf|cadastre 18|historique|scan 50|edugéo|\b1950\b|\b1980\b", re.IGNORECASE)
+_ARCHIVE_RE = re.compile(r"géoréf|cadastre 18|historique|scan 50|edugéo|\b(?:1950|1980)\b(?!\s*[-–—]\s*\d{4})", re.IGNORECASE)
 _ANNEE_RE = re.compile(r"(19\d{2}|20\d{2})")
 
 
@@ -53,13 +52,20 @@ def _annee_max(texte: str | None) -> int | None:
     return max(annees) if annees else None
 
 
+def _horizon_cure(nom: str) -> date | None:
+    for fragment, horizon in HORIZONS_CURES.items():
+        if fragment.lower() in (nom or "").lower():
+            return horizon
+    return None
+
+
 def horizon_reel(nom: str, millesime: str | None, source_horizon_at: date | None) -> date | None:
     """La date RÉELLE de la donnée : assertion curée d'abord, puis l'horizon amont écrit par
     l'ingester, puis l'année lisible du millésime (ancrée au 31/12 — hypothèse optimiste « au plus
     tard dans l'année »). Une archive figée → None (jamais d'échéance)."""
-    for frag, d in HORIZONS_CURES.items():
-        if frag.lower() in (nom or "").lower():
-            return d
+    horizon_cure = _horizon_cure(nom)
+    if horizon_cure is not None:
+        return horizon_cure
     if _ARCHIVE_RE.search(millesime or ""):
         return None
     if source_horizon_at is not None:
@@ -87,7 +93,7 @@ def echeance_pour(nom: str, millesime: str | None, source_horizon_at: date | Non
 
 
 def ensure_echeances_couches(engine) -> dict:
-    """Persiste `source_horizon_at` (où NULL) et `prochain_millesime_at` (l'échéance) pour les sources
+    """Persiste les horizons documentés et les échéances de revue pour les sources
     qui alimentent la carte. Idempotent, sûr à rejouer. Lit le millésime courant → se recale à chaque
     passage (ingester/sentinelle peuvent l'avoir rafraîchi). Rendu : compte des sources à vérifier."""
     from sqlalchemy import text
@@ -103,13 +109,12 @@ def ensure_echeances_couches(engine) -> dict:
             if h is None:
                 continue
             e = echeance_de(h)
-            # source_horizon_at : posé seulement s'il manque (ne jamais écraser un horizon d'ingester) ;
-            # prochain_millesime_at : toujours recalé (dérive de l'horizon courant).
+            # Une année seule permet de planifier la revue. Le jour de publication reste inconnu.
             c.execute(text(
                 "UPDATE data_sources SET "
-                "  source_horizon_at = COALESCE(source_horizon_at, :h), "
+                "  source_horizon_at = COALESCE(source_horizon_at, :horizon_documente), "
                 "  prochain_millesime_at = :e WHERE id = :id"),
-                {"h": h, "e": e, "id": r["id"]})
+                {"horizon_documente": _horizon_cure(r["name"]), "e": e, "id": r["id"]})
             poses += 1
             if a_verifier(e):
                 a_verif += 1

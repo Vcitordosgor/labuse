@@ -56,6 +56,11 @@ def commune_known(insee: str | None = None, nom: str | None = None) -> bool:
     return False
 
 
+def insee_officiel(nom: str) -> str | None:
+    cle = nom.strip().replace("’", "'").casefold()
+    return next((code for libelle, code in _OFFICIAL_BY_NAME.items() if libelle.casefold() == cle), None)
+
+
 def nom_officiel(insee_ou_idu: str | None) -> str | None:
     """FIX-PRIX-ET-OPPORTUNITES (lot 1) — nom OFFICIEL de la commune depuis l'INSEE cadastral, ou depuis
     un IDU (ses 5 premiers caractères = l'INSEE). Source de vérité = `REUNION_COMMUNES` (la loi), jamais

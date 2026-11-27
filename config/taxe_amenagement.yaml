@@ -2,30 +2,30 @@
 # Config DATÉE et SOURCÉE (aucun chiffre inventé). RV2-V2 (28/08/2026) — RÉFÉRENCE LÉGALE CORRIGÉE :
 # depuis la réforme (transfert à la DGFiP, ord. 2022-883), la taxe d'aménagement est régie par le CODE
 # GÉNÉRAL DES IMPÔTS, art. 1635 quater A à 1635 quater V (le code de l'urbanisme L.331-* est abrogé).
-# Assiette = surface taxable × valeur forfaitaire (art. 1635 quater I) + forfaits (art. 1635 quater J) ;
-# abattement 50 % (art. 1635 quater H) ; exonération des petites surfaces < 5 m² (art. 1635 quater D).
+# Assiette = surface taxable × valeur forfaitaire (art. 1635 quater H) + forfaits (art. 1635 quater J) ;
+# abattement 50 % (art. 1635 quater I) ; exonération des petites surfaces ≤ 5 m² (art. 1635 quater D).
 # Valeurs au m² actualisées chaque année (indexation ICC INSEE) — À METTRE À JOUR au millésime.
 meta:
   annee: 2026
   source: "service-public.gouv.fr — Taxe d'aménagement : quels montants en 2026 (indexation ICC INSEE) ; base légale CGI art. 1635 quater A s."
   url: "https://www.service-public.gouv.fr/particuliers/actualites/A15416"
-  releve_le: "2026-08-28"
+  releve_le: "2026-11-26"
   note: >-
     Estimation INDICATIVE. Le montant officiel est notifié par l'administration après dépôt du permis.
     La Réunion (DOM) est HORS Île-de-France : la valeur forfaitaire hors-IdF s'applique (aucune valeur
     forfaitaire spécifique aux DOM n'existe). Base légale : CGI art. 1635 quater A et suivants.
 
 # Valeur forfaitaire de la surface de construction (€/m² de surface taxable), millésime 2026
-# (CGI art. 1635 quater I). Vérifié le 28/08/2026 contre service-public A15416.
+# (CGI art. 1635 quater H). Vérifié le 28/08/2026 contre service-public A15416.
 valeur_forfaitaire_m2:
   hors_idf: 892        # La Réunion (DOM) — valeur applicable
   idf: 1011            # documenté pour mémoire, non applicable au 974
 
 # Exonération de PLEIN DROIT des petites surfaces : une construction dont la surface taxable est
-# < 5 m² n'est pas soumise à la part surface (CGI art. 1635 quater D, 10°). Cadré et incontestable.  # CHASSE-FIX-1 (C42)
+# ≤ 5 m² n'est pas soumise à la part surface (CGI art. 1635 quater D, 10°). Cadré et incontestable.  # CHASSE-FIX-1 (C42)
 exoneration_surface_min_m2: 5
 
-# Abattement de 50 % sur la valeur forfaitaire (CGI art. 1635 quater H) :
+# Abattement de 50 % sur la valeur forfaitaire (CGI art. 1635 quater I) :
 # - 100 premiers m² d'un local d'habitation à usage de résidence principale ;
 # - locaux d'habitation aidés (prêts aidés de l'État) et leurs annexes.
 abattement:
@@ -51,3 +51,62 @@ taux:
   part_departementale_plafond_pct: 2.5
   part_departementale_defaut: 2.5      # taux 974 servi par défaut, CONFIRMÉ par DELTA, modifiable
   part_departementale_confirmee_974: true   # confirmé par DGFiP/DELTA (délibération départementale, 2,5 %)
+
+# Relevé DELTA 974 du 26/11/2026 : 24 communes, 1 département, 11 636 lignes parcellaires.
+# Les 121 lignes sectorielles d'Entre-Deux portent les mêmes quotités que la commune.
+exonerations_locales:
+  annee: 2026
+  releve_le: '2026-11-26'
+  source: 'https://data.economie.gouv.fr/explore/dataset/delta_deliberation_tam_17_01_23/'
+  communes:
+    '97403':
+      effet: '2022-01-01'
+      social: 100
+      ptz: 20
+      monument: 100
+  departement: {}
+
+# CGI 1635 quater B, E, H et I. BOI-IF-TU-10-20-40 et BOI-IF-TU-10-30-20 (26/08/2026).
+# "champ" est la colonne DELTA et "vote" la clé des relevés déjà en service.
+formules_locales:
+  industrie:
+    champ: locaux_a_usage_industriel_et_artisanal
+    vote: Locaux industriels et artisanaux
+    label: Local industriel ou artisanal éligible
+    condition: Local relevant du 3° du I de l’article 1635 quater I, sous réserve des conditions d’aides de minimis.
+    abattement: true
+  boutique:
+    champ: commerces_de_detail
+    vote: Commerces de détail
+    label: Magasin ou boutique hors ensemble commercial
+    condition: Magasin de rue ou sans accès à la rue relevant de l’article 1388 quinquies C, sous réserve des aides de minimis. Saisissez une ligne par cellule, annexes comprises.
+    seuil_principal_exclusif: 400
+  jardin:
+    champ: abris_de_jardin
+    vote: Abris de jardin
+    label: Abri ou serre de jardin non professionnel
+    condition: Indiquez la surface par construction. Au-delà du seuil, la construction reste taxée.
+    seuil_surface_inclusif: 20
+  pigeonnier:
+    champ: abris_de_jardin
+    vote: Abris de jardin
+    label: Pigeonnier ou colombier
+    condition: Le vote de la catégorie jardin couvre aussi les pigeonniers et colombiers, sans plafond de surface.
+  sante:
+    champ: maisons_de_sante
+    vote: Maisons de santé
+    label: Maison de santé éligible
+    condition: Maison de santé répondant à l’article L. 6323-3 du code de la santé publique, sous réserve des aides de minimis.
+  terrain:
+    champ: les_constructions_sur_terrains_rehabilites
+    vote: Constructions sur terrains réhabilités
+    label: Projet entièrement situé sur terrain réhabilité éligible ou en secteur d’information sur les sols
+    condition: Constructions et aménagements situés dans le périmètre justifié au titre du 8° du I de l’article 1635 quater E. Pour un projet à cheval, simulez séparément chaque périmètre.
+    projet_entier: true
+  transformation:
+    champ: locaux_transformes_en_habitation
+    vote: Locaux transformés en habitation
+    label: Local professionnel transformé en logement
+    condition: Changement de destination soumis à autorisation. Indiquez la surface transformée et déclarez séparément les surfaces nouvellement construites.
+    abattement: true
+    communale_seule: true

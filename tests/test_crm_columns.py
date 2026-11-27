@@ -196,3 +196,18 @@ def test_h3_reset_restaure_defaut_et_remappe_les_cartes(client):
     # la carte n'a PAS disparu : elle est dans la 1re colonne par défaut
     entry = next(e for e in client.get("/pipeline").json() if e["id"] == eid)
     assert entry["status"] == cols[0]["key"]
+
+
+def test_restauration_directe_archive_ancienne(client):
+    from labuse.db import session_scope
+
+    idu = "97415000AB0001"
+    cols = client.get("/pipeline/columns").json()["columns"]
+    entry = client.post("/pipeline", json={"idu": idu, "notes": "rappel"}).json()["entry"]
+    eid = entry["id"]
+    assert client.delete(f"/pipeline/{eid}").status_code == 200
+    with session_scope() as db:
+        db.execute(_t("UPDATE pipeline_entries SET status = 'ancienne_etape' WHERE id = :id"), {"id": eid})
+    assert client.post("/pipeline", json={"idu": idu, "status": "inconnue"}).status_code == 422
+    restored = client.post(f"/pipeline/{eid}/restore").json()["entry"]
+    assert restored["status"] == cols[0]["key"] and restored["notes"] == "rappel"

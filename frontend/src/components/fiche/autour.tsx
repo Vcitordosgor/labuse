@@ -44,7 +44,7 @@ export function HistoriqueSiteBlock({ f }: { f: Fiche }) {
             // OUTIL-PERMIS-FIX-8 (LOT 1) — le dépôt vient déjà filtré par le serveur (fonction unique) :
             // s'il est absent, on NE RECOPIE PLUS l'autorisation sous « déposé » (contre-audit ASTRA-4) —
             // on dit alors seulement « autorisé … ».
-            <li key={i}>{pm.type_label ?? pm.type ?? 'permis'}{pm.date_depot ? ` — déposé ${fmtDateNum(pm.date_depot)}` : ''}{pm.date_autorisation ? `${pm.date_depot ? ',' : ' —'} autorisé ${fmtDateNum(pm.date_autorisation)}` : ''}
+            <li key={i}>{pm.type_label ?? pm.type ?? 'permis'} {pm.permit_id}{pm.date_depot ? ` — déposé ${fmtDateNum(pm.date_depot)}` : ''}{pm.date_autorisation ? `${pm.date_depot ? ',' : ' —'} autorisé ${fmtDateNum(pm.date_autorisation)}` : ''}
               {pm.annule ? <span className="font-medium text-st-ecartee"> · annulé</span>
                 : pm.etat_libelle && pm.etat_libelle !== 'autorisé' && <span className="text-txt-dim"> · {pm.etat_libelle}</span>}
               {note && <span className="text-st-ecartee"> · {note}</span>}
@@ -52,7 +52,18 @@ export function HistoriqueSiteBlock({ f }: { f: Fiche }) {
           )
         })}
         {h.caducite && (
-          <li className="text-st-ecartee">PC {h.caducite.pc_annee ?? ''} — {h.caducite.libelle_court ?? 'caduc'}</li>
+          // OUTIL-PERMIS-FIX-16 (LOT 1) — la PREUVE au même endroit que le signal : numéro(s) du PC +
+          // date d'autorisation + échéance estimée (dans libelle_court) ; base légale + réserve Sitadel
+          // en note. « aucun commencement déclaré » (servi par pc_caducs), plus « jamais commencé ».
+          <li className="text-st-ecartee">
+            {h.caducite.pc_numeros?.length ? `PC ${h.caducite.pc_numeros.join(', ')} · ` : ''}
+            {h.caducite.date_autorisation && h.caducite.echeance
+              ? `Autorisé le ${fmtDateNum(h.caducite.date_autorisation)} · aucun commencement déclaré · échéance estimée au ${fmtDateNum(h.caducite.echeance)} · caducité probable`
+              : h.caducite.libelle_court}
+            {(h.caducite.base_legale || h.caducite.reserve) && (
+              <span className="block text-txt-dim">{[h.caducite.base_legale, h.caducite.reserve].filter(Boolean).join(' · ')}</span>
+            )}
+          </li>
         )}
       </ul>
       <FactNote>{h.honnetete}</FactNote>
@@ -121,6 +132,7 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
         if (iris.part_bati_avant_1990_pct != null) t.push({ label: 'Bâti avant 1990', valeur: <>{String(iris.part_bati_avant_1990_pct).replace('.', ',')} <small>%</small></> })
         if (iris.taille_menages != null) t.push({ label: 'Pers./ménage', valeur: String(iris.taille_menages).replace('.', ',') })
         if (iris.part_60_plus_pct != null) t.push({ label: '60 ans et +', valeur: <>{String(iris.part_60_plus_pct).replace('.', ',')} <small>%</small></> })
+        else if (iris.part_65_plus_pct != null) t.push({ label: '65 ans et +', valeur: <>{String(iris.part_65_plus_pct).replace('.', ',')} <small>%</small></> })
         if (iris.part_hlm_pct != null) t.push({ label: 'HLM', valeur: <>{String(iris.part_hlm_pct).replace('.', ',')} <small>%</small></> })
         return (
           <div data-iris-quartier>

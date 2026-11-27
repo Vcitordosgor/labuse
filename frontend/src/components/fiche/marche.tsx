@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getFaisabilite, getMonSecteur, radarClic } from '../../lib/api'
 import { fmtInt, fmtDateNum, fmtMoisAn, casseSociete } from '../../lib/format'
 import { fourchette, FOURCHETTE_MENTION } from '../../lib/fourchette'   // FIX-PRIX-ET-OPPORTUNITES — fourchette ±30 %
+import { enteteMarche } from '../../lib/marche'   // OUTIL-COMMUNES-FIX-11 LOT 1 — en-tête cohérent (1 série)
 import { Siren } from '../shared/Siren'   // FICHE-ORFEVRERIE-1 (Lot D, pt 28) — SIREN cliquable Pappers
 import type { Fiche } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -81,17 +82,25 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
   // CHASSE-APP-FIX-1 (pt 1) — l'horizon de couverture DVF (« DVF — jusqu'à déc. 2025 ») est RETIRÉ du
   // contexte client : décision Vic 18/09, aucune date ni millésime de SOURCE n'est montré au client
   // (réservé à l'admin). La donnée reste servie (fraicheur/dvf_couverture), elle n'est plus affichée.
-  const contexte = dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} vente${dvfSecteur.n_ventes > 1 ? 's' : ''}${dvfSecteur.perimetre ? ` · ${dvfSecteur.perimetre}` : ''} · DVF` : 'comparables DVF'
+  // OUTIL-COMMUNES-FIX-11 LOT 1 — l'en-tête tire prix + TYPE + effectif + périmètre d'UNE SEULE série.
+  // Priorité au TERRAIN NU (sujet du §Marché) s'il est diffusable (≥ seuil) ; sinon repli sur l'ANCIEN
+  // (bâti) AVEC SON propre effectif/rayon/type ; le terrain sous le seuil est dit À PART. Plus jamais le
+  // prix du bâti présenté avec l'effectif/périmètre du terrain (défaut ASTRA-8 §1 : « 2947 €/m² · 1 vente
+  // · section cadastrale » où 2947 = maisons sur 10 ventes à 500 m). `mb` (faisa.marche) = type_prix / n /
+  // radius_m / commune_fallback / median de la MÊME série.
+  const { valeur: enteteValeur, contexte: enteteContexte, terrainInsuffisant, methode: enteteMethode } = enteteMarche(dvfSecteur, mb)
   return (
     <RefDrawer id="marche" icon={IC.marche} name="Marché"
-      context={contexte}
-      /* RECETTE-2 (A9) — quand le secteur DVF manque (dvf_parcelle null), l'en-tête portait « — »
-         alors que le prix de l'ancien du secteur existe (faisa.marche.median) → on l'affiche. */
-      value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²`
-        : (mb?.median != null ? `${fmtInt(Number(mb.median))} €/m²` : '—')}
+      context={enteteContexte}
+      value={enteteValeur}
       /* RECETTE-2 (A9) — le sous-titre « comparables DVF · … » vit dans l'en-tête (context) ; on ne le
          redouble plus sous la courbe (MicroSpark sans label). */
       micro={<MicroSpark label="" />}>
+      {/* FIX-11 LOT 1 — le terrain sous le seuil est dit À PART (jamais mêlé au prix affiché en tête). */}
+      {terrainInsuffisant && <p data-marche-terrain-insuffisant className="text-[11px] text-txt-dim">{terrainInsuffisant}.</p>}
+      {/* OUTIL-COMMUNES-FIX-13 LOT 5 — la MÉTHODE (« recherche mixte ») au DÉTAIL : l'en-tête dit le lot
+          retenu (« 10 maisons »), ici on explique qu'on a cherché maisons ET appartements. */}
+      {enteteMethode && <p data-marche-methode className="text-[11px] text-txt-dim">Recherche mixte (maisons et appartements cherchés) ; seul le type ci-dessus a été retenu.</p>}
       {/* KELFONCIER-FIX-2 (Lot I) — Verdict + Tuiles c3 (médiane par type, servie) + Réglette
           (écart secteur ↔ commune, servi). Aucun prix recalculé. */}
       {(() => {

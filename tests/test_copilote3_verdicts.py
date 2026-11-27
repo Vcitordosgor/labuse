@@ -225,9 +225,8 @@ def test_reponse_copro_oui_non_deterministe(db):
 def test_answer_copro_est_deterministe_et_source_rnic(db):
     """Bout en bout, SANS IA : la question copropriété est servie par la voie déterministe (RNIC),
     jamais par le formuler qui inventait (« pas en copropriété » sur une copro avérée, NU-E-046)."""
+    _skip_si_absent(db, "97404000AV0167")
     rep = A.answer(db, "La parcelle 97404000AV0167 est-elle en copropriété ?")
-    if "introuvable" in (rep.get("text") or "").lower():
-        pytest.skip("témoin AV0167 absent de cette base")
     assert not rep.get("degraded")
     assert "copropriété" in rep["text"].lower()
     assert rep["text"].lower().startswith("oui")

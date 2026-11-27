@@ -70,12 +70,17 @@ _RX_CAD = re.compile(r"^SEC_CADASTRE(\d+)$")
 _RX_PV = re.compile(r"PHOTOVOLT|^PV_|^I_PV", re.IGNORECASE)
 
 
-def _fetch_csv(rid: str, since: str | None = None, timeout: float = 300.0) -> str:
-    """CSV du datafile, FILTRÉ SERVEUR (DEP 974 [+ date ≥ since]) — dernier millésime."""
+def _fetch_csv(rid: str, since: str | None = None, timeout: float = 300.0,
+               millesime: str | None = None) -> str:
+    """CSV du datafile, FILTRÉ SERVEUR (DEP 974 [+ date ≥ since]) — dernier millésime par défaut.
+    `millesime` (ex. '2026-10') épingle un millésime précis (reproductibilité / millésime courant non
+    encore diffusé pour certains datafiles)."""
     params = ["withColumnName=true", "withColumnDescription=false", "withColumnUnit=false",
               f"DEP_CODE=eq:{DEP}"]
     if since:
         params.append(f"DATE_REELLE_AUTORISATION=gte:{since}")
+    if millesime:
+        params.append(f"millesime={millesime}")
     url = f"{DIDO}/datafiles/{rid}/csv?" + "&".join(params)
     with httpx.Client(timeout=timeout, headers={"User-Agent": constants.USER_AGENT},
                       follow_redirects=True) as c:
@@ -101,31 +106,47 @@ def _cadastre_pairs(fieldnames: list[str]) -> list[tuple[str, str]]:
     return sorted(pairs, key=lambda p: int(_RX_CAD.match(p[0]).group(1)))
 
 
+# OUTIL-PERMIS-FIX-16 (LOT 3) — la clé d'un permis n'est PLUS le seul numéro : un même NUM_DAU porte
+# parfois DEUX autorisations de TYPES différents (ex. 9744121620163 = un PC sur BO0239 ET un DP sur
+# CO0082). Keyer sur le seul numéro faisait écraser l'un par l'autre (dernière ligne gagne), et le PC
+# caduc sur BO0239 disparaissait du signal. La clé de conflit est donc (permit_id, type). Les lignes
+# d'un MÊME (permit_id, type) — un permis mixte réparti sur les fichiers logements + locaux, ou un permis
+# sur plusieurs parcelles — sont FUSIONNÉES en amont (union des parcelles) avant l'upsert.
 _UPSERT = text(
     """INSERT INTO sitadel_permits (permit_id, type, date, date_depot, idu_codes, commune, geom, raw)
        SELECT :pid, :typ, :dt, :ddep, CAST(:idus AS jsonb), :c,
               (SELECT centroid FROM parcels WHERE idu = ANY(:idu_arr) LIMIT 1),
               CAST(:raw AS jsonb)
-       ON CONFLICT (permit_id) DO UPDATE SET
-         type = EXCLUDED.type, date = EXCLUDED.date, date_depot = EXCLUDED.date_depot,
+       ON CONFLICT (permit_id, type) DO UPDATE SET
+         date = EXCLUDED.date, date_depot = EXCLUDED.date_depot,
          idu_codes = EXCLUDED.idu_codes,
-         commune = EXCLUDED.commune, raw = EXCLUDED.raw,
-         geom = COALESCE(EXCLUDED.geom, sitadel_permits.geom)""")
+         commune = EXCLUDED.commune,
+         raw = CASE WHEN sitadel_permits.idu_codes = EXCLUDED.idu_codes
+                         AND sitadel_permits.raw ? 'geoloc' AND EXCLUDED.geom IS NULL
+                    THEN EXCLUDED.raw || jsonb_build_object('geoloc', sitadel_permits.raw->'geoloc')
+                    ELSE EXCLUDED.raw END,
+         geom = CASE WHEN sitadel_permits.idu_codes = EXCLUDED.idu_codes AND EXCLUDED.geom IS NULL
+                     THEN sitadel_permits.geom ELSE EXCLUDED.geom END""")
 
 
 def ensure_indexes(session: Session, log=print) -> None:
-    """Contrainte unique permit_id (après PURGE des doublons préexistants, le meilleur survit :
-    géolocalisé d'abord, puis le plus récent) + index pétitionnaire (raw->>'petitioner_siret')."""
+    """Contrainte unique (permit_id, TYPE) — OUTIL-PERMIS-FIX-16 (LOT 3) : un numéro porté par deux types
+    (PC + DP…) reste DEUX permis distincts, aucun n'écrase l'autre. Les doublons préexistants d'un même
+    (permit_id, type) sont purgés d'abord (le meilleur survit : géolocalisé, puis le plus récent) + index
+    pétitionnaire (raw->>'petitioner_siret')."""
+    # bascule depuis l'ancien index UNIQUE (permit_id) seul (qui empêcherait deux types du même numéro).
+    session.execute(text("DROP INDEX IF EXISTS uq_sitadel_permit"))
     purged = session.execute(text(
         """DELETE FROM sitadel_permits s USING (
-             SELECT id, row_number() OVER (PARTITION BY permit_id
+             SELECT id, row_number() OVER (PARTITION BY permit_id, type
                       ORDER BY (geom IS NOT NULL) DESC, id DESC) AS rn
              FROM sitadel_permits WHERE permit_id IS NOT NULL) d
            WHERE s.id = d.id AND d.rn > 1""")).rowcount
     if purged:
-        log(f"  doublons préexistants purgés : {purged}")
+        log(f"  doublons préexistants (permit_id, type) purgés : {purged}")
     session.execute(text(
-        "CREATE UNIQUE INDEX IF NOT EXISTS uq_sitadel_permit ON sitadel_permits (permit_id)"))
+        "CREATE UNIQUE INDEX IF NOT EXISTS uq_sitadel_permit_type "
+        "ON sitadel_permits (permit_id, type)"))
     session.execute(text(
         "CREATE INDEX IF NOT EXISTS ix_sitadel_petitioner_siret "
         "ON sitadel_permits ((raw->>'petitioner_siret'))"))
@@ -174,13 +195,43 @@ def _date_depot(rec: dict, raw: dict, stats: dict) -> str | None:
     return val
 
 
-def ingest_sdes(session: Session, since: str | None = None, log=print) -> dict:
-    """Ingestion (backfill si since=None, delta sinon) des 4 datafiles — idempotente (upsert)."""
+def _fusionner(pending: dict, cle: tuple, params: dict) -> None:
+    """OUTIL-PERMIS-FIX-16 (LOT 3) — accumule une ligne d'ingestion dans `pending[cle]` (cle =
+    (permit_id, type)) : UNION des parcelles (`idus`), union des champs `raw` (on ne REMPLACE jamais un
+    champ déjà renseigné — un permis mixte complète nb_lgt côté logements et surf côté locaux), date/dépôt
+    = première valeur non nulle. Un permis sur plusieurs lignes garde ainsi TOUTES ses parcelles."""
+    cur = pending.get(cle)
+    if cur is None:
+        pending[cle] = params
+        return
+    for i in params["_idus"]:
+        if i not in cur["_idus"]:
+            cur["_idus"].append(i)
+    cur["dt"] = cur["dt"] or params["dt"]
+    cur["ddep"] = cur["ddep"] or params["ddep"]
+    cur["c"] = cur["c"] or params["c"]
+    if params["_raw"].get("famille") == "locaux":
+        for k in ("surf_loc", "surfaces_destinations"):
+            if params["_raw"].get(k) not in (None, ""):
+                cur["_raw"][k] = params["_raw"][k]
+    for k, v in params["_raw"].items():
+        if v not in (None, "") and cur["_raw"].get(k) in (None, ""):
+            cur["_raw"][k] = v
+
+
+def ingest_sdes(session: Session, since: str | None = None, log=print,
+                millesime: str | None = None) -> dict:
+    """Ingestion (backfill si since=None, delta sinon) des 4 datafiles — idempotente (upsert).
+    `millesime` épingle un millésime SDES précis (reproductibilité)."""
     communes = _commune_map(session)
     stats = {"lignes": 0, "upserts": 0, "sans_cadastre": 0, "petitioner": 0, "pv_col": None,
              "dates_futures": 0, "dates_invalides": 0, "depots_futurs": 0, "depots_invalides": 0}
+    # OUTIL-PERMIS-FIX-16 (LOT 3) — on ACCUMULE toutes les lignes par (permit_id, type) AVANT d'upserter,
+    # pour unir les parcelles d'un permis réparti sur plusieurs lignes (fichiers logements+locaux, ou
+    # plusieurs parcelles). Un même numéro porté par deux types reste deux entrées distinctes.
+    pending: dict[tuple, dict] = {}
     for key, df in DATAFILES.items():
-        raw_csv = _fetch_csv(df["rid"], since=since)
+        raw_csv = _fetch_csv(df["rid"], since=since, millesime=millesime)
         reader = csv.DictReader(io.StringIO(raw_csv), delimiter=";")
         fields = reader.fieldnames or []
         pairs = _cadastre_pairs(fields)
@@ -200,9 +251,10 @@ def ingest_sdes(session: Session, since: str | None = None, log=print) -> dict:
                 if idu and idu not in idus:
                     idus.append(idu)
             if not idus:
-                stats["sans_cadastre"] += 1   # même règle que la voie ODS : pas de réf = pas de ligne
-                continue
+                stats["sans_cadastre"] += 1
             raw = {"src": "SDES Dido — Sitadel3 (974)",
+                   "sdes_courant": True,
+                   "surf_loc": rec.get("SURF_LOC_CREEE"),
                    "nb_lgt": rec.get("NB_LGT_TOT_CREES"),
                    "surf_hab": rec.get("SURF_HAB_CREEE"),
                    "destination": rec.get("DESTINATION_PRINCIPALE"),
@@ -214,6 +266,14 @@ def ingest_sdes(session: Session, since: str | None = None, log=print) -> dict:
                    "an_depot": (rec.get("AN_DEPOT") or "").strip() or None,
                    "famille": key,
                    "insee": insee}
+            if millesime:
+                raw["sdes_millesime"] = millesime
+            if key == "locaux":
+                raw["surfaces_destinations"] = {
+                    dest: rec[f"SURF_{dest}_CREEE"]
+                    for dest in ("AGR", "COM", "PUB", "HEB", "BUR", "IND", "ENT")
+                    if rec.get(f"SURF_{dest}_CREEE") not in (None, "", "0")
+                }
             # RETOURS-13 R30 — l'ADRESSE DU TERRAIN (colonnes ADR_* du flux) voyage dans raw :
             # c'est le REPLI de géolocalisation quand la parcelle du permis a DISPARU du cadastre
             # (division/remembrement — cas du PC hôtel 97441816A0077, parcelle BC0328 divisée :
@@ -235,20 +295,42 @@ def ingest_sdes(session: Session, since: str | None = None, log=print) -> dict:
             for col in pv_cols:
                 if rec.get(col) not in (None, ""):
                     raw["pv"] = rec[col]
-            session.execute(_UPSERT, {
-                "pid": pid, "typ": (rec.get(df.get("type_col")) or df.get("type_fixe") or "").strip() or None,
+            typ = (rec.get(df.get("type_col")) or df.get("type_fixe") or "").strip() or None
+            # accumulation par (permit_id, type) — l'upsert (union des parcelles) est fait après.
+            _fusionner(pending, (pid, typ or ""), {
+                "pid": pid, "typ": typ,
                 "dt": _date_autorisation(rec, raw, stats),
                 "ddep": _date_depot(rec, raw, stats),   # M38 : date de dépôt Sitadel (DR_DEPOT)
-                "idus": json.dumps(idus), "idu_arr": idus,
                 "c": communes.get(insee, insee),
-                "raw": json.dumps(raw, ensure_ascii=False)})
-            stats["upserts"] += 1
+                "_idus": list(idus), "_raw": raw})
             n_file += 1
-            if n_file % 2000 == 0:
-                session.flush()
-                log(f"  {key} : {n_file}…")
-        session.flush()
-        log(f"  ✓ {key} : {n_file} upserts")
+        if not since and not n_file:
+            raise ValueError(f"Publication Sitadel incomplète : fichier {key} vide")
+        log(f"  ✓ {key} : {n_file} lignes lues")
+    # upsert des permis fusionnés (une ligne par (permit_id, type), toutes parcelles unies).
+    # Reconcile membership only after reading all four complete files. Retain the
+    # historical records and their last known vintage for traceability.
+    session.execute(text("SELECT pg_advisory_xact_lock(hashtext('labuse.ingest_sdes'))"))
+    if since is None:
+        session.execute(text("""
+            UPDATE sitadel_permits s SET raw = s.raw || jsonb_build_object('sdes_courant', false)
+            WHERE s.raw->>'src' LIKE 'SDES Dido%'
+              AND s.raw->>'sdes_courant' IS DISTINCT FROM 'false'
+              AND NOT EXISTS (
+                SELECT FROM jsonb_to_recordset(CAST(:actes AS jsonb)) AS a(n text, t text)
+                WHERE a.n = s.permit_id AND a.t = s.type)
+        """), {"actes": json.dumps([{"n": n, "t": t} for n, t in pending])})
+    for i, p in enumerate(pending.values(), 1):
+        session.execute(_UPSERT, {
+            "pid": p["pid"], "typ": p["typ"], "dt": p["dt"], "ddep": p["ddep"], "c": p["c"],
+            "idus": json.dumps(p["_idus"]), "idu_arr": p["_idus"],
+            "raw": json.dumps(p["_raw"], ensure_ascii=False)})
+        stats["upserts"] += 1
+        if i % 2000 == 0:
+            session.flush()
+            log(f"  upsert {i}/{len(pending)}…")
+    session.flush()
+    log(f"  ✓ {len(pending)} permis distincts (permit_id, type) upsertés")
     return stats
 
 
@@ -423,15 +505,16 @@ def refresh_since(session: Session) -> str | None:
     return None
 
 
-def run(refresh: bool = False, geocode: bool = True, log=print) -> dict:
-    """Point d'entrée (CLI + cron) : ingestion + fallback géoloc + traçage ingestion_runs."""
+def run(refresh: bool = False, geocode: bool = True, log=print, millesime: str | None = None) -> dict:
+    """Point d'entrée (CLI + cron) : ingestion + fallback géoloc + traçage ingestion_runs.
+    `millesime` épingle un millésime SDES précis (reproductibilité ; millésime courant non diffusé)."""
     from ..db import session_scope
 
     with session_scope() as s:
         run_id = s.execute(text(
             "INSERT INTO ingestion_runs (commune, status) VALUES (:c, 'running') RETURNING id"),
             {"c": f"974 (SDES Sitadel3{' — refresh' if refresh else ' — backfill'})"}).scalar()
-        s.flush()
+        s.commit()
         try:
             ensure_indexes(s, log=log)
             since = refresh_since(s) if refresh else None
@@ -439,7 +522,7 @@ def run(refresh: bool = False, geocode: bool = True, log=print) -> dict:
             # since vaut None dans les deux cas désormais (cf. refresh_since).
             log("SDES Sitadel3 — " + ("réconciliation mensuelle (millésime complet, corrections captées)"
                                        if refresh else "backfill complet 2013+"))
-            stats = ingest_sdes(s, since=since, log=log)
+            stats = ingest_sdes(s, since=since, log=log, millesime=millesime)
             if geocode:
                 stats["geocode"] = geocode_missing(s, log=log)
                 # R30 — le repli ADRESSE passe APRÈS le repli cadastral (une parcelle disparue
@@ -463,6 +546,7 @@ def run(refresh: bool = False, geocode: bool = True, log=print) -> dict:
                 "WHERE name = :n"),
                 {"n": SOURCE_NAME})
         except Exception:
+            s.rollback()
             s.execute(text(
                 "UPDATE ingestion_runs SET finished_at = now(), status = 'error' WHERE id = :id"),
                 {"id": run_id})

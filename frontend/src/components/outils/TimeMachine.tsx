@@ -1,6 +1,7 @@
+import { fmtDateNum } from '../../lib/format'
 import { useQuery } from '@tanstack/react-query'
 import * as maplibregl from 'maplibre-gl'   // MAPLIBRE-1 Lot B — v6 ESM : plus d'export par défaut
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { reglerWorkerMaplibre } from '../map/maplibreWorker'   // MAPLIBRE-1 Lot B — worker Vite (dev + build)
 import { getParcelGeojson, getParcelsGeojson, getParcellaireEpoque, parcelAt } from '../../lib/api'
 import { useApp } from '../../store/useApp'
@@ -37,8 +38,9 @@ function applyBasemap(m: maplibregl.Map, def: BasemapDef) {
     const below = m.getLayer('parcellaire') ? 'parcellaire' : m.getLayer('p') ? 'p' : undefined
     m.addLayer({ id: 'bm', type: 'raster', source: 'bm' }, below)
   }
-  if (m.isStyleLoaded()) add()
+  if (m.getLayer('parcellaire')) add()
   else m.once('load', add)
+  return () => { m.off('load', add) }
 }
 
 function muteTileErrors(m: maplibregl.Map) {
@@ -65,7 +67,7 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   // TEMPS (refonte) — la parcelle DÉSIGNÉE (M08), épinglée sur LES DEUX fonds (contour mint appuyé),
   // pour ne jamais la perdre en glissant la poignée. Son contour ignore le filtre de statut de 'p'.
   const pinIdu = useApp((s) => s.tempsPinIdu)
-  const dragging = useRef(false)
+  const viewport = useRef<HTMLDivElement>(null)
   const commune = useApp((s) => s.commune)
   const labelMarkers = useRef<maplibregl.Marker[]>([])
   // RECETTE-9 T6 — le contour BLANC (W13) ne s'affichait JAMAIS depuis la fiche : la source `cible`
@@ -77,18 +79,23 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   const cibleFC = useRef<{ type: 'FeatureCollection'; features: unknown[] }>({ type: 'FeatureCollection', features: [] })
   // REMONTER-TEMPS-2 Lot B — « Parcellaire de l'époque » (off par défaut) : superpose sur la vue AVANT
   // le contour de la parcelle MÈRE d'origine (cadastre_historique, parcelles disparues). Disponible
-  // seulement quand la période « avant » atteint 2017 (début de l'ingestion cadastre). Cadastre plein
+  // pour les millésimes cadastraux compris dans la période du fond ancien. Cadastre plein
   // écran NON servi (choix RT-2 : version minimale — l'ancien contour de CETTE parcelle, sinon message).
   const [cadastreOn, setCadastreOn] = useState(false)
-  const periodAn = leftKey === 'bm-ortho-now'
-    ? 9999
-    : Number(TEMPS_MILLESIMES.find((m) => m.key === leftKey)?.an ?? 0)
-  const cadastreDispo = periodAn >= 2016   // 2016-2020 recouvre déjà 2017 (1er millésime cadastre)
+  const periode = TEMPS_MILLESIMES.find((m) => m.key === leftKey)?.periode
+  const cadastreDispo = !!periode && periode[1] >= 2008
   const cadEpoque = useQuery({
     queryKey: ['cad-epoque', pinIdu],
     queryFn: () => getParcellaireEpoque(pinIdu!),
     enabled: !!pinIdu && cadastreOn && cadastreDispo, retry: false,
   })
+  const archives = useMemo(() => {
+    if (!cadastreOn || !periode || !pinIdu) return []
+    return (cadEpoque.data?.features ?? []).filter(({ properties }) => {
+      const an = Number(properties.millesime?.slice(0, 4))
+      return an >= periode[0] && an <= periode[1]
+    })
+  }, [cadastreOn, periode, pinIdu, cadEpoque.data])
   const cadFC = useRef<{ type: 'FeatureCollection'; features: unknown[] }>({ type: 'FeatureCollection', features: [] })
   // mode île : pas de GeoJSON (431k features) — le comparateur reste utilisable sans la
   // surcouche parcelles (l'ortho historique est l'objet de l'outil)
@@ -96,6 +103,7 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   // O2-4 (OUTILS-2) — géométrie de LA parcelle désignée, chargée SEULE (indépendante de la commune) :
   // c'est elle qui garantit le contour sur les deux volets même en mode île (l'ancienne épingle
   // dépendait du GeoJSON commune, jamais chargé sans commune → parcelle invisible, tout l'objet raté).
+  const communeFC = useRef(geo.data)
   const cible = useQuery({ queryKey: ['temps-cible', pinIdu], queryFn: () => getParcelGeojson(pinIdu!), enabled: !!pinIdu, retry: false })
 
   useEffect(() => {
@@ -117,8 +125,10 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
     now.on('move', sync(now, past))
     // M82 (refonte) — CLIC CARTE = désigner la parcelle : parcelAt(point)→idu→parcelPrefill (motif
     // M-ENTREE, pas un nouveau mécanisme). Le bandeau M08 consomme parcelPrefill et recentre.
+    let pick = 0
     const onPick = (e: maplibregl.MapMouseEvent) => {
-      parcelAt(e.lngLat.lng, e.lngLat.lat).then((r) => { if (r.idu) useApp.getState().setParcelPrefill(r.idu) }).catch(() => {})
+      const request = ++pick
+      parcelAt(e.lngLat.lng, e.lngLat.lat).then((r) => { if (request === pick && r.idu) useApp.getState().setParcelPrefill(r.idu) }).catch(() => {})
     }
     past.on('click', onPick); now.on('click', onPick)
     const addParcels = (m: maplibregl.Map) => m.on('load', () => {
@@ -129,7 +139,7 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
         tiles: [`${window.location.origin}/map/tiles/{z}/{x}/{y}.pbf`] })
       m.addLayer({ id: 'parcellaire', type: 'line', source: 'parcels-ile', 'source-layer': 'parcels',
         paint: { 'line-color': '#ECF5EF', 'line-width': 0.5, 'line-opacity': 0.4 } })
-      m.addSource('p', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } as never })
+      m.addSource('p', { type: 'geojson', data: (communeFC.current ?? { type: 'FeatureCollection', features: [] }) as never })
       m.addLayer({ id: 'p', type: 'line', source: 'p',
         filter: ['in', ['get', 'status'], ['literal', ['chaude', 'a_surveiller', 'a_creuser']]],
         paint: { 'line-color': '#5CE6A1', 'line-width': 1 } })
@@ -156,11 +166,11 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
       m.addLayer({ id: 'cad-epoque', type: 'line', source: 'cad-epoque',
         paint: { 'line-color': '#E0A94F', 'line-width': 1.4, 'line-dasharray': [3, 2], 'line-opacity': 0.9 } },
         m.getLayer('cible-casing') ? 'cible-casing' : undefined)
-      ;(m.getSource('cad-epoque') as maplibregl.GeoJSONSource | undefined)?.setData(cadFC.current as never)
+      if (m === past) (m.getSource('cad-epoque') as maplibregl.GeoJSONSource | undefined)?.setData(cadFC.current as never)
     })
     addParcels(past); addParcels(now)
     if (center) { past.jumpTo({ center, zoom: 17 }) }
-    return () => { past.remove(); now.remove(); maps.current = null }
+    return () => { pick++; past.remove(); now.remove(); maps.current = null }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -174,17 +184,18 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   // Fond de gauche / de droite : posés au montage, ré-échangés sur place si le choix change.
   useEffect(() => {
     const m = maps.current?.[0]
-    if (m && BASEMAP_SOURCES[leftKey]) applyBasemap(m, BASEMAP_SOURCES[leftKey])
+    if (m && BASEMAP_SOURCES[leftKey]) return applyBasemap(m, BASEMAP_SOURCES[leftKey])
   }, [leftKey])
   useEffect(() => {
     const m = maps.current?.[1]
-    if (m && BASEMAP_SOURCES[rightKey]) applyBasemap(m, BASEMAP_SOURCES[rightKey])
+    if (m && BASEMAP_SOURCES[rightKey]) return applyBasemap(m, BASEMAP_SOURCES[rightKey])
   }, [rightKey])
 
   useEffect(() => {
+    communeFC.current = geo.data
     for (const m of maps.current ?? []) {
-      if (geo.data && m.isStyleLoaded()) (m.getSource('p') as maplibregl.GeoJSONSource | undefined)?.setData(geo.data as never)
-      else if (geo.data) m.once('load', () => (m.getSource('p') as maplibregl.GeoJSONSource | undefined)?.setData(geo.data as never))
+      const source = m.getSource('p') as maplibregl.GeoJSONSource | undefined
+      source?.setData((geo.data ?? { type: 'FeatureCollection', features: [] }) as never)
     }
   }, [geo.data])
 
@@ -228,20 +239,14 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   }, [cible.data, pinIdu])
 
   // Lot B — pose le parcellaire d'époque (mère d'origine) sur le volet AVANT (carte gauche) uniquement,
-  // et l'efface dès que le chip retombe / la période passe sous 2017 / la parcelle change. Le contour
+  // et l'efface dès que le chip retombe / la période change / la parcelle change. Le contour
   // n'est JAMAIS inventé : si la mère n'est pas captée, la FC reste vide (le message le dit à côté).
   useEffect(() => {
     const past = maps.current?.[0]
-    const actif = cadastreOn && cadastreDispo && !!cadEpoque.data && cadEpoque.data.features.length > 0
-    const fc = { type: 'FeatureCollection' as const, features: actif ? cadEpoque.data!.features : [] }
+    const fc = { type: 'FeatureCollection' as const, features: archives }
     cadFC.current = fc
     ;(past?.getSource('cad-epoque') as maplibregl.GeoJSONSource | undefined)?.setData(fc as never)
-  }, [cadEpoque.data, cadastreOn, cadastreDispo, pinIdu])
-
-  useEffect(() => {
-    const t = setTimeout(() => maps.current?.forEach((m) => m.resize()), 60)
-    return () => clearTimeout(t)
-  }, [split])
+  }, [archives])
 
   return (
     // OUTILS-MUSCLER-2 C1 — le comparateur (inchangé : mêmes curseurs, mêmes libellés) prend la
@@ -249,13 +254,7 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
     <div className="flex min-w-0 flex-1 flex-col">
     <div
       className="relative min-w-0 flex-1 select-none"
-      onMouseMove={(e) => {
-        if (!dragging.current) return
-        const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
-        setSplit(Math.min(92, Math.max(8, ((e.clientX - r.left) / r.width) * 100)))
-      }}
-      onMouseUp={() => { dragging.current = false }}
-      onMouseLeave={() => { dragging.current = false }}
+      ref={viewport}
     >
       {/* maplibre-gl.css (`.maplibregl-map{position:relative}`, chargée APRÈS l'app via le lazy-load
           M-V) écrase la classe Tailwind `.absolute` posée sur ces conteneurs → les deux cartes
@@ -271,8 +270,21 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
       {/* poignée */}
       <div className="absolute inset-y-0 z-10 w-[2px] bg-mint" style={{ left: `${split}%` }}>
         <button
-          onMouseDown={() => { dragging.current = true }}
-          className="absolute left-1/2 top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize items-center justify-center rounded-full border border-mint bg-[#0F1A14] text-mint"
+          role="slider" aria-valuemin={8} aria-valuemax={92} aria-valuenow={Math.round(split)}
+          aria-valuetext={`${Math.round(split)} % de la vue ancienne`}
+          onPointerDown={(e) => e.currentTarget.setPointerCapture(e.pointerId)}
+          onPointerMove={(e) => {
+            if (!e.currentTarget.hasPointerCapture(e.pointerId)) return
+            const rect = viewport.current?.getBoundingClientRect()
+            if (rect?.width) setSplit(Math.max(8, Math.min(92, 100 * (e.clientX - rect.left) / rect.width)))
+          }}
+          onKeyDown={(e) => {
+            const positions: Record<string, number> = { ArrowLeft: split - 2, ArrowRight: split + 2, Home: 8, End: 92 }
+            if (!(e.key in positions)) return
+            e.preventDefault()
+            setSplit(Math.max(8, Math.min(92, positions[e.key])))
+          }}
+          className="absolute left-1/2 top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 touch-none cursor-ew-resize items-center justify-center rounded-full border border-mint bg-[#0F1A14] text-mint"
           aria-label="Glisser pour comparer"
         >
           <span aria-hidden="true">⇔</span>
@@ -285,22 +297,24 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
           gauche). Off par défaut, grisé quand la période « avant » est < 2017. Millésime et état
           (contour trouvé / pas de parcellaire) dits sous le chip. Survol = rien (règle DA). */}
       {pinIdu && (
-        <div className="absolute right-3 top-3 z-10 flex max-w-[17rem] flex-col items-end gap-1">
+        <div className="absolute left-3 top-3 z-10 flex max-w-[17rem] flex-col items-start gap-1">
           <Chip data-temps-cadastre ton="ambre" on={cadastreOn && cadastreDispo} disabled={!cadastreDispo}
             onClick={() => setCadastreOn((v) => !v)}>Parcellaire de l'époque</Chip>
+          {cadastreOn && cadastreDispo && cadEpoque.isLoading && <span role="status" className="rounded bg-surface-2 px-2 text-xs">Recherche du contour archivé…</span>}
+          {cadastreOn && cadastreDispo && cadEpoque.isError && <button onClick={() => void cadEpoque.refetch()} className="rounded bg-surface-2 px-2 text-xs">Archives indisponibles · Réessayer</button>}
           {!cadastreDispo && (
-            <span className="rounded bg-surface-2/95 px-2 py-0.5 text-right text-[9.5px] leading-snug text-txt-dim">
-              parcellaire d'époque disponible à partir de 2017
+            <span className="rounded bg-surface-2/95 px-2 py-0.5 text-left text-[9.5px] leading-snug text-txt-dim">
+              Les archives cadastrales commencent en 2008.
             </span>
           )}
-          {cadastreOn && cadastreDispo && cadEpoque.data && cadEpoque.data.features.length > 0 && (
-            <span data-temps-cadastre-mil className="rounded bg-surface-2/95 px-2 py-0.5 text-right text-[9.5px] leading-snug text-amber">
-              Cadastre d'époque {cadEpoque.data.millesime} — parcelle d'origine (contour ambre)
+          {cadastreOn && cadastreDispo && archives.length > 0 && (
+            <span data-temps-cadastre-mil className="rounded bg-surface-2/95 px-2 py-0.5 text-left text-[9.5px] leading-snug text-amber">
+              Contour d’origine en ambre · archive du {Array.from(new Set(archives.map((f) => f.properties.millesime))).sort().map(fmtDateNum).join(' · ')}
             </span>
           )}
-          {cadastreOn && cadastreDispo && cadEpoque.data && cadEpoque.data.features.length === 0 && (
-            <span data-temps-cadastre-vide className="rounded bg-surface-2/95 px-2 py-0.5 text-right text-[9.5px] leading-snug text-txt-mut">
-              pas de parcellaire d'époque pour cette parcelle
+          {cadastreOn && cadastreDispo && cadEpoque.isSuccess && archives.length === 0 && (
+            <span data-temps-cadastre-vide className="rounded bg-surface-2/95 px-2 py-0.5 text-left text-[9.5px] leading-snug text-txt-mut">
+              Aucun contour d’origine archivé pour cette parcelle sur la période choisie.
             </span>
           )}
         </div>

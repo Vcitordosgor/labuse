@@ -69,11 +69,13 @@ def test_envoi_stub_et_plafond(client, monkeypatch, engine):
     suivi = client.get("/courrier/envois").json()
     assert suivi["n"] == 2 and suivi["envois"][0]["modele"] == "renovation"
 
-def test_courrier_pdf_compose_recto_verso_sans_placeholder(client, engine):
+def test_courrier_pdf_compose_recto_verso_sans_placeholder(client, engine, monkeypatch):
     """COURRIER-2 Lot 3 — POST /courrier/pdf {idu} COMPOSE un PDF recto+verso VALIDE : contient la
     référence cadastrale, AUCUN placeholder {…}, AUCUNE ponctuation dégradée « ? », AUCUN mot
     d'estimation (potentiel/valorisation/valeur). Le back sert le même contenu que /courrier/composer."""
     import io
+    monkeypatch.setattr("labuse.api.courrier._marque_du_compte",
+                        lambda db, request: {"raison_sociale": "Agence Test"})
     idu = "97499000ZP0001"
     with engine.begin() as db:
         _seed_parcel(db, idu, commune="Saint-Paul", section="ZP", numero="0001", surface=800,

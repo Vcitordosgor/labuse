@@ -157,6 +157,28 @@ beforeEach(() => {
 })
 
 describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
+  it('cherche le maximum avec des quantités imposées et un complément totalisant 100 %', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    vi.mocked(postEtude).mockResolvedValue(RESULTAT as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await screen.findByText('AW 99')
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    fireEvent.click(screen.getByText('Résidence étudiante'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    fireEvent.click(screen.getByLabelText('Chercher le maximum de logements'))
+    fireEvent.change(screen.getByLabelText('Quantité imposée de T3'), { target: { value: '10' } })
+    fireEvent.change(screen.getByLabelText('Pourcentage de T2'), { target: { value: '60' } })
+    const lancer = screen.getByRole('button', { name: /Analyser mon projet/ }) as HTMLButtonElement
+    expect(lancer.disabled).toBe(true)
+    fireEvent.change(screen.getByLabelText('Pourcentage de T1'), { target: { value: '40' } })
+    fireEvent.click(lancer)
+    await waitFor(() => expect(postEtude).toHaveBeenCalledWith(expect.objectContaining({
+      type_projet: 'etudiante', programme: expect.objectContaining({
+        mode: 'maximum', fixes: { T1: 0, T2: 0, T3: 10, T4: 0 }, parts: { T1: 40, T2: 60, T3: 0, T4: 0 },
+      }),
+    })))
+  })
+
   it('étape 1 : affiche les faits par parcelle + l\'assiette contiguë, Continuer actif', async () => {
     vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
     renderV6(['97404000AW0099', '97404000AW0451'])
@@ -555,6 +577,16 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
 // ETUDE-FIABLE-1 (LOT B2) — ROUVRIR une étude affiche la RÉVISION enregistrée, SANS recalcul.
 describe('ÉTUDE — rouvrir affiche la révision sans recalcul (B2)', () => {
   const CFG = { idus: ['97404000AW0099', '97404000AW0451'], type_projet: 'social' as const }
+  it('affiche le motif et permet un export lorsque le résumé du scénario est nul', async () => {
+    const raison = 'Aucune implantation trouvée avec ces hypothèses'
+    const variante = { ...RESULTAT.variantes[0], absente: true, resume: null, raison }
+    vi.mocked(getEtudeRevisionParConfig).mockResolvedValue({
+      ...RESULTAT, variantes: [variante], capacite_maximale: null,
+    } as any)
+    render(<QueryClientProvider client={qc()}><EtudeV6 initialIdus={CFG.idus} rouvrir={CFG} /></QueryClientProvider>)
+    expect(await screen.findByText(raison)).toBeTruthy()
+    expect((screen.getByRole('button', { name: /Générer le PDF/ }) as HTMLButtonElement).disabled).toBe(false)
+  })
   it('relit la révision (verdict affiché) et NE rappelle PAS le moteur (postEtude)', async () => {
     vi.mocked(getEtudeRevisionParConfig).mockResolvedValue(RESULTAT as any)
     render(<QueryClientProvider client={qc()}><EtudeV6 initialIdus={CFG.idus} rouvrir={CFG as any} /></QueryClientProvider>)

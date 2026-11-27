@@ -10,4 +10,14 @@ describe('bandeauEtatPluSous — la case État du PLU porte la date', () => {
   it('sans date → repli lisible (pas de date inventée)', () => {
     expect(bandeauEtatPluSous(null)).toBeTruthy()
   })
+  // OUTIL-COMMUNES-FIX-9 LOT C (4) — précision de date variable honnête (mois/année), bonne préposition.
+  it('précision MOIS : « 2025-05 » → « en mai 2025 » (jamais un faux 1er du mois)', () => {
+    expect(bandeauEtatPluSous('2025-05')).toBe('en mai 2025')
+  })
+  it('précision ANNÉE : « 2025 » → « en 2025 »', () => {
+    expect(bandeauEtatPluSous('2025')).toBe('en 2025')
+  })
+  it('précision JOUR : « au 29/09/2025 »', () => {
+    expect(bandeauEtatPluSous('2025-09-29')).toBe('au 29/09/2025')
+  })
 })

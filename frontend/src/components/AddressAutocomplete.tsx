@@ -82,6 +82,7 @@ export function AddressAutocomplete({
   // M137-R (bug scoreur) : une SÉLECTION recopie le libellé dans `text`, ce qui relance l'effet
   // de recherche — on saute la recherche qu'un pick provoque.
   const skipSearchRef = useRef(false)
+  const suggestionRequest = useRef<AbortController | null>(null)
   const boxRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)   // CHASSE-APP-FIX-2 (point 5) — conteneur (statut + liste)
@@ -111,10 +112,13 @@ export function AddressAutocomplete({
     const needle = text.trim()
     if (needle.length < 2) { setItems([]); setOpen(false); setLoading(false); setNoResults(false); return }
     const ctrl = new AbortController()
+    suggestionRequest.current = ctrl
     setLoading(true)
     const t = setTimeout(() => {
+      if (ctrl.signal.aborted) return
       rechercheSuggest(needle, grammaires, ctrl.signal)
         .then((r) => {
+          if (ctrl.signal.aborted) return
           const flat = r.groupes.flatMap((g) => g.items.map((i) => ({ ...i, type: g.type })))
           // A-01-1 — « aucun résultat » dans le dropdown LIVE quand la recherche ABOUTIE ne renvoie
           // AUCUNE proposition. On ne flashe pas pendant la frappe (le test length<2 et le debounce
@@ -126,10 +130,10 @@ export function AddressAutocomplete({
         .catch((e) => {
           // A-01-1 — un échec RÉEL (pas un abort de requête remplacée) ne doit pas rester muet :
           // on le signale comme « aucun résultat » plutôt que de laisser le dropdown fantôme.
-          if (e?.name === 'AbortError') return
+          if (ctrl.signal.aborted || e?.name === 'AbortError') return
           setItems([]); setNoResults(true); setOpen(true); setActive(-1)
         })
-        .finally(() => setLoading(false))
+        .finally(() => { if (!ctrl.signal.aborted) setLoading(false) })
     }, 200)
     return () => { clearTimeout(t); ctrl.abort() }
     // eslint-disable-next-line react-hooks/exhaustive-deps — `grammaires` est une constante d'appelant
@@ -169,11 +173,13 @@ export function AddressAutocomplete({
 
   const pick = (it: SuggestItem) => {
     if (it.note) return   // RECHERCHE-2 Lot 3 (b) — ligne d'information : rien à ouvrir, on ne fait rien.
-    skipSearchRef.current = true   // le setText ci-dessous ne doit PAS relancer la recherche
+    suggestionRequest.current?.abort()
+    setLoading(false)
     // RETOURS-15 S1/D5 — le champ reçoit l'adresse ENTIÈRE. Pour une adresse BAN, `label` ne porte que
     // le numéro + voie et `sub` le « code postal + commune » : les recoller (« 3 Chemin de la Citerne,
     // 97490 Saint-Denis ») pour que le libellé affiché ET remonté ne perde ni le CP ni la commune.
     const libelleComplet = it.type === 'adresse' && it.sub ? `${it.label}, ${it.sub}` : it.label
+    skipSearchRef.current = libelleComplet !== text
     setText(libelleComplet)
     onTextChange?.(libelleComplet)
     setItems([])
@@ -208,7 +214,11 @@ export function AddressAutocomplete({
       // V5.5 — Entrée ne valide qu'une ligne SÉLECTIONNÉE ; sinon la saisie brute part à
       // l'appelant (résolution Entrée) : jamais la 1re suggestion à la place de l'utilisateur.
       if (open && active >= 0 && items[active]) pick(items[active])
-      else if (onEnterRaw) onEnterRaw(text.trim())
+      else if (onEnterRaw) {
+        suggestionRequest.current?.abort()
+        setOpen(false); setItems([]); setLoading(false)
+        onEnterRaw(text.trim())
+      }
     } else if (e.key === 'Escape') {
       if (open) { e.stopPropagation(); setOpen(false) }
     }
@@ -224,6 +234,8 @@ export function AddressAutocomplete({
         autoFocus={autoFocus}
         value={text}
         onChange={(e) => {
+          skipSearchRef.current = false
+          setItems([]); setOpen(false); setActive(-1); setNoResults(false)
           setText(e.target.value)
           onTextChange?.(e.target.value)
           if (e.target.value.trim() === '') onClear?.()

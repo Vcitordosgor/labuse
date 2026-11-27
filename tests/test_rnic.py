@@ -159,3 +159,21 @@ def test_surface_champs_raw_stationnement_residence(db_session, tmp_path):
     assert r["nb_stat"] == 117
     assert r["hbc"] == "40"
     assert r["rs"] == "non" and r["coop"] == "oui"
+
+
+def test_format_anah_2026_code_postal_et_champs_de_fiche():
+    from labuse.ingestion.rnic import _ligne_anah
+
+    row = {
+        "numero_immatriculation": "AA0000001", "nom_officiel_commune": "St Pierre",
+        "code_officiel_commune": "97410", "code_postal_adresse": "97410",
+        "nombre_lots_stationnement": "23", "nombre_lots_habitation_bureaux_commerces": "42",
+        "identification_representant_legal": "Personne de test", "mandat_en_cours": "Mandat en cours",
+    }
+    parsed = _ligne_anah(row, {"saintpierre": "97416"}, {"97410": "97416"}, {"97416"})
+    assert parsed["code_officiel_commune"] == "97416"
+    assert parsed["code_commune_amont"] == "97410"
+    assert parsed["numero_d_immatriculation"] == "AA0000001"
+    assert parsed["nombre_de_lots_de_stationnement"] == "23"
+    assert parsed["nombre_total_de_lots_a_usage_d_habitation_de_bureaux_ou_de_comm"] == "42"
+    assert "identification_representant_legal" not in parsed

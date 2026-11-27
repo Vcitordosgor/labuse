@@ -12,8 +12,11 @@ import { ageConversation } from '../../lib/format'
 const ageConv = ageConversation
 
 export function ConversationsSidebar({ conversations, activeId, onNouvelle, onOuvrir,
-  onSupprimer, onFermerMenu, mobile = false }: {
+  onSupprimer, onFermerMenu, listeEtat, onRecharger, onSuite, mobile = false }: {
   conversations: CopiloteMission[]
+  listeEtat: 'chargement' | 'prete' | 'erreur'
+  onSuite?: () => void
+  onRecharger: () => void
   activeId: number | null
   retentionJours?: number   // RETOURS-18 (pt 15) — pied « Conservées 30 jours… » retiré ; prop ignorée (appelants inchangés).
   onNouvelle: () => void
@@ -40,7 +43,9 @@ export function ConversationsSidebar({ conversations, activeId, onNouvelle, onOu
       </div>
       <p className="px-4 pb-1.5 pt-1 font-mono text-[10px] tracking-[.14em] text-cp-faint">VOS CONVERSATIONS</p>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
-        {conversations.length === 0 && (
+        {listeEtat === 'erreur' && <p role="alert" className="p-2">Historique indisponible. <button className="underline" onClick={onRecharger}>Réessayer</button></p>}
+        {listeEtat === 'chargement' && <p role="status" className="p-2">Chargement des conversations…</p>}
+        {listeEtat === 'prete' && conversations.length === 0 && (
           <p className="px-2 py-3 text-[12px] leading-snug text-cp-faint">Aucune conversation pour l'instant. Posez une question pour en démarrer une.</p>
         )}
         {conversations.map((c) => (
@@ -71,6 +76,7 @@ export function ConversationsSidebar({ conversations, activeId, onNouvelle, onOu
             </div>
           )
         ))}
+        {onSuite && <button className="w-full py-3 underline" onClick={onSuite}>Conversations précédentes</button>}
       </div>
       {/* RETOURS-18 (pt 15) — la section « Conservées 30 jours… » est RETIRÉE du pied de la barre. */}
     </nav>

@@ -162,6 +162,7 @@ export interface PipelineEntry {
 export interface SourceInfo {
   id: number
   name: string
+  display_name?: string | null
   category: string | null
   provider: string | null
   access_type: string | null
@@ -235,6 +236,7 @@ export interface ModeB extends Indisponible {
   shab_rehabilitable_m2?: number   // servi au niveau racine quand trop_petit (message)
   population_tier?: string
   etiquette?: string
+  note_seuil?: string | null   // OUTIL-COMMUNES-FIX-9 LOT C (3) : phrase d'explication du seuil (3 au Bilan vs 8 à l'affichage)
   achat_max_eur?: number
   achat_max_libelle?: string   // M37 Lot 0.1 : formaté k€ côté serveur (point unique)
   negatif?: boolean
@@ -242,11 +244,9 @@ export interface ModeB extends Indisponible {
   surface_parcelle_m2?: number | null   // M59-P1 (Q1) : foncier, pour « hors valeur du terrain »
   // M59-P1 (Q1) : repère « terrain nu au prix du secteur » (Estimé, hors formule réhab) + drapeau
   // « valeur portée par le terrain » (le foncier vaut plus que ce que le bâti justifie).
-  terrain_nu?: { valeur_eur: number; valeur_libelle: string; prix_m2: number; surface_m2: number
+  terrain_nu?: { effectif?: number | null; effectif_unite?: string | null; valeur_eur: number; valeur_libelle: string; prix_m2: number; surface_m2: number
     // FIX-PRIX-ET-OPPORTUNITES (lot 1) — fourchette ±30 % + mention d'incertitude (backtest VT2).
     valeur_bas_eur?: number; valeur_haut_eur?: number; valeur_fourchette_libelle?: string; incertitude?: string
-    // OUTIL-COMMUNES-FIX-8 — effectif (nb de ventes) servi à côté du prix de section (3-7 ventes), étiqueté « Estimé ».
-    effectif?: number | null
     niveau: string; libelle: string; etiquette: string } | null
   porte_par_terrain?: boolean
   // M101 A2 : la PORTE du mode B — pourquoi cette parcelle est « bâtie », en français lisible
@@ -256,7 +256,7 @@ export interface ModeB extends Indisponible {
     surface: { emprise_bati_m2: number; niveaux: number; niveaux_reels: boolean
       niveaux_etiquette: string; sdp_existante_m2: number; shab_rehabilitable_m2: number
       source_emprise: string; etiquette_emprise: string }
-    prix_sortie: { prix_m2: number; niveau: string; libelle: string; etiquette: string; perimetre?: string }
+    prix_sortie: { prix_m2: number; niveau: string; libelle: string; etiquette: string; perimetre?: string; effectif?: number | null; effectif_unite?: string }
     travaux: { hypothese_m2: number; defaut_m2: number; bornes: [number, number]
       etiquette: string; libelle: string }
     frais_marge: { coef_ca: number; libelle: string; etiquette: string }
@@ -392,7 +392,12 @@ export interface Fiche {
   radar_procedure?: {
     indisponible?: boolean; raison?: string   // M125 — état PANNE (≠ absence)
     commune?: string; confiance?: string
-    synthese?: { etat: string; prochaine_etape?: string | null; servi_en_vigilance?: boolean } | null
+    // OUTIL-COMMUNES-FIX-14 LOT 5/6 — sursis_autorise (conseil) + recherche infructueuse datée, servis
+    // au MÊME champ que le vérificateur et la carte commune (source unique = radar).
+    synthese?: { etat: string; prochaine_etape?: string | null; servi_en_vigilance?: boolean;
+      debat_padd_tenu?: string | null
+      sursis_autorise?: { date: string; date_fr?: string | null; article?: string | null; base_legale?: string | null; source_url?: string | null } | null
+      debat_recherche_le?: string | null } | null
     sursis?: { texte: string; base_legale: string } | null
     veille_au?: string | null
   } | null
@@ -409,7 +414,11 @@ export interface Fiche {
     titre: string; n_permis: number; source: string; honnetete: string
     // KELFONCIER-FIX-1 (Lot C) — type libellé (PA/DP/PC/PD) + état (annulé compris), source unique.
     permis: { permit_id: string; type: string | null; type_label?: string | null; date_autorisation: string | null; date_depot: string | null; etat_libelle?: string | null; annule?: boolean; note_incoherence?: string | null }[]
-    caducite?: { pc_annee?: number; caduc_depuis?: string | null; libelle_court?: string | null; detail?: string | null } | null
+    // OUTIL-PERMIS-FIX-16 (LOT 1) — preuve servie au même endroit : n° du/des PC, date d'autorisation,
+    // échéance estimée, base légale, réserve « sur les seules données Sitadel ».
+    caducite?: { pc_annee?: number; caduc_depuis?: string | null; libelle_court?: string | null; detail?: string | null;
+      pc_numeros?: string[]; base_legale?: string | null; date_autorisation?: string | null; echeance?: string | null;
+      reserve?: string | null } | null
   } | null
   // M42 : « Autour, à moins de 100 m » (ventes DVF + permis, 36 mois) — contexte, 0 tier.
   voisinage_proche?: {
@@ -528,7 +537,7 @@ export interface Fiche {
     n: number
     n_hazards?: number   // NU-3-J#4 — familles d'aléas distinctes (compteur partagé fiche/Estimer/PDF)
     liste: {
-      nature: string; niveau: string | null; libelle: string
+      nature: string; niveau: string | null; libelle: string; provenance_alea?: string | null
       part_pct: number | null; redhibitoire: boolean
       source: string | null; millesime: string | null
       ppr: { document: string; approbation: string | null }[] | null
@@ -586,6 +595,7 @@ export interface Fiche {
     part_bati_avant_1990_pct: number | null
     taille_menages: number | null
     part_60_plus_pct: number | null
+    part_65_plus_pct?: number | null
     part_locataires_pct: number | null
     part_hlm_pct: number | null
     source: string
@@ -922,7 +932,10 @@ export interface ReglementZone {
   // PLU-EXCEPTIONS-1 — exception au règlement d'une règle (cf. PluException plus bas).
   regles_valeurs?: { cle: string; libelle: string; valeur: string | null; etat: string; reference: string | null; url: string | null
     // PLU-EXCEPTIONS-1 — exceptions au règlement de la règle (texte verbatim + article + page + porte).
-    exceptions?: PluException[] }[]
+    exceptions?: PluException[]
+    // OUTIL-PLU-FIX-10 (LOT 4) — conditions du tableau de stationnement (logement social, part publique,
+    // lotissement individuel…) non réductibles à un nombre, servies sur la fiche sous le barème.
+    conditions?: { texte: string }[] }[]
   annuaire?: { insee: string | null; zone: string | null } | null   // M51 — deep-link outil O13
   note: string | null
   // DESTINATIONS-1 (X4.2) — ligne « Destinations » de la zone : résumé + dépliable 23 sous-destinations
@@ -1100,4 +1113,9 @@ export interface Gestionnaires extends Indisponible {
   electricite: { gestionnaire: string; detail?: string; raccordement?: string } | null
   note: string | null
   disclaimer: string | null
+}
+
+export interface ReferencePermis {
+  id: string
+  nature?: string
 }

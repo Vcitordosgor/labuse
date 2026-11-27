@@ -33,7 +33,6 @@ _VOIE_KW = frozenset(_fold_py(w) for w in (
 # rep (bis/ter/…) qui peut s'intercaler entre le numéro et la voie (« 4 bis Chemin … »).
 _REP = frozenset(("bis", "ter", "quater", "a", "b", "c", "d", "e"))
 _RE_NUM = re.compile(r"^\d{1,4}$")
-_RE_LEAD_NUM = re.compile(r"^\s*(\d{1,4})\b")
 # référence cadastrale courte dans une phrase : « BZ 1065 », « bz1065 » (1-2 lettres + 1-4 chiffres).
 _RE_REF = re.compile(r"\b([A-Za-z]{1,2})\s?(\d{1,4})\b")
 # Un IDU complet (14 car.) : traité en amont (`_idu_dans`) — on ne le re-résout pas ici.
@@ -62,7 +61,9 @@ class Resolution:
 
 def _tokens(message: str) -> list[str]:
     """Jetons alphanumériques du message plié (accents retirés, minuscules)."""
-    return [t for t in re.split(r"[^0-9a-z]+", _fold_py((message or "").lower())) if t]
+    plie = _fold_py((message or "").lower())
+    plie = re.sub(r"\b(\d{1,4})(bis|ter|quater|[abcde])\b", r"\1 \2", plie)
+    return [t for t in re.split(r"[^0-9a-z]+", plie) if t]
 
 
 def _extraire_adresse(message: str) -> tuple[str, int | None] | None:
@@ -169,23 +170,21 @@ def _resoudre_adresse(db: Session, message: str) -> Resolution | None:
         if not commune_sig and not cp:
             return True
         sub = set(_tokens(c["sub"]))
-        if cp and cp in sub:
-            return True
-        return bool(commune_sig) and all(t in sub for t in commune_sig)
+        return (not cp or cp in sub) and all(t in sub for t in commune_sig)
 
     proches = [c for c in uniques if _voie_ok(c)]
     retenues = [c for c in proches if _commune_ok(c)]
     if not retenues:
-        if num is not None:
+        if num is not None or cp or commune_sig:
             return _introuvable(needle, candidats=proches[:MAX_CANDIDATS])
         return None
     # numéro demandé → les candidates qui le PORTENT exactement (le reste = voisins de numéro).
     if num is not None:
-        exacts = [c for c in retenues if _lead_num(c["label"]) == num]
-        if len(exacts) == 1:
-            return Resolution("idu", idu=exacts[0]["idu"], requete=needle, famille="adresse")
-        if len(exacts) > 1:
-            retenues = exacts
+        numero_demande = _numero_et_suffixe(adresse)
+        exacts = [c for c in retenues if _numero_et_suffixe(c["label"]) == numero_demande]
+        if not exacts:
+            return _introuvable(adresse, candidats=retenues[:MAX_CANDIDATS])
+        retenues = exacts
     if len(retenues) == 1:
         return Resolution("idu", idu=retenues[0]["idu"], requete=needle, famille="adresse")
     return Resolution("candidats", candidats=retenues[:MAX_CANDIDATS], requete=needle, famille="adresse")
@@ -197,9 +196,12 @@ def _introuvable(needle: str, candidats: list[dict] | None = None) -> Resolution
     return Resolution("introuvable", candidats=candidats or [], requete=needle, famille="adresse")
 
 
-def _lead_num(label: str) -> int | None:
-    m = _RE_LEAD_NUM.match(label or "")
-    return int(m.group(1)) if m else None
+def _numero_et_suffixe(label: str) -> tuple[int, str] | None:
+    tokens = _tokens(label)
+    if not tokens or not _RE_NUM.fullmatch(tokens[0]):
+        return None
+    rep = tokens[1] if len(tokens) > 1 and tokens[1] in _REP else ""
+    return int(tokens[0]), rep
 
 
 # mots qui annoncent une référence cadastrale courte (pour ne pas confondre « R+3 », « zone U2 »…).
@@ -267,8 +269,8 @@ def message_introuvable(res: Resolution) -> str:
     if res.candidats:
         lignes = "\n".join(f"• {c['label']}" + (f" — {c['sub']}" if c["sub"] else "") + f"  ({c['idu']})"
                            for c in res.candidats)
-        return ("Adresse introuvable — aucune parcelle ne correspond à cette voie dans cette commune.\n"
+        return ("Adresse introuvable — aucune parcelle ne correspond exactement à cette adresse.\n"
                 "Vouliez-vous dire l'une de celles-ci ?\n" + lignes + "\n"
                 "Donnez l'adresse complète (voie + commune), le code postal, ou l'identifiant (14 caractères).")
-    return ("Adresse introuvable — aucune parcelle ne correspond à cette voie dans cette commune. "
+    return ("Adresse introuvable — aucune parcelle ne correspond exactement à cette adresse. "
             "Vérifiez la voie et la commune, ou donnez l'identifiant de la parcelle (14 caractères).")

@@ -87,11 +87,15 @@ def _cause_court(c):
     # RECETTE-PROD-1 (12) — tag COURT de la cause (même règle qu'à l'écran ComparePanel).
     if not c:
         return None
-    if c.startswith("zone_non_constructible") or c.startswith("zone_non_resolue"):
+    if c.startswith("zone_non_resolue"):
+        return "zonage à vérifier"
+    if c.startswith("zone_non_constructible"):
         return "zone non constructible"
     # CHIRURGICAL-FIX-1 (E112a) — cause « code:ZONE » (« habitat_interdit:UE ») écrite EN CLAIR,
     # zone entre parenthèses, au lieu du brut « habitat interdit:UE ».
     head, _, zone = c.partition(":")
+    if head == "hors_classement" and zone:
+        return zone
     libelle = _CAUSE_COURT.get(head, head.replace("_", " "))
     return f"{libelle} (zone {zone})" if zone else libelle
 
@@ -100,7 +104,7 @@ def _sdp_residuelle_cause(r):
     # RECETTE-PROD-1 (12) — potentiel résiduel + CAUSE COURTE quand il n'y en a pas (0/None) :
     # « 0 m² · terrain exigu » / « — · zone non constructible » plutôt qu'un « 0 » muet.
     x = _i(r.get("sdp_residuelle_m2"))
-    if x:
+    if x and r.get("sdp_residuelle_m2") != 0:
         return f"{x} m²"
     base = "0 m²" if r.get("sdp_residuelle_m2") == 0 else "—"
     sc = _cause_court(r.get("cause"))
@@ -110,6 +114,47 @@ def _sdp_residuelle_cause(r):
 def _eur_m2(r, k):
     x = _i(r.get(k))
     return f"{x} €/m²" if x else None
+
+
+def _mixite_txt(r):
+    """OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — obligation de mixité à côté de la charge, MÊME source que
+    l'écran (`r["mixite"]`, issu de `compute_bilan_servi`). N'apparaît que si la charge est présentable
+    (bilan avec hypothèses). Dit le quota, l'article/la page, et la réserve « borne haute » le cas échéant."""
+    if not (r.get("charge_fonciere_m2") is not None and r.get("bilan_hypotheses")):
+        return None
+    m = r.get("mixite")
+    if not isinstance(m, dict) or not m.get("servitude"):
+        return None
+    cite = " · ".join(x for x in (m.get("article"), m.get("page")) if x)
+    # OUTIL-ASSEMBLAGE-FIX-3 (relecture-2) — règle de ZONE (Saint-Denis) vs secteur SMS (Saint-Paul).
+    _amont = "Obligation de mixité du règlement de zone" if m.get("origine") == "zone_reglement" \
+        else "Secteur de mixité sociale"
+    if not m.get("declenchee"):
+        # OUTIL-ASSEMBLAGE-FIX-6 (LOT 2) — quand la clause ne s'applique pas PARCE QUE la ZAC a son propre
+        # programme (Savane des Tamarins), on porte CETTE précision (le detail du moteur), pas un simple
+        # « non déclenchée » qui perdrait l'information essentielle (programme aidé à l'échelle de la ZAC).
+        _detail = m.get("detail") or ""
+        if "ZAC" in _detail:
+            return esc(_detail)
+        return esc(f"{_amont} — clause non déclenchée sur ce programme" + (f" ({cite})" if cite else ""))
+    quota = m.get("quota_pct")
+    base = f"Obligation : {int(quota)} % " if quota else "Obligation : "
+    base += esc(m.get("produits") or "logements aidés")
+    if cite:
+        base += f" ({cite})"
+    # OUTIL-ASSEMBLAGE-FIX-8 (LOT 2 / « mieux » 1) — dénominateur Saint-Paul (secteur SMS) : 30 % de la
+    # SDP affectée aux logements, arrondi supérieur en nombre de logements (Art. 2 p. 106).
+    if m.get("origine") == "secteur_sms" and quota:
+        base += (f" — dénominateur : {int(quota)} % de la SDP affectée aux logements, arrondi supérieur en "
+                 "nombre de logements (Art. 2 p. 106)")
+    if m.get("borne_haute"):
+        # OUTIL-ASSEMBLAGE-FIX-6 (LOT 3) — « part aidée », pas « accession sociale » (faux pour Saint-Denis).
+        base += " — charge = <strong>borne haute</strong> (CA au prix libre, part aidée non chiffrée)"
+    # OUTIL-ASSEMBLAGE-FIX-8 (LOT 2) — l'avertissement d'exclusion ZAC (Marie Caze / Sans Souci) voyage
+    # jusqu'au comparatif (audit bloquant 2 : il était omis du comparatif d'AH0022).
+    for a in (m.get("avertissements") or []):
+        base += f" <em>{esc(a)}</em>"
+    return base
 
 
 def _terrain_prix_ventes(r):
@@ -145,7 +190,7 @@ def _pct(r, k, suffixe="%"):
     return f"{x} {suffixe}" if x is not None else None
 
 
-def _contraintes_txt(r):
+def _contraintes_liste(r):
     """EXPORTS-FIX-3 LOT 2 (#1) — liste des contraintes de la colonne. Sur une parcelle NON
     CONSTRUCTIBLE, on NE MONTRE PAS la clause rassurante « (pas d'exclusion automatique) » du PPR
     partiel : elle rassurerait à tort alors que le verdict est « non constructible ».
@@ -168,7 +213,11 @@ def _contraintes_txt(r):
         if c not in _vus:
             _vus.add(c)
             _uniq.append(c)
-    return " · ".join(esc(c) for c in _uniq) if _uniq else "aucune relevée"
+    return _uniq
+
+
+def _contraintes_txt(r):
+    return " · ".join(esc(c) for c in _contraintes_liste(r)) or "aucune relevée"
 
 
 def _bati_existant(r):
@@ -199,12 +248,10 @@ _LIGNES = [
     ("Bâti existant", "s", lambda r: _bati_existant(r)),
     ("Propriétaire", "s", lambda r: _PROPRIO.get(r.get("proprietaire"))),
     # URBANISME
-    ("Hauteur autorisée", "s", lambda r: ((f"R+{max(0, int(r['gabarit_niveaux_max']) - 1)}"
-                                           + (" + combles" if r.get("gabarit_combles") else ""))
-                                          if r.get("gabarit_niveaux_max") is not None else None)),
+    ("Hauteur autorisée", "s", lambda r: esc(r.get("hauteur_reglement") or "Règle à vérifier")),
     # OUTILS-P1-1 (pt 3) — même règle qu'à l'écran : « PLU sans plafond d'emprise » seulement si une
     # règle est identifiée (silence prouvé), sinon « Règle non renseignée ».
-    ("Emprise au sol maximale", "s", lambda r: (_pct(r, "emprise_ces_pct")
+    ("Emprise au sol maximale", "s", lambda r: (esc(r["emprise_ces_detail"]) if r.get("emprise_ces_detail") else _pct(r, "emprise_ces_pct")
         or ("PLU sans plafond d'emprise" if r.get("emprise_ces_etat") == "sans_plafond"
             else "Règle non renseignée"))),
     # POTENTIEL CONSTRUCTIBLE
@@ -219,14 +266,19 @@ _LIGNES = [
     # EXPORTS-FIX-3 LOT 2 (#7) — la charge foncière DIT sa surface de référence (« par m² de terrain ») ;
     # ses hypothèses sont données en note sous le tableau (sinon on ne l'affiche pas).
     ("Charge foncière", "e", lambda r: ((f"{_i(r.get('charge_fonciere_m2'))} €/m² de terrain"
+        + (" — capacité à vérifier" if r.get("capacite_a_verifier") else "")
         + (" — bilan déficitaire : à ces hypothèses, le foncier ne se paie pas"
            if (r.get("charge_fonciere_m2") or 0) < 0 else ""))
         if (r.get("charge_fonciere_m2") is not None and r.get("bilan_hypotheses")) else None)),
+    # OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — l'obligation de mixité portée à CÔTÉ de la charge (même source que
+    # l'écran) : plus jamais un chiffre de charge sans sa réserve (« borne haute » quand l'accession
+    # sociale n'est pas chiffrée). Affichée seulement quand la charge l'est (bilan présentable).
+    ("Mixité sociale", "s", lambda r: _mixite_txt(r)),
     # RISQUES ET CONTRAINTES
     # OUTILS-P1-1 (pt 3) — statistique de SECTEUR préfixée « Secteur : » (comme à l'écran).
     ("Assainissement", "s", lambda r: (f"Secteur : {esc(r.get('assainissement'))}"
                                        if r.get("assainissement") else None)),
-    ("Contraintes relevées", "s", lambda r: _contraintes_txt(r)),
+    ("Contraintes relevées", "s", lambda r: (f"{len(cs)} · voir détail ci-dessous" if (cs := _contraintes_liste(r)) else "aucune relevée")),
 ]
 
 _BADGE = {"s": ("s", "sourcé"), "e": ("e", "estimé")}
@@ -238,6 +290,11 @@ _BADGE = {"s": ("s", "sourcé"), "e": ("e", "estimé")}
 _LIGNES_CAPACITE = {"Hauteur autorisée", "Plancher possible · bâti conservé",
                     "Plancher possible · reconstruction", "Surface à retenir",
                     "Part du gabarit déjà occupée", "Charge foncière"}
+# OUTIL-ASSEMBLAGE-FIX-8 (LOT 5 / « mieux » 2) — sous-ensemble des lignes de SURFACE/PLANCHER : sur une
+# parcelle non constructible, elles disent « capacité non calculée » (donnée absente ≠ zéro calculé) ;
+# les autres lignes de capacité (hauteur, charge foncière, taux d'occupation) gardent le tiret.
+_LIGNES_CAPACITE_SDP = {"Plancher possible · bâti conservé", "Plancher possible · reconstruction",
+                        "Surface à retenir"}
 
 
 def _surface_a_retenir_txt(r):
@@ -247,7 +304,7 @@ def _surface_a_retenir_txt(r):
     sar = r.get("surface_a_retenir")
     if not isinstance(sar, dict) or sar.get("valeur_m2") is None:
         return "—"
-    return esc(f"{sar['valeur_m2']:g} m² ({sar['source']})")
+    return esc(sar.get("phrase") or f"{sar['valeur_m2']:g} m² ({sar['source']})")
 
 
 def _est_non_constructible(r) -> bool:
@@ -257,18 +314,22 @@ def _est_non_constructible(r) -> bool:
 
 
 def _ligne_verdict(rows) -> str:
-    """Ligne « Constructibilité » : « Non constructible — <motif> » (la MÊME raison que la fiche) ou
-    « Constructible », sur chaque colonne. Rendue seulement si au moins une parcelle est non
-    constructible (sinon le tableau reste comme avant)."""
-    if not any(_est_non_constructible(r) for r in rows):
+    """Lecture de la capacité pour chacune des parcelles comparées."""
+    if not any(_est_non_constructible(r) or r.get("mention_portion") or r.get("lecture_capacite") or (r.get("au_ouverture") or {}).get("bloquant") for r in rows):
         return ""
     cells = ""
     for r in rows:
-        if _est_non_constructible(r):
-            motif = esc(r.get("verdict_motif") or r.get("cause_libelle") or "zone non constructible")
-            cells += f'<td><strong>Non constructible</strong> — {motif}</td>'
+        if r.get("lecture_capacite"):
+            cells += f'<td>{esc(r["lecture_capacite"])}</td>'
+        elif _est_non_constructible(r):
+            motif = esc(r.get("verdict_motif") or r.get("cause_libelle") or "Capacité non calculée")
+            cells += f'<td>{motif}</td>'
+        elif r.get("mention_portion"):
+            cells += f'<td>{esc(r["mention_portion"])}</td>'
+        elif (r.get("au_ouverture") or {}).get("bloquant"):
+            cells += f'<td>{esc(r["au_ouverture"]["statut"])}</td>'
         elif r.get("constructible") is True:
-            cells += "<td>Constructible</td>"
+            cells += "<td>Capacité estimée</td>"
         else:
             cells += "<td>—</td>"
     return f'<tr><td class="lbl">Constructibilité</td>{cells}</tr>'
@@ -285,6 +346,13 @@ def rendu(rows) -> str:
         zs = " · ".join(x for x in [esc(r.get("zone")) if r.get("zone") else None,
                                     (f'{_i(r.get("surface_m2"))} m²' if r.get("surface_m2") is not None else None)] if x)
         sub = (f'<div class="sub">{adr}</div>' if adr else "") + (f'<div class="sub">{zs}</div>' if zs else "")
+        if r.get("zonage_detail"):
+            sub += f'<div class="sub">Répartition du terrain · {esc(r["zonage_detail"])}. Règles affichées pour la zone dominante.</div>'
+        au = r.get("au_ouverture") or {}
+        if (r.get("cause") or "").startswith("hors_classement:") and r.get("cause_libelle"):
+            sub += f'<div class="sub">{esc(r["cause_libelle"])}</div>'
+        if au.get("statut"):
+            sub += f'<div class="sub">{esc(au["statut"])} · {esc(au.get("motif") or "")}</div>'
         return f"<th>{idu}{sub}</th>"
     thead = "<tr><th></th>" + "".join(_col(r) for r in rows) + "</tr>"
     # EXPORTS-FIX-3 LOT 2 — verdict de constructibilité en tête du corps (avant l'urbanisme) : la même
@@ -298,8 +366,13 @@ def rendu(rows) -> str:
         cells = ""
         for r in rows:
             # EXPORTS-FIX-3 LOT 2 — parcelle non constructible : aucune capacité/bilan dans sa colonne.
-            if label in _LIGNES_CAPACITE and _est_non_constructible(r):
-                cells += "<td>—</td>"
+            # OUTIL-ASSEMBLAGE-FIX-8 (LOT 5 / « mieux » 2) — pour les lignes de PLANCHER/SURFACE, on écrit
+            # « capacité non calculée » (et non un tiret muet) : le lecteur distingue une donnée ABSENTE
+            # d'une capacité calculée à zéro (DH0120, CV1504 affichaient « — » quand l'Assemblage disait
+            # bien « reconstruction non calculée »).
+            if label in _LIGNES_CAPACITE and (_est_non_constructible(r) or (r.get("au_ouverture") or {}).get("bloquant")):
+                cells += ("<td>capacité non calculée</td>" if label in _LIGNES_CAPACITE_SDP
+                          else "<td>—</td>")
                 continue
             v = fn(r)
             cells += f"<td>{v if v is not None else '—'}</td>"
@@ -313,7 +386,8 @@ def rendu(rows) -> str:
     # EXPORTS-FIX-3 LOT 2 (#7) — si au moins une charge foncière est affichée, on DONNE ses hypothèses
     # et sa surface de référence (sinon le chiffre ne serait pas interprétable) : note sous le tableau.
     note_bilan = ""
-    _avec_charge = [r for r in rows if r.get("charge_fonciere_m2") is not None and r.get("bilan_hypotheses")]
+    _avec_charge = [r for r in rows if r.get("charge_fonciere_m2") is not None and r.get("bilan_hypotheses")
+                    and not _est_non_constructible(r) and not (r.get("au_ouverture") or {}).get("bloquant")]
     if _avec_charge:
         # EXPORTS-FIX-3 LOT 2 (#5/#7) — CHAQUE bilan affiché donne SES hypothèses (une par colonne,
         # étiquetée par l'IDU), jamais celles de la seule première parcelle.
@@ -326,5 +400,13 @@ def rendu(rows) -> str:
                         f'Hypothèses :</p><ul class="anote">{lis}</ul>')
         note_bilan = ('<p class="anote"><strong>Charge foncière</strong> = résultat du bilan promoteur '
                       'rapporté au m² de terrain (indicatif).</p>' + blocs_h)
-    bloc = f'<section class="cmp-bloc"><h2>Comparatif</h2>{corps}{note_bilan}</section>'
+    details = ""
+    for r in rows:
+        contraintes = _contraintes_liste(r)
+        if contraintes:
+            items = "".join(f"<li>{esc(c)}</li>" for c in contraintes)
+            details += f'<h3>{esc(r.get("idu") or "")} · {esc(r.get("commune") or "")}</h3><ul>{items}</ul>'
+    if details:
+        details = "<h2>Détail des contraintes</h2>" + details
+    bloc = f'<section class="cmp-bloc"><h2>Comparatif</h2>{corps}{note_bilan}{details}</section>'
     return _virgule_sortie(bloc)

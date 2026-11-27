@@ -206,3 +206,16 @@ def test_statut_silence_non_bloquant():
     assert c.resultat == NON_APPLICABLE
     assert statut_etude(controles, True, scene=sc, terrain=ter, regles=_regles(dc)) \
         == "exploitable en pré-faisabilité"
+
+
+def test_deux_barres_paralleles_laissent_le_retrait_sur_le_plan():
+    from labuse.implantation.moteur import _construire
+
+    scene = _scene(0, 0)
+    modules = _construire("barres_paralleles", scene, CONV, niveaux=3,
+                         fraction=0.7, distance_min_m=8.0)
+    assert modules > 0
+    b1, b2 = scene.of("batiment_emprise")
+    assert b1.geom_local.distance(b2.geom_local) >= 8.0
+    assert {m.ref for m in scene.of("module")} == {b1.ref, b2.ref}
+    assert len(scene.of("module")) == modules * 3

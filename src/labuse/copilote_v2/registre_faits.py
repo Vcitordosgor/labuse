@@ -94,6 +94,7 @@ def du_fil(db: Session, compte_id: int | None, conversation_id: int, ttl_minutes
             "WHERE f.conversation_id = :i "
             "  AND (c.compte_id IS NOT DISTINCT FROM :cp AND (:cp IS NOT NULL OR c.sujet IS NOT DISTINCT FROM :s)) "
             "  AND c.updated_at >= now() - make_interval(mins => :ttl) "
+            "AND (c.contexte_depuis IS NULL OR f.ts >= c.contexte_depuis) "
             "ORDER BY f.ts DESC, f.id DESC LIMIT :n"),
             {"i": conversation_id, "cp": compte_id, "s": sujet, "ttl": int(ttl_minutes),
              "n": FAITS_MAX}).mappings().all()

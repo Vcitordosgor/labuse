@@ -1,0 +1,134 @@
+FFFFFFFFFFFFFFFFFFFFFFFF                                                 [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert '2024-12-09' == '2018-10-02'
+      
+      - 2018-10-02
+      + 2024-12-09
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_dates.py:25: AssertionError: assert '2024-12-09' == '2018-10-02'
+E   AssertionError: assert '2026-06-25' == '2019-06-12'
+      
+      - 2019-06-12
+      + 2026-06-25
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_dates.py:25: AssertionError: assert '2026-06-25' == '2019-06-12'
+E   AssertionError: assert '2025-12-18' == '2014-03-11'
+      
+      - 2014-03-11
+      + 2025-12-18
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_dates.py:25: AssertionError: assert '2025-12-18' == '2014-03-11'
+E   AssertionError: assert None == '2022-06-02'
+     +  where None = <built-in method get of dict object at 0x11f8d9dc0>('derniere_modification_couverture')
+     +    where <built-in method get of dict object at 0x11f8d9dc0> = {'commune': 'Les Trois-Bassins', 'date_approbation': '2017-02-21', 'edition': None, 'idurba': '97423_PLU_20220602', ...}.get
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_dates.py:26: AssertionError: assert None == '2022-06-02'
+E   AssertionError: assert '2020-02-06' == None
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_dates.py:25: AssertionError: assert '2020-02-06' == None
+E   AssertionError: assert 'PLU approuvé le 2024-06-25' == 'Approbation ...ure · 06/2024'
+      
+      - Approbation en couverture · 06/2024
+      + PLU approuvé le 2024-06-25
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_dates.py:37: AssertionError: assert 'PLU approuvé le 2024-06-25' == 'Approbation ...ure · 06/2024'
+E   AssertionError: assert 'PLU approuvé le 2024-12-09' == 'Approbation ... · 02/10/2018'
+      
+      - Approbation en couverture · 02/10/2018
+      + PLU approuvé le 2024-12-09
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_dates.py:37: AssertionError: assert 'PLU approuvé le 2024-12-09' == 'Approbation ... · 02/10/2018'
+E   AssertionError: assert 'PLU approuvé le 2020-02-06' == 'Dépôt GPU 97410_PLU_20200206'
+      
+      - Dépôt GPU 97410_PLU_20200206
+      + PLU approuvé le 2020-02-06
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_dates.py:37: AssertionError: assert 'PLU approuvé le 2020-02-06' == 'Dépôt GPU 97410_PLU_20200206'
+E   AssertionError: assert 'Se reporter au règlement de la zone U indiquée en indice' in 'ARTICLE AUINDICEE 6 - IMPLANTATION DES CONSTRUCTIONS PAR RAPPORT AUX VOIES ET'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_decoupage.py:30: AssertionError: assert 'Se reporter au règlement de la zone U indiquée en indice' in 'ARTICLE AUINDICEE 6 - IMPLANTATION DES CONSTRUCTIONS PAR RAPPORT AUX VOIES ET'
+E   AssertionError: assert 'Se reporter au règlement de la zone U indiquée en indice' in 'ARTICLE AUINDICEE 6 - IMPLANTATION DES CONSTRUCTIONS PAR RAPPORT AUX'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_decoupage.py:30: AssertionError: assert 'Se reporter au règlement de la zone U indiquée en indice' in 'ARTICLE AUINDICEE 6 - IMPLANTATION DES CONSTRUCTIONS PAR RAPPORT AUX'
+E   assert 0 == 1
+     +  where 0 = len([])
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_decoupage.py:39: assert 0 == 1
+E   AssertionError: assert not [{'article_ref': 'Article U11', 'doute': False, 'doute_motif': None, 'livret': None, ...}, {'article_ref': 'Article AU...: None, 'livret': None, ...}, {'article_ref': 'Article N11', 'doute': False, 'doute_motif': None, 'livret': None, ...}]
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_decoupage.py:46: AssertionError: assert not [{'article_ref': 'Article U11', 'doute': False, 'doute_motif': None, 'livret': None, ...}, {'article_ref': 'Article AU...: None, 'livret': None, ...}, {'article_ref': 'Article N11', 'doute': False, 'doute_motif': None, 'livret': None, ...}]
+E   AssertionError: assert not [{'article_ref': 'Section 2', 'doute': False, 'doute_motif': None, 'livret': None, ...}]
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_decoupage.py:53: AssertionError: assert not [{'article_ref': 'Section 2', 'doute': False, 'doute_motif': None, 'livret': None, ...}]
+E   AssertionError: Expected 'execute' to not have been called. Called 14 times.
+    Calls: [call(<sqlalchemy.sql.elements.TextClause object at 0x11f8eeab0>),
+     call(<sqlalchemy.sql.elements.TextClause object at 0x11f8ec050>),
+     call(<sqlalchemy.sql.elements.TextClause object at 0x11f8ec920>),
+     call(<sqlalchemy.sql.elements.TextClause object at 0x11f8edb50>),
+     call(<sqlalchemy.sql.elements.TextClause object at 0x11f8e7fe0>),
+     call(<sqlalchemy.sql.elements.TextClause object at 0x11f8e7bf0>),
+     call(<sqlalchemy.sql.elements.TextClause object at 0x11f8e7f20>),
+     call(<sqlalchemy.sql.elements.TextClause object at 0x11f8e6ab0>),
+     call(<sqlalchemy.sql.elements.TextClause object at 0x11f8fc830>),
+     call(<sqlalchemy.sql.elements.TextClause object at 0x11f8fe9f0>),
+     call(<sqlalchemy.sql.elements.TextClause object at 0x11f8fdcd0>),
+     call(<sqlalchemy.sql.elements.TextClause object at 0x11f8fdac0>),
+     call(<sqlalchemy.sql.elements.TextClause object at 0x11f8fed20>),
+     call(<sqlalchemy.sql.elements.TextClause object at 0x11f8efbf0>),
+     call().scalar()].
+/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/unittest/mock.py:910: AssertionError: Expected 'execute' to not have been called. Called 14 times.
+E   AttributeError: module 'labuse.ingestion.plu_ingest' has no attribute 'mention_rattachement'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_rattachement.py:15: AttributeError: module 'labuse.ingestion.plu_ingest' has no attribute 'mention_rattachement'
+E   AttributeError: module 'labuse.ingestion.plu_ingest' has no attribute 'mention_rattachement'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_rattachement.py:15: AttributeError: module 'labuse.ingestion.plu_ingest' has no attribute 'mention_rattachement'
+E   AttributeError: module 'labuse.ingestion.plu_ingest' has no attribute 'mention_rattachement'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_rattachement.py:15: AttributeError: module 'labuse.ingestion.plu_ingest' has no attribute 'mention_rattachement'
+E   AttributeError: module 'labuse.ingestion.plu_ingest' has no attribute 'mention_rattachement'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_rattachement.py:15: AttributeError: module 'labuse.ingestion.plu_ingest' has no attribute 'mention_rattachement'
+E   AttributeError: module 'labuse.ingestion.plu_ingest' has no attribute 'mention_rattachement'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_rattachement.py:15: AttributeError: module 'labuse.ingestion.plu_ingest' has no attribute 'mention_rattachement'
+E   StopIteration
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_sources.py:6: StopIteration
+E   assert 'OUTIL-PLU-FIX' not in "Texte index...t d'édition."
+      
+      'OUTIL-PLU-FIX' is contained here:
+        0260625). OUTIL-PLU-FIX-12 : l'édition déc. 2025 restée sur disque et l'édition juin 2026 du GPU sont OCTET POUR OCTET IDENTIQUES (md5 8b3bd9de…, 164 p., 0 page au texte différent) ; réingéré depuis le PDF juin 2026 → texte, pages et ancres #page viennent du MÊME document (10 articles vérifiés au PDF). Plus d'écart d'édition.
+      ?           +++++++++++++
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_sources.py:15: assert 'OUTIL-PLU-FIX' not in "Texte index...t d'édition."
+E   assert 'une place au maximum' in "logement locatif prêt aidé : 1 place / logement foyer/résidence sociale (1 place pour 3) résidence (1 place pour 3) dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)"
+     +  where "logement locatif prêt aidé : 1 place / logement foyer/résidence sociale (1 place pour 3) résidence (1 place pour 3) dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)" = conditions('Le Tampon', 'Ud')
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_stationnement.py:11: assert 'une place au maximum' in "logement locatif prêt aidé : 1 place / logement foyer/résidence sociale (1 place pour 3) résidence (1 place pour 3) dont au moins 0,5 place à l'extérieur des espaces privatisés (opération/lotissement de plus de 5 logements/lots)"
+E   AssertionError: assert ('stationnement public par logement' in 'logement social : 1 place / logement résidence personnes âgées (1 pour 3) les 0,5 place/logt au-delà de 10 logements sont publiques (hors parcelle), comptées à part')
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_plu_fix15_stationnement.py:16: AssertionError: assert ('stationnement public par logement' in 'logement social : 1 place / logement résidence personnes âgées (1 pour 3) les 0,5 place/logt au-delà de 10 logements sont publiques (hors parcelle), comptées à part')
+E   AssertionError: assert '05/08/2026' == '02/2024'
+      
+      - 02/2024
+      + 05/08/2026
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/tests/test_faisabilite3_scenarios.py:214: AssertionError: assert '05/08/2026' == '02/2024'
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_plu_fix15_dates.py::test_dates_couverture_et_depot[97407-2018-10-02-2024-01-30-2024-12-09]
+FAILED tests/test_plu_fix15_dates.py::test_dates_couverture_et_depot[97408-2019-06-12-2025-12-17-2026-06-25]
+FAILED tests/test_plu_fix15_dates.py::test_dates_couverture_et_depot[97414-2014-03-11-2025-07-09-2025-12-18]
+FAILED tests/test_plu_fix15_dates.py::test_dates_couverture_et_depot[97423-2017-02-21-2022-06-02-2022-06-02]
+FAILED tests/test_plu_fix15_dates.py::test_dates_couverture_et_depot[97410-None-None-2020-02-06]
+FAILED tests/test_plu_fix15_dates.py::test_date_du_document_sur_la_fiche[97416-Approbation en couverture \xb7 06/2024]
+FAILED tests/test_plu_fix15_dates.py::test_date_du_document_sur_la_fiche[97407-Approbation en couverture \xb7 02/10/2018]
+FAILED tests/test_plu_fix15_dates.py::test_date_du_document_sur_la_fiche[97410-D\xe9p\xf4t GPU 97410_PLU_20200206]
+FAILED tests/test_plu_fix15_decoupage.py::test_au_indicee_titre_et_renvoi[97402-79-80]
+FAILED tests/test_plu_fix15_decoupage.py::test_au_indicee_titre_et_renvoi[97414-109-110]
+FAILED tests/test_plu_fix15_decoupage.py::test_etang_sale_stationnement_ua_2_7
+FAILED tests/test_plu_fix15_decoupage.py::test_entre_deux_sommaire_et_article_12
+FAILED tests/test_plu_fix15_decoupage.py::test_saint_benoit_intertitre_et_article_12
+FAILED tests/test_plu_fix15_decoupage.py::test_reingestion_donnees_seules_ne_prepare_pas_le_schema
+FAILED tests/test_plu_fix15_rattachement.py::test_provenance_carte[97403-Nci-N-Article N3-Implantation des constructions-r\xe8gle de la zone m\xe8re]
+FAILED tests/test_plu_fix15_rattachement.py::test_provenance_carte[97403-Nci-None-None-DISPOSITIONS COMMUNES APPLICABLES \xc0 TOUTES LES ZONES-disposition commune \xe0 toutes les zones]
+FAILED tests/test_plu_fix15_rattachement.py::test_provenance_carte[97424-Ub1-UB-Article Ub 12--rattachement non \xe9tabli dans le r\xe8glement \xe9crit, \xe0 v\xe9rifier]
+FAILED tests/test_plu_fix15_rattachement.py::test_provenance_carte[97423-Nto1-N-Article N 10--rattachement non \xe9tabli dans le r\xe8glement \xe9crit, \xe0 v\xe9rifier]
+FAILED tests/test_plu_fix15_rattachement.py::test_provenance_carte[97424-NtoPOS-N-Article N 10--rattachement non \xe9tabli dans le r\xe8glement \xe9crit, \xe0 v\xe9rifier]
+FAILED tests/test_plu_fix15_sources.py::test_vote_zattes_source_et_reserve - ...
+FAILED tests/test_plu_fix15_sources.py::test_la_possession_reference_publique
+FAILED tests/test_plu_fix15_stationnement.py::test_tampon_plafond_ud - assert...
+FAILED tests/test_plu_fix15_stationnement.py::test_saint_louis_place_publique_ua
+FAILED tests/test_faisabilite3_scenarios.py::test_badge_reglement_reste_au_mois_de_la_couverture
+24 failed, 5 warnings in 18.72s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

@@ -1,0 +1,26 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert not True
+     +  where True = <function _is_chapter_block at 0x13e066f20>({'article_ref': 'Article 1AUindicée 12', 'document': '97407_reglement_20241209.pdf', 'doute': False, 'doute_motif': None, ...})
+     +    where <function _is_chapter_block at 0x13e066f20> = <module 'mesure' from '/Users/openclaw/Desktop/labuse-plu-fix/scripts/plu_fix14_mesure.py'>._is_chapter_block
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_chapitres.py:145: AssertionError: assert not True
+E   assert False
+     +  where False = all(<generator object test_joseph_page_de_titre_avant_le_chapitre_u1.<locals>.<genexpr> at 0x13e07f440>)
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_chapitres.py:152: assert False
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_plu_chapitres.py::test_mesure_article_multilignes_du_port_et_vrai_bloc_fusionne
+FAILED tests/test_plu_chapitres.py::test_joseph_page_de_titre_avant_le_chapitre_u1
+2 failed, 15 deselected, 5 warnings in 9.12s

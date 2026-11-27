@@ -91,7 +91,7 @@ def _pan_urls(client: httpx.Client) -> dict[str, tuple[str, str]]:
             continue
         for res in d.get("resources", []):
             if (res.get("format") or "").upper() == "GTFS" and res.get("url"):
-                out[slug] = (res["url"], (d.get("updated") or "")[:10])
+                out[slug] = (res["url"], (res.get("updated") or d.get("updated") or "")[:10])
                 break
     return out
 

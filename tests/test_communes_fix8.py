@@ -32,11 +32,13 @@ def test_rehab_bloc_porte_effectif_et_estime():
     assert "Estimé" in ligne, f"mention « Estimé » absente : {ligne!r}"
 
 
-def test_rehab_bloc_singulier_une_vente():
-    """L'accord se fait au singulier pour 1 vente (jamais « 1 ventes »)."""
-    bloc = rehab_bloc(_mb(1))
+def test_rehab_bloc_unite_par_defaut_ventes():
+    """FIX-9 LOT C (3) a remplacé l'accord singulier par le champ `effectif_unite` (« ventes »/
+    « sections ») — le singulier « 1 vente » est inatteignable (seuil mode B = 3 ⇒ n ≥ 3 au secteur,
+    sections au repli). Sans `effectif_unite`, le rendu retombe sur « ventes »."""
+    bloc = rehab_bloc(_mb(7))   # _mb() ne fournit pas effectif_unite → défaut « ventes »
     ligne = next((t for _, t in bloc["lignes"] if "Terrain nu au prix du secteur" in t), "")
-    assert "1 vente " in ligne and "1 ventes" not in ligne, ligne
+    assert "7 ventes" in ligne, ligne
 
 
 def test_export_markdown_et_html_portent_effectif_et_estime():

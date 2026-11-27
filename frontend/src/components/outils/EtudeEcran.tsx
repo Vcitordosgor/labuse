@@ -39,10 +39,12 @@ export function EtudeEcran() {
         <EtudeV6 key={etudeIdus.join(',')} initialIdus={etudeIdus} rouvrir={(etudeRouvrir ?? undefined) as EtudeIn | undefined} onClose={fermerEtude} onBilan={setBilanProg} />
       </div>
 
-      {/* Bilan de ce scénario — par-dessus l'Étude (son propre overlay). Le Bilan porte sur la 1ʳᵉ parcelle. */}
+      {/* Bilan de ce scénario — par-dessus l'Étude (son propre overlay). Le Bilan porte sur la 1ʳᵉ parcelle.
+          OUTIL-ASSEMBLAGE-FIX-9 (LOT 7A) — assiette multi-parcelles : on passe le nombre pour que le Bilan
+          DISE en tête qu'il porte sur la seule 1ʳᵉ parcelle, pas sur l'union des N. */}
       {bilanProg && etudeIdus[0] && (
         <div onClick={(e) => e.stopPropagation()}>
-          <BilanEcran idu={etudeIdus[0]} depuisEtude={bilanProg} onClose={() => setBilanProg(null)} />
+          <BilanEcran idu={etudeIdus[0]} depuisEtude={bilanProg} assembleDe={etudeIdus.length} onClose={() => setBilanProg(null)} />
         </div>
       )}
     </div>

@@ -1,21 +1,16 @@
-import { useContraintesParcelle } from '../../lib/contraintesParcelle'
+import { useContraintesParcelle, type Alerte } from '../../lib/contraintesParcelle'
 /** BLOC B · Partie 2 — les outils O sans écran (verdict Vic sur maquettes docs/mockups/).
  *  Chaque module vit dans le shell violet du registre ; tokens seulement, wording boussole
  *  (Sourcé/Estimé, « non couvert » dit — jamais un faux RAS). */
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
+import { lireJson, messageChargement } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
 import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
 import { Tip } from '../Tip'
 import { Retour } from '../ui/Retour'   // DA-FIX-5 P6 — retour unique (haut gauche)
-
-const jfetch = async <T,>(url: string): Promise<T> => {
-  const r = await fetch(url)
-  if (!r.ok) throw new Error(`${url} → ${r.status}`)
-  return r.json() as Promise<T>
-}
 
 function Banner({ children }: { children: React.ReactNode }) {
   return (
@@ -27,8 +22,12 @@ function Banner({ children }: { children: React.ReactNode }) {
 
 /* ───────────── O5 — SERVITUDES INVISIBLES (S46) ───────────── */
 
+function documentsHttp(urls: string[] = []) {
+  return urls.filter(url => /^https?:\/\//i.test(url))
+}
+
 export function O5Servitudes() {
-  const { selectedIdu, select, focusParcelle } = useApp()
+  const { selectedIdu, select, focusParcelle, setModuleMap, setMobilePanelOpen } = useApp()
   const [idu, setIdu] = useState(selectedIdu ?? '')
   // RECETTE-1 (F2) — quelle entrée a désigné la parcelle (grise l'autre). INVARIANT : 'carte' seulement
   // quand la parcelle vient de selectedIdu. (Le wrapper Risques remonte O5 à chaque selectedIdu → F1 inhérent.)
@@ -47,6 +46,40 @@ export function O5Servitudes() {
   const allerA = (id: string) => { select(null); focusParcelle(id); setIdu(id) }
   const q = useContraintesParcelle(idu)
   const d = q.data
+  useEffect(() => () => setModuleMap({ idus: [], extra: null }), [idu, setModuleMap])
+  const communes = useQuery({
+    queryKey: ['contours-communes-risques'],
+    enabled: !!d?.procedure_plu,
+    queryFn: async (): Promise<GeoJSON.FeatureCollection> => {
+      const response = await fetch(import.meta.env.BASE_URL + 'communes974.geojson')
+      if (!response.ok) throw new Error('Contour communal indisponible')
+      return response.json()
+    },
+  })
+  const communeZone = communes.data?.features?.find(f => f.properties?.code === idu.slice(0, 5))
+  function voirZone(geometries: GeoJSON.Geometry[]) {
+    const features = geometries.flatMap(g => g.type === 'GeometryCollection' ? g.geometries : [g])
+      .map(geometry => ({ type: 'Feature', geometry, properties: { kind: 'alerte-risque' } }))
+    setModuleMap({ idus: [idu], extra: { type: 'FeatureCollection', features }, fit: true })
+    setMobilePanelOpen(false)
+  }
+  const actionStyle = 'text-[11px] font-medium text-mint underline underline-offset-2'
+  function effet(a: Alerte) {
+    return <div key={a.effet} className="mt-1">
+      <p className="text-[11px] leading-snug text-txt">{a.effet}</p>
+      <p className="text-[9.5px] text-txt-dim">{a.source}{a.date && ' · ' + a.date}</p>
+      <div className="flex flex-wrap gap-x-3">
+        {!!a.geometries?.length && <button className={actionStyle} onClick={() => voirZone(a.geometries!)}>Voir la zone sur la carte</button>}
+        {a.portee === 'parcelle' && <button className={actionStyle} onClick={() => {
+          setModuleMap({ idus: [idu], extra: null }); focusParcelle(idu); setMobilePanelOpen(false)
+        }}>Voir la parcelle (emprise AU indisponible)</button>}
+        {documentsHttp(a.reglements).map((url, i, urls) => <a className={actionStyle} key={url} href={url} target="_blank" rel="noopener noreferrer">
+          Ouvrir le règlement{urls.length > 1 && ' ' + (i + 1)}
+        </a>)}
+      </div>
+    </div>
+  }
+
   return (
     <>
       {/* RETOURS-25 (pt 2) — phrase d'intro « Ce qui peut bloquer un projet… » retirée. */}
@@ -62,11 +95,7 @@ export function O5Servitudes() {
               des voies » catégories 2 et 4) ne font plus DEUX cartes identiques mais UNE, qui liste ses
               effets (« catégorie 2 · catégorie 4 »). Dédoublonne aussi les effets strictement identiques. */}
           {(() => {
-            const groupes = d.groupes.map(([premiere, ...autres]) => ({
-              ...premiere,
-              effets: [...new Set([premiere, ...autres].map(a => a.effet).filter(Boolean))],
-              redhibitoire: [premiere, ...autres].some(a => a.redhibitoire),
-            }))
+            const groupes = d.groupes
             return (<>
               {/* OUTILS-REFONTE-1 (9a) — compteur « N contrainte(s) relevée(s) sur la parcelle ». */}
               <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
@@ -83,38 +112,32 @@ export function O5Servitudes() {
                   </div>
                   <p className="mt-1 text-[11px] leading-snug text-txt">{d.procedure_plu.libelle}{d.procedure_plu.stade ? ` — ${d.procedure_plu.stade}` : ''}. Le document d'urbanisme peut évoluer — voir l'outil PLU.</p>
                   <p className="mt-0.5 text-[9.5px] text-txt-dim">{d.procedure_plu.source ?? 'radar PLU (Sudocuh)'}{d.procedure_plu.date ? ` · ${d.procedure_plu.date}` : ''}</p>
+                  {communeZone && <button className={actionStyle} onClick={() => voirZone([communeZone.geometry])}>Voir la commune sur la carte</button>}
+                  {communes.isError && <button className={actionStyle} onClick={() => communes.refetch()}>Recharger le contour communal</button>}
+                  {documentsHttp([d.procedure_plu.source_url ?? '']).map(url => <a key={url} className={actionStyle + ' ml-3'} href={url} target="_blank" rel="noopener noreferrer">Ouvrir la source de la procédure</a>)}
                 </div>
               )}
               {/* OUTILS-REFONTE-1 (9a) — une carte par contrainte : titre · badge · une phrase · source.
                   RETOURS-27 (pt 2) — liseré JAUNE FIN tout autour (plus de bord gauche épais) ; rouge si rédhibitoire. */}
-              {groupes.map((s, i) => (
-                <div key={i} className={`rounded-lg border px-3 py-2 shadow-elev-1 ${s.redhibitoire ? 'border-red-500/50 bg-red-500/10' : 'border-st-creuser/40 bg-surface-3'}`}>
+              {groupes.map(([s, ...autres]) => {
+                const inconnu = s.statut === 'a_verifier'
+                const rouge = s.redhibitoire && !inconnu
+                const entier = s.statut === 'rouge_total' || (!s.statut && s.effet.includes('entièrement INCONSTRUCTIBLE'))
+                return <div key={s.categorie} className={`rounded-lg border px-3 py-2 shadow-elev-1 ${rouge ? 'border-red-500/50 bg-red-500/10' : 'border-st-creuser/40 bg-surface-3'}`}>
                   <div className="flex flex-wrap items-baseline gap-1.5">
-                    {s.redhibitoire && <span aria-hidden className="text-red-500">●</span>}
                     <b className="text-[11.5px] text-txt-hi">{s.categorie}</b>
-                    {s.redhibitoire
-                      // OUTILS-LOT-4 bis (pt 2) — parcelle 100 % rouge (effet « parcelle entièrement
-                      // INCONSTRUCTIBLE », servi par le back) : étiquette « Inconstructible » SANS
-                      // « (partie rouge) » — ici il n'y a pas de partie constructible.
-                      ? <span className="rounded-full border border-red-500/40 bg-red-500/10 px-1.5 text-[8.5px] font-medium text-red-500">{s.effets.some((e) => /entièrement INCONSTRUCTIBLE/.test(e)) ? 'Inconstructible' : 'Inconstructible (partie rouge)'}</span>
-                      : <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 text-[8.5px] font-medium text-mint">sourcé</span>}
+                    <span className="rounded-full border border-current px-1.5 text-[9px]">
+                      {rouge ? (entier ? 'Inconstructible' : 'Inconstructible (partie rouge)') :
+                        inconnu ? 'Classement PPR à vérifier' : 'sourcé'}
+                    </span>
                   </div>
-                  {/* OUTILS-LOT-4 (pt 3) — une carte qui agrège plusieurs effets (ex. « Risque naturel » :
-                      PPR rouge + bleu + aléas) devenait trop longue. L'ESSENTIEL (le 1ᵉ effet, le plus
-                      fort) reste visible ; le reste passe dans un repli « Détail ». */}
-                  <p className="mt-1 text-[11px] leading-snug text-txt">{s.effets[0]}</p>
-                  {s.effets.length > 1 && (
-                    <details data-o5-detail className="group/d mt-0.5">
-                      <summary className="flex cursor-pointer list-none items-center gap-1 text-[10px] text-mint marker:hidden hover:underline">
-                        <span aria-hidden className="inline-block w-3 transition-transform duration-quick group-open/d:rotate-90">▸</span>
-                        Détail · {s.effets.length - 1} autre{s.effets.length - 1 > 1 ? 's' : ''}
-                      </summary>
-                      <p className="mt-1 text-[11px] leading-snug text-txt">{s.effets.slice(1).join(' · ')}</p>
-                    </details>
-                  )}
-                  <p className="mt-0.5 text-[9.5px] text-txt-dim">{s.source}{s.date ? ` · ${s.date}` : ''}</p>
+                  {effet(s)}
+                  {autres.length > 0 && <details data-o5-detail className="mt-1">
+                    <summary className="cursor-pointer text-[10px] text-mint">Détail · {autres.length} autre{autres.length > 1 && 's'}</summary>
+                    {autres.map(effet)}
+                  </details>}
                 </div>
-              ))}
+              })}
             </>)
           })()}
           {/* OUTILS-P0-1 (#2) — « AUCUNE INTERSECTION DÉTECTÉE » : familles interrogées DONT la source
@@ -163,7 +186,7 @@ export function O5Servitudes() {
             <span>Couverture des contrôles</span>
             <Tip garder side="top" tip={
               <div className="flex flex-col gap-1.5 text-left">
-                {(d.verifie?.length ?? 0) > 0 && <span>Contrôlées sans intersection : {(d.verifie ?? []).join(' · ')}.</span>}
+                {(d.verifie?.length ?? 0) > 0 && <span>Couches présentes dans la commune, sans intersection détectée sur la parcelle : {(d.verifie ?? []).join(' · ')}.</span>}
                 <span>Non couvert : oléoducs (Le Port, Sainte-Marie) et servitudes non publiées au Géoportail. Le certificat d'urbanisme fait foi.</span>
                 {(d.non_couvert?.length ?? 0) > 0 && <span>{d.non_couvert.join(' · ')}.</span>}
               </div>
@@ -239,7 +262,7 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
   // Tri par CLIC sur l'en-tête ; défaut = dynamisme des permis (5 ans) décroissant depuis que la
   // colonne « Parcelles à potentiel » est retirée (B2). Re-clic sur la même colonne inverse le sens.
   const [tri, setTri] = useState<{ k: string; dir: 'desc' | 'asc' }>({ k: 'permis', dir: 'desc' })
-  const q = useQuery({ queryKey: ['o6'], queryFn: () => jfetch<Comparateur>('/comparateur-communes') })
+  const q = useQuery({ queryKey: ['o6'], queryFn: () => lireJson<Comparateur>('/comparateur-communes') })
   const clicTri = (k: string) => setTri((t) => (t.k === k ? { k, dir: t.dir === 'desc' ? 'asc' : 'desc' } : { k, dir: 'desc' }))
   const rows = [...(q.data?.communes ?? [])].sort((a, b) => {
     const av = a[tri.k], bv = b[tri.k]                    // NULL toujours en bas, quel que soit le sens
@@ -291,7 +314,7 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {q.isLoading && <Squelette lignes={6} />}
-      {q.isError && <ErrorState className="py-6" message="Comparateur indisponible." retry={() => q.refetch()} />}
+      {q.isError && <ErrorState className="py-6" message={messageChargement(q.error, "Comparateur indisponible.")} retry={() => q.refetch()} />}
       <div className="min-h-0 flex-1 overflow-y-auto">
         {/* RETOURS-12 T4 — thead-sticky (z-20, fond opaque) : l'en-tête « 24 communes » ne glisse plus sur les lignes. */}
         <div className={`thead-sticky grid ${O6_GRID} items-end border-b border-line-2 px-2 py-1.5`}>
@@ -389,9 +412,9 @@ type CarnetSecteur = {
 // (exporté) ; endpoints /carnet-secteur vivants. Concept-route Copilote retirée.
 export function O7Carnet() {
   const [secteur, setSecteur] = useState<string | null>(null)
-  const liste = useQuery({ queryKey: ['o7-liste'], queryFn: () => jfetch<CarnetListe>('/carnet-secteur') })
+  const liste = useQuery({ queryKey: ['o7-liste'], queryFn: () => lireJson<CarnetListe>('/carnet-secteur') })
   const page = useQuery({
-    queryKey: ['o7', secteur], queryFn: () => jfetch<CarnetSecteur>(`/carnet-secteur/${secteur}`),
+    queryKey: ['o7', secteur], queryFn: () => lireJson<CarnetSecteur>(`/carnet-secteur/${secteur}`),
     enabled: !!secteur,
   })
   const d = page.data
@@ -473,7 +496,7 @@ type Rarete = { communes: { insee: string; commune: string; rythme_conso_ha_an: 
   statut: string; stock_opportunites_ha: number | null; source: string }[] }
 
 export function O9Rarete() {
-  const q = useQuery({ queryKey: ['o9'], queryFn: () => jfetch<Rarete>('/pipeline-rarete') })
+  const q = useQuery({ queryKey: ['o9'], queryFn: () => lireJson<Rarete>('/pipeline-rarete') })
   const rows = q.data?.communes ?? []
   return (
     <>
@@ -538,7 +561,7 @@ const O10_FILTRES = [['', 'tout'], ['bascule', 'bascules'], ['match', 'matches']
 export function O10Bascules() {
   const { select, setView } = useApp()
   const [kind, setKind] = useState('')
-  const q = useQuery({ queryKey: ['o10'], queryFn: () => jfetch<Bascules>('/events?limit=100') })
+  const q = useQuery({ queryKey: ['o10'], queryFn: () => lireJson<Bascules>('/events?limit=100') })
   const items = (q.data?.items ?? []).filter((e) => !kind || e.kind.includes(kind))
   return (
     <>

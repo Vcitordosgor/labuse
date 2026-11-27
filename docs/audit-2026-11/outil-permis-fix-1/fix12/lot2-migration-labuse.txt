@@ -1,0 +1,9 @@
+AVANT     : 3140 alertes permis_in_zone · md5=088973b517577a273aeabd3f9a8d0396
+diagnostic: à corriger 3119 · « déposé » à dépôt invalide 3111
+TEST copie: corrigées 3119 → rollback 3140 → empreinte restaurée == AVANT : True
+sauvegarde: alertes_bak_fix12__20261125_122602
+corrigées : 3119
+APRÈS     : 3140 alertes · md5=77c9d6fa2c900668bec93f2f286a4b97
+« Permis déposé » à dépôt INVALIDE restantes : 0 (attendu 0)
+
+RETOUR ARRIÈRE : labuse ... --rollback alertes_bak_fix12__20261125_122602

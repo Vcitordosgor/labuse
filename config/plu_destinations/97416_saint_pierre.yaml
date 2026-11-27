@@ -1186,6 +1186,7 @@ zones:
       emprise_sol:
         ces:
           pct: 50.0
+          condition_unite_fonciere: "80 % jusqu’à 150 m² inclus, 70 % au-delà et jusqu’à 250 m² inclus, 50 % au-delà de 250 m². Vérifier la superficie de l’unité foncière. La capacité estimée retient 50 %."
           article: Ug3.4
           page_pdf: 103
           citation: 50% de la superficie de l’unité foncière, pour les unités foncières supérieures à 250 m².
@@ -1465,6 +1466,7 @@ zones:
       emprise_sol:
         ces:
           pct: 50.0
+          condition_unite_fonciere: "80 % jusqu’à 150 m² inclus, 70 % au-delà et jusqu’à 250 m² inclus, 50 % au-delà de 250 m². Vérifier la superficie de l’unité foncière. La capacité estimée retient 50 %."
           article: Ug3.4
           page_pdf: 103
           citation: 50% de la superficie de l’unité foncière, pour les unités foncières supérieures à 250 m².

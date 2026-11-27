@@ -1,0 +1,12 @@
+('97406', 'C', 'UB', 'HAUTEUR MAXIMALE DES CONSTRUCTIONS', 171, 176, "'HAUTEUR MAXIMALE DES CONSTRUCTIONS\\n Modification n°2 du Plan Local d’Urbanisme de la Plaine des Palmistes \\n \\n2019 \\n4.2. LA MO'") AUb,Ub
+('97406', 'C', 'UR', 'ZONE Ur', 148, 149, "'ZONE Ur En cas d’impossibilité de réaliser des aires de stationnement \\nEn cas d’impossibilité, justifiée par des raisons tech'") AUr,Ur
+('97408', 'A', 'vide', False) Up
+('97410', 'A', 'vide', True) A,Acor,Acu,Ai,N,Nci,Nerl,Np,Npnr,Ns20,Ns21,Ns22,Ns23,Ns24,Ns25,Ns26,Ns27,Ns28,Ns32,Ns33,Ns34,Ns35,Ns36,Ns37,Ns38,Ns39,Ns40,Ns41,Ns42,Ns43,Ns44,Ns45,Ns46,Nta47,Nta48,Nta49,Nta50,Nta51,Nta52,Nta53,Nta54
+('97411', 'C', 'A', 'Zone A', 106, 106, "'Zone A Urbaniser d’activités\\n\\n\\n\\n\\nCaractère de la zone\\n\\n      Cette zone, non équipée, est située chemin Neuf à la Montagne ; '") A,Ac
+('97411', 'A', 'AUX', 'Article AUx.12', 111, 111, "'Article AUx.12 . Aires de stationnement\\n\\n     Non réglementé.'") AUx
+('97420', 'C', 'UE', 'Section 2', 30, 31, "'Section 2 : Caractéristiques urbaine, architecturale, environnementale et paysagère \\nSous-section 2.1. : Volumétrie et implan'") 1AUe,UE
+('97420', 'C', 'UE', 'Section 2', 22, 22, "'Section 2 : Caractéristiques urbaine, architecturale, environnementale et paysagère \\nSous-section 2.1. : Volumétrie et implan'") 1AUe,UE
+('97420', 'C', 'U', 'Section 2', 12, 12, "'Section 2 : Caractéristiques urbaine, architecturale, environnementale et paysagère \\nSous-section 2.1. : Volumétrie et implan'") 2AUa,2AUb,UA,UAc,UAv,UB,UC,UC1
+('97422', 'C', 'UE', 'ARTICLE Ue3', 73, 75, "'ARTICLE Ue3 - CONDITIONS DE DESSERTE DES TERRAINS PAR LES VOIES PUBLIQUES \\nOU PRIVEES ET D’ACCES AUX VOIES OUVERTES AU PUBLIC'") 1AUe,2AUe,Ue
+('97423', 'A', 'vide', False) 1AUa,1AUb,1AUc,1AUe,1AUt,2AUa,2AUb,2AUc
+('97423', 'C', 'N', 'VALEUR PATRIMONIALE ELEVEE', 96, 112, "'VALEUR PATRIMONIALE ELEVEE \\n  \\n \\n \\n \\nMAISON \\nEcole Elémentaire Publique Bois Joli Cœur\\n \\nADRESSE POSTALE \\nRue du Général de G'") N,Nco,Nli,Nr,Nto,Nto1,Nto2,Nto3,Nto4,Nto5,Nu

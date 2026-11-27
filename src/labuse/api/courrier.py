@@ -131,9 +131,22 @@ def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(ge
     demande (elle est déjà enregistrée)."""
     from .tenant import current_compte
     cid = current_compte(request)
-    parcelles = [p.strip() for p in body.parcelles if p.strip()]
+    parcelles = list(dict.fromkeys(p.strip().upper() for p in body.parcelles if p.strip()))
     if not parcelles:
         raise HTTPException(422, "aucune parcelle valide dans la demande.")
+    from .. import courrier_adressage as ca
+    for idu in parcelles:
+        resolution = ca.resoudre_destinataire(db, idu)
+        if resolution["bloque"]:
+            raise HTTPException(422, f"{idu} — {resolution['motif']}")
+    from ..courrier_compose import ExpediteurSansNom, expediteur_du_compte
+    try:
+        expediteur_du_compte(_marque_du_compte(db, request), None)
+    except ExpediteurSansNom as exc:
+        raise HTTPException(422, str(exc)) from exc
+    if body.projet_id is not None:
+        from .projets import _projet_or_404
+        _projet_or_404(db, body.projet_id, cid)
     # KO-6 — si la demande vient d'une piste, on ne rattache QU'À une piste DU compte (sinon on ignore
     # le lien, jamais un rattachement croisé). Idem projet.
     pe_id = _valider_pipeline_entry(db, cid, body.pipeline_entry_id)
@@ -417,18 +430,16 @@ def courrier_composer(body: ComposerIn, request: Request, db: Session = Depends(
     PDF, donc aperçu = PDF. Renvoie {recto, verso, ouverture, reference, destinataire, adresse_envoi,
     bloque, motif}."""
     from .. import courrier_adressage as ca, courrier_compose as cc
-    from .. import cadastre_disparue as _cd
-    # CHASSE-DONNEES-FIX-1 (Lot 2) — parcelle disparue du cadastre : le courrier REFUSE de composer
-    # (il composait « Votre parcelle AV 2114… Surface cadastrale : 2853 m², zone UB » sur une parcelle
-    # sortie du cadastre). On bloque avec le message, jamais une donnée servie.
-    _disp = _cd.info_disparue(db, body.idu)
-    if _disp:
-        _ph = _cd.phrase_disparue(_disp)
-        return {"recto": [_ph], "verso": [_ph], "ouverture": None,
-                "reference": body.idu, "destinataire": None, "adresse_envoi": None,
-                "bloque": True, "motif": "parcelle disparue du cadastre"}
     res = ca.resoudre_destinataire(db, body.idu)
+    if res.get("code") == "disparue":
+        return {"recto": res["motif"], "verso": [], "ouverture": None,
+                "reference": body.idu, "destinataire": None, "adresse_envoi": None,
+                "bloque": True, "motif": res["motif"]}
     comp = cc.composer(db, body.idu, resolution=res, marque=_marque_du_compte(db, request))
+    if comp["synthese"].get("sans_nom"):
+        return {"recto": comp["recto"], "verso": [], "ouverture": None,
+                "reference": comp["reference"], "destinataire": res.get("destinataire"),
+                "adresse_envoi": res.get("adresse_envoi"), "bloque": True, "motif": comp["recto"]}
     return {"recto": comp["recto"], "verso": comp["verso"], "ouverture": comp["ouverture"],
             "reference": comp["reference"], "destinataire": res.get("destinataire"),
             "adresse_envoi": res.get("adresse_envoi"), "bloque": res["bloque"], "motif": res.get("motif")}
@@ -524,6 +535,8 @@ def courrier_pdf(body: PdfIn, request: Request, db: Session = Depends(get_db)) -
     ref_pied = idu or "—"
     if idu:
         res = ca.resoudre_destinataire(db, idu)
+        if res.get("code") == "disparue":
+            raise HTTPException(422, res["motif"])
         comp = cc.composer(db, idu, resolution=res, marque=_marque_du_compte(db, request))
         ref_pied = comp["reference"]
         # DOCS-1 (décision Vic) — compte sans nom exploitable : le document REFUSE (message clair),

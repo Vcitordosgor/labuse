@@ -746,17 +746,17 @@ def est_outillee(commune: str | None) -> bool:
     return bool(ins and D.regles_commune(ins))
 
 
-def reglement_source(commune: str | None) -> dict | None:
+def reglement_source(commune: str | None, zone: str | None = None) -> dict | None:
     """Métadonnée du document règlement de la commune (URL, document, édition, millésime), lue de
     module `plu.destinations` (meta). Remplace l'ancien `_doc(commune)['source']`. `offset` = 0 : regles
     portent `page_pdf` (page PDF réelle), plus de conversion page imprimée → page PDF."""
     from ..plu import destinations as D
-    meta = D.reglement_meta(commune) if commune else D.reglement_meta(_insee(commune) or "")
+    meta = D.reglement_meta(commune, zone) if commune else D.reglement_meta(_insee(commune) or "", zone)
     if meta is None:
         return None
     return {"url": meta.get("url"), "document": meta.get("document"),
             "edition": meta.get("edition"), "approbation": meta.get("edition"),
-            "millesime": meta.get("millesime"), "offset": 0}
+            "millesime": meta.get("millesime"), "note_locale": meta.get("note_locale"), "offset": 0}
 
 
 # ── superposition des feuilles VALIDÉES (branchement PLU-CALIBRAGE-2, lu de destinations) ────────

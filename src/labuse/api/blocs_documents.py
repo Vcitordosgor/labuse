@@ -115,14 +115,19 @@ def rehab_bloc(mode_b: dict | None) -> dict:
         # FIX-PRIX-ET-OPPORTUNITES (lot 1) — valeur estimée en fourchette ±30 % (repli libellé simple
         # si la fourchette n'est pas servie) + mention d'incertitude mesurée (backtest VERITE-TERRAIN-2).
         _vtn = tn.get("valeur_fourchette_libelle") or tn.get("valeur_libelle", "")
-        # OUTIL-COMMUNES-FIX-8 (2) — l'effectif (nb de ventes utilisées) accompagne le prix de section
-        # à côté de « Estimé », car le Bilan mode B sert des sections à 3-7 ventes (seuil 3, pas 8).
+        # OUTIL-COMMUNES-FIX-8 (2) — l'effectif accompagne le prix de section à côté de « Estimé » (le
+        # Bilan mode B sert des sections à 3-7 ventes). FIX-9 LOT C (3) — UNITÉ « ventes » (secteur) /
+        # « sections » (repli communal), jamais « ventes » pour un comptage de sections.
         _ntn = tn.get("effectif")
-        _vtn_n = f" · {_ntn} vente{'s' if (_ntn or 0) > 1 else ''}" if _ntn else ""
+        _utn = tn.get("effectif_unite") or "ventes"
+        _vtn_n = f" · {_ntn} {_utn}" if _ntn else ""
         lignes.append(("ligne", f"Terrain nu au prix du secteur : ~{_vtn} "
                                 f"({tn.get('prix_m2', '')} €/m² × {tn.get('surface_m2', '')} m²{_vtn_n} · Estimé, fourchette ±30 %)"))
         if tn.get("incertitude"):
             lignes.append(("note", str(tn["incertitude"])))
+    # FIX-9 LOT C (3) — pourquoi le Bilan affiche un prix que Comparer masque (seuil 3 vs 8), dit en clair.
+    if mb.get("note_seuil"):
+        lignes.append(("note", str(mb["note_seuil"])))
     if mb.get("porte_par_terrain"):
         lignes.append(("phrase_forte", "À ces hypothèses, la valeur de cette parcelle est portée "
                                        "par le terrain, pas par le bâti."))

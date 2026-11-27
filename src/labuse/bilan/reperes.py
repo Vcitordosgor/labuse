@@ -78,7 +78,7 @@ def _zonage_detail(db: Session, parcel_id: int) -> dict | None:
             for p in (getattr(z, "parts", None) or [])
         ]
         if len(parts) > 1:
-            label = " · ".join(f"{p['zone']} {round(p['pct'])} %" for p in parts)
+            label = " · ".join(f"{p['zone']} {_dec_m2(p['pct']) if p['pct'] else '< 0,1'} %" for p in parts)
         else:
             label = str(z.zone)
         nc = round(sum(p["pct"] for p in parts if p["fam"] not in FAMILLES_CONSTRUCTIBLES), 1)
@@ -107,12 +107,18 @@ def sources_parcelle(db: Session, idu: str) -> dict[str, Any]:
     # mais sans surface résiduelle (`rien_a_batir` alors que `constructible=True`, IS0448 : SDP 0)
     # reste constructible — elle NE passe PAS à 100 % non constructible (c'était un motif vide, faux).
     # Seule une non-constructibilité RÉELLE (`constructible=False`) ferme la parcelle.
+    pb = {}
+    portion = None
     non_constructible_motif = None
     if parcel_id is not None:
         try:
             from ..faisabilite.potentiel_batir import potentiel_batir
             pb = potentiel_batir(db, idu)
-            if pb and not pb.get("constructible", True):
+            portion = pb.get("portion_ouverte") if pb else None
+            if portion:
+                c_pct = portion["pct"]
+                nc_pct = round(100 - c_pct, 1)
+            elif pb and pb.get("constructible") is False:
                 nc_pct = 100.0
                 c_pct = 0.0
                 non_constructible_motif = pb.get("motif")
@@ -133,15 +139,19 @@ def sources_parcelle(db: Session, idu: str) -> dict[str, Any]:
         "zonage_parts": zd["parts"] if zd else [],
         "non_constructible_pct": nc_pct,
         "non_constructible_motif": non_constructible_motif,
-        "constructible_m2": constructible_m2,
-        "prix_achat_dvf": _prix_achat_dvf(db, parcel_id) if parcel_id else None,
+        "constructible_m2": portion["m2"] if portion else constructible_m2,
+        "mention_portion": portion["mention"] if portion else None,
+        "fermeture_au": bool((pb or {}).get("fermeture_au")),
+        "analyse_incomplete": (pb or {}).get("motif") if (pb or {}).get("constructible") is None else None,
+        "residuel_portion_m2": pb.get("sdp_restante_m2") if portion else None,
+        "prix_achat_dvf": _prix_achat_dvf(db, idu) if parcel_id else None,
     }
 
 
 def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
                     postes_saisis: set[str] | None = None,
                     programme_saisi: bool = True,
-                    suv_saisie: float | None = None) -> dict[str, Any]:
+                    suv_saisie: float | None = None, sourcee: dict | None = None) -> dict[str, Any]:
     """CHIRURGICAL-FIX-1 (LOT K 2b / LOT L 2 / LOT M 3) — le GARDE-FOU en tête du Bilan. Un Bilan chiffre
     un programme ; s'il contredit ce que le Dossier retient, on le dit EN TÊTE, avec le motif :
       · parcelle non constructible / habitat interdit → motif de la fiche, et AUCUNE « surface à retenir »
@@ -153,16 +163,21 @@ def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
     `programme_saisi` = False quand le Bilan est livré SANS programme (l'outil le produit de lui-même) :
     le bandeau dira « aucun programme », pas « programme saisi ». Renvoie
     `{alertes, surface_a_retenir, terrain_libere, non_constructible, sdp_saisie, programme_saisi}`."""
-    src = sources_parcelle(db, idu) or {}
+    from ..faisabilite.lecture_capacite import lecture_parcelle, marques_ouverture, statuts_ouverture
+    from ..faisabilite.surface_retenue import GRANDEUR_TESTEE
+
+    src = sources_parcelle(db, idu) if sourcee is None else sourcee
+    src = src or {}
     motif_nc = src.get("non_constructible_motif")
+    sar = {}
     sar_val = None
     terrain_libere = False
+    bati = bool(_emprise_batie(db, idu))
     try:
         from ..faisabilite.surface_retenue import estimation_rapide_m2, surface_a_retenir
         from ..exports.etude_faisabilite import scenario_etude_persiste
         est = estimation_rapide_m2(db, idu)
         scn = scenario_etude_persiste(db, idu)
-        bati = bool(_emprise_batie(db, idu))
         if est not in (None, "") or scn is not None:
             sar = surface_a_retenir(est, scn, bati=bati, copropriete=False)
             sar_val = sar.get("valeur_m2")
@@ -176,11 +191,39 @@ def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
     if motif_nc:
         sar_val = None
         terrain_libere = False
+    parts = src.get("zonage_parts") or []
+    marque = marques_ouverture(db, [idu]).get(idu) if src.get("parcel_id") else None
+    if src.get("mention_portion"):
+        # Une condition de réouverture sur une portion déjà exclue ne s'applique pas aux m² retenus.
+        from ..faisabilite.zonage import resolve_zone
+        ouvertes = []
+        for part in parts:
+            regle = resolve_zone(part["zone"], src["commune"])
+            if regle is None or regle.constructible_neuf:
+                ouvertes.append(part)
+        parts = ouvertes
+        if marque and marque["zone_lib"] not in {p["zone"] for p in parts}:
+            marque = None
+    reserves, fermees = statuts_ouverture(idu, src.get("commune"), parts, marque)
+    motif = src.get("analyse_incomplete") or motif_nc
+    if fermees and src.get("fermeture_au") and motif_nc and not src.get("analyse_incomplete"):
+        motif = "Capacité non calculée — zone à urbaniser fermée (" + ", ".join(sorted(fermees)) + ")."
+        motif_nc = motif
+    if sar.get("source") == GRANDEUR_TESTEE:
+        motif = sar["phrase"]
+    if reserves and not fermees and src.get("fermeture_au") and motif == motif_nc:
+        motif = None
+    lecture = lecture_parcelle(sar, motif, src.get("mention_portion"), reserves)
+    if reserves or motif:
+        sar_val = None
+        terrain_libere = False
     # LOT N 3 — la capacité « bâti conservé » du Dossier (SDP résiduelle, §3) : IS0448 = 0 m² en l'état,
     # ~85 m² en terrain libéré. Le bandeau « Aucun programme » reprend CETTE distinction (jamais un faux
     # « aucune capacité à bâtir »).
     cap_batie_conservee = None
-    if not motif_nc:
+    if src.get("mention_portion"):
+        cap_batie_conservee = src.get("residuel_portion_m2")
+    elif not motif_nc:
         try:
             pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
             if pid:
@@ -189,9 +232,18 @@ def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
         except Exception:  # noqa: BLE001 — lecture annexe, jamais bloquante
             cap_batie_conservee = None
     cap_terrain_libere = sar_val if terrain_libere else None
+    if not motif and sar.get("valeur_m2") is not None and cap_batie_conservee is not None:
+        from ..faisabilite.lecture_capacite import m2
+        scenario = "Hypothèse bâti conservé" if reserves else "Bâti conservé"
+        lecture += f" {scenario} : {m2(cap_batie_conservee)} de plancher supplémentaire estimé."
+    a_verifier = bool(reserves or src.get("analyse_incomplete") or sar.get("source") == GRANDEUR_TESTEE)
     alertes: list[str] = []
-    if motif_nc:
+    if reserves:
+        alertes.append("Le montant dépend de la vérification des conditions d'ouverture.")
+    elif motif_nc:
         alertes.append(motif_nc)
+    elif sar_val is None and src.get("parcel_id") and not programme_saisi:
+        alertes.append("Aucune surface de plancher retenue pour chiffrer ce dossier.")
     if terrain_libere:
         alertes.append("Scénario « terrain libéré » : le potentiel suppose la démolition du bâti existant.")
         if not (postes_saisis and "demol" in postes_saisis):
@@ -221,7 +273,10 @@ def garde_fou_bilan(db: Session, idu: str, sdp_saisie: float | None = None,
         alertes.append(
             f"Surface vendable ({_suv} m²) supérieure à la surface de plancher "
             f"({_sdp_txt}) — incohérent (le chiffre d'affaires est surestimé).")
-    return {"alertes": alertes, "surface_a_retenir": sar_val, "terrain_libere": terrain_libere,
+    return {"lecture_capacite": lecture, "capacite_a_verifier": a_verifier, "bati_detecte": bati,
+            "export_constat": sar_val is None and bool(src.get("parcel_id")),
+            "surface_reference": sar if sar_val is not None else None,
+            "mention_portion": src.get("mention_portion"), "alertes": alertes, "surface_a_retenir": sar_val, "terrain_libere": terrain_libere,
             "non_constructible": bool(motif_nc), "sdp_saisie": sdp_saisie,
             "programme_saisi": programme_saisi,
             "capacite_batie_conservee_m2": cap_batie_conservee, "capacite_terrain_libere_m2": cap_terrain_libere}
@@ -231,17 +286,20 @@ def bandeau_sans_programme(gf: dict[str, Any]) -> tuple[str, str]:
     """CHIRURGICAL-FIX-1 (LOT N 3) — titre + texte du bandeau d'un Bilan livré SANS programme, PARTAGÉ
     par le PDF et l'Excel. Il reprend la DISTINCTION du Dossier (0 m² bâti conservé / ~85 m² terrain
     libéré sur IS0448) au lieu d'un faux « aucune capacité à bâtir »."""
-    titre = "Aucun programme — parcelle écartée par LABUSE"
+    titre = ("Aucun programme saisi" if gf.get("lecture_capacite") or gf.get("mention_portion") else
+             "Aucun programme — parcelle écartée par LABUSE")
     base = ("Aucun programme n'a été saisi : ce bilan ne porte que les repères de la parcelle "
             "(terrain, taxes).")
     cons = gf.get("capacite_batie_conservee_m2")
     libere = gf.get("capacite_terrain_libere_m2")
+    if gf.get("capacite_a_verifier"):
+        return "Aucun programme saisi", f"{base} La capacité reste à vérifier avant de chiffrer le projet."
     if gf.get("non_constructible"):
         capacite = "LABUSE n'y retient aucune capacité résidentielle"
     elif isinstance(libere, (int, float)) and libere:
         # le Dossier distingue le bâti conservé (SDP résiduelle, souvent 0) et le terrain libéré.
-        capacite = (f"Le Dossier distingue {round(cons) if isinstance(cons, (int, float)) else 0} m² en "
-                    f"l'état (bâti conservé) et ~{round(libere)} m² estimés en terrain libéré (démolition)")
+        conserve = f"{round(cons)} m² en l'état (bâti conservé)" if cons is not None else "une capacité inconnue à bâti conservé"
+        capacite = f"Le Dossier distingue {conserve} et ~{round(libere)} m² estimés en terrain libéré (démolition)"
     elif isinstance(cons, (int, float)):
         capacite = f"Le Dossier retient {round(cons)} m² (bâti conservé)"
     else:
@@ -254,25 +312,25 @@ def _emprise_batie(db: Session, idu: str) -> float | None:
     """Emprise bâtie (m²) de la parcelle — pour savoir si un scénario est « terrain libéré ». Lue de
     `p_model_bati` (BD TOPO), la même source que la fiche. Best-effort (jamais un bloqueur)."""
     try:
-        return db.execute(text(
-            "SELECT emprise_bati_m2 FROM p_model_bati WHERE idu = :i"), {"i": idu}).scalar()
+        with db.begin_nested():
+            return db.execute(text(
+                "SELECT emprise_bati_m2 FROM p_model_bati WHERE idu = :i"), {"i": idu}).scalar()
     except Exception:  # noqa: BLE001
         return None
 
 
-def _prix_achat_dvf(db: Session, parcel_id: int) -> dict | None:
+def _prix_achat_dvf(db: Session, idu: str) -> dict | None:
     """Dernier prix d'achat connu de la parcelle (DVF), pour affichage INFO (hors
     calcul, règle validée). Best-effort : None si aucune mutation lisible."""
 
     def _q():
         row = db.execute(
             text(
-                "SELECT valeur_fonciere, date_mutation FROM dvf_mutations m "
-                "JOIN dvf_mutation_parcelles mp ON mp.mutation_id = m.id "
-                "WHERE mp.parcel_id = :p AND m.valeur_fonciere > 0 "
-                "ORDER BY m.date_mutation DESC LIMIT 1"
+                "SELECT valeur_fonciere, date_mutation FROM dvf_mutations_parcelle "
+                "WHERE id_parcelle = :idu AND valeur_fonciere > 0 AND date_mutation IS NOT NULL "
+                "ORDER BY date_mutation DESC, id_mutation DESC, valeur_fonciere DESC LIMIT 1"
             ),
-            {"p": parcel_id},
+            {"idu": idu},
         ).one_or_none()
         if not row:
             return None
@@ -361,18 +419,45 @@ def reperes_publics(db: Session, idu: str, sourcee: dict) -> dict[str, dict]:
 
         def _fais():
             from ..faisabilite.scenarios import faisabilite_scenario
+            from ..faisabilite.db import parcel_faisabilite
 
             d = faisabilite_scenario(db, parcel_id)
             sdp = d.get("sdp_possible_m2") if isinstance(d, dict) else None
             if not sdp:
                 return None
+            # OUTIL-ASSEMBLAGE-FIX-9 (CV1498) — NOMMER LES DEUX CHIFFRES pour ce qu'ils sont. L'audit lisait
+            # « terrain libéré 5 949 m² » et l'attribuait à la reconstruction. En réalité, sur CV1498 :
+            #   · « reconstruction » (table rase) = capacité LIVE du gabarit (parcel_faisabilite) = 5 992 m²,
+            #     la MÊME que l'Assemblage, la fiche et le comparatif ;
+            #   · « résiduel après existant » (bâti conservé) = 5 949 m² = 5 992 − 43, les 43 m² étant le bâti
+            #     EXISTANT (COSIA ~45 m²). On montre les DEUX, nommés pour ce qu'ils sont. (NB : le bâti est vu
+            #     par la couche COSIA, d'où `_emprise_batie` ; le run figé pouvait ne pas le détecter.)
+            recon = None
+            try:
+                pf = parcel_faisabilite(db, parcel_id)
+                if pf and pf[1].constructible:
+                    recon = (pf[1].fourchette or {}).get("surface_plancher_m2")
+            except Exception:  # noqa: BLE001 — repère best-effort, jamais un bloqueur
+                recon = None
+            residuel = float(sdp)
+            bati = bool(_emprise_batie(db, idu))
+            if recon and bati and float(recon) - residuel > 1.0:
+                # bâti existant présent ET reconstruction > résiduel : les deux lectures, avec l'écart = existant.
+                label = (f"Surface de plancher estimée — reconstruction {round(float(recon)):g} m² · "
+                         f"résiduel après existant {round(residuel):g} m² "
+                         f"({round(float(recon) - residuel):g} m² existants)")
+            elif recon and float(recon) - residuel > 1.0:
+                # écart sans bâti détecté (live/run) : les deux chiffres, nommés pour ce qu'ils sont.
+                label = (f"Surface de plancher estimée — reconstruction {round(float(recon)):g} m² · "
+                         f"résiduel servi {round(residuel):g} m²")
+            else:
+                label = f"Surface de plancher estimée — reconstruction {round(residuel):g} m²"
             return {
-                "valeur": float(sdp),
-                # IMPLANTATION-4 (LOT C) — SDP de l'ancien moteur = « surface de plancher estimée »
-                # (jamais « SDP du scénario », réservé à l'Étude) : les deux libellés ne se croisent jamais.
                 # CAPACITE-1 (B1) — ce n'est PAS un maximum réglementaire (occupation = hypothèse) :
-                # on la nomme « estimée », jamais « maximale réglementaire ».
-                "label": f"Surface de plancher estimée {round(float(sdp)):g} m²",
+                # on la nomme « estimée », jamais « maximale réglementaire ». Valeur pré-remplie = le run
+                # servi (inchangée, euro-sûr) ; le libellé porte les deux chiffres.
+                "valeur": float(sdp),
+                "label": label,
                 "source": "faisabilité LABUSE (estimation, à confirmer)",
                 "parkings": d.get("stationnement_places"),
             }

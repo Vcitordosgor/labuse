@@ -12,6 +12,10 @@ communes:
   # ── Saint-Paul (97415) : conditionnelle ; planchers DÉLÉGUÉS au PLH (non chiffrés) ──
   "97415":
     nom: "Saint-Paul"
+    zones_exactes:
+      AU3st:
+        ouverture: fermee
+        motif: "Ouverture à l’urbanisation subordonnée à une modification du PLU. Les exceptions pour l’existant et les ouvrages techniques relèvent de l’article 2.2 (règlement de Saint-Paul, AU3st, p. 162–163)."
     defaut: {ouverture: conditionnelle_operation}
     note: "planchers délégués au PLH TCO (non chiffrés) → pas de au_sous_plancher calculable"
 

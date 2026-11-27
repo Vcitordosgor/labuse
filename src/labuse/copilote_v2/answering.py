@@ -131,8 +131,8 @@ CATALOGUE = [
      "Chaque fait porte sa source (cadastre / PLU / RNIC / DGFiP).", "params": {"idu": "str 14 car."}},
     {"nom": "stats_commune", "desc": "Contexte d'une commune : taux de logement social (SRU), statut SRU, "
      "nombre de logements, part de propriétaires.", "params": {"commune": "str"}},
-    # OUTIL-PERMIS-FIX-5 (Point 2) — `delais_instruction` RETIRÉ du catalogue : délai jamais mesuré (dépôt
-    # à l'année → gonflé). « On ne montre pas un délai faux » (Vic). Le Copilote ne sert plus de délai.
+    {"nom": "delais_instruction", "desc": "DÉLAI médian d'instruction d'une commune (dépôt→autorisation, "
+     "Sitadel). Pour « quel délai / combien de temps / vélocité d'instruction ».", "params": {"commune": "str"}},
     {"nom": "compter_permis", "desc": "NOMBRE de permis accordés d'une commune sur une fenêtre de N mois "
      "(défaut 24). Pour « combien de permis (accordés/délivrés) à X », « permis sur 24 mois ». C'est un "
      "COMPTE, pas un délai.", "params": {"commune": "str", "mois": "int (défaut 24)"}},
@@ -193,8 +193,7 @@ RÈGLES :
   APPLIQUÉS (ne les mets JAMAIS dans criteres_non_appliques).
 - « Combien de permis (accordés/délivrés) à X » → outil compter_permis (le COMPTE ; extrais `mois` si
   une fenêtre est dite : « sur 24 mois » → mois=24, « sur 12 mois » → mois=12). « Quel DÉLAI d'instruction
-  à X » → AUCUN outil : le délai n'a jamais été mesuré (dépôt connu à l'année → gonflé), on ne le montre
-  PLUS (OUTIL-PERMIS-FIX-5). Dis-le simplement, ne donne jamais de chiffre de délai.
+  à X » → delais_instruction. Ne CONFONDS PAS le compte (compter_permis) et le délai (delais_instruction).
 - REFUS (mets "tool":null et "refus" à la bonne valeur, "args":{{}}) :
   · "proprietaire_pp" : on demande l'identité/nom/adresse du PROPRIÉTAIRE d'une parcelle (personne
     physique — donnée non ouverte). NB : « quelles parcelles possède [société] » n'est PAS un refus
@@ -477,7 +476,7 @@ _ARG_SPEC = {
     "parcelles_par_entreprise": {"q": str},
     "fiche_parcelle": {"idu": str},
     "stats_commune": {"commune": str},
-    # OUTIL-PERMIS-FIX-5 (Point 2) — `delais_instruction` retiré (délai jamais mesuré, non montré).
+    "delais_instruction": {"commune": str},
     "compter_permis": {"commune": str, "mois": int},
     "marche": {"commune": str},
     "compter_piscines": {"commune": str},
@@ -758,9 +757,10 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
             rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
             return rep
         # (c) calcul sur SES PROPRES chiffres : « calcule 3 % de 2 327 » → arithmétique déterministe.
-        calc = _calcul_pct(message, faits_fil)
+        idu_calcul = _idu_dans(message) or (contexte or {}).get("idu") or (prior_params or {}).get("idu")
+        calc = _calcul_pct(message, faits_fil, db=db, history=history, idu=idu_calcul)
         if calc is not None:
-            calc["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
+            calc["_route"] = {"intent": "QUESTION", "params": {"idu": idu_calcul} if idu_calcul else {}, "voie": prior_voie}
             return calc
         # (d) anaphore SPATIALE : « et sa voisine ? » → clarification honnête (plusieurs mitoyennes),
         #     jamais re-servir la même parcelle (le contresens GB-019).
@@ -770,6 +770,81 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
                          "sur la carte.", "QUESTION", clarification=True)
             rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
             return rep
+    if not scenario:
+        from . import resume_fiche as rf
+        ids = list(dict.fromkeys(x.upper() for x in _IDU_RE.findall(message)))
+        normalise = _fold_py(message.lower())
+        if re.fullmatch(r"(?:et\s+)?en\s+(?:hectares?|ha)\s*[?.!]*", normalise.strip()):
+            dernier = history[-1] if history else {}
+            mesure = re.match(r"^(Surface(?: totale| libre au sol)?|Emprise bâtie)\s*:\s*([\d\s.,]+)\s*m²",
+                              dernier.get("content", "")) if dernier.get("role") == "assistant" else None
+            if mesure:
+                m2 = float("".join(mesure[2].split()).replace(",", "."))
+                rep = _reply(f"{mesure[1]} : {rf.format_surface(m2, True)} ({rf.format_surface(m2, False)}).",
+                             "QUESTION", tool="fiche_parcelle")
+                rep["_route"] = {"intent": "QUESTION", "params": prior_params or {}}
+                return rep
+            return _reply("Précisez la surface en mètres carrés à convertir en hectares.", "QUESTION", clarification=True)
+        if len(ids) > 1:
+            cible = rf._quel_champ(message)
+            classement = "plus petite" in normalise or "plus grande" in normalise
+            if len(ids) <= 12 and (cible == ("surface_parcelle_m2", "Surface") or (classement and cible is None)):
+                surfaces = []
+                for identifiant in ids:
+                    ch = rf.champ_precis(db, identifiant, "surface")
+                    if not ch or not isinstance(ch.get("valeur"), (int, float)):
+                        return _reply(f"Surface indisponible pour {identifiant}. Le calcul est indéterminé.", "QUESTION")
+                    surfaces.append(ch["valeur"])
+                hectares = rf.en_hectares(message)
+                detail = " + ".join(f"{idu} ({rf.format_surface(v, hectares)})" for idu, v in zip(ids, surfaces))
+                if any(m in normalise for m in ("total", "cumul", "somme")):
+                    texte = f"Surface totale : {rf.format_surface(sum(surfaces), hectares)}. {detail}."
+                elif "moyenne" in normalise:
+                    from ..exports.registre_fmt import groupe
+                    moyenne = sum(surfaces) / len(surfaces)
+                    mesure = rf.format_surface(moyenne, True) if hectares else f"{groupe(moyenne, 2).rstrip('0').rstrip(',')} m²"
+                    texte = f"Surface moyenne : {mesure}. " + detail.replace(" + ", " et ") + "."
+                elif len(ids) == 2 and any(m in normalise for m in ("difference", "ecart")):
+                    ecart = abs(surfaces[0] - surfaces[1])
+                    texte = f"Écart de surface : {rf.format_surface(ecart, hectares)}. " + detail.replace(" + ", " et ") + "."
+                elif classement:
+                    extremum = min(surfaces) if "plus petite" in normalise else max(surfaces)
+                    gagnants = ", ".join(idu for idu, v in zip(ids, surfaces) if v == extremum)
+                    texte = f"Surface {'minimale' if 'plus petite' in normalise else 'maximale'} : {gagnants} ({rf.format_surface(extremum, hectares)})."
+                else:
+                    texte = "Surfaces cadastrales : " + detail.replace(" + ", " et ") + "."
+                return _reply(texte, "QUESTION", sources=["cadastre"], tool="fiche_parcelle")
+            return _reply("Précisez la mesure à comparer pour ces parcelles ou ouvrez le comparateur.",
+                          "QUESTION", clarification=True)
+        if ids and contexte and contexte.get("idu") != ids[0]:
+            contexte = {**contexte, "idu": ids[0]}
+        candidats = (prior_params or {}).get("candidats") or []
+        if candidats and not ids:
+            rangs = {"premiere": 1, "premier": 1, "deuxieme": 2, "seconde": 2, "second": 2,
+                     "troisieme": 3, "quatrieme": 4, "cinquieme": 5}
+            choix = re.search(r"\b(premiere|premier|deuxieme|seconde?|troisieme|quatrieme|cinquieme|[1-5](?:er|re|e|eme))\b", normalise)
+            if not choix:
+                choix = re.fullmatch(r"\s*([1-5])\s*[.!?]?\s*", normalise)
+            if choix:
+                mot = choix.group(1)
+                rang = int(mot[0]) if mot[0].isdigit() else rangs.get(mot, 0)
+                if 1 <= rang <= len(candidats):
+                    contexte = {**(contexte or {}), "idu": candidats[rang - 1]}
+                    if not rf._quel_champ(message):
+                        message = "dis-moi tout sur la parcelle " + candidats[rang - 1]
+        sujet = ids[0] if ids else (contexte or {}).get("idu")
+        if sujet:
+            volets = re.split(r"\s+et\s+|[?;]", message, flags=re.I)
+            cibles = [(part, rf._quel_champ(part)) for part in volets if part.strip()]
+            distincts = {c for _, c in cibles if c}
+            if len(distincts) > 1:
+                champs = [rf.champ_precis(db, sujet, part) for part,c in cibles if c]
+                if all(champs):
+                    rep = _reply("\n".join(ch["texte"] for ch in champs), "QUESTION", tool="fiche_parcelle",
+                                 sources=list(dict.fromkeys(ch["source"] for ch in champs)),
+                                 voie={"cible":"fiche","idu":sujet,"libelle":"Voir la fiche parcelle complète"})
+                    rep["_route"] = {"intent":"QUESTION","params":{"idu":sujet}}
+                    return rep
     # GB-014 (Q24/Q25) — DÉICTIQUE VAGUE SANS ANTÉCÉDENT : le fil ne la résout pas → clarification courte
     # (déterministe, 0 appel modèle), jamais une réponse au hasard ni un hors-sujet. Un « et là-bas ? »
     # qui hérite d'une commune (prior_params) ou un message qui nomme son lieu ne tombe PAS ici.
@@ -792,14 +867,14 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         if reso is not None and reso.kind == "candidats":
             rep = _reply(_RES.message_candidats(reso), "QUESTION", clarification=True,
                          candidats=[{"idu": c["idu"], "label": c["label"]} for c in reso.candidats])
-            rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
+            rep["_route"] = {"intent": "QUESTION", "params": {"candidats": [c["idu"] for c in reso.candidats]}, "voie": prior_voie}
             return rep
         if reso is not None and reso.kind == "introuvable":
             # CHASSE-FIX-1 (B-5) — la voie/commune saisies ne correspondent à aucune parcelle : on le
             # DIT (« adresse introuvable ») et on PROPOSE les candidates proches, sans en imposer une.
             rep = _reply(_RES.message_introuvable(reso), "QUESTION", clarification=True,
                          candidats=[{"idu": c["idu"], "label": c["label"]} for c in reso.candidats])
-            rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
+            rep["_route"] = {"intent": "QUESTION", "params": {"candidats": [c["idu"] for c in reso.candidats]}, "voie": prior_voie}
             return rep
         if reso is not None and reso.kind == "idu":
             contexte = {**(contexte or {}), "idu": reso.idu}   # le flux fiche le relit comme un IDU embarqué
@@ -850,7 +925,7 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
             # déterminent — la zone (PLU) et le PPR (DEAL), chacun sourcé — et on renvoie la mesure
             # précise au règlement de la zone / à l'Étude. (La fiche factuelle ne PORTE pas de verdict
             # de constructibilité : le formuler, lui, ne peut donc pas l'affirmer — cf. verrou NU-E-047.)
-            if _est_question_constructibilite(message):
+            if _est_question_constructibilite(message) and (_RF._quel_champ(message) or ("",))[0] != "sdp_residuelle_m2":
                 rep = _reponse_constructibilite(db, idu_cible)
                 if rep is not None:
                     rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_cible}, "voie": prior_voie}
@@ -1455,36 +1530,72 @@ _CAPACITE_TXT = (
     "dans leur écran).")
 
 
-_RE_CALCUL_PCT = re.compile(r"(\d+(?:[.,]\d+)?)\s*(?:%|pour ?cent)\s*(?:de|d'|of|sur)\s*([\d][\d\s.,]*)?")
+_NOMBRE = r"[+\-]?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?"
+_RE_CALCUL_PCT = re.compile(rf"(?P<taux>{_NOMBRE})\s*(?:%|pour ?cent)\s*(?:de\b|d'|of\b|sur\b)\s*")
+_MESURE = re.compile(rf"(?P<nombre>{_NOMBRE})\s*(?P<echelle>millions?|milliers?|milliards?)?\s*(?:d')?\s*(?P<unite>euros?\b|€|m²|m2\b|metres? carres?\b|hectares?\b|ha\b)?")
 
 
-def _calcul_pct(message: str, faits_fil: list[dict] | None) -> dict | None:
-    """« calcule-moi 3 % de 2 327 » → calcul déterministe. Base numérique dans le message, ou (si un
-    verbe de calcul est présent) le dernier chiffre du fil. Renvoie None si ce n'est pas un vrai calcul
-    (« 3 % de logements sociaux » n'a pas de base numérique et pas de verbe → on laisse le routeur)."""
-    m = _fold_py((message or "").lower())
-    mt = _RE_CALCUL_PCT.search(m)
-    if not mt:
+def _decimal_fr(s):
+    from decimal import Decimal
+    return Decimal("".join(s.split()).replace(",", "."))
+
+
+def _afficher_nombre(n):
+    valeur = format(n, "f")
+    return (valeur.rstrip("0").rstrip(".") if "." in valeur else valeur).replace(".", ",")
+
+
+def _calcul_pct(message, faits_fil, *, db=None, history=None, idu=None):
+    from decimal import Decimal
+    from . import resume_fiche as rf
+    m = _fold_py(message.lower()).replace("−", "-").replace("’", "'")
+    match = _RE_CALCUL_PCT.search(m)
+    if not match:
         return None
-    pct = float(mt.group(1).replace(",", "."))
-    base = None
-    if mt.group(2):
-        raw = mt.group(2).replace(" ", "").replace(",", ".").rstrip(".")
-        try:
-            base = float(raw)
-        except ValueError:
-            base = None
-    if base is None:                       # « X % de ce chiffre » → dernier fait, SI verbe de calcul
-        if not any(k in m for k in ("calcul", "combien font", "ca fait", "ca donne", "ca fais")):
+    taux = _decimal_fr(match["taux"])
+    suite = m[match.end():]
+    mesure = _MESURE.match(suite)
+    unite = ""
+    if mesure:
+        base = _decimal_fr(mesure["nombre"])
+        echelle = (mesure["echelle"] or "").rstrip("s")
+        base *= {"": 1, "millier": 1000, "million": 1000000, "milliard": 1000000000}[echelle]
+        brut = mesure["unite"] or ""
+        if brut:
+            unite = "€" if brut in ("€", "euro", "euros") else ("ha" if brut.startswith("h") else "m²")
+    elif idu and ("surface" in suite or "superficie" in suite):
+        champ = rf.champ_precis(db, idu, suite)
+        if not champ or champ.get("champ_id") not in {"surface_parcelle_m2", "surface_libre_sol_m2", "emprise_batie_m2"} or champ.get("valeur") is None:
+            return _reply("Précisez la surface en mètres carrés à utiliser pour ce calcul.", "QUESTION", clarification=True)
+        base, unite = Decimal(str(champ["valeur"])), "m²"
+    elif any(k in m for k in ("calcul", "combien font", "ca fait", "ca donne", "ca fais")):
+        dernier = history[-1] if history else {}
+        precedent = re.match(rf"^(?:Surface(?: totale| libre au sol)?|Emprise bâtie)\s*:\s*({_NOMBRE})\s*(m²|ha)", dernier.get("content", "")) if dernier.get("role") == "assistant" else None
+        if precedent:
+            base, unite = _decimal_fr(precedent[1]), precedent[2]
+        elif faits_fil and isinstance(faits_fil[0].get("valeur"), (int, float)):
+            base = Decimal(str(faits_fil[0]["valeur"]))
+        else:
             return None
-        fait = (faits_fil or [None])[0] if faits_fil else None
-        base = fait.get("valeur") if fait else None
-    if base is None:
+    else:
         return None
-    res = pct / 100.0 * float(base)
-    bf = int(base) if float(base).is_integer() else round(base, 2)
-    rf = int(res) if float(res).is_integer() else round(res, 2)
-    return _reply(f"{pct:g} % de {bf} = {rf}.", "QUESTION", calcul=True)
+    resultat = base * taux / 100
+    if re.search(r"\b(apres|final|total|ttc|comprise?)\b", m):
+        if any(k in m for k in ("reduction", "remise", "baisse", "rabais")):
+            resultat = base - abs(resultat)
+        elif any(k in m for k in ("hausse", "majoration", "augmentation", "tva")):
+            resultat = base + resultat
+    sortie = unite
+    if unite == "ha" and re.search(r"\ben (?:m²|m2|metres? carres?)", m):
+        resultat *= 10000
+        sortie = "m²"
+    elif unite == "m²" and re.search(r"\ben (?:ha|hectares?)\b", m):
+        resultat /= 10000
+        sortie = "ha"
+    montant = f"{_afficher_nombre(resultat)} {sortie}".strip()
+    if resultat != base * taux / 100 and sortie == unite:
+        return _reply(f"Montant final : {montant}.", "QUESTION", calcul=True)
+    return _reply(f"{_afficher_nombre(taux)} % de {_afficher_nombre(base)} {unite}".rstrip() + f" = {montant}.", "QUESTION", calcul=True)
 
 
 _VOISINE_KW = ("sa voisine", "la voisine", "ses voisines", "les voisines", "parcelle voisine",

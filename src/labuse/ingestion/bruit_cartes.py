@@ -1,25 +1,10 @@
-"""SOURCES-1 lot 3 — cartes de bruit stratégiques (CBS) de la DEAL, WFS Carmen.
-
-Service RÉEL vérifié le 07/09/2026 : `Cartes_bruit_strategiques` (nœud Carmen 29, WFS 1.1.0,
-GML EPSG:2975, 15 couches). On ingère les couches **type c** — les ZONES DE DÉPASSEMENT des
-valeurs limites (Lden 68 dB(A) / Ln 62 dB(A), routes) pour les trois gestionnaires RN/RD/VC :
-6 entités multi-polygones. Les couches type b (« secteurs affectés par le bruit ») ne sont
-PAS ingérées : doublon vérifié des bandes du classement sonore déjà servies (kind
-`bruit_route`, largeur réglementaire `sect_bruit` du flux Cerema). Les type a (courbes
-isophones complètes) sont une cartographie d'exposition, écartées (pas d'effet réglementaire
-propre — décision au compte-rendu).
-
-⚠ Les CBS (directive 2002/49/CE, échéance 4, 2022) ne sont PAS le classement sonore
-réglementaire (arrêtés préfectoraux des 14-15/12/2023) — le « i » de la couche le dit.
-Stockage : spatial_layers kind='bruit_carte', subtype='<rn|rd|vc>_<lden|ln>'.
-GML → GeoJSON par ogr2ogr (même mécanique que deal_carmen, lot 2). Purge kind, idempotent.
-"""
+"""Cartes de bruit stratégiques des routes non concédées, deux contours de type C."""
 from __future__ import annotations
 
+import io
 import json
-import subprocess
-import tempfile
-from pathlib import Path
+import re
+import zipfile
 
 import httpx
 from sqlalchemy import text
@@ -27,78 +12,75 @@ from sqlalchemy.orm import Session
 
 from .. import constants
 from ..config import get_settings
-from .layers_ingest import _insert_layer
+from .archives_littoral import shapefile_2975
 
-BASE = "http://ws.carmen.developpement-durable.gouv.fr/WFS/29/Cartes_bruit_strategiques"
+BASE = ("https://www.data.gouv.fr/api/1/datasets/cartes-de-bruit-strategiques-des-reseaux-"
+        "routiers-et-ferroviaires-non-concedes-directive-europeenne-2002-49-ce/")
 SOURCE_NAME = "DEAL — cartes de bruit stratégiques (CBS)"
 
-#: typename → subtype (gestionnaire_indicateur). Type c = dépassements des valeurs limites.
-LAYERS: dict[str, str] = {
-    "RN_Type_c_LDEN": "rn_lden", "RN_Type_c_LN": "rn_ln",
-    "RD_Type_c_LDEN": "rd_lden", "RD_Type_c_LN": "rd_ln",
-    "VC_Type_c_LDEN": "vc_lden", "VC_Type_c_LN": "vc_ln",
-}
 
-_LIBELLE = {"lden": "dépassement Lden 68 dB(A) — journée entière",
-            "ln": "dépassement Ln 62 dB(A) — nuit"}
-
-
-def _fetch_geojson(typename: str, client: httpx.Client, tmpdir: str) -> list[dict]:
-    gml = Path(tmpdir) / f"{typename}.gml"
-    gj = Path(tmpdir) / f"{typename}.json"
-    with client.stream("GET", BASE, params={
-            "SERVICE": "WFS", "VERSION": "1.1.0", "REQUEST": "GetFeature",
-            "TYPENAME": typename}) as r:
-        r.raise_for_status()
-        with open(gml, "wb") as f:
-            for chunk in r.iter_bytes():
-                f.write(chunk)
-    res = subprocess.run(
-        ["ogr2ogr", "-f", "GeoJSON", "-t_srs", "EPSG:4326", "-s_srs", "EPSG:2975",
-         str(gj), str(gml)],
-        capture_output=True, text=True, timeout=600)
-    if res.returncode != 0:
-        raise RuntimeError(f"ogr2ogr {typename} : {res.stderr[:300]}")
-    return json.load(open(gj)).get("features") or []
+def _contours(client):
+    catalogue = client.get(BASE)
+    catalogue.raise_for_status()
+    candidates = []
+    for resource in catalogue.json()["resources"]:
+        found = re.fullmatch(r"CBS\s*(\d{4})\s+Département\s+974\.zip", resource["title"], flags=re.I)
+        if found:
+            candidates.append((int(found[1]), resource.get("last_modified") or "", resource["url"]))
+    if not candidates:
+        raise ValueError("Archive CBS du département 974 absente du catalogue Cerema")
+    year, _, url = max(candidates)
+    response = client.get(url)
+    response.raise_for_status()
+    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+        seen = set()
+        for indic, code, threshold in (("LD", "lden", "68"), ("LN", "ln", "62")):
+            name = f"N_BRUIT_ZBR_INFRA_R_C_{indic}_S_974"
+            with shapefile_2975(archive, name) as reader:
+                if not len(reader):
+                    raise ValueError(f"Couche CBS vide : {name}")
+                for rec in reader.iterShapeRecords():
+                    attrs = {k.lower(): v for k, v in rec.record.as_dict().items() if v is not None}
+                    key = attrs["idzonbruit"]
+                    if (key in seen or attrs["annee"] != str(year) or attrs["codedept"] != "974"
+                            or attrs["cbstype"] != "C" or attrs["indicetype"] != indic
+                            or str(attrs["legende"]) != threshold):
+                        raise ValueError(f"Zone CBS incohérente : {key}")
+                    seen.add(key)
+                    attrs.update(typename=name, indicateur=code,
+                                 source=f"Cerema / DEAL Réunion — CBS {year}, routes non concédées")
+                    yield (name, "route_" + code, f"CBS routières — dépassement {code} {threshold} dB(A)",
+                           attrs, rec.shape.__geo_interface__)
 
 
 def ingest_bruit_cartes(session: Session, source_id: int | None = None,
                         run_id: int | None = None, log=print,
                         client: httpx.Client | None = None) -> dict:
-    """Ingère les 6 couches type c. Purge kind='bruit_carte' (idempotent). Rend {typename: n}."""
-    session.execute(text("DELETE FROM spatial_layers WHERE kind = 'bruit_carte'"))
-    out: dict[str, int] = {}
     own = client is None
-    c = client or httpx.Client(timeout=max(get_settings().http_timeout_s, 300.0),
-                               headers={"User-Agent": constants.USER_AGENT},
-                               follow_redirects=True)
+    client = client or httpx.Client(timeout=max(get_settings().http_timeout_s, 300),
+                                    headers={"User-Agent": constants.USER_AGENT}, follow_redirects=True)
     try:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            for typename, sub in LAYERS.items():
-                feats = _fetch_geojson(typename, c, tmpdir)
-                n = 0
-                gest, indic = sub.split("_")
-                nom = f"CBS {gest.upper()} — {_LIBELLE[indic]}"
-                for f in feats:
-                    g = f.get("geometry")
-                    if not g:
-                        continue
-                    # SOURCES-4 lot 3 (comparaison DEAL) — DescribeFeatureType : le WFS publie ANNEE,
-                    # LEGENDE (seuil dB), TYPETERR, VALIDEDEB, IDCBS… jusque-là jetés. Règle « tout
-                    # champ publié » : on garde toutes les propriétés (lowercase) + les dérivées.
-                    fp = {k.lower(): v for k, v in (f.get("properties") or {}).items()
-                          if v is not None and k.lower() != "geometry"}
-                    _insert_layer(session, "bruit_carte", sub, nom, g, source_id, None,
-                                  run_id,
-                                  attrs={**fp, "typename": typename, "indicateur": indic,
-                                         "gestionnaire": gest.upper(),
-                                         "source": "DEAL Réunion — CBS échéance 4 (2022), "
-                                                   "WFS Carmen"})
-                    n += 1
-                out[typename] = n
-                log(f"  {typename} : {n} entité(s) → bruit_carte/{sub}")
+        records = list(_contours(client))
     finally:
         if own:
-            c.close()
-    session.flush()
-    return out
+            client.close()
+    if source_id is None:
+        source_id = session.execute(text("SELECT id FROM data_sources WHERE name=:name"),
+                                    {"name": SOURCE_NAME}).scalar_one()
+    counts = {}
+    with session.begin_nested():
+        session.execute(text("DELETE FROM spatial_layers WHERE kind='bruit_carte' AND data_source_id=:sid"),
+                        {"sid": source_id})
+        for layer, sub, name, attrs, geometry in records:
+            session.execute(text("""INSERT INTO spatial_layers
+                      (kind,subtype,name,geom,attrs,data_source_id,ingestion_run_id)
+                    VALUES ('bruit_carte',:sub,:name,ST_Transform(ST_Multi(ST_CollectionExtract(
+                      ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:g),2975)),3)),4326),
+                      CAST(:attrs AS jsonb),:sid,:run)"""),
+                            {"sub": sub, "name": name, "g": json.dumps(geometry),
+                             "attrs": json.dumps(attrs), "sid": source_id, "run": run_id})
+            counts[layer] = counts.get(layer, 0) + 1
+        session.flush()
+    for layer, count in counts.items():
+        log(f"{layer} : {count} zones")
+    return counts

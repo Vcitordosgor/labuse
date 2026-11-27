@@ -124,22 +124,23 @@ def test_ppr_ligne_non_classe_ne_dit_plus_inconstructible():
     assert "hypothèse" in bas                               # l'hypothèse prudente, DITE comme telle
     assert lig["redhibitoire"] is True                     # le calcul reste prudent (part retranchée)
     assert lig["nature"] == "PPR — zonage non classé"
+    assert lig["statut"] == "a_verifier"
 
 
 def test_familles_vide_sans_preuve_est_couverture_inconnue():
     # OUTILS-P0-1 (#2) — items vides SANS preuve de couverture : AUCUNE famille « vérifiée » (fini les
     # dix familles « vérifiées »). Toutes « Couverture inconnue ».
     etats = sv.etats_familles([])
-    assert len(etats) == len(sv._FAMILLES_VERIFIEES) == 10
+    assert len(etats) == len(sv._CONTROLES)
     assert all(e["etat"] == sv.ETAT_INCONNU for e in etats)
     assert sv.familles_verifiees([]) == []                  # le cœur du mandat
 
 
 def test_famille_couverte_sans_intersection_est_claire():
     # couverture DÉMONTRÉE (famille dans `couvertes`) + rien remonté → « Aucune intersection détectée ».
-    couv = {"Risques naturels", "Sols pollués"}
+    couv = {"Zonage PPR", "Bruit routier"}
     etats = {e["famille"]: e["etat"] for e in sv.etats_familles([], couvertes=couv)}
-    assert etats["Risques naturels"] == sv.ETAT_CLAIR
+    assert etats["Zonage PPR"] == sv.ETAT_CLAIR
     assert etats["Préemption"] == sv.ETAT_INCONNU           # non démontrée couverte → inconnue
     assert set(sv.familles_verifiees([], couv)) == couv
 
@@ -147,22 +148,22 @@ def test_famille_couverte_sans_intersection_est_claire():
 def test_contrainte_visible_meme_si_famille_pas_demontree_couverte():
     # une contrainte détectée RESTE visible même si le reste de sa famille n'est couvert qu'en partie
     # (ici : couverture NON démontrée) — CONTRAINTE prime sur la couverture.
-    items = [{"categorie": "Risque naturel (PPR / aléa)", "effet": "PPR inondation — zone rouge sur 40 %"}]
+    items = [{"controle": "ppr", "categorie": "Risque naturel (PPR / aléa)", "effet": "PPR inondation — zone rouge sur 40 %"}]
     etats = {e["famille"]: e["etat"] for e in sv.etats_familles(items, couvertes=set())}
-    assert etats["Risques naturels"] == sv.ETAT_CONTRAINTE
+    assert etats["Zonage PPR"] == sv.ETAT_CONTRAINTE
 
 
 def test_lecture_indisponible_prime_sur_tout():
     etats = {e["famille"]: e["etat"] for e in
-             sv.etats_familles([], couvertes={"Risques naturels"}, indisponibles={"Risques naturels"})}
-    assert etats["Risques naturels"] == sv.ETAT_INDISPONIBLE   # une panne n'est jamais « clair »
+             sv.etats_familles([], couvertes={"Zonage PPR"}, indisponibles={"Zonage PPR"})}
+    assert etats["Zonage PPR"] == sv.ETAT_INDISPONIBLE   # une panne n'est jamais « clair »
 
 
 def test_etats_familles_partition_exacte():
     # OUTILS-P0-1 (#2) — chaque famille a EXACTEMENT un état (partition) ; les quatre états couvrent tout.
-    items = [{"categorie": "Risque naturel (PPR / aléa)", "effet": "PPR inondation — zone rouge"}]
-    etats = sv.etats_familles(items, couvertes={"Sols pollués"}, indisponibles={"Bruit"})
-    assert [e["famille"] for e in etats] == [f for f, _ in sv._FAMILLES_VERIFIEES]   # toutes, une fois
+    items = [{"controle": "ppr", "categorie": "Risque naturel (PPR / aléa)", "effet": "PPR inondation — zone rouge"}]
+    etats = sv.etats_familles(items, couvertes={"Bruit routier"}, indisponibles={"Bruit aéroportuaire"})
+    assert [e["famille"] for e in etats] == list(sv._CONTROLES.values())   # toutes, une fois
     assert all(e["etat"] in (sv.ETAT_CONTRAINTE, sv.ETAT_CLAIR, sv.ETAT_INCONNU, sv.ETAT_INDISPONIBLE) for e in etats)
 
 
@@ -303,7 +304,7 @@ def test_flux_ras_honnete(db_session):
 
 # ───────────── OUTILS-P0-1 (#2) — quatre états bout-en-bout (flux DB) ─────────────
 
-_FAM_COUCHES = {f for f, _ in sv._FAMILLES_VERIFIEES}
+_FAM_COUCHES = set(sv._CONTROLES.values())
 _WKT_AILLEURS = "POLYGON((55.6 -21.3,55.601 -21.3,55.601 -21.301,55.6 -21.301,55.6 -21.3))"
 
 
@@ -345,8 +346,8 @@ def test_couverte_sans_intersection_est_claire(db_session):
         " ST_Transform(ST_GeomFromText(:w,4326),2975))"), {"ds": ds, "w": _WKT_AILLEURS})
     s.flush()
     out = sv.servitudes_invisibles(idu, s)
-    assert "Sols pollués" in out["verifie"]                   # couverte (commune) + aucune intersection
-    assert "Sols pollués" not in out["couverture_inconnue"]
+    assert "Anciens sites industriels (CASIAS)" in out["verifie"]                   # couverte (commune) + aucune intersection
+    assert "Secteurs d’information sur les sols (SIS)" in out["couverture_inconnue"]
     # une couverture PARTIELLE : les AUTRES familles (non ingérées pour la commune) restent « inconnues »
     assert "Préemption" in out["couverture_inconnue"]
 
@@ -389,3 +390,39 @@ def test_ppr_non_classe_flux(db_session):
     assert "non classé" in bas and "à vérifier" in bas        # le libellé honnête
     assert "inconstructible" not in bas                       # plus « partie inconstructible » asséné
     assert "hypothèse" in bas                                 # hypothèse prudente DITE comme telle
+
+
+@pytest.mark.db
+@pytest.mark.parametrize(("largeur", "statut", "libelle"), [
+    (0, None, None), (0.4, "rouge_partiel", "moins de 1 %"),
+    (99.6, "rouge_partiel", "plus de 99 %"), (100, "rouge_total", "entièrement INCONSTRUCTIBLE"),
+])
+def test_surface_ppr_et_emprise_exactes(db_session, largeur, statut, libelle):
+    idu = "97499000SV0009"
+    _ins_parcelle(db_session, idu, "TestSurface")
+    db_session.execute(text("""
+        UPDATE parcels SET geom_2975=ST_Multi(ST_MakeEnvelope(300000,7600000,300100,7600100,2975))
+        WHERE idu=:idu
+    """), {"idu": idu})
+    db_session.execute(text("""
+        INSERT INTO spatial_layers(kind,subtype,name,attrs,geom,geom_2975)
+        SELECT 'ppr','INTERDICTION','PPR test',
+          jsonb_build_object('code_insee','97408','document','PPR','approbation','2018-07-13'),
+          ST_Transform(g,4326),g
+        FROM (SELECT ST_MakeEnvelope(299999,7600000,300000+:largeur,7600100,2975) g) t
+    """), {"largeur": largeur})
+    # Le trigger d’insertion reprojette depuis WGS84. Fixer les coordonnées
+    # natives du témoin pour que le contact de bord soit mathématiquement exact.
+    db_session.execute(text("""
+        UPDATE spatial_layers SET geom_2975=ST_MakeEnvelope(299999,7600000,300000+:largeur,7600100,2975)
+        WHERE name='PPR test' AND kind='ppr' AND subtype='INTERDICTION'
+    """), {"largeur": largeur})
+    alertes = sv.servitudes_invisibles(idu, db_session)["servitudes"]
+    ppr = [a for a in alertes if a.get("controle") == "ppr"]
+    if statut is None:
+        assert not ppr
+        return
+    assert len(ppr) == 1 and ppr[0]["statut"] == statut and libelle in ppr[0]["effet"]
+    assert ppr[0]["geometries"][0]["type"] in ("Polygon", "MultiPolygon")
+    assert len(ppr[0]["reglements"]) == 1
+    assert ppr[0]["reglements"][0].endswith("ppr_i_mvt_la_possession_reg_appro_201807.pdf")

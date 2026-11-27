@@ -92,7 +92,7 @@ function FaitDetail({ f, idu, onClose }: { f: HistoireFait; idu: string; onClose
         {ch.surface_bati_m2 != null && <span>{fmtInt(ch.surface_bati_m2)} m² bâti</span>}
         {ch.surface_terrain_m2 != null && <span>{fmtInt(ch.surface_terrain_m2)} m² terrain</span>}
         {ch.nb_logements != null && <span>{fmtInt(ch.nb_logements)} logement{ch.nb_logements > 1 ? 's' : ''}</span>}
-        {ch.surf_hab_m2 != null && <span>{fmtInt(ch.surf_hab_m2)} m² hab.</span>}
+        {ch.surf_hab_m2 != null && <span>{fmtInt(ch.surf_hab_m2)} m² de plancher habitation</span>}
         <span className="rounded bg-mint/15 px-1 text-[8.5px] font-medium text-mint">{ch.statut}</span>
       </div>
       {f.famille === 'proprietaire' && f.avant && f.apres && (
@@ -116,7 +116,7 @@ function FaitDetail({ f, idu, onClose }: { f: HistoireFait; idu: string; onClose
       <div className="flex flex-wrap gap-2">
         {f.famille === 'permis' && f.permit_id && (
           <Bouton niveau="lien" data-histoire-pont-permis
-            onClick={() => { setPermitToOpen(f.permit_id!); setModule('permis'); pushOutilRetour(RETOUR) }}>Voir dans Permis →</Bouton>
+            onClick={() => { setPermitToOpen({ id: f.permit_id!, nature: f.type_permis }); setModule('permis'); pushOutilRetour(RETOUR) }}>Voir dans Permis →</Bouton>
         )}
         {f.famille === 'vente' && (
           /* pas de fil de retour ici : la fiche est un OVERLAY au-dessus de l'outil temps resté

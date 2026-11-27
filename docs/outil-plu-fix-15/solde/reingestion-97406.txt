@@ -1,0 +1,6 @@
+  ✓ purge 97406 : 174 extrait(s) supprimé(s)
+  ✓ 97406 97406_reglement_20230527.pdf : 176 extraits article · PAGINATION AMBIGUË
+  ✓ 97406 La Plaine-des-Palmistes : 1 document(s), 176 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 176 extraits · 21 communes en base
+REINGEST_DONE

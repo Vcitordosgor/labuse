@@ -84,7 +84,8 @@ def test_millesime_expose_et_frais(db_session):
     pub = taux_communal_public(db_session, "97411")   # relevé aujourd'hui → frais
     # EXPORTS-REBRANCHEMENT-1 lot 0 — la phrase client dit le FAIT (délibération), la source
     # vit dans les champs structurés (source/maj_at) : plus de « DGFiP/DELTA, relevé le … ».
-    assert "en vigueur depuis le 01/01/2022" in pub["millesime"]
+    assert "au 01/01/2022" in pub["millesime"]
+    assert "maintien non vérifié" in pub["millesime"]
     assert "DGFiP" not in pub["millesime"] and "relevé le" not in pub["millesime"]
     assert pub["delib_date"] == "2022-01-01"
     assert pub["perime"] is False

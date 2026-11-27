@@ -163,6 +163,8 @@ zones:
           social:
             places: 1
             tranche: prêt aidé (1 max/logt)
+          conditions:
+          - "À moins de 500 m d’une gare routière ou d’une station de transport public guidé ou de transport collectif en site propre, si la qualité de la desserte le permet : logement locatif financé par un prêt aidé de l’État, 0,5 place par logement. Logement privé, 1 place par logement."
           senior:
             places: 0.3333
             tranche: hébergement (1 pour 3)
@@ -405,6 +407,8 @@ zones:
           social:
             places: 1
             tranche: prêt aidé (1 max/logt)
+          conditions:
+          - "À moins de 500 m d’une gare routière ou d’une station de transport public guidé ou de transport collectif en site propre, si la qualité de la desserte le permet : logement locatif financé par un prêt aidé de l’État, 0,5 place par logement. Logement privé, 1 place par logement."
           senior:
             places: 0.3333
             tranche: hébergement (1 pour 3)
@@ -574,6 +578,8 @@ zones:
           social:
             places: 1
             tranche: prêt aidé (1 max/logt)
+          conditions:
+          - "À moins de 500 m d’une gare routière ou d’une station de transport public guidé ou de transport collectif en site propre, si la qualité de la desserte le permet : logement locatif financé par un prêt aidé de l’État, 0,5 place par logement. Logement privé, 1 place par logement."
           senior:
             places: 0.3333
             tranche: hébergement (1 pour 3)
@@ -752,6 +758,8 @@ zones:
           social:
             places: 1
             tranche: prêt aidé (1 max/logt)
+          conditions:
+          - "À moins de 500 m d’une gare routière ou d’une station de transport public guidé ou de transport collectif en site propre, si la qualité de la desserte le permet : logement locatif financé par un prêt aidé de l’État, 0,5 place par logement. Logement privé, 1 place par logement."
           senior:
             places: 0.3333
             tranche: hébergement (1 pour 3)
@@ -983,6 +991,8 @@ zones:
           social:
             places: 1
             tranche: prêt aidé (1 max/logt)
+          conditions:
+          - "À moins de 500 m d’une gare routière ou d’une station de transport public guidé ou de transport collectif en site propre, si la qualité de la desserte le permet : logement locatif financé par un prêt aidé de l’État, 0,5 place par logement. Logement privé, 1 place par logement."
           senior:
             places: 0.3333
             tranche: hébergement (1 pour 3)
@@ -1214,6 +1224,8 @@ zones:
           social:
             places: 1
             tranche: prêt aidé (1 max/logt)
+          conditions:
+          - "À moins de 500 m d’une gare routière ou d’une station de transport public guidé ou de transport collectif en site propre, si la qualité de la desserte le permet : logement locatif financé par un prêt aidé de l’État, 0,5 place par logement. Logement privé, 1 place par logement."
           senior:
             places: 0.3333
             tranche: hébergement (1 pour 3)
@@ -1411,6 +1423,8 @@ zones:
           social:
             places: 1
             tranche: prêt aidé (1 max/logt)
+          conditions:
+          - "À moins de 500 m d’une gare routière ou d’une station de transport public guidé ou de transport collectif en site propre, si la qualité de la desserte le permet : logement locatif financé par un prêt aidé de l’État, 0,5 place par logement. Logement privé, 1 place par logement."
           senior:
             places: 0.3333
             tranche: hébergement (1 pour 3)
@@ -1592,6 +1606,8 @@ zones:
           social:
             places: 1
             tranche: prêt aidé (1 max/logt)
+          conditions:
+          - "À moins de 500 m d’une gare routière ou d’une station de transport public guidé ou de transport collectif en site propre, si la qualité de la desserte le permet : logement locatif financé par un prêt aidé de l’État, 0,5 place par logement. Logement privé, 1 place par logement."
           senior:
             places: 0.3333
             tranche: hébergement (1 pour 3)
@@ -1805,6 +1821,8 @@ zones:
           social:
             places: 1
             tranche: prêt aidé (1 max/logt)
+          conditions:
+          - "À moins de 500 m d’une gare routière ou d’une station de transport public guidé ou de transport collectif en site propre, si la qualité de la desserte le permet : logement locatif financé par un prêt aidé de l’État, 0,5 place par logement. Logement privé, 1 place par logement."
           senior:
             places: 0.3333
             tranche: hébergement (1 pour 3)
@@ -2843,6 +2861,8 @@ zones:
           social:
             places: 1
             tranche: prêt aidé (1 max/logt)
+          conditions:
+          - "À moins de 500 m d’une gare routière ou d’une station de transport public guidé ou de transport collectif en site propre, si la qualité de la desserte le permet : logement locatif financé par un prêt aidé de l’État, 0,5 place par logement. Logement privé, 1 place par logement."
           senior:
             places: 0.3333
             tranche: hébergement (1 pour 3)
@@ -3014,6 +3034,8 @@ zones:
           social:
             places: 1
             tranche: prêt aidé (1 max/logt)
+          conditions:
+          - "À moins de 500 m d’une gare routière ou d’une station de transport public guidé ou de transport collectif en site propre, si la qualité de la desserte le permet : logement locatif financé par un prêt aidé de l’État, 0,5 place par logement. Logement privé, 1 place par logement."
           senior:
             places: 0.3333
             tranche: hébergement (1 pour 3)

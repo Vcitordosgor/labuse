@@ -1,0 +1,6 @@
+  ✓ purge 97407 : 276 extrait(s) supprimé(s)
+  ✓ 97407 97407_reglement_20241209.pdf : 260 extraits article
+  ✓ 97407 Le Port : 1 document(s), 260 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 260 extraits · 21 communes en base
+REINGEST_DONE

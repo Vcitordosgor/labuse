@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from sqlalchemy import text
 
-from . import courrier
+from . import cadastre_disparue, courrier
 
 MOTIF_NU = "Parcelle non bâtie : aucun destinataire à l'adresse"
 MOTIF_SANS_ADRESSE = "Aucune adresse postale connue pour la parcelle"
@@ -92,6 +92,11 @@ def resoudre_destinataire(db, idu: str) -> dict:
 
     `type` ∈ {'occupant', 'siege', None}. `bloque=True` ⇒ `motif` renseigné (jamais None) et
     `adresse_envoi` peut rester None. `bien` = {reference cadastrale, adresse BAN, commune}."""
+    disparue = cadastre_disparue.info_disparue(db, idu)
+    if disparue:
+        return {"idu": idu, "bien": {"reference": idu, "adresse": None, "commune": disparue["commune"]},
+                "type": None, "destinataire": None, "adresse_envoi": None, "mention": None,
+                "bloque": True, "code": "disparue", "motif": cadastre_disparue.phrase_disparue(disparue)}
     row = db.execute(text("""
         SELECT p.idu, p.section, p.numero, p.commune, p.surface_m2,
                (fb.idu IS NOT NULL) AS batie,

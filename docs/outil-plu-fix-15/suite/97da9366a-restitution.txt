@@ -1,0 +1,1046 @@
+
+ RUN  v4.1.10 /Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-ubp_baux/frontend
+
+ × src/components/outils/PluRestitutionFix15.test.tsx > affiche la provenance dans chacune des cartes concernées 223ms
+   → expected 'N6Recul des bâtimentsRèglement · p. p…' to contain 'règle de la zone mère'
+ × src/components/outils/PluRestitutionFix15.test.tsx > qualifie la date de modification en couverture 1012ms
+   → Unable to find an element with the text: /Dernière modification en couverture le 02\/06\/2022/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto"[39m
+      [33mdata-plu-annuaire[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 text-[11px] text-txt-mut"[39m
+      [36m>[39m
+        [36m<b[39m
+          [33mclass[39m=[32m"text-txt"[39m
+        [36m>[39m
+          [0mLes Trois-Bassins[0m
+        [36m</b>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9px] text-mint/70"[39m
+        [36m>[39m
+          [0mPLU du [0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10px] leading-snug text-txt-dim"[39m
+        [33mdata-plu-doc-etat[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9.5px]"[39m
+        [36m>[39m
+          [0mdépôt [0m
+          [0m97423_PLU_20220602[0m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mversion [0m
+            [36m<b[39m
+              [33mclass[39m=[32m"text-txt-mut"[39m
+            [36m>[39m
+              [0mapprouvée le 21/02/2017[0m
+            [36m</b>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 text-cp-amber"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [0m⚠ [0m
+            [0mmise en compatibilité[0m
+            [0m du 27/08/2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-0.5"[39m
+          [36m>[39m
+            [0mOpposabilité SOUS RÉSERVE de cet acte postérieur (vérifiez en mairie l'état en vigueur).[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-[10.5px] leading-snug text-txt-mut"[39m
+        [36m>[39m
+          [0mCherchez dans le règlement de [0m
+          [36m<b[39m
+            [33mclass[39m=[32m"text-txt"[39m
+          [36m>[39m
+            [0mLes Trois-Bassins[0m
+          [36m</b>[39m
+          [0m — verbatim sourcé (article, page, lien), jamais un résumé.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"rounded-md border border-line/60 bg-surface-3/60 px-2 py-1 text-[9.5px] leading-snug text-txt-dim"[39m
+          [33mdata-plu-limites[39m=[32m"true"[39m
+        [36m>[39m
+          [0m⚠ Recherche [0m
+          [36m<b>[39m
+            [0mcommunale[0m
+          [36m</b>[39m
+          [0m (texte du règlement). Elle ne vérifie pas, à la parcelle, les prescriptions graphiques, les servitudes d’utilité publique ni le PPR — à contrôler sur la fiche parcelle et au document graphique.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex gap-2"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:outline-none"[39m
+            [33mdata-plu-q[39m=[32m"true"[39m
+            [33mplaceholder[39m=[32m"ex. hauteur clôture / Ua"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on shrink-0 whitespace-nowrap"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mChercher[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-1.5 text-[10.5px] text-txt-mut"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mFiltré sur la [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-mint"[39m
+            [36m>[39m
+              [0mzone [0m
+              [0mNto1[0m
+            [36m</span>[39m
+            [0m (depuis la fiche)[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rounded bg-surface-3 px-1 text-txt-dim hover:text-txt"[39m
+          [36m>[39m
+            [0m✕ retirer[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto"[39m
+      [33mdata-plu-annuaire[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 text-[11px] text-txt-mut"[39m
+      [36m>[39m
+        [36m<b[39m
+          [33mclass[39m=[32m"text-txt"[39m
+        [36m>[39m
+          [0mLes Trois-Bassins[0m
+        [36m</b>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9px] text-mint/70"[39m
+        [36m>[39m
+          [0mPLU du [0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10px] leading-snug text-txt-dim"[39m
+        [33mdata-plu-doc-etat[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9.5px]"[39m
+        [36m>[39m
+          [0mdépôt [0m
+          [0m97423_PLU_20220602[0m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mversion [0m
+            [36m<b[39m
+              [33mclass[39m=[32m"text-txt-mut"[39m
+            [36m>[39m
+              [0mapprouvée le 21/02/2017[0m
+            [36m</b>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 text-cp-amber"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [0m⚠ [0m
+            [0mmise en compatibilité[0m
+            [0m du 27/08/2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-0.5"[39m
+          [36m>[39m
+            [0mOpposabilité SOUS RÉSERVE de cet acte postérieur (vérifiez en mairie l'état en vigueur).[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-[10.5px] leading-snug text-txt-mut"[39m
+        [36m>[39m
+          [0mCherchez dans le règlement de [0m
+          [36m<b[39m
+            [33mclass[39m=[32m"text-txt"[39m
+          [36m>[39m
+            [0mLes Trois-Bassins[0m
+          [36m</b>[39m
+          [0m — verbatim sourcé (article, page, lien), jamais un résumé.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"rounded-md border border-line/60 bg-surface-3/60 px-2 py-1 text-[9.5px] leading-snug text-txt-dim"[39m
+          [33mdata-plu-limites[39m=[32m"true"[39m
+        [36m>[39m
+          [0m⚠ Recherche [0m
+          [36m<b>[39m
+            [0mcommunale[0m
+          [36m</b>[39m
+          [0m (texte du règlement). Elle ne vérifie pas, à la parcelle, les prescriptions graphiques, les servitudes d’utilité publique ni le PPR — à contrôler sur la fiche parcelle et au document graphique.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex gap-2"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:outline-none"[39m
+            [33mdata-plu-q[39m=[32m"true"[39m
+            [33mplaceholder[39m=[32m"ex. hauteur clôture / Ua"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on shrink-0 whitespace-nowrap"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mChercher[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-1.5 text-[10.5px] text-txt-mut"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mFiltré sur la [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-mint"[39m
+            [36m>[39m
+              [0mzone [0m
+              [0mNto1[0m
+            [36m</span>[39m
+            [0m (depuis la fiche)[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rounded bg-surface-3 px-1 text-txt-dim hover:text-txt"[39m
+          [36m>[39m
+            [0m✕ retirer[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × src/components/outils/PluRestitutionFix15.test.tsx > ouvre la page du vote des Zattes depuis l’avertissement 1009ms
+   → Unable to find role="link" and name "Conseil municipal, p. 2"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto"[39m
+      [33mdata-plu-annuaire[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 text-[11px] text-txt-mut"[39m
+      [36m>[39m
+        [36m<b[39m
+          [33mclass[39m=[32m"text-txt"[39m
+        [36m>[39m
+          [0mLes Trois-Bassins[0m
+        [36m</b>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9px] text-mint/70"[39m
+        [36m>[39m
+          [0mPLU du [0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10px] leading-snug text-txt-dim"[39m
+        [33mdata-plu-doc-etat[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9.5px]"[39m
+        [36m>[39m
+          [0mdépôt [0m
+          [0m97423_PLU_20220602[0m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mversion [0m
+            [36m<b[39m
+              [33mclass[39m=[32m"text-txt-mut"[39m
+            [36m>[39m
+              [0mapprouvée le 21/02/2017[0m
+            [36m</b>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 text-cp-amber"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [0m⚠ [0m
+            [0mmise en compatibilité[0m
+            [0m du 27/08/2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-0.5"[39m
+          [36m>[39m
+            [0mOpposabilité SOUS RÉSERVE de cet acte postérieur (vérifiez en mairie l'état en vigueur).[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-[10.5px] leading-snug text-txt-mut"[39m
+        [36m>[39m
+          [0mCherchez dans le règlement de [0m
+          [36m<b[39m
+            [33mclass[39m=[32m"text-txt"[39m
+          [36m>[39m
+            [0mLes Trois-Bassins[0m
+          [36m</b>[39m
+          [0m — verbatim sourcé (article, page, lien), jamais un résumé.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"rounded-md border border-line/60 bg-surface-3/60 px-2 py-1 text-[9.5px] leading-snug text-txt-dim"[39m
+          [33mdata-plu-limites[39m=[32m"true"[39m
+        [36m>[39m
+          [0m⚠ Recherche [0m
+          [36m<b>[39m
+            [0mcommunale[0m
+          [36m</b>[39m
+          [0m (texte du règlement). Elle ne vérifie pas, à la parcelle, les prescriptions graphiques, les servitudes d’utilité publique ni le PPR — à contrôler sur la fiche parcelle et au document graphique.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex gap-2"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:outline-none"[39m
+            [33mdata-plu-q[39m=[32m"true"[39m
+            [33mplaceholder[39m=[32m"ex. hauteur clôture / Ua"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on shrink-0 whitespace-nowrap"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mChercher[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-1.5 text-[10.5px] text-txt-mut"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mFiltré sur la [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-mint"[39m
+            [36m>[39m
+              [0mzone [0m
+              [0mNto1[0m
+            [36m</span>[39m
+            [0m (depuis la fiche)[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rounded bg-surface-3 px-1 text-txt-dim hover:text-txt"[39m
+          [36m>[39m
+            [0m✕ retirer[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto"[39m
+      [33mdata-plu-annuaire[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 text-[11px] text-txt-mut"[39m
+      [36m>[39m
+        [36m<b[39m
+          [33mclass[39m=[32m"text-txt"[39m
+        [36m>[39m
+          [0mLes Trois-Bassins[0m
+        [36m</b>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9px] text-mint/70"[39m
+        [36m>[39m
+          [0mPLU du [0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10px] leading-snug text-txt-dim"[39m
+        [33mdata-plu-doc-etat[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9.5px]"[39m
+        [36m>[39m
+          [0mdépôt [0m
+          [0m97423_PLU_20220602[0m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mversion [0m
+            [36m<b[39m
+              [33mclass[39m=[32m"text-txt-mut"[39m
+            [36m>[39m
+              [0mapprouvée le 21/02/2017[0m
+            [36m</b>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 text-cp-amber"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [0m⚠ [0m
+            [0mmise en compatibilité[0m
+            [0m du 27/08/2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-0.5"[39m
+          [36m>[39m
+            [0mOpposabilité SOUS RÉSERVE de cet acte postérieur (vérifiez en mairie l'état en vigueur).[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-[10.5px] leading-snug text-txt-mut"[39m
+        [36m>[39m
+          [0mCherchez dans le règlement de [0m
+          [36m<b[39m
+            [33mclass[39m=[32m"text-txt"[39m
+          [36m>[39m
+            [0mLes Trois-Bassins[0m
+          [36m</b>[39m
+          [0m — verbatim sourcé (article, page, lien), jamais un résumé.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"rounded-md border border-line/60 bg-surface-3/60 px-2 py-1 text-[9.5px] leading-snug text-txt-dim"[39m
+          [33mdata-plu-limites[39m=[32m"true"[39m
+        [36m>[39m
+          [0m⚠ Recherche [0m
+          [36m<b>[39m
+            [0mcommunale[0m
+          [36m</b>[39m
+          [0m (texte du règlement). Elle ne vérifie pas, à la parcelle, les prescriptions graphiques, les servitudes d’utilité publique ni le PPR — à contrôler sur la fiche parcelle et au document graphique.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex gap-2"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:outline-none"[39m
+            [33mdata-plu-q[39m=[32m"true"[39m
+            [33mplaceholder[39m=[32m"ex. hauteur clôture / Ua"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on shrink-0 whitespace-nowrap"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mChercher[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-1.5 text-[10.5px] text-txt-mut"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mFiltré sur la [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-mint"[39m
+            [36m>[39m
+              [0mzone [0m
+              [0mNto1[0m
+            [36m</span>[39m
+            [0m (depuis la fiche)[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rounded bg-surface-3 px-1 text-txt-dim hover:text-txt"[39m
+          [36m>[39m
+            [0m✕ retirer[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/outils/PluRestitutionFix15.test.tsx > affiche la provenance dans chacune des cartes concernées
+AssertionError: expected 'N6Recul des bâtimentsRèglement · p. p…' to contain 'règle de la zone mère'
+
+Expected: "règle de la zone mère"
+Received: "N6Recul des bâtimentsRèglement · p. pack PLU (.zip) ↗"
+
+ ❯ src/components/outils/PluRestitutionFix15.test.tsx:36:33
+     34|   await waitFor(() => expect(page.container.querySelectorAll('[data-pl…
+     35|   const cartes = Array.from(page.container.querySelectorAll('[data-plu…
+     36|   expect(cartes[0].textContent).toContain('règle de la zone mère')
+       |                                 ^
+     37|   expect(cartes[1].textContent).toContain('rattachement non établi')
+     38| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/components/outils/PluRestitutionFix15.test.tsx > qualifie la date de modification en couverture
+TestingLibraryElementError: Unable to find an element with the text: /Dernière modification en couverture le 02\/06\/2022/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto"[39m
+      [33mdata-plu-annuaire[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 text-[11px] text-txt-mut"[39m
+      [36m>[39m
+        [36m<b[39m
+          [33mclass[39m=[32m"text-txt"[39m
+        [36m>[39m
+          [0mLes Trois-Bassins[0m
+        [36m</b>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9px] text-mint/70"[39m
+        [36m>[39m
+          [0mPLU du [0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10px] leading-snug text-txt-dim"[39m
+        [33mdata-plu-doc-etat[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9.5px]"[39m
+        [36m>[39m
+          [0mdépôt [0m
+          [0m97423_PLU_20220602[0m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mversion [0m
+            [36m<b[39m
+              [33mclass[39m=[32m"text-txt-mut"[39m
+            [36m>[39m
+              [0mapprouvée le 21/02/2017[0m
+            [36m</b>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 text-cp-amber"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [0m⚠ [0m
+            [0mmise en compatibilité[0m
+            [0m du 27/08/2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-0.5"[39m
+          [36m>[39m
+            [0mOpposabilité SOUS RÉSERVE de cet acte postérieur (vérifiez en mairie l'état en vigueur).[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-[10.5px] leading-snug text-txt-mut"[39m
+        [36m>[39m
+          [0mCherchez dans le règlement de [0m
+          [36m<b[39m
+            [33mclass[39m=[32m"text-txt"[39m
+          [36m>[39m
+            [0mLes Trois-Bassins[0m
+          [36m</b>[39m
+          [0m — verbatim sourcé (article, page, lien), jamais un résumé.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"rounded-md border border-line/60 bg-surface-3/60 px-2 py-1 text-[9.5px] leading-snug text-txt-dim"[39m
+          [33mdata-plu-limites[39m=[32m"true"[39m
+        [36m>[39m
+          [0m⚠ Recherche [0m
+          [36m<b>[39m
+            [0mcommunale[0m
+          [36m</b>[39m
+          [0m (texte du règlement). Elle ne vérifie pas, à la parcelle, les prescriptions graphiques, les servitudes d’utilité publique ni le PPR — à contrôler sur la fiche parcelle et au document graphique.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex gap-2"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:outline-none"[39m
+            [33mdata-plu-q[39m=[32m"true"[39m
+            [33mplaceholder[39m=[32m"ex. hauteur clôture / Ua"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on shrink-0 whitespace-nowrap"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mChercher[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-1.5 text-[10.5px] text-txt-mut"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mFiltré sur la [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-mint"[39m
+            [36m>[39m
+              [0mzone [0m
+              [0mNto1[0m
+            [36m</span>[39m
+            [0m (depuis la fiche)[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rounded bg-surface-3 px-1 text-txt-dim hover:text-txt"[39m
+          [36m>[39m
+            [0m✕ retirer[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto"[39m
+      [33mdata-plu-annuaire[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 text-[11px] text-txt-mut"[39m
+      [36m>[39m
+        [36m<b[39m
+          [33mclass[39m=[32m"text-txt"[39m
+        [36m>[39m
+          [0mLes Trois-Bassins[0m
+        [36m</b>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9px] text-mint/70"[39m
+        [36m>[39m
+          [0mPLU du [0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10px] leading-snug text-txt-dim"[39m
+        [33mdata-plu-doc-etat[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9.5px]"[39m
+        [36m>[39m
+          [0mdépôt [0m
+          [0m97423_PLU_20220602[0m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mversion [0m
+            [36m<b[39m
+              [33mclass[39m=[32m"text-txt-mut"[39m
+            [36m>[39m
+              [0mapprouvée le 21/02/2017[0m
+            [36m</b>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 text-cp-amber"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [0m⚠ [0m
+            [0mmise en compatibilité[0m
+            [0m du 27/08/2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-0.5"[39m
+          [36m>[39m
+            [0mOpposabilité SOUS RÉSERVE de cet acte postérieur (vérifiez en mairie l'état en vigueur).[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-[10.5px] leading-snug text-txt-mut"[39m
+        [36m>[39m
+          [0mCherchez dans le règlement de [0m
+          [36m<b[39m
+            [33mclass[39m=[32m"text-txt"[39m
+          [36m>[39m
+            [0mLes Trois-Bassins[0m
+          [36m</b>[39m
+          [0m — verbatim sourcé (article, page, lien), jamais un résumé.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"rounded-md border border-line/60 bg-surface-3/60 px-2 py-1 text-[9.5px] leading-snug text-txt-dim"[39m
+          [33mdata-plu-limites[39m=[32m"true"[39m
+        [36m>[39m
+          [0m⚠ Recherche [0m
+          [36m<b>[39m
+            [0mcommunale[0m
+          [36m</b>[39m
+          [0m (texte du règlement). Elle ne vérifie pas, à la parcelle, les prescriptions graphiques, les servitudes d’utilité publique ni le PPR — à contrôler sur la fiche parcelle et au document graphique.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex gap-2"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:outline-none"[39m
+            [33mdata-plu-q[39m=[32m"true"[39m
+            [33mplaceholder[39m=[32m"ex. hauteur clôture / Ua"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on shrink-0 whitespace-nowrap"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mChercher[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-1.5 text-[10.5px] text-txt-mut"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mFiltré sur la [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-mint"[39m
+            [36m>[39m
+              [0mzone [0m
+              [0mNto1[0m
+            [36m</span>[39m
+            [0m (depuis la fiche)[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rounded bg-surface-3 px-1 text-txt-dim hover:text-txt"[39m
+          [36m>[39m
+            [0m✕ retirer[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../../../frontend/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../frontend/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/outils/PluRestitutionFix15.test.tsx:41:25
+     39|
+     40| it('qualifie la date de modification en couverture', async () => {
+     41|   expect(await ouvrir().findByText(/Dernière modification en couvertur…
+       |                         ^
+     42| })
+     43|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/components/outils/PluRestitutionFix15.test.tsx > ouvre la page du vote des Zattes depuis l’avertissement
+TestingLibraryElementError: Unable to find role="link" and name "Conseil municipal, p. 2"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto"[39m
+      [33mdata-plu-annuaire[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 text-[11px] text-txt-mut"[39m
+      [36m>[39m
+        [36m<b[39m
+          [33mclass[39m=[32m"text-txt"[39m
+        [36m>[39m
+          [0mLes Trois-Bassins[0m
+        [36m</b>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9px] text-mint/70"[39m
+        [36m>[39m
+          [0mPLU du [0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10px] leading-snug text-txt-dim"[39m
+        [33mdata-plu-doc-etat[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9.5px]"[39m
+        [36m>[39m
+          [0mdépôt [0m
+          [0m97423_PLU_20220602[0m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mversion [0m
+            [36m<b[39m
+              [33mclass[39m=[32m"text-txt-mut"[39m
+            [36m>[39m
+              [0mapprouvée le 21/02/2017[0m
+            [36m</b>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 text-cp-amber"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [0m⚠ [0m
+            [0mmise en compatibilité[0m
+            [0m du 27/08/2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-0.5"[39m
+          [36m>[39m
+            [0mOpposabilité SOUS RÉSERVE de cet acte postérieur (vérifiez en mairie l'état en vigueur).[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-[10.5px] leading-snug text-txt-mut"[39m
+        [36m>[39m
+          [0mCherchez dans le règlement de [0m
+          [36m<b[39m
+            [33mclass[39m=[32m"text-txt"[39m
+          [36m>[39m
+            [0mLes Trois-Bassins[0m
+          [36m</b>[39m
+          [0m — verbatim sourcé (article, page, lien), jamais un résumé.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"rounded-md border border-line/60 bg-surface-3/60 px-2 py-1 text-[9.5px] leading-snug text-txt-dim"[39m
+          [33mdata-plu-limites[39m=[32m"true"[39m
+        [36m>[39m
+          [0m⚠ Recherche [0m
+          [36m<b>[39m
+            [0mcommunale[0m
+          [36m</b>[39m
+          [0m (texte du règlement). Elle ne vérifie pas, à la parcelle, les prescriptions graphiques, les servitudes d’utilité publique ni le PPR — à contrôler sur la fiche parcelle et au document graphique.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex gap-2"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:outline-none"[39m
+            [33mdata-plu-q[39m=[32m"true"[39m
+            [33mplaceholder[39m=[32m"ex. hauteur clôture / Ua"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on shrink-0 whitespace-nowrap"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mChercher[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-1.5 text-[10.5px] text-txt-mut"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mFiltré sur la [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-mint"[39m
+            [36m>[39m
+              [0mzone [0m
+              [0mNto1[0m
+            [36m</span>[39m
+            [0m (depuis la fiche)[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rounded bg-surface-3 px-1 text-txt-dim hover:text-txt"[39m
+          [36m>[39m
+            [0m✕ retirer[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto"[39m
+      [33mdata-plu-annuaire[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 text-[11px] text-txt-mut"[39m
+      [36m>[39m
+        [36m<b[39m
+          [33mclass[39m=[32m"text-txt"[39m
+        [36m>[39m
+          [0mLes Trois-Bassins[0m
+        [36m</b>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9px] text-mint/70"[39m
+        [36m>[39m
+          [0mPLU du [0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10px] leading-snug text-txt-dim"[39m
+        [33mdata-plu-doc-etat[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9.5px]"[39m
+        [36m>[39m
+          [0mdépôt [0m
+          [0m97423_PLU_20220602[0m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mversion [0m
+            [36m<b[39m
+              [33mclass[39m=[32m"text-txt-mut"[39m
+            [36m>[39m
+              [0mapprouvée le 21/02/2017[0m
+            [36m</b>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 text-cp-amber"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [0m⚠ [0m
+            [0mmise en compatibilité[0m
+            [0m du 27/08/2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-0.5"[39m
+          [36m>[39m
+            [0mOpposabilité SOUS RÉSERVE de cet acte postérieur (vérifiez en mairie l'état en vigueur).[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-[10.5px] leading-snug text-txt-mut"[39m
+        [36m>[39m
+          [0mCherchez dans le règlement de [0m
+          [36m<b[39m
+            [33mclass[39m=[32m"text-txt"[39m
+          [36m>[39m
+            [0mLes Trois-Bassins[0m
+          [36m</b>[39m
+          [0m — verbatim sourcé (article, page, lien), jamais un résumé.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"rounded-md border border-line/60 bg-surface-3/60 px-2 py-1 text-[9.5px] leading-snug text-txt-dim"[39m
+          [33mdata-plu-limites[39m=[32m"true"[39m
+        [36m>[39m
+          [0m⚠ Recherche [0m
+          [36m<b>[39m
+            [0mcommunale[0m
+          [36m</b>[39m
+          [0m (texte du règlement). Elle ne vérifie pas, à la parcelle, les prescriptions graphiques, les servitudes d’utilité publique ni le PPR — à contrôler sur la fiche parcelle et au document graphique.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex gap-2"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:outline-none"[39m
+            [33mdata-plu-q[39m=[32m"true"[39m
+            [33mplaceholder[39m=[32m"ex. hauteur clôture / Ua"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on shrink-0 whitespace-nowrap"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mChercher[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-1.5 text-[10.5px] text-txt-mut"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mFiltré sur la [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-mint"[39m
+            [36m>[39m
+              [0mzone [0m
+              [0mNto1[0m
+            [36m</span>[39m
+            [0m (depuis la fiche)[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rounded bg-surface-3 px-1 text-txt-dim hover:text-txt"[39m
+          [36m>[39m
+            [0m✕ retirer[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../../../frontend/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../frontend/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/outils/PluRestitutionFix15.test.tsx:45:31
+     43|
+     44| it('ouvre la page du vote des Zattes depuis l’avertissement', async ()…
+     45|   const lien = await ouvrir().findByRole('link', { name: 'Conseil muni…
+       |                               ^
+     46|   expect(lien.getAttribute('href')).toBe('https://docs.trois-bassins.r…
+     47| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  09:44:30
+   Duration  9.49s (transform 268ms, setup 782ms, import 320ms, tests 2.25s, environment 5.71s)
+

@@ -17,6 +17,16 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks())
 
 describe('cleanup on-leave centralisé', () => {
+  it('fermer la fiche efface le focus et invalide les réponses de la sélection précédente', () => {
+    st().focusParcelle('97411000DI0030', { fiche: true })
+    const nonce = st().focusNonce
+    st().fermerFicheParcelle()
+    expect(st()).toMatchObject({ selectedIdu: null, focusIdu: null, focusNonce: nonce + 1 })
+    st().select('97411000DK0243')
+    expect(st()).toMatchObject({ selectedIdu: '97411000DK0243', focusIdu: null })
+    st().fermerFicheParcelle()
+  })
+
   it('ouvrir le tiroir Outils ferme l\'overlay Comparaison, la sélection SURVIT', () => {
     st().addToCompare('97411000BZ1065')       // sélection
     st().setCompareOpen(true)                 // tableau ouvert (bouton « Comparer »)

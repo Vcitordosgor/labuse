@@ -210,33 +210,42 @@ def compute_alertes(session: Session, commune: str, cid: int | None) -> dict[str
         {"c": commune, "cid": cid}).mappings().all()
 
     # 2 · PERMIS déposés dans le secteur (géocodage SITADEL direct — symétrique du suivi parcelle)
-    # OUTIL-PERMIS-FIX-9 (point 1) — seul le TEXTE affiché (`detail`) change : on n'y écrit JAMAIS une date
-    # de dépôt BRUTE sous « déposé le ». Le dépôt passe par LA fonction unique (depot_affichable) ; écarté
-    # (année ≠ AN_DEPOT…), on dit « autorisé le … » (date d'autorisation), comme la veille du Copilote.
-    # `fait_date` reste `date_depot` (= la clé d'ARRIVÉE/tri qui gouverne la cloche : ne pas la changer,
-    # sinon un fait ancien sonnerait). La clé de détection (géocodé en zone, date_depot non nul,
-    # ON CONFLICT) est INCHANGÉE : aucune alerte émise deux fois ni perdue. `.format` (pas f-string) car
-    # la condition contient `{4}` (regex de l'année).
+    # OUTIL-PERMIS-FIX-9/10 — le TITRE, le DÉTAIL et `fait_date` annoncent TOUS le MÊME événement
+    # réellement daté : « Permis déposé … / déposé le … » si le dépôt est AFFICHABLE (fonction unique,
+    # année = AN_DEPOT), sinon « Permis autorisé … / autorisé le … » sur la date d'autorisation.
+    # OUTIL-PERMIS-FIX-12 (LOT 1) — la SÉLECTION se fait désormais sur la DATE DE L'ÉVÉNEMENT réellement
+    # daté (`permis_classe.evenement_date_sql` = COALESCE(dépôt affichable, autorisation)), non plus sur
+    # `date_depot IS NOT NULL` : un permis géolocalisé SANS dépôt mais AUTORISÉ devient éligible (278 île
+    # auparavant perdus), et la date de dépôt brute rejetée ne décide plus de l'éligibilité. La clé de
+    # DÉDUP reste l'IDENTIFIANT du permis (source_ref=permit_id, ON CONFLICT) — jamais la date : aucune
+    # alerte émise deux fois ni perdue. `.format` (pas f-string) car la condition contient `{4}` (regex).
+    # OUTIL-PERMIS-FIX-13 (LOT 4) — ÉTAT ACTUEL à côté de l'événement historique : quand le permis est
+    # AUJOURD'HUI annulé (ETAT_DAU=4, permis_classe.annule_sql), le détail le dit « … · annulé depuis » →
+    # le promoteur lit l'alerte sans ouvrir la fiche. Le titre et `fait_date` (l'événement daté) ne changent
+    # pas : l'autorisation a bien eu lieu à sa date ; seule l'annotation d'état courant s'ajoute.
     from . import permis_classe
     _cond = permis_classe.depot_affichable_cond_sql("sp.")
-    _aff = permis_classe.depot_affichable_sql("sp.")
+    _ev = permis_classe.evenement_date_sql("sp.")
+    _annule = permis_classe.annule_sql("sp.")
     permis = session.execute(
         text("""INSERT INTO alertes (kind, zone_id, compte_id, source_ref, label, payload, detected_at)
                 SELECT 'permis_in_zone', z.id, z.compte_id, sp.permit_id,
-                       'Permis déposé dans « ' || z.name || ' »',
-                       jsonb_build_object('fait_date', sp.date_depot,
+                       (CASE WHEN {cond} THEN 'Permis déposé dans « ' ELSE 'Permis autorisé dans « ' END)
+                         || z.name || ' »',
+                       jsonb_build_object('fait_date', ({ev}),
                                           'type', sp.type, 'zone', z.name,
                                           'detail', coalesce(sp.type, 'Permis') || ' ' || sp.permit_id ||
                                                     CASE WHEN {cond} THEN ' déposé le ' || sp.date_depot::date::text
                                                          WHEN sp.date IS NOT NULL THEN ' autorisé le ' || sp.date::date::text
-                                                         ELSE '' END),
+                                                         ELSE '' END
+                                                    || CASE WHEN {annule} THEN ' · annulé depuis' ELSE '' END),
                        now()
                 FROM watch_zones z
                 JOIN sitadel_permits sp ON sp.geom IS NOT NULL AND ST_Contains(z.geom, sp.geom)
                 WHERE z.commune = :c AND z.compte_id IS NOT DISTINCT FROM :cid
-                  AND sp.permit_id IS NOT NULL AND sp.date_depot IS NOT NULL
+                  AND sp.permit_id IS NOT NULL AND ({ev}) IS NOT NULL
                 ON CONFLICT DO NOTHING
-                {ret}""".format(aff=_aff, cond=_cond, ret=ret)),
+                {ret}""".format(ev=_ev, cond=_cond, annule=_annule, ret=ret)),
         {"c": commune, "cid": cid}).mappings().all()
 
     # 3 · PROCÉDURES BODACC sur le propriétaire (personne morale) d'une parcelle du secteur

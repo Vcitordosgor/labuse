@@ -18,7 +18,8 @@ from rasterio.transform import from_origin
 
 from labuse.gabarit import scene as SC
 from labuse.gabarit.terrain_mesh import TerrainMesh
-from labuse.gabarit.coupe_svg import coupe_svg, plan_cle_svg, _runs, _soustraire
+from labuse.gabarit.coupe_svg import coupe_svg, plan_cle_svg, _runs
+from labuse.gabarit._geom import soustraire_intervalles
 from labuse.exports.blocs import gabarit as BL
 
 
@@ -149,6 +150,15 @@ def test_pente_max_5m_deux_bornes_hors_bati():
     assert not (7.0 <= pm["d0"] <= 13.0 and 7.0 <= pm["d1"] <= 13.0)   # fenêtre hors bâti ±1 m
 
 
+def test_pente_max_atteinte_entre_les_sommets_ou_a_la_limite():
+    profil = [{"d": d, "z": z} for d, z in [(0, 0), (4, 0), (8, 8), (10, 7), (12, 0)]]
+    # Le sommet à 8 m est la fin de la fenêtre. Son départ à 3 m est entre deux sommets.
+    assert SC._pente_max(profil, [(1, 11)], []) == {
+        "disponible": True, "d0": 3.0, "d1": 8.0, "pente_pct": 160.0}
+    assert not SC._pente_max(profil, [(0, 4), (7, 10)], [])["disponible"]
+    assert not SC._pente_max(profil, [(1, 9)], [(4.5, 4.6)])["disponible"]
+
+
 def test_pente_acces_seulement_si_continu():
     profil = [{"d": float(i), "z": (None if i == 5 else 1.0 * i)} for i in range(15)]
     voie = {"etablie": True, "intersection_d": 2.0}
@@ -157,7 +167,7 @@ def test_pente_acces_seulement_si_continu():
 
 
 def test_soustraire_emprise():
-    assert _soustraire((0, 10), [(3, 5)]) == [(0, 3), (5, 10)]
+    assert soustraire_intervalles((0, 10), [(3, 5)]) == [(0, 3), (5, 10)]
 
 
 # ── planches : cadre tenu, aucun plafond, une cote par point, thèmes ──────────────────────────────
@@ -277,6 +287,12 @@ def test_cote_evite_la_pente_max_5m():
         assert not any(_chevauchent(p, k) for k in cotes), "une cote chevauche « pente max … »"
 
 
+def test_coupe_affiche_la_meme_pente_au_dixieme_dans_les_deux_formats():
+    coupe = _coupe_pente(0.685)
+    for detail in (False, True):
+        assert "pente max 68,5 % sur 5 m" in coupe_svg(coupe, detail=detail)
+
+
 def test_plan_cle_lettres_axe_sans_chevauchement():
     """Finition 4b — deux extrémités d'axes proches d'un même coin (cas DX0049) : les lettres A/A′/B/B′ (et
     « voie ») sont décalées → aucune ne se superpose."""
@@ -368,6 +384,11 @@ def test_implantation_band_etats():
     assert "non traversée" not in coupe_svg(_coupe_demo(zone=True), theme="clair", detail=True)  # zone traversée
     svg = coupe_svg(_coupe_demo(zone=False), theme="clair", detail=True)
     assert "indisponible" in svg                         # pas de zone → indisponible (bande détail)
+    vide = {**_coupe_demo(zone=False), "surface_disponible_m2": 0}
+    hors_axe = {**_coupe_demo(zone=True), "zone_implantation_d": [], "surface_disponible_m2": 35}
+    for detail in (False, True):
+        assert "0 m² disponible" in coupe_svg(vide, detail=detail)
+        assert "non traversée" in coupe_svg(hors_axe, detail=detail)
 
 
 def test_themes_clair_sombre_fond():

@@ -44,14 +44,24 @@ export const commune = () => useApp.getState().commune
 export class ApiError extends Error {
   status: number
   detail?: string
-  constructor(url: string, status: number, detail?: string) {
+  // OUTIL-ASSEMBLAGE-FIX-3 (LOT 4) — on conserve le `detail` BRUT (objet) en plus du message : l'écran
+  // Assemblage y lit la liste `introuvables` du 404 tout-introuvable pour la nommer, pas seulement le texte.
+  detailObj?: unknown
+  constructor(url: string, status: number, detail?: string, detailObj?: unknown) {
     super(detail || `${url} → HTTP ${status}`)
     this.status = status
     this.detail = detail
+    this.detailObj = detailObj
   }
 }
 
+export function messageChargement(erreur: unknown, defaut: string): string {
+  return erreur instanceof ApiError && erreur.status === 503 && erreur.detail ? erreur.detail : defaut
+}
+
 export const is429 = (e: unknown): boolean => e instanceof ApiError && e.status === 429
+
+export { j as lireJson }
 
 async function j<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, init)
@@ -62,7 +72,7 @@ async function j<T>(url: string, init?: RequestInit): Promise<T> {
     const detail = (await r.json().catch(() => null))?.detail
     const detailStr = typeof detail === 'string' ? detail
       : (detail && typeof detail === 'object' && typeof detail.message === 'string' ? detail.message : undefined)
-    throw new ApiError(url, r.status, detailStr)
+    throw new ApiError(url, r.status, detailStr, detail)
   }
   return r.json() as Promise<T>
 }
@@ -437,13 +447,23 @@ export interface ContexteCommune {
       vacance_mediane_pct: number; source: string } | null
   }
   plu_statut: {
-    statut: string; libelle: string | null; procedure?: string | null; date_reglement: string | null
+    // OUTIL-COMMUNES-FIX-14 LOT 4 — `indisponible` : le bloc Urbanisme en panne se signale indisponible
+    // (comme les autres blocs) ; `statut` est alors null (plus de « document local » en badge vert menteur).
+    indisponible?: boolean
+    // OUTIL-COMMUNES-FIX-14 LOT 5/6 — mêmes faits que la fiche parcelle / le vérificateur (source unique) :
+    sursis_autorise?: SursisAutorise | null; debat_recherche_le?: string | null
+    statut: string | null; libelle: string | null; procedure?: string | null; date_reglement: string | null
     etat_au?: string | null   // FIX-4 LOT 2 — « état au … » : date de la pièce la plus récente
+    etat_label?: string | null   // FIX-12 LOT 4 — « Dernière pièce connue » / « Dernier acte connu de la révision générale »
     // FIX-7 LOT 2 — objet de la dernière pièce (révision générale / modif / allégée) + date de notre vérif
-    piece_objet?: string | null; date_constat?: string | null
+    stade_texte?: string | null; piece_objet?: string | null; date_constat?: string | null
     confiance?: string | null; recherche_verbatim: boolean; source: string | null
     // FIX-6 LOT 4 — citation affichée (collectivité + date) + lien, sans la note interne du registre
     source_citation?: string | null; source_url?: string | null
+    // OUTIL-COMMUNES-FIX-10 LOT 3 — chronologie des pièces : acte de procédure vs mention d'avancement, date + lien
+    chronologie?: { date: string; nature: 'acte' | 'avancement'; objet: string; source_url?: string | null }[] | null
+    // OUTIL-COMMUNES-FIX-13 LOT 2 — même champ que la fiche parcelle (radar) et Vérif procédure
+    debat_padd_tenu?: string | null
     // COMMUNE-FIX-1 (D12) — procédure PLU en cours au dernier relevé Sudocuh
     procedure_sudocuh?: { document: string | null; etat: string | null; prescription: string | null; millesime: string | null } | null
   }
@@ -821,18 +841,28 @@ export const etudeZoneEntreprises = (body: EtudeZoneInput) =>
 
 // M41 (Phase 2.6) — outil « Vérif procédure » : un IDU → procédure PLU en cours OUI/NON + conséquences.
 // L'outil LIT le radar (point de calcul unique), il ne calcule rien. L'absence est datée elle aussi.
+export interface SursisAutorise { date: string; date_fr?: string | null; article?: string | null; base_legale?: string | null; source_url?: string | null }
 export interface VerifProcedure {
   idu: string; commune: string; insee: string; tier_servi: string | null; consulte_le: string
   procedure_en_cours: boolean | null; message?: string
-  type?: string; stade?: string; date_acte?: string; source?: string; source_url?: string | null
+  // OUTIL-COMMUNES-FIX-14 LOT 6 — `source_citation` : citation propre affichée au client (organisme ·
+  // objet · date · réf), jamais le `source` BRUT du registre (note de tour interne, admin seulement).
+  type?: string; stade?: string; date_acte?: string; source?: string; source_citation?: string | null; source_url?: string | null
   date_constat?: string; confiance?: string; synthese?: string
-  consequences?: { sursis: { texte: string; base_legale: string } | null; veille_au: string | null }
+  consequences?: { sursis: { texte: string; base_legale: string } | null; veille_au: string | null;
+    debat_padd_tenu?: string | null
+    // OUTIL-COMMUNES-FIX-14 LOT 5/6 — autorisation de surseoir (conseil) + recherche infructueuse datée.
+    sursis_autorise?: SursisAutorise | null; debat_recherche_le?: string | null }
 }
 export const verifProcedure = (idu: string) => j<VerifProcedure>(`/modules/verif-procedure/${idu}`)
 
 // M51 — Annuaire PLU : recherche verbatim sourcé dans le règlement opposable (article, page PDF, lien).
 // Aucun résumé. doute + pagination_ambigue rendus. RNU / hors-corpus = message honnête.
 export interface PluExtrait {
+  renvoi_article?: { article: string; page: number; url: string }
+  explication?: { texte: string; page_pdf: number } | null
+  millesime_lot?: string | null
+  mention_rattachement?: string | null
   insee: string; commune: string; idurba: string; millesime: string | null; document: string
   zone: string | null; article_ref: string | null; page_pdf: number
   texte_verbatim: string; doute: boolean; doute_motif: string | null
@@ -848,8 +878,22 @@ export interface PluExtrait {
   // OUTIL-PLU-FIX-9 (point 4) — un article générique servi à l'identique sous plusieurs zones est
   // regroupé à l'affichage : zones_concernees = toutes les zones où CETTE règle s'applique.
   zones_concernees?: string[] | null
+  // OUTIL-PLU-FIX-10 (LOT 3) — Saint-Paul réédite les articles d'une zone par bassin de vie (livret) :
+  // livret = le bassin de CET extrait ; livrets = toutes les rééditions {livret, page} de la même règle.
+  livret?: string | null
+  livrets?: { livret: string | null; page_pdf?: number | null; page_debut?: number | null; page_fin?: number | null }[]
+  // OUTIL-PLU-FIX-13 — extrait issu d'un DOSSIER de modification concaténé au PDF (La Plaine) : étiquette
+  // du dossier (NULL = article du règlement de base) ; modif_note = sur un article du règlement de base,
+  // modification postérieure non intégrée.
+  dossier?: string | null
+  modif_note?: string | null
 }
 export interface PluSearch {
+  absence_article?: {
+    nature: 'absence_documentee' | 'rattachement_incertain'
+    document: string; texte: string; page_debut: number; page_fin: number; url: string
+    complement?: { texte: string; page: number; url: string }
+  } | null
   query: string; insee: string | null; n: number; n_total?: number; tronque?: boolean; resultats: PluExtrait[]; message?: string; avis?: string
   // OUTIL-PLU-FIX-3 (point 8) — dispositions communes (sans zone) présentées à part sous filtre de zone.
   dispositions_communes?: PluExtrait[]
@@ -875,9 +919,10 @@ export interface PluCommune {
   // OUTIL-PLU-FIX-4 (critère 3) — part indexée à l'article vs au chapitre + drapeau peu structuré.
   pct_article?: number | null; pct_chapitre?: number | null; peu_structure?: boolean | null
   // OUTIL-PLU-FIX-1 (LOT 1) — dates DISTINCTES + actes postérieurs + inventaire des procédures (sourcés).
+  derniere_modification_couverture?: string | null
   date_approbation?: string | null; publication_gpu?: string | null; edition?: string | null
   millesime_lot?: string | null   // OUTIL-PLU-FIX-7 (point 4) — date du dépôt GPU, nommée distinctement
-  modifications?: { type: string; date?: string; source?: string; note?: string }[] | null
+  modifications?: { type: string; date?: string; source?: string; url?: string; note?: string }[] | null
   procedures_inventaire?: { type: string; date?: string; source?: string }[] | null
   note_doc?: string | null
   // RETOURS-12 O4 — procédure PLU EN COURS (source unique veille_plu) : « révision générale »… ou null.
@@ -909,7 +954,14 @@ export const getModeB = (idu: string, travauxM2?: number) =>
 // K3 (rattrapage KelFoncier) · calculette « Taxe d'aménagement ». Backend maître : aucun montant/taux
 // écrit en dur côté front — la config (valeurs forfaitaires, abattement, forfaits, taux plafonds/défauts)
 // et le calcul viennent des endpoints. Le taux communal N'A JAMAIS de défaut (l'outil ne l'invente pas).
+export interface VotesTaxe { [categorie: string]: number | string | undefined; effet?: string; social?: number; ptz?: number; monument?: number }
+export interface LotTaxe { nombre: number; surface: number; existant: number; regime: 'rp' | 'ptz' | 'social' | 'plai' | 'plein'; monument?: boolean }
+export interface FormuleTaxe {
+  label: string; vote: string; condition: string; projet_entier?: boolean; seuil_principal_exclusif?: number
+}
 export interface TaxeConfig {
+  formules_locales?: Record<string, FormuleTaxe>
+  exonerations_locales?: { version?: [string, string, number]; communes: Record<string, VotesTaxe>; departement: VotesTaxe; releve_le: string; source: string }
   meta: { annee: number; source: string; url: string; releve_le: string; note: string }
   valeur_forfaitaire_m2: { hors_idf: number; idf: number }
   abattement: { taux_pct: number; plafond_m2_residence_principale: number }
@@ -924,7 +976,7 @@ export interface TaxeConfig {
   }
   exoneration_surface_min_m2: number | null   // RV2-V2 — exonération petites surfaces (CGI 1635 quater D)
 }
-export const getTaxeConfig = () => j<TaxeConfig>('/outils/taxe-amenagement/config')
+export const getTaxeConfig = (idu?: string) => j<TaxeConfig>('/outils/taxe-amenagement/config' + (idu ? '?idu=' + encodeURIComponent(idu) : ''))
 
 // CHASSE-DONNEES-FIX-1 (suite 2, E-77/E-78) — seuils d'écran SERVIS (source unique config/moteurs.yaml) :
 // plafond d'assemblage écran, plafond API, rayons d'Étude de zone. Le front ne code plus ces bornes en dur.
@@ -937,6 +989,8 @@ export const getMoteursConfig = () => j<MoteursConfig>('/moteurs/config')
 
 export interface TaxeLigne { poste: string; detail: string; assiette_eur: number }
 export interface TaxeResult {
+  exonerations_locales?: { base_exoneree_communale: number; base_exoneree_departementale: number }
+  taux_communal_maj_at?: string | null
   annee: number; source: string; url: string; note: string
   valeur_forfaitaire_m2: number
   lignes: TaxeLigne[]
@@ -968,6 +1022,13 @@ export interface TaxeResult {
   taux_communal_secteur_majore?: boolean | null
 }
 export interface TaxeParams {
+  surfaces?: { categorie: string; surface: number; surface_principale?: number }[]
+  terrain_rehabilite?: boolean
+  lots?: LotTaxe[]
+  ptz?: boolean
+  monument?: boolean
+  forfait_stationnement_eur?: number
+  surface_existante_m2?: number
   surface_taxable_m2: number
   residence_principale?: boolean
   nb_logements?: number   // E-A1 — abattement 100 m² par logement (résidence principale)
@@ -987,6 +1048,8 @@ export interface TaxeParams {
 }
 export const getTaxeAmenagement = (p: TaxeParams) => {
   const params = new URLSearchParams({ surface_taxable_m2: String(p.surface_taxable_m2) })
+  if (p.forfait_stationnement_eur != null) params.set('forfait_stationnement_eur', String(p.forfait_stationnement_eur))
+  if (p.surface_existante_m2) params.set('surface_existante_m2', String(p.surface_existante_m2))
   if (p.residence_principale) params.set('residence_principale', 'true')
   if (p.nb_logements) params.set('nb_logements', String(p.nb_logements))
   if (p.logement_aide) params.set('logement_aide', 'true')
@@ -1000,7 +1063,13 @@ export const getTaxeAmenagement = (p: TaxeParams) => {
   if (p.taux_departemental_pct != null) params.set('taux_departemental_pct', String(p.taux_departemental_pct))
   if (p.insee) params.set('insee', p.insee)
   if (p.idu) params.set('idu', p.idu)
-  return j<TaxeResult>(`/outils/taxe-amenagement?${params.toString()}`)
+  if (p.ptz) params.set('ptz', 'true')
+  if (p.monument) params.set('monument', 'true')
+  if (p.terrain_rehabilite) params.set('terrain_rehabilite', 'true')
+  const programme = p.surfaces?.length ? { lots: p.lots, surfaces: p.surfaces } : p.lots
+  return j<TaxeResult>(`/outils/taxe-amenagement?${params.toString()}`, programme ? {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(programme),
+  } : undefined)
 }
 
 // GABARIT-1 — outil « Gabarit réglementaire ». Le front N'AFFICHE que ce que sert le moteur pur
@@ -1028,6 +1097,12 @@ export interface GabaritResult {
   // « majoritairement inconstructible » et coche « risques intégrés » retirée. null si aucune exclusion.
   partExcluePct?: number | null
   zoneImplantationM2?: number | null
+  batiConserveM2?: number | null
+  empriseSupplementaireM2?: number | null
+  exempleEmpriseM2?: number | null
+  exempleEmpriseGeoJSON?: GabGeom
+  surfacesContinuesM2?: number[]
+  reculSepScenario?: string | null
   batiDeduitM2?: number | null   // RECETTE-OUTILS-3 (S7) — emprise bâti retranchée de la zone d'implantation
   plafondEmpriseM2?: number | null
   plafondEmpriseStatus?: string | null   // 'absent' → « Non réglementé »
@@ -1048,11 +1123,13 @@ export interface GabaritResult {
   // GABARIT-6 P4 — bâti existant (emprise BD TOPO + hauteur LiDAR HD), fait contextuel
   batiExistantGeoJSON?: GabFeatureCollection | null
 }
-export interface GabBatiProps { hauteur_m?: number | null; h_source?: string | null }
+export interface GabBatiProps { hauteur_bdtopo_m?: number | null; hauteur_m?: number | null; h_source?: string | null }
 export interface GabFeatureCollection {
   type: 'FeatureCollection'
   features: Array<{ type: 'Feature'; properties: GabBatiProps; geometry: GabGeom }>
 }
+export const getGabaritRelief = (idu: string) =>
+  j<{ source: string; maille_m: number }>(`/outils/gabarit/relief/${encodeURIComponent(idu)}`)
 export const getGabarit = (idu: string) =>
   j<GabaritResult>(`/outils/gabarit/${encodeURIComponent(idu)}`)
 
@@ -1063,6 +1140,8 @@ export interface GabPoly { ext: number[][]; trous: number[][][] }
 export interface GabSceneBati { empreinte: GabPoly[]; pied_m: number | null; hauteur_m: number | null; attribution: string | null }
 export interface GabScene {
   idu: string; scene_id: string; disponible: boolean; adresse?: string | null
+  regles: Pick<GabaritResult, 'zoneImplantationM2' | 'plafondEmpriseM2' | 'batiConserveM2' | 'empriseSupplementaireM2' | 'surfacesContinuesM2'>
+  exemple_emprise?: GabPoly[]
   etat: { gabarit: string; terrain_couverture: number; fond_disponible: boolean; coupes: Array<{ axe: string; disponible: boolean }> }
   origine_2975: number[]
   contour_cadastral: GabPoly[]; contour_gabarit: GabPoly[]; zone_implantation: GabPoly[]
@@ -1078,6 +1157,8 @@ export const getGabaritScene = (idu: string) =>
 // sid = identifiant de scène TRANSMIS par la visionneuse (parité : même version terrain/plan/coupe/PDF).
 export const gabCoupeSvgUrl = (idu: string, axe: string, theme = 'sombre', sid?: string, detail = false, w?: number, h?: number, header = true) =>
   `/outils/gabarit/scene/${encodeURIComponent(idu)}/coupe/${axe}.svg?theme=${theme}${sid ? `&sid=${sid}` : ''}${detail ? '&detail=1' : ''}${w ? `&w=${w}` : ''}${h ? `&h=${h}` : ''}${header ? '' : '&header=0'}`
+export const gabCoupesPdfUrl = (idu: string, sid: string) =>
+  `/outils/gabarit/scene/${encodeURIComponent(idu)}/coupes.pdf?sid=${encodeURIComponent(sid)}`
 export const gabPlanSvgUrl = (idu: string, theme = 'sombre', sid?: string, w?: number, h?: number) =>
   `/outils/gabarit/scene/${encodeURIComponent(idu)}/plan.svg?theme=${theme}${sid ? `&sid=${sid}` : ''}${w ? `&w=${w}` : ''}${h ? `&h=${h}` : ''}`
 // PHOTO aérienne (étape 3) : orthophoto IGN proxyée par le serveur, mise en cache par identifiant de scène.
@@ -1114,9 +1195,21 @@ export interface OperationPromoteur {
   annee: number | null; etat: string | null; etat_libelle: string | null; lon: number | null; lat: number | null
   idus: string[]; libelle: string; radar_bien_id: number | null; radar_cite: boolean
   programme?: ProgrammeLie | null
+  // OUTIL-PERMIS-FIX-16 (LOT 4) — pétitionnaire Sitadel (demandeur) ≠ propriétaire cadastral.
+  petitionnaire_nom?: string | null; petitionnaire_siren?: string | null
+  petitionnaires?: { nom: string; siren: string | null }[]
+  proprietaire_cadastral_nom?: string | null; proprietaire_cadastral_siren?: string | null
+  depot_jour_connu?: boolean   // OUTIL-PERMIS-FIX-16 (LOT 5) — false → dépôt connu à l'année seulement
+}
+export interface CartePromoteur {
+  siren: string | null; denomination: string | null; categorie: string
+  categorie_label?: string | null; categorie_justifiee?: boolean | null
+  n_operations: number; n_permis: number; nb_logements: number; nb_logements_dp: number; nb_logements_annules: number; ambigu: boolean
 }
 export interface VeillePromoteurs {
+  n_depots_a_confirmer?: number
   n_total: number; n_servi: number; tronquee: boolean; plafond: number; n_logements_total: number
+  n_logements_dp: number; n_logements_annules: number; n_operations_ambigues: number; par_promoteur: CartePromoteur[]
   categories: { cle: string; label: string }[]; millesime: string | null
   regle: { contiguite_m: number; periode_mois: number; phrase: string }
   operations: OperationPromoteur[]; note: string
@@ -1135,6 +1228,9 @@ export interface PromoteurFrise {
   siren: string; denomination: string | null; n_operations: number; n_logements: number
   // RETOURS-13 R29 — le chiffre dit ce qu'il compte + activité de pétitionnaire (Sitadel 2013+).
   perimetre_note: string
+  // SCAN-FIX-1 (bloquant 2) — deux listes nommées + part pétitionnaire inconnu.
+  sur_son_foncier: { n_operations: number; n_permis: number; n_logements: number; n_logements_dp: number; n_logements_annules: number; n_permis_sans_petitionnaire: number; part_petitionnaire_inconnu: number | null; note: string }
+  deposes_petitionnaire: { n_permis: number; n_logements: number; note: string }
   petitionnaire: { n_permis: number; n_logements: number; note: string }
   filiales_identifiees: { siren: string; nom: string | null; n_permis: number; n_logements: number }[]
   frise: { annee: number; n_operations: number; n_logements: number }[]
@@ -1244,6 +1340,7 @@ export interface AccueilChiffres {
   ventes_train: number | null; communes_calibrees: number | null
   golden_parcelles: number | null; golden_verifs: number | null
   defisc_actives: number | null; permis_caducs: number | null
+  permis_caducs_actuels?: number | null; permis_caducs_archives?: number | null
   ensembles_fonciers: number | null; bascules_tiers_hauts: number | null
   run_label: string
 }
@@ -1336,7 +1433,7 @@ export interface CopiloteV2Reponse {
 }
 export const copiloteV2Ask = (message: string, opts?: {
   history?: { role: string; content: string }[]; contexte?: Record<string, unknown>
-  conversation_id?: number | null; confirme?: boolean; scenario?: string | null }) =>
+  request_id?: string; conversation_id?: number | null; confirme?: boolean; scenario?: string | null }) =>
   j<CopiloteV2Reponse>('/api/copilote-v2/ask', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, ...opts }) })
@@ -1360,10 +1457,14 @@ export interface CopiloteMission {
 }
 export interface CopiloteConversation extends CopiloteMission {
   created_at: string
-  messages: { role: 'client' | 'copilote'; texte: string; intent: string | null; ts: string }[]
+  contexte_ttl_minutes?: number
+  messages: { role: 'client' | 'copilote'; texte: string; intent: string | null; ts: string; reponse?: Partial<CopiloteV2Reponse> | null }[]
 }
 // RETOURS-8 (R11) — `retention_jours` accompagne la liste pour le bandeau « conservées N jours ».
-export const copiloteV2Missions = () => j<{ missions: CopiloteMission[]; retention_jours: number }>('/api/copilote-v2/missions')
+export const copiloteV2Missions = (avant?: CopiloteMission) => {
+  const query = avant ? '?' + new URLSearchParams({ avant: avant.updated_at, avant_id: String(avant.id) }) : ''
+  return j<{ missions: CopiloteMission[]; retention_jours: number; suite?: boolean }>('/api/copilote-v2/missions' + query)
+}
 export const copiloteV2Mission = (id: number) => j<CopiloteConversation>(`/api/copilote-v2/missions/${id}`)
 // COPILOTE-4 — supprimer une conversation de la liste (geste explicite ; cloisonné serveur).
 export const copiloteV2MissionSupprimer = (id: number) =>
@@ -1495,9 +1596,9 @@ export interface SuccessionItem {
   // (« A 65 % · Ua 35 % »), ou null quand la dominante résume la parcelle.
   zone_parts_libelle?: string | null
   sdp_residuelle_m2: number | null   // Estimé — moteur de la fiche (p_model_ext_dataset)
-  dirigeant_age: number | null; dirigeant_nom: string | null; sci_dormante: boolean
+  dirigeant_age: number | null; dirigeant_nom: string | null; age_au_calcul?: boolean; sci_dormante: boolean
   // DONNEES-1 lot 2.3 — dernier dépôt de comptes BODACC du propriétaire PM (null = aucun publié).
-  depot_comptes: { annee: number | null; depuis_ans: number | null; muet?: boolean } | null
+  depot_comptes: { annee: number | null; annee_parution?: number | null; depuis_ans: number | null; muet?: boolean } | null
   proprio: SolaireProprio
 }
 export interface SuccessionsResp {
@@ -1532,7 +1633,7 @@ export const getAssemblageVoisines = (idu: string) =>
 export interface BlocItem {
   bloc_id: number; siren: string; denomination: string | null
   n_parcelles: number; surface_totale_m2: number; communes: string[]
-  sdp_residuelle_m2: number; sdp_couverture: number   // couverture = nb parcelles au résiduel connu
+  sdp_residuelle_m2: number | null; sdp_couverture: number   // couverture = nb parcelles au résiduel connu
   zonages: string[]
   is_public: boolean        // propriétaire de droit public (classify_dgfip) — écarté par défaut
   idu_repr: string | null   // IDU représentatif (min) — résout le propriétaire pour le pont Courrier
@@ -1717,7 +1818,7 @@ export interface CompareRow {
   // verdict SERVI (source _q_v2_fiche) — la puce dérive de tier_v2 + etage0 ; fraction + raison M135
   status?: string | null; tier_v2?: string | null; etage0?: boolean | null; rang_v2?: number | null
   label?: string | null; fraction?: string | null; raison?: string | null
-  zone?: string | null; constructible?: boolean | null
+  lecture_capacite?: string; capacite_a_verifier?: boolean; zone?: string | null; constructible?: boolean | null
   // RECETTE-PROD-1 (12) — « zone constructible » (famille ∉ A/N) séparée du potentiel résiduel + cause servie.
   zone_constructible?: boolean | null; cause?: string | null; cause_libelle?: string | null
   sdp_max_m2?: number | null; taux_emprise_pct?: number | null; sdp_residuelle_m2?: number | null; sous_densite?: boolean | null
@@ -1725,7 +1826,16 @@ export interface CompareRow {
   emprise_ces_pct?: number | null; emprise_ces_source?: string | null
   // OUTILS-P1-1 (pt 3) — 'plafond' (CES chiffré) · 'sans_plafond' (règle identifiée, pas de plafond) ·
   // 'non_renseigne' (aucune règle d'emprise identifiée pour la zone).
-  emprise_ces_etat?: 'plafond' | 'sans_plafond' | 'non_renseigne' | null
+  surface_a_retenir?: { phrase?: string } | null
+  zonage_detail?: string | null
+  hauteur_reglement?: string | null
+  emprise_ces_detail?: string | null
+  bati_etat?: string | null
+  verdict_motif?: string | null
+  bilan_hypotheses?: string[]
+  mixite?: { borne_haute?: boolean; detail?: string; article?: string; page?: string } | null
+  au_ouverture?: { statut?: string; motif?: string; bloquant?: boolean } | null
+  emprise_ces_etat?: 'conditionnel' | 'plafond' | 'sans_plafond' | 'non_renseigne' | null
   charge_fonciere_m2?: number | null
   // COMPARER-2 §4 / SOURCES-FIX-2 lot B — Classement LABUSE du RUN SERVI (même source que l'Analyse et la fiche) : bande + Signal
   bande?: string | null; signal_niveau?: string | null
@@ -1742,7 +1852,10 @@ export interface CompareRow {
   prix_secteur_bati_m2?: number | null
 }
 export const getCompare = (idus: string[]) =>
-  j<{ count: number; parcels: CompareRow[] }>(`/compare?idus=${encodeURIComponent(idus.join(','))}`)
+  // OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 7) — `echecs` (trouvées mais fiche non calculable, ex. DH0098)
+  // s'ajoute à `ignores` (introuvables) : l'écran nomme TOUT identifiant écarté, jamais en silence.
+  j<{ count: number; parcels: CompareRow[]; ignores?: string[]; echecs?: string[]; capacites_sans_fiche?: Record<string, string>; tronques?: string[]; doublons?: string[] }>(
+    `/compare?idus=${encodeURIComponent(idus.join(','))}`)
 
 // M54-EXPO-2 A6 — marque blanche (logo + libellés) relue par GET, uploadée en body brut.
 export interface Marque { raison_sociale: string; coordonnees: string; mention: string; has_logo: boolean; logo_data_uri?: string }
@@ -1855,7 +1968,9 @@ export const getSourcesCalibrages = () => j<Record<string, SourceCalibrage[]>>('
 
 // ── Modules outils (Vague 1) ──
 // M129-C (Vic 19/08/2026) : modDivision retiré — division hors produit (endpoint dormant).
-export const modPatrimoineSearch = (q: string) => j<{ siren: string; nom: string; n: number }[]>(`/modules/patrimoine/search?q=${encodeURIComponent(q)}`)
+export const modPatrimoineSearch = (q: string) => j<{ resultats: { siren: string; nom: string; n: number; siren_reel: boolean }[]; total: number; affiches: number; masques: number; plafond: number }>(`/modules/patrimoine/search?q=${encodeURIComponent(q)}`)
+// SCAN-FIX-1 (fiche, écran seul) — autres titulaires d'une parcelle (hors principal) avec leur droit DGFiP.
+export const modParcelleTitulaires = (idu: string) => j<{ n_autres: number; titulaires: { siren: string | null; denomination: string | null; droit_code: string | null; droit_label: string | null; siren_reel: boolean }[] }>(`/modules/parcelle/${encodeURIComponent(idu)}/titulaires`)
 // RETOURS-11 (T4) — liste PAGINÉE (limit/offset) : l'endpoint sert déjà des pages (géom calculée pour la
 // page seulement) ; le front tranche par 200 via « Voir plus » (jamais de dump). Défauts = 1re page 200.
 export const modPatrimoine = (siren: string, limit = 200, offset = 0, blocsLimit?: number) =>
@@ -1865,8 +1980,9 @@ export const modPatrimoineCsvUrl = (siren: string) => `/modules/patrimoine?siren
 const cq = () => (commune() ? `commune=${encodeURIComponent(commune()!)}` : '')
 // RETOURS-17 W2 — `etat` (recent|acheve|autre) affine la fenêtre par ÉTAT DE CYCLE ; le dormant garde
 // son endpoint /promesses (jointure parcelle+run). Sans `etat`, comportement d'avant (fenêtre `months`).
-export const modPermis = (months: number, nature?: string | null, limit = 300, offset = 0, etat?: string | null) =>
-  j<Record<string, unknown>>(`/modules/permis?${cq()}&months=${months}${nature ? `&nature=${nature}` : ''}${etat ? `&etat=${etat}` : ''}&limit=${limit}&offset=${offset}`)
+export const modPermisCommunes = () => j<string[]>('/modules/permis-communes')
+export const modPermis = (months: number, nature?: string | null, limit = 300, offset = 0, etat?: string | null, geo = 'tous') =>
+  j<Record<string, unknown>>(`/modules/permis?${cq()}&months=${months}${nature ? `&nature=${nature}` : ''}${etat ? `&etat=${etat}` : ''}&geo=${geo}&limit=${limit}&offset=${offset}`)
 // RETOURS-16 V4 — compteur seul (ni lignes ni carte) : le chip « Tous » dit le total EN BASE.
 export const modPermisCount = (months: number, etat?: string | null) =>
   j<{ total: number; geocodes?: number; donnees_jusqu_au?: string }>(`/modules/permis?${cq()}&months=${months}${etat ? `&etat=${etat}` : ''}&count_only=true`)
@@ -1878,15 +1994,15 @@ export const modPermisEtats = (months = 240) =>
       // OUTIL-PERMIS-FIX-2 (G2) — fraîcheur de la couche de bâti (fonde « aucun bâtiment détecté »).
       bati_fraicheur?: { perimee: boolean | null; built_at: string | null; note?: string | null } }>(
     `/modules/permis?${cq()}&months=${months}&count_only=true&etats=true`)
-export const modPermisFiche = (permitId: string) =>
-  j<Record<string, unknown>>(`/modules/permis/${encodeURIComponent(permitId)}`)
+export const modPermisFiche = (permitId: string, nature?: string) =>
+  j<Record<string, unknown>>(`/modules/permis/${encodeURIComponent(permitId)}${nature ? `?nature=${encodeURIComponent(nature)}` : ''}`)
 export const modParcellePermis = (idu: string) =>
-  j<Record<string, unknown>>(`/modules/parcelle-permis?idu=${encodeURIComponent(idu)}`)
+  j<Record<string, unknown>>(`/modules/parcelle-permis?idu=${encodeURIComponent(idu)}&complet=true`)
 // 1re page légère (1000), le reste en « voir plus » ; le total (COUNT ~4 s) arrive en PARALLÈLE.
-export const modPromesses = (months: number, limit = 1000, offset = 0) =>
-  j<Record<string, unknown>>(`/modules/promesses?${cq()}&months=${months}&limit=${limit}&offset=${offset}`)
-export const modPromessesCount = (months: number) =>
-  j<{ total: number }>(`/modules/promesses?${cq()}&months=${months}&count_only=true`)
+export const modPromesses = (months: number, limit = 1000, offset = 0, geo = 'tous') =>
+  j<Record<string, unknown>>(`/modules/promesses?${cq()}&months=${months}&geo=${geo}&limit=${limit}&offset=${offset}`)
+export const modPromessesCount = (months: number, geo = 'tous') =>
+  j<{ total: number; sources?: { libelle: string; nombre: number }[] }>(`/modules/promesses?${cq()}&months=${months}&geo=${geo}&count_only=true`)
 // OUTIL-PERMIS-FIX-5 (Point 2) — `modVelocite` (GET /modules/velocite) SUPPRIMÉ : plus aucun écran
 // n'appelle le délai d'instruction (jamais mesuré, non montré). L'endpoint back reste dormant.
 // M137-Z — Rareté (horizon ZAN + stock foncier par commune), pour la fiche commune de l'outil Communes.
@@ -1940,7 +2056,7 @@ export interface CourrierResolution {
   motif: string | null
   // OUTILS-S2 Lot B — code machine du blocage : 'nu'|'sans_adresse'|'sans_canal'|'inconnue' (aucun
   // occupant joignable → l'ajout est refusé, on renvoie au Courrier SPF) ; 'opposition' (traité au dépôt).
-  code: 'nu' | 'sans_adresse' | 'sans_canal' | 'inconnue' | 'opposition' | null
+  code: 'nu' | 'sans_adresse' | 'sans_canal' | 'inconnue' | 'disparue' | 'opposition' | null
   bien: { reference: string; adresse: string | null; commune: string | null }
 }
 export const postCourrierAdressage = (idus: string[]) =>
@@ -1948,7 +2064,7 @@ export const postCourrierAdressage = (idus: string[]) =>
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus }) })
 // COURRIER-2 Lot 3 — aperçu COMPOSÉ (recto + verso), même source que le PDF (« ne pas reformuler »).
 export interface CourrierApercu {
-  recto: string; verso: string[]; ouverture: string; reference: string
+  recto: string; verso: string[]; ouverture: string | null; reference: string
   destinataire: string | null; adresse_envoi: string | null; bloque: boolean; motif: string | null
 }
 export const postCourrierComposer = (idu: string) =>
@@ -2584,6 +2700,8 @@ export interface EtudeScenario {
     sdp_aidee_imposee_m2: number | null
     // ETUDE-V6-7 (item 2) — surface tenue = Σ (logements DESSINÉS × surface) ; source unique écran/PDF.
     surface_tenue_m2?: number | null
+    // ETUDE-AUDIT-FIX-1 (relecture pt5) — true en logement social : mixité satisfaite par nature (100 % aidé).
+    mixite_satisfaite_social?: boolean | null
   }
   distribution_niveaux: Array<{ niveau: number; par_type: Record<string, number>; sdp_m2: number }>
   stationnement: {
@@ -2619,10 +2737,11 @@ export interface EtudeRegle {
   source_url?: string | null; millesime?: string | null
 }
 export interface EtudePayload {
+  surface_retenue?: string
   moteur: { livrable: string; version_conventions: string; etiquette: string; crs_dessin: string; crs_carte: string }
   entrees: {
     idus: string[]; commune: string; insee: string; zone: string; type_projet: string
-    objectif: string; programme_mode: 'propose' | 'saisi'; stationnement: string; terrain: string
+    objectif: string; programme_mode: 'propose' | 'saisi' | 'maximum'; programme_maximum?: string | null; stationnement: string; terrain: string
   }
   regles: { zone: string; insee: string; commune?: string | null; millesime?: string | null; source_url?: string | null; lignes: EtudeRegle[] }
   terrain: {
@@ -2707,6 +2826,8 @@ export interface EtudeLotissement {
   tableau_lots: {
     nombre: number; surface_moyenne_m2: number | null; surface_min_m2: number | null
     surface_max_m2: number | null; surfaces_m2: number[]; acces: string
+    // ETUDE-AUDIT-FIX-1 LOT 3 (défaut 6) — couple numéro↔surface du polygone du plan (= GeoJSON).
+    lots?: { numero: number; surface_m2: number }[]
   }
   voirie_m2: number; voirie_largeur_m: number; voirie_config: string; voirie_largeur_source: string
   pleine_terre: {
@@ -2780,6 +2901,11 @@ export interface EtudeVariante extends EtudeScenario {
   absente?: boolean
   raison?: string | null
   verdict: string
+  // ETUDE-AUDIT-FIX-1 LOT 1 (défaut 1) — verdict AFFICHÉ + réserves POSÉS par la source unique serveur
+  // (`implantation.verdict_etude`), lus à l'identique par l'écran et le PDF. Fin du verdict divergent.
+  verdict_affiche?: string
+  verdict_classe?: 'ok' | 'cp' | 'no'
+  reserves?: string[]
   // ETUDE-V6-7 (item 4) — en sous-sol, comment le sol libéré est utilisé (phrase chiffrée).
   sol_libere_note?: string | null
   // ETUDE-V6-7 (suite) — déviation du prorata exact pour tenir dans les places du −1 (phrase chiffrée).
@@ -2801,7 +2927,7 @@ export interface EtudeIn {
   idus: string[]; type_projet?: string; objectif?: string; stationnement?: string; terrain?: string
   // ETUDE-V6-5 — nombre de niveaux de sous-sol (1 par défaut, 2 au choix) ; sans objet en aérien.
   niveaux_sous_sol?: number
-  programme?: { mode: 'propose' | 'saisi'; lignes?: Array<{ type: string; nombre: number; surface_m2?: number }> } | null
+  programme?: { mode: 'propose' | 'saisi' | 'maximum'; parts?: Record<string, number>; fixes?: Record<string, number>; lignes?: Array<{ type: string; nombre: number; surface_m2?: number }> } | null
   hypotheses?: { profondeur_m?: number; coef_plancher_habitable?: number; surfaces?: Record<string, number>; varangues?: Record<string, number>; lot_cible_m2?: number; voirie_largeur_m?: number } | null
 }
 // ETUDE-V6-2 (Lot 3) — l'étude est bornée côté serveur ; le fetch front abandonne au-delà (aligné sur
@@ -2811,11 +2937,44 @@ export interface EtudeIn {
 // garde-fou front est relevé à 150 s pour rester STRICTEMENT AU-DESSUS de la borne (sinon le navigateur
 // abandonnerait avant que le serveur ait rendu son 503 honnête). Aligné avec Caddy/nginx (150 s).
 export const ETUDE_FETCH_TIMEOUT_MS = 150_000
-export const postEtude = (body: EtudeIn) =>
-  j<EtudePayload>('/modules/etude', {
+
+// ETUDE-AUDIT-FIX-1 LOT 2 (défaut 2) — l'étude est ASYNCHRONE : on LANCE (retour immédiat), puis on ATTEND
+// par POLLING (l'écran montre l'animation de l'app) sans aucun timeout de requête → plus de 503. Le résultat
+// est ENREGISTRÉ en révision : récupérable même si le client quitte la page (rouvrir par configuration).
+export const postEtudeAsync = (body: EtudeIn) =>
+  j<{ study_id: string; etat: 'pret' | 'en_cours' }>('/modules/etude/async', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-    signal: AbortSignal.timeout(ETUDE_FETCH_TIMEOUT_MS),
   })
+export const getEtudeJob = (studyId: string) =>
+  j<{ etat: 'pret' | 'en_cours' | 'echec' | 'inconnu'; payload?: EtudePayload; message?: string }>(
+    `/modules/etude/job/${encodeURIComponent(studyId)}`)
+
+const ETUDE_POLL_MS = 2000
+const ETUDE_REPRISES_MAX = 2
+
+export const postEtude = async (body: EtudeIn): Promise<EtudePayload> => {
+  const start = await postEtudeAsync(body)
+  if (start.etat === 'pret') {
+    const r = await getEtudeJob(start.study_id)
+    if (r.etat === 'pret' && r.payload) return r.payload
+  }
+  let reprises = 0
+  for (;;) {
+    await new Promise((res) => setTimeout(res, ETUDE_POLL_MS))
+    const r = await getEtudeJob(start.study_id)
+    if (r.etat === 'pret' && r.payload) return r.payload
+    if (r.etat === 'echec') throw new ApiError('/modules/etude/job', 503, r.message || "L'étude n'a pas pu être calculée. Relancez.")
+    if (r.etat === 'inconnu') {
+      if (reprises >= ETUDE_REPRISES_MAX) {
+        throw new ApiError('/modules/etude/job', 503, "Le serveur a perdu le suivi de cette étude. Relancez l’analyse.")
+      }
+      await postEtudeAsync(body)
+      reprises++
+    } else {
+      reprises = 0
+    }
+  }
+}
 
 // ETUDE-FIABLE-1 (LOT B2) — ROUVRIR une étude : relit la révision ENREGISTRÉE pour cette configuration,
 // SANS recalcul (le moteur n'est pas appelé ; le serveur empreinte le study_id). 404 si aucune révision.
@@ -2977,7 +3136,7 @@ export interface ParcoursEtat {
   analyse?: { total: number; priorite: number; a_suivre: number; signalees: number } | null
   // RETOURS-3 R8 — le RESTANT à trier par tier (chips Tous/Priorité/À suivre) = total du cadrage par tier
   // moins les décidées du même tier. Le bandeau garde `analyse` (total) ; les chips lisent `restant`.
-  restant?: { priorite: number; a_suivre: number; signalees: number } | null
+  restant?: { total?: number; priorite: number; a_suivre: number; signalees: number } | null
   proposees: ParcoursItem[]; retenues: ParcoursItem[]; ecartees: ParcoursItem[]; a_analyser: ParcoursItem[]
 }
 export interface CarteDecision {
@@ -3541,7 +3700,7 @@ export interface BilanModele {
     idu: string; parcel_id: number | null; commune: string | null
     terrain: number | null; zonage: string | null
     zonage_parts: { zone: string; fam: string; pct: number }[]
-    non_constructible_pct: number; non_constructible_motif?: string | null; constructible_m2: number | null
+    lecture_capacite?: string; capacite_a_verifier?: boolean; export_constat?: boolean; mention_portion?: string | null; non_constructible_pct: number; non_constructible_motif?: string | null; constructible_m2: number | null
     prix_achat_dvf: { valeur: number; date: string; label: string } | null
   }
   reperes_publics: Record<string, { valeur: number; n?: number; label: string; source: string; parkings?: number | null; logements?: number[] | null }>
@@ -3574,6 +3733,9 @@ export interface BilanResultat {
   cash_flow: number | null; aleas: number | null; resultat_sans_aleas: number | null; marge_sans_aleas_pct: number | null
   ratios: [string, string][]
   prix_max_terrain: number | null; prix_max_terrain_m2: number | null
+  // OUTIL-ASSEMBLAGE-FIX-8 (LOT 1) — mixité SAISIE, même source que le PDF/Excel : la note d'obligation
+  // (+ dénominateur Saint-Paul) et la réserve rattachée à la charge foncière (borne haute / part chiffrée).
+  mixite?: { note: string; charge_reserve: string | null; borne_haute: boolean; declenchee: boolean; avertissements?: string[] } | null
 }
 export const getBilanModele = (idu: string) =>
   j<BilanModele>(`/bilan/${encodeURIComponent(idu)}/modele`)

@@ -86,6 +86,9 @@ def zone_regime(insee: str | None, zone_lib: str | None) -> dict | None:
         return None
     from .zone_norm import normalize_key
     zk = normalize_key(zone_lib)
+    for code, regime in (com.get("zones_exactes") or {}).items():
+        if normalize_key(code) == zk:
+            return regime
     zones = com.get("zones", {}) or {}
     # préfixe le plus spécifique (plus long, normalisé) d'abord — « 1AUa » avant « AUa »
     for pref in sorted(zones, key=lambda p: len(normalize_key(p)), reverse=True):
@@ -191,7 +194,7 @@ def classify(insee: str | None, zone_lib: str | None, surface_m2: float | None,
         return None
     ouv = regime.get("ouverture")
     if ouv == OUVERTURE_FERMEE:
-        return DECLASSE_AU_FERMEE, MOTIF_FERMEE
+        return DECLASSE_AU_FERMEE, regime.get("motif") or MOTIF_FERMEE
     if ouv == OUVERTURE_ETAT_TIERS:
         return DECLASSE_AU_STATUT_INCONNU, MOTIF_ETAT_TIERS
     if ouv == OUVERTURE_CONDITIONNELLE:

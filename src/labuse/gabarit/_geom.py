@@ -38,3 +38,20 @@ def to_metric(geom_4326: BaseGeometry) -> BaseGeometry:
 
 def to_wgs(geom_2975: BaseGeometry) -> BaseGeometry:
     return shp_transform(_tf(METRIC_EPSG, WGS84_EPSG).transform, geom_2975)
+
+
+def soustraire_intervalles(seg, spans):
+    """Retire de [d0,d1] les intervalles `spans` (emprises bâties) → liste de sous-segments."""
+    out = [seg]
+    for a, b in spans:
+        nxt = []
+        for s0, s1 in out:
+            if b <= s0 or a >= s1:
+                nxt.append((s0, s1))
+            else:
+                if s0 < a:
+                    nxt.append((s0, a))
+                if b < s1:
+                    nxt.append((b, s1))
+        out = nxt
+    return out

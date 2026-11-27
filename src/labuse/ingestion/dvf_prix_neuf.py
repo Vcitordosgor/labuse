@@ -71,7 +71,9 @@ _BUILD = """
 -- date_achevement = left(daact,10)::date quand daact est une date — même calcul ici.
 WITH ach AS (
   SELECT pmp.idu, min((left(sp.raw->>'daact',10))::date) AS ach FROM p_model_permits pmp
-  JOIN sitadel_permits sp ON sp.permit_id = pmp.permit_id
+  -- OUTIL-PERMIS-FIX-16 (LOT 3) — jointure sur (permit_id, TYPE) : un numéro peut porter deux types,
+  -- le seul permit_id dédoublerait désormais les lignes.
+  JOIN sitadel_permits sp ON sp.permit_id = pmp.permit_id AND sp.type = pmp.type
   WHERE pmp.type = 'PC' AND sp.raw->>'daact' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}' GROUP BY pmp.idu),
 muts AS (
   SELECT id_parcelle idu, date_mutation::date dt, valeur_fonciere val, surface_reelle_bati surf, type_local tl

@@ -29,11 +29,12 @@ def _p():
 
 
 def test_prix_terrain_du_secteur_pas_de_bati():
-    # canari M79 : secteur 97415000AC → terrain 173 €/m², n=3 (le vrai « 173 », pas le « 379 » bâti-étalé)
-    v = DvfLayer().evaluate(_p(), _Ctx({"median_eur_m2": 173, "n_ventes": 3, "fenetre": "2021-2025"}), P)
+    # canari M79 : secteur → terrain 173 €/m² (le vrai « 173 », pas le « 379 » bâti-étalé).
+    # OUTIL-COMMUNES-FIX-10 LOT 1 — SEUIL de diffusion = 8 (fonction unique dvf_secteur) : on exerce n≥8.
+    v = DvfLayer().evaluate(_p(), _Ctx({"median_eur_m2": 173, "n_ventes": 10, "fenetre": "2021-2025"}), P)
     assert "Prix médian terrain 173 €/m²" in v.detail
     assert "tous biens" not in v.detail and "rayon" not in v.detail       # plus de ratio bâti/rayon
-    assert "3 ventes" in v.detail and "secteur cadastral" in v.detail
+    assert "10 ventes" in v.detail and "secteur cadastral" in v.detail
 
 
 def test_plancher_dur_moins_de_3_ventes_pas_de_chiffre():
@@ -43,10 +44,13 @@ def test_plancher_dur_moins_de_3_ventes_pas_de_chiffre():
     assert "500" not in v.detail                                          # AUCUN chiffre sous le plancher
 
 
-def test_entre_3_et_5_prix_avec_mention_fragilite():
+def test_sous_le_seuil_8_echantillon_insuffisant_sans_prix():
+    # OUTIL-COMMUNES-FIX-10 LOT 1 — l'ancienne bande « fragile » 3-7 est SUPPRIMÉE : sous le seuil
+    # public de 8, aucun prix ni qualificatif, comme la fiche / le Carnet / Comparer.
     v = DvfLayer().evaluate(_p(), _Ctx({"median_eur_m2": 300, "n_ventes": 4, "fenetre": "2021-2025"}), P)
-    assert "Prix médian terrain 300 €/m²" in v.detail
-    assert "fragile" in v.detail                                          # fragilité DITE, jamais cachée
+    assert v.result == CascadeVerdict.PASS
+    assert "échantillon insuffisant (4 vente(s)" in v.detail
+    assert "300" not in v.detail and "favorable" not in v.detail.lower()
 
 
 def test_au_moins_5_ventes_fiable_sans_mention():

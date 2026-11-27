@@ -122,6 +122,9 @@ describe('SOLAIRE — deux modes', () => {
     const fiche = document.querySelector('[data-solaire-fiche]')!
     expect(fiche.textContent).toContain('kWh/kWc/an')  // potentiel AVEC unité
     // OUTILS-LOT-4 (pt 1) — décimales à la virgule : « 8,3° », jamais « 8.3° ».
+    expect(fiche.textContent).toContain('pic en décembre')
+    expect(fiche.textContent).toContain('Emprise bâtie au sol')
+    expect(fiche.textContent).toContain(FICHE.millesime)
     expect(fiche.textContent).toContain('8,3°')
     expect(fiche.textContent).not.toContain('8.3')
     // OUTILS-LOT-4 (pt 2) — aucun classement/verdict LABUSE (« Écartée ») dans la prospection solaire.
@@ -147,6 +150,26 @@ describe('SOLAIRE — deux modes', () => {
     const fiche = document.querySelector('[data-solaire-fiche]')!
     expect(fiche.textContent).toContain('28')          // kWc servi (pas recalculé au front)
     expect(document.querySelector('[data-solaire-kwc-hyp]')?.textContent).toContain('0,2 kWc/m²')
+  })
+
+  it('conserve la liste et permet de recharger la carte après un échec', async () => {
+    const fetchInitial = global.fetch
+    let enPanne = true
+    global.fetch = vi.fn((url, options) => {
+      if (String(url).includes('/prospection-piscines/parcelles') && enPanne) {
+        return Promise.reject(new Error('Carte indisponible'))
+      }
+      return fetchInitial(url, options)
+    })
+    renderTool()
+    fireEvent.click(screen.getByRole('button', { name: /Piscines/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /Toute l’île/ }))
+    await screen.findByText('Carte des piscines momentanément indisponible.')
+    expect(document.querySelectorAll('button[data-piscines-row]')).toHaveLength(2)
+    enPanne = false
+    fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }))
+    await waitFor(() => expect(useApp.getState().moduleMap.extra).toEqual(PARCELLES))
+    expect(screen.queryByText('Carte des piscines momentanément indisponible.')).toBeNull()
   })
 
   it('D14b — liste IDU · commune (plus de colonne source ni croix « pas une piscine ») ; clic ligne → fiche', async () => {

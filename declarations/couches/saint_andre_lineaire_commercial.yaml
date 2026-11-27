@@ -1,0 +1,25 @@
+surface: couche_lineaire_commercial_saint_andre
+nom: Linéaires commerciaux protégés de Saint-André
+categorie: couche
+parent: null
+route: /map/tiles/plu_lineaire_commercial/{z}/{x}/{y}.pbf
+rendu: carte
+donnees:
+  - quoi: zonage_plu_couche
+    ou: { rang: 10, etat: replie, section: "Zonage réglementaire" }
+    comment:
+      libelle: Linéaires commerciaux protégés de Saint-André
+      format: liste
+      i: "Façades et voies du centre-ville identifiées au règlement graphique municipal du 22 septembre 2023, annexe 6. Consulter le règlement pour le droit applicable."
+    carte:
+      kind: plu_lineaire_commercial
+      agregat: false
+      famille: urbanisme
+      geometrie: ligne
+      zoom_min: 12
+      rang_carte: 83
+      style: { couleur: "#F54EE2", epaisseur: 2.8, opacite: 0.95, tirets: [2, 1] }
+      legende: Linéaires commerciaux protégés, PLU de Saint-André
+      popup:
+        - { champ: name, libelle: "Prescription" }
+        - { champ: commune, libelle: "Commune" }

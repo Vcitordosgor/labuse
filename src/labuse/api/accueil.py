@@ -69,6 +69,10 @@ def accueil_chiffres(db: Session = Depends(get_db)) -> dict:
         except Exception:  # noqa: BLE001 — un chiffre indisponible = null, jamais une invention
             return None
 
+    from ..cadastre_disparue import filtre_vivant_sql
+    filtre_actuel = filtre_vivant_sql(db, "p")
+    caducs_total = one("SELECT count(*) FROM pc_caducs")
+    caducs_actuels = one("SELECT count(*) FROM pc_caducs c JOIN parcels p USING (idu) WHERE true" + filtre_actuel)
     golden_parcelles, golden_verifs = _golden_counts()
     # CIRCUIT-2 lot 1.6 — deux compteurs calculés par le moteur nommé `plateforme_compteurs`
     # (ids registre n_parcelles_ile, n_bascules_7j) : ce robinet ne calcule plus, il appelle.
@@ -95,7 +99,9 @@ def accueil_chiffres(db: Session = Depends(get_db)) -> dict:
         "golden_verifs": golden_verifs,
         # ── bloc 3 · « Je vois ce que personne ne voit » ──
         "defisc_actives": one("SELECT count(*) FROM defisc_fenetres WHERE fenetre_active"),
-        "permis_caducs": one("SELECT count(*) FROM pc_caducs"),
+        "permis_caducs": caducs_total,
+        "permis_caducs_actuels": caducs_actuels,
+        "permis_caducs_archives": caducs_total - caducs_actuels if None not in (caducs_total, caducs_actuels) else None,
         "ensembles_fonciers": one(
             "SELECT count(*) FROM (SELECT siren FROM parcelle_personne_morale "
             "WHERE groupe = 0 AND siren IS NOT NULL GROUP BY siren "

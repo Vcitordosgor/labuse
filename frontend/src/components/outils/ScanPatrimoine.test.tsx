@@ -18,7 +18,10 @@ const NOMS: Record<string, string> = {
 function mockFetch(searchResults: { siren: string; nom: string; n: number }[]) {
   global.fetch = vi.fn(async (url: string) => {
     const u = String(url)
-    if (u.includes('/patrimoine/search')) return { ok: true, json: async () => searchResults }
+    // SCAN-FIX-1 (pt 8) — /patrimoine/search renvoie { resultats, total, affiches, masqués, plafond }.
+    if (u.includes('/patrimoine/search')) return { ok: true, json: async () => ({
+      resultats: searchResults.map((r) => ({ ...r, siren_reel: /^\d{9}$/.test(r.siren) })),
+      total: searchResults.length, affiches: searchResults.length, masques: 0, plafond: 12 }) }
     if (u.includes('/patrimoine')) {
       // le portefeuille : on renvoie la raison sociale du SIREN demandé (comme la vraie base)
       const siren = new URL(u, 'http://x').searchParams.get('siren') ?? ''

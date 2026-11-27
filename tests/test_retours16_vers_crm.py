@@ -68,3 +68,38 @@ def test_vers_crm_projet_sans_retenue(db_session, monkeypatch):
     pid = projets.projet_create(projets.ProjetIn(cadrage={"communes": ["X"]}, nom="VIDE"), None, s)["projet"]["id"]
     # aucune retenue (la parcelle reste « proposee ») → réponse vide, pas d'erreur.
     assert projets.projet_vers_crm(pid, None, s) == {"ok": True, "total": 0, "ajoutees": 0, "deja": 0}
+
+
+@pytest.mark.db
+@pytest.mark.parametrize("parcours", ["vers_crm", "retenue", "reactiver_projet"])
+def test_restaure_carte_ancienne_sans_colonne(db_session, monkeypatch, parcours):
+    s = db_session
+    idu = "97160000CC0001"
+    parcel_id = _parcelle(s, idu)
+    monkeypatch.setattr(projets, "_search_items", lambda *args, **kwargs: [{"idu": idu}])
+    pid = projets.projet_create(
+        projets.ProjetIn(cadrage={"communes": ["X"]}, nom="Restauration"), None, s)["projet"]["id"]
+    retenue = projets.StatutIn(statut="retenue")
+    projets.projet_parcelle_statut(pid, idu, retenue, None, s)
+    if parcours == "reactiver_projet":
+        projets.projet_patch(pid, projets.ProjetPatchIn(statut="archive"), None, s)
+    elif parcours == "retenue":
+        projets.projet_parcelle_statut(pid, idu, projets.StatutIn(statut="ecartee"), None, s)
+
+    # Simule une archive créée avant la correction, dont personne ne peut plus afficher l'étape.
+    eid = s.execute(text(
+        "UPDATE pipeline_entries SET status = 'ancienne_etape', archived_at = COALESCE(archived_at, now()), notes = 'rappel' "
+        "WHERE parcel_id = :pc RETURNING id"), {"pc": parcel_id}).scalar_one()
+    if parcours == "vers_crm":
+        projets.projet_vers_crm(pid, None, s)
+    elif parcours == "retenue":
+        projets.projet_parcelle_statut(pid, idu, retenue, None, s)
+    else:
+        projets.projet_patch(pid, projets.ProjetPatchIn(statut="actif"), None, s)
+
+    row = s.execute(text(
+        "SELECT e.id, e.notes, e.archived_at, c.id AS colonne FROM pipeline_entries e "
+        "LEFT JOIN crm_columns c ON c.key = e.status AND c.compte_id IS NOT DISTINCT FROM e.compte_id "
+        "WHERE e.parcel_id = :pc"), {"pc": parcel_id}).mappings().one()
+    assert row["id"] == eid and row["notes"] == "rappel"
+    assert row["archived_at"] is None and row["colonne"] is not None

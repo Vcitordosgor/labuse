@@ -677,6 +677,15 @@ class ReglesZone:
     # moins N logements, ex. L'Étang-Salé UA3.1.2 : 5 m à partir de 7 logements) : le moteur MESURE l'accès
     # dessiné et le compare. Dict {largeur_min_m, seuil_logements, article, page_pdf, citation} ou None.
     desserte: Optional[dict] = None
+    # ETUDE-AUDIT-FIX-1 LOT 3 (défaut 8) — largeur MINIMALE d'une VOIE À CRÉER (lotissement), ex. Saint-Leu
+    # UD 3.2 : 3,50 m. Dict {largeur_min_m, trottoir_min_m?, article, page_pdf, citation} ou None (non calibré
+    # → le découpage de lotissement ne pose pas de garde et la largeur reste une « hypothèse non vérifiée »).
+    voie_creation: Optional[dict] = None
+    # ETUDE-AUDIT-FIX-1 LOT 4 (défaut 4) — obligation de sol À DEUX VOLETS : X % d'ESPACES LIBRES DONT au
+    # moins une fraction perméable (ex. Saint-André UC 13.1 : 40 % d'espaces libres dont au moins la moitié
+    # perméable). Dict {pct, part_permeable_fraction, article, page_pdf, citation} ou None. Quand il est servi,
+    # les contrôles émettent DEUX lignes distinctes (espaces libres + part perméable), pas une seule.
+    espaces_libres: Optional[dict] = None
 
     @property
     def hauteur_plafond(self) -> Regle:
@@ -946,6 +955,8 @@ def charger(insee: str, zone: str) -> ReglesZone:
                           ((reg.get("biotope") or {}).get("pct") or {}).get("libelle") or "coefficient de biotope (CBS)", "%"),
         pente_toiture=(reg.get("pente_toiture") if isinstance(reg.get("pente_toiture"), dict) else None),
         desserte=(reg.get("desserte") if isinstance(reg.get("desserte"), dict) else None),
+        voie_creation=(reg.get("voie_creation") if isinstance(reg.get("voie_creation"), dict) else None),
+        espaces_libres=(reg.get("espaces_libres") if isinstance(reg.get("espaces_libres"), dict) else None),
         mixite=mixite,
         stationnement=_bareme(reg.get("stationnement") or {}),
         distance_constructions=_distance_constructions(retraits),

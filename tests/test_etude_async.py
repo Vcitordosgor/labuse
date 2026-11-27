@@ -35,6 +35,17 @@ def _fake_runtime() -> None:
     raise RuntimeError("échec de rendu technique")
 
 
+def _arret_sans_resultat():
+    import os
+    os._exit(3)
+
+
+def test_arret_brutal_signale_avant_la_borne():
+    with pytest.raises(RuntimeError, match="avant de rendre son résultat"):
+        modules._dans_processus(_arret_sans_resultat, (), timeout_s=30)
+    _sans_fantome()
+
+
 def _sans_fantome() -> None:
     """Aucun processus « etude » ne doit rester vivant."""
     time.sleep(0.2)  # laisse l'OS/mp reaper les enfants terminés

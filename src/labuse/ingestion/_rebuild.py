@@ -19,19 +19,47 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 
+class RebuildWouldEmptyError(RuntimeError):
+    """OUTIL-PERMIS-FIX-15 — `rebuild_swap` a REFUSÉ de remplacer une table SERVIE PEUPLÉE par une
+    reconstruction VIDE (0 ligne). Cause typique : source transitoirement vide/verrouillée (reload
+    concurrent de `sitadel_permits` par un autre worktree, statement_timeout, bascule en cours). La
+    table servie est CONSERVÉE telle quelle (aucun swap) — jamais remplacée par du vide en silence.
+    Forcer l'effacement volontaire avec `allow_empty=True`."""
+
+
 def rebuild_swap(session: Session, table: str, ddl: str,
-                 populate: Callable[[str], object], *, commit: bool = True) -> object:
+                 populate: Callable[[str], object], *, commit: bool = True,
+                 allow_empty: bool = False) -> object:
     """Reconstruit `table` sans bloquer les lecteurs.
 
     - `ddl` : le `CREATE TABLE IF NOT EXISTS <table> …` canonique — réécrit vers la shadow.
     - `populate(shadow)` : fait le travail LOURD (SELECT + INSERT) dans la table shadow ; sa valeur
       de retour est relayée telle quelle (stats du builder).
     Le SWAP (DROP live + RENAME + rename des index shadow) est la SEULE section sous verrou exclusif.
+
+    OUTIL-PERMIS-FIX-15 — GARDE-FOU VIDE : si la shadow est VIDE (0 ligne) alors que la table servie
+    en a, le swap est REFUSÉ (`RebuildWouldEmptyError`) AVANT tout `DROP` de la table servie → elle
+    est conservée intacte. C'est la cause des deux disparitions de `pc_caducs` (une reconstruction sur
+    source transitoirement vide écrasait les 4 440 lignes par du vide). `allow_empty=True` lève la
+    garde pour un effacement volontaire. La garde protège aussi `defisc_fenetres` et `score_e`.
     """
     shadow = f"{table}__rebuild"
     session.execute(text(f'DROP TABLE IF EXISTS "{shadow}"'))          # nettoie un run précédent avorté
     session.execute(text(ddl.replace(f"EXISTS {table}", f'EXISTS "{shadow}"', 1)))
     result = populate(shadow)                                          # HORS-LIGNE : aucun verrou sur `table`
+    # ── GARDE-FOU VIDE (avant tout DROP de la table servie : elle reste intacte si on refuse) ──
+    if not allow_empty:
+        shadow_n = session.execute(text(f'SELECT count(*) FROM "{shadow}"')).scalar() or 0
+        if shadow_n == 0:
+            live_n = 0
+            if session.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar() is not None:
+                live_n = session.execute(text(f'SELECT count(*) FROM "{table}"')).scalar() or 0
+            if live_n > 0:
+                session.execute(text(f'DROP TABLE IF EXISTS "{shadow}"'))   # nettoie la shadow refusée
+                raise RebuildWouldEmptyError(
+                    f"{table} : reconstruction VIDE (0 ligne) alors que la table servie en a {live_n} — "
+                    "SWAP REFUSÉ, table conservée (source dégradée / verrou / reload concurrent ?). "
+                    "Forcer avec allow_empty=True si l'effacement est voulu.")
     # ── SWAP atomique — métadonnées seules, verrou ACCESS EXCLUSIVE de l'ordre de la ms ──
     session.execute(text(f'DROP TABLE IF EXISTS "{table}"'))
     session.execute(text(f'ALTER TABLE "{shadow}" RENAME TO "{table}"'))

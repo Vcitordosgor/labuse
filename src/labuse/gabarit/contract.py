@@ -190,6 +190,11 @@ class GabaritResult(BaseModel):
     # conservé : `zoneImplantationM2` est la valeur APRÈS déduction, `batiDeduitM2` l'emprise retranchée
     # (m²). None si pas de bâti à déduire. Appliqué au service (app + PDF lisent la même géométrie).
     batiDeduitM2: Optional[float] = None
+    batiConserveM2: Optional[float] = None
+    empriseSupplementaireM2: Optional[float] = None
+    exempleEmpriseM2: Optional[float] = None
+    exempleEmpriseGeoJSON: Optional[GeoJSON] = None
+    surfacesContinuesM2: list[float] = Field(default_factory=list)
     # FRONT-CHIFFRES-2 (F57/F50) — % de la parcelle dans la zone dominante quand elle est « à cheval »
     # (round(portion / cadastre × 100)), calculé UNE fois au service. Deux sites front (GabaritLine +
     # panneau Gabarit) le recomputaient à l'identique → divergence possible ; ils lisent ce champ. None si non « à cheval ».

@@ -118,9 +118,8 @@ def _emprise_batie_assiette(session: Session, parcel_id: int) -> float:
 
 def _cause_indisponible(session: Session, parcel_id: int, f=None) -> tuple[str, int | None]:
     """M125 — cause STRUCTURÉE d'un résiduel non disponible + la valeur de SDP à écrire
-    (arbitrage Vic, Option 1 : le 0 n'est pas un doute, c'est la réponse du moteur ;
-    seul `hors_plu` est réellement inconnaissable → NULL). MÊMES résolveurs que le moteur
-    (parcel_context/resolve_zone) — attribution de cause, jamais une 2e formule."""
+    Une surface non calculable reste inconnue. La cause porte la zone concernée.
+    Utilise les mêmes résolveurs que le moteur de faisabilité."""
     if f is not None:
         code = f.cause or "capacite_nulle"
         zone = (f.zone or "").strip()
@@ -131,10 +130,9 @@ def _cause_indisponible(session: Session, parcel_id: int, f=None) -> tuple[str, 
             return (f"zone_non_constructible:{zone}" if zone else "zone_non_constructible"), 0
         if code == "habitat_interdit":
             return (f"habitat_interdit:{zone}" if zone else "habitat_interdit"), 0
-        # PLU-CALIBRAGE-6 — règle PLU non validée (feuille SDP `propose`) : non calculable, SDP 0
-        # (0 = « le moteur ne sait pas », pas un droit ; la zone est portée pour la fiche/M127).
+        # Une règle de capacité non validée laisse la surface inconnue.
         if code == "regle_plu_non_validee":
-            return (f"regle_plu_non_validee:{zone}" if zone else "regle_plu_non_validee"), 0
+            return (f"regle_plu_non_validee:{zone}" if zone else "regle_plu_non_validee"), None
         return code, 0          # terrain_exigu / redhibitoire / hauteur_indispo / capacite_nulle
     # parcel_faisabilite → None : distinguer « aucune zone » (hors PLU) d'une zone sans règle.
     from .db import parcel_context

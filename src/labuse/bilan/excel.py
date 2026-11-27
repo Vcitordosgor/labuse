@@ -74,6 +74,11 @@ def classeur_bilan(
     wb = Workbook()
     ws = wb.active
     ws.title = "Bilan"
+    ws.sheet_properties.pageSetUpPr.fitToPage = True
+    ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
+    ws.page_setup.paperSize = ws.PAPERSIZE_A4
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
     widths = {"A": 34, "B": 16, "C": 12, "D": 15, "E": 13, "F": 15, "G": 2}
     for col, w in widths.items():
         ws.column_dimensions[col].width = w
@@ -89,23 +94,33 @@ def classeur_bilan(
     _gf_statiques = [a for a in (_gf.get("alertes") or [])
                      if "dépasse la surface à retenir" not in a
                      and "supérieure à la surface de plancher" not in a]
-    if _gf_statiques:
+    # OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — la mention de mixité (même source que l'écran, portée par le
+    # garde-fou) accompagne la charge foncière dans l'Excel remis au promoteur ; non recalculée ici.
+    _mx = _gf.get("mixite_note")
+    portion = _gf.get("lecture_capacite") or _gf.get("mention_portion")
+    if _gf_statiques or _mx or portion:
         # CHIRURGICAL-FIX-1 (LOT M 3) — même libellé que le PDF : « Aucun programme » quand le Bilan est
         # livré sans programme (parcelle écartée), « Programme saisi » quand l'utilisateur en a saisi un.
-        if _gf.get("programme_saisi", True):
+        if _gf_statiques and _gf.get("programme_saisi", True):
             _txt = ("Programme saisi — non vérifié par LABUSE : " + " ; ".join(_gf_statiques)
                     + " Les chiffres ci-dessous découlent de cette saisie.")
-        else:
+        elif _gf_statiques:
             # CHIRURGICAL-FIX-1 (LOT N 3) — même texte que le PDF (reprend la distinction du Dossier).
             from .reperes import bandeau_sans_programme
             _titre, _bas = bandeau_sans_programme(_gf)
             _txt = f"{_titre} : " + (" ; ".join(_gf_statiques) + " " if _gf_statiques else "") + _bas
+        else:
+            _txt = ""
+        if _mx:
+            _txt = (_txt + "  " if _txt else "") + f"Mixité sociale — {_mx}"
+        if portion:
+            _txt = "\n".join(filter(None, [portion, _txt]))
         c = ws.cell(2, 1, _txt)
         c.font = Font(bold=True, color="7C2D12")
         c.fill = PatternFill("solid", fgColor="FFF7ED")
         c.alignment = Alignment(wrap_text=True, vertical="top")
         ws.merge_cells("A2:F2")
-        ws.row_dimensions[2].height = 42
+        ws.row_dimensions[2].height = 42 if not portion else min(409, 18 * sum(1 + len(line) // 82 for line in _txt.splitlines()) + 10)
     # CHIRURGICAL-FIX-1 (LOT Q) — la « surface à retenir du Dossier » est posée DANS UNE CELLULE (I2) :
     # l'alerte SDP > surface à retenir se construit à partir d'ELLE (pas d'un nombre figé dans la
     # formule), donc le message suit si on modifie cette cellule ou la SDP sans régénérer.
@@ -406,11 +421,19 @@ def classeur_bilan(
     # ---- Haut de feuille : ratios & programme (ordre du modèle) + calendrier ----
     # Rempli ici car il référence des cellules du corps, maintenant connues.
     d = {k: ligne_poste.get(k) for k in ("constr", "aleaC", "acte", "pack", "proc")}
+    def total_affiche(total: str, colonne: str, prix: bool = False) -> str:
+        if prod_first > prod_last:
+            return '="—"'
+        plage = f"{colonne}{prod_first}:{colonne}{prod_last}"
+        nb = (f'COUNTIFS({plage},"<>",D{prod_first}:D{prod_last},"<>")'
+              if prix else f"COUNT({plage})")
+        return f'=IF({nb}=0,"—",{total})'
+
     ratios_tete = [
-        ("Terrain", f"={cell_terrain}", _M2),
-        ("Surface de plancher", f"={cell_sdp}", _M2),
-        ("Surface taxable", f"={cell_stax}", _M2),
-        ("Surface vendable", f"={cell_suv}", _M2),
+        ("Terrain", f'=IF(ISBLANK({cell_terrain}),"—",{cell_terrain})', _M2),
+        ("Surface de plancher", f'=IF(ISBLANK({cell_sdp}),"—",{cell_sdp})', _M2),
+        ("Surface taxable", f'=IF(ISBLANK({cell_stax}),"—",{cell_stax})', _M2),
+        ("Surface vendable", total_affiche(cell_suv, "C"), _M2),
         # CHIRURGICAL-FIX-1 (LOT J 1b) — pas de #DIV/0! quand la surface vendable est nulle (0 produit) :
         # ces ratios /m² de SUV sont vides tant que SUV = 0.
         ("Coût const. m² de surface vendable HT",
@@ -428,12 +451,12 @@ def classeur_bilan(
                        f'(({cell_ca_ht}-D{d["acte"]}-D{d["pack"]}-D{d["proc"]})/{cell_suv})*({cell_ca_ttc}/{cell_ca_ht})))'),
             _EUR,
         ),
-        ("CA TTC programme", f"={cell_ca_ttc}", _EUR),
+        ("CA TTC programme", total_affiche(cell_ca_ttc, "C", prix=True), _EUR),
         # CHIRURGICAL-FIX-1 (LOT H pt1 + LOT I 1b + LOT M 2) — « non calculable » si CA HT inconnu (TVA
         # vide) ; sinon vide tant qu'un coût requis manque OU que le CA HT est nul (pas de #DIV/0!).
         ("Renta nette / CA HT",
          _si_valide(f'=IF(ISTEXT({cell_ca_ht}),"non calculable",IF(OR({_cm},{cell_ca_ht}=0),"",D{row_res}/{cell_ca_ht}))'), _PCT),
-        ("Nombre de lots", f"={cell_lots}", '#,##0'),
+        ("Nombre de lots", total_affiche(cell_lots, "B"), '#,##0'),
     ]
     ws.cell(3, 1, "Ratios & programme").font = _GRAS
     for i, (lib, frm, fmt) in enumerate(ratios_tete):
@@ -535,6 +558,8 @@ def classeur_bilan(
 import re as _re
 
 _SUM_RE = _re.compile(r"SUM\(([A-Z]+)(\d+):([A-Z]+)(\d+)\)")
+_COUNT_RE = _re.compile(r"COUNT\(([A-Z]+)(\d+):[A-Z]+(\d+)\)")
+_COUNTIFS_RE = _re.compile(r'COUNTIFS\(([A-Z]+)(\d+):[A-Z]+(\d+),"<>",([A-Z]+)\d+:[A-Z]+\d+,"<>"\)')
 _ISBLANK_RE = _re.compile(r"ISBLANK\(([A-Z]+\d+)\)")   # LOT M 2 — cellule VIDE (≠ 0)
 _REF_RE = _re.compile(r"(?<![A-Za-z_])([A-Z]{1,3})(\d+)")
 _EQ_RE = _re.compile(r"(?<![<>=!])=(?!=)")
@@ -558,6 +583,12 @@ def _valeurs_calculees(ws) -> dict[str, object]:
     grille = {c.coordinate: c.value for row in ws.iter_rows() for c in row if c.value is not None}
     cache: dict[str, object] = {}
 
+    def compter(match):
+        # COUNT et COUNTIFS ne référencent ici que les cellules de saisie des produits.
+        colonnes = [match[1]] + ([match[4]] if match.lastindex == 4 else [])
+        return str(sum(all(isinstance(grille.get(f"{col}{r}"), (int, float)) for col in colonnes)
+                       for r in range(int(match[2]), int(match[3]) + 1)))
+
     def ev(coord: str):
         if coord in cache:
             return cache[coord]
@@ -578,6 +609,8 @@ def _valeurs_calculees(ws) -> dict[str, object]:
             v[1:])
         # LOT M 2 — ISBLANK(ref) AVANT la substitution des références : une cellule absente de la grille
         # (valeur None → ex. TVA non saisie) est VIDE ; une cellule présente ne l'est pas.
+        expr = _COUNT_RE.sub(compter, expr)
+        expr = _COUNTIFS_RE.sub(compter, expr)
         expr = _ISBLANK_RE.sub(lambda m: repr(grille.get(m.group(1)) in (None, "")), expr)
         expr = _REF_RE.sub(lambda m: repr(ev(f"{m.group(1)}{m.group(2)}")), expr)
         expr = expr.replace("<>", "!=")       # LOT L 3 — « différent de » Excel → Python (avant « = »→« == »)

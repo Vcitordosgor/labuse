@@ -93,6 +93,96 @@ def depot_affichable_sql(a: str = "s.") -> str:
     return f"CASE WHEN {depot_affichable_cond_sql(a)} THEN {a}date_depot::date END"
 
 
+# ── OUTIL-PERMIS-FIX-12 (LOT 1) — LA date de l'ÉVÉNEMENT réellement daté, pour la SÉLECTION des veilles ──
+# Contre-audit ASTRA-6 (point 2) : la veille de parcelle (events.evaluer_suivis) et l'alerte de zone
+# (alertes.compute_alertes) SÉLECTIONNAIENT les permis sur la date de dépôt BRUTE (`date_depot >= since`
+# / `date_depot IS NOT NULL`). Résultat faux dans les DEUX sens : un faux dépôt récent fait entrer un
+# permis autorisé AVANT le suivi (9744012520010), et un dépôt brut ancien écarte un permis autorisé
+# DANS le suivi (97441626E0304) ou sans dépôt du tout (278 permis géolocalisés autorisés inéligibles).
+#
+# RÈGLE : on sélectionne sur la date de l'ÉVÉNEMENT réellement daté = le dépôt s'il est AFFICHABLE (la
+# fonction unique, année = AN_DEPOT…), SINON la date d'autorisation. C'est la même date que celle déjà
+# servie en `fait_date` (titre/détail/tri). La date de dépôt brute rejetée ne sert JAMAIS de critère.
+def evenement_date_sql(a: str = "s.") -> str:
+    """L'expression SQL de la date de l'ÉVÉNEMENT réellement daté d'un permis : `COALESCE(dépôt
+    affichable, autorisation)`. `a` = préfixe d'alias de `sitadel_permits` (''/'s.'/'sp.'). NULL
+    seulement si le permis n'a NI dépôt affichable NI autorisation (cas marginal) → inéligible."""
+    return f"COALESCE({depot_affichable_sql(a)}, {a}date::date)"
+
+
+# ── OUTIL-PERMIS-FIX-13 (LOT 3) — LA date de DÉPÔT réelle, pour FILTRER/GROUPER « ce qui est déposé » ──
+# Contre-audit ASTRA-7 (point 3) : Scan patrimoine (veille_promoteurs) sélectionnait « opérations déposées
+# depuis » et groupait les opérations (fenêtre 24 mois « déposés sur une même période ») sur la date
+# d'AUTORISATION (`date`) — un PC déposé en 2025 mais autorisé en 2026 (97441625A0405) entrait à tort dans
+# « déposées depuis le 01/01/2026 ». La date de dépôt BRUTE (`date_depot`) est, elle, corrompue (= parfois
+# l'autorisation). On lit donc la date de dépôt RÉELLE : le dépôt AFFICHABLE (fonction unique) s'il est
+# fiable, SINON le 1er janvier de l'ANNÉE DE DÉPÔT officielle `AN_DEPOT` (borne basse, millésime fiable du
+# fichier SDES) — JAMAIS la date d'autorisation.
+def depot_date_sql(a: str = "s.") -> str:
+    """L'expression SQL de la date de DÉPÔT réelle d'un permis, pour la DÉFINITION des périodes (24 mois) :
+    `COALESCE(dépôt affichable, 1er janvier de AN_DEPOT)`. `a` = préfixe d'alias de `sitadel_permits`. NULL
+    si ni dépôt affichable ni AN_DEPOT exploitable (4 chiffres). Le 1er janvier est un PROXY D'ANNÉE (la
+    tolérance de 24 mois l'absorbe) — il ne doit JAMAIS servir un FILTRE au jour (cf. depot_depuis_cond_sql)."""
+    return (f"COALESCE({depot_affichable_sql(a)}, CASE WHEN {a}raw->>'an_depot' ~ '^[0-9]{{4}}$' "
+            f"THEN make_date(({a}raw->>'an_depot')::int, 1, 1) END)")
+
+
+# ── OUTIL-PERMIS-FIX-16 (LOT 5) — FILTRE « déposées depuis » SANS jour inventé ──────────────────────
+# Contre-audit ASTRA-8 (point 5) : « opérations déposées depuis » tombait de 5 (au 01/01/2026) à 0 (au
+# 02/01/2026). Un dépôt connu à la seule ANNÉE (AN_DEPOT, sans jour affichable) était remplacé par le 1er
+# janvier, un jour INVENTÉ : il passait « depuis le 01/01 » mais plus « depuis le 02/01 ». On ne compare donc
+# un dépôt au JOUR que s'il est connu AU JOUR (dépôt affichable) ; sinon on compare à l'ANNÉE (AN_DEPOT >=
+# année du seuil) — jamais un jour fabriqué, et aucune falaise au 2 janvier. Aucun chiffre faussé.
+def depot_depuis_cond_sql(a: str = "s.", param: str = ":depuis") -> str:
+    """Prédicat SQL « ce permis est déposé le `param` ou après ». Dépôt connu AU JOUR (affichable) →
+    comparaison au jour ; connu à la seule ANNÉE (AN_DEPOT) → comparaison à l'ANNÉE du seuil ; inconnu →
+    faux. `param` = bind de la date seuil (ISO)."""
+    aff = depot_affichable_sql(a)
+    seuil = f"CAST({param} AS date)"
+    return (f"((({aff}) IS NOT NULL AND ({aff}) >= {seuil}) "
+            f"OR (({aff}) IS NULL AND {a}raw->>'an_depot' ~ '^[0-9]{{4}}$' "
+            f"AND ({a}raw->>'an_depot')::int >= EXTRACT(YEAR FROM {seuil})::int "
+            f"AND ({a}date IS NULL OR {a}date::date >= {seuil})))")
+
+
+def depot_jour_connu_sql(a: str = "s.") -> str:
+    """Booléen SQL « le JOUR de dépôt est connu » (dépôt affichable non nul) — l'écran peut dire « jour de
+    dépôt inconnu » sinon, plutôt que d'exhiber un jour fabriqué."""
+    return f"({depot_affichable_sql(a)}) IS NOT NULL"
+
+
+# ── OUTIL-PERMIS-FIX-14 — LA date d'AUTORISATION SOURCE (sitadel_permits.date), pour TOUT AFFICHAGE ──
+# Relecture-permis-7 (point 3) : la table dérivée `p_model_permits` est PÉRIMÉE — `date_autorisation`
+# porte parfois la date de dépôt BRUTE (ex. 97415000DP0016 : 28/08/2023 au lieu du 26/02/2020 réel) et
+# il lui manque des couples PC/parcelle (422 île). Tout écran/route/export qui AFFICHE une date
+# d'autorisation de permis doit la lire à la SOURCE `sitadel_permits.date` (comme pc_caducs/veille le
+# font déjà), JAMAIS dans `p_model_permits`. La table dérivée reste réservée aux features du modèle P.
+def date_autorisation_sql(a: str = "sp.") -> str:
+    """L'expression SQL de la date d'AUTORISATION SOURCE d'un permis = `sitadel_permits.date::date`.
+    `a` = préfixe d'alias de `sitadel_permits` (''/'s.'/'sp.'). À lire à la source, jamais via la table
+    dérivée `p_model_permits.date_autorisation` (périmée, FIX-14)."""
+    return f"{a}date::date"
+
+
+def permis_autorise_apres(db, idu: str, apres):
+    """La date d'autorisation la PLUS RÉCENTE d'un permis rattaché à la parcelle `idu` qui soit
+    STRICTEMENT postérieure à `apres` (objet `date` ou ISO), ou None. Lit la SOURCE
+    `sitadel_permits.date` (explosion de `idu_codes`) — JAMAIS `p_model_permits` (périmée, FIX-14).
+    Sert l'avertissement §Bâti « un permis autorisé après le survol a pu changer le bâti ». None aussi
+    si la table `sitadel_permits` est absente (dev/test) → l'appelant n'a rien à signaler."""
+    from sqlalchemy import text as _text
+    d = date_autorisation_sql("sp.")
+    try:
+        return db.execute(_text(
+            f"SELECT max({d}) FROM sitadel_permits sp "
+            "JOIN LATERAL jsonb_array_elements_text(sp.idu_codes) j(idu) ON true "
+            f"WHERE j.idu = :i AND {d} > :apres"),
+            {"i": idu, "apres": apres}).scalar()
+    except Exception:          # noqa: BLE001 — table absente (dev/test) → pas de caveat, jamais un faux
+        db.rollback()
+        return None
+
+
 def depot_affichable(date_depot, date_autorisation, an_depot):
     """Version Python de `depot_affichable_sql` (même règle, pour les tests et les lecteurs Python) :
     rend la date de dépôt (objet `date`) si elle est affichable, sinon None. Accepte des dates ISO

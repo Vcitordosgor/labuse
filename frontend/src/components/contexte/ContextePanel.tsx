@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { getCommuneAcquisitions, getContexteCommune, motMarcheCommune, motRarete } from '../../lib/api'
+import { messageChargement, getCommuneAcquisitions, getContexteCommune, motMarcheCommune, motRarete } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
 import { fmtDateNum, fmtAns } from '../../lib/format'   // RECETTE-2 (B2/B5/B6) — dates JJ/MM/AAAA, « 1,1 an »
 import { catnatReste } from '../../lib/catnat'   // FIX-6 LOT 3 — « et N autres » sur le total source
@@ -134,6 +134,7 @@ function fmtDateFr(iso: string): string {
 function AcquereursPmCommune({ commune }: { commune: string }) {
   const q = useQuery({ queryKey: ['commune-acq', commune], queryFn: () => getCommuneAcquisitions(commune, 200), enabled: !!commune })
   const d = q.data
+  if (q.isError) return <ErrorState message={messageChargement(q.error, "Acquéreurs récents indisponibles.")} retry={() => q.refetch()} />
   if (!d || !d.acquisitions?.length) return null
   const parAcq = new Map<string, { siren: string | null; nom: string | null; n: number; dernier: number }>()
   for (const a of d.acquisitions) {
@@ -312,7 +313,7 @@ export function ContextePanel() {
           la largeur du texte (le contenu revient à la ligne, cf. RowT/break-words). */}
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
         {q.isLoading && <div className="p-5"><Squelette lignes={5} /></div>}
-        {q.isError && <ErrorState className="p-5" message="Erreur de chargement — réessayez." retry={() => q.refetch()} />}
+        {q.isError && <ErrorState className="p-5" message={messageChargement(q.error, "Erreur de chargement — réessayez.")} retry={() => q.refetch()} />}
         {d && (
           <>
             {/* ── EN-TÊTE (maquette v1) — bandeau 9 chiffres en 3×3 + 3 raccourcis. Pas de rang comparatif.
@@ -330,7 +331,7 @@ export function ContextePanel() {
                   { v: d.comparable?.ancien_median_eur_m2 != null ? `${fmt(d.comparable.ancien_median_eur_m2)} €/m²` : '—', n: 'Prix ancien', s: 'DVF' },
                   { v: tendPct != null ? `${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %` : '—', n: 'Tendance 12 m', s: 'DVF' },
                   // OUTIL-COMMUNES-FIX-7 LOT 3 — la case « État du PLU » porte la DATE de la dernière pièce.
-                  { v: d.plu_statut?.statut ?? '—', n: 'État du PLU', s: bandeauEtatPluSous(d.plu_statut?.etat_au) },
+                  { v: d.plu_statut?.statut ?? 'indisponible', n: 'État du PLU', s: bandeauEtatPluSous(d.plu_statut?.etat_au) },
                   // COMMUNE-FIX-2 — surface cadastrale de la commune (même grandeur que l'en-tête).
                   { v: d.foncier?.surface_ha != null ? `${fmt(d.foncier.surface_ha)} ha` : '—', n: 'Surface', s: 'Cadastre' },
                   // COMMUNE-FIX-2 — sigle de l'intercommunalité (CINOR, TCO…) ; le nom long est déjà sous le titre.
@@ -683,23 +684,69 @@ export function ContextePanel() {
               {/* OUTIL-COMMUNES-FIX-6 LOT 2 — pour une commune EN RÉVISION, le bandeau (et le détail) portent
                   la date de la DERNIÈRE PIÈCE de procédure (etat_au), pas celle de la PRESCRIPTION
                   (date_reglement, souvent ancienne). La Plaine-des-Palmistes : 27/11/2025, pas 24/09/2015. */}
-              {(() => {
-                const _revision = d.plu_statut.statut.startsWith('en ')
+              {d.plu_statut.indisponible || !d.plu_statut.statut ? (
+                /* OUTIL-COMMUNES-FIX-14 LOT 4 — bloc Urbanisme EN PANNE : « indisponible », neutre (pas de
+                   badge vert), comme les autres blocs. Avant, le repli portait « document local » → badge
+                   vert + « Document local — document local. », lu à tort comme un renseignement. */
+                <LigneCarte id="regle-plu" chiffre="statut_plu" ic="§" titre="Urbanisme"
+                  sous="indisponible" val="indisponible">
+                  <p className="text-[12px] leading-relaxed text-txt-mut">
+                    Vérification du document d’urbanisme momentanément indisponible — réessayez.
+                  </p>
+                </LigneCarte>
+              ) : (() => {
+                const _revision = d.plu_statut.statut!.startsWith('en ')
                 const _bandeauDate = _revision ? d.plu_statut.etat_au : d.plu_statut.date_reglement
                 return (
               <LigneCarte id="regle-plu" chiffre="statut_plu" ic="§" titre="Urbanisme"
-                sous={d.plu_statut.statut.startsWith('aucune') ? d.plu_statut.statut : `PLU ${d.plu_statut.statut}${_bandeauDate ? ` · ${fmtDateNum(_bandeauDate)}` : ''}`}
+                sous={d.plu_statut.statut!.startsWith('aucune') ? d.plu_statut.statut! : `PLU ${d.plu_statut.statut}${_bandeauDate ? ` · ${fmtDateNum(_bandeauDate)}` : ''}`}
                 val={d.plu_statut.statut} badge ton={d.plu_statut.statut === 'RNU' ? 'orange' : 'vert'}>
                 <p className="text-[12px] leading-relaxed text-txt">
                   {d.plu_statut.statut === 'RNU' ? "Pas de PLU opposable : c'est le Règlement National d'Urbanisme qui s'applique."
                     : d.plu_statut.statut === 'à jour' ? `Le PLU est opposable${d.plu_statut.date_reglement ? ` (approuvé le ${fmtDateNum(d.plu_statut.date_reglement)})` : ''}.`
-                      : _revision ? `Document local — ${d.plu_statut.statut}${d.plu_statut.piece_objet ? ` · ${d.plu_statut.piece_objet}` : ''}.`
+                      : _revision ? d.plu_statut.stade_texte ?? `Document local — ${d.plu_statut.statut}.`
                       : `Document local — ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${fmtDateNum(d.plu_statut.date_reglement)}` : ''}.`}
                 </p>
+                {_revision && d.plu_statut.piece_objet && <p className="mt-1 text-[11px] text-txt-dim">{d.plu_statut.piece_objet}</p>}
                 {/* OUTIL-COMMUNES-FIX-4/7 LOT 2 — l'état porte la date de sa pièce. Libellé « dernière pièce
-                    connue de LABUSE », avec la date de notre dernière vérification (date_constat). */}
+                    connue de LABUSE », avec la date de notre dernière vérification (date_constat).
+                    FIX-10 LOT 2 — « : » (pas « le ») car la date peut être au MOIS (« mai 2025 ») : « le mai » serait fautif. */}
                 {d.plu_statut.etat_au && (
-                  <p className="mt-1 text-[11px] text-txt-dim">Dernière pièce connue de LABUSE le {fmtDateNum(d.plu_statut.etat_au)}{d.plu_statut.date_constat ? ` — vérifié le ${fmtDateNum(d.plu_statut.date_constat)}` : ''}.</p>
+                  <p className="mt-1 text-[11px] text-txt-dim">{d.plu_statut.etat_label || 'Dernière pièce connue de LABUSE'} : {fmtDateNum(d.plu_statut.etat_au)}{d.plu_statut.date_constat ? ` — vérifié le ${fmtDateNum(d.plu_statut.date_constat)}` : ''}.</p>
+                )}
+                {/* OUTIL-COMMUNES-FIX-13 LOT 2 — la carte commune lit le MÊME champ `debat_padd_tenu` que la
+                    fiche parcelle (radar) et l'outil Vérif procédure : « débat PADD tenu le … », sans armer
+                    le sursis (décision discrétionnaire du maire, non constatée). */}
+                {d.plu_statut.debat_padd_tenu && d.plu_statut.sursis_autorise ? (
+                  /* OUTIL-COMMUNES-FIX-14 LOT 5 — débat tenu ET autorisation expresse de surseoir (conseil) :
+                     les deux faits ensemble (Saint-Louis : délib. 29/10/2024, art. 2), sans conclure à un
+                     sursis sur la parcelle. */
+                  <p className="mt-1 text-[11px] text-txt-dim">Débat PADD tenu le {fmtDateNum(d.plu_statut.debat_padd_tenu)}. Le conseil a autorisé le maire à surseoir à statuer (délibération du {d.plu_statut.sursis_autorise.date_fr ?? fmtDateNum(d.plu_statut.sursis_autorise.date)}, {d.plu_statut.sursis_autorise.article ?? 'art. 2'}). Une décision individuelle se vérifie dans le dossier de la parcelle.</p>
+                ) : d.plu_statut.debat_padd_tenu ? (
+                  <p className="mt-1 text-[11px] text-txt-dim">Débat PADD tenu le {fmtDateNum(d.plu_statut.debat_padd_tenu)} — sursis à statuer non armé (décision discrétionnaire du maire, non constatée).</p>
+                ) : d.plu_statut.debat_recherche_le ? (
+                  /* OUTIL-COMMUNES-FIX-14 LOT 6 — recherche infructueuse DATÉE (Étang-Salé/Saint-Denis/Saint-Paul). */
+                  <p className="mt-1 text-[11px] text-txt-dim">Pièce du débat PADD non retrouvée lors de la recherche du {fmtDateNum(d.plu_statut.debat_recherche_le)} — pas de sursis servi.</p>
+                ) : null}
+                {/* OUTIL-COMMUNES-FIX-10 LOT 3 — CHRONOLOGIE des pièces : chaque acte de procédure et chaque
+                    mention d'avancement, avec sa date (précision honnête) et son lien ; les mentions sont
+                    distinguées des actes (badge). Chaque lien a été ouvert avant d'être cité. */}
+                {d.plu_statut.chronologie && d.plu_statut.chronologie.length > 0 && (
+                  <div className="mt-1.5">
+                    <p className="text-[11px] font-medium text-txt-mut">Chronologie de la procédure</p>
+                    <ul className="mt-0.5 flex flex-col gap-0.5">
+                      {d.plu_statut.chronologie.map((pc, i) => (
+                        <li key={i} className="text-[11px] leading-relaxed text-txt-dim">
+                          <span className="font-mono text-txt-mut">{fmtDateNum(pc.date)}</span>{' '}
+                          <span className={`rounded px-1 text-[9px] ${pc.nature === 'acte' ? 'bg-mint/15 text-mint' : 'bg-line-2 text-txt-dim'}`}>
+                            {pc.nature === 'acte' ? 'acte' : 'avancement'}</span>{' '}
+                          {pc.source_url
+                            ? <a href={pc.source_url} target="_blank" rel="noreferrer" className="text-txt hover:text-mint underline decoration-dotted">{pc.objet}</a>
+                            : <span className="text-txt">{pc.objet}</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
                 {/* COMMUNE-FIX-1 (D12) — procédure PLU en cours au dernier relevé Sudocuh (révision, modification…). */}
                 {d.plu_statut.procedure_sudocuh?.etat && (

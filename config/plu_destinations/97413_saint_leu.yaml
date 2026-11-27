@@ -1225,6 +1225,17 @@ zones:
       rattachables : cf. note UC.'
   UD:
     regles:
+      # ETUDE-AUDIT-FIX-1 LOT 3 (défaut 8) — largeur MINIMALE d'une voie nouvelle à créer (lotissement).
+      # Lue par le moteur de lotissement (quel que soit le statut) : une chaussée sous ce minimum → aucun
+      # découpage proposé. Largeur (3,50 m) et article (UD 3.2) tirés de l'audit ; la PAGE PDF reste à
+      # confirmer → statut `propose` (le verrou des citations ne l'exige que pour les règles `valide`).
+      voie_creation:
+        largeur_min_m: 3.5
+        trottoir_min_m: 1.5
+        article: UD 3.2
+        citation: 'Les voies nouvelles à créer doivent avoir une largeur minimale de plateforme (chaussée)
+          de 3,50 m ; lorsqu''un trottoir est réalisé, sa largeur minimale est de 1,50 m.'
+        statut: propose
       hauteur:
         egout:
           m: 4.0

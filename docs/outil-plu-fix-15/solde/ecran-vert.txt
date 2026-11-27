@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /Users/openclaw/Desktop/labuse-plu-fix/frontend
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  11:21:44
+   Duration  1.70s (transform 152ms, setup 173ms, import 186ms, tests 193ms, environment 1.00s)
+

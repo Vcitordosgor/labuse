@@ -1,0 +1,6 @@
+  ✓ purge 97404 : 135 extrait(s) supprimé(s)
+  ✓ 97404 97404_reglement_20250917.pdf : 130 extraits article · 1 douteux
+  ✓ 97404 L'Étang-Salé : 1 document(s), 130 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 130 extraits · 21 communes en base
+REINGEST_DONE

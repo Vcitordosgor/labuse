@@ -1,0 +1,10 @@
+tests/test_outil_permis_fix10.py::test_lot0_structurel_aucune_lecture_directe_du_depot FAILED [ 33%]
+tests/test_outil_permis_fix10.py::test_lot0_bloc_depots_ne_compte_pas_la_date_contradictoire FAILED [ 66%]
+tests/test_outil_permis_fix10.py::test_lot0_alerte_de_zone_titre_annonce_l_evenement_date FAILED [100%]
+E       AssertionError: Lecture directe de la date de dépôt Sitadel hors permis_classe/EXEMPTES : api/veille_promoteurs.py, faisabilite/marche_commune.py, ingestion/permits.py — passer par permis_classe ou la date d'autorisation, ou inscrire l'exception nommément dans EXEMPTES avec sa raison.
+E         '2026-03-09' is contained here:
+E       AssertionError: assert ('autorisé' in 'permis déposé dans « titre fix-10 »')
+E        +  where 'permis déposé dans « titre fix-10 »' = <built-in method lower of str object at 0x12c785650>()
+FAILED tests/test_outil_permis_fix10.py::test_lot0_structurel_aucune_lecture_directe_du_depot
+FAILED tests/test_outil_permis_fix10.py::test_lot0_bloc_depots_ne_compte_pas_la_date_contradictoire
+FAILED tests/test_outil_permis_fix10.py::test_lot0_alerte_de_zone_titre_annonce_l_evenement_date

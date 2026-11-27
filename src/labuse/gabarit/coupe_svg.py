@@ -16,6 +16,8 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from ._geom import soustraire_intervalles
+
 _THEMES = {
     "sombre": {"bg": "#0f1115", "plot": "#161a20", "terrain": "#cbd5e1", "fill": "#1f2630",
                "limite": "#e5e7eb", "zone": "#36c99a", "bati": "#9aa0a6", "txt": "#d7dce3",
@@ -74,23 +76,6 @@ def _runs(profil):
     return runs
 
 
-def _soustraire(seg, spans):
-    """Retire de [d0,d1] les intervalles `spans` (emprises bâties) → liste de sous-segments."""
-    out = [seg]
-    for a, b in spans:
-        nxt = []
-        for s0, s1 in out:
-            if b <= s0 or a >= s1:
-                nxt.append((s0, s1))
-            else:
-                if s0 < a:
-                    nxt.append((s0, a))
-                if b < s1:
-                    nxt.append((b, s1))
-        out = nxt
-    return out
-
-
 def _fleche(x0, y0, x1, y1, col, w=1.4):
     ang = math.atan2(y1 - y0, x1 - x0)
     hl, ha = 7, math.radians(22)
@@ -98,6 +83,38 @@ def _fleche(x0, y0, x1, y1, col, w=1.4):
     xb, yb = x1 - hl * math.cos(ang + ha), y1 - hl * math.sin(ang + ha)
     return (f'<line x1="{x0:.1f}" y1="{y0:.1f}" x2="{x1:.1f}" y2="{y1:.1f}" stroke="{col}" stroke-width="{w}"/>'
             f'<polygon points="{x1:.1f},{y1:.1f} {xa:.1f},{ya:.1f} {xb:.1f},{yb:.1f}" fill="{col}"/>')
+
+
+def _bornes_altitudes(valides, batis):
+    zs_all = [p["z"] for p in valides]
+    for b in batis:                                   # inclure pied + faîtage au cadrage
+        if b.get("pied_m") is not None:
+            zs_all.append(b["pied_m"])
+            if b.get("hauteur_m"):
+                zs_all.append(b["pied_m"] + b["hauteur_m"])
+    return min(zs_all), max(zs_all)
+
+
+def _graduations(mini, maxi):
+    pas = _nice_step(max(maxi - mini, 1))
+    debut = math.ceil((mini - 1e-6) / pas)
+    fin = math.floor((maxi + 1e-6) / pas)
+    return [i * pas for i in range(debut, fin + 1)]
+
+
+def mesures_apercu(coupe):
+    """Valeurs sources des annotations et des axes du profil imprimé."""
+    bas, haut = _bornes_altitudes([p for p in coupe["profil"] if p["z"] is not None],
+                                  coupe.get("batiments") or [])
+    longueur = coupe["longueur_m"]
+    return {
+        "graduations_m": _graduations(0, longueur) + _graduations(bas, haut),
+        "barre_m": _nice_step(longueur, 5),
+        "altitudes_m": [p["z"] for p in coupe["cotes_points"]["points"]],
+        "traversees_m": [b-a for cle in ("limites_parcelle_d", "zone_implantation_d")
+                         for a, b in coupe[cle]],
+        "pente_max_pct": (coupe["indicateurs"].get("pente_max_5m") or {}).get("pente_pct"),
+    }
 
 
 def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=None, detail=False, header=True):
@@ -114,13 +131,7 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
     batis = coupe.get("batiments") or []
     bati_spans = [(b["d0"], b["d1"]) for b in batis]
 
-    zs_all = [p["z"] for p in valides]
-    for b in batis:                                   # inclure pied + faîtage au cadrage
-        if b.get("pied_m") is not None:
-            zs_all.append(b["pied_m"])
-            if b.get("hauteur_m"):
-                zs_all.append(b["pied_m"] + b["hauteur_m"])
-    zmin, zmax = min(zs_all), max(zs_all)
+    zmin, zmax = _bornes_altitudes(valides, batis)
     zspan = max(zmax - zmin, 1.0)
 
     # 3 bis : les deux bandes (parcelle, zone) + la légende figurent dans l'APERÇU COMME dans le DÉTAIL
@@ -161,31 +172,23 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
                 ys.append(Y(zk))
         return min(ys) if ys else PAD_T + CIEL
 
-    # data-plot-x0/x1 : bornes px du RECTANGLE du tracé (cale le survol de la coupe en 3D — B8)
-    out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" '
-           f'height="{height}" role="img" aria-label="{_esc(coupe.get("titre",""))}" {_FONT} '
-           f'data-plot-x0="{off_x:.1f}" data-plot-x1="{off_x+plot_w:.1f}" '
-           f'style="background:{T["bg"]}">']
+    out = []
     # en-tête UNE LIGNE (2 quater) : titre à gauche, datum à droite — RETIRÉ si header=False (bandeau HTML)
     if header:
         out.append(f'<text x="{PAD_L}" y="15" font-size="12" font-weight="600" fill="{T["txt"]}">{_esc(coupe.get("titre",""))}</text>')
-        out.append(f'<text x="{width-PAD_R}" y="15" text-anchor="end" font-size="9" fill="{T["txt_dim"]}">Altitudes en m · IGN 1989 · H = V</text>')
+        pas = coupe.get("maille_m")
+        maille = f" · maille {pas:g} m".replace(".", ",") if isinstance(pas, (int, float)) else ""
+        out.append(f'<text x="{width-PAD_R}" y="15" text-anchor="end" font-size="9" fill="{T["txt_dim"]}">Altitudes en m · IGN 1989{maille} · H = V</text>')
     out.append(f'<rect x="{off_x:.1f}" y="{PAD_T}" width="{plot_w:.1f}" height="{plot_h:.1f}" '
                f'fill="{T["plot"]}" stroke="{T["grid"]}" stroke-width="0.6"/>')
 
     # graduations
-    xs = _nice_step(L); zstep = _nice_step(zspan)
-    d = 0.0
-    while d <= L + 1e-6:
+    for d in _graduations(0, L):
         out.append(f'<line x1="{X(d):.1f}" y1="{PAD_T}" x2="{X(d):.1f}" y2="{y_base:.1f}" stroke="{T["grid"]}" stroke-width="0.4"/>')
         out.append(f'<text x="{X(d):.1f}" y="{y_base+13:.1f}" text-anchor="middle" font-size="9.5" fill="{T["txt_dim"]}">{_fmt(d)}</text>')
-        d += xs
-    z = zmin - (zmin % zstep)
-    while z <= zmax + 1e-6:
-        if z >= zmin - 1e-6:
-            out.append(f'<line x1="{off_x:.1f}" y1="{Y(z):.1f}" x2="{off_x+plot_w:.1f}" y2="{Y(z):.1f}" stroke="{T["grid"]}" stroke-width="0.4"/>')
-            out.append(f'<text x="{off_x-6:.1f}" y="{Y(z)+3:.1f}" text-anchor="end" font-size="9" fill="{T["txt_dim"]}">{_fmt(z)}</text>')
-        z += zstep
+    for z in _graduations(zmin, zmax):
+        out.append(f'<line x1="{off_x:.1f}" y1="{Y(z):.1f}" x2="{off_x+plot_w:.1f}" y2="{Y(z):.1f}" stroke="{T["grid"]}" stroke-width="0.4"/>')
+        out.append(f'<text x="{off_x-6:.1f}" y="{Y(z)+3:.1f}" text-anchor="end" font-size="9" fill="{T["txt_dim"]}">{_fmt(z)}</text>')
 
     # ÉLÉMENT COUVERT (varangue/auvent pris pour du sol SOUS le bâti) : une BOSSE locale ≥ _COUVERT_SEUIL_M
     # au-dessus des DEUX sols voisins. On ne la DESSINE PAS (ni dans le tracé principal, ni dans le profil sous
@@ -237,7 +240,7 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
                     couvert_anchor = ((X(pL["d"]) + X(pR["d"])) / 2, (Y(pL["z"]) + Y(pR["z"])) / 2)
             i = j + 1
         # sol MESURÉ sous le bâti = emprise hors des portions couvertes → pointillé orange
-        for s0, s1 in _soustraire((pb[0][0], pb[-1][0]), couvert_sous):
+        for s0, s1 in soustraire_intervalles((pb[0][0], pb[-1][0]), couvert_sous):
             run = [(d, z) for d, z in pb if s0 - 1e-6 <= d <= s1 + 1e-6]
             if len(run) >= 2:
                 sous_bati_runs.append(run)
@@ -250,7 +253,7 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
     for run in runs:
         if len(run) < 2:
             continue
-        for s0, s1 in _soustraire((run[0]["d"], run[-1]["d"]), coupe_hors):
+        for s0, s1 in soustraire_intervalles((run[0]["d"], run[-1]["d"]), coupe_hors):
             pts = [(p["d"], p["z"]) for p in run if s0 - 1e-6 <= p["d"] <= s1 + 1e-6]
             if len(pts) < 2:
                 continue
@@ -324,7 +327,11 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
             # VALEUR MESURÉE : « pente max N % sur 5 m » (se lit comme une pente, pas des mètres) — fond opaque,
             # posée AU-DESSUS du terrain LOCAL (jamais sur la courbe, pt 4).
             xcp = X((pm["d0"] + pm["d1"]) / 2)
-            txt = f"pente max {_fmt(pm.get('pente_pct'), 0)} % sur 5 m" if pm.get("pente_pct") is not None else "pente max sur 5 m"
+            pente = pm.get("pente_pct")
+            txt = "pente max sur 5 m"
+            if pente is not None:
+                valeur = _fmt(pente, 1).removesuffix(",0")
+                txt = f"pente max {valeur} % sur 5 m"
             halfp = max(len(txt) * 9 * 0.56 / 2 + 3, 8.0)
             ypm = max(sky_top(xcp, halfp) - 6, PAD_T + 9)
             prot.append(_label_box(xcp, ypm, txt, T["lacune"], T["plot"]))
@@ -372,14 +379,23 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
         out.append(_bande(zspans, yb1, X, "zone d'implantation", T, col=T["zone"]))
     else:
         etat = "non traversée" if coupe.get("zone_presente") else "indisponible"
+        if coupe.get("surface_disponible_m2") == 0:
+            etat = "0 m² disponible"
         out.append(f'<text x="8" y="{yb1+3:.1f}" font-size="9" fill="{T["txt_dim"]}">zone d\'implantation — {etat}</text>')
-    out.append(_legende_coupe(yb1 + 19, off_x, T, rupture, bool(batis), couvert_present))
+    legende, hauteur_extra = _legende_coupe(yb1 + 19, width, T, rupture, bool(batis), couvert_present)
+    out.append(legende)
+    height += hauteur_extra
     # indicateurs (deux pentes, pente max 5 m, accès, bâti) : DÉTAIL seulement
     if detail:
-        out.append(_indicateurs(coupe, faitages, rupture, y_base + AX_H + BANDES_H, PAD_L, width - PAD_R, T))
+        out.append(_indicateurs(coupe, faitages, rupture, y_base + AX_H + BANDES_H + hauteur_extra, PAD_L, width - PAD_R, T))
 
     # A2 — libellés à fond opaque EN DERNIER : aucun trait ne les traverse à l'écran
     out.extend(prot)
+    # data-plot-x0/x1 : bornes px du RECTANGLE du tracé (cale le survol de la coupe en 3D — B8)
+    out.insert(0, f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" '
+           f'height="{height}" role="img" aria-label="{_esc(coupe.get("titre",""))}" {_FONT} '
+           f'data-plot-x0="{off_x:.1f}" data-plot-x1="{off_x+plot_w:.1f}" '
+           f'style="background:{T["bg"]}">')
     out.append("</svg>")
     return "".join(out)
 
@@ -475,26 +491,31 @@ def _bande(spans, y, X, label, T, col=None):
     return "".join(frag)
 
 
-def _legende_coupe(y, x, T, rupture, has_bati, couvert=False):
+def _legende_coupe(y, width, T, rupture, has_bati, couvert=False):
     """Légende de la COUPE (aperçu et détail) : terrain, profil sous le bâti (trait différent), rupture,
     sol non mesuré sous un élément couvert."""
-    frag, cx = [], x
-    def ent(label, draw, w):
-        nonlocal cx
+    frag, cx, lignes_extra = [], 8, 0
+    def ent(label, draw):
+        nonlocal cx, y, lignes_extra
+        largeur = 22 + len(label) * 5.2
+        if cx > 8 and cx + largeur > width - 8:
+            cx = 8
+            y += 13
+            lignes_extra += 1
         frag.append(draw(cx))
         frag.append(f'<text x="{cx+22:.1f}" y="{y+3:.1f}" font-size="9" fill="{T["txt_dim"]}">{_esc(label)}</text>')
-        cx += 22 + len(label) * 5.2 + 16
-    ent("terrain", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["terrain"]}" stroke-width="2"/>', 16)
+        cx += largeur + 16
+    ent("terrain", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["terrain"]}" stroke-width="2"/>')
     if has_bati:
         # barre grise = emprise bâtie (plus d'étiquette sur la courbe, pt 4) ; et profil sous le bâti INTERPOLÉ
         # par l'IGN (MNT bare-earth sans retour sol).
-        ent("emprise bâtie", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["bati"]}" stroke-width="3"/>', 16)
-        ent("profil sous le bâti (interpolé)", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["sous_bati"]}" stroke-width="2.2" stroke-dasharray="3 2.5"/>', 16)
+        ent("emprise bâtie", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["bati"]}" stroke-width="3"/>')
+        ent("profil sous le bâti (interpolé)", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["sous_bati"]}" stroke-width="2.2" stroke-dasharray="3 2.5"/>')
     if couvert:
-        ent("sol non mesuré sous un élément couvert", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["lacune"]}" stroke-width="1.6" stroke-dasharray="1 3"/>', 16)
+        ent("sol non mesuré sous un élément couvert", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["lacune"]}" stroke-width="1.6" stroke-dasharray="1 3"/>')
     if rupture:
-        ent("rupture du terrain à vérifier", lambda c: f'<path d="M{c+8:.1f},{y-4:.1f} l4,4 l-4,4 l-4,-4 z" fill="none" stroke="{T["lacune"]}" stroke-width="1.4"/>', 16)
-    return "".join(frag)
+        ent("rupture du terrain à vérifier", lambda c: f'<path d="M{c+8:.1f},{y-4:.1f} l4,4 l-4,4 l-4,-4 z" fill="none" stroke="{T["lacune"]}" stroke-width="1.4"/>')
+    return "".join(frag), lignes_extra * 13
 
 
 def palier_max_m(profil, bati_spans=()) -> float:
@@ -586,6 +607,9 @@ def plan_cle_svg(scene, *, theme="sombre", width=380, height=320):
 
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" '
            f'height="{height}" role="img" aria-label="Plan-clé des coupes" {_FONT} style="background:{T["bg"]}">']
+    for couche, couleur in (("reculs", "#e0a44a"), ("exclusions", "#e8491d")):
+        for poly in scene.get(couche) or []:
+            out.append(f'<path data-couche="{couche}" d="{path(poly)}" fill="{couleur}" fill-opacity="0.5" fill-rule="evenodd"/>')
     for poly in zone:
         out.append(f'<path d="{path(poly)}" fill="{T["zone"]}" fill-opacity="0.4" stroke="{T["zone"]}" stroke-width="1" fill-rule="evenodd"/>')
     for poly in batis:

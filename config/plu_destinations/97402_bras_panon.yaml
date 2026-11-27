@@ -112,10 +112,10 @@ zones:
             tranche: logement aidé (1 place max)
           senior:
             places: 0.3333
-            tranche: foyer/résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
           etudiant:
             places: 0.3333
-            tranche: résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
       pleine_terre:
         pct:
           pct: 30.0
@@ -318,10 +318,10 @@ zones:
             tranche: logement aidé (1 place max)
           senior:
             places: 0.3333
-            tranche: foyer/résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
           etudiant:
             places: 0.3333
-            tranche: résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
       pleine_terre:
         pct:
           pct: 30.0
@@ -509,10 +509,10 @@ zones:
             tranche: logement aidé (1 place max)
           senior:
             places: 0.3333
-            tranche: foyer/résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
           etudiant:
             places: 0.3333
-            tranche: résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
       pleine_terre:
         pct:
           pct: 30.0
@@ -632,10 +632,10 @@ zones:
             tranche: logement aidé (1 place max)
           senior:
             places: 0.3333
-            tranche: foyer/résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
           etudiant:
             places: 0.3333
-            tranche: résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
       pleine_terre:
         pct:
           pct: 30.0
@@ -792,10 +792,10 @@ zones:
             tranche: logement aidé (1 place max)
           senior:
             places: 0.3333
-            tranche: foyer/résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
           etudiant:
             places: 0.3333
-            tranche: résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
       pleine_terre:
         pct:
           pct: 40.0
@@ -1235,10 +1235,10 @@ zones:
             tranche: logement aidé (1 place max)
           senior:
             places: 0.3333
-            tranche: foyer/résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
           etudiant:
             places: 0.3333
-            tranche: résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
       pleine_terre:
         pct:
           pct: 30.0
@@ -1373,10 +1373,10 @@ zones:
             tranche: logement aidé (1 place max)
           senior:
             places: 0.3333
-            tranche: foyer/résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
           etudiant:
             places: 0.3333
-            tranche: résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
       pleine_terre:
         pct:
           pct: 30.0
@@ -1486,10 +1486,10 @@ zones:
             tranche: logement aidé (1 place max)
           senior:
             places: 0.3333
-            tranche: foyer/résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
           etudiant:
             places: 0.3333
-            tranche: résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
       pleine_terre:
         pct:
           pct: 30.0
@@ -1599,10 +1599,10 @@ zones:
             tranche: logement aidé (1 place max)
           senior:
             places: 0.3333
-            tranche: foyer/résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
           etudiant:
             places: 0.3333
-            tranche: résidence (1 pour 3)
+            tranche: "foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres"
       pleine_terre:
         pct:
           pct: 40.0

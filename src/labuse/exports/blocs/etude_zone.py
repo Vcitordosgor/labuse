@@ -52,13 +52,23 @@ def _economie(z) -> str:
     lignes = []
     # CHASSE-DOCS-FIX-1 (E-10) — la FOURCHETTE d'abord : `libelle` (toujours posé par zone.py, sans
     # le nombre) ne doit pas court-circuiter `postes_min/max` ; il n'en est que le SUFFIXE (comme le Flash).
-    if e.get("postes_min") is not None:
+    if z.get("emplois_couverture") == "non_couverte":
+        return _sec("Économie", [_kv("Emplois salariés", "Couverture SIRENE indisponible")])
+    if e.get("n_avec_tranche") == 0 and e.get("n_sans_tranche"):
+        lignes.append(_kv("Emplois salariés", "Effectif inconnu"))
+    elif e.get("postes_min") is not None:
         val = f"{_i(e.get('postes_min'))} à {_i(e.get('postes_max'))}"
+        if e.get("postes_max_ouvert"):
+            val = f"Au moins {_i(e['postes_min'])}"
+        elif e.get("postes_min") == e.get("postes_max"):
+            val = _i(e["postes_min"])
         if e.get("libelle"):
             val += " " + esc(e["libelle"])
         lignes.append(_kv("Emplois salariés", val))
     elif e.get("libelle"):
         lignes.append(_kv("Emplois salariés", esc(e.get("libelle"))))
+    if e.get("n_sans_tranche"):
+        lignes.append(_kv("Établissements sans effectif renseigné", _i(e["n_sans_tranche"])))
     if _i(e.get("n_etablissements")):
         lignes.append(_kv("Établissements", f"{_i(e.get('n_etablissements'))}"))
     conc = z.get("concurrents") or {}
@@ -140,7 +150,7 @@ _ETAT_LABEL = {"autorise": "autorisé", "sous_condition": "sous condition", "int
 def _contraintes(z) -> str:
     lignes = []
     cp = z.get("contraintes_plu") or {}
-    for zn in (cp.get("zones") or [])[:8]:
+    for zn in cp.get("zones") or []:
         zone = zn.get("zone")
         part = _i(zn.get("part_pct"))
         commune = zn.get("commune")
@@ -201,7 +211,7 @@ def _dynamique(z) -> str:
     cc = z.get("commune_contexte") or {}
     # maille commune : libellée « à l'échelle de la commune » comme à l'écran.
     if cc.get("loyer_median_eur_m2") is not None:
-        lignes.append(_kv(f"Loyer médian ({ECHELLE_COMMUNE})", f"{_i(cc.get('loyer_median_eur_m2'))} €/m²"))
+        lignes.append(_kv(f"Loyer médian ({ECHELLE_COMMUNE})", f"{groupe(cc['loyer_median_eur_m2'], 2)} €/m²"))
     tr = z.get("trafic") or {}
     for ax in (tr.get("axes") or [])[:3]:
         if ax.get("tmja") is not None:
@@ -209,19 +219,23 @@ def _dynamique(z) -> str:
     return _sec("Dynamique", lignes)
 
 
+def _rayon_km_fr(v):
+    return esc(str(v).removesuffix(".0").replace(".", ","))
+
+
 def _echelle_label(z: dict, idu: str, rayon_km) -> str:
     """CHASSE-DONNEES-FIX-1 (Lot 7, E-69) — le périmètre IMPRIMÉ = celui RÉELLEMENT calculé (lu de
     `zone`), plus le rayon DEMANDÉ : un rayon hors {0,5 ; 1 ; 2 ; 5} km retombe sur l'isochrone 10
     min voiture, et le document affichait quand même « Rayon 10 km »."""
     if z.get("entree") == "rayon" and z.get("rayon_km"):
-        return f"Rayon {esc(str(z['rayon_km']))} km autour de {esc(idu)}"
+        return f"Rayon {_rayon_km_fr(z['rayon_km'])} km autour de {esc(idu)}"
     mins, mode = z.get("isochrone_minutes"), z.get("isochrone_mode")
     if mins:
         return f"Isochrone {esc(str(mins))} min ({esc(str(mode or 'voiture'))}) autour de {esc(idu)}"
     if z.get("entree") == "polygone":
         return f"Périmètre dessiné autour de {esc(idu)}"
     # repli : le rayon demandé s'il a été retenu, sinon libellé neutre (jamais un rayon non calculé)
-    return (f"Rayon {esc(str(rayon_km))} km autour de {esc(idu)}" if rayon_km
+    return (f"Rayon {_rayon_km_fr(rayon_km)} km autour de {esc(idu)}" if rayon_km
             else f"Périmètre autour de {esc(idu)}")
 
 
@@ -235,14 +249,14 @@ def _tuiles(z, rayon_km) -> str:
             t.append(f'<div class="tile"><div class="v">{v}</div><div class="l">{esc(lib)}</div></div>')
 
     sa = z.get("surface_ha")
-    tile(f"{_i(sa)} ha" if sa else (f"{_i(rayon_km)} km" if rayon_km else None), "Périmètre")
+    tile(f"{_i(sa)} ha" if sa else (f"{_rayon_km_fr(rayon_km)} km" if rayon_km else None), "Périmètre")
     p = z.get("population") or {}
     tile(_i(p.get("habitants")), "Habitants")
     rm = p.get("revenu_median_eur")
-    tile(f"{_i(rm)} €" if rm is not None else None, "Revenu médian / an")
+    tile(f"{_i(rm)} €" if rm is not None else None, "Niveau de vie moyen / an")
     m = z.get("marche") or {}
-    pa = (m.get("prix_ancien") or {}).get("median") or m.get("prix_m2_median_bati")
-    tile(f"{_i(pa)} €/m²" if pa else None, "Prix médian bâti")
+    pa = m.get("prix_m2_median_bati")
+    tile(_i(pa), "Prix médian du bâti (€/m²)")
     v12 = m.get("ventes_12m")
     tile(_i(v12) if v12 is not None else None, "Ventes 12 mois")
     return f'<div class="tiles">{"".join(t[:5])}</div>' if t else ""

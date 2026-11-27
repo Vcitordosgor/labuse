@@ -95,3 +95,20 @@ def test_rejeu_non_perte_retenue_hors_criteres(db_session, monkeypatch):
     assert rows[pin][0] == "retenue" and rows[pout][0] == "retenue"
     # celle sortie des critères est marquée hors_criteres ; celle qui rematche ne l'est pas
     assert rows[pout][1] is True and rows[pin][1] is False
+
+
+@pytest.mark.db
+def test_reactivation_crm_respecte_la_cause_archive(db_session):
+    s = db_session
+    projet = _projet(s, "Cycle CRM")
+    idus = ["97999000ZZ8711", "97999000ZZ8712", "97999000ZZ8713"]
+    pcs = [_parcelle(s, idu) for idu in idus]
+    for idu in idus:
+        projets.projet_parcelle_statut(projet.id, idu, projets.StatutIn(statut="retenue"), None, s)
+    projets.projet_parcelle_statut(projet.id, idus[0], projets.StatutIn(statut="ecartee"), None, s)
+    s.execute(text("UPDATE pipeline_entries SET archived_at = now() WHERE parcel_id = :pc"), {"pc": pcs[1]})
+    projets.projet_delete(projet.id, None, s)
+    projets.projet_patch(projet.id, projets.ProjetPatchIn(statut="actif"), None, s)
+    actives = s.execute(text("SELECT parcel_id FROM pipeline_entries WHERE projet_id = :pid "
+                             "AND archived_at IS NULL"), {"pid": projet.id}).scalars().all()
+    assert actives == [pcs[2]]

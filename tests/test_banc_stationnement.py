@@ -178,3 +178,26 @@ def test_bareme_existence_source_unique_par_m2_sdp():
     assert _bareme_stationnement_absent(payload) is False
     # non validé → bien « absent »
     assert _bareme_stationnement_absent({"stationnement_regimes": {"general": {"validee": False}}}) is True
+
+
+def test_stationnement_cherche_la_cour_reliee():
+    """Une barre continue sépare la grande cour du seul accès sur rue."""
+    from shapely.geometry import LineString, box
+    from shapely.ops import unary_union
+    from labuse.implantation.conventions import charger
+    from labuse.implantation.geometrie import Frame, Objet, Scene, poser_stationnement
+
+    assiette = unary_union([box(0, 0, 66, 30), box(0, 30, 36, 52)])
+    rue = LineString([(36, 33), (36, 52)])
+    scene = Scene(Frame(0, 0, 0), assiette, assiette, False, [rue])
+    scene.ajouter(Objet("batiment_emprise", box(0, 25, 66, 30)))
+    assert poser_stationnement(scene, charger(), cible=12) == 12
+    assert all(place.geom_local.bounds[1] >= 30 for place in scene.of("place"))
+    assert scene.of("acces")[0].geom_local.distance(rue) < 1e-6
+
+
+
+def test_repartition_apres_arrondi_du_type_minoritaire():
+    from labuse.implantation.geometrie import _repartir_prorata
+
+    assert _repartir_prorata({"T2": 17, "T3": 22, "T4": 9}, 4) == {"T2": 1, "T3": 2, "T4": 1}

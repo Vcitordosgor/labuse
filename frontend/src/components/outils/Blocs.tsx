@@ -11,7 +11,7 @@
  */
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { BLOCS_PAGE, getBlocDetail, getBlocs, getCommunes, type BlocItem } from '../../lib/api'
+import { BLOCS_PAGE, getBlocDetail, getBlocs, getCommunes, getMoteursConfig, type BlocItem } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { ListPaginationFooter } from '../ListPagination'
@@ -52,32 +52,45 @@ function BlocDetail({ blocId, siren }: { blocId: number; siren: string | null })
   const setModule = useApp((s) => s.setModule)
   const pushOutilRetour = useApp((s) => s.pushOutilRetour)
   const q = useQuery({ queryKey: ['bloc', blocId], queryFn: () => getBlocDetail(blocId) })
+  const config = useQuery({ queryKey: ['moteurs-config'], queryFn: getMoteursConfig, staleTime: 3600_000 })
+  const [selection, setSelection] = useState<string[]>([])
+  const max = config.data?.assemblage_max_ecran ?? 8
   const membres = q.data?.membres ?? []
   // Emprise = les parcelles du bloc surlignées sur la carte tant que le détail est ouvert.
   useModuleMap(membres.map((m) => m.idu), null, [q.dataUpdatedAt])
 
   if (q.isLoading) return <div className="px-2 py-1"><Squelette lignes={3} /></div>
-  if (q.isError || !q.data) return null
+  if (q.isError || !q.data) return (
+    <div onClick={(e) => e.stopPropagation()}>
+      <ErrorState message="Détail du bloc indisponible." retry={() => q.refetch()} />
+    </div>
+  )
+  const grandBloc = membres.length > max
+  const idus = grandBloc ? selection.filter((idu) => membres.some((m) => m.idu === idu)) : membres.map((m) => m.idu)
   return (
-    <div className="mt-1.5 flex flex-col gap-0.5 border-t border-line-2 pt-1.5">
+    <div onClick={(e) => e.stopPropagation()} className="mt-1.5 flex flex-col gap-0.5 border-t border-line-2 pt-1.5">
       {/* RECETTE-1 R21 — cliquer la LIGNE (IDU) ouvre la fiche parcelle. */}
+      {grandBloc && <p className="text-[11px] text-txt-mut">Pour assembler une partie de ce bloc, cochez de 2 à {max} parcelles voisines.</p>}
       {membres.map((m) => (
-        <div key={m.idu} data-bloc-membre data-bloc-fiche role="button" tabIndex={0}
-          onClick={(e) => { e.stopPropagation(); select(m.idu) }}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); select(m.idu) } }}
-          className="flex cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 text-[10.5px] hover-fill">
-          <span className="font-mono text-txt-hi">{m.idu}</span>
-          <span className="text-txt-dim">{fmtM2(m.surface_m2)}</span>
-          {m.zone && <span className="text-txt-dim">· {m.zone}</span>}
-          <span className="ml-auto tnum text-txt-mut">{fmtM2(m.sdp_residuelle_m2)}</span>
+        <div key={m.idu} className="flex items-center gap-1">
+          {grandBloc && <Case aria-label={`Inclure ${m.idu} dans l’assemblage`} checked={selection.includes(m.idu)}
+            disabled={!selection.includes(m.idu) && idus.length >= max}
+            onChange={(e) => setSelection(e.target.checked ? [...idus, m.idu] : idus.filter((i) => i !== m.idu))} />}
+          <button type="button" data-bloc-membre data-bloc-fiche onClick={() => select(m.idu)}
+            className="flex flex-1 flex-wrap items-baseline gap-x-1.5 rounded px-1 py-0.5 text-left text-[10.5px] hover-fill">
+            <span className="font-mono text-txt-hi">{m.idu}</span>
+            <span className="text-txt-dim">Terrain {fmtM2(m.surface_m2)}</span>
+            {m.zone && <span className="text-txt-dim">· {m.zone}</span>}
+            <span className="ml-auto tnum text-txt-mut">Plancher restant {fmtM2(m.sdp_residuelle_m2)}</span>
+          </button>
         </div>
       ))}
       {/* OUTILS-REFONTE-1 (9d) — les actions du bloc vivent DANS le détail ouvert (la carte, elle, n'a plus
           de bouton) : Assembler (IDU du bloc) · Scan patrimoine (SIREN). Fil de retour vers Blocs. */}
       <div className="mt-1 flex flex-wrap gap-1.5">
-        <Bouton niveau="secondaire" ton="vert" data-bloc-assembler
-          onClick={(e) => { e.stopPropagation(); setMselPrefill(membres.map((m) => m.idu)); setModule('assemblage'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}>
-          ⛶ Assembler ce bloc →
+        <Bouton niveau="secondaire" ton="vert" data-bloc-assembler disabled={idus.length < 2 || idus.length > max || config.isLoading}
+          onClick={(e) => { e.stopPropagation(); setMselPrefill(idus); setModule('assemblage'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}>
+          {grandBloc ? `Assembler la sélection (${idus.length}) →` : 'Assembler ce bloc →'}
         </Bouton>
         {siren && (
           <Bouton niveau="secondaire" ton="vert" data-bloc-scan
@@ -97,19 +110,21 @@ function BlocDetail({ blocId, siren }: { blocId: number; siren: string | null })
 function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onToggle: () => void }) {
   // OUTILS-REFONTE-1 (9d) — zonages PLU : 5 puces au maximum, « +N » déplie le reste au clic.
   const [zonesDepliees, setZonesDepliees] = useState(false)
-  const commune = it.communes[0]   // commune principale (première listée)
+  const communes = it.communes.join(', ')
   const ZONES_MAX = 5
   const zonesVisibles = zonesDepliees ? it.zonages : it.zonages.slice(0, ZONES_MAX)
   const zonesCachees = it.zonages.length - ZONES_MAX
   return (
     // OUTILS-REFONTE-1 (9d) — carte CLIQUABLE, SANS bouton : nom · SIREN · commune · N parcelles ·
     // surface · plancher restant · zones. Un clic ouvre le bloc (parcelles, carte, Scan patrimoine).
-    <div data-bloc-row role="button" tabIndex={0} onClick={onToggle}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}
+    <div data-bloc-row onClick={onToggle}
       className="cursor-pointer rounded-lg border border-line-2 bg-surface-3 px-3 py-2.5 transition-colors duration-quick hover:border-mint/50">
       {/* ligne 1 : dénomination · SIREN (droite, vert) */}
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 break-words text-[14px] font-semibold leading-tight text-txt">{it.denomination ?? '—'}</div>
+        <button type="button" aria-expanded={ouvert}
+          className="min-w-0 break-words text-left text-[14px] font-semibold leading-tight text-txt">
+          {it.denomination || 'Titulaire sans dénomination'}
+        </button>
         {it.siren && (
           <span className="shrink-0 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
             <Siren value={it.siren} className="font-mono text-[11px] text-mint" />
@@ -118,7 +133,7 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
       </div>
       {/* ligne 2 : commune · N parcelles */}
       <div className="mt-0.5 text-[10.5px] text-txt-mut">
-        {commune ?? '—'} · <span className="tnum">{it.n_parcelles}</span> parcelles
+        {communes || '—'} · <span className="tnum">{it.n_parcelles}</span> parcelles
       </div>
       {/* ligne 3 : surface · plancher restant (vert) */}
       <div className="mt-1.5 flex items-start gap-8">
@@ -127,12 +142,12 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
           <div className="text-[9px] uppercase tracking-wide text-txt-dim">surface</div>
         </div>
         <div>
-          <div className="tnum text-[13px] font-medium text-mint">{fmtM2(it.sdp_residuelle_m2)}</div>
-          <div className="text-[9px] uppercase tracking-wide text-txt-dim">plancher restant <Estime /></div>
+          <div className="tnum text-[13px] font-medium text-mint">{it.sdp_couverture ? fmtM2(it.sdp_residuelle_m2) : 'Non renseigné'}</div>
+          <div className="text-[9px] uppercase tracking-wide text-txt-dim">plancher restant {it.sdp_couverture > 0 && <Estime />}</div>
           {/* OUTILS-P1-1 (pt 4) — couverture ET méthode d'agrégation EN CLAIR, à côté de la valeur :
               « estimé sur 5 des 9 parcelles (somme par parcelle) » (ou « sur les N parcelles » si complet). */}
           <div data-bloc-couverture className="mt-0.5 text-[9px] normal-case leading-snug text-txt-dim">
-            {it.sdp_couverture < it.n_parcelles
+            {it.sdp_couverture === 0 ? 'Aucune parcelle renseignée' : it.sdp_couverture < it.n_parcelles
               ? <>estimé sur {it.sdp_couverture} des {it.n_parcelles} parcelles (somme par parcelle)</>
               : <>estimé sur les {it.n_parcelles} parcelles (somme par parcelle)</>}
           </div>
@@ -202,17 +217,6 @@ export function Blocs() {
           puis la case « publics » et « Réinitialiser » sur UNE ligne. La liste se met à jour à chaque
           changement (pas de bouton « Voir les parcelles »). */}
       <div data-blocs-filtres className="flex flex-col gap-2">
-        {/* MINI-CORRECTIONS-2 (pt 11 bis) — « Réinitialiser les filtres » remplacé par LA MÊME CROIX que
-            partout ailleurs, en HAUT À DROITE du bloc de filtres, qui remet tous les filtres à leur
-            valeur de départ. Visible seulement si un filtre a été modifié (`dirty`). */}
-        {dirty && (
-          <div className="flex justify-end">
-            <button data-blocs-reset-filtres onClick={resetAll} aria-label="Réinitialiser les filtres"
-              className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">
-              ✕
-            </button>
-          </div>
-        )}
         {/* RETOURS-28 (Blocs, 9d) — 4 BOUTONS-MENUS : le libellé est DANS le bouton (option sélectionnée),
             pas d'intitulé extérieur ; grille de 2 colonnes ÉGALES (wrapClassName w-full) ; police resserrée
             + pl-1 pour que « Plancher restant : tous » tienne SANS troncature sous le chevron (pr-9). */}
@@ -238,16 +242,20 @@ export function Blocs() {
         <div className="flex items-center gap-2 text-[11px] text-txt-mut">
           <Case data-blocs-inclure-publics
             checked={inclurePublics} onChange={(e) => { setInclurePublics(e.target.checked); reset() }}
-            label="Inclure les propriétaires publics" />
+            label="Inclure les propriétaires publics et parapublics" />
           <Tip garder tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
             <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
           </Tip>
-          {/* MINI-CORRECTIONS-2 (pt 11 bis) — « Réinitialiser » retiré d'ici : remplacé par la croix en haut du bloc. */}
+          {dirty && (
+            <Bouton niveau="lien" ton="vert" data-blocs-reset-filtres onClick={resetAll} className="ml-auto">
+              Réinitialiser
+            </Bouton>
+          )}
         </div>
       </div>
 
       {q.isLoading && <Squelette lignes={6} />}
-      {q.isError && <ErrorState message="Signal momentanément indisponible — réessayez." retry={() => q.refetch()} />}
+      {q.isError && <ErrorState message="Liste des blocs momentanément indisponible." retry={() => q.refetch()} />}
       {meta && total === 0 && (
         // ÉTAT VIDE HONNÊTE — jamais de zéros : le périmètre est nommé.
         <p data-blocs-vide className="rounded-lg bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-mut">
@@ -257,23 +265,25 @@ export function Blocs() {
           {nMin > 2 ? ` (≥ ${nMin} parcelles)` : ''}.
           {/* OUTILS-P1-1 (pt 4) — l'unité comptée est le BLOC (« blocs publics »), pas « propriétaires publics ». */}
           {!inclurePublics && meta.n_publics > 0 && (
-            <> {fmtInt(meta.n_publics)} bloc{meta.n_publics > 1 ? 's' : ''} public{meta.n_publics > 1 ? 's' : ''} écarté{meta.n_publics > 1 ? 's' : ''} (cochez « Inclure les propriétaires publics » ci-dessus pour les voir).</>
+            <> {fmtInt(meta.n_publics)} bloc{meta.n_publics > 1 ? 's' : ''} public{meta.n_publics > 1 ? 's' : ''} écarté{meta.n_publics > 1 ? 's' : ''} (cochez « Inclure les propriétaires publics et parapublics » ci-dessus pour les voir).</>
           )}
           {/* OUTILS-P1-1 (pt 4) — millésime de propriété affiché même à l'état vide. */}
-          {meta.millesime && <> Propriété (fichiers PM DGFiP) {meta.millesime}.</>}
+          {meta.maj && <> Blocs calculés le {meta.maj}.</>}
+          {meta.millesime && <> Dernier millésime DGFiP chargé : {meta.millesime}.</>}
         </p>
       )}
       {meta && total > 0 && (
         <>
-          {/* RETOURS-29 (Blocs) — compteur : « N blocs appartenant à des sociétés · M blocs publics
-              masqués » ; la 2ᵉ partie disparaît quand « Inclure les propriétaires publics » est coché. */}
+          {/* RETOURS-29 (Blocs) — compteur : « N blocs rattaché{total > 1 ? 's' : ''} à des personnes morales · M blocs publics
+              masqués » ; la 2ᵉ partie disparaît quand « Inclure les propriétaires publics et parapublics » est coché. */}
           <div data-blocs-bandeau className="rounded-lg bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
-            <b data-blocs-total className="tnum text-txt">{fmtInt(total)}</b> bloc{total > 1 ? 's' : ''} appartenant à des sociétés{commune ? ` — ${commune}` : ''}
+            <b data-blocs-total className="tnum text-txt">{fmtInt(total)}</b> bloc{total > 1 ? 's' : ''} rattaché{total > 1 ? 's' : ''} à des personnes morales{commune ? ` — ${commune}` : ''}
             {!inclurePublics && meta.n_publics > 0 && (
               <span data-blocs-ecartes className="text-txt-dim"> · {fmtInt(meta.n_publics)} bloc{meta.n_publics > 1 ? 's' : ''} public{meta.n_publics > 1 ? 's' : ''} masqué{meta.n_publics > 1 ? 's' : ''}</span>
             )}
             {/* OUTILS-P1-1 (pt 4) — millésime de la donnée de propriété (fichiers PM DGFiP) affiché. */}
-            {meta.millesime && <span data-blocs-millesime className="text-txt-dim"> · propriété (DGFiP) {meta.millesime}</span>}
+            {meta.millesime && <span data-blocs-millesime className="text-txt-dim"> · dernier millésime DGFiP chargé : {meta.millesime}</span>}
+            {meta.maj && <span> · blocs calculés le {meta.maj}</span>}
           </div>
 
           {/* OUTILS-S1 (Lot D) — plus de « Tout sélectionner » ni de case par bloc : la sélection multiple
@@ -288,7 +298,7 @@ export function Blocs() {
             {q.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}
           </ListPaginationFooter>
           {/* OUTILS-REFONTE-1 (9d) — ligne discrète : ce qu'un clic sur une carte ouvre. */}
-          <p className="shrink-0 text-[9.5px] leading-snug text-txt-dim">Un clic ouvre le bloc : parcelles, carte, Scan patrimoine.</p>
+          <p className="shrink-0 text-[9.5px] leading-snug text-txt-dim">Parcelles reliées à 0,5 m ou moins, y compris par un coin. L’outil utilise un seul des titulaires recensés par la DGFiP pour chaque parcelle. Les droits des cotitulaires restent à vérifier.</p>
         </>
       )}
       {/* OUTILS-S1 (Lot D) — pied retiré : « Détail et méthode » remonté dans le « i » de l'en-tête ;

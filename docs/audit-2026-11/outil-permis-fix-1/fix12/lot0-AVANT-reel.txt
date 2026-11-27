@@ -1,0 +1,28 @@
+INFO:     labuse — LA BUSE démarrée · env=local · auth=désactivée (local) · schéma=ÉCHEC(verrou/ensure_schema)
+WARNING:     labuse — LABUSE_SECRET_KEY absente (env=local) : clé de session éphémère (les sessions ne survivront pas à un redémarrage).
+INFO:     httpx — HTTP Request: GET http://testserver/accueil/chiffres "HTTP/1.1 200 OK"
+Base : labuse (lecture seule)
+
+① VEILLE DE PARCELLE — sélection sur l'événement réellement daté (suivi du 01/01/2026)
+  [FAIL] permis_classe.evenement_date_sql absente
+         fonction unique de sélection non encore livrée (LOT 1)
+
+② ALERTE DE ZONE — un permis géolocalisé sans dépôt mais autorisé doit être éligible
+  [FAIL] 278 permis géolocalisés autorisés SANS dépôt — tous inéligibles
+         la clé `date_depot IS NOT NULL` les exclut ; fonction unique de sélection non livrée (LOT 1)
+
+③ ALERTE ENREGISTRÉE 97441521G0020 — titre/détail/fait_date servis
+  [FAIL] doit dire « Permis autorisé » au 2021-03-26
+         servi : label='Permis déposé dans « Centre Saint-Paul »' fait_date='2021-01-01' detail='DP 97441521G0020 déposé le 2021-01-01'
+
+④ CADUCS — route réelle GET /accueil/chiffres + filtre parcellaire
+  [FAIL] GET /accueil/chiffres → permis_caducs == 4836
+         servi : 0
+  [FAIL] filtre parcellaire permis_caduc trouve 97401000AD0106
+         EXISTS pc_caducs = False
+
+— diagnostic (lecture seule) —
+  alertes permis_in_zone « déposé » : 3140 (dont dépôt INVALIDE : 3111, 3021 permis distincts)
+  pc_caducs (table servie)          : 0
+
+ROUGE — 5 fait(s) FAIL : permis_classe.evenement_date_sql absente · 278 permis géolocalisés autorisés SANS dépôt — tous inéligibles · doit dire « Permis autorisé » au 2021-03-26 · GET /accueil/chiffres → permis_caducs == 4836 · filtre parcellaire permis_caduc trouve 97401000AD0106

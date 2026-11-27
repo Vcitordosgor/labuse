@@ -179,8 +179,16 @@ def _bandeau_garde_fou(garde_fou: dict | None) -> str:
     identifié comme celui d'un PROGRAMME SAISI, non vérifié par LABUSE."""
     gf = garde_fou or {}
     alertes = gf.get("alertes") or []
+    # OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — la mention de mixité (même source que l'écran) voyage avec le
+    # garde-fou : un document remis au promoteur ne porte plus un chiffre de charge sans sa réserve.
+    _mx = gf.get("mixite_note")
+    _mx_html = (f'<div class="mixite" style="border:1.5px solid #1d4ed8;background:#eff6ff;'
+                f'border-radius:6px;padding:8px 12px;margin:8px 0;color:#1e3a8a;font-size:10.5px">'
+                f'<strong>Mixité sociale —</strong> {esc(_mx)}</div>') if _mx else ""
+    portion = gf.get("lecture_capacite") or gf.get("mention_portion")
+    note = f'<p class="tete-doc">{esc(portion)}</p>' if portion else ""
     if not alertes:
-        return ""
+        return note + _mx_html
     lignes = "".join(f"<li>{esc(a)}</li>" for a in alertes)
     # CHIRURGICAL-FIX-1 (LOT M 3) — un Bilan livré SANS programme (l'outil le produit de lui-même, sur
     # une parcelle écartée) dit « Aucun programme », PAS « Programme saisi par l'utilisateur ».
@@ -198,7 +206,7 @@ def _bandeau_garde_fou(garde_fou: dict | None) -> str:
         f'<div style="font-weight:700;margin-bottom:3px">{esc(titre)}</div>'
         f'<ul style="margin:4px 0 0 18px;padding:0">{lignes}</ul>'
         f'<div style="margin-top:5px;font-size:10.5px">{esc(bas)}</div></div>'
-    )
+    ) + note + _mx_html
 
 
 def construire_html(
@@ -229,12 +237,15 @@ def construire_html(
     # DOCS-COHERENCE-1 (recette Vic, G6) — en-tête COMPLET : adresse + Étude reliée + prix demandé,
     # comme à l'écran. « — » honnête quand une donnée n'est pas servie (jamais un zéro inventé).
     _etude = etude_reliee or "aucune Étude reliée"
-    _prix = (f"{round(prix_demande):,}".replace(",", " ") + " €") if prix_demande else "non renseigné"
+    _prix = (f"{round(prix_demande):,}".replace(",", " ") + " €/m²") if prix_demande else "non renseigné"
     # DOCS-1 (décision Vic) — RÉSUMÉ de couverture : chiffre d'affaires et résultat net du programme.
     _eur = lambda x: (f"{round(x):,}".replace(",", " ") + " €") if isinstance(x, (int, float)) else "—"  # noqa: E731
     # DOCS-1 (décision Vic) — pas de bénéfice annoncé en couverture tant qu'aucun coût n'est saisi.
-    _res_txt = esc(_eur(r.resultat_net)) if r.resultat_net is not None else "non calculable — saisissez vos coûts"
-    _resume = (f'<p class="tete-doc">CA TTC : {esc(_eur(r.ca_ttc))} · '
+    sans_programme = (garde_fou or {}).get("programme_saisi") is False
+    _ca_txt = "non chiffré" if sans_programme else esc(_eur(r.ca_ttc))
+    _motif_resultat = "non calculable — aucun programme saisi" if sans_programme else "non calculable — saisissez vos coûts"
+    _res_txt = _motif_resultat if sans_programme or r.resultat_net is None else esc(_eur(r.resultat_net))
+    _resume = (f'<p class="tete-doc">CA TTC : {_ca_txt} · '
                f'Résultat net : {_res_txt}</p>')
     tete = (
         f'<div class="brand"><span class="wordmark">LABUSE</span>'
@@ -243,7 +254,7 @@ def construire_html(
         f'<p class="idu">{esc(idu)}'
         + (f" · {esc(adresse)}" if adresse else "")
         + f" · {esc(numero)} · {j:%d/%m/%Y}</p>"
-        f'<p class="tete-doc">Programme : {esc(_etude)} · Prix demandé : {esc(_prix)}</p>'
+        f'<p class="tete-doc">Programme : {esc(_etude)} · Prix de vente TTC le plus élevé du programme : {esc(_prix)}</p>'
         + _resume
         + (map_html or "")   # carte de situation sur la couverture (DOCS-1)
     )
@@ -319,14 +330,14 @@ def construire_html(
     # DOCS-1 (décision Vic) — tant qu'aucun coût majeur n'est saisi, le moteur laisse résultat/marge/
     # cash-flow à None : on écrit « non calculable — saisissez vos coûts », JAMAIS un bénéfice (= tout
     # le CA) trompeur.
-    if r.resultat_net is None:
+    if sans_programme or r.resultat_net is None:
         corps.append(
             "<tr class='tot'><td>Résultat net</td><td colspan='3' class='num'>"
-            "non calculable — saisissez vos coûts</td></tr>"
+            f"{_motif_resultat}</td></tr>"
         )
         corps.append(
             "<tr><td>Cash flow</td><td colspan='3' class='num'>"
-            "non calculable — saisissez vos coûts</td></tr>"
+            f"{_motif_resultat}</td></tr>"
         )
     else:
         corps.append(

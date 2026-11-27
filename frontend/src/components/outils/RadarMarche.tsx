@@ -3,7 +3,7 @@
 // AUCUN chiffre. Les comptes (actives, nouvelles…) sont des faits bruts. État de démarrage = digne :
 // on explique que le corpus se constitue, pas un tableau de tirets qui fait peur. Couleurs source unique.
 import { useQuery } from '@tanstack/react-query'
-import { getRadarMarche, type RadarMarcheLigne, type RadarMesure } from '../../lib/api'
+import { getRadarMarche, messageChargement, type RadarMarcheLigne, type RadarMesure } from '../../lib/api'
 import { communePastille } from '../../lib/communes'   // RECETTE-OUTILS-1 (point 11) — règle d'article
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
@@ -40,13 +40,13 @@ function Ligne({ l, fort = false }: { l: RadarMarcheLigne; fort?: boolean }) {
 }
 
 export function RadarMarche() {
-  const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['radar-marche'], queryFn: getRadarMarche })
+  const { data, isLoading, isError, error, refetch } = useQuery({ queryKey: ['radar-marche'], queryFn: getRadarMarche })
   if (isLoading) return <Squelette lignes={6} className="p-4" />
   // RETOURS-1 R9 (Vic) — CAUSE du « Chargement… » infini : `isError` n'était pas lu — une erreur
   // (ici : '/radar' absent du proxy vite dev → 404 HTML) laissait isLoading=false et data=undefined,
   // et l'écran restait sur « Chargement… » pour toujours. Désormais : erreur DITE + réessayer.
   if (isError || !data) return (
-    <ErrorState message="Le marché du Radar n’a pas pu être chargé — le serveur n’a pas répondu." retry={() => refetch()} />
+    <ErrorState message={messageChargement(error, "Le marché du Radar n’a pas pu être chargé — réessayez.")} retry={() => refetch()} />
   )
   // FRONT-CHIFFRES-2 (F25) — le front ne décide plus le seuil « corpus jeune » : il lit le flag servi.
   const jeune = data.corpus_jeune

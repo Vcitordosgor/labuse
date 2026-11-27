@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { getCommuneAcquisitions, getCommunes, getRadarMarche } from '../../lib/api'
+import { getCommuneAcquisitions, getCommunes, getRadarMarche, messageChargement } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
@@ -158,7 +158,7 @@ function AcquisitionsRecentes() {
       ) : q.isLoading ? (
         <Squelette lignes={6} />
       ) : q.isError || !d ? (
-        <ErrorState message="Constat indisponible — réessayez." retry={() => q.refetch()} />
+        <ErrorState message={messageChargement(q.error, "Constat indisponible — réessayez.")} retry={() => q.refetch()} />
       ) : d.n_total === 0 ? (
         <EmptyState title="Aucun changement de propriétaire moral constaté"
           hint={`depuis ${d.depuis_millesime} à ${commune}.`} />

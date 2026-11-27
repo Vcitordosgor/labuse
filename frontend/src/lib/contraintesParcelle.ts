@@ -1,9 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-const jfetch = async <T,>(url: string): Promise<T> => {
-  const r = await fetch(url)
-  if (!r.ok) throw new Error(`${url} → ${r.status}`)
-  return r.json() as Promise<T>
-}
+import { lireJson } from './api'
 
 export type Alerte = {
   categorie: string
@@ -53,7 +49,7 @@ export function useContraintesParcelle(idu: string) {
   const id = idu.trim()
   return useQuery({
     queryKey: ['o5', id],
-    queryFn: () => jfetch<Servitudes>(`/servitudes-invisibles/${id}`),
+    queryFn: () => lireJson<Servitudes>(`/servitudes-invisibles/${id}`),
     enabled: id.length === 14,
     select: avecGroupes,
   })

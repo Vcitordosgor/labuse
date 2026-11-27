@@ -1068,6 +1068,12 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
             : <><b className="text-txt">{nf.format(live)}</b> parcelles correspondent à vos critères</>}
         </p>
       )}
+      {filters.signaux.includes('permis_caduc') && totalIleQ.data?.permis_caducs_actuels != null
+        && totalIleQ.data.permis_caducs_archives != null && (
+        <p className="mt-1 text-[11px] text-txt-mut">
+          Sur l’île · {nf.format(totalIleQ.data.permis_caducs_actuels)} parcelles actuelles avec un PC probablement caduc · {nf.format(totalIleQ.data.permis_caducs_archives)} anciennes références cadastrales.
+        </p>
+      )}
       {/* VEILLE-2 (Lot 4) — la CRÉATION d'une veille de recherche est RETIRÉE (plus de bouton « Créer une
           veille » depuis les filtres) : la page Veille n'a plus que PARCELLE et RADAR. */}
       </>

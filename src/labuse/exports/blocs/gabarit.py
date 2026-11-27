@@ -6,7 +6,7 @@ incomplet, le document NE se génère PAS (builder.construire_gabarit lève Docu
 from __future__ import annotations
 
 from ..lignes import ligne
-from ..registre_fmt import fmt_m, fmt_m2, fmt_pct
+from ..registre_fmt import fmt_m, fmt_m2, fmt_pct, groupe
 from ..rendu import esc, ligne_kv, note, section, table_kv, verdict
 
 IDS = ("gabarit_zone_libere_m2", "gabarit_implantation_m2", "gabarit_bati_deduit_m2",
@@ -150,21 +150,24 @@ def _bloc_coupes_pilote(scene: dict) -> str:
     figures = [f for f in figures if f]
     if not figures:
         return ""
-    # identifiant de scène porté par le DOCUMENT (parité écran/PDF), pas par la coupe (C10).
-    corps = ('<div class="coupes3d" style="page-break-before:always">'
-             f'<h3>Terrain réel — coupes (pilote 3D)</h3>'
-             f'<p class="src" style="font-size:8px">Scène {esc(str(sid or ""))} — servie pour cet identifiant.</p>')
-    # plan-clé À CÔTÉ de la première coupe (B8) : rangée flex
-    corps += (f'<div style="display:flex;gap:8px;align-items:flex-start">'
-              f'<div class="plan2d" style="flex:1 1 auto">{figures[0]}</div>'
-              f'<div class="plan2d" style="flex:0 0 auto">{plan}</div></div>')
-    for fig in figures[1:]:
-        corps += f'<div class="plan2d" style="margin-top:8px">{fig}</div>'
-    corps += ('</div>' + note(
-        "Cotes indicatives issues du MNT LiDAR HD IGN à 1 m (REUN89). Échelle horizontale = verticale "
-        "(aucune exagération). Une coupe s'interrompt au droit d'une lacune. Aucun plafond de hauteur "
-        "n'est dessiné. Précision locale à établir."))
-    return corps
+    meta = scene.get("meta") or {}
+    pas = meta.get("maille_m")
+    source = meta.get("produit") or meta.get("acquisition_produit") or "MNT IGN"
+    maille = f", maille de {pas:g} m".replace(".", ",") if isinstance(pas, (int, float)) else ""
+    provenance = note(f"{source}{maille} · altitudes en mètres (REUN89). "
+                      "Échelles horizontale et verticale identiques. Cotes indicatives.")
+    pages = []
+    for figure in figures:
+        pages.append(
+            '<section class="coupes3d" style="break-before:page">'
+            '<div style="display:flex;align-items:center;gap:20px">'
+            '<div style="flex:1"><h2>Coupes du terrain</h2>'
+            f'<p>{esc(adr or idu or "")}</p>'
+            f'<p class="src">{esc(idu or "")} · Scène {esc(sid or "")}</p>{provenance}</div>'
+            f'<div class="plan-coupes" style="width:40mm">{plan}</div></div>'
+            f'<div class="plan2d">{figure}</div></section>'
+        )
+    return "".join(pages)
 
 
 def rendu(valeurs, ctx=None) -> str:
@@ -173,6 +176,16 @@ def rendu(valeurs, ctx=None) -> str:
     cv = valeurs.get("gabarit_couverture_verdict")
     if cv is not None and cv.valeur:
         corps += verdict(esc(cv.valeur), "neutral")
+    if gr is not None:
+        def aire(n):
+            return groupe(n, 0 if float(n).is_integer() else 1) + " m²"
+        solde = getattr(gr, "empriseSupplementaireM2", None)
+        if solde is not None and gr.plafondEmpriseM2 is not None and gr.batiConserveM2 is not None:
+            corps += note(f"Emprise supplémentaire estimée · {aire(solde)}. "
+                          f"Plafond total {aire(gr.plafondEmpriseM2)} · bâti cartographié conservé {aire(gr.batiConserveM2)}.")
+        morceaux = getattr(gr, "surfacesContinuesM2", [])
+        if len(morceaux) > 1:
+            corps += note(f"{len(morceaux)} surfaces séparées · {aire(morceaux[0])} pour la plus grande.")
     plan = valeurs.get("gabarit_plan_2d")
     if plan is not None and plan.valeur:
         # le plan 2D est un fragment SVG déjà composé par le moteur (gabarit_svg) — embarqué tel quel.
@@ -231,27 +244,36 @@ def rendu(valeurs, ctx=None) -> str:
     if _au:
         corps += verdict(esc(_au.get("libelle") or "Potentiel différé — ouverture de la zone requise"),
                          "warn")
-    # RECETTE-OUTILS-2 (R16) — page « Vue 3D » : axonométrie du MÊME volume que l'outil (enveloppe
-    # extrudée à la hauteur sourcée + bâti existant), rendue en SVG serveur (l'écran la fait en WebGL,
-    # non reproductible ici). Sol plat → légende « Volume indicatif — terrain supposé plat ». Absente si
-    # la hauteur n'est pas chiffrée (prospect) : pas de volume, comme l'outil dit « 3D indisponible ».
-    try:
-        from ...gabarit.plan_svg import gabarit_svg_3d
-        svg3d = gabarit_svg_3d(gr) if gr is not None else None
-    except Exception:  # noqa: BLE001 — la vue 3D est un plus, jamais un bloqueur du document
-        svg3d = None
-    if svg3d:
-        corps += ('<div class="vue3d" style="page-break-before:always">'
-                  '<h3>Vue 3D du gabarit</h3>'
-                  f'<div class="plan3d">{svg3d}</div></div>')
-    # GABARIT-3D-1 (pilote) — l'export reprend la SCÈNE (terrain réel) : plan-clé + deux coupes
-    # vectorielles (SVG serveur, sans réseau ni GPU). GATÉ sur ctx['scene3d'] : absent dans le
-    # document par défaut → PDF inchangé pour tous (interrupteur réservé au pilote admin).
+    if isinstance(ctx, dict) and "terrain_pdf" in ctx:
+        from ...gabarit.relief_pdf import vue_relief_pdf
+        scene = ctx["terrain_pdf"]
+        figure = vue_relief_pdf(scene, gr, ctx.get("sommets"))
+        if figure:
+            corps += ('<div class="vue3d" style="break-before:page"><h2>Vue 3D du gabarit</h2>'
+                      f'<div class="plan3d">{figure}</div>')
+            cotes = ctx.get("cotes_pdf")
+            if cotes:
+                def metres(k):
+                    return f"{cotes[k]:.2f}".replace(".", ",") + " m"
+                corps += (f'<p><b>Dénivelé sur le terrain dégagé · {metres("denivele_m")}</b><br>'
+                          f'Point bas {metres("bas_m")} · point haut {metres("haut_m")}</p>')
+            from ...gabarit.coupe_svg import coupe_svg, plan_cle_svg
+            coupe = next((c for c in scene["coupes"] if c["label"] == "A" and c["cotes"]["disponible"]), None)
+            if coupe:
+                profil = coupe_svg(coupe, theme="clair", width=460, h_max=265, header=False)
+                repere = {**scene, "axes_plan": {"A": scene["axes_plan"]["A"]}, "coupes": [coupe]}
+                cle = plan_cle_svg(repere, theme="clair", width=160, height=150)
+                if profil and cle:
+                    corps += ('<h3>Coupe A–A′ · pente dominante</h3><div style="display:flex;align-items:center">'
+                              f'<div style="width:73%" class="plan2d">{profil}</div>'
+                              f'<div style="width:27%" class="plan2d">{cle}</div></div>')
+            corps += '</div>'
+        else:
+            corps += note("Relief IGN indisponible sur cette parcelle. Le plan 2D présente les emprises et les reculs.")
     scene3d = (ctx or {}).get("scene3d") if isinstance(ctx, dict) else None
     if scene3d:
         corps += _bloc_coupes_pilote(scene3d)
-    corps += note("Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Une étude par un "
-                  "professionnel peut modifier ces valeurs.")
+    corps += note("Étude de pré-faisabilité sur règlement public. Les cotes du terrain restent indicatives.")
     # DOCS-DA-1 (V10) — plus de ligne « Sources : » sous la section (comme le Dossier) ; les sources
     # restent portées par les badges de nature et le pied légal du document.
     return section("Enveloppe réglementaire (gabarit)", corps)

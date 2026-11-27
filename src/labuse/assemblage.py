@@ -14,8 +14,96 @@ from sqlalchemy.orm import Session
 from . import runs  # run servi (point de vérité unique) — lu à la requête
 from .proprietaire_type import classify_owner_type
 
-ADJ_BUFFER_M = 0.5          # contact cadastral (cf. voisinage)
+ADJ_BUFFER_M = 0.5          # contact cadastral (cf. voisinage) — distance MAX pour considérer un lien
+# OUTIL-ASSEMBLAGE-FIX-1 (LOT 1) — longueur MINIMALE de bord cadastral PARTAGÉ pour qualifier une vraie
+# mitoyenneté (« bord commun »). En deçà (contact par un seul point : bord mesuré ~0), l'assiette n'est
+# PAS d'un seul tenant. Les vrais bords du relecteur mesurent 10–43 m, les contacts ponctuels 0 m : 0,5 m
+# sépare proprement les deux (et absorbe les artefacts de précision d'une intersection ponctuelle).
+SEUIL_BORD_M = 0.5
 _INTERESSANT = ("opportunite", "a_creuser")
+
+
+# OUTIL-ASSEMBLAGE-FIX-1 (LOT 1) — SQL de mesure d'un lien entre deux parcelles proches : distance
+# (0 = elles se touchent) et LONGUEUR du bord cadastral commun (part LIGNE de l'intersection ;
+# un contact ponctuel donne un ST_Point → longueur 0). Même seuil `ADJ_BUFFER_M` que la détection.
+_LIENS_MESURE = text("""
+    SELECT a.id AS a, b.id AS b,
+           ST_Distance(a.geom_2975, b.geom_2975) AS dist,
+           COALESCE(ST_Length(ST_CollectionExtract(
+               ST_Intersection(a.geom_2975, b.geom_2975), 2)), 0.0) AS bord
+    FROM parcels a JOIN parcels b
+      ON a.id < b.id AND ST_DWithin(a.geom_2975, b.geom_2975, :buf)
+    WHERE a.id = ANY(:ids) AND b.id = ANY(:ids)""")
+
+
+#: OUTIL-ASSEMBLAGE-FIX-6 (LOT 5) — en deçà de cette longueur, un bord cadastral PARTAGÉ (part LIGNE de
+#: l'intersection, donc > 0) est trop court pour fonder une opération « d'un seul tenant » : on le signale
+#: « à vérifier » — mais il reste un SEGMENT décrit par sa longueur, JAMAIS « un point » (audit finding 5 :
+#: CV1134/CV1381 partagent 0,34 m, CV1334/CV1435 0,48 m — l'outil renvoyait « type: point, aucun bord »).
+_EPS_BORD_M = 0.01
+
+
+def classer_lien(dist_m: float, bord_m: float) -> dict:
+    """OUTIL-ASSEMBLAGE-FIX-1/6 (LOT 1/5) — les verdicts d'un lien entre deux parcelles proches
+    (≤ `ADJ_BUFFER_M`), pour ne plus donner le même feu vert à une mitoyenneté vérifiée qu'à un
+    contact ponctuel, un bord trop court ou un petit vide :
+      · ``bord``       — bord cadastral commun MESURÉ (≥ `SEUIL_BORD_M`) : SEULE vraie mitoyenneté, la
+                         seule qui autorise une opération « d'un seul tenant » (porte `longueur_bord_m`) ;
+      · ``bord_court`` — bord cadastral PARTAGÉ mais plus court que `SEUIL_BORD_M` (segment réel,
+                         `longueur_bord_m` > 0) : décrit AVEC sa longueur et signalé `a_verifier` — c'est
+                         un segment, pas un point (le seuil prudent justifie une vérification foncière, il
+                         ne transforme pas un bord cadastral en point) ;
+      · ``point``      — contact par un seul point (les polygones se touchent sans partager AUCUN bord :
+                         part ligne nulle) ;
+      · ``vide``       — petit vide cadastral (séparées de `vide_m` > 0, sous la tolérance) : la fusion des
+                         géométries ne comble PAS ce vide.
+    """
+    dist_m, bord_m = float(dist_m or 0.0), float(bord_m or 0.0)
+    if bord_m >= SEUIL_BORD_M:
+        return {"type": "bord", "longueur_bord_m": round(bord_m, 2), "vide_m": None, "a_verifier": False}
+    if bord_m > _EPS_BORD_M:   # segment réel mais court → à vérifier, jamais « un point »
+        return {"type": "bord_court", "longueur_bord_m": round(bord_m, 2), "vide_m": None, "a_verifier": True}
+    if dist_m <= _EPS_BORD_M:
+        return {"type": "point", "longueur_bord_m": round(bord_m, 2), "vide_m": None, "a_verifier": True}
+    return {"type": "vide", "longueur_bord_m": None, "vide_m": round(dist_m, 2), "a_verifier": True}
+
+
+def liens_assiette(session: Session, ids: list[int]) -> list[dict]:
+    """Les liens classés (bord/point/vide) entre les parcelles `ids`, du moteur de mesure PostGIS."""
+    rows = session.execute(_LIENS_MESURE, {"ids": ids, "buf": ADJ_BUFFER_M}).mappings().all()
+    return [{"a": r["a"], "b": r["b"], **classer_lien(r["dist"], r["bord"])} for r in rows]
+
+
+def verdicts_contiguite(session: Session, ids: list[int]) -> dict:
+    """OUTIL-ASSEMBLAGE-FIX-1 (LOT 1) — les verdicts de contiguïté d'une sélection ORDONNÉE d'ids,
+    partagés par l'écran (`/moteurs/assemblage`) et l'orphelin `/assemblage/study` :
+      · ``contigu`` / ``tenant_unique`` — tous reliés par de VRAIS bords (seule « contiguë ») ;
+      · ``relie``        — tous dans UN bloc via n'importe quel lien ≤ `ADJ_BUFFER_M` (gate du chiffrage) ;
+      · ``lien_faible``  — relié mais via ≥ 1 contact ponctuel / petit vide ;
+      · ``liens``        — liste brute `[{a, b, type, longueur_bord_m, vide_m}]` (ids internes) ;
+      · ``isolees_ids``  — ids hors du bloc relié de `ids[0]` (séparés > tolérance cadastrale)."""
+    liens = liens_assiette(session, ids)
+    adj_all: dict[int, set[int]] = {i: set() for i in ids}
+    adj_bord: dict[int, set[int]] = {i: set() for i in ids}
+    for ln in liens:
+        adj_all[ln["a"]].add(ln["b"]); adj_all[ln["b"]].add(ln["a"])
+        if ln["type"] == "bord":
+            adj_bord[ln["a"]].add(ln["b"]); adj_bord[ln["b"]].add(ln["a"])
+
+    def _comp(adj: dict[int, set[int]]) -> set[int]:
+        seen, stack = {ids[0]}, [ids[0]]
+        while stack:
+            for nb in adj[stack.pop()]:
+                if nb not in seen:
+                    seen.add(nb); stack.append(nb)
+        return seen
+
+    seen_all = _comp(adj_all)
+    tenant = len(_comp(adj_bord)) == len(ids)
+    relie = len(seen_all) == len(ids)
+    return {"contigu": tenant, "tenant_unique": tenant, "relie": relie,
+            "lien_faible": relie and not tenant, "liens": liens,
+            "isolees_ids": [i for i in ids if i not in seen_all]}
 
 
 def _params() -> dict:
@@ -119,64 +207,130 @@ def find_assemblages(session: Session, commune: str, limit: int = 100) -> list[d
     return out
 
 
-# ASSEMBLAGE-2 (RETOUCHES-1 lot B.4) — l'assiette d'un assemblage = l'UNION des géométries, jamais
-# la somme des résiduels par parcelle (qui compte DEUX FOIS les reculs INTERNES entre parcelles et
-# multiplie la VRD par le nombre de parcelles). On insète le CONTOUR EXTÉRIEUR de l'union du recul
-# séparatif (les limites internes disparaissent dans ST_Union), on clippe à la portion U/AU, on
-# retranche l'union des grèves (ER ∪ EBC ∪ PPR rouge ∪ PEB A/B ∪ marchepied DPF ∪ ravine ∪ 50 pas ∩
-# assiette, jamais deux fois un chevauchement) — MÊME logique et MÊMES seuils que l'assiette clippée
-# servie (faisabilite/db.py `_EMPRISE` + `_GREVE_CERTAINE`), appliquée à l'union.
-_EMPRISE_UNION = text("""
-WITH u AS (
-    SELECT ST_Union(geom_2975) AS g, ST_Area(ST_Union(geom_2975)) AS surface,
-           ST_Buffer(ST_Union(geom_2975), -:d) AS b
-    FROM parcels WHERE id = ANY(:ids)),
-uau AS (
-    SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(z.geom_2975, u.b))) AS uu
-    FROM spatial_layers z, u
-    WHERE z.kind = :zkind AND z.commune = :commune
-      AND labuse_zone_famille(z.subtype) = ANY(:uau_fams)
-      AND ST_Intersects(z.geom_2975, u.b)),
-assiette AS (
-    SELECT CASE WHEN uau.uu IS NULL THEN u.b ELSE ST_Intersection(u.b, uau.uu) END AS a,
-           ST_Area(u.b) AS full_area, u.surface AS surface, u.b AS b
-    FROM u LEFT JOIN uau ON TRUE),
+# OUTIL-ASSEMBLAGE-FIX-1 (LOT 2) — la capacité de l'union se calcule ZONE PAR ZONE : chaque portion
+# de l'union reçoit les règles de SA propre zone (emprise, hauteur, recul), puis on additionne les SDP.
+# Avant, la zone DOMINANTE régissait tout le calcul (audit ASTRA bloquant 2 : U2h recevait la hauteur
+# U2b, Uh recevait l'emprise Uj). On conserve le CONTOUR de l'union (les limites INTERNES entre parcelles
+# disparaissent dans ST_Union) : chaque zone insète l'union de SON recul (contour extérieur seulement —
+# `ST_Buffer` sur l'union ne touche pas la limite interne entre zones), clippe à U/AU, intersecte SA
+# zone, retranche les grèves. Reproduit à l'euro les contrôles du relecteur (DH 32 174, BZ 1 460, 1 007).
+
+# 1er token du libellé = code court de zone (même extraction que api/tiles + zone_servie).
+_TOK_ZONE = ("COALESCE(NULLIF(rtrim(split_part(btrim(z.attrs->>'libelle'), ' ', 1), ':'), ''), "
+             "rtrim(split_part(btrim(z.name), ' ', 1), ':'))")
+
+# Les zones U/AU (codes courts distincts) qui touchent l'union — une portion par zone.
+_ZONES_UNION = text(f"""
+WITH u AS (SELECT ST_Union(geom_2975) AS g FROM parcels WHERE id = ANY(:ids))
+SELECT {_TOK_ZONE} AS zone, labuse_zone_famille(z.subtype) AS fam
+FROM spatial_layers z, u
+WHERE z.kind = :zkind AND z.commune = :commune
+  AND labuse_zone_famille(z.subtype) = ANY(:uau_fams)
+  AND ST_Intersects(z.geom_2975, u.g)
+GROUP BY 1, 2
+HAVING sum(ST_Area(ST_Intersection(ST_MakeValid(z.geom_2975), (SELECT g FROM u)))) > 0
+ORDER BY sum(ST_Area(ST_Intersection(ST_MakeValid(z.geom_2975), (SELECT g FROM u)))) DESC
+""")
+
+# Emprise constructible d'UNE zone : union insetée de SON recul (contour extérieur), ∩ U/AU, ∩ SA zone,
+# − grèves (ER ∪ EBC ∪ PPR rouge ∪ PEB A/B ∪ marchepied DPF ∪ ravine ∪ 50 pas ∩ cette portion). Rend
+# aussi la surface de TERRAIN de la zone (union ∩ zone, sans recul) pour le plafond CES/densité.
+_EMPRISE_ZONE = text(f"""
+WITH u AS (SELECT ST_Union(geom_2975) AS g FROM parcels WHERE id = ANY(:ids)),
+ins AS (SELECT ST_Buffer(g, -:d) AS b, g FROM u),
+zed AS (SELECT ST_Union(ST_MakeValid(z.geom_2975)) AS zz FROM spatial_layers z, ins
+        WHERE z.kind = :zkind AND z.commune = :commune AND {_TOK_ZONE} = :zone
+          AND ST_Intersects(z.geom_2975, ins.b)),
+uau AS (SELECT ST_Union(ST_MakeValid(z.geom_2975)) AS uu FROM spatial_layers z, ins
+        WHERE z.kind = :zkind AND z.commune = :commune
+          AND labuse_zone_famille(z.subtype) = ANY(:uau_fams) AND ST_Intersects(z.geom_2975, ins.b)),
+ass AS (SELECT ST_Intersection(ST_Intersection(ins.b, COALESCE(uau.uu, ins.b)),
+                               (SELECT zz FROM zed)) AS a, ins.g AS g
+        FROM ins LEFT JOIN uau ON TRUE),
 greve AS (
-    SELECT ST_MakeValid(ST_ClipByBox2D(e.geom_2975, a.b)) AS geom FROM spatial_layers e, assiette a
-      WHERE e.kind = :pkind AND e.commune = :commune AND e.subtype = ANY(:er_types)
-        AND ST_Intersects(e.geom_2975, a.b)
+    SELECT ST_MakeValid(ST_ClipByBox2D(e.geom_2975, ass.a)) AS geom FROM spatial_layers e, ass
+      WHERE e.kind = :pkind AND e.commune = :commune AND e.subtype = ANY(:er_types) AND ST_Intersects(e.geom_2975, ass.a)
   UNION ALL
-    SELECT ST_MakeValid(ST_ClipByBox2D(e.geom_2975, a.b)) FROM spatial_layers e, assiette a
-      WHERE e.kind = :pkind AND e.commune = :commune AND e.subtype = ANY(:ebc_types)
-        AND ST_Intersects(e.geom_2975, a.b)
+    SELECT ST_MakeValid(ST_ClipByBox2D(e.geom_2975, ass.a)) FROM spatial_layers e, ass
+      WHERE e.kind = :pkind AND e.commune = :commune AND e.subtype = ANY(:ebc_types) AND ST_Intersects(e.geom_2975, ass.a)
   UNION ALL
-    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, a.b)) FROM spatial_layers g, assiette a
-      WHERE g.kind = 'ppr' AND g.commune = :commune AND g.subtype = ANY(:ppr_red)
-        AND ST_Intersects(g.geom_2975, a.b)
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, ass.a)) FROM spatial_layers g, ass
+      WHERE g.kind = 'ppr' AND g.commune = :commune AND g.subtype = ANY(:ppr_red) AND ST_Intersects(g.geom_2975, ass.a)
   UNION ALL
-    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, a.b)) FROM spatial_layers g, assiette a
-      WHERE g.kind = 'peb' AND lower(g.subtype) = ANY(:peb_ab) AND ST_Intersects(g.geom_2975, a.b)
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, ass.a)) FROM spatial_layers g, ass
+      WHERE g.kind = 'peb' AND lower(g.subtype) = ANY(:peb_ab) AND ST_Intersects(g.geom_2975, ass.a)
   UNION ALL
-    SELECT ST_Buffer(ST_MakeValid(g.geom_2975), :dpf_m) FROM spatial_layers g, assiette a
-      WHERE g.kind = 'dpf' AND g.commune = :commune AND ST_DWithin(g.geom_2975, a.b, :dpf_m)
+    SELECT ST_Buffer(ST_MakeValid(g.geom_2975), :dpf_m) FROM spatial_layers g, ass
+      WHERE g.kind = 'dpf' AND g.commune = :commune AND ST_DWithin(g.geom_2975, ass.a, :dpf_m)
   UNION ALL
-    SELECT ST_Buffer(ST_MakeValid(g.geom_2975), :rav_m) FROM spatial_layers g, assiette a
-      WHERE g.kind = 'ravine' AND g.commune = :commune AND ST_DWithin(g.geom_2975, a.b, :rav_m)
+    SELECT ST_Buffer(ST_MakeValid(g.geom_2975), :rav_m) FROM spatial_layers g, ass
+      WHERE g.kind = 'ravine' AND g.commune = :commune AND ST_DWithin(g.geom_2975, ass.a, :rav_m)
   UNION ALL
-    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, a.b)) FROM spatial_layers g, assiette a
-      WHERE g.kind = 'cinquante_pas' AND g.commune = :commune AND ST_Intersects(g.geom_2975, a.b)
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, ass.a)) FROM spatial_layers g, ass
+      WHERE g.kind = 'cinquante_pas' AND g.commune = :commune AND ST_Intersects(g.geom_2975, ass.a)
 )
-SELECT a.full_area, ST_Area(a.a) AS assiette_area, a.surface,
-       COALESCE(ST_Area(ST_Intersection(a.a, gg.u)), 0.0) AS greve_area
-FROM assiette a LEFT JOIN (SELECT ST_Union(geom) AS u FROM greve) gg ON TRUE
+SELECT GREATEST(0.0, ST_Area(ass.a) - COALESCE(
+         (SELECT ST_Area(ST_Intersection(ass.a, ST_Union(geom))) FROM greve), 0.0)) AS emprise_z,
+       ST_Area(ST_Intersection(ass.g, (SELECT zz FROM zed))) AS surface_z,
+       -- OUTIL-ASSEMBLAGE-FIX-8 (LOT 6) — surface EFFECTIVEMENT retranchée de l'enveloppe constructible
+       -- (contrainte ∩ enveloppe post-recul `ass.a`), par type, pour l'AFFICHER à côté de la surface
+       -- brute (ex. PPR rouge 935 m² dont ~41 m² réellement retirés de l'assiette constructible).
+       COALESCE((SELECT ST_Area(ST_Union(ST_Intersection(ST_MakeValid(g.geom_2975), ass.a)))
+                 FROM spatial_layers g WHERE g.kind = 'ppr' AND g.commune = :commune
+                   AND g.subtype = ANY(:ppr_red) AND ST_Intersects(g.geom_2975, ass.a)), 0.0) AS rouge_eff,
+       COALESCE((SELECT ST_Area(ST_Union(ST_Intersection(ST_MakeValid(e.geom_2975), ass.a)))
+                 FROM spatial_layers e WHERE e.kind = :pkind AND e.commune = :commune
+                   AND e.subtype = ANY(:er_types) AND ST_Intersects(e.geom_2975, ass.a)), 0.0) AS er_eff,
+       COALESCE((SELECT ST_Area(ST_Union(ST_Intersection(ST_MakeValid(e.geom_2975), ass.a)))
+                 FROM spatial_layers e WHERE e.kind = :pkind AND e.commune = :commune
+                   AND e.subtype = ANY(:ebc_types) AND ST_Intersects(e.geom_2975, ass.a)), 0.0) AS ebc_eff
+FROM ass
+""")
+
+# Retranchements AFFICHÉS (ce que les parcelles contiennent, mesuré SUR l'union DESSINÉE, non insetée) :
+# part hors zone constructible, zone rouge PPR, emplacement réservé, espace boisé classé — en m², pour
+# que l'utilisateur voie ce qui a été retiré et pourquoi (audit ASTRA bloquant 2).
+_RETRANCH_UNION = text(f"""
+WITH u AS (SELECT ST_Union(geom_2975) AS g, ST_Area(ST_Union(geom_2975)) AS surface
+           FROM parcels WHERE id = ANY(:ids)),
+uau AS (SELECT ST_Union(ST_MakeValid(z.geom_2975)) AS uu FROM spatial_layers z, u
+        WHERE z.kind = :zkind AND z.commune = :commune
+          AND labuse_zone_famille(z.subtype) = ANY(:uau_fams)
+          AND NOT (labuse_zone_famille(z.subtype) = 'AU' AND {_TOK_ZONE} = ANY(:codes_fermes))
+          AND ST_Intersects(z.geom_2975, u.g))
+SELECT u.surface AS surface_union,
+  COALESCE(ST_Area(ST_Intersection(u.g, uau.uu)), 0.0) AS surface_constructible,
+  COALESCE((SELECT ST_Area(ST_Union(ST_Intersection(ST_MakeValid(g.geom_2975), u.g))) FROM spatial_layers g
+            WHERE g.kind = 'ppr' AND g.commune = :commune AND g.subtype = ANY(:ppr_red)
+              AND ST_Intersects(g.geom_2975, u.g)), 0.0) AS rouge,
+  COALESCE((SELECT ST_Area(ST_Union(ST_Intersection(ST_MakeValid(e.geom_2975), u.g))) FROM spatial_layers e
+            WHERE e.kind = :pkind AND e.commune = :commune AND e.subtype = ANY(:er_types)
+              AND ST_Intersects(e.geom_2975, u.g)), 0.0) AS er,
+  COALESCE((SELECT ST_Area(ST_Union(ST_Intersection(ST_MakeValid(e.geom_2975), u.g))) FROM spatial_layers e
+            WHERE e.kind = :pkind AND e.commune = :commune AND e.subtype = ANY(:ebc_types)
+              AND ST_Intersects(e.geom_2975, u.g)), 0.0) AS ebc
+FROM u LEFT JOIN uau ON TRUE
 """)
 
 
+def _greve_params(presc: dict, risq: dict, pebp: dict, dpfp: dict, ravp: dict) -> dict:
+    return {
+        "pkind": presc.get("spatial_kind", "plu_gpu_prescription"),
+        "er_types": [str(t) for t in presc.get("emplacement_reserve_typepsc", ["05"])],
+        "ebc_types": [str(t) for t in presc.get("boise_classe_typepsc", ["01"])],
+        "ppr_red": [str(s) for s in risq.get("ppr_red_subtypes", ["INTERDICTION"])],
+        "peb_ab": [str(z).lower() for z in pebp.get("hard_zones", ["a", "b"])],
+        "dpf_m": float(dpfp.get("marchepied_m", 3.25)),
+        "rav_m": float(ravp.get("buffer_m", 10)),
+    }
+
+
 def _capacite_union(session: Session, parcels: list) -> dict | None:
-    """ASSEMBLAGE-2 — capacité + bilan de l'UNION des parcelles : UNE assiette (l'union insetée,
-    clippée U/AU, moins les grèves), UN passage du moteur de capacité (`estimate_capacity`, le même
-    que le résiduel/la fiche), UNE charge foncière (`compute_bilan_servi`, VRD sur l'emprise
-    RÉELLEMENT aménagée — COMPARER-2 §2). None si aucune parcelle n'est constructible."""
+    """OUTIL-ASSEMBLAGE-FIX-1 (LOT 2) — capacité + bilan de l'UNION, calculés ZONE PAR ZONE : chaque
+    portion de l'union reçoit les règles de SA zone (emprise/hauteur/recul), `estimate_capacity` par
+    zone (le MÊME moteur que la fiche), puis on additionne les SDP. UNE charge foncière sur la fourchette
+    AGRÉGÉE (`compute_bilan_servi`, VRD sur l'emprise réellement aménagée). None si aucune zone
+    constructible. Reproduit les contrôles multizones du relecteur à l'euro près."""
     import dataclasses
 
     from .faisabilite.bilan import compute_bilan_servi
@@ -184,7 +338,7 @@ def _capacite_union(session: Session, parcels: list) -> dict | None:
     from .faisabilite.engine import Hypotheses, estimate_capacity
     from .faisabilite.zonage import resolve_zone
 
-    # parcelle DOMINANTE constructible (plus grande surface) : porte la zone/commune de référence
+    # parcelle DOMINANTE constructible (plus grande surface) : porte la commune/contraintes de référence
     # (assemblage = parcelles contiguës, même secteur) + le prix de sortie du secteur pour le bilan.
     dom = None
     for p in sorted(parcels, key=lambda p: p.surface_m2 or 0, reverse=True):
@@ -196,72 +350,154 @@ def _capacite_union(session: Session, parcels: list) -> dict | None:
         return None
     p_dom, (ctx_dom, _f_dom) = dom
     commune = ctx_dom.commune
-    rules = resolve_zone(ctx_dom.zone, ctx_dom.commune) if ctx_dom.zone else None
-    if rules is None:
-        return None
     hyp = Hypotheses.charger(commune)
-    recul = (float(rules.recul_limites_sep_m)
-             if isinstance(rules.recul_limites_sep_m, (int, float))
-             else hyp.recul_limites_defaut_m)
     zonage, presc = _layer_params("zonage_plu_gpu"), _layer_params("prescription_plu")
     risq, dpfp, ravp, pebp = (_layer_params("risques"), _layer_params("dpf"),
                               _layer_params("ravine"), _layer_params("peb"))
-    row = session.execute(_EMPRISE_UNION, {
-        "ids": [p.id for p in parcels], "d": recul, "commune": commune,
-        "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
-        "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"])),
-        "pkind": presc.get("spatial_kind", "plu_gpu_prescription"),
-        "er_types": [str(t) for t in presc.get("emplacement_reserve_typepsc", ["05"])],
-        "ebc_types": [str(t) for t in presc.get("boise_classe_typepsc", ["01"])],
-        "ppr_red": [str(s) for s in risq.get("ppr_red_subtypes", ["INTERDICTION"])],
-        "peb_ab": [str(z).lower() for z in pebp.get("hard_zones", ["a", "b"])],
-        "dpf_m": float(dpfp.get("marchepied_m", 3.25)),
-        "rav_m": float(ravp.get("buffer_m", 10)),
-    }).one()
-    surface_union = float(row.surface or 0.0)             # union DESSINÉE totale (toute l'assiette)
-    inset_total = float(row.full_area or 0.0)             # union insetée (après recul), toutes zones
-    inset_uau = float(row.assiette_area or 0.0)           # union insetée ∩ zone constructible U/AU
-    emprise = max(0.0, inset_uau - float(row.greve_area or 0.0))
-    if surface_union <= 0 or emprise <= 0:
+    ids = [p.id for p in parcels]
+    zkind = zonage.get("spatial_kind", "plu_gpu_zone")
+    uau_fams = list(zonage.get("positive_prefixes", ["U", "AU"]))
+    gparams = _greve_params(presc, risq, pebp, dpfp, ravp)
+
+    def _recul(rz) -> float:
+        return (float(rz.recul_limites_sep_m) if isinstance(rz.recul_limites_sep_m, (int, float))
+                else hyp.recul_limites_defaut_m)
+
+    zones = session.execute(_ZONES_UNION, {
+        "ids": ids, "commune": commune, "zkind": zkind, "uau_fams": uau_fams}).mappings().all()
+
+    zones_detail: list[dict] = []
+    sdp_tot = emprise_tot = shab_tot = silo_tot = 0.0
+    # OUTIL-ASSEMBLAGE-FIX-8 (LOT 6) — surfaces EFFECTIVEMENT retranchées (contrainte ∩ enveloppe
+    # constructible post-recul), sommées sur les zones CONSTRUCTIBLES, pour les afficher à côté du brut.
+    rouge_eff_tot = er_eff_tot = ebc_eff_tot = 0.0
+    # OUTIL-ASSEMBLAGE-FIX-6 (LOT 2) — nombre de logements du programme = SOMME de TOUTES les portions
+    # constructibles (comme les surfaces), pour le test des seuils 20/30 de l'Art. 2 de Saint-Paul : en
+    # multizone, reprendre l'effectif de la seule zone représentative (f_rep) sous-estimait le programme
+    # (audit finding 3). Exact en mono-zone (une seule portion). Ne sert QUE la clause de mixité.
+    logements_tot = 0.0
+    surf_dom = -1.0
+    f_rep = None                    # faisabilité représentative (zone de plus grande surface) pour le bilan
+    codes_fermes = []
+    for z in zones:
+        rules_z = resolve_zone(z["zone"], commune)
+        if rules_z is None:
+            continue
+        fermee = z["fam"] == "AU" and not rules_z.constructible_neuf
+        if fermee:
+            codes_fermes.append(z["zone"])
+        recul_z = _recul(rules_z)
+        er = session.execute(_EMPRISE_ZONE, {
+            "ids": ids, "commune": commune, "d": recul_z, "zone": z["zone"],
+            "zkind": zkind, "uau_fams": uau_fams, **gparams}).one()
+        emprise_z = 0.0 if fermee else max(0.0, float(er.emprise_z or 0.0))
+        surface_z = float(er.surface_z or 0.0)
+        detail = {"zone": z["zone"], "fam": z["fam"], "surface_m2": round(surface_z),
+                  "emprise_m2": round(emprise_z), "recul_limites_m": recul_z,
+                  "recul_voirie_m": (float(rules_z.recul_voirie_m)
+                                     if isinstance(rules_z.recul_voirie_m, (int, float)) else None),
+                  "sdp_m2": 0, "niveaux": None, "constructible": False}
+        if emprise_z <= 0 or surface_z <= 0:
+            zones_detail.append(detail)
+            continue
+        f_z = estimate_capacity(rules_z, surface_z, ctx_dom.contraintes, hyp=hyp,
+                                emprise_geo=(emprise_z, recul_z), extras={})
+        frz = f_z.fourchette or {}
+        sdp_z = float(frz.get("surface_plancher_m2") or 0.0)
+        if not f_z.constructible or sdp_z <= 0:
+            zones_detail.append(detail)
+            continue
+        sdp_tot += sdp_z
+        emprise_tot += emprise_z
+        rouge_eff_tot += float(getattr(er, "rouge_eff", 0.0) or 0.0)   # LOT 6 — effectif retranché
+        er_eff_tot += float(getattr(er, "er_eff", 0.0) or 0.0)
+        ebc_eff_tot += float(getattr(er, "ebc_eff", 0.0) or 0.0)
+        shab_tot += float(frz.get("shab_vendable_m2") or 0.0)
+        silo_tot += float(frz.get("shab_vendable_silo_m2") or 0.0)
+        # OUTIL-ASSEMBLAGE-FIX-6 (LOT 2) — logements de CETTE portion (max au sol / sous-sol, comme les
+        # context builders du bilan), ADDITIONNÉS pour le test des seuils de mixité. Lecture locale au test
+        # de mixité (pas un nouveau lecteur « servi » : le nombre de logements AFFICHÉ reste celui de l'Étude).
+        logements_tot += max(float((frz.get("logements_au_sol") or (0, 0))[1]),
+                             float((frz.get("logements_sous_sol") or (0, 0))[1]))
+        if surface_z > surf_dom:
+            surf_dom, f_rep = surface_z, f_z
+        detail.update({"sdp_m2": round(sdp_z), "niveaux": frz.get("niveaux_max"), "constructible": True})
+        zones_detail.append(detail)
+    if sdp_tot <= 0 or f_rep is None:
         return None
-    # NU-G-007 — la SDP cumulée est BORNÉE à la part de l'assiette EN ZONE CONSTRUCTIBLE, comme le
-    # `bilan_surfacique` de l'Étude du même assemblage. L'emprise géométrique est déjà clippée U/AU ;
-    # restait le plafond CES (= surface × CES%) calculé sur l'assiette TOTALE. On passe donc à
-    # `estimate_capacity` la surface de la PART CONSTRUCTIBLE (= union totale × part U/AU de l'assiette
-    # insetée) : une assiette 100 % U est inchangée (part = 1), une assiette à 40 % hors zone voit son
-    # plafond CES — et donc sa SDP — réduit d'autant. Le % hors zone est servi et DIT à l'écran.
-    part_constructible = (inset_uau / inset_total) if inset_total > 0 else 1.0
-    surface_constructible = surface_union * part_constructible
-    pct_hors_zone = round(100.0 * (1.0 - part_constructible))
-    # capacité de l'union : MÊME moteur que le résiduel (assiette réelle = union insetée)
-    f_union = estimate_capacity(rules, surface_constructible, ctx_dom.contraintes, hyp=hyp,
-                                emprise_geo=(emprise, recul), extras={})
-    if not f_union.constructible:
+
+    rt = session.execute(_RETRANCH_UNION, {
+        "codes_fermes": codes_fermes,
+        "ids": ids, "commune": commune, "zkind": zkind, "uau_fams": uau_fams, **gparams}).one()
+    surface_union = float(rt.surface_union or 0.0)
+    surface_constructible = float(rt.surface_constructible or 0.0)
+    if surface_union <= 0:
         return None
-    ctx_union = dataclasses.replace(ctx_dom, surface_m2=surface_constructible, idu="ASSEMBLAGE",
-                                    parcel_id=p_dom.id)
+    part_constructible = (surface_constructible / surface_union) if surface_union > 0 else 1.0
+    pct_hors_zone = max(0, min(100, round(100.0 * (1.0 - part_constructible))))
+    retranchements = {
+        # mesurés SUR l'union dessinée (ce que les parcelles contiennent) — l'effet NET après recul est
+        # déjà dans l'emprise par zone ; ici on montre la surface VISIBLE de chaque contrainte.
+        "hors_zone_m2": round(max(0.0, surface_union - surface_constructible)),
+        "ppr_rouge_m2": round(float(rt.rouge or 0.0)),
+        "emplacement_reserve_m2": round(float(rt.er or 0.0)),
+        "ebc_m2": round(float(rt.ebc or 0.0)),
+        # OUTIL-ASSEMBLAGE-FIX-8 (LOT 6) — surface EFFECTIVEMENT retranchée de l'enveloppe constructible
+        # (contrainte ∩ enveloppe post-recul, sommée sur les zones constructibles) : affichée À CÔTÉ du
+        # brut, pour distinguer « 935 m² de PPR rouge sur l'assiette » de « ~41 m² réellement retirés ».
+        "ppr_rouge_effectif_m2": round(rouge_eff_tot),
+        "emplacement_reserve_effectif_m2": round(er_eff_tot),
+        "ebc_effectif_m2": round(ebc_eff_tot),
+    }
+
+    # Fourchette AGRÉGÉE : somme PAR ZONE (chaque zone a subi SON plafond de densité et SON % d'emprise).
+    # C'est elle qui nourrit le bilan (CA = surface vendable cumulée des zones, pas la zone dominante).
+    fr_agg = dict(f_rep.fourchette or {})
+    # NOTE (OUTIL-ASSEMBLAGE-FIX-6, LOT 2) — on NE touche PAS aux logements de `fr_agg` : ils restent ceux
+    # de la zone représentative (f_rep), qui pilotent le STATIONNEMENT / la VRD (`logements_estimes` →
+    # emprise aménagée, bilan.py). Les toucher ici changeait le COÛT VRD de TOUS les assemblages multizones
+    # (effet de bord non voulu). La somme des logements ne sert QUE le test des seuils de mixité, portée
+    # par un canal DÉDIÉ `logements_mixite` (lu par `_clause_mixite`, jamais par la VRD) — voir ci-dessous.
+    fr_agg.update({
+        "surface_plancher_m2": round(sdp_tot),
+        "shab_vendable_m2": round(shab_tot),
+        "shab_vendable_silo_m2": round(silo_tot),
+    })
+    f_union = dataclasses.replace(f_rep, fourchette=fr_agg, constructible=True)
+    # OUTIL-ASSEMBLAGE-FIX-6 (LOT 2) — logements SOMMÉS portés au contexte éco sous `logements_mixite`
+    # (canal réservé à la clause) : `compute_bilan` le préfère à `logements_estimes` POUR LE SEUIL de
+    # mixité uniquement, sans rien changer au stationnement/VRD ni au CA.
+    ctx_union = dataclasses.replace(
+        ctx_dom, surface_m2=surface_constructible, idu="ASSEMBLAGE", parcel_id=p_dom.id,
+        prescriptions_eco={**dict(ctx_dom.prescriptions_eco or {}), "logements_mixite": round(logements_tot)})
     # bilan de l'union : UNE charge foncière (VRD sur l'emprise aménagée de l'ENSEMBLE, une fois),
     # prix de sortie du secteur de la parcelle dominante (même secteur pour des parcelles contiguës).
     b, _ps = compute_bilan_servi(session, p_dom.id, fz=(ctx_union, f_union))
-    fr = f_union.fourchette or {}
-    # LOGEMENTS-SOURCE-UNIQUE — `logements` (fourchette de l'ancien calcul de capacité, qui en plus
-    # préférait le scénario SOUS-SOL optimiste) RETIRÉ : l'écran Assemblage renvoie déjà vers
-    # l'Étude de faisabilité (moteurs.tsx), on cesse de servir le chiffre sans lecteur.
     return {
         "surface_m2": round(surface_union),
-        # NU-G-007 — la part constructible servie à côté de la SDP (comme le `bilan_surfacique` de l'Étude).
+        # NU-G-007 — surface d'assiette EN ZONE CONSTRUCTIBLE = intersection DIRECTE de l'union avec U/AU
+        # (ASTRA : « l'intersection directe du dessin avec U/AU », pas une proportion après recul).
         "surface_constructible_m2": round(surface_constructible),
         "pct_hors_zone": pct_hors_zone,
-        # OUTILS-P1-1 LOT3d (pt 1) — la PART constructible (ratio géométrique), pour que l'agrégat
-        # décompose le MÊME total affiché (surface cumulée) en « constructible » + « hors zone » = 100 %.
         "part_constructible": part_constructible,
-        "emprise_m2": round(emprise),
-        "sdp_m2": round(float(fr.get("surface_plancher_m2") or 0.0)),
+        "emprise_m2": round(emprise_tot),
+        "sdp_m2": round(sdp_tot),
+        # OUTIL-ASSEMBLAGE-FIX-6 (LOT 2) — logements du programme SOMMÉS (test des seuils de mixité) +
+        # logements de la seule zone représentative (ancien comportement) = pour la MESURE d'impact euro.
+        "logements_programme": round(logements_tot),
+        "logements_representatif": round(max(
+            float(((f_rep.fourchette or {}).get("logements_au_sol") or (0, 0))[1]),
+            float(((f_rep.fourchette or {}).get("logements_sous_sol") or (0, 0))[1]))),
+        # LOT 2 — décomposition par zone (règles de chaque portion) + contraintes retranchées visibles.
+        "zones_detail": zones_detail,
+        "retranchements": retranchements,
         "ca": (b.ca if (b and b.fiable) else None),
         "charge_fonciere": (b.charge_fonciere if (b and b.fiable) else None),
-        # RETOURS-25 (pt 1) — prix de SORTIE neuf (€/m² habitable) résolu pour ce bilan : exposé pour le
-        # Bilan de l'Assemblage (était calculé puis jeté). `_ps["prix"]` = resolve_prix_sortie_servi.
+        # RETOURS-25 (pt 1) — prix de SORTIE neuf (€/m² habitable) résolu pour ce bilan.
         "prix_sortie_eur_m2": (round(float(_ps["prix"])) if (b and b.fiable and _ps and _ps.get("prix")) else None),
+        # OUTIL-ASSEMBLAGE-FIX-2 (LOT 1) — obligation de mixité (règle/article/page/régime/borne haute),
+        # pour que l'écran Assemblage la PORTE comme la fiche. None si la parcelle n'est pas en SMS.
+        "mixite": (b.mixite if b else None),
     }
 
 
@@ -283,6 +519,10 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
     # (même source que la fiche : `residuel` de `fiche_payload`) pour dériver la conservation à l'union.
     existante_par: dict[int, float | None] = {}
     residuelle_par: dict[int, float | None] = {}
+    # OUTIL-ASSEMBLAGE-FIX-6 (LOT 7) — capacité ABSENTE (fiche sans fourchette constructible) vs capacité
+    # calculée à zéro : une parcelle sans capacité n'affiche plus « reconstruction 0 m² » (un 0 muet qui se
+    # lit comme un calcul), mais « non calculée » (audit finding 7 : DH0120, CV1504).
+    capacite_absente_par: dict[int, bool] = {}
     conserve_estimation = False
     zones: list[tuple[str | None, str | None]] = []
     for p in parcels:
@@ -291,7 +531,9 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
         except Exception:  # noqa: BLE001 — une parcelle illisible ne casse pas l'étude
             fa = None
         fr = (fa or {}).get("fourchette") or {}
-        par_parcelle[p.id] = round(fr.get("surface_plancher_m2") or 0)
+        _sp = fr.get("surface_plancher_m2")
+        capacite_absente_par[p.id] = _sp is None
+        par_parcelle[p.id] = round(_sp or 0)
         res = (fa or {}).get("residuel") or {}
         if res.get("disponible") is not False and res.get("sdp_existante_m2") is not None:
             existante_par[p.id] = round(float(res.get("sdp_existante_m2") or 0))
@@ -303,13 +545,32 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
             conserve_estimation = True
         zones.append((getattr(p, "commune", None), (fa or {}).get("zone")))
     sdp_existante_totale = round(sum(v for v in existante_par.values() if v))
+    from .faisabilite.lecture_capacite import lecture_union, marques_ouverture, statuts_ouverture
+    from .faisabilite.zone_servie import zone_dominante
+
     u = _capacite_union(session, parcels)
+    reserves = {}
+    fermees = set()
+    marques = marques_ouverture(session, [p.idu for p in parcels])
+    for p in parcels:
+        z = zone_dominante(session, p.id)
+        conditions, exclues = statuts_ouverture(p.idu, p.commune, z.parts if z else [], marques.get(p.idu), union=True)
+        reserves.update(conditions)
+        fermees.update(exclues)
+    details = (u or {}).get("zones_detail") or []
+    # Pour un minimum réglementaire, c'est la portion de l'union dans la zone qui compte.
+    if u and parcels:
+        conditions, exclues = statuts_ouverture(parcels[0].idu, parcels[0].commune, details)
+        reserves.update(conditions)
+        fermees.update(exclues)
+    lecture, conditionnel = lecture_union(details, reserves, u["sdp_m2"] if u else None, fermees)
     if not u:
-        return {"surface_cumulee_m2": surface, "sdp_m2": 0, "ca": None,
+        return {"lecture_capacite": lecture, "bilan_conditionnel": conditionnel,
+                "surface_cumulee_m2": surface, "sdp_m2": 0, "ca": None,
                 "charge_fonciere": None, "n_chiffrables": 0, "sdp_par_parcelle": par_parcelle,
                 "sdp_terrain_libere_m2": 0, "sdp_bati_conserve_m2": 0,
                 "sdp_existante_totale_m2": sdp_existante_totale,
-                "sdp_residuelle_par_parcelle": residuelle_par, "sdp_existante_par_parcelle": existante_par,
+                "sdp_residuelle_par_parcelle": residuelle_par, "sdp_existante_par_parcelle": existante_par, "capacite_absente_par_parcelle": capacite_absente_par,
                 "conserve_estimation": conserve_estimation,
                 "zones": zones, "assiette": "aucune", "emprise_union_m2": None}
     # SDP terrain libéré = capacité BRUTE de l'union (table rase du bâti) ; SDP bâti conservé = ce qui
@@ -318,18 +579,17 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
     sdp_conserve = max(0, sdp_libere - sdp_existante_totale)
     cf = u["charge_fonciere"]
     cf_out = ({**cf, "par_m2_terrain": round(cf["central"] / surface)} if cf and surface else cf)
-    # OUTILS-P1-1 LOT3d (pt 1) — « dont N m² en zone constructible · X % hors zone » : les DEUX chiffres
-    # décomposent le MÊME total affiché (surface cumulée) via la part constructible → ils s'additionnent à
-    # 100 %. Avant, la surface constructible (union DESSINÉE × part) et le % (géométrie INSETÉE) sortaient
-    # de deux bases ≠ de la surface cumulée (contenance) : 1 689 / 2 630 ≠ 1 − 31 %.
+    # OUTIL-ASSEMBLAGE-FIX-6 (LOT 6) — la surface EN ZONE CONSTRUCTIBLE affichée est la surface GÉOMÉTRIQUE
+    # de l'union ∩ U/AU (intersection directe du dessin, `_capacite_union`), PAS la contenance cadastrale
+    # mise à l'échelle de la part (audit finding 6 : l'écran annonçait 21 638 m² = 21 832 contenance ×
+    # part, alors que la géométrie de l'union en U/AU mesure 21 516 m²). C'est la MÊME grandeur que celle
+    # réellement passée au bilan (terrain) et citée dans la clause de mixité — une seule vérité.
     part_c = u.get("part_constructible")
-    if part_c is not None and surface:
-        surf_constr_aff = round(surface * part_c)
-        pct_hz_aff = max(0, min(100, round(100.0 * (1.0 - part_c))))
-    else:
-        surf_constr_aff = u.get("surface_constructible_m2")
-        pct_hz_aff = u.get("pct_hors_zone")
+    surf_constr_aff = u.get("surface_constructible_m2")
+    pct_hz_aff = (u.get("pct_hors_zone") if u.get("pct_hors_zone") is not None
+                  else (max(0, min(100, round(100.0 * (1.0 - part_c)))) if part_c is not None else None))
     return {
+        "lecture_capacite": lecture, "bilan_conditionnel": conditionnel,
         "surface_cumulee_m2": surface,
         # NU-G-007 — surface d'assiette EN ZONE CONSTRUCTIBLE + part hors zone (alignés sur l'Étude du
         # même assemblage) : la SDP cumulée est bornée à cette part, le % hors zone est DIT.
@@ -341,7 +601,7 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
         "sdp_bati_conserve_m2": sdp_conserve,
         "sdp_existante_totale_m2": sdp_existante_totale,
         "sdp_residuelle_par_parcelle": residuelle_par,
-        "sdp_existante_par_parcelle": existante_par,
+        "sdp_existante_par_parcelle": existante_par, "capacite_absente_par_parcelle": capacite_absente_par,
         "conserve_estimation": conserve_estimation,
         "ca": u["ca"],
         "prix_sortie_eur_m2": u.get("prix_sortie_eur_m2"),   # RETOURS-25 (pt 1) — Bilan Assemblage
@@ -349,6 +609,15 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
         "n_chiffrables": 1 if u["ca"] else 0,
         "sdp_par_parcelle": par_parcelle,
         "zones": zones,
+        # LOT 2 — décomposition PAR ZONE (règles propres à chaque portion) + contraintes retranchées
+        # visibles (hors zone, zone rouge, emplacement réservé, EBC — en m²).
+        "zones_detail": u.get("zones_detail"),
+        "retranchements": u.get("retranchements"),
+        # OUTIL-ASSEMBLAGE-FIX-2 (LOT 1) — obligation de mixité portée par le bilan de l'union.
+        "mixite": u.get("mixite"),
         "assiette": "union",
         "emprise_union_m2": u["emprise_m2"],
+        # OUTIL-ASSEMBLAGE-FIX-6 (LOT 2) — logements du programme sommés / zone représentative (mesure).
+        "logements_programme": u.get("logements_programme"),
+        "logements_representatif": u.get("logements_representatif"),
     }

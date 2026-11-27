@@ -1,6 +1,6 @@
 """Moteur d'implantation — recherche déterministe du meilleur scénario.
 
-Parcours ORDONNÉ de formes (barre, deux barres, L) × niveaux × longueur de barre. Pour chaque
+Parcours ORDONNÉ de longueurs, orientations, bâtiments simples ou doubles et niveaux. Pour chaque
 candidat : on dessine la géométrie, on en TIRE la capacité, on pose le stationnement minimal imposé,
 on vérifie la géométrie et les contrôles réglementaires. On garde le meilleur candidat FAISABLE
 (tous contrôles durs Réussi + géométrie valide), en PRÉFÉRANT un scénario « exploitable » (un seul
@@ -10,7 +10,8 @@ Aucun réglage par terrain : la zone, les règles et les contraintes viennent de
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from itertools import chain, islice, product
 from typing import Optional
 
 from . import capacite as cap_mod
@@ -18,7 +19,7 @@ from . import controles as ctrl_mod
 from . import regles as regles_mod
 from . import terrain as terrain_mod
 from .conventions import Conventions, charger as charger_conventions
-from .geometrie import (Frame, Scene, poser_barre, poser_espaces_libres,
+from .geometrie import (_entrelacer_counts, Frame, Scene, poser_barre, poser_espaces_libres,
                         poser_sous_sol, poser_stationnement, raccorder_acces_voie, scene_depuis)
 
 IDUS_ETANG_SALE = ["97404000AW0099", "97404000AW0451", "97404000AW0624", "97404000AW0625"]
@@ -34,7 +35,8 @@ _FRACTIONS = [round(1.0 - 0.05 * k, 2) for k in range(0, 15)]   # 1.00 .. 0.30
 # borne toujours la recherche.
 _FRACTIONS_GROSSIERES = [round(1.0 - 0.10 * k, 2) for k in range(0, 8)]   # 1.00 .. 0.30 par 0,10
 _SEUIL_GRANDE_M2 = 5000.0
-_FORMES = ["barre", "deux_barres", "L"]
+_IMPLANTATIONS = (("barre", 0), ("barre", 90), ("barre", 180), ("barre", 270), ("deux_barres", 0),
+                  ("barres_paralleles", 0), ("barres_paralleles", 180))
 
 
 @dataclass
@@ -73,7 +75,7 @@ class Scenario:
 
 
 def _construire(forme: str, scene: Scene, conv: Conventions, *, niveaux: int, fraction: float,
-                repartition: Optional[list[str]] = None) -> int:
+                repartition: Optional[list[str]] = None, distance_min_m: float = 0.0) -> int:
     zx0, _zy0, zx1, _zy1 = scene.zone_local.bounds
     L = zx1 - zx0
     x_end = zx0 + fraction * L
@@ -81,21 +83,26 @@ def _construire(forme: str, scene: Scene, conv: Conventions, *, niveaux: int, fr
     if forme == "barre":
         return poser_barre(scene, conv, x_start=zx0, x_end=x_end, repartition=rep, niveaux=niveaux, ref="B")
     if forme == "deux_barres":
-        gap = conv.retrait_inter_barre_m
+        gap = max(conv.retrait_inter_barre_m, distance_min_m)
         xm = (zx0 + x_end) / 2.0
         n1 = poser_barre(scene, conv, x_start=zx0, x_end=xm - gap / 2.0, repartition=rep, niveaux=niveaux, ref="B1")
         n2 = poser_barre(scene, conv, x_start=xm + gap / 2.0, x_end=x_end, repartition=rep, niveaux=niveaux, ref="B2")
-        return n1 + n2
-    if forme == "L":
-        _, zy0, _, zy1 = scene.zone_local.bounds
-        if (zy1 - zy0) < 2 * conv.profondeur_m + conv.retrait_inter_barre_m:
-            return 0
-        return poser_barre(scene, conv, x_start=zx0, x_end=x_end, repartition=rep, niveaux=niveaux, ref="B")
+        return n1 + n2 if n1 and n2 else 0
+    if forme == "barres_paralleles":
+        _, bas, _, haut = scene.zone_local.bounds
+        milieu = (bas + haut) / 2
+        demi_retrait = max(conv.retrait_inter_barre_m, distance_min_m) / 2
+        nombres = [poser_barre(scene, conv, x_start=zx0, x_end=x_end, repartition=rep,
+                               niveaux=niveaux, ref=ref, intervalle_y=bande)
+                   for ref, bande in (("B1", (bas, milieu - demi_retrait)),
+                                      ("B2", (milieu + demi_retrait, haut)))]
+        return sum(nombres) if all(nombres) else 0
+
     return 0
 
 
 def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition=None,
-             stationnement_mode="aerien", niveaux_sous_sol=1, type_projet="collectif"):
+             stationnement_mode="aerien", niveaux_sous_sol=1, type_projet="collectif", maximum=None):
     # hauteur : nb de niveaux borné par la hauteur réglementaire. FAISA-REGLES-1 (E-059) — on compare la
     # hauteur RÉELLE du projet (rez + étages, toiture comptée si la règle se mesure au faîtage), pas le seul
     # niveaux × étage.
@@ -105,10 +112,26 @@ def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition
         if _h_proj > r.valeur + 1e-9:
             return None, Candidat(forme, niveaux, fraction, False, "—", 0, 0.0, 0, None, "dépasse la hauteur")
     scene = scene_depuis(terrain, frame)
-    n_mod = _construire(forme, scene, conv, niveaux=niveaux, fraction=fraction, repartition=repartition)
+    distance_min_m = 0.0
+    dc = regles.distance_constructions
+    if forme != "barre" and dc.est_chiffrable:
+        distance_min_m = ctrl_mod.distance_requise(dc, niveaux, conv)[0]
+    n_mod = _construire(forme, scene, conv, niveaux=niveaux, fraction=fraction,
+                        repartition=repartition, distance_min_m=distance_min_m)
     if n_mod <= 0:
-        motif = "forme L écartée (largeur zone insuffisante)" if forme == "L" else "aucun module implantable"
+        motif = "configuration sans bâtiment complet" if forme != "barre" else "aucun module implantable"
         return None, Candidat(forme, niveaux, fraction, False, "—", 0, 0.0, 0, None, motif)
+    if maximum:
+        if maximum.fixes:
+            total = sum(o.kind == "module" for o in scene.objets)
+            scene = scene_depuis(terrain, frame)
+            n_mod = _construire(forme, scene, conv, niveaux=niveaux, fraction=fraction,
+                                repartition=_entrelacer_counts(maximum.cible(total)),
+                                distance_min_m=distance_min_m)
+        if not n_mod or not maximum.ajuster(scene):
+            return None, Candidat(forme, niveaux, fraction, False, "—", 0, 0.0, 0, None,
+                                  "composition demandée non implantée")
+    objets_batiment = list(scene.objets)
     cap0 = cap_mod.calculer(scene, conv, regles, terrain, type_projet)
     cible = cap0.places_imposees or 0
     # ETUDE-V6-2 (Lot 3) — sous-sol : places au niveau −1 (le sol reste libre → plus de logements) ;
@@ -138,15 +161,23 @@ def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition
     _ECHEC_HORS_FAIS = {_HAIE_NOM, "Largeur de desserte"}
     sans_echec = not any(c.resultat == ctrl_mod.ECHOUE and c.nom not in _ECHEC_HORS_FAIS for c in controles)
     faisable = geo_ok and sans_echec
-    # ETUDE-V6-2 (Lot 2) — faisable si l'on RETIRE le stationnement : on lève les DEUX contrôles que les
-    # places consomment — « Stationnement » (comptage) ET « Perméabilité (pleine terre) » (le parking
-    # mange la pleine terre). Vérifié : ce drapeau reproduit EXACTEMENT un 2ᵉ passage « sans places »
-    # (44 logts à Étang-Salé), sans recherche supplémentaire → budget 30 s tenu.
-    # (en sous-sol, le gabarit du parking se lit dans « Emprise du sous-sol » → on le lève aussi).
-    _hors_stat = {"Stationnement", "Perméabilité (pleine terre)", "Emprise du sous-sol"}
-    sans_echec_hors_stat = not any(c.resultat == ctrl_mod.ECHOUE and c.nom not in _hors_stat
-                                   for c in controles)
-    faisable_sans_stat = geo_ok and sans_echec_hors_stat
+    if maximum:
+        faisable = faisable and not any(c.resultat == ctrl_mod.ECHOUE for c in controles)
+        faisable = faisable and (cap.places_imposees is None or cap.places >= cap.places_imposees)
+    # Mesurer séparément le même bâtiment sans parking. Une allée défectueuse ou
+    # de la pleine terre consommée par les places ne décrit pas cette seconde scène.
+    faisable_sans_stat = faisable
+    if not faisable:
+        bati = replace(scene, objets=objets_batiment, stationnement_note=None,
+                       sous_sol=None, acces_ppr_rouge_m2=0.0)
+        poser_espaces_libres(bati)
+        bati.finaliser_monde()
+        cap_bati = cap_mod.calculer(bati, conv, regles, terrain, type_projet)
+        geo_bati = ctrl_mod.verifier_geometrie(bati, terrain, conv, cap_bati, regles)
+        reg_bati = ctrl_mod.controles_reglementaires(bati, terrain, conv, cap_bati, regles)
+        faisable_sans_stat = (ctrl_mod.geometrie_valide(geo_bati)
+                              and not any(c.resultat == ctrl_mod.ECHOUE and c.nom != "Stationnement"
+                                          for c in reg_bati))
     statut = (ctrl_mod.statut_etude(controles, geo_ok, scene=scene, terrain=terrain, regles=regles)
               if geo_ok else "simulation impossible")
     motif = "" if faisable else "; ".join(
@@ -271,7 +302,7 @@ def _charger(session, idus, zone, conv, avec_pente):
 
 
 def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnement_mode="aerien",
-                niveaux_sous_sol=1, ordre="objectif", budget_override=None, type_projet="collectif"):
+                niveaux_sous_sol=1, ordre="objectif", budget_override=None, type_projet="collectif", maximum=None):
     """Parcourt la grille ORDONNÉE forme×niveaux×fraction et renvoie (ranked, candidats) :
     `ranked` = liste des candidats FAISABLES, triée par la clef d'objectif décroissante, chaque
     item = (clef, paquet, forme, niveaux, fraction). `candidats` = la trace complète.
@@ -325,46 +356,53 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
     else:
         garde_fou_s = float(_s.etude_grille_garde_fou_s)
     # grille PLANIFIÉE : nb de candidats que la grille complète contient, borné par la constante de config.
-    total_grille = len(_FORMES) * len(_NIVEAUX) * len(fractions)
+    # Les hauteurs impossibles sont connues avant de dessiner. Elles ne doivent
+    # pas consommer le budget réservé aux implantations distinctes.
+    plafond = regles.hauteur_plafond
+    etages = [n for n in reversed(_NIVEAUX)
+              if not plafond.validee or plafond.valeur is None
+              or ctrl_mod.hauteur_projet_m(conv, regles, n)[0] <= plafond.valeur + 1e-9]
+    # Conserver une trace explicite du refus de hauteur si aucun niveau ne tient.
+    etages = etages or [1]
+    # Sonder plusieurs longueurs dès le début, puis affiner les intervalles.
+    principales = fractions[::3]
+    intermediaires = [f for f in fractions if f not in principales]
+    orientations = [(forme, replace(frame, angle_deg=frame.angle_deg + angle))
+                    for forme, angle in _IMPLANTATIONS]
+    total_grille = len(orientations) * len(etages) * len(fractions)
     prevu = min(max_candidats, total_grille)
     terrain.grille_candidats_prevus = prevu
     t0 = time.monotonic()
     candidats: list[Candidat] = []
     faisables: list = []
-    coupe = False
     garde_fou = False
-    for forme in _FORMES:
-        if coupe:
-            break
-        for niveaux in _NIVEAUX:
-            if coupe:
+    # D'abord toutes les hauteurs sur la grille large. Pour les longueurs
+    # intermédiaires, couvrir toutes les formes au niveau préféré de l'objectif
+    # avant de consacrer le budget à un autre étage de la même implantation.
+    essais = product(principales, orientations, etages)
+    niveaux_fins = sorted(etages) if objectif == "plus_simple" else etages
+    affinements = ((f, orientation, n) for n in niveaux_fins
+                   for f in intermediaires for orientation in orientations)
+    for fraction, (forme, repere), niveaux in islice(chain(essais, affinements), prevu):
+        paquet, cand = _evaluer(terrain, repere, conv, regles, forme, niveaux, fraction,
+                                repartition=repartition, stationnement_mode=stationnement_mode,
+                                niveaux_sous_sol=niveaux_sous_sol, type_projet=type_projet, maximum=maximum)
+        candidats.append(cand)
+        if paquet is not None:
+            _scene, cap, _ctrl, _chk, _geo, statut = paquet
+            clef = _clef(objectif, statut, cap, niveaux, forme, fraction)
+            faisables.append((clef, paquet, forme, niveaux, fraction))
+            # DOCS-1 (décision Vic) — en 2ᵉ passage « faisable-probable », on cherche à PROUVER
+            # qu'une implantation TIENT (jamais un faux « impossible »), pas à maximiser : dès
+            # quelques faisables trouvés, on s'arrête → temps borné SOUS le timeout API.
+            if ordre == "faisable_probable" and len(faisables) >= 3:
                 break
-            for fraction in fractions:
-                # PLAFOND DÉTERMINISTE (décide du résultat) — on n'examine que les N premiers candidats.
-                if len(candidats) >= max_candidats:
-                    coupe = True
-                    break
-                paquet, cand = _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction,
-                                        repartition=repartition, stationnement_mode=stationnement_mode,
-                                        niveaux_sous_sol=niveaux_sous_sol, type_projet=type_projet)
-                candidats.append(cand)
-                if paquet is not None:
-                    _scene, cap, _ctrl, _chk, _geo, statut = paquet
-                    clef = _clef(objectif, statut, cap, niveaux, forme, fraction)
-                    faisables.append((clef, paquet, forme, niveaux, fraction))
-                    # DOCS-1 (décision Vic) — en 2ᵉ passage « faisable-probable », on cherche à PROUVER
-                    # qu'une implantation TIENT (jamais un faux « impossible »), pas à maximiser : dès
-                    # quelques faisables trouvés, on s'arrête → temps borné SOUS le timeout API.
-                    if ordre == "faisable_probable" and len(faisables) >= 3:
-                        coupe = True
-                        break
-                # GARDE-FOU TEMPS (filet, PAS le résultat) — si le temps file avant d'avoir examiné les N
-                # candidats prévus (assiette très lourde), on s'arrête SOUS la borne API et on le DIT
-                # (« recherche partielle »). Sur les témoins, N est atteint bien avant ce filet.
-                if (time.monotonic() - t0) > garde_fou_s:
-                    coupe = True
-                    garde_fou = True
-                    break
+        # GARDE-FOU TEMPS (filet, PAS le résultat) — si le temps file avant d'avoir examiné les N
+        # candidats prévus (assiette très lourde), on s'arrête SOUS la borne API et on le DIT
+        # (« recherche partielle »). Sur les témoins, N est atteint bien avant ce filet.
+        if (time.monotonic() - t0) > garde_fou_s:
+            garde_fou = True
+            break
     # état de recherche : complète = on a examiné tous les candidats PRÉVUS sans que le filet temps coupe.
     examines = len(candidats)
     terrain.grille_candidats_examines = examines
@@ -653,7 +691,7 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
                     avec_pente: bool = True, programme: Optional[dict[str, int]] = None,
                     repartition: Optional[list[str]] = None, max_scenarios: int = 3,
                     stationnement_ratio: Optional[float] = None, stationnement_mode: str = "aerien",
-                    niveaux_sous_sol: int = 1, type_projet: Optional[str] = None):
+                    niveaux_sous_sol: int = 1, type_projet: Optional[str] = None, maximum=None):
     """ETUDE-V6 (Lot B) — UN SEUL passage de recherche, deux vues :
     `scenarios` = sémantique historique (Pareto des candidats couvrant la demande ; [] si la demande
     ne tient pas), et `variantes` = les 3 rôles du mandat (best-effort si dépassement). Renvoie
@@ -711,12 +749,15 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
     faisables, candidats = _rechercher_avec_repli(terrain, regles, conv, objectif, repartition=repartition,
                                                   stationnement_mode=stationnement_mode,
                                                   niveaux_sous_sol=niveaux_sous_sol,
-                                                  type_projet=(type_projet or "collectif"))
+                                                  type_projet=(type_projet or "collectif"), maximum=maximum)
     if not faisables:
         return ([], [], None,
                 _message_impossible(terrain, regles, candidats, conv, stationnement_mode),
                 terrain, regles, conv, None)
 
+    if maximum:
+        best = _best_faisable(faisables)
+        faisables = [best, *(it for it in faisables if it is not best)]
     message, depassement = None, None
     couvrants = faisables
     if programme:
@@ -786,6 +827,45 @@ def limite_capacite(scenario, regles) -> Optional[str]:
     return " ; ".join(raisons) or None
 
 
+def message_aucune_implantation(scenario) -> str:
+    """ETUDE-AUDIT-FIX-1 (relecture) — message honnête quand aucune implantation CRÉDIBLE n'a été trouvée
+    (le meilleur candidat « faisable » est dégénéré : ≤ 1 logement, une barre réduite à un module). Plutôt
+    que de se replier sur « 1 logement R+0 », on chiffre les candidats EXAMINÉS et on nomme la contrainte
+    qui en écarte le PLUS souvent, lue dans la trace (chaque candidat écarté compte une fois par famille)."""
+    from collections import Counter
+    cand = (getattr(scenario, "candidats", None) or []) if scenario is not None else []
+    n = len(cand)
+    familles: Counter = Counter()
+    for c in cand:
+        if getattr(c, "faisable", False) or not getattr(c, "motif", ""):
+            continue
+        vues: set = set()
+        for mo in c.motif.split(";"):
+            mo = mo.strip().lower()
+            if not mo:
+                continue
+            if ("allée" in mo or "allee" in mo or "dégagement" in mo or "degagement" in mo
+                    or "module" in mo or "largeur" in mo or "⊆ assiette" in mo or "places/" in mo):
+                vues.add("largeur insuffisante pour le bâtiment et l'allée de 5 m")
+            elif "chevauchement" in mo:
+                vues.add("espacement insuffisant entre les bâtiments")
+            elif "hauteur" in mo:
+                vues.add("hauteur réglementaire insuffisante pour un étage")
+            elif "stationnement" in mo:
+                vues.add("stationnement aérien impossible sur cette assiette")
+            elif "distance" in mo:
+                vues.add("distance réglementaire entre constructions")
+        for f in vues:
+            familles[f] += 1
+    base = "Aucune implantation trouvée avec ces hypothèses"
+    if n and familles:
+        return (f"{base} — {n} candidats examinés ; "
+                f"contrainte la plus fréquente : {familles.most_common(1)[0][0]}.")
+    if n:
+        return f"{base} — {n} candidats examinés."
+    return f"{base}."
+
+
 # ------------------------------------------------------------------ ETUDE-V6-2 (Lot 2)
 def _best_faisable(faisables):
     """Le candidat FAISABLE maximal (plus de logements, puis moins de bâtiments, moins de niveaux).
@@ -825,10 +905,10 @@ def facteurs_limitants(terrain, regles, conv, scenario_max, *, stationnement_mod
         "preuve": "contrefactuel sans stationnement imposé",
         "mesure": (f"{stat_m2:.0f} m² {occupe} sur {contenance:.0f} m² d'assiette"
                    if stat_m2 else "aucune place dessinée"),
-        "detail": (f"sans stationnement imposé : {logts_sans} logements au maximum "
+        "detail": (f"sur les implantations examinées, sans stationnement imposé : {logts_sans} logements "
                    f"(vs {logts0} avec) → +{delta_stat} logement(s)" if delta_stat
-                   else f"retirer les places n'ajoute aucun logement ({logts_sans} = {logts0}) : "
-                        f"le stationnement n'est pas le facteur limitant ici"),
+                   else f"sur les implantations examinées, retirer les places donne {logts_sans} logements, "
+                        f"contre {logts0} avec stationnement"),
     })
 
     # (2) HAUTEUR — le plafond réglementaire borne les niveaux. Impact ESTIMÉ (un niveau de plus ≈ les

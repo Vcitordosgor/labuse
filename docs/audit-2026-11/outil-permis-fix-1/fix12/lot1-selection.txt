@@ -1,0 +1,13 @@
+Base : labuse (lecture seule) · suivi depuis 2026-01-01
+
+VEILLE DE PARCELLE — sélection avant/après (permis rattachés à une parcelle)
+  ancienne règle (date_depot ≥ 2026-01-01)        : 3088
+  nouvelle règle (événement daté ≥ 2026-01-01)     : 2051
+  ENTRENT (autorisés dans la fenêtre, dépôt brut absent/ancien) : 440
+  SORTENT (faux dépôt récent, autorisés AVANT la fenêtre)       : 1477
+  témoin 9744012520010 : autorisé 2025-10-24 / dépôt 2026-03-09 → ancienne=True nouvelle=False
+  témoin 97441626E0304 : autorisé 2026-08-03 / dépôt 2020-06-01 → ancienne=False nouvelle=True
+
+DÉDUP par identifiant (alerte de zone) — index d'unicité servi :
+  CREATE UNIQUE INDEX uq_alertes_zone_kind_ref ON public.alertes USING btree (zone_id, kind, source_ref) WHERE ((kind)::text = ANY ((ARRAY['permis_in_zone'::character varying, 'bodacc_in_zone'::character varying, 'zonage_in_zone'::character varying])::text[]))
+  alertes permis_in_zone déjà enregistrées (rejeu = ON CONFLICT DO NOTHING) : 3140

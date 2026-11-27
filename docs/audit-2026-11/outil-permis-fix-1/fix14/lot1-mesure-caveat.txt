@@ -1,0 +1,25 @@
+parcelles dont le TEXTE de l'avertissement §Bâti change : 283
+  · l'avertissement DISPARAÎT (plus de permis postérieur réel) : 13
+  · la DATE de l'avertissement change                          : 270
+
+10 parcelles vérifiées à la main (permis source sur la parcelle, date de survol) :
+  97401000AL0494  survol fin 2023-09-01  AVANT(périmé)=— (aucun caveat)  APRÈS(source)=08/09/2026
+      permis source : 9744012620054:2026-09-08
+  97401000AM1581  survol fin 2023-09-16  AVANT(périmé)=— (aucun caveat)  APRÈS(source)=22/09/2026
+      permis source : 9744012620044:2026-09-22
+  97401000AR0928  survol fin 2023-08-25  AVANT(périmé)=— (aucun caveat)  APRÈS(source)=08/09/2026
+      permis source : 9744012620031:2026-09-08
+  97401000AR0929  survol fin 2023-08-25  AVANT(périmé)=— (aucun caveat)  APRÈS(source)=08/09/2026
+      permis source : 9744012620031:2026-09-08
+  97401000AR0937  survol fin 2023-08-25  AVANT(périmé)=— (aucun caveat)  APRÈS(source)=20/08/2026
+      permis source : 9744012610116:2026-08-20
+  97401000AR0947  survol fin 2023-08-25  AVANT(périmé)=— (aucun caveat)  APRÈS(source)=20/08/2026
+      permis source : 9744012610116:2026-08-20
+  97401000AR1503  survol fin 2023-08-25  AVANT(périmé)=— (aucun caveat)  APRÈS(source)=11/09/2026
+      permis source : 97440122A0094:2023-04-24, 9744012620041:2026-09-11
+  97401000AS0527  survol fin 2023-08-25  AVANT(périmé)=— (aucun caveat)  APRÈS(source)=22/09/2026
+      permis source : 9744012620023:2026-09-22
+  97401000AS0529  survol fin 2023-08-25  AVANT(périmé)=— (aucun caveat)  APRÈS(source)=22/09/2026
+      permis source : 9744012620023:2026-09-22
+  97401000AS0753  survol fin 2023-08-25  AVANT(périmé)=— (aucun caveat)  APRÈS(source)=22/09/2026
+      permis source : 9744012620023:2026-09-22

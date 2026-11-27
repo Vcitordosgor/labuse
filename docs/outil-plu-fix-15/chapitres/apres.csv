@@ -1,0 +1,2035 @@
+insee,commune,label,theme,lettre
+97401,Les Avirons,A,hauteur,J
+97401,Les Avirons,A,implantation,J
+97401,Les Avirons,A,stationnement,J
+97401,Les Avirons,AUa,hauteur,T
+97401,Les Avirons,AUa,implantation,T
+97401,Les Avirons,AUa,stationnement,T
+97401,Les Avirons,AUc,hauteur,T
+97401,Les Avirons,AUc,implantation,T
+97401,Les Avirons,AUc,stationnement,T
+97401,Les Avirons,AUd,hauteur,T
+97401,Les Avirons,AUd,implantation,T
+97401,Les Avirons,AUd,stationnement,T
+97401,Les Avirons,AUec,hauteur,J
+97401,Les Avirons,AUec,implantation,J
+97401,Les Avirons,AUec,stationnement,J
+97401,Les Avirons,AUes,hauteur,J
+97401,Les Avirons,AUes,implantation,J
+97401,Les Avirons,AUes,stationnement,J
+97401,Les Avirons,AUt,hauteur,J
+97401,Les Avirons,AUt,implantation,J
+97401,Les Avirons,AUt,stationnement,J
+97401,Les Avirons,N,hauteur,J
+97401,Les Avirons,N,implantation,J
+97401,Les Avirons,N,stationnement,J
+97401,Les Avirons,Nli,hauteur,T
+97401,Les Avirons,Nli,implantation,J
+97401,Les Avirons,Nli,stationnement,J
+97401,Les Avirons,Npnr,hauteur,T
+97401,Les Avirons,Npnr,implantation,J
+97401,Les Avirons,Npnr,stationnement,J
+97401,Les Avirons,Nr,hauteur,T
+97401,Les Avirons,Nr,implantation,J
+97401,Les Avirons,Nr,stationnement,J
+97401,Les Avirons,Nto,hauteur,T
+97401,Les Avirons,Nto,implantation,J
+97401,Les Avirons,Nto,stationnement,J
+97401,Les Avirons,Ua,hauteur,J
+97401,Les Avirons,Ua,implantation,J
+97401,Les Avirons,Ua,stationnement,J
+97401,Les Avirons,Ub,hauteur,J
+97401,Les Avirons,Ub,implantation,J
+97401,Les Avirons,Ub,stationnement,J
+97401,Les Avirons,Ub1,hauteur,J
+97401,Les Avirons,Ub1,implantation,J
+97401,Les Avirons,Ub1,stationnement,J
+97401,Les Avirons,Ub2,hauteur,J
+97401,Les Avirons,Ub2,implantation,J
+97401,Les Avirons,Ub2,stationnement,J
+97401,Les Avirons,Ub3,hauteur,J
+97401,Les Avirons,Ub3,implantation,J
+97401,Les Avirons,Ub3,stationnement,J
+97401,Les Avirons,Ub4,hauteur,J
+97401,Les Avirons,Ub4,implantation,J
+97401,Les Avirons,Ub4,stationnement,J
+97401,Les Avirons,Ub5,hauteur,J
+97401,Les Avirons,Ub5,implantation,J
+97401,Les Avirons,Ub5,stationnement,J
+97401,Les Avirons,Uc,hauteur,J
+97401,Les Avirons,Uc,implantation,J
+97401,Les Avirons,Uc,stationnement,J
+97401,Les Avirons,Uc1,hauteur,J
+97401,Les Avirons,Uc1,implantation,J
+97401,Les Avirons,Uc1,stationnement,J
+97401,Les Avirons,Uc3,hauteur,J
+97401,Les Avirons,Uc3,implantation,J
+97401,Les Avirons,Uc3,stationnement,J
+97401,Les Avirons,Ud,hauteur,J
+97401,Les Avirons,Ud,implantation,J
+97401,Les Avirons,Ud,stationnement,J
+97401,Les Avirons,Ud1,hauteur,J
+97401,Les Avirons,Ud1,implantation,J
+97401,Les Avirons,Ud1,stationnement,J
+97401,Les Avirons,Ud2,hauteur,J
+97401,Les Avirons,Ud2,implantation,J
+97401,Les Avirons,Ud2,stationnement,J
+97401,Les Avirons,Ud3,hauteur,J
+97401,Les Avirons,Ud3,implantation,J
+97401,Les Avirons,Ud3,stationnement,J
+97401,Les Avirons,Ue,hauteur,J
+97401,Les Avirons,Ue,implantation,J
+97401,Les Avirons,Ue,stationnement,J
+97402,Bras-Panon,1AUa,hauteur,R
+97402,Bras-Panon,1AUa,implantation,R
+97402,Bras-Panon,1AUa,stationnement,R
+97402,Bras-Panon,1AUb,hauteur,R
+97402,Bras-Panon,1AUb,implantation,R
+97402,Bras-Panon,1AUb,stationnement,R
+97402,Bras-Panon,1AUc,hauteur,R
+97402,Bras-Panon,1AUc,implantation,R
+97402,Bras-Panon,1AUc,stationnement,R
+97402,Bras-Panon,1AUd,hauteur,R
+97402,Bras-Panon,1AUd,implantation,R
+97402,Bras-Panon,1AUd,stationnement,R
+97402,Bras-Panon,1AUe,hauteur,R
+97402,Bras-Panon,1AUe,implantation,R
+97402,Bras-Panon,1AUe,stationnement,R
+97402,Bras-Panon,1AUec,hauteur,R
+97402,Bras-Panon,1AUec,implantation,R
+97402,Bras-Panon,1AUec,stationnement,R
+97402,Bras-Panon,1AUt,hauteur,R
+97402,Bras-Panon,1AUt,implantation,R
+97402,Bras-Panon,1AUt,stationnement,R
+97402,Bras-Panon,2AUa,hauteur,R
+97402,Bras-Panon,2AUa,implantation,R
+97402,Bras-Panon,2AUa,stationnement,R
+97402,Bras-Panon,2AUb,hauteur,R
+97402,Bras-Panon,2AUb,implantation,R
+97402,Bras-Panon,2AUb,stationnement,R
+97402,Bras-Panon,2AUc,hauteur,R
+97402,Bras-Panon,2AUc,implantation,R
+97402,Bras-Panon,2AUc,stationnement,R
+97402,Bras-Panon,2AUec,hauteur,R
+97402,Bras-Panon,2AUec,implantation,R
+97402,Bras-Panon,2AUec,stationnement,R
+97402,Bras-Panon,A,hauteur,J
+97402,Bras-Panon,A,implantation,J
+97402,Bras-Panon,A,stationnement,J
+97402,Bras-Panon,AUst,hauteur,J
+97402,Bras-Panon,AUst,implantation,J
+97402,Bras-Panon,AUst,stationnement,J
+97402,Bras-Panon,Acu,hauteur,T
+97402,Bras-Panon,Acu,implantation,J
+97402,Bras-Panon,Acu,stationnement,T
+97402,Bras-Panon,N,hauteur,J
+97402,Bras-Panon,N,implantation,J
+97402,Bras-Panon,N,stationnement,J
+97402,Bras-Panon,Nli,hauteur,T
+97402,Bras-Panon,Nli,implantation,J
+97402,Bras-Panon,Nli,stationnement,J
+97402,Bras-Panon,Npnr,hauteur,T
+97402,Bras-Panon,Npnr,implantation,J
+97402,Bras-Panon,Npnr,stationnement,J
+97402,Bras-Panon,Nr,hauteur,T
+97402,Bras-Panon,Nr,implantation,J
+97402,Bras-Panon,Nr,stationnement,J
+97402,Bras-Panon,Nsc,hauteur,T
+97402,Bras-Panon,Nsc,implantation,J
+97402,Bras-Panon,Nsc,stationnement,J
+97402,Bras-Panon,Nt3,hauteur,T
+97402,Bras-Panon,Nt3,implantation,J
+97402,Bras-Panon,Nt3,stationnement,J
+97402,Bras-Panon,Ua,hauteur,J
+97402,Bras-Panon,Ua,implantation,J
+97402,Bras-Panon,Ua,stationnement,J
+97402,Bras-Panon,Ub,hauteur,J
+97402,Bras-Panon,Ub,implantation,J
+97402,Bras-Panon,Ub,stationnement,J
+97402,Bras-Panon,Uba,hauteur,J
+97402,Bras-Panon,Uba,implantation,J
+97402,Bras-Panon,Uba,stationnement,T
+97402,Bras-Panon,Uc,hauteur,J
+97402,Bras-Panon,Uc,implantation,J
+97402,Bras-Panon,Uc,stationnement,J
+97402,Bras-Panon,Ud,hauteur,J
+97402,Bras-Panon,Ud,implantation,J
+97402,Bras-Panon,Ud,stationnement,J
+97402,Bras-Panon,Udu,hauteur,T
+97402,Bras-Panon,Udu,implantation,T
+97402,Bras-Panon,Udu,stationnement,T
+97402,Bras-Panon,Ue,hauteur,J
+97402,Bras-Panon,Ue,implantation,J
+97402,Bras-Panon,Ue,stationnement,J
+97403,Entre-Deux,A,hauteur,J
+97403,Entre-Deux,A,implantation,J
+97403,Entre-Deux,A,stationnement,J
+97403,Entre-Deux,AUb,hauteur,T
+97403,Entre-Deux,AUb,implantation,T
+97403,Entre-Deux,AUb,stationnement,T
+97403,Entre-Deux,AUe,hauteur,T
+97403,Entre-Deux,AUe,implantation,T
+97403,Entre-Deux,AUe,stationnement,T
+97403,Entre-Deux,AUst,hauteur,T
+97403,Entre-Deux,AUst,implantation,T
+97403,Entre-Deux,AUst,stationnement,T
+97403,Entre-Deux,Aba,hauteur,J
+97403,Entre-Deux,Aba,implantation,J
+97403,Entre-Deux,Aba,stationnement,J
+97403,Entre-Deux,N,hauteur,J
+97403,Entre-Deux,N,implantation,J
+97403,Entre-Deux,N,stationnement,J
+97403,Entre-Deux,Nci,hauteur,T
+97403,Entre-Deux,Nci,implantation,T
+97403,Entre-Deux,Nci,stationnement,J
+97403,Entre-Deux,Npnr,hauteur,T
+97403,Entre-Deux,Npnr,implantation,T
+97403,Entre-Deux,Npnr,stationnement,J
+97403,Entre-Deux,Nr,hauteur,T
+97403,Entre-Deux,Nr,implantation,T
+97403,Entre-Deux,Nr,stationnement,J
+97403,Entre-Deux,Nstep,hauteur,T
+97403,Entre-Deux,Nstep,implantation,T
+97403,Entre-Deux,Nstep,stationnement,J
+97403,Entre-Deux,Nt,hauteur,T
+97403,Entre-Deux,Nt,implantation,T
+97403,Entre-Deux,Nt,stationnement,J
+97403,Entre-Deux,Ua,hauteur,J
+97403,Entre-Deux,Ua,implantation,J
+97403,Entre-Deux,Ua,stationnement,T
+97403,Entre-Deux,Ub,hauteur,J
+97403,Entre-Deux,Ub,implantation,J
+97403,Entre-Deux,Ub,stationnement,T
+97403,Entre-Deux,Ub1,hauteur,J
+97403,Entre-Deux,Ub1,implantation,J
+97403,Entre-Deux,Ub1,stationnement,T
+97403,Entre-Deux,Ub2,hauteur,J
+97403,Entre-Deux,Ub2,implantation,J
+97403,Entre-Deux,Ub2,stationnement,T
+97404,L'Étang-Salé,A,hauteur,J
+97404,L'Étang-Salé,A,implantation,J
+97404,L'Étang-Salé,A,stationnement,J
+97404,L'Étang-Salé,AUa,hauteur,J
+97404,L'Étang-Salé,AUa,implantation,J
+97404,L'Étang-Salé,AUa,stationnement,J
+97404,L'Étang-Salé,AUb,hauteur,J
+97404,L'Étang-Salé,AUb,implantation,J
+97404,L'Étang-Salé,AUb,stationnement,J
+97404,L'Étang-Salé,AUc,hauteur,J
+97404,L'Étang-Salé,AUc,implantation,J
+97404,L'Étang-Salé,AUc,stationnement,J
+97404,L'Étang-Salé,AUe,hauteur,J
+97404,L'Étang-Salé,AUe,implantation,J
+97404,L'Étang-Salé,AUe,stationnement,J
+97404,L'Étang-Salé,AUs,hauteur,J
+97404,L'Étang-Salé,AUs,implantation,J
+97404,L'Étang-Salé,AUs,stationnement,J
+97404,L'Étang-Salé,AUt,hauteur,J
+97404,L'Étang-Salé,AUt,implantation,J
+97404,L'Étang-Salé,AUt,stationnement,J
+97404,L'Étang-Salé,Acu,hauteur,T
+97404,L'Étang-Salé,Acu,implantation,J
+97404,L'Étang-Salé,Acu,stationnement,T
+97404,L'Étang-Salé,N,hauteur,J
+97404,L'Étang-Salé,N,implantation,J
+97404,L'Étang-Salé,N,stationnement,J
+97404,L'Étang-Salé,Nce,hauteur,T
+97404,L'Étang-Salé,Nce,implantation,J
+97404,L'Étang-Salé,Nce,stationnement,T
+97404,L'Étang-Salé,Ne,hauteur,T
+97404,L'Étang-Salé,Ne,implantation,J
+97404,L'Étang-Salé,Ne,stationnement,J
+97404,L'Étang-Salé,Nerl,hauteur,T
+97404,L'Étang-Salé,Nerl,implantation,J
+97404,L'Étang-Salé,Nerl,stationnement,J
+97404,L'Étang-Salé,Nparc,hauteur,T
+97404,L'Étang-Salé,Nparc,implantation,J
+97404,L'Étang-Salé,Nparc,stationnement,T
+97404,L'Étang-Salé,Nt,hauteur,T
+97404,L'Étang-Salé,Nt,implantation,J
+97404,L'Étang-Salé,Nt,stationnement,J
+97404,L'Étang-Salé,Nt1,hauteur,T
+97404,L'Étang-Salé,Nt1,implantation,J
+97404,L'Étang-Salé,Nt1,stationnement,J
+97404,L'Étang-Salé,UA,hauteur,J
+97404,L'Étang-Salé,UA,implantation,J
+97404,L'Étang-Salé,UA,stationnement,J
+97404,L'Étang-Salé,UB,hauteur,J
+97404,L'Étang-Salé,UB,implantation,J
+97404,L'Étang-Salé,UB,stationnement,J
+97404,L'Étang-Salé,UBv,hauteur,J
+97404,L'Étang-Salé,UBv,implantation,J
+97404,L'Étang-Salé,UBv,stationnement,J
+97404,L'Étang-Salé,UC,hauteur,J
+97404,L'Étang-Salé,UC,implantation,J
+97404,L'Étang-Salé,UC,stationnement,J
+97404,L'Étang-Salé,UD,hauteur,J
+97404,L'Étang-Salé,UD,implantation,J
+97404,L'Étang-Salé,UD,stationnement,J
+97404,L'Étang-Salé,UE,hauteur,J
+97404,L'Étang-Salé,UE,implantation,J
+97404,L'Étang-Salé,UE,stationnement,J
+97404,L'Étang-Salé,UT,hauteur,J
+97404,L'Étang-Salé,UT,implantation,J
+97404,L'Étang-Salé,UT,stationnement,J
+97405,Petite-Île,1AU,hauteur,J
+97405,Petite-Île,1AU,implantation,J
+97405,Petite-Île,1AU,stationnement,J
+97405,Petite-Île,1AUa,hauteur,T
+97405,Petite-Île,1AUa,implantation,T
+97405,Petite-Île,1AUa,stationnement,T
+97405,Petite-Île,1AUz,hauteur,J
+97405,Petite-Île,1AUz,implantation,J
+97405,Petite-Île,1AUz,stationnement,J
+97405,Petite-Île,2AU,hauteur,J
+97405,Petite-Île,2AU,implantation,J
+97405,Petite-Île,2AU,stationnement,J
+97405,Petite-Île,2AUe,hauteur,R
+97405,Petite-Île,2AUe,implantation,R
+97405,Petite-Île,2AUe,stationnement,R
+97405,Petite-Île,A,hauteur,J
+97405,Petite-Île,A,implantation,J
+97405,Petite-Île,A,stationnement,J
+97405,Petite-Île,AUE,hauteur,J
+97405,Petite-Île,AUE,implantation,J
+97405,Petite-Île,AUE,stationnement,J
+97405,Petite-Île,AUF,hauteur,J
+97405,Petite-Île,AUF,implantation,J
+97405,Petite-Île,AUF,stationnement,J
+97405,Petite-Île,AUT,hauteur,J
+97405,Petite-Île,AUT,implantation,J
+97405,Petite-Île,AUT,stationnement,J
+97405,Petite-Île,AUs,hauteur,J
+97405,Petite-Île,AUs,implantation,J
+97405,Petite-Île,AUs,stationnement,J
+97405,Petite-Île,Ac,hauteur,T
+97405,Petite-Île,Ac,implantation,T
+97405,Petite-Île,Ac,stationnement,T
+97405,Petite-Île,Acu,hauteur,T
+97405,Petite-Île,Acu,implantation,J
+97405,Petite-Île,Acu,stationnement,T
+97405,Petite-Île,Ad,hauteur,T
+97405,Petite-Île,Ad,implantation,T
+97405,Petite-Île,Ad,stationnement,T
+97405,Petite-Île,Ae,hauteur,T
+97405,Petite-Île,Ae,implantation,T
+97405,Petite-Île,Ae,stationnement,T
+97405,Petite-Île,N,hauteur,J
+97405,Petite-Île,N,implantation,J
+97405,Petite-Île,N,stationnement,J
+97405,Petite-Île,Na,hauteur,T
+97405,Petite-Île,Na,implantation,T
+97405,Petite-Île,Na,stationnement,T
+97405,Petite-Île,Nce,hauteur,T
+97405,Petite-Île,Nce,implantation,T
+97405,Petite-Île,Nce,stationnement,T
+97405,Petite-Île,Ncu,hauteur,T
+97405,Petite-Île,Ncu,implantation,T
+97405,Petite-Île,Ncu,stationnement,T
+97405,Petite-Île,Ne,hauteur,T
+97405,Petite-Île,Ne,implantation,T
+97405,Petite-Île,Ne,stationnement,T
+97405,Petite-Île,Np,hauteur,T
+97405,Petite-Île,Np,implantation,T
+97405,Petite-Île,Np,stationnement,T
+97405,Petite-Île,Ntl,hauteur,T
+97405,Petite-Île,Ntl,implantation,T
+97405,Petite-Île,Ntl,stationnement,T
+97405,Petite-Île,Ntla,hauteur,T
+97405,Petite-Île,Ntla,implantation,T
+97405,Petite-Île,Ntla,stationnement,T
+97405,Petite-Île,UB,hauteur,J
+97405,Petite-Île,UB,implantation,J
+97405,Petite-Île,UB,stationnement,J
+97405,Petite-Île,UC,hauteur,J
+97405,Petite-Île,UC,implantation,J
+97405,Petite-Île,UC,stationnement,J
+97405,Petite-Île,UCe,hauteur,T
+97405,Petite-Île,UCe,implantation,T
+97405,Petite-Île,UCe,stationnement,T
+97405,Petite-Île,UD,hauteur,J
+97405,Petite-Île,UD,implantation,J
+97405,Petite-Île,UD,stationnement,J
+97405,Petite-Île,UDe,hauteur,T
+97405,Petite-Île,UDe,implantation,T
+97405,Petite-Île,UDe,stationnement,T
+97405,Petite-Île,UE,hauteur,J
+97405,Petite-Île,UE,implantation,J
+97405,Petite-Île,UE,stationnement,J
+97405,Petite-Île,UEa,hauteur,J
+97405,Petite-Île,UEa,implantation,J
+97405,Petite-Île,UEa,stationnement,J
+97405,Petite-Île,UF,hauteur,J
+97405,Petite-Île,UF,implantation,J
+97405,Petite-Île,UF,stationnement,J
+97405,Petite-Île,UFcim,hauteur,T
+97405,Petite-Île,UFcim,implantation,T
+97405,Petite-Île,UFcim,stationnement,T
+97405,Petite-Île,UT,hauteur,J
+97405,Petite-Île,UT,implantation,J
+97405,Petite-Île,UT,stationnement,J
+97405,Petite-Île,UZ,hauteur,J
+97405,Petite-Île,UZ,implantation,J
+97405,Petite-Île,UZ,stationnement,J
+97406,La Plaine-des-Palmistes,A,hauteur,J
+97406,La Plaine-des-Palmistes,A,implantation,J
+97406,La Plaine-des-Palmistes,A,stationnement,J
+97406,La Plaine-des-Palmistes,AUb,hauteur,C
+97406,La Plaine-des-Palmistes,AUb,implantation,C
+97406,La Plaine-des-Palmistes,AUb,stationnement,R
+97406,La Plaine-des-Palmistes,AUc,hauteur,R
+97406,La Plaine-des-Palmistes,AUc,implantation,R
+97406,La Plaine-des-Palmistes,AUc,stationnement,R
+97406,La Plaine-des-Palmistes,AUe,hauteur,R
+97406,La Plaine-des-Palmistes,AUe,implantation,R
+97406,La Plaine-des-Palmistes,AUe,stationnement,R
+97406,La Plaine-des-Palmistes,AUr,hauteur,J
+97406,La Plaine-des-Palmistes,AUr,implantation,R
+97406,La Plaine-des-Palmistes,AUr,stationnement,C
+97406,La Plaine-des-Palmistes,AUs1,hauteur,J
+97406,La Plaine-des-Palmistes,AUs1,implantation,J
+97406,La Plaine-des-Palmistes,AUs1,stationnement,J
+97406,La Plaine-des-Palmistes,AUs2,hauteur,J
+97406,La Plaine-des-Palmistes,AUs2,implantation,J
+97406,La Plaine-des-Palmistes,AUs2,stationnement,J
+97406,La Plaine-des-Palmistes,Aco,hauteur,T
+97406,La Plaine-des-Palmistes,Aco,implantation,J
+97406,La Plaine-des-Palmistes,Aco,stationnement,T
+97406,La Plaine-des-Palmistes,Ama,hauteur,T
+97406,La Plaine-des-Palmistes,Ama,implantation,J
+97406,La Plaine-des-Palmistes,Ama,stationnement,T
+97406,La Plaine-des-Palmistes,N,hauteur,J
+97406,La Plaine-des-Palmistes,N,implantation,J
+97406,La Plaine-des-Palmistes,N,stationnement,J
+97406,La Plaine-des-Palmistes,Nco,hauteur,T
+97406,La Plaine-des-Palmistes,Nco,implantation,T
+97406,La Plaine-des-Palmistes,Nco,stationnement,J
+97406,La Plaine-des-Palmistes,Nma,hauteur,T
+97406,La Plaine-des-Palmistes,Nma,implantation,T
+97406,La Plaine-des-Palmistes,Nma,stationnement,J
+97406,La Plaine-des-Palmistes,Np,hauteur,J
+97406,La Plaine-des-Palmistes,Np,implantation,J
+97406,La Plaine-des-Palmistes,Np,stationnement,J
+97406,La Plaine-des-Palmistes,Nr,hauteur,T
+97406,La Plaine-des-Palmistes,Nr,implantation,T
+97406,La Plaine-des-Palmistes,Nr,stationnement,J
+97406,La Plaine-des-Palmistes,Nto,hauteur,T
+97406,La Plaine-des-Palmistes,Nto,implantation,T
+97406,La Plaine-des-Palmistes,Nto,stationnement,J
+97406,La Plaine-des-Palmistes,Nu,hauteur,T
+97406,La Plaine-des-Palmistes,Nu,implantation,T
+97406,La Plaine-des-Palmistes,Nu,stationnement,T
+97406,La Plaine-des-Palmistes,Ua,hauteur,J
+97406,La Plaine-des-Palmistes,Ua,implantation,J
+97406,La Plaine-des-Palmistes,Ua,stationnement,J
+97406,La Plaine-des-Palmistes,Ub,hauteur,C
+97406,La Plaine-des-Palmistes,Ub,implantation,C
+97406,La Plaine-des-Palmistes,Ub,stationnement,J
+97406,La Plaine-des-Palmistes,Uc,hauteur,J
+97406,La Plaine-des-Palmistes,Uc,implantation,J
+97406,La Plaine-des-Palmistes,Uc,stationnement,J
+97406,La Plaine-des-Palmistes,Ue,hauteur,J
+97406,La Plaine-des-Palmistes,Ue,implantation,J
+97406,La Plaine-des-Palmistes,Ue,stationnement,J
+97406,La Plaine-des-Palmistes,Ur,hauteur,J
+97406,La Plaine-des-Palmistes,Ur,implantation,J
+97406,La Plaine-des-Palmistes,Ur,stationnement,C
+97407,Le Port,1AUa,hauteur,T
+97407,Le Port,1AUa,implantation,J
+97407,Le Port,1AUa,stationnement,T
+97407,Le Port,1AUc,hauteur,T
+97407,Le Port,1AUc,implantation,T
+97407,Le Port,1AUc,stationnement,T
+97407,Le Port,1AUe,hauteur,T
+97407,Le Port,1AUe,implantation,T
+97407,Le Port,1AUe,stationnement,T
+97407,Le Port,1AUem,hauteur,T
+97407,Le Port,1AUem,implantation,T
+97407,Le Port,1AUem,stationnement,T
+97407,Le Port,1AUm,hauteur,J
+97407,Le Port,1AUm,implantation,J
+97407,Le Port,1AUm,stationnement,J
+97407,Le Port,1AUmut,hauteur,J
+97407,Le Port,1AUmut,implantation,J
+97407,Le Port,1AUmut,stationnement,J
+97407,Le Port,1AUs,hauteur,T
+97407,Le Port,1AUs,implantation,J
+97407,Le Port,1AUs,stationnement,T
+97407,Le Port,1AUv,hauteur,T
+97407,Le Port,1AUv,implantation,T
+97407,Le Port,1AUv,stationnement,T
+97407,Le Port,2AUem,hauteur,R
+97407,Le Port,2AUem,implantation,R
+97407,Le Port,2AUem,stationnement,R
+97407,Le Port,2AUmut,hauteur,T
+97407,Le Port,2AUmut,implantation,T
+97407,Le Port,2AUmut,stationnement,T
+97407,Le Port,2AUp,hauteur,T
+97407,Le Port,2AUp,implantation,J
+97407,Le Port,2AUp,stationnement,J
+97407,Le Port,A,hauteur,J
+97407,Le Port,A,implantation,J
+97407,Le Port,A,stationnement,J
+97407,Le Port,N,hauteur,J
+97407,Le Port,N,implantation,J
+97407,Le Port,N,stationnement,J
+97407,Le Port,Ua,hauteur,J
+97407,Le Port,Ua,implantation,J
+97407,Le Port,Ua,stationnement,J
+97407,Le Port,Ub,hauteur,J
+97407,Le Port,Ub,implantation,J
+97407,Le Port,Ub,stationnement,J
+97407,Le Port,Uc,hauteur,J
+97407,Le Port,Uc,implantation,J
+97407,Le Port,Uc,stationnement,J
+97407,Le Port,Uca,hauteur,J
+97407,Le Port,Uca,implantation,T
+97407,Le Port,Uca,stationnement,T
+97407,Le Port,Ud,hauteur,J
+97407,Le Port,Ud,implantation,J
+97407,Le Port,Ud,stationnement,J
+97407,Le Port,Ue,hauteur,J
+97407,Le Port,Ue,implantation,J
+97407,Le Port,Ue,stationnement,J
+97407,Le Port,Uem,hauteur,J
+97407,Le Port,Uem,implantation,J
+97407,Le Port,Uem,stationnement,T
+97407,Le Port,Umi,hauteur,J
+97407,Le Port,Umi,implantation,J
+97407,Le Port,Umi,stationnement,J
+97407,Le Port,Uoap,hauteur,J
+97407,Le Port,Uoap,implantation,J
+97407,Le Port,Uoap,stationnement,J
+97407,Le Port,Up,hauteur,J
+97407,Le Port,Up,implantation,J
+97407,Le Port,Up,stationnement,J
+97407,Le Port,Uppp,hauteur,T
+97407,Le Port,Uppp,implantation,J
+97407,Le Port,Uppp,stationnement,T
+97407,Le Port,Us,hauteur,J
+97407,Le Port,Us,implantation,J
+97407,Le Port,Us,stationnement,J
+97407,Le Port,Uv,hauteur,J
+97407,Le Port,Uv,implantation,J
+97407,Le Port,Uv,stationnement,J
+97408,La Possession,A,hauteur,J
+97408,La Possession,A,implantation,J
+97408,La Possession,A,stationnement,J
+97408,La Possession,AUAv,hauteur,R
+97408,La Possession,AUAv,implantation,R
+97408,La Possession,AUAv,stationnement,R
+97408,La Possession,AUB,hauteur,R
+97408,La Possession,AUB,implantation,R
+97408,La Possession,AUB,stationnement,R
+97408,La Possession,AUBb,hauteur,R
+97408,La Possession,AUBb,implantation,R
+97408,La Possession,AUBb,stationnement,R
+97408,La Possession,AUBm,hauteur,J
+97408,La Possession,AUBm,implantation,J
+97408,La Possession,AUBm,stationnement,J
+97408,La Possession,AUBpsfr2,hauteur,R
+97408,La Possession,AUBpsfr2,implantation,R
+97408,La Possession,AUBpsfr2,stationnement,R
+97408,La Possession,AUEm,hauteur,R
+97408,La Possession,AUEm,implantation,R
+97408,La Possession,AUEm,stationnement,R
+97408,La Possession,AUT,hauteur,R
+97408,La Possession,AUT,implantation,R
+97408,La Possession,AUT,stationnement,R
+97408,La Possession,AUst,hauteur,J
+97408,La Possession,AUst,implantation,J
+97408,La Possession,AUst,stationnement,J
+97408,La Possession,N,hauteur,J
+97408,La Possession,N,implantation,J
+97408,La Possession,N,stationnement,J
+97408,La Possession,Ni1,hauteur,J
+97408,La Possession,Ni1,implantation,J
+97408,La Possession,Ni1,stationnement,T
+97408,La Possession,Ni2,hauteur,T
+97408,La Possession,Ni2,implantation,J
+97408,La Possession,Ni2,stationnement,T
+97408,La Possession,Nli,hauteur,T
+97408,La Possession,Nli,implantation,J
+97408,La Possession,Nli,stationnement,T
+97408,La Possession,Npnr,hauteur,T
+97408,La Possession,Npnr,implantation,J
+97408,La Possession,Npnr,stationnement,T
+97408,La Possession,Nr,hauteur,T
+97408,La Possession,Nr,implantation,J
+97408,La Possession,Nr,stationnement,T
+97408,La Possession,UA,hauteur,J
+97408,La Possession,UA,implantation,J
+97408,La Possession,UA,stationnement,J
+97408,La Possession,UAa,hauteur,J
+97408,La Possession,UAa,implantation,J
+97408,La Possession,UAa,stationnement,J
+97408,La Possession,UAm,hauteur,J
+97408,La Possession,UAm,implantation,J
+97408,La Possession,UAm,stationnement,J
+97408,La Possession,UApsfr2,hauteur,J
+97408,La Possession,UApsfr2,implantation,J
+97408,La Possession,UApsfr2,stationnement,J
+97408,La Possession,UAv,hauteur,J
+97408,La Possession,UAv,implantation,J
+97408,La Possession,UAv,stationnement,J
+97408,La Possession,UB,hauteur,J
+97408,La Possession,UB,implantation,J
+97408,La Possession,UB,stationnement,J
+97408,La Possession,UBa,hauteur,J
+97408,La Possession,UBa,implantation,J
+97408,La Possession,UBa,stationnement,J
+97408,La Possession,UBb,hauteur,J
+97408,La Possession,UBb,implantation,J
+97408,La Possession,UBb,stationnement,J
+97408,La Possession,UBc,hauteur,T
+97408,La Possession,UBc,implantation,T
+97408,La Possession,UBc,stationnement,T
+97408,La Possession,UBpsfr2,hauteur,T
+97408,La Possession,UBpsfr2,implantation,T
+97408,La Possession,UBpsfr2,stationnement,T
+97408,La Possession,UBpszc,hauteur,J
+97408,La Possession,UBpszc,implantation,J
+97408,La Possession,UBpszc,stationnement,J
+97408,La Possession,UE,hauteur,J
+97408,La Possession,UE,implantation,J
+97408,La Possession,UE,stationnement,J
+97408,La Possession,UEm,hauteur,J
+97408,La Possession,UEm,implantation,J
+97408,La Possession,UEm,stationnement,J
+97408,La Possession,UT,hauteur,J
+97408,La Possession,UT,implantation,J
+97408,La Possession,UT,stationnement,J
+97408,La Possession,UTfr2,hauteur,T
+97408,La Possession,UTfr2,implantation,T
+97408,La Possession,UTfr2,stationnement,J
+97408,La Possession,Up,hauteur,A
+97408,La Possession,Up,implantation,T
+97408,La Possession,Up,stationnement,T
+97410,Saint-Benoît,A,hauteur,J
+97410,Saint-Benoît,A,implantation,J
+97410,Saint-Benoît,A,stationnement,A
+97410,Saint-Benoît,AUa18,hauteur,J
+97410,Saint-Benoît,AUa18,implantation,J
+97410,Saint-Benoît,AUa18,stationnement,T
+97410,Saint-Benoît,AUa5,hauteur,J
+97410,Saint-Benoît,AUa5,implantation,J
+97410,Saint-Benoît,AUa5,stationnement,T
+97410,Saint-Benoît,AUa8,hauteur,J
+97410,Saint-Benoît,AUa8,implantation,J
+97410,Saint-Benoît,AUa8,stationnement,T
+97410,Saint-Benoît,AUa9,hauteur,J
+97410,Saint-Benoît,AUa9,implantation,J
+97410,Saint-Benoît,AUa9,stationnement,T
+97410,Saint-Benoît,AUb10,hauteur,J
+97410,Saint-Benoît,AUb10,implantation,J
+97410,Saint-Benoît,AUb10,stationnement,T
+97410,Saint-Benoît,AUb11,hauteur,J
+97410,Saint-Benoît,AUb11,implantation,J
+97410,Saint-Benoît,AUb11,stationnement,T
+97410,Saint-Benoît,AUb12,hauteur,J
+97410,Saint-Benoît,AUb12,implantation,J
+97410,Saint-Benoît,AUb12,stationnement,T
+97410,Saint-Benoît,AUb13,hauteur,J
+97410,Saint-Benoît,AUb13,implantation,J
+97410,Saint-Benoît,AUb13,stationnement,T
+97410,Saint-Benoît,AUb14,hauteur,J
+97410,Saint-Benoît,AUb14,implantation,J
+97410,Saint-Benoît,AUb14,stationnement,T
+97410,Saint-Benoît,AUb15,hauteur,J
+97410,Saint-Benoît,AUb15,implantation,J
+97410,Saint-Benoît,AUb15,stationnement,T
+97410,Saint-Benoît,AUb16,hauteur,J
+97410,Saint-Benoît,AUb16,implantation,J
+97410,Saint-Benoît,AUb16,stationnement,T
+97410,Saint-Benoît,AUb17,hauteur,J
+97410,Saint-Benoît,AUb17,implantation,J
+97410,Saint-Benoît,AUb17,stationnement,T
+97410,Saint-Benoît,AUb19,hauteur,J
+97410,Saint-Benoît,AUb19,implantation,J
+97410,Saint-Benoît,AUb19,stationnement,T
+97410,Saint-Benoît,AUb2,hauteur,J
+97410,Saint-Benoît,AUb2,implantation,J
+97410,Saint-Benoît,AUb2,stationnement,T
+97410,Saint-Benoît,AUb6,hauteur,J
+97410,Saint-Benoît,AUb6,implantation,J
+97410,Saint-Benoît,AUb6,stationnement,T
+97410,Saint-Benoît,AUb7,hauteur,J
+97410,Saint-Benoît,AUb7,implantation,J
+97410,Saint-Benoît,AUb7,stationnement,T
+97410,Saint-Benoît,AUe3,hauteur,J
+97410,Saint-Benoît,AUe3,implantation,J
+97410,Saint-Benoît,AUe3,stationnement,T
+97410,Saint-Benoît,AUp1,hauteur,J
+97410,Saint-Benoît,AUp1,implantation,J
+97410,Saint-Benoît,AUp1,stationnement,T
+97410,Saint-Benoît,Acor,hauteur,T
+97410,Saint-Benoît,Acor,implantation,J
+97410,Saint-Benoît,Acor,stationnement,A
+97410,Saint-Benoît,Acu,hauteur,T
+97410,Saint-Benoît,Acu,implantation,J
+97410,Saint-Benoît,Acu,stationnement,A
+97410,Saint-Benoît,Ai,hauteur,T
+97410,Saint-Benoît,Ai,implantation,J
+97410,Saint-Benoît,Ai,stationnement,A
+97410,Saint-Benoît,N,hauteur,J
+97410,Saint-Benoît,N,implantation,J
+97410,Saint-Benoît,N,stationnement,A
+97410,Saint-Benoît,Nci,hauteur,J
+97410,Saint-Benoît,Nci,implantation,J
+97410,Saint-Benoît,Nci,stationnement,A
+97410,Saint-Benoît,Nerl,hauteur,J
+97410,Saint-Benoît,Nerl,implantation,J
+97410,Saint-Benoît,Nerl,stationnement,A
+97410,Saint-Benoît,Np,hauteur,J
+97410,Saint-Benoît,Np,implantation,J
+97410,Saint-Benoît,Np,stationnement,A
+97410,Saint-Benoît,Npnr,hauteur,J
+97410,Saint-Benoît,Npnr,implantation,J
+97410,Saint-Benoît,Npnr,stationnement,A
+97410,Saint-Benoît,Ns20,hauteur,J
+97410,Saint-Benoît,Ns20,implantation,J
+97410,Saint-Benoît,Ns20,stationnement,A
+97410,Saint-Benoît,Ns21,hauteur,J
+97410,Saint-Benoît,Ns21,implantation,J
+97410,Saint-Benoît,Ns21,stationnement,A
+97410,Saint-Benoît,Ns22,hauteur,J
+97410,Saint-Benoît,Ns22,implantation,J
+97410,Saint-Benoît,Ns22,stationnement,A
+97410,Saint-Benoît,Ns23,hauteur,J
+97410,Saint-Benoît,Ns23,implantation,J
+97410,Saint-Benoît,Ns23,stationnement,A
+97410,Saint-Benoît,Ns24,hauteur,J
+97410,Saint-Benoît,Ns24,implantation,J
+97410,Saint-Benoît,Ns24,stationnement,A
+97410,Saint-Benoît,Ns25,hauteur,J
+97410,Saint-Benoît,Ns25,implantation,J
+97410,Saint-Benoît,Ns25,stationnement,A
+97410,Saint-Benoît,Ns26,hauteur,J
+97410,Saint-Benoît,Ns26,implantation,J
+97410,Saint-Benoît,Ns26,stationnement,A
+97410,Saint-Benoît,Ns27,hauteur,J
+97410,Saint-Benoît,Ns27,implantation,J
+97410,Saint-Benoît,Ns27,stationnement,A
+97410,Saint-Benoît,Ns28,hauteur,J
+97410,Saint-Benoît,Ns28,implantation,J
+97410,Saint-Benoît,Ns28,stationnement,A
+97410,Saint-Benoît,Ns32,hauteur,J
+97410,Saint-Benoît,Ns32,implantation,J
+97410,Saint-Benoît,Ns32,stationnement,A
+97410,Saint-Benoît,Ns33,hauteur,J
+97410,Saint-Benoît,Ns33,implantation,J
+97410,Saint-Benoît,Ns33,stationnement,A
+97410,Saint-Benoît,Ns34,hauteur,J
+97410,Saint-Benoît,Ns34,implantation,J
+97410,Saint-Benoît,Ns34,stationnement,A
+97410,Saint-Benoît,Ns35,hauteur,J
+97410,Saint-Benoît,Ns35,implantation,J
+97410,Saint-Benoît,Ns35,stationnement,A
+97410,Saint-Benoît,Ns36,hauteur,J
+97410,Saint-Benoît,Ns36,implantation,J
+97410,Saint-Benoît,Ns36,stationnement,A
+97410,Saint-Benoît,Ns37,hauteur,J
+97410,Saint-Benoît,Ns37,implantation,J
+97410,Saint-Benoît,Ns37,stationnement,A
+97410,Saint-Benoît,Ns38,hauteur,J
+97410,Saint-Benoît,Ns38,implantation,J
+97410,Saint-Benoît,Ns38,stationnement,A
+97410,Saint-Benoît,Ns39,hauteur,J
+97410,Saint-Benoît,Ns39,implantation,J
+97410,Saint-Benoît,Ns39,stationnement,A
+97410,Saint-Benoît,Ns40,hauteur,J
+97410,Saint-Benoît,Ns40,implantation,J
+97410,Saint-Benoît,Ns40,stationnement,A
+97410,Saint-Benoît,Ns41,hauteur,J
+97410,Saint-Benoît,Ns41,implantation,J
+97410,Saint-Benoît,Ns41,stationnement,A
+97410,Saint-Benoît,Ns42,hauteur,J
+97410,Saint-Benoît,Ns42,implantation,J
+97410,Saint-Benoît,Ns42,stationnement,A
+97410,Saint-Benoît,Ns43,hauteur,J
+97410,Saint-Benoît,Ns43,implantation,J
+97410,Saint-Benoît,Ns43,stationnement,A
+97410,Saint-Benoît,Ns44,hauteur,J
+97410,Saint-Benoît,Ns44,implantation,J
+97410,Saint-Benoît,Ns44,stationnement,A
+97410,Saint-Benoît,Ns45,hauteur,J
+97410,Saint-Benoît,Ns45,implantation,J
+97410,Saint-Benoît,Ns45,stationnement,A
+97410,Saint-Benoît,Ns46,hauteur,J
+97410,Saint-Benoît,Ns46,implantation,J
+97410,Saint-Benoît,Ns46,stationnement,A
+97410,Saint-Benoît,Nta47,hauteur,J
+97410,Saint-Benoît,Nta47,implantation,J
+97410,Saint-Benoît,Nta47,stationnement,A
+97410,Saint-Benoît,Nta48,hauteur,J
+97410,Saint-Benoît,Nta48,implantation,J
+97410,Saint-Benoît,Nta48,stationnement,A
+97410,Saint-Benoît,Nta49,hauteur,J
+97410,Saint-Benoît,Nta49,implantation,J
+97410,Saint-Benoît,Nta49,stationnement,A
+97410,Saint-Benoît,Nta50,hauteur,J
+97410,Saint-Benoît,Nta50,implantation,J
+97410,Saint-Benoît,Nta50,stationnement,A
+97410,Saint-Benoît,Nta51,hauteur,J
+97410,Saint-Benoît,Nta51,implantation,J
+97410,Saint-Benoît,Nta51,stationnement,A
+97410,Saint-Benoît,Nta52,hauteur,J
+97410,Saint-Benoît,Nta52,implantation,J
+97410,Saint-Benoît,Nta52,stationnement,A
+97410,Saint-Benoît,Nta53,hauteur,J
+97410,Saint-Benoît,Nta53,implantation,J
+97410,Saint-Benoît,Nta53,stationnement,A
+97410,Saint-Benoît,Nta54,hauteur,J
+97410,Saint-Benoît,Nta54,implantation,J
+97410,Saint-Benoît,Nta54,stationnement,A
+97410,Saint-Benoît,Ntb57,hauteur,J
+97410,Saint-Benoît,Ntb57,implantation,J
+97410,Saint-Benoît,Ntb57,stationnement,J
+97410,Saint-Benoît,Ntb59,hauteur,J
+97410,Saint-Benoît,Ntb59,implantation,J
+97410,Saint-Benoît,Ntb59,stationnement,J
+97410,Saint-Benoît,Ua,hauteur,J
+97410,Saint-Benoît,Ua,implantation,J
+97410,Saint-Benoît,Ua,stationnement,J
+97410,Saint-Benoît,Uap,hauteur,J
+97410,Saint-Benoît,Uap,implantation,J
+97410,Saint-Benoît,Uap,stationnement,J
+97410,Saint-Benoît,Ub,hauteur,J
+97410,Saint-Benoît,Ub,implantation,J
+97410,Saint-Benoît,Ub,stationnement,J
+97410,Saint-Benoît,Ue,hauteur,J
+97410,Saint-Benoît,Ue,implantation,J
+97410,Saint-Benoît,Ue,stationnement,J
+97410,Saint-Benoît,Up,hauteur,J
+97410,Saint-Benoît,Up,implantation,J
+97410,Saint-Benoît,Up,stationnement,T
+97410,Saint-Benoît,Ut,hauteur,J
+97410,Saint-Benoît,Ut,implantation,J
+97410,Saint-Benoît,Ut,stationnement,T
+97411,Saint-Denis,A,hauteur,J
+97411,Saint-Denis,A,implantation,C
+97411,Saint-Denis,A,stationnement,J
+97411,Saint-Denis,AUa,hauteur,J
+97411,Saint-Denis,AUa,implantation,J
+97411,Saint-Denis,AUa,stationnement,J
+97411,Saint-Denis,AUh,hauteur,J
+97411,Saint-Denis,AUh,implantation,J
+97411,Saint-Denis,AUh,stationnement,J
+97411,Saint-Denis,AUj,hauteur,J
+97411,Saint-Denis,AUj,implantation,J
+97411,Saint-Denis,AUj,stationnement,J
+97411,Saint-Denis,AUm,hauteur,J
+97411,Saint-Denis,AUm,implantation,J
+97411,Saint-Denis,AUm,stationnement,J
+97411,Saint-Denis,AUx,hauteur,J
+97411,Saint-Denis,AUx,implantation,J
+97411,Saint-Denis,AUx,stationnement,A
+97411,Saint-Denis,Ac,hauteur,T
+97411,Saint-Denis,Ac,implantation,C
+97411,Saint-Denis,Ac,stationnement,T
+97411,Saint-Denis,N,hauteur,J
+97411,Saint-Denis,N,implantation,J
+97411,Saint-Denis,N,stationnement,J
+97411,Saint-Denis,Npf,hauteur,T
+97411,Saint-Denis,Npf,implantation,J
+97411,Saint-Denis,Npf,stationnement,T
+97411,Saint-Denis,Ntc,hauteur,J
+97411,Saint-Denis,Ntc,implantation,J
+97411,Saint-Denis,Ntc,stationnement,T
+97411,Saint-Denis,Ntn,hauteur,J
+97411,Saint-Denis,Ntn,implantation,J
+97411,Saint-Denis,Ntn,stationnement,T
+97411,Saint-Denis,Ua,hauteur,J
+97411,Saint-Denis,Ua,implantation,J
+97411,Saint-Denis,Ua,stationnement,J
+97411,Saint-Denis,Uac,hauteur,J
+97411,Saint-Denis,Uac,implantation,J
+97411,Saint-Denis,Uac,stationnement,J
+97411,Saint-Denis,Uad,hauteur,J
+97411,Saint-Denis,Uad,implantation,J
+97411,Saint-Denis,Uad,stationnement,J
+97411,Saint-Denis,Uat,hauteur,J
+97411,Saint-Denis,Uat,implantation,J
+97411,Saint-Denis,Uat,stationnement,J
+97411,Saint-Denis,Uavap,hauteur,J
+97411,Saint-Denis,Uavap,implantation,J
+97411,Saint-Denis,Uavap,stationnement,J
+97411,Saint-Denis,Ud,hauteur,J
+97411,Saint-Denis,Ud,implantation,J
+97411,Saint-Denis,Ud,stationnement,J
+97411,Saint-Denis,Udo,hauteur,J
+97411,Saint-Denis,Udo,implantation,J
+97411,Saint-Denis,Udo,stationnement,J
+97411,Saint-Denis,Udop,hauteur,J
+97411,Saint-Denis,Udop,implantation,J
+97411,Saint-Denis,Udop,stationnement,J
+97411,Saint-Denis,Udp,hauteur,J
+97411,Saint-Denis,Udp,implantation,J
+97411,Saint-Denis,Udp,stationnement,J
+97411,Saint-Denis,Uh,hauteur,J
+97411,Saint-Denis,Uh,implantation,J
+97411,Saint-Denis,Uh,stationnement,J
+97411,Saint-Denis,Ui,hauteur,J
+97411,Saint-Denis,Ui,implantation,J
+97411,Saint-Denis,Ui,stationnement,J
+97411,Saint-Denis,Uicm,hauteur,J
+97411,Saint-Denis,Uicm,implantation,J
+97411,Saint-Denis,Uicm,stationnement,T
+97411,Saint-Denis,Uip,hauteur,J
+97411,Saint-Denis,Uip,implantation,J
+97411,Saint-Denis,Uip,stationnement,J
+97411,Saint-Denis,Uj,hauteur,J
+97411,Saint-Denis,Uj,implantation,J
+97411,Saint-Denis,Uj,stationnement,J
+97411,Saint-Denis,Um,hauteur,J
+97411,Saint-Denis,Um,implantation,J
+97411,Saint-Denis,Um,stationnement,J
+97411,Saint-Denis,Uma,hauteur,J
+97411,Saint-Denis,Uma,implantation,J
+97411,Saint-Denis,Uma,stationnement,J
+97411,Saint-Denis,Upi,hauteur,T
+97411,Saint-Denis,Upi,implantation,T
+97411,Saint-Denis,Upi,stationnement,T
+97411,Saint-Denis,Upr,hauteur,T
+97411,Saint-Denis,Upr,implantation,J
+97411,Saint-Denis,Upr,stationnement,T
+97411,Saint-Denis,Uu,hauteur,J
+97411,Saint-Denis,Uu,implantation,J
+97411,Saint-Denis,Uu,stationnement,J
+97411,Saint-Denis,Uva,hauteur,J
+97411,Saint-Denis,Uva,implantation,T
+97411,Saint-Denis,Uva,stationnement,J
+97411,Saint-Denis,Uvac,hauteur,J
+97411,Saint-Denis,Uvac,implantation,J
+97411,Saint-Denis,Uvac,stationnement,J
+97411,Saint-Denis,Uvl,hauteur,J
+97411,Saint-Denis,Uvl,implantation,T
+97411,Saint-Denis,Uvl,stationnement,J
+97412,Saint-Joseph,1AU3,hauteur,R
+97412,Saint-Joseph,1AU3,implantation,R
+97412,Saint-Joseph,1AU3,stationnement,R
+97412,Saint-Joseph,1AU3a,hauteur,R
+97412,Saint-Joseph,1AU3a,implantation,R
+97412,Saint-Joseph,1AU3a,stationnement,R
+97412,Saint-Joseph,1AU5,hauteur,R
+97412,Saint-Joseph,1AU5,implantation,R
+97412,Saint-Joseph,1AU5,stationnement,R
+97412,Saint-Joseph,1AU5ru,hauteur,R
+97412,Saint-Joseph,1AU5ru,implantation,R
+97412,Saint-Joseph,1AU5ru,stationnement,R
+97412,Saint-Joseph,1AU5vi,hauteur,R
+97412,Saint-Joseph,1AU5vi,implantation,R
+97412,Saint-Joseph,1AU5vi,stationnement,R
+97412,Saint-Joseph,1AU6,hauteur,R
+97412,Saint-Joseph,1AU6,implantation,R
+97412,Saint-Joseph,1AU6,stationnement,R
+97412,Saint-Joseph,1AU6c,hauteur,R
+97412,Saint-Joseph,1AU6c,implantation,R
+97412,Saint-Joseph,1AU6c,stationnement,R
+97412,Saint-Joseph,1AUto,hauteur,R
+97412,Saint-Joseph,1AUto,implantation,R
+97412,Saint-Joseph,1AUto,stationnement,R
+97412,Saint-Joseph,1AUtok,hauteur,R
+97412,Saint-Joseph,1AUtok,implantation,R
+97412,Saint-Joseph,1AUtok,stationnement,R
+97412,Saint-Joseph,2AU2,hauteur,R
+97412,Saint-Joseph,2AU2,implantation,R
+97412,Saint-Joseph,2AU2,stationnement,R
+97412,Saint-Joseph,2AU3,hauteur,R
+97412,Saint-Joseph,2AU3,implantation,R
+97412,Saint-Joseph,2AU3,stationnement,R
+97412,Saint-Joseph,2AU3a,hauteur,R
+97412,Saint-Joseph,2AU3a,implantation,R
+97412,Saint-Joseph,2AU3a,stationnement,R
+97412,Saint-Joseph,2AU5,hauteur,R
+97412,Saint-Joseph,2AU5,implantation,R
+97412,Saint-Joseph,2AU5,stationnement,R
+97412,Saint-Joseph,2AU5cvd,hauteur,R
+97412,Saint-Joseph,2AU5cvd,implantation,R
+97412,Saint-Joseph,2AU5cvd,stationnement,R
+97412,Saint-Joseph,2AU5ma,hauteur,R
+97412,Saint-Joseph,2AU5ma,implantation,R
+97412,Saint-Joseph,2AU5ma,stationnement,R
+97412,Saint-Joseph,2AU5st,hauteur,R
+97412,Saint-Joseph,2AU5st,implantation,R
+97412,Saint-Joseph,2AU5st,stationnement,R
+97412,Saint-Joseph,2AU5vi,hauteur,R
+97412,Saint-Joseph,2AU5vi,implantation,R
+97412,Saint-Joseph,2AU5vi,stationnement,R
+97412,Saint-Joseph,2AU6,hauteur,R
+97412,Saint-Joseph,2AU6,implantation,R
+97412,Saint-Joseph,2AU6,stationnement,R
+97412,Saint-Joseph,2AU6ch,hauteur,R
+97412,Saint-Joseph,2AU6ch,implantation,R
+97412,Saint-Joseph,2AU6ch,stationnement,R
+97412,Saint-Joseph,3AU3,hauteur,R
+97412,Saint-Joseph,3AU3,implantation,R
+97412,Saint-Joseph,3AU3,stationnement,R
+97412,Saint-Joseph,3AU3a,hauteur,R
+97412,Saint-Joseph,3AU3a,implantation,R
+97412,Saint-Joseph,3AU3a,stationnement,R
+97412,Saint-Joseph,3AU3st,hauteur,R
+97412,Saint-Joseph,3AU3st,implantation,R
+97412,Saint-Joseph,3AU3st,stationnement,R
+97412,Saint-Joseph,3AU5,hauteur,R
+97412,Saint-Joseph,3AU5,implantation,R
+97412,Saint-Joseph,3AU5,stationnement,R
+97412,Saint-Joseph,3AU5ma,hauteur,R
+97412,Saint-Joseph,3AU5ma,implantation,R
+97412,Saint-Joseph,3AU5ma,stationnement,R
+97412,Saint-Joseph,3AU5st,hauteur,R
+97412,Saint-Joseph,3AU5st,implantation,R
+97412,Saint-Joseph,3AU5st,stationnement,R
+97412,Saint-Joseph,3AU5vist,hauteur,R
+97412,Saint-Joseph,3AU5vist,implantation,R
+97412,Saint-Joseph,3AU5vist,stationnement,R
+97412,Saint-Joseph,3AU6,hauteur,R
+97412,Saint-Joseph,3AU6,implantation,R
+97412,Saint-Joseph,3AU6,stationnement,R
+97412,Saint-Joseph,3AU6ch,hauteur,R
+97412,Saint-Joseph,3AU6ch,implantation,R
+97412,Saint-Joseph,3AU6ch,stationnement,R
+97412,Saint-Joseph,A,hauteur,J
+97412,Saint-Joseph,A,implantation,J
+97412,Saint-Joseph,A,stationnement,J
+97412,Saint-Joseph,Aba,hauteur,J
+97412,Saint-Joseph,Aba,implantation,J
+97412,Saint-Joseph,Aba,stationnement,T
+97412,Saint-Joseph,Acu,hauteur,J
+97412,Saint-Joseph,Acu,implantation,J
+97412,Saint-Joseph,Acu,stationnement,T
+97412,Saint-Joseph,N,hauteur,J
+97412,Saint-Joseph,N,implantation,J
+97412,Saint-Joseph,N,stationnement,J
+97412,Saint-Joseph,Nba,hauteur,T
+97412,Saint-Joseph,Nba,implantation,J
+97412,Saint-Joseph,Nba,stationnement,J
+97412,Saint-Joseph,Nci,hauteur,T
+97412,Saint-Joseph,Nci,implantation,J
+97412,Saint-Joseph,Nci,stationnement,J
+97412,Saint-Joseph,Nco,hauteur,T
+97412,Saint-Joseph,Nco,implantation,J
+97412,Saint-Joseph,Nco,stationnement,J
+97412,Saint-Joseph,Nli,hauteur,T
+97412,Saint-Joseph,Nli,implantation,J
+97412,Saint-Joseph,Nli,stationnement,J
+97412,Saint-Joseph,Nma,hauteur,T
+97412,Saint-Joseph,Nma,implantation,J
+97412,Saint-Joseph,Nma,stationnement,J
+97412,Saint-Joseph,Npnr,hauteur,T
+97412,Saint-Joseph,Npnr,implantation,J
+97412,Saint-Joseph,Npnr,stationnement,J
+97412,Saint-Joseph,Ntoh,hauteur,T
+97412,Saint-Joseph,Ntoh,implantation,J
+97412,Saint-Joseph,Ntoh,stationnement,J
+97412,Saint-Joseph,Ntok,hauteur,J
+97412,Saint-Joseph,Ntok,implantation,J
+97412,Saint-Joseph,Ntok,stationnement,J
+97412,Saint-Joseph,Ntol,hauteur,T
+97412,Saint-Joseph,Ntol,implantation,J
+97412,Saint-Joseph,Ntol,stationnement,J
+97412,Saint-Joseph,U1,hauteur,J
+97412,Saint-Joseph,U1,implantation,J
+97412,Saint-Joseph,U1,stationnement,J
+97412,Saint-Joseph,U2,hauteur,J
+97412,Saint-Joseph,U2,implantation,J
+97412,Saint-Joseph,U2,stationnement,J
+97412,Saint-Joseph,U2a,hauteur,T
+97412,Saint-Joseph,U2a,implantation,T
+97412,Saint-Joseph,U2a,stationnement,J
+97412,Saint-Joseph,U3,hauteur,J
+97412,Saint-Joseph,U3,implantation,J
+97412,Saint-Joseph,U3,stationnement,J
+97412,Saint-Joseph,U3a,hauteur,J
+97412,Saint-Joseph,U3a,implantation,J
+97412,Saint-Joseph,U3a,stationnement,J
+97412,Saint-Joseph,U3ar,hauteur,J
+97412,Saint-Joseph,U3ar,implantation,J
+97412,Saint-Joseph,U3ar,stationnement,J
+97412,Saint-Joseph,U4,hauteur,J
+97412,Saint-Joseph,U4,implantation,J
+97412,Saint-Joseph,U4,stationnement,J
+97412,Saint-Joseph,U5,hauteur,J
+97412,Saint-Joseph,U5,implantation,J
+97412,Saint-Joseph,U5,stationnement,J
+97412,Saint-Joseph,U5cv,hauteur,J
+97412,Saint-Joseph,U5cv,implantation,J
+97412,Saint-Joseph,U5cv,stationnement,J
+97412,Saint-Joseph,U5cvd,hauteur,J
+97412,Saint-Joseph,U5cvd,implantation,J
+97412,Saint-Joseph,U5cvd,stationnement,J
+97412,Saint-Joseph,U5ma,hauteur,J
+97412,Saint-Joseph,U5ma,implantation,J
+97412,Saint-Joseph,U5ma,stationnement,T
+97412,Saint-Joseph,U5ru,hauteur,J
+97412,Saint-Joseph,U5ru,implantation,J
+97412,Saint-Joseph,U5ru,stationnement,J
+97412,Saint-Joseph,U5vi,hauteur,J
+97412,Saint-Joseph,U5vi,implantation,J
+97412,Saint-Joseph,U5vi,stationnement,J
+97412,Saint-Joseph,U6,hauteur,J
+97412,Saint-Joseph,U6,implantation,J
+97412,Saint-Joseph,U6,stationnement,J
+97412,Saint-Joseph,U6c,hauteur,J
+97412,Saint-Joseph,U6c,implantation,J
+97412,Saint-Joseph,U6c,stationnement,J
+97414,Saint-Louis,1AUa,hauteur,R
+97414,Saint-Louis,1AUa,implantation,R
+97414,Saint-Louis,1AUa,stationnement,R
+97414,Saint-Louis,1AUb1,hauteur,R
+97414,Saint-Louis,1AUb1,implantation,R
+97414,Saint-Louis,1AUb1,stationnement,R
+97414,Saint-Louis,1AUb2,hauteur,R
+97414,Saint-Louis,1AUb2,implantation,R
+97414,Saint-Louis,1AUb2,stationnement,R
+97414,Saint-Louis,1AUc,hauteur,R
+97414,Saint-Louis,1AUc,implantation,R
+97414,Saint-Louis,1AUc,stationnement,R
+97414,Saint-Louis,1AUc1,hauteur,R
+97414,Saint-Louis,1AUc1,implantation,R
+97414,Saint-Louis,1AUc1,stationnement,R
+97414,Saint-Louis,1AUc2,hauteur,R
+97414,Saint-Louis,1AUc2,implantation,R
+97414,Saint-Louis,1AUc2,stationnement,R
+97414,Saint-Louis,1AUd,hauteur,R
+97414,Saint-Louis,1AUd,implantation,R
+97414,Saint-Louis,1AUd,stationnement,R
+97414,Saint-Louis,1AUd1,hauteur,R
+97414,Saint-Louis,1AUd1,implantation,R
+97414,Saint-Louis,1AUd1,stationnement,R
+97414,Saint-Louis,1AUe,hauteur,R
+97414,Saint-Louis,1AUe,implantation,R
+97414,Saint-Louis,1AUe,stationnement,R
+97414,Saint-Louis,1AUst,hauteur,R
+97414,Saint-Louis,1AUst,implantation,R
+97414,Saint-Louis,1AUst,stationnement,R
+97414,Saint-Louis,1AUste,hauteur,R
+97414,Saint-Louis,1AUste,implantation,R
+97414,Saint-Louis,1AUste,stationnement,R
+97414,Saint-Louis,2AUb1,hauteur,R
+97414,Saint-Louis,2AUb1,implantation,R
+97414,Saint-Louis,2AUb1,stationnement,R
+97414,Saint-Louis,2AUb2,hauteur,R
+97414,Saint-Louis,2AUb2,implantation,R
+97414,Saint-Louis,2AUb2,stationnement,R
+97414,Saint-Louis,2AUd,hauteur,R
+97414,Saint-Louis,2AUd,implantation,R
+97414,Saint-Louis,2AUd,stationnement,R
+97414,Saint-Louis,2AUd1,hauteur,R
+97414,Saint-Louis,2AUd1,implantation,R
+97414,Saint-Louis,2AUd1,stationnement,R
+97414,Saint-Louis,2AUe,hauteur,R
+97414,Saint-Louis,2AUe,implantation,R
+97414,Saint-Louis,2AUe,stationnement,R
+97414,Saint-Louis,2AUst,hauteur,R
+97414,Saint-Louis,2AUst,implantation,R
+97414,Saint-Louis,2AUst,stationnement,R
+97414,Saint-Louis,2AUste,hauteur,R
+97414,Saint-Louis,2AUste,implantation,R
+97414,Saint-Louis,2AUste,stationnement,R
+97414,Saint-Louis,A,hauteur,J
+97414,Saint-Louis,A,implantation,J
+97414,Saint-Louis,A,stationnement,J
+97414,Saint-Louis,Aco,hauteur,T
+97414,Saint-Louis,Aco,implantation,J
+97414,Saint-Louis,Aco,stationnement,T
+97414,Saint-Louis,Acu,hauteur,T
+97414,Saint-Louis,Acu,implantation,J
+97414,Saint-Louis,Acu,stationnement,T
+97414,Saint-Louis,Ama,hauteur,T
+97414,Saint-Louis,Ama,implantation,J
+97414,Saint-Louis,Ama,stationnement,T
+97414,Saint-Louis,Arh,hauteur,T
+97414,Saint-Louis,Arh,implantation,J
+97414,Saint-Louis,Arh,stationnement,T
+97414,Saint-Louis,Ato,hauteur,T
+97414,Saint-Louis,Ato,implantation,J
+97414,Saint-Louis,Ato,stationnement,T
+97414,Saint-Louis,N,hauteur,J
+97414,Saint-Louis,N,implantation,J
+97414,Saint-Louis,N,stationnement,J
+97414,Saint-Louis,Nco,hauteur,T
+97414,Saint-Louis,Nco,implantation,T
+97414,Saint-Louis,Nco,stationnement,T
+97414,Saint-Louis,Nli,hauteur,T
+97414,Saint-Louis,Nli,implantation,T
+97414,Saint-Louis,Nli,stationnement,T
+97414,Saint-Louis,Nma,hauteur,T
+97414,Saint-Louis,Nma,implantation,T
+97414,Saint-Louis,Nma,stationnement,T
+97414,Saint-Louis,Npnr,hauteur,T
+97414,Saint-Louis,Npnr,implantation,T
+97414,Saint-Louis,Npnr,stationnement,T
+97414,Saint-Louis,Nr,hauteur,T
+97414,Saint-Louis,Nr,implantation,T
+97414,Saint-Louis,Nr,stationnement,T
+97414,Saint-Louis,Nstep,hauteur,T
+97414,Saint-Louis,Nstep,implantation,T
+97414,Saint-Louis,Nstep,stationnement,T
+97414,Saint-Louis,Nto,hauteur,T
+97414,Saint-Louis,Nto,implantation,T
+97414,Saint-Louis,Nto,stationnement,T
+97414,Saint-Louis,Nto3,hauteur,T
+97414,Saint-Louis,Nto3,implantation,T
+97414,Saint-Louis,Nto3,stationnement,T
+97414,Saint-Louis,UA,hauteur,J
+97414,Saint-Louis,UA,implantation,J
+97414,Saint-Louis,UA,stationnement,J
+97414,Saint-Louis,UA1,hauteur,J
+97414,Saint-Louis,UA1,implantation,T
+97414,Saint-Louis,UA1,stationnement,J
+97414,Saint-Louis,UB,hauteur,J
+97414,Saint-Louis,UB,implantation,J
+97414,Saint-Louis,UB,stationnement,J
+97414,Saint-Louis,UC,hauteur,J
+97414,Saint-Louis,UC,implantation,J
+97414,Saint-Louis,UC,stationnement,J
+97414,Saint-Louis,UC1,hauteur,J
+97414,Saint-Louis,UC1,implantation,J
+97414,Saint-Louis,UC1,stationnement,T
+97414,Saint-Louis,UC2,hauteur,J
+97414,Saint-Louis,UC2,implantation,T
+97414,Saint-Louis,UC2,stationnement,T
+97414,Saint-Louis,UD,hauteur,J
+97414,Saint-Louis,UD,implantation,J
+97414,Saint-Louis,UD,stationnement,J
+97414,Saint-Louis,UD1,hauteur,J
+97414,Saint-Louis,UD1,implantation,J
+97414,Saint-Louis,UD1,stationnement,J
+97414,Saint-Louis,UE,hauteur,J
+97414,Saint-Louis,UE,implantation,J
+97414,Saint-Louis,UE,stationnement,J
+97414,Saint-Louis,US,hauteur,J
+97414,Saint-Louis,US,implantation,J
+97414,Saint-Louis,US,stationnement,J
+97414,Saint-Louis,UZ,hauteur,J
+97414,Saint-Louis,UZ,implantation,J
+97414,Saint-Louis,UZ,stationnement,J
+97415,Saint-Paul,A,hauteur,J
+97415,Saint-Paul,A,implantation,J
+97415,Saint-Paul,A,stationnement,J
+97415,Saint-Paul,AU1b,hauteur,J
+97415,Saint-Paul,AU1b,implantation,J
+97415,Saint-Paul,AU1b,stationnement,J
+97415,Saint-Paul,AU1e,hauteur,J
+97415,Saint-Paul,AU1e,implantation,J
+97415,Saint-Paul,AU1e,stationnement,J
+97415,Saint-Paul,AU1ec,hauteur,J
+97415,Saint-Paul,AU1ec,implantation,J
+97415,Saint-Paul,AU1ec,stationnement,J
+97415,Saint-Paul,AU1est,hauteur,J
+97415,Saint-Paul,AU1est,implantation,J
+97415,Saint-Paul,AU1est,stationnement,J
+97415,Saint-Paul,AU1lec,hauteur,J
+97415,Saint-Paul,AU1lec,implantation,J
+97415,Saint-Paul,AU1lec,stationnement,J
+97415,Saint-Paul,AU1st,hauteur,J
+97415,Saint-Paul,AU1st,implantation,J
+97415,Saint-Paul,AU1st,stationnement,J
+97415,Saint-Paul,AU2c,hauteur,J
+97415,Saint-Paul,AU2c,implantation,J
+97415,Saint-Paul,AU2c,stationnement,R
+97415,Saint-Paul,AU2h,hauteur,J
+97415,Saint-Paul,AU2h,implantation,J
+97415,Saint-Paul,AU2h,stationnement,R
+97415,Saint-Paul,AU3a,hauteur,J
+97415,Saint-Paul,AU3a,implantation,J
+97415,Saint-Paul,AU3a,stationnement,R
+97415,Saint-Paul,AU3b,hauteur,J
+97415,Saint-Paul,AU3b,implantation,J
+97415,Saint-Paul,AU3b,stationnement,R
+97415,Saint-Paul,AU3c,hauteur,J
+97415,Saint-Paul,AU3c,implantation,J
+97415,Saint-Paul,AU3c,stationnement,R
+97415,Saint-Paul,AU3e,hauteur,R
+97415,Saint-Paul,AU3e,implantation,R
+97415,Saint-Paul,AU3e,stationnement,R
+97415,Saint-Paul,AU3st,hauteur,J
+97415,Saint-Paul,AU3st,implantation,J
+97415,Saint-Paul,AU3st,stationnement,J
+97415,Saint-Paul,AU4b,hauteur,J
+97415,Saint-Paul,AU4b,implantation,J
+97415,Saint-Paul,AU4b,stationnement,R
+97415,Saint-Paul,AU4c,hauteur,J
+97415,Saint-Paul,AU4c,implantation,J
+97415,Saint-Paul,AU4c,stationnement,R
+97415,Saint-Paul,AU5a,hauteur,J
+97415,Saint-Paul,AU5a,implantation,J
+97415,Saint-Paul,AU5a,stationnement,R
+97415,Saint-Paul,AU5b,hauteur,J
+97415,Saint-Paul,AU5b,implantation,J
+97415,Saint-Paul,AU5b,stationnement,R
+97415,Saint-Paul,AU5c,hauteur,J
+97415,Saint-Paul,AU5c,implantation,J
+97415,Saint-Paul,AU5c,stationnement,R
+97415,Saint-Paul,AU5e,hauteur,J
+97415,Saint-Paul,AU5e,implantation,J
+97415,Saint-Paul,AU5e,stationnement,J
+97415,Saint-Paul,AU5st,hauteur,J
+97415,Saint-Paul,AU5st,implantation,J
+97415,Saint-Paul,AU5st,stationnement,J
+97415,Saint-Paul,AU6a,hauteur,J
+97415,Saint-Paul,AU6a,implantation,J
+97415,Saint-Paul,AU6a,stationnement,R
+97415,Saint-Paul,AU6b,hauteur,J
+97415,Saint-Paul,AU6b,implantation,J
+97415,Saint-Paul,AU6b,stationnement,R
+97415,Saint-Paul,AU6c,hauteur,J
+97415,Saint-Paul,AU6c,implantation,J
+97415,Saint-Paul,AU6c,stationnement,R
+97415,Saint-Paul,AU6st,hauteur,J
+97415,Saint-Paul,AU6st,implantation,J
+97415,Saint-Paul,AU6st,stationnement,J
+97415,Saint-Paul,Acu,hauteur,T
+97415,Saint-Paul,Acu,implantation,J
+97415,Saint-Paul,Acu,stationnement,T
+97415,Saint-Paul,An,hauteur,T
+97415,Saint-Paul,An,implantation,J
+97415,Saint-Paul,An,stationnement,T
+97415,Saint-Paul,N,hauteur,J
+97415,Saint-Paul,N,implantation,J
+97415,Saint-Paul,N,stationnement,J
+97415,Saint-Paul,Ncor,hauteur,T
+97415,Saint-Paul,Ncor,implantation,T
+97415,Saint-Paul,Ncor,stationnement,T
+97415,Saint-Paul,Ncu,hauteur,T
+97415,Saint-Paul,Ncu,implantation,T
+97415,Saint-Paul,Ncu,stationnement,T
+97415,Saint-Paul,Nerl,hauteur,T
+97415,Saint-Paul,Nerl,implantation,T
+97415,Saint-Paul,Nerl,stationnement,T
+97415,Saint-Paul,Ni,hauteur,J
+97415,Saint-Paul,Ni,implantation,J
+97415,Saint-Paul,Ni,stationnement,J
+97415,Saint-Paul,Nrh,hauteur,T
+97415,Saint-Paul,Nrh,implantation,T
+97415,Saint-Paul,Nrh,stationnement,T
+97415,Saint-Paul,Nto,hauteur,T
+97415,Saint-Paul,Nto,implantation,T
+97415,Saint-Paul,Nto,stationnement,T
+97415,Saint-Paul,Ntoa,hauteur,T
+97415,Saint-Paul,Ntoa,implantation,T
+97415,Saint-Paul,Ntoa,stationnement,T
+97415,Saint-Paul,U1a,hauteur,J
+97415,Saint-Paul,U1a,implantation,J
+97415,Saint-Paul,U1a,stationnement,J
+97415,Saint-Paul,U1b,hauteur,J
+97415,Saint-Paul,U1b,implantation,J
+97415,Saint-Paul,U1b,stationnement,J
+97415,Saint-Paul,U1c,hauteur,J
+97415,Saint-Paul,U1c,implantation,J
+97415,Saint-Paul,U1c,stationnement,J
+97415,Saint-Paul,U1d,hauteur,J
+97415,Saint-Paul,U1d,implantation,J
+97415,Saint-Paul,U1d,stationnement,J
+97415,Saint-Paul,U1e,hauteur,J
+97415,Saint-Paul,U1e,implantation,J
+97415,Saint-Paul,U1e,stationnement,J
+97415,Saint-Paul,U1f,hauteur,J
+97415,Saint-Paul,U1f,implantation,J
+97415,Saint-Paul,U1f,stationnement,J
+97415,Saint-Paul,U1g,hauteur,J
+97415,Saint-Paul,U1g,implantation,J
+97415,Saint-Paul,U1g,stationnement,J
+97415,Saint-Paul,U1l,hauteur,J
+97415,Saint-Paul,U1l,implantation,J
+97415,Saint-Paul,U1l,stationnement,J
+97415,Saint-Paul,U1pru,hauteur,J
+97415,Saint-Paul,U1pru,implantation,J
+97415,Saint-Paul,U1pru,stationnement,J
+97415,Saint-Paul,U1pso,hauteur,J
+97415,Saint-Paul,U1pso,implantation,J
+97415,Saint-Paul,U1pso,stationnement,J
+97415,Saint-Paul,U2a,hauteur,J
+97415,Saint-Paul,U2a,implantation,J
+97415,Saint-Paul,U2a,stationnement,J
+97415,Saint-Paul,U2b,hauteur,J
+97415,Saint-Paul,U2b,implantation,J
+97415,Saint-Paul,U2b,stationnement,J
+97415,Saint-Paul,U2c,hauteur,J
+97415,Saint-Paul,U2c,implantation,J
+97415,Saint-Paul,U2c,stationnement,J
+97415,Saint-Paul,U2d,hauteur,J
+97415,Saint-Paul,U2d,implantation,J
+97415,Saint-Paul,U2d,stationnement,J
+97415,Saint-Paul,U2e,hauteur,J
+97415,Saint-Paul,U2e,implantation,J
+97415,Saint-Paul,U2e,stationnement,J
+97415,Saint-Paul,U2h,hauteur,J
+97415,Saint-Paul,U2h,implantation,J
+97415,Saint-Paul,U2h,stationnement,J
+97415,Saint-Paul,U3a,hauteur,J
+97415,Saint-Paul,U3a,implantation,J
+97415,Saint-Paul,U3a,stationnement,J
+97415,Saint-Paul,U3b,hauteur,J
+97415,Saint-Paul,U3b,implantation,J
+97415,Saint-Paul,U3b,stationnement,J
+97415,Saint-Paul,U3c,hauteur,J
+97415,Saint-Paul,U3c,implantation,J
+97415,Saint-Paul,U3c,stationnement,J
+97415,Saint-Paul,U3e,hauteur,J
+97415,Saint-Paul,U3e,implantation,J
+97415,Saint-Paul,U3e,stationnement,J
+97415,Saint-Paul,U4a,hauteur,J
+97415,Saint-Paul,U4a,implantation,J
+97415,Saint-Paul,U4a,stationnement,J
+97415,Saint-Paul,U4b,hauteur,J
+97415,Saint-Paul,U4b,implantation,J
+97415,Saint-Paul,U4b,stationnement,J
+97415,Saint-Paul,U4c,hauteur,J
+97415,Saint-Paul,U4c,implantation,J
+97415,Saint-Paul,U4c,stationnement,J
+97415,Saint-Paul,U5a,hauteur,J
+97415,Saint-Paul,U5a,implantation,J
+97415,Saint-Paul,U5a,stationnement,J
+97415,Saint-Paul,U5b,hauteur,J
+97415,Saint-Paul,U5b,implantation,J
+97415,Saint-Paul,U5b,stationnement,J
+97415,Saint-Paul,U5c,hauteur,J
+97415,Saint-Paul,U5c,implantation,J
+97415,Saint-Paul,U5c,stationnement,J
+97415,Saint-Paul,U6a,hauteur,J
+97415,Saint-Paul,U6a,implantation,J
+97415,Saint-Paul,U6a,stationnement,J
+97415,Saint-Paul,U6b,hauteur,J
+97415,Saint-Paul,U6b,implantation,J
+97415,Saint-Paul,U6b,stationnement,J
+97415,Saint-Paul,U6c,hauteur,J
+97415,Saint-Paul,U6c,implantation,J
+97415,Saint-Paul,U6c,stationnement,J
+97415,Saint-Paul,Usdu,hauteur,J
+97415,Saint-Paul,Usdu,implantation,J
+97415,Saint-Paul,Usdu,stationnement,J
+97416,Saint-Pierre,A,hauteur,J
+97416,Saint-Pierre,A,implantation,J
+97416,Saint-Pierre,A,stationnement,J
+97416,Saint-Pierre,AU01,hauteur,T
+97416,Saint-Pierre,AU01,implantation,T
+97416,Saint-Pierre,AU01,stationnement,T
+97416,Saint-Pierre,AU02,hauteur,T
+97416,Saint-Pierre,AU02,implantation,T
+97416,Saint-Pierre,AU02,stationnement,T
+97416,Saint-Pierre,AU03,hauteur,T
+97416,Saint-Pierre,AU03,implantation,T
+97416,Saint-Pierre,AU03,stationnement,T
+97416,Saint-Pierre,AU0c-1,hauteur,T
+97416,Saint-Pierre,AU0c-1,implantation,T
+97416,Saint-Pierre,AU0c-1,stationnement,T
+97416,Saint-Pierre,AUazc,hauteur,T
+97416,Saint-Pierre,AUazc,implantation,T
+97416,Saint-Pierre,AUazc,stationnement,T
+97416,Saint-Pierre,AUazi,hauteur,T
+97416,Saint-Pierre,AUazi,implantation,T
+97416,Saint-Pierre,AUazi,stationnement,T
+97416,Saint-Pierre,AUdma,hauteur,T
+97416,Saint-Pierre,AUdma,implantation,T
+97416,Saint-Pierre,AUdma,stationnement,T
+97416,Saint-Pierre,AUf,hauteur,T
+97416,Saint-Pierre,AUf,implantation,T
+97416,Saint-Pierre,AUf,stationnement,T
+97416,Saint-Pierre,AUfGB,hauteur,T
+97416,Saint-Pierre,AUfGB,implantation,T
+97416,Saint-Pierre,AUfGB,stationnement,T
+97416,Saint-Pierre,AUg,hauteur,T
+97416,Saint-Pierre,AUg,implantation,T
+97416,Saint-Pierre,AUg,stationnement,T
+97416,Saint-Pierre,AUt1,hauteur,T
+97416,Saint-Pierre,AUt1,implantation,T
+97416,Saint-Pierre,AUt1,stationnement,T
+97416,Saint-Pierre,Ac,hauteur,J
+97416,Saint-Pierre,Ac,implantation,J
+97416,Saint-Pierre,Ac,stationnement,T
+97416,Saint-Pierre,Ac1,hauteur,J
+97416,Saint-Pierre,Ac1,implantation,J
+97416,Saint-Pierre,Ac1,stationnement,T
+97416,Saint-Pierre,Acu,hauteur,J
+97416,Saint-Pierre,Acu,implantation,J
+97416,Saint-Pierre,Acu,stationnement,T
+97416,Saint-Pierre,Acu1,hauteur,J
+97416,Saint-Pierre,Acu1,implantation,J
+97416,Saint-Pierre,Acu1,stationnement,T
+97416,Saint-Pierre,At,hauteur,J
+97416,Saint-Pierre,At,implantation,J
+97416,Saint-Pierre,At,stationnement,J
+97416,Saint-Pierre,N,hauteur,J
+97416,Saint-Pierre,N,implantation,J
+97416,Saint-Pierre,N,stationnement,J
+97416,Saint-Pierre,Nc,hauteur,T
+97416,Saint-Pierre,Nc,implantation,J
+97416,Saint-Pierre,Nc,stationnement,J
+97416,Saint-Pierre,Nci,hauteur,T
+97416,Saint-Pierre,Nci,implantation,J
+97416,Saint-Pierre,Nci,stationnement,J
+97416,Saint-Pierre,Ncu,hauteur,T
+97416,Saint-Pierre,Ncu,implantation,J
+97416,Saint-Pierre,Ncu,stationnement,J
+97416,Saint-Pierre,Nge,hauteur,T
+97416,Saint-Pierre,Nge,implantation,J
+97416,Saint-Pierre,Nge,stationnement,J
+97416,Saint-Pierre,Np,hauteur,J
+97416,Saint-Pierre,Np,implantation,J
+97416,Saint-Pierre,Np,stationnement,J
+97416,Saint-Pierre,Npnr,hauteur,J
+97416,Saint-Pierre,Npnr,implantation,J
+97416,Saint-Pierre,Npnr,stationnement,J
+97416,Saint-Pierre,Nr,hauteur,T
+97416,Saint-Pierre,Nr,implantation,J
+97416,Saint-Pierre,Nr,stationnement,J
+97416,Saint-Pierre,Uaza,hauteur,J
+97416,Saint-Pierre,Uaza,implantation,J
+97416,Saint-Pierre,Uaza,stationnement,T
+97416,Saint-Pierre,Uazc,hauteur,J
+97416,Saint-Pierre,Uazc,implantation,J
+97416,Saint-Pierre,Uazc,stationnement,T
+97416,Saint-Pierre,Uazi,hauteur,J
+97416,Saint-Pierre,Uazi,implantation,J
+97416,Saint-Pierre,Uazi,stationnement,T
+97416,Saint-Pierre,Uazp,hauteur,J
+97416,Saint-Pierre,Uazp,implantation,J
+97416,Saint-Pierre,Uazp,stationnement,T
+97416,Saint-Pierre,Uazpc,hauteur,J
+97416,Saint-Pierre,Uazpc,implantation,J
+97416,Saint-Pierre,Uazpc,stationnement,T
+97416,Saint-Pierre,Ucv,hauteur,J
+97416,Saint-Pierre,Ucv,implantation,J
+97416,Saint-Pierre,Ucv,stationnement,J
+97416,Saint-Pierre,Ud,hauteur,J
+97416,Saint-Pierre,Ud,implantation,J
+97416,Saint-Pierre,Ud,stationnement,J
+97416,Saint-Pierre,UdBO,hauteur,J
+97416,Saint-Pierre,UdBO,implantation,J
+97416,Saint-Pierre,UdBO,stationnement,J
+97416,Saint-Pierre,Udl,hauteur,J
+97416,Saint-Pierre,Udl,implantation,J
+97416,Saint-Pierre,Udl,stationnement,T
+97416,Saint-Pierre,Ue,hauteur,J
+97416,Saint-Pierre,Ue,implantation,J
+97416,Saint-Pierre,Ue,stationnement,J
+97416,Saint-Pierre,Uea,hauteur,J
+97416,Saint-Pierre,Uea,implantation,J
+97416,Saint-Pierre,Uea,stationnement,T
+97416,Saint-Pierre,Uemi,hauteur,J
+97416,Saint-Pierre,Uemi,implantation,J
+97416,Saint-Pierre,Uemi,stationnement,T
+97416,Saint-Pierre,Uep,hauteur,J
+97416,Saint-Pierre,Uep,implantation,J
+97416,Saint-Pierre,Uep,stationnement,T
+97416,Saint-Pierre,Uf,hauteur,J
+97416,Saint-Pierre,Uf,implantation,J
+97416,Saint-Pierre,Uf,stationnement,J
+97416,Saint-Pierre,UfCA,hauteur,J
+97416,Saint-Pierre,UfCA,implantation,J
+97416,Saint-Pierre,UfCA,stationnement,T
+97416,Saint-Pierre,Ug,hauteur,J
+97416,Saint-Pierre,Ug,implantation,J
+97416,Saint-Pierre,Ug,stationnement,J
+97416,Saint-Pierre,Up,hauteur,J
+97416,Saint-Pierre,Up,implantation,J
+97416,Saint-Pierre,Up,stationnement,J
+97416,Saint-Pierre,Us,hauteur,J
+97416,Saint-Pierre,Us,implantation,J
+97416,Saint-Pierre,Us,stationnement,J
+97416,Saint-Pierre,Ut,hauteur,J
+97416,Saint-Pierre,Ut,implantation,J
+97416,Saint-Pierre,Ut,stationnement,J
+97418,Sainte-Marie,1AUb,hauteur,R
+97418,Sainte-Marie,1AUb,implantation,R
+97418,Sainte-Marie,1AUb,stationnement,R
+97418,Sainte-Marie,1AUc,hauteur,R
+97418,Sainte-Marie,1AUc,implantation,R
+97418,Sainte-Marie,1AUc,stationnement,R
+97418,Sainte-Marie,1AUep,hauteur,R
+97418,Sainte-Marie,1AUep,implantation,R
+97418,Sainte-Marie,1AUep,stationnement,R
+97418,Sainte-Marie,2AUa,hauteur,R
+97418,Sainte-Marie,2AUa,implantation,R
+97418,Sainte-Marie,2AUa,stationnement,R
+97418,Sainte-Marie,2AUb,hauteur,R
+97418,Sainte-Marie,2AUb,implantation,R
+97418,Sainte-Marie,2AUb,stationnement,R
+97418,Sainte-Marie,2AUc,hauteur,R
+97418,Sainte-Marie,2AUc,implantation,R
+97418,Sainte-Marie,2AUc,stationnement,R
+97418,Sainte-Marie,A,hauteur,J
+97418,Sainte-Marie,A,implantation,J
+97418,Sainte-Marie,A,stationnement,J
+97418,Sainte-Marie,Acu,hauteur,T
+97418,Sainte-Marie,Acu,implantation,J
+97418,Sainte-Marie,Acu,stationnement,J
+97418,Sainte-Marie,Aenr,hauteur,T
+97418,Sainte-Marie,Aenr,implantation,J
+97418,Sainte-Marie,Aenr,stationnement,T
+97418,Sainte-Marie,Ap,hauteur,T
+97418,Sainte-Marie,Ap,implantation,J
+97418,Sainte-Marie,Ap,stationnement,J
+97418,Sainte-Marie,N,hauteur,J
+97418,Sainte-Marie,N,implantation,J
+97418,Sainte-Marie,N,stationnement,J
+97418,Sainte-Marie,Ncu,hauteur,T
+97418,Sainte-Marie,Ncu,implantation,J
+97418,Sainte-Marie,Ncu,stationnement,J
+97418,Sainte-Marie,Nli,hauteur,T
+97418,Sainte-Marie,Nli,implantation,J
+97418,Sainte-Marie,Nli,stationnement,J
+97418,Sainte-Marie,Npnr,hauteur,T
+97418,Sainte-Marie,Npnr,implantation,J
+97418,Sainte-Marie,Npnr,stationnement,J
+97418,Sainte-Marie,Npv,hauteur,T
+97418,Sainte-Marie,Npv,implantation,J
+97418,Sainte-Marie,Npv,stationnement,J
+97418,Sainte-Marie,Nr,hauteur,T
+97418,Sainte-Marie,Nr,implantation,J
+97418,Sainte-Marie,Nr,stationnement,J
+97418,Sainte-Marie,UA,hauteur,J
+97418,Sainte-Marie,UA,implantation,J
+97418,Sainte-Marie,UA,stationnement,J
+97418,Sainte-Marie,UAb,hauteur,J
+97418,Sainte-Marie,UAb,implantation,J
+97418,Sainte-Marie,UAb,stationnement,J
+97418,Sainte-Marie,UAz,hauteur,J
+97418,Sainte-Marie,UAz,implantation,J
+97418,Sainte-Marie,UAz,stationnement,J
+97418,Sainte-Marie,UB,hauteur,J
+97418,Sainte-Marie,UB,implantation,J
+97418,Sainte-Marie,UB,stationnement,J
+97418,Sainte-Marie,UC,hauteur,J
+97418,Sainte-Marie,UC,implantation,J
+97418,Sainte-Marie,UC,stationnement,J
+97418,Sainte-Marie,UC1,hauteur,J
+97418,Sainte-Marie,UC1,implantation,J
+97418,Sainte-Marie,UC1,stationnement,J
+97418,Sainte-Marie,UC2,hauteur,J
+97418,Sainte-Marie,UC2,implantation,J
+97418,Sainte-Marie,UC2,stationnement,J
+97418,Sainte-Marie,UD,hauteur,J
+97418,Sainte-Marie,UD,implantation,J
+97418,Sainte-Marie,UD,stationnement,J
+97418,Sainte-Marie,UD1,hauteur,J
+97418,Sainte-Marie,UD1,implantation,J
+97418,Sainte-Marie,UD1,stationnement,J
+97418,Sainte-Marie,UEa,hauteur,J
+97418,Sainte-Marie,UEa,implantation,J
+97418,Sainte-Marie,UEa,stationnement,J
+97418,Sainte-Marie,UEc,hauteur,J
+97418,Sainte-Marie,UEc,implantation,J
+97418,Sainte-Marie,UEc,stationnement,J
+97418,Sainte-Marie,UEm,hauteur,J
+97418,Sainte-Marie,UEm,implantation,J
+97418,Sainte-Marie,UEm,stationnement,J
+97418,Sainte-Marie,UEp,hauteur,J
+97418,Sainte-Marie,UEp,implantation,J
+97418,Sainte-Marie,UEp,stationnement,J
+97418,Sainte-Marie,UR,hauteur,J
+97418,Sainte-Marie,UR,implantation,J
+97418,Sainte-Marie,UR,stationnement,J
+97418,Sainte-Marie,UT,hauteur,J
+97418,Sainte-Marie,UT,implantation,J
+97418,Sainte-Marie,UT,stationnement,J
+97418,Sainte-Marie,UTp,hauteur,J
+97418,Sainte-Marie,UTp,implantation,J
+97418,Sainte-Marie,UTp,stationnement,J
+97419,Sainte-Rose,1AUa,hauteur,R
+97419,Sainte-Rose,1AUa,implantation,R
+97419,Sainte-Rose,1AUa,stationnement,R
+97419,Sainte-Rose,1AUc,hauteur,R
+97419,Sainte-Rose,1AUc,implantation,R
+97419,Sainte-Rose,1AUc,stationnement,R
+97419,Sainte-Rose,1AUe,hauteur,R
+97419,Sainte-Rose,1AUe,implantation,R
+97419,Sainte-Rose,1AUe,stationnement,R
+97419,Sainte-Rose,1AUto,hauteur,R
+97419,Sainte-Rose,1AUto,implantation,R
+97419,Sainte-Rose,1AUto,stationnement,R
+97419,Sainte-Rose,2AUa,hauteur,R
+97419,Sainte-Rose,2AUa,implantation,R
+97419,Sainte-Rose,2AUa,stationnement,R
+97419,Sainte-Rose,2AUb,hauteur,R
+97419,Sainte-Rose,2AUb,implantation,R
+97419,Sainte-Rose,2AUb,stationnement,R
+97419,Sainte-Rose,2AUc,hauteur,R
+97419,Sainte-Rose,2AUc,implantation,R
+97419,Sainte-Rose,2AUc,stationnement,R
+97419,Sainte-Rose,2AUd,hauteur,R
+97419,Sainte-Rose,2AUd,implantation,R
+97419,Sainte-Rose,2AUd,stationnement,R
+97419,Sainte-Rose,A,hauteur,J
+97419,Sainte-Rose,A,implantation,J
+97419,Sainte-Rose,A,stationnement,J
+97419,Sainte-Rose,Acu,hauteur,T
+97419,Sainte-Rose,Acu,implantation,J
+97419,Sainte-Rose,Acu,stationnement,T
+97419,Sainte-Rose,Ai,hauteur,J
+97419,Sainte-Rose,Ai,implantation,J
+97419,Sainte-Rose,Ai,stationnement,T
+97419,Sainte-Rose,N,hauteur,J
+97419,Sainte-Rose,N,implantation,J
+97419,Sainte-Rose,N,stationnement,J
+97419,Sainte-Rose,Nec,hauteur,J
+97419,Sainte-Rose,Nec,implantation,J
+97419,Sainte-Rose,Nec,stationnement,J
+97419,Sainte-Rose,Nli,hauteur,T
+97419,Sainte-Rose,Nli,implantation,J
+97419,Sainte-Rose,Nli,stationnement,T
+97419,Sainte-Rose,Npnr,hauteur,J
+97419,Sainte-Rose,Npnr,implantation,J
+97419,Sainte-Rose,Npnr,stationnement,T
+97419,Sainte-Rose,Nrev,hauteur,J
+97419,Sainte-Rose,Nrev,implantation,J
+97419,Sainte-Rose,Nrev,stationnement,T
+97419,Sainte-Rose,Ntvb,hauteur,T
+97419,Sainte-Rose,Ntvb,implantation,J
+97419,Sainte-Rose,Ntvb,stationnement,T
+97419,Sainte-Rose,UC,hauteur,J
+97419,Sainte-Rose,UC,implantation,J
+97419,Sainte-Rose,UC,stationnement,J
+97419,Sainte-Rose,Ua,hauteur,J
+97419,Sainte-Rose,Ua,implantation,J
+97419,Sainte-Rose,Ua,stationnement,J
+97419,Sainte-Rose,Ub,hauteur,J
+97419,Sainte-Rose,Ub,implantation,J
+97419,Sainte-Rose,Ub,stationnement,J
+97419,Sainte-Rose,Uc,hauteur,J
+97419,Sainte-Rose,Uc,implantation,J
+97419,Sainte-Rose,Uc,stationnement,J
+97419,Sainte-Rose,Ud,hauteur,J
+97419,Sainte-Rose,Ud,implantation,J
+97419,Sainte-Rose,Ud,stationnement,J
+97419,Sainte-Rose,Ue,hauteur,J
+97419,Sainte-Rose,Ue,implantation,J
+97419,Sainte-Rose,Ue,stationnement,J
+97420,Sainte-Suzanne,1AUa,hauteur,T
+97420,Sainte-Suzanne,1AUa,implantation,T
+97420,Sainte-Suzanne,1AUa,stationnement,T
+97420,Sainte-Suzanne,1AUac,hauteur,T
+97420,Sainte-Suzanne,1AUac,implantation,T
+97420,Sainte-Suzanne,1AUac,stationnement,T
+97420,Sainte-Suzanne,1AUb,hauteur,T
+97420,Sainte-Suzanne,1AUb,implantation,T
+97420,Sainte-Suzanne,1AUb,stationnement,T
+97420,Sainte-Suzanne,1AUc,hauteur,T
+97420,Sainte-Suzanne,1AUc,implantation,T
+97420,Sainte-Suzanne,1AUc,stationnement,T
+97420,Sainte-Suzanne,1AUe,hauteur,C
+97420,Sainte-Suzanne,1AUe,implantation,C
+97420,Sainte-Suzanne,1AUe,stationnement,C
+97420,Sainte-Suzanne,2AUa,hauteur,R
+97420,Sainte-Suzanne,2AUa,implantation,C
+97420,Sainte-Suzanne,2AUa,stationnement,R
+97420,Sainte-Suzanne,2AUb,hauteur,R
+97420,Sainte-Suzanne,2AUb,implantation,C
+97420,Sainte-Suzanne,2AUb,stationnement,R
+97420,Sainte-Suzanne,A,hauteur,J
+97420,Sainte-Suzanne,A,implantation,J
+97420,Sainte-Suzanne,A,stationnement,J
+97420,Sainte-Suzanne,Acu,hauteur,T
+97420,Sainte-Suzanne,Acu,implantation,J
+97420,Sainte-Suzanne,Acu,stationnement,J
+97420,Sainte-Suzanne,Aenr,hauteur,T
+97420,Sainte-Suzanne,Aenr,implantation,J
+97420,Sainte-Suzanne,Aenr,stationnement,J
+97420,Sainte-Suzanne,N,hauteur,J
+97420,Sainte-Suzanne,N,implantation,J
+97420,Sainte-Suzanne,N,stationnement,J
+97420,Sainte-Suzanne,Ndé,hauteur,T
+97420,Sainte-Suzanne,Ndé,implantation,J
+97420,Sainte-Suzanne,Ndé,stationnement,J
+97420,Sainte-Suzanne,Nenr,hauteur,T
+97420,Sainte-Suzanne,Nenr,implantation,T
+97420,Sainte-Suzanne,Nenr,stationnement,T
+97420,Sainte-Suzanne,Nlit,hauteur,T
+97420,Sainte-Suzanne,Nlit,implantation,J
+97420,Sainte-Suzanne,Nlit,stationnement,J
+97420,Sainte-Suzanne,Npnr,hauteur,T
+97420,Sainte-Suzanne,Npnr,implantation,J
+97420,Sainte-Suzanne,Npnr,stationnement,J
+97420,Sainte-Suzanne,Nr,hauteur,T
+97420,Sainte-Suzanne,Nr,implantation,J
+97420,Sainte-Suzanne,Nr,stationnement,J
+97420,Sainte-Suzanne,Nt,hauteur,T
+97420,Sainte-Suzanne,Nt,implantation,J
+97420,Sainte-Suzanne,Nt,stationnement,J
+97420,Sainte-Suzanne,UA,hauteur,J
+97420,Sainte-Suzanne,UA,implantation,C
+97420,Sainte-Suzanne,UA,stationnement,J
+97420,Sainte-Suzanne,UAc,hauteur,J
+97420,Sainte-Suzanne,UAc,implantation,C
+97420,Sainte-Suzanne,UAc,stationnement,J
+97420,Sainte-Suzanne,UAv,hauteur,J
+97420,Sainte-Suzanne,UAv,implantation,C
+97420,Sainte-Suzanne,UAv,stationnement,J
+97420,Sainte-Suzanne,UB,hauteur,J
+97420,Sainte-Suzanne,UB,implantation,C
+97420,Sainte-Suzanne,UB,stationnement,J
+97420,Sainte-Suzanne,UC,hauteur,J
+97420,Sainte-Suzanne,UC,implantation,C
+97420,Sainte-Suzanne,UC,stationnement,J
+97420,Sainte-Suzanne,UC1,hauteur,J
+97420,Sainte-Suzanne,UC1,implantation,C
+97420,Sainte-Suzanne,UC1,stationnement,J
+97420,Sainte-Suzanne,UE,hauteur,C
+97420,Sainte-Suzanne,UE,implantation,C
+97420,Sainte-Suzanne,UE,stationnement,C
+97421,Salazie,A,hauteur,J
+97421,Salazie,A,implantation,J
+97421,Salazie,A,stationnement,J
+97421,Salazie,AUa1,hauteur,T
+97421,Salazie,AUa1,implantation,T
+97421,Salazie,AUa1,stationnement,T
+97421,Salazie,AUb,hauteur,T
+97421,Salazie,AUb,implantation,T
+97421,Salazie,AUb,stationnement,T
+97421,Salazie,AUc,hauteur,T
+97421,Salazie,AUc,implantation,T
+97421,Salazie,AUc,stationnement,T
+97421,Salazie,AUe,hauteur,J
+97421,Salazie,AUe,implantation,J
+97421,Salazie,AUe,stationnement,J
+97421,Salazie,AUt,hauteur,R
+97421,Salazie,AUt,implantation,R
+97421,Salazie,AUt,stationnement,R
+97421,Salazie,Aba,hauteur,J
+97421,Salazie,Aba,implantation,J
+97421,Salazie,Aba,stationnement,J
+97421,Salazie,N,hauteur,J
+97421,Salazie,N,implantation,J
+97421,Salazie,N,stationnement,J
+97421,Salazie,Npnr,hauteur,T
+97421,Salazie,Npnr,implantation,J
+97421,Salazie,Npnr,stationnement,J
+97421,Salazie,Nr,hauteur,T
+97421,Salazie,Nr,implantation,J
+97421,Salazie,Nr,stationnement,J
+97421,Salazie,UA,hauteur,J
+97421,Salazie,UA,implantation,J
+97421,Salazie,UA,stationnement,J
+97421,Salazie,UA1,hauteur,J
+97421,Salazie,UA1,implantation,J
+97421,Salazie,UA1,stationnement,J
+97421,Salazie,UB,hauteur,J
+97421,Salazie,UB,implantation,J
+97421,Salazie,UB,stationnement,J
+97421,Salazie,UC,hauteur,J
+97421,Salazie,UC,implantation,J
+97421,Salazie,UC,stationnement,J
+97421,Salazie,UT,hauteur,J
+97421,Salazie,UT,implantation,J
+97421,Salazie,UT,stationnement,J
+97422,Le Tampon,1AUa,hauteur,R
+97422,Le Tampon,1AUa,implantation,R
+97422,Le Tampon,1AUa,stationnement,R
+97422,Le Tampon,1AUb,hauteur,R
+97422,Le Tampon,1AUb,implantation,R
+97422,Le Tampon,1AUb,stationnement,R
+97422,Le Tampon,1AUc,hauteur,R
+97422,Le Tampon,1AUc,implantation,R
+97422,Le Tampon,1AUc,stationnement,R
+97422,Le Tampon,1AUcto,hauteur,R
+97422,Le Tampon,1AUcto,implantation,R
+97422,Le Tampon,1AUcto,stationnement,R
+97422,Le Tampon,1AUe,hauteur,R
+97422,Le Tampon,1AUe,implantation,C
+97422,Le Tampon,1AUe,stationnement,R
+97422,Le Tampon,1AUto,hauteur,R
+97422,Le Tampon,1AUto,implantation,R
+97422,Le Tampon,1AUto,stationnement,R
+97422,Le Tampon,2AUa,hauteur,R
+97422,Le Tampon,2AUa,implantation,R
+97422,Le Tampon,2AUa,stationnement,R
+97422,Le Tampon,2AUb,hauteur,R
+97422,Le Tampon,2AUb,implantation,R
+97422,Le Tampon,2AUb,stationnement,R
+97422,Le Tampon,2AUc,hauteur,R
+97422,Le Tampon,2AUc,implantation,R
+97422,Le Tampon,2AUc,stationnement,R
+97422,Le Tampon,2AUd,hauteur,R
+97422,Le Tampon,2AUd,implantation,R
+97422,Le Tampon,2AUd,stationnement,R
+97422,Le Tampon,2AUe,hauteur,R
+97422,Le Tampon,2AUe,implantation,C
+97422,Le Tampon,2AUe,stationnement,R
+97422,Le Tampon,A,hauteur,J
+97422,Le Tampon,A,implantation,J
+97422,Le Tampon,A,stationnement,J
+97422,Le Tampon,Aba,hauteur,T
+97422,Le Tampon,Aba,implantation,J
+97422,Le Tampon,Aba,stationnement,T
+97422,Le Tampon,N,hauteur,J
+97422,Le Tampon,N,implantation,J
+97422,Le Tampon,N,stationnement,J
+97422,Le Tampon,Nco,hauteur,T
+97422,Le Tampon,Nco,implantation,T
+97422,Le Tampon,Nco,stationnement,T
+97422,Le Tampon,Npnr,hauteur,T
+97422,Le Tampon,Npnr,implantation,T
+97422,Le Tampon,Npnr,stationnement,T
+97422,Le Tampon,Nto1,hauteur,J
+97422,Le Tampon,Nto1,implantation,J
+97422,Le Tampon,Nto1,stationnement,T
+97422,Le Tampon,Nto4,hauteur,J
+97422,Le Tampon,Nto4,implantation,J
+97422,Le Tampon,Nto4,stationnement,T
+97422,Le Tampon,Nto5,hauteur,J
+97422,Le Tampon,Nto5,implantation,J
+97422,Le Tampon,Nto5,stationnement,T
+97422,Le Tampon,UCto,hauteur,T
+97422,Le Tampon,UCto,implantation,T
+97422,Le Tampon,UCto,stationnement,J
+97422,Le Tampon,UCtom,hauteur,T
+97422,Le Tampon,UCtom,implantation,T
+97422,Le Tampon,UCtom,stationnement,J
+97422,Le Tampon,Ua,hauteur,J
+97422,Le Tampon,Ua,implantation,J
+97422,Le Tampon,Ua,stationnement,J
+97422,Le Tampon,Uav,hauteur,J
+97422,Le Tampon,Uav,implantation,T
+97422,Le Tampon,Uav,stationnement,J
+97422,Le Tampon,Ub,hauteur,J
+97422,Le Tampon,Ub,implantation,J
+97422,Le Tampon,Ub,stationnement,J
+97422,Le Tampon,Uc,hauteur,J
+97422,Le Tampon,Uc,implantation,J
+97422,Le Tampon,Uc,stationnement,J
+97422,Le Tampon,Ucm,hauteur,T
+97422,Le Tampon,Ucm,implantation,T
+97422,Le Tampon,Ucm,stationnement,T
+97422,Le Tampon,Ud,hauteur,J
+97422,Le Tampon,Ud,implantation,J
+97422,Le Tampon,Ud,stationnement,J
+97422,Le Tampon,Ue,hauteur,J
+97422,Le Tampon,Ue,implantation,C
+97422,Le Tampon,Ue,stationnement,J
+97423,Les Trois-Bassins,1AUa,hauteur,R
+97423,Les Trois-Bassins,1AUa,implantation,R
+97423,Les Trois-Bassins,1AUa,stationnement,A
+97423,Les Trois-Bassins,1AUb,hauteur,R
+97423,Les Trois-Bassins,1AUb,implantation,R
+97423,Les Trois-Bassins,1AUb,stationnement,A
+97423,Les Trois-Bassins,1AUc,hauteur,R
+97423,Les Trois-Bassins,1AUc,implantation,R
+97423,Les Trois-Bassins,1AUc,stationnement,A
+97423,Les Trois-Bassins,1AUe,hauteur,R
+97423,Les Trois-Bassins,1AUe,implantation,R
+97423,Les Trois-Bassins,1AUe,stationnement,A
+97423,Les Trois-Bassins,1AUt,hauteur,R
+97423,Les Trois-Bassins,1AUt,implantation,R
+97423,Les Trois-Bassins,1AUt,stationnement,A
+97423,Les Trois-Bassins,2AUa,hauteur,R
+97423,Les Trois-Bassins,2AUa,implantation,R
+97423,Les Trois-Bassins,2AUa,stationnement,A
+97423,Les Trois-Bassins,2AUb,hauteur,R
+97423,Les Trois-Bassins,2AUb,implantation,R
+97423,Les Trois-Bassins,2AUb,stationnement,A
+97423,Les Trois-Bassins,2AUc,hauteur,R
+97423,Les Trois-Bassins,2AUc,implantation,R
+97423,Les Trois-Bassins,2AUc,stationnement,A
+97423,Les Trois-Bassins,A,hauteur,J
+97423,Les Trois-Bassins,A,implantation,J
+97423,Les Trois-Bassins,A,stationnement,J
+97423,Les Trois-Bassins,AUs,hauteur,J
+97423,Les Trois-Bassins,AUs,implantation,J
+97423,Les Trois-Bassins,AUs,stationnement,J
+97423,Les Trois-Bassins,AUse,hauteur,T
+97423,Les Trois-Bassins,AUse,implantation,T
+97423,Les Trois-Bassins,AUse,stationnement,T
+97423,Les Trois-Bassins,Acu,hauteur,T
+97423,Les Trois-Bassins,Acu,implantation,J
+97423,Les Trois-Bassins,Acu,stationnement,T
+97423,Les Trois-Bassins,Arh,hauteur,T
+97423,Les Trois-Bassins,Arh,implantation,J
+97423,Les Trois-Bassins,Arh,stationnement,T
+97423,Les Trois-Bassins,N,hauteur,J
+97423,Les Trois-Bassins,N,implantation,C
+97423,Les Trois-Bassins,N,stationnement,J
+97423,Les Trois-Bassins,Nco,hauteur,T
+97423,Les Trois-Bassins,Nco,implantation,C
+97423,Les Trois-Bassins,Nco,stationnement,J
+97423,Les Trois-Bassins,Nli,hauteur,T
+97423,Les Trois-Bassins,Nli,implantation,C
+97423,Les Trois-Bassins,Nli,stationnement,J
+97423,Les Trois-Bassins,Nr,hauteur,T
+97423,Les Trois-Bassins,Nr,implantation,C
+97423,Les Trois-Bassins,Nr,stationnement,J
+97423,Les Trois-Bassins,Nto,hauteur,J
+97423,Les Trois-Bassins,Nto,implantation,C
+97423,Les Trois-Bassins,Nto,stationnement,J
+97423,Les Trois-Bassins,Nto1,hauteur,J
+97423,Les Trois-Bassins,Nto1,implantation,C
+97423,Les Trois-Bassins,Nto1,stationnement,J
+97423,Les Trois-Bassins,Nto2,hauteur,J
+97423,Les Trois-Bassins,Nto2,implantation,C
+97423,Les Trois-Bassins,Nto2,stationnement,J
+97423,Les Trois-Bassins,Nto3,hauteur,J
+97423,Les Trois-Bassins,Nto3,implantation,C
+97423,Les Trois-Bassins,Nto3,stationnement,J
+97423,Les Trois-Bassins,Nto4,hauteur,J
+97423,Les Trois-Bassins,Nto4,implantation,C
+97423,Les Trois-Bassins,Nto4,stationnement,J
+97423,Les Trois-Bassins,Nto5,hauteur,J
+97423,Les Trois-Bassins,Nto5,implantation,C
+97423,Les Trois-Bassins,Nto5,stationnement,J
+97423,Les Trois-Bassins,Nu,hauteur,T
+97423,Les Trois-Bassins,Nu,implantation,C
+97423,Les Trois-Bassins,Nu,stationnement,T
+97423,Les Trois-Bassins,Ua,hauteur,J
+97423,Les Trois-Bassins,Ua,implantation,J
+97423,Les Trois-Bassins,Ua,stationnement,J
+97423,Les Trois-Bassins,Uaa,hauteur,J
+97423,Les Trois-Bassins,Uaa,implantation,J
+97423,Les Trois-Bassins,Uaa,stationnement,T
+97423,Les Trois-Bassins,Ub,hauteur,J
+97423,Les Trois-Bassins,Ub,implantation,J
+97423,Les Trois-Bassins,Ub,stationnement,J
+97423,Les Trois-Bassins,Uc,hauteur,J
+97423,Les Trois-Bassins,Uc,implantation,J
+97423,Les Trois-Bassins,Uc,stationnement,J
+97423,Les Trois-Bassins,Ue,hauteur,J
+97423,Les Trois-Bassins,Ue,implantation,J
+97423,Les Trois-Bassins,Ue,stationnement,J
+97424,Cilaos,A,hauteur,J
+97424,Cilaos,A,implantation,J
+97424,Cilaos,A,stationnement,J
+97424,Cilaos,AUb,hauteur,R
+97424,Cilaos,AUb,implantation,R
+97424,Cilaos,AUb,stationnement,T
+97424,Cilaos,AUb1,hauteur,R
+97424,Cilaos,AUb1,implantation,R
+97424,Cilaos,AUb1,stationnement,T
+97424,Cilaos,AUb2,hauteur,R
+97424,Cilaos,AUb2,implantation,R
+97424,Cilaos,AUb2,stationnement,T
+97424,Cilaos,AUst,hauteur,J
+97424,Cilaos,AUst,implantation,J
+97424,Cilaos,AUst,stationnement,J
+97424,Cilaos,Anc,hauteur,T
+97424,Cilaos,Anc,implantation,J
+97424,Cilaos,Anc,stationnement,T
+97424,Cilaos,N,hauteur,J
+97424,Cilaos,N,implantation,J
+97424,Cilaos,N,stationnement,J
+97424,Cilaos,Nco,hauteur,T
+97424,Cilaos,Nco,implantation,T
+97424,Cilaos,Nco,stationnement,T
+97424,Cilaos,Ndé,hauteur,T
+97424,Cilaos,Ndé,implantation,T
+97424,Cilaos,Ndé,stationnement,T
+97424,Cilaos,Nto,hauteur,T
+97424,Cilaos,Nto,implantation,T
+97424,Cilaos,Nto,stationnement,T
+97424,Cilaos,NtoPOS,hauteur,T
+97424,Cilaos,NtoPOS,implantation,T
+97424,Cilaos,NtoPOS,stationnement,T
+97424,Cilaos,Ua,hauteur,J
+97424,Cilaos,Ua,implantation,J
+97424,Cilaos,Ua,stationnement,J
+97424,Cilaos,Uah,hauteur,J
+97424,Cilaos,Uah,implantation,T
+97424,Cilaos,Uah,stationnement,T
+97424,Cilaos,Ub,hauteur,J
+97424,Cilaos,Ub,implantation,J
+97424,Cilaos,Ub,stationnement,J
+97424,Cilaos,Ub1,hauteur,T
+97424,Cilaos,Ub1,implantation,T
+97424,Cilaos,Ub1,stationnement,T
+97424,Cilaos,Uc,hauteur,J
+97424,Cilaos,Uc,implantation,J
+97424,Cilaos,Uc,stationnement,J

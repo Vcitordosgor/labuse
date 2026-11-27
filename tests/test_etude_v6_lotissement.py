@@ -41,8 +41,9 @@ def test_lotissement_une_parcelle_produit_des_lots(session_reelle):
     assert r["voirie_m2"] > 0 and r["geojson"]["features"]
     assert r["stationnement"]["par_lot"] == 2      # Ud 12 (2 places/logement)
     assert "Permis d'aménager" in r["regime_procedural"]
-    # voirie réaliste : largeur hypothèse (pas de règle PLU) + tracé nommé (impasse/T/croix)
-    assert "hypothèse" in r["voirie_largeur_source"].lower() and r["voirie_config"]
+    # ETUDE-AUDIT-FIX-1 LOT 3 (défaut 8) — Saint-Leu UD sert désormais une largeur MINIMALE de voie à
+    # créer (UD 3.2 : 3,50 m) : la source la cite (plus « hypothèse ») et la chaussée (5 m) la respecte.
+    assert "3,50" in r["voirie_largeur_source"] and r["voirie_config"]
     # pleine terre = jardins privatifs (lot − emprise au CES) + communs, contrôle Réussi/Échoué chiffré
     pt = r["pleine_terre"]
     assert pt["jardins_privatifs_m2"] > 0 and pt["communs_m2"] >= 0

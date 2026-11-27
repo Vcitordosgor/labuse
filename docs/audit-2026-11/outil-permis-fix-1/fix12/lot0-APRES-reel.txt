@@ -1,0 +1,27 @@
+Base : labuse (lecture seule)
+
+① VEILLE DE PARCELLE — sélection sur l'événement réellement daté (suivi du 01/01/2026)
+  [PASS] 9744012520010 ÉCARTÉ (autorisé 2025-10-24 < 2026-01-01)
+         règle actuelle (date_depot 2026-03-09) retient=True ; sur l'événement retient=False
+  [PASS] 97441626E0304 RETENU (autorisé 2026-08-03 ≥ 2026-01-01)
+         règle actuelle (date_depot 2020-06-01) retient=False ; sur l'événement retient=True
+
+② ALERTE DE ZONE — un permis géolocalisé sans dépôt mais autorisé doit être éligible
+  [PASS] 278 permis géolocalisés autorisés SANS dépôt sont ÉLIGIBLES sur l'événement daté
+         éligibles sur l'événement : 278/278 (la clé dépôt-non-nul ne les perd plus)
+
+③ ALERTE ENREGISTRÉE 97441521G0020 — titre/détail/fait_date servis
+  [PASS] doit dire « Permis autorisé » au 2021-03-26
+         servi : label='Permis autorisé dans « Centre Saint-Paul »' fait_date='2021-03-26' detail='DP 97441521G0020 autorisé le 2021-03-26'
+
+④ CADUCS — route réelle GET /accueil/chiffres + filtre parcellaire
+  [PASS] GET /accueil/chiffres → permis_caducs == 4836
+         servi : 4836
+  [PASS] filtre parcellaire permis_caduc trouve 97401000AD0106
+         EXISTS pc_caducs = True
+
+— diagnostic (lecture seule) —
+  alertes permis_in_zone « déposé » : 29 (dont dépôt INVALIDE : 0, 0 permis distincts)
+  pc_caducs (table servie)          : 4836
+
+TOUT VERT

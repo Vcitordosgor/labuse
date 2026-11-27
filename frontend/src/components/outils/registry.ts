@@ -148,12 +148,12 @@ export const MODULES: ModuleDef[] = [
   // Le précalcul figé `parcel_renouvellement` n'est plus lu par aucun écran (table conservée en base).
 
   // Blocs fonciers — OUTILS-MUSCLER-3 : assiettes contiguës d'un même propriétaire PM (parcel_blocs).
-  { key: 'blocs-fonciers', num: 'M29', group: 'agir',
-    label: 'Blocs fonciers', desc: 'Toutes les assiettes d’un même propriétaire.' },
+  { key: 'blocs-fonciers', num: 'M29', group: 'agir', descSmall: true,
+    label: 'Blocs fonciers', desc: 'Parcelles voisines rattachées à une même personne morale.' },
 
   // 16. Successions à venir — OUTILS-MUSCLER-1 A : radar patrimonial (jamais « est en succession »).
   { key: 'successions', num: 'M28', group: 'agir',
-    label: 'Successions à venir', desc: 'Le foncier à l’approche d’une succession.' },
+    label: 'Successions à venir', desc: 'Parcelles de sociétés repérées par l’âge des dirigeants ou l’ancienneté de la SCI.' },
 
   // 17. Courrier propriétaire — M09 : le client prépare, LABUSE envoie.
   { key: 'courriers', num: 'M09', group: 'agir',

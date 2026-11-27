@@ -136,8 +136,7 @@ def test_r8_chips_comptent_le_restant_a_trier(db_session):
     lui, garde le total du cadrage. Le chip « Priorité 34 » affichait le total alors que 9 étaient triées."""
     import json
 
-    from labuse.api.app import _score_v2_run_id
-    from labuse.api.projets import _analyse_cadrage, _restant_a_trier
+    from labuse.api.projets import _analyse_cadrage, _decisions_du_cadrage, _restant_a_trier
 
     db_session.execute(text(
         "INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256, params, n_parcelles) "
@@ -179,7 +178,7 @@ def test_r8_chips_comptent_le_restant_a_trier(db_session):
             {"pj": projet_id, "p": ids[key], "s": statut})
     db_session.flush()
 
-    restant = _restant_a_trier(db_session, projet_id, _score_v2_run_id(db_session), analyse)
+    restant = _restant_a_trier(analyse, _decisions_du_cadrage(db_session, projet_id, cadrage))
     # têtes décidées = 1 retenue + 1 écartée = 2 ; restant tête = 3 − 2 = 1 (sous À suivre, repli
     # Priorité). signalees restant inchangé (1) par rapport à l'avant-repli.
     assert restant["priorite"] == 0
@@ -219,3 +218,69 @@ def test_r8_compteur_voit_les_tiers_v2_du_run_servi(db_session):
 
     analyse = _analyse_cadrage(db_session, {"communes": ["Vmega"]})
     assert analyse["signalees"] == 3, f"le compteur ignore les tiers v2 du run servi : {analyse}"
+
+
+@pytest.mark.db
+def test_compteur_filtre_et_liste_excluent_seulement_les_decisions_du_cadrage(db_session):
+    from labuse import models
+    _seed(db_session)
+    p = models.Projet(nom="Tri Alpha", filtres={"communes": ["Alpha"]})
+    db_session.add(p)
+    db_session.flush()
+    for commune in ("Alpha", "Beta"):
+        db_session.execute(text(
+            "INSERT INTO projet_parcelles (projet_id, parcel_id, statut) "
+            "SELECT :pid, id, 'a_analyser' FROM parcels WHERE commune = :commune ORDER BY id LIMIT 1"
+        ), {"pid": p.id, "commune": commune})
+    detail = projets.projet_parcelles(p.id, None, db_session, limit=2)
+    assert detail["counts"]["proposee"] == len(detail["proposees"]) == 2
+    assert not detail["page"]["has_more"]
+    filtre = projets.projet_parcelles(p.id, None, db_session, sf='{"surfaceMin":900}')
+    assert filtre["counts"]["proposee"] == len(filtre["proposees"]) == 0
+    db_session.flush()
+    liste = next(row for row in projets.projets_list(None, db_session) if row["id"] == p.id)
+    assert liste["counts"]["proposee"] == 2
+    assert liste["counts"]["a_analyser"] == 2
+
+
+@pytest.mark.db
+def test_projets_manuels_distincts_et_vivier_vide_apres_filtre(db_session, monkeypatch):
+    _seed(db_session)
+    monkeypatch.setattr(projets, "_search_items", lambda *args: [])
+    def creer(nom, manuel):
+        return projets.projet_create(projets.ProjetIn(nom=nom, cadrage={}, de_zero=manuel), None, db_session)
+    premier = creer("Manuel A", True)
+    ile = creer("Recherche île", False)
+    second = creer("Manuel B", True)
+    assert len({p["projet"]["id"] for p in (premier, ile, second)}) == 3
+    assert creer("Manuel B", True)["projet"]["id"] == second["projet"]["id"]
+    assert creer("Seconde recherche île", False)["projet"]["id"] == ile["projet"]["id"]
+    for offset in (0, 200):
+        r = projets.projet_parcelles(second["projet"]["id"], None, db_session, offset=offset,
+                                    tier="chaude", sf='{"surfaceMin":500}')
+        assert r["counts"]["proposee"] == 0 and r["proposees"] == []
+
+
+@pytest.mark.db
+def test_rejeu_decision_eligible_au_dela_du_plafond(db_session):
+    from labuse import models
+    _seed(db_session)
+    cadrage = {"communes": ["Alpha"]}
+    projet = models.Projet(nom="Extrait plafonné", filtres=cadrage)
+    db_session.add(projet)
+    db_session.flush()
+    # Un plafond de deux place la troisième parcelle dans la même situation que le rang 201.
+    dedans = _cadrage_page_idus(db_session, cadrage, 3, 0)[2]
+    dehors = _cadrage_page_idus(db_session, {"communes": ["Beta"]}, 1, 0)[0]
+    for idu in (dedans, dehors):
+        db_session.execute(text(
+            "INSERT INTO projet_parcelles (projet_id, parcel_id, statut, hors_criteres) "
+            "SELECT :pid, id, 'a_analyser', true FROM parcels WHERE idu = :idu"
+        ), {"pid": projet.id, "idu": idu})
+    diff = projets.projet_proposer(projet.id, projets.ProposerIn(limit=2), None, db_session)["shortlist"]
+    assert (diff["n_shortlist"], diff["sorties"], diff["tris_conserves"]) == (2, 1, 2)
+    flags = db_session.execute(text(
+        "SELECT p.idu, pp.hors_criteres FROM projet_parcelles pp JOIN parcels p ON p.id = pp.parcel_id "
+        "WHERE pp.projet_id = :pid AND pp.statut = 'a_analyser'"
+    ), {"pid": projet.id}).all()
+    assert dict(flags) == {dedans: False, dehors: True}

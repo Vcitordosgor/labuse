@@ -43,3 +43,18 @@ describe('COMMUNE-FIX-1 (B5) — « Voir ses parcelles »', () => {
     expect(apres.panneauSection).toBe('listing')           // listing ouvert
   })
 })
+
+it('Vue de l’île ferme la sélection et annule un focus ou un vol en attente', () => {
+  const state = useApp.getState()
+  state.focusCommune('Saint-Denis')
+  state.focusParcelle('97401000AD1375')
+  state.select('97401000AD1375')
+  state.setFlyTo({ center: [55.45, -20.9], zoom: 18 })
+  state.revenirVueIle()
+  expect(useApp.getState()).toMatchObject({
+    commune: null, contexteCommune: null, selectedIdu: null, focusIdu: null,
+    flyTo: null, filters: { communes: [] }, fitCommuneNonce: state.fitCommuneNonce + 1,
+  })
+  state.revenirVueIle()
+  expect(useApp.getState().fitCommuneNonce).toBe(state.fitCommuneNonce + 2)
+})

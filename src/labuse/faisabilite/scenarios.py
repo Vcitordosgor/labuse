@@ -137,7 +137,8 @@ def faisabilite_scenario(session: Session, parcel_id: int, scenario: str | None 
     from .db import parcel_faisabilite
     from .engine import Hypotheses, appliquer_overrides_hypotheses, hypotheses_modifiables
     from .residuel import compute_residuel
-    from .zonage import reglement_source, resolve_zone
+    from .zonage import resolve_zone
+    from ..config import approbation_couverture_plu
 
     from sqlalchemy import text
 
@@ -186,7 +187,6 @@ def faisabilite_scenario(session: Session, parcel_id: int, scenario: str | None 
     if scenario == "bati_garde" and not bati_present:
         scenario = "terrain_libere"
 
-    reg = reglement_source(ctx.commune) or {}
     rules_pan = resolve_zone(zone, ctx.commune) if zone else None
     plu = _plu_section(ctx.commune, zone, ctx.idu, rules_pan)
 
@@ -204,7 +204,7 @@ def faisabilite_scenario(session: Session, parcel_id: int, scenario: str | None 
     badges = {
         "regles_sourcees": bool(f.calibree),
         "plancher_estime": True,   # occupation/rendement sont TOUJOURS des hypothèses (Estimé)
-        "plu_approuve_le": reg.get("approbation") or None,
+        "plu_approuve_le": approbation_couverture_plu((ctx.idu or "")[:5]),
     }
     base = {
         "idu": ctx.idu, "zone": zone, "commune": ctx.commune,

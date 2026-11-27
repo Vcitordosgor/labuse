@@ -69,11 +69,14 @@ function pluRef(commune?: string | null, zone?: string | null, article?: string 
     article ? `art. ${article}` : null, millesime ? `millésime ${millesime}` : null].filter(Boolean).join(' · ')
 }
 
-type ProjetKey = 'etudiante' | 'senior' | 'social' | 'lotissement'
+type ProjetKey = 'etudiante' | 'senior' | 'social' | 'collectif' | 'lotissement'
 const PROJETS: { key: ProjetKey; label: string; desc: string }[] = [
   { key: 'etudiante', label: 'Résidence étudiante', desc: 'Studios et petits logements pour étudiants' },
   { key: 'senior', label: 'Résidence senior', desc: 'Logements adaptés pour personnes âgées' },
   { key: 'social', label: 'Logement social', desc: 'Programme locatif social ou assimilé' },
+  // ETUDE-AUDIT-FIX-1 LOT 5 (défaut 7) — collectif ORDINAIRE (logement libre) : stationnement selon le
+  // PLU (règle générale + plafond L151-35/36). Le commerce n'est pas étudié (phrase écran + PDF).
+  { key: 'collectif', label: 'Collectif', desc: 'Logement libre en immeuble collectif (hors commerce)' },
   { key: 'lotissement', label: 'Lotissement', desc: 'Division foncière en lots destinés à bâtir' },
 ]
 // Lot C — le vrai type est transmis au moteur : l'implantation reste collective (le lotissement =
@@ -87,7 +90,8 @@ const ETAPES = [
 
 function verdictTon(v: string): 'vert' | 'ambre' | 'rouge' {
   if (v.startsWith('Exploitable')) return 'vert'
-  if (v.startsWith('À compléter')) return 'ambre'
+  // ETUDE-AUDIT-FIX-1 LOT 1 — « À vérifier » (réserve d'honnêteté) et « À compléter » = ambre, pas rouge.
+  if (v.startsWith('À compléter') || v.startsWith('À vérifier')) return 'ambre'
   return 'rouge'
 }
 function etatTon(r: string): 'vert' | 'ambre' | 'rouge' | 'neutre' {
@@ -108,6 +112,11 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
   const [rouvrirActif, setRouvrirActif] = useState(!!rouvrir)
   const [sel, setSel] = useState<string[]>(initialIdus ?? [])
   const [projet, setProjet] = useState<ProjetKey | null>(null)
+  const [chercherMax, setChercherMax] = useState(false)
+  const [parts, setParts] = useState({ T1: 0, T2: 100, T3: 0, T4: 0 })
+  const [fixes, setFixes] = useState({ T1: 0, T2: 0, T3: 0, T4: 0 })
+  const maximum = chercherMax && projet !== 'lotissement'
+  const sommeParts = TYPES.reduce((s, t) => s + parts[t], 0)
   const [nb, setNb] = useState<Record<TypeKey, number>>({ T1: 0, T2: 0, T3: 0, T4: 0 })
   // Hypothèses modifiables (mandat) : surfaces T1–T4, varangues, et hypothèses MOTEUR (profondeur,
   // coef plancher). Vides = valeurs LABUSE par défaut. Édition dans le résultat → recalcul → même PDF.
@@ -136,7 +145,9 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
     // ETUDE-V6-5 — en sous-sol, le NOMBRE DE NIVEAUX (1 ou 2) est explicite et borne la capacité.
     stationnement: hyp.stationnement,
     niveaux_sous_sol: hyp.stationnement === 'sous_sol' ? hyp.niveauxSousSol : undefined,
-    programme: { mode: 'saisi', lignes: TYPES.filter((t) => nb[t] > 0).map((t) => ({ type: t, nombre: nb[t], surface_m2: surfOf(t) })) },
+    programme: maximum ? { mode: 'maximum', parts, fixes,
+      lignes: TYPES.filter(t => parts[t] || fixes[t]).map(t => ({ type: t, nombre: 0, surface_m2: surfOf(t) })) }
+      : { mode: 'saisi', lignes: TYPES.filter((t) => nb[t] > 0).map((t) => ({ type: t, nombre: nb[t], surface_m2: surfOf(t) })) },
     hypotheses: hypBody(),
     ...over,
   })
@@ -190,9 +201,9 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
   // GRISE le PDF (« Recalculez pour mettre à jour l'étude ») tant que le recalcul n'est pas fait.
   const [dirty, setDirty] = useState(false)
   // Analyse (étape finale ET recalcul) : un seul appel moteur avec la config courante (hypothèses comprises).
-  const analyse = useMutation({ mutationFn: (body?: EtudeIn) => postEtude(body ?? corpsBody()),
+  const analyse = useMutation({ mutationFn: (body: EtudeIn) => postEtude(body),
                                 onSuccess: () => setDirty(false) })
-  const recalculer = () => analyse.mutate(undefined)
+  const recalculer = () => analyse.mutate(corpsBody())
   const marquerModifie = () => setDirty(true)
   // ETUDE-FIABLE-1 (LOT B2) — ROUVRIR : on RELIT la révision enregistrée pour la config archivée, SANS
   // recalcul (le moteur n'est pas appelé). Tant qu'on n'a pas « Relancé », le résultat AFFICHÉ est la révision.
@@ -213,7 +224,7 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
   const resultat: EtudePayload | undefined = analyse.data ?? (rouvrirActif ? revQ.data : undefined)
   // la config qui a produit le RÉSULTAT affiché (PDF et relance) : la config archivée en mode rouvrir, sinon
   // le formulaire. Garantit « PDF = écran » même sur une étude rouverte (le wizard n'est pas resaisi).
-  const configCourante = (): EtudeIn => (rouvrirActif && rouvrir && !analyse.data ? rouvrir : corpsBody())
+  const configCourante = (): EtudeIn => (analyse.variables ?? (rouvrirActif && rouvrir ? rouvrir : corpsBody()))
   // ETUDE-V6-7 (item 3) — stationnement CHOISI dès l'étape 3 : AÉRIEN ou SOUS-SOL (1 niveau ; plus de 2
   // niveaux). Met juste à jour l'hypothèse (pas de recalcul ; le choix part avec le programme, la jauge suit).
   const setStatioEtape3 = (choix: 'aerien' | 'sous_sol') => setHyp((h) => ({
@@ -239,9 +250,28 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
 
   const contiguOk = sel.length > 0 && !!v?.contiguite.ok
   const peutContinuer1 = contiguOk && !valide.isFetching
-  const peutAnalyser = contiguOk && !!projet && totalLogts > 0
+  // ETUDE-AUDIT-FIX-1 LOT 3 (défaut 9) — un LOTISSEMENT s'analyse avec T1–T4 à zéro : les logements futurs
+  // y sont INFORMATIFS (la faisabilité dépend de la division en lots), on n'exige donc pas de programme.
+  const peutAnalyser = contiguOk && !!projet && ((maximum ? sommeParts === 100 : totalLogts > 0) || projet === 'lotissement')
 
-  function reset() { setStep(1); setSel([]); setProjet(null); setNb({ T1: 0, T2: 0, T3: 0, T4: 0 }); resetHyp(); analyse.reset(); setRouvrirActif(false) }
+  function changerQuantiteImposee(t: TypeKey, valeur: string) {
+    const nombre = Math.max(0, Math.min(200, parseInt(valeur, 10) || 0))
+    setFixes({ ...fixes, [t]: nombre })
+    if (nombre > 0) setParts({ ...parts, [t]: 0 })
+  }
+
+  function reset() {
+    setChercherMax(false)
+    setParts({ T1: 0, T2: 100, T3: 0, T4: 0 })
+    setFixes({ T1: 0, T2: 0, T3: 0, T4: 0 })
+    setStep(1)
+    setSel([])
+    setProjet(null)
+    setNb({ T1: 0, T2: 0, T3: 0, T4: 0 })
+    resetHyp()
+    analyse.reset()
+    setRouvrirActif(false)
+  }
   function resetHyp() { setHyp({ surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '', stationnement: 'aerien', niveauxSousSol: 1, lotCible: '', voirie: '' }) }
   // « Modifier le programme » revient au formulaire ET réinitialise les hypothèses éditées (pas de fuite) ;
   // on quitte aussi le mode « rouvrir » (révision) → le formulaire reprend la main.
@@ -273,6 +303,7 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
   // ── RÉSULTAT (Lot B) — le résultat qui explique : Votre demande → Ce que le terrain accueille →
   //    L'écart → Ce qui limite → Alternative ; 4 grandeurs séparées ; 3 variantes ; 5 états ; verdict.
   if (resultat) {
+    const descriptionMax = resultat.entrees?.programme_maximum
     const variantes = resultat.variantes ?? []
     // ETUDE-V6-3 (item 6) — un SEUL scénario affiché : « votre programme » (plus d'onglets, plus d'alternative).
     const active = variantes.find((v) => v.role === 'votre_programme' && !v.absente) ?? variantes.find((v) => !v.absente) ?? variantes[0]
@@ -281,12 +312,12 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
     const demTotal = Object.values(demMap).reduce((s, n) => s + n, 0)
     // ETUDE-V6-7 (item 2) — surface TENUE = Σ (logements DESSINÉS × surface), servie par le moteur : une seule
     // vérité (le plan), jamais la surface de la demande. Repli local si le champ n'est pas servi.
-    const parPlan = active?.programme.par_type ?? {}
-    const surfaceTenue = active?.programme.surface_tenue_m2 ?? Object.entries(parPlan).reduce((s, [t, n]) => s + n * surfA(t), 0)
+    const parPlan = active?.programme?.par_type ?? {}
+    const surfaceTenue = active?.programme?.surface_tenue_m2 ?? Object.entries(parPlan).reduce((s, [t, n]) => s + n * surfA(t), 0)
     // ETUDE-V6-6 (item 5) — jauge EN LOGEMENTS confrontée au calcul EN LOGEMENTS (plus de SDP).
     const jaugeRes = enveloppeJauge(jaugeQ.data, demMap, surfA, active?.stationnement?.mode ?? 'aerien')
     const capLog = resultat.capacite_maximale?.logements
-    const divergence = (jaugeRes && capLog != null && capLog > 0 && Math.abs(jaugeRes.estime - capLog) / capLog > 0.2)
+    const divergence = (!descriptionMax && jaugeRes && capLog != null && capLog > 0 && Math.abs(jaugeRes.estime - capLog) / capLog > 0.2)
       ? { estime: jaugeRes.estime, calcule: capLog, pct: Math.round((Math.abs(jaugeRes.estime - capLog) / capLog) * 100) }
       : null
     // ETUDE-V6-3 (item 7) — UN SEUL facteur limitant, calculé une fois : bandeau, « Ce qui limite » n°1 et
@@ -299,10 +330,10 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
     const limitePhrase: string | null = resultat.facteur_limitant ?? facteurs.find((f) => f.limitant)?.facteur ?? active?.limite_capacite ?? null
     // ETUDE-V6-3 (item 8) — bloc fusionné « Votre programme : N demandés · M tiennent · max K » ; UNE réserve.
     const confr = resultat.confrontation
-    const kMax = resultat.capacite_maximale?.logements ?? active?.resume.logements ?? null
+    const kMax = resultat.capacite_maximale?.logements ?? active?.resume?.logements ?? null
     const nDem = confr?.demande_logements ?? demTotal
     const mTiennent = confr?.tient ? nDem : (resultat.depassement?.total_tiennent ?? (kMax == null ? nDem : Math.min(nDem, kMax)))
-    const reserve = kMax == null ? null : kMax - nDem
+    const reserve = descriptionMax || kMax == null ? null : kMax - nDem
     const repLabel = resultat.capacite_maximale?.repartition ?? ''
     return (
       <div className="relative flex min-h-full flex-col">
@@ -311,10 +342,19 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
         {/* ETUDE-V6-3 (items 6/7) — bandeau : verdict + LE facteur limitant (même phrase partout). Plus d'onglets. */}
         <div className="flex flex-wrap items-center gap-2.5 border-b border-line-2 px-4 py-3">
           <span className="text-[12px] text-txt-dim">Verdict de l'étude</span>
-          <Badge ton={verdictTon(resultat.verdict ?? '')}>{resultat.verdict}</Badge>
-          {limitePhrase && <span className="text-[11px] text-txt-mut">· ce qui limite : <b className="text-txt">{limitePhrase}</b></span>}
+          {/* ETUDE-AUDIT-FIX-1 LOT 1 (défaut 1) — verdict AFFICHÉ posé par la source unique (identique au
+              PDF) ; repli sur le verdict brut du payload si non annoté. */}
+          <Badge ton={verdictTon(active?.verdict_affiche ?? resultat.verdict ?? '')}>{active?.verdict_affiche ?? resultat.verdict}</Badge>
+          {active && !active.absente && limitePhrase && <span className="text-[11px] text-txt-mut">· ce qui limite : <b className="text-txt">{limitePhrase}</b></span>}
           {/* ETUDE-FIABLE-1 (LOT C2) — parcelle bâtie : l'étude suppose le terrain libéré. */}
           {resultat.terrain_suppose_libere && <span data-terrain-libere className="rounded border border-line-2 bg-surface-2 px-1.5 py-0.5 text-[10px] text-txt-dim">Terrain supposé libéré</span>}
+        </div>
+
+        {/* ETUDE-AUDIT-FIX-1 LOT 5 (défaut 7) — périmètre explicite : cette étude porte sur le LOGEMENT ;
+            un éventuel commerce n'est pas étudié. Même phrase qu'au PDF. */}
+        {resultat.surface_retenue && <p className="mx-4 mt-2 text-[12px]">{resultat.surface_retenue}</p>}
+        <div data-perimetre-commerce className="mx-4 mt-2 rounded-md border border-line-2 bg-surface-1 px-3 py-2 text-[10.5px] text-txt-dim">
+          <b className="text-txt">Périmètre de l'étude : logement.</b> Un éventuel commerce (en rez-de-chaussée par exemple) n'est pas étudié — ses surfaces, son stationnement et ses accès propres sont à vérifier séparément.
         </div>
 
         {/* ETUDE-FIABLE-1 (LOT B5) — état de la recherche : rien si complète, bandeau ambre si partielle /
@@ -322,6 +362,17 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
         {resultat.recherche && resultat.recherche.etat !== 'complete' && resultat.recherche.note && (
           <div data-recherche-etat={resultat.recherche.etat} className="mx-4 mt-2 rounded-md border border-amber/50 bg-amber-bg px-3 py-2 text-[11px] text-amber">
             <b>{resultat.recherche.etat === 'partielle' ? 'Recherche partielle' : 'Recherche non aboutie'}</b> — {resultat.recherche.note}
+          </div>
+        )}
+
+        {/* ETUDE-AUDIT-FIX-1 LOT 1 (défaut 1) — les RÉSERVES, MÊMES qu'au PDF (« À vérifier avant de
+            retenir ce programme »), posées par la source unique serveur. Écran et PDF ne divergent plus. */}
+        {active && !active.absente && (active.reserves?.length ?? 0) > 0 && (
+          <div data-reserves className="mx-4 mt-2 rounded-md border border-amber/50 bg-amber-bg px-3 py-2 text-[11px] text-amber">
+            <b>À vérifier avant de retenir ce programme</b>
+            <ul className="mt-1 list-disc pl-4">
+              {active.reserves!.map((r, i) => <li key={i}>{r}</li>)}
+            </ul>
           </div>
         )}
 
@@ -343,8 +394,8 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg border border-line-2 bg-surface-2 p-3 transition-colors hover:border-mint/40">
                   <p className="text-[9px] uppercase tracking-wide text-txt-dim">Logements</p>
-                  <div className="font-display text-[22px] font-bold leading-none text-txt-hi">{fmtInt(mTiennent)} <span className="text-[13px] text-txt-mut">/ {fmtInt(nDem)}</span></div>
-                  <p className="mt-0.5 text-[9.5px] text-txt-dim">tenus / demandés</p>
+                  <div className="font-display text-[22px] font-bold leading-none text-txt-hi">{descriptionMax ? fmtInt(active.resume?.logements ?? 0) : <>{fmtInt(mTiennent)} <span className="text-[13px] text-txt-mut">/ {fmtInt(nDem)}</span></>}</div>
+                  <p className="mt-0.5 text-[9.5px] text-txt-dim">{descriptionMax ? 'dessinés sur le plan retenu' : 'tenus / demandés'}</p>
                 </div>
                 <div className="rounded-lg border border-line-2 bg-surface-2 p-3 transition-colors hover:border-mint/40">
                   {/* ETUDE-V6-4 (item 6) — surface DU PROGRAMME (logements × surfaces T1–T4), JAMAIS la SDP. */}
@@ -369,7 +420,8 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
                   mode={active.stationnement?.mode ?? 'aerien'} niveaux={active.stationnement?.niveaux_sous_sol ?? 1}
                   mixite={{ regle: resultat.regles.lignes.find((l) => /mixit/i.test(l.nom)) ?? null,
                             applicable: active.programme.mixite_applicable, aides: active.programme.logements_aides_imposes,
-                            sdp_aidee: active.programme.sdp_aidee_imposee_m2 }} />
+                            sdp_aidee: active.programme.sdp_aidee_imposee_m2,
+                            satisfaite_social: active.programme.mixite_satisfaite_social }} />
               )}
               {/* ETUDE-V6-3 (item 9) — détail des surfaces : sol restant, emprise mobilisable, SDP autorisée (+ rampe sous-sol). */}
               <DetailSurfaces v={active} />
@@ -383,14 +435,14 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
               <Recit titre="Votre programme" ton={confr ? (confr.tient ? 'vert' : 'ambre') : verdictTon(active.verdict)}>
                 {/* ETUDE-FIABLE-1 (LOT C1) — « meilleure capacité trouvée avec ces hypothèses », jamais un
                     « maximum réglementaire » (c'est le meilleur candidat de la recherche déterministe). */}
-                <p className="text-[12px] text-txt-hi">{fmtInt(nDem)} demandés · <b className={confr?.tient !== false ? 'text-mint' : 'text-amber'}>{fmtInt(mTiennent)} tiennent</b> · meilleure capacité trouvée : <b>{fmtInt(kMax)}</b></p>
+                <p className="text-[12px] text-txt-hi">{descriptionMax ? descriptionMax : <>{fmtInt(nDem)} demandés · <b className={confr?.tient !== false ? 'text-mint' : 'text-amber'}>{fmtInt(mTiennent)} tiennent</b> · meilleure capacité trouvée : <b>{fmtInt(kMax)}</b></>}</p>
                 {/* ETUDE-V6-7 (item 2) — on DÉCRIT le plan dessiné (la typologie tenue) + la surface tenue : une
                     seule vérité, jamais la surface de la demande. */}
                 <p className="mt-0.5 text-[10.5px] text-txt-dim">Dessiné : {Object.entries(parPlan).filter(([, n]) => n > 0).map(([t, n]) => `${n}×${t}`).join(' · ') || '—'} · {fmtDec(surfaceTenue)} m² de programme tenu</p>
                 {reserve != null && (reserve >= 0
                   ? <p className="mt-1 text-[11px] text-txt">Réserve de <b className="text-mint">{fmtInt(reserve)}</b> logement(s) jusqu'à la meilleure capacité trouvée.</p>
                   : <p className="mt-1 text-[11px] text-txt">Dépassement de <b className="text-amber">{fmtInt(-reserve)}</b> logement(s) au-delà de cette capacité.</p>)}
-                <p className="mt-0.5 text-[9.5px] text-txt-dim">Meilleure capacité trouvée avec ces hypothèses (répartition {repLabel}) · {resultat.capacite_maximale?.niveaux_label} — indépendante du nombre demandé.</p>
+                <p className="mt-0.5 text-[9.5px] text-txt-dim">{descriptionMax ? 'Meilleure capacité trouvée avec cette composition' : `Meilleure capacité trouvée avec ces hypothèses (répartition ${repLabel}) — indépendante du nombre demandé.`} · {resultat.capacite_maximale?.niveaux_label}</p>
                 {divergence && (
                   <p data-divergence className="mt-1 text-[10.5px] text-amber">⚠ L'estimation de l'étape 3 (≈ {fmtInt(divergence.estime)} logements) et le calcul ({fmtInt(divergence.calcule)} logements) divergent de {divergence.pct} % : la jauge était {divergence.estime > divergence.calcule ? 'optimiste' : 'prudente'} — fiez-vous au calcul.</p>
                 )}
@@ -448,6 +500,7 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
           </div>
         )}
 
+        {(!active || active.absente) && <>{descriptionMax && <p className="px-4 text-xs">{descriptionMax}</p>}<BoutonPdf /></>}
         {!active && (
           <div className="p-6 text-center">
             <Badge ton="rouge">{resultat.verdict}</Badge>
@@ -486,14 +539,31 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
         <div className="rounded-lg border border-line-2 bg-surface-2 p-4">
           {step === 1 && <EtapeParcelles sel={sel} v={v} chargement={valide.isFetching} erreur={valide.error} onAjouter={ajouter} onRetirer={retirer} />}
           {step === 2 && <EtapeType projet={projet} onChoisir={setProjet} regimes={statio.data?.regimes} chargement={statio.isFetching} commune={statio.data?.commune} zone={statio.data?.zone} mixite={statio.data?.mixite} />}
-          {step === 3 && <EtapeProgramme nb={nb} setNb={setNb} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar} surfaceInt={surfaceInt} lotissement={projet === 'lotissement'}
+          {step === 3 && projet !== 'lotissement' && <fieldset className="mb-4 flex flex-wrap gap-4 text-sm">
+            <legend className="mb-2 font-semibold">Objectif du programme</legend>
+            <label><input type="radio" name="objectif-programme" checked={!maximum} onChange={() => setChercherMax(false)} /> Saisir les quantités</label>
+            <label><input type="radio" name="objectif-programme" checked={maximum} onChange={() => setChercherMax(true)} /> Chercher le maximum de logements</label>
+          </fieldset>}
+          {step === 3 && maximum && <div className="grid gap-2">
+            <p className="text-xs">Imposez une quantité si besoin, puis répartissez le reste en pourcentage. Pour maximiser uniquement les T2, indiquez 100 % de T2.</p>
+            <table className="text-center text-sm"><thead><tr><th>Type</th><th>Quantité imposée</th><th>Part du complément</th></tr></thead>
+              <tbody>{TYPES.map(t => <tr key={t}><th>{t} <span className="text-xs font-normal text-txt-mut">({SURF[t].area} m²)</span></th>
+                <td><input aria-label={`Quantité imposée de ${t}`} type="number" min={0} max={200} value={fixes[t]}
+                  onChange={e => changerQuantiteImposee(t, e.target.value)}
+                  className="w-16 rounded bg-surface-2 p-1" /></td>
+                <td><input aria-label={`Pourcentage de ${t}`} type="number" min={0} max={100} disabled={fixes[t] > 0} value={parts[t]}
+                  onChange={e => setParts({ ...parts, [t]: Math.max(0, Math.min(100, parseInt(e.target.value) || 0)) })}
+                  className="w-16 rounded bg-surface-2 p-1 disabled:opacity-40" /> %</td></tr>)}</tbody>
+            </table><p aria-live="polite" className="text-xs">{sommeParts === 100 ? 'Répartition complète. Le calcul arrondit aux logements entiers.' : `Total : ${sommeParts} %. Répartissez 100 % pour lancer le calcul.`}</p>
+          </div>}
+          {step === 3 && <EtapeProgramme maximum={maximum} nb={nb} setNb={setNb} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar} surfaceInt={surfaceInt} lotissement={projet === 'lotissement'}
             jauge={jauge} jaugeChargement={jaugeQ.isFetching} jaugeManquant={jaugeQ.data && !jaugeQ.data.estimable ? jaugeQ.data.manquant : null}
             statioChoix={hyp.stationnement} onStatioChoix={setStatioEtape3} sousSolDispo={jaugeQ.data?.sous_sol_dispo ?? null} />}
         </div>
         {/* ETUDE-V6-7 (item 8) — récap + boutons Retour/Continuer/Analyser dans la COLONNE DE DROITE, sous
             le récap, STICKY au défilement (sur les 3 étapes). */}
         <div className="flex flex-col gap-4 self-start lg:sticky lg:top-4">
-          <Recap sel={sel} v={v} projet={projet} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar}
+          <Recap maximum={maximum} sel={sel} v={v} projet={projet} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar}
             stationnement={projet && statio.data?.regimes?.general ? (statio.data.regimes.general.regle_courte ?? statio.data.regimes.general.etat ?? 'règle PLU') : null} />
           <PiedEtape
             step={step}
@@ -501,7 +571,7 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
             enAnalyse={analyse.isPending} erreurAnalyse={analyse.error}
             onPrec={() => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s))}
             onSuiv={() => setStep((s) => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s))}
-            onAnalyser={() => analyse.mutate(undefined)}
+            onAnalyser={() => analyse.mutate(corpsBody())}
             projetChoisi={!!projet}
           />
         </div>
@@ -732,8 +802,10 @@ function LotissementResultat({ lot, hypothese, boutonPdf, pdfErreur, studyId, ed
         <div className="rounded-lg border border-line-2 bg-surface-2 p-3">
           <b className="text-[11px] font-semibold text-txt">Tableau des lots — accès {tl.acces}</b>
           <div className="mt-1.5 grid grid-cols-6 gap-1 text-[10.5px] sm:grid-cols-8">
-            {tl.surfaces_m2.map((s, i) => (
-              <span key={i} className="rounded border border-line-2 bg-surface-1 px-1.5 py-1 text-center"><b className="text-txt">#{i + 1}</b> <span className="text-txt-dim">{fmtInt(s)}</span></span>
+            {/* ETUDE-AUDIT-FIX-1 LOT 3 (défaut 6) — on affiche le NUMÉRO du polygone du plan (tl.lots),
+                plus un index de surfaces triées. Repli sur surfaces_m2 (déjà en ordre de polygone). */}
+            {(tl.lots ?? tl.surfaces_m2.map((s, i) => ({ numero: i + 1, surface_m2: s }))).map((l) => (
+              <span key={l.numero} className="rounded border border-line-2 bg-surface-1 px-1.5 py-1 text-center"><b className="text-txt">#{l.numero}</b> <span className="text-txt-dim">{fmtInt(l.surface_m2)}</span></span>
             ))}
           </div>
         </div>
@@ -832,7 +904,7 @@ function StationnementResultat({ regimes, placesActive, commune, zone, mode, niv
   regimes: EtudeStationnementRegimes
   placesActive: number; commune?: string | null; zone?: string | null
   mode: 'aerien' | 'sous_sol'; niveaux?: number
-  mixite?: { regle: EtudeRegle | null; applicable: boolean | null; aides: number | null; sdp_aidee: number | null } | null
+  mixite?: { regle: EtudeRegle | null; applicable: boolean | null; aides: number | null; sdp_aidee: number | null; satisfaite_social?: boolean | null } | null
 }) {
   const lieu = mode === 'sous_sol' ? `au sous-sol (${(niveaux ?? 1) >= 2 ? 'niveaux −1 et −2' : 'niveau −1'})` : 'en aérien (au sol)'
   const g = regimes.general, pf = regimes.plafond_national
@@ -842,7 +914,7 @@ function StationnementResultat({ regimes, placesActive, commune, zone, mode, niv
       <b className="text-[11px] font-semibold text-txt">Stationnement</b>
       <ol className="mt-2 flex flex-col gap-1.5 text-[11px] text-txt">
         <li className="flex items-start gap-1.5">
-          <span>Le PLU de <b>{commune}</b> (art. {g.article ?? '—'}{g.page_pdf != null ? `, p. ${g.page_pdf}` : ''}) exige <b>{regleG}</b>{g.distingue_autres_cas ? <span className="text-amber"> — valeur du logement ordinaire ; le barème distingue d'autres cas (voir l'article)</span> : null}.</span>
+          <span>Le PLU de <b>{commune}</b> (art. {g.article ?? '—'}) exige <b>{regleG}</b>.</span>
           <LireArticle r={{ article: g.article, page_pdf: g.page_pdf, millesime: g.millesime, citation: g.citation, source_url: g.source_url, commune, zone }} />
         </li>
         {pf ? (
@@ -852,7 +924,14 @@ function StationnementResultat({ regimes, placesActive, commune, zone, mode, niv
         )}
         <li className="text-txt">LABUSE a dessiné <b>{fmtInt(placesActive)} places</b> {lieu} selon la règle du PLU.</li>
       </ol>
-      {mixite?.regle && (
+      {/* ETUDE-AUDIT-FIX-1 (relecture pt5) — en social, mixité satisfaite par nature (100 % aidé), sans
+          compteur « aidés imposés ». */}
+      {mixite?.satisfaite_social ? (
+        <div data-mixite className="mt-2 border-t border-line-2 pt-2 text-[10.5px] text-txt">
+          <span><b>Mixité sociale</b>{mixite.regle?.article ? ` (art. ${mixite.regle.article})` : ''} : satisfaite, programme 100 % logement aidé.</span>
+          {mixite.regle && <LireArticle r={{ article: mixite.regle.article, page_pdf: mixite.regle.page_pdf, millesime: mixite.regle.millesime, citation: mixite.regle.citation, source_url: mixite.regle.source_url, commune, zone }} />}
+        </div>
+      ) : mixite?.regle && (
         <div data-mixite className="mt-2 border-t border-line-2 pt-2 text-[10.5px] text-txt">
           <span><b>Mixité sociale</b> (art. {mixite.regle.article ?? '—'}) : {fmtDec(mixite.regle.valeur)} % de logements aidés{mixite.regle.seuil_m2 != null ? ` au-delà de ${fmtDec(mixite.regle.seuil_m2)} m² de SDP` : ''}.</span>
           <LireArticle r={{ article: mixite.regle.article, page_pdf: mixite.regle.page_pdf, millesime: mixite.regle.millesime, citation: mixite.regle.citation, source_url: mixite.regle.source_url, commune, zone }} />
@@ -984,7 +1063,7 @@ function ReglesAssiette({ parcelles }: { parcelles: EtudeParcellesOut['parcelles
 function LireArticle({ r }: { r: { article?: string | null; page_pdf?: number | null; millesime?: string | null; citation?: string | null; source_url?: string | null; commune?: string | null; zone?: string | null } }) {
   const [ouvert, setOuvert] = useState(false)
   if (!r.article && !r.citation) return null
-  const lien = r.source_url ? (r.page_pdf != null ? `${r.source_url}#page=${r.page_pdf}` : r.source_url) : null
+  const lien = r.source_url ? (r.page_pdf != null && !r.source_url.includes('#page=') ? `${r.source_url}#page=${r.page_pdf}` : r.source_url) : null
   return (
     <span className="relative inline-block">
       <button type="button" data-lire-article onClick={() => setOuvert((o) => !o)}
@@ -1069,11 +1148,6 @@ function StationnementRegle({ regimes, lotissement, commune, zone }: { regimes: 
         <p className="mt-1 text-[10px] text-txt-dim">{pluRef(commune, zone, g.article, g.millesime)}</p>
         <p className="mt-0.5 text-[11px] text-txt">{g.regle_courte ?? (g.ratio_par_logement != null ? `${fmtDec(g.ratio_par_logement)} place / logement` : 'barème par typologie')}</p>
         {g.citation && <p className="mt-0.5 text-[9.5px] text-txt-dim">« {g.citation} »</p>}
-        {/* OUTIL-PLU-FIX-7 (point 2) — la valeur affichée est celle du LOGEMENT ORDINAIRE ; on signale que le
-            barème distingue d'autres cas (logement social/aidé, opération, places publiques…) → voir l'article. */}
-        {g.distingue_autres_cas && (
-          <p className="mt-0.5 text-[10px] text-amber">Valeur pour le logement ordinaire — le barème (art. {g.article ?? '—'}{g.page_pdf != null ? `, p. ${g.page_pdf}` : ''}) distingue d'autres cas (logement social/aidé, opération, places publiques…).</p>
-        )}
         {/* ETUDE-V6-4 (item 3) — « Lire l'article » dès l'étape 2 (stationnement). */}
         <LireArticle r={{ article: g.article, page_pdf: g.page_pdf, millesime: g.millesime, citation: g.citation, source_url: g.source_url, commune, zone }} />
       </div>
@@ -1100,8 +1174,8 @@ function StationnementRegle({ regimes, lotissement, commune, zone }: { regimes: 
 }
 
 // ── Étape 3 — Programme ──────────────────────────────────────────────────────────────────────────
-function EtapeProgramme({ nb, setNb, totalLogts, surfaceProg, surfaceVar, surfaceInt, lotissement, jauge, jaugeChargement, jaugeManquant, statioChoix, onStatioChoix, sousSolDispo }: {
-  nb: Record<TypeKey, number>; setNb: (f: (n: Record<TypeKey, number>) => Record<TypeKey, number>) => void
+function EtapeProgramme({ maximum, nb, setNb, totalLogts, surfaceProg, surfaceVar, surfaceInt, lotissement, jauge, jaugeChargement, jaugeManquant, statioChoix, onStatioChoix, sousSolDispo }: {
+  maximum: boolean; nb: Record<TypeKey, number>; setNb: (f: (n: Record<TypeKey, number>) => Record<TypeKey, number>) => void
   totalLogts: number; surfaceProg: number; surfaceVar: number; surfaceInt: number; lotissement: boolean
   jauge: ReturnType<typeof enveloppeJauge>; jaugeChargement: boolean; jaugeManquant: string[] | null
   statioChoix: 'aerien' | 'sous_sol'; onStatioChoix: (c: 'aerien' | 'sous_sol') => void
@@ -1111,6 +1185,7 @@ function EtapeProgramme({ nb, setNb, totalLogts, surfaceProg, surfaceVar, surfac
   const set = (t: TypeKey, val: number) => setNb((n) => ({ ...n, [t]: Math.max(0, Math.min(200, val)) }))
   return (
     <div>
+      {!maximum && <>
       <EnTetePanneau n="03" titre="Combien de logements souhaitez-vous ?" sous="Indiquez simplement le nombre de T1, T2, T3 et T4." />
       {lotissement && (
         <div className="mb-3 rounded-md border border-amber/40 bg-amber-bg px-3 py-2 text-[10.5px] text-txt-mut">
@@ -1146,6 +1221,7 @@ function EtapeProgramme({ nb, setNb, totalLogts, surfaceProg, surfaceVar, surfac
           <p className="text-[10px] text-txt-dim">surface du programme</p>
         </div>
       </div>
+      </>}
       {/* ETUDE-V6-7 (items 3/4) — STATIONNEMENT choisi dès l'étape 3 : Aérien / Sous-sol 1 niveau (plus de
           2 niveaux). L'option Sous-sol est GRISÉE avec sa raison si le terrain touche un PPR ou si le
           règlement l'interdit ; sinon « à confirmer géotechnique/nappe ». */}
@@ -1165,7 +1241,7 @@ function EtapeProgramme({ nb, setNb, totalLogts, surfaceProg, surfaceVar, surfac
         </div>
       )}
       {/* ETUDE-V6-6 (item 5) — JAUGE EN LOGEMENTS : ≈ N estimés vs demande. Grise si donnée manquante. */}
-      {!lotissement && totalLogts > 0 && (
+      {!maximum && !lotissement && totalLogts > 0 && (
         <JaugeEnveloppe jauge={jauge} chargement={jaugeChargement} manquant={jaugeManquant} demande={totalLogts} />
       )}
       <p className="mt-2 text-[10px] text-txt-dim">Ces surfaces sont des hypothèses de programme (varangue comprise). La capacité ci-dessus est une estimation en logements, affinée par le calcul complet.</p>
@@ -1239,8 +1315,8 @@ function EnTetePanneau({ n, titre, sous }: { n: string; titre: string; sous: str
 // ── Récapitulatif ────────────────────────────────────────────────────────────────────────────────
 // ETUDE-V6-2 (Lot 5) — le récap affiche « — » tant qu'une donnée n'est pas choisie/saisie (jamais 0,
 // jamais « Non vérifié ») : un tiret dit « pas encore renseigné », pas « absent / problème ».
-function Recap({ sel, v, projet, totalLogts, surfaceProg, surfaceVar, stationnement }: {
-  sel: string[]; v?: EtudeParcellesOut; projet: ProjetKey | null
+function Recap({ maximum, sel, v, projet, totalLogts, surfaceProg, surfaceVar, stationnement }: {
+  maximum: boolean; sel: string[]; v?: EtudeParcellesOut; projet: ProjetKey | null
   totalLogts: number; surfaceProg: number; surfaceVar: number; stationnement: string | null
 }) {
   const surfaceTerrain = v?.union.surface_reelle_m2
@@ -1254,8 +1330,10 @@ function Recap({ sel, v, projet, totalLogts, surfaceProg, surfaceVar, stationnem
         <p className="mt-0.5 text-[10.5px] text-txt-dim">{sel.length > 0 ? `${sel.length} parcelle${sel.length > 1 ? 's' : ''}` : '—'}</p>
       </div>
       <Ligne l="Projet" v={projetLabel} />
+      {maximum ? <Ligne l="Logements" v="Maximum recherché" /> : <>
       <Ligne l="Logements demandés" v={totalLogts > 0 ? fmtInt(totalLogts) : '—'} />
       <Ligne l="Surface du programme" v={totalLogts > 0 ? `${fmtDec(surfaceProg)} m²` : '—'} sous={totalLogts > 0 && surfaceVar > 0 ? `dont ${fmtDec(surfaceVar)} m² varangues` : undefined} />
+      </>}
       <Ligne l="Stationnement PLU" v={stationnement ?? '—'} />
     </aside>
   )

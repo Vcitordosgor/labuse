@@ -1,0 +1,248 @@
+
+ RUN  v4.1.10 /Users/openclaw/Desktop/labuse-plu-fix/frontend
+
+ ❯ src/components/outils/PluAbsenceArticle.test.tsx (2 tests | 1 failed) 1459ms
+   × relie la fiche du secteur à sa page du règlement 1018ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/outils/PluAbsenceArticle.test.tsx > relie la fiche du secteur à sa page du règlement
+TestingLibraryElementError: Unable to find role="link" and name `/fiche.*86/i`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto"[39m
+      [33mdata-plu-annuaire[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 text-[11px] text-txt-mut"[39m
+      [36m>[39m
+        [36m<b[39m
+          [33mclass[39m=[32m"text-txt"[39m
+        [36m>[39m
+          [0mSaint-Benoît[0m
+        [36m</b>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9px] text-mint/70"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10px] leading-snug text-txt-dim"[39m
+        [33mdata-plu-doc-etat[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-[10.5px] leading-snug text-txt-mut"[39m
+        [36m>[39m
+          [0mCherchez dans le règlement de [0m
+          [36m<b[39m
+            [33mclass[39m=[32m"text-txt"[39m
+          [36m>[39m
+            [0mSaint-Benoît[0m
+          [36m</b>[39m
+          [0m — verbatim sourcé (article, page, lien), jamais un résumé.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"rounded-md border border-line/60 bg-surface-3/60 px-2 py-1 text-[9.5px] leading-snug text-txt-dim"[39m
+          [33mdata-plu-limites[39m=[32m"true"[39m
+        [36m>[39m
+          [0m⚠ Recherche [0m
+          [36m<b>[39m
+            [0mcommunale[0m
+          [36m</b>[39m
+          [0m (texte du règlement). Elle ne vérifie pas, à la parcelle, les prescriptions graphiques, les servitudes d’utilité publique ni le PPR — à contrôler sur la fiche parcelle et au document graphique.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex gap-2"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:outline-none"[39m
+            [33mdata-plu-q[39m=[32m"true"[39m
+            [33mplaceholder[39m=[32m"ex. hauteur clôture / Ua"[39m
+            [33mvalue[39m=[32m"stationnement"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on shrink-0 whitespace-nowrap"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mChercher[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-1.5 text-[10.5px] text-txt-mut"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mFiltré sur la [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-mint"[39m
+            [36m>[39m
+              [0mzone [0m
+              [0mNta53[0m
+            [36m</span>[39m
+            [0m (depuis la fiche)[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rounded bg-surface-3 px-1 text-txt-dim hover:text-txt"[39m
+          [36m>[39m
+            [0m✕ retirer[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11px]"[39m
+        [33mdata-plu-absence-article[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mLe chapitre de la zone A ne comporte pas d’article propre au stationnement.[0m
+        [36m</p>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"text-mint underline"[39m
+          [33mhref[39m=[32m"https://data.geopf.fr/reglement.pdf#page=32"[39m
+          [33mrel[39m=[32m"noreferrer"[39m
+          [33mtarget[39m=[32m"_blank"[39m
+        [36m>[39m
+          [0mChapitre du règlement · pp. [0m
+          [0m32[0m
+          [0m–[0m
+          [0m39[0m
+        [36m</a>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto"[39m
+      [33mdata-plu-annuaire[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 text-[11px] text-txt-mut"[39m
+      [36m>[39m
+        [36m<b[39m
+          [33mclass[39m=[32m"text-txt"[39m
+        [36m>[39m
+          [0mSaint-Benoît[0m
+        [36m</b>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"font-mono text-[9px] text-mint/70"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10px] leading-snug text-txt-dim"[39m
+        [33mdata-plu-doc-etat[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-[10.5px] leading-snug text-txt-mut"[39m
+        [36m>[39m
+          [0mCherchez dans le règlement de [0m
+          [36m<b[39m
+            [33mclass[39m=[32m"text-txt"[39m
+          [36m>[39m
+            [0mSaint-Benoît[0m
+          [36m</b>[39m
+          [0m — verbatim sourcé (article, page, lien), jamais un résumé.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"rounded-md border border-line/60 bg-surface-3/60 px-2 py-1 text-[9.5px] leading-snug text-txt-dim"[39m
+          [33mdata-plu-limites[39m=[32m"true"[39m
+        [36m>[39m
+          [0m⚠ Recherche [0m
+          [36m<b>[39m
+            [0mcommunale[0m
+          [36m</b>[39m
+          [0m (texte du règlement). Elle ne vérifie pas, à la parcelle, les prescriptions graphiques, les servitudes d’utilité publique ni le PPR — à contrôler sur la fiche parcelle et au document graphique.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex gap-2"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:outline-none"[39m
+            [33mdata-plu-q[39m=[32m"true"[39m
+            [33mplaceholder[39m=[32m"ex. hauteur clôture / Ua"[39m
+            [33mvalue[39m=[32m"stationnement"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on shrink-0 whitespace-nowrap"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mChercher[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-1.5 text-[10.5px] text-txt-mut"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mFiltré sur la [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-mint"[39m
+            [36m>[39m
+              [0mzone [0m
+              [0mNta53[0m
+            [36m</span>[39m
+            [0m (depuis la fiche)[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rounded bg-surface-3 px-1 text-txt-dim hover:text-txt"[39m
+          [36m>[39m
+            [0m✕ retirer[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11px]"[39m
+        [33mdata-plu-absence-article[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mLe chapitre de la zone A ne comporte pas d’article propre au stationnement.[0m
+        [36m</p>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"text-mint underline"[39m
+          [33mhref[39m=[32m"https://data.geopf.fr/reglement.pdf#page=32"[39m
+          [33mrel[39m=[32m"noreferrer"[39m
+          [33mtarget[39m=[32m"_blank"[39m
+        [36m>[39m
+          [0mChapitre du règlement · pp. [0m
+          [0m32[0m
+          [0m–[0m
+          [0m39[0m
+        [36m</a>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/outils/PluAbsenceArticle.test.tsx:41:22
+     39|   fireEvent.change(q, { target: { value: 'stationnement' } })
+     40|   fireEvent.keyDown(q, { key: 'Enter' })
+     41|   expect((await page.findByRole('link', { name: /fiche.*86/i })).getAt…
+       |                      ^
+     42|   expect(page.getByText('Accès piéton depuis le parking.')).toBeTruthy…
+     43| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  11:18:31
+   Duration  3.03s (transform 149ms, setup 253ms, import 196ms, tests 1.46s, environment 942ms)
+

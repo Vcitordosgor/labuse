@@ -190,7 +190,7 @@ class AssemblageIn(BaseModel):
 def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
     from types import SimpleNamespace
 
-    from ..assemblage import ADJ_BUFFER_M, aggregate_assiette
+    from ..assemblage import aggregate_assiette, verdicts_contiguite
     from ..faisabilite.marche_commune import prix_terrain_nu_zone
     cap = _moteurs_cap("assemblage_max_parcelles", 30)   # M137-O : plafond EN CONFIG, plus jamais en dur
     demandes = [i.strip().upper() for i in body.idus if i.strip()]
@@ -212,26 +212,62 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
         WHERE p.idu = ANY(:idus)"""), {"idus": idus, "run": runs.cascade(), "v2run": _v2run(db)}).mappings().all()
+    # OUTIL-ASSEMBLAGE-FIX-2 (LOT 4, pt 6) — identifiants DEMANDÉS mais INTROUVABLES en base : nommés
+    # explicitement (comme /compare), jamais écartés en silence. Le calcul porte sur les parcelles
+    # trouvées ; l'écran dira que la/les introuvable(s) a/ont été écartée(s) du périmètre.
+    _trouves = {r["idu"] for r in rows}
+    introuvables = [i for i in idus if i not in _trouves]
+    # OUTIL-ASSEMBLAGE-FIX-3 (LOT 4) — même quand TOUT (ou tout sauf une) est introuvable, le 404 NOMME
+    # les identifiants fautifs au lieu d'un « 0 trouvée(s) sur N » muet : la promesse « introuvable nommé »
+    # est tenue dans TOUS les cas, pas seulement quand ≥ 2 parcelles restent valides. Le détail est un
+    # objet structuré (introuvables + trouvées + compteurs) que le front liste tel quel.
     if len(rows) < 2:
-        raise HTTPException(404, f"{len(rows)} parcelle(s) trouvée(s) sur {len(idus)}")
-    # contiguïté : graphe des adjacences (contact cadastral ADJ_BUFFER_M — MÊME seuil que la détection
-    # assemblage.py, plus de 1 m ad hoc) → l'assiette est-elle d'un seul tenant ?
+        _manque = ", ".join(introuvables) if introuvables else "aucun"
+        raise HTTPException(404, {
+            "message": (f"{len(rows)} parcelle(s) trouvée(s) sur {len(idus)} — "
+                        f"il faut au moins 2 parcelles valides. Introuvable(s) : {_manque}."),
+            "introuvables": introuvables,
+            "trouvees": sorted(_trouves),
+            "n_demandes": len(idus),
+            "n_trouvees": len(rows),
+        })
+    # OUTIL-ASSEMBLAGE-FIX-1 (LOT 1) — contiguïté en TROIS verdicts (assemblage.py `classer_lien`) :
+    # bord cadastral commun MESURÉ (seule vraie mitoyenneté), contact par un point, petit vide cadastral.
+    # Deux graphes : `adj_bord` (vrais bords seuls) → « d'un seul tenant » strict ; `adj_all` (tout lien
+    # ≤ ADJ_BUFFER_M) → assiette RELIÉE (gate du chiffrage). Une assiette reliée par un point ou un vide
+    # est chiffrée mais n'est PAS annoncée « contiguë »/« d'un seul tenant » (le calcul fusionne les
+    # polygones réels SANS combler le vide — audit ASTRA bloquant 1).
     ids = [r["id"] for r in rows]
-    pairs = db.execute(text("""
-        SELECT a.id AS a, b.id AS b FROM parcels a JOIN parcels b
-          ON a.id < b.id AND ST_DWithin(a.geom_2975, b.geom_2975, :buf)
-        WHERE a.id = ANY(:ids) AND b.id = ANY(:ids)"""), {"ids": ids, "buf": ADJ_BUFFER_M}).all()
-    adj: dict[int, set[int]] = {i: set() for i in ids}
-    for a, b in pairs:
-        adj[a].add(b)
-        adj[b].add(a)
-    seen, stack = {ids[0]}, [ids[0]]
-    while stack:
-        for nb in adj[stack.pop()]:
-            if nb not in seen:
-                seen.add(nb)
-                stack.append(nb)
-    contigu = len(seen) == len(ids)
+    idu_of = {r["id"]: r["idu"] for r in rows}
+    vc = verdicts_contiguite(db, ids)
+    relie = vc["relie"]                          # assiette d'un bloc (gate du chiffrage) ; sinon isolées
+    tenant_unique = vc["tenant_unique"]          # d'un seul tenant : vrais bords partout
+    contigu = vc["contigu"]                      # « contiguës » = STRICTEMENT les vrais bords partagés
+    lien_faible = vc["lien_faible"]              # reliée mais par ≥1 point/vide → chiffrage à réserver
+    seen_all = {i for i in ids if i not in vc["isolees_ids"]}
+    # liens LISIBLES (idu + verdict + mesure), pour que l'écran dise chaque contact par son nom.
+    liens_affiches = [{"a": idu_of[ln["a"]], "b": idu_of[ln["b"]], "type": ln["type"],
+                       "longueur_bord_m": ln["longueur_bord_m"], "vide_m": ln["vide_m"]} for ln in vc["liens"]]
+    # avertissement de tenant quand l'assiette n'est pas d'un seul tenant (reliée par point/bord court/vide).
+    # OUTIL-ASSEMBLAGE-FIX-6 (LOT 5) — un bord cadastral plus court que le seuil est décrit AVEC sa longueur
+    # et signalé « à vérifier », jamais comme « un point » / « aucun bord commun ».
+    _faibles = [ln for ln in liens_affiches if ln["type"] in ("point", "bord_court", "vide")]
+    tenant_avertissement = None
+    if lien_faible and _faibles:
+        _desc = []
+        for ln in _faibles:
+            pa, pb = ln["a"][8:], ln["b"][8:]
+            if ln["type"] == "point":
+                _desc.append(f"{pa}–{pb} : contact par un point (aucun bord commun)")
+            elif ln["type"] == "bord_court":
+                _desc.append(f"{pa}–{pb} : bord commun très court de {ln['longueur_bord_m']:.2f} m "
+                             "(sous le seuil d'un seul tenant) — à vérifier")
+            else:
+                _desc.append(f"{pa}–{pb} : petit vide cadastral de {ln['vide_m']:.2f} m")
+        tenant_avertissement = (
+            "Assiette NON d'un seul tenant — " + " ; ".join(_desc)
+            + ". Le chiffrage fusionne les polygones réels sans combler ce vide : traiter comme des "
+            "parcelles reliées, pas comme une opération d'un seul tenant.")
     # PRIVACY (B) : personne morale = dénomination + SIREN (public) ; particulier = JAMAIS nommé.
     def _proprio(r: dict) -> dict:
         if r["denomination"]:
@@ -272,10 +308,26 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
     from collections import Counter
     zc = Counter((c, z) for c, z in agg["zones"] if c and z)
     terrain_zone = None
+    zone_marche = None            # OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 5) — la zone d'où vient le repère
+    # OUTIL-ASSEMBLAGE-FIX-6 (LOT 8) — le PÉRIMÈTRE RÉEL de la médiane du terrain nu est la FAMILLE de zone
+    # (`prix_terrain_nu_zone` agrège toute la famille U ou AU de la commune, toutes sous-zones confondues).
+    # L'écran nomme donc « zones AU de {commune} », pas la sous-zone AU3c (audit finding 8 : 401 €/m² sur
+    # 188 ventes = médiane de la famille AU de Saint-Paul, pas de l'unique AU3c).
+    terrain_zone_famille = terrain_zone_commune = None
     zones_mixtes = len({z for _, z in zc}) > 1
     if zc:
         (commune_dom, zone_dom), _ = zc.most_common(1)[0]
+        zone_marche = zone_dom
         terrain_zone = prix_terrain_nu_zone(db, commune_dom, zone_dom)
+        if terrain_zone:
+            terrain_zone_famille = "AU" if str(zone_dom).upper().startswith("AU") else str(zone_dom)[:1].upper()
+            terrain_zone_commune = commune_dom
+    # OUTIL-ASSEMBLAGE-FIX-1 (LOT 4, pt 4) — existant PARTIEL : au moins une parcelle sans bâti mesuré
+    # (son existant est inconnu, pas zéro) → le total d'existant est PARTIEL et aucun « ajout » précis
+    # ne doit en être déduit. On le DIT ; distinct d'un existant mesuré à zéro.
+    _exist_par = agg.get("sdp_existante_par_parcelle") or {}
+    existant_partiel = any(v is None for v in _exist_par.values())
+    existant_mesurees = sum(1 for v in _exist_par.values() if v is not None)
     # #3 — le SCORE reste calculé mais DORMANT (jamais servi à l'écran : doctrine M120, pas de
     # « qualité N/100 »). Conservé pour un tri éventuel ; l'écran montre les FAITS qu'il agrégeait.
     # « sans potentiel » = aucune capacité MÊME terrain libéré (brute ≤ 0) ou tout étage 0 — sinon on
@@ -286,14 +338,28 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
                   + (10 if tous_pm else 0) + 25 * min(1, sdp_libere / 3000)))
     return {
         "n": len(rows), "contigu": contigu,
-        # RECETTE-1 (H5, Vic) — les parcelles ISOLÉES (hors du bloc d'un seul tenant de la 1ʳᵉ parcelle) :
-        # l'étape 2 les nomme quand « pas d'assemblage possible » (elles ne se touchent pas).
-        "isolees": [r["idu"] for r in rows if r["id"] not in seen],
+        # OUTIL-ASSEMBLAGE-FIX-1 (LOT 1) — verdicts de contiguïté distincts :
+        # `contigu`/`tenant_unique` = vrais bords partout ; `relie` = assiette d'un bloc (gate du
+        # chiffrage, inclut point/vide) ; `lien_faible` = reliée mais par ≥1 contact ponctuel/petit vide.
+        "relie": relie, "tenant_unique": tenant_unique, "lien_faible": lien_faible,
+        "liens": liens_affiches, "tenant_avertissement": tenant_avertissement,
+        # RECETTE-1 (H5, Vic) — les parcelles ISOLÉES (hors du bloc relié de la 1ʳᵉ parcelle, > tolérance
+        # cadastrale) : l'étape 2 les nomme quand « pas d'assemblage possible » (elles ne se touchent pas).
+        "isolees": [r["idu"] for r in rows if r["id"] not in seen_all],
+        "lecture_capacite": agg.get("lecture_capacite"), "bilan_conditionnel": agg.get("bilan_conditionnel"),
         "surface_totale_m2": agg["surface_cumulee_m2"],
         # NU-G-007 — part de l'assiette EN ZONE CONSTRUCTIBLE + % hors zone (alignés sur l'Étude du même
         # assemblage) : la SDP combinée est bornée à cette part, le % hors zone est DIT à l'écran.
         "surface_constructible_m2": agg.get("surface_constructible_m2"),
         "pct_hors_zone": agg.get("pct_hors_zone"),
+        # OUTIL-ASSEMBLAGE-FIX-1 (LOT 2) — capacité calculée ZONE PAR ZONE : décomposition (chaque
+        # portion avec ses règles d'emprise/hauteur/recul) + contraintes retranchées visibles (m²).
+        "zones_detail": agg.get("zones_detail"),
+        "retranchements": agg.get("retranchements"),
+        # OUTIL-ASSEMBLAGE-FIX-2 (LOT 4, pt 6) — introuvables nommés + nombre DEMANDÉ (l'écran ne dit
+        # plus « N parcelles » quand il en manque) ; (LOT 1) obligation de mixité portée par l'union.
+        "introuvables": introuvables, "n_demandes": len(idus),
+        "mixite": agg.get("mixite"),
         "tronquee": tronquee, "cap": cap,
         # #1 — capacité cumulée RÉELLE (fiche_payload agrégé). SDP-UNIQUE (CHASSE-FIX-1 B-2) :
         # `sdp_combinee_m2` = SDP BÂTI CONSERVÉ (défaut, comme la fiche) ; `sdp_terrain_libere_m2` =
@@ -303,6 +369,10 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         "sdp_terrain_libere_m2": sdp_libere,
         "sdp_existante_totale_m2": agg["sdp_existante_totale_m2"],
         "sdp_conserve_estimation": agg["conserve_estimation"],
+        # LOT 4 (pt 4) — existant PARTIEL (≥1 parcelle sans bâti mesuré) : le total est partiel, aucun
+        # ajout précis n'en est déduit ; distinct d'un existant mesuré à zéro.
+        "existant_partiel": existant_partiel,
+        "existant_mesurees": existant_mesurees,
         "sdp_max_seule_m2": sdp_max_seule,                       # meilleure seule BRUTE
         "sdp_max_seule_conserve_m2": sdp_max_seule_conserve,     # meilleure seule CONSERVÉE
         "gain_ratio": gain_ratio, "gain_pct": gain_pct,          # gain par défaut = base conservée
@@ -321,19 +391,34 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
                     "suppose la DÉMOLITION du bâti existant. Accords, propriétaires et faisabilité "
                     "restent à vérifier.",
         # #2 — valorisation (référentiel unique prix terrain nu de zone)
+        # LOT 4 (pt 5) — on NOMME la zone du repère et sa règle de choix (zone la plus représentée en
+        # nombre de parcelles ; départage au 1ᵉʳ groupe) : ce repère n'entre PAS dans la charge foncière.
         "terrain_zone_eur_m2": (terrain_zone or {}).get("eur_m2"),
         "terrain_zone_fiabilite": (terrain_zone or {}).get("fiabilite"),
         "terrain_zone_n": (terrain_zone or {}).get("n"), "zones_mixtes": zones_mixtes,
-        # B — approche propriétaire (privacy)
-        "proprietaires_pm": owners_pm, "n_proprietaires": len(owners_pm) + n_particuliers,
-        "n_personnes_morales": len(owners_pm), "n_particuliers": n_particuliers,
+        "terrain_zone_zone": zone_marche,
+        # OUTIL-ASSEMBLAGE-FIX-6 (LOT 8) — famille + commune = le périmètre RÉEL de la médiane (toute la
+        # famille U/AU de la commune), nommé « zones {famille} de {commune} » à l'écran.
+        "terrain_zone_famille": terrain_zone_famille, "terrain_zone_commune": terrain_zone_commune,
+        # B — approche propriétaire (privacy) — LOT 4 (pt 6) : on compte les PERSONNES MORALES identifiées
+        # et on QUALIFIE les parcelles restantes (« sans personne morale identifiée »), sans inventer un
+        # nombre de particuliers distincts (plusieurs parcelles peuvent appartenir au même propriétaire).
+        "proprietaires_pm": owners_pm,
+        "n_personnes_morales": len(owners_pm),
+        "n_parcelles_sans_pm": n_particuliers,     # = nb de parcelles sans PM identifiée (jamais « N particuliers »)
+        "n_particuliers": n_particuliers,          # (compat ascendante — ne plus présenter comme des particuliers distincts)
         "tous_personnes_morales": tous_pm,
         # C — indivision : NON détectable en base (aucune structure de propriété physique en open data)
         "indivision_detectable": False,
         "score_assemblage": score_dormant, "sans_potentiel": sans_potentiel,
         # items : `sdp_m2` = brute (terrain libéré) par parcelle ; `sdp_residuelle_m2` = bâti conservé
         # par parcelle (= fiche), `sdp_existante_m2` = bâti déjà debout. None si faisabilité absente.
-        "items": [{"idu": r["idu"], "surface_m2": r["surface_m2"], "sdp_m2": sdp_par.get(r["id"], 0),
+        # OUTIL-ASSEMBLAGE-FIX-6 (LOT 7) — capacité ABSENTE (fiche sans fourchette) → `sdp_m2 = None` +
+        # `capacite_absente` : l'écran écrit « non calculée », pas « reconstruction 0 m² » (un 0 muet).
+        "items": [{"idu": r["idu"], "surface_m2": r["surface_m2"],
+                   "sdp_m2": (None if agg["capacite_absente_par_parcelle"].get(r["id"])
+                              else sdp_par.get(r["id"], 0)),
+                   "capacite_absente": bool(agg["capacite_absente_par_parcelle"].get(r["id"])),
                    "sdp_residuelle_m2": sdp_res_par.get(r["id"]),
                    "sdp_existante_m2": agg["sdp_existante_par_parcelle"].get(r["id"]),
                    "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
@@ -655,7 +740,12 @@ def _zan_indicateur(db: Session, commune: str | None = None) -> list[dict]:
     Aucune fabrication : uniquement les communes présentes dans commune_conso_enaf."""
     rows = db.execute(text(
         "SELECT commune, conso_2011_2021_m2 AS c1121, conso_2021_2024_m2 AS c2124, "
-        "hab_2011_2021_m2 AS h1121, millesime, source_nom FROM commune_conso_enaf "
+        "hab_2011_2021_m2 AS h1121, "
+        "CAST(to_jsonb(e)->>'conso_2024_2025_m2' AS double precision) AS conso_2024_2025_m2, "
+        "CAST(to_jsonb(e)->>'hab_2024_2025_m2' AS double precision) AS hab_2024_2025_m2, "
+        "CAST(to_jsonb(e)->>'conso_2021_2025_m2' AS double precision) AS conso_2021_2025_m2, "
+        "CAST(to_jsonb(e)->>'hab_2021_2025_m2' AS double precision) AS hab_2021_2025_m2, "
+        "millesime, source_nom, source_url FROM commune_conso_enaf e "
         "WHERE (CAST(:c AS text) IS NULL OR commune = :c) ORDER BY conso_2011_2021_m2 DESC NULLS LAST"),
         {"c": commune}).mappings().all()
     out = []
@@ -680,6 +770,11 @@ def _zan_indicateur(db: Session, commune: str | None = None) -> list[dict]:
             traj = "sous la cible" if rythme_recent <= rythme_cible else "au-dessus de la cible"
         out.append({
             "commune": r["commune"],
+            "consommation_observee": {
+                "conso_2024_2025_m2": r["conso_2024_2025_m2"], "hab_2024_2025_m2": r["hab_2024_2025_m2"],
+                "conso_2021_2025_m2": r["conso_2021_2025_m2"], "hab_2021_2025_m2": r["hab_2021_2025_m2"],
+                "source_url": r["source_url"],
+            },
             "conso_2011_2021_ha": round(c1121 / 10000, 1),          # Sourcé
             # COHERENCE-FIX-1 (lot D) — habitat NULL (non ventilé dans la source) → None (« — »),
             # jamais « 0 % » : un zéro affirmerait « aucune conso pour l'habitat », ce qui est faux.

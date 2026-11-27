@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 import zipfile
 from pathlib import Path
 
@@ -21,11 +22,14 @@ from sqlalchemy.orm import Session
 
 from .. import constants
 from ..config import get_settings
+from .pm_millesimes import MILLESIME_ATTACHMENTS, url_millesime
 
 SOURCE = "DGFiP — parcelles des personnes morales"
 URL_ZIP_2025 = ("https://data.economie.gouv.fr/api/v2/catalog/datasets/"
                 "fichiers-des-locaux-et-des-parcelles-des-personnes-morales/attachments/"
                 "fichier_des_parcelles_situation_2025_dpts_57_a_976_zip")
+
+MILLESIME_COURANT = max(MILLESIME_ATTACHMENTS)
 
 # Positions (1-indexées) dans le CSV DGFiP (24 colonnes, délimiteur ';', avec entête).
 _COL = {"dep": 0, "commune": 2, "prefixe": 4, "section": 5, "nplan": 6,
@@ -72,10 +76,22 @@ def _rows_from_csv(path: Path, code_commune: str):
 
 
 def ingest_personnes_morales(session: Session, csv_path: str | Path,
-                             insee: str | None = None, millesime: str = "2025",
-                             url_source: str = URL_ZIP_2025) -> int:
+                             insee: str | None = None, millesime: str | None = None,
+                             url_source: str | None = None) -> int:
     """Charge le fichier DGFiP (CSV départemental déjà extrait) pour la commune pilote. Upsert
     par idu ; remplace le millésime précédent de chaque parcelle. Retourne le nombre de parcelles."""
+    # Les exports officiels nomment l'année dans le membre PM_26_NB_974.csv.
+    if millesime is None:
+        match = re.fullmatch(r"PM_(\d{2}|\d{4})(?:_NB)?_974\.csv", Path(csv_path).name, re.I)
+        # Pour un ancien CSV renommé, conserver le millésime historique de cette interface.
+        millesime = "2025"
+        if match:
+            millesime = match[1] if len(match[1]) == 4 else "20" + match[1]
+    servi = session.execute(text("SELECT max(millesime) FROM parcelle_personne_morale")).scalar()
+    if servi and int(servi) > int(millesime):
+        raise ValueError(f"Le fichier {millesime} est antérieur au millésime servi {servi}.")
+    if url_source is None:
+        url_source = url_millesime(int(millesime))
     insee = insee or get_settings().pilot_commune_insee
     code_commune = insee[2:]  # 97415 -> 415
     n = 0
@@ -88,7 +104,8 @@ def ingest_personnes_morales(session: Session, csv_path: str | Path,
                ON CONFLICT (idu) DO UPDATE SET
                  groupe=EXCLUDED.groupe, groupe_label=EXCLUDED.groupe_label,
                  forme_juridique=EXCLUDED.forme_juridique, denomination=EXCLUDED.denomination,
-                 siren=EXCLUDED.siren, millesime=EXCLUDED.millesime, date_import=now()"""),
+                 siren=EXCLUDED.siren, millesime=EXCLUDED.millesime, source=EXCLUDED.source,
+                 url_source=EXCLUDED.url_source, date_import=now()"""),
             {"idu": row["idu"], "g": row["groupe"], "gl": row["groupe_label"],
              "f": row["forme"], "d": row["denomination"], "s": row["siren"],
              "m": millesime, "src": SOURCE, "url": url_source})
@@ -116,7 +133,8 @@ def fetch_974_csv(dest_dir: str | Path = "/tmp/dgfip_pm") -> Path:
     """Télécharge le ZIP DGFiP (retry) et extrait le CSV départemental 974 (cache si déjà là)."""
     dest = Path(dest_dir)
     dest.mkdir(parents=True, exist_ok=True)
-    csv_path = dest / "PM_25_NB_974.csv"
+    member = f"PM_{MILLESIME_COURANT % 100:02d}_NB_974.csv"
+    csv_path = dest / member
     if csv_path.exists() and csv_path.stat().st_size > 0:
         return csv_path
     last = None
@@ -124,10 +142,10 @@ def fetch_974_csv(dest_dir: str | Path = "/tmp/dgfip_pm") -> Path:
         try:
             with httpx.Client(timeout=600.0, follow_redirects=True,
                               headers={"User-Agent": constants.USER_AGENT}) as c:
-                r = c.get(URL_ZIP_2025)
+                r = c.get(url_millesime(MILLESIME_COURANT))
                 r.raise_for_status()
                 zf = zipfile.ZipFile(io.BytesIO(r.content))
-                name = next(n for n in zf.namelist() if n.endswith("PM_25_NB_974.csv"))
+                name = next(n for n in zf.namelist() if n.endswith(member))
                 csv_path.write_bytes(zf.read(name))
             return csv_path
         except Exception as exc:  # noqa: BLE001

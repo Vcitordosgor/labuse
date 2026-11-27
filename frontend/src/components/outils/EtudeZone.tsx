@@ -26,7 +26,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 // EntreeParcelle encapsule lui-même ParcelInput (SOCLE) pour la saisie adresse/IDU/référence.
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'
 import { ListPaginationFooter, usePagination } from '../ListPagination'
-import { docEtudeZoneUrl, etudeZone, etudeZoneEntreprises, getMoteursConfig, parcelAt, type EtudeZoneInput } from '../../lib/api'
+import { ApiError, docEtudeZoneUrl, etudeZone, etudeZoneEntreprises, getMoteursConfig, parcelAt, type EtudeZoneInput } from '../../lib/api'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import type { EtudeZoneResult, ZoneEntreprises, ZoneFamille } from '../../lib/types'
 import { iduCourt } from '../../lib/format'
@@ -161,11 +161,14 @@ export function EtudeZone() {
 
   // pousse la zone sur la carte : anneaux d'isochrone + point d'origine + concurrents (ambre). Nettoie en sortie.
   useEffect(() => {
-    if (!res?.zone_disponible) return
+    if (!res?.zone_disponible) {
+      setModuleMap({ idus: [], extra: null })
+      return
+    }
     const feats: unknown[] = []
     for (const b of res.bandes ?? []) feats.push({ type: 'Feature', geometry: b.geom, properties: { kind: 'zone-iso' } })
     if ((!res.bandes || res.bandes.length === 0) && res.geom) feats.push({ type: 'Feature', geometry: res.geom, properties: { kind: 'zone-iso' } })
-    if (res.origine && res.entree === 'point') feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [res.origine.lon, res.origine.lat] }, properties: { kind: 'zone-origin' } })
+    if (res.origine && res.entree !== 'polygone') feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [res.origine.lon, res.origine.lat] }, properties: { kind: 'zone-origin' } })
     // F8 (OUTILS-3) — la pastille concurrent porte de quoi se rendre CLIQUABLE (popup : nom, activité,
     // date de création, lien parcelle). L'activité lisible (naf_label) est portée par le bloc concurrents.
     for (const c of res.concurrents?.items ?? []) feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [c.lon, c.lat] },
@@ -178,8 +181,10 @@ export function EtudeZone() {
         properties: { kind: 'zone-concurrent', siret: e.siret, nom: e.nom, annee: e.annee_creation ?? '', activite: e.naf_label ?? e.naf ?? '', lon: e.lon, lat: e.lat } })
     }
     setModuleMap({ idus: [], extra: { type: 'FeatureCollection', features: feats } })
-    if (res.origine) setFlyTo({ center: [res.origine.lon, res.origine.lat], zoom: 13 })
-  }, [res, entOpen, entQ.data, setModuleMap, setFlyTo])
+  }, [res, entOpen, entQ.data, setModuleMap])
+  useEffect(() => {
+    if (res?.zone_disponible && res.origine) setFlyTo({ center: [res.origine.lon, res.origine.lat], zoom: 13 })
+  }, [res, setFlyTo])
   // LOT F — au DÉMONTAGE de l'outil (← Outils, changement d'outil, de catégorie ou de route), on efface
   // l'emprise de travail : la carte redevient nette, le pointillé ne survit pas. Couvre TOUTES les
   // sorties (toggleOutils comme setModule). Les veilles enregistrées (serveur) ne sont pas touchées.
@@ -248,11 +253,11 @@ export function EtudeZone() {
         </Bouton>
       )}
 
-      {/* RÉSULTATS */}
+      {mut.isError && <ErrorState message={mut.error instanceof ApiError && mut.error.detail
+        ? mut.error.detail : 'Impossible de calculer la zone. Relancez la lecture.'} />}
       {res && !res.zone_disponible && (
         <div data-zone-indisponible className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-mut">
-          Zone atteignable indisponible — {res.detail ?? 'le service d’isochrones IGN n’a pas répondu'}.
-          <span className="text-txt-dim"> Aucun cercle approximatif n’est affiché à la place.</span>
+          {res.detail ?? 'Le périmètre de cette zone est indisponible.'}
         </div>
       )}
 
@@ -281,7 +286,7 @@ export function EtudeZone() {
                   k={res.population?.revenu_majorite_imputee
                     ? `niveau de vie moyen / an · valeur approchée (${nb(res.population.revenu_impute_n)}/${nb(res.population.revenu_carreaux_n)} carreaux)`
                     : 'niveau de vie moyen / an · source Filosofi (INSEE)'}
-                  variante={res.population?.revenu_majorite_imputee ? 'approche' : 'source'} />
+                  variante={res.population?.revenu_median_eur == null ? undefined : res.population.revenu_majorite_imputee ? 'approche' : 'source'} />
               </div>
             )}
             {/* B1 — structure d'âge (IRIS RP2022, pondérée par la part de surface d'IRIS dans la zone) */}
@@ -656,11 +661,16 @@ function ActifsStat({ res }: { res: EtudeZoneResult }) {
     )
   }
   const e = res.emplois
-  const fourchette = e ? `${nb(e.postes_min)}–${nb(e.postes_max)}${e.postes_max_ouvert ? '+' : ''}` : '—'
+  let fourchette = 'Effectif inconnu'
+  if (e && (e.n_avec_tranche > 0 || e.n_etablissements === 0)) {
+    if (e.postes_max_ouvert) fourchette = `Au moins ${nb(e.postes_min)}`
+    else if (e.postes_min === e.postes_max) fourchette = nb(e.postes_min)
+    else fourchette = `${nb(e.postes_min)}–${nb(e.postes_max)}`
+  }
   return (
     <div className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
       <div className="text-[13px] font-semibold text-txt-hi">{fourchette}</div>
-      <div className="mt-0.5 text-[10px] text-txt-mut">postes salariés déclarés dans la zone
+      <div className="mt-0.5 text-[10px] text-txt-mut">postes salariés estimés (tranches SIRENE)
         {e && e.n_sans_tranche > 0 && <span className="text-txt-dim"> · {nb(e.n_sans_tranche)} étab. sans effectif renseigné</span>}</div>
     </div>
   )
@@ -684,7 +694,7 @@ function ToutesEntreprises({ total, open, setOpen, data, loading, error }: {
   const toggleFam = (s: string) => setOuvertes((prev) => { const n = new Set(prev); if (n.has(s)) n.delete(s); else n.add(s); return n })
   return (
     <div>
-      <button data-zone-entreprises-toggle onClick={() => setOpen(!open)}
+      <button data-zone-entreprises-toggle aria-expanded={open} onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left text-[12px] transition-colors duration-quick hover:border-mint/40">
         <span className="text-txt">Toutes les entreprises de la zone <b className="text-txt-hi">({nb(total)})</b></span>
         <Chevron open={open} />
@@ -695,7 +705,7 @@ function ToutesEntreprises({ total, open, setOpen, data, loading, error }: {
           {error && <ErrorState message="Indisponible — réessayez." />}
           {data?.familles.map((f) => (
             <div key={f.section} className="overflow-hidden rounded-md border border-line-2 bg-surface-1">
-              <button data-zone-famille={f.section} onClick={() => toggleFam(f.section)}
+              <button data-zone-famille={f.section} aria-expanded={ouvertes.has(f.section)} onClick={() => toggleFam(f.section)}
                 className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[11.5px] hover:bg-surface-2">
                 <span className="min-w-0 truncate text-txt">{f.nom}</span>
                 <span className="shrink-0 inline-flex items-center gap-1 font-mono text-[11px] text-txt-hi">{nb(f.n)} <Chevron open={ouvertes.has(f.section)} /></span>

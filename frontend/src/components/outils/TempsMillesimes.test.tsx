@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
 import { BASEMAP_SOURCES, TEMPS_MILLESIMES, basemapLabel } from '../map/basemaps'
+import { TimeMachine } from './TimeMachine'
 import { M08 } from './ModulePanel'
 
 // Mandat TEMPS — 1) frise des millésimes (lot 3 conditionnel : ACTIVÉ, l'inventaire IGN a trouvé
@@ -54,9 +55,9 @@ describe('TEMPS — la frise (M08) + l\'épingle de la parcelle', () => {
     // un bouton par millésime + les nouveaux millésimes visibles
     const boutons = document.querySelectorAll('[data-cmp-left]')
     expect(boutons.length).toBe(TEMPS_MILLESIMES.length)
-    for (const an of ['1950', '2006', '2011', '2016', '2021']) expect(screen.getByText(an)).toBeTruthy()
+    for (const an of ['Carte SCAN 50 (1950)', '1950-1965', '2006-2010', '2011-2015', '2016-2020', '2021-2023']) expect(screen.getByText(an)).toBeTruthy()
     // RETOURS-15 C2 — millésimes en Chip ; l'« après » verrouillé = chip « Aujourd'hui » (borne de droite).
-    expect(document.querySelector('[data-cmp-aujourdhui]')?.textContent).toContain('Aujourd\'hui')
+    expect(document.querySelector('[data-cmp-aujourdhui]')?.textContent).toContain('Ortho Express 2025')
     // l'épingle est posée dans le store (consommée par TimeMachine sur les deux fonds)
     expect(useApp.getState().tempsPinIdu).toBe('97415000CW0658')
     // choisir un millésime récent met à jour le fond « avant »
@@ -67,3 +68,31 @@ describe('TEMPS — la frise (M08) + l\'épingle de la parcelle', () => {
 
 // RECETTE-OUTILS-1 (point 24) — le bloc « TEMPS — légende des zones noires » est retiré : l'encart
 // `data-temps-legende` a été supprimé de l'outil (demande Vic), le test de sa présence n'a plus d'objet.
+
+describe('Contour cadastral du volet ancien', () => {
+  it('retient uniquement les archives comprises dans la période visible', async () => {
+    const idu = '97401000AD1375'
+    const client = qc()
+    client.setQueryData(['cad-epoque', idu], {
+      features: ['2017-07-06', '2008-06-27'].map((millesime) => ({ properties: { millesime } })),
+    })
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})))
+    const initial = useApp.getState()
+    useApp.setState({ tempsPinIdu: idu, cmpLeft: 'bm-ortho-2016' })
+    const view = render(<QueryClientProvider client={client}><TimeMachine /></QueryClientProvider>)
+    try {
+      fireEvent.click(screen.getByRole('button', { name: "Parcellaire de l'époque" }))
+      expect(screen.getByText(/06\/07\/2017/)).toBeTruthy()
+      expect(screen.queryByText(/27\/06\/2008/)).toBeNull()
+      act(() => useApp.getState().setCmpLeft('bm-ortho-2006'))
+      expect(screen.getByText(/27\/06\/2008/)).toBeTruthy()
+      act(() => useApp.getState().setCmpLeft('bm-ortho-2021'))
+      expect(screen.getByText(/Aucun contour d’origine archivé/)).toBeTruthy()
+    } finally {
+      view.unmount()
+      useApp.setState({ tempsPinIdu: initial.tempsPinIdu, cmpLeft: initial.cmpLeft })
+      vi.unstubAllGlobals()
+      client.clear()
+    }
+  })
+})

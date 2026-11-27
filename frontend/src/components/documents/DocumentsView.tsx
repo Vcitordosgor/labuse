@@ -19,7 +19,7 @@ import {
   getFiche, getGabarit,
   docDossierUrl, docBilanUrl, docBilanExcelUrl, docApporteurUrl, docPreDossierUrl, docGabaritUrl, docComparatifUrl, docEtudeZoneUrl,
   docAnalyseAnnonceUrl, docAnalyseAnnonceLienUrl,
-  ETUDE_PDF_URL, etudePdfInit,
+  ETUDE_PDF_URL, etudePdfInit, postEtude, messageEtudeErreur,
   listerDocuments, enregistrerDocument, rafraichirDocument,
   type DocType, type DocGenereRow, type EtudePdfIn,
 } from '../../lib/api'
@@ -367,12 +367,6 @@ function sur(r: DocGenereRow): string {
   return iduComplet(r.idus[0] ?? '')
 }
 
-// IMPLANTATION-3 — la recette d'une Étude de faisabilité = la config archivée (POST), jamais une URL GET.
-function etudeInitDe(r: DocGenereRow): RequestInit | null {
-  const cfg = (r.hypotheses as { config?: EtudePdfIn } | null)?.config
-  return cfg ? etudePdfInit(cfg) : null
-}
-
 function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
   const setToast = useApp((s) => s.setToast)
   const ouvrirEtude = useApp((s) => s.ouvrirEtude)   // ETUDE-FIABLE-1 (LOT B2) — rouvrir l'ÉCRAN sur la révision
@@ -380,7 +374,8 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
   // action ne tombe jamais dans le vide ») plutôt que d'ouvrir un onglet blanc puis du JSON brut.
   const { ouvrir: ouvrirDoc, enCours } = useOuvrirDocument(setToast)
   const [confirmSuppr, setConfirmSuppr] = useState(false)
-  const busy = enCours === String(r.id)
+  const [calculEnCours, setCalculEnCours] = useState(false)
+  const busy = calculEnCours || enCours === String(r.id)
   // RETOURS-17 — nom du fichier exporté depuis « Mes documents » : « <IDU> — <Nom du document>.<ext> ».
   const nomRow = (ext: string) => {
     const idus = (r.idus ?? []).filter(Boolean).map(iduComplet)
@@ -393,13 +388,28 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
     if (r.doc_type === 'etude-faisabilite') {
       const cfg = (r.hypotheses as { config?: EtudePdfIn } | null)?.config
       if (cfg?.idus?.length) { ouvrirEtude(cfg.idus, cfg as unknown as Record<string, unknown>); return }
-      const i = etudeInitDe(r); if (i) void ouvrirDoc(ETUDE_PDF_URL, String(r.id), i, nomPdf()); return
+      setToast("La configuration de cette étude est indisponible.")
+      return
     }
     const u = urlDocument(r); if (u) void ouvrirDoc(u, String(r.id), undefined, nomPdf())
   }
   const regenerer = async () => {
     if (r.doc_type === 'etude-faisabilite') {
-      const i = etudeInitDe(r); if (i && await ouvrirDoc(ETUDE_PDF_URL, String(r.id), i, nomPdf())) rafraichirDocument(r.id).then(onChange).catch(() => {}); return
+      const cfg = (r.hypotheses as { config?: EtudePdfIn } | null)?.config
+      if (!cfg) { setToast("La configuration de cette étude est indisponible."); return }
+      setCalculEnCours(true)
+      try {
+        await postEtude(cfg)
+        if (await ouvrirDoc(ETUDE_PDF_URL, String(r.id), etudePdfInit(cfg), nomPdf())) {
+          await rafraichirDocument(r.id)
+          onChange()
+        }
+      } catch (erreur) {
+        setToast(messageEtudeErreur(erreur))
+      } finally {
+        setCalculEnCours(false)
+      }
+      return
     }
     const u = urlDocument(r); if (u && await ouvrirDoc(u, String(r.id), undefined, nomPdf())) rafraichirDocument(r.id).then(onChange).catch(() => {})
   }

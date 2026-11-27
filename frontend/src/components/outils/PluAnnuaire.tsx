@@ -2,6 +2,16 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { pluAnnuaireSearch, pluAnnuaireCommunes, pluAnnuairePack, type PluExtrait } from '../../lib/api'
 import { fmtDateNum } from '../../lib/format'
+
+// OUTIL-PLU-FIX-10 (LOT 5, point 7) — une couverture peut ne porter que le MOIS (« DOSSIER APPROUVE
+// FEVRIER 2024 » à Saint-Denis, « juin 2024 » à Saint-Pierre) : on ne fabrique jamais un quantième. Un
+// « YYYY-MM » est rendu « février 2024 » et DIT sans jour ; un « YYYY-MM-DD » garde la date complète.
+const _MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+function approbationLabel(d: string): { phrase: string; sansJour: boolean } {
+  const m = /^(\d{4})-(\d{2})$/.exec(d)
+  if (m) return { phrase: `en ${_MOIS[+m[2] - 1] ?? m[2]} ${m[1]}`, sansJour: true }
+  return { phrase: `le ${fmtDateNum(d) ?? d}`, sansJour: false }
+}
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
@@ -111,12 +121,23 @@ export function PluAnnuaire() {
                       <span className="min-w-0 flex-1 text-[11.5px] font-medium text-txt">{c.commune}</span>
                       {/* UN SEUL badge, UN MOT (« révision »), à droite, sur une ligne — le détail
                           (prescription, règlement non servi) vit dans le title + la note ambre. */}
+                      {/* OUTIL-PLU-FIX-10 (LOT 5, point 8) — le badge de la LISTE reflète la MÊME information
+                          que le détail : une procédure connue (veille OU inventaire contre-audit) OU une
+                          évolution postérieure non intégrée. Sinon Saint-Benoît / La Possession / Saint-Pierre
+                          / Le Tampon portaient une procédure DANS le détail et AUCUN badge dans la liste. */}
+                      {(() => {
+                        const proc = c.procedure_active || c.procedures_inventaire?.[0]?.type
+                        const evo = !proc && (c.modifications?.length ?? 0) > 0
+                        return (
                       <span className="flex shrink-0 items-center gap-1 whitespace-nowrap">
-                        {c.procedure_active
-                          ? <span data-plu-procedure={c.insee} className="whitespace-nowrap rounded bg-cp-amber/15 px-1 font-mono text-[8px] text-cp-amber">{(c.procedure_active || '').split(' ')[0]}</span>
+                        {proc
+                          ? <span data-plu-procedure={c.insee} title={proc} className="whitespace-nowrap rounded bg-cp-amber/15 px-1 font-mono text-[8px] text-cp-amber">{proc.split(' ')[0]}</span>
+                          : evo
+                          ? <span data-plu-evolution={c.insee} title="évolution postérieure connue, non intégrée au lot GPU" className="whitespace-nowrap rounded bg-cp-amber/15 px-1 font-mono text-[8px] text-cp-amber">évolution</span>
                           : !ok && <span className="whitespace-nowrap font-mono text-[8px] text-cp-amber">
                               {c.statut === 'rnu' ? 'RNU' : 'non servi'}</span>}
                       </span>
+                        ) })()}
                     </button>
                   )
                 })}
@@ -138,7 +159,7 @@ export function PluAnnuaire() {
         <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-txt-mut">
           <b className="text-txt">{nomInsee(insee) ?? insee}</b>
           {servable
-            ? <span className="font-mono text-[9px] text-mint/70">PLU du {cur?.millesime}</span>
+            ? <span className="font-mono text-[9px] text-mint/70">{cur?.millesime_lot && `Lot GPU du ${fmtDateNum(cur.millesime_lot)}`}</span>
             : <span className="font-mono text-[9px] text-cp-amber">{RAISON[cur?.statut ?? ''] ?? ''}</span>}
         </div>
       )}
@@ -175,7 +196,10 @@ export function PluAnnuaire() {
           <button data-plu-rechercher onClick={() => setMode('recherche')}
             className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-left">
             <span className="text-[12.5px] font-medium text-txt">Rechercher dans le PLU →</span>
-            <span className="text-[10px] leading-snug text-txt-dim">Le verbatim opposable (article, page, lien), jamais un résumé</span>
+            {/* OUTIL-PLU-FIX-10 (LOT 5, point 8) — on ne promet plus « le verbatim opposable » : le texte
+                servi est celui du LOT publié au Géoportail (daté), pas nécessairement l'état opposable du
+                jour (une évolution communale postérieure peut ne pas y être intégrée — cf. doc-état). */}
+            <span className="text-[10px] leading-snug text-txt-dim">Le texte du règlement publié au Géoportail{cur?.millesime_lot ? `, lot du ${fmtDateNum(cur.millesime_lot)}` : ''} (article, page, lien) — jamais un résumé</span>
           </button>
         </div>
       )}
@@ -193,17 +217,21 @@ export function PluAnnuaire() {
             {cur?.idurba && <span className="font-mono text-[9.5px]">dépôt {cur.idurba}</span>}
             {/* LOT 1 — dates distinctes, nommées, en français. */}
             <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              {cur?.date_approbation && <span>version approuvée le <b className="text-txt-mut">{fmtDateNum(cur.date_approbation) ?? cur.date_approbation}</b></span>}
+              {cur?.date_approbation && (() => { const a = approbationLabel(cur.date_approbation); return (
+                <span>Approbation indiquée en couverture <b className="text-txt-mut">{a.phrase}</b>{a.sansJour && <span className="text-txt-dim"> (jour non précisé en couverture)</span>}</span>
+              ) })()}
+              {cur?.derniere_modification_couverture && <span>Dernière modification en couverture le {fmtDateNum(cur.derniere_modification_couverture)}</span>}
               {cur?.edition && <span>· édition PDF {cur.edition}</span>}
               {/* OUTIL-PLU-FIX-7 (point 4) — le MILLÉSIME DU LOT (dépôt GPU) est nommé comme tel, distinct de
                   la date d'approbation ÉCRITE (L'Étang-Salé : approuvé 22/06/2017 ≠ lot 17/09/2025). */}
-              {cur?.millesime_lot && cur.millesime_lot !== cur.date_approbation && <span>· millésime du lot (dépôt GPU) {fmtDateNum(cur.millesime_lot) ?? cur.millesime_lot}</span>}
+              {cur?.millesime_lot && <span>· millésime du lot (dépôt GPU) {fmtDateNum(cur.millesime_lot) ?? cur.millesime_lot}</span>}
               {cur?.publication_gpu && <span>· publiée au GPU le {fmtDateNum(cur.publication_gpu) ?? cur.publication_gpu}</span>}
             </div>
             {cur?.modifications && cur.modifications.length > 0 && (
               <div className="mt-0.5 text-cp-amber">
                 {cur.modifications.map((mo, i) => (
-                  <div key={i}>⚠ {mo.type}{mo.date ? ` du ${fmtDateNum(mo.date) ?? mo.date}` : ''}{mo.note ? ` — ${mo.note}` : ''}</div>
+                  <div key={i}>⚠ {mo.type}{mo.date ? ` du ${fmtDateNum(mo.date) ?? mo.date}` : ''}{mo.note ? ` — ${mo.note}` : ''}
+                    {mo.url && <> <a href={mo.url} target="_blank" rel="noreferrer" className="underline">{mo.source}</a></>}</div>
                 ))}
                 {/* OUTIL-PLU-FIX-6 (point 4) — un acte communal postérieur est connu : le verbatim servi
                     reste celui du dépôt GPU actif, mais on ne le dit plus « opposable » sans réserve. */}
@@ -232,7 +260,7 @@ export function PluAnnuaire() {
             )}
             {/* OUTIL-PLU-FIX-2 (C7) — note d'édition (ex. La Possession : texte indexé déc. 2025, lien PDF
                 juin 2026) servie aussi sur une commune SERVABLE, pas seulement en révision. */}
-            {cur?.note_doc && <div className="mt-0.5 text-cp-amber">{cur.note_doc}</div>}
+            {cur?.note_doc && <div className="mt-0.5 text-cp-amber">{cur.note_doc} {cur.pdf_url && <a href={cur.pdf_url} target="_blank" rel="noreferrer" className="underline">Règlement écrit ↗</a>}</div>}
           </div>
           <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
             {/* RETOURS-15 C1 (P1) — le bouton « ← Voies » est retiré de l'annuaire (demande Vic). */}
@@ -316,7 +344,25 @@ export function PluAnnuaire() {
           {/* OUTIL-PLU-FIX-6 (point 5) — « Aucun extrait » ne s'affiche PLUS en même temps qu'une
               disposition commune : si le filtre de zone ne rend rien MAIS qu'une disposition commune
               s'applique (ex. « piscine » filtré sur UA à Saint-Denis), le bloc ci-dessous la montre. */}
-          {d && d.n_total != null && d.resultats.length === 0 &&
+          {d?.absence_article && (
+            <div data-plu-absence-article className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11px]">
+              <p>{d.absence_article.texte}</p>
+              <a className="text-mint underline" href={d.absence_article.url} target="_blank" rel="noreferrer">
+                Règlement · {d.absence_article.page_fin === d.absence_article.page_debut
+                  ? 'p. ' + d.absence_article.page_debut
+                  : 'pp. ' + d.absence_article.page_debut + '–' + d.absence_article.page_fin}
+              </a>
+              {d.absence_article.complement && (
+                <div className="mt-2">
+                  <p>{d.absence_article.complement.texte}</p>
+                  <a className="text-mint underline" href={d.absence_article.complement.url} target="_blank" rel="noreferrer">
+                    Fiche du secteur · p. {d.absence_article.complement.page}
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+          {d && !d.absence_article && d.n_total != null && d.resultats.length === 0 &&
            (!d.dispositions_communes || d.dispositions_communes.length === 0) && (
             <div data-plu-aucun className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11px] leading-snug text-txt-mut">
               <p>Aucun extrait trouvé dans les documents indexés{zone ? <> pour la zone <span className="font-mono text-mint">{zone}</span></> : null}.</p>
@@ -360,7 +406,7 @@ export function PluAnnuaire() {
           {d && d.n_total != null && d.dispositions_communes && d.dispositions_communes.length > 0 && (
             <div data-plu-communes className="flex flex-col gap-2">
               <div className="mt-1 text-[11px] font-medium text-txt-mut">
-                Dispositions communes (applicables à toutes les zones) — {d.dispositions_communes.length}
+                Extraits sans zone propre — {d.dispositions_communes.length}
               </div>
               {d.dispositions_communes.map((r: PluExtrait, i: number) => (
                 <PluExtraitCard key={`c${i}`} r={r} />
@@ -399,15 +445,52 @@ function PluExtraitCard({ r, premier = false }: { r: PluExtrait; premier?: boole
           {r.zones_concernees && r.zones_concernees.length > 1
             ? <span className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[9.5px] text-txt-mut">zones {r.zones_concernees.join(', ')}</span>
             : r.zone && <span className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[9.5px] text-txt-mut">zone {r.zone}</span>}
+          {/* OUTIL-PLU-FIX-10 (LOT 3) — bassin de vie (livret) de l'extrait, quand le règlement en a. */}
+          {r.livret && <span className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[9.5px] text-txt-mut">{r.livret}</span>}
           <span className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[9.5px] text-txt-mut">{r.commune}</span>
         </div>
       </div>
+      {/* OUTIL-PLU-FIX-10 (LOT 3) — même règle rééditée dans d'autres bassins de vie : on les cite tous
+          (nom du livret + page) pour que le lecteur retrouve le livret de son terrain. */}
+      {r.mention_rattachement && <p data-plu-rattachement className="mt-1 text-[10px] text-txt-mut">{r.mention_rattachement}</p>}
+      {r.livrets && r.livrets.length > 1 && (
+        <div className="mt-1 text-[10px] text-txt-mut">Aussi dans · {r.livrets.map((l, i) => {
+          const page = l.page_pdf ?? l.page_debut
+          const label = `${l.livret ?? 'Livret'}${page ? ` (p. ${page})` : ''}`
+          return <span key={`${l.livret}-${page}`}>{i > 0 && ' · '}{r.pdf_url && page
+            ? <a data-plu-livret href={`${r.pdf_url}#page=${page}`} target="_blank" rel="noreferrer" className="text-mint underline">{label}</a>
+            : label}</span>
+        })}</div>
+      )}
+      {/* OUTIL-PLU-FIX-13 — extrait d'un DOSSIER de modification collé au PDF (pas un article du règlement
+          de base) : on l'étiquette comme tel et on dit que le texte est restitué tel que publié (le document
+          source a des espaces parasites). */}
+      {r.dossier && (
+        <div data-plu-dossier className="mt-1 rounded border border-cp-amber/40 bg-cp-amber/10 px-1.5 py-0.5 text-[9.5px] leading-snug text-cp-amber">
+          {r.dossier} — texte restitué tel que publié : espaces parasites dans le document source.
+        </div>
+      )}
+      {/* OUTIL-PLU-FIX-13 — article du règlement de base visé par une modification POSTÉRIEURE non intégrée. */}
+      {r.modif_note && (
+        <div data-plu-modif className="mt-1 text-[10px] leading-snug text-cp-amber">⚠ {r.modif_note}</div>
+      )}
       {/* titre « en clair », deux lignes au plus */}
       {r.titre && <p className="mt-1 line-clamp-2 text-[12px] font-medium leading-snug text-txt-hi">{r.titre}</p>}
       {/* aperçu 3 lignes (corps, sans le titre) ; déplié → verbatim complet */}
       <p className={`mt-1 whitespace-pre-wrap break-words text-[11px] leading-snug text-txt ${ouvert ? '' : 'line-clamp-3'}`}>
         {ouvert ? complet : corps}
       </p>
+      {r.renvoi_article && (
+        <a className="mt-1 block text-[11px] text-mint underline" href={r.renvoi_article.url} target="_blank" rel="noreferrer">
+          Barème de stationnement · article {r.renvoi_article.article} · p. {r.renvoi_article.page}
+        </a>
+      )}
+      {r.explication && (
+        <details className="mt-1 text-[11px] text-txt-mut">
+          <summary>Explication non opposable · p. {r.explication.page_pdf}</summary>
+          <p className="whitespace-pre-line">{r.explication.texte}</p>
+        </details>
+      )}
       {r.doute && (
         <span className="mt-1 inline-block rounded bg-st-ecartee/15 px-1 text-[9.5px] text-st-ecartee">doute — vérifier au PDF</span>
       )}
@@ -417,7 +500,7 @@ function PluExtraitCard({ r, premier = false }: { r: PluExtrait; premier?: boole
             sur plusieurs pages. « Lire tout » montre l'article ENTIER (exceptions comprises). */}
         {/* OUTIL-PLU-FIX-4 (point 1) — p. = TOUTES les pages où le mot apparaît (pluriels compris) ;
             « article p. X-Y » = étendue de l'article. Le lien ouvre la 1re page du mot. */}
-        <span className="text-txt-mut">Règlement{r.millesime ? ` du ${fmtDateNum(r.millesime)}` : ''} · p. {r.pages_match && r.pages_match.length > 1 ? r.pages_match.join(', ') : r.page_pdf}{r.page_debut != null && r.page_fin != null && r.page_fin !== r.page_debut ? ` (article p. ${r.page_debut}-${r.page_fin})` : ''}</span>
+        <span className="text-txt-mut">Règlement{r.millesime_lot ? ` · lot GPU du ${fmtDateNum(r.millesime_lot)}` : ''} · p. {r.pages_match && r.pages_match.length > 1 ? r.pages_match.join(', ') : r.page_pdf}{r.page_debut != null && r.page_fin != null && r.page_fin !== r.page_debut ? ` (article p. ${r.page_debut}-${r.page_fin})` : ''}</span>
         {long && (
           <button data-plu-lire onClick={() => setOuvert((o) => !o)} className="text-mint hover:underline">
             {ouvert ? 'Réduire ▲' : 'Lire l’article entier ▾'}
@@ -469,7 +552,7 @@ function PackVigueur({ insee }: { insee: string }) {
           className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2.5">
           <span className="text-[12px] font-medium text-mint">Télécharger le PLU en vigueur (.zip) ↓</span>
           <span className="text-[10px] leading-snug text-txt-dim">
-            Pack officiel Géoportail de l'Urbanisme{p.millesime ? ` — version du ${p.millesime}` : ''}{p.idurba ? ` (${p.idurba})` : ''}
+            Pack officiel Géoportail de l'Urbanisme{p.millesime ? ` — lot du ${p.millesime}` : ''}{p.idurba ? ` (${p.idurba})` : ''}
           </span>
         </a>
         <p className="mt-1 text-[10px] leading-snug text-txt-dim">

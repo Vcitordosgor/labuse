@@ -1,0 +1,49 @@
+b-rouge.txt
+FAILED tests/test_plu_fix15_decoupage.py::test_au_indicee_titre_et_renvoi[97402-79-80]
+FAILED tests/test_plu_fix15_decoupage.py::test_au_indicee_titre_et_renvoi[97414-109-110]
+FAILED tests/test_plu_fix15_decoupage.py::test_etang_sale_stationnement_ua_2_7
+FAILED tests/test_plu_fix15_decoupage.py::test_entre_deux_sommaire_et_article_12
+FAILED tests/test_plu_fix15_decoupage.py::test_saint_benoit_intertitre_et_article_12
+5 failed, 5 warnings in 12.36s
+
+cd-rouge.txt
+FAILED tests/test_plu_fix15_rattachement.py::test_provenance_carte[97403-Nci-N-Article N3-Implantation des constructions-r\xe8gle de la zone m\xe8re]
+FAILED tests/test_plu_fix15_rattachement.py::test_provenance_carte[97403-Nci-None-None-DISPOSITIONS COMMUNES APPLICABLES \xc0 TOUTES LES ZONES-disposition commune \xe0 toutes les zones]
+FAILED tests/test_plu_fix15_rattachement.py::test_provenance_carte[97424-Ub1-UB-Article Ub 12--rattachement non \xe9tabli dans le r\xe8glement \xe9crit, \xe0 v\xe9rifier]
+FAILED tests/test_plu_fix15_rattachement.py::test_provenance_carte[97423-Nto1-N-Article N 10--rattachement non \xe9tabli dans le r\xe8glement \xe9crit, \xe0 v\xe9rifier]
+FAILED tests/test_plu_fix15_rattachement.py::test_provenance_carte[97424-NtoPOS-N-Article N 10--rattachement non \xe9tabli dans le r\xe8glement \xe9crit, \xe0 v\xe9rifier]
+FAILED tests/test_plu_fix15_stationnement.py::test_tampon_plafond_ud - assert...
+FAILED tests/test_plu_fix15_stationnement.py::test_saint_louis_place_publique_ua
+7 failed, 5 warnings in 2.75s
+
+d-lien-rouge.txt
+ ❯ src/components/fiche/StationnementLien.test.tsx (1 test | 1 failed) 33ms
+   × ouvre le barème de stationnement sur sa propre page à Saint-Pierre 33ms
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+
+e-rouge.txt
+FAILED tests/test_plu_fix15_dates.py::test_dates_couverture_et_depot[97407-2018-10-02-2024-01-30-2024-12-09]
+FAILED tests/test_plu_fix15_dates.py::test_dates_couverture_et_depot[97408-2019-06-12-2025-12-17-2026-06-25]
+FAILED tests/test_plu_fix15_dates.py::test_dates_couverture_et_depot[97414-2014-03-11-2025-07-09-2025-12-18]
+FAILED tests/test_plu_fix15_dates.py::test_dates_couverture_et_depot[97423-2017-02-21-2022-06-02-2022-06-02]
+FAILED tests/test_plu_fix15_dates.py::test_dates_couverture_et_depot[97410-None-None-2020-02-06]
+5 failed in 2.34s
+
+e-fiche-rouge.txt
+FAILED tests/test_plu_fix15_dates.py::test_date_du_document_sur_la_fiche[97416-Approbation en couverture \xb7 06/2024]
+FAILED tests/test_plu_fix15_dates.py::test_date_du_document_sur_la_fiche[97407-Approbation en couverture \xb7 02/10/2018]
+FAILED tests/test_plu_fix15_dates.py::test_date_du_document_sur_la_fiche[97410-D\xe9p\xf4t GPU 97410_PLU_20200206]
+FAILED tests/test_faisabilite3_scenarios.py::test_badge_reglement_reste_au_mois_de_la_couverture
+4 failed in 1.99s
+
+f-rouge.txt
+FAILED tests/test_plu_fix15_sources.py::test_vote_zattes_source_et_reserve - ...
+FAILED tests/test_plu_fix15_sources.py::test_la_possession_reference_publique
+2 failed in 1.65s
+
+f-livret-rouge.txt
+ ❯ src/components/outils/PluLivrets.test.tsx (1 test | 1 failed) 43ms
+   × permet d’ouvrir la page de chaque livret de Saint-Paul 42ms
+ Test Files  1 failed (1)
+      Tests  1 failed (1)

@@ -43,6 +43,8 @@ def rendu(valeurs) -> str:
         tui.append((groupe(iq["habitants"]), lib))
     if iq.get("part_60_plus_pct") is not None:
         tui.append((fmt_pct(iq["part_60_plus_pct"]), "de 60 ans et plus"))
+    elif iq.get("part_65_plus_pct") is not None:
+        tui.append((fmt_pct(iq["part_65_plus_pct"]), "de 65 ans et plus"))
     if iq.get("part_locataires_pct") is not None:
         tui.append((fmt_pct(iq["part_locataires_pct"]), "de locataires"))
     corps = tuiles(tui[:3]) if tui else ""

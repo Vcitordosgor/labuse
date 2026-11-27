@@ -1,0 +1,25 @@
+autok 200 http://127.0.0.1:10280/parcels/97412000BZ0689/exposition
+autok 200 http://127.0.0.1:10280/parcels/97412000BZ0689?source=q_v20
+autok 97412000BZ0689 1AUtok hauteur 200 [
+  [ 'ARTICLE AUindicée 10', 110, 110 ],
+  [ 'ARTICLE AUindicée 7', 109, 109 ],
+  [ 'ARTICLE AUindicée 8', 110, 110 ]
+]  peut excéder : - 9 mètres à l’égout du toit ou au sommet de l’acrotère, - 12 mètres au faîtage. [
+  'https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=110'
+]
+n 200 http://127.0.0.1:10280/parcels/97412000AH0006/exposition
+n 200 http://127.0.0.1:10280/parcels/97412000AH0006?source=q_v20
+n 97412000AH0006 N hauteur 200 [ [ 'ARTICLE N 10', 132, 133 ] ] à : - 4 mètres à l’égout du toit ou au sommet de l’acrotère, - 6 mètres au faîtage. Pour les bâtiments annexes, la hauteur absolue est limitée à 3 mètres. En secteur Ntok, la hauteur ma [
+  'https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=132'
+]
+port 200 http://127.0.0.1:10280/parcels/97407000BM0010/exposition
+port 200 http://127.0.0.1:10280/parcels/97407000BM0010?source=q_v20
+port 97407000BM0010 1AUmut stationnement 200 [
+  [ 'Article 1AUindicée 12', 151, 154 ],
+  [ 'Article 1AUindicée 10', 148, 149 ],
+  [ 'Article 1AUindicée 2', 144, 145 ],
+  [ 'Article 1AUindicée 11', 149, 151 ],
+  [ 'Article 1AUindicée 13', 154, 155 ]
+] Aménagement et de Programmation lorsqu’elles existent. Dans les zones 1AUm,1AUmut : 12.1 - Stationnement des véhicules particuliers Lors de toute opération de construction ou de changem [
+  'https://data.geopf.fr/annexes/gpu/documents/DU_97407/8cdd92497a52e883eddd7330b3836873/97407_reglement_20241209.pdf#page=151'
+]

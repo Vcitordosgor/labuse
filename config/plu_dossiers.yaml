@@ -1,0 +1,33 @@
+# OUTIL-PLU-FIX-13 — dossiers de modification CONCATÉNÉS après le règlement dans le MÊME PDF.
+# Cas unique mesuré sur l'île : La Plaine-des-Palmistes (97406), dont le PDF (217 p.) colle 3 dossiers de
+# modification après le règlement opposable (p.1-117). Ces pages ne sont PAS des articles du règlement : on
+# les ÉTIQUETTE comme dossiers, on les classe APRÈS le règlement, et on signale sur les zones du règlement
+# de base les modifications NON encore intégrées.
+#
+# reglement_pages : plage PDF du règlement de base (consolidé) — extraits NON étiquetés dossier.
+# dossiers[].pages : plage PDF (page_debut de l'extrait) du dossier.
+# dossiers[].integre_base : le règlement de base intègre-t-il déjà cette modification ?
+# dossiers[].signale_zones : si NON intégré, zones du règlement de base à marquer (chapitre servi).
+communes:
+  "97406":
+    reglement_pages: [1, 117]
+    # OUTIL-PLU-FIX-14 (LOT 5) — frontières EXACTES vérifiées sur les pages de couverture du PDF :
+    # p.118 « Mai 2023 … Ouverture à l'urbanisation », p.150 « Février 2019 … Modification n°2 »,
+    # p.177 « Avril 2016 … Plateau vert (chemin Dureau) ». (Ancien config : 118-167/168-199/200-217, faux.)
+    dossiers:
+      - pages: [118, 149]
+        label: "ouverture à l'urbanisation de la zone AUs1 (parcelle AV 613)"
+        date: "mai 2023"
+        integre_base: false
+        signale_zones: ["AUS", "AUS1"]
+      - pages: [150, 176]
+        num: 2
+        label: "modification n°2 (reprise d'articles UB/Ur 7, Uc…)"
+        date: "février 2019"
+        integre_base: true
+        signale_zones: []
+      - pages: [177, 217]
+        label: "« Plateau vert » (chemin Dureau)"
+        date: "avril 2016"
+        integre_base: true
+        signale_zones: []

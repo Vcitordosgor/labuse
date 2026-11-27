@@ -42,6 +42,7 @@ MILLESIME_ATTACHMENTS = {
     # table de prod `parcelle_personne_morale`, uni à la volée par proprietaire_historique. Présent ici
     # pour que la commande de rafraîchissement puisse le charger dans la table versionnée si voulu.
     2025: "fichier_des_parcelles_situation_2025_dpts_57_a_976_zip",
+    2026: "fichiers_des_parcelles_dpts_61_a_976_situation_2026zip",
 }
 
 #: positions attendues (mêmes 24 colonnes que la situation 2025 — vérifié par _sniff_header,

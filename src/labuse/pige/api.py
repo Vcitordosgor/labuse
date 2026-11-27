@@ -2302,6 +2302,8 @@ def distinct_hazards(aleas_liste: list[dict] | None) -> list[str]:
     « Aléas » de la fiche, l'outil « Estimer » et le PDF — plus jamais « 6 » d'un côté et « 2 » de l'autre."""
     out: list[str] = []
     for e in aleas_liste or []:
+        if e.get("niveau") == "negligeable":
+            continue
         txt = f"{e.get('nature') or ''} {e.get('libelle') or ''}".lower()
         for frag, lab in _HAZARDS:
             if frag in txt and lab not in out:
@@ -2340,6 +2342,8 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
         return out
 
     for e in liste:
+        if e.get("niveau") == "negligeable":
+            continue
         nat = (e.get("nature") or "")
         natl = nat.lower()
         if natl.startswith("aléa") or natl.startswith("alea"):

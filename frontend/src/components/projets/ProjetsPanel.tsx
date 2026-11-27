@@ -9,7 +9,7 @@ import { fusionnerProjets, getCourrierDemandes, getProjets, postCourrierClientSt
 import { fmtEurCompact, fmtDateCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Chargement, Skeleton } from '../Loading'
-import { EmptyState } from '../States'
+import { EmptyState, ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
 import { Chip } from '../ui/Chip'   // DA-FIX-5b — Actifs/Archivées/Mes courriers sont des FILTRES → Chip
 import { ProjetKanban } from './ProjetKanban'
@@ -219,20 +219,24 @@ export function ProjetsPanel() {
 
         {projetsQ.isLoading && (<><Skeleton className="mb-2 h-20 rounded-xl" /><Skeleton className="h-16 rounded-xl" /></>)}
 
-        {!projetsQ.isLoading && all.length === 0 && courriers.length === 0 ? (
+        {projetsQ.isError && (
+          <ErrorState message="Impossible de charger les projets." retry={() => void projetsQ.refetch()} />
+        )}
+
+        {projetsQ.isSuccess && all.length === 0 && courriers.length === 0 ? (
           /* 3 · ÉTAT VIDE — il doit inviter, pas constater. */
           <div data-projets-vide style={{ marginTop: 8, border: '.5px dashed #1E2A23', borderRadius: 6 }}>
             <EmptyState mint title="Aucun projet pour l'instant"
               hint="Un projet garde votre cadrage et vos parcelles retenues."
               action={<Bouton data-projet-nouveau-vide niveau="primaire" ton="vert" onClick={() => setFormOuvert(true)}>Créer votre premier projet</Bouton>} />
           </div>
-        ) : !projetsQ.isLoading && (
+        ) : !projetsQ.isLoading && (projetsQ.isSuccess || all.length > 0 || courriers.length > 0) && (
           <>
             {/* 2 · FILTRES — DA-FIX-5b : ce sont des FILTRES (une vue à la fois), pas des actions → Chip
                 (filtre actif = vert plein + coche), plus des Bouton. */}
             <div className="mb-5 flex flex-wrap gap-2">
-              <Chip data-tab-actifs on={!showArchived && !showCourriers} onClick={() => { setShowArchived(false); setShowCourriers(false); setMontre(4) }}>Actifs {actifs.length}</Chip>
-              <Chip data-tab-archives on={showArchived && !showCourriers} onClick={() => { setShowArchived(true); setShowCourriers(false); setMontre(4) }}>Archivés {archives.length}</Chip>
+              <Chip data-tab-actifs on={!showArchived && !showCourriers} onClick={() => { setShowArchived(false); setShowCourriers(false); setMontre(4) }}>Actifs {projetsQ.data && actifs.length}</Chip>
+              <Chip data-tab-archives on={showArchived && !showCourriers} onClick={() => { setShowArchived(true); setShowCourriers(false); setMontre(4) }}>Archivés {projetsQ.data && archives.length}</Chip>
               <Chip data-tab-courriers on={showCourriers} onClick={() => { setShowCourriers(true); setMontre(4) }}>Mes courriers {courriers.length}</Chip>
             </div>
 
@@ -285,7 +289,7 @@ export function ProjetsPanel() {
                 {!showArchived && groupesDoublons(actifs).map((g) => <DedupBanner key={g[0].id} groupe={g} />)}
 
                 <div data-projets-liste>
-                  {visibles.length === 0 && (
+                  {projetsQ.isSuccess && visibles.length === 0 && (
                     <p style={{ fontSize: 13, color: '#7E8E83', padding: '16px 0' }}>
                       {showArchived ? 'Aucun projet archivé.' : 'Aucun projet actif.'}
                     </p>

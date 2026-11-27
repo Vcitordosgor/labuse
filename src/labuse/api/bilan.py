@@ -12,6 +12,8 @@ côté client. La cloison par compte suit api/tenant (bilan_ratios ∈ SCOPED_TA
 from __future__ import annotations
 
 import json
+import math
+import re
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, field_validator
@@ -319,13 +321,22 @@ def _resultat_dict(r: ResultatBilan) -> dict:
 
 
 @router.post("/bilan/{idu}/calcul")
-def calculer_bilan(idu: str, corps: CalculIn) -> dict:
+def calculer_bilan(idu: str, corps: CalculIn, db: Session = Depends(get_db)) -> dict:
     """Calcule le bilan à partir des seules saisies du client. BILAN-2 : calcul EN
     CONTINU (comme l'Excel) — une case vide vaut 0, la marge et les totaux
     s'affichent dès la première saisie. Les lignes vides sont seulement comptées
-    (``lignes_vides``). Aucune donnée n'est inventée."""
+    (``lignes_vides``). Aucune donnée n'est inventée.
+
+    OUTIL-ASSEMBLAGE-FIX-8 (LOT 1) — l'écran de saisie porte la MÊME mention de mixité que le PDF/Excel
+    (source unique `_mixite_structuree`) : obligation, dénominateur, et réserve rattachée à la charge
+    foncière. Audit bloquant 1 : à 35 logements, l'écran n'affichait aucune mixité ni borne haute."""
     r = Moteur().calculer(_entrees(corps))
-    return _resultat_dict(r)
+    out = _resultat_dict(r)
+    try:
+        out["mixite"] = _mixite_structuree(db, idu, corps)
+    except Exception:  # noqa: BLE001 — jamais un bloqueur de calcul écran
+        out["mixite"] = None
+    return out
 
 
 # ===========================================================================
@@ -394,6 +405,8 @@ def modele_bilan(idu: str, request: Request, db: Session = Depends(get_db)) -> d
     # au JJ/MM/AAAA » de l'écran Bilan, identique aux 8 documents.
     from ..exports.builder import _donnees_labuse_au
     sourcee["donnees_au"] = _donnees_labuse_au()
+    garde = _rep.garde_fou_bilan(db, idu, sourcee=sourcee)
+    sourcee.update({k: garde[k] for k in ("lecture_capacite", "capacite_a_verifier", "export_constat")})
     cat["sourcee"] = sourcee  # {terrain, zonage, commune, parcel_id, prix_achat_dvf, donnees_au}
     cat["reperes_publics"] = _rep.reperes_publics(db, idu, sourcee)
 
@@ -467,6 +480,11 @@ def _saisies_du_document(db: Session, idu: str, doc_id: int, request: Request) -
     return CalculIn.model_validate(data)
 
 
+def _programme_saisi(corps: CalculIn) -> bool:
+    """Les lignes de produit vides de l'éditeur ne constituent pas un programme."""
+    return bool(corps.programme.sdp or any(p.lots or p.suv or p.prix_ttc_m2_suv for p in corps.produits))
+
+
 def _refuser_si_ca_nul(r, autorise_sans_ca: bool = False) -> None:
     """DOCS-COHERENCE-1 (recette Vic, G3) — export REFUSÉ côté SERVEUR si le CA est nul : un Bilan sans
     programme ni prix de vente n'a rien à exporter.
@@ -476,6 +494,151 @@ def _refuser_si_ca_nul(r, autorise_sans_ca: bool = False) -> None:
     if not getattr(r, "ca_ttc", None) and not autorise_sans_ca:
         raise HTTPException(
             422, "Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.")
+
+
+# OUTIL-ASSEMBLAGE-FIX-8 (LOT 1) — la clause de mixité (Art. 2 des règlements) porte sur les LOGEMENTS
+# (seuil 20/30 logements, quota au nombre de logements ou à la SDP affectée aux logements). Un lot
+# NON-logement (commerce, bureau, activité, local, stationnement…) ne compte NI pour le seuil NI pour la
+# SDP de mixité. On exclut par le libellé du produit : tout produit est un logement SAUF si son libellé
+# nomme une autre nature. Audit bloquant 1 : « 24 logements + 8 commerces » déclenchait les 15 % à 32
+# lots au lieu de rester sous le seuil de 30 logements.
+_RE_NON_LOGEMENT = re.compile(
+    r"commerc|bureau|tertiaire|activit|atelier|entrep[oô]t|\blocal\b|\blocaux\b|boutique|"
+    r"restaur|h[oô]tel|h[eé]bergement|parking|stationnement|\bbox\b|\bcave\b", re.I)
+# Produits AIDÉS (part sociale/accession) — pour dire si le PRIX de cette part est réellement saisi.
+_RE_PRODUIT_AIDE = re.compile(
+    r"\bpls\b|\blls\b|\bllts\b|\blli\b|\bpsla\b|\bptz\b|social|sociaux|aid[eé]|accession\s+social|"
+    r"interm[eé]diaire", re.I)
+
+
+def _est_logement(libelle: str | None) -> bool:
+    """Un produit compte comme logement pour la mixité SAUF si son libellé nomme une autre nature."""
+    return not _RE_NON_LOGEMENT.search(libelle or "")
+
+
+def _logements_sdp_saisis(corps: "CalculIn") -> tuple[float, float]:
+    """OUTIL-ASSEMBLAGE-FIX-6/8 (LOT 1) — le PROGRAMME SAISI vu par la mixité : nombre de LOGEMENTS
+    (somme des lots des seuls produits logement, commerces exclus) et SDP des LOGEMENTS (surface
+    vendable des produits logement ÷ rendement de la commune ; sinon `programme.sdp` saisie)."""
+    logs = [p for p in corps.produits if _est_logement(p.libelle)]
+    logements = sum(float(p.lots or 0.0) for p in logs)
+    suv_log = sum(float(p.suv or 0.0) for p in logs)
+    if suv_log > 0:
+        from ..faisabilite.engine import Hypotheses
+        coef = float(getattr(Hypotheses.charger(), "coef_rendement", 0.0) or 0.0)
+        sdp = suv_log / coef if coef else suv_log
+    else:
+        sdp = float(corps.programme.sdp or 0.0)
+    return logements, sdp
+
+
+def _part_aidee_chiffree(corps: "CalculIn | None", quota_pct: float | None,
+                         logements: float) -> tuple[bool, str]:
+    """OUTIL-ASSEMBLAGE-FIX-8 (LOT 1) — la part aidée imposée est-elle RÉELLEMENT chiffrée dans la
+    saisie ? Renvoie (prix_aidé_saisi, libellé de la part : « ≈ N logements, Q % du programme »).
+    Un produit aidé (PLS/LLS/LLTS/PSLA/PTZ/accession sociale/intermédiaire) avec un prix > 0 chiffre la
+    part aidée. Audit bloquant 1 (2ᵉ contre-exemple) : 6 PLS à 2 200 €/m² saisis → la note ne doit plus
+    dire « part aidée non chiffrée »."""
+    q = float(quota_pct or 0.0)
+    requis = math.ceil(q / 100.0 * float(logements or 0.0)) if q and logements else 0
+    part_txt = (f"≈ {requis} logement{'s' if requis > 1 else ''}, {q:.0f} % du programme"
+                if requis else (f"{q:.0f} % du programme" if q else "la part aidée imposée"))
+    if corps is None:
+        return False, part_txt
+    chiffree = any(
+        _est_logement(p.libelle) and _RE_PRODUIT_AIDE.search(p.libelle or "")
+        and float(p.prix_ttc_m2_suv or 0.0) > 0
+        for p in corps.produits)
+    return chiffree, part_txt
+
+
+def _denominateur_saint_paul(m: dict, logements: float) -> str | None:
+    """OUTIL-ASSEMBLAGE-FIX-8 (LOT 2 / « mieux » 1) — à Saint-Paul (secteur SMS, Art. 2 p. 106), le
+    règlement fixe le dénominateur : 30 % de la SDP affectée aux logements, arrondi SUPÉRIEUR en nombre
+    de logements. On le DIT pour que le promoteur contrôle son programme. None hors secteur SMS."""
+    if m.get("origine") != "secteur_sms":
+        return None
+    q = float(m.get("quota_pct") or 0.0)
+    if not q:
+        return None
+    base = (f"Dénominateur : {q:.0f} % de la SDP affectée aux logements, arrondi supérieur en nombre de "
+            "logements (Art. 2 p. 106)")
+    if logements:
+        base += f" — soit ≈ {math.ceil(q / 100.0 * float(logements))} logements sur {int(round(logements))}"
+    return base + "."
+
+
+def _mixite_structuree(db: Session, idu: str, corps: "CalculIn | None" = None) -> dict | None:
+    """OUTIL-ASSEMBLAGE-FIX-8 (LOT 1/2) — SOURCE UNIQUE de la mention de mixité du Bilan, structurée pour
+    que l'ÉCRAN et les EXPORTS portent la même chose : `note` (obligation + dénominateur Saint-Paul),
+    `charge_reserve` (réserve rattachée au MONTANT de charge foncière : borne haute si la part aidée n'est
+    pas chiffrée, ou mention que la part aidée EST chiffrée au prix saisi) et `borne_haute` (bool corrigé
+    par la saisie). Calculée sur le PROGRAMME RÉELLEMENT SAISI (`corps`) ; sans saisie → scénario servi."""
+    from ..faisabilite.bilan import compute_bilan_servi, mixite_pour_programme
+    row = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
+    if not row:
+        return None
+    m = None
+    logements = 0.0
+    try:
+        if corps is not None and (corps.produits or corps.programme.sdp):
+            logements, sdp = _logements_sdp_saisis(corps)
+            m = mixite_pour_programme(db, row["id"], logements, sdp)
+        else:
+            b, _ = compute_bilan_servi(db, row["id"])
+            m = b.mixite if (b and getattr(b, "mixite", None)) else None
+            logements = float((m or {}).get("logements") or 0.0)
+    except Exception:  # noqa: BLE001 — jamais un bloqueur d'export
+        return None
+    if not isinstance(m, dict) or not m.get("servitude"):
+        return None
+    cite = " · ".join(x for x in (m.get("article"), m.get("page")) if x)
+    # OUTIL-ASSEMBLAGE-FIX-3 (relecture-2) — libellé exact selon l'origine : règle de ZONE (Saint-Denis)
+    # vs secteur SMS (Saint-Paul). On ne dit « servitude/secteur » que pour un vrai secteur SMS.
+    _amont = "Obligation de mixité du règlement de zone" if m.get("origine") == "zone_reglement" \
+        else "Secteur de mixité sociale"
+    if not m.get("declenchee"):
+        # OUTIL-ASSEMBLAGE-FIX-6 (LOT 2) — exemption ZAC (Savane des Tamarins) : on porte la précision du
+        # moteur (programme aidé à l'échelle de la ZAC, non chiffré ici), pas un « non déclenchée » muet.
+        _detail = m.get("detail") or ""
+        note = _detail if "ZAC" in _detail else f"{_amont} — clause non déclenchée sur ce programme ({cite})."
+        return {"note": note, "charge_reserve": None, "borne_haute": False, "declenchee": False,
+                "avertissements": list(m.get("avertissements") or []), "mixite": m}
+    q = m.get("quota_pct")
+    note = (f"Obligation de mixité : {int(q)} % " if q else "Obligation de mixité : ") \
+        + (m.get("produits") or "logements aidés") + (f" ({cite})" if cite else "")
+    denom = _denominateur_saint_paul(m, logements)   # LOT 2 / « mieux » 1 — dénominateur Saint-Paul
+    if denom:
+        note += " " + denom
+    # OUTIL-ASSEMBLAGE-FIX-8 (LOT 1 / « mieux » 3) — la réserve est RATTACHÉE au montant de charge foncière
+    # et dit CE QUI EST VRAIMENT CHIFFRÉ : si la part aidée a un prix saisi, ce n'est plus une borne haute.
+    charge_reserve, bh = None, bool(m.get("borne_haute"))
+    if bh:
+        aide_chiffree, part_txt = _part_aidee_chiffree(corps, q, logements)
+        if aide_chiffree:
+            charge_reserve = (f"La part aidée ({part_txt}) est chiffrée au prix saisi : la charge foncière "
+                              "en tient compte (ce n'est plus une borne haute).")
+            bh = False
+        else:
+            charge_reserve = (f"Charge foncière = BORNE HAUTE : la part aidée ({part_txt}) n'est pas chiffrée "
+                              "(aucun prix social/accession saisi). Le montant est un PLAFOND, pas le chiffre "
+                              "réglementaire de l'opération.")
+    return {"note": note, "charge_reserve": charge_reserve, "borne_haute": bh, "declenchee": True,
+            "avertissements": list(m.get("avertissements") or []), "mixite": m}
+
+
+def _mixite_note(db: Session, idu: str, corps: "CalculIn | None" = None) -> str | None:
+    """Note PLATE (obligation + réserve de charge foncière + avertissements) pour le Bilan PDF/Excel —
+    bâtie sur la source unique `_mixite_structuree`, pour que l'écran et les documents ne divergent jamais.
+    OUTIL-ASSEMBLAGE-FIX-8 (LOT 2) — l'avertissement d'exclusion ZAC (Marie Caze / Sans Souci) voyage
+    jusqu'au PDF/Excel (audit bloquant 2 : il était omis des documents individuels d'AH0022)."""
+    s = _mixite_structuree(db, idu, corps)
+    if not s:
+        return None
+    txt = s["note"] + (" " + s["charge_reserve"] if s.get("charge_reserve") else "")
+    for a in s.get("avertissements") or []:
+        txt += " " + a
+    return txt
 
 
 @router.get("/bilan/{idu}.pdf")
@@ -494,9 +657,10 @@ def bilan_pdf(
     e, _pf = _entrees_servies(db, idu, corps)
     r = Moteur().calculer(e)
     _gf = _rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp, postes_saisis=set(corps.postes),
-                               programme_saisi=bool(corps.produits) or bool(corps.programme.sdp),
+                               programme_saisi=_programme_saisi(corps),
                                suv_saisie=sum(p.suv or 0.0 for p in corps.produits))
-    _refuser_si_ca_nul(r, autorise_sans_ca=bool(_gf.get("alertes")))
+    _gf["mixite_note"] = _mixite_note(db, idu, corps)   # OUTIL-ASSEMBLAGE-FIX-6 (LOT 1) — programme SAISI
+    _refuser_si_ca_nul(r, autorise_sans_ca=bool(_gf.get("alertes") or _gf.get("export_constat")))
     # DOCS-1 — carte de situation sur la couverture du Bilan (best-effort : jamais un bloqueur).
     try:
         from ..exports.builder import _plan_situation_html
@@ -542,9 +706,10 @@ def bilan_xlsx(
     # quand la parcelle est écartée (le classeur porte alors « non calculable » + l'avertissement).
     from ..bilan import reperes as _rep
     _gf = _rep.garde_fou_bilan(db, idu, sdp_saisie=corps.programme.sdp, postes_saisis=set(corps.postes),
-                               programme_saisi=bool(corps.produits) or bool(corps.programme.sdp),
+                               programme_saisi=_programme_saisi(corps),
                                suv_saisie=sum(p.suv or 0.0 for p in corps.produits))
-    _refuser_si_ca_nul(Moteur().calculer(e), autorise_sans_ca=bool(_gf.get("alertes")))
+    _gf["mixite_note"] = _mixite_note(db, idu, corps)   # OUTIL-ASSEMBLAGE-FIX-6 (LOT 1) — programme SAISI
+    _refuser_si_ca_nul(Moteur().calculer(e), autorise_sans_ca=bool(_gf.get("alertes") or _gf.get("export_constat")))
     octets = classeur_bilan_bytes(e, titre=f"Bilan — {idu}", garde_fou=_gf)
     return Response(
         content=octets,

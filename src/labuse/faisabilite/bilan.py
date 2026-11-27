@@ -56,6 +56,10 @@ class Bilan:
     bandeau: str = _BANDEAU
     # Paramètres bruts pour le recalcul instantané côté fiche (mixité sociale, Décision 3.b).
     calc: dict | None = None
+    # OUTIL-ASSEMBLAGE-FIX-2 (LOT 1) — obligation de mixité STRUCTURÉE (règle, régime, quota, article,
+    # page, produits, borne_haute) pour que l'Assemblage PORTE l'obligation comme la fiche. None quand
+    # la clause ne s'applique pas / bilan non calculable.
+    mixite: dict | None = None
 
 
 def _eur(x: float) -> str:
@@ -409,12 +413,26 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses,
         return {**base, "fiable": False, "fiabilite": "insuffisant"}
     prices = [s["prix"] for s in kept]
     annees = [s["annee"] for s in kept]
-    pct_appt = round(100 * sum(1 for s in kept if s["cat"] == "appartement") / len(kept))
+    n_appt = sum(1 for s in kept if s["cat"] == "appartement")
+    n_mais = sum(1 for s in kept if s["cat"] == "maison")
+    pct_appt = round(100 * n_appt / len(kept))
+    # OUTIL-COMMUNES-FIX-12 LOT 4 (ASTRA-9) — « mixte » SEULEMENT si l'échantillon RETENU contient
+    # vraiment des maisons ET des appartements. La recherche « mixte (appart+maison) » peut ne réunir
+    # que des maisons (Saint-Louis CT0691 : 10 maisons) → on nomme ce qui est retenu, sans mentir sur
+    # la composition. On garde la trace que le mixte a été CHERCHÉ (« recherche mixte »).
+    type_prix_servi = label
+    if label.startswith("mixte"):
+        if n_appt > 0 and n_mais > 0:
+            type_prix_servi = label                       # vraiment mixte (ex. Saint-Paul CD : 8 m + 4 a)
+        elif n_mais > 0 and n_appt == 0:
+            type_prix_servi = "maisons (recherche mixte)"
+        elif n_appt > 0 and n_mais == 0:
+            type_prix_servi = "appartements (recherche mixte)"
     # ESTIMER-2 (D-2) — médiane/quartiles PONDÉRÉS par la ressemblance (lecteur unique `_mediane_ponderee`,
     # même calcul que `reference_locale`), surface/terrain du sujet INTRINSÈQUES → fiche == Estimer == PDF.
     _ssurf, _sterr = _surface_terrain_sujet(db, parcel_id)
     q1, med, q3 = _mediane_ponderee(kept, _ssurf, _sterr, tp)
-    return {**base, "fiable": niveau != "insuffisant", "pct_appartement": pct_appt,
+    return {**base, "type_prix": type_prix_servi, "fiable": niveau != "insuffisant", "pct_appartement": pct_appt,
             "periode": [min(annees), max(annees)],
             "q1": round(q1), "median": round(med), "q3": round(q3),
             "min": round(min(prices)), "max": round(max(prices)),
@@ -543,7 +561,21 @@ def contexte_bilan_servi(session: Session, parcel_id: int, fz=None) -> dict | No
     eco.update({"sdp_max_m2": fr.get("surface_plancher_m2"), "logements_estimes": logements_est,
                 "terrain_m2": ctx.surface_m2, "pente_pct": ctx.contraintes.pente_pct,
                 "niveaux_max": fr.get("niveaux_max"),
+                "zone_mixite": _zone_mixite_regle(ctx.commune, ctx.zone, rules),
+                # OUTIL-ASSEMBLAGE-FIX-4 (LOT 3) commune servie (source affichée) ; (LOT 2) exemption ZAC
+                # Savane des Tamarins sur la géographie = zone AU3st (et elle seule).
+                "commune": ctx.commune,
+                "zac_mixite_exclue": _zac_savane_tamarins(ctx.commune, ctx.zone),
+                # OUTIL-ASSEMBLAGE-FIX-5 (LOT 1) — zones U4a/U4b/U4c : exclusion ZAC Marie Caze / Sans Souci
+                # NON exemptable (pas de périmètre dans le zonage) → avertissement sur les déclenchées.
+                "zac_avert_u4": _zac_marie_caze_sans_souci(ctx.commune, ctx.zone),
                 "places_par_logt": (rules.places_par_logement() if rules else None)})
+    # OUTIL-ASSEMBLAGE-FIX-5 (LOT 2) — Usdu : page de mixité du LIVRET rattaché par la géographie
+    # (la zone n'a pas de numéro de livret dans son nom) ; aucune page si rattachement à cheval.
+    if (ctx.commune or "").strip().lower().startswith("saint-paul") and (ctx.zone or "").strip() == "Usdu":
+        eco["zone_mixite"] = {"article": None, "page": _usdu_livret_page(session, parcel_id),
+                              "page_pdf": None, "seuil_logements": None, "quota_pct": None,
+                              "produits": None, "citation": None}
     bp = {k: r["value"] for k, r in bpmod.resolve(session, secteur).items()}
     bp["prix_m2_neuf"] = ps["prix"]
     return {"secteur": secteur, "hyp": hyp, "ps": ps, "eco": eco, "base_params": bp}
@@ -582,7 +614,23 @@ def compute_bilan_servi(session: Session, parcel_id: int, fz=None) -> tuple["Bil
                 "terrain_m2": ctx.surface_m2, "pente_pct": ctx.contraintes.pente_pct,
                 # COMPARER-2 §2 — pour l'emprise aménagée de la VRD (empreinte au sol + stationnement)
                 "niveaux_max": fr.get("niveaux_max"),
+                # OUTIL-ASSEMBLAGE-FIX-3 — règle de mixité de la ZONE (page par livret + obligation de
+                # zone type Saint-Denis Uavap). Source unique lue par `_clause_mixite`.
+                "zone_mixite": _zone_mixite_regle(ctx.commune, ctx.zone, rules),
+                # OUTIL-ASSEMBLAGE-FIX-4 (LOT 3) commune servie (source affichée) ; (LOT 2) exemption ZAC
+                # Savane des Tamarins sur la géographie = zone AU3st (et elle seule).
+                "commune": ctx.commune,
+                "zac_mixite_exclue": _zac_savane_tamarins(ctx.commune, ctx.zone),
+                # OUTIL-ASSEMBLAGE-FIX-5 (LOT 1) — zones U4a/U4b/U4c : exclusion ZAC Marie Caze / Sans Souci
+                # NON exemptable (pas de périmètre dans le zonage) → avertissement sur les déclenchées.
+                "zac_avert_u4": _zac_marie_caze_sans_souci(ctx.commune, ctx.zone),
                 "places_par_logt": (rules.places_par_logement() if rules else None)})
+    # OUTIL-ASSEMBLAGE-FIX-5 (LOT 2) — Usdu : page de mixité du LIVRET rattaché par la géographie
+    # (la zone n'a pas de numéro de livret dans son nom) ; aucune page si rattachement à cheval.
+    if (ctx.commune or "").strip().lower().startswith("saint-paul") and (ctx.zone or "").strip() == "Usdu":
+        eco["zone_mixite"] = {"article": None, "page": _usdu_livret_page(session, parcel_id),
+                              "page_pdf": None, "seuil_logements": None, "quota_pct": None,
+                              "produits": None, "citation": None}
     bp = {k: r["value"] for k, r in bpmod.resolve(session, secteur).items()}
     bp["prix_m2_neuf"] = ps["prix"]
     b = compute_bilan(float(shab), float(ctx.surface_m2 or 0),
@@ -591,28 +639,359 @@ def compute_bilan_servi(session: Session, parcel_id: int, fz=None) -> tuple["Bil
     return b, ps
 
 
+def _zone_mixite_regle(commune: str | None, zone: str | None, rules) -> dict | None:
+    """OUTIL-ASSEMBLAGE-FIX-3 (LOT 2/3) — la clause de mixité de la ZONE de la parcelle, lue du YAML
+    calibré (transcrit du PDF officiel), pour (a) citer la PAGE de SA zone, pas une page commune-wide
+    (le règlement de Saint-Paul répète l'Art. 2 par livret de bassin : U1 p. 14, U3/AU3 p. 106…), et
+    (b) armer l'obligation de ZONE là où il n'y a pas de secteur SMS (Saint-Denis Uavap.2, p. 27 :
+    « 30 logements collectif et plus → 15 % social »).
+
+    Priorité au leaf `mixite:` calibré (`rules.mixite`) ; repli sur la sous-destination `logement` (où
+    vit la clause pour les zones sans leaf, ex. AU3c p. 106). Renvoie {article, page, page_pdf,
+    seuil_logements, quota_pct, produits, citation} ou None."""
+    import re as _re
+
+    def _page(citation, page_pdf):
+        m = _re.search(r"pp?\.\s*\d+(?:\s*[-–]\s*\d+)?", str(citation or ""))
+        if m:
+            return m.group(0)
+        return f"p. {int(page_pdf)}" if isinstance(page_pdf, (int, float)) and page_pdf else None
+
+    def _ok(leaf):
+        return isinstance(leaf, dict) and (leaf.get("page_pdf") or leaf.get("article")) \
+            and leaf.get("statut", "valide") != "propose"
+
+    leaf = None
+    # 1) leaf `mixite:` de resolve_zone (plu_zonage) — forme Saint-Paul (seuil_m2), page par livret.
+    m = getattr(rules, "mixite", None)
+    if _ok(m):
+        leaf = m
+    # 2) leaf `regles.mixite` des destinations (plu_destinations) — forme Saint-Denis (seuil_logements,
+    #    quota), ABSENTE de plu_zonage. On la préfère si elle porte un seuil_logements (obligation de
+    #    zone au nombre de logements) ou s'il n'y a pas de leaf plu_zonage.
+    if commune and zone:
+        try:
+            from ..plu import destinations as D
+            doc = D._doc(commune)
+            if doc:
+                _, entry = D._zone_entry(doc, zone)
+                dm = ((entry or {}).get("regles") or {}).get("mixite")
+                if _ok(dm) and (dm.get("seuil_logements") or not leaf):
+                    leaf = dm
+                if not leaf:   # 3) repli : la clause vit dans la sous-destination logement (ex. AU3c p.106)
+                    log = ((entry or {}).get("sous_destinations") or {}).get("logement") or {}
+                    if (log.get("article") or log.get("page_pdf")) \
+                            and "mixit" in (str(log.get("condition")) + str(log.get("citation"))).lower():
+                        leaf = log
+        except Exception:  # noqa: BLE001 — l'absence de transcription ne casse pas le bilan
+            pass
+    # OUTIL-ASSEMBLAGE-FIX-4 (LOT 1) — à Saint-Paul, l'Art. 2 de mixité est RÉPÉTÉ à l'identique dans
+    # chaque livret de bassin de vie, à une page connue (vérifiée au PDF 97415). La page AFFICHÉE vient
+    # donc du LIVRET de la zone (chiffre après U/AU : 1→pp.14-15, 2→p.67, 3→pp.106-107, 4→p.168, 5→p.214,
+    # 6→p.274), MÊME pour les zones « sans leaf » (armées par un secteur SMS) — fin du repli commune-wide
+    # « pp. 14-15 ». Si la zone n'appartient à aucun des 6 livrets (N/A/Usdu…), aucune page n'est citée.
+    _sp = bool(commune) and (commune or "").strip().lower().startswith("saint-paul")
+    sp_page = _saint_paul_mixite_page(zone) if _sp else None
+    if not _ok(leaf) and not sp_page:
+        return None
+    if _ok(leaf):
+        # Saint-Paul : la page du livret FAIT AUTORITÉ (page de l'Art. 2, pas celle d'une sous-destination) ;
+        # ailleurs (Saint-Denis…) : la page du leaf (ex. Uavap.2 p. 27).
+        page = sp_page if _sp else _page(leaf.get("citation"), leaf.get("page_pdf"))
+        return {"article": leaf.get("article"), "page": page,
+                "page_pdf": leaf.get("page_pdf"), "seuil_logements": leaf.get("seuil_logements"),
+                "quota_pct": leaf.get("quota_pct"), "produits": leaf.get("produits"),
+                "citation": leaf.get("citation")}
+    # Saint-Paul sans leaf (zone armée par un secteur SMS) : page du livret seule ; l'article reste
+    # l'Art. 2 commune-wide (repli `hyp.mixite_article`), ce qui est le règlement de Saint-Paul.
+    return {"article": None, "page": sp_page, "page_pdf": None, "seuil_logements": None,
+            "quota_pct": None, "produits": None, "citation": None}
+
+
+#: OUTIL-ASSEMBLAGE-FIX-4 (LOT 1) — page de l'Art. 2 de mixité par LIVRET de bassin de vie de Saint-Paul,
+#: VÉRIFIÉE dans le PDF officiel 97415_reglement_20251217 : livret 1 (Saint-Paul centre) la clause couvre
+#: pp. 14-15 ; livret 2 (Saint-Gilles) p. 67 ; livret 3 (Plateau Caillou) pp. 106-107 ; livret 4 (La
+#: Plaine – Bois de Nèfles) p. 168 ; livret 5 (La Saline) p. 214 ; livret 6 (Guillaume) p. 274.
+_SP_LIVRET_PAGE = {1: "pp. 14-15", 2: "p. 67", 3: "pp. 106-107", 4: "p. 168", 5: "p. 214", 6: "p. 274"}
+
+
+def _saint_paul_mixite_page(zone: str | None) -> str | None:
+    """Page de l'Art. 2 de mixité du LIVRET de la zone de Saint-Paul (le chiffre après U/AU donne le
+    bassin de vie). None si la zone n'est dans aucun des 6 livrets (N/A/Usdu…) → aucune page citée."""
+    import re as _re
+    m = _re.match(r"^A?U([1-6])", (zone or "").strip())
+    return _SP_LIVRET_PAGE.get(int(m.group(1))) if m else None
+
+
+def _zac_savane_tamarins(commune: str | None, zone: str | None) -> bool:
+    """OUTIL-ASSEMBLAGE-FIX-9 (LOT 3) — exemption automatique RETIRÉE (décision Vic). Aucun périmètre
+    officiel de la ZAC Savane des Tamarins n'existe en base (spatial_layers : que des POI « Tamarins »,
+    aucune géométrie de ZAC). Assimiler le LIBELLÉ `AU3st` au périmètre de la ZAC n'est pas prouvé ; de
+    plus AU3st est une zone à urbaniser FERMÉE (règlement 97415 p. 158 : « ouverture conditionnée à une
+    modification du PLU ») — sans capacité, donc sans clause de mixité à exempter. L'exemption ne s'arme
+    plus (`False` partout) ; si un périmètre officiel est un jour publié, l'exempter sur CETTE géométrie."""
+    return False
+
+
+#: OUTIL-ASSEMBLAGE-FIX-5 (LOT 1) — zones du livret 4 (La Plaine – Bois de Nèfles, Art. 2 PDF pp.168-169)
+#: dont le texte exclut la clause dans « la ZAC Marie Caze et la ZAC Sans Souci … calculé à l'échelle de
+#: l'opération ». Contrairement à Savane des Tamarins (= zone AU3st), AUCUNE de ces deux ZAC n'a de zone
+#: ni de secteur dédié dans le zonage : Marie Caze n'existe que comme OAP 4.2 (orientation, pas une zone),
+#: Sans Souci n'a aucun périmètre. On ne peut donc pas exempter sur la géographie → les parcelles
+#: DÉCLENCHÉES de ces zones portent un avertissement nommé (décision Vic, zonage strict).
+_SP_ZAC_AVERT_ZONES = {"U4a", "U4b", "U4c"}
+
+
+def _zac_marie_caze_sans_souci(commune: str | None, zone: str | None) -> bool:
+    return (bool(commune) and (commune or "").strip().lower().startswith("saint-paul")
+            and (zone or "").strip() in _SP_ZAC_AVERT_ZONES)
+
+
+#: OUTIL-ASSEMBLAGE-FIX-6 (LOT 4) — texte UNIQUE de l'avertissement d'exclusion ZAC Marie Caze / Sans
+#: Souci, partagé par `compute_bilan` (liste d'avertissements du bilan) et `mixite_pour_programme`, et
+#: embarqué dans le dict `mixite` (`avertissements`) pour voyager jusqu'à l'Assemblage (assemblage.py:433).
+_AVERT_ZAC_MARIE_CAZE = (
+    "Exclusion ZAC possible — le règlement de la zone (Art. 2, p. 168-169) exclut cette "
+    "obligation dans la ZAC Marie Caze et la ZAC Sans Souci (programme de logements aidés "
+    "calculé à l'échelle de l'opération). Le périmètre de ces ZAC n'est pas disponible dans le "
+    "zonage (Marie Caze n'existe que comme OAP 4.2, Sans Souci n'a aucun périmètre publié) : si "
+    "cette parcelle est incluse dans l'une d'elles, l'obligation ne s'applique pas — à vérifier "
+    "auprès de la commune.")
+
+
+#: OUTIL-ASSEMBLAGE-FIX-5 (LOT 2) — marge de rattachement d'une parcelle Usdu à un livret : si une 2e zone
+#: d'un AUTRE livret est à moins de cette distance de la plus proche, la parcelle est à cheval entre deux
+#: bassins → rattachement écarté (aucune page citée).
+_USDU_MARGE_M = 50.0
+
+
+def _usdu_livret_page(session, parcel_id: int) -> str | None:
+    """OUTIL-ASSEMBLAGE-FIX-5 (LOT 2) — la zone « Usdu » de Saint-Paul est répétée dans plusieurs livrets
+    de bassin (articles Usdu relevés pp. 139/200/246/306) et son nom ne porte pas de numéro de livret. On
+    rattache la parcelle à son bassin via la zone à livret (U1-6/AU1-6) la PLUS PROCHE (polygones
+    plu_gpu_zone) et on cite la page de mixité de CE livret. Rattachement ÉCARTÉ (→ aucune page) si la
+    parcelle est à cheval entre deux livrets (2e livret distinct à moins de `_USDU_MARGE_M`)."""
+    from sqlalchemy import text as _t
+    rows = session.execute(_t(
+        """
+        WITH liv AS (
+          SELECT geom_2975 g, substring(attrs->>'libelle' from '^A?U([1-6])')::int AS livret
+          FROM spatial_layers
+          WHERE kind='plu_gpu_zone' AND commune='Saint-Paul' AND attrs->>'libelle' ~ '^A?U[1-6]'
+        ), p AS (SELECT geom_2975 g FROM parcels WHERE id = :pid)
+        SELECT liv.livret, min(ST_Distance(p.g, liv.g)) AS d
+        FROM liv, p GROUP BY liv.livret ORDER BY d
+        """), {"pid": parcel_id}).all()
+    if not rows or rows[0].livret is None:
+        return None
+    if len(rows) >= 2 and (rows[1].d - rows[0].d) < _USDU_MARGE_M:   # à cheval entre deux livrets
+        return None
+    return _SP_LIVRET_PAGE.get(rows[0].livret)
+
+
 def _clause_mixite(eco: dict, hyp: Hypotheses) -> dict:
     """Déclenchement de la clause de mixité (Art. 2 règlement PLU) selon le PROGRAMME estimé.
-    Logique OU du texte : SDP ≥ seuil OU logements ≥ seuil OU terrain > seuil. Renvoie l'état
-    (déclenchée + critère atteint) pour pondérer le CA et l'AFFICHER au promoteur."""
-    sdp = float(eco.get("sdp_max_m2") or 0.0)
-    logements = float(eco.get("logements_estimes") or 0.0)
+
+    OUTIL-ASSEMBLAGE-FIX-1 (LOT 3) — deux régimes selon que la commune DÉCLARE un seuil HAUT
+    (`mixite_sdp_seuil_haut_m2` ; Saint-Paul : 1 800 m²) :
+
+    · commune à RÉGIME À BANDES (seuil haut présent) — le déclenchement porte sur le PROGRAMME
+      RÉELLEMENT CHIFFRÉ (`sdp_programme_m2` = surface vendable ÷ rendement), JAMAIS le gabarit
+      théorique. `regime = "plein"` si programme ≥ seuil haut (ou logements/terrain au-dessus de leur
+      seuil) → quota LLS pondéré ; `regime = "intermediaire"` si seuil bas ≤ programme < seuil haut →
+      accession sociale admise, quota au nombre de logements (NON chiffré, faute de calibrage : on ne
+      fabrique pas de prix) ; sinon non déclenchée.
+    · autre commune (pas de seuil haut) — comportement HISTORIQUE INCHANGÉ : déclenchement sur le
+      gabarit (`sdp_max_m2`), régime `plein`, logique OU du texte (SDP OU logements OU terrain).
+    """
+    sdp_gabarit = float(eco.get("sdp_max_m2") or 0.0)
+    sdp_prog = float(eco.get("sdp_programme_m2") or 0.0)
+    # OUTIL-ASSEMBLAGE-FIX-6 (LOT 2) — pour le SEUIL de mixité (20/30 logts), le nombre de logements est
+    # celui du programme ENTIER (somme des portions, canal `logements_mixite` posé par l'assemblage) ;
+    # à défaut, l'estimé de la parcelle. Ce canal NE touche PAS le stationnement/VRD (qui lit
+    # `logements_estimes`) : la correction du seuil reste sans effet sur le coût (euro-neutre hors régime).
+    logements = float(eco.get("logements_mixite") or eco.get("logements_estimes") or 0.0)
     terrain = float(eco.get("terrain_m2") or 0.0)
     s_sdp = float(hyp.mixite_sdp_seuil_m2)
     s_log = float(hyp.mixite_logements_seuil)
     s_ter = float(hyp.mixite_terrain_seuil_m2)
-    if sdp >= s_sdp:
-        return {"declenchee": True, "critere": f"SDP {sdp:.0f} m² ≥ {s_sdp:.0f} m²",
-                "detail": f"programme SDP ~{sdp:.0f} m² ≥ seuil {s_sdp:.0f} m²"}
+    s_haut = float(getattr(hyp, "mixite_sdp_seuil_haut_m2", 0.0) or 0.0)
+    # OUTIL-ASSEMBLAGE-FIX-3/4 (LOT 2/1) — la citation AFFICHÉE (article + page) vient de la ZONE de la
+    # parcelle (`eco["zone_mixite"]`, page du LIVRET à Saint-Paul, vérifiée au PDF). FIX-4 LOT 1 : PLUS de
+    # repli `hyp.mixite_page` (« pp. 14-15 » commune-wide) — si la zone n'a pas de page connue, on n'en
+    # cite AUCUNE plutôt qu'une fausse. L'article garde le repli commune (Art. 2 de la commune servie).
+    _zm = eco.get("zone_mixite") or {}
+    _commune = eco.get("commune")
+    _art = _zm.get("article") or getattr(hyp, "mixite_article", None)
+    _page = _zm.get("page")   # FIX-4 LOT 1 — aucune page inventée (fin du repli commune-wide « pp. 14-15 »)
+    _quota = float(hyp.pct_lls) if hyp.pct_lls else None
+    # OUTIL-ASSEMBLAGE-FIX-4 (LOT 3) — la source AFFICHÉE cite le règlement de SA commune. Une obligation
+    # de ZONE (Saint-Denis : `seuil_logements` + article) cite « Règlement du PLU de {commune} — {article} »,
+    # jamais le barème « par défaut (Saint-Paul) » d'une autre commune.
+    if _zm.get("seuil_logements") and _zm.get("article"):
+        _src = (f"Règlement du PLU de {_commune} — {_zm['article']}" if _commune
+                else f"Règlement du PLU — {_zm['article']}")
+    else:
+        _src = hyp.mixite_source_ref
+
+    def _rc(declenchee, regime, critere, detail, produits=None, quota=None):
+        """Construit le verdict + la citation AFFICHÉE (article/page/quota/produits/source)."""
+        return {"declenchee": declenchee, "regime": regime, "critere": critere, "detail": detail,
+                "quota_pct": ((quota if quota is not None else _quota) if declenchee else None),
+                "produits": (produits if declenchee else None),
+                "article": _art, "page": _page, "source": _src}
+
+    # OUTIL-ASSEMBLAGE-FIX-3 (LOT 3) — obligation de mixité portée par la ZONE (pas par un secteur SMS),
+    # forme « nombre de logements » : Saint-Denis Uavap.2 (p. 27) « 30 logements collectif et plus →
+    # 15 % de logements sociaux et/ou intermédiaires », + 6 zones sœurs. Déclenchée sur le PROGRAMME
+    # chiffré (`logements_estimes`). Prix social non calibré pour ces communes → résultat en BORNE HAUTE
+    # (CA au prix marché, obligation non chiffrée), traité comme « intermediaire » au cœur du bilan.
+    if _zm.get("seuil_logements"):
+        s_log_zone = float(_zm["seuil_logements"])
+        q_zone = _zm.get("quota_pct")
+        prod_zone = "logements sociaux et/ou intermédiaires"
+        if logements >= s_log_zone:
+            return _rc(True, "intermediaire",
+                       f"{logements:.0f} logements ≥ {s_log_zone:.0f} (habitat collectif)",
+                       f"opération d'habitat collectif de ~{logements:.0f} logements ≥ {s_log_zone:.0f} : "
+                       f"{q_zone:.0f} % de logements sociaux et/ou intermédiaires imposés" if q_zone else
+                       f"opération d'habitat collectif de ~{logements:.0f} logements ≥ {s_log_zone:.0f}",
+                       produits=prod_zone, quota=(float(q_zone) if q_zone else None))
+        return _rc(False, None, None,
+                   f"programme de ~{logements:.0f} logements < seuil {s_log_zone:.0f} (habitat collectif)")
+
+    if s_haut > 0:   # régime À BANDES (Saint-Paul) — déclenchement sur le PROGRAMME chiffré
+        # OUTIL-ASSEMBLAGE-FIX-4 (LOT 2) — exemption ZAC Savane des Tamarins (Art. 2, PDF p. 107 : « Ces
+        # dispositions ne s'appliquent pas dans la ZAC Savane des Tamarins où le programme de logements
+        # aidés est calculé à l'échelle de l'opération »). Armée pour la zone AU3st (périmètre de la ZAC,
+        # 156 parcelles) par les context builders — et elle seule. La citation (article/page) suit le livret.
+        if eco.get("zac_mixite_exclue"):
+            _cite = ", ".join(x for x in (_art, _page) if x)
+            # OUTIL-ASSEMBLAGE-FIX-5 (LOT 3) — le règlement (p. 107) pose que la ZAC a son PROPRE programme
+            # de logements aidés, calculé à l'échelle de l'opération ; aucun pourcentage propre n'est fixé
+            # dans les pièces disponibles (pas de dossier ZAC ni d'OAP « Savane ») → non chiffré ici.
+            return _rc(False, None, None,
+                       f"ZAC Savane des Tamarins — clause générale non applicable"
+                       f"{(' (' + _cite + ')') if _cite else ''} : la ZAC a son PROPRE programme de "
+                       "logements aidés, calculé à l'échelle de l'opération — non chiffré ici.")
+        # OUTIL-ASSEMBLAGE-FIX-6 (LOT 2) — l'Art. 2 (PDF Saint-Paul pp. 106-107) code TROIS déclencheurs,
+        # dans cet ORDRE de priorité (le plus exigeant d'abord) :
+        #   · SDP du programme de logements ≥ 1 800 m² → « un minimum de 30 % … affecté à des logements
+        #     aidés de type logements locatifs sociaux (LLTS, LLS, PLS) … du total de la SDP affecté aux
+        #     logements ». C'est du LOCATIF SOCIAL (pas d'accession) — l'exigence la plus forte. La
+        #     disposition « terrain > 6 000 m² » ne la RETIRE pas (audit bloquant 3) : on la teste AVANT.
+        #   · terrain d'habitation > 6 000 m² (SDP < 1 800) → « 30 % du nombre de logements … soit LLTS/
+        #     LLS/PLS, soit logements collectifs en accession sociale (PTZ/PSLA) ».
+        #   · SDP ∈ [1 500 ; 1 800[ OU programme ≥ 20 logements → « 30 % du nombre de logements … soit
+        #     logements aidés (LLTS/LLS/PLS), soit accession sociale (PTZ/PSLA) ».
+        # Les deux premiers restent en régime PLEIN (décote conservée — l'audit la valide) ; seul le
+        # LIBELLÉ change (il reprend les termes du texte). Le 3ᵉ reste INTERMÉDIAIRE (quota non chiffré).
+        if sdp_prog >= s_haut:
+            return _rc(True, "plein", f"programme {sdp_prog:.0f} m² ≥ {s_haut:.0f} m²",
+                       f"programme de logements chiffré ~{sdp_prog:.0f} m² ≥ {s_haut:.0f} m² : minimum "
+                       f"30 % de la SDP logements en logements locatifs sociaux (LLTS, LLS, PLS)",
+                       produits="logements locatifs sociaux (LLTS, LLS, PLS)")
+        if terrain > s_ter:
+            return _rc(True, "plein", f"terrain {terrain:.0f} m² > {s_ter:.0f} m²",
+                       f"terrain d'habitation ~{terrain:.0f} m² > {s_ter:.0f} m² : 30 % du nombre de "
+                       f"logements en logements locatifs sociaux (LLTS, LLS, PLS) ou accession sociale "
+                       f"collective (PTZ, PSLA)",
+                       produits="logements locatifs sociaux (LLTS, LLS, PLS) ou accession sociale "
+                                "collective (PTZ, PSLA)")
+        if sdp_prog >= s_sdp:
+            return _rc(True, "intermediaire",
+                       f"programme {sdp_prog:.0f} m² dans la bande {s_sdp:.0f}–{s_haut:.0f} m²",
+                       f"programme chiffré ~{sdp_prog:.0f} m² dans la bande {s_sdp:.0f}–{s_haut:.0f} m² : "
+                       "accession sociale admise, quota au nombre de logements",
+                       produits="logements aidés (LLTS, LLS, PLS) ou accession sociale (PTZ, PSLA)")
+        if logements >= s_log:
+            return _rc(True, "intermediaire",
+                       f"{logements:.0f} logements ≥ {s_log:.0f} (SDP < {s_haut:.0f} m²)",
+                       f"programme de ~{logements:.0f} logements ≥ {s_log:.0f} (programme {sdp_prog:.0f} m² "
+                       f"< {s_haut:.0f} m²) : accession sociale admise, quota au nombre de logements",
+                       produits="logements aidés (LLTS, LLS, PLS) ou accession sociale (PTZ, PSLA)")
+        return _rc(False, None, None,
+                   f"programme chiffré ~{sdp_prog:.0f} m² < seuil bas {s_sdp:.0f} m² "
+                   f"({logements:.0f} < {s_log:.0f} logts, terrain {terrain:.0f} ≤ {s_ter:.0f} m²)")
+
+    # autres communes : déclenchement HISTORIQUE sur le gabarit (régime plein), logique OU du texte.
+    if sdp_gabarit >= s_sdp:
+        return _rc(True, "plein", f"SDP {sdp_gabarit:.0f} m² ≥ {s_sdp:.0f} m²",
+                   f"programme SDP ~{sdp_gabarit:.0f} m² ≥ seuil {s_sdp:.0f} m²")
     if logements >= s_log:
-        return {"declenchee": True, "critere": f"{logements:.0f} logements ≥ {s_log:.0f}",
-                "detail": f"programme ~{logements:.0f} logements ≥ seuil {s_log:.0f}"}
+        return _rc(True, "plein", f"{logements:.0f} logements ≥ {s_log:.0f}",
+                   f"programme ~{logements:.0f} logements ≥ seuil {s_log:.0f}")
     if terrain > s_ter:
-        return {"declenchee": True, "critere": f"terrain {terrain:.0f} m² > {s_ter:.0f} m²",
-                "detail": f"terrain ~{terrain:.0f} m² > seuil {s_ter:.0f} m²"}
-    return {"declenchee": False, "critere": None,
-            "detail": (f"programme sous les seuils (SDP {sdp:.0f} < {s_sdp:.0f} m², "
-                       f"{logements:.0f} < {s_log:.0f} logts, terrain {terrain:.0f} ≤ {s_ter:.0f} m²)")}
+        return _rc(True, "plein", f"terrain {terrain:.0f} m² > {s_ter:.0f} m²",
+                   f"terrain ~{terrain:.0f} m² > seuil {s_ter:.0f} m²")
+    return _rc(False, None, None,
+               f"programme sous les seuils (SDP {sdp_gabarit:.0f} < {s_sdp:.0f} m², "
+               f"{logements:.0f} < {s_log:.0f} logts, terrain {terrain:.0f} ≤ {s_ter:.0f} m²)")
+
+
+def _mixite_obl_dict(mixite: bool, clause: dict | None, declenchee: bool, regime: str | None,
+                     zone_oblig: bool, intermediaire: bool, exclure_lls: bool, eco: dict,
+                     mixite_src: str | None, mixite_averts: list[str]) -> dict | None:
+    """OUTIL-ASSEMBLAGE-FIX-6 (LOT 1) — SOURCE UNIQUE du dict `mixite` servi à tous les écrans (fiche,
+    Bilan PDF/Excel, comparatif, Assemblage). Construit à l'identique par `compute_bilan` (scénario
+    servi) ET par `mixite_pour_programme` (programme SAISI du Bilan) — un seul format, un seul libellé."""
+    if not (mixite and clause):
+        return None
+    return {
+        "servitude": True, "declenchee": declenchee, "regime": regime,
+        # l'ORIGINE : règle de ZONE du règlement (Saint-Denis) vs secteur SMS (Saint-Paul).
+        "origine": ("zone_reglement" if zone_oblig else "secteur_sms"),
+        "critere": clause.get("critere"), "detail": clause.get("detail"),
+        "quota_pct": clause.get("quota_pct"), "produits": clause.get("produits"),
+        "article": clause.get("article"), "page": clause.get("page"),
+        "source": clause.get("source") or mixite_src,
+        "libelle": (eco.get("mixite_libelle") or "logements aidés"),
+        # OUTIL-ASSEMBLAGE-FIX-8 (LOT 2) — nombre de logements qui a servi au seuil, pour que les écrans
+        # puissent afficher le DÉNOMINATEUR (30 % de N logements, arrondi supérieur) à Saint-Paul.
+        "logements": float(eco.get("logements_mixite") or eco.get("logements_estimes") or 0.0),
+        "borne_haute": bool(declenchee and (intermediaire or exclure_lls)),
+        # OUTIL-ASSEMBLAGE-FIX-6 (LOT 4) — avertissements propres à la mixité (Marie Caze / Sans Souci),
+        # transmis par le canal `mixite` → l'Assemblage les PORTE comme la fiche (assemblage.py:433).
+        "avertissements": list(mixite_averts or []),
+    }
+
+
+def mixite_pour_programme(session: Session, parcel_id: int, logements: float,
+                          sdp_programme_m2: float) -> dict | None:
+    """OUTIL-ASSEMBLAGE-FIX-6 (LOT 1) — obligation de mixité évaluée pour le PROGRAMME RÉELLEMENT SAISI
+    (nombre de logements + SDP du programme), avec le MÊME moteur (`_clause_mixite`) et le MÊME contexte
+    calibré que le bilan servi, mais sur les grandeurs ENTRÉES par l'utilisateur — jamais le scénario
+    automatique de la parcelle. C'est ce qui corrige le Bilan PDF/Excel (audit bloquant 1) : un Bilan de
+    24 logts sur une zone à 30 n'hérite plus du « 15 % » du scénario auto à 39. Renvoie le dict `mixite`
+    (même forme que `Bilan.mixite`) ou None (zone sans obligation / parcelle non constructible)."""
+    ctx = contexte_bilan_servi(session, parcel_id)
+    if not ctx:
+        return None
+    hyp = ctx["hyp"]
+    eco = dict(ctx["eco"])
+    bp = ctx.get("base_params") or {}
+    eco["logements_estimes"] = float(logements or 0.0)
+    eco["sdp_max_m2"] = float(sdp_programme_m2 or 0.0)   # communes historiques : gabarit = programme saisi
+    zone_oblig = bool((eco.get("zone_mixite") or {}).get("seuil_logements"))
+    mixite = bool(eco.get("mixite")) or zone_oblig
+    if not mixite:
+        return None
+    clause = _clause_mixite({**eco, "sdp_programme_m2": float(sdp_programme_m2 or 0.0)}, hyp)
+    declenchee = bool(clause.get("declenchee"))
+    regime = clause.get("regime")
+    p_lls = min(1.0, max(0.0, float(hyp.pct_lls) / 100.0))
+    prix_lls = float(bp.get("prix_m2_lls") or hyp.prix_m2_lls or 0.0)
+    intermediaire = declenchee and regime == "intermediaire"
+    exclure_lls = declenchee and regime == "plein" and p_lls > 0 and not (prix_lls > 0)
+    averts: list[str] = []
+    if declenchee and eco.get("zac_avert_u4") and not eco.get("zac_mixite_exclue"):
+        averts.append(_AVERT_ZAC_MARIE_CAZE)
+    _commune_srv = (eco.get("commune") or "").strip()
+    mixite_src = hyp.mixite_source_ref or (
+        f"Estimé — seuils de mixité non calibrés pour {_commune_srv}" if _commune_srv
+        else "Estimé — seuils de mixité non calibrés pour cette commune")
+    return _mixite_obl_dict(mixite, clause, declenchee, regime, zone_oblig,
+                            intermediaire, exclure_lls, eco, mixite_src, averts)
 
 
 def _fiabilite_prix_neuf(niveau: str | None) -> tuple[str, list[str]]:
@@ -701,6 +1080,10 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     steps: list[Step] = []
     hypotheses: list[str] = []
     avert: list[str] = []
+    # OUTIL-ASSEMBLAGE-FIX-6 (LOT 4) — avertissements PROPRES À LA MIXITÉ (ex. exclusion ZAC Marie Caze /
+    # Sans Souci) : rangés à part pour VOYAGER avec `mixite` (fiche, comparatif, Assemblage lisent tous
+    # `mixite`), car l'Assemblage ne transmettait que `mixite` et perdait ces réserves (audit, finding 4).
+    mixite_averts: list[str] = []
 
     steps.append(Step("Surface habitable vendable",
                       "issue de la faisabilité (post-rendement, plafond, modulation)",
@@ -732,49 +1115,106 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                           f"DVF Région ODS · fiabilité {niveau}", prov="sourcee"))
 
     eco = contexte_eco or {}
-    mixite, pluvial = bool(eco.get("mixite")), bool(eco.get("pluvial"))
+    # OUTIL-ASSEMBLAGE-FIX-3 (LOT 3) — la clause s'arme soit par un secteur SMS (`eco["mixite"]`, cas
+    # Saint-Paul), soit par une OBLIGATION DE ZONE au nombre de logements (`eco["zone_mixite"]` avec
+    # `seuil_logements`, cas Saint-Denis Uavap). Avant, seul le SMS armait → l'obligation de zone de
+    # Saint-Denis était ignorée du bilan (relecture-2, finding 4).
+    _zone_oblig = bool((eco.get("zone_mixite") or {}).get("seuil_logements"))
+    mixite, pluvial = bool(eco.get("mixite")) or _zone_oblig, bool(eco.get("pluvial"))
     p_lls = min(1.0, max(0.0, float(hyp.pct_lls) / 100.0))
     # M-N P1-13 — source AFFICHÉE des seuils de mixité : la référence Sourcée SEULEMENT si le YAML
-    # de la commune servie la DÉCLARE (mixite_source_ref) ; sinon défaut → jamais l'Art. 2 d'une
-    # autre commune (un Estimé emprunté ne se présente pas en Sourcé).
-    mixite_src = hyp.mixite_source_ref or "Estimé — seuils de mixité par défaut (Saint-Paul)"
-    # Clause de mixité : déclenchée seulement si le PROGRAMME estimé franchit un seuil de l'Art. 2.
-    clause = _clause_mixite(eco, hyp) if mixite else None
+    # de la commune servie la DÉCLARE (mixite_source_ref) ; sinon défaut.
+    # OUTIL-ASSEMBLAGE-FIX-4 (LOT 3) — le défaut ne nomme PLUS « (Saint-Paul) » quand il est servi hors de
+    # Saint-Paul (c'était trompeur sur un document d'une autre commune) : il dit que les seuils sont estimés
+    # et non calibrés pour LA commune servie. Les obligations de zone (Saint-Denis) portent, elles, leur
+    # propre source « Règlement du PLU de {commune} » posée dans `_clause_mixite` (clause.source).
+    _commune_srv = (eco.get("commune") or "").strip()
+    mixite_src = hyp.mixite_source_ref or (
+        f"Estimé — seuils de mixité non calibrés pour {_commune_srv}" if _commune_srv
+        else "Estimé — seuils de mixité non calibrés pour cette commune")
+    # Clause de mixité : déclenchée seulement si le PROGRAMME franchit un seuil de l'Art. 2.
+    # OUTIL-ASSEMBLAGE-FIX-1 (LOT 3) — pour la commune à régime à bandes, le déclenchement porte sur le
+    # PROGRAMME CHIFFRÉ (surface vendable ÷ rendement), pas le gabarit théorique. On l'injecte ici (le
+    # cœur dispose de `surf` = surface vendable et du rendement) ; les autres communes l'ignorent.
+    _eco_clause = {**eco, "sdp_programme_m2": (surf / hyp.coef_rendement if hyp.coef_rendement else surf)}
+    clause = _clause_mixite(_eco_clause, hyp) if mixite else None
     declenchee = bool(clause and clause["declenchee"])
-    # Pondération du CA = clause déclenchée ET 30 % posé ET prix LLS calibré (jamais de prix fictif).
-    pondere = declenchee and p_lls > 0 and prix_lls > 0
-    # COMPARER-2 §2 — clause déclenchée MAIS prix LLS non calibré (ni secteur ni saisi) : on n'invente
-    # pas un prix LLS et on ne valorise pas la part aidée au plein prix marché. On l'EXCLUT du CA (LLS
-    # non chiffré) et on le DIT — jamais un 0 silencieux ni un plein prix trompeur.
-    exclure_lls = declenchee and p_lls > 0 and not (prix_lls > 0)
+    regime = (clause or {}).get("regime")
+    intermediaire = declenchee and regime == "intermediaire"   # bande 1500–1800 : quota non chiffré
+    # Pondération du CA = clause déclenchée en PLEIN régime ET 30 % posé ET prix LLS calibré (jamais de
+    # prix fictif). La bande intermédiaire (accession sociale, quota au nombre de logements) n'est PAS
+    # chiffrée faute de calibrage — CA au prix marché, dit à l'écran (on ne fabrique pas de pondération).
+    pondere = declenchee and regime == "plein" and p_lls > 0 and prix_lls > 0
+    # COMPARER-2 §2 — clause PLEINE déclenchée MAIS prix LLS non calibré : on n'invente pas un prix LLS
+    # et on ne valorise pas la part aidée au plein prix marché. On l'EXCLUT du CA (LLS non chiffré).
+    exclure_lls = declenchee and regime == "plein" and p_lls > 0 and not (prix_lls > 0)
     if pondere:
         _px = lambda x: (1.0 - p_lls) * float(x) + p_lls * prix_lls  # noqa: E731
     elif exclure_lls:
         _px = lambda x: (1.0 - p_lls) * float(x)                     # noqa: E731 — part LLS retirée du CA
     else:
-        _px = lambda x: float(x)                                      # noqa: E731
+        _px = lambda x: float(x)                                      # noqa: E731 — bande interm. / non déclenchée
     ca_bas, ca_cen, ca_haut = surf * _px(q1), surf * _px(med), surf * _px(q3)
     if mixite:
         lib_sms = eco.get("mixite_libelle") or "logements aidés"
-        # EXPORTS-1 lot 5 (5.1) : bloc unique DEUX lignes — (1) la SERVITUDE, présente au zonage ;
+        # OUTIL-ASSEMBLAGE-FIX-3 (LOT 3, relecture-2) — DISTINGUER l'origine : une obligation de ZONE du
+        # règlement (Saint-Denis Uavap, `zone_mixite.seuil_logements`) n'est PAS une servitude SMS. Le
+        # libellé le dit, au lieu de « servitude au zonage » (qui vaut pour un secteur SMS, cas Saint-Paul).
+        _mx_titre = ("Obligation de mixité — règlement de zone" if _zone_oblig
+                     else "Secteur de mixité sociale — servitude au zonage")
+        # EXPORTS-1 lot 5 (5.1) : bloc unique DEUX lignes — (1) l'obligation, présente au zonage ;
         # (2) son DÉCLENCHEMENT, seuils du règlement vs programme estimé. Les deux lisent LA même
         # clause (_clause_mixite) — fin du « quota imposé » (fiche) vs « non déclenchée » (banquier)
         # sans explication (audit A5).
-        steps.append(Step("Secteur de mixité sociale — servitude au zonage",
+        steps.append(Step(_mx_titre,
                           lib_sms, "OUI — quota conditionné au programme (ligne suivante)",
                           mixite_src, prov="derive"))
         if not declenchee:
             steps.append(Step("Clause de mixité sociale — non déclenchée",
                               clause["detail"], "pas de quota LLS sur ce programme",
                               mixite_src, prov="derive"))
+        elif intermediaire and _zone_oblig:
+            # OUTIL-ASSEMBLAGE-FIX-8 (LOT 2) — OBLIGATION DE ZONE (Saint-Denis Uavap & sœurs) traitée en
+            # régime intermédiaire au cœur du bilan (quota non chiffré, CA au prix marché), MAIS la part
+            # visée est « logements sociaux et/ou intermédiaires » — JAMAIS « accession sociale » (faux pour
+            # Saint-Denis : audit bloquant 2). Le libellé reprend donc les produits réels de la clause.
+            _prod = clause.get("produits") or "logements sociaux et/ou intermédiaires"
+            _qz = clause.get("quota_pct")
+            _qtxt = f"{int(_qz)} % de " if _qz else ""
+            steps.append(Step("Clause de mixité — obligation de zone (part aidée non chiffrée)",
+                              f"{clause['detail']} — quota au nombre de logements, non chiffré (prix de la "
+                              "part aidée non calibré pour cette commune)",
+                              "CA au prix marché (part aidée non chiffrée)",
+                              mixite_src, prov="estimee"))
+            avert.append(
+                f"Clause de mixité DÉCLENCHÉE ({clause['critere']}) : le règlement impose {_qtxt}{_prod}, "
+                "au nombre de logements. Prix de la part aidée non calibré → impact non chiffré, "
+                f"CA présenté au prix marché (borne haute). Source : {mixite_src}.")
+        elif intermediaire:
+            # OUTIL-ASSEMBLAGE-FIX-1 (LOT 3) — bande intermédiaire (Saint-Paul, 1500–1800 m²) : le
+            # règlement admet l'accession sociale et raisonne au nombre de logements ; le quota n'est
+            # PAS le 30 % LLS du plein régime et n'est pas calibré → on ne fabrique pas de pondération,
+            # le CA reste au prix marché et on le DIT (réserve). C'est ce qui réconcilie le trio CV :
+            # son programme chiffré (~1 583 m²) tombe dans cette bande, pas dans le plein régime.
+            steps.append(Step("Clause de mixité — bande intermédiaire (accession sociale)",
+                              f"{clause['detail']} — quota en accession sociale / au nombre de logements, "
+                              "non chiffré (hors 30 % LLS du plein régime)",
+                              "CA au prix marché (part aidée non chiffrée)",
+                              mixite_src, prov="estimee"))
+            avert.append(
+                f"Clause de mixité DÉCLENCHÉE en bande intermédiaire ({clause['critere']}) : le règlement "
+                "y admet l'accession sociale et raisonne au nombre de logements (pas le 30 % LLS du plein "
+                f"régime ≥ {hyp.mixite_sdp_seuil_haut_m2:.0f} m²). Quota non calibré → impact non chiffré, "
+                f"CA présenté au prix marché. Source : {mixite_src}.")
         elif pondere:
             # COMPARER-2 §2 — le prix LLS AFFICHÉ est celui RÉELLEMENT utilisé (prix_lls résolu par
-            # secteur), plus jamais `hyp.prix_m2_lls` (le placeholder 0 brut, qui faisait lire « ×0 »
-            # alors que le CA était calculé au prix de secteur).
-            steps.append(Step("CA pondéré — clause de mixité DÉCLENCHÉE",
-                              f"{clause['detail']} · prix mixé = (1−{p_lls:.0%})×prix DVF + "
-                              f"{p_lls:.0%}×{prix_lls:.0f} €/m² (LLS)",
-                              f"{_px(med):.0f} €/m² (médiane pondérée)",
+            # secteur), plus jamais `hyp.prix_m2_lls` (le placeholder 0 brut, qui faisait lire « ×0 »).
+            # OUTIL-ASSEMBLAGE-FIX-1 (LOT 3) — on AFFICHE les trois prix et leurs parts : libre, aidé,
+            # pondéré (le relecteur voyait 4 730 à l'écran mais le calcul utilisait 4 181 sans le dire).
+            steps.append(Step("CA pondéré — clause de mixité DÉCLENCHÉE (plein régime)",
+                              f"{clause['detail']} · prix libre {med:g} €/m² × {1 - p_lls:.0%} + prix aidé "
+                              f"{prix_lls:.0f} €/m² (LLS) × {p_lls:.0%}",
+                              f"{_px(med):.0f} €/m² pondéré (libre {med:g} · aidé {prix_lls:.0f} · part aidée {p_lls:.0%})",
                               f"{mixite_src} · pct_lls / prix_m2_lls", prov="estimee"))
         elif exclure_lls:  # COMPARER-2 §2 — prix LLS non calibré → part LLS EXCLUE du CA, dit clairement
             steps.append(Step("CA — part LLS exclue (non chiffrée)",
@@ -791,6 +1231,20 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                 f"Secteur de mixité sociale ({lib_sms}) — programme au-dessus des seuils estimés "
                 f"({clause['critere']}). Taux de logements aidés non calibré pour cette commune "
                 f"(seuils : {mixite_src}) → impact non chiffré.")
+        # OUTIL-ASSEMBLAGE-FIX-4 (LOT 2) — l'avertissement « exclusion ZAC non vérifiable » est RETIRÉ : le
+        # périmètre de la ZAC Savane des Tamarins EST connu (= la zone PLU AU3st, 156 parcelles en base,
+        # Art. 2 PDF p. 107). L'exemption est désormais posée SUR LA GÉOGRAPHIE (`eco["zac_mixite_exclue"]`
+        # armé pour AU3st par les context builders, qui déclenche la branche d'exemption de `_clause_mixite`)
+        # et ne contamine donc plus les parcelles U3/AU3c hors ZAC.
+        # OUTIL-ASSEMBLAGE-FIX-5 (LOT 1) — zones U4a/U4b/U4c (livret 4) : le règlement (Art. 2, PDF
+        # pp. 168-169) exclut la clause dans la ZAC Marie Caze et la ZAC Sans Souci, mais AUCUNE des deux
+        # n'a de zone/secteur dédié dans le zonage (Marie Caze n'existe que comme OAP 4.2, Sans Souci n'a
+        # aucun périmètre) : on NE PEUT PAS exempter sur la géographie. La clause s'applique donc (pas de
+        # décote retirée, aucun euro bougé), mais on DIT la réserve — sur ces zones seulement, et seulement
+        # quand elle est déclenchée.
+        if declenchee and eco.get("zac_avert_u4") and not eco.get("zac_mixite_exclue"):
+            avert.append(_AVERT_ZAC_MARIE_CAZE)
+            mixite_averts.append(_AVERT_ZAC_MARIE_CAZE)   # OUTIL-ASSEMBLAGE-FIX-6 (LOT 4) — voyage avec `mixite`
     # Coût de construction rapporté à la SURFACE DE PLANCHER. Coût au m² piloté par secteur
     # (cout_construction_m2_sdp) si calibré ; sinon fourchette YAML bas/haut.
     # M128-3-§1 : la SDP RETENUE au bilan = vendable retenu ÷ rendement (coef_rendement, SOURCE UNIQUE
@@ -930,13 +1384,19 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
             "clause_declenchee": declenchee,
             "clause_critere": (clause or {}).get("critere"),
             "clause_detail": (clause or {}).get("detail")}
+    # OUTIL-ASSEMBLAGE-FIX-2 (LOT 1) — obligation de mixité STRUCTURÉE, servie à tous les écrans (fiche,
+    # Bilan, Assemblage) : règle, régime, quota, article/page, produits. `borne_haute` = le résultat est
+    # une BORNE HAUTE au prix libre (régime intermédiaire NON chiffré, ou part aidée exclue faute de prix
+    # calibré), PAS le chiffre réglementaire.
+    mixite_obl = _mixite_obl_dict(mixite, clause, declenchee, regime, _zone_oblig,
+                                  intermediaire, exclure_lls, eco, mixite_src, mixite_averts)
     return Bilan(True, niveau, verdict, prix,
                  {"bas": ca_bas_r, "central": ca_cen_r, "haut": ca_haut_r},
                  # bas borné à 0 pour l'AFFICHAGE (audit O3) ; l'avertissement « charge
                  # foncière négative en bas de fourchette » reste émis quand c'est le cas.
                  {"bas": cf_bas_aff, "central": cf_cen_r, "haut": cf_haut_r,
                   "par_m2_terrain": par_m2},
-                 steps, hypotheses, avert, calc=calc)
+                 steps, hypotheses, avert, calc=calc, mixite=mixite_obl)
 
 
 # ── CALCULETTE DE CHARGE FONCIÈRE (mandat bilan-calculette) ────────────────────────────────
@@ -1051,6 +1511,9 @@ def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix:
         "charge_fonciere": cf,                  # {bas, central, haut, par_m2_terrain}
         "verdict": b.verdict,
         "avertissements": b.avertissements,
+        # OUTIL-ASSEMBLAGE-FIX-3 (LOT 1) — obligation de mixité (règle/article/page/régime/borne haute),
+        # pour que le PDF premium porte la MÊME mention que la fiche (plus de chiffre sans sa réserve).
+        "mixite": b.mixite,
         "marche": marche,
         # M22-F C9 (additif) : termes bruts du bilan (cc_bas/cc_haut, cout_vrd, coef) — le
         # diagramme en cascade de l'argumentaire les dessine sans RIEN recalculer.
@@ -1298,6 +1761,9 @@ def compute_mode_b(session: Session, idu: str, *,
             "prix_m2": round(px_terrain["prix_m2"]), "surface_m2": round(float(surface_parcelle)),
             "niveau": px_terrain["niveau"], "libelle": px_terrain["libelle"],
             "effectif": px_terrain.get("n"),   # FIX-8 (2) — nb de ventes utilisées, à côté de « Estimé »
+            # FIX-9 LOT C (3) — UNITÉ de l'effectif : « ventes » au secteur (actes), « sections » au
+            # repli communal (comptage de sections) ; jamais « ventes » pour des sections.
+            "effectif_unite": "ventes" if px_terrain["niveau"] == "secteur" else "sections",
             "etiquette": "Estimé",
         }
     porte_par_terrain = bool(terrain_nu and terrain_nu["valeur_eur"] > achat_max)
@@ -1312,10 +1778,21 @@ def compute_mode_b(session: Session, idu: str, *,
     except Exception:  # noqa: BLE001 — le locatif ne casse jamais le mode B
         sortie_locative = None
 
+    # FIX-9 LOT C (3) — EXPLIQUER pourquoi le Bilan affiche un prix que Comparer masque : il sert une
+    # médiane de SECTION dès `mode_b_prix_local` (3) ventes, alors que l'affichage public exige
+    # `seuil_section()` (8). On le DIT en clair, calculé depuis l'effectif réel d'un prix SECTORIEL
+    # (niveau 'secteur') sous le seuil public. None si aucun prix fin (repli communal, ou ≥ 8 ventes).
+    from ..dvf_secteur import seuil_section as _seuil_section
+    _seuil_public = _seuil_section()
+    _ns = [p["n"] for p in (px_terrain, px)
+           if p and p.get("niveau") == "secteur" and p.get("n") is not None and p["n"] < _seuil_public]
+    note_seuil = (f"Hypothèse de Bilan fondée sur {min(_ns)} ventes. "
+                  f"Un prix de marché est publié à partir de {_seuil_public} ventes." if _ns else None)
     return {
         "disponible": True,
         "trop_petit": False,
         "population_tier": tier,
+        "note_seuil": note_seuil,   # FIX-9 LOT C (3) — phrase d'explication du seuil (ou None)
         "porte": porte,           # M101 A2 — la porte réelle du mode B, en français lisible
         # M59-P1 (Q1) — surface du foncier (toujours servie, pour la ligne « hors valeur du
         # terrain »), repère « terrain nu au prix du secteur » (Estimé) + drapeau « valeur portée
@@ -1356,6 +1833,7 @@ def compute_mode_b(session: Session, idu: str, *,
                 "prix_m2": round(px["prix_m2"]),
                 "niveau": px["niveau"], "libelle": px["libelle"],
                 "effectif": px.get("n"),   # FIX-8 (2) — nb de ventes utilisées (le libellé le porte déjà)
+                "effectif_unite": "ventes" if px["niveau"] == "secteur" else "sections",   # FIX-9 LOT C (3)
                 "etiquette": "Sourcé (DVF)",
                 # M59-P1 (Q3) — périmètre DIT (pas d'harmonisation des moteurs, juste l'honnêteté) :
                 # le mode B lit des médianes sectorielles pré-agrégées, SANS rayon adaptatif (≠ le

@@ -15,12 +15,12 @@ from __future__ import annotations
 
 import math
 import os
-import time
+import tempfile
 from pathlib import Path
 
 import numpy as np
 
-WMS_DEFAUT = "https://data.geopf.fr/wms-r/wms"
+WMS_DEFAUT = "https://data.geopf.fr/wms-r"
 # GABARIT-3D-3 (correction) — la couche HIGHRES est, à La Réunion, du RGE ALTI ~5 m RÉÉCHANTILLONNÉ à la
 # demande (paliers de 4,5 m mesurés → « escalier »). On revient au vrai LiDAR HD MNT, dont la maille NATIVE
 # est 0,5 m (palier 0,5 m mesuré) : relief fin réel, même produit que l'ancien fond 1 m (justesse < 0,3 m).
@@ -106,6 +106,25 @@ def _fetch_wms(x0, y0, x1, y1) -> bytes:
     return r.content
 
 
+def _copies_couvrantes(dossier, bounds):
+    x0, y0, x1, y1 = bounds
+    candidates = []
+    for chemin in dossier.glob(f"{_PREFIXE}_*.tif"):
+        try:
+            gauche, bas, droite, haut = map(int, chemin.stem.split("_")[1:])
+        except ValueError:
+            continue
+        if gauche <= x0 and bas <= y0 and droite >= x1 and haut >= y1:
+            candidates.append(((droite - gauche) * (haut - bas), chemin))
+    return [chemin for _, chemin in sorted(candidates)]
+
+
+def _valider_copie(chemin, bounds):
+    import rasterio
+    with rasterio.open(chemin) as ds:
+        _fenetre_native(ds, bounds)
+
+
 def obtenir_fenetre(minx, miny, maxx, maxy, marge):
     """Rend (chemin_tif, source) pour la fenêtre : source ∈ {'copie', 'lidar_05m'} ; (None, None) si le
     service ne répond pas ET qu'aucune copie n'existe (→ l'appelant replie sur le fond 1 m).
@@ -113,16 +132,28 @@ def obtenir_fenetre(minx, miny, maxx, maxy, marge):
     Copie d'abord (0 appel extérieur) ; sinon appel WMS court, écriture en cache + éviction LRU."""
     x0, y0, x1, y1 = _fenetre(minx, miny, maxx, maxy, marge)
     f = cache_dir() / _cle(x0, y0, x1, y1)
-    if f.exists():
-        os.utime(f, None)                               # marque l'accès (LRU) → resservi sans appel
-        return f, "copie"
+    copies = [f] if f.is_file() else _copies_couvrantes(f.parent, (x0, y0, x1, y1))
+    for copie in copies:
+        try:
+            _valider_copie(copie, (x0, y0, x1, y1))
+            os.utime(copie, None)
+            return copie, "copie"
+        except (OSError, ValueError):  # éviction concurrente ou grille incompatible
+            continue
     try:
         contenu = _fetch_wms(x0, y0, x1, y1)
     except Exception:  # noqa: BLE001 — service indisponible/timeout : pas d'écran cassé, l'appelant replie
         return None, None
-    tmp = f.with_suffix(".tmp")
-    tmp.write_bytes(contenu)
-    os.replace(tmp, f)                                  # écriture atomique
+    with tempfile.NamedTemporaryFile(dir=f.parent, suffix=".tmp", delete=False) as tmp:
+        try:
+            tmp.write(contenu)
+            tmp.flush()
+            _valider_copie(tmp.name, (x0, y0, x1, y1))
+            os.replace(tmp.name, f)
+        except (OSError, ValueError):
+            return None, None
+        finally:
+            Path(tmp.name).unlink(missing_ok=True)                                  # écriture atomique
     _evict_lru(_cache_max())
     return f, "lidar_05m"
 
@@ -144,11 +175,30 @@ def acquisition(db, minx, miny, maxx, maxy):
         return None
 
 
-def lire_tif(chemin: Path):
+def _fenetre_native(ds, bounds):
+    from rasterio.windows import Window
+    if (ds.crs is None or ds.crs.to_epsg() not in (2975, 32740)
+            or not np.allclose([ds.transform.a, ds.transform.e, ds.transform.b, ds.transform.d],
+                               [RES, -RES, 0, 0], atol=1e-8, rtol=0)):
+        raise ValueError("Grille LiDAR incompatible")
+    requested = ds.window(*bounds)
+    values = [requested.col_off, requested.row_off, requested.width, requested.height]
+    if not all(abs(v - round(v)) < 1e-6 for v in values):
+        raise ValueError("Fenêtre non alignée sur la grille LiDAR")
+    col, row, width, height = map(round, values)
+    if min(row, col) < 0 or col + width > ds.width or row + height > ds.height:
+        raise ValueError("Couverture LiDAR partielle")
+    return Window(col, row, width, height)
+
+
+def lire_tif(chemin: Path, bounds=None):
     """(array float, ox, oy, pas) d'un GeoTIFF en cache — lecture pixel-native."""
     import rasterio
     with rasterio.open(chemin) as ds:
-        a = ds.read(1).astype("float64")
-        tr = ds.transform
+        window = None
+        if bounds is not None:
+            window = _fenetre_native(ds, bounds)
+        a = ds.read(1, window=window, masked=True).astype("float64").filled(np.nan)
+        tr = ds.window_transform(window) if window is not None else ds.transform
     a[(a <= -1000.0) | ~np.isfinite(a)] = np.nan
     return a, float(tr.c), float(tr.f), float(tr.a)

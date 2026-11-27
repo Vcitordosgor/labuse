@@ -148,6 +148,8 @@ def pct_parcelles_couche(db, commune: str, kind: str, total_parcelles: int,
     from ...cadastre_disparue import filtre_vivant_sql
     vivant = filtre_vivant_sql(db, "p")
     clause = "sl.kind = :k" + (" AND sl.subtype = :st" if subtype else "")
+    if kind == "georisque_alea":
+        clause += " AND (sl.attrs->>'niveau') IS DISTINCT FROM 'negligeable'"
     params = {"k": kind, "c": commune}
     if subtype:
         params["st"] = subtype

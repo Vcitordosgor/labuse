@@ -134,7 +134,12 @@ def _carnet(secteur: str, db: Session) -> dict:
     zan = None
     if _has(db, "commune_conso_enaf"):
         zan = db.execute(text(
-            "SELECT commune, conso_2021_2024_m2, source_nom FROM commune_conso_enaf WHERE insee = :i"),
+            "SELECT commune, conso_2021_2024_m2, "
+            "CAST(to_jsonb(e)->>'conso_2024_2025_m2' AS double precision) AS conso_2024_2025_m2, "
+            "CAST(to_jsonb(e)->>'hab_2024_2025_m2' AS double precision) AS hab_2024_2025_m2, "
+            "CAST(to_jsonb(e)->>'conso_2021_2025_m2' AS double precision) AS conso_2021_2025_m2, "
+            "CAST(to_jsonb(e)->>'hab_2021_2025_m2' AS double precision) AS hab_2021_2025_m2, "
+            "millesime, source_nom, source_url FROM commune_conso_enaf e WHERE insee = :i"),
             {"i": insee}).mappings().first()
 
     return {

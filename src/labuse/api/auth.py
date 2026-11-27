@@ -191,7 +191,10 @@ def session_info(token: str | None) -> dict | None:
         from ..db import session_scope
         with session_scope() as db:
             return session_utilisateur(db, token[2:])
-    except Exception:  # noqa: BLE001 — table absente (première install) → pas de session
+    except Exception as exc:  # table absente (première install) → pas de session
+        from ..db import requete_bdd_indisponible
+        if requete_bdd_indisponible(exc):
+            raise
         return None
 
 

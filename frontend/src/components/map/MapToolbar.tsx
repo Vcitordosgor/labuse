@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useLayoutEffect, useRef, useState } from 'react'
 import { useApp, type Basemap, type MapTool } from '../../store/useApp'
 import { ORTHO_YEARS } from './basemaps'   // FIX-FONDS B5 — millésimes partagés avec l'outil TEMPS
 import { Tip } from '../Tip'   // M62-P1 (c) : infobulles à 150 ms (survol) / immédiat (focus/clic)
@@ -20,7 +20,7 @@ const TOOLS: { key: MapTool; label: string; icon: JSX.Element; tip: string }[] =
     icon: <path d="M3 17 L17 3 M5.5 14.5 l1.6 1.6 M8.5 11.5 l1.6 1.6 M11.5 8.5 l1.6 1.6" stroke="currentColor" strokeWidth="1.4" fill="none" />,
   },
   {
-    key: 'surface', label: 'Surface', tip: 'Calculer un périmètre',
+    key: 'surface', label: 'Surface', tip: 'Mesurer une surface',
     icon: <path d="M4 6 L14 3.5 L16.5 13 L7 16.5 Z" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinejoin="round" />,
   },
   {
@@ -44,11 +44,48 @@ export function MapToolbar() {
   const ficheCommune = contexteCommune != null
   const decalage = ficheParcelle ? 416 : ficheCommune ? 436 : 16
   const [bmOpen, setBmOpen] = useState(false)
+  const [terrainOpen, setTerrainOpen] = useState(false)
+  const terrainButton = useRef<HTMLButtonElement>(null)
+  const fondButton = useRef<HTMLButtonElement>(null)
+  const menuPanel = useRef<HTMLDivElement>(null)
+  const menuPanelId = useId()
+  const millesime = ORTHO_YEARS.find((y) => y.an === orthoYear)
+  const carteAncienne = orthoYear === 'scan1950'
+  const fondLabel = basemap === 'ortho' && millesime && orthoYear !== 'now'
+    ? (carteAncienne ? millesime.label : `Ortho IGN · ${millesime.label}`)
+    : BASEMAPS.find((b) => b.key === basemap)?.label ?? 'Clair'
+
+  useLayoutEffect(() => {
+    const panel = menuPanel.current
+    if ((!bmOpen && !terrainOpen) || !panel) return
+    const consentBanner = document.querySelector('[data-cookie-consent]')
+    const fitPanel = () => {
+      const bottom = consentBanner?.isConnected ? consentBanner.getBoundingClientRect().top : window.innerHeight
+      panel.style.maxHeight = `${Math.max(0, bottom - panel.getBoundingClientRect().top - 16)}px`
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.stopPropagation()
+      event.preventDefault()
+      setBmOpen(false)
+      setTerrainOpen(false)
+      ;(terrainOpen ? terrainButton : fondButton).current?.focus()
+    }
+    fitPanel()
+    const resizeObserver = new ResizeObserver(fitPanel)
+    if (consentBanner) resizeObserver.observe(consentBanner)
+    window.addEventListener('resize', fitPanel)
+    window.addEventListener('keydown', closeOnEscape, true)
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', fitPanel)
+      window.removeEventListener('keydown', closeOnEscape, true)
+    }
+  }, [bmOpen, terrainOpen])
   // RETOURS-14 P4 — « 3D » devient un MENU (même composant que « Sombre »). Le chip « Bâtiments »
   // disparaît : le bâti extrudé est désormais une entrée du menu Relief. Trois modes exclusifs, un
-  // seul actif à la fois (comme un fond de carte). AUCUNE mention de LiDAR — relief = RGE ALTI,
-  // bâtiments = BD TOPO. « Relief + bâtiments » est le défaut à l'activation (batiVisible=true).
-  const [terrainOpen, setTerrainOpen] = useState(false)
+  // seul actif à la fois (comme un fond de carte).
+  // « Relief + bâtiments » est le défaut à l'activation (batiVisible=true).
   const modeRelief = !terrain3d ? 'flat' : batiVisible ? 'bati' : 'relief'
   const RELIEFS: { key: string; label: string; actif: boolean; apply: () => void }[] = [
     { key: 'flat', label: 'Aucun (2D)', actif: modeRelief === 'flat', apply: () => { setTerrain3d(false); setTerrainOpen(false) } },
@@ -70,33 +107,36 @@ export function MapToolbar() {
       {/* fond de plan */}
       <div className="relative">
         <button
-          onClick={() => setBmOpen((o) => !o)}
+          ref={fondButton}
+          aria-expanded={bmOpen}
+          aria-controls={bmOpen ? menuPanelId : undefined}
+          onClick={() => { setTerrainOpen(false); setBmOpen((o) => !o) }}
           /* RETOURS-19 Y1 — menu ouvert = ÉTAT ACTIF : vert opaque, contenu inversé sombre (avant : simple
              contour vert sur fond sombre). FINITIONS-1 (P3) — au SURVOL (état inactif), le bouton « Vue »
              (fond de plan) reçoit la MÊME animation verte que partout ailleurs (`hover-fill` : fond vert
              opaque, contenu inversé sombre) au lieu du simple éclaircissement du texte. */
           className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
             bmOpen ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-2 text-txt hover-fill'}`}
-          aria-label={`Fond de plan : ${BASEMAPS.find((b) => b.key === basemap)?.label ?? ''}`}
+          aria-label={`Fond de plan : ${fondLabel}`}
         >
           <svg viewBox="0 0 20 20" className="h-4 w-4">
             <polygon points="10,3 17,7 10,11 3,7" fill="none" stroke="currentColor" strokeWidth="1.4" />
             <polygon points="10,9.5 17,13.5 10,17.5 3,13.5" fill="none" stroke="currentColor" strokeWidth="1.4" opacity="0.5" />
           </svg>
-          {BASEMAPS.find((b) => b.key === basemap)?.label}
-          {basemap === 'ortho' && orthoYear !== 'now' && <span aria-hidden className={bmOpen ? 'text-mint-ink/80' : 'text-mint'}>· {ORTHO_YEARS.find((y) => y.an === orthoYear)?.label}</span>}
+          {fondLabel}
         </button>
         {bmOpen && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setBmOpen(false)} />
-            <div className="floating absolute right-0 top-11 z-20 w-64 p-3">
+            <div ref={menuPanel} id={menuPanelId} className="floating absolute right-0 top-11 z-20 w-64 overflow-y-auto overscroll-contain p-3">
               <p className="label-caps">Fond de plan</p>
               <div className="mt-2 flex flex-col gap-1">
                 {BASEMAPS.map((b) => (
-                  <button key={b.key} onClick={() => setBasemap(b.key)}
+                  <button key={b.key} aria-pressed={basemap === b.key && !(b.key === 'ortho' && carteAncienne)}
+                    onClick={() => b.key === 'ortho' && carteAncienne ? setOrthoYear('now') : setBasemap(b.key)}
                     /* RETOURS-19 Y1 — entrée ACTIVE = vert opaque, contenu inversé sombre. FINITIONS-2 (P2) —
                        au SURVOL d'une ligne non active, la même animation verte que partout (`hover-fill`). */
-                    className={`rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-quick ${basemap === b.key ? 'bg-mint font-medium text-mint-ink' : 'text-txt hover-fill'}`}>
+                    className={`rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-quick ${basemap === b.key && !(b.key === 'ortho' && carteAncienne) ? 'bg-mint font-medium text-mint-ink' : 'text-txt hover-fill'}`}>
                     {b.label}
                   </button>
                 ))}
@@ -107,10 +147,10 @@ export function MapToolbar() {
                   ci-dessus, visible seulement quand le menu est déplié. */}
               <div className="mt-1.5 flex flex-col gap-0.5">
                 {ORTHO_YEARS.map((y) => (
-                  <button key={y.an} onClick={() => setOrthoYear(y.an)}
+                  <button key={y.an} aria-pressed={basemap === 'ortho' && orthoYear === y.an} onClick={() => setOrthoYear(y.an)}
                     /* FINITIONS-2 (P2) — tranches « Remonter le temps » : survol vert (`hover-fill`) hors ligne active. */
                     className={`rounded-md px-2 py-1 text-left text-[11px] transition-colors duration-quick ${
-                      basemap === 'ortho' && orthoYear === y.an ? 'bg-mint font-medium text-mint-ink' : 'text-txt-mut hover-fill'}`}>
+                      basemap === 'ortho' && orthoYear === y.an ? 'bg-mint font-medium text-mint-ink' : 'text-txt hover-fill'}`}>
                     {y.label}
                   </button>
                 ))}
@@ -125,7 +165,10 @@ export function MapToolbar() {
           millésime ortho sur le bouton Sombre. Le chip « Bâtiments » a disparu (fondu dans le menu). */}
       <div className="relative">
         <button
-          onClick={() => setTerrainOpen((o) => !o)}
+          ref={terrainButton}
+          aria-expanded={terrainOpen}
+          aria-controls={terrainOpen ? menuPanelId : undefined}
+          onClick={() => { setBmOpen(false); setTerrainOpen((o) => !o) }}
           className={`flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
             terrainOpen ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-2 text-txt hover-fill'}`}
           aria-label="Relief 3D"
@@ -136,13 +179,13 @@ export function MapToolbar() {
         {terrainOpen && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setTerrainOpen(false)} />
-            <div className="floating absolute right-0 top-11 z-20 w-64 p-3">
+            <div ref={menuPanel} id={menuPanelId} className="floating absolute right-0 top-11 z-20 w-64 overflow-y-auto overscroll-contain p-3">
               <p className="label-caps">Relief</p>
               {/* transparence des sources (culture LABUSE) — jamais « LiDAR » : relief = RGE ALTI, bâtiments = BD TOPO */}
-              <p className="mt-0.5 text-[10.5px] text-txt-dim">Relief RGE ALTI · bâtiments BD TOPO</p>
+              <p className="mt-0.5 text-[10.5px] text-txt-dim">Terrain IGN · LiDAR HD selon couverture · bâtiments BD TOPO</p>
               <div className="mt-2 flex flex-col gap-1">
                 {RELIEFS.map((r) => (
-                  <button key={r.key} data-relief={r.key} onClick={r.apply}
+                  <button key={r.key} data-relief={r.key} aria-pressed={r.actif} onClick={() => { r.apply(); terrainButton.current?.focus() }}
                     className={`rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-quick ${r.actif ? 'bg-mint font-medium text-mint-ink' : 'text-txt hover-fill'}`}>
                     {r.label}
                   </button>
@@ -167,6 +210,7 @@ export function MapToolbar() {
                 className={`relative flex h-9 w-9 items-center justify-center border-b border-line-2 transition-colors duration-quick last:border-0 ${
                   tool === t.key ? 'bg-mint text-mint-ink' : 'text-txt-mut hover:text-txt'}`}
                 aria-label={t.label}
+                aria-pressed={tool === t.key}
               >
                 <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" aria-hidden="true">{t.icon}</svg>
               </button>

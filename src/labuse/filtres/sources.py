@@ -776,9 +776,9 @@ _ajout(_f(
     source_motif="DEAL — cartes de bruit%", portee_run=False,
     propres=[
         c.domaine("d_cbs_subtypes", "subtype",
-                  ("rn_lden", "rn_ln", "rd_lden", "rd_ln", "vc_lden", "vc_ln"),
-                  "bloquant", "Couches type c (dépassements Lden/Ln, RN/RD/VC)",
-                  "6 sous-couches fixées à l'ingestion — type b/a jamais servies (doublon/exposition)"),
+                  ("route_lden", "route_ln", "rn_lden", "rn_ln", "rd_lden", "rd_ln", "vc_lden", "vc_ln"),
+                  "bloquant", "Couches de type C (dépassements routiers Lden/Ln)",
+                  "Deux indicateurs sur le réseau routier, gestionnaires distincts dans les éditions antérieures"),
     ]))
 
 

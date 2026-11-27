@@ -122,34 +122,37 @@ DEPOTS_LIBELLE = "activité de dépôt (permis aboutis — les refus et dossiers
 
 
 def depots_recents(session, parcel_id: int, fenetre_mois: int = DEPOTS_FENETRE_MOIS) -> dict | None:
-    """M38 — activité de DÉPÔT récente (Sitadel3 `date_depot`), pour la fiche. Informatif seul :
-    lu par AUCUN calcul servi, ne touche ni tier ni verdict.
+    """M38 — activité de DÉPÔT récente, pour la fiche. Informatif seul : lu par AUCUN calcul servi, ne
+    touche ni tier ni verdict.
+
+    OUTIL-PERMIS-FIX-10 (point 1) — le compteur ET la dernière date passent par LA fonction unique
+    `permis_classe.depot_affichable_sql` (année de la date = AN_DEPOT) : un dépôt dont la date brute
+    contredit l'année de dépôt déclarée (ex. 9744012520010 : 09/03/2026 pour AN_DEPOT 2025) n'est NI
+    compté NI daté ici. Plus aucune lecture directe de la colonne brute.
 
     Deux lignes HIÉRARCHISÉES et DISTINCTES (arbitrage Vic Phase 0 §3), jamais fusionnées :
     - `parcelle` : dépôts rattachés (IDU) à LA parcelle consultée — « sur cette parcelle : … ».
     - `secteur`  : dépôts de la section cadastrale (préfixe IDU 10) — « sur le secteur : N sur M mois ».
 
-    Fenêtre glissante `fenetre_mois` (défaut nommé). Retourne None si AUCUN dépôt (ni parcelle ni
-    secteur) sur la fenêtre → pas de bloc vide hors couverture."""
-    row = session.execute(
-        text(
-            """
-            WITH p AS (SELECT idu FROM parcels WHERE id = :pid)
-            SELECT
-              count(*) FILTER (WHERE jsonb_exists(s.idu_codes, p.idu)) AS n_parcelle,
-              max(s.date_depot) FILTER (WHERE jsonb_exists(s.idu_codes, p.idu)) AS dernier_parcelle,
-              count(*) FILTER (WHERE EXISTS (
-                SELECT 1 FROM jsonb_array_elements_text(s.idu_codes) e
-                WHERE e LIKE left(p.idu, 10) || '%')) AS n_secteur,
-              max(s.date_depot) FILTER (WHERE EXISTS (
-                SELECT 1 FROM jsonb_array_elements_text(s.idu_codes) e
-                WHERE e LIKE left(p.idu, 10) || '%')) AS dernier_secteur
-            FROM sitadel_permits s, p
-            WHERE s.date_depot IS NOT NULL
-              AND s.date_depot >= (current_date - (:mois || ' months')::interval)
-            """
-        ), {"pid": parcel_id, "mois": fenetre_mois},
-    ).mappings().first()
+    Fenêtre glissante `fenetre_mois` (défaut nommé). Retourne None si AUCUN dépôt AFFICHABLE (ni parcelle
+    ni secteur) sur la fenêtre → pas de bloc vide hors couverture."""
+    from .. import permis_classe
+    # `aff` = CASE qui rend la date de dépôt AFFICHABLE (::date) ou NULL (concaténation : il contient un
+    # littéral `{4}` de regex, incompatible f-string). On compte et date EXCLUSIVEMENT sur cette valeur.
+    aff = permis_classe.depot_affichable_sql("s.")
+    _sect = ("EXISTS (SELECT 1 FROM jsonb_array_elements_text(dep.idu_codes) e "
+             "WHERE e LIKE left(p.idu, 10) || '%')")
+    sql = (
+        "WITH p AS (SELECT idu FROM parcels WHERE id = :pid), "
+        "dep AS (SELECT s.idu_codes AS idu_codes, (" + aff + ") AS d FROM sitadel_permits s) "
+        "SELECT "
+        "  count(*) FILTER (WHERE jsonb_exists(dep.idu_codes, p.idu)) AS n_parcelle, "
+        "  max(dep.d) FILTER (WHERE jsonb_exists(dep.idu_codes, p.idu)) AS dernier_parcelle, "
+        "  count(*) FILTER (WHERE " + _sect + ") AS n_secteur, "
+        "  max(dep.d) FILTER (WHERE " + _sect + ") AS dernier_secteur "
+        "FROM dep, p "
+        "WHERE dep.d IS NOT NULL AND dep.d >= (current_date - (:mois || ' months')::interval)")
+    row = session.execute(text(sql), {"pid": parcel_id, "mois": fenetre_mois}).mappings().first()
 
     n_parcelle = int(row["n_parcelle"]) if row else 0
     n_secteur = int(row["n_secteur"]) if row else 0
@@ -198,7 +201,7 @@ def _nature(raw: dict | None) -> str:
         try:
             s = int(float(surf))
             if s > 0:
-                bits.append(f"~{s} m² hab.")
+                bits.append(f"~{s} m² de plancher habitation")
         except (TypeError, ValueError):
             pass
     return " · ".join(bits) or "projet (non résidentiel ou non précisé)"

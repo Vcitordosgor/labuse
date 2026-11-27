@@ -56,6 +56,32 @@ def test_horizon_ingester_respecte_si_pas_de_curation():
     assert r["horizon"] == date(2017, 6, 1) and r["a_verifier"] is True
 
 
+def test_edition_inec_recente_avec_periode_historique():
+    date_edition = date(2026, 8, 24)
+    resultat = ech.echeance_pour("Cerema / GéoLittoral — érosion",
+                                "INEC 2026 : période 1950–2020", date_edition, AUJ)
+    assert resultat["horizon"] == date_edition
+    assert resultat["a_verifier"] is False
+
+
+def test_annee_seule_ne_devient_pas_une_date_de_publication():
+    from sqlalchemy import create_engine, text
+
+    engine = create_engine("sqlite://")
+    with engine.begin() as c:
+        c.execute(text("CREATE TABLE data_sources (id int, name text, source_millesime text, "
+                       "source_horizon_at date, prochain_millesime_at date)"))
+        c.execute(text("CREATE TABLE spatial_layers (data_source_id int)"))
+        c.execute(text("INSERT INTO spatial_layers VALUES (1)"))
+        c.execute(text("INSERT INTO data_sources VALUES (1, 'Carte', 'Édition 2026', NULL, NULL)"))
+    ech.ensure_echeances_couches(engine)
+    with engine.connect() as c:
+        horizon, prochaine_revue = c.execute(text(
+            "SELECT source_horizon_at, prochain_millesime_at FROM data_sources")).one()
+    assert horizon is None
+    assert prochaine_revue is not None
+
+
 # ─────────────────────────── Q3 · ortho plus récente pour La Réunion ───────────────────────────
 _CAPS = (
     "<Layer><ows:Identifier>ORTHOIMAGERY.ORTHOPHOTOS.ORTHO-EXPRESS.2024</ows:Identifier></Layer>"

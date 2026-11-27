@@ -1,0 +1,14 @@
+[pc_caducs] AVANT n=4836 md5=85b13fd6cf01cd0bac2a8a8db46eb221 · sauvegarde pc_caducs_bak_fix13__20261125_190346
+[pc_caducs] APRÈS n=4440 md5=6ae694a6d71df5d343468fe00f8eb15a
+[pc_caducs] recompte indépendant sitadel (règle date) = 4440 · écart = 0
+[pc_caducs] rollback testé (copie) : empreinte restaurée == AVANT : True
+
+[alertes] AVANT n=3140 md5=77c9d6fa2c900668bec93f2f286a4b97 · à annoter 258 · sauvegarde alertes_bak_fix12__annule_20261125_190346
+[alertes] annotées 258 · APRÈS n=3140 md5=dd495c5596bf147d71a113d9702e1407
+[alertes] event_log AVANT=2359 APRÈS=2359 → réémission : AUCUNE
+[alertes] rollback testé (copie) : empreinte restaurée == AVANT : True
+[alertes] témoin 97441513A0361 : 'PC 97441513A0361 autorisé le 2013-09-09 · annulé depuis'
+
+TOUT VERT — commit
+RETOUR ARRIÈRE pc_caducs : TRUNCATE pc_caducs; INSERT SELECT * FROM pc_caducs_bak_fix13__20261125_190346;
+RETOUR ARRIÈRE alertes   : labuse ... alertes_migration.rollback(alertes_bak_fix12__annule_20261125_190346)

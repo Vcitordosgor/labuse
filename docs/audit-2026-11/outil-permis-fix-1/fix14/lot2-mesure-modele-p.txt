@@ -1,0 +1,25 @@
+=== 1 · Variables FAUSSES : péremption des couples (permit_id, idu) ===
+  couples source (sitadel)        : 60301
+  lignes p_model_permits          : 59880
+  couples à DATE divergente       : 144  (sur 143 parcelles)
+  couples MANQUANTS (source→pmp)  : 445  (sur 437 parcelles)
+  couples FANTÔMES (pmp→source)   : 24
+  => PARCELLES à variable modèle P potentiellement fausse : 604
+
+=== 2 · Rattachement defisc / pro_pc (non daté) ===
+  parcelles avec PC (p_model_permits, drapeau pro_pc) : 45507
+  parcelles avec PC (sitadel, vérité)                 : 45780
+  => parcelles PC perdues par le drapeau pro_pc        : 273
+
+=== 3 · Classement SERVI q_v20 — ne bouge pas (preuve) ===
+  table servie parcel_p_score_v2 présente : True
+  run servi (served_run)                  : None
+  lignes parcel_p_score_v2 (figées)       : 1299687
+  => aucune écriture ce tour + aucun fichier scoring modifié (LOT 2) → q_v20 servi inchangé.
+     Les features du modèle P ne sont relues qu'au PROCHAIN run (q_v25).
+
+=== 4 · À reconstruire AVANT q_v25 ===
+  1) scoring/p_model/sql.build_permits  → p_model_permits = DISTINCT sitadel.date::date (table fraîche)
+  2) scoring/p_model/sql.build_dataset + p_model/ext_sql.build_ext_dataset (features)
+  3) chaîne q_v2 (qv12/qv14/monitoring) relue sur la table reconstruite
+  defisc_fenetres / dvf_prix_neuf : se rafraîchissent aussi via build_permits (rattachement).

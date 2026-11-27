@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Optional
 
-from shapely import minimum_rotated_rectangle
+import numpy as np
+from shapely import box, covers, linestrings, minimum_rotated_rectangle
 from shapely.affinity import rotate, translate
 from shapely.geometry import LineString, MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
@@ -140,7 +142,14 @@ def _bande_x(zone: Polygon, y0: float, y1: float, x0: float, x1: float,
     ~convexe, le rectangle [a,b]×[y0,y1] ⊆ zone). Robuste quand la zone ne touche son rectangle
     englobant qu'en des sommets. None si on reste sous `min_len`."""
     n = int((x1 - x0) / pas)
-    dedans = [zone.covers(LineString([(x0 + k * pas, y0), (x0 + k * pas, y1)])) for k in range(n + 1)]
+    if x1 - x0 < min_len:
+        return None
+    # Même grille métrique pour chaque coupe, testée en bloc dans GEOS.
+    xs = x0 + np.arange(n + 1) * pas
+    segments = np.empty((n + 1, 2, 2))
+    segments[:, :, 0] = xs[:, None]
+    segments[:, :, 1] = (y0, y1)
+    dedans = covers(zone, linestrings(segments))
     best = (0.0, None)
     i = 0
     while i <= n:
@@ -159,6 +168,8 @@ def _bande_x(zone: Polygon, y0: float, y1: float, x0: float, x1: float,
     return best[1]
 
 
+# Le nombre d'étages et le programme ne changent pas la bande géométrique.
+@lru_cache(maxsize=256)
 def _meilleure_bande(zone: Polygon, y_lo: float, y_haut: float, D: float, x0: float, x1: float,
                      plaquer_bas: bool) -> Optional[tuple[float, float, float, float]]:
     """Fait glisser une bande de profondeur D entre y_lo et y_haut et garde la position donnant la
@@ -208,13 +219,11 @@ def _repartir_prorata(proportions: dict[str, int], total: int) -> dict[str, int]
     for t in proportions:
         if alloc[t] == 0 and sum(alloc.values()) < total:
             alloc[t] = 1
-    reste = total - sum(alloc.values())
-    ordre = sorted(proportions, key=lambda t: (brut[t] - int(brut[t]), proportions[t], t), reverse=True)
-    i = 0
-    while reste > 0 and ordre:
-        alloc[ordre[i % len(ordre)]] += 1
-        reste -= 1
-        i += 1
+    # Une typologie déjà portée à un logement a consommé son reste.
+    # Attribuer chaque place suivante au déficit encore réel.
+    for _ in range(total - sum(alloc.values())):
+        t = max(proportions, key=lambda t: (brut[t] - alloc[t], proportions[t], t))
+        alloc[t] += 1
     return alloc
 
 
@@ -278,10 +287,15 @@ def _tiler_modules(conv: Conventions, x0: float, x1: float, repartition: list[st
 
 
 def poser_barre(scene: Scene, conv: Conventions, *, x_start: float, x_end: float,
-                repartition: list[str], niveaux: int, ref: str = "B") -> int:
+                repartition: list[str], niveaux: int, ref: str = "B",
+                intervalle_y: Optional[tuple[float, float]] = None) -> int:
     """Pose une barre (emprise + modules/noyau/coursive sur `niveaux`) dans la zone, le long de
     l'axe x, plaquée sur la grande limite OPPOSÉE à la voie. Renvoie modules/niveau posés (0 si échec)."""
     zx0, zy0, zx1, zy1 = scene.zone_local.bounds
+    if intervalle_y is not None:
+        zy0, zy1 = max(zy0, intervalle_y[0]), min(zy1, intervalle_y[1])
+        if zy1 - zy0 < conv.profondeur_m:
+            return 0
     D = conv.profondeur_m
     # barre plaquée sur la grande limite OPPOSÉE à la voie ; coursive côté voie
     plaquer_bas = not scene.voie_bas       # voie en haut -> barre en bas (plaquer_bas=True)
@@ -320,17 +334,14 @@ _OUVERTURE_BANDE_M = 1.2  # ouverture de la bande d'allée : retire les étrangl
                           # c'est le dégagement DUR qui tranche (on n'escamote pas un vrai défaut de largeur).
 
 
-def _poser_une_bande(scene: Scene, conv: Conventions, free: BaseGeometry, bati: Optional[BaseGeometry],
-                     reseau: Optional[BaseGeometry], cible: int, bounds):
-    """Pose UNE bande d'allée (places des deux côtés si la largeur le permet) dans l'espace `free`, reliée
-    par un accès à `reseau` (voie ∪ allées déjà posées). Renvoie (nb, allée, accès, places, cotes) ou None."""
+@lru_cache(maxsize=16)
+def _bandes_stationnement(free, bounds, pl, pw, aw):
+    """Bandes classées par nombre de places, avant vérification de leur raccordement."""
     ax0, ay0, ax1, ay1 = bounds
-    pl, pw, aw = conv.place_longueur_m, conv.place_largeur_m, conv.allee_largeur_m
+    # Les abscisses restent sur la grille de la parcelle pour toutes les allées.
+    colonnes = np.arange(int((ax1 - ax0 + 1e-9) / pw)) * pw + ax0
 
-    def dans_libre(p: Polygon) -> bool:
-        return free.covers(p.buffer(-1e-9))
-
-    best = None
+    bandes = []
     yc = ay0 + aw / 2.0
     while yc + aw / 2.0 <= ay1 + 1e-9:
         allee_g = free.intersection(rect(ax0, yc - aw / 2.0, ax1, yc + aw / 2.0))
@@ -343,7 +354,7 @@ def _poser_une_bande(scene: Scene, conv: Conventions, free: BaseGeometry, bati: 
         # tronçons trop minces → la bande se pose où elle est PLEINE (ex. au-delà du bâti), pas en travers de
         # lui avec une allée de 1 m que le dégagement dur rejetterait ensuite. Clé du pavage multi-bandes.
         ouvert = allee_g.buffer(-_OUVERTURE_BANDE_M).buffer(_OUVERTURE_BANDE_M)
-        allee_g = _plus_grand(ouvert) if not ouvert.is_empty else allee_g
+        allee_g = _plus_grand(ouvert.intersection(allee_g)) if not ouvert.is_empty else allee_g
         if allee_g.is_empty or not isinstance(allee_g, Polygon):
             continue
         mnx, mny, mxx, mxy = allee_g.bounds
@@ -353,21 +364,39 @@ def _poser_une_bande(scene: Scene, conv: Conventions, free: BaseGeometry, bati: 
         cands = []
         for (yr0, yr1, side) in [(cyc - aw / 2.0 - pl, cyc - aw / 2.0, "bas"),
                                  (cyc + aw / 2.0, cyc + aw / 2.0 + pl, "haut")]:
-            x = ax0
-            while x + pw <= ax1 + 1e-9:
-                p = rect(x, yr0, x + pw, yr1)
-                x += pw
-                if dans_libre(p) and p.distance(allee_g) < 1e-6:
-                    cands.append((p, side))
+            dedans = covers(free, box(colonnes + 1e-9, yr0 + 1e-9,
+                                      colonnes + pw - 1e-9, yr1 - 1e-9))
+            devant = box(colonnes + 1e-9, cyc - aw / 2.0 + 1e-9,
+                         colonnes + pw - 1e-9, cyc + aw / 2.0 - 1e-9)
+            cands.extend((x, yr0, side) for x in colonnes[dedans & covers(allee_g, devant)])
         if not cands:
             continue
         key = (len(cands), -cyc)
-        if best is None or key > best[0]:
-            best = (key, allee_g, cands)
-    if best is None:
-        return None
-    _, allee_g, cands = best
-    tries = sorted(cands, key=lambda pc: (round(pc[0].bounds[1], 2), round(pc[0].bounds[0], 2)))
+        bandes.append((key, allee_g, cands))
+    return sorted(bandes, key=lambda bande: bande[0], reverse=True)
+
+
+def _poser_une_bande(scene: Scene, conv: Conventions, free: BaseGeometry, bati: Optional[BaseGeometry],
+                     reseau: Optional[BaseGeometry], cible: int, bounds):
+    """Pose UNE bande d'allée (places des deux côtés si la largeur le permet) dans l'espace `free`, reliée
+    par un accès à `reseau` (voie ∪ allées déjà posées). Renvoie (nb, allée, accès, places, cotes) ou None."""
+    ax0, ay0, ax1, ay1 = bounds
+    pl, pw, aw = conv.place_longueur_m, conv.place_largeur_m, conv.allee_largeur_m
+
+    occupe = [o.geom_local for o in scene.objets if o.kind in ("place", "allee", "acces")]
+    for _, allee_g, cands in _bandes_stationnement(free, bounds, pl, pw, aw):
+        raccord = _raccorder_bande(scene, conv, bati, reseau, cible, allee_g, cands, ay0, ay1)
+        if raccord is not None:
+            _, _, acces, _, _ = raccord
+            if all(acces.intersection(obj).area < 1e-6 for obj in occupe):
+                return raccord
+    return None
+
+
+def _raccorder_bande(scene, conv, bati, reseau, cible, allee_g, cands, ay0, ay1):
+    # Les candidats arrivent rangée basse puis haute, par abscisse croissante.
+    tries = [(rect(x, y, x + conv.place_largeur_m, y + conv.place_longueur_m), side)
+             for x, y, side in cands]
 
     def _trim_allee(places_pc, acces=None):
         xs = [p.bounds[0] for p, _ in places_pc] + [p.bounds[2] for p, _ in places_pc]

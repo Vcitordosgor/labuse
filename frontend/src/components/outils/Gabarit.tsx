@@ -1,7 +1,8 @@
+import { Implantation, CotesProjet, PdfProjet, type ProjetDessine } from './Implantation'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'   // RETOURS-26 (pt 4) — étiquettes de hauteur sur la vue 3D (Marker)
 import { useQuery } from '@tanstack/react-query'
-import { getGabarit, docGabaritUrl, getMoi, type GabaritResult, type GabGeom } from '../../lib/api'
+import { getGabarit, getGabaritRelief, docGabaritUrl, getMoi, type GabaritResult, type GabGeom } from '../../lib/api'
 
 // GABARIT-3D-1 (pilote, étape 2) — visionneuse Three.js chargée À LA DEMANDE (hors bundle principal),
 // réservée aux admins. N'affecte ni la vue par défaut, ni les chiffres servis.
@@ -9,6 +10,7 @@ const GabaritViewer3D = lazy(() =>
   import('./GabaritViewer3D').then((m) => ({ default: m.GabaritViewer3D })))
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'   // RECETTE-OUTILS-1 (34) — export = doc Gabarit
 import { fmtInt } from '../../lib/format'
+import { EmpriseProjet, mesure } from './EmpriseProjet'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
 import { Squelette } from '../Loading'
@@ -31,7 +33,7 @@ const C_CONTOUR = '#ffffff'   // contour cadastral
 const C_BATI = '#9aa0a6'      // bâti existant — gris neutre (un FAIT contextuel, jamais un signal)
 
 const SRC = 'gabarit-outil'
-const LAYERS = ['gabarit-zone', 'gabarit-contour', 'gabarit-retrait', 'gabarit-excl', 'gabarit-zone-3d',
+const LAYERS = ['gabarit-projet', 'gabarit-projet-cotes', 'gabarit-zone', 'gabarit-contour', 'gabarit-retrait', 'gabarit-excl', 'gabarit-zone-3d',
                 'gabarit-bati', 'gabarit-bati-line', 'gabarit-bati-3d']
 // RECETTE-OUTILS-2 (R15) — le liseré blanc de sélection de la carte de base (`selection-line`/`-halo`,
 // posé depuis `getParcelGeojson`) est tracé depuis une AUTRE source que le gabarit (contour du moteur) :
@@ -42,6 +44,8 @@ const LAYERS = ['gabarit-zone', 'gabarit-contour', 'gabarit-retrait', 'gabarit-e
 const SEL_BASE = ['selection-line', 'selection-halo']
 
 type MapLike = {
+  getPitch: () => number
+  getTerrain: () => unknown
   getSource: (id: string) => unknown
   addSource: (id: string, s: unknown) => void
   removeSource: (id: string) => void
@@ -53,6 +57,11 @@ type MapLike = {
 
 function getMap(): MapLike | null {
   return (window as unknown as Record<string, MapLike | undefined>).__labuse_map ?? null
+}
+
+function contourCadastral(res?: GabaritResult): GabGeom {
+  const parcelle = res?.raccordement?.parcelle as { contour_entier?: GabGeom } | undefined
+  return parcelle?.contour_entier ?? res?.contourGeoJSON ?? null
 }
 
 function feat(geom: GabGeom, kind: string) {
@@ -101,11 +110,62 @@ function mkHauteurEl(texte: string, couleur: string): HTMLDivElement {
 }
 
 /** Dessine (ou retire) les couches réglementaires sur la carte, seulement après validation réussie. */
-function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVisible: boolean) {
+function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVisible: boolean, fond?: string, projet?: ProjetDessine | null) {
   // RETOURS-26 (pt 4) — étiquettes de hauteur (Marker) posées sur la vue 3D ; retirées à chaque passe.
   const labels = useRef<maplibregl.Marker[]>([])
+  const [map, setMap] = useState(getMap)
+  const [etatRelief, setEtatRelief] = useState<'chargement' | 'pret' | 'erreur'>('chargement')
   useEffect(() => {
-    const m = getMap()
+    const ready = () => setMap(getMap())
+    window.addEventListener('labuse:map-ready', ready)
+    ready()
+    return () => window.removeEventListener('labuse:map-ready', ready)
+  }, [])
+  useEffect(() => {
+    setEtatRelief('chargement')
+    const m = map as unknown as maplibregl.Map | null
+    if (!m || !terrain3d || !fond || !res) return
+    const id = 'gabarit-mnt'
+    let tuileRecue = false
+    // En altitude, incliner la caméra avant la première tuile peut la placer sous le terrain.
+    const incliner = () => {
+      if (!tuileRecue || !m.isSourceLoaded(id)) return
+      m.off('render', incliner)
+      m.easeTo({ pitch: 45, duration: 400 })
+    }
+    const onSource = (e: maplibregl.MapSourceDataEvent) => {
+      if (e.sourceId === id && e.tile?.state === 'loaded') {
+        tuileRecue = true
+        setEtatRelief('pret')
+      }
+    }
+    const onError = (e: maplibregl.ErrorEvent & { sourceId?: string }) => {
+      if (e.sourceId === id) setEtatRelief('erreur')
+    }
+    m.on('sourcedata', onSource)
+    m.on('error', onError)
+    try {
+      m.addSource(id, { type: 'raster-dem', encoding: 'terrarium', tileSize: 256, minzoom: 10, maxzoom: 19,
+        tiles: [`${location.origin}/outils/gabarit/relief/tuiles/${encodeURIComponent(fond)}/{z}/{x}/{y}.png`],
+        attribution: 'Relief © IGN' })
+      m.setPitch(0)
+      m.setTerrain({ source: id, exaggeration: 1 })
+      m.on('render', incliner)
+      const avant = ['gabarit-retrait', 'gabarit-zone', 'gabarit-contour'].find(k => m.getLayer(k))
+      m.addLayer({ id: 'gabarit-ombrage', type: 'hillshade', source: id,
+        paint: { 'hillshade-exaggeration': 0.35 } }, avant)
+    } catch { setEtatRelief('erreur') }
+    return () => {
+      m.off('render', incliner)
+      m.off('sourcedata', onSource)
+      m.off('error', onError)
+      if (m.getTerrain()?.source === id) m.setTerrain(null)
+      if (m.getLayer('gabarit-ombrage')) m.removeLayer('gabarit-ombrage')
+      if (m.getSource(id)) m.removeSource(id)
+    }
+  }, [map, terrain3d, fond, res])
+  useEffect(() => {
+    const m = map
     if (!m) return
     const setBaseSel = (v: 'visible' | 'none') =>
       SEL_BASE.forEach((id) => { try { const mm = m as unknown as { setLayoutProperty?: (i: string, p: string, x: string) => void }; if (m.getLayer(id)) mm.setLayoutProperty?.(id, 'visibility', v) } catch { /* noop */ } })
@@ -133,22 +193,24 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVi
     // Feature porte sa hauteur mesurée (LiDAR HD, à défaut BD TOPO) pour l'extrusion 3D.
     const batiFeats = (res.batiExistantGeoJSON?.features ?? []).map((f) => ({
       type: 'Feature' as const,
-      properties: { kind: 'bati', hauteur_m: f.properties?.hauteur_m ?? null },
+      properties: { kind: 'bati', hauteur_m: f.properties?.hauteur_bdtopo_m ?? null },
       geometry: f.geometry,
     }))
     const features = [
-      ...(ok
+      ...(res.status === 'ok'
         ? [
             feat(res.retraitsGeoJSON ?? null, 'retrait'),
             feat(res.exclusionsGeoJSON ?? null, 'excl'),
             feat(res.zoneImplantationGeoJSON ?? null, 'zone'),
-            feat(res.contourGeoJSON ?? null, 'contour'),
+            ...(projet ? [feat(projet.bilan.contour, 'projet'), ...projet.bilan.cotes.map(c => feat({type:'LineString', coordinates:c.wgs}, 'cote-projet'))] : []),
+            ...(terrain3d && !projet ? [feat(res.exempleEmpriseGeoJSON ?? null, 'exemple')] : []),
+            feat(contourCadastral(res), 'contour'),
           ]
-        : [feat(res.contourGeoJSON ?? null, 'contour')]).filter(Boolean),
+        : [feat(contourCadastral(res), 'contour')]).filter(Boolean),
       ...batiFeats,
     ]
-    m.addSource(SRC, { type: 'geojson', data: { type: 'FeatureCollection', features } })
-    if (ok) {
+    m.addSource(SRC, { type: 'geojson', tolerance: 0, maxzoom: 20, data: { type: 'FeatureCollection', features } })
+    if (res.status === 'ok') {
       m.addLayer({ id: 'gabarit-retrait', type: 'fill', source: SRC, filter: ['==', 'kind', 'retrait'],
         paint: { 'fill-color': C_RETRAIT, 'fill-opacity': 0.3 } })
       m.addLayer({ id: 'gabarit-excl', type: 'fill', source: SRC, filter: ['==', 'kind', 'excl'],
@@ -166,56 +228,41 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVi
     m.addLayer({ id: 'gabarit-contour', type: 'line', source: SRC, filter: ['==', 'kind', 'contour'],
       paint: { 'line-color': C_CONTOUR, 'line-width': 1.5, 'line-dasharray': [2, 1] } })
     setBaseSel('none')   // R15 — un seul contour (celui du gabarit, aligné à ses couches)
-    // 3D : seule la ZONE (enveloppe réglementaire, vert) est extrudée — à la hauteur SOURCÉE (une RÈGLE,
-    // fiable). RETOURS-27 (pt 3, correction) — le bâti existant n'est PLUS extrudé à la hauteur LiDAR :
-    // cette hauteur n'est pas rattachée de façon sûre au bâtiment dessiné (elle peut venir d'un bâtiment
-    // voisin qui touche la parcelle). On ne dessine donc AUCUN volume de bâti ; l'empreinte 2D grise
-    // (gabarit-bati) reste pour situer le bâti, et le faîtage LiDAR est donné comme une valeur de PARCELLE
-    // (étiquette flottante, non attachée à un volume).
-    if (ok && terrain3d && res.hauteurReglementaireM != null) {
+    if (terrain3d && batiVisible && batiFeats.length) {
+      m.addLayer({ id: 'gabarit-bati-3d', type: 'fill-extrusion', source: SRC,
+        filter: ['all', ['==', 'kind', 'bati'], ['>', 'hauteur_m', 0]],
+        paint: { 'fill-extrusion-color': C_BATI, 'fill-extrusion-height': ['get', 'hauteur_m'] } })
+    }
+    if (projet) {
+      m.addLayer({id:'gabarit-projet', type:'fill', source:SRC, filter:['==','kind','projet'],
+        paint:{'fill-color':'#669cff','fill-opacity':0.72,'fill-outline-color':'#164881'}})
+      m.addLayer({id:'gabarit-projet-cotes', type:'line', source:SRC, filter:['==','kind','cote-projet'],
+        paint:{'line-color':'#ffbd67','line-width':2,'line-dasharray':[3,2]}})
+    }
+    if (!projet && ok && terrain3d && res.exempleEmpriseGeoJSON && res.hauteurReglementaireM != null) {
       m.addLayer({ id: 'gabarit-zone-3d', type: 'fill-extrusion', source: SRC,
-        filter: ['==', 'kind', 'zone'],
-        paint: { 'fill-extrusion-color': C_ZONE, 'fill-extrusion-opacity': 0.6,
+        filter: ['==', 'kind', 'exemple'],
+        paint: { 'fill-extrusion-color': '#218465', 'fill-extrusion-opacity': 0.6,
                  'fill-extrusion-height': res.hauteurReglementaireM, 'fill-extrusion-base': 0 } })
     }
-    // RETOURS-26/27 — DEUX pastilles écrites sur la vue (Marker, billboard = lisibles sous tous les
-    // angles). « Règle : X m » (vert) = enveloppe réglementaire, attachée à son volume vert (hauteur
-    // fiable). RETOURS-27 (pt 3, correction) — « Faîtage LiDAR sur la parcelle : X m » (gris) = la plus
-    // haute toiture mesurée sur/au contact de la parcelle, donnée comme une valeur de PARCELLE, NON
-    // attachée à un volume (la mesure n'est pas rattachée de façon sûre au bâtiment dessiné) ; offset
-    // FIXE (pas proportionnel à une hauteur de volume), et AUCUNE comparaison « dépasse la règle ».
     const mapGl = m as unknown as maplibregl.Map
-    const hRegle = ok && res.hauteurReglementaireM != null ? res.hauteurReglementaireM : null
-    const hBati = batiFeats.length
-      ? Math.round(Math.max(0, ...batiFeats.map((f) => Number(f.properties?.hauteur_m) || 0))) : 0
-    // RETOURS-28 (Gabarit) — seule « Règle : X m » reste sur la vue 3D (attachée au volume vert de
-    // l'enveloppe). Le faîtage LiDAR QUITTE la vue : il devient une LIGNE DU PANNEAU (sous les tuiles),
-    // car la mesure n'est pas rattachée de façon sûre à un bâtiment dessiné. `batiVisible`/`hBati` ne
-    // pilotent plus d'étiquette ici.
-    void batiVisible; void hBati
-    const cParc = centerOf(res.zoneImplantationGeoJSON ?? null, res.contourGeoJSON ?? null)
-    if (terrain3d && cParc && hRegle != null) {
+    const hRegle = ok ? res.hauteurReglementaireM : null
+    const cParc = centerOf(res.exempleEmpriseGeoJSON ?? null)
+    if (!projet && terrain3d && cParc && hRegle != null) {
       const dyRegle = -14 - Math.round((hRegle / Math.max(hRegle, 1)) * 42)   // pastille au niveau du toit de l'enveloppe
-      const el = mkHauteurEl(`Règle : ${hRegle} m`, C_ZONE)
+      const el = mkHauteurEl(`${res.hauteurEstimee ? "Hauteur estimée" : "Règle"} : ${hRegle} m`, C_ZONE)
       labels.current.push(new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [-46, dyRegle] }).setLngLat(cParc).addTo(mapGl))
     }
-    // RECETTE-OUTILS-2 (R13) — le cadrage est le SEUL propriétaire de la caméra du Gabarit (MapView ne
-    // recentre plus en gabarit). En 3D on cadre AVEC l'inclinaison (pitch 55, bearing 0) — comme « Vue
-    // par défaut » — sinon un fitBounds à plat suivi du pitch poussait la parcelle hors champ (écran
-    // noir « très zoomé à côté »). En 2D, cadrage normal.
-    // RECETTE-OUTILS-2 (R13) — le Gabarit est SEUL propriétaire de la caméra (MapView ne recentre plus
-    // en gabarit, et pose un terrain PLAT). En 3D on cadre avec l'inclinaison (pitch 45, bearing 0),
-    // comme « Vue par défaut ». Terrain plat → le centroïde tombe au centre de l'écran, donc un seul
-    // fitBounds suffit (plus de course avec le chargement du relief, plus d'écran noir sur pente forte).
-    const bb = bboxOf(res.contourGeoJSON ?? res.zoneImplantationGeoJSON ?? null)
+    const bb = bboxOf(contourCadastral(res) ?? res.zoneImplantationGeoJSON ?? null)
     if (bb) {
       const opts = terrain3d
-        ? { padding: 70, bearing: 0, pitch: 45, duration: 600, maxZoom: 18 }
+        ? { padding: window.matchMedia('(max-width: 767px)').matches ? 42 : 70, bearing: 0, pitch: m.getTerrain() ? m.getPitch() : 0, duration: 0, maxZoom: 18 }
         : { padding: 80, duration: 600, maxZoom: 19 }
       try { m.fitBounds(bb, opts) } catch { /* noop */ }
     }
     return clear
-  }, [res, terrain3d, batiVisible])
+  }, [map, res, terrain3d, batiVisible, projet])
+  return etatRelief
 }
 
 function Num({ label, value, unit, accent, statusLabel, sub }: {
@@ -228,7 +275,7 @@ function Num({ label, value, unit, accent, statusLabel, sub }: {
       {statusLabel
         ? <span className="text-[12px] font-medium text-txt-mut">{statusLabel}</span>
         : <span className={`font-mono text-[15px] tabular-nums ${accent ? 'text-mint' : 'text-txt-hi'}`}>
-            {value != null ? `${fmtInt(value)} ${unit}` : '—'}
+            {value != null ? `${unit === 'm' ? mesure(value) : fmtInt(value)} ${unit}` : '—'}
           </span>}
       {sub && <span className="text-[9px] leading-tight text-txt-dim">{sub}</span>}
     </div>
@@ -272,17 +319,23 @@ export function Gabarit() {
     enabled: !!target, retry: false,
   })
   const res = q.data
-  useMapLayers(res, terrain3d, batiVisible)
+  const relief = useQuery({
+    queryKey: ['gabarit-relief', target], queryFn: () => getGabaritRelief(target!),
+    enabled: Boolean(terrain3d && res && target), staleTime: 300_000, retry: false,
+  })
+  const [dessin, setDessin] = useState<ProjetDessine | null>(null)
+  const projet = dessin?.idu === target ? dessin : null
+  const etatRelief = useMapLayers(res, terrain3d, batiVisible, relief.data?.source, projet)
   // RECETTE-OUTILS-1 (point 34 / T6) — export PDF = le document « Gabarit » de Docs (même générateur).
-  const { ouvrir, enCours } = useOuvrirDocument()
+  const { ouvrir, enCours, erreur } = useOuvrirDocument()
   // RECETTE-OUTILS-1 (point 33) — « Vue par défaut » : recentre sur la parcelle, orientation initiale
   // (bearing 0, pitch 55), même cadrage que l'entrée en 3D.
   const vueParDefaut = () => {
     const m = (window as unknown as { __labuse_map?: { fitBounds: (b: number[][], o?: unknown) => void; easeTo: (o: unknown) => void } }).__labuse_map
     if (!m) return
-    const bb = bboxOf(res?.contourGeoJSON ?? res?.zoneImplantationGeoJSON ?? null)
+    const bb = bboxOf(contourCadastral(res) ?? res?.zoneImplantationGeoJSON ?? null)
     // R13 — même cadrage 3D que l'entrée (pitch 45, maxZoom 18) : cohérent et sûr sur pente forte.
-    if (bb) m.fitBounds(bb, { padding: 70, bearing: 0, pitch: 45, duration: 600, maxZoom: 18 })
+    if (bb) m.fitBounds(bb, { padding: window.matchMedia('(max-width: 767px)').matches ? 42 : 70, bearing: 0, pitch: 45, duration: 600, maxZoom: 18 })
     else m.easeTo({ bearing: 0, pitch: 45, duration: 600 })
   }
   // RECETTE-OUTILS-3 (S11) — le bouton « Recentrer » (◎) du bloc de contrôle 3D de la carte demande au
@@ -370,6 +423,7 @@ export function Gabarit() {
             Aucun gabarit d'implantation n'est calculé : le règlement n'autorise pas de construction
             ici. Le contour de la parcelle est tracé sur la carte.
           </p>
+          {target && <Bouton niveau="secondaire" disabled={enCours != null} onClick={() => ouvrir(docGabaritUrl(target), 'gabarit')}>Exporter le motif en PDF</Bouton>}
         </div>
       )}
 
@@ -392,9 +446,7 @@ export function Gabarit() {
               constructible » : la constructibilité et la capacité estimée restent dans la fiche. */}
           <p className="text-[10px] leading-snug text-txt-dim">
             Contour de la parcelle tracé sur la carte. L'absence de gabarit ne préjuge pas de la
-            constructibilité — la capacité estimée reste indiquée dans la fiche de la parcelle. Le
-            calcul reprendra dès qu'une limite non qualifiée (bord de ravine, littoral ou domaine
-            public) sera renseignée.
+            constructibilité.
           </p>
         </div>
       )}
@@ -423,30 +475,42 @@ export function Gabarit() {
               sub={res.batiDeduitM2 ? `après reculs · bâti déduit ${fmtInt(res.batiDeduitM2)} m²` : 'après reculs'} />
             <Num label="Emprise maximale" value={res.plafondEmpriseM2} unit="m²"
               statusLabel={res.plafondEmpriseStatus === 'absent' ? 'Non réglementé' : null}
-              sub={res.plafondEmpriseStatus === 'absent' ? 'pas de règle d’emprise au sol'
+              sub={res.zoneImplantationM2 === 0 ? 'aucune implantation disponible' : res.plafondEmpriseStatus === 'absent' ? 'pas de règle d’emprise au sol'
                 : emprisePctRule != null ? `${fmtInt(emprisePctRule)} % de la parcelle` : null} />
-            <Num label="Hauteur maximale" value={res.hauteurReglementaireM} unit="m"
+            <Num label={res.hauteurEstimee ? "Hauteur maximale estimée" : "Hauteur maximale"} value={res.hauteurReglementaireM} unit="m"
               statusLabel={res.hauteurStatus === 'not_integrated' ? 'Non chiffrée' : null}
               sub={res.hauteurStatus === 'not_integrated'
                 ? 'prospect L ≥ H (non intégré)'
                 : res.hauteurEgoutM != null ? `${String(res.hauteurEgoutM).replace('.', ',')} m à l’égout`
-                : res.hauteurBase ? `au ${res.hauteurBase}` : null} />
+                : res.hauteurBase === 'egout' ? 'à l’égout' : res.hauteurBase === 'faitage' ? 'au faîtage' : null} />
             {aCheval
               ? <Num label="Surface parcelle" value={cadastreM2} unit="m²"
                   sub={`dont ${fmtInt(res.surfaceParcelleM2)} m² en ${zoneServieCode ?? 'zone constructible'} (${pctPortion} %)`} />
               : <Num label="Surface parcelle" value={res.surfaceParcelleM2} unit="m²" sub="cadastre" />}
           </div>
 
+          <EmpriseProjet regles={res} />
+          {target && <Implantation key={target} idu={target} onProjet={setDessin} />}
+          {projet && <><CotesProjet projet={projet} /><PdfProjet idu={projet.idu} pts={projet.pts} /></>}
+          {res.reculSepScenario && <p className="text-xs text-txt-mut">{res.reculSepScenario}</p>}
+          <div aria-label="Légende du gabarit" className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-txt-mut">
+            {[[res.zoneImplantationGeoJSON, C_ZONE, 'Zone disponible'], [res.retraitsGeoJSON, C_RETRAIT, 'Reculs'],
+              [res.exclusionsGeoJSON, C_EXCL, 'Exclusions'], [res.batiExistantGeoJSON?.features?.length, C_BATI, 'Bâti existant']]
+              .filter(([present]) => Boolean(present)).map(([, color, label]) => <span key={String(label)} className="inline-flex items-center gap-1">
+                <i className="h-2 w-3 rounded-sm" style={{ backgroundColor: String(color) }} />{String(label)}</span>)}
+          </div>
           {/* RETOURS-28 (Gabarit) — « Faîtage LiDAR sur la parcelle » : une LIGNE du panneau, sous les
               tuiles (plus sur la vue 3D). Valeur de parcelle (plus haut faîtage mesuré), non rattachée à
               un bâtiment précis. */}
           {(() => {
-            const hBatiP = Math.round(Math.max(0, ...((res.batiExistantGeoJSON?.features ?? [])
-              .map((f) => Number(f.properties?.hauteur_m) || 0))))
-            if (hBatiP <= 0) return null
+            const heights = (res.batiExistantGeoJSON?.features ?? []).map(f => f.properties)
+              .filter(p => (p?.hauteur_m ?? 0) > 0)
+            const tallest = heights.sort((a, b) => (b?.hauteur_m ?? 0) - (a?.hauteur_m ?? 0))[0]
+            if (!tallest?.hauteur_m) return null
+            const hBatiP = tallest.hauteur_m.toLocaleString('fr-FR')
             return (
               <div data-gabarit-faitage className="flex items-baseline justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
-                <span className="min-w-0 text-txt-mut">Faîtage LiDAR sur la parcelle</span>
+                <span className="min-w-0 text-txt-mut">{tallest.h_source === 'lidar' ? 'Faîtage LiDAR sur la parcelle' : tallest.h_source === 'bdtopo' ? 'Hauteur du bâti · BD TOPO' : 'Hauteur du bâti'}</span>
                 <span className="shrink-0 font-mono tabular-nums text-txt-hi">{hBatiP} m</span>
               </div>
             )
@@ -486,6 +550,14 @@ export function Gabarit() {
             </div>
           )}
 
+          {terrain3d && <p data-gabarit-relief role="status" className="text-xs text-txt-mut">
+            {relief.isError || etatRelief === 'erreur' ? 'Relief indisponible pour cette vue.'
+              : etatRelief === 'pret' && relief.data
+                ? `Relief IGN · maille source ${relief.data.maille_m.toLocaleString('fr-FR')} m · échelle verticale réelle.`
+                : 'Chargement du relief IGN…'}
+          </p>}
+          {res.terrainNote && (terrain3d || res.zoneImplantationM2 === 0) && <p className="text-xs text-txt-mut">{res.terrainNote}</p>}
+          {terrain3d && !projet && res.exempleEmpriseM2 != null && <p className="text-xs text-txt-mut">Volume indicatif · {mesure(res.exempleEmpriseM2)} m² au sol. Le vert clair délimite toute la zone disponible.</p>}
           {/* Voir en 3D / Exporter en PDF */}
           <div className="grid grid-cols-2 gap-2">
             <Bouton niveau="secondaire" ton="vert" data-gabarit-3d
@@ -494,21 +566,18 @@ export function Gabarit() {
             </Bouton>
             {target && res?.status === 'ok' && (
               <Bouton niveau="secondaire" ton="vert" data-gabarit-export
-                disabled={enCours != null} onClick={() => ouvrir(docGabaritUrl(target), 'gabarit')} className="w-full justify-center">
+                disabled={enCours != null} onClick={() => ouvrir(docGabaritUrl(target), 'gabarit', projet ? {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(projet.pts)
+                } : undefined)} className="w-full justify-center">
                 Exporter en PDF
               </Bouton>
             )}
           </div>
 
-          {/* RETOURS-28 (Gabarit) — phrase du bas : « En pratique, les permis délivrés utilisent environ la
-              moitié de ce maximum (médiane sur 6 601 permis). » (traçable : ratio médian 0,46 surface /
-              0,40 logements, Sit@del post-PLU). */}
-          <p data-gabarit-plafond className="text-[10px] leading-snug text-txt-dim">
-            En pratique, les permis délivrés utilisent environ la moitié de ce maximum (médiane sur 6 601 permis).
-          </p>
         </>
         )
       })()}
+      {erreur && <p role="alert" className="text-xs text-coral">{erreur}</p>}
       {/* GABARIT-3D-1 (pilote) — bouton ADMIN du terrain réel, quel que soit le statut du gabarit
           (la scène dégrade proprement : terrain + contours restent utiles sur un calcul incomplet). */}
       {admin && target && res && res.status !== 'inconstructible' && (
@@ -520,7 +589,7 @@ export function Gabarit() {
       {/* Visionneuse 3D chargée à la demande (Three.js hors bundle principal). */}
       {viewer3dOpen && target && (
         <Suspense fallback={null}>
-          <GabaritViewer3D idu={target} onClose={() => setViewer3dOpen(false)} />
+          <GabaritViewer3D projet={projet} idu={target} onClose={() => setViewer3dOpen(false)} />
         </Suspense>
       )}
     </div>

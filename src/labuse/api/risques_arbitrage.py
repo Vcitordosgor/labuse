@@ -24,7 +24,7 @@ import re
 
 #: sévérité croissante des niveaux d'aléa — on retient le maximum par type d'aléa.
 _NIVEAU_RANK = {
-    "faible": 1, "faible_a_modere": 2, "faible à modéré": 2,
+    "negligeable": 0, "négligeable": 0, "faible": 1, "faible_a_modere": 2, "faible à modéré": 2,
     "modere": 3, "modéré": 3, "moyen": 3,
     "eleve": 4, "élevé": 4, "fort": 5, "tres_fort": 6, "très fort": 6,
 }
@@ -53,7 +53,8 @@ def libelle_client_detail(detail: str | None) -> str | None:
     d = d.replace("mouvement_terrain", "mouvement de terrain")
     d = d.replace("submersion_marine", "submersion marine")
     # niveaux techniques / sans accent.
-    for raw, lab in (("niveau eleve", "niveau élevé"), ("niveau tres_fort", "niveau très fort"),
+    for raw, lab in (("niveau negligeable", "niveau négligeable"), ("niveau tres_eleve", "niveau très élevé"),
+                     ("niveau eleve", "niveau élevé"), ("niveau tres_fort", "niveau très fort"),
                      ("niveau faible_a_modere", "niveau faible à modéré"),
                      ("niveau modere", "niveau modéré"),
                      ("Pente modere", "Pente modérée"), ("Pente eleve", "Pente élevée"),

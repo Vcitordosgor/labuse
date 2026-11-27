@@ -1,0 +1,6 @@
+  ✓ purge 97405 : 272 extrait(s) supprimé(s)
+  ✓ 97405 97405_reglement_20230609.pdf : 272 extraits article
+  ✓ 97405 Petite-Île : 1 document(s), 272 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 272 extraits · 21 communes en base
+REINGEST_DONE

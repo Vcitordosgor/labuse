@@ -1611,6 +1611,11 @@ def seed(session: Session) -> int:
         if row["name"] in existing:
             ds = session.execute(select(DataSource).where(DataSource.name == row["name"])).scalar_one()
             for k, v in row.items():
+                # Ces valeurs du catalogue servent à initialiser une source. Une ingestion
+                # datée a ensuite autorité sur l'édition et l'horizon réellement servis.
+                if k in {"source_millesime", "source_horizon_at"} and ds.last_sync_at is not None:
+                    if getattr(ds, k) is not None:
+                        continue
                 setattr(ds, k, v)
         else:
             session.add(DataSource(**row))

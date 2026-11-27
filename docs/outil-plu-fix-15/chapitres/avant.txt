@@ -1,0 +1,26 @@
+INSEE  commune                  J   R   F   X   A   T   C   I  total
+97401  Les Avirons             68   0   0   0   0  13   0   0  81
+97402  Bras-Panon              37  33   0   0   0  11   0   0  81
+97403  Entre-Deux              22   0   0   0   0  23   0   0  45
+97404  L'Étang-Salé            56   0   0   0   0  10   0   0  66
+97405  Petite-Île              46   3   0   9   0  41   0   0  99
+97406  La Plaine-des-Palmiste  34   8   0   0   0  15   6   0  63
+97407  Le Port                 41   0   0   0   0   7  30   0  78
+97408  La Possession           55  18   0   0   1  19   0   0  93
+97410  Saint-Benoît           137   0   0   0  41  23   0   0  201
+97411  Saint-Denis             82   0   0   0   1  14   2   0  99
+97412  Saint-Joseph            50  78   0   0   2   7  31   0  168
+97414  Saint-Louis             40  54   0   0   0  38   0   0  132
+97415  Saint-Paul             157  16   0   0   0  22   0   0  195
+97416  Saint-Pierre            80   0   0   0   0  52   0   0  132
+97418  Sainte-Marie            38   0   0  48   0  10   0   0  96
+97419  Sainte-Rose             36  24   0   0   0   9   0   0  69
+97420  Sainte-Suzanne          32   4   0   0   0  22  14   0  72
+97421  Salazie                 31   3   0   0   0  11   0   0  45
+97422  Le Tampon               31  31   0   0   0  19   3   0  84
+97423  Les Trois-Bassins       39  16   0   0   8  13  11   0  87
+97424  Cilaos                  20   6   0   0   0  22   0   0  48
+------------------------------------------------------------
+TOTAL                         1132 294   0  57  53 401  97   0  2034
+
+CSV → docs/outil-plu-fix-15/chapitres/avant.csv (2034 lignes)

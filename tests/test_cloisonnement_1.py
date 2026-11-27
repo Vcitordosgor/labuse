@@ -252,7 +252,12 @@ def test_signalement_cloison(deux_comptes):
 
 
 # ─────────────────────────── DEMANDE DE COURRIER ───────────────────────────
-def test_courrier_demande_cloison(deux_comptes):
+def test_courrier_demande_cloison(deux_comptes, monkeypatch):
+    monkeypatch.setattr("labuse.api.courrier._marque_du_compte",
+                        lambda db, request: {"raison_sociale": "Agence Test"})
+    # Ce test isole les comptes avec une parcelle fictive supposée adressable.
+    monkeypatch.setattr("labuse.courrier_adressage.resoudre_destinataire",
+                        lambda db, idu: {"bloque": False})
     ca, cb, cid_a, cid_b, idu1, _ = deux_comptes
     r = ca.post("/courrier/demande", json={"parcelles": [idu1], "communes": "Saint-Denis",
                                            "modele": "standard", "corps": "Demande de A."})

@@ -1,0 +1,47 @@
+200 http://127.0.0.1:7480/modules/plu-annuaire/search?zone=1AU&insee=97405&q=hauteur total 11
+ARTICLE 1AU.10 1AU 94 95 94 https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf#page=94
+ARTICLE 1AUZ.10 1AU 104 104 104 https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf#page=104
+ARTICLE 1AUZ.11 1AU 104 106 104 https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf#page=104
+ARTICLE 1AU.11 1AU 95 96 96 https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf#page=96
+ARTICLE 1AU.13 1AU 97 99 97 https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf#page=97
+ARTICLE 1AUZ.13 1AU 107 109 108 https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf#page=108
+200 http://127.0.0.1:7480/modules/plu-annuaire/search?zone=1AUz&insee=97405&q=hauteur total 11
+ARTICLE 1AU.10 1AU 94 95 94 https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf#page=94
+ARTICLE 1AUZ.10 1AU 104 104 104 https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf#page=104
+ARTICLE 1AUZ.11 1AU 104 106 104 https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf#page=104
+ARTICLE 1AU.11 1AU 95 96 96 https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf#page=96
+ARTICLE 1AU.13 1AU 97 99 97 https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf#page=97
+ARTICLE 1AUZ.13 1AU 107 109 108 https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf#page=108
+200 http://127.0.0.1:7480/modules/plu-annuaire/search?zone=UC1&insee=97418&q=hauteur total 9
+Article U9 U 22 24 24 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=24
+Article U9 U 35 37 36 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=36
+Article U8 U 21 22 21 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=21
+Article U8 U 34 35 34 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=34
+Article U4 U 18 19 19 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=19
+Article U5 U 19 20 20 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=20
+Article U5 U 32 33 33 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=33
+Article U13 U 38 44 42 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=42
+200 http://127.0.0.1:7480/modules/plu-annuaire/search?zone=UEm&insee=97418&q=hauteur total 8
+Article U9 U 22 24 24 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=24
+Article U9 U 35 37 36 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=36
+Article U8 U 34 35 34 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=34
+Article U4 U 18 19 19 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=19
+Article U5 U 19 20 20 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=20
+Article U5 U 32 33 33 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=33
+Article U13 U 38 44 42 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=42
+200 http://127.0.0.1:7480/modules/plu-annuaire/search?zone=1AUmut&insee=97407&q=stationnement total 12
+Article 1AUindic 1AU 151 154 151 https://data.geopf.fr/annexes/gpu/documents/DU_97407/8cdd92497a52e883eddd7330b3836873/97407_reglement_20241209.pdf#page=151
+Article 1AUindic 1AU 148 149 149 https://data.geopf.fr/annexes/gpu/documents/DU_97407/8cdd92497a52e883eddd7330b3836873/97407_reglement_20241209.pdf#page=149
+Article 1AUindic 1AU 144 145 144 https://data.geopf.fr/annexes/gpu/documents/DU_97407/8cdd92497a52e883eddd7330b3836873/97407_reglement_20241209.pdf#page=144
+Article 1AUindic 1AU 149 150 150 https://data.geopf.fr/annexes/gpu/documents/DU_97407/8cdd92497a52e883eddd7330b3836873/97407_reglement_20241209.pdf#page=150
+Section 3 1AU 154 155 154 https://data.geopf.fr/annexes/gpu/documents/DU_97407/8cdd92497a52e883eddd7330b3836873/97407_reglement_20241209.pdf#page=154
+200 http://127.0.0.1:7480/modules/plu-annuaire/search?zone=U5&insee=97412&q=hauteur total 5
+ARTICLE U5 10 U5 80 84 80 https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=80
+ARTICLE U5 6 U5 77 78 77 https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=77
+ARTICLE U5 7 U5 78 79 78 https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=78
+ARTICLE U5 8 U5 79 80 79 https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=79
+ARTICLE U5 13 U5 86 89 86 https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=86
+200 http://127.0.0.1:7480/modules/plu-annuaire/search?zone=N&insee=97412&q=hauteur total 3
+ARTICLE N 10 N 132 133 132 https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=132
+ÉNERGÉTIQUES ET ENVIRONNEMENTALES N 135 145 143 https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=143
+VILLA NEOCLASSIQUE EN BOIS N 149 150 149 https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=149

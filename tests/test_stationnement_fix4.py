@@ -59,10 +59,8 @@ def test_degagement_pas_de_marge_cachee():
 
 # ── LOT 2 : une recherche sans résultat ≠ « impossible pour cause établie » ──────────────────────
 @pytest.mark.reel
-def test_assemblage_sans_plan_dit_aucun_plan_trouve(session_reelle):
-    """Sur un assemblage dont la part d'habitat (UB) est trop étroite, la recherche ne trouve aucun plan.
-    Le verdict doit le DIRE (« Aucun plan trouvé sous ces hypothèses »), PAS conclure à une impossibilité
-    réglementaire (« Impossible pour cause établie ») : la zone est constructible."""
+def test_assemblages_verdict_conforme_au_plan(session_reelle):
+    """Distinguer le plan partiel de l'assemblage AM et la recherche sans plan sur AR."""
     from labuse.implantation.service import etudier_payload
     from sqlalchemy import text
     for idus in (["97404000AM0759", "97404000AM0874"], ["97408000AR0468", "97408000AR1302"]):
@@ -71,7 +69,14 @@ def test_assemblage_sans_plan_dit_aucun_plan_trouve(session_reelle):
             pytest.skip(f"parcelles {idus} absentes")
         p = etudier_payload(session_reelle, {"idus": idus, "type_projet": "collectif", "objectif": "equilibre",
                                              "stationnement": "aerien", "terrain": "libere"})
-        assert p.get("verdict") == "Aucun plan trouvé sous ces hypothèses", p.get("verdict")
+        if idus[0] == "97404000AM0759":
+            assert p["verdict"] == "À compléter"
+            v = next(v for v in p["variantes"] if not v.get("absente"))
+            assert v["resume"]["logements"] >= 3
+            assert v["checks_geometriques"] and all(c["ok"] for c in v["checks_geometriques"])
+        else:
+            assert p["capacite_maximale"] is None
+            assert p["verdict"] == "Aucun plan trouvé sous ces hypothèses"
 
 
 # ── LOT 2 : le Dossier affiche la MÊME règle de stationnement que l'Étude (jamais « non réglementé ») ──

@@ -179,13 +179,15 @@ def test_permis_dans_secteur_produit_un_evenement_reel(db_session):
     lon, lat = 55.31, -21.06
     alertes.create_watch_zone(db_session, "Quartier permis", COMMUNE, _zone(lon, lat), None)
     alertes.compute_alertes(db_session, COMMUNE, None)              # photo initiale, rien
+    # OUTIL-PERMIS-FIX-10 — permis AUTORISÉ aujourd'hui, dépôt non affichable (pas d'AN_DEPOT) : le titre
+    # annonce l'événement réellement daté (« Permis autorisé dans… »), pas un dépôt.
     db_session.execute(text(
-        "INSERT INTO sitadel_permits (permit_id, type, date_depot, commune, geom) "
-        "VALUES ('PC974TEST01', 'PC', now()::date, :c, ST_SetSRID(ST_MakePoint(:lon,:lat),4326))"),
+        "INSERT INTO sitadel_permits (permit_id, type, date, date_depot, commune, geom) "
+        "VALUES ('PC974TEST01', 'PC', now()::date, now()::date, :c, ST_SetSRID(ST_MakePoint(:lon,:lat),4326))"),
         {"c": COMMUNE, "lon": lon, "lat": lat})
     out = alertes.compute_alertes(db_session, COMMUNE, None)
     assert out["permis_in_zone"] == 1 and out["notifications"] == 1
-    assert any("Permis déposé" in t for t, _ in _notifs_secteur(db_session))
+    assert any("Permis autorisé" in t for t, _ in _notifs_secteur(db_session))
     # idempotence : re-évaluer n'ajoute rien
     again = alertes.compute_alertes(db_session, COMMUNE, None)
     assert again["permis_in_zone"] == 0 and again["notifications"] == 0
@@ -229,9 +231,11 @@ def test_repartir_du_present_fait_ancien_ne_notifie_pas(db_session):
     """Un fait daté AVANT la création de la zone alimente le panneau, jamais la cloche."""
     lon, lat = 55.37, -21.09
     alertes.create_watch_zone(db_session, "Zone rattrapage", COMMUNE, _zone(lon, lat), None)
+    # OUTIL-PERMIS-FIX-10 — l'événement daté (ici l'autorisation, 2020) gouverne la cloche via fait_date :
+    # antérieur à la zone → panneau seulement. (date d'autorisation seedée, comme en production.)
     db_session.execute(text(
-        "INSERT INTO sitadel_permits (permit_id, type, date_depot, commune, geom) "
-        "VALUES ('PC974VIEUX', 'PC', '2020-01-15', :c, ST_SetSRID(ST_MakePoint(:lon,:lat),4326))"),
+        "INSERT INTO sitadel_permits (permit_id, type, date, date_depot, commune, geom) "
+        "VALUES ('PC974VIEUX', 'PC', '2020-01-15', '2020-01-15', :c, ST_SetSRID(ST_MakePoint(:lon,:lat),4326))"),
         {"c": COMMUNE, "lon": lon, "lat": lat})
     out = alertes.compute_alertes(db_session, COMMUNE, None)
     assert out["permis_in_zone"] == 1        # le panneau montre l'historique…

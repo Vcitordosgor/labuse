@@ -1678,7 +1678,10 @@
     marge_promoteur_pct: 0.09
     mixite_logements_seuil: 20
     mixite_sdp_seuil_m2: 1500
+    mixite_sdp_seuil_haut_m2: 1800
     mixite_source_ref: Art. 2 règlement PLU
+    mixite_article: Art. 2 (zones U1 à U6)
+    mixite_page: pp. 14-15
     mixite_terrain_seuil_m2: 6000
     niveaux_bati_existant_defaut: 1
     pct_lls: 30

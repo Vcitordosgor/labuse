@@ -1,0 +1,48 @@
+97401 A 1
+AUes hauteur [('ARTICLE AUES 10', 43, 43, 'ARTICLE AUES 10 - HAUTEUR MAXIMALE DES CONSTRUCTIONS Sans objet.')] commun 2
+97402 A 1
+AUst hauteur [('ARTICLE AUST 10', 84, 84, 'ARTICLE AUST 10 - HAUTEUR MAXIMALE DES CONSTRUCTIONS Sans objet.')] commun 0
+97404 C 30
+A implantation [('ZONE A', 89, 90, 'ZONE A 2. Sous réserve de la légalité du bâti existant, l’amélioration, l’extension limitée et la reconst')] commun 2
+AUa implantation [('AU 3.2', 84, 87, 'AU 3.2 – CONDITIONS DE DESSERTE DES TERRAINS PAR LES RESEAUX 3.2.1 - Alimentation en eau potable et sécur')] commun 2
+97405 A 2
+2AU hauteur [('ARTICLE 2AU.10', 141, 141, 'ARTICLE 2AU.10 — HAUTEUR MAXIMUM DES CONSTRUCTIONS Sans objet.')] commun 5
+2AU stationnement [('ARTICLE 2AU.12', 141, 141, 'ARTICLE 2AU.12 — STATIONNEMENT Sans objet.')] commun 1
+97406 C 6
+AUb hauteur [('HAUTEUR MAXIMALE DES CONSTRUCTIONS', 171, 176, 'HAUTEUR MAXIMALE DES CONSTRUCTIONS Modification n°2 du Plan Local d’Urbanisme de la Plaine des Palmistes ')] commun 2
+AUb implantation [('HAUTEUR MAXIMALE DES CONSTRUCTIONS', 171, 176, 'HAUTEUR MAXIMALE DES CONSTRUCTIONS Modification n°2 du Plan Local d’Urbanisme de la Plaine des Palmistes ')] commun 3
+97407 C 30
+1AUa stationnement [('Article 1AUindic', 151, 154, 'Article 1AUindicée 12 - Obligation de réalisation d’aires de stationnement Se reporter au règlement de la'), ('Section 3', 154, 155, 'Section 3 : Equipement et réseaux Article 1AUindicée 13 - Desserte par les voies publiques ou privées 13.')] commun 7
+1AUc stationnement [('Article 1AUindic', 151, 154, 'Article 1AUindicée 12 - Obligation de réalisation d’aires de stationnement Se reporter au règlement de la'), ('Section 3', 154, 155, 'Section 3 : Equipement et réseaux Article 1AUindicée 13 - Desserte par les voies publiques ou privées 13.')] commun 7
+97408 A 2
+AUst hauteur [('ARTICLE AUST 10', 82, 82, 'ARTICLE AUST 10 - HAUTEUR MAXIMALE DES CONSTRUCTIONS Sans objet.')] commun 0
+Up hauteur [] commun 0
+97410 A 41
+A stationnement [] commun 0
+Acor stationnement [] commun 0
+97410 C 35
+AUa18 stationnement [('Zone AU', 150, 152, "Zone AU n°18 - Agrandissement chemin Impérial : 8 m d'emprise moins la largeur de la voie Commune Sentier")] commun 0
+AUa5 stationnement [('Zone AU', 150, 152, "Zone AU n°18 - Agrandissement chemin Impérial : 8 m d'emprise moins la largeur de la voie Commune Sentier")] commun 0
+97411 C 2
+A implantation [('Zone A', 106, 106, 'Zone A Urbaniser d’activités Caractère de la zone Cette zone, non équipée, est située chemin Neuf à la Mo')] commun 8
+Ac implantation [('Zone A', 106, 106, 'Zone A Urbaniser d’activités Caractère de la zone Cette zone, non équipée, est située chemin Neuf à la Mo')] commun 8
+97411 A 1
+AUx stationnement [('Article AUx.12', 111, 111, 'Article AUx.12 . Aires de stationnement Non réglementé.')] commun 2
+97412 A 2
+1AUto hauteur [] commun 0
+1AUtok hauteur [] commun 0
+97412 C 31
+N hauteur [('ÉNERGÉTIQUES ET ENVIRONNEMENTALES', 135, 145, 'ÉNERGÉTIQUES ET ENVIRONNEMENTALES L’implantation, la volumétrie et l’architecture des constructions doit ')] commun 0
+N implantation [('ÉNERGÉTIQUES ET ENVIRONNEMENTALES', 135, 145, 'ÉNERGÉTIQUES ET ENVIRONNEMENTALES L’implantation, la volumétrie et l’architecture des constructions doit ')] commun 1
+97420 C 14
+1AUe hauteur [('Section 2', 30, 31, 'Section 2 : Caractéristiques urbaine, architecturale, environnementale et paysagère Sous-section 2.1. : V')] commun 1
+1AUe implantation [('Section 2', 30, 31, 'Section 2 : Caractéristiques urbaine, architecturale, environnementale et paysagère Sous-section 2.1. : V'), ('Section 2', 22, 22, 'Section 2 : Caractéristiques urbaine, architecturale, environnementale et paysagère Sous-section 2.1. : V')] commun 1
+97422 C 3
+1AUe implantation [('ARTICLE Ue3', 73, 75, 'ARTICLE Ue3 - CONDITIONS DE DESSERTE DES TERRAINS PAR LES VOIES PUBLIQUES OU PRIVEES ET D’ACCES AUX VOIES')] commun 1
+2AUe implantation [('ARTICLE Ue3', 73, 75, 'ARTICLE Ue3 - CONDITIONS DE DESSERTE DES TERRAINS PAR LES VOIES PUBLIQUES OU PRIVEES ET D’ACCES AUX VOIES')] commun 1
+97423 A 10
+1AUa stationnement [] commun 0
+1AUb stationnement [] commun 0
+97423 C 11
+N implantation [('VALEUR PATRIMONIALE ELEVEE', 96, 112, 'VALEUR PATRIMONIALE ELEVEE MAISON Ecole Elémentaire Publique Bois Joli Cœur ADRESSE POSTALE Rue du Généra')] commun 3
+Nco implantation [('VALEUR PATRIMONIALE ELEVEE', 96, 112, 'VALEUR PATRIMONIALE ELEVEE MAISON Ecole Elémentaire Publique Bois Joli Cœur ADRESSE POSTALE Rue du Généra')] commun 3

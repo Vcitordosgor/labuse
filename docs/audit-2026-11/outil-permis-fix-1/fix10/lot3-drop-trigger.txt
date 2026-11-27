@@ -1,0 +1,13 @@
+=== AVANT ===
+  déclencheurs sitadel_permits : ['trg_m10_permit_delais_sync', 'trg_via_permits_geo_sync']
+  → déclencheur DÉSACTIVÉ puis SUPPRIMÉ (committé).
+=== APRÈS ===
+  déclencheurs sitadel_permits : ['trg_via_permits_geo_sync']
+=== PREUVE : UPDATE d'une ligne Sitadel + ROLLBACK, m10 inchangée ===
+  témoin permis 97440110A0056 — m10 AVANT : {'date_depot': '2010-01-01', 'valide': True, 'computed_at': '2026-11-23 22:15:07.781766+04'}
+  après UPDATE (dans la transaction) — m10 : {'date_depot': '2010-01-01', 'valide': True, 'computed_at': '2026-11-23 22:15:07.781766+04'}
+  (transaction ANNULÉE)
+  m10 APRÈS rollback : {'date_depot': '2010-01-01', 'valide': True, 'computed_at': '2026-11-23 22:15:07.781766+04'}
+
+→ m10 n'a PAS bougé pendant l'UPDATE (déclencheur retiré) : True (attendu True)
+✓ LOT 3 : déclencheur retiré de labuse, m10 n'est plus alimentée, table conservée.

@@ -118,6 +118,35 @@ def _pct_ppr_mvt(db: Session, commune: str, total_parcelles: int) -> float | Non
 
 
 # ───────────────────────────── C5 — les risques (Géorisques / Pièges & risques) ─────────────────────────────
+def _exposition_spatiale(db: Session, commune: str):
+    from ..registre.moteurs.commune import compte_parcelles_commune, pct_parcelles_couche
+    mvt_repli = False
+    tot = compte_parcelles_commune(db, commune)
+
+    def _pct_layer(kind: str, subtype: str | None = None) -> float | None:
+        return pct_parcelles_couche(db, commune, kind, tot, subtype)
+
+    ppr_pct = _pct_layer("ppr")
+    # SOURCES-FIX-2 lot A — mvt = aléa RÉGLEMENTAIRE zoné (georisque_alea/mouvement_terrain, DEAL).
+    mvt_pct = _pct_layer("georisque_alea", "mouvement_terrain")
+    # QV21-PROMO-1 (E-2) — Saint-Denis : aléa ÉTUDES mvt ABSENT de la DEAL alors que le PPR i+mvt est
+    # zoné. Sans zone d'aléa études PROPRE à la commune, on lit le zonage réglementaire PPR i+mvt
+    # (même source) plutôt qu'un mvt quasi nul trompeur. Les 23 autres communes sont inchangées.
+    a_ses_zones_mvt = db.execute(text(
+        "SELECT EXISTS (SELECT 1 FROM spatial_layers WHERE commune = :c "
+        "AND kind = 'georisque_alea' AND subtype = 'mouvement_terrain')"), {"c": commune}).scalar()
+    if not a_ses_zones_mvt:
+        ppr_mvt = _pct_ppr_mvt(db, commune, tot)
+        if ppr_mvt:
+            mvt_pct, mvt_repli = ppr_mvt, True
+    # NU5-FIX-1 (E-3) — « Parc national » ne vaut QUE pour le CŒUR (la vraie contrainte foncière).
+    parc = db.execute(text(
+        "SELECT EXISTS (SELECT 1 FROM parcels p JOIN spatial_layers sl ON sl.kind = 'parc_national' "
+        "AND sl.subtype = 'coeur' AND ST_Intersects(p.geom_2975, sl.geom_2975) WHERE p.commune = :c)"),
+        {"c": commune}).scalar()
+    return ppr_pct, mvt_pct, parc, mvt_repli
+
+
 def risques(db: Session, commune: str, insee: str | None) -> dict:
     """Part des parcelles de la commune exposées, par couche Géorisques déjà ingérée (mêmes couches
     `spatial_layers` que l'outil Pièges & risques), + le nombre d'arrêtés CatNat (table `catnat_arretes`)
@@ -125,7 +154,6 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
     pas de sous-type dans nos attributs, on n'invente pas « inondation » — on dit « PPR (risque naturel) »."""
     # CIRCUIT-2 lot 1.6 — la part par couche est calculée par le moteur nommé `commune_compteurs`
     # (id registre ppr_pct) : ce robinet ne calcule plus, il appelle (le total est calculé une fois).
-    from ..registre.moteurs.commune import compte_parcelles_commune, pct_parcelles_couche
 
     # ── FIX-4 LOT 3 — ISOLATION DU FAUX ZÉRO ──────────────────────────────────────────────────────
     # Le nombre d'arrêtés CatNat est un FAIT (table `catnat_arretes`, indexée sur insee) totalement
@@ -183,29 +211,8 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
     parc = None
     mvt_repli = False
     try:
-        tot = compte_parcelles_commune(db, commune)
-
-        def _pct_layer(kind: str, subtype: str | None = None) -> float | None:
-            return pct_parcelles_couche(db, commune, kind, tot, subtype)
-
-        ppr_pct = _pct_layer("ppr")
-        # SOURCES-FIX-2 lot A — mvt = aléa RÉGLEMENTAIRE zoné (georisque_alea/mouvement_terrain, DEAL).
-        mvt_pct = _pct_layer("georisque_alea", "mouvement_terrain")
-        # QV21-PROMO-1 (E-2) — Saint-Denis : aléa ÉTUDES mvt ABSENT de la DEAL alors que le PPR i+mvt est
-        # zoné. Sans zone d'aléa études PROPRE à la commune, on lit le zonage réglementaire PPR i+mvt
-        # (même source) plutôt qu'un mvt quasi nul trompeur. Les 23 autres communes sont inchangées.
-        a_ses_zones_mvt = db.execute(text(
-            "SELECT EXISTS (SELECT 1 FROM spatial_layers WHERE commune = :c "
-            "AND kind = 'georisque_alea' AND subtype = 'mouvement_terrain')"), {"c": commune}).scalar()
-        if not a_ses_zones_mvt:
-            ppr_mvt = _pct_ppr_mvt(db, commune, tot)
-            if ppr_mvt:
-                mvt_pct, mvt_repli = ppr_mvt, True
-        # NU5-FIX-1 (E-3) — « Parc national » ne vaut QUE pour le CŒUR (la vraie contrainte foncière).
-        parc = db.execute(text(
-            "SELECT EXISTS (SELECT 1 FROM parcels p JOIN spatial_layers sl ON sl.kind = 'parc_national' "
-            "AND sl.subtype = 'coeur' AND ST_Intersects(p.geom_2975, sl.geom_2975) WHERE p.commune = :c)"),
-            {"c": commune}).scalar()
+        from .exposition_commune import exposition
+        ppr_pct, mvt_pct, parc, mvt_repli = exposition(db, commune, _exposition_spatiale)
     except Exception:  # noqa: BLE001 — scan d'exposition indisponible (timeout) : None, jamais un faux 0
         db.rollback()
         log.warning("fiche_commune: exposition PPR/mvt indisponible pour %s (scan échoué)", commune)
@@ -245,7 +252,8 @@ def population(db: Session, commune: str, insee: str | None) -> dict:
     def _c():
         r = db.execute(text(
             "SELECT round(sum(f.ind_snv) / NULLIF(sum(f.ind), 0)) niveau_vie_moyen "
-            "FROM filosofi_carreaux_200m f WHERE EXISTS ("
+            "FROM filosofi_carreaux_200m f WHERE f.geom && "
+            "(SELECT ST_Extent(geom_2975)::geometry FROM parcels WHERE commune = :c) AND EXISTS ("
             "  SELECT 1 FROM parcels p WHERE p.commune = :c "
             "  AND ST_Intersects(p.geom_2975, ST_Centroid(f.geom)))"), {"c": commune}).mappings().first()
         return dict(r) if r else {}
@@ -342,15 +350,37 @@ _PLU_STATUT = {
 }
 
 
+_MOIS_FR = ("janvier", "février", "mars", "avril", "mai", "juin",
+            "juillet", "août", "septembre", "octobre", "novembre", "décembre")
+
+
 def _fr_date_iso(iso: str | None) -> str | None:
-    """« 2024-12-31 » → « 31/12/2024 » ; None/illisible → None."""
+    """« 2024-12-31 » → « 31/12/2024 ». FIX-9 LOT C (4) — précision VARIABLE honnête : « 2025-05 » →
+    « mai 2025 » (jamais un faux 1er du mois), « 2025 » → « 2025 ». None/illisible → None."""
     if not iso:
         return None
+    s = str(iso)
+    parts = s.split("-")
     try:
-        from datetime import date
-        return date.fromisoformat(str(iso)).strftime("%d/%m/%Y")
-    except (ValueError, TypeError):
+        if len(parts) == 3:
+            from datetime import date
+            return date.fromisoformat(s).strftime("%d/%m/%Y")
+        if len(parts) == 2:                         # précision MOIS
+            return f"{_MOIS_FR[int(parts[1]) - 1]} {int(parts[0])}"
+        if len(parts) == 1 and parts[0].isdigit():  # précision ANNÉE
+            return parts[0]
+    except (ValueError, TypeError, IndexError):
         return None
+    return None
+
+
+def _fr_date_au(iso: str | None) -> str | None:
+    """Phrase prépositionnelle correcte selon la précision : « au 31/12/2024 » (jour),
+    « en mai 2025 » (mois), « en 2025 » (année). None si vide — FIX-9 LOT C (4)."""
+    d = _fr_date_iso(iso)
+    if not d:
+        return None
+    return f"au {d}" if "/" in d else f"en {d}"
 
 
 def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
@@ -367,6 +397,8 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
     from .. import veille_plu
     e = veille_plu.entry(insee) or {}
     proc = e.get("procedure")
+    if proc != "aucune" and proc not in _PLU_STATUT:
+        return dict(_FALLBACK["plu_statut"])
     # COMMUNE-FIX-1 (D12) — la PROCÉDURE PLU EN COURS au dernier relevé Sudocuh (révision, modification,
     # élaboration…), avec son millésime : le fait producteur brut, daté, à côté du statut déduit.
     procedure_sudocuh = None
@@ -387,7 +419,7 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
         _d = _fr_date_iso(etat_au)
         statut = f"aucune procédure connue au {_d}" if _d else "aucune procédure connue"
     else:
-        statut = _PLU_STATUT.get(proc, "document local")
+        statut = _PLU_STATUT[proc]
     # FIX-6 LOT 4 — CITATION de source destinée au promoteur : collectivité + date de la pièce + (lien via
     # source_url), PAS la note interne du registre (« OUTIL-COMMUNES-FIX-… »). Construite des champs, jamais
     # recopiée de `source` (gardé brut pour l'admin).
@@ -397,24 +429,41 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
     # générale, ou modification/révision allégée dont l'objet est précisé quand le rattachement à la
     # révision générale n'est pas certifié). « dernière pièce connue de LABUSE » + date de vérification.
     piece_objet = e.get("piece_objet")
+    _au_phrase = _fr_date_au(etat_au)   # FIX-9 LOT C (4) — « au 31/12/2024 » / « en mai 2025 » selon la précision
+    # OUTIL-COMMUNES-FIX-12 LOT 4 — quand la fiche liste des pièces PLUS RÉCENTES (chronologie) que l'état
+    # affiché, c'est qu'une AUTRE procédure a produit des actes postérieurs (La Plaine : modif n°3 2023,
+    # avancement 2025). On dit alors « dernier acte connu de la révision générale » (précision honnête,
+    # que la chronologie corrobore) au lieu de « dernière pièce connue de LABUSE » (que la fiche dément).
+    _a_post = any((p.get("date") or "") > (etat_au or "") for p in (e.get("chronologie") or []))
+    if _a_post and proc == "revision_plu":
+        etat_label = "Dernier acte connu de la révision générale"
+    elif _a_post and proc == "elaboration_plu":
+        etat_label = "Dernier acte connu de l'élaboration"
+    elif _a_post:
+        etat_label = "Dernier acte connu de la procédure"
+    else:
+        etat_label = "Dernière pièce connue de LABUSE"
+    _label_bas = etat_label[:1].lower() + etat_label[1:]   # même phrase, minuscule en milieu de citation
     if proc == "aucune":
-        source_citation = f"SuDocUH (planification nationale) — relevé au {_au}" if _au else "SuDocUH (planification nationale)"
+        source_citation = f"SuDocUH (planification nationale) — relevé {_au_phrase}" if _au_phrase else "SuDocUH (planification nationale)"
     elif proc == "cloturee":
         _ap = _fr_date_iso(None if e.get("date_acte") in (None, "ABSENT") else e.get("date_acte"))
         source_citation = f"{_coll} — PLU approuvé le {_ap}" if _ap else f"{_coll} — PLU approuvé"
     elif proc in ("revision_plu", "elaboration_plu", "modification_plu"):
         _obj = piece_objet or statut
-        source_citation = (f"{_coll} — {_obj} — dernière pièce connue de LABUSE au {_au}" if _au
+        source_citation = (f"{_coll} — {_obj} — {_label_bas} {_au_phrase}" if _au_phrase
                            else f"{_coll} — {_obj}")
     else:
         source_citation = _coll
     return {
         "statut": statut,
+        "stade_texte": (veille_plu.synthese_commune(insee) or {}).get("etat"),
         "libelle": e.get("stade"),
         "procedure": proc,
         "procedure_sudocuh": procedure_sudocuh,   # COMMUNE-FIX-1 (D12) — révision/modification en cours (Sudocuh)
         "date_reglement": None if e.get("date_acte") in (None, "ABSENT") else e.get("date_acte"),
         "etat_au": etat_au,   # FIX-4 LOT 2 — date de la pièce la plus récente établissant cet état
+        "etat_label": etat_label,   # FIX-12 LOT 4 — « Dernière pièce connue » / « Dernier acte connu de la révision générale »
         "piece_objet": piece_objet,   # FIX-7 LOT 2 — objet de la dernière pièce (révision générale ou autre)
         "date_constat": e.get("date_constat"),   # FIX-7 LOT 2 — date de notre dernière vérification
         "confiance": e.get("confiance"),
@@ -422,6 +471,17 @@ def plu_statut(db: Session, insee: str | None, commune: str | None) -> dict:
         "source": e.get("source"),              # BRUT (admin/registre) — jamais affiché au promoteur
         "source_citation": source_citation,     # FIX-6 LOT 4 — affiché : collectivité + objet + date
         "source_url": e.get("source_url"),       # FIX-6 LOT 4 — lien vers la pièce
+        # OUTIL-COMMUNES-FIX-10 LOT 3 — chronologie des pièces (acte de procédure vs mention d'avancement),
+        # chacune avec sa date et son lien (La Plaine-des-Palmistes). None si le registre n'en porte pas.
+        "chronologie": e.get("chronologie"),
+        # OUTIL-COMMUNES-FIX-13 LOT 2 — la carte commune lit le MÊME champ `debat_padd_tenu` que la fiche
+        # parcelle (radar) et l'outil Vérif procédure : « débat PADD tenu le … » sans armer le sursis.
+        "debat_padd_tenu": veille_plu.debat_padd_tenu(e),
+        # OUTIL-COMMUNES-FIX-14 LOT 5/6 — mêmes faits que la fiche parcelle / le vérificateur (source
+        # unique = registre) : autorisation expresse de surseoir (Saint-Louis) et date de la recherche
+        # infructueuse du débat PADD (Étang-Salé/Saint-Denis/Saint-Paul), pour les trois écrans d'accord.
+        "sursis_autorise": veille_plu.sursis_autorise(e),
+        "debat_recherche_le": veille_plu.debat_recherche_le(e),
     }
 
 
@@ -708,10 +768,15 @@ _FALLBACK = {
                    "logements": None, "vacants": None, "vacance_pct": None, "quartiers": None,
                    "parc_ancien_pct": None,
                    "source": "INSEE — population municipale légale · INSEE RP · INSEE Filosofi (niveau de vie)"},
-    "plu_statut": {"statut": "document local", "libelle": None, "procedure": None,
+    # FIX-14 LOT 4 — un bloc Urbanisme EN PANNE doit se signaler INDISPONIBLE (comme risques/population),
+    # jamais porter « document local » qui s'affichait en BADGE VERT + « Document local — document local. »
+    # (un faux renseignement). `indisponible: True` est le drapeau que la carte lit pour afficher
+    # « indisponible », neutre, sans aucune valeur de statut menteuse.
+    "plu_statut": {"indisponible": True, "statut": None, "libelle": None, "procedure": None,
                    "procedure_sudocuh": None, "etat_au": None,
                    "date_reglement": None, "confiance": None, "recherche_verbatim": True,
-                   "source": None, "source_citation": None, "source_url": None},
+                   "source": None, "source_citation": None, "source_url": None,
+                   "debat_padd_tenu": None, "sursis_autorise": None, "debat_recherche_le": None},
     # FIX-4 LOT 3 — faux zéros bannis : un bloc permis en échec est « indisponible » (None), jamais
     # « 0 permis » / « 0 au point mort » qui se confond avec une commune réellement sans permis.
     "permis": {"permis_12m": None, "permis_5a": None, "logements_12m": None,
@@ -729,6 +794,9 @@ def _safe(db: Session, key: str, fn):
     try:
         return fn()
     except Exception as exc:   # noqa: BLE001 — un bloc défaillant ne doit jamais casser la fiche
+        from ..db import connexions_saturees
+        if connexions_saturees(exc):
+            raise
         log.warning("fiche_commune: bloc %s indisponible (%s)", key, exc)
         db.rollback()
         return _FALLBACK[key]

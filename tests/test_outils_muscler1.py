@@ -61,12 +61,12 @@ def test_successions_liste(db_session):
     par_idu = {i["idu"]: i for i in out["items"]}
     assert par_idu["SUCC0001"]["sci_dormante"] is True
     assert par_idu["SUCC0002"]["dirigeant_age"] == 82
+    assert par_idu["SUCC0002"]["age_au_calcul"] is True
     for it in out["items"]:
         assert it["proprio"]["type"] == "personne_morale" and it["proprio"]["denomination"]
         assert "tier_v2" not in it and "etage0" not in it   # aucun badge de score sur cet écran
         assert "sdp_residuelle_m2" in it                    # Estimé — peut être None (hors PLU / store absent)
-    # doctrine A0 : l'avertissement dit « probable », jamais une succession ouverte.
-    assert "probable" in out["avertissement"].lower()
+    assert "ne permettent de confirmer" in out["avertissement"]
 
 
 def test_successions_commune_vide_honnete(db_session):
@@ -145,3 +145,33 @@ def test_assemblage_voisines_parcelle_inconnue_404(db_session):
     with pytest.raises(HTTPException) as e:
         assemblage_voisines(idu="ZZ00000000", db=db_session)
     assert e.value.status_code == 404
+
+
+def test_successions_identite_et_age_actuels(db_session):
+    from labuse.api.modules import _calcul_successions
+    s = db_session
+    commune = "Radar-test"
+    for i in range(1, 8):
+        idu, siren = f"RTEST{i}", f"97011100{i}"
+        _p(s, idu, _SQ, 500, commune)
+        _pm(s, idu, idu, siren)
+        _veille(s, idu, "999999999" if i == 1 else siren, age=82, sci=i in (1, 7))
+
+    def dirigeant(i, naissance, actif=True):
+        s.execute(text("INSERT INTO pm_dirigeants (siren, nom, date_naissance, type_personne, "
+                       "actif, diffusible) VALUES (:s, 'TEST', :d, 'INDIVIDU', :a, true)"),
+                  {"s": f"97011100{i}", "d": naissance, "a": actif})
+
+    today = s.execute(text("SELECT current_date")).scalar_one()
+    # Né le mois prochain, ou en janvier il y a 69 ans si le test tourne en décembre.
+    year = today.year - 70 + (today.month == 12)
+    dirigeant(2, f"{year}-{today.month % 12 + 1:02}")
+    dirigeant(3, f"{today.year - 70}-{today.month:02}")
+    dirigeant(4, "1930-01", False)
+    dirigeant(5, "1950-99")
+    dirigeant(6, f"{today.year - 101}-01")
+    out = _calcul_successions(s, commune, 0, 1, 0)
+    assert out["total"] == 2
+    assert out["n_age_ecarte"] == 1
+    assert [(r["idu"], r["dirigeant_age"]) for r in out["items"]] == [("RTEST3", 70)]
+    assert _calcul_successions(s, commune, 0, 1, 1)["items"][0]["idu"] == "RTEST7"

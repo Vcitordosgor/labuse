@@ -16,7 +16,7 @@ import { CAPACITE_MAX_MENTION, CAPACITE_MAX_MENTION_COURTE } from '../../lib/cap
 import { Chargement, Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { BlocIndisponible } from './BlocIndisponible'
-import type { Fiche, PotentielTransformation } from '../../lib/types'
+import type { Fiche, PotentielABatir, PotentielTransformation } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroTriple, PorteOutil, StepProv, HypInput, GroupLabel, FactRow, FactNote, RefLink, Vigilance } from './primitives'
 import { Badge } from '../ui/Badge'
@@ -37,23 +37,29 @@ const PT_CHIP: Record<string, string> = { differe: 'différé', exclu: 'non rete
 // CLASSEMENT-USAGE-1 — « Potentiel à bâtir » : information À PART (jamais le palier de vente), servie
 // par la SEULE fonction back `potentiel_batir`. SDP restante (0 en zone fermée), zone ouverte/fermée,
 // « rien à bâtir » quand la SDP est nulle. Vert = constructible avec SDP ; gris = rien à bâtir.
-export function PotentielABatirBlock({ pab }: { pab: import('../../lib/types').PotentielABatir }) {
-  const rien = pab.rien_a_batir === true || !(pab.sdp_restante_m2 && pab.sdp_restante_m2 > 0)
-  const color = rien ? '#9AA6A0' : '#4ADE96'
+export function libellePotentielNonChiffre(pab?: PotentielABatir | null): string | null {
+  if (!pab || pab.sdp_restante_m2 !== null || pab.rien_a_batir === true || pab.constructible === false) return null
+  return pab.libelle
+}
+
+export function PotentielABatirBlock({ pab }: { pab: PotentielABatir }) {
+  const nonChiffre = libellePotentielNonChiffre(pab)
+  const rien = pab.rien_a_batir === true || pab.sdp_restante_m2 === 0
+  const color = rien || nonChiffre ? '#9AA6A0' : '#4ADE96'
   return (
     <div data-potentiel-a-batir>
       <GroupLabel right={
         <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium" style={{ background: `${color}22`, color }}>
-          {rien ? 'rien à bâtir' : 'constructible'}
+          {nonChiffre ? 'non chiffré' : rien ? 'rien à bâtir' : 'constructible'}
         </span>
       }>Potentiel à bâtir</GroupLabel>
       <Lignes>
         <Ligne label="SDP restante"
           valeur={pab.sdp_restante_m2 != null ? <>{fmtInt(pab.sdp_restante_m2)} <small>m²</small></> : <small>non calculée</small>} />
         <Ligne label="Zone"
-          valeur={<small>{pab.zone_lib ? `${pab.zone_lib} — ` : ''}{pab.zone_ouverte === false ? 'fermée à l’urbanisation' : 'ouverte'}</small>} />
+          valeur={<small>{pab.zone_lib ? `${pab.zone_lib} — ` : ''}{pab.zone_ouverte == null ? 'statut à vérifier' : pab.zone_ouverte ? 'ouverte' : 'fermée à l’urbanisation'}</small>} />
       </Lignes>
-      {pab.motif && <FactNote>{pab.libelle}</FactNote>}
+      {(pab.motif || nonChiffre) && <FactNote>{pab.libelle}</FactNote>}
     </div>
   )
 }
@@ -694,7 +700,7 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
             Surfaces : {pan.capacite_mention ?? CAPACITE_MAX_MENTION_COURTE}.
           </p>
         )}
-        {badges.plu_approuve_le && <p className="mt-2 text-[10.5px] text-txt-dim">PLU — {String(badges.plu_approuve_le)}</p>}
+        {badges.plu_approuve_le && <p className="mt-2 text-[10.5px] text-txt-dim">Approbation en couverture · {String(badges.plu_approuve_le)}</p>}
       </div>
 
       {/* 3 · TESTER UN PROJET — deux champs EMPILÉS pleine largeur, unité dans le champ, libellé dessus */}
@@ -726,7 +732,7 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
           même DA Repli que les autres blocs du panneau). */}
       {rv.length > 0 && (
         <Repli defaultOpen compteur={rv.length} label={<>Règles du PLU · zone {pan.zone}{pluDoc ? (
-          <Tip garder tip={<>Règlement : {pluDoc}{badges.plu_approuve_le ? ` · approuvé le ${String(badges.plu_approuve_le)}` : ''}</>}>
+          <Tip garder tip={<>Règlement : {pluDoc}{badges.plu_approuve_le ? ` · approbation en couverture · ${String(badges.plu_approuve_le)}` : ''}</>}>
             <span data-faisa-plu-info tabIndex={0} className="ml-1 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-line-2 text-[9px] text-txt-dim">i</span>
           </Tip>) : null}</>}>
         <div data-faisa-plu>
@@ -940,9 +946,17 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
             // d'incertitude mesurée (backtest VT2) en title. Repli sur l'ancien libellé si absent.
             <p data-mode-b-terrain-nu style={{ margin: 0, fontSize: 10.5, color: '#8FA69A' }} title={mb.terrain_nu.incertitude}>
               terrain nu au prix du secteur : <b style={{ color: 'var(--txt-hi)' }}>~{mb.terrain_nu.valeur_fourchette_libelle ?? mb.terrain_nu.valeur_libelle}</b>{' '}
-              {/* OUTIL-COMMUNES-FIX-8 (2) — l'EFFECTIF (nb de ventes utilisées) est affiché à côté du prix et
-                  de « Estimé », pour que le lecteur voie sur combien de ventes repose ce prix de section. */}
-              <span style={{ fontSize: 10 }}>({fmtInt(mb.terrain_nu.prix_m2)} €/m² × {fmtInt(mb.terrain_nu.surface_m2)} m²{mb.terrain_nu.effectif != null ? ` · ${mb.terrain_nu.effectif} vente${mb.terrain_nu.effectif > 1 ? 's' : ''}` : ''} · Estimé, fourchette ±{FOURCHETTE_DEMI_LARGEUR_PCT} %)</span>
+              {/* OUTIL-COMMUNES-FIX-8 (2) — l'EFFECTIF est affiché à côté du prix et de « Estimé ».
+                  FIX-9 LOT C (3) — l'UNITÉ suit le niveau : « ventes » au secteur (actes), « sections »
+                  au repli communal (jamais « ventes » pour un comptage de sections). */}
+              <span style={{ fontSize: 10 }}>({fmtInt(mb.terrain_nu.prix_m2)} €/m² × {fmtInt(mb.terrain_nu.surface_m2)} m²{mb.terrain_nu.effectif != null ? ` · ${mb.terrain_nu.effectif} ${mb.terrain_nu.effectif_unite ?? 'ventes'}` : ''} · Estimé, fourchette ±{FOURCHETTE_DEMI_LARGEUR_PCT} %)</span>
+            </p>
+          )}
+          {mb.note_seuil && (
+            // FIX-9 LOT C (3) — pourquoi un prix apparaît ici quand Comparer le masque : le Bilan sert une
+            // médiane de section dès 3 ventes, l'affichage public exige 8. Dit en clair à côté du prix.
+            <p data-mode-b-note-seuil style={{ margin: '2px 0 0', fontSize: 10, color: '#8FA69A', fontStyle: 'italic' }}>
+              {mb.note_seuil}
             </p>
           )}
           {mb.porte_par_terrain && (

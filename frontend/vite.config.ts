@@ -133,7 +133,24 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
 
 export default defineConfig({
   base: '/socle/', // servi par FastAPI sous /socle (cf. app.py). Dev vite = racine.
-  plugins: [react()],
+  optimizeDeps: { exclude: ['maplibre-gl'] },
+  plugins: [react(), {
+    name: 'maplibre-grounded-extrusions',
+    enforce: 'pre',
+    transform(code, id) {
+      if (!id.endsWith('/maplibre-gl/dist/maplibre-gl.mjs')) return
+      // MapLibre 6.4.1 ancre le toit au centre et limite la jupe à 10 m sous ce centre.
+      // Pour les murs au sol, prolonger seulement les sommets qui arrivent près du terrain
+      // ou au-dessus. La marge de 2 m couvre l'interpolation entre sommets de façade.
+      const original = 'height_terrain3d_offset-(base > 0.0 ? 0.0 : 10.0)'
+      const grounded = 'base > 0.0 ? height_terrain3d_offset : min(height_terrain3d_offset-10.0,get_elevation(a_pos)-2.0)'
+      // Deux shaders, façades unies et texturées. Revalider lors d'une mise à jour du moteur.
+      if (code.split(original).length !== 3) {
+        this.error('Ancrage des façades : shaders MapLibre incompatibles')
+      }
+      return { code: code.split(original).join(grounded), map: null }
+    },
+  }],
   // M31 : injecte le run servi versionné dans le bundle (api.ts lit import.meta.env.VITE_RUN_LABEL).
   define: {
     'import.meta.env.VITE_RUN_LABEL': JSON.stringify(SERVED_RUN),

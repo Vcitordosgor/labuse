@@ -110,7 +110,7 @@ def lire_zones_interdites_wkt(session, geom_wkt: str):
     rows = session.execute(text(
         "SELECT subtype, attrs->>'code_degre' AS code_degre, attrs->>'code_risque' AS code_risque, "
         "       ST_AsText(ST_Intersection(geom_2975, ST_GeomFromText(:g,2975))) AS wkt "
-        "FROM spatial_layers WHERE kind='ppr' "
+        "FROM spatial_layers WHERE kind='ppr' AND labuse_ppr_couleur(subtype,attrs) IS NOT NULL "
         "  AND ST_Intersects(geom_2975, ST_GeomFromText(:g,2975))"
     ), {"g": geom_wkt}).fetchall()
     interdites, bleues = [], []

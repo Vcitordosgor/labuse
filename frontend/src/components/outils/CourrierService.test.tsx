@@ -96,6 +96,30 @@ describe('COURRIER — service d\'envoi (3 étapes)', () => {
     expect(screen.queryByText('Posté')).toBeNull()
   })
 
+  it('refuse un adressage incomplet et permet de le revérifier', async () => {
+    const fetchNormal = global.fetch
+    let incomplet = true
+    global.fetch = vi.fn((url, init) => {
+      if (incomplet && String(url).includes('/courrier/adressage')) {
+        return Promise.resolve(new Response(JSON.stringify({ resolutions: [] })))
+      }
+      return fetchNormal(url, init)
+    })
+    renderTool()
+    const relire = await screen.findByRole('button', { name: 'Relire ›' })
+    await waitFor(() => expect(relire).toBeEnabled())
+    fireEvent.click(relire)
+    const verifier = await screen.findByRole('button', { name: /Vérifier l'envoi/ })
+    await waitFor(() => expect(verifier).toBeEnabled())
+    fireEvent.click(verifier)
+    await screen.findByText('La vérification des destinataires est incomplète.')
+    const deposer = screen.getByRole('button', { name: /Déposer une demande/ })
+    expect(deposer).toBeDisabled()
+    incomplet = false
+    fireEvent.click(screen.getByRole('button', { name: /réessayer/i }))
+    await waitFor(() => expect(deposer).toBeEnabled())
+  })
+
   it('③ aperçu PDF de relecture disponible (secondaire)', async () => {
     renderTool()
     await waitFor(() => expect(document.querySelectorAll('[data-courrier-dest]').length).toBe(1))

@@ -36,21 +36,21 @@ def _bati_existant(db: Session, idu: str) -> dict | None:
     à défaut la hauteur BD TOPO du bâtiment. C'est un FAIT contextuel (l'outil montre où l'on PEUT
     construire ; ceci montre ce qui est DÉJÀ là) : aucun calcul réglementaire n'en dépend.
 
-    On retient les bâtiments MAJORITAIREMENT sur la parcelle (≥ 50 % de leur emprise) ou d'emprise
-    intersectée ≥ 20 m² — écarte les débords de voisins. Emprise entière servie (schéma fidèle).
-    Renvoie une FeatureCollection (4326) ou None si la parcelle ne porte aucun bâti."""
+    Les empreintes sont découpées au cadastre. Toute intersection surfacique est
+    conservée, y compris le débord d’un bâtiment voisin. Un contact linéaire est exclu."""
     lid = db.execute(text(
         # CHASSE-INVARIANTS-FIX-2 (1) — même borne unique : faîtage ≤ 0 ou > plafond ⇒ NULL (non mesuré).
         "SELECT labuse_hauteur_lidar_m(faitage_m) FROM batiment_hauteur_lidar WHERE idu = :i"),
         {"i": idu}).scalar()
     lidar_faitage = float(lid) if lid is not None else None
     rows = db.execute(text(
-        "SELECT ST_AsGeoJSON(ST_Transform(s.geom_2975, 4326)) AS gj, "
+        "SELECT ST_AsGeoJSON(ST_Transform(c.emprise, 4326)) AS gj, "
         "       (s.attrs->>'hauteur')::float AS h_bdtopo "
         "FROM spatial_layers s JOIN parcels p ON p.idu = :i "
+        "CROSS JOIN LATERAL (SELECT ST_CollectionExtract("
+        "  ST_Intersection(s.geom_2975, p.geom_2975), 3) AS emprise) c "
         "WHERE s.kind = 'batiment' AND ST_Intersects(s.geom_2975, p.geom_2975) "
-        "  AND (ST_Area(ST_Intersection(s.geom_2975, p.geom_2975)) >= 0.5 * ST_Area(s.geom_2975) "
-        "       OR ST_Area(ST_Intersection(s.geom_2975, p.geom_2975)) >= 20.0)"
+        "AND NOT ST_IsEmpty(c.emprise)"
     ), {"i": idu}).mappings().all()
     feats = []
     for r in rows:
@@ -79,7 +79,9 @@ def _bati_existant(db: Session, idu: str) -> dict | None:
 @router.get("/{idu}", response_model=GabaritResult)
 def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
     if idu == "demo":
+        from ..gabarit.builder import renseigner_emprise_projet
         res = compute_gabarit(demo_gabarit_input())
+        renseigner_emprise_projet(res)
         res.raccordement = {"mode": "fixtures",
                             "avertissement": "Données FICTIVES de démonstration (CDC §9)"}
         return res
@@ -138,18 +140,8 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
     if res.status == "inconstructible":
         res.batiExistantGeoJSON = _bati_existant(db, idu)
         return res
-    # CHASSE-CALCULS-FIX-1 Lot 4 (E-B2) — UNE SEULE zone d'implantation : son AIRE est servie dans le
-    # MÊME repère que la Faisabilité (échelle CONTENANCE, règle CONTENANCE-1 C3 = contenance/dessin,
-    # identique à ctx.terrain_sur_dessin). La FORME (GeoJSON, reculs, PPR découpé) reste sur le dessin ;
-    # seule l'aire scalaire `zoneImplantationM2` est ré-échelonnée → même valeur au m² près que l'outil
-    # Faisabilité, fin du doublon (ex. AK0804 : 19 294 → 19 024, = faisabilité). surfaceParcelleM2 est
-    # déjà la contenance ; le plafond d'emprise (CES × contenance) l'est aussi → rien d'autre à toucher.
-    if res.zoneImplantationM2 and res.surfaceParcelleM2:
-        _dessin = db.execute(text("SELECT ST_Area(geom_2975) FROM parcels WHERE idu = :i"),
-                             {"i": idu}).scalar()
-        if _dessin and float(_dessin) > 0:
-            res.zoneImplantationM2 = round(
-                float(res.zoneImplantationM2) * float(res.surfaceParcelleM2) / float(_dessin), 1)
+    from ..gabarit.builder import rescale_zone_contenance
+    rescale_zone_contenance(db, idu, res)
     # CHASSE-DOCS-FIX-1 (vérif #3) + FAISA-REGLES-1 (D-025/026) — SOURCE UNIQUE pour la part en zone
     # constructible (zone_servie.zone_dominante, la MÊME que la fiche §PLU / Comparer) : pctPortionZone +
     # surfaceNote. Helper PARTAGÉ avec le builder PDF → écran et PDF portent la même mise en garde à-cheval.
@@ -158,25 +150,43 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
     res.batiExistantGeoJSON = _bati_existant(db, idu)
     # RECETTE-OUTILS-3 (S7/S10) — bâti découpé au contour + zone d'implantation déduite du bâti conservé.
     # Référence UNIQUE lue par l'app (2D/3D) ET le PDF (le PDF rappelle la même fonction, cf. construire_gabarit).
-    from ..gabarit.builder import deduire_bati_de_zone
+    from ..gabarit.builder import deduire_bati_de_zone, renseigner_emprise_projet
     deduire_bati_de_zone(res)
+    renseigner_emprise_projet(res)
     # CHASSE-DOCS-FIX-1 (E-07) — zone d'implantation NULLE (terrain exigu : rien ne passe après reculs) :
     # le plafond d'emprise et la hauteur n'ont pas d'objet (ils donneraient un gabarit chiffré sur un
     # terrain où rien ne s'implante). On les masque et on le DIT.
     if res.zoneImplantationM2 == 0:
         res.plafondEmpriseM2 = None
         res.hauteurReglementaireM = None
-        res.terrainNote = ("Aucune zone d'implantation après reculs (terrain exigu) : plafond "
+        res.terrainNote = res.terrainNote or ("Aucune zone d'implantation après reculs (terrain exigu) : plafond "
                            "d'emprise et hauteur sans objet ici.")
         return res
-    # CHASSE-CALCULS-FIX-1 Lot 6 (E-C1) — l'extrusion 3D est posée à plat : on le DIT dès qu'une
-    # hauteur réglementaire permet un volume (le mode 3D l'affiche).
-    if res.hauteurReglementaireM is not None:
-        # RECETTE-4 — formulation explicite : la hauteur EST mesurée depuis le terrain naturel (le volume
-        # vert part du sol du MNT), mais le SOMMET est représenté à plat (il ne suit pas la pente).
-        res.terrainNote = ("Volume 3D indicatif — la hauteur réglementaire est mesurée depuis le terrain "
-                           "naturel, mais le sommet est représenté à plat (il ne suit pas la pente du terrain).")
     return res
+
+
+@router.get("/relief/{idu}")
+def gabarit_relief(idu: str, db: Session = Depends(get_db)) -> dict:
+    from ..gabarit.scene import _cadastre_2975, _MARGE_FACES_1M, charger_surface_sol
+
+    parcelle = _cadastre_2975(db, idu)
+    if parcelle is None:
+        raise HTTPException(404, "Parcelle sans contour.")
+    surf, meta = charger_surface_sol(db, *parcelle.bounds, marge=_MARGE_FACES_1M + 10)
+    if surf is None:
+        raise HTTPException(404, "Relief indisponible sur cette parcelle.")
+    fonds = {"rge_alti_5m": "regional", "fond_1m": "local"}
+    return {"source": fonds.get(meta["source"], surf.chemin.stem), "maille_m": surf.pas}
+
+
+@router.get("/relief/tuiles/{fond}/{z}/{x}/{y}.png")
+def gabarit_tuile_relief(fond: str, z: int, x: int, y: int) -> Response:
+    from ..gabarit.relief_carte import sources, tuile
+    try:
+        png = tuile(sources(fond), z, x, y)
+    except (ValueError, FileNotFoundError):
+        raise HTTPException(404, "Tuile de relief indisponible.")
+    return Response(png, media_type="image/png", headers={"Cache-Control": "private, max-age=300"})
 
 
 # ── GABARIT-3D-1 (pilote) — SCÈNE + COUPES ────────────────────────────────────────────────────────
@@ -241,6 +251,32 @@ def gabarit_coupe_svg(idu: str, axe: str, request: Request, theme: str = "sombre
     return Response(svg, media_type="image/svg+xml")
 
 
+@router.get("/scene/{idu}/coupes.pdf")
+def gabarit_coupes_pdf(idu: str, sid: str, request: Request, db: Session = Depends(get_db)) -> Response:
+    """Exporte les coupes de la scène affichée, y compris sur une parcelle sans enveloppe bâtissable."""
+    from ..exports.blocs.gabarit import _bloc_coupes_pilote
+    from ..exports.rendu import Cartouche, page_html, render_pdf
+    from ..gabarit.scene import build_scene
+    from ..quota import porte_export
+
+    _exiger_admin(request)
+    porte_export(request, db)
+    scene = build_scene(db, idu)
+    _verif_sid(scene, sid)
+    corps = _bloc_coupes_pilote(scene.to_dict())
+    if not corps:
+        raise HTTPException(404, "Aucune coupe de terrain disponible pour cette parcelle.")
+    titre = "Gabarit — coupes du terrain"
+    cartouche = Cartouche(titre, scene.idu, "LABUSE · Gabarit · Étude de faisabilité")
+    html = page_html(titre, cartouche, corps, paysage=True, page_extra_css=
+                     ".plan-coupes svg {display:block;width:100%;height:auto} "
+                     ".coupes3d:first-child {break-before:auto !important}")
+    return Response(render_pdf(html), media_type="application/pdf", headers={
+        "Content-Disposition": f'attachment; filename="Gabarit-coupes-{scene.scene_id}.pdf"',
+        "Cache-Control": "private, no-store",
+    })
+
+
 @router.get("/scene/{idu}/ortho")
 def gabarit_ortho(idu: str, request: Request, sid: str | None = None,
                   db: Session = Depends(get_db)) -> Response:
@@ -279,3 +315,24 @@ def gabarit_plan_cle_svg(idu: str, request: Request, theme: str = "sombre", sid:
     if not svg:
         raise HTTPException(404, f"Plan-clé indisponible pour {idu}.")
     return Response(svg, media_type="image/svg+xml")
+
+
+@router.get("/{idu}/implantation")
+def plan_implantation(idu: str, db: Session = Depends(get_db)):
+    from ..gabarit.plan_projet import plan_metrique
+    return plan_metrique(gabarit_detail(idu, db))
+
+
+@router.post("/{idu}/implantation/cotes")
+def cotes_implantation(idu: str, sommets: list[tuple[float, float]], db: Session = Depends(get_db)):
+    from ..gabarit.plan_projet import _mesurer_implantation
+    return _mesurer_implantation(sommets, plan_implantation(idu, db))
+
+
+@router.post("/{idu}/implantation/plan.pdf")
+def pdf_implantation(idu: str, sommets: list[tuple[float, float]], db: Session = Depends(get_db)):
+    from ..gabarit.plan_projet import plan_cote_pdf, _mesurer_implantation
+    plan = plan_implantation(idu, db)
+    bilan = _mesurer_implantation(sommets, plan)
+    return Response(plan_cote_pdf(idu, plan, sommets, bilan), media_type="application/pdf",
+                    headers={"Cache-Control": "no-store"})

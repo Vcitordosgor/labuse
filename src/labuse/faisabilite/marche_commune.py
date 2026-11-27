@@ -500,16 +500,18 @@ def _serie_maison_annuelle(db: Session, commune: str, *, n_ans: int = 5) -> list
 
 
 def _permis_12m_commune(db: Session, commune: str) -> int | None:
-    """Permis DÉPOSÉS sur les 12 derniers mois (Sit@del), par commune — insensible à la casse. None si
-    la table est absente (base de test). La date de dépôt (défaut : la date d'autorisation)."""
+    """Permis AUTORISÉS sur les 12 derniers mois (Sit@del), par commune — insensible à la casse. None si
+    la table est absente (base de test). OUTIL-PERMIS-FIX-10 — fondé sur la DATE D'AUTORISATION (`date`,
+    fiable, 100 % présente), plus sur la date de dépôt brute (corrompue) : un dépôt faux ne fausse plus
+    ce compte. Ancre = dernière autorisation intégrée."""
     try:
-        d = db.execute(text("SELECT max(COALESCE(date_depot, date)) FROM sitadel_permits "
+        d = db.execute(text("SELECT max(date::date) FROM sitadel_permits "
                             "WHERE lower(commune)=lower(:c)"), {"c": commune}).scalar()
         if d is None:
             return None
         return int(db.execute(text(
             "SELECT count(*) FROM sitadel_permits WHERE lower(commune)=lower(:c) "
-            "AND COALESCE(date_depot, date) > :d - interval '12 months'"), {"c": commune, "d": d}).scalar() or 0)
+            "AND date::date > :d - interval '12 months'"), {"c": commune, "d": d}).scalar() or 0)
     except Exception:  # noqa: BLE001 — table absente : la ligne disparaît (jamais un faux 0)
         try:
             db.rollback()

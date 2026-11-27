@@ -21,7 +21,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from .. import runs
-from .outils import _fold_py
+from .outils import _fold_py, copro_sur_parcelle
 
 # Les SIX chiffres du bandeau (declarations/fiche/entete_tuiles.yaml — l'ordre de la maquette v4).
 # (id du registre, libellé, fmt) — fmt appliqué à la valeur BRUTE, jamais recalculée.
@@ -73,18 +73,18 @@ def _fmt(valeur: Any, kind: str) -> str | None:
 def _fiche(db: Session, idu: str) -> dict | None:
     from fastapi import HTTPException
 
-    from ..api.app import _q_v2_fiche
+    from ..api.app import _fiche_servie
     try:
-        f = _q_v2_fiche(db, idu, run_label=runs.current())
+        f = _fiche_servie(db, idu, runs.current())
     except HTTPException:
         return None                     # parcelle absente du run servi → pas de résumé (jamais un 500)
     return f if f and f.get("commune") is not None else None
 
 
-def _valeurs(db: Session, idu: str, fiche: dict) -> dict:
+def _valeurs(db: Session, idu: str, fiche: dict, ids: list[str] | None = None) -> dict:
     """{id → Valeur} pour TOUS les ids câblés au robinet : le résumé lit exactement ce que le Dossier lit."""
     from ..exports import robinet_fiche
-    return robinet_fiche.collecte(db, idu, list(robinet_fiche.EXTRACTEURS.keys()), fiche=fiche)
+    return robinet_fiche.collecte(db, idu, ids or list(robinet_fiche.EXTRACTEURS), fiche=fiche)
 
 
 def _verdict_section(sec_id: str, valeurs: dict) -> tuple[str, str] | None:
@@ -211,9 +211,9 @@ def resume_commune(db: Session, commune: str) -> dict | None:
     _lignes_tf = fisc.get("lignes") or []
     if _lignes_tf:
         carte("Fiscalité", _lignes_tf[0]["ligne"] + ".")
-    # OUTIL-PERMIS-FIX-5 (Point 2) — carte « Instruction » (délai médian) RETIRÉE : délai jamais mesuré
-    # (dépôt connu à l'année → gonflé). « On ne montre pas un délai faux » (Vic). `delai_median_mois` n'est
-    # d'ailleurs plus servi par le bloc `comparable` de la fiche commune.
+    comp = c.get("comparable") or {}
+    if comp.get("delai_median_mois") is not None:
+        carte("Instruction", f"Délai médian d'instruction {comp['delai_median_mois']} mois.")
     fonc = c.get("foncier") or {}
     if fonc.get("classement"):
         carte("Foncier", f"Classement du foncier : {fonc['classement']}.")
@@ -238,6 +238,11 @@ def phrase_commune(resume: dict) -> str:
 # mot-clé (folded) → (id du registre, libellé). La réponse cite la ligne et son id : plus de champ
 # jeté par l'outil (le trou d'outillage constaté à COPILOTE-AUDIT-1 point 3).
 _CHAMPS = [
+    (("pente du toit", "pente de toiture", "pente de la toiture"), ("pente_toit_deg", "Pente du toit")),
+    (("combien de logements", "capacite en logements", "nombre de logements constructibles",
+      "combien de lots"), ("capacite_logements", "Capacité en logements")),
+    (("emprise batie", "emprise du bati", "surface batie", "emprise bâtie", "surface au sol du bati"),
+     ("emprise_batie_m2", "Emprise bâtie")),
     (("proprietaire", "proprio", "a qui appartient", "appartient-elle", "appartient elle",
       "appartient a", "qui possede", "qui detient", "personne morale", "detenue par", "detenu par"),
      ("type_proprietaire", "Propriétaire")),
@@ -251,6 +256,8 @@ _CHAMPS = [
     # COPILOTE-5 — outil ÉTUDE DE ZONE / chalandise AVANT la zone (« étude de zone » contient « zone »).
     (("etude de zone", "chalandise", "a moins de 100 m", "autour a 100", "ventes a proximite"),
      ("voisinage_100m_liste", "Autour (100 m)")),
+    (("droit de preemption", "dpu"), ("dpu_perimetre", "Droit de préemption")),
+    (("emplacement reserve", "emplacements reserves"), ("er_emplacement_reserve", "Emplacement réservé")),
     (("zone", "zonage", "plu"), ("zone_plu_famille", "Zone PLU")),
     (("risque", "risques", "alea", "aleas", "ppr", "inondation"), ("aleas_parcelle_liste", "Risques et aléas")),
     # COPILOTE-5 — pollution des sols (CASIAS), distincte des aléas PPR.
@@ -259,7 +266,7 @@ _CHAMPS = [
     (("pente", "denivele"), ("pente_deg", "Pente")),
     (("exposition", "versant", "orientation"), ("exposition_versant", "Exposition")),
     # COPILOTE-5 — surface LIBRE au sol AVANT la surface de parcelle (« surface » happerait sinon).
-    (("surface libre", "sol libre", "terrain libre", "espace libre", "surface disponible au sol"),
+    (("surface libre", "sol libre", "terrain libre", "espace libre", "surface disponible au sol", "surface non batie", "surface non-batie"),
      ("surface_libre_sol_m2", "Surface libre au sol")),
     (("surface", "superficie", "taille"), ("surface_parcelle_m2", "Surface")),
     # CLASSEMENT-USAGE-1 — « potentiel à bâtir » : peut-on construire, zone ouverte/fermée, rien à
@@ -276,8 +283,6 @@ _CHAMPS = [
     (("adresse", "ou se trouve", "localisation", "ou est-elle situee", "quelle adresse",
       "quelle est l'adresse"), ("adresse_ban", "Adresse")),
     # §3 Bâti
-    (("emprise batie", "emprise du bati", "surface batie", "emprise bâtie", "surface au sol du bati"),
-     ("emprise_batie_m2", "Emprise bâtie")),
     (("hauteur du bati", "hauteur du batiment", "hauteur existante", "hauteur construite",
       "hauteur batie"), ("hauteur_bati_m", "Hauteur du bâti")),
     (("combien de batiments", "nombre de batiments", "parcelle batie", "deja bati",
@@ -292,13 +297,14 @@ _CHAMPS = [
     (("arret de bus", "transport en commun", "arret de transport", "tcsp", "ligne de bus",
       "transports en commun"), ("distance_arret_m", "Transport en commun")),
     # §4/7 Urbanisme — servitudes & dispositifs
-    (("servitude", "dispositif", "emplacement reserve", "droit de preemption", "dpu",
+    (("servitude", "dispositif",
       "monument historique", "batiment de france", "abf"), ("dispositifs_parcelle", "Dispositifs et servitudes")),
     (("rtaa", "reglementation thermique", "confort thermique dom"), ("rtaa_exigences", "RTAA DOM")),
     # §9 Marché
     (("prix du terrain", "prix au m2 du terrain", "valeur du terrain", "combien vaut le terrain",
       "prix du foncier", "prix du m2 de terrain"), ("prix_terrain_secteur_eur_m2", "Prix du terrain (secteur)")),
-    (("derniere vente", "deja vendu", "ventes autour", "dvf", "prix du marche", "prix au m2",
+    (("derniere vente", "derniere mutation", "deja vendu"), ("prix_achat_historique_eur", "Dernière mutation")),
+    (("ventes autour", "dvf", "prix du marche", "prix au m2",
       "prix de l'ancien", "transactions", "prix de vente"), ("dvf_parcelle_liste", "Marché — ventes")),
     (("prix d'achat", "achetee pour", "acquise pour", "dernier prix paye", "prix paye"),
      ("prix_achat_historique_eur", "Dernier prix d'achat")),
@@ -306,8 +312,6 @@ _CHAMPS = [
     (("potentiel constructible", "potentiel de la parcelle", "capacite constructible",
       "capacite de la parcelle", "faisabilite", "etude de faisabilite", "que peut-on construire",
       "densifier"), ("potentiel_verdict", "Potentiel constructible")),
-    (("combien de logements", "capacite en logements", "nombre de logements constructibles",
-      "combien de lots"), ("capacite_logements", "Capacité en logements")),
     # outil GABARIT (implantation/hauteur/emprise constructibles) — résultat graphique : on donne les
     # CHIFFRES (même moteur que l'écran) et on propose d'ouvrir le Gabarit.
     (("gabarit", "jusqu'ou", "ou puis-je construire", "implantation",
@@ -360,6 +364,8 @@ _SOURCE_CHAMP = {
     "viabilisation_verdict": "LABUSE — faisceau viabilisation (faits réseaux)",
     "distance_arret_m": "Réseaux de transport (Citalis / Car Jaune…)",
     "dispositifs_parcelle": "GPU — servitudes et dispositifs (SUP)",
+    "dpu_perimetre": "GPU — périmètres de préemption",
+    "er_emplacement_reserve": "GPU — emplacements réservés",
     "rtaa_exigences": "RTAA DOM (arrêté)",
     "prix_terrain_secteur_eur_m2": "DVF — terrains du secteur",
     "dvf_parcelle_liste": "DVF — ventes du secteur",
@@ -406,15 +412,14 @@ def reponse_copro(db: Session, idu: str) -> dict | None:
     fiche = _fiche(db, idu)
     if fiche is None:
         return None
-    sv2 = fiche.get("score_v2") or {}
-    copros = fiche.get("coproprietes") or []
     src = "RNIC — répertoire des copropriétés"
-    if "copro" not in sv2 and not copros:
-        return {"texte": f"Je n'ai pas l'information de copropriété pour la parcelle {idu} au run servi.",
+    copro, rattachees = copro_sur_parcelle(fiche)
+    if copro is None:
+        return {"texte": f"Statut de copropriété non confirmé sur la parcelle {idu}. "
+                         "Aucun rattachement RNIC sur cette parcelle ne permet de lui attribuer des lots.",
                 "champ_id": "copro", "valeur": None, "source": src}
-    copro = bool(sv2.get("copro")) or bool(copros)
     if copro:
-        n = sum(int(c.get("nb_lots_total") or 0) for c in copros if isinstance(c, dict))
+        n = sum(int(c.get("nb_lots_total") or 0) for c in rattachees)
         detail = f" ({n} lots recensés au répertoire des copropriétés)" if n else ""
         texte = f"Oui, la parcelle {idu} est en copropriété{detail}."
     else:
@@ -433,9 +438,66 @@ def _mot_present(m: str, k: str) -> bool:
     return k in m
 
 
+def _zone_demandee(message):
+    return re.search(r"\b(?:zonee?|zonage)\s+(?:plu\s+)?(au[a-z0-9]*|[uan][a-z0-9]*)\b", message)
+
+
 def _quel_champ(message: str) -> tuple[str, str] | None:
     # L'ordre du tableau reste la priorité (le plus spécifique d'abord).
-    m = _fold_py(message.lower())
+    m = _fold_py(message.lower()).replace("’", "'")
+    if "pente" in m and "toit" not in m and any(k in m for k in ("pourcentage", "pour cent", "%")):
+        return "pente_terrain_pct", "Pente du terrain"
+    if "panneau" in m and re.search(r"\d\s*(?:k?wc|watts?[- ]crete)", m):
+        return "solaire_panneaux", "Équivalent en panneaux"
+    if any(k in m for k in ("mensuel", "par mois", "chaque mois")) and any(k in m for k in ("production", "kwh", "solaire")):
+        return "solaire_mensuel", "Production mensuelle moyenne"
+    if any(k in m for k in ("surface", "superficie", "metres carres", "m²")) and _zone_demandee(m):
+        return "surface_zone_m2", "Surface en zone PLU"
+    if "quartier" in m or "iris" in m:
+        if "vacant" in m:
+            if any(k in m for k in ("taux", "part", "pourcentage")):
+                return "iris_vacance_pct", "Taux de vacance"
+            return "iris_vacants", "Logements vacants"
+        if ("sociaux" in m or "hlm" in m) and any(k in m for k in ("part", "pourcentage", "taux")):
+            return "iris_part_hlm_pct", "Part de logements HLM"
+        if "menage" in m:
+            return "iris_menages", "Ménages"
+        for mot, cle, libelle in (("vacance", "vacance_pct", "Taux de vacance"),
+                                  ("population", "habitants", "Population"), ("habitant", "habitants", "Population"),
+                                  ("logement", "logements", "Nombre de logements")):
+            if mot in m:
+                return "iris_" + cle, libelle
+    if "casias" in m or "pollution des sols" in m:
+        return "casias_statut", "Pollution des sols (CASIAS)"
+    if "assainissement" in m and ("collectif" in m or "raccord" in m):
+        return "assainissement_collectif", "Assainissement"
+    if "ecole" in m and any(k in m for k in ("proche", "distance", "proximite")):
+        return "ecole_premier_degre", "École du premier degré"
+    if "toit" in m and any(k in m for k in ("orientation", "azimut", "exposition")):
+        return "pans_orientation_deg", "Orientation des pans de toiture"
+    if any(k in m for k in ("surface", "superficie", "emprise")):
+        if "piscine" in m:
+            return "surface_piscine", "Surface de piscine"
+        if "toit" in m:
+            return "surface_toiture", "Emprise de toiture"
+    if "surface de plancher" in m and any(k in m for k in ("restant", "residu", "disponible")):
+        return "sdp_residuelle_m2", "SDP restante (bâti conservé)"
+    if any(k in m for k in ("solaire", "photovoltaique", "kwh")):
+        if "productible" in m or "rendement" in m or "kwh/kwc" in m.replace(" ", ""):
+            return "solaire_productible", "Productible solaire estimé"
+        if "production" in m or "kwh" in m:
+            return "solaire_annuel", "Production photovoltaïque annuelle estimée"
+    if "taxe" in m and any(k in m for k in ("montant", "euros", "combien", "€")):
+        if "fonciere" in m:
+            return "montant_foncier", "Montant annuel de taxe foncière"
+        if "amenagement" in m:
+            return "montant_amenagement", "Montant de taxe d’aménagement"
+    if "kwc" in m or ("puissance" in m and any(k in m for k in ("solaire", "photovoltaique"))):
+        return "solaire_kwc", "Puissance photovoltaïque installable estimée"
+    if "bati" in m and any(k in m for k in ("pourcentage", "part batie", "proportion", "taux d'emprise existant")):
+        if re.search(r"non[ -]+bati", m):
+            return "part_non_batie_pct", "Part non bâtie"
+        return "part_batie_pct", "Part bâtie"
     for kws, cible in _CHAMPS:
         if any(_mot_present(m, k) for k in kws):
             return cible
@@ -465,6 +527,118 @@ def _ajouter_zones_a_cheval(db: Session, idu: str, texte: str) -> str:
     return texte
 
 
+def en_hectares(message: str) -> bool:
+    return bool(re.search(r"\b(?:hectares?|ha)\b", message.lower()))
+
+
+def format_surface(m2: float, hectares: bool) -> str:
+    from ..exports.registre_fmt import fmt_m2
+    if hectares:
+        valeur = f"{m2 / 10000:.6f}".rstrip("0").rstrip(".").replace(".", ",")
+        return f"{valeur} ha"
+    return fmt_m2(m2)
+
+
+def _detail_parcelle(db, idu, fiche, cid, libelle, message):
+    from ..exports.registre_fmt import fmt_pct
+    valeur = None
+    rendu = None
+    source = "fiche LABUSE"
+    if cid.startswith("iris_") and cid != "iris_quartier":
+        iris = fiche.get("iris_quartier") or {}
+        cle = cid.removeprefix("iris_")
+        valeur = iris.get(cle)
+        source = iris.get("source") or "INSEE — IRIS"
+        if valeur is not None:
+            unites = {"vacants": "logements vacants", "menages": "ménages"}
+            mesure = (f"{libelle} : {fmt_pct(valeur)}" if cle.endswith("_pct")
+                      else f"{valeur} {unites.get(cle, cle)}")
+            rendu = f"{iris.get('nom') or 'Quartier'} — {mesure} ({iris.get('millesime') or 'millésime inconnu'})."
+    elif cid == "pente_terrain_pct":
+        from math import radians, tan
+        degres = (fiche.get("terrain") or {}).get("pente_moy_deg")
+        if degres is not None:
+            valeur = 100 * tan(radians(float(degres)))
+            rendu = f"Pente moyenne du terrain : {fmt_pct(valeur)}."
+    elif cid == "surface_zone_m2":
+        demande = _zone_demandee(_fold_py(message.lower()))[1].upper()
+        zones = (fiche.get("reglement_plu") or {}).get("zones") or []
+        surface = fiche.get("contenance_m2")
+        if surface is not None and zones and all(z.get("zone") and isinstance(z.get("part"), (int, float)) for z in zones):
+            def correspond(zone):
+                famille = "AU" if zone.startswith("AU") else zone[:1]
+                return zone == demande or famille == demande
+            part = sum(z["part"] for z in zones if correspond(z["zone"].upper()))
+            valeur = surface * part
+            rendu = f"Zone {demande} : environ {format_surface(valeur, en_hectares(message))} sur la base de la contenance cadastrale."
+    elif cid == "assainissement_collectif":
+        valeur = ((fiche.get("viabilisation") or {}).get("cout_raccordement") or {}).get("assainissement")
+        rendu = f"{valeur or 'Zonage indisponible.'} Raccordement effectif à vérifier auprès du gestionnaire."
+    elif cid == "pans_orientation_deg":
+        toit = (fiche.get("le_bien") or {}).get("toit") or {}
+        valeur = toit.get(cid) if isinstance(toit, dict) else None
+        source = "LiDAR HD IGN — toiture"
+        if valeur:
+            rendu = libelle + " : " + ", ".join(f"{v}°" for v in valeur) + "."
+    elif cid in ("part_batie_pct", "part_non_batie_pct"):
+        cle = "surface_libre_m2" if cid == "part_non_batie_pct" else "emprise_batie_m2"
+        emprise = (fiche.get("le_bien") or {}).get(cle)
+        surface = fiche.get("contenance_m2")
+        if emprise is not None and surface and surface > 0:
+            valeur = 100 * emprise / surface
+            rendu = f"{libelle} : {fmt_pct(valeur)} ({format_surface(emprise, False)} sur {format_surface(surface, False)})."
+    elif cid == "montant_foncier":
+        source = "Fiscalité de la parcelle"
+        rendu = ("Montant annuel en euros indisponible. Il faut la base imposable de l’avis de taxe foncière "
+                 "et les exonérations applicables pour calculer la cotisation.")
+    elif cid == "montant_amenagement":
+        source = "Taxe d’aménagement — fiche parcelle"
+        valeur = (fiche.get("taxe_amenagement") or {}).get("total_eur")
+        rendu = (f"Montant du projet : {valeur} €." if valeur is not None else
+                 "Montant en euros à estimer dans le simulateur de taxe d’aménagement. Confirmez la surface taxable "
+                 "créée, l’année et l’usage du projet pour appliquer les valeurs et abattements correspondants.")
+    elif cid in ("solaire_kwc", "solaire_productible", "solaire_annuel", "surface_piscine", "surface_toiture", "solaire_panneaux", "solaire_mensuel"):
+        from ..api.modules import prospection_solaire_parcelle
+        from fastapi import HTTPException
+        try:
+            solaire = prospection_solaire_parcelle(idu, db=db)
+        except HTTPException as exc:
+            if exc.status_code != 503:
+                raise
+            solaire = {}
+        source = "Prospection solaire"
+        champs = {"solaire_kwc": ("kwc", "kWc"), "solaire_productible": ("productible", "kWh/kWc/an"),
+                  "solaire_annuel": ("prod_annuel", "kWh/an"), "surface_toiture": ("toit_m2", "m²"),
+                  "surface_piscine": ("piscine_m2", "m²")}
+        champs["solaire_panneaux"] = ("kwc", "panneaux")
+        champs["solaire_mensuel"] = ("prod_annuel", "kWh/mois")
+        cle, unite = champs[cid]
+        valeur = solaire.get(cle)
+        if valeur is not None and cid == "solaire_mensuel":
+            valeur = round(valeur / 12, 1)
+        if valeur is not None and cid == "solaire_panneaux":
+            puissance = re.search(r"(\d+(?:[.,]\d+)?)\s*(kwc|wc|watts?[- ]crete)", _fold_py(message.lower()))
+            watts = float(puissance[1].replace(",", ".")) * (1000 if puissance[2] == "kwc" else 1)
+            valeur = round(valeur * 1000 / watts, 2) if watts > 0 else None
+            libelle = "Équivalent théorique pour la puissance unitaire indiquée"
+        if valeur is not None:
+            rendu = f"{libelle} : {str(valeur).replace('.', ',')} {unite}."
+        elif cid == "surface_piscine" and solaire.get("piscine") is False:
+            rendu = "Aucune piscine détectée sur cette parcelle."
+        elif cid == "solaire_kwc":
+            rendu = "Puissance installable indisponible : il manque une estimation solaire ou une surface de toiture exploitable."
+    elif cid == "ecole_premier_degre":
+        from ..registre.moteurs.parcelle import plus_proche
+        valeur = plus_proche(db, idu, "amenite_bpe", "C", sdom="C1")
+        source = "INSEE BPE — premier degré"
+        if valeur:
+            rendu = f"École du premier degré la plus proche : {valeur['nom']} à {valeur['distance_m']} m à vol d’oiseau."
+    else:
+        return None
+    return {"texte": rendu or f"{libelle} : donnée indisponible pour cette parcelle.",
+            "champ_id": cid, "source": source, "valeur": valeur}
+
+
 def champ_precis(db: Session, idu: str, message: str) -> dict | None:
     """Une question sur UN champ de la fiche → la ligne DÉCLARÉE et son id (jamais un champ jeté).
     Rend {texte, champ_id, valeur, source} ou None si la demande ne vise pas un champ connu."""
@@ -478,12 +652,49 @@ def champ_precis(db: Session, idu: str, message: str) -> dict | None:
     fiche = _fiche(db, idu)
     if fiche is None:
         return None
-    valeurs = _valeurs(db, idu, fiche)
+    detail = _detail_parcelle(db, idu, fiche, cid, libelle, message)
+    if detail is not None:
+        return detail
+    if cid == "prix_achat_historique_eur" and libelle == "Dernière mutation":
+        mutation = (fiche.get("dvf_parcelle") or {}).get("derniere_mutation") or {}
+        date = mutation.get("date_mutation") or mutation.get("date")
+        texte = (f"Dernière mutation DVF enregistrée pour cette parcelle le {date}."
+                 if date else "Date de dernière mutation inconnue pour cette parcelle dans les données DVF.")
+        return {"texte": texte, "champ_id": cid, "source": _source_champ(cid), "valeur": date}
+    if cid == "dpu_perimetre":
+        dpu = (fiche.get("dispositifs") or {}).get("dpu") or {}
+        statut = {"servi": "Parcelle dans le périmètre de préemption publié.",
+                  "hors": "Parcelle hors du périmètre de préemption publié."}.get(dpu.get("etat"))
+        return {"texte": statut or dpu.get("detail") or "Droit de préemption non vérifié.",
+                "champ_id": cid, "source": _source_champ(cid), "valeur": dpu}
+    if cid == "hauteur_bati_m":
+        bati = fiche.get("le_bien") or {}
+        hauteur = bati.get("hauteur_bati_m")
+        if hauteur is not None:
+            qualif = bati.get("hauteur_source") or "source non précisée"
+            nature = "estimée" if bati.get("hauteur_nature") == "estimé" else "du bâti"
+            texte = f"Hauteur {nature} : {str(hauteur).replace('.', ',')} m ({qualif})."
+            return {"texte": texte, "champ_id": cid, "source": qualif, "valeur": hauteur}
+    dependances = {
+        "zone_plu_famille": ["reglement_plu_bloc"],
+        "gabarit_implantation_m2": ["gabarit_motif_blocage", "gabarit_emprise_plafond_m2",
+                                    "gabarit_zone_libere_m2", "gabarit_hauteur_m"],
+        "pente_toit_deg": ["nature_toit", "prod_spec_kwh_kwc"],
+    }
+    valeurs = _valeurs(db, idu, fiche, [cid, *dependances.get(cid, [])])
     v = valeurs.get(cid)
     if v is None or v.valeur in (None, "", [], {}):
         return {"texte": f"{libelle} : non renseigné pour la parcelle {idu} (donnée absente au run servi).",
                 "champ_id": cid, "valeur": None, "source": _source_champ(cid)}
     texte = _rendre_champ(cid, libelle, v.valeur, valeurs)
+    if cid == "distance_arret_m" and re.search(r"\b(kilometres?|km)\b", _fold_py(message.lower())):
+        arret = v.valeur.get("arret") or {} if isinstance(v.valeur, dict) else {}
+        metres = arret.get("distance_m")
+        if arret.get("nom") and isinstance(metres, (int, float)):
+            distance = f"{metres / 1000:.3f}".rstrip("0").rstrip(".").replace(".", ",")
+            texte = f"Arrêt le plus proche : {arret['nom']} à {distance} km."
+    if cid in {"surface_parcelle_m2", "surface_libre_sol_m2", "emprise_batie_m2"} and en_hectares(message):
+        texte = f"{libelle} : {format_surface(v.valeur, True)}."
     # CHASSE-FIX-1 (B-6) — « quelle zone PLU ? » sur une parcelle à cheval ne rendait que la zone
     # DOMINANTE et cachait la part non constructible (N/Ncor) — alors que la fiche et l'outil
     # destination_zone citent toutes les zones. On ajoute les zones + leur part, MÊME source que la
@@ -558,10 +769,17 @@ def _rendre_champ(cid: str, libelle: str, valeur: Any, valeurs: dict) -> str:
     if cid == "piscine_m2":
         return f"Piscine détectée — environ {fmt_m2(valeur)}."
     if cid == "fibre_parcelle" and isinstance(valeur, dict):
-        if valeur.get("ftth"):
-            ops = ", ".join(valeur.get("operateurs") or [])
-            return "Fibre optique (FTTH) disponible" + (f" — opérateurs : {ops}." if ops else ".")
-        return f"Fibre : {valeur.get('etat') or 'non desservie'}."
+        if valeur.get("etat") == "aucun_immeuble":
+            return valeur.get("detail") or "Aucun immeuble Arcep relevé à proximité."
+        distance = valeur.get("distance_m")
+        lieu = f" à {distance} m de la parcelle" if distance is not None else " à proximité de la parcelle"
+        statut = {True: "raccordable", False: "non raccordable"}.get(valeur.get("ftth"), "de statut inconnu")
+        ops = ", ".join(valeur.get("operateurs") or [])
+        return f"Immeuble Arcep{lieu} : {statut} à la fibre" + (f" ({ops})." if ops else ".")
+    if cid == "er_emplacement_reserve":
+        from ..exports.miroir import _r_er_ebc
+        items = valeur if isinstance(valeur, list) else [valeur]
+        return "Emplacement réservé : " + " ; ".join(_plain(_r_er_ebc(item)) for item in items) + "."
     if cid == "viabilisation_verdict" and isinstance(valeur, dict):
         return (valeur.get("libelle") or "Viabilisation : à confirmer").rstrip(".") + "."
     if cid == "distance_arret_m" and isinstance(valeur, dict):
@@ -576,9 +794,8 @@ def _rendre_champ(cid: str, libelle: str, valeur: Any, valeurs: dict) -> str:
         return ("Dispositifs / servitudes : " + " ; ".join(bouts) + "."
                 if bouts else "Aucun dispositif ni servitude relevé sur la parcelle.")
     if cid == "prix_terrain_secteur_eur_m2" and isinstance(valeur, dict):
-        p = valeur.get("prix_m2")
-        return (f"Prix du terrain au secteur : {p} €/m² (médiane de {valeur.get('n')} ventes, "
-                f"{valeur.get('perimetre')}, {valeur.get('fenetre')}).")
+        from ..exports.miroir import _r_terrain_nu
+        return "Prix du terrain au secteur : " + _plain(_r_terrain_nu(valeur)) + "."
     if cid == "dvf_parcelle_liste" and isinstance(valeur, list) and valeur:
         d = valeur[0]
         return (f"Marché du secteur : médiane {d.get('mediane_prix_m2')} €/m² — {d.get('type_bien')} "
@@ -587,13 +804,6 @@ def _rendre_champ(cid: str, libelle: str, valeur: Any, valeurs: dict) -> str:
         v = _scalaire(valeur)
         return (f"Dernier prix d'achat connu : {f'{int(v):,}'.replace(',', ' ')} €."
                 if isinstance(v, (int, float)) else f"{libelle} : {valeur}.")
-    if cid == "potentiel_verdict" and isinstance(valeur, dict):
-        calc = valeur.get("calcul") or {}
-        sdp = calc.get("sdp_max_m2")
-        # CAPACITE-1 (B1) — SDP = estimation (occupation du gabarit supposée), jamais « jusqu'à ».
-        return (f"Potentiel constructible : surface de plancher estimée {fmt_m2(sdp)} (indicatif) — "
-                "voir l'Étude de faisabilité pour le détail." if sdp is not None
-                else "Potentiel constructible : voir l'Étude de faisabilité.")
     if cid == "capacite_logements" and isinstance(valeur, dict):
         return "Capacité en logements : " + (valeur.get("texte") or "voir l'Étude de faisabilité") + "."
     if cid == "iris_quartier" and isinstance(valeur, dict):
@@ -604,7 +814,13 @@ def _rendre_champ(cid: str, libelle: str, valeur: Any, valeurs: dict) -> str:
                  for e in valeur[:3] if isinstance(e, dict) and e.get("nom")]
         return "À proximité : " + " ; ".join(bouts) + "." if bouts else "Aucun équipement relevé à proximité."
     if cid == "dpe_connu":
-        return f"DPE : {valeur}." if isinstance(valeur, (str, int, float)) else f"{libelle} : connu."
+        if isinstance(valeur, dict):
+            etiquette = valeur.get("etiquette") or "non renseignée"
+            date = valeur.get("date") or valeur.get("annee")
+            batiment = valeur.get("type_batiment")
+            sujet = f"du bâtiment ({batiment})" if batiment else "du bâtiment"
+            return f"Dernier DPE {sujet} : classe {etiquette}" + (f", {date}." if date else ".")
+        return f"DPE : {valeur}."
     # outil FAISABILITÉ — verdict + SDP (calcul null → on sert le libellé/niveau du moteur).
     if cid == "potentiel_verdict" and isinstance(valeur, dict):
         calc = valeur.get("calcul") or {}
@@ -612,9 +828,11 @@ def _rendre_champ(cid: str, libelle: str, valeur: Any, valeurs: dict) -> str:
         lib = valeur.get("libelle")
         if sdp is not None:
             # CAPACITE-1 (B1) — SDP estimée, jamais « jusqu'à » (occupation = hypothèse, pas une règle).
-            return (f"Potentiel constructible : surface de plancher estimée {fmt_m2(sdp)} "
-                    f"(dont {fmt_m2(calc.get('sdp_residuelle_m2'))} résiduels après le bâti conservé) — "
-                    "voir l'Étude de faisabilité pour le détail.")
+            residuel = calc.get("sdp_residuelle_m2")
+            precision = (f" (dont {fmt_m2(residuel)} résiduels après le bâti conservé)"
+                         if residuel is not None else "")
+            return (f"Potentiel constructible : surface de plancher estimée {fmt_m2(sdp)}{precision} "
+                    "— voir l'Étude de faisabilité pour le détail.")
         return ((lib or "Potentiel constructible : voir l'Étude de faisabilité").rstrip(".")
                 + " — voir l'Étude de faisabilité pour le détail.")
     # outil GABARIT (graphique) — chiffres servis + proposer d'ouvrir le plan.
@@ -651,7 +869,9 @@ def _rendre_champ(cid: str, libelle: str, valeur: Any, valeurs: dict) -> str:
         if nat and nat.valeur:
             txt += f", {nat.valeur}"
         if prod and prod.valeur is not None:
-            txt += f" ; productible ~{prod.valeur} kWh/kWc·an"
+            kwh = prod.valeur.get("kwh") if isinstance(prod.valeur, dict) else prod.valeur
+            if kwh is not None:
+                txt += f" ; productible ~{kwh} kWh/kWc·an"
         return txt + ". Ouvrez la Prospection solaire pour le détail."
     # outil SUCCESSIONS — timeline de propriété (PM).
     if cid == "proprietaire_timeline_liste" and isinstance(valeur, list):

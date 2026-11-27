@@ -1,0 +1,39 @@
+FFFFFF                                                                   [100%]
+=================================== FAILURES ===================================
+E   StopIteration
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde.py:24: StopIteration
+E   assert False
+     +  where False = all(<generator object test_plaine_le_plan_de_zonage_ne_fait_pas_partie_de_la_hauteur.<locals>.<genexpr> at 0x14f892670>)
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde.py:32: assert False
+E   assert not True
+     +  where True = any(<generator object test_saint_denis_intitule_a_urbaniser.<locals>.<genexpr> at 0x14f892400>)
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde.py:40: assert not True
+E   assert not True
+     +  where True = any(<generator object test_sainte_suzanne_chapitre_au_et_rubriques_urbaines.<locals>.<genexpr> at 0x14f892b50>)
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde.py:47: assert not True
+E   assert 73 == 75
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde.py:58: assert 73 == 75
+E   assert False
+     +  where False = all(<generator object test_trois_bassins_fiches_patrimoniales_distinctes_du_chapitre_n.<locals>.<genexpr> at 0x1039bfd30>)
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde.py:66: assert False
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_plu_solde.py::test_plaine_glyphes_imprimes_dans_le_dossier_de_2023
+FAILED tests/test_plu_solde.py::test_plaine_le_plan_de_zonage_ne_fait_pas_partie_de_la_hauteur
+FAILED tests/test_plu_solde.py::test_saint_denis_intitule_a_urbaniser - asser...
+FAILED tests/test_plu_solde.py::test_sainte_suzanne_chapitre_au_et_rubriques_urbaines
+FAILED tests/test_plu_solde.py::test_tampon_deux_articles_avec_la_fin_de_phrase
+FAILED tests/test_plu_solde.py::test_trois_bassins_fiches_patrimoniales_distinctes_du_chapitre_n
+6 failed, 5 warnings in 117.65s (0:01:57)

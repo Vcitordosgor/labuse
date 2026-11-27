@@ -1,0 +1,6 @@
+  ✓ purge 97411 : 270 extrait(s) supprimé(s)
+  ✓ 97411 97411_reglement_20260805.pdf : 271 extraits article
+  ✓ 97411 Saint-Denis : 1 document(s), 271 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 271 extraits · 21 communes en base
+REINGEST_DONE

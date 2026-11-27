@@ -696,12 +696,12 @@ def _distance_min_batiments(scene: Scene) -> Optional[float]:
     return min(batis[i].distance(batis[j]) for i in range(len(batis)) for j in range(i + 1, len(batis)))
 
 
-def _distance_requise(dc, cap: Capacite, conv: Conventions, max_logts_bati: int = 0) -> tuple[float, str, str]:
+def distance_requise(dc, niveaux: int, conv: Conventions, max_logts_bati: int = 0) -> tuple[float, str, str]:
     """(distance requise en m, libellé de règle, mention) pour une règle de distance CHIFFRABLE.
     La hauteur retenue est celle du bâtiment proposé (niveaux × hauteur d'étage) ; `cumulee` = H+h
     (deux volumes identiques dans le modèle → 2×h), `plus_haut` = H du plus haut (= h).
     `max_logts_bati` = nombre de logements du bâtiment le plus peuplé (seuil « grand bâtiment »)."""
-    h = cap.niveaux * conv.hauteur_etage_m
+    h = niveaux * conv.hauteur_etage_m
     if dc.forme == "fixe":
         # ETUDE-STATIONNEMENT-FIX-6 (point 3) — seuil PAR BÂTIMENT : le minimum passe à `min_m_grand_batiment`
         # dès qu'un bâtiment dépasse `seuil_logements_grand_batiment` logements (Le Tampon Ua8.2 : 3 m, porté
@@ -726,7 +726,7 @@ def _distance_requise(dc, cap: Capacite, conv: Conventions, max_logts_bati: int 
         req_final = max(req, plancher)
         quoi = "H+h" if dc.base_hauteur == "cumulee" else "H"
         lib = f"≥ {dc.fraction_hauteur:g}×{quoi} = {req:.1f} m" + (f", min {plancher:.0f} m" if plancher else "")
-        mention = f"hauteur retenue {h:.1f} m (R+{cap.niveaux - 1})"
+        mention = f"hauteur retenue {h:.1f} m (R+{niveaux - 1})"
         return req_final, lib, mention
     if dc.forme == "conditionnelle":
         # cas le plus strict = façades AVEC ouvertures
@@ -909,8 +909,37 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                                "accès supposé sur l'arête la plus longue", A_CONFIRMER,
                                detail="classement de la limite « voie » non établi — accès à confirmer"))
 
+    # ETUDE-AUDIT-FIX-1 LOT 4 (défaut 4) — obligation de sol À DEUX VOLETS (ex. Saint-André UC 13.1 :
+    # 40 % d'ESPACES LIBRES DONT au moins la moitié PERMÉABLE). Quand elle est servie, on émet DEUX
+    # contrôles DISTINCTS, libellés comme l'article, au lieu de comparer toute la perméabilité au seuil 40 %.
+    el = getattr(regles, "espaces_libres", None)
     r = regles.pleine_terre
-    if r.validee and r.valeur is not None:
+    if isinstance(el, dict) and el.get("pct") is not None:
+        _art = el.get("article")
+        _cit = el.get("citation")
+        _lib = f" ({_art})" if _art else ""
+        pct_el = float(el["pct"])
+        frac = float(el.get("part_permeable_fraction") or 0.5)
+        req_el = contenance * pct_el / 100.0
+        req_perm = max(req_el, cap.pleine_terre_m2) * frac
+        # (1) ESPACES LIBRES — surface NON bâtie MESURÉE (place disponible) : Réussi/Échoué franc.
+        if cap.pleine_terre_m2 >= req_el - 1e-6:
+            out.append(ControleReg(
+                f"Espaces libres{_lib}", f"≥ {req_el:.0f} m² ({pct_el:.0f} % de l'unité foncière)",
+                f"surface libre {cap.pleine_terre_m2:.0f} m²", REUSSI, _cit,
+                detail=f"écart {cap.pleine_terre_m2 - req_el:+.0f} m²"))
+        else:
+            out.append(ControleReg(
+                f"Espaces libres{_lib}", f"≥ {req_el:.0f} m² ({pct_el:.0f} % de l'unité foncière)",
+                f"surface libre {cap.pleine_terre_m2:.0f} m²", ECHOUE, _cit,
+                f"écart {cap.pleine_terre_m2 - req_el:+.0f} m² (place insuffisante)"))
+        # (2) PART PERMÉABLE — au moins la moitié des espaces libres : caractère perméable à confirmer au projet.
+        out.append(ControleReg(
+            f"Part perméable{_lib}",
+            f"≥ {req_perm:.0f} m² ({frac:.0%} des espaces libres, au minimum {req_el * frac:.0f} m² sur ce terrain)",
+            f"à prélever sur {cap.pleine_terre_m2:.0f} m² d'espaces libres", A_CONFIRMER, _cit,
+            detail="au moins la moitié des espaces libres doit être perméable ; ce caractère se confirme au projet"))
+    elif r.validee and r.valeur is not None:
         requis = contenance * r.valeur / 100.0
         assez = cap.pleine_terre_m2 >= requis - 1e-6
         # ETUDE-STATIONNEMENT-FIX-5 (point 4) — « Réussi » est réservé à ce qui est MESURÉ. La surface libre
@@ -1156,7 +1185,7 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
         from collections import Counter
         _par_bati = Counter(o.ref for o in scene.of("module") if o.ref)
         max_logts_bati = max(_par_bati.values(), default=getattr(cap, "logements", 0) or 0)
-        requis, lib, mention = _distance_requise(dc, cap, conv, max_logts_bati)
+        requis, lib, mention = distance_requise(dc, cap.niveaux, conv, max_logts_bati)
         ok = dmes >= requis - 1e-6
         out.append(ControleReg("Distance entre constructions", lib, f"{dmes:.1f} m mesurés",
                                REUSSI if ok else ECHOUE, dc.citation_complete, detail=(mention or None)))

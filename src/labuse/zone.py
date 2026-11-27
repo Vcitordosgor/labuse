@@ -363,7 +363,7 @@ def entreprises_zone(session: Session, geom_geojson: dict, *, cap_carte: int = E
                    ST_X(geom) AS lon, ST_Y(geom) AS lat
             FROM sirene_etablissements
             WHERE actif AND ST_Contains({_zone2975()}, ST_Transform(geom, 2975))
-            ORDER BY date_creation DESC NULLS LAST
+            ORDER BY date_creation DESC NULLS LAST, siret
             LIMIT :cap"""), {**zone, "cap": cap_carte}).mappings().all()
     par_fam: dict[str, list] = {}
     for r in ets:
@@ -566,7 +566,7 @@ def contraintes_plu(session: Session, geom_geojson: dict) -> dict:
             SELECT zone, commune, document, round(100 * a / :aire) AS part_pct
             FROM agg
             WHERE round(100 * a / :aire) > 0
-            ORDER BY part_pct DESC LIMIT 12"""), p).mappings().all()
+            ORDER BY part_pct DESC, zone, commune, document LIMIT 12"""), p).mappings().all()
     zones = [{"zone": r["zone"], "part_pct": int(r["part_pct"] or 0), "commune": r["commune"],
               "document": r["document"]} for r in rows]
     return {
@@ -592,7 +592,7 @@ def zone_demain(session: Session, geom_geojson: dict) -> dict:
     logements = permis = None
     if _existe("sitadel_permits"):
         r = session.execute(text(
-            f"""SELECT count(*) n, coalesce(sum((s.raw->>'nb_lgt')::int), 0) lgt
+            f"""SELECT count(*) n, coalesce(sum((s.raw->>'nb_lgt')::int) FILTER (WHERE s.raw->>'etat' IS DISTINCT FROM '4'), 0) lgt
                 FROM sitadel_permits s
                 WHERE s.geom IS NOT NULL AND s.date >= ({_ANCRE_SITADEL} - interval '36 months')
                   AND ST_Contains({z}, ST_Transform(s.geom, 2975))"""), p).mappings().first()
@@ -604,11 +604,14 @@ def zone_demain(session: Session, geom_geojson: dict) -> dict:
         # nombre de polygones AU intersectant la zone (un compte, pas une aire) ; `ha` est la
         # surface de leur UNION (footprint réel, jamais un double compte).
         r = session.execute(text(
-            f"""SELECT count(*) n,
-                       round((coalesce(ST_Area(ST_Union(ST_Transform(geom,2975))),0)/10000)::numeric) ha
-                FROM spatial_layers
-                WHERE kind='plu_gpu_zone' AND subtype LIKE 'AU%'
-                  AND ST_Intersects({z}, ST_Transform(geom, 2975))"""), p).mappings().first()
+            f"""WITH morceaux AS (
+                  SELECT ST_Intersection(geom_2975, {z}) AS g
+                  FROM spatial_layers
+                  WHERE kind='plu_gpu_zone' AND subtype LIKE 'AU%'
+                    AND ST_Intersects(geom_2975, {z})
+                )
+                SELECT count(*) n, round((coalesce(ST_Area(ST_Union(g)),0)/10000)::numeric) ha
+                FROM morceaux WHERE ST_Area(g) > 0"""), p).mappings().first()
         au_n, au_ha = int(r["n"] or 0), int(r["ha"] or 0)
     return {"logements_autorises_36m": logements, "permis_36m": permis,
             "au_zones_n": au_n, "au_zones_ha": au_ha,

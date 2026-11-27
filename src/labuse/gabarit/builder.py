@@ -417,7 +417,7 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         # contenance si présente, sinon dessin. La ZONE d'implantation (zone_m.area) reste la forme
         # géométrique réelle (C2) ; son aire est ramenée à l'échelle contenance là où elle alimente
         # une capacité client (faisabilite/db.py, facteur C3).
-        "SELECT id, commune, COALESCE(contenance_m2, ST_Area(geom_2975)) AS surface_m2, "
+        "SELECT id, commune, COALESCE(contenance_m2, ST_Area(geom_2975)) AS surface_m2, ST_Area(geom_2975) AS dessin_m2, "
         "ST_AsGeoJSON(geom) AS geojson FROM parcels WHERE idu = :i"
     ), {"i": idu}).mappings().first()
     if not row:
@@ -465,8 +465,11 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
             # A/N non constructibles sont hors du morceau et deviennent des voisins de la coupure).
             work_zone = cons[0]["code"]
             mz_sub_geom_wkt = cons[0]["wkt"]
+            racc["parcelle"]["contour_entier"] = geom
             geom = cons[0]["gj"]                 # contour = partie constructible
-            surface = cons[0]["area"]            # surface + plafond calculés sur le morceau
+            dessin = row.get("dessin_m2")
+            facteur = surface / float(dessin) if surface and dessin else 1.0
+            surface = cons[0]["area"] * facteur
             mz_extra_neighbors = [c["wkt"] for c in noncons if c["wkt"]]
             racc["multizone"]["servie_sur"] = f"{work_zone} ({cons[0]['pct']:g} %)"
             for c in bandes:
@@ -872,6 +875,11 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                                      voies_privees=voies_privees,
                                      sub_geom_wkt=mz_sub_geom_wkt,
                                      extra_neighbors_wkt=mz_extra_neighbors or None)
+        racc["limites_implantation"] = [
+            {"nom": f"{i} · " + ({"voie": "Voie", "side": "Latérale", "rear": "Fond"}.get(e.type, "Limite")
+                                  if getattr(e, "cadastrale", True) else "Limite de zone"),
+             "ligne": list(e.geom.coords)} for i, e in enumerate(lim.edges, 1)
+        ]
         mill = _bdtopo_millesime(session)
         # CHASSE-DOCS-FIX-1 (E-17) — le millésime (ex. « BD TOPO® V3 (IGN) … ») est DÉJÀ porté par
         # versionDate ; ne pas le recoller dans provider, sinon « …+ BD TOPO BD TOPO® V3 … » (doublon).
@@ -1278,22 +1286,16 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
 
 
 def rescale_zone_contenance(db, idu: str, result) -> None:
-    """RECETTE-OUTILS-4 (U4) — ré-échelonne l'aire de la zone d'implantation sur la CONTENANCE cadastrale
-    (repère de la Faisabilité), EXACTEMENT comme l'endpoint /outils/gabarit (api/gabarit.py), À APPELER
-    juste avant `deduire_bati_de_zone`. Sans ça, les chemins PDF (construire_gabarit, robinet_fiche) qui
-    ne passent pas par l'endpoint partaient de l'aire du DESSIN (ex. 176 m²) et affichaient « déduit
-    46 m² » au lieu de « 40 » (170 → 130) : la déduction prend pour référence l'aire AVANT, qui doit être
-    la même partout. Best-effort (jamais un document cassé)."""
-    try:
-        z, s = getattr(result, "zoneImplantationM2", None), getattr(result, "surfaceParcelleM2", None)
-        if not z or not s:
-            return
-        from sqlalchemy import text
-        dessin = db.execute(text("SELECT ST_Area(geom_2975) FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
-        if dessin and float(dessin) > 0:
-            result.zoneImplantationM2 = round(float(z) * float(s) / float(dessin), 1)
-    except Exception:  # noqa: BLE001 — l'échelle contenance n'est jamais un bloqueur
-        pass
+    """Applique le rapport contenance/dessin de la parcelle entière, même après découpe PLU."""
+    z = result.zoneImplantationM2
+    if not z:
+        return
+    facteur = db.execute(text(
+        "SELECT contenance_m2 / NULLIF(ST_Area(geom_2975), 0) FROM parcels WHERE idu = :i"
+    ), {"i": idu}).scalar()
+    if facteur and facteur > 0:
+        result.zoneImplantationM2 = round(z * float(facteur), 1)
+
 
 
 def appliquer_note_a_cheval(db: Session, idu: str, result) -> None:
@@ -1317,7 +1319,12 @@ def appliquer_note_a_cheval(db: Session, idu: str, result) -> None:
         uu = [p["zone"] for p in (zs.parts or []) if p.get("fam") in ("U", "AU")]
         zn = uu[0] if len(uu) == 1 else None
         if contenance:
-            portion = round(float(contenance) * pct / 100)   # % NON arrondi × contenance
+            # Le zonage publie ses pourcentages au dixième. Pour un morceau effectivement
+            # calculé, reprendre son aire cadastrale avant arrondi (la valeur de la tuile écran).
+            portion_m2 = float(contenance) * pct / 100
+            if (racc.get("multizone") or {}).get("servie_sur") and result.surfaceParcelleM2 is not None:
+                portion_m2 = result.surfaceParcelleM2
+            portion = int(portion_m2 + 0.5)
             result.surfaceNote = (f"Contenance cadastrale {int(contenance)} m² — dont ~{portion} m² "
                                   + (f"en zone {zn}" if zn else "en zone constructible")
                                   + " (parcelle à cheval).")
@@ -1360,6 +1367,78 @@ def appliquer_verdict_constructibilite(db: Session, idu: str, result) -> None:
     # on CONSERVE contourGeoJSON + surfaceParcelleM2 + raccordement + batiExistant (contexte carte).
 
 
+def surfaces_continues(zone_geojson, surface_m2):
+    """Aires des morceaux disjoints, dans le même repère de surface que la zone servie."""
+    if not zone_geojson or not surface_m2:
+        return []
+    from ._geom import shape_from_geojson, to_metric
+    zone = to_metric(shape_from_geojson(zone_geojson))
+    parties = list(zone.geoms) if zone.geom_type == "MultiPolygon" else [zone]
+    aires = sorted((p.area for p in parties if p.area > 0), reverse=True)
+    total = sum(aires)
+    return [round(surface_m2 * aire / total, 1) for aire in aires]
+
+
+def renseigner_emprise_projet(result) -> None:
+    """Hypothèse de conservation du bâti cartographié dans la seule assiette du calcul."""
+    from shapely.geometry import mapping, shape
+    from shapely.ops import unary_union
+    from shapely.validation import make_valid
+    from ._geom import to_metric, to_wgs
+
+    result.batiConserveM2 = None
+    result.empriseSupplementaireM2 = None
+    result.exempleEmpriseGeoJSON = None
+    result.exempleEmpriseM2 = None
+    result.surfacesContinuesM2 = []
+    libre = result.zoneImplantationM2
+    if result.status != "ok" or libre is None or not result.contourGeoJSON:
+        return
+    result.surfacesContinuesM2 = surfaces_continues(result.zoneImplantationGeoJSON, libre)
+    assiette = make_valid(to_metric(shape(result.contourGeoJSON)))
+    if assiette.area <= 0 or not result.surfaceParcelleM2:
+        return
+    facteur = result.surfaceParcelleM2 / assiette.area
+    batis = (result.batiExistantGeoJSON or {}).get("features", [])
+    occupe = unary_union([make_valid(to_metric(shape(f["geometry"]))) for f in batis]).intersection(assiette)
+    conserve = occupe.area * facteur
+    result.batiConserveM2 = round(conserve, 1)
+    plafond = result.plafondEmpriseM2
+    if libre > 0 and plafond is None and result.plafondEmpriseStatus != "absent":
+        return
+    solde = min(libre, max(0.0, plafond - conserve)) if plafond is not None else libre
+    result.empriseSupplementaireM2 = round(solde, 1)
+    if not result.empriseSupplementaireM2 or not result.zoneImplantationGeoJSON or not result.hauteurReglementaireM:
+        return
+    zone = make_valid(to_metric(shape(result.zoneImplantationGeoJSON)))
+
+    def principale(g):
+        if g.geom_type == "Polygon":
+            return g
+        return max((p for p in getattr(g, "geoms", ()) if p.geom_type == "Polygon"), key=lambda p: p.area, default=None)
+
+    exemple = principale(zone)
+    if exemple is None or exemple.is_empty or zone.area <= 0:
+        return
+    # La surface disponible est servie à l'échelle cadastrale. Le dessin respecte aussi
+    # le solde en mètres projetés quand les deux mesures diffèrent.
+    echelle = libre / zone.area
+    cible = min(solde / echelle, solde) if plafond is not None else solde / echelle
+    if exemple.area > cible + 1e-7:
+        x0, y0, x1, y1 = exemple.bounds
+        bas, haut = 0.0, max(x1 - x0, y1 - y0)
+        for _ in range(32):
+            retrait = (bas + haut) / 2
+            if exemple.buffer(-retrait).area > cible:
+                bas = retrait
+            else:
+                haut = retrait
+        exemple = principale(exemple.buffer(-haut))
+    if exemple is not None and not exemple.is_empty and round(exemple.area * echelle, 1) > 0:
+        result.exempleEmpriseM2 = round(exemple.area * echelle, 1)
+        result.exempleEmpriseGeoJSON = mapping(to_wgs(exemple))
+
+
 def deduire_bati_de_zone(result) -> None:
     """RECETTE-OUTILS-3 (S7 / S10) — rend la zone d'implantation et le bâti COHÉRENTS et UNIQUES pour
     l'app (2D/3D) et le PDF (p1 schéma, p3 3D). Deux opérations, in place sur un `GabaritResult` servi :
@@ -1373,10 +1452,7 @@ def deduire_bati_de_zone(result) -> None:
     mètres (CRS métrique 2975), géométries re-servies en WGS84."""
     if result is None or getattr(result, "status", None) != "ok":
         return
-    # RECETTE-OUTILS-4 (U4) — « déduit » = surface RÉELLEMENT retirée de la zone AFFICHÉE : la valeur
-    # AVANT déduction (le `zoneImplantationM2` servi par le moteur, avant qu'on l'écrase) moins la
-    # valeur APRÈS. On NE repart PAS de l'aire re-projetée `zone_m.area`, qui diffère de quelques m²
-    # du chiffre moteur — sinon « 170 → 130 » affichait « déduit 46 » au lieu de « 40 ».
+    # Aire servie avant déduction, déjà exprimée à l’échelle cadastrale.
     orig_m2 = getattr(result, "zoneImplantationM2", None)
     z_gj = getattr(result, "zoneImplantationGeoJSON", None)
     b_fc = getattr(result, "batiExistantGeoJSON", None)
@@ -1387,7 +1463,9 @@ def deduire_bati_de_zone(result) -> None:
         from shapely.ops import unary_union
         from shapely.validation import make_valid
         from ._geom import to_metric, to_wgs
-        contour_m = make_valid(to_metric(shape(result.contourGeoJSON))) if result.contourGeoJSON else None
+        parcelle = (getattr(result, "raccordement", None) or {}).get("parcelle") or {}
+        contour = parcelle.get("contour_entier") or result.contourGeoJSON
+        contour_m = make_valid(to_metric(shape(contour))) if contour else None
         zone_m = make_valid(to_metric(shape(z_gj)))
         if zone_m.is_empty or zone_m.area <= 0:
             return
@@ -1398,7 +1476,7 @@ def deduire_bati_de_zone(result) -> None:
             gm = make_valid(to_metric(shape(f["geometry"])))
             if contour_m is not None:
                 gm = gm.intersection(contour_m)           # S10 — découpe au contour
-            if gm.is_empty:
+            if gm.is_empty or gm.area <= 0:
                 continue
             batis_m.append(gm)
             feats.append({"type": "Feature", "properties": f.get("properties") or {},
@@ -1407,15 +1485,16 @@ def deduire_bati_de_zone(result) -> None:
             return
         bati_union = unary_union(batis_m)
         zone_deduit = zone_m.difference(bati_union)        # S7 — déduction du bâti
-        if zone_deduit.is_empty:
-            return
-        brute_m2, deduit_m2 = round(zone_m.area), round(zone_deduit.area)
+        avant = orig_m2 if orig_m2 is not None else round(zone_m.area, 1)
+        # Conserver le rapport de contenance du moteur, même sur une parcelle à cheval.
+        restant = round(avant * min(1.0, zone_deduit.area / zone_m.area), 1)
         result.batiExistantGeoJSON = {"type": "FeatureCollection", "features": feats}
-        result.zoneImplantationGeoJSON = mapping(to_wgs(zone_deduit))
-        result.zoneImplantationM2 = deduit_m2
-        # U4 — retrait réel = (avant affiché) − (après). Repli sur l'aire re-projetée si le moteur
-        # n'a pas posé de valeur avant (jamais négatif).
-        ref_avant = round(orig_m2) if isinstance(orig_m2, (int, float)) else brute_m2
-        result.batiDeduitM2 = max(0, ref_avant - deduit_m2)
+        result.zoneImplantationGeoJSON = None if zone_deduit.is_empty else mapping(to_wgs(zone_deduit))
+        result.zoneImplantationM2 = restant
+        result.batiDeduitM2 = round(avant - restant, 1)
+        if zone_deduit.is_empty:
+            result.plafondEmpriseM2 = None
+            result.hauteurReglementaireM = None
+            result.terrainNote = "Le bâti conservé occupe toute la zone disponible après reculs."
     except Exception:  # noqa: BLE001 — géométrie dégénérée : on garde le résultat non déduit
         pass

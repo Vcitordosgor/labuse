@@ -204,7 +204,8 @@ def _colonnes_pc_pm(conn, years) -> pd.DataFrame:
     pcpm = pd.read_sql("""
         SELECT pp.idu, pp.date_autorisation
         FROM p_model_permits pp
-        JOIN sitadel_permits s ON s.permit_id = pp.permit_id
+        -- OUTIL-PERMIS-FIX-16 (LOT 3) — jointure sur (permit_id, TYPE) : un numéro peut porter deux types.
+        JOIN sitadel_permits s ON s.permit_id = pp.permit_id AND s.type = pp.type
         WHERE pp.type = 'PC' AND coalesce(s.raw->>'petitioner_siren','') <> ''""", conn)
     pcpm["date_autorisation"] = pd.to_datetime(pcpm["date_autorisation"])
     frames = []

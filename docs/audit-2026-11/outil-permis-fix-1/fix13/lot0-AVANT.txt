@@ -1,0 +1,12 @@
+E   TypeError: build_pc_caducs() got an unexpected keyword argument 'ref_date'
+/Users/openclaw/Desktop/labuse-permis-fix/tests/test_outil_permis_fix13.py:71: TypeError: build_pc_caducs() got an unexpected keyword argument 'ref_date'
+E   TypeError: build_pc_caducs() got an unexpected keyword argument 'ref_date'
+/Users/openclaw/Desktop/labuse-permis-fix/tests/test_outil_permis_fix13.py:87: TypeError: build_pc_caducs() got an unexpected keyword argument 'ref_date'
+E   AssertionError: déposé en 2025 (an_depot) → hors « déposées depuis 01/01/2026 »
+    assert '97416000DR0312' not in {'97416000DR0312'}
+/Users/openclaw/Desktop/labuse-permis-fix/tests/test_outil_permis_fix13.py:108: AssertionError: déposé en 2025 (an_depot) → hors « déposées depuis 01/01/2026 »
+=========================== short test summary info ============================
+FAILED tests/test_outil_permis_fix13.py::test_lot0_caduc_echeance_decret_2022
+FAILED tests/test_outil_permis_fix13.py::test_lot0_parcelle_manquante_date_source
+FAILED tests/test_outil_permis_fix13.py::test_lot0_scan_patrimoine_depose_pas_autorise
+3 failed in 33.86s

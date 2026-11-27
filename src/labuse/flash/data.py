@@ -735,11 +735,15 @@ def _terrain(db: Session, idu: str, avail: set[str]) -> dict | None:
         out["mode_b"] = compute_mode_b(db, idu)          # run=None → run servi (Q_A_RUN_LABEL)
     except Exception:  # noqa: BLE001
         pass
-    if "parcel_vegetation" in avail and {"ombrage_pct"} <= _existing_columns(db, "parcel_vegetation"):
-        r = db.execute(text("SELECT ombrage_pct FROM parcel_vegetation WHERE idu = :idu"),
-                       {"idu": idu}).mappings().first()
-        if r and r["ombrage_pct"] is not None:
-            out["canopee"] = {"ombrage_pct": _i(r["ombrage_pct"])}
+    if "parcel_vegetation" in avail:
+        cols = _existing_columns(db, "parcel_vegetation")
+        couvert = next((col for col in ("canopee_pct", "ombrage_pct") if col in cols), None)
+        if couvert:
+            valeur = db.execute(text(
+                f"SELECT {couvert} FROM parcel_vegetation WHERE idu = :idu"
+            ), {"idu": idu}).scalar()
+            if valeur is not None:
+                out["canopee"] = {"ombrage_pct": _i(valeur)}
     # M18 → M75 — gisement solaire PVGIS. POINT DE CALCUL UNIQUE partagé avec la fiche
     # (viabilisation_build.solaire_note) : le PDF affiche EXACTEMENT le même libellé que la fiche
     # (exigence Vic — une donnée, un libellé). Le score_solaire /100 (score LABUSE opaque) N'EST

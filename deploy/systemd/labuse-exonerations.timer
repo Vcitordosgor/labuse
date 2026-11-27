@@ -1,0 +1,11 @@
+[Unit]
+Description=Vérification des publications fiscales DELTA toutes les quinze minutes
+
+[Timer]
+OnActiveSec=30s
+OnCalendar=*-*-* *:00/15:00
+Persistent=true
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

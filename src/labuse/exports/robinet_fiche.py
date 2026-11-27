@@ -873,16 +873,7 @@ def _c_permis(db, idu, f):
         return None
     dyn = (nearby_permits(db, pid, radius_m=500, fenetre_mois=24) or {}).get("dynamique") or {}
     n = dyn.get("permis_recents")
-    if n is None:
-        return None
-    # OUTIL-PERMIS-FIX-6 (Point 3) — on RESTITUE le zéro (0/0, jamais masqué : « aucun permis » ≠ donnée
-    # indisponible) ET le total de logements DÉCLARÉS, avec la réserve sur les permis sans nombre de logements.
-    # OUTIL-PERMIS-FIX-7 (Point 3) — `n` exclut déjà les ANNULÉS (nearby_permits) ; on porte leur nombre
-    # pour le DIRE à part (« dont N annulé(s), non comptés »).
-    return {"n": n, "logements": dyn.get("logements_recents"),
-            "sans_logements": dyn.get("permis_sans_logements"),
-            "annules": dyn.get("permis_annules"),
-            "non_couvert": False, "rayon_m": 500, "fenetre_mois": 24}
+    return ({"n": n, "non_couvert": False, "rayon_m": 500, "fenetre_mois": 24} if n else None)
 
 
 # ══ Score / en-tête ════════════════════════════════════════════════════════════════════════
@@ -943,6 +934,8 @@ def _gabarit(db, idu: str) -> dict:
             from ..gabarit.builder import deduire_bati_de_zone, rescale_zone_contenance
             rescale_zone_contenance(db, idu, res)   # U4 — aire AVANT = contenance (comme l'endpoint)
             deduire_bati_de_zone(res)
+            from ..gabarit.builder import renseigner_emprise_projet
+            renseigner_emprise_projet(res)
         except Exception:  # noqa: BLE001
             pass
         if res.status != "ok":
@@ -985,18 +978,19 @@ def _gabarit(db, idu: str) -> dict:
             return None if x is None else (f"{int(x)}" if float(x) == int(x) else f"{x:g}".replace(".", ","))
         if res.hauteurStatus == "not_integrated":
             hauteur = "Non chiffrée (prospect)"
-        elif getattr(res, "hauteurEstimee", False):
+        elif getattr(res, "hauteurEstimee", False) and res.hauteurReglementaireM is not None:
             # RECETTE-PROD-1 (A7) — hauteur issue de la table graphique par secteur : valeur servie,
             # étiquetée « Estimé » dans le PDF (jamais présentée comme la valeur validée du règlement).
             hauteur = f"{_hm(res.hauteurReglementaireM)} m à l'égout · Estimé (table graphique par secteur)"
         else:
             parts = []
             if res.hauteurReglementaireM is not None:
-                parts.append(f"{_hm(res.hauteurReglementaireM)} m au faîtage")
-            if res.hauteurEgoutM is not None:
+                base = {"egout": " à l’égout", "faitage": " au faîtage"}.get(res.hauteurBase, "")
+                parts.append(f"{_hm(res.hauteurReglementaireM)} m{base}")
+            if res.hauteurEgoutM is not None and res.hauteurBase != "egout":
                 parts.append(f"{_hm(res.hauteurEgoutM)} m à l'égout")
             extrude = "faîtage" if res.hauteurBase == "faitage" else "égout"
-            hauteur = " · ".join(parts) + (f" (le gabarit extrude le {extrude})" if parts else "")
+            hauteur = " · ".join(parts) + (f" (le gabarit extrude le {extrude})" if parts and res.hauteurBase in ("egout", "faitage") else "")
         out.update(served=True, zone_m2=res.zoneImplantationM2, couverture=txt,
                    bati_deduit_m2=res.batiDeduitM2,   # S7 — emprise bâti retranchée (None si aucune)
                    # A3 — « terrain libéré » (X, avant déduction du bâti) = zone + bâti retranché.

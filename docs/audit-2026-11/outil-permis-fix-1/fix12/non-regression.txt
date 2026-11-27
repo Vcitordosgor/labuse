@@ -1,0 +1,22 @@
+=== Dormants (île, prédicat unique permis_classe._dormant_sql) ===
+  dormants : 854 (attendu 854) OK
+=== Classement composite des 24 communes (5 axes) ===
+     1. Saint-Denis      57.4
+     2. Saint-Pierre     56.4
+     3. Saint-Paul       54.6
+  tête : Saint-Denis · 24 communes (attendu Saint-Denis / 24)
+=== Dossier — 6 témoins (nearby_permits 500 m / 24 mois) ===
+  97411000BZ1065 Saint-Denis   : 1/4 (attendu 1/4) OK
+  97424000AB0001 Cilaos        : 0/0 (attendu 0/0) OK
+  97415000CV1498 Saint-Paul    : 5/6 (attendu 5/6) OK
+  97405000BE1692 Petite-Île    : 16/9 (attendu 16/9) OK
+  97414000DK0208 Saint-Louis   : 9/14 (attendu 9/14) OK
+  97408000AC2215 La Possession : 7/9 (attendu 7/9) OK
+=== Bloc « Activité de dépôt » — 97401000AD0701 (depots_recents) ===
+  depots_recents.parcelle = None (attendu None : le faux dépôt 9744012520010 reste écarté)
+
+=== Bilan BZ1065 — inchangé par construction ===
+  FIX-12 ne modifie AUCUN fichier du Bilan (git diff -- src/labuse/bilan declarations/bilan = vide)
+  → totaux 8 115 036,80 / 12 288 000,00 / 3 709 265,62 € inchangés (test_bilan_recette vert).
+
+NON-RÉGRESSION OK

@@ -18,6 +18,14 @@ import { EmptyState, ErrorState } from '../States'
 // RECETTE-PROD-1 (D5) — le composant Badge (« En direct »/proxy…) et sa table de tons sont retirés :
 // la page Sources ne porte plus aucune pastille.
 
+function nomPublic(s: SourceInfo) {
+  if (s.display_name) return s.display_name
+  const recensement = (s.source_millesime ?? '').match(/^RP\d{4}\b/)?.[0]
+  return (s.id === 66 || s.id === 133) && recensement
+    ? s.name.replace(/^INSEE RP\d{4}\b/, `INSEE ${recensement}`)
+    : s.name
+}
+
 function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   const ref = useRef<HTMLElement | null>(null)
   useEffect(() => { if (focused) ref.current?.scrollIntoView({ block: 'center' }) }, [focused])
@@ -33,7 +41,7 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           {/* RECETTE-PROD-1 (D5) — plus aucune pastille (« En direct », nature/proxy…) : seulement le titre. */}
           <span className="flex flex-wrap items-center gap-2 text-[13.5px] text-txt">
-            {s.name}
+            {nomPublic(s)}
           </span>
           {s.provider && <span data-source-provider className="shrink-0 text-[12px] text-txt-dim">{s.provider}</span>}
         </div>
@@ -87,7 +95,7 @@ export function SourcesPage() {
     const ql = q.trim().toLowerCase()
     const passeTheme = (s: SourceInfo) => theme == null || (s.category || 'Autres') === theme
     const passeSearch = (s: SourceInfo) =>
-      !ql || [s.name, s.provider, s.category].some((v) => (v ?? '').toLowerCase().includes(ql))
+      !ql || [nomPublic(s), s.provider, s.category].some((v) => (v ?? '').toLowerCase().includes(ql))
     const m = new Map<string, SourceInfo[]>()
     for (const s of comptees) {
       if (!passeTheme(s) || !passeSearch(s)) continue

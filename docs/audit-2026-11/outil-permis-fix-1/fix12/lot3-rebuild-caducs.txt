@@ -1,0 +1,7 @@
+AVANT : pc_caducs = 4836 · fraicheur_etat['derive:pc_caducs:rule_version'] = oracle-fix-1:octroye{2,5,6}+realise{5,6|daact}+y4
+build : {'total': 4836}
+APRÈS : pc_caducs = 4836 · fraicheur_etat['derive:pc_caducs:rule_version'] = oracle-fix-1:octroye{2,5,6}+realise{5,6|daact}+y4
+ROUTE GET /accueil/chiffres → permis_caducs = 4836
+FILTRE parcellaire permis_caduc trouve 97401000AD0106 : True
+
+TOUT VERT

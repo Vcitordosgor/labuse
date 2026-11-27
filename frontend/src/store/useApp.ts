@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { FicheLine } from '../lib/types'
+import type { FicheLine, ReferencePermis } from '../lib/types'
 import type { FilterTier } from '../lib/status'
 
 // M26-B : 'copilote' = l'écran Copilote (instruction de dossier, event log SSE) — vue de
@@ -239,7 +239,7 @@ export type OutilRetour = {
   restore?: {
     densifierTableOpen?: boolean
     m02Prefill?: string | null
-    permitToOpen?: string | null
+    permitToOpen?: string | ReferencePermis | null
     calcPrefill?: string | null
     solairePrefill?: string | null
     parcelPrefill?: string | null
@@ -374,6 +374,7 @@ interface AppState {
   toggleOutils: () => void
   selectedIdu: string | null
   select: (idu: string | null) => void
+  fermerFicheParcelle: () => void
   // RETOURS-12 O1/O12/J1 — FOCUS PARCELLE : zoome + met en surbrillance la parcelle sur la carte.
   // Geste commun réutilisé par « Étudier un bien », « Permis » et l'œil ambre des Projets. `ortho` :
   // bascule le fond en orthophoto (J1).
@@ -570,11 +571,12 @@ interface AppState {
   // sur CHANGEMENT de `commune` ; « Voir ses parcelles » depuis la fiche (où commune est déjà la bonne)
   // ne bougeait donc pas la carte. Ce compteur force un refit sans changer la valeur de commune.
   fitCommuneNonce: number
+  revenirVueIle: () => void
   refitCommune: () => void
   // radar-permis — clic sur un POINT permis de la carte → ouvre la fiche permis (drawer M03).
   // Consommé-puis-reset par M03 (même idiome que parcelPrefill) : MapView écrit, M03 lit et remet à null.
-  permitToOpen: string | null
-  setPermitToOpen: (id: string | null) => void
+  permitToOpen: string | ReferencePermis | null
+  setPermitToOpen: (id: string | ReferencePermis | null) => void
   // RADAR P3 — clic sur un PIN Radar (bien rattaché) de la carte → ouvre la fiche du bien dans l'outil
   // Radar. Même idiome consommé-puis-reset : MapView écrit le bien_id, RadarClient lit et remet à null.
   radarToOpen: number | null
@@ -597,8 +599,11 @@ interface AppState {
   // RETOURS-3 R4 — pont Scan patrimoine → Veille promoteurs (« Voir ses opérations », même SIREN).
   veilleFocusSiren: string | null
   setVeilleFocusSiren: (s: string | null) => void
-  pluPrefill: { insee: string; zone: string | null } | null // fiche → annuaire PLU (O13) : commune + zone
-  setPluPrefill: (p: { insee: string; zone: string | null } | null) => void
+  // fiche → annuaire PLU (O13) : commune + zone. OUTIL-COMMUNES-FIX-14 LOT 1 — `idu` optionnel : le
+  // bouton « Vérif procédure » de la fiche fait setModule('plu') qui EFFACE selectedIdu ; la parcelle
+  // voyage donc par ce prefill (qui survit au changement d'outil) et amorce la vérification sans ressaisie.
+  pluPrefill: { insee: string; zone: string | null; idu?: string | null } | null
+  setPluPrefill: (p: { insee: string; zone: string | null; idu?: string | null } | null) => void
   // M137-P — l'outil PLU unifié ouvre directement une de ses 3 vues (consommé-puis-remis-à-null par le hub).
   pluVue: 'annuaire' | 'procedure' | 'changement' | null
   setPluVue: (v: 'annuaire' | 'procedure' | 'changement' | null) => void
@@ -648,8 +653,8 @@ interface AppState {
   setCarteOutilIdu: (s: string | null) => void
   // RECETTE-OUTILS-1 (points 6 & 7) — permis actuellement ouvert en bulle sur la carte (pour surligner
   // la ligne correspondante dans la liste Permis ; la bulle elle-même vit dans MapView/maplibre).
-  permisOuvert: string | null
-  setPermisOuvert: (s: string | null) => void
+  permisOuvert: ReferencePermis | null
+  setPermisOuvert: (s: ReferencePermis | null) => void
   // DESTINATIONS-1 (X4.4) — Copilote (outil destination_zone) → Étude de zone préremplie (parcelle +
   // sous-destination R151-28). Même idiome consommé-puis-reset : EtudeZone lit AU MONTAGE, remet à null.
   etudeZonePrefill: { idu?: string | null; commune?: string | null; zone?: string | null; sous_destination: string } | null
@@ -839,6 +844,7 @@ export const useApp = create<AppState>((set, get) => ({
     const clean = idu === '' || idu === 'undefined' ? null : idu
     return { selectedIdu: clean, contexteCommune: clean ? null : s.contexteCommune }
   }),
+  fermerFicheParcelle: () => set((s) => ({ selectedIdu: null, focusIdu: null, focusNonce: s.focusNonce + 1 })),
   // RETOURS-12 O1/O12/J1 — focus SANS ouvrir la fiche (zoom + surbrillance sur la carte). Bascule
   // sur 'cartes' pour que la carte soit visible ; option ortho (J1). `focusIdu` réamorcé même valeur.
   focusIdu: null,
@@ -1108,6 +1114,11 @@ export const useApp = create<AppState>((set, get) => ({
   flyTo: null,
   setFlyTo: (flyTo) => set({ flyTo }),
   fitCommuneNonce: 0,
+  revenirVueIle: () => set((s) => ({
+    commune: null, filters: { ...s.filters, communes: [] }, zone: null,
+    contexteCommune: null, selectedIdu: null, focusIdu: null, flyTo: null,
+    fitCommuneNonce: s.fitCommuneNonce + 1,
+  })),
   refitCommune: () => set((s) => ({ fitCommuneNonce: (s.fitCommuneNonce ?? 0) + 1 })),
   permitToOpen: null,
   setPermitToOpen: (permitToOpen) => set({ permitToOpen }),

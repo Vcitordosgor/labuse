@@ -72,7 +72,8 @@ def lint(registre: dict | None = None) -> list[str]:
             errs.append(f"{insee}: confiance invalide « {e.get('confiance')} » (∈ {sorted(CONFIANCES)})")
         if e.get("confiance") == "DEDUIT" and not e.get("raisonnement"):
             errs.append(f"{insee}: confiance=DEDUIT exige un « raisonnement » écrit")
-        for dk in ("date_acte", "debat_padd", "date_constat"):
+        for dk in ("date_acte", "debat_padd", "debat_padd_tenu", "date_arret", "date_constat",
+                   "date_enquete_fin", "avis_commission_date", "debat_recherche_le"):
             if dk in e and not _iso_or_absent(e[dk]):
                 errs.append(f"{insee}: « {dk} » n'est ni une date ISO ni ABSENT ({e[dk]!r})")
         if e.get("date_constat") in ("ABSENT", None):
@@ -94,8 +95,52 @@ def sursis_arme(e: dict) -> bool:
             and e.get("debat_padd") not in ("ABSENT", None, ""))
 
 
+def debat_padd_tenu(e: dict) -> str | None:
+    """OUTIL-COMMUNES-FIX-12 LOT 2 — DATE du débat sur le PADD TENU EN CONSEIL (fait sourcé), ou None.
+    DISTINCT de `debat_padd` qui, lui, ARME le sursis à statuer : on peut consigner qu'un débat a eu
+    lieu (fait daté) SANS conclure qu'un sursis s'applique à une parcelle (décision discrétionnaire du
+    maire, L.153-11 — jamais servie par LABUSE tant que `debat_padd` reste ABSENT). Sépare « débat
+    tenu le » de « sursis applicable »."""
+    v = e.get("debat_padd_tenu")
+    return v if v not in ("ABSENT", None, "") else None
+
+
 def _cap(t: str) -> str:
     return (t[:1].upper() + t[1:]) if t else t
+
+
+def _fr(iso: str | None) -> str | None:
+    """Une date ISO (AAAA-MM-JJ) en JJ/MM/AAAA pour l'affichage client ; renvoie l'entrée telle quelle
+    si elle n'est pas une date ISO (robustesse : jamais de crash sur une valeur curée inattendue)."""
+    if not iso or iso in ("ABSENT",):
+        return iso
+    try:
+        return date.fromisoformat(str(iso)).strftime("%d/%m/%Y")
+    except (ValueError, TypeError):
+        return iso
+
+
+def sursis_autorise(e: dict) -> dict | None:
+    """OUTIL-COMMUNES-FIX-14 LOT 5 — le conseil municipal a-t-il EXPRESSÉMENT autorisé le maire à
+    surseoir à statuer (délibération citée, art. visé) ? Fait DISTINCT de `debat_padd` (qui armerait
+    une vigilance sursis à l'échelle de la commune) : une autorisation générale donnée au maire ne vaut
+    pas décision individuelle de sursis sur une parcelle. Les deux s'affichent ENSEMBLE (« le conseil a
+    autorisé… » + « aucune décision de sursis connue pour cette parcelle »). None si le registre n'en
+    porte pas. `date` est servie formatée (JJ/MM/AAAA) pour l'écran et le PDF."""
+    sa = e.get("sursis_autorise")
+    if not isinstance(sa, dict) or not sa.get("date"):
+        return None
+    return {"date": sa.get("date"), "date_fr": _fr(sa.get("date")),
+            "article": sa.get("article"), "base_legale": sa.get("base_legale"),
+            "source_url": sa.get("source_url")}
+
+
+def debat_recherche_le(e: dict) -> str | None:
+    """OUTIL-COMMUNES-FIX-14 LOT 6 — DATE à laquelle le débat PADD a été CHERCHÉ sans être retrouvé
+    (distincte du `date_constat` général). Permet de DATER la recherche infructueuse sur les trois
+    écrans (« non retrouvée lors de la recherche du JJ/MM/AAAA ») au lieu d'un « non constaté » nu."""
+    v = e.get("debat_recherche_le")
+    return v if v not in ("ABSENT", None, "") else None
 
 
 _TYPE_LABEL = {"revision_plu": "révision générale du PLU", "elaboration_plu": "élaboration du PLU",
@@ -215,12 +260,54 @@ def synthese_commune(insee: str | None) -> dict | None:
     elif e.get("stade") == "prescrite_dormante":
         etat = f"Élaboration prescrite le {e['date_acte']} — dormante (aucun acte postérieur connu)."
     else:
+        # FIX-13 LOT 1/2 — le STADE réel est dit (la révision ne reste pas éternellement « prescrite »).
+        # « arrêté » / « enquête publique » portent la date de l'ARRÊT du projet (date_arret), la
+        # prescription restant rappelée comme origine. Les autres stades gardent le libellé générique.
         lbl = _TYPE_LABEL.get(e["procedure"], e["procedure"])
-        etat = f"{_cap(lbl)} en cours — stade « {e['stade']} », prescrite le {e['date_acte']}."
-    padd = (f"Débat PADD constaté le {e['debat_padd']} — sursis à statuer possible."
-            if sursis_arme(e) else
-            "Débat PADD non constaté à ce jour — pas de sursis servi (donnée à curer).")
+        _arr = e.get("date_arret")
+        _stade = e.get("stade")
+        if _stade in ("arrêté", "arrete") and _arr:
+            etat = f"{_cap(lbl)} — projet ARRÊTÉ le {_fr(_arr)} (prescrite le {_fr(e['date_acte'])})."
+        elif _stade in ("avis commission", "avis_commission") and e.get("date_enquete_fin"):
+            # FIX-14 LOT 5 — l'enquête publique est CLOSE : on dit le stade RÉEL (enquête terminée + avis
+            # de la commission d'enquête), factuel, sans préjuger de la décision municipale. Plus de
+            # bandeau « ENQUÊTE PUBLIQUE » (stade dépassé).
+            _sens = e.get("avis_commission")
+            _dac = e.get("avis_commission_date")
+            _avis = (f" — avis {_sens} de la commission d'enquête ({_fr(_dac)})"
+                     if _sens and _dac else " — avis de la commission d'enquête")
+            etat = f"{_cap(lbl)} — enquête terminée le {_fr(e['date_enquete_fin'])}{_avis}."
+        elif _stade in ("enquête publique", "enquete publique", "enquete_publique") and _arr:
+            etat = (f"{_cap(lbl)} — enquête publique (projet arrêté le {_fr(_arr)}, prescrite le "
+                    f"{_fr(e['date_acte'])}).")
+        else:
+            etat = f"{_cap(lbl)} en cours — stade « {_stade} », prescrite le {_fr(e['date_acte'])}."
+    # FIX-12 LOT 2 — 3 cas, « débat tenu » séparé de « sursis applicable » :
+    _tenu = debat_padd_tenu(e)
+    _autor = sursis_autorise(e)        # FIX-14 LOT 5 — autorisation expresse de surseoir (conseil)
+    _cherche = debat_recherche_le(e)   # FIX-14 LOT 6 — date de la recherche infructueuse du débat
+    if sursis_arme(e):
+        padd = f"Débat PADD constaté le {_fr(e['debat_padd'])} — sursis à statuer possible."
+    elif _tenu and _autor:
+        # FIX-14 LOT 5 — débat tenu ET autorisation de surseoir donnée au maire : on sert les DEUX faits
+        # ensemble, sans conclure à un sursis sur la parcelle (aucune décision individuelle connue).
+        padd = (f"Débat PADD tenu le {_fr(_tenu)}. Le conseil a autorisé le maire à surseoir à statuer "
+                f"(délibération du {_autor['date_fr']}, {_autor['article']}) — aucune décision de sursis "
+                "connue pour cette parcelle.")
+    elif _tenu:
+        padd = (f"Débat PADD tenu le {_fr(_tenu)} — sursis à statuer non armé (décision discrétionnaire "
+                "du maire, L.153-11, non constatée par LABUSE).")
+    elif _cherche:
+        # FIX-14 LOT 6 — la recherche infructueuse est DATÉE (distincte du constat général) : le client
+        # sait QUAND le débat a été cherché sans être retrouvé, sur les trois écrans.
+        padd = (f"Pièce du débat PADD non retrouvée lors de la recherche du {_fr(_cherche)} — "
+                "pas de sursis servi.")
+    else:
+        padd = "Débat PADD non constaté à ce jour — pas de sursis servi (donnée à curer)."
     return {"etat": etat, "prochaine_etape": padd if active else None,
+            "debat_padd_tenu": _tenu,   # FIX-12 LOT 2 — fait daté servi au radar (≠ sursis)
+            "sursis_autorise": _autor,       # FIX-14 LOT 5 — autorisation de surseoir (conseil), ou None
+            "debat_recherche_le": _cherche,  # FIX-14 LOT 6 — date de la recherche infructueuse, ou None
             "confiance": e["confiance"], "source": e.get("source"),
             "date_constat": e.get("date_constat"), "servi_en_vigilance": active}
 

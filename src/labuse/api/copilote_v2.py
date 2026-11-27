@@ -15,7 +15,8 @@ dashboard ne touchait pas. Dépassement → 429 honnête (repart à minuit) AVAN
 """
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
@@ -51,6 +52,7 @@ def get_db():
 
 
 class AskIn(BaseModel):
+    request_id: UUID | None = None
     message: str
     history: list[dict] | None = None
     contexte: dict | None = None       # {idu} | {selection} des surfaces embarquées (Phase 5)
@@ -80,6 +82,16 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
     # compteur (kind `QUOTA_COPILOTE_KIND`). Fini le plafond GLOBAL `copilote_v2_missions_jour` que
     # l'override dashboard ne touchait pas. Compte AVANT tout appel modèle. `LABUSE_DEV_MODE=1` désactive.
     s = config.get_settings()
+    def reprise():
+        if body.request_id is None:
+            return None
+        rep = historique.reponse_enregistree(db, body.request_id, current_compte(request), _sujet_memoire(request))
+        if rep is not None:
+            return {**rep, "contexte_ttl_minutes": s.copilote_v2_contexte_ttl_minutes}
+
+    precedente = reprise()
+    if precedente is not None:
+        return precedente
     if not s.dev_mode:
         from ..tz import today_reunion   # R2 — quota jour aligné minuit Réunion
         from .dashboard import etat_plafond_ia
@@ -140,9 +152,18 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
         if jl:
             rep["journal"] = jl
     faits_tour = rep.pop("_faits_tour", None)         # M102-B3 — faits du tour → registre, jamais servis
-    cid = historique.enregistrer(db, compte_id=current_compte(request),
-                                 conversation_id=body.conversation_id, message=body.message,
-                                 reponse=rep, payload=payload_tour, sujet=_sujet_memoire(request))
+    # Un outil aval peut avoir clôturé la transaction initiale. Reprendre le verrou avant l’écriture.
+    precedente = reprise()
+    if precedente is not None:
+        return precedente
+    try:
+        cid = historique.enregistrer(db, compte_id=current_compte(request),
+                                     conversation_id=body.conversation_id, message=body.message,
+                                     reponse=rep, payload=payload_tour, sujet=_sujet_memoire(request),
+                                     **({"request_id": body.request_id} if body.request_id else {}))
+    except historique.ConversationIntrouvable:
+        from fastapi import HTTPException
+        raise HTTPException(404, "conversation introuvable") from None
     if faits_tour and cid is not None:
         from ..copilote_v2 import registre_faits
         registre_faits.enregistrer(db, cid, faits_tour)
@@ -207,11 +228,13 @@ def heros(body: HerosIn, db: Session = Depends(get_db)) -> dict:
 
 
 @router.get("/missions")
-def missions(request: Request, db: Session = Depends(get_db)) -> dict:
+def missions(request: Request, db: Session = Depends(get_db), avant: datetime | None = None, avant_id: int = 0) -> dict:
     """§2b — les missions passées du compte (titre auto, date, statut) pour rouvrir.
     RETOURS-8 (R11) — `retention_jours` accompagne la liste pour le bandeau « conservées N jours »."""
     from .. import reglages
-    return {"missions": historique.lister(db, current_compte(request), sujet=_sujet_memoire(request)),
+    page = historique.lister(db, current_compte(request), limite=41, sujet=_sujet_memoire(request),
+                            avant=avant, avant_id=avant_id)
+    return {"missions": page[:40], "suite": len(page) > 40,
             "retention_jours": reglages.copilote_retention_jours()}
 
 
@@ -222,7 +245,7 @@ def mission(conversation_id: int, request: Request, db: Session = Depends(get_db
     if conv is None:
         from fastapi import HTTPException
         raise HTTPException(404, "conversation introuvable")
-    return conv
+    return {**conv, "contexte_ttl_minutes": config.get_settings().copilote_v2_contexte_ttl_minutes}
 
 
 @router.delete("/missions/{conversation_id}")

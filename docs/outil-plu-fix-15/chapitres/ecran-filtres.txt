@@ -1,0 +1,37 @@
+1au 200 http://127.0.0.1:10280/parcels/97405000AE0509/exposition
+1au 200 http://127.0.0.1:10280/parcels/97405000AE0509?source=q_v20
+1au 97405000AE0509 1AU hauteur 200 [
+  [ 'ARTICLE 1AU.10', 94, 94 ],
+  [ 'ARTICLE 1AU.11', 95, 96 ],
+  [ 'ARTICLE 1AU.13', 97, 98 ]
+] voir schéma ci-dessous). La hauteur d’une construction ne doit pas excéder 7 mètres à l’égout du toit et 10 mètres au faîtage. En cas de bâtiment développant une façade dans le sens de  [
+  'https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf#page=94'
+]
+1auz 200 http://127.0.0.1:10280/parcels/97405000AR0403?source=q_v20
+1auz 200 http://127.0.0.1:10280/parcels/97405000AR0403/exposition
+1auz 97405000AR0403 1AUz hauteur 200 [
+  [ 'ARTICLE 1AUZ.10', 104, 104 ],
+  [ 'ARTICLE 1AUZ.11', 104, 106 ],
+  [ 'ARTICLE 1AUZ.13', 107, 108 ]
+] voir schéma ci-dessous). La hauteur d’une construction ne doit pas excéder 7 mètres à l’égout du toit et 10 mètres au faîtage. En cas de bâtiment développant une façade dans le sens de  [
+  'https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf#page=104'
+]
+uc1 200 http://127.0.0.1:10280/parcels/97418000AO0081?source=q_v20
+uc1 200 http://127.0.0.1:10280/parcels/97418000AO0081/exposition
+uc1 97418000AO0081 UC1 hauteur 200 [
+  [ 'Article U9', 22, 24 ],
+  [ 'Article U8', 21, 22 ],
+  [ 'Article U4', 18, 19 ],
+  [ 'Article U5', 19, 20 ]
+]  faîtage ▪ 13,00 mètres à l’acrotère en cas de toiture-terrasse • Zone UC (y compris UC1 et UC2) : ▪ 10,00 mètres à l’égout du toit ▪ 13,00 mètres au faîtage ▪ 11,00 mètres à l’acrotère [
+  'https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=21'
+]
+uem 200 http://127.0.0.1:10280/parcels/97418000AC0002?source=q_v20
+uem 200 http://127.0.0.1:10280/parcels/97418000AC0002/exposition
+uem 97418000AC0002 UEm hauteur 200 [
+  [ 'Article U9', 35, 37 ],
+  [ 'Article U8', 34, 35 ],
+  [ 'Article U5', 32, 33 ]
+] u faitage des constructions est limitée à : • Zone UEa : 24 mètres • Zones UEm et UEp : 16 m • Zone UR : 24 mètres • Zone UEc : 14 mètres • Zone UT : 11 mètres 8.3 - Exception Des haute [
+  'https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=34'
+]

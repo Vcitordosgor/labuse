@@ -182,6 +182,8 @@ def nombres_ancres(valeurs: dict[str, Valeur], ctx: dict | None = None) -> dict[
         # ce résultat ; on le rattache à une donnée-TÊTE du domaine (faute d'un id par champ), comme le
         # bilan Financier. Les ids-tête sont des données réelles du registre (robinets outil_gabarit /
         # outil_etude_zone + chiffres parcelle de Comparer). Sur-rattacher un nombre non imprimé est bénin.
+        for x in _scalaires(ctx.get("relief")):
+            _poser(x, "gabarit_plan_3d")
         for x in _scalaires(ctx.get("gabarit")):
             _poser(x, "gabarit_hauteur_m")
         # FAISA-REGLES-1 (D-026) — la mise en garde « parcelle à cheval » imprime la part NON constructible

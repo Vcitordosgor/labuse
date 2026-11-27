@@ -1,0 +1,47 @@
+
+ RUN  v4.1.10 /Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-97da9366a-984vhddk/frontend
+
+ × src/components/outils/PluLivrets.test.tsx > permet d’ouvrir la page de chaque livret de Saint-Paul 96ms
+   → expected undefined to be truthy
+ × src/components/fiche/StationnementLien.test.tsx > ouvre le barème de stationnement sur sa propre page à Saint-Pierre 124ms
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/fiche/StationnementLien.test.tsx > ouvre le barème de stationnement sur sa propre page à Saint-Pierre
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ src/components/fiche/StationnementLien.test.tsx:12:71
+     10|       valeur: '1 place / 75 m²', etat: 'texte', reference: 'Art. Ud6 ·…
+     11|   }] }} />)
+     12|   expect(container.querySelector('a[href$="#page=93"]')?.textContent).…
+       |                                                                       ^
+     13| })
+     14|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/components/outils/PluLivrets.test.tsx > permet d’ouvrir la page de chaque livret de Saint-Paul
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/components/outils/PluLivrets.test.tsx:28:15
+     26|   for (const n of [139, 200, 246, 306]) {
+     27|     const a = Array.from(container.querySelectorAll('a')).find(l => l.…
+     28|     expect(a).toBeTruthy()
+       |               ^
+     29|   }
+     30| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed (2)
+   Start at  09:32:01
+   Duration  2.21s (transform 772ms, setup 431ms, import 1.07s, tests 223ms, environment 2.12s)
+

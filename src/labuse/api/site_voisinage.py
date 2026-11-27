@@ -45,13 +45,14 @@ def historique_permis(db: Session, idu: str) -> dict | None:
     # OUTIL-PERMIS-FIX-8 (LOT 1) — l'historique lisait la date de dépôt BRUTE (DR_DEPOT) : pour
     # 97441626E0304, « déposé 01/06/2020 » alors que l'AN_DEPOT publié est 2026 (contre-audit ASTRA-4).
     # Le dépôt passe désormais par LA fonction unique `depot_affichable_sql` (NULL si écarté) — rien
-    # n'est écrit à sa place. L'ORDER BY garde la date brute (tri, pas affichage).
+    # n'est écrit à sa place. OUTIL-PERMIS-FIX-10 — le TRI se fait sur la DATE D'AUTORISATION (`date`,
+    # fiable), plus sur la date de dépôt brute : plus aucune lecture de la colonne brute pour trier.
     for r in db.execute(text(f"""
         SELECT permit_id, type, date::date::text AS date_autorisation,
                ({permis_classe.depot_affichable_sql("")})::text AS date_depot, raw
         FROM sitadel_permits
         WHERE idu_codes ? :idu
-        ORDER BY COALESCE(date_depot, date) DESC
+        ORDER BY date DESC NULLS LAST, permit_id
         LIMIT 20"""), {"idu": idu}).mappings().all():
         raw = r["raw"] if isinstance(r["raw"], dict) else {}
         permis.append({
@@ -63,15 +64,36 @@ def historique_permis(db: Session, idu: str) -> dict | None:
             # (miroir.permis_incoherence_note, seuil 1 mois) ; le front ne la calcule plus.
             "note_incoherence": _incoherence_note(r["date_depot"], r["date_autorisation"]) or None,
         })
-    caduc = db.execute(text("""
-        SELECT pc_annee, caduc_depuis, statut_autorisation, statut_caducite, libelle_court, detail
-        FROM pc_caducs WHERE idu = :idu"""), {"idu": idu}).mappings().first()
+    # OUTIL-PERMIS-FIX-16 (LOT 1) — la PREUVE est servie AU MÊME ENDROIT que le signal : numéro(s) du/des
+    # PC octroyé(s) + date d'autorisation + échéance estimée + base légale + « sur les seules données
+    # Sitadel ». base_legale/date_autorisation/echeance viennent de pc_caducs. `SELECT *` (plus .get) pour
+    # rester tolérant à une table pas encore reconstruite (colonnes absentes → None, jamais une 500).
+    caduc = db.execute(text("SELECT * FROM pc_caducs WHERE idu = :idu"), {"idu": idu}).mappings().first()
     if not permis and not caduc:
         return None
+    caducite = None
+    if caduc:
+        def _iso(v):
+            return v.isoformat() if hasattr(v, "isoformat") else v
+        caducite = {
+            "pc_annee": caduc.get("pc_annee"), "caduc_depuis": caduc.get("caduc_depuis"),
+            "statut_autorisation": caduc.get("statut_autorisation"), "statut_caducite": caduc.get("statut_caducite"),
+            "libelle_court": caduc.get("libelle_court"), "detail": caduc.get("detail"),
+            "base_legale": caduc.get("base_legale"),
+            "date_autorisation": _iso(caduc.get("date_autorisation")), "echeance": _iso(caduc.get("echeance")),
+        }
+        # numéro(s) du/des PC de la parcelle (affichés avec la caducité, pas à chercher ailleurs).
+        caducite["pc_numeros"] = list(db.scalars(text("""
+            SELECT permit_id FROM sitadel_permits
+            WHERE idu_codes ? :idu AND type = 'PC' AND raw->>'etat' = '2'
+              AND date::date = :autorisation
+            ORDER BY permit_id
+        """), {"idu": idu, "autorisation": caduc.get("date_autorisation")}))
+        caducite["reserve"] = "sur les seules données Sitadel"
     return {
         "titre": "Sur cette parcelle",
         "permis": permis, "n_permis": len(permis),
-        "caducite": (dict(caduc) if caduc else None),
+        "caducite": caducite,
         "source": SRC_SITADEL,
         "honnetete": "Autorisations et dépôts uniquement — refus et dossiers en cours non publiés.",
     }
@@ -105,7 +127,7 @@ def voisinage_proche(db: Session, idu: str) -> dict | None:
           (SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur)
              FROM muts WHERE valeur > 0) AS prix_median,
           (SELECT count(*) FROM sitadel_permits p, a, since
-            WHERE p.geom_2975 IS NOT NULL AND COALESCE(p.date_depot, p.date) >= since.d
+            WHERE p.geom_2975 IS NOT NULL AND p.date >= since.d
               AND NOT (p.idu_codes ? :idu) AND ST_DWithin(a.g, p.geom_2975, {RAYON_M})) AS n_permis
     """), {"idu": idu}).mappings().first()
     if not row or ((row["n_dvf"] or 0) == 0 and (row["n_permis"] or 0) == 0):

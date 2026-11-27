@@ -15,8 +15,8 @@ donnees:
     comment: { libelle: "PPR multirisque", format: liste, i: "Plan de Prévention des Risques (document multirisque, opposable)." }
     # COUCHES-RECETTE-1 A3 : Information / Prescription / Interdiction en 3 teintes distinctes ordonnées
     # (jaune → orange → rouge) — plus le camaïeu de rouges qui ne se lisait pas. Emboîtement conservé.
-    carte: { kind: ppr, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 65, style: { opacite: 0.45, trait: "#7a1414" }, niveaux: [ { id: i, propriete: subtype, valeur: i, couleur: "#F2D06B", legende: "Information" }, { id: prescription, propriete: subtype, valeur: PRESCRIPTION, couleur: "#E8843D", legende: "Prescription" }, { id: interdiction, propriete: subtype, valeur: INTERDICTION, couleur: "#C0142A", legende: "Interdiction" } ], popup: [ { champ: risque, libelle: "Risque" }, { champ: document, libelle: "Document" }, { champ: approbation, libelle: "Approuvé le" }, { champ: statut, libelle: "Statut" } ], legende: "PPR multirisque — information (jaune) → prescription (orange) → interdiction (rouge)" }
-    absence: "PPR : parcelle hors périmètre PPR sur l'emprise visible."
+    carte: { kind: ppr, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 65, style: { opacite: 0.45, trait: "#7a1414" }, niveaux: [ { id: prescription, propriete: subtype, valeur: PRESCRIPTION, couleur: "#3989C5", legende: "Zone bleue – prescriptions" }, { id: interdiction, propriete: subtype, valeur: INTERDICTION, couleur: "#C0142A", legende: "Interdiction" } ], popup: [ { champ: risque, libelle: "Risque" }, { champ: document, libelle: "Document" }, { champ: approbation, libelle: "Approuvé le" }, { champ: statut, libelle: "Statut" } ], legende: "Zonage réglementaire du PPR – prescriptions en bleu, interdictions en rouge" }
+    absence: "Aucune zone réglementaire PPR dans l'emprise visible."
     absence_type: absente_ici
     statut_juridique: opposable
     pourquoi: "Le risque opposable de référence ; rendu identique au legacy (#E8695A)."
@@ -119,10 +119,11 @@ rendu:     carte
 donnees:
   - quoi:  alea_inondation_couche
     ou:    { rang: 10, etat: en_tete, section: "Aléas" }
-    comment: { libelle: "Aléa inondation", format: liste, i: "Aléa inondation (Géorisques), gradué par classe (faible / moyen / fort)." }
-    carte: { kind: alea_inondation, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 33, style: { opacite: 0.42, trait: "#45B4C6" }, niveaux: [ { id: faible, propriete: classe, valeur: faible, couleur: "#9AD0F5", legende: "Faible" }, { id: moyen, propriete: classe, valeur: moyen, couleur: "#F0913D", legende: "Moyen" }, { id: fort, propriete: classe, valeur: fort, couleur: "#D0342A", legende: "Fort" } ], popup: [ { champ: degre, libelle: "Degré" }, { champ: risque, libelle: "Risque" }, { champ: document, libelle: "Document" } ], legende: "Aléa inondation — degré : faible → fort (emboîté)" }
+    comment: { libelle: "Aléa inondation", format: liste, i: "Carte d’aléa inondation de la DEAL. Les interdictions et prescriptions se consultent dans la couche Zonage PPR." }
+    carte: { kind: alea_inondation, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 33, style: { opacite: 0.42, trait: "#45B4C6" }, niveaux: [ { id: negligeable, propriete: classe, valeur: negligeable, couleur: "#C8D8D2", legende: "Nul à négligeable" }, { id: faible, propriete: classe, valeur: faible, couleur: "#9AD0F5", legende: "Faible" }, { id: moyen, propriete: classe, valeur: moyen, couleur: "#F0913D", legende: "Moyen" }, { id: fort, propriete: classe, valeur: fort, couleur: "#D0342A", legende: "Fort" }, { id: tres_fort, propriete: classe, valeur: tres_fort, couleur: "#812584", legende: "Très fort" } ], popup: [ { champ: degre, libelle: "Degré" }, { champ: risque, libelle: "Risque" }, { champ: document, libelle: "Document de l’étude" }, { champ: date_pac, libelle: "Date du porter à connaissance" } ], legende: "Aléa inondation — nul à négligeable à très fort" }
     absence: "Aléa inondation : parcelle hors zone d'aléa cartographié."
     absence_type: absente_ici
+    statut_juridique: informatif
     pourquoi: "Couleurs exactes aleaInondationRamp ; filtre subtype (kind virtuel)."
 ---
 surface:   couche_alea_mvt
@@ -134,12 +135,13 @@ rendu:     carte
 donnees:
   - quoi:  alea_mvt_couche
     ou:    { rang: 10, etat: en_tete, section: "Aléas" }
-    comment: { libelle: "Aléa mouvement de terrain", format: liste, i: "Aléa mouvement de terrain (Géorisques), gradué par classe (faible → très élevé)." }
+    comment: { libelle: "Aléa mouvement de terrain", format: liste, i: "Carte d’aléa mouvement de terrain de la DEAL. Les interdictions et prescriptions se consultent dans la couche Zonage PPR." }
     # COUCHES-RECETTE-1 A3 : 4 grades en teintes distinctes ordonnées (jaune → orange → rouge → violet)
     # — plus la rampe orange/orange qui confondait moyen/élevé. Emboîtement conservé.
-    carte: { kind: alea_mvt, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 34, style: { opacite: 0.44, trait: "#3a1150" }, niveaux: [ { id: faible, propriete: classe, valeur: faible, couleur: "#F2D98A", legende: "Faible" }, { id: moyen, propriete: classe, valeur: moyen, couleur: "#F0A030", legende: "Moyen" }, { id: eleve, propriete: classe, valeur: eleve, couleur: "#E0491F", legende: "Élevé" }, { id: tres_eleve, propriete: classe, valeur: tres_eleve, couleur: "#8B2FC7", legende: "Très élevé" } ], popup: [ { champ: degre, libelle: "Degré" }, { champ: risque, libelle: "Risque" }, { champ: document, libelle: "Document" } ], note: "Pas de donnée publiée pour : Saint-Denis (aléa mouvement de terrain non cartographié). Couverture partielle ailleurs — l'absence n'est pas une preuve d'absence de risque.", legende: "Aléa mvt — faible (jaune) → très élevé (violet), emboîté" }
+    carte: { kind: alea_mvt, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 34, style: { opacite: 0.44, trait: "#3a1150" }, niveaux: [ { id: negligeable, propriete: classe, valeur: negligeable, couleur: "#C8D8D2", legende: "Négligeable" }, { id: faible, propriete: classe, valeur: faible, couleur: "#F2D98A", legende: "Faible" }, { id: moyen, propriete: classe, valeur: moyen, couleur: "#F0A030", legende: "Moyen" }, { id: eleve, propriete: classe, valeur: eleve, couleur: "#E0491F", legende: "Élevé" }, { id: tres_eleve, propriete: classe, valeur: tres_eleve, couleur: "#8B2FC7", legende: "Très élevé" } ], popup: [ { champ: degre, libelle: "Degré" }, { champ: risque, libelle: "Risque" }, { champ: document, libelle: "Document de l’étude" }, { champ: date_pac, libelle: "Date du porter à connaissance" } ], note: "À Saint-Denis, le porter à connaissance du 26 novembre 2026 précise l’aléa mouvement de terrain.", legende: "Aléa mouvement de terrain — négligeable à très élevé" }
     absence: "Aléa mouvement de terrain : parcelle hors zone d'aléa cartographié."
     absence_type: absente_ici
+    statut_juridique: informatif
     pourquoi: "Couleurs exactes aleaMvtRamp ; filtre subtype (kind virtuel)."
 ---
 surface:   couche_sis

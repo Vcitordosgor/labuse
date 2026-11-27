@@ -802,3 +802,477 @@ Le **seul rouge non-db (hook) reste `test_etude_fiable_1`** → **commits gardé
 Back : `alertes.py` (détail permis_in_zone via fonction unique, `fait_date` inchangé), `api/events.py` (veille parcelle : détail via fonction unique ; brief : base `date`), `api/accueil.py` (compteurs + `derniere` sur `date`), `ingestion/pc_caducs.py` (`IS TRUE` sur le DAACT), `registre/lectures.py` (note accueil).
 Tests : `tests/test_outil_permis_fix8.py` (+2 canaux), `tests/test_pc_caducs.py` (seed DAACT dans `raw`). Script : `scripts/outil_permis_fix8/verif_fix9_canaux.py` + sorties `docs/.../fix8/fix9-*.txt`.
 **Aucune écriture dans la base `labuse`.**
+
+---
+---
+
+# OUTIL-PERMIS-FIX-10 — contre-audit ASTRA-5 (liste « C'est faux » : 3 points)
+
+**Contexte.** `origin/main` **fusionné d'abord** dans la branche (merge `ort`, sans conflit ; il apporte une mise à jour MARCHÉ amont — `marche_service`/`dvf_marche`/`marche_dvf_commune`/`comparateur`/`commune` — à prendre en compte pour la non-régression, cf. plus bas). Les surfaces déjà validées (fiche individuelle, classement, Dossier, Bilan) ne bougent pas. Périmètre = les 3 « C'est faux ».
+
+Scripts commités + sorties brutes sous `docs/audit-2026-11/outil-permis-fix-1/fix10/`.
+
+## LOT 0 — le filet, écrit AVANT (3 rouges)
+
+`tests/test_outil_permis_fix10.py` (commit séparé `0da276b71`). Sortie AVANT (`fix10/lot0-AVANT.txt`) :
+```
+test_lot0_structurel_aucune_lecture_directe_du_depot      FAILED
+  → api/veille_promoteurs.py, faisabilite/marche_commune.py, ingestion/permits.py
+test_lot0_bloc_depots_ne_compte_pas_la_date_contradictoire FAILED  (« 2026-03-09 » compté)
+test_lot0_alerte_de_zone_titre_annonce_l_evenement_date    FAILED  (titre « Permis déposé dans… »)
+```
+Le **test structurel** parcourt `src/labuse` et échoue si un fichier hors `permis_classe.py` lit
+`date_depot`/`DR_DEPOT` sans être une exception NOMMÉE (dict `EXEMPTES`, chacune avec sa raison).
+
+## LOT 1 — plus aucune lecture directe (bloc Dépôts + tous les lecteurs révélés)
+
+**Bloc « Activité de dépôt »** (`ingestion/permits.py:depots_recents`, lu par `DepotsBlock.tsx`) : le
+compteur ET la dernière date passent par la fonction unique `permis_classe.depot_affichable_sql`. Pour
+**97401000AD0701**, `9744012520010` (DR_DEPOT 09/03/2026 mais AN_DEPOT 2025, et DR postérieur à
+l'autorisation 24/10/2025) n'est plus ni compté ni affiché ; le fichier ne contient **aucun** littéral
+`date_depot` (tout via le helper). Conséquence honnête : le bloc ne retient que les dépôts à date
+**fiable** (année = AN_DEPOT, antérieure à l'autorisation) — bien moins nombreux, jamais une date
+contradictoire.
+
+**Les autres lecteurs révélés par le test structurel**, traités :
+- `api/veille_promoteurs.py` (outil Promoteurs — clustering d'opérations, frise, tri) → **rebasé sur la
+  date d'AUTORISATION** (`date`) ;
+- `faisabilite/marche_commune.py` (permis 12 mois de la fiche commune) → **date d'autorisation** ;
+- `api/site_voisinage.py` (historique) : le **tri** et la **fenêtre** du voisinage passent sur la date
+  d'autorisation (le dépôt affiché était déjà gaté depuis FIX-8).
+
+**Exceptions légitimes — inscrites NOMMÉMENT dans le test (`EXEMPTES`) avec leur raison, et SIGNALÉES ici :**
+- `ingestion/permits_sdes.py` — **ingestion** : écrit la colonne brute `DR_DEPOT`→`date_depot` (stockage).
+- `models.py` — **schéma** (déclaration + migration de la colonne).
+- `ingestion/permit_delais_m10.py` — **module dormant** (couche m10 décommissionnée, trigger retiré, cf. LOT 3).
+- `filtres/sources.py` — **méta de fraîcheur** de source (`date_cols`), pas un affichage de dépôt.
+- `verite_terrain_capacite.py`, `verite_terrain_dpe_permis.py` — **calibration interne NON servie** (date
+  d'autorisation, repli `date_depot` si nulle).
+- `alertes.py`, `api/events.py` — **clé d'ARRIVÉE** d'une veille (`date_depot IS NOT NULL` / `>= since`) :
+  elle détecte qu'un permis est entré, ne l'affiche pas ; le texte passe par le helper (LOT 2 / FIX-9).
+- `api/modules.py`, `api/site_voisinage.py`, `api/moteurs.py` — **affichage via le helper** ; lisent la
+  valeur gatée (clé de sortie `date_depot`).
+- `exports/miroir.py`, `api/pdf_premium.py` — consomment la **valeur gatée** du payload `historique_site`.
+- `api/accueil.py` — compteurs sur la date d'autorisation (FIX-9) ; mentions en commentaire.
+- `api/app.py`, `registre/lectures.py` — docstrings / notes de registre (documentation).
+- `pige/api.py`, `pige/tables.py`, `circuit_garanties.py` — **autre table** `pige_depots` (dépôts
+  d'annonces Pige), sans rapport avec `sitadel_permits`.
+
+Sortie APRÈS : le test structurel **passe** ; le témoin Dépôts montre « count=1, dernier=2024-05-10 »
+(seul le dépôt de contrôle valide, le 2026-03-09 écarté).
+
+## LOT 2 — alerte de zone : titre + tri alignés sur l'événement réellement daté
+
+`alertes.py` (`permis_in_zone`) : le **titre**, le **détail** et **`fait_date`** (le champ de tri qui
+gouverne la cloche) annoncent désormais le MÊME événement — « Permis **déposé** … » + `fait_date` = date
+de dépôt si le dépôt est **affichable**, sinon « Permis **autorisé** … » + `fait_date` = date
+d'autorisation. On n'ordonne ni n'affiche plus jamais la date de dépôt brute rejetée. La **clé de
+détection** (géocodé en zone, `date_depot IS NOT NULL`, `ON CONFLICT`) est **inchangée**.
+
+Preuve (`fix10/` tests db) : pour 97441626E0304 (dépôt écarté) le titre devient « Permis autorisé dans… » ;
+`fait_date` = 2025-10-24 (autorisation) pour un dépôt écarté, 2024-05-10 (dépôt) pour un dépôt affichable ;
+réévaluation = 0 nouvelle alerte et **une seule ligne** en base → aucune alerte émise deux fois ni perdue.
+
+## LOT 3 — arrêt de l'alimentation résiduelle des délais fictifs
+
+Déclencheur `trg_m10_permit_delais_sync` **DÉSACTIVÉ puis SUPPRIMÉ** dans la base `labuse` (autorisé par
+Vic, **ce trigger et lui seul** : son frère `trg_via_permits_geo_sync` — couche de voisinage servie — est
+intact ; la **table** `m10_permit_delais` n'est **pas** supprimée). Sa définition complète (fonction
+incluse) est notée dans la migration pour recréation.
+
+Preuve (`fix10/lot3-drop-trigger.txt`, script `fix10_drop_trigger_labuse.py`) :
+```
+AVANT : ['trg_m10_permit_delais_sync', 'trg_via_permits_geo_sync']  → DÉSACTIVÉ puis SUPPRIMÉ
+APRÈS : ['trg_via_permits_geo_sync']
+PREUVE : UPDATE d'une ligne Sitadel (an_depot→1999) + ROLLBACK → m10 inchangée (date_depot 2010-01-01,
+         computed_at identique) → la table n'est plus alimentée.
+```
+**Migration de mise en ligne** (équivalente, NON exécutée ailleurs) :
+`deploy/migrations/2026-11-25-drop-trg-m10-permit-delais-sync.sql` (`DROP TRIGGER IF EXISTS …`).
+
+## Non-régression (scripts commités — `fix10/non-regression.txt`)
+
+- **Dormants** île = **854** · **Caducs** (build lecture seule) = **4 836** parcelles · **Rayon 500 m**
+  BZ1065 = **1 permis / 4 logements** — reproduits à l'identique.
+- **Composite des 24 communes** : **Saint-Denis 1ᵉʳ**, formule et poids publiés inchangés
+  (35,29 / 17,65 / 17,65 / 11,76 / 17,65). La **valeur absolue** du score suit la **mise à jour marché du
+  merge `origin/main`** (fait en premier, comme demandé), **pas** FIX-10.
+- **Bilan** : FIX-10 ne modifie **aucun** fichier du Bilan (`git diff origin/main..HEAD -- src/labuse/bilan
+  declarations/bilan` = vide) → totaux inchangés par construction ; cohérence moteur=PDF=Excel tenue par
+  `tests/test_bilan_recette.py`.
+
+## Vérifications
+
+LOT 0 : **5/5 verts** après correctif (3 témoins + 2 preuves LOT 2). Front `tsc -b` + `vitest` **345/345**.
+Test structurel vert. (Suite non-db complète + cohérence : voir fin de session.)
+
+## Fichiers touchés (mandat 10)
+
+Back : `ingestion/permits.py` (bloc Dépôts via helper, zéro littéral), `api/veille_promoteurs.py` +
+`faisabilite/marche_commune.py` + `api/site_voisinage.py` (date d'autorisation), `alertes.py` (titre +
+`fait_date` alignés sur l'événement). Base : déclencheur `trg_m10_permit_delais_sync` retiré de `labuse`
+(ce trigger seul ; table conservée). Migration : `deploy/migrations/2026-11-25-drop-trg-….sql`.
+Tests : `tests/test_outil_permis_fix10.py` (LOT 0 : 3 + LOT 2 : 2), `tests/test_alertes.py` (2 témoins
+réalignés sur l'événement). Scripts : `scripts/outil_permis_fix8/{fix10_drop_trigger_labuse,
+fix10_non_regression}.py` + sorties `docs/.../fix10/`. **Seule écriture base : le DROP du trigger autorisé.**
+
+---
+---
+
+# OUTIL-PERMIS-FIX-11 — traiter la CAUSE : la pollution de `labuse_test`
+
+**Contexte.** Deux pushs FIX-10 refusés par le hook, non sur le code mais sur des flakies d'ÉTAT PARTAGÉ
+de `labuse_test`. Plutôt que relancer à l'aveugle, on traite la cause.
+
+## 1 — Diagnostic (ce qui s'accumulait d'un run à l'autre, et pourquoi le plafond)
+
+Des tests COMMITTENT dans des tables d'**accumulation** (via `session_scope`/app/TestClient) sans
+nettoyer. État de `labuse_test` avant correctif :
+
+| Table | Lignes | Depuis | Cause |
+|---|--:|---|---|
+| `comptes` | **43 511** | 2026-09-06 (+89/jour) | tout test créant un compte committé (ex. `test_brand_colors`, `test_recette_generale1_mails_circuit` +4) |
+| `event_log` | 658 (dont `systeme` **666** cumulés, **≥ 50 aujourd'hui**) | 2026-09-06 | producteurs `systeme` committés : `ops_alertes.signaler`, `sentinelle`, `mail` (ex. `test_sentinelle` +3) |
+| `ops_incidents` | 115 (93 ouverts) | 2026-10-14 | incidents ops jamais refermés |
+| `watch_zones` / `watched_parcels` / `veilles` / `saved_searches` / `notif_prefs` | 93 / 88 / 419 / 383 / 1 542 | 2026-09-28 | veilles/zones/recherches committées (cascade de `comptes`) |
+
+**Pourquoi « NOTIF PLAFOND ≥ 50/jour ».** `creer_notification` (events.py) refuse d'insérer un N-ᵉ
+event `(kind, compte, jour)` au-delà de `NOTIF_CAP_JOUR = 50` : il agrège en « +N autres ». Comme les
+runs répétés d'aujourd'hui avaient committé **51 lignes `kind='systeme'` (compte NULL)**, tout nouveau
+`systeme` était agrégé au lieu d'être créé → `test_notifications_m85`, `test_cockpit_corrections_c`,
+`test_silence_1` (qui créent + relisent un `systeme`) tombaient **dans la suite complète** (verts seuls).
+
+## 2 — Nettoyage (AUTORISÉ, `labuse_test` UNIQUEMENT — jamais `labuse`)
+
+Script `scripts/outil_permis_fix8/fix11_nettoyer_labuse_test.py`, **garde-fou dur** : refuse si
+`current_database() != 'labuse_test'`. Sortie (`fix10/fix11-cleanup.txt`), table par table :
+```
+comptes        43 511 → 0   (+ filles ON DELETE CASCADE : event_log/watch_zones/watched_parcels/
+                             veilles/saved_searches/notif_prefs à compte non nul)
+event_log         658 → 0   (dont 296 à compte NULL — `systeme`/zone — supprimées explicitement)
+ops_incidents     115 → 0
+watch_zones/watched_parcels/veilles/saved_searches/notif_prefs → 0
+```
+
+## 3 — Cause : les tests ne nettoient plus derrière eux
+
+Fixture de **session** `_nettoyer_accumulateurs_fix11` (`tests/conftest.py`, autouse) : photographie le
+`max(id)` des tables d'accumulation au DÉBUT de la session, supprime à la FIN les lignes committées
+PENDANT (id > photo) — `comptes` d'abord (CASCADE), puis les lignes à compte NULL. **Portée session**
+(pas par test) → aucune suppression pendant un test → zéro risque pour une fixture module/session qui
+committe et réutilise ; **aucune assertion touchée** (nettoyage POST-session). La suite laisse donc
+`labuse_test` dans l'état EXACT où elle l'a trouvé, et une exécution n'ajoute jamais 50 `systeme`/jour
+→ le plafond ne s'arme plus.
+
+**Les trois tests qui échouaient :**
+- `test_silence_1::test_resume_matin_info_quand_rien_ne_casse` — **CAUSE = pollution** (plafond
+  `systeme` → le résumé matin bascule). Vert dès que `event_log` revient à 0.
+- `test_cockpit_corrections_c::test_alerte_sauvegarde_ratee_part_sans_recap` — **CAUSE = pollution**
+  (même plafond `systeme`). Vert après nettoyage.
+- `test_etude_fiable_1::test_r2` — **PAS la pollution.** Réparé dans `main` pour le déterminisme
+  (`p1 == p2`), mais il exige aussi une recherche **COMPLÈTE** ; sous CHARGE (suite + sessions //), le
+  **garde-fou TEMPS** de la grille (`etude_grille_garde_fou_s` ≈ 100 s, `implantation/moteur.py`) coupe
+  avant la fin → `recherche = partielle`, `candidats_examines < prévus` → rouge. Correctif ciblé : on
+  **relève ce filet** pour ce test (`monkeypatch` 1800 s) — il valide le déterminisme et la complétude,
+  pas la tenue d'un budget temps sous charge ; aucune assertion affaiblie.
+
+## 4 — Preuve
+
+(suite non-db complète 2× de suite + empreinte `labuse_test` avant/après — collée en fin de session)
+
+## Fichiers touchés (mandat 11)
+
+`tests/conftest.py` (fixture de session anti-pollution), `tests/test_etude_fiable_1.py` (filet temps
+relevé pour `test_r2`). Script : `scripts/outil_permis_fix8/fix11_nettoyer_labuse_test.py` + sortie.
+**Écriture base : `labuse_test` uniquement (nettoyage autorisé) ; `labuse` jamais touchée par ce mandat.**
+
+---
+---
+
+# OUTIL-PERMIS-FIX-12 — contre-audit ASTRA-6 (liste « C'est faux » : 3 points + remarque test structurel)
+
+**Contexte.** Branche `fix/outil-permis-1` (reprise après 11 tours). Règle du tour : chaque point se
+prouve par CE QUE L'UTILISATEUR REÇOIT (route réelle, écran, notification lue), pas seulement le calcul.
+Scripts commités + sorties brutes sous `docs/audit-2026-11/outil-permis-fix-1/fix12/`.
+
+## LOT 0 — le filet, écrit AVANT (commit séparé `39914d9da`, 5 rouges)
+
+`tests/test_outil_permis_fix12.py` (db) + `scripts/outil_permis_fix8/fix12_lot0_reel.py` (lecture seule
+`labuse`, route réelle `/accueil/chiffres`). Sortie AVANT (`fix12/lot0-AVANT-reel.txt`, `lot0-AVANT-pytest.txt`) :
+les 4 faits FAIL — ① veille (fonction unique de sélection absente), ② 278 permis géolocalisés autorisés
+sans dépôt inéligibles, ③ alerte 97441521G0020 « Permis déposé » / 01/01/2021, ④ `/accueil/chiffres`
+permis_caducs=0 & filtre ne trouve pas 97401000AD0106. Diagnostic : 3140 alertes « déposé » dont **3111**
+à dépôt invalide (3021 permis distincts) ; pc_caducs=0.
+
+## LOT 1 — sélection des veilles sur l'événement réellement daté (`94f25b61a`)
+
+Fonction UNIQUE `permis_classe.evenement_date_sql` = `COALESCE(dépôt affichable, autorisation)` : LA date
+sur laquelle on SÉLECTIONNE.
+- `api/events.py` (`evaluer_suivis`, veille de parcelle) : `WHERE … AND evenement_date >= :since` (au lieu de `date_depot >= since`) ;
+- `alertes.py` (`compute_alertes`, alerte de zone) : `WHERE … AND evenement_date IS NOT NULL` (au lieu de `date_depot IS NOT NULL`) → un permis géolocalisé SANS dépôt mais AUTORISÉ devient éligible.
+
+**Dédup inchangée, par IDENTIFIANT du permis** (alerte : index unique `(zone_id,kind,source_ref=permit_id)` + `ON CONFLICT` ; veille : dédup PERMANENTE `(idu,permit_id)`) — jamais la date → aucun déjà signalé signalé deux fois, aucun perdu (filet `test_lot1_veille_dedup…` = (1,0,1)).
+
+**Jeu avant/après** (`fix12/lot1-selection.txt`, suivi 01/01/2026, permis rattachés à une parcelle) :
+ancienne règle 3088 → nouvelle 2051 · **ENTRENT 440** (autorisés dans la fenêtre, dépôt brut absent/ancien)
+· **SORTENT 1477** (faux dépôt récent, autorisés AVANT la fenêtre). Témoins : 9744012520010 sort
+(autorisé 2025-10-24), 97441626E0304 entre (autorisé 2026-08-03). (Mêmes magnitudes que l'audit : 1477/440.)
+
+## LOT 2 — mise à niveau des anciennes alertes dans `labuse` (`18478fa6f`)
+
+`labuse.alertes_migration` (empreinte / sauvegarde datée / corriger / rollback). Réécrit titre, détail et
+`fait_date` des alertes `permis_in_zone` divergentes sur l'ÉVÉNEMENT réellement daté (mêmes expressions
+que `compute_alertes`). **N'écrit QUE dans `alertes`** — jamais `event_log` → AUCUNE réémission.
+
+Exécuté sur `labuse` (autorisé par Vic, cette table seule — `fix12/lot2-migration-labuse.txt`) : AVANT
+empreinte `088973b5`, **3119 corrigées**, sauvegarde `alertes_bak_fix12__20261125_122602`, APRÈS `77c9d6fa`,
+**0 « Permis déposé » à dépôt invalide restante** (était 3111). Témoin 97441521G0020 → « Permis autorisé
+dans « Centre Saint-Paul » » / « autorisé le 2021-03-26 » / fait_date 2021-03-26. Aucune notification
+réémise (0 `veille_zone` event_log du jour). déposé=29 (dépôts valides) / autorisé=3111.
+
+**Rollback écrit et testé sur COPIE** : sous-transaction annulée (sauvegarde → corriger → rollback →
+empreinte restaurée == AVANT) avant toute écriture réelle. **Migration de mise en ligne équivalente**,
+NON exécutée ailleurs : `deploy/migrations/2026-11-25-fix12-corriger-alertes-permis-depot.sql`.
+
+## LOT 3 — reconstruction de `pc_caducs` dans `labuse` (`289a72728`)
+
+**Pourquoi vide ?** `pc_caducs` est recalculée hors-run par la chaîne des dérivés légers
+(`ingestion.fraicheur.run_derives` → `build_pc_caducs`). En PRODUCTION cette chaîne est jouée **chaque
+nuit** par le job `ingest-bodacc` (quotidien 06:40) qui enchaîne `fraicheur-derives`
+(`jobs_impl.ingest_bodacc` : `_ingest_via_cli(ctx,"fraicheur-derives")`). Sur la base de **dev** `labuse`,
+cette chaîne n'avait **jamais** tourné : `fraicheur_etat` ne portait aucune entrée
+`derive:pc_caducs:rule_version` (jamais `marquer_regle_derivee`), la table était à 0. Le CALCUL, lui, est
+juste (4 836 parcelles). → **La prod n'est PAS dans ce cas** (lecture du registre de jobs : le job est
+actif, non gelé ; la sonde `/healthz/crons` + le contrôle de version de règle `fraicheur_caches` signalent
+« à reconstruire » si la chaîne échouait).
+
+Reconstruction AUTORISÉE par Vic (cette table seule ; lecture seule des sources, swap ~ms —
+`fix12/lot3-rebuild-caducs.txt`). APRÈS : **pc_caducs = 4 836**, version de règle gravée, sonde dérivés
+non périmée. **Preuve par les ROUTES** : `GET /accueil/chiffres` → `permis_caducs = 4836` ; filtre
+parcellaire `signaux=permis_caduc` (expression EXISTS de `/parcels`) trouve **97401000AD0106**. Les 4 faits
+du LOT 0 repassent VERTS (`fix12/lot0-APRES-reel.txt`).
+
+## LOT 4 — test structurel PAR USAGE (`982a34ff1`)
+
+`test_outil_permis_fix10.py` : le test ne dispense plus un FICHIER entier. `USAGES_AUTORISES` est keyé
+`(fichier, FONCTION) → raison` ; commentaires et docstrings ne comptent pas (AST + tokenize), les requêtes
+SQL en chaîne qui touchent la colonne comptent. Deux garde-fous : usage hors liste = **intrus** (échec),
+exception sans usage réel = **périmée** (échec). **24 usages nommés, 18 fichiers, 0 périmé.**
+
+Conséquences ASTRA-6 : **`events.py`, `accueil.py`, `app.py` SORTENT des exceptions** (leurs seules
+mentions étaient des commentaires — la sélection passe désormais par `permis_classe.evenement_date_sql`).
+**`permits_sdes.py`** est éclaté en usages nommés : `<module>` (upsert stockage), `_date_depot` (parse),
+et `run` (**millésime de source = max(dépôt, autorisation)**) — l'usage que l'audit voulait voir distinct
+du simple stockage. **`alertes.py`** = `compute_alertes` (affichage du dépôt affichable ; la sélection
+passe par la fonction unique).
+
+## Non-régression — par les routes/fonctions réelles (`fix12/non-regression.txt`)
+
+`scripts/outil_permis_fix8/fix12_non_regression.py` — **NON-RÉGRESSION OK** :
+- **dormants = 854** ; **classement** : Saint-Denis 1ᵉʳ, **24** communes (valeur absolue 57,4 = mise à
+  jour marché du merge, pas FIX-12) ;
+- **Dossier, 6 témoins** (500 m / 24 mois) : BZ1065 1/4 · AB0001 0/0 · CV1498 5/6 · BE1692 16/9 ·
+  DK0208 (Saint-Louis) 9/14 · AC2215 7/9 — tous exacts ;
+- **bloc « Activité de dépôt » 97401000AD0701** : `depots_recents.parcelle = None` (le faux dépôt
+  9744012520010 reste écarté) ;
+- **Bilan BZ1065** : inchangé par construction (`git diff 92c8ef49e..HEAD -- src/labuse/bilan
+  declarations/bilan src/labuse/api/bilan.py` = **vide**) → totaux 8 115 036,80 / 12 288 000,00 /
+  3 709 265,62 € tenus par `test_bilan_recette`.
+
+**Aucun fichier front touché** par FIX-12 (`git diff 92c8ef49e..HEAD` : 0 `.tsx`/`.ts`).
+
+## Vérifications
+
+- **Rayon d'impact — 40/40 VERT** (db inclus) : `test_outil_permis_fix12` (5), `fix10` (5, test structurel
+  par usage inclus), `fix8`, `test_alertes` (18), `test_pc_caducs`, `test_events_bascule`, `test_veille_notifs_fixes`.
+- **Golden cohérence** (`labuse coherence --comparer`) : **0 dérive** (signal de cohérence propre). Le banc
+  échantillon en-process n'a pas pu aboutir sous la charge du jour (load ~25, > 32 min sans fin, affamé —
+  arrêté) ; non bloquant : FIX-12 ne touche aucune notion d'écran parcelle/commune comparée par le banc
+  (sélection de veille + données alertes/pc_caducs), et `permis_caduc` est servi identiquement par tous ses
+  lecteurs (même table pc_caducs reconstruite).
+- **Suite complète non-db** : n'a PAS pu être menée au propre — environnement partagé hostile ce jour :
+  (1) un autre worktree (`labuse-assemblage-fix`) lance `pkill -f pytest` avant ses tests et a TUÉ mes runs
+  (exit 144) ; (2) le disque s'est rempli à 100 % (~14 h 15–14 h 30), faisant échouer des écritures de
+  temporaires ; (3) `labuse_test` est PARTAGÉE et polluée (plafond NOTIF — `reports/BASE-DE-TEST-A-FINIR.md`,
+  « en cours de réparation »). Les échecs observés sont **non déterministes** (positions différentes à chaque
+  run : ~36/39/40 % puis ~80/86 %) = flakes de pollution/concurrence, PAS mon code.
+- **Preuve que ces rouges sont étrangers** : les tests sensibles à la pollution (`test_notifications_m85`,
+  `test_silence_1`, `test_cockpit_corrections_c`, non-db) passent **31/31 EN ISOLATION** — ils ne tombent que
+  dans la suite complète quand l'accumulation de notifications `systeme` dans `labuse_test` arme le plafond
+  (mécanisme FIX-11). Et `test_notifications_m85::test_chaine_veille…` (db-only) échoue **identiquement SANS
+  mes changements** (vérifié par `git stash`) — test périmé depuis la décommission de m10 (FIX-8 : seed
+  `m10_permit_delais` alors que `veilles.py` lit `sitadel_permits`). Hors périmètre FIX-12.
+- **Décision : commits gardés en LOCAL** (comme FIX-8/9/10/11) — un push déclencherait le hook `-m "not db"`
+  sur la base partagée/polluée, refusé par des flakes SANS rapport avec les permis. `origin`/`main` intacts.
+
+## Écritures en base `labuse` (autorisées par Vic, ces deux tables seules)
+
+- `alertes` — 3119 lignes réécrites (LOT 2), sauvegarde `alertes_bak_fix12__20261125_122602`, rollback fourni.
+- `pc_caducs` — reconstruite à 4 836 (LOT 3) + `fraicheur_etat['derive:pc_caducs:rule_version']` gravée.
+Aucune autre table touchée. **Pas de fusion dans `main`.**
+
+## Fichiers touchés (mandat 12)
+
+Back : `permis_classe.py` (+`evenement_date_sql`), `alertes.py` (sélection compute_alertes),
+`api/events.py` (sélection evaluer_suivis), `alertes_migration.py` (nouveau, LOT 2).
+Tests : `tests/test_outil_permis_fix12.py` (filet), `tests/test_outil_permis_fix10.py` (test structurel
+par usage). Migration : `deploy/migrations/2026-11-25-fix12-corriger-alertes-permis-depot.sql`.
+Scripts : `scripts/outil_permis_fix8/fix12_{lot0_reel,lot1_selection,migrer_alertes,rebuild_caducs,non_regression}.py`
++ sorties `docs/.../fix12/`.
+
+---
+---
+
+# OUTIL-PERMIS-FIX-13 — contre-audit ASTRA-7 (« C'est faux » : 3 + « Ça pourrait être mieux » : 2)
+
+**Contexte.** `main` locale fusionnée d'abord (communes/assemblage-fix ; aucun conflit). Pas de suite
+complète, pas de push, pas de pkill. Chaque point prouvé par CE QUE L'UTILISATEUR REÇOIT. Scripts +
+sorties brutes sous `docs/audit-2026-11/outil-permis-fix-1/fix13/`.
+
+## LOT 0 — filet (commit séparé `623fe67da`, 3 rouges)
+`tests/test_outil_permis_fix13.py` : AM0036 ne doit pas être caduc 2025 ; DP0016 doit être caduc ;
+l'opération DR0312 ne doit pas entrer dans « déposées depuis 01/01/2026 ». Sortie `fix13/lot0-AVANT.txt`.
+
+## LOT 1 — durée de validité réelle (décret lu sur Légifrance)
+**Décret n° 2025-461 du 26 mai 2025** (prorogation exceptionnelle du délai de validité de certaines
+autorisations d'urbanisme ; JO du 27/05/2025, entrée en vigueur le 28/05/2025 ; s'applique aux
+autorisations **encore en cours de validité à son entrée en vigueur**) — périodes de délivrance visées,
+durée accordée, conditions :
+- **délivrées du 28/05/2022 au 28/05/2024** → **validité portée à 5 ANS**, **non prorogeable** (exclut les
+  deux prorogations classiques) ;
+- **délivrées du 01/01/2021 au 27/05/2022** → **+1 an** (soit 4 ans), restant éligibles aux deux
+  prorogations classiques ;
+- types : PC, PA, PD, non-opposition à DP, et AEC valant PC (AEC prorogées +2 ans / +1 an respectivement).
+**Droit commun** (art. R.424-17 du Code de l'urbanisme) : **3 ans**, prorogeable **2 fois 1 an sur demande
+expresse**. (Les prorogations « sur demande » sont INVISIBLES dans Sitadel → non supposées.)
+
+`pc_caducs.py` : `_echeance(date d'autorisation)` applique ces durées et rend la BASE LÉGALE ;
+`_row` écrit le libellé daté « PC autorisé le JJ/MM/AAAA · jamais commencé · caducité probable depuis le
+JJ/MM/AAAA » + détail avec la base légale + « **sur les seules données Sitadel** ». Caduc = échéance
+STRICTEMENT dépassée à la date de réf. Infobulle `strings.ts:35` : **plus de « croisement Sitadel × bâti »**
+(le calcul ne consulte aucune emprise bâtie) — remplacée par l'échéance + base légale.
+Témoin : **97401000AM0036** (PC autorisé 06/11/2022) → échéance **06/11/2027** → **sort du signal**.
+Mesure (`fix13/lot1-mesure-caducs.txt`) : **404 parcelles sortent** (toutes 2022, décret → 2027), par
+commune détaillée ; par année d'autorisation : 2022 = 404.
+
+## LOT 2 — 8 parcelles manquantes
+Cause : la reconstruction lisait la table dérivée **`p_model_permits`** — PÉRIMÉE (date de dépôt brute en
+`date_autorisation` : DP0016 portait 28/08/2023 au lieu du 26/02/2020 réel ; 376 couples PC/parcelle
+manquants). Correctif : `_SELECT_RAW` lit **directement `sitadel_permits`** (date d'autorisation SOURCE
+`sp.date` + explosion `idu_codes`) — zéro intermédiaire. Témoin **97415000DP0016** entre (autorisé
+26/02/2020 → échéance 2023). Les **8 entrantes** = DP0016 + 7 anciennes 2013-2020. **Recompte indépendant**
+depuis `sitadel_permits` (même règle) = **4 440 = compte de la table → écart 0** (`fix13/ecritures-labuse.txt`).
+
+## LOT 3 — Scan patrimoine : « déposées depuis » sur la date de dépôt
+Fonction UNIQUE `permis_classe.depot_date_sql = COALESCE(dépôt affichable, 1er janvier de AN_DEPOT)` — la
+date de DÉPÔT réelle, jamais l'autorisation ni la date brute. `veille_promoteurs._operations` l'emploie
+pour le filtre « déposées depuis » ET la fenêtre 24 mois (`date_evt`). L'opération de **97416000DR0312**
+(déposé 2025 / autorisé 25/08/2026) **n'entre plus** dans « déposées depuis le 01/01/2026 ». Libellé front
+ligne 273 désormais véridique (back corrigé). **Test structurel étendu à `an_depot`** (2ᵉ colonne de dépôt) +
+usages nommés ; `veille_promoteurs` lit via la fonction unique (consommateur vérifié). **Balayage grep du
+dépôt entier** : aucun autre lecteur confondant autorisation/dépôt (`division_or` lit `sp.date` pour « PC
+accordé récemment » — sémantique autorisation légitime).
+
+## LOT 4 — alertes : état actuel à côté de l'événement
+Quand le permis d'une alerte est AUJOURD'HUI annulé (ETAT_DAU=4), le détail dit « … autorisé le JJ/MM/AAAA
+**· annulé depuis** » (génération live `compute_alertes` + migration `alertes_migration.annoter_annules`
+des alertes déjà enregistrées). **258** alertes annotées (= `a_annoter`), témoin **97441513A0361** →
+« PC 97441513A0361 autorisé le 2013-09-09 · annulé depuis ». Aucune réémission (event_log inchangé).
+
+## LOT 5 — accueil (décrire + proposer, sans trancher)
+**Ce qui existe** : `/accueil/chiffres` (accueil.py:98) SERT `permis_caducs` (désormais **4 440**). Côté
+front, `getAccueilChiffres` n'est consommé que par `FiltreLabuse` pour `parcelles` (total île) ; **aucun
+composant d'accueil n'affiche `permis_caducs`** (`LeftPanel.AccueilPreuves` montre le nombre de sources, pas
+les caducs). Le signal « caduc » n'est lu que par le **filtre carte** (`signaux=permis_caduc`) et la **fiche
+parcelle** (badge) — tous deux interrogent `pc_caducs` directement, indépendamment du compteur d'accueil.
+Donc le compteur d'API et un nombre visible à l'accueil sont bien deux choses différentes.
+**Deux options (je ne tranche pas)** :
+- **(A) Afficher** : ajouter une tuile « N permis probablement caducs » au bloc accueil « Je vois ce que
+  personne ne voit », branchée sur `permis_caducs` de `/accueil/chiffres` (honnête : estimation sur Sitadel,
+  base légale au survol). Cohérent avec les blocs defisc/ensembles déjà servis par la même route.
+- **(B) Ne plus le renvoyer** : retirer `permis_caducs` de `/accueil/chiffres` (le filtre et la fiche
+  continuent de lire `pc_caducs`), pour que la route ne porte que ce que l'accueil affiche — cohérent avec
+  l'accueil volontairement minimal (6 portes, sans tuiles de KPI).
+Arbitrage = décision produit (Vic).
+
+## Écritures dans `labuse` (autorisées : ces 2 tables seulement) — `fix13/ecritures-labuse.txt`
+Garde-fou base=labuse ; sauvegarde datée + empreinte AVANT/APRÈS ; rollback TESTÉ sur copie ; aucune
+réémission :
+- **pc_caducs** : 4836 → **4440** (md5 85b13fd6→6ae694a6) ; sauvegarde `pc_caducs_bak_fix13__20261125_190346` ;
+  recompte indépendant sitadel = 4440 (écart 0) ; rollback testé = empreinte AVANT restaurée.
+- **alertes** : **258** annotées (n inchangé 3140, md5 77c9d6fa→dd495c55) ; sauvegarde
+  `alertes_bak_fix12__annule_20261125_190346` ; event_log **2359 → 2359** (aucune réémission) ; rollback
+  testé. Retours arrière écrits dans la sortie.
+Preuve par ROUTES : `/accueil/chiffres` permis_caducs=**4440** ; fiche DP0016 caduc (daté 2020→2023), fiche
+AM0036 **non caduc** ; alerte 97441513A0361 « … · annulé depuis ».
+
+## Non-régression (routes réelles — `fix13/non-regression.txt`)
+Dormants **854** · Saint-Denis **1er**/24 · Dossier 6 témoins (BZ1065 1/4, AB0001 0/0, CV1498 5/6,
+BE1692 16/9, DK0208 9/14, AC2215 7/9) · bloc Dépôts 97401000AD0701 **null** · Bilan BZ1065 inchangé ·
+**0 faux « déposé »**. Graphe de lectures : `lecteurs_non_declares()==[]`, `lectures_perimees()==[]`
+(arête `alertes_migration → sitadel_permits` déclarée).
+
+## Vérifications (ciblées — pas de suite complète, consigne)
+Filet FIX-13 7/7 ; fix10 (structurel par usage, an_depot) + pc_caducs + alertes + fix12 : **35/35**.
+Commits LOCAUX (pas de push, pas de fusion main). Aucune autre table que pc_caducs/alertes écrite.
+
+## Fichiers touchés (mandat 13)
+Back : `ingestion/pc_caducs.py` (échéance par date + lecture directe sitadel), `permis_classe.py`
+(+`depot_date_sql`), `api/veille_promoteurs.py` (dépôt réel), `alertes.py` (« · annulé depuis » live),
+`alertes_migration.py` (+`annoter_annules`/`a_annoter`), `registre/lectures.py` (arête déclarée).
+Front : `lib/strings.ts` (infobulle caduc sans bâti). Tests : `test_outil_permis_fix13.py`,
+`test_outil_permis_fix10.py` (an_depot), `test_pc_caducs.py` (règle date). Scripts :
+`scripts/outil_permis_fix8/fix13_{mesure_caducs,ecritures}.py` + sorties `fix13/`.
+
+---
+
+## OUTIL-PERMIS-FIX-16 (contre-audit 02-PERMIS-ASTRA-8)
+
+Branche `fix/outil-permis-1` (main locale fusionnée d'abord). 5 « C'est faux » + 3 « Ça pourrait être
+mieux », prouvés par ce que l'utilisateur reçoit (route réelle sur `:7500`, fonction servie). 8 commits
+`c4ee501b5`→`449dcac0b`. Écritures labuse autorisées : `sitadel_permits` (réimport) + `pc_caducs` (rebuild).
+
+- **LOT 0** (`c4ee501b5`) filet rouge `tests/test_outil_permis_fix16.py` (7 tests, rouges avant).
+- **LOT 2 — décret 2025-461 art. 3** (`252870fa6`). Article 3 (recopié) : « Le bénéfice des articles 1er
+  et 2 est réservé aux autorisations encore valides à la date de publication du présent décret »
+  (27/05/2025). `_echeance` n'applique la prorogation (5 ans art. 1er / +1 an art. 2) que si la validité
+  de droit commun (3 ans) n'est pas écoulée le 27/05/2025 ; sinon droit commun maintenu. 97406000AV1068
+  (04/01/2021) → échéance **04/01/2024** (plus 2025). Mesure : **777** échéances changent, dont **195**
+  (sous-ensemble audit, échéance 4 ans antérieure à la publication) ; **0** parcelle entre/sort du signal.
+- **LOT 3 — import Sitadel clé (permit_id, type)** (`dd39a8a83`). Un même NUM_DAU porte parfois deux
+  autorisations de types différents (9744121620163 = PC/BO0239 + DP/CO0082) → l'une écrasait l'autre. Clé
+  d'unicité et d'upsert = (permit_id, type) ; accumulation+union des parcelles par (permit_id, type).
+  Recompte indépendant fichiers officiels oct. 2026 : LOCAL 4440 / OFFICIEL 4418 → **23 seulement-officiel
+  = 23/23 collisions multi-type** (toutes récupérées) ; **45 seulement-local** = 34 Région seule, 3 mixtes et 8 SDES seuls en classant tous les PC rattachés dans la sauvegarde du
+  26/11/2026. Quatre parcelles sont sorties après récupération d'un PC commencé ou achevé. Le recomptage
+  est reproductible avec `scripts/outil_permis_fix16/recompte_lot3_officiel.py /tmp --date 2026-11-26 --avant-fix16`. Jointures dérivées rendues
+  type-aware (dvf_prix_neuf/defisc_fenetres/qv14, fiche permis déterministe) anti-fan-out.
+- **LOT 1 — historique de fiche** (`3dca5f746`). CAUSE de l'« erreur technique » (8/10 fiches, HTTP 200) :
+  le cache `fiche_cache` figeait une **panne transitoire** de `_historique_site` (pc_caducs vide pendant
+  FIX-13/14) sous une clé de fraîcheur indépendante de pc_caducs. Correctif : `_fiche_contient_panne` —
+  `_fiche_servie` ne cache jamais une fiche portant un bloc « indisponible ». Purge du cache empoisonné.
+  Preuve au même endroit : la caducité porte n° PC + date d'autorisation + échéance + base légale +
+  « sur les seules données Sitadel » ; libellé « aucun commencement déclaré ». **30 fiches signalées au
+  hasard : 0 erreur, 30/30 preuve complète.**
+- **LOT 4 — pétitionnaire** (`7057edbaf`). Le pétitionnaire = celui que Sitadel nomme (dénomination+SIREN,
+  `raw.petitioner_*`), servi à part ; le propriétaire cadastral (DGFiP) à part, jamais « demandeur ». Note
+  de pied d'écran corrigée. PC 97441626A0008 : pétitionnaire **GUYAB IMMO** (910668011), propriétaire IDEA
+  GROUPE ; 97441626A0156 : **MAURRIC TS**, propriétaire DECA INVESTISSEMENT.
+- **LOT 5 — dépôt à l'année** (`7057edbaf`). `depot_depuis_cond_sql` : jour-contre-jour si le dépôt est
+  connu au jour, année-contre-année sinon (plus de 01/01 inventé). Saint-Pierre : **7 au 01/01 = 7 au
+  02/01** (plus de falaise). `depot_jour_connu` servi → « jour de dépôt inconnu ».
+- **LOT 6 — permis_pro** (`e55750986`). `_PRO_PC_CTE` et `_permits_ready` lisent la SOURCE
+  `sitadel_permits` (plus `p_model_permits` périmée). Test structurel : app.py n'est plus lecteur de
+  p_model_permits. 97408000AO0072 porte le PC pro 9744082600082 (DURAMEN) autorisé 30/09/2026, présent à
+  la source, absent de p_model. Recalcul source vs p_model : +114 / -2 (le +40/-6 de l'audit était mesuré
+  avant la ré-ingestion d'octobre).
+- **Fixups** (`908e11298`, `449dcac0b`) : lecture pc_caducs tolérante (SELECT *) ; déclaration graphe
+  permis_classe→sitadel (dette FIX-14).
+
+**Écritures (sauvegardes `*_bak_fix16__20261126_085912`, rollback testé, servi inchangé après)** :
+sitadel_permits 51125→51503 rows (+378 collisions récupérées) ; pc_caducs 4440→4459 (+23 récupérées
+−4 parcelles avec un PC commencé ou achevé retrouvé). **Non-régression routes** : /accueil/chiffres caducs=4459 (=table), dormants 854→**855** (un
+PC récupéré par LOT 3 est dormant), Saint-Denis 1er (52,8), Dossier BZ1065 1/4 · BE1692 16/9 · AC2215 7/9
+exacts, **DK0208 9→10** (le PC 97441425A0006 qu'une PA écrasait — le bug LOT 3), 0 faux « déposé »
+(type-aware), aucun fichier Bilan/score servi touché. Tests ciblés : filet 8/8 + permis 52 + registre/
+graphe 16 + vitest 2 + tsc. Pas de push, pas de suite complète, pas de pkill.

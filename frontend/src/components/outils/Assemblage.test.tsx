@@ -12,7 +12,12 @@ const IDUS = ['97415000CT1917', '97415000CT2565', '97415000CT3327']
 const STUDY_OK = {
   // CHASSE-FIX-1 (B-2) — SDP-UNIQUE : `sdp_combinee_m2`/`sdp_bati_conserve_m2` = SDP bâti conservé
   // (défaut, comme la fiche) ; `sdp_terrain_libere_m2` = table rase (démolition supposée), dite à côté.
-  n: 3, contigu: true, isolees: [], surface_totale_m2: 14111,
+  // OUTIL-ASSEMBLAGE-FIX-1 (LOT 1) — `relie` = assiette d'un bloc (gate du chiffrage), `tenant_unique`
+  // = vrais bords partout (« contiguës »). `contigu` reste l'alias strict (= tenant_unique).
+  n: 3, contigu: true, relie: true, tenant_unique: true, lien_faible: false, tenant_avertissement: null,
+  liens: [{ a: '97415000CT1917', b: '97415000CT2565', type: 'bord', longueur_bord_m: 24.3, vide_m: null },
+          { a: '97415000CT2565', b: '97415000CT3327', type: 'bord', longueur_bord_m: 18.1, vide_m: null }],
+  isolees: [], surface_totale_m2: 14111,
   sdp_combinee_m2: 11065, sdp_bati_conserve_m2: 11065, sdp_terrain_libere_m2: 12800,
   sdp_existante_totale_m2: 1735, sdp_conserve_estimation: false,
   sdp_max_seule_m2: 10726, sdp_max_seule_conserve_m2: 9000,
@@ -24,8 +29,8 @@ const STUDY_OK = {
     sdp_residuelle_m2: [200, 100, 9000][k], sdp_existante_m2: [17, 22, 1726][k],
     tier_v2: 'neutre', etage0: false, proprio: { type: k === 0 ? 'personne_morale' : 'particulier', denomination: 'SEDRE', siren: '1' } })),
 }
-// NON contigu : le backend sert contigu=false + la liste des parcelles isolées (hors du bloc d'un seul tenant).
-const STUDY_KO = { ...STUDY_OK, contigu: false, isolees: ['97415000CT3327'] }
+// NON reliée : le backend sert relie=false + la liste des parcelles isolées (hors du bloc d'un seul tenant).
+const STUDY_KO = { ...STUDY_OK, contigu: false, relie: false, tenant_unique: false, isolees: ['97415000CT3327'], liens: [] }
 
 let current: Record<string, any> = STUDY_OK
 function mockFetch() {
@@ -47,6 +52,17 @@ async function verifier(attendu: string) {
 describe('ASSEMBLAGE (H5) — étapes, contiguïté, isolées, plus de Courrier', () => {
   beforeEach(() => { current = STUDY_OK; mockFetch(); useApp.setState({ msel: IDUS, parcelPrefill: null, module: 'assemblage' }) })
   afterEach(() => { vi.restoreAllMocks(); useApp.setState({ msel: [], module: null }) })
+
+  it('montre la réserve de l’union sans écarter une parcelle de capacité inconnue', async () => {
+    const lecture = 'Capacité à vérifier — vérifier le phasage de 2AUb.'
+    current = { ...STUDY_OK, lecture_capacite: lecture, sans_potentiel: true,
+      items: STUDY_OK.items.map(i => ({ ...i, sdp_m2: null })) }
+    renderM16()
+    await verifier('[data-asm-sans-potentiel]')
+    expect(document.body.textContent).toContain(lecture)
+    expect(document.body.textContent).not.toContain('aucun potentiel de projet')
+    expect(document.querySelector('[data-asm-retirer-vides]')).toBeNull()
+  })
 
   it('RETOURS-25 — en-tête « N contiguës » SANS « surface totale » (dédup) + 2 KPI (14 111 / 11 065)', async () => {
     renderM16(); await verifier('[data-asm-charge]')
@@ -80,6 +96,63 @@ describe('ASSEMBLAGE (H5) — étapes, contiguïté, isolées, plus de Courrier'
     // « rien d'autre » : aucun bilan (KPI/charge) quand l'assiette n'est pas d'un seul tenant.
     expect(document.querySelector('[data-asm-kpi="surface"]')).toBeFalsy()
     expect(document.querySelector('[data-asm-charge]')).toBeFalsy()
+  })
+
+  it('LOT 1 : reliée par contact ponctuel/petit vide → « pas d\'un seul tenant » + liens mesurés + caveat, bilan chiffré', async () => {
+    current = {
+      ...STUDY_OK, contigu: false, tenant_unique: false, lien_faible: true,
+      liens: [{ a: '97415000CT1917', b: '97415000CT2565', type: 'bord', longueur_bord_m: 24.3, vide_m: null },
+              { a: '97415000CT2565', b: '97415000CT3327', type: 'point', longueur_bord_m: 0, vide_m: null }],
+      tenant_avertissement: 'Assiette NON d\'un seul tenant — CT2565–CT3327 : contact par un point (aucun bord commun). Le chiffrage fusionne les polygones réels sans combler ce vide.',
+    }
+    renderM16(); await verifier('[data-asm-charge]')
+    expect(document.querySelector('[data-asm-lien-faible]')?.textContent).toContain("pas d'un seul tenant")
+    const liens = document.querySelector('[data-asm-liens]')?.textContent ?? ''
+    expect(liens).toContain('24') ; expect(liens).toContain('contact par un point')
+    expect(document.querySelector('[data-asm-tenant-avert]')?.textContent).toContain("NON d'un seul tenant")
+    // le chiffrage est présent MAIS réservé (pas bloqué comme une assiette isolée).
+    expect(document.querySelector('[data-asm-charge]')).toBeTruthy()
+    expect(document.querySelector('[data-asm-pas-possible]')).toBeFalsy()
+  })
+
+  it('LOT 2 : capacité par zone (table des portions) + contraintes retranchées en m²', async () => {
+    current = {
+      ...STUDY_OK,
+      zones_detail: [
+        { zone: 'U2b', fam: 'U', surface_m2: 19475, emprise_m2: 17897, recul_limites_m: 3, recul_voirie_m: 4, sdp_m2: 30673, niveaux: 5, constructible: true },
+        { zone: 'U2h', fam: 'U', surface_m2: 2041, emprise_m2: 1112, recul_limites_m: 4, recul_voirie_m: 4, sdp_m2: 1501, niveaux: 3, constructible: true },
+      ],
+      retranchements: { hors_zone_m2: 193, ppr_rouge_m2: 458, emplacement_reserve_m2: 0, ebc_m2: 0 },
+    }
+    renderM16(); await verifier('[data-asm-charge]')
+    const t = (document.querySelector('[data-asm-zones]')?.textContent ?? '').replace(/\s/g, '')
+    expect(t).toContain('U2b'); expect(t).toContain('U2h')
+    expect(t).toContain('30673'); expect(t).toContain('1501')   // SDP par zone (niveaux 5 vs 3)
+    const r = (document.querySelector('[data-asm-retranche]')?.textContent ?? '').replace(/ | /g, ' ')
+    expect(r).toContain('Zone rouge du PPR'); expect(r).toContain('458')
+    expect(r).toContain('Hors zone constructible')
+  })
+
+  it('FIX-2 LOT 1 : l\'obligation de mixité (bande intermédiaire) est affichée + « borne haute »', async () => {
+    current = {
+      ...STUDY_OK,
+      mixite: { servitude: true, declenchee: true, regime: 'intermediaire', quota_pct: 30,
+        produits: 'logements aidés ou accession sociale (PTZ, PSLA)', article: 'Art. 2 (zones U1 à U6)',
+        page: 'pp. 14-15', borne_haute: true, critere: 'programme 1 583 m² dans la bande 1 500–1 800 m²' },
+    }
+    renderM16(); await verifier('[data-asm-charge]')
+    const t = document.querySelector('[data-asm-mixite]')?.textContent ?? ''
+    expect(t).toContain('Obligation de mixité sociale')
+    expect(t).toContain('Art. 2'); expect(t).toContain('pp. 14-15'); expect(t).toContain('30%')
+    expect(document.querySelector('[data-asm-mixite-borne]')?.textContent).toContain('borne haute')
+  })
+
+  it('FIX-2 LOT 4 : un identifiant introuvable est nommé (plus de « N parcelles » quand il en manque)', async () => {
+    current = { ...STUDY_OK, n: 3, introuvables: ['97415000ZZ9999'], n_demandes: 4 }
+    renderM16(); await verifier('[data-asm-charge]')
+    const t = document.querySelector('[data-asm-introuvables]')?.textContent ?? ''
+    expect(t).toContain('introuvable'); expect(t).toContain('ZZ9999')
+    expect(t).toContain('4 parcelles demandées'); expect(t).toContain('3 trouvées')
   })
 
   it('OUTILS-P1-1 (pt 2) : trois lectures « Existant » / « Si conservé » / « Après démolition · ±Δ » ; « · terrain libéré » retiré des lignes', async () => {
@@ -134,5 +207,49 @@ describe('ASSEMBLAGE (H5) — étapes, contiguïté, isolées, plus de Courrier'
     renderM16()
     await waitFor(() => expect(document.querySelector('[data-asm-max]')).toBeTruthy())
     expect(useApp.getState().msel.length).toBe(8)
+  })
+
+  // OUTIL-ASSEMBLAGE-FIX-8 (LOT 4) — un lien `bord_court` (vide_m = null) ne plante plus l'écran.
+  // Avant : la branche « petit vide » faisait (ln.vide_m).toFixed(2) → TypeError à l'init du composant.
+  it('LOT 4 — un bord cadastral court (bord_court, vide_m null) rend sans planter', async () => {
+    current = { ...STUDY_OK, contigu: false, relie: true, tenant_unique: false,
+      liens: [{ a: '97415000CV1134', b: '97415000CV1381', type: 'bord_court', longueur_bord_m: 0.34, vide_m: null }] }
+    renderM16(); await verifier('[data-asm-lien="bord_court"]')
+    const li = document.querySelector('[data-asm-lien="bord_court"]')?.textContent ?? ''
+    expect(li).toContain('0,34 m')
+    expect(li).toContain('à vérifier')
+  })
+
+  // OUTIL-ASSEMBLAGE-FIX-8 (LOT 2) — l'avertissement d'exclusion ZAC (Marie Caze / Sans Souci) est
+  // AFFICHÉ sur l'écran Assemblage (il était omis alors que le moteur le connaît) + dénominateur.
+  it('LOT 2 — l\'avertissement ZAC Marie Caze / Sans Souci et le dénominateur sont affichés', async () => {
+    current = { ...STUDY_OK, mixite: { servitude: true, declenchee: true, regime: 'plein', quota_pct: 30,
+      origine: 'secteur_sms', produits: 'logements locatifs sociaux (LLTS, LLS, PLS)', article: 'Zones U4a-U4b-U4c, Art. 2.2',
+      page: 'p. 168', borne_haute: false, logements: 40,
+      avertissements: ['Exclusion ZAC possible — le règlement de la zone (Art. 2, p. 168-169) exclut cette obligation dans la ZAC Marie Caze et la ZAC Sans Souci.'] } }
+    renderM16(); await verifier('[data-asm-mixite]')
+    expect(document.querySelector('[data-asm-mixite-avert]')?.textContent).toContain('Marie Caze')
+    expect(document.querySelector('[data-asm-mixite-denom]')?.textContent).toContain('arrondi supérieur')
+  })
+
+  // OUTIL-ASSEMBLAGE-FIX-8 (LOT 6) — la surface effectivement retranchée est affichée À CÔTÉ du brut.
+  it('LOT 6 — contrainte : surface brute ET surface effectivement retranchée', async () => {
+    current = { ...STUDY_OK, zones_detail: [{ zone: 'U2h', fam: 'U', surface_m2: 6163, emprise_m2: 573, recul_limites_m: 4, recul_voirie_m: 4, sdp_m2: 774, niveaux: 3, constructible: true },
+                                            { zone: 'U2d', fam: 'U', surface_m2: 2381, emprise_m2: 1242, recul_limites_m: 4, recul_voirie_m: 4, sdp_m2: 107, niveaux: 1, constructible: true }],
+      retranchements: { hors_zone_m2: 0, ppr_rouge_m2: 935, emplacement_reserve_m2: 0, ebc_m2: 0, ppr_rouge_effectif_m2: 41, emplacement_reserve_effectif_m2: 0, ebc_effectif_m2: 0 } }
+    renderM16(); await verifier('[data-asm-retranche-ppr]')
+    const li = document.querySelector('[data-asm-retranche-ppr]')?.textContent ?? ''
+    expect(li).toContain('935 m²')
+    expect(li).toContain('41 m²')
+    expect(li).toContain('enveloppe constructible')
+  })
+
+  // OUTIL-ASSEMBLAGE-FIX-8 (LOT 6) — la phrase « recul sur voie » est présente même sur une assiette mono-zone.
+  it('LOT 6 — recul sur voie affiché sur une assiette mono-zone', async () => {
+    current = { ...STUDY_OK, zones_detail: [{ zone: 'AU3c', fam: 'AU', surface_m2: 3778, emprise_m2: 2703, recul_limites_m: 3, recul_voirie_m: 4, sdp_m2: 3060, niveaux: 3, constructible: true }] }
+    renderM16(); await verifier('[data-asm-recul-voie]')
+    const t = document.querySelector('[data-asm-recul-voie]')?.textContent ?? ''
+    expect(t).toContain('recul sur voie')
+    expect(t).toContain('4 m')
   })
 })

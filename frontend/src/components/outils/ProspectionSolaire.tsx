@@ -15,7 +15,7 @@
  */
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useState } from 'react'
-import { getPiscinesAgregat, getPiscinesListe, getPiscinesParcelles, getSolaireFiche,
+import { messageChargement, getPiscinesAgregat, getPiscinesListe, getPiscinesParcelles, getSolaireFiche,
   type SolaireFiche } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
@@ -27,7 +27,7 @@ import { ErrorState } from '../States'
 
 // A1 — plus de date « gelée » en dur : le millésime affiché à l'écran est celui SERVI par l'endpoint
 // (parcel_solar.source_millesime). Un seul millésime par écran, jamais deux dates contradictoires.
-const MOIS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
 const num = (v: number | null | undefined, unit = '') => (v == null ? '—' : `${fmtInt(v)}${unit}`)
 // OUTILS-LOT-4 (pt 1) — tout décimal à l'écran avec une VIRGULE (jamais un point) : « 8,3° », pas « 8.3° ».
 const dec = (v: number | string) => String(v).replace('.', ',')
@@ -113,7 +113,12 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   const [commune, setCommune] = useState<string | null>(null)   // null = toute l'île
   const statut: PiscStatut = 'tous'
   const [pasPiscine, setPasPiscine] = useState<Set<string>>(new Set())
-  const [carteBusy, setCarteBusy] = useState(false)
+  const carte = useQuery({
+    queryKey: ['piscines-carte', commune, statut],
+    queryFn: () => getPiscinesParcelles(commune, statut),
+    enabled: step === 'resultat',
+    staleTime: 60_000,
+  })
 
   // AGRÉGAT (île, les deux bandes) chargé une fois : alimente le compte des deux étapes (périmètre +
   // statut). confiance.haute = confirmées de l'île · confiance.incertaines = à confirmer de l'île.
@@ -140,18 +145,10 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   const total = list.data?.pages[0]?.total ?? 0
   const items = (list.data?.pages.flatMap((p) => p.items) ?? []).filter((it) => !pasPiscine.has(it.idu))
 
-  // Quitter l'outil / changer de périmètre-statut efface la couche carte.
-  useEffect(() => () => setModuleMap({ idus: [], extra: null }), [setModuleMap])
-  // Au résultat, poser les PARCELLES COLORÉES sur la carte (tout le périmètre) ; sinon l'effacer.
   useEffect(() => {
-    if (step !== 'resultat') { setModuleMap({ idus: [], extra: null }); return }
-    let vivant = true
-    setCarteBusy(true)
-    getPiscinesParcelles(commune, statut)
-      .then((fc) => { if (vivant) setModuleMap({ idus: [], extra: fc, fit: true }) })   // cadrer sur le périmètre
-      .finally(() => { if (vivant) setCarteBusy(false) })
-    return () => { vivant = false }
-  }, [step, commune, statut, setModuleMap])
+    if (step === 'resultat' && carte.data) setModuleMap({ idus: [], extra: carte.data, fit: true })
+    return () => setModuleMap({ idus: [], extra: null })
+  }, [step, carte.data, setModuleMap])
 
   // RECETTE-PROD-1 (#9, précision Vic) — UN SEUL compteur par périmètre (plus de « N conf · N à conf ») :
   // la catégorie « Piscines » est unique, le total agrège les deux bandes de la source.
@@ -211,21 +208,22 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
         <div>
           <b data-piscines-total className="tnum text-2xl font-semibold" style={{ color: TOKENS.mint }}>{fmtInt(nbStatut)}</b>
           <span className="ml-2 text-[11px] text-txt-mut">piscines {commune ? `à ${commune}` : 'à La Réunion'}</span>
-          {carteBusy && <span className="ml-2 text-[9.5px] text-txt-dim">· carte en cours…</span>}
+          {carte.isFetching && <span className="ml-2 text-[9.5px] text-txt-dim">· carte en cours…</span>}
         </div>
       </div>
 
       {/* LISTE paginée : IDU · commune · source · statut · Fiche → · « pas une piscine » (icône).
           RECETTE-1 H13.4 — colonne m² par piscine RETIRÉE. H13.3 — tri commune puis section (serveur). */}
+      {carte.isError && <ErrorState message="Carte des piscines momentanément indisponible." retry={() => carte.refetch()} />}
       {list.isLoading && <Squelette lignes={6} />}
       {list.isError && <ErrorState message="Liste momentanément indisponible." retry={() => list.refetch()} />}
       {list.data && (
         <>
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
             {items.map((it, i) => (
-              <div key={`${it.idu}-${i}`} data-piscines-row role="button" tabIndex={0}
+              <button type="button" key={`${it.idu}-${i}`} data-piscines-row
                 onClick={() => focusParcelle(it.idu, { fiche: true })}
-                className="hover-fill cursor-pointer rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5 transition-colors duration-quick">
+                className="hover-fill cursor-pointer text-left rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5 transition-colors duration-quick">
                 {/* RECETTE-2 (D14b) — colonne SOURCE (CoSIA / FLAIR+CoSIA) et croix « pas une piscine » retirées. */}
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-[11px] text-txt-hi">{it.idu.slice(8)}</span>
@@ -235,7 +233,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
                     <span className="text-[10px] text-mint hover:underline">Fiche →</span>
                   </span>
                 </div>
-              </div>
+              </button>
             ))}
             {pasPiscine.size > 0 && (
               <div className="px-1 text-[9.5px] text-txt-dim">
@@ -292,7 +290,7 @@ function ModeEnsoleillement({ onBack, prefillIdu }: { onBack: () => void; prefil
       <EntreeParcelle source={source} picked={ficheIdu} onChanger={resetAll}
         onPick={(i, src) => { setSource(src); setFicheIdu(i); select(i) }} />
       {ficheIdu && fiche.isLoading && <Squelette lignes={4} />}
-      {ficheIdu && fiche.isError && <ErrorState message="Parcelle introuvable — vérifiez l’IDU." retry={() => fiche.refetch()} />}
+      {ficheIdu && fiche.isError && <ErrorState message={messageChargement(fiche.error, "Fiche solaire momentanément indisponible.")} retry={() => fiche.refetch()} />}
       {ficheIdu && fiche.data && <FicheSoleil f={fiche.data} />}
       {/* RECETTE-2 (D13) — retirés : l'invite « Saisissez une parcelle … », l'encart « 💡 Couche carte
           Contraintes EnR … », et le pied « Détection FLAIR · PVGIS … · RGE ALTI ». */}
@@ -370,13 +368,10 @@ function FicheSoleil({ f }: { f: SolaireFiche }) {
       </div>
       <div className="mt-2 grid grid-cols-2 gap-1.5">
         <KPI k="Potentiel" v={num(f.productible)} u="kWh/kWc/an" prov="Estimé" />
-        {/* CHIRURGICAL-FIX-1 (Solaire) — on NOMME la grandeur : « Surface de toiture » (proxy pans de
-            toit, p_model_bati BD TOPO/CoSIA), DISTINCTE de l'« emprise au sol » de la fiche. La
-            toiture (débords, pente) dépasse normalement l'emprise au sol — ce ne sont pas le même m². */}
-        <KPI k="Surface de toiture" v={num(f.toit_m2, ' m²')} prov="Sourcé" />
+        <KPI k="Emprise bâtie au sol" v={num(f.toit_m2, ' m²')} prov="Sourcé" />
         {/* A6 — puissance installable + production annuelle SERVIES par le back ; ratio kWc/m² écrit ci-dessous. */}
-        <KPI k="Puissance installable" v={kwc == null ? '—' : String(kwc).replace('.', ',')} u="kWc" prov="Estimé" />
-        <KPI k="Production annuelle" v={num(prodAn)} u="kWh/an" prov="Estimé" />
+        <KPI k="Puissance théorique" v={kwc == null ? '—' : String(kwc).replace('.', ',')} u="kWc" prov="Estimé" />
+        <KPI k="Production annuelle théorique" v={num(prodAn)} u="kWh/an" prov="Estimé" />
         {/* orientation = azimut DU BÂTI (Estimé), pas une orientation « optimale » (non calculée) ;
             l'inclinaison optimale n'est pas servie par la V1 → non affichée (jamais inventée). */}
         <KPI k="Orientation du bâti" v={f.azimut == null ? '—' : `${dec(f.azimut)}°`} prov="Estimé" />
@@ -389,8 +384,8 @@ function FicheSoleil({ f }: { f: SolaireFiche }) {
       {/* A6 — l'hypothèse de dimensionnement (ratio kWc/m²) est ÉCRITE à côté du résultat, servie de la config. */}
       {kwcParM2 != null && kwc != null && (
         <p data-solaire-kwc-hyp className="mt-1 text-[9px] leading-snug text-txt-dim">
-          Puissance installable = surface de toiture × {String(kwcParM2).replace('.', ',')} kWc/m² (hypothèse) ; production annuelle = puissance × potentiel PVGIS.
-          La surface de toiture (pans de toit modélisés) diffère de l'emprise au sol de la fiche : elle la dépasse normalement (débords, pente).
+          Le calcul applique {dec(kwcParM2)} kWc/m² à toute l’emprise bâtie, puis multiplie la puissance par le potentiel PVGIS.
+          La surface équipable et les ombres proches restent à vérifier sur place.
         </p>
       )}
       {/* RETOURS-25 (pt 9) — ligne « Nature du toit : {statut} — {méthode} » RETIRÉE (doublon de la tuile
@@ -406,7 +401,7 @@ function FicheSoleil({ f }: { f: SolaireFiche }) {
           <p className="mt-1 text-[9px] leading-snug text-txt-dim">
             {/* RETOURS-25 (pt 9) — phrase « La lecture LiDAR … se vérifie sur cette photo » retirée (filler).
                 On garde la légende de la rosace et la levée d'ambiguïté « pente du terrain ≠ pente du toit ». */}
-            Photo aérienne (ortho IGN) — rosace alignée sur l'orientation du bâti{f.azimut != null ? ` (${dec(f.azimut)}°, Estimé)` : ' (orientation non estimée)'}.
+            Photo aérienne (ortho IGN) — rosace alignée sur l'orientation du bâti{f.azimut != null ? ` (${dec(f.azimut)}°${f.azimut_confiance ? ', confiance ' + f.azimut_confiance : ''})` : ' (orientation non estimée)'}.
             « Pente du terrain » ci-dessus = pente moyenne du sol (RGE ALTI), pas la pente du toit.
           </p>
         </div>
@@ -429,14 +424,14 @@ function FicheSoleil({ f }: { f: SolaireFiche }) {
       )}
       {pm.length === 12 && (
         <>
-          <p className="mt-2 text-[9px] text-txt-dim">Profil mensuel (kWh/kWc · maille PVGIS){f.mois_optimal ? ` · pic en ${MOIS[f.mois_optimal - 1]}` : ''}</p>
+          <p className="mt-2 text-[9px] text-txt-dim">Profil mensuel (kWh/kWc · {f.millesime || 'PVGIS'}){f.mois_optimal ? ` · pic en ${MOIS[f.mois_optimal - 1]}` : ''}</p>
           <div className="mt-0.5 flex h-14 items-end gap-0.5">
             {pm.map((v, i) => (
               <div key={i} data-solaire-bar className="flex-1 rounded-t" aria-label={`${MOIS[i]} : ${fmtInt(v)} kWh/kWc`}
                 style={{ height: `${Math.max(4, Math.round((v / max) * 100))}%`, background: i + 1 === f.mois_optimal ? TOKENS.mint : `${TOKENS.mint}55` }} />
             ))}
           </div>
-          <div className="flex gap-0.5 text-[8px] text-txt-dim">{MOIS.map((m, i) => <span key={i} className="flex-1 text-center">{m}</span>)}</div>
+          <div className="flex gap-0.5 text-[8px] text-txt-dim">{MOIS.map((m, i) => <span key={i} className="flex-1 text-center" title={m}>{m[0].toUpperCase()}</span>)}</div>
         </>
       )}
       {/* RECETTE-4 — les deux paragraphes d'explication sous le graphique mensuel (« Productible estimé… »

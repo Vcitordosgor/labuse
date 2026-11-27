@@ -11,6 +11,7 @@
 // Hook (pas un composant : aucune DA nouvelle) réutilisé par la page Docs (porte + bibliothèque) et
 // par les tuiles de la fiche, pour que les 7 documents se comportent partout pareil.
 import { useState } from 'react'
+import { lireImplantation } from './implantationLocale'
 
 // Message FR par statut, en NOMMANT les manques quand le back les fournit (422, comme le Bilan).
 async function messageDErreur(r: Response): Promise<string> {
@@ -54,6 +55,11 @@ export function useOuvrirDocument(onErreur?: (msg: string) => void) {
       setProgres(Math.min(92, Math.round(100 * (1 - Math.exp(-s / 7)))))   // ~63 % à 7 s, ~92 % à ~18 s
     }, 200)
     try {
+      const rapport = /^\/gabarit\/([^/]+)\.pdf$/.exec(url)
+      if (rapport && !init) {
+        const projet = lireImplantation(decodeURIComponent(rapport[1]))
+        if (projet.ferme) init = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(projet.pts) }
+      }
       const r = await fetch(url, init)
       if (!r.ok) { const m = await messageDErreur(r); (onErreur ?? setErreur)(m); return false }
       const blobUrl = URL.createObjectURL(await r.blob())

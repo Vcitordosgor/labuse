@@ -207,3 +207,8 @@ def test_garde_occupation_defaut_pas_100pct():
     assert 0 < h.coef_occupation <= 1.0
     assert h.coef_occupation != 1.0            # ne remplit jamais 100 % de l'emprise max
     assert 0 < h.coef_rendement <= 1.0
+
+
+def test_badge_reglement_reste_au_mois_de_la_couverture():
+    panneau = scenarios.faisabilite_scenario(None, 1)
+    assert panneau["badges"]["plu_approuve_le"] == "02/2024"

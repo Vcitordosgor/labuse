@@ -1,0 +1,79 @@
+FFFFFFFFFFFFFFF                                                          [100%]
+=================================== FAILURES ===================================
+E   assert (84, 87) == (84, 85)
+      
+      At index 1 diff: 87 != 85
+      Use -v to get more diff
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_suite.py:16: assert (84, 87) == (84, 85)
+E   assert (29, 32) == (29, 31)
+      
+      At index 1 diff: 32 != 31
+      Use -v to get more diff
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_suite.py:26: assert (29, 32) == (29, 31)
+E   assert not True
+     +  where True = any(<generator object test_saint_benoit_liste_emplacements_hors_articles_au.<locals>.<genexpr> at 0x142fabe00>)
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_suite.py:35: assert not True
+E   assert (None, None) == (32, 39)
+      
+      At index 0 diff: None != 32
+      Use -v to get more diff
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_suite.py:46: assert (None, None) == (32, 39)
+E   assert (None, None) == (40, 48)
+      
+      At index 0 diff: None != 40
+      Use -v to get more diff
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_suite.py:46: assert (None, None) == (40, 48)
+E   AssertionError: assert not True
+     +  where True = <function _is_title_only at 0x142f7ed40>({'texte_verbatim': 'ARTICLE AUST 10 - HAUTEUR MAXIMALE DES CONSTRUCTIONS\nSans objet.'})
+     +    where <function _is_title_only at 0x142f7ed40> = <module 'mesure' from '/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/scripts/plu_fix14_mesure.py'>._is_title_only
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_suite.py:57: AssertionError: assert not True
+E   AssertionError: assert 'Zone AUc' in 'AU 2.2 – IMPLANTATION DES CONSTRUCTIONS PAR RAPPORT AUX LIMITES SEPARATIVES \n \n \n2.2.1 - Règle \nRègles communes à...s éléments \ntechniques assurant une protection solaire des façades, ainsi que les balcons, dans la limite de \n1,00m.'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_suite.py:64: AssertionError: assert 'Zone AUc' in 'AU 2.2 – IMPLANTATION DES CONSTRUCTIONS PAR RAPPORT AUX LIMITES SEPARATIVES \n \n \n2.2.1 - Règle \nRègles communes à...s éléments \ntechniques assurant une protection solaire des façades, ainsi que les balcons, dans la limite de \n1,00m.'
+E   assert False
+     +  where False = any(<generator object test_fiches_de_saint_benoit_conservent_leur_perimetre.<locals>.<genexpr> at 0x147e7cba0>)
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_suite.py:71: assert False
+E   AssertionError: assert 'au maximum pour 3 logements ou 3 chambres' in 'logement aidé : une place au maximum par logement foyer/résidence (1 pour 3) résidence (1 pour 3)'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_infobulles_suite.py:8: AssertionError: assert 'au maximum pour 3 logements ou 3 chambres' in 'logement aidé : une place au maximum par logement foyer/résidence (1 pour 3) résidence (1 pour 3)'
+E   AssertionError: assert 'au maximum pour 3 logements ou 3 chambres' in 'logement aidé : une place au maximum par logement foyer/résidence (1 pour 3) résidence (1 pour 3)'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_infobulles_suite.py:8: AssertionError: assert 'au maximum pour 3 logements ou 3 chambres' in 'logement aidé : une place au maximum par logement foyer/résidence (1 pour 3) résidence (1 pour 3)'
+E   AssertionError: assert 'au maximum pour 3 logements ou 3 chambres' in 'logement aidé : une place au maximum par logement foyer/résidence (1 pour 3) résidence (1 pour 3)'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_infobulles_suite.py:8: AssertionError: assert 'au maximum pour 3 logements ou 3 chambres' in 'logement aidé : une place au maximum par logement foyer/résidence (1 pour 3) résidence (1 pour 3)'
+E   AssertionError: assert '1 place visiteur par tranche de 10 logements' in 'prêt aidé : une place au maximum par logement'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_infobulles_suite.py:14: AssertionError: assert '1 place visiteur par tranche de 10 logements' in 'prêt aidé : une place au maximum par logement'
+E   AssertionError: assert '1 place visiteur par tranche de 10 logements' in 'prêt aidé : une place au maximum par logement'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_infobulles_suite.py:14: AssertionError: assert '1 place visiteur par tranche de 10 logements' in 'prêt aidé : une place au maximum par logement'
+E   AssertionError: assert '0,5 place par logement' in 'prêt aidé : une place au maximum par logement hébergement (1 pour 3)'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_infobulles_suite.py:21: AssertionError: assert '0,5 place par logement' in 'prêt aidé : une place au maximum par logement hébergement (1 pour 3)'
+E   AssertionError: assert '0,5 place par logement' in 'prêt aidé : une place au maximum par logement hébergement (1 pour 3)'
+/Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-om8rgcgd/tests/test_plu_fix15_infobulles_suite.py:21: AssertionError: assert '0,5 place par logement' in 'prêt aidé : une place au maximum par logement hébergement (1 pour 3)'
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_plu_fix15_suite.py::test_etang_limite_avant_le_titre_agricole
+FAILED tests/test_plu_fix15_suite.py::test_saint_benoit_colonnes_article_au_12
+FAILED tests/test_plu_fix15_suite.py::test_saint_benoit_liste_emplacements_hors_articles_au
+FAILED tests/test_plu_fix15_suite.py::test_carte_documentaire_sans_article_propre[A-pages0]
+FAILED tests/test_plu_fix15_suite.py::test_carte_documentaire_sans_article_propre[Nta47-pages1]
+FAILED tests/test_plu_fix15_suite.py::test_mesure_sans_objet_et_titre_reellement_vide
+FAILED tests/test_plu_fix15_suite.py::test_etang_intertitres_de_secteurs_restant_dans_au_2_2
+FAILED tests/test_plu_fix15_suite.py::test_fiches_de_saint_benoit_conservent_leur_perimetre
+FAILED tests/test_plu_fix15_infobulles_suite.py::test_bras_panon_foyers[Ua]
+FAILED tests/test_plu_fix15_infobulles_suite.py::test_bras_panon_foyers[Ub]
+FAILED tests/test_plu_fix15_infobulles_suite.py::test_bras_panon_foyers[Uc]
+FAILED tests/test_plu_fix15_infobulles_suite.py::test_entre_deux_visiteurs[Ua]
+FAILED tests/test_plu_fix15_infobulles_suite.py::test_entre_deux_visiteurs[Ub]
+FAILED tests/test_plu_fix15_infobulles_suite.py::test_sainte_marie_desserte[UA]
+FAILED tests/test_plu_fix15_infobulles_suite.py::test_sainte_marie_desserte[UB]
+15 failed, 5 warnings in 33.00s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

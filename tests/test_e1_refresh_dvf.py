@@ -62,7 +62,7 @@ def _fake_get(ferme_s1=False):
         if "full-2026-s1" in url:
             return _csv_s1_2026()
         if "full-2025" in url:
-            return _csv_s1_2026()  # peu importe : on ne le recharge que si sa version a changé
+            return gzip.compress(gzip.decompress(_csv_s1_2026()).replace(b"2026-", b"2025-"))
         raise AssertionError(f"URL inattendue : {url}")
     return get
 
@@ -71,11 +71,13 @@ def _seed_parcelle_sd(s):
     """Une parcelle Saint-Denis (insee 97411) pour que insert_muts rattache l'INSEE à la commune."""
     s.execute(text("DELETE FROM dvf_mutations WHERE commune = 'Saint-Denis' "
                    "AND date_mutation::date BETWEEN '2026-01-01' AND '2026-06-30'"))
-    existe = s.execute(text("SELECT 1 FROM parcels WHERE idu LIKE '97411%' LIMIT 1")).scalar()
-    if not existe:
-        s.execute(text(
-            "INSERT INTO parcels (idu, commune, geom) VALUES ('97411000AB0001', 'Saint-Denis', "
-            "ST_SetSRID(ST_MakePoint(55.45, -20.88), 4326))"))
+    s.execute(text(
+        "INSERT INTO parcels (idu, commune, geom) VALUES ('97411000AB0001', 'Saint-Denis', "
+        "ST_SetSRID(ST_MakePoint(55.45, -20.88), 4326)) ON CONFLICT (idu) DO NOTHING"))
+    # Sources indépendantes interrogées par le constructeur réel du prix neuf.
+    from labuse.ingestion import dvf_histo
+    s.execute(dvf_histo.DDL)
+    s.execute(text("CREATE TEMP TABLE p_model_permits(idu text, permit_id text, type text) ON COMMIT DROP"))
 
 
 def test_refresh_dvf_charge_le_s1_2026(db_session):
@@ -101,6 +103,10 @@ def test_refresh_dvf_charge_le_s1_2026(db_session):
     assert n == 2
     # la version n'est gravée qu'APRÈS succès
     assert fraicheur._etat_get(s, "dvf:res:2026-S1") == "20261020-114825"
+    assert rech["dispositions"] == 2
+    assert s.execute(text("SELECT adresse FROM dvf_mutation_detail WHERE id_mutation='2026-900001' "
+                          "AND id_parcelle='97411000AB0001'")).scalar_one() == "12 RUE TEST"
+    assert s.execute(text("SELECT max(millesime_dvf)::text FROM dvf_secteur_medianes")).scalar_one() == "2026-02-10"
 
 
 def test_refresh_dvf_idempotent_sans_doublon(db_session):
@@ -135,4 +141,21 @@ def test_refresh_dvf_version_pas_gravee_si_download_leve(db_session):
         fraicheur.refresh_dvf(s, commit=False, http_get=get_boom)
     except RuntimeError:
         pass
+    assert fraicheur._etat_get(s, "dvf:res:2026-S1") is None
+
+
+def test_echec_du_prix_neuf_annule_aussi_les_derives_et_la_version(db_session, monkeypatch):
+    from labuse.ingestion import dvf_prix_neuf, fraicheur
+    s = db_session
+    _seed_parcelle_sd(s)
+    fraicheur._etat_set(s, "dvf:res:2025", "20261020-114721")
+    avant = s.execute(text("SELECT count(*) FROM dvf_mutations_parcelle")).scalar_one()
+
+    def echouer(*args, **kwargs):
+        raise RuntimeError("échec du prix neuf")
+
+    monkeypatch.setattr(dvf_prix_neuf, "build_prix_neuf", echouer)
+    with pytest.raises(RuntimeError, match="prix neuf"), s.begin_nested():
+        fraicheur.refresh_dvf(s, commit=False, http_get=_fake_get())
+    assert s.execute(text("SELECT count(*) FROM dvf_mutations_parcelle")).scalar_one() == avant
     assert fraicheur._etat_get(s, "dvf:res:2026-S1") is None

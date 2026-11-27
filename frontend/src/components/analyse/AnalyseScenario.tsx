@@ -104,6 +104,7 @@ function raisonCarte(p: ScnParcelle, objectif: Objectif, scenario: ScnScenario, 
 function CarteResultat({ p, objectif, scenario }:
   { p: ScnParcelle; objectif: Objectif; scenario: ScnScenario }) {
   const focusParcelle = useApp((s) => s.focusParcelle)
+  const selectionnee = useApp((s) => s.selectedIdu === p.idu)
   const q = p.quantites
   const bande = bandeLabel(p.bande)
   const bandeColor = (p.bande && BANDE_META[p.bande as Bande]?.color) || '#5C7268'
@@ -137,8 +138,8 @@ function CarteResultat({ p, objectif, scenario }:
   const raison = raisonCarte(p, objectif, scenario, aCheval)
 
   return (
-    <button data-carte-resultat={p.idu} onClick={() => focusParcelle(p.idu, { fiche: true })}
-      className="shrink-0 rounded-[10px] border border-line-2 bg-surface-3 px-4 py-3 text-left transition-colors duration-quick hover:border-mint">
+    <button data-carte-resultat={p.idu} aria-pressed={selectionnee} onClick={() => focusParcelle(p.idu, { fiche: true })}
+      className={`shrink-0 rounded-[10px] border bg-surface-3 px-4 py-3 text-left transition-colors duration-quick hover:border-mint ${selectionnee ? 'border-mint' : 'border-line-2'}`}>
       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
         <span className="shrink-0 font-mono text-[11.5px] font-medium tracking-tight text-txt-hi">{p.idu}</span>
         {objectif === 'sale' ? (

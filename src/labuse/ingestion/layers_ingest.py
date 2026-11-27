@@ -32,10 +32,6 @@ from . import agorah_plu
 APICARTO = "https://apicarto.ign.fr/api"
 ODS_BASE = "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets"
 # M-C (F6) : URL/throttle RGE ALTI déménagés dans connectors.rge_alti (unifiés avec la fiche).
-# Indicateur national d'érosion côtière (Cerema/GéoLittoral), emprise Réunion, EPSG:2975.
-EROSION_URL = ("https://geolittoral.din.developpement-durable.gouv.fr/telechargement/"
-               "couches_sig/N_evolution_trait_cote_S_reunion_epsg2975_062018_shape.zip")
-
 # kind LA BUSE -> nom canonique de data_sources (pour data_source_id).
 KIND_SOURCE = {
     "water": "BD TOPO IGN",
@@ -62,7 +58,7 @@ KIND_SOURCE = {
     "pente": "RGE ALTI (altimétrie)",
     "trait_de_cote": "Cerema / GéoLittoral — indicateur d'érosion côtière",
     "osm_faux_positif": "OpenStreetMap / Overpass",
-    "ppr": "DEAL Réunion — PPR / aléas",            # zonage rouge/bleu (fallback PM1 API Carto si commune sans PPR approuvé)
+    "ppr": "DEAL Réunion — PPR / aléas",            # zonages réglementaires PPR et PPRL ; assiettes PM1 dans SUP
     "georisque_alea": "DEAL Réunion — PPR / aléas",
     # M-H : la vocation SAR est DÉRIVÉE du potentiel foncier Région (ODS) — l'ancien nom
     # « data.regionreunion.com — SAR (vocation via potentiel foncier) » n'existait pas au catalogue
@@ -269,6 +265,27 @@ def ingest_gpu_zones(session, insee, bbox, commune, run_id, sids) -> int:
 _PRESCRIPTION_ENDPOINTS = (("surf", "prescription-surf"), ("lin", "prescription-lin"), ("pct", "prescription-pct"))
 
 
+def _fetch_gpu_partition(c, endpoint: str, part: str) -> list[dict]:
+    """MISE-EN-LIGNE-7 — TOUTES les features du document `part` (ex. DU_97412), paginées, SANS
+    aucun objet d'une commune voisine. Requête PAR PARTITION (`?partition=`), pas par bbox : la
+    bbox capturait les objets frontaliers des documents VOISINS (débordement mesuré : Saint-Joseph
+    surf-01 renvoyait 65 features / +7 ha au lieu de 64 — un EBC d'une commune limitrophe). On
+    refiltre sur `partition == part` par ceinture-et-bretelles (l'API par partition ne renvoie déjà
+    que ce document)."""
+    feats: list[dict] = []
+    start = 0
+    while True:
+        r = c.get(f"{APICARTO}/gpu/{endpoint}",
+                  params={"partition": part, "_start": start, "_limit": 1000})
+        r.raise_for_status()
+        page = r.json().get("features", []) or []
+        feats.extend(f for f in page if (f.get("properties") or {}).get("partition") == part)
+        if len(page) < 1000:
+            break
+        start += len(page)
+    return feats
+
+
 def ingest_gpu_prescriptions(session, bbox, commune, run_id, sids, insee: str | None = None) -> int:
     """Prescriptions du PLU (API Carto GPU) → kind='plu_gpu_prescription', subtype=typepsc.
 
@@ -277,19 +294,24 @@ def ingest_gpu_prescriptions(session, bbox, commune, run_id, sids, insee: str | 
     contraintes opposables, jusqu'ici non ingérées (la cascade ne lisait que le zonage).
     Le GPU fournit le LIBELLÉ lisible : on le stocke tel quel (jamais inventé). La géométrie
     surf est un polygone (couverture mesurable) ; lin/pct sont ligne/point (présence seule).
-    Source/url/millésime (idurba) tracés. Idempotent à l'appelant (purge avant rechargement)."""
-    poly = json.dumps(_bbox_polygon(bbox))
+    Source/url/millésime (idurba) tracés. Idempotent à l'appelant (purge avant rechargement).
+
+    MISE-EN-LIGNE-7 — requête PAR PARTITION du document (`DU_<insee>`), plus par bbox : l'ingestion
+    reproduit EXACTEMENT le document GPU de la commune, sans aucun objet d'une commune voisine.
+    Repli bbox uniquement si `insee` est absent (chemin hérité ; jamais emprunté en prod)."""
     src = sids.get(KIND_SOURCE["plu_gpu_prescription"])
-    # M6 2b (A-02) : même garde que les zones — une prescription n'est rattachée qu'à la
-    # commune dont le document GPU la porte (41 % de doublons bbox corrigés à l'audit).
     part = agorah_plu.agorah_partition(insee) if insee else None
     n = 0
     with _client() as c:
         for geom_kind, endpoint in _PRESCRIPTION_ENDPOINTS:
             try:
-                r = c.get(f"{APICARTO}/gpu/{endpoint}", params={"geom": poly})
-                r.raise_for_status()
-                feats = r.json().get("features", []) or []
+                if part:
+                    feats = _fetch_gpu_partition(c, endpoint, part)
+                else:   # hérité : pas d'insee → bbox (comportement d'origine, filtre partition ci-dessous)
+                    r = c.get(f"{APICARTO}/gpu/{endpoint}",
+                              params={"geom": json.dumps(_bbox_polygon(bbox))})
+                    r.raise_for_status()
+                    feats = r.json().get("features", []) or []
             except Exception:
                 continue  # un endpoint vide/en échec n'empêche pas les autres (résultats partiels)
             for f in feats:
@@ -297,7 +319,7 @@ def ingest_gpu_prescriptions(session, bbox, commune, run_id, sids, insee: str | 
                     continue
                 p = f.get("properties") or {}
                 if part and p.get("partition") and p.get("partition") != part:
-                    continue    # document d'une commune voisine (débordement bbox)
+                    continue    # (défense : déjà filtré par _fetch_gpu_partition)
                 typepsc = (p.get("typepsc") or "").strip() or None
                 libelle = (p.get("libelle") or p.get("txt") or "prescription PLU").strip()
                 _insert_layer(
@@ -373,6 +395,8 @@ def ingest_ppr_sup(session, bbox, commune, run_id, sids) -> int:
 # et TRES_ELEVE sur « moyen » (aucun mot-clé reconnu) → les 484 zones LES PLUS GRAVES étaient
 # servies comme moyennes, et la carte n'affichait jamais de rouge. Ils sont désormais EXPLICITES.
 _ALEA_NIVEAU = {
+    "TRES_FORT": ("fort", False), "NUL_A_NEGLIGEABLE": ("negligeable", False),
+    "NEGLIGEABLE": ("negligeable", False),
     "FAIBLE": ("faible", False), "MOYEN": ("moyen", False), "FORT": ("fort", False),
     "RESIDUEL_FAIBLE": ("faible", True), "RESIDUEL_MOYEN": ("moyen", True),
     "RESIDUEL_FORT": ("fort", True), "RESIDUEL_FORT_AGGRAVE": ("fort", True),
@@ -388,6 +412,7 @@ _ALEA_NIVEAU = {
 # tant qu'aucun nouveau run n'est créé ; la correction ELEVE/TRES_ELEVE→fort ci-dessus ne
 # s'applique qu'à la prochaine ré-ingestion + run, avec régénération du golden — documenté).
 _ALEA_CLASSE = {
+    "TRES_FORT": "tres_fort", "NUL_A_NEGLIGEABLE": "negligeable", "NEGLIGEABLE": "negligeable",
     "FAIBLE": "faible", "FAIBLE_A_MODERE": "faible", "RESIDUEL_FAIBLE": "faible",
     "MODERE": "moyen", "MOYEN": "moyen", "MOYEN_B2U": "moyen", "MOYEN_SECURISABLE": "moyen",
     "RESIDUEL_MOYEN": "moyen",
@@ -424,32 +449,95 @@ def _prop(props: dict, name: str):
     return next((v for k, v in props.items() if k.lower() == low), None)
 
 
-def ingest_ppr_zone(session, bbox, commune, run_id, sids, insee) -> int:
-    """PPR ZONÉ RÉGLEMENTAIRE (rouge/bleu) via WFS DEAL Réunion (Lizmap) → kind='ppr'.
+def _filtres_deal(typename, insee):
+    champ = "CODE_INSEE" if typename in ("PPR_APPROUVE", "PPL_approuves") else "code_insee"
+    filtre = f"{champ} = '{insee}'"
+    if typename == "ALEA_INONDATION" and insee == "97411":
+        # Le PAC du 26/11/2026 est diffusé avec le code postal de Saint-Denis.
+        filtre += " OR (code_insee = '97400' AND upper(zone_etude) = 'SAINT-DENIS')"
+    return filtre
 
-    subtype = DEGRE : 'INTERDICTION' (rouge, inconstructible — cf. ppr_red_subtypes) /
-    'PRESCRIPTION' (bleu, constructible sous conditions). Filtré CODE_INSEE.
-    FALLBACK : si 0 zone DEAL pour la commune (PPR non approuvé/dématérialisé), on retombe
-    sur le PÉRIMÈTRE PM1 (API Carto GPU, ingest_ppr_sup). Une seule fonction alimente
-    kind='ppr', jamais les deux (DELETE-avant-ingestion garantit l'absence de doublon)."""
+
+def _lire_deal(wfs, typename, insee):
+    fc = wfs.fetch_layer("deal_reunion", typename, exp_filter=_filtres_deal(typename, insee))
+    lignes = []
+    for feature in fc["features"]:
+        props = {k.lower(): v for k, v in (feature.get("properties") or {}).items()}
+        source_insee = str(props.get("code_insee") or "")
+        postal = (typename == "ALEA_INONDATION" and insee == "97411" and source_insee == "97400"
+                  and str(props.get("zone_etude") or "").upper() == "SAINT-DENIS")
+        if source_insee != insee and not postal:
+            raise ValueError(f"{typename} : géographie inattendue {source_insee}, commune {insee}")
+        if not feature.get("geometry") or not props.get("degre"):
+            raise ValueError(f"{typename} : géométrie ou degré absent, commune {insee}")
+        attrs = {"code_insee": insee, "code_insee_producteur": source_insee,
+                 "code_degre": props.get("code_degre"), "risque": props.get("risque") or props.get("theme"),
+                 "document": props.get("document"), "approbation": props.get("approbatio") or props.get("date_appro"),
+                 "date_pac": props.get("date_pac"), "source": "DEAL Réunion — Lizmap",
+                 "couche_producteur": typename, "fid_producteur": feature.get("id")}
+        lignes.append((feature["geometry"], props, attrs))
+    return lignes
+
+
+def _anciens_identifiants_risque(session, kind, commune, source):
+    return list(session.execute(text(
+        "SELECT id FROM spatial_layers WHERE kind=:kind AND commune=:commune AND data_source_id=:source"),
+        {"kind": kind, "commune": commune, "source": source}).scalars())
+
+
+def _rafraichir_derives_risque(session, kind, commune, source, anciens):
+    """Met à jour les géométries de calcul et les tuiles dans la transaction du chargement communal."""
+    params = {"kind": kind, "commune": commune, "source": source, "anciens": anciens}
+    scope = "kind=:kind AND commune=:commune AND data_source_id=:source"
+    tables = session.execute(text(
+        "SELECT to_regclass('spatial_layers_sub'),to_regclass('tuyau_subdivise'),"
+        "to_regclass('mvt_tile_cache'),to_regclass('mvt_meta'),to_regclass('fiche_cache')")).one()
+    scope_source = "FROM spatial_layers sl CROSS JOIN LATERAL ST_Subdivide(" \
+                   "COALESCE(sl.geom_2975,ST_Transform(sl.geom,2975)),256) p(g) WHERE " + scope
+    if tables[0]:
+        session.execute(text("DELETE FROM spatial_layers_sub WHERE lid=ANY(CAST(:anciens AS int[]))"), params)
+        session.execute(text("INSERT INTO spatial_layers_sub(lid,kind,subtype,name,attrs,data_source_id,g) "
+                             "SELECT sl.id,sl.kind,sl.subtype,sl.name,sl.attrs,sl.data_source_id,p.g " + scope_source),
+                        params)
+    if tables[1]:
+        session.execute(text("DELETE FROM tuyau_subdivise WHERE " + scope), params)
+        session.execute(text("INSERT INTO tuyau_subdivise(kind,subtype,name,commune,attrs,data_source_id,geom_2975) "
+                             "SELECT sl.kind,sl.subtype,sl.name,sl.commune,sl.attrs,sl.data_source_id,p.g " + scope_source),
+                        params)
+    if tables[2]:
+        couches = ["ppr"] if kind == "ppr" else ["georisque_alea", "alea_mvt", "alea_inondation"]
+        session.execute(text("DELETE FROM mvt_tile_cache WHERE layer=ANY(CAST(:couches AS text[]))"),
+                        {"couches": couches})
+    if tables[3]:
+        session.execute(text("INSERT INTO mvt_meta(key,value,updated_at) VALUES "
+                             "('tuyau_rev',to_char(clock_timestamp(),'YYYYMMDDHH24MISSMS'),clock_timestamp()) "
+                             "ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at"))
+    if tables[4]:
+        session.execute(text("DELETE FROM fiche_cache f USING parcels p WHERE p.idu=f.idu AND p.commune=:commune"),
+                        {"commune": commune})
+
+
+def ingest_ppr_zone(session, bbox, commune, run_id, sids, insee) -> int:
+    """Recharge les zonages approuvés intérieurs et littoraux de la commune."""
     wfs = WfsConnector("deal_reunion")
-    fc = wfs.fetch_layer("deal_reunion", "PPR_APPROUVE", exp_filter=f"CODE_INSEE = '{insee}'")
-    n = 0
-    for f in fc.get("features", []) or []:
-        p = f.get("properties") or {}
-        degre = (_prop(p, "degre") or "").strip()
-        if not f.get("geometry") or not degre:
-            continue
-        code_degre, risque = _prop(p, "code_degre"), _prop(p, "risque")
-        _insert_layer(session, "ppr", degre, f"PPR {risque} — {code_degre}", f["geometry"],
-                      sids.get(KIND_SOURCE["ppr"]), commune, run_id,
-                      {"code_degre": code_degre, "risque": risque, "document": _prop(p, "document"),
-                       "code_insee": _prop(p, "code_insee"), "approbation": _prop(p, "approbatio"),
-                       "statut": "zonage_reglementaire", "source": "DEAL Réunion — Lizmap"})
-        n += 1
-    if n == 0:
-        return ingest_ppr_sup(session, bbox, commune, run_id, sids)   # repli périmètre PM1
-    return n
+    normales = _lire_deal(wfs, "PPR_APPROUVE", insee)
+    if not normales:
+        raise ValueError(f"Zonage PPR DEAL vide pour {commune}")
+    littorales = _lire_deal(wfs, "PPL_approuves", insee)
+    if not littorales and session.execute(text(
+        "SELECT EXISTS (SELECT 1 FROM spatial_layers WHERE commune=:c AND kind='ppr' "
+        "AND attrs->>'document'='PPRL')"), {"c": commune}).scalar():
+        raise ValueError(f"Zonage PPRL antérieur absent du flux pour {commune}")
+    src = sids[KIND_SOURCE["ppr"]]
+    anciens = _anciens_identifiants_risque(session, "ppr", commune, src)
+    session.execute(text("DELETE FROM spatial_layers WHERE kind='ppr' AND data_source_id=:src AND commune=:c"),
+                    {"src": src, "c": commune})
+    for geom, props, attrs in normales + littorales:
+        attrs["statut"] = "zonage_reglementaire"
+        _insert_layer(session, "ppr", props["degre"], f"PPR {attrs['risque']} — {attrs['code_degre']}",
+                      geom, src, commune, run_id, attrs)
+    _rafraichir_derives_risque(session, "ppr", commune, src, anciens)
+    return len(normales) + len(littorales)
 
 
 #: SOURCES-2 lot 3 — + les aléas SUBMERSION MARINE (BRGM via DEAL Lizmap, PPRL : degré, dates
@@ -462,28 +550,30 @@ _ALEA_LAYERS = (("ALEA_INONDATION", "inondation"), ("ALEA_MOUVEMENT_TERRAIN", "m
 
 
 def ingest_georisque_alea(session, bbox, commune, run_id, sids, insee) -> int:
-    """Aléas zonés (inondation, mouvement de terrain) via WFS DEAL Réunion → kind='georisque_alea'.
-
-    subtype = type d'aléa ; attrs.niveau ∈ {faible,moyen,fort} (consommé par alea_severity_map),
-    + flag `residuel` (zones derrière protection). Filtré code_insee."""
+    """Recharge les quatre couches d’aléa après validation de la réponse de la DEAL."""
     wfs = WfsConnector("deal_reunion")
+    src = sids[KIND_SOURCE["georisque_alea"]]
+    anciens = _anciens_identifiants_risque(session, "georisque_alea", commune, src)
     n = 0
     for typename, subtype in _ALEA_LAYERS:
-        fc = wfs.fetch_layer("deal_reunion", typename, exp_filter=f"code_insee = '{insee}'")
-        for f in fc.get("features", []) or []:
-            p = f.get("properties") or {}
-            degre = (_prop(p, "degre") or "").strip()
-            if not f.get("geometry") or not degre:
-                continue
+        lignes = _lire_deal(wfs, typename, insee)
+        if not lignes and (subtype in ("inondation", "mouvement_terrain") or session.execute(text(
+                "SELECT EXISTS (SELECT 1 FROM spatial_layers WHERE kind='georisque_alea' "
+                "AND commune=:c AND subtype=:sub AND data_source_id=:src)"),
+                {"c": commune, "sub": subtype, "src": src}).scalar()):
+            raise ValueError(f"Aléa {typename} absent du flux pour {commune}")
+        session.execute(text("DELETE FROM spatial_layers WHERE kind='georisque_alea' AND commune=:c "
+                             "AND data_source_id=:src AND subtype=:sub"),
+                        {"c": commune, "src": src, "sub": subtype})
+        for geom, props, attrs in lignes:
+            degre = props["degre"].strip()
             niveau, residuel = _normalise_alea(degre)
-            _insert_layer(session, "georisque_alea", subtype,
-                          f"Aléa {subtype.replace('_', ' ')} — {degre.lower()}", f["geometry"],
-                          sids.get(KIND_SOURCE["georisque_alea"]), commune, run_id,
-                          {"niveau": niveau, "classe": _classe_alea(degre),   # R6 — classe d'affichage
-                           "degre": degre, "code_degre": _prop(p, "code_degre"),
-                           "residuel": residuel, "risque": _prop(p, "risque") or _prop(p, "theme"),
-                           "code_insee": _prop(p, "code_insee"), "source": "DEAL Réunion — Lizmap"})
-            n += 1
+            attrs.update(niveau=niveau, classe=_classe_alea(degre), residuel=residuel, degre=degre,
+                         statut="etude_alea", date_reali=props.get("date_reali"))
+            _insert_layer(session, "georisque_alea", subtype, f"Aléa {subtype.replace('_', ' ')} — {degre.lower()}",
+                          geom, src, commune, run_id, attrs)
+        n += len(lignes)
+    _rafraichir_derives_risque(session, "georisque_alea", commune, src, anciens)
     return n
 
 
@@ -1086,7 +1176,7 @@ _PROTECTED = [
     ("patrinat_rnr:rnr", "Réserve naturelle régionale"),
     ("patrinat_rb:rb", "Réserve biologique"),
     ("patrinat_cen:cen", "Conservatoire d'espaces naturels"),
-    ("patrinat_cdl:conservatoire_littoral", "Conservatoire du littoral"),
+    ("patrinat_cdl2:cdl", "Conservatoire du littoral"),
     ("patrinat_rncfs:rncfs", "Réserve nationale de chasse et faune sauvage"),
 ]
 
@@ -1098,23 +1188,24 @@ def ingest_espaces_proteges(session, bbox, commune, run_id, sids) -> int:
     réglementaires (APB/APHN/réserves/conservatoires) qui jouent le même rôle de
     contrainte. Étiquetées par leur vrai type."""
     wfs = WfsConnector("geoplateforme_wfs")
-    n = 0
+    sid = sids["INPN / patrinat — espaces protégés"]
+    collections = []
     for typename, label in _PROTECTED:
-        try:
-            fc = wfs.fetch_layer("geoplateforme_wfs", typename, bbox=bbox, max_features=2000)
-        except Exception as exc:
-            # SOURCES-5 #5 : un échec WFS n'est plus MUET (un typename qui dérive renvoyait 0 en
-            # silence, cf. reserve_biologique) — on le journalise, tout en laissant les autres couches.
-            logging.getLogger("labuse").warning("espaces_proteges : %s indisponible (%s: %s)",
-                                                 typename, type(exc).__name__, str(exc)[:120])
-            continue
+        fc = wfs.fetch_layer("geoplateforme_wfs", typename, bbox=bbox, max_features=2000)
+        if not isinstance(fc.get("features"), list) or int(fc.get("numberMatched", len(fc["features"]))) != len(fc["features"]):
+            raise ValueError(f"Réponse PatriNat incomplète pour {typename}")
+        collections.append((typename, label, fc))
+    session.execute(text("DELETE FROM spatial_layers WHERE kind='ens' AND data_source_id=:sid AND commune=:c"),
+                    {"sid": sid, "c": commune})
+    n = 0
+    for typename, label, fc in collections:
         for f in fc.get("features", []) or []:
             if not f.get("geometry"):
                 continue
             p = f.get("properties") or {}
             # M1 : ne JAMAIS flaguer du foncier terrestre avec une protection MARINE
             # (ex. Réserve naturelle marine de La Réunion). On garde les protections terrestres.
-            if str(p.get("marin", "")).strip().upper() in ("T", "OUI", "TRUE", "1"):
+            if str(p.get("marin", "")).strip().upper() in ("M", "T", "OUI", "TRUE", "1"):
                 continue
             nom = p.get("nom_site") or p.get("nom") or p.get("toponyme") or p.get("libelle") or label
             # SOURCES-5 #5 : tout champ publié du WFS patrinat (id_mnhn, dates, gestionnaire, surface,
@@ -1122,7 +1213,7 @@ def ingest_espaces_proteges(session, bbox, commune, run_id, sids) -> int:
             attrs = {k: (v.strip() if isinstance(v, str) else v) for k, v in p.items()}
             attrs.update({"type": label, "src": typename})
             _insert_layer(session, "ens", label.lower().replace(" ", "_")[:48], f"{label} — {nom}"[:255],
-                          f["geometry"], sids.get("INPN / patrinat — espaces protégés"), commune, run_id,
+                          f["geometry"], sid, commune, run_id,
                           attrs)
             n += 1
     return n
@@ -1139,56 +1230,49 @@ def _taux_subtype(taux) -> str:
     return "stable"                    # stable / accrétion → PASS
 
 
-def ingest_trait_de_cote(session, commune, run_id, sids) -> int:
-    """Indicateur national d'érosion côtière (Cerema/GéoLittoral) — SHP Réunion EPSG:2975.
-
-    Téléchargé puis reprojeté 2975→4326 (pyproj). `taux` (m/an) → recul fort = exclude,
-    recul modéré = flag (cf. config/cascade_rules.yaml : trait_de_cote)."""
-    import shapefile  # pyshp
+def ingest_trait_de_cote(session, commune, run_id, sids, insee=None, bbox=None) -> int:
+    """Charge les profils Cerema de longue durée P0 pour la commune et ses parcelles frontalières."""
     from pyproj import Transformer
+    from .archives_littoral import profils_inec
 
-    with _client() as c:
-        r = c.get(EROSION_URL)
-        r.raise_for_status()
-    tmp = tempfile.mkdtemp(prefix="labuse_tdc_")
-    zipfile.ZipFile(io.BytesIO(r.content)).extractall(tmp)
-    shp = next((os.path.join(tmp, f) for f in os.listdir(tmp) if f.lower().endswith(".shp")), None)
-    if not shp:
-        return 0
-    rd = shapefile.Reader(shp)
-    flds = [f[0] for f in rd.fields[1:]]
-    ti = flds.index("taux") if "taux" in flds else None
-    tr = Transformer.from_crs(2975, 4326, always_xy=True)
-    n = 0
-    for srec in rd.shapeRecords():
-        sh = srec.shape
-        if not sh.points or sh.shapeType not in (5, 15, 25):
-            continue
-        taux = float(srec.record[ti]) if ti is not None else None
-        parts = list(sh.parts) + [len(sh.points)]
-        polys = []
-        for k in range(len(parts) - 1):
-            ring = sh.points[parts[k]:parts[k + 1]]
-            coords = [list(tr.transform(x, y)) for (x, y) in ring]
-            if len(coords) >= 4:
-                polys.append([coords])
-        if not polys:
-            continue
-        # SOURCES-5 #1 : tout champ publié du SHP officiel (13 attributs), pas seulement `taux`.
-        # -9999 / -9000 = donnée absente chez le Cerema → None (ne pas afficher un sentinel).
-        attrs = {"src": "GéoLittoral/Cerema — indicateur érosion (SHP officiel, EPSG:2975)"}
-        for k, v in zip(flds, srec.record):
-            if v is None or (isinstance(v, (int, float)) and v <= -9000):
-                attrs[k] = None
-            elif isinstance(v, str):
-                attrs[k] = v.strip() or None
-            else:
-                attrs[k] = v
-        _insert_layer(session, "trait_de_cote", _taux_subtype(taux),
-                      f"Évolution trait de côte (taux {taux} m/an)",
-                      {"type": "MultiPolygon", "coordinates": polys},
-                      sids.get(KIND_SOURCE["trait_de_cote"]), commune, run_id, attrs)
-        n += 1
+    if insee is None:
+        insee = session.execute(text("SELECT left(idu,5) FROM parcels WHERE commune=:c LIMIT 1"),
+                                {"c": commune}).scalar_one()
+    if bbox is None:
+        bbox = session.execute(text("""SELECT ST_XMin(e),ST_YMin(e),ST_XMax(e),ST_YMax(e)
+                        FROM (SELECT ST_Extent(geom) AS e FROM parcels WHERE commune=:c) q"""),
+                               {"c": commune}).one()
+    if not bbox or any(v is None for v in bbox):
+        raise ValueError(f"Emprise communale introuvable pour {commune}")
+    from shapely.geometry import shape
+    left, bottom, right, top = Transformer.from_crs(4326,2975,always_xy=True).transform_bounds(*bbox)
+    rows = []
+    with _client() as client:
+        for attrs, geom in profils_inec(client):
+            if attrs["code_insee"] != insee:
+                xmin,ymin,xmax,ymax = shape(geom).bounds
+                if xmax < left or xmin > right or ymax < bottom or ymin > top:
+                    continue
+            taux = attrs["taux"]
+            titre = attrs["legende2"] if taux is None else f"{taux} m/an"
+            rows.append({"sous_type": _taux_subtype(taux), "nom": f"Évolution du trait de côte ({titre})",
+                         "attr": attrs, "geom": geom})
+    sid = sids[KIND_SOURCE["trait_de_cote"]]
+    with session.begin_nested():
+        session.execute(text("""DELETE FROM spatial_layers
+                               WHERE kind='trait_de_cote' AND data_source_id=:sid AND commune=:c"""),
+                        {"sid": sid, "c": commune})
+        n = session.execute(text("""WITH formes AS (
+                SELECT v.*,ST_Transform(ST_Multi(ST_CollectionExtract(ST_MakeValid(
+                    ST_SetSRID(ST_GeomFromGeoJSON(v.geom),2975)),3)),4326) AS g
+                FROM jsonb_to_recordset(CAST(:rows AS jsonb))
+                     AS v(sous_type text,nom text,attr jsonb,geom jsonb))
+            INSERT INTO spatial_layers (kind,subtype,name,geom,attrs,data_source_id,commune,ingestion_run_id)
+            SELECT 'trait_de_cote',sous_type,nom,g,attr,:sid,:c,:run FROM formes f
+             WHERE attr->>'code_insee'=:insee OR EXISTS
+                (SELECT 1 FROM parcels p WHERE p.commune=:c AND ST_Intersects(p.geom,f.g))"""),
+                            {"rows": json.dumps(rows), "sid": sid, "c": commune,
+                             "run": run_id, "insee": insee}).rowcount
     return n
 
 
@@ -1290,7 +1374,7 @@ def ingest_layers(session: Session, insee: str, commune: str,
         ("foret_publique", lambda: ingest_foret_publique(session, bbox, commune, run_id, sids)),
         ("safer", lambda: ingest_rpg_agricole(session, bbox, commune, run_id, sids)),
         ("ens", lambda: ingest_espaces_proteges(session, bbox, commune, run_id, sids)),
-        ("trait_de_cote", lambda: ingest_trait_de_cote(session, commune, run_id, sids)),
+        ("trait_de_cote", lambda: ingest_trait_de_cote(session, commune, run_id, sids, insee, bbox)),
         ("pente", lambda: ingest_pente(session, bbox, commune, run_id, sids)),
         ("osm_faux_positif", lambda: ingest_osm_faux_positifs(session, bbox, commune, run_id, sids)),
         ("ppr", lambda: ingest_ppr_zone(session, bbox, commune, run_id, sids, insee)),

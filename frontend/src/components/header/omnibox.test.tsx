@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
+import * as api from '../../lib/api'
 import { Omnibox } from './Header'
 
 function mockFetch() {
@@ -14,8 +15,9 @@ function mockFetch() {
     const json = async (v: unknown) => v
     if (u.includes('/modules/patrimoine/search')) {
       // un propriétaire n'est renvoyé que pour un NOM d'entreprise (contient « SCI »).
-      const owner = u.toLowerCase().includes('sci') ? [{ siren: '123456789', nom: 'SCI TEST', n: 4 }] : []
-      return { ok: true, json: () => json(owner) }
+      // SCAN-FIX-1 (pt 8) — nouvelle forme { resultats, total, masqués }.
+      const liste = u.toLowerCase().includes('sci') ? [{ siren: '123456789', nom: 'SCI TEST', n: 4, siren_reel: true }] : []
+      return { ok: true, json: () => json({ resultats: liste, total: liste.length, affiches: liste.length, masques: 0, plafond: 12 }) }
     }
     if (u.includes('/projets')) return { ok: true, json: () => json([{ id: 7, nom: 'Mon projet test', statut: 'actif', counts: {} }]) }
     if (u.includes('/communes')) return { ok: true, json: () => json([{ insee: '97415', commune: 'Saint-Paul' }]) }
@@ -48,6 +50,23 @@ describe('CONNEXIONS-2 Lot 8 — omnibox multi-type', () => {
     await chercher(container, '123456789')
     await waitFor(() => expect(useApp.getState().module).toBe('patrimoine'))
     expect(useApp.getState().m02Prefill).toBe('123456789')
+  })
+
+  it('conserve la dernière référence si la première recherche termine après elle', async () => {
+    const premiere = '97411000BZ1065'
+    const derniere = '97401000AM0909'
+    const ligne = (idu: string) => ({ idu, commune: 'Les Avirons', surface_m2: null, status: null,
+      q_score: null, tier_v2: null, rang_v2: null, etage0: false })
+    let terminer!: (rows: Awaited<ReturnType<typeof api.searchParcels>>) => void
+    const retard = new Promise<Awaited<ReturnType<typeof api.searchParcels>>>((resolve) => { terminer = resolve })
+    vi.spyOn(api, 'searchParcels').mockImplementation((q) => q === premiere ? retard : Promise.resolve([ligne(derniere)]))
+    const { container } = renderOmnibox()
+    await chercher(container, premiere)
+    await chercher(container, derniere)
+    await waitFor(() => expect(useApp.getState().selectedIdu).toBe(derniere))
+    terminer([ligne(premiere)])
+    await retard
+    expect(useApp.getState()).toMatchObject({ selectedIdu: derniere, focusIdu: derniere })
   })
 
   it('un NOM de propriétaire ouvre Scan patrimoine à l\'état 2', async () => {

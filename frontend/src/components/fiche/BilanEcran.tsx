@@ -108,8 +108,11 @@ export function entreesInitiales(m: BilanModele, etude?: BilanDepuisEtude | null
   }
 }
 
-export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
-  { idu: string; onClose: () => void; onGenerated?: (docId: number) => void; depuisEtude?: BilanDepuisEtude | null }) {
+export function BilanEcran({ idu, onClose, onGenerated, depuisEtude, assembleDe }:
+  // OUTIL-ASSEMBLAGE-FIX-9 (LOT 7A) — `assembleDe` = nombre de parcelles de l'assemblage/Étude d'origine
+  // quand le Bilan est lancé depuis une assiette MULTI-parcelles. Le Bilan ne porte alors que sur UNE
+  // parcelle (la 1ʳᵉ) ; on le DIT en tête pour ne pas laisser croire qu'il chiffre l'union.
+  { idu: string; onClose: () => void; onGenerated?: (docId: number) => void; depuisEtude?: BilanDepuisEtude | null; assembleDe?: number | null }) {
   const { data: modele, isLoading, error } = useQuery({
     queryKey: ['bilan-modele', idu], queryFn: () => getBilanModele(idu), retry: false,
   })
@@ -226,6 +229,7 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
   // G7 — repères de l'en-tête et des tuiles.
   const nSource = (res?.lignes ?? []).filter((l) => l.etat === 'source').length
   const caNul = !res?.ca_ttc                               // G3 — pas de CA → exports grisés
+  const exportDisponible = !caNul || modele.sourcee.export_constat
   const totalPostes = (modele.blocs ?? []).reduce((n, b) => n + b.postes.length, 0)
   const nSections = (modele.blocs ?? []).length
 
@@ -249,12 +253,12 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
                   <button className="text-mint underline" onClick={onClose}>Choisir une Étude de faisabilité</button>
                 </>}
             <span className="text-txt-dim">·</span>
-            <span>Prix demandé : inconnu</span>
+            <span>Prix demandé du terrain : inconnu</span>
           </div>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <Bouton niveau="secondaire" ton="vert" disabled={caNul || !!enCours} onClick={exporterPdf}>Exporter en PDF</Bouton>
-          <Bouton niveau="secondaire" ton="vert" disabled={caNul || !!enCours} onClick={exporterExcel}>Exporter en Excel</Bouton>
+          <Bouton niveau="secondaire" ton="vert" disabled={!exportDisponible || !!enCours} onClick={exporterPdf}>Exporter en PDF</Bouton>
+          <Bouton niveau="secondaire" ton="vert" disabled={!exportDisponible || !!enCours} onClick={exporterExcel}>Exporter en Excel</Bouton>
           <Bouton niveau="primaire" ton="vert" disabled={!!enCours} onClick={enregistrer}>
             {enCours ? <Chargement variant="inline" accent="courant" label="Enregistrement…" /> : 'Enregistrer'}
           </Bouton>
@@ -264,24 +268,41 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
       {/* ── Ligne d'état sous l'en-tête ── */}
       <div className="border-b border-line bg-surface-1 px-5 py-2 text-[12px] text-txt-mut">
         {nSource} poste{nSource > 1 ? 's' : ''} pré-rempli{nSource > 1 ? 's' : ''} (sourcés) · {vides} à renseigner, comptés pour 0 ·
-        {' '}les exports s'ouvrent dès que le programme et un prix de vente sont saisis.
+        {' '}{modele.sourcee.export_constat
+          ? 'Le constat de capacité peut être exporté sans programme.'
+          : 'Les exports s’ouvrent dès que le programme et un prix de vente sont saisis.'}
       </div>
 
       <div className="grid gap-4 p-5">
+        {/* OUTIL-ASSEMBLAGE-FIX-9 (LOT 7A) — assiette d'origine MULTI-parcelles : ce Bilan ne porte que
+            sur la 1ʳᵉ parcelle, pas sur l'union. On le DIT en tête (fini l'ambiguïté « bilan de l'assemblage »). */}
+        {assembleDe != null && assembleDe > 1 && (
+          <div data-bilan-sur-parcelle className="rounded-md border border-amber/50 bg-amber/[0.07] px-3 py-2 text-[12px] leading-snug text-amber">
+            <b>Ce bilan porte sur la parcelle {idu}</b>, pas sur l'assemblage de {assembleDe} parcelles. Pour chiffrer l'union, passez par l'outil Assemblage.
+          </div>
+        )}
         {/* Bandeau zone à cheval : partie non constructible (familles ≠ U/AU) */}
         {/* CHIRURGICAL-FIX-1 (E104) — quand le verdict (point unique potentiel_batir) ferme TOUTE la
             parcelle (habitat interdit, PPR rouge…), on NOMME le motif au lieu de « (N/A) » et on ne
             propose plus « Utiliser 0 m² ». Le modèle ne présente plus la parcelle 100 % constructible. */}
+        {modele.sourcee.lecture_capacite && (
+          <div data-bilan-capacite className="rounded-md border border-line bg-surface-1 p-3 text-[13px]">
+            <b>Parcelle {idu}</b> · {modele.sourcee.lecture_capacite}
+          </div>
+        )}
         {modele.sourcee.non_constructible_motif ? (
           <div className="rounded-md border border-amber bg-surface-1 p-3 text-[13px]">
-            <b className="text-amber">Parcelle non constructible — {modele.sourcee.non_constructible_motif}</b>
-            <span className="text-txt"> : aucun programme ne peut y être porté en l'état.</span>
+            {!modele.sourcee.lecture_capacite && <b className="text-amber">{modele.sourcee.non_constructible_motif}</b>}
             {modele.sourcee.zonage && <div className="mt-1 text-[12px] text-txt-mut">{modele.sourcee.zonage}</div>}
           </div>
         ) : modele.sourcee.non_constructible_pct > 0 && (
           <div className="rounded-md border border-amber bg-surface-1 p-3 text-[13px]">
-            <b className="text-amber">Parcelle à {fmtNum(modele.sourcee.non_constructible_pct)} % en zone non constructible (N/A)</b>
-            <span className="text-txt"> : le programme ne peut porter que sur la partie constructible{modele.sourcee.constructible_m2 != null ? ` (${fmtNum(modele.sourcee.constructible_m2)} m²)` : ''}.</span>
+            {modele.sourcee.mention_portion ? (
+              !modele.sourcee.lecture_capacite && <b className="text-amber">{modele.sourcee.mention_portion}</b>
+            ) : (<>
+              <b className="text-amber">Parcelle à {fmtNum(modele.sourcee.non_constructible_pct)} % en zone non constructible (N/A)</b>
+              <span className="text-txt"> : le programme ne peut porter que sur la partie constructible{modele.sourcee.constructible_m2 != null ? ` (${fmtNum(modele.sourcee.constructible_m2)} m²)` : ''}.</span>
+            </>)}
             {modele.sourcee.zonage && <div className="mt-1 text-[12px] text-txt-mut">{modele.sourcee.zonage}</div>}
             {modele.sourcee.constructible_m2 != null && (
               <button className="mt-2 rounded-full border border-dashed border-amber px-2 py-0.5 text-[12px] text-amber hover:bg-amber hover:text-mint-on"
@@ -297,7 +318,7 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
           <Tuile titre="CA TTC programme" valeur={fmtEur(res?.ca_ttc)} sous={caNul ? 'programme à saisir' : `${lotsTot != null ? Math.round(lotsTot) : 0} lots`} />
           <Tuile titre="Dépenses TTC" valeur={fmtEur(res?.depenses_ttc)} sous={`${totalPostes} postes, ${nSections} sections`} />
           <Tuile titre="Résultat net" valeur={fmtEur(res?.resultat_net)} sous={`${fmtPct(res?.marge_pct)} du CA HT`} vert />
-          <Tuile titre="Charge foncière max" valeur={fmtEur(res?.prix_max_terrain)} sous="à la marge visée" />
+          <Tuile titre="Charge foncière max" valeur={fmtEur(res?.prix_max_terrain)} sous={[modele.sourcee.capacite_a_verifier && 'capacité à vérifier', res?.mixite?.borne_haute ? 'borne haute — voir mixité' : 'à la marge visée'].filter(Boolean).join(' · ')} />
           {/* 5e tuile : Lecture (ma marge / prix max du terrain) */}
           <section className="grid content-start gap-2 rounded-md border border-line bg-surface-1 p-3">
             <div className="text-[11px] uppercase tracking-wide text-txt-dim">Lecture</div>
@@ -330,6 +351,22 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
             {erreurGen && <p className="rounded border-l-2 border-amber bg-surface p-2 text-[11px] text-amber">{erreurGen}</p>}
           </section>
         </div>
+
+        {/* OUTIL-ASSEMBLAGE-FIX-8 (LOT 1/2) — mention de mixité à l'écran de saisie, MÊME source que le
+            PDF/Excel (res.mixite). La réserve « borne haute » est rattachée au montant de charge foncière,
+            et dit quelle part aidée manque (ou qu'elle est chiffrée). Audit bloquant 1 : à 35 logements,
+            l'écran n'affichait aucune mixité ni borne haute. */}
+        {res?.mixite && (
+          <div data-bilan-mixite className={`rounded-md border px-3 py-2 text-[12px] leading-snug ${res.mixite.borne_haute ? 'border-amber/50 bg-amber/[0.07] text-amber' : 'border-line-2 bg-surface-1 text-txt'}`}>
+            <b>Mixité sociale —</b> {res.mixite.note}
+            {res.mixite.charge_reserve && (
+              <div data-bilan-mixite-charge className="mt-1 font-medium">⚠ {res.mixite.charge_reserve}</div>
+            )}
+            {(res.mixite.avertissements ?? []).map((a, k) => (
+              <div key={k} data-bilan-mixite-avert className="mt-1 text-[11px] leading-snug text-amber">⚠ {a}</div>
+            ))}
+          </div>
+        )}
 
         {/* ── Programme (table des produits) · Calendrier ── */}
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">

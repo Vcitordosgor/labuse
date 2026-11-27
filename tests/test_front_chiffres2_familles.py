@@ -274,10 +274,14 @@ def test_f03_permis_coupure_et_sommeil_servis():
     assert '"coupure_recent"' in mods and "interval '24 months'" in mods
     assert '"muet"' in mods and "SEUIL_DEPOT_MUET_ANS" in mods
     mp = (SRC / "components/outils/ModulePanel.tsx").read_text(encoding="utf-8")
-    # OUTIL-PERMIS-FIX-1 (LOT 1) — le front ne reconstruit MÊME PLUS la coupure au client : il consomme
-    # l'ÉTAT DE CYCLE servi par le back (`etat_cycle`, dérivé de la coupure 24 mois servie). F03 renforcé.
-    assert "etat_cycle" in mp and "dc.muet" in mp
+    # (1) OUTIL-PERMIS-FIX-1 (LOT 1) — le front consomme l'ÉTAT DE CYCLE servi par le back (`etat_cycle`,
+    # dérivé de la coupure 24 mois servie), il ne le reconstruit plus.
+    assert "etat_cycle" in mp
     assert "minus24m" not in mp, "fenêtre de 24 mois reconstruite au front (F03)"
+    # (2) SCAN-FIX-1 (bloquant 5) — le verdict « société en sommeil » est RETIRÉ : le front n'affiche plus
+    # d'interprétation (ni via `dc.muet`, ni via un seuil recodé), mais le FAIT DATÉ (dernier dépôt publié).
+    assert "dc.muet" not in mp, "le verdict « sommeil » (dc.muet) doit être retiré du front (SCAN-FIX-1)"
+    assert "dc.parution" in mp, "le front doit servir le fait daté du dernier dépôt (publié le…)"
     assert "dc.depuis_ans >= 3" not in mp, "seuil de sommeil recodé au front (F03)"
 def test_f01e_risque_synthese_servie():
     """F01e — la SYNTHÈSE du niveau de risque des aléas (« rédhibitoire »/« fort ») n'est plus

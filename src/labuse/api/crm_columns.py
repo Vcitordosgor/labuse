@@ -264,18 +264,19 @@ def delete_column(col_id: int, body: DeleteIn, request: Request, db: Session = D
     if len(cols) <= 1:
         raise HTTPException(422, "Impossible de supprimer la dernière colonne du kanban.")
     n = _cards_in(db, cid, col["key"])
-    if n > 0:
-        if body.move_to is None:
-            raise HTTPException(
-                422, "Cette colonne contient des cartes : indiquez une colonne cible (move_to) "
-                     "vers laquelle les déplacer — aucune carte n'est perdue.")
-        if body.move_to == col_id:
-            raise HTTPException(422, "La colonne cible doit être différente de celle supprimée.")
-        target = _own_column(db, cid, body.move_to)   # IDOR : cible aussi au tenant
-        db.execute(text(
-            "UPDATE pipeline_entries SET status = :dst"
-            " WHERE compte_id IS NOT DISTINCT FROM :cid AND status = :src"),
-            {"dst": target["key"], "src": col["key"], "cid": cid})
+    if n and body.move_to is None:
+        raise HTTPException(
+            422, "Cette colonne contient des cartes : indiquez une colonne cible (move_to) "
+                 "vers laquelle les déplacer — aucune carte n'est perdue.")
+    if body.move_to == col_id:
+        raise HTTPException(422, "La colonne cible doit être différente de celle supprimée.")
+    target = (_own_column(db, cid, body.move_to) if body.move_to is not None
+              else next(c for c in cols if c["id"] != col_id))
+    # Les archives aussi doivent conserver une destination lors de leur restauration.
+    db.execute(text(
+        "UPDATE pipeline_entries SET status = :dst"
+        " WHERE compte_id IS NOT DISTINCT FROM :cid AND status = :src"),
+        {"dst": target["key"], "src": col["key"], "cid": cid})
     db.execute(text("DELETE FROM crm_columns WHERE id = :id AND compte_id IS NOT DISTINCT FROM :cid"),
                {"id": col_id, "cid": cid})
     db.flush()

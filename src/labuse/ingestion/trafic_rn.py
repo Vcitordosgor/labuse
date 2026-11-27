@@ -2,7 +2,7 @@
 
 Notre substitut au flux piéton que vendent MyTraffic/Geoblink (et qu'ils ne couvrent pas à La Réunion).
 Source : Région Réunion, Système d'Information Routier — open data ODS `trafic-mja-rn-lareunion`
-(tronçons LineString WGS84, `route`/`annee`/`tmja` véhicules/jour). Table dédiée `trafic_rn`.
+(tronçons LineString et MultiLineString WGS84, `route`/`annee`/`tmja` véhicules/jour). Table dédiée `trafic_rn`.
 
 STRICTEMENT : trafic VÉHICULES sur ROUTES NATIONALES (pas de flux piéton, pas de réseau départemental/
 communal). L'équivalent départemental/communal n'est pas ouvert (cf. compte-rendu) — on n'extrapole pas.
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS trafic_rn (
   annee  integer,                     -- millésime du comptage (fraîcheur amont)
   tmja   integer,                     -- trafic moyen journalier annuel (véhicules/jour)
   nb_pl  integer,                     -- poids lourds (NULL si non renseigné)
-  geom   geometry(LineString, 4326),
+  geom   geometry(Geometry, 4326) CHECK (GeometryType(geom) IN ('LINESTRING', 'MULTILINESTRING')),
   data_source_id integer
 );
 CREATE INDEX IF NOT EXISTS ix_trafic_rn_geom ON trafic_rn USING gist (geom);
@@ -67,7 +67,7 @@ def build_trafic_rn(session: Session, *, url: str = EXPORT_URL, log=lambda *_: N
     def charger(conn, staging):
         for f in feats:
             geom = f.get("geometry")
-            if not geom or geom.get("type") != "LineString":
+            if not geom or geom.get("type") not in ("LineString", "MultiLineString"):
                 continue
             pr = f.get("properties", {})
             annee = _int(pr.get("annee"))

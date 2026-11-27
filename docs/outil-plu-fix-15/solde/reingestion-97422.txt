@@ -1,0 +1,6 @@
+  ✓ purge 97422 : 136 extrait(s) supprimé(s)
+  ✓ 97422 97422_reglement_20230811.pdf : 127 extraits article
+  ✓ 97422 Le Tampon : 1 document(s), 127 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 127 extraits · 21 communes en base
+REINGEST_DONE

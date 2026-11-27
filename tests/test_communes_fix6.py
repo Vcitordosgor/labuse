@@ -68,11 +68,36 @@ def test_section_cd_aucun_prix():
             f"1 vente < seuil {SEUIL_N} → AUCUN prix de section servi (obtenu n={r['n_ventes']})"
 
 
-def test_plaine_des_palmistes_revision_datee_27_11_2025():
-    """La pièce municipale du 27/11/2025 confirme la révision EN COURS : c'est la date de preuve la plus
-    récente, pas l'opposable GPU du 27/05/2023. Registre = etat_source_date 2025-11-27 (sans base)."""
+def test_plaine_des_palmistes_chronologie_actes_vs_avancement():
+    """OUTIL-COMMUNES-FIX-11 LOT 2 — RÉVISÉ : la délibération du 28/09/2022 (concertation additionnelles
+    de la révision, DCM3) est AJOUTÉE ; le DERNIER ACTE de la révision générale n'est plus le 13/07/2022
+    mais le 28/09/2022. La modification n°3 du 27/05/2023 figure comme procédure DISTINCTE (pour info).
+    La mention d'avancement (DCM32-271125, 27/11/2025) reste distinguée."""
     from labuse import veille_plu
     e = veille_plu.entry("97406") or {}
-    assert e.get("procedure") == "revision_plu", f"Plaine-des-Palmistes toujours en révision, obtenu {e.get('procedure')!r}"
-    assert e.get("etat_source_date") == "2025-11-27", \
-        f"dernière pièce attendue le 2025-11-27, obtenu {e.get('etat_source_date')!r}"
+    assert e.get("procedure") == "revision_plu"
+    assert e.get("etat_source_date") == "2022-09-28", \
+        f"dernier acte de la révision = 28/09/2022, obtenu {e.get('etat_source_date')!r}"
+    assert "28/09/2022" in (e.get("piece_objet") or "") and "aucune pièce postérieure" not in (e.get("piece_objet") or "").lower()
+    chrono = e.get("chronologie") or []
+    dates = [p["date"] for p in chrono]
+    assert dates == ["2015-09-24", "2018-03-01", "2020-02-05", "2022-07-13", "2022-09-28", "2023-05-27", "2025-11-27"], dates
+    assert all(p.get("source_url", "").startswith("http") for p in chrono)   # chaque pièce a un lien
+    # 28/09/2022 = acte, dernier de la révision générale ; la modif n°3 (2023) dite DISTINCTE
+    a2809 = next(p for p in chrono if p["date"] == "2022-09-28")
+    assert a2809["nature"] == "acte" and "280922" in a2809["source_url"] and "concertation" in a2809["objet"].lower()
+    modif = next(p for p in chrono if p["date"] == "2023-05-27")
+    assert "distincte" in modif["objet"].lower() and "modification" in modif["objet"].lower()
+    av = next(p for p in chrono if p["nature"] == "avancement")
+    assert "DCM32-271125" in av["objet"] and "approbation" in av["objet"].lower()
+
+
+def test_trois_bassins_acte_posterieur_padd_09_2025():
+    """OUTIL-COMMUNES-FIX-11 LOT 2 — Les Trois-Bassins : acte POSTÉRIEUR trouvé (débat PADD en conseil du
+    04/09/2025), plus récent que les réunions de mai 2025 → dernière pièce au 04/09/2025. Le débat PADD
+    n'arme PAS le sursis ici (debat_padd laissé ABSENT, décision séparée)."""
+    from labuse import veille_plu
+    e = veille_plu.entry("97423") or {}
+    assert e.get("etat_source_date") == "2025-09-04", e.get("etat_source_date")
+    assert "04/09/2025" in (e.get("piece_objet") or "") and "padd" in (e.get("piece_objet") or "").lower()
+    assert e.get("debat_padd") in (None, "ABSENT")   # sursis non armé (hors périmètre LOT 2)

@@ -82,19 +82,19 @@ export const BASEMAP_SOURCES: Record<string, BasemapDef> = {
 // Frise des millésimes « avant » — ordre chronologique, tous vérifiés servant des dalles sur le 974.
 // L'« après » du comparateur reste toujours aujourd'hui (bm-ortho-now, verrouillé). SOURCE DE VÉRITÉ
 // du sélecteur M08 et des libellés du comparateur.
-export const TEMPS_MILLESIMES: { key: keyof typeof BASEMAP_SOURCES; an: string; label: string }[] = [
+export const TEMPS_MILLESIMES: { key: keyof typeof BASEMAP_SOURCES; an: string; label: string; periode: readonly [number, number] }[] = [
   // GEOPF-3 — les deux cartes anciennes encadrent chronologiquement les orthos historiques.
-  { key: 'bm-scan50-1950', an: 'scan1950', label: 'Carte SCAN 50 (1950)' },
-  { key: 'bm-ortho-1950', an: '1950', label: '1950-1965' },
+  { key: 'bm-scan50-1950', an: 'scan1950', label: 'Carte SCAN 50 (1950)', periode: [1950, 1950] },
+  { key: 'bm-ortho-1950', an: '1950', label: '1950-1965', periode: [1950, 1965] },
   // RECETTE-PROD-1 (15) — la carte EduGéo 1980 (`bm-edugeo-1980`) est RETIRÉE des choix proposés :
   // plus dans « Remonter le temps » ni dans le sélecteur de fond d'accueil (tous deux lisent cette
   // liste, ORTHO_YEARS la reprenant). La source reste définie dans BASEMAP_SOURCES (route carte-ancienne
   // intacte) mais n'est plus offerte nulle part. Couverture partielle (St-Denis/Cilaos vides) = motif.
-  { key: 'bm-ortho-2000', an: '2000', label: '2000-2005' },
-  { key: 'bm-ortho-2006', an: '2006', label: '2006-2010' },
-  { key: 'bm-ortho-2011', an: '2011', label: '2011-2015' },
-  { key: 'bm-ortho-2016', an: '2016', label: '2016-2020' },
-  { key: 'bm-ortho-2021', an: '2021', label: '2021-2023' },
+  { key: 'bm-ortho-2000', an: '2000', label: '2000-2005', periode: [2000, 2005] },
+  { key: 'bm-ortho-2006', an: '2006', label: '2006-2010', periode: [2006, 2010] },
+  { key: 'bm-ortho-2011', an: '2011', label: '2011-2015', periode: [2011, 2015] },
+  { key: 'bm-ortho-2016', an: '2016', label: '2016-2020', periode: [2016, 2020] },
+  { key: 'bm-ortho-2021', an: '2021', label: '2021-2023', periode: [2021, 2023] },
 ]
 
 // FIX-FONDS B5 — millésimes d'ortho du SÉLECTEUR PRINCIPAL, dérivés de la MÊME source de vérité que

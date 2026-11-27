@@ -529,7 +529,7 @@ def _cart(document: str, titre_suffixe: str, idu_ref: str, numero: str, jour: da
         doc_foot=_FOOT.get(document, "Document d'information LABUSE.").format(au=au))
 
 
-def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc:
+def construire_gabarit(db, idu: str, *, jour: date | None = None, sommets=None) -> ResultatDoc:
     """Le Gabarit, miroir de l'outil /outils/gabarit : plan 2D + zone d'implantation + plafond
     d'emprise + hauteur + règles appliquées / non intégrées. ABSENT si « Calcul incomplet » :
     on lève DocumentNonEtablissable (la route rend 422 + le message, la porte le dit avant génération).
@@ -558,10 +558,12 @@ def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc
         raise DocumentNonEtablissable([{"libelle": gr.message or "Parcelle inconstructible"}])
     # RECETTE-OUTILS-2 (R16) — le bâti EXISTANT n'est peuplé que par l'endpoint outil ; on l'attache
     # ici aussi (best-effort) pour que la vue 3D du PDF montre le MÊME contexte bâti que l'écran.
+    bati_lu = False
     try:
         from ..api.gabarit import _bati_existant
         if gr.batiExistantGeoJSON is None:
             gr.batiExistantGeoJSON = _bati_existant(db, idu)
+        bati_lu = True
     except Exception:  # noqa: BLE001 — le bâti de contexte n'est jamais un bloqueur du document
         pass
     # RECETTE-OUTILS-3 (S7/S10) — MÊME déduction/découpe que l'app : la zone d'implantation du PDF (p1
@@ -571,6 +573,9 @@ def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc
         rescale_zone_contenance(db, idu, gr)   # U4 — même aire AVANT que l'endpoint (contenance), sinon déduit 46≠40
         appliquer_note_a_cheval(db, idu, gr)   # FAISA-REGLES-1 (D-026) — même mise en garde à-cheval qu'à l'écran
         deduire_bati_de_zone(gr)
+        if bati_lu:
+            from ..gabarit.builder import renseigner_emprise_projet
+            renseigner_emprise_projet(gr)
     except Exception:  # noqa: BLE001
         pass
     # DOCS-1 (décision Vic) — le Gabarit LIT LES SERVITUDES D'UTILITÉ PUBLIQUE DE LA FICHE
@@ -583,13 +588,40 @@ def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc
     except Exception:  # noqa: BLE001 — jamais un 500 sur un PDF : à défaut, le bloc retombe sur le moteur
         fiche_sup = {}
     valeurs = collecte(db, idu, sorted(bloc_gabarit.IDS), fiche=fiche_sup)
+    # Le plan imprimé conserve le contour cadastral entier, y compris à cheval sur deux zones.
+    from dataclasses import replace
+    from ..gabarit.plan_svg import gabarit_svg
+    if "gabarit_plan_2d" in valeurs:
+        valeurs["gabarit_plan_2d"] = replace(valeurs["gabarit_plan_2d"], valeur=gabarit_svg(gr))
     numero = numeros.numero_rapport("gabarit", idu, j)
     cart = _cart("gabarit", idu, idu, numero, j)
-    corps = _entete_doc("gabarit", idu, numero, j) + bloc_gabarit.rendu(valeurs, {"gabarit": gr})
+    from ..gabarit.scene import scene_pour_gabarit
+    try:
+        terrain = scene_pour_gabarit(db, idu, gr).to_dict()
+    except Exception:
+        log.warning("Gabarit %s : terrain indisponible pour le PDF", idu, exc_info=True)
+        terrain = {}
+    contexte = {"gabarit": gr.model_dump()}
+    mesures = {"scene_id": terrain.get("scene_id"), "maille_m": (terrain.get("meta") or {}).get("maille_m")}
+    cotes = (terrain.get("terrain") or {}).get("cotes_3d")
+    if cotes:
+        bas, haut = cotes["bas"][2], cotes["haut"][2]
+        mesures.update(bas_m=bas, haut_m=haut, denivele_m=round(haut - bas, 2))
+    coupe = next((c for c in terrain.get("coupes", []) if c["label"] == "A" and c["cotes"]["disponible"]), None)
+    if coupe and terrain["disponible"]:
+        from ..gabarit.coupe_svg import mesures_apercu
+        mesures["coupe"] = mesures_apercu(coupe)
+    contexte["relief"] = mesures
+    page_projet = ""
+    if sommets is not None:
+        from ..gabarit.plan_projet import plan_metrique, _mesurer_implantation, plan_cote_html
+        plan = plan_metrique(gr)
+        bilan = _mesurer_implantation(sommets, plan)
+        page_projet = '<section style="break-before:page">' + plan_cote_html(idu, plan, sommets, bilan) + '</section>'
+    corps = _entete_doc("gabarit", idu, numero, j) + bloc_gabarit.rendu(
+        valeurs, {"gabarit": gr, "terrain_pdf": terrain, "sommets": sommets, "cotes_pdf": mesures if cotes else None}) + page_projet
     html = page_html(_LABEL["gabarit"][0], cart, corps)
-    # le contexte porte le résultat gabarit (pour que le crible de provenance rattache SES nombres).
-    return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart,
-                       contexte={"gabarit": gr.model_dump() if hasattr(gr, "model_dump") else dict(gr)})
+    return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart, contexte=contexte)
 
 
 def _resume_comparatif(rows: list[dict]) -> str:
@@ -605,11 +637,15 @@ def _resume_comparatif(rows: list[dict]) -> str:
     if plus_grande.get("surface_m2"):
         bits.append(f"la plus grande : {_ref_court(plus_grande.get('idu', ''))} "
                     f"({fmt_m2(plus_grande['surface_m2'])})")
-    avec_pot = [r for r in rows if (r.get("sdp_residuelle_m2") or 0) > 0]
-    if len(avec_pot) == 1:
+    eligibles = [r for r in rows if r.get("constructible") is not False and not (r.get("au_ouverture") or {}).get("bloquant")]
+    avec_pot = [r for r in eligibles if (r.get("sdp_residuelle_m2") or 0) > 0]
+    incomplet = any(r.get("sdp_residuelle_m2") is None for r in eligibles)
+    if incomplet:
+        bits.append("potentiel résiduel non chiffré pour une partie de la sélection")
+    elif len(avec_pot) == 1:
         bits.append(f"seule à garder du potentiel résiduel : {_ref_court(avec_pot[0].get('idu', ''))}")
-    elif not avec_pot:
-        bits.append("aucune ne garde de potentiel résiduel (rien à construire)")
+    elif eligibles and not avec_pot:
+        bits.append("aucune surface de plancher supplémentaire estimée en conservant le bâti")
     return f'<p class="cover-resume">{" · ".join(bits)}.</p>'
 
 
@@ -618,6 +654,7 @@ def _ref_court(idu: str) -> str:
 
 
 def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | None = None,
+                          capacites_sans_fiche: dict[str, str] | None = None,
                           note_limite: str | None = None, map_html: str = "") -> ResultatDoc:
     """Le Comparatif, miroir de l'outil Comparer (/compare) : 2-3 parcelles en colonnes sur les lignes
     de Comparer, EN PAGE PAYSAGE. `rows` sont les CompareRow servis (aucun recalcul ici).
@@ -627,7 +664,10 @@ def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | Non
     j = jour or today_reunion()
     ids = [i.strip() for i in idus if i and i.strip()][:3]
     ref0 = ids[0] if ids else ""
-    suffixe = f"{len(rows)} parcelles"
+    lectures = capacites_sans_fiche or {}
+    suffixe = f"{len(rows)} parcelles" if not lectures else f"{len(ids)} parcelles demandées"
+    partielles = "".join(f"<p><b>{esc(i)}</b> · Fiche de classement indisponible. {esc(lecture)}</p>"
+                         for i, lecture in lectures.items())
     _note_html = (f'<p class="notice" style="color:#b06a2c">{esc(note_limite)}</p>'
                   if note_limite else "")
     # CHIRURGICAL-FIX-1 (LOT L 5 / LOT M mineur) — couverture COMPACTE EN DEUX COLONNES (résumé à
@@ -635,21 +675,24 @@ def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | Non
     # page. Le tableau enchaîne juste après.
     _cover = (f'<div class="cmp-cover">'
               f'<div class="cmp-resume">{_resume_comparatif(rows)}</div>'
-              f'<div class="cmp-carte">{map_html or ""}</div></div>')
+              f'<div class="cmp-carte">{(esc(ref0) + map_html) if map_html else ""}</div></div>')
     # CHIRURGICAL-FIX-1 (LOT I pt4 / LOT K 3g) — le numéro du Comparatif tient compte de TOUTES ses
     # parcelles ET de TOUT son contenu rendu : deux comparatifs au contenu affiché différent diffèrent.
     corps = (_entete_doc("comparatif", suffixe, _NUMERO_PLACEHOLDER, j)
-             + _cover + _note_html + bloc_comparatif.rendu(rows))
+             + _cover + _note_html + partielles + (bloc_comparatif.rendu(rows) if rows or not lectures else ""))
     numero = numeros.numero_rapport("comparatif", ref0, j,
                                     discriminant="|".join(sorted(ids)) + "|" + _signature_contenu(corps))
     corps = corps.replace(_NUMERO_PLACEHOLDER, numero)
     cart = _cart("comparatif", suffixe, " · ".join(ids), numero, j)
-    _cmp_css = (".cmp-cover{display:flex;gap:10pt;align-items:flex-start;margin:2pt 0 6pt;"
-                "page-break-inside:avoid}"
-                ".cmp-resume{flex:1 1 55%}.cmp-carte{flex:1 1 45%}"
-                ".cmp-cover .plan{max-height:46mm;overflow:hidden;margin:0}"
-                ".cmp-cover .plan img,.cmp-cover .plan svg{max-height:44mm;width:auto}"
-                ".cmp-bloc{page-break-before:avoid}")
+    _cmp_css = (
+        ".cmp-cover{display:table;width:100%;margin:2pt 0 6pt}"
+        ".cmp-resume,.cmp-carte{display:table-cell;vertical-align:top}"
+        ".cmp-carte{width:36%;font-size:10px}.cmp-carte .plan{margin:2pt 0 0}"
+        ".cmp-carte .plan img{width:100%;height:30mm;object-fit:contain}"
+        ".cmp-carte .plan .ph{height:30mm}"
+        ".cmp-bloc{break-inside:auto;page-break-inside:auto}"
+        "table.cmp{table-layout:fixed}table.cmp th .sub{font-weight:400;font-size:11px}"
+    )
     html = page_html(_LABEL["comparatif"][0], cart, corps, paysage=True, page_extra_css=_cmp_css)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
                        contexte={"comparatif": rows})
@@ -669,7 +712,11 @@ def construire_etude_zone(idu: str, rayon_km, zone: dict, map_html: str, *,
     cart = _cart("etude-zone", suffixe, idu, numero, j)
     corps = (_entete_doc("etude-zone", suffixe, numero, j)
              + bloc_zone.rendu(zone, map_html=map_html, idu=idu, rayon_km=rayon_km))
-    html = page_html(_LABEL["etude-zone"][0], cart, corps)
+    css = """
+    section table.kv td { padding-top: 4.5pt; padding-bottom: 4.5pt; }
+    section > .note:last-child { break-before: avoid; }
+    """
+    html = page_html(_LABEL["etude-zone"][0], cart, corps, page_extra_css=css)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
                        contexte={"zone": zone})
 

@@ -11,10 +11,40 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine, text
+from psycopg import OperationalError as DriverOperationalError
+from sqlalchemy.exc import DBAPIError, TimeoutError as PoolTimeout
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from .config import get_settings
+
+
+def connexions_saturees(exc: Exception) -> bool:
+    """Pool local expiré ou refus PostgreSQL faute de connexions disponibles."""
+    if isinstance(exc, PoolTimeout):
+        return True
+    erreur = exc.orig if isinstance(exc, DBAPIError) else exc
+    if getattr(erreur, "sqlstate", None):
+        return erreur.sqlstate == "53300"
+    # Au démarrage de la connexion, libpq peut transmettre le FATAL sans SQLSTATE.
+    if isinstance(erreur, DriverOperationalError):
+        message = str(erreur).lower()
+        return any(motif in message for motif in (
+            "too many clients already", "too many connections for",
+            "remaining connection slots are reserved",
+        ))
+    return False
+
+
+def requete_bdd_indisponible(exc: Exception) -> bool:
+    """À la frontière HTTP, un calcul SQL interrompu peut être retenté."""
+    if connexions_saturees(exc):
+        return True
+    erreur = exc.orig if isinstance(exc, DBAPIError) else exc
+    code = getattr(erreur, "sqlstate", None)
+    # PostgreSQL signale une annulation en 57014. Si elle survient pendant une
+    # intersection PostGIS, GEOS remonte parfois son propre diagnostic en XX000.
+    return code == "57014" or (code == "XX000" and "GEOS Error: InterruptedException" in str(erreur))
 
 
 def sql_statements(ddl: str) -> list[str]:

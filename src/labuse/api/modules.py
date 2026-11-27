@@ -18,7 +18,7 @@ import io
 import logging
 import json
 import multiprocessing
-import queue as _queue
+from multiprocessing.connection import wait as attendre_processus
 import re
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -213,7 +213,7 @@ def division_list(min_score: int = 0, limit: int = Query(300, ge=1, le=2000),   
 # ───────────────────────── M02 — SCAN PATRIMOINE INVERSÉ ─────────────────────────
 
 @router.get("/patrimoine/search")
-def patrimoine_search(q: str, db: Session = Depends(get_db)) -> list[dict]:
+def patrimoine_search(q: str, db: Session = Depends(get_db)) -> dict:
     # M103 P2 (défaut M100 n°3) : la colonne MAJIC est 100 % désaccentuée (82 701 lignes) et
     # ILIKE ne plie pas les accents — « Société » rendait 0 en silence. LE MÊME pliage
     # (constants.sql_plie) s'applique au paramètre ET à la colonne (motif NDé M99-B, déjà en
@@ -221,7 +221,7 @@ def patrimoine_search(q: str, db: Session = Depends(get_db)) -> list[dict]:
     from ..constants import params_pliage, sql_plie
     from ..patrimoine_alias import expand_sigle
     if len(q.strip()) < 2:
-        return []
+        return {"resultats": [], "total": 0, "affiches": 0, "masques": 0, "plafond": 12}
     # GB-006 : si la saisie EST un sigle foncier connu (« SHLMR »…), on cherche AUSSI son expansion en
     # raison sociale (les fichiers fonciers ne stockent que le nom légal complet). Table extensible.
     alias = expand_sigle(q)
@@ -230,18 +230,35 @@ def patrimoine_search(q: str, db: Session = Depends(get_db)) -> list[dict]:
     if alias:
         params["a"] = alias
         alias_clause = " OR " + sql_plie("pm.denomination") + " LIKE " + sql_plie("'%' || :a || '%'")
-    # GB-007 : le compteur `n` DOIT être le MÊME que le scan (qui fait JOIN parcels) — sinon
-    # l'autocomplétion sur-comptait les lignes MAJIC dont l'IDU n'a pas de parcelle (2632 vs 2618).
-    rows = db.execute(text(f"""
-        SELECT pm.siren, max(pm.denomination) AS nom, count(*) AS n
-        FROM parcelle_personne_morale pm
-        JOIN parcels p ON p.idu = pm.idu
+    # SCAN-FIX-1 (pt 8) — le compteur `n` annoncé par la recherche = le MÊME que le scan : désormais
+    # les parcelles RECENSÉES (toutes les parcelles du SIREN aux fichiers DGFiP, via `parcelle_pm_droit`
+    # si présent), plus les seules RATTACHÉES. Avant, la recherche comptait les rattachées (1 833) alors
+    # que le scan affiche les recensées (1 946) → deux chiffres pour la même société. REPLI : table de principal.
+    PLAFOND = 12
+    use_droit = bool(db.execute(
+        text("SELECT to_regclass('parcelle_pm_droit') IS NOT NULL")).scalar())
+    if use_droit:
+        src = ("(SELECT DISTINCT siren, idu, denomination FROM parcelle_pm_droit "
+               "WHERE millesime = (SELECT max(millesime) FROM parcelle_pm_droit)) pm")
+    else:
+        src = "parcelle_personne_morale pm"
+    base = f"""
+        SELECT pm.siren, max(pm.denomination) AS nom, count(DISTINCT pm.idu) AS n
+        FROM {src}
         WHERE pm.siren IS NOT NULL
           AND ({sql_plie('pm.denomination')} LIKE {sql_plie("'%' || :q || '%'")}
                OR pm.siren LIKE :qs{alias_clause})
-        GROUP BY pm.siren ORDER BY n DESC LIMIT 12"""),
-        params).mappings().all()
-    return [dict(r) for r in rows]
+        GROUP BY pm.siren"""
+    # total RÉEL des sociétés qui correspondent (pour annoncer les résultats masqués au-delà du plafond)
+    total = int(db.execute(text(f"SELECT count(*) FROM ({base}) t"), params).scalar() or 0)
+    rows = db.execute(text(base + f" ORDER BY n DESC, pm.siren LIMIT {PLAFOND}"), params).mappings().all()
+    resultats = [dict(r) for r in rows]
+    # SCAN-FIX-1 (pt 8) — un identifiant « U… » est un IDENTIFIANT FISCAL (MAJIC), PAS un SIREN : on le
+    # qualifie à plat pour que le front ne mette ni lien pappers ni traitement « entreprise ».
+    for r in resultats:
+        r["siren_reel"] = bool(re.fullmatch(r"\d{9}", str(r.get("siren") or "")))
+    return {"resultats": resultats, "total": total, "affiches": len(resultats),
+            "masques": max(0, total - len(resultats)), "plafond": PLAFOND}
 
 
 _TIERS_ACTIONNABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser",
@@ -280,7 +297,10 @@ def _depots_par_siren(db: Session, sirens: list[str]) -> dict[str, dict]:
         cloture, parution = r["derniere_cloture"], r["derniere_parution"]
         annee = cloture.year if cloture else (parution.year if parution else None)
         depuis = (annee_courante - parution.year) if parution else None
+        # SCAN-FIX-1 (bloquant 5) — on sert le FAIT DATÉ (dernier dépôt publié le…), plus l'interprétation
+        # « sommeil probable » (qui reposait sur un silence = une absence relative dans la base locale).
         out[r["siren"]] = {"annee": annee, "depuis_ans": depuis,
+                           "annee_parution": parution.year if parution else None,
                            "muet": depuis is not None and depuis >= SEUIL_DEPOT_MUET_ANS}
     return out
 
@@ -288,6 +308,25 @@ def _depots_par_siren(db: Session, sirens: list[str]) -> dict[str, dict]:
 def _dernier_depot_comptes(db: Session, siren: str) -> dict | None:
     """Le dépôt de comptes le plus récent d'UN siren (passe-plat de bodacc_depots). None si aucun."""
     return _depots_par_siren(db, [siren]).get(siren)
+
+
+@router.get("/parcelle/{idu}/titulaires")
+def parcelle_titulaires(idu: str, db: Session = Depends(get_db)) -> dict:
+    """SCAN-FIX-1 (fiche parcelle, ÉCRAN SEULEMENT) — les AUTRES titulaires d'une parcelle (hors
+    titulaire principal servi dans la fiche), avec leur droit DGFiP. Lu de la table complète
+    `parcelle_pm_droit` (tous titulaires, tous droits). Sert une ligne discrète « + N autres
+    titulaires » et son détail (bulle « i ») dans le tiroir Identité. N'alimente AUCUN export
+    (PDF/Excel) : endpoint dédié à l'écran. Repli : table absente → vide (jamais un 500)."""
+    if not db.execute(text("SELECT to_regclass('parcelle_pm_droit') IS NOT NULL")).scalar():
+        return {"n_autres": 0, "titulaires": []}
+    rows = db.execute(text(
+        "SELECT siren, denomination, droit_code, droit_label FROM parcelle_pm_droit "
+        "WHERE idu = :idu AND millesime = (SELECT max(millesime) FROM parcelle_pm_droit) "
+        "AND ordre_titulaire > 1 ORDER BY ordre_titulaire"), {"idu": idu}).mappings().all()
+    titulaires = [{"siren": r["siren"], "denomination": r["denomination"],
+                   "droit_code": r["droit_code"], "droit_label": r["droit_label"],
+                   "siren_reel": bool(re.fullmatch(r"\d{9}", str(r["siren"] or "")))} for r in rows]
+    return {"n_autres": len(titulaires), "titulaires": titulaires}
 
 
 @router.get("/patrimoine")
@@ -307,7 +346,6 @@ def patrimoine(siren: str, fmt: str = "json",
     `fmt` est désormais un vrai paramètre (json|csv), plus un param fantôme ignoré."""
     from .app import _score_v2_run_id
     from ..assemblage import ADJ_BUFFER_M
-    from ..faisabilite.marche_commune import ligne2_terrain_zone
     # ROBUSTESSE — cette fonction est aussi appelée EN DIRECT (copilote `parcelles_par_entreprise`,
     # tests) où les défauts `Query()` ne sont pas résolus : on retombe sur les valeurs par défaut.
     limit = limit if isinstance(limit, int) else 200
@@ -321,21 +359,42 @@ def patrimoine(siren: str, fmt: str = "json",
     has_frame = bool(db.execute(text("SELECT to_regclass('p_model_frame') IS NOT NULL")).scalar())
     frame_join = "LEFT JOIN p_model_frame pf ON pf.idu = p.idu" if has_frame else ""
     frame_expr = "(pf.idu IS NOT NULL)" if has_frame else "NULL::boolean"
+    # SCAN-FIX-1 (bloquant 1, pt 7) — « qui possède » lit désormais la table COMPLÈTE des droits
+    # `parcelle_pm_droit` (tous titulaires, tous droits DGFiP), et non plus le seul titulaire principal
+    # servi dans `parcelle_personne_morale` (qui écrasait la distinction propriété/gestion/autres). Chaque
+    # parcelle du SIREN est servie UNE fois avec SON droit de plus haut rang pour ce SIREN (DISTINCT ON
+    # idu, ordre_titulaire) → la propriété (P/U/N), la gestion (G/Q/Z/S) et les autres droits (B/E/F…)
+    # sont séparables dans les comptes ET la liste. REPLI (prod non migrée) : la table de principal.
+    use_droit = bool(db.execute(
+        text("SELECT to_regclass('parcelle_pm_droit') IS NOT NULL")).scalar())
+    if use_droit:
+        src_cte = """src AS (
+            SELECT DISTINCT ON (idu) idu, droit_code, droit_label, groupe, denomination
+            FROM parcelle_pm_droit
+            WHERE siren = :s AND millesime = (SELECT max(millesime) FROM parcelle_pm_droit)
+            ORDER BY idu, ordre_titulaire)"""
+    else:
+        src_cte = """src AS (
+            SELECT idu, NULL::varchar AS droit_code, NULL::varchar AS droit_label,
+                   groupe, denomination
+            FROM parcelle_personne_morale WHERE siren = :s)"""
     rows = db.execute(text(f"""
+        WITH {src_cte}
         SELECT p.id, p.idu, p.commune, p.surface_m2, p.contenance_m2, z.zone_fam, r.sdp_residuelle_m2,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                pb.emprise_bati_m2 AS emprise_bati,
                {frame_expr} AS dans_frame,
+               src.droit_code, src.droit_label,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
-        FROM parcelle_personne_morale pm
-        JOIN parcels p ON p.idu = pm.idu
+        FROM src
+        JOIN parcels p ON p.idu = src.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN parcel_zone_plu z ON z.idu = p.idu
         LEFT JOIN p_model_bati pb ON pb.idu = p.idu
         {frame_join}
-        WHERE pm.siren = :s ORDER BY s2.rang ASC NULLS LAST"""),
+        ORDER BY s2.rang ASC NULLS LAST"""),
         {"s": siren, "run": runs.cascade(), "v2run": _score_v2_run_id(db)}).mappings().all()
     bodacc = db.execute(text(
         "SELECT type_procedure, date_annonce FROM v_foncier_sous_pression WHERE siren = :s LIMIT 1"),
@@ -369,9 +428,11 @@ def patrimoine(siren: str, fmt: str = "json",
     # ENTREPRISE (SIREN à 9 chiffres). Une ASL / un syndicat de copropriété porte un identifiant
     # non-entreprise (ex. « U23889204 », « W97400… ») : il n'a par nature AUCUN dirigeant INPI et
     # ne « tombe pas en sommeil ». Sans ce garde-fou, le scan d'une ASL affichait un faux signal.
-    _siren_entreprise = bool(re.fullmatch(r"\d{9}", str(siren or "")))
-    inpi_sans_dirigeant = _siren_entreprise and bool(rows) and bool(nom) and not db.execute(text(
-        "SELECT EXISTS (SELECT 1 FROM pm_dirigeants WHERE siren = :s)"), {"s": siren}).scalar()
+    # SCAN-FIX-1 (bloquant 5) — le signal « aucun dirigeant au registre INPI → succession / sommeil »
+    # est RETIRÉ : il reposait sur une ABSENCE dans la base locale (`pm_dirigeants` non peuplé pour ce
+    # SIREN), pas sur un fait. Le contre-audit l'a mis en défaut (5/10 avaient un dirigeant public). On ne
+    # sert plus d'interprétation ; les faits datés (dépôt de comptes, avis BODACC daté) les remplacent.
+    inpi_sans_dirigeant = False
     # #2 l'agrégat dit l'ACTIONNABLE. « Écartées » de base = étage 0 cascade (exclues/faux positif).
     # CONNEXIONS-2 Lot 4 (KO-10) : si le COMPTE courant a explicitement ÉCARTÉ des parcelles dans un
     # de SES projets (projet_parcelles.statut='ecartee') ou archivé une piste (pipeline_entries), on
@@ -419,30 +480,46 @@ def patrimoine(siren: str, fmt: str = "json",
     # SIREN aux fichiers fonciers DGFiP, y compris celles sans géométrie cadastrale), RATTACHÉES au cadastre
     # (jointes à `parcels` → une géométrie → `rows`). L'écart (ex. 1 871 vs 1 833) est ainsi ventilé, jamais
     # muet : des parcelles recensées peuvent manquer au cadastre ingéré (le JOIN les écartait en silence).
-    n_recensees = int(db.execute(text(
-        "SELECT count(*) FROM parcelle_personne_morale WHERE siren = :s"), {"s": siren}).scalar() or 0)
+    if use_droit:
+        n_recensees = int(db.execute(text(
+            "SELECT count(DISTINCT idu) FROM parcelle_pm_droit WHERE siren = :s "
+            "AND millesime = (SELECT max(millesime) FROM parcelle_pm_droit)"),
+            {"s": siren}).scalar() or 0)
+    else:
+        n_recensees = int(db.execute(text(
+            "SELECT count(*) FROM parcelle_personne_morale WHERE siren = :s"), {"s": siren}).scalar() or 0)
     n_rattachees = len(rows)
+    # SCAN-FIX-1 (bloquant 1, pt 7) — VENTILATION PAR DROIT : propriété (P/U/N), gestion (G/Q/Z/S),
+    # autres droits (bailleur à construction, emphytéote, foncier…). Comptes RECENSÉES (fichier DGFiP,
+    # distinct idu par famille, y compris hors cadastre) ET RATTACHÉES au cadastre (lignes servies), avec
+    # la surface réellement rattachée par famille. Un SIREN seulement gestionnaire n'est PLUS compté
+    # « propriétaire » (contre-audit §1 : CBO gestionnaire/mandataire sur 14 parcelles).
+    droits_familles = {"propriete": {"label": "Propriété"}, "gestion": {"label": "Gestion / mandat"},
+                       "autres": {"label": "Autres droits"}}
+    par_droit: dict | None = None
+    if use_droit:
+        from ..ingestion.pm_droits import famille_droit
+        rec = {"propriete": 0, "gestion": 0, "autres": 0}
+        for (dc,) in db.execute(text(
+                "SELECT droit_code FROM (SELECT DISTINCT ON (idu) idu, ordre_titulaire, droit_code "
+                "FROM parcelle_pm_droit WHERE siren = :s "
+                "AND millesime = (SELECT max(millesime) FROM parcelle_pm_droit) "
+                "ORDER BY idu, ordre_titulaire) t"), {"s": siren}).all():
+            rec[famille_droit(dc)] += 1
+        ratt = {"propriete": 0, "gestion": 0, "autres": 0}
+        surf = {"propriete": 0.0, "gestion": 0.0, "autres": 0.0}
+        for r in rows:
+            fam = famille_droit(r["droit_code"])
+            ratt[fam] += 1
+            surf[fam] += (_surface.surface_terrain(r["surface_m2"], r["contenance_m2"]).valeur or 0)
+        par_droit = {fam: {"label": droits_familles[fam]["label"], "recensees": rec[fam],
+                           "rattachees": ratt[fam], "surface_rattachee_m2": round(surf[fam])}
+                     for fam in ("propriete", "gestion", "autres")}
     n_constructible_u_au = sum(1 for r in rows if r["zone_fam"] in ("U", "AU"))
-    # #3 VALORISATION indicative du foncier nu (zones U/AU) au RÉFÉRENTIEL UNIQUE prix terrain de zone
-    # (ligne2_terrain_zone, une fois par commune). Indicative — seules les zones U/AU ont un prix marché.
-    prix_zone: dict[tuple[str, str], float] = {}
-    for c in {r["commune"] for r in rows if r["commune"]}:
-        try:
-            cellules = (ligne2_terrain_zone(db, c).get("valeurs") or {}).get("par_zone") or {}
-            for fam, cell in cellules.items():
-                if cell.get("calculable"):
-                    prix_zone[(c, fam)] = cell["median_eur_m2"]
-        except Exception:  # noqa: BLE001 — la valorisation est un bonus, jamais un 500
-            pass
-    val_nu = 0.0
-    n_valorisables = 0
-    for r in rows:
-        px = prix_zone.get((r["commune"], r["zone_fam"])) if r["zone_fam"] in ("U", "AU") else None
-        # CONTENANCE-1 (Lot C) : valeur nue = surface de TERRAIN (contenance si présente) × prix/m².
-        _surf_t = _surface.surface_terrain(r["surface_m2"], r["contenance_m2"]).valeur
-        if px and _surf_t:
-            val_nu += _surf_t * px
-            n_valorisables += 1
+    # SCAN-FIX-1 (point 9) — la VALORISATION du foncier nu est RETIRÉE de la réponse servie (client ET
+    # Copilote), pas corrigée : son assiette (bâties non filtrées) et son prix (médianes contaminées par
+    # des actes mixtes) n'étaient pas sûrs, et le champ n'avait de toute façon aucun consommateur UI. On ne
+    # calcule plus rien (ni `val_nu`, ni `ligne2_terrain_zone`) : surface de confusion/latence supprimée.
     # #5 ASSIETTE CONTIGUË : parcelles du portefeuille d'un seul tenant (contact cadastral ADJ_BUFFER_M)
     # → « Analyser en assiette ». Fréquent (79 % des portefeuilles multi-parcelles). Plus gros bloc ≥ 2.
     assiette_contigue: list[str] = []
@@ -534,14 +611,18 @@ def patrimoine(siren: str, fmt: str = "json",
         "n_bati_non_renseigne": n_bati_non_renseigne,   # OUTILS-P1-1 (pt 7) — distinct de « nu »
         "n_recensees": n_recensees,                     # OUTILS-P1-1 (pt 7) — fichiers fonciers DGFiP
         "n_rattachees": n_rattachees,                   # OUTILS-P1-1 (pt 7) — jointes au cadastre
+        "surface_rattachee_m2": surface_totale_m2,      # SCAN-FIX-1 (pt 7) — surface RÉELLEMENT rattachée au cadastre
+        "par_droit": par_droit,                         # SCAN-FIX-1 (bloquant 1) — propriété / gestion / autres droits
+        # SCAN-FIX-1 (pt 7) — l'en-tête dit le PÉRIMÈTRE : ce SIREN SEUL, filiales NON comprises
+        # (le patrimoine n'est pas consolidé — cf. frise Construction qui identifie les filiales).
+        "perimetre": {"siren_seul": True, "filiales_incluses": False,
+                      "libelle": "Ce SIREN seul — filiales non comprises"},
         "n_constructible_u_au": n_constructible_u_au,
         "n_actionnables": n_actionnables,
         # KO-10 — le libellé front dit « hors écartées par vous » SI ce compte a écarté des parcelles.
         "hors_ecartees_par_vous": bool(ecartees_par_vous),
         "n_ecartees_par_vous": len(ecartees_par_vous),
         "sdp_residuelle_m2": sdp_residuelle,
-        "valorisation_nu_eur": round(val_nu) if n_valorisables else None,
-        "n_valorisables": n_valorisables,
         "bodacc": dict(bodacc) if bodacc else None,
         "depot_comptes": depot,          # DONNEES-1 lot 2.3 — {annee, depuis_ans} ou None (aucun dépôt)
         "inpi_sans_dirigeant": inpi_sans_dirigeant,
@@ -554,6 +635,8 @@ def patrimoine(siren: str, fmt: str = "json",
                    "surface_m2": round(r["surface_m2"] or 0),  # DESSIN (compat)
                    **_surface.champs_terrain(r["surface_m2"], r["contenance_m2"]),  # CONTENANCE-1 (B)
                    "sdp": r["sdp_residuelle_m2"],
+                   # SCAN-FIX-1 (bloquant 1) — droit DGFiP de la parcelle pour ce SIREN (famille propriété/gestion/autres)
+                   "droit_code": r["droit_code"], "droit_label": r["droit_label"],
                    "n_etablissements": etab_count.get(r["idu"], 0),   # KELFONCIER-FIX-1 (Lot H)
                    "geom": json.loads(geoms[r["idu"]]) if geoms.get(r["idu"]) else None} for r in page],
     }
@@ -570,13 +653,39 @@ def _permis_etat_pred(etat: str | None, a: str, bati: bool = True) -> str:
     return permis_classe.etat_pred_sql(etat, a, ":dmax", bati)
 
 
+def _filtre_position(geo: str, alias: str = "") -> str:
+    if geo == "geo":
+        return f" AND {alias}geom IS NOT NULL"
+    if geo == "nongeo":
+        return f" AND {alias}geom IS NULL"
+    return ""
+
+
+def _source_permis(src, courant, millesime=None):
+    if courant == "true":
+        return "Sitadel · publication SDES " + (millesime or "courante")
+    if courant == "false":
+        return "Sitadel · ancien import SDES, absent de la publication courante"
+    if src and "Région" in src:
+        return "Sitadel · fonds régional (ODS)"
+    return src or "Sitadel · provenance non précisée"
+
+
+@router.get("/permis-communes")
+def permis_communes(db: Session = Depends(get_db)) -> list[str]:
+    return list(db.execute(text("""
+        SELECT DISTINCT commune FROM sitadel_permits
+        WHERE commune IS NOT NULL AND commune <> '' ORDER BY commune
+    """)).scalars())
+
+
 @router.get("/permis")
 def permis(commune: str | None = None, months: int = 24, nature: str | None = None,
            limit: int = Query(300, ge=1, le=2000), offset: int = Query(0, ge=0),  # GB-029 : ge=0 → 422, plus de 500
            count_only: bool = False,   # RETOURS-16 V4 — compteur seul (ni lignes ni carte)
            etat: str | None = None,    # OUTIL-PERMIS-FIX-1 — état de cycle : recent|dormant|acheve|autre
            etats: bool = False,        # OUTIL-PERMIS-FIX-1 (LOT 1) — partition COMPTÉE des 4 états en une passe
-           db: Session = Depends(get_db)) -> dict:
+           db: Session = Depends(get_db), geo: str = "tous") -> dict:
     # fenêtre ancrée sur la FIN DES DONNÉES (le flux Sitadel s'arrête avant aujourd'hui) — honnêteté
     dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
     # FIX-C6 (GB-049) — base NEUVE / sans permis : dmax NULL rendrait `date >= NULL - interval`
@@ -605,6 +714,8 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
     # OUTIL-PERMIS-FIX-1 (LOT 5) — chaque permis porte SON état de cycle (liste + carte) : la couleur
     # d'un point est celle de SON état, identique quel que soit le filtre actif (avant, le front peignait
     # tout un segment d'une couleur, et « Tous » reclassait un achevé ancien en orange).
+    ep += _filtre_position(geo)
+    eps += _filtre_position(geo, "s.")
     etat_cycle_bare = permis_classe.etat_case_sql("", ":dmax", bati_ok)
     etat_cycle_s = permis_classe.etat_case_sql("s.", ":dmax", bati_ok)
     prun = runs.cascade()  # conservé pour les params liés des requêtes historiques (inoffensif)
@@ -663,14 +774,14 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         WHERE (CAST(:c AS text) IS NULL OR s.commune = :c)
           AND (CAST(:nat AS text) IS NULL OR s.type = :nat)
           AND s.date >= :dmax - (:m || ' months')::interval{eps}
-        ORDER BY s.date DESC, s.permit_id ASC LIMIT :lim OFFSET :off"""),
+        ORDER BY s.date DESC, s.permit_id ASC, s.type ASC LIMIT :lim OFFSET :off"""),
         {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun, "lim": limit, "off": offset}).mappings().all()
     # MERGE RETOURS×CIRCUIT-2 — les deux apports cohabitent :
     #  · CIRCUIT-2 lot 1.6 : le count « nu » (sans filtre d'état) passe par le moteur nommé
     #    `commune_compteurs` (id registre permis_12m_n) — source unique, ce robinet appelle, ne calcule plus ;
     #  · RETOURS-17 : quand un état de cycle est filtré (recent/acheve/autre), le compte doit respecter
     #    le prédicat `{ep}` que le moteur ne connaît pas → count inline (avec :run pour l'état « autre »).
-    if etat:
+    if etat or _filtre_position(geo):
         counts = db.execute(text(
             f"""SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
                FROM sitadel_permits
@@ -698,7 +809,7 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
             WHERE (CAST(:c AS text) IS NULL OR commune = :c)
               AND (CAST(:nat AS text) IS NULL OR type = :nat)
               AND date >= :dmax - (:m || ' months')::interval AND geom IS NOT NULL{ep}
-            ORDER BY date DESC, permit_id ASC LIMIT 60000"""),
+            ORDER BY date DESC, permit_id ASC, type ASC LIMIT 60000"""),
             {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun}).mappings().all()
         carte = [{"permit_id": r["permit_id"], "type": r["type"], "date": r["date"],
                   "etat_cycle": r["etat_cycle"], "geom": json.loads(r["g"])} for r in crows]
@@ -738,7 +849,7 @@ _NATURE_LABELS = {"PC": "Permis de construire", "DP": "Déclaration préalable",
 
 
 @router.get("/permis/{permit_id}")
-def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
+def permis_fiche(permit_id: str, db: Session = Depends(get_db), nature: str | None = None) -> dict:
     """Fiche permis cliquable (M10 lot 1.1) : référence, porteur (si PM), nature, lots,
     surfaces, dates clés (dépôt / autorisation / achèvement), statut.
 
@@ -746,19 +857,48 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
     `permis_classe.depot_affichable_sql` (année de la date = AN_DEPOT), la MÊME que l'historique, la
     liste et le Dossier. LOT 2 : AUCUNE durée d'instruction (plus de calcul dépôt→autorisation, même
     ici) ; les deux dates restent servies quand elles sont valides, sans rien calculer entre elles."""
-    r = db.execute(text(f"""
+    actes = db.execute(text(f"""
         SELECT s.permit_id, s.type, s.commune, s.date::date::text AS date_autorisation,
                s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
                s.raw->>'daact' AS daact, s.raw->>'destination' AS destination,
                s.raw->>'geoloc' AS geoloc,
                s.raw->>'petitioner_name' AS porteur, s.raw->>'petitioner_siren' AS porteur_siren,
+               s.raw->>'src' AS src, s.raw->>'sdes_courant' AS courant,
+               s.raw->>'sdes_millesime' AS millesime, s.raw->>'surf_loc' AS surf_loc,
+               s.raw->'surfaces_destinations' AS surfaces_destinations,
+               concat_ws(' ', s.raw->>'adr_num', s.raw->>'adr_voie', s.raw->>'adr_lieudit') AS adresse,
                s.idu_codes,
                ({permis_classe.depot_affichable_sql("s.")})::text AS date_depot,
                CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
         FROM sitadel_permits s
-        WHERE s.permit_id = :pid"""), {"pid": permit_id}).mappings().first()
-    if not r:
+        WHERE s.permit_id = :pid AND (CAST(:nature AS text) IS NULL OR s.type = :nature)
+        ORDER BY s.type, s.id"""), {"pid": permit_id, "nature": nature}).mappings().all()
+    if not actes:
         raise HTTPException(404, "Permis introuvable")
+    if len(actes) > 1:
+        return {"permit_id": permit_id, "choix": [
+            {"nature": a["type"], "date": a["date_autorisation"], "parcelles": a["idu_codes"] or [],
+             "geom": json.loads(a["g"]) if a["g"] else None} for a in actes
+        ]}
+    r = actes[0]
+    destinations = {"AGR": "exploitation agricole et forestière", "COM": "commerce et activités de services",
+                    "PUB": "équipements d’intérêt collectif et services publics",
+                    "HEB": "hébergement hôtelier", "BUR": "bureaux", "IND": "industrie", "ENT": "entrepôt"}
+    surfaces = []
+    if r["surf_hab"] and float(r["surf_hab"]) > 0:
+        surfaces.append({"destination": "habitation", "m2": float(r["surf_hab"])})
+    if r["surf_loc"] and float(r["surf_loc"]) > 0:
+        surfaces.append({"destination": "locaux non résidentiels", "m2": float(r["surf_loc"])})
+    detail = {k: float(v) for k, v in (r["surfaces_destinations"] or {}).items() if float(v) > 0}
+    for code, label in destinations.items():
+        if code not in detail:
+            continue
+        # L'hôtellerie est incluse dans la destination commerce et services du SDES.
+        if code == "COM" and detail.get("HEB") == detail["COM"]:
+            continue
+        if code == "HEB" and detail.get("COM", 0) > detail["HEB"]:
+            label += " (inclus dans commerce et activités de services)"
+        surfaces.append({"destination": "dont " + label, "m2": detail[code]})
     return {
         "permit_id": r["permit_id"], "commune": r["commune"],
         "nature": r["type"], "nature_libelle": _NATURE_LABELS.get(r["type"], r["type"]),
@@ -766,6 +906,7 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
         "porteur_note": None if r["porteur"] else "Pétitionnaire personne physique (anonymisé à la source)",
         "nb_lots": int(r["nb_lgt"]) if (r["nb_lgt"] or "").isdigit() else None,
         "surface_hab_m2": float(r["surf_hab"]) if r["surf_hab"] else None,
+        "surfaces_plancher_creees": surfaces, "adresse": r["adresse"],
         "date_depot": r["date_depot"], "date_autorisation": r["date_autorisation"],
         # FRONT-CHIFFRES-2 (F32) — la note d'incohérence dépôt/autorisation (seuil 1 mois) vient de la
         # fonction PARTAGÉE `miroir.permis_incoherence_note`, plus de la regex de seuil au front.
@@ -784,29 +925,45 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
         "geoloc_note": r["geoloc"],
         "parcelles": list(r["idu_codes"]) if r["idu_codes"] else [],
         "geom": json.loads(r["g"]) if r["g"] else None,
-        "source": "SITADEL (SDES/Dido) — autorisations d'urbanisme, dép. 974",
+        "source": _source_permis(r["src"], r["courant"], r["millesime"]),
     }
 
 
 @router.get("/parcelle-permis")
-def parcelle_permis(idu: str, db: Session = Depends(get_db)) -> dict:
+def parcelle_permis(idu: str, db: Session = Depends(get_db), complet: bool = False) -> dict:
     """M10 lot 1.2/1.3 — permis SUR ou À PROXIMITÉ d'une parcelle, cliquables.
 
     Lit EXACTEMENT `via_permits_geo` (permis géolocalisés autorisés, EPSG 2975) — la même
     table que le score de viabilisation M-VIA — pour que les permis affichés soient LA PREUVE
     derrière les compteurs c100/c200 de la fiche (cohérence garantie, rayons 100/200 m). Chaque
     entrée porte son `permit_id` → fiche permis (/modules/permis/{id})."""
-    exists = db.execute(text(
-        "SELECT to_regclass('public.via_permits_geo') IS NOT NULL")).scalar()
-    if not exists:
-        return {"idu": idu, "indisponible": "via_permits_geo non construit (relancer M-VIA)",
-                "c100": 0, "c200": 0, "items": []}
     dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
     # OUTIL-PERMIS-FIX-1 (LOT 3) — chaque permis du voisinage reçoit SON état de cycle par la MÊME
     # fonction que l'île/la commune (`permis_classe`) : le mode parcelle affiche DÉSORMAIS les dormants
     # et peint chaque point de la même couleur qu'ailleurs. ST_Distance mesure depuis la GÉOMÉTRIE de la
     # parcelle (sa limite), pas son centre.
     etat_case = permis_classe.etat_case_sql("s.", ":dmax", permis_classe.bati_table_existe(db))
+    # Une référence cadastrale identifie un acte même sans point dans le rayon.
+    directs = db.execute(text(f"""
+        SELECT s.permit_id, s.type AS nature, s.date::date::text AS date, s.commune,
+               s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt,
+               s.raw->>'petitioner_name' AS porteur, ({etat_case}) AS etat_cycle,
+               ST_AsGeoJSON(ST_PointOnSurface(p.geom)) AS point_parcelle
+        FROM sitadel_permits s LEFT JOIN parcels p ON p.idu = :idu
+        WHERE s.idu_codes ? :idu
+        ORDER BY s.date DESC NULLS LAST, s.permit_id, s.type
+    """), {"idu": idu, "dmax": dmax}).mappings()
+    rattaches = []
+    for row in directs:
+        item = dict(row)
+        point = item.pop("point_parcelle")
+        item["geom"] = json.loads(point) if point else None
+        item["sur_parcelle"] = True
+        rattaches.append(item)
+    exists = db.execute(text("SELECT to_regclass('public.via_permits_geo') IS NOT NULL")).scalar()
+    if not exists:
+        return {"idu": idu, "indisponible": "Voisinage indisponible", "rattaches": rattaches,
+                "c100": 0, "c200": 0, "items": []}
     rows = db.execute(text(f"""
         WITH p AS (SELECT geom_2975 AS g FROM parcels WHERE idu = :idu)
         SELECT w.permit_id, s.type, s.date::date::text AS date, s.commune,
@@ -819,9 +976,9 @@ def parcelle_permis(idu: str, db: Session = Depends(get_db)) -> dict:
                -- compte sans support visible). Même colonne `geom` que /permis (carte).
                CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
         FROM p JOIN via_permits_geo w ON ST_DWithin(p.g, w.g, 200)
-               JOIN sitadel_permits s ON s.permit_id = w.permit_id
-        ORDER BY dist_m ASC, w.permit_id ASC LIMIT 500"""),
-        {"idu": idu, "dmax": dmax}).mappings().all()
+               JOIN sitadel_permits s ON s.id = w.acte_id
+        ORDER BY dist_m ASC, w.permit_id ASC, s.type ASC LIMIT :limite"""),
+        {"idu": idu, "dmax": dmax, "limite": None if complet else 500}).mappings().all()
     # OUT-PERMIS-009 — les COMPTES c100/c200 sont des COUNT EXACTS (jamais le len() d'une liste
     # plafonnée) : une parcelle dense à 185 permis réels doit compter 185, pas 100. La liste peut
     # rester bornée (payload) mais le compte servi à l'écran dit le vrai total (et `tronque` le signale).
@@ -860,7 +1017,7 @@ def parcelle_permis(idu: str, db: Session = Depends(get_db)) -> dict:
         "localises": sum(1 for i in items if i["geom"]),
         "non_localises": sum(1 for i in items if not i["geom"]),
         "note": "Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA).",
-        "items": items,
+        "rattaches": rattaches, "items": items,
     }
 
 
@@ -872,7 +1029,7 @@ def parcelle_permis(idu: str, db: Session = Depends(get_db)) -> dict:
 @router.get("/promesses")
 def promesses(commune: str | None = None, months: int = 36,   # OUTIL-PERMIS-FIX-1 — défaut = 3 ans
               limit: int = 1000, offset: int = Query(0, ge=0), count_only: bool = False,  # GB-029
-              db: Session = Depends(get_db)) -> dict:
+              db: Session = Depends(get_db), geo: str = "tous") -> dict:
     limit = max(1, min(limit, 2000))  # 1re page légère (défaut 1000), le reste en « voir plus »
     dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
     # OUTIL-PERMIS-FIX-1 — sans la couche d'emprise bâtie, on ne mesure pas → aucun dormant (jamais un 500).
@@ -881,9 +1038,6 @@ def promesses(commune: str | None = None, months: int = 36,   # OUTIL-PERMIS-FIX
                 "months": months, "total": 0, "affiches": 0, "has_more": False, "items": []}
     # OUTIL-PERMIS-FIX-1 (LOT 2) — le compteur dormant lit la MÊME définition mesurée que la liste
     # et la partition (`permis_point_mort`, réécrit) : plus de jointure au run, plus d'horloge `now()`.
-    if count_only:
-        from ..registre.moteurs.commune import permis_point_mort
-        return {"total": permis_point_mort(db, commune, months, dmax)}
     # OUTIL-PERMIS-FIX-3 (Point 2) — la liste lit la DÉFINITION UNIQUE (`permis_classe._dormant_sql`),
     # plus un prédicat recopié : même dormant que la partition, le filtre, le compteur et la fiche commune.
     # Et l'affinage ne peut QUE RESTREINDRE les 854 : on CLAMPE le seuil d'âge à ≥ 36 mois (DORMANT_MOIS)
@@ -891,6 +1045,16 @@ def promesses(commune: str | None = None, months: int = 36,   # OUTIL-PERMIS-FIX
     m_dormant = max(int(months), permis_classe.DORMANT_MOIS)
     dormant_pred = permis_classe._dormant_sql("s.", ":dmax").replace(
         f"interval '{permis_classe.DORMANT_MOIS} months'", "(:m || ' months')::interval")
+    dormant_pred += _filtre_position(geo, "s.")
+    if count_only:
+        sources = db.execute(text(f"""
+            SELECT s.raw->>'src', s.raw->>'sdes_courant', count(*)
+            FROM sitadel_permits s WHERE (CAST(:c AS text) IS NULL OR s.commune = :c)
+              AND {dormant_pred} GROUP BY 1, 2 ORDER BY 3 DESC
+        """), {"c": commune, "m": m_dormant, "dmax": dmax}).all()
+        return {"total": sum(n for _, _, n in sources),
+                "sources": [{"libelle": _source_permis(src, courant), "nombre": n}
+                            for src, courant, n in sources]}
     # CTE MATERIALIZED = parade au plan « fast-start » de LIMIT/OFFSET-0. La parcelle AFFICHÉE est la MOINS
     # bâtie du permis (celle qui porte l'opportunité). §3 : la géom du permis est rendue en POINTS CLIQUABLES.
     rows = db.execute(text(f"""
@@ -1102,7 +1266,7 @@ def prospection_solaire_parcelle(idu: str, db: Session = Depends(get_db)):
         SELECT ps.idu, p.commune AS commune,
                ST_X(ST_Centroid(p.geom)) AS lon, ST_Y(ST_Centroid(p.geom)) AS lat,  -- RETOURS-12 O7 : photo ortho du toit
                round(ps.prod_spec_kwh_kwc)::int AS productible,
-               ps.prod_mensuel, ps.mois_optimal,
+               ps.prod_mensuel, ps.mois_optimal, ps.source_millesime AS millesime,
                round(ps.azimut_bati_deg)::int AS azimut, ps.azimut_confiance,
                round(t.pente_moy_deg::numeric, 1) AS pente,
                round(b.emprise_bati_m2)::int AS toit_m2,
@@ -1143,9 +1307,7 @@ def prospection_solaire_parcelle(idu: str, db: Session = Depends(get_db)):
     # (Parc national, réserve naturelle), un projet solaire AU SOL y est exclu ; la TOITURE reste possible.
     d["enr_sol_exclu_zone"] = r["enr_sol_exclu_zone"]
     d["enr_au_sol_exclu"] = r["enr_sol_exclu_zone"] is not None
-    mil = db.execute(text("SELECT max(source_millesime) AS mil FROM parcel_solar "
-                          "WHERE prod_spec_kwh_kwc IS NOT NULL")).scalar()
-    d["millesime"] = mil or "PVGIS SARAH3"
+    d["millesime"] = r["millesime"] or "PVGIS SARAH3"
     # A6 — dimensionnement SERVI PAR LE BACK (plus de calcul au front) : puissance installable
     # = emprise toit × ratio kWc/m² (lu de la config, écrit à l'écran) ; production annuelle
     # = kWc × productible PVGIS. Absents → None (jamais un zéro fabriqué).
@@ -1192,8 +1354,7 @@ def _cle_successions(db: Session, commune, sdp_min, limit, offset) -> str:
     from ..fraicheur_caches import empreinte_attendue
     vs = db.execute(text(
         "SELECT coalesce(max(computed_at)::text, '∅') FROM parcel_veille_succession")).scalar()
-    rne = db.execute(text("SELECT coalesce(max(last_sync_at)::text, '∅') FROM data_sources "
-                          "WHERE name = 'INPI RNE (dirigeants)'")).scalar()
+    rne = db.execute(text("SELECT concat(current_date, '/', max(ingested_at)) FROM pm_dirigeants")).scalar()
     return (f"{empreinte_attendue(db)}|vs={vs}|rne={rne}"
             f"|c={commune}|sdp={sdp_min}|lim={limit}|off={offset}")
 
@@ -1208,7 +1369,8 @@ def successions_liste(commune: str | None = None,
     de règle regles/sdp_residuelle_m2.py). Surface/zonage Sourcés ; propriétaire = PM DGFiP (public).
     Le millésime du signal (date du calcul Score V) et la date amont RNE voyagent au bandeau."""
     try:
-        cle = _cle_successions(db, commune, sdp_min, limit, offset)
+        with db.begin_nested():
+            cle = _cle_successions(db, commune, sdp_min, limit, offset)
     except Exception:  # noqa: BLE001 — clé indisponible → calcul direct (jamais un cache menteur)
         return _calcul_successions(db, commune, sdp_min, limit, offset)
     return _SUCCESSIONS_MEMO.get_or_compute(
@@ -1251,6 +1413,8 @@ def _successions_zones_a_cheval(db: Session, idus: list[str]) -> dict[str, str]:
 def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
     if not db.execute(text("SELECT to_regclass('parcel_veille_succession') IS NOT NULL")).scalar():
         raise HTTPException(503, "signal succession non calculé (table absente).")
+    if not db.execute(text("SELECT to_regclass('pm_dirigeants') IS NOT NULL")).scalar():
+        raise HTTPException(503, "Registre des dirigeants indisponible.")
     # `p_model_ext_dataset` n'est PAS une table ORM (bâtie par le feature store) : elle peut manquer
     # sur une base neuve (même garde que models.py) — la SDP est alors servie inconnue, jamais un 500.
     has_ext = bool(db.execute(text("SELECT to_regclass('p_model_ext_dataset') IS NOT NULL")).scalar())
@@ -1264,7 +1428,7 @@ def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
     # SA/SAS/SEM/société d'HLM/SCA ne « succède » pas quand son président vieillit → écartée ici. La
     # SCI dormante reste toujours servie. Filtre au SERVICE : corrige le snapshot courant sans re-run
     # Score V ; une fois `veille_succession_eligible` rejouée, la table ne portera plus ces formes.
-    filtre_forme = " AND (v.sci_dormante OR upper(coalesce(pm.forme_juridique,'')) = ANY(:formes))"
+    filtre_forme = " AND (v.sci_dormante OR upper(trim(pm.forme_juridique)) = ANY(:formes))"
     # Filtre « résiduel minimum » : sans seuil, les SDP inconnues (NULL — hors PLU) restent listées
     # (triées en queue) ; avec un seuil, une SDP inconnue ne peut pas le prouver → exclue.
     where = ("WHERE 1=1" + filtre_forme + (" AND p.commune = :c" if commune else "")
@@ -1275,40 +1439,50 @@ def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
     # Score V : le couple nom/âge décrit la même personne, daté par la même ingestion (bandeau `rne`).
     join_dir = """
         LEFT JOIN LATERAL (
-            SELECT NULLIF(trim(coalesce(dd.prenoms,'') || ' ' || coalesce(dd.nom,'')), '') AS dirigeant_nom,
-                   (EXTRACT(year FROM current_date)::int - substring(dd.date_naissance, 1, 4)::int) AS age
-              FROM pm_dirigeants dd
-             WHERE dd.siren = pm.siren AND dd.type_personne = 'INDIVIDU'
-               AND dd.date_naissance ~ '^[0-9]{4}'
-             ORDER BY dd.date_naissance ASC LIMIT 1
+            SELECT candidat.*, true AS present
+              FROM (
+                SELECT CASE WHEN dd.diffusible IS TRUE THEN
+                         NULLIF(trim(coalesce(dd.prenoms,'') || ' ' || coalesce(dd.nom,'')), '')
+                       END AS dirigeant_nom,
+                       CASE WHEN dd.actif IS NOT FALSE AND dd.diffusible IS TRUE
+                              AND dd.date_naissance ~ '^[1-9][0-9]{3}-(0[1-9]|1[0-2])$'
+                            THEN extract(year FROM age(current_date, to_date(dd.date_naissance, 'YYYY-MM')))::int
+                       END AS age, dd.id
+                  FROM pm_dirigeants dd
+                 WHERE dd.siren = pm.siren AND dd.type_personne = 'INDIVIDU'
+              ) candidat
+             ORDER BY (age BETWEEN 18 AND 99) DESC NULLS LAST, age DESC NULLS LAST, id
+             LIMIT 1
         ) dir ON true"""
     base = f"""
         FROM parcel_veille_succession v
         JOIN parcels p ON p.idu = v.parcelle_id
         {join_ext}
         LEFT JOIN parcel_zone_plu z ON z.idu = v.parcelle_id
-        LEFT JOIN parcelle_personne_morale pm ON pm.idu = v.parcelle_id{join_dir}"""
-    # OUTILS-P1-1 (pt 1) — un âge AFFICHÉ ≥ 100 ans est invraisemblable (dirigeant décédé, date amont
-    # erronée) : la parcelle SORT de la liste et est COMPTÉE à part (`n_age_ecarte`), jamais écartée en
-    # silence. L'âge affiché = dérivé RNE quand il existe, sinon l'âge figé du signal (SCI dormante : pas
-    # d'âge, jamais écartée ici). Le repère est le même pour l'exclusion et pour l'affichage.
-    age_affiche = "coalesce(dir.age, v.dirigeant_age)"
+        JOIN parcelle_personne_morale pm ON pm.idu = v.parcelle_id AND pm.siren = v.siren{join_dir}"""
+    # Sans dirigeant direct dans le RNE, le calcul historique peut avoir utilisé
+    # un gérant indirect ou Recherche d'entreprises. On date explicitement ce repli.
+    # Une ligne directe inexploitable ne réactive pas un ancien âge.
+    age_affiche = "(CASE WHEN dir.present THEN dir.age ELSE v.dirigeant_age END)"
     ecart_age = f"((NOT v.sci_dormante) AND {age_affiche} >= 100)"
-    where_elig = f"{where} AND NOT {ecart_age}"
+    eligible = f"(v.sci_dormante OR {age_affiche} BETWEEN :age_min AND 99)"
     params = {"c": commune, "smin": sdp_min, "annee": annee,
-              "formes": sorted(score_v_constants.VEILLE_SUCCESSION_FORMES)}
-    total = int(db.execute(text(f"SELECT count(*) {base} {where_elig}"), params).scalar() or 0)
-    n_age_ecarte = int(db.execute(
-        text(f"SELECT count(*) {base} {where} AND {ecart_age}"), params).scalar() or 0)
+              "formes": sorted(score_v_constants.VEILLE_SUCCESSION_FORMES),
+              "age_min": score_v_constants.VEILLE_SUCCESSION_AGE_MIN}
+    total, n_age_ecarte = db.execute(text(f"""
+        SELECT count(*) FILTER (WHERE {eligible}),
+               count(*) FILTER (WHERE {ecart_age})
+        {base} {where}"""), params).one()
     rows = db.execute(text(f"""
         SELECT v.parcelle_id AS idu, p.commune AS commune,
                round(p.surface_m2)::int AS surface_m2,
                coalesce(z.zone_lib, z.zone_fam) AS zone, z.zone_fam AS zone_fam,
                {sdp_expr} AS sdp_residuelle_m2,
-               {age_affiche} AS dirigeant_age, v.sci_dormante,
-               dir.dirigeant_nom,
+               CASE WHEN {age_affiche} BETWEEN 18 AND 99 THEN {age_affiche} END AS dirigeant_age, v.sci_dormante,
+               CASE WHEN dir.age BETWEEN 18 AND 99 THEN dir.dirigeant_nom END AS dirigeant_nom,
+               (dir.present IS NULL AND v.dirigeant_age BETWEEN 18 AND 99) IS TRUE AS age_au_calcul,
                pm.denomination, pm.siren
-        {base} {where_elig}
+        {base} {where} AND {eligible}
         ORDER BY {ordre}
         LIMIT :lim OFFSET :off"""),
         {**params, "lim": limit, "off": offset}).mappings().all()
@@ -1338,23 +1512,14 @@ def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
     # il est servi même quand le filtre rend 0 ligne (l'état vide honnête le cite).
     maj = db.execute(text(
         "SELECT to_char(max(computed_at), 'DD/MM/YYYY') FROM parcel_veille_succession")).scalar()
-    # FRAICHEUR-FIX-1 (point 3) — date RNE servie = celle de la DONNÉE (max(ingested_at) de
-    # pm_dirigeants), plus `data_sources.last_sync_at` (une date de catalogue qui pouvait diverger de
-    # l'ingéré : FRAICHEUR-1 §3.3 — l'écran montrait « au 06/10 » sans ingestion correspondante). Repli
-    # sur le catalogue uniquement si la table est absente (base partielle).
     rne = db.execute(text(
-        "SELECT to_char(max(ingested_at), 'DD/MM/YYYY') FROM pm_dirigeants")).scalar() \
-        if db.execute(text("SELECT to_regclass('pm_dirigeants') IS NOT NULL")).scalar() else None
-    if not rne:
-        rne = db.execute(text("SELECT to_char(max(last_sync_at), 'DD/MM/YYYY') FROM data_sources "
-                              "WHERE name = 'INPI RNE (dirigeants)'")).scalar()
+        "SELECT to_char(max(ingested_at), 'DD/MM/YYYY') FROM pm_dirigeants")).scalar()
     return {"total": total, "n": len(items), "items": items,
             "n_age_ecarte": n_age_ecarte,   # OUTILS-P1-1 (pt 1) — parcelles sorties (âge ≥ 100 ans)
             "maj": maj, "rne_sync": rne,
             "source": "RNE INPI (dirigeants) · Recherche d'entreprises (DINUM) · fichiers PM DGFiP",
-            "avertissement": ("Radar patrimonial (horizon 3-7 ans) : dirigeant âgé ou SCI dormante — "
-                              "une succession PROBABLE, pas une succession ouverte ni un décès "
-                              "constaté. Aucune date par parcelle : le signal est daté du calcul.")}
+            "avertissement": ("Ces indices sur la société propriétaire ne permettent de confirmer "
+                              "ni une succession ni une échéance de transmission.")}
 
 
 # ── OUTILS-MUSCLER-3 — outil « Blocs fonciers ». Sert la table `parcel_blocs` (bâtie par le batch
@@ -1364,6 +1529,7 @@ def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
 
 @router.get("/blocs")
 def blocs_liste(commune: str | None = None,
+                siren: str | None = Query(None, description="SCAN-FIX-2 (M4) — restreindre aux blocs d'UN propriétaire (SIREN)"),
                 surface_min: int = Query(0, ge=0),
                 sdp_min: int = Query(0, ge=0),
                 n_min: int = Query(2, ge=2),
@@ -1375,13 +1541,19 @@ def blocs_liste(commune: str | None = None,
     nombre de parcelles). Les propriétaires de droit public (commune, État, collectivité, EPF/EP,
     SEM — classés par la catégorie juridique de la source, `classify_dgfip`, jamais une liste en dur)
     sont ÉCARTÉS par défaut ; `inclure_publics=true` les rétablit. Le bandeau dit combien sont écartés."""
+    # ROBUSTESSE — appels EN DIRECT (tests) où le défaut `Query()` n'est pas résolu : on retombe sur None.
+    siren = siren if isinstance(siren, str) else None
     if not db.execute(text("SELECT to_regclass('parcel_blocs') IS NOT NULL")).scalar():
         raise HTTPException(503, "blocs non calculés (table absente — lancer `labuse blocs-build`).")
     where = ("WHERE n_parcelles >= :nmin"
              + (" AND :c = ANY(communes)" if commune else "")
+             # SCAN-FIX-2 (M4) — le paramètre `siren` était IGNORÉ (absent de la signature) : il filtre
+             # désormais réellement les blocs du propriétaire (9 chiffres, même SIREN que Scan patrimoine).
+             + (" AND siren = :siren" if siren else "")
              + (" AND surface_totale_m2 >= :surfmin" if surface_min else "")
              + (" AND sdp_residuelle_m2 >= :sdpmin" if sdp_min else ""))
-    params = {"nmin": n_min, "c": commune, "surfmin": surface_min, "sdpmin": sdp_min}
+    params = {"nmin": n_min, "c": commune, "siren": (siren or "").strip()[:9],
+              "surfmin": surface_min, "sdpmin": sdp_min}
     where_f = where + ("" if inclure_publics else " AND is_public = false")
     total = int(db.execute(text(f"SELECT count(*) FROM parcel_blocs {where_f}"), params).scalar() or 0)
     # Combien de blocs publics correspondraient aux mêmes filtres (le bandeau dit combien sont écartés).
@@ -1389,10 +1561,10 @@ def blocs_liste(commune: str | None = None,
         f"SELECT count(*) FROM parcel_blocs {where} AND is_public = true"), params).scalar() or 0)
     rows = db.execute(text(f"""
         SELECT b.id AS bloc_id, b.siren, b.denomination, b.n_parcelles, b.surface_totale_m2,
-               b.communes, b.sdp_residuelle_m2, b.sdp_couverture, b.zonages, b.is_public,
+               b.communes, CASE WHEN b.sdp_couverture > 0 THEN b.sdp_residuelle_m2 END AS sdp_residuelle_m2, b.sdp_couverture, b.zonages, b.is_public,
                (SELECT min(m.idu) FROM parcel_bloc_membres m WHERE m.bloc_id = b.id) AS idu_repr
         FROM parcel_blocs b {where_f}
-        ORDER BY b.sdp_residuelle_m2 DESC, b.id
+        ORDER BY sdp_residuelle_m2 DESC NULLS LAST, b.id
         LIMIT :lim OFFSET :off"""),
         {**params, "lim": limit, "off": offset}).mappings().all()
     items = [dict(r) for r in rows]
@@ -1404,8 +1576,8 @@ def blocs_liste(commune: str | None = None,
             "n_publics": n_publics, "inclure_publics": inclure_publics,
             "maj": maj, "millesime": millesime,
             "source": "Fichiers des personnes morales (DGFiP) · contiguïté cadastrale (PostGIS)",
-            "avertissement": ("Les parcelles CONTIGUËS d'un même propriétaire personne morale (SIREN), "
-                              "regroupées en une assiette. Uniquement des personnes morales : les "
+            "avertissement": ("Parcelles reliées à 0,5 m ou moins et rattachées au même titulaire DGFiP, "
+                              "y compris par un coin. Uniquement des personnes morales : les "
                               "particuliers n'ont pas d'identité stable d'une parcelle à l'autre. Les "
                               "propriétaires de droit public sont écartés par défaut. La SDP résiduelle "
                               "est Estimée (enveloppe de la fiche), sommée sur le bloc.")}
@@ -1419,7 +1591,8 @@ def bloc_detail(bloc_id: int, db: Session = Depends(get_db)) -> dict:
         raise HTTPException(503, "blocs non calculés (table absente).")
     head = db.execute(text(
         "SELECT id AS bloc_id, siren, denomination, n_parcelles, surface_totale_m2, communes, "
-        "sdp_residuelle_m2, sdp_couverture, zonages FROM parcel_blocs WHERE id = :id"),
+        "CASE WHEN sdp_couverture > 0 THEN sdp_residuelle_m2 END AS sdp_residuelle_m2, "
+        "sdp_couverture, zonages FROM parcel_blocs WHERE id = :id"),
         {"id": bloc_id}).mappings().first()
     if head is None:
         raise HTTPException(404, "bloc introuvable.")
@@ -1978,8 +2151,13 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     # résolues par charger() dans le profil), plus jamais sector_price en direct.
     from .. import marche_service
     prix = marche_service.marche_dvf(db, idu, profil=marche_service.DVF_BANQUIER_ADAPTATIF)
+    # OUTIL-COMMUNES-FIX-12 LOT 1 (ASTRA-9 §1, Cilaos AC0139) — on TRANSMET le périmètre RÉELLEMENT
+    # utilisé : `commune_fallback` dit que l'effectif/la médiane viennent de la COMMUNE entière (le
+    # rayon adaptatif n'a pas réuni le seuil). Sans ce drapeau, l'en-tête (lib/marche.ts:25) retombait
+    # sur `radius_m` et affichait « rayon 1 500 m » pour 82 ventes qui n'y sont pas. Avec, il affiche
+    # « commune entière ». Même source que le bilan (sector_price) : aucun chiffre recalculé ici.
     out["marche"] = {k: prix.get(k) for k in ("type_prix", "median", "q1", "q3", "n", "fiabilite",
-                                              "tendance", "volatilite", "radius_m") if k in prix}
+                                              "tendance", "volatilite", "radius_m", "commune_fallback") if k in prix}
     # P14 (dernière passe) : fraîcheur DVF — période RÉELLE couverte (SQL), pour que l'utilisateur
     # sache de QUAND datent les prix (« fiabilité fragile » reste, c'est le n de ventes).
     out["marche"]["dvf_couverture"] = _dvf_couverture(db)
@@ -2160,8 +2338,12 @@ def _worker_etude(data: dict, idus: list[str]) -> dict:
         _attach_au_ouverture(s, out, idus)            # vérif #2 — caveat AU, comme Comparer
         _attach_contraintes_signalees(s, out, idus)   # A5 — mêmes contraintes que le Dossier §5
         _attach_zone_gabarit(s, out, idus)            # A3 — zone d'implantation lue du Gabarit
-        # ETUDE-FIABLE-1 (LOT B1) — on ENREGISTRE le résultat affiché (une révision) : le PDF et la
-        # réouverture le reliront sans rappeler le moteur. Best-effort (jamais bloquant pour l'étude).
+        if not out.get("lotissement") and not out.get("hors_perimetre"):
+            _attach_garde_fiche(s, out, idus)
+            from ..exports.etude_faisabilite import surface_scenario
+            variante = next((v for v in out.get("variantes", []) if not v.get("absente")), None)
+            if variante:
+                out["surface_retenue"] = surface_scenario(out, variante)["phrase"]
         revisions_mod.enregistrer(s, out)
     return out
 
@@ -2174,7 +2356,7 @@ def _worker_etude_pdf(data: dict, idus: list[str], scenario_ref: str | None, gen
     quelle → 400 ; toute autre erreur de rendu → 500 technique, comme avant."""
     from ..db import session_scope
     from ..implantation import revisions as revisions_mod
-    from ..implantation.service import _study_id, etudier_payload
+    from ..implantation.service import _study_id
     from ..exports import etude_faisabilite as ef
     from ..exports.rendu import render_pdf
     # ETUDE-FIABLE-1 (LOT B3) — le PDF est rendu DEPUIS LA RÉVISION AFFICHÉE, sans rappeler le moteur :
@@ -2184,17 +2366,8 @@ def _worker_etude_pdf(data: dict, idus: list[str], scenario_ref: str | None, gen
     study_id = _study_id(data)
     with session_scope() as s:
         payload = revisions_mod.charger(s, study_id)
-        if payload is None:
-            payload = etudier_payload(s, data)        # chemin de repli : aucune révision stockée
-            revisions_mod.enregistrer(s, payload)     # on enregistre le payload MOTEUR (base)
-        # EXPORTS-FIX-3 LOT 3 (relecture) — les enrichissements (contraintes signalées, DPU/TRI/endiguement,
-        # garde d'honnêteté) sont RÉ-ATTACHÉS À CHAQUE EXPORT, hors du cache de révision : une révision
-        # stockée avant un correctif d'affichage ne doit pas servir un libellé périmé (même piège que le
-        # cache de fiche). Déterministes depuis la base → rejeu identique. N'altèrent pas le moteur.
-        _attach_au_ouverture(s, payload, idus)
-        _attach_contraintes_signalees(s, payload, idus)
-        _attach_zone_gabarit(s, payload, idus)
-        _attach_garde_fiche(s, payload, idus)
+    if payload is None:
+        payload = _worker_etude(data, idus)
     # FIX-FINAL-1 (régression NU-E-055 / NU-D-001) — refus « hors périmètre » : document de refus honnête
     # (jamais un 500 technique ni un 400 muet), comme l'écran sert le verdict sans planter.
     if payload.get("hors_perimetre"):
@@ -2208,17 +2381,17 @@ def _worker_etude_pdf(data: dict, idus: list[str], scenario_ref: str | None, gen
             "payload": payload}   # payload complet → archivage identique côté parent
 
 
-def _cible_processus(q, fn, args) -> None:
-    """Point d'entrée du processus enfant : exécute `fn(*args)` et renvoie ("ok", résultat) ou
-    ("err", exception) par la file. L'exception traverse le pickle (ValueError, etc.) ; si elle n'est pas
-    picklable, on renvoie un RuntimeError portant son repr (jamais de silence)."""
+def _cible_processus(envoi, fn, args) -> None:
+    """Transmet le résultat ou l'exception avant de fermer le canal."""
     try:
-        q.put(("ok", fn(*args)))
-    except BaseException as exc:  # noqa: BLE001 — toute erreur de l'enfant doit remonter au parent
+        envoi.send(("ok", fn(*args)))
+    except BaseException as exc:
         try:
-            q.put(("err", exc))
-        except Exception:  # noqa: BLE001 — exception non picklable
-            q.put(("err", RuntimeError(repr(exc))))
+            envoi.send(("err", exc))
+        except Exception:
+            envoi.send(("err", RuntimeError(repr(exc))))
+    finally:
+        envoi.close()
 
 
 def _tuer_processus(p: "multiprocessing.Process") -> None:
@@ -2232,9 +2405,18 @@ def _tuer_processus(p: "multiprocessing.Process") -> None:
         p.join(1.0)
 
 
-def _dans_processus(fn, args: tuple):
-    """Exécute `fn(*args)` dans un processus séparé « spawn », borné à `etude_timeout_s`. Rend le résultat,
-    ou lève HTTPException(503) à la borne APRÈS avoir tué l'enfant, ou ré-élève l'exception de l'enfant."""
+def _etude_async_timeout_s() -> float:
+    """ETUDE-AUDIT-FIX-1 LOT 2 — borne de SÉCURITÉ du calcul EN TÂCHE DE FOND (anti-zombie), large : le
+    moteur s'auto-borne déjà (150 candidats + budget de temps) et rend un résultat PARTIEL bien avant. Le
+    client ne subit plus cette borne (il attend par polling, jamais de 503)."""
+    import os
+    return float(os.environ.get("LABUSE_ETUDE_ASYNC_TIMEOUT_S", "900"))
+
+
+def _dans_processus(fn, args: tuple, timeout_s: float | None = None):
+    """Exécute `fn(*args)` dans un processus séparé « spawn », borné à `timeout_s` (défaut `etude_timeout_s`).
+    Rend le résultat, ou lève HTTPException(503) à la borne APRÈS avoir tué l'enfant, ou ré-élève
+    l'exception de l'enfant."""
     # FIX-NU3-3 (K-CHG-03) — PLAFOND de processus d'étude simultanés : on prend une place dans la file
     # AVANT de spawner. File pleine (aucune place libérée dans le délai) → 503 honnête, sans spawner
     # (la RAM ne sature pas, fiche/carte restent réactives). La place est tenue pendant tout le calcul.
@@ -2245,27 +2427,66 @@ def _dans_processus(fn, args: tuple):
     except FileEtudePleine:
         raise HTTPException(503, detail=_ETUDE_FILE_PLEINE)
     ctx = multiprocessing.get_context("spawn")
-    q = ctx.Queue()
-    p = ctx.Process(target=_cible_processus, args=(q, fn, args), name="etude", daemon=True)
-    p.start()
+    reception, envoi = ctx.Pipe(duplex=False)
+    p = ctx.Process(target=_cible_processus, args=(envoi, fn, args), name="etude", daemon=True)
     try:
-        try:
-            statut, charge = q.get(timeout=_etude_timeout_s())
-        except _queue.Empty:
-            # borne dépassée : on TUE l'enfant (le calcul s'arrête vraiment, pas de thread/processus fantôme)
+        p.start()
+        envoi.close()
+        delai = timeout_s if timeout_s is not None else _etude_timeout_s()
+        if not attendre_processus([reception, p.sentinel], timeout=delai):
             raise HTTPException(503, detail=_ETUDE_TROP_LOURDE)
+        try:
+            statut, charge = reception.recv()
+        except EOFError as exc:
+            raise RuntimeError("Le processus de calcul s’est arrêté avant de rendre son résultat.") from exc
         if statut == "err":
             raise charge   # ValueError → 400 côté route ; autre → gérée par la route (PDF : 500 technique)
         return charge
     finally:
         _tuer_processus(p)
-        q.close()
+        reception.close()
+        envoi.close()
         cm.__exit__(None, None, None)   # libère la place de la file pour l'étude suivante
 
 
 def _etudier_borne(data: dict) -> dict:
     idus = [str(i).strip() for i in (data.get("idus") or []) if str(i).strip()]
     return _dans_processus(_worker_etude, (data, idus))
+
+
+# ETUDE-AUDIT-FIX-1 LOT 2 (défaut 2) — CALCUL EN TÂCHE DE FOND. Le lancement rend la main TOUT DE SUITE :
+# un thread détaché calcule l'étude dans un sous-processus tuable (GIL libre pour l'API) et ENREGISTRE la
+# révision (clé = study_id). L'écran attend par POLLING (animation de l'app) ; le résultat reste
+# récupérable même si le client quitte la page (il est en base, relu par study_id / config). Plus de 503.
+# Registre en mémoire du worker : il ne porte QUE l'état transitoire (en cours / échec) ; la VÉRITÉ du
+# résultat est la révision persistée (cross-worker). Un study_id disparaît du registre dès la révision écrite.
+import threading as _threading  # noqa: E402
+
+_ETUDE_JOBS: dict[str, dict] = {}
+_ETUDE_JOBS_LOCK = _threading.Lock()
+
+
+def _etude_job_echec_message(exc: BaseException) -> str:
+    if isinstance(exc, HTTPException):
+        det = exc.detail
+        if isinstance(det, dict) and det.get("message"):
+            return str(det["message"])
+    return ("L'étude n'a pas pu être calculée. Relancez — sur une assiette très lourde, essayez moins "
+            "de parcelles.")
+
+
+def _lancer_etude_fond(data: dict, idus: list[str], study_id: str) -> None:
+    """Thread détaché : calcule l'étude (sous-processus tuable) → la révision est écrite par `_worker_etude`.
+    Succès → on retire le study_id du registre (le polling lira la révision). Échec → état « echec » consigné
+    (le client le lira par polling, jamais un 503)."""
+    try:
+        _dans_processus(_worker_etude, (data, idus), timeout_s=_etude_async_timeout_s())
+        with _ETUDE_JOBS_LOCK:
+            _ETUDE_JOBS.pop(study_id, None)
+    except BaseException as exc:  # noqa: BLE001 — tout échec du fond est consigné, jamais propagé en 503 client
+        logging.getLogger("labuse").exception("étude de faisabilité : calcul de fond en échec")
+        with _ETUDE_JOBS_LOCK:
+            _ETUDE_JOBS[study_id] = {"etat": "echec", "message": _etude_job_echec_message(exc)}
 
 
 def _attach_au_ouverture(db: Session, payload: dict, idus) -> None:
@@ -2389,13 +2610,22 @@ def _attach_garde_fiche(db: Session, payload: dict, idus) -> None:
     try:
         from ..faisabilite.potentiel_batir import potentiel_batir
         pot = potentiel_batir(db, idus[0])
-        gf = {"sdp_fiche_m2": pot.get("sdp_restante_m2"), "motif_fiche": pot.get("motif")}
+        # ETUDE-AUDIT-FIX-1 (relecture pt4) — la « surface à retenir » et la SDP fiche portent sur
+        # l'ASSIETTE ENTIÈRE (terrain nu), pas la 1ʳᵉ parcelle : l'esquisse est dessinée sur l'assiette
+        # FUSIONNÉE, on ne peut pas la comparer à l'estimation d'une seule parcelle (Étang-Salé : 483 m²
+        # pour AW0099 seule face à 2 730 m² dessinés sur les 4 parcelles). On SOMME chaque parcelle ;
+        # une parcelle non calculable est ignorée.
+        _resid = [potentiel_batir(db, i).get("sdp_restante_m2") for i in idus]
+        _resid = [r for r in _resid if isinstance(r, (int, float))]
+        gf = {"sdp_fiche_m2": round(sum(_resid), 1) if _resid else None, "motif_fiche": pot.get("motif")}
         # CAPACITE-1 (LOT C) — l'ESTIMATION RAPIDE (table rase, moteur analytique) sert de base à
         # « surface à retenir ». On la lit via la MÊME fonction que le Dossier (table rase LIVE), pour
         # que les deux documents concordent même sur une parcelle bâtie (colonne de run partielle).
         try:
             from ..faisabilite.surface_retenue import estimation_rapide_m2
-            gf["sdp_max_m2"] = estimation_rapide_m2(db, idus[0])
+            _ests = [estimation_rapide_m2(db, i) for i in idus]
+            _ests = [e for e in _ests if isinstance(e, (int, float))]
+            gf["sdp_max_m2"] = round(sum(_ests), 1) if _ests else None
         except Exception:  # noqa: BLE001
             gf["sdp_max_m2"] = None
         # CAPACITE-1 (D4) — l'occupation SUPPOSÉE du Dossier (le « 45 % » : emprise constructible ×
@@ -2538,6 +2768,56 @@ def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     return out
+
+
+@router.post("/etude/async")
+def etude_async(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
+    """ETUDE-AUDIT-FIX-1 LOT 2 (défaut 2) — LANCE l'étude et REND LA MAIN TOUT DE SUITE (jamais de 503). Si
+    la révision existe déjà (même configuration), on la sert immédiatement (« pret » + payload). Sinon on
+    démarre le calcul EN TÂCHE DE FOND (thread détaché → sous-processus tuable, révision enregistrée à la
+    fin) et on renvoie « en_cours » + le study_id ; l'écran attend par /etude/job/{study_id}. ValueError
+    (entrée invalide) → 400."""
+    for idu in (body.idus or []):
+        idu = _check_idu(idu)
+    data = body.model_dump()
+    idus = [str(i).strip() for i in (data.get("idus") or []) if str(i).strip()]
+    from ..implantation import revisions as revisions_mod
+    from ..implantation.service import _study_id, valider_entree_etude
+    # ETUDE-AUDIT-FIX-1 LOT 2 — on VALIDE l'entrée AVANT de lancer (comme la route sync) : une entrée
+    # refusée (>8 parcelles, type/objectif inconnu, aucune parcelle) rend un 400 IMMÉDIAT, jamais un job
+    # de fond qui échouerait silencieusement.
+    try:
+        valider_entree_etude(data)
+        study_id = _study_id(data)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    if revisions_mod.charger(db, study_id) is not None:
+        return {"study_id": study_id, "etat": "pret"}
+    with _ETUDE_JOBS_LOCK:
+        deja = _ETUDE_JOBS.get(study_id)
+        if not (deja and deja.get("etat") == "en_cours"):
+            _ETUDE_JOBS[study_id] = {"etat": "en_cours"}
+            _threading.Thread(target=_lancer_etude_fond, args=(data, idus, study_id),
+                              name=f"etude-{study_id}", daemon=True).start()
+    return {"study_id": study_id, "etat": "en_cours"}
+
+
+@router.get("/etude/job/{study_id}")
+def etude_job(study_id: str, db: Session = Depends(get_db)) -> dict:
+    """ETUDE-AUDIT-FIX-1 LOT 2 (défaut 2) — ÉTAT d'un calcul lancé par /etude/async. « pret » + payload dès
+    que la révision est écrite (récupérable même après avoir quitté la page) ; « en_cours » tant qu'il
+    tourne ; « echec » + message si le calcul a échoué ; « inconnu » si ni révision ni job (→ relancer)."""
+    from ..implantation import revisions as revisions_mod
+    payload = revisions_mod.charger(db, study_id)
+    if payload is not None:
+        return {"etat": "pret", "payload": payload}
+    with _ETUDE_JOBS_LOCK:
+        job = _ETUDE_JOBS.get(study_id)
+    if job and job.get("etat") == "echec":
+        return {"etat": "echec", "message": job.get("message")}
+    if job and job.get("etat") == "en_cours":
+        return {"etat": "en_cours"}
+    return {"etat": "inconnu"}
 
 
 @router.get("/etude/revision/{study_id}")
@@ -2964,15 +3244,31 @@ def verif_procedure(idu: str, db: Session = Depends(get_db)) -> dict:
     active = V.procedure_active(e)
     if active:
         syn = V.synthese_commune(insee) or {}
+        # FIX-14 LOT 6 — le client lit une CITATION propre (organisme · objet · date · réf · lien), le
+        # MÊME champ que la carte commune (fiche_commune.plu_statut.source_citation), jamais la note de
+        # registre brute (« FIX-13 LOT 1 (pièces OUVERTES et lues) »). `source` BRUT reste servi pour
+        # l'admin mais n'est plus affiché. Source UNIQUE de la citation : plu_statut.
+        source_citation = None
+        try:
+            from .fiche_commune import plu_statut as _plu_statut
+            _ps = _plu_statut(db, insee, p["commune"])
+            source_citation = _ps.get("source_citation")
+        except Exception:  # noqa: BLE001 — la citation propre ne doit jamais faire 500 l'outil
+            source_citation = None
         out.update({
             "procedure_en_cours": True,
             "type": e["procedure"], "stade": e["stade"], "date_acte": e["date_acte"],
-            "source": e["source"], "source_url": e.get("source_url"),
+            "source": e["source"],   # BRUT (admin) — non affiché ; le client lit source_citation
+            "source_citation": source_citation,   # FIX-14 LOT 6 — affiché au client (propre)
+            "source_url": e.get("source_url"),
             "date_constat": e["date_constat"], "confiance": e["confiance"],
             "synthese": syn.get("etat"),
             "consequences": {
                 "sursis": (radar or {}).get("sursis"),          # None tant que débat PADD non constaté
                 "veille_au": (radar or {}).get("veille_au"),     # sur les déclassées zone-fermée/AU
+                "debat_padd_tenu": syn.get("debat_padd_tenu"),   # FIX-12 LOT 2 — fait daté (≠ sursis)
+                "sursis_autorise": syn.get("sursis_autorise"),       # FIX-14 LOT 5 — autorisation de surseoir (conseil)
+                "debat_recherche_le": syn.get("debat_recherche_le"), # FIX-14 LOT 6 — recherche infructueuse datée
             },
         })
     else:
@@ -3019,6 +3315,11 @@ def _plu_dates_gpu() -> dict:
         return {}
 
 
+def _date_lot_plu(idurba: str | None) -> str | None:
+    m = re.search(r"_(\d{4})(\d{2})(\d{2})$", idurba or "")
+    return "-".join(m.groups()) if m else None
+
+
 @router.get("/plu-annuaire/communes")
 def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
     """M51 — état du corpus par commune : SERVABLE (n extraits), RNU, révision non réconciliée,
@@ -3039,15 +3340,12 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
     # version = date_mairie ; publication GPU ; édition matérielle du PDF), ses actes postérieurs et
     # l'inventaire des procédures. L'écran dira laquelle il affiche ; l'absence de badge n'est plus lue
     # comme « aucune procédure ».
-    mil, dates = _plu_millesimes(), _plu_dates_gpu()
+    dates = _plu_dates_gpu()
     for c in res["communes"]:
         dg = dates.get(c["insee"], {})
-        # OUTIL-PLU-FIX-7 (point 4) — la date d'approbation AFFICHÉE est celle ÉCRITE dans le règlement
-        # (quand elle est vérifiée sur pièce et diffère du lot : L'Étang-Salé 22/06/2017 ≠ lot 17/09/2025) ;
-        # le millésime du LOT (= date du dépôt GPU, date_mairie/idurba) est TOUJOURS nommé comme tel.
-        lot = (mil.get(c["insee"], {}) or {}).get("date_mairie")
-        c["date_approbation"] = dg.get("date_approbation_ecrite") or lot
-        c["millesime_lot"] = lot
+        c["date_approbation"] = dg.get("date_approbation_ecrite")
+        c["derniere_modification_couverture"] = dg.get("derniere_modification_couverture")
+        c["millesime_lot"] = _date_lot_plu(c.get("idurba"))
         c["publication_gpu"] = dg.get("publication_gpu")
         c["edition"] = dg.get("edition")
         c["modifications"] = dg.get("modifications")
@@ -3109,8 +3407,9 @@ def plu_annuaire_pack(insee: str, db: Session = Depends(get_db)) -> dict:
 # titre : l'aperçu 3 lignes de la carte, sans répéter le titre affiché au-dessus. Heuristique pure
 # (aucune ré-ingestion), couverte par tests/test_plu_titre.py.
 _PLU_DASH = "-–—"
-_PLU_REF = re.compile(r"(?i)^\s*(?:ARTICLE|Article|article)\s+[A-Za-zÀ-ÿ]{0,5}\s*\.?\s*\d*[A-Za-z0-9.\-]*\s*")
-_PLU_SUB = re.compile(r"\b\d{1,2}\.\d{1,2}\b")
+_PLU_REF = re.compile(
+    r"(?i)^\s*article\s+(?:\d*AU\s*indic[ée]e\s*\d+|[A-Za-zÀ-ÿ]{0,5}\s*\.?\s*\d*[A-Za-z0-9.\-]*)\s*")
+_PLU_DEBUT_CORPS = re.compile(r"\b(?:\d{1,2}\.\d{1,2}|Se reporter au règlement)\b")
 
 
 def _plu_mot_maj(mot: str) -> bool:
@@ -3132,6 +3431,10 @@ def _plu_nettoie_titre(titre: str) -> str:
 def plu_titre_corps(verbatim: str) -> tuple[str | None, str]:
     """Scinde un extrait d'article en (titre « en clair », corps). `titre` = None si rien d'exploitable
     (le corps vaut alors le verbatim entier)."""
+    court = re.search(r"\n\s*(Non réglementé\.)\s*$", verbatim or "", re.I)
+    if court and len(verbatim[:court.start()].strip().splitlines()) == 1:
+        titre, _ = plu_titre_corps(verbatim[:court.start()])
+        return titre, court[1]
     # les PDF de règlement sèment des puces Wingdings (zone d'usage privé U+F000–F0FF) et des puces
     # Unicode (•, ·, ▪…) en tête de liste → on les remplace par une espace avant de normaliser.
     sans_puces = re.sub(r"[\uf000-\uf0ff\u2022\u2023\u25aa\u25e6\u00b7\u2219]", " ", verbatim or "")
@@ -3141,7 +3444,7 @@ def plu_titre_corps(verbatim: str) -> tuple[str | None, str]:
     reste = re.sub(r"^\d{1,2}\s*[" + _PLU_DASH + r"]\s*", "", reste)   # « 3 - » (sous-numéro collé au ref)
     if not reste:
         return None, plein
-    sub = _PLU_SUB.search(reste)
+    sub = _PLU_DEBUT_CORPS.search(reste)
     tete = reste[: sub.start()].strip() if sub else reste
     mots = tete.split(" ")
     # motif dominant — en-tête TOUT EN MAJUSCULES : le titre = le préfixe majuscule, le corps commence
@@ -3161,6 +3464,48 @@ def plu_titre_corps(verbatim: str) -> tuple[str | None, str]:
     titre_brut = tete if (len(tete) <= 110 and len(mots) <= 14) else " ".join(mots[:14])
     corps = reste[len(titre_brut):].strip()
     return _plu_nettoie_titre(titre_brut), corps
+
+
+# Pages physiques des fiches de l'édition 97410_PLU_20200206.
+_FICHES_BENOIT = {
+    **{f"NS{n}": page for debut, fin, page in (
+        (20, 21, 74), (22, 22, 75), (23, 25, 76), (26, 34, 77), (35, 36, 78),
+        (37, 40, 79), (41, 41, 80), (42, 46, 81)) for n in range(debut, fin + 1)},
+    "NTA47": 82, "NTA48": 83, "NTA49": 84, "NTA50": 84, "NTA51": 84, "NTA52": 84,
+    "NTA53": 86, "NTA54": 87,
+}
+
+
+def _plu_absence_documentaire(insee, idurba, zone, theme):
+    from ..plu.destinations import reglement_meta
+
+    secteur = (zone or "").strip().upper()
+    if (idurba == "97408_PLU_20260625" and secteur == "UP" and theme == "hauteur"):
+        document = "97408_reglement_20260625.pdf"
+        nature, debut, fin = "rattachement_incertain", 7, 7
+        texte = ("Zone Up : rattachement non établi dans le règlement écrit. La liste des zones urbaines "
+                 "ne permet pas de déterminer la règle de hauteur applicable. À vérifier auprès du service urbanisme.")
+    elif (idurba == "97410_PLU_20200206" and theme == "stationnement" and
+          (secteur in {"A", "ACOR", "ACU", "AI", "N", "NCI", "NERL", "NP", "NPNR"} or secteur in _FICHES_BENOIT)):
+        document = "97410_reglement_20200206.pdf"
+        nature = "absence_documentee"
+        debut, fin = (32, 39) if secteur.startswith("A") else (40, 48)
+        texte = (f"Le chapitre de la zone {secteur[0]} ne comporte pas d’article propre au stationnement "
+                 "et n’y fixe aucun nombre de places.")
+    else:
+        return None
+    pdf = (reglement_meta(insee) or {}).get("url") or ""
+    if not pdf.endswith("/" + document):
+        return None
+    carte = {"nature": nature, "document": document, "texte": texte, "page_debut": debut,
+             "page_fin": fin, "url": f"{pdf}#page={debut}"}
+    if secteur in _FICHES_BENOIT:
+        page = _FICHES_BENOIT[secteur]
+        note = "La fiche du secteur ne fixe pas de nombre de places."
+        if secteur == "NTA53":
+            note += " Elle donne une orientation : « Principe d’accès piéton depuis le parking du Grand Etang »."
+        carte["complement"] = {"texte": note, "page": page, "url": f"{pdf}#page={page}"}
+    return carte
 
 
 @router.get("/plu-annuaire/search")
@@ -3206,6 +3551,7 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
     fetch = min(n_total, 1000) if n_total else limit
     res = search_reglement(db, q_fts, insee, limit=fetch, zone=zone, offset=0, terms=terms)
     for r in res:
+        r["millesime_lot"] = _date_lot_plu(r.get("idurba"))
         r["gpu_consult"] = "https://www.geoportail-urbanisme.gouv.fr/"
         # OUTIL-PLU-FIX-3 (points 2-3) — la page CITÉE est celle du mot dans l'article (`page_match`) ;
         # « p. X-Y » quand l'article court sur plusieurs pages ; le corps est l'extrait AUTOUR du mot,
@@ -3213,6 +3559,13 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
         r["page_pdf"] = r.get("page_match") or r.get("page_debut") or r.get("page_pdf")
         r["titre"], _corps = plu_titre_corps(r.get("texte_verbatim") or "")
         r["corps"] = r.get("extrait") or _corps
+        if (r.get("document") == "97423_reglement_20220602.pdf" and
+                r.get("article_ref") == "ARTICLE AUINDICEE 12" and r.get("page_debut") == 69 and r.get("pdf_url")):
+            indice = re.fullmatch(r"[12]?AU([ABCET])", (zone or "").upper())
+            if indice:
+                cible, page = {"A": ("Ua", 21), "B": ("Ub", 36), "C": ("Uc", 50),
+                               "E": ("Ue", 60), "T": ("Ub", 36)}[indice[1]]
+                r["renvoi_article"] = {"article": cible + " 12", "page": page, "url": f"{r['pdf_url']}#page={page}"}
         r.pop("page_map", None)
         if r.get("pagination_ambigue"):
             r["pagination_note"] = ("pagination du document ambiguë (double numérotation) — la page "
@@ -3221,21 +3574,34 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
     # (Saint-Paul sans filtre : AU1/AU3ST/AU4ST/AU5ST/AU6ST…) n'apparaît qu'UNE fois, avec la liste des
     # zones concernées (`zones_concernees`). La règle reste servable pour CHAQUE zone (rien n'est retiré de
     # la base ; le filtre d'une zone précise la ressert seule).
+    # OUTIL-PLU-FIX-10 (LOT 3) — un même article RÉÉDITÉ par LIVRET (Saint-Paul Usdu : La Plaine p.200,
+    # La Saline p.246, Guillaume p.306) reste accessible : on l'affiche UNE fois mais on JOINT la liste
+    # (`livrets`) de ses rééditions {livret, page} pour que le lecteur retrouve le bassin de son terrain.
     import re as _re_grp
-    _vus: dict[str, dict] = {}
+    _vus: dict[tuple[str, str | None], dict] = {}
     _group: list[dict] = []
+
+    def _liv_entry(r: dict) -> dict:
+        return {"livret": r.get("livret"), "page_pdf": r.get("page_match") or r.get("page_debut"),
+                "page_debut": r.get("page_debut"), "page_fin": r.get("page_fin")}
     for r in res:
         k = _re_grp.sub(r"\s+", " ", (r.get("texte_verbatim") or "")).strip()
-        if k and k in _vus:
-            g = _vus[k]
+        group_key = (k, r.get("mention_rattachement"))
+        if k and group_key in _vus:
+            g = _vus[group_key]
             if r.get("zone") and r["zone"] not in g["zones_concernees"]:
                 g["zones_concernees"].append(r["zone"])
+            if r.get("livret") and all(e["livret"] != r.get("livret") for e in g["livrets"]):
+                g["livrets"].append(_liv_entry(r))
         else:
             r["zones_concernees"] = [r["zone"]] if r.get("zone") else []
-            _vus[k] = r
+            r["livrets"] = [_liv_entry(r)] if r.get("livret") else []
+            _vus[group_key] = r
             _group.append(r)
     for g in _group:
         g["zones_concernees"] = sorted(z for z in g["zones_concernees"] if z)
+    if q.casefold() == "stationnement" and any(r.get("renvoi_article") for r in _group):
+        _group.sort(key=lambda r: not r.get("renvoi_article"))
     n_brut = len(res)                              # extraits bruts (avant regroupement d'affichage)
     n_group = len(_group)                          # entrées distinctes après regroupement
     res = _group[offset: offset + limit]           # pagination SUR la liste regroupée
@@ -3279,7 +3645,12 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
         res = [r for r in res if r.get("zone") is not None]
     # OUTIL-PLU-FIX-6 (point 1) — si le secteur filtré RENVOIE à une autre zone (AU3c→U3c), on le DIT.
     renvoi_note = zone_renvoi_note(zone, insee, db) if (zone and insee) else None
-    return {"query": q, "insee": insee, "n": len(res), "n_total": n_total,
+    absence_article = None
+    if n_total == 0 and insee and zone:
+        absence_article = _plu_absence_documentaire(insee, (mil or {}).get("idurba"), zone, q.casefold())
+        if absence_article:
+            message = absence_article["texte"]
+    return {"query": q, "insee": insee, "n": len(res), "n_total": n_total, "absence_article": absence_article,
             "n_extraits": n_brut,       # OUTIL-PLU-FIX-9 — total d'extraits bruts (avant regroupement)
             "n_groupes": n_group,       # total d'entrées distinctes après regroupement d'affichage
             "limit": limit, "offset": offset, "message": message,

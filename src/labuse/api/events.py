@@ -462,14 +462,19 @@ def evaluer_suivis(db: Session) -> dict:
         # 2) PERMIS SUR la parcelle (idu_codes contient l'idu) — jamais la proximité (secteur = veille).
         # OUTIL-PERMIS-FIX-9 (point 1) — la date de dépôt passe par LA fonction unique (depot_affichable) :
         # si elle est écartée (année ≠ AN_DEPOT…), on dit « autorisé le … » (date d'autorisation), jamais
-        # la date brute que la fiche rejette. La clé d'arrivée (`date_depot >= :d`) et la dédup permanente
-        # (idu+permit_id) ne changent PAS : aucune notification émise deux fois ni perdue. Concaténation
-        # (pas de f-string) car la condition contient `{4}` (regex de l'année).
+        # la date brute que la fiche rejette.
+        # OUTIL-PERMIS-FIX-12 (LOT 1) — la SÉLECTION du suivi se fait sur la DATE DE L'ÉVÉNEMENT réellement
+        # daté (`evenement_date_sql` = COALESCE(dépôt affichable, autorisation)) `>= :d`, non plus sur la
+        # date de dépôt BRUTE : un faux dépôt récent n'entre plus un permis autorisé AVANT le suivi, et un
+        # dépôt brut ancien n'écarte plus un permis autorisé DANS le suivi (ni un permis sans dépôt). La
+        # dédup reste PERMANENTE par IDENTIFIANT (idu, permit_id) — jamais la date : aucune notification
+        # émise deux fois ni perdue. Concaténation (pas de f-string) car la condition contient `{4}` (regex).
         from .. import permis_classe
         _permis_q = (
             "SELECT permit_id, type, (" + permis_classe.depot_affichable_sql("sitadel_permits.")
             + ")::text AS depot_aff, date::date::text AS d_aut FROM sitadel_permits "
-            "WHERE idu_codes @> to_jsonb(CAST(:idu AS text)) AND date_depot >= :d")
+            "WHERE idu_codes @> to_jsonb(CAST(:idu AS text)) AND ("
+            + permis_classe.evenement_date_sql("sitadel_permits.") + ") >= :d")
         for p in db.execute(text(_permis_q), {"idu": idu, "d": depuis}).mappings():
             if p["depot_aff"]:
                 detail = f"{p['type']} {p['permit_id']} déposé le {p['depot_aff']}."

@@ -90,17 +90,24 @@ def loyers_oll(db: Session, idu: str) -> dict:
 
 # ── C.11 — Trafic routier RN (§Réseaux, « Axes et nuisances ») ──────────────────────────────────
 def trafic_rn(db: Session, idu: str) -> dict:
-    """TMJA de l'axe RN le plus proche (≤ rayon) + distance. « sans objet » au-delà du rayon."""
+    """Dernier TMJA disponible dans le rayon sur l’axe RN le plus proche, avec sa distance. « sans objet » au-delà du rayon."""
     if not _has(db, "trafic_rn"):
         return {"disponible": False, "rayon_m": TMJA_RAYON_M,
                 "source": "Trafic RN — Région Réunion (SIR)", "millesime": None}
-    r = db.execute(text(
-        "SELECT t.route, t.tmja, t.nb_pl, t.annee, "
-        "       round(ST_Distance(t.geom::geography, p.centroid::geography)) AS dist "
-        "FROM trafic_rn t JOIN parcels p ON p.idu = :idu "
-        "WHERE t.tmja IS NOT NULL "
-        "  AND ST_DWithin(t.geom::geography, p.centroid::geography, :ray) "
-        "ORDER BY dist LIMIT 1"), {"idu": idu, "ray": float(TMJA_RAYON_M)}).mappings().first()
+    r = db.execute(text("""
+        WITH candidats AS MATERIALIZED (
+            SELECT t.id, t.route, t.tmja, t.nb_pl, t.annee,
+                   ST_Distance(t.geom::geography, p.centroid::geography) AS distance_m
+            FROM parcels p JOIN trafic_rn t
+              ON ST_DWithin(t.geom::geography, p.centroid::geography, :ray)
+            WHERE p.idu = :idu AND t.tmja IS NOT NULL
+        ), route_proche AS (
+            SELECT route FROM candidats ORDER BY distance_m, annee DESC NULLS LAST, id LIMIT 1
+        )
+        SELECT c.route, c.tmja, c.nb_pl, c.annee, round(c.distance_m) AS dist
+        FROM candidats c JOIN route_proche r ON c.route IS NOT DISTINCT FROM r.route
+        ORDER BY c.annee DESC NULLS LAST, c.distance_m, c.id LIMIT 1
+        """), {"idu": idu, "ray": float(TMJA_RAYON_M)}).mappings().first()
     if not r:
         return {"disponible": False, "rayon_m": TMJA_RAYON_M,
                 "source": "Trafic RN — Région Réunion (Système d'Information Routier)", "millesime": None}

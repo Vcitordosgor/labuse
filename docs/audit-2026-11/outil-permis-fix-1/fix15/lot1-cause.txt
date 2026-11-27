@@ -1,0 +1,24 @@
+OUTIL-PERMIS-FIX-15 — cause des deux disparitions de pc_caducs
+==============================================================
+Signature pg_stat_user_tables (labuse, 25/11 ~22h) :
+  n_tup_ins=0, n_tup_del=0, last_vacuum/analyse=NULL, reltuples=-1
+→ le relfilenode courant de pc_caducs n'a JAMAIS reçu d'INSERT : ce n'est pas
+  un DELETE/TRUNCATE mais une table FRAÎCHE jamais peuplée = une shadow VIDE
+  renommée en place par rebuild_swap.
+
+Mécanisme : build_pc_caducs → rebuild_swap crée une shadow, _populate() la
+remplit, puis DROP live + RENAME shadow→live. rebuild_swap publiait le résultat
+de _populate MÊME à 0 ligne (aucun garde-fou). Déclencheurs qui rebuild :
+  · CLI `fraicheur-derives` (chaîne nightly `ingest-bodacc` 06:40 en prod) ;
+  · un autre worktree jouant la même chaîne sur la base `labuse` partagée.
+Quand la source (sitadel_permits) est transitoirement VIDE/verrouillée (reload
+concurrent, bascule, statement_timeout), _populate rend 0 → la table servie
+(4 440 lignes) est écrasée par du vide, en silence.
+NB : relancer_local.sh (18h26) NE rebuild PAS pc_caducs (il ne purge que 4 caches
+de réponses + joue ensure_schema, qui ne touche pas pc_caducs) ; le vidage vient
+de la chaîne de dérivés, pas de la relance elle-même.
+Reproduit sur labuse_test : build#1→1 ligne ; source vidée ; build#2→0 (wipe).
+
+Correctif : rebuild_swap refuse le swap si shadow vide ET table servie peuplée
+(RebuildWouldEmptyError), AVANT tout DROP → table conservée. allow_empty=True
+pour un effacement volontaire. Protège aussi defisc_fenetres et score_e.

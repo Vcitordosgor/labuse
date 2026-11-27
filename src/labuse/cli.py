@@ -572,11 +572,16 @@ def ingest_sirene_etab_cmd(
     from . import models
     from .db import engine
     from .ingestion import seed_sources
-    from .ingestion.sirene_etablissements import build_sirene_etablissements
+    from .ingestion.sirene_etablissements import SOURCE_NAME, build_sirene_etablissements, ensure_tables
 
+    # Libérer les verrous DDL avant les lectures nationales distantes (plusieurs minutes).
     with session_scope() as s:
-        seed_sources.seed(s)
-        r = build_sirene_etablissements(s, geo_url=geo_url, stock_url=stock_url, log=typer.echo)
+        if not s.scalar(text("SELECT id FROM data_sources WHERE name=:nom"), {"nom": SOURCE_NAME}):
+            seed_sources.seed(s)
+        ensure_tables(s)
+    with session_scope() as s:
+        r = build_sirene_etablissements(s, geo_url=geo_url, stock_url=stock_url,
+                                        schema_pret=True, log=typer.echo)
     models.ensure_geom_2975(engine())
     typer.echo(f"✓ SIRENE établissements 974 : {r['n']} ({r['n_diffusion_partielle']} en diffusion "
                f"partielle) · millésime {r['millesime']}")
@@ -2299,10 +2304,9 @@ def ingest_georisques_cmd(
                             typer.echo(f"     ⚠ {nom} : pas de parcelles → bbox absente, aléas sautés.")
                         else:
                             sids = layers_ingest._source_ids(s)
-                            s.execute(text("DELETE FROM spatial_layers WHERE commune=:c AND kind='georisque_alea'"),
-                                      {"c": nom})
                             try:
-                                n_al = layers_ingest.ingest_georisque_alea(s, bbox, nom, None, sids, insee)
+                                with s.begin_nested():
+                                    n_al = layers_ingest.ingest_georisque_alea(s, bbox, nom, None, sids, insee)
                                 tot["georisque_alea"] += n_al
                                 typer.echo(f"     ✓ aléas DEAL : {n_al}")
                             except Exception as exc:  # noqa: BLE001 — une commune en échec ne bloque pas les autres
@@ -3013,7 +3017,7 @@ def rebuild_demo_cmd(
         # on ré-ingère seulement les COUCHES de la commune (geo-dvf/PPR/SAR/OSM/pente/PLU).
         typer.echo(f"▶ {n_parcels} parcelles présentes → ré-ingestion des COUCHES seulement…")
         with session_scope() as s:
-            s.execute(text("DELETE FROM spatial_layers WHERE commune = :c"), {"c": name})
+            s.execute(text("DELETE FROM spatial_layers WHERE commune = :c AND kind NOT IN ('ppr','georisque_alea')"), {"c": name})
             s.execute(text("DELETE FROM dvf_mutations WHERE commune = :c"), {"c": name})
             bb = s.execute(text("SELECT ST_XMin(e),ST_YMin(e),ST_XMax(e),ST_YMax(e) "
                                 "FROM (SELECT ST_Extent(geom) e FROM parcels WHERE commune=:c) t"),

@@ -5,10 +5,10 @@ anc:
   # A1 — couche probabiliste (INSEE RP, fichier détail Logements, variable EGOUL,
   # DOM uniquement : 1=égout, 2=fosse septique, 3=puisard, 4=à même le sol).
   insee:
-    millesime: "RP2022"
-    url_zip: "https://www.insee.fr/fr/statistiques/fichier/8647099/RP2022_logemt.zip"
-    url_dictionnaire: "https://www.insee.fr/fr/statistiques/fichier/8647099/varmod_logemt_2022.csv"
-    # le fichier national fait ~400 Mo compressés : cache local hors dépôt
+    millesime: "RP2023"
+    url_zip: "https://www.insee.fr/fr/statistiques/fichier/9070285/RP2023_logemtze.zip"
+    url_dictionnaire: "https://www.insee.fr/fr/statistiques/fichier/9070285/varmod_logemt_2023.csv"
+    # la zone E contient La Réunion (92 Mo compressés) : cache local hors dépôt
     cache_dir: "data/insee_rp"
   # contours IRIS (IGN Géoplateforme WFS, Licence Ouverte)
   iris:

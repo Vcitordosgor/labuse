@@ -1,10 +1,11 @@
 import { useMutation } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { verifProcedure, type VerifProcedure as VP } from '../../lib/api'
+import { messageChargement, verifProcedure, type VerifProcedure as VP } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2 (H1)
 import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3 (H1)
 import { ErrorState } from '../States'
+import { fmtDateNum } from '../../lib/format'   // FIX-12 LOT 2 — date du débat PADD tenu (mois/jour)
 
 // M41 Phase 2.6 — OUTIL « VÉRIF PROCÉDURE » : un IDU → la commune a-t-elle une procédure PLU en
 // cours ? L'outil LIT le radar (point de calcul unique, mêmes libellés que la fiche) — il ne calcule
@@ -13,6 +14,8 @@ import { ErrorState } from '../States'
 export function VerifProcedure() {
   const selectedIdu = useApp((s) => s.selectedIdu)
   const select = useApp((s) => s.select)   // RECETTE-1 F3 (H1) — fermer la fiche au Réinitialiser
+  const pluPrefill = useApp((s) => s.pluPrefill)       // OUTIL-COMMUNES-FIX-14 LOT 1 — IDU porté depuis la fiche
+  const setPluPrefill = useApp((s) => s.setPluPrefill)
   const m = useMutation({ mutationFn: (i: string) => verifProcedure(i.trim()) })
   const lancer = (i: string) => { if (i.trim().length >= 10) m.mutate(i) }
   // RECETTE-1 (F2, H1) — source de la parcelle (grise l'autre entrée). INVARIANT : 'carte' seulement
@@ -25,6 +28,13 @@ export function VerifProcedure() {
     else if (source === 'carte') { m.reset(); setSource(null) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIdu])
+  // OUTIL-COMMUNES-FIX-14 LOT 1 — porte « Vérif procédure » depuis la fiche : setModule('plu') a effacé
+  // selectedIdu ; l'IDU arrive par le prefill (qui survit au changement d'outil). On l'amorce UNE fois
+  // puis on le consomme (remis à null) pour ne pas re-vérifier à chaque passage dans l'outil.
+  useEffect(() => {
+    if (pluPrefill?.idu) { lancer(pluPrefill.idu); setSource('carte'); setPluPrefill(null) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   // RECETTE-1 (F3, H1) — Réinitialiser : vide le résultat + rend les deux entrées + ferme la fiche.
   const resetAll = () => { if (selectedIdu) select(null); m.reset(); setSource(null) }
   const d: VP | undefined = m.data
@@ -49,7 +59,7 @@ export function VerifProcedure() {
           onPick={(i, src) => { setSource(src); lancer(i) }} />
       </div>
 
-      {m.isError && <ErrorState message="Parcelle inconnue ou erreur." retry={m.variables ? () => m.mutate(m.variables!) : undefined} />}
+      {m.isError && <ErrorState message={messageChargement(m.error, "Parcelle inconnue ou erreur.")} retry={m.variables ? () => m.mutate(m.variables!) : undefined} />}
 
       {d && (
         <div data-verif-result className="flex flex-col gap-2">
@@ -61,8 +71,10 @@ export function VerifProcedure() {
             <div className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11.5px] text-txt">
               <div className="font-medium">▲ Procédure PLU en cours</div>
               <div className="mt-1">{d.synthese}</div>
+              {/* OUTIL-COMMUNES-FIX-14 LOT 6 — le client lit une CITATION propre (organisme · objet ·
+                  date · réf), jamais le nom de tour interne du registre (« FIX-13 LOT 1 … »). */}
               <div className="mt-1 text-[10px] text-txt-dim">
-                Sourcé {d.source} · confiance {d.confiance} · constaté le {d.date_constat}
+                Sourcé {d.source_citation ?? d.source} · confiance {d.confiance} · constaté le {d.date_constat}
                 {d.source_url && <> · <a href={d.source_url} target="_blank" rel="noreferrer" className="text-mint hover:underline">source ↗</a></>}
               </div>
               {cons?.veille_au && (
@@ -74,6 +86,26 @@ export function VerifProcedure() {
                 <div className="mt-2 border-t border-line-2 pt-2 text-[11px]">
                   <span className="font-medium text-st-ecartee">Sursis à statuer</span> — {cons.sursis.texte}
                   <div className="mt-0.5 text-[10px] text-txt-dim">{cons.sursis.base_legale}</div>
+                </div>
+              ) : cons?.debat_padd_tenu && cons?.sursis_autorise ? (
+                /* OUTIL-COMMUNES-FIX-14 LOT 5 — débat tenu ET autorisation expresse de surseoir (conseil) :
+                   les DEUX faits ensemble, sans conclure à un sursis sur la parcelle (aucune décision
+                   individuelle connue). Saint-Louis : délibération du 29/10/2024, art. 2. */
+                <div className="mt-2 border-t border-line-2 pt-2 text-[10px] text-txt-dim">
+                  Débat PADD tenu le {fmtDateNum(cons.debat_padd_tenu)}. Le conseil a autorisé le maire à surseoir à statuer (délibération du {cons.sursis_autorise.date_fr ?? fmtDateNum(cons.sursis_autorise.date)}, {cons.sursis_autorise.article ?? 'art. 2'}) — aucune décision de sursis connue pour cette parcelle.
+                  {cons.sursis_autorise.source_url && <> · <a href={cons.sursis_autorise.source_url} target="_blank" rel="noreferrer" className="text-mint hover:underline">pièce ↗</a></>}
+                </div>
+              ) : cons?.debat_padd_tenu ? (
+                /* OUTIL-COMMUNES-FIX-12 LOT 2 — « débat tenu » séparé de « sursis applicable » :
+                   même libellé que la fiche parcelle (point de calcul unique = radar). */
+                <div className="mt-2 border-t border-line-2 pt-2 text-[10px] text-txt-dim">
+                  Débat PADD tenu le {fmtDateNum(cons.debat_padd_tenu)} — sursis à statuer non armé (décision discrétionnaire du maire, non constatée).
+                </div>
+              ) : cons?.debat_recherche_le ? (
+                /* OUTIL-COMMUNES-FIX-14 LOT 6 — recherche infructueuse DATÉE (distincte du constat
+                   général) : Étang-Salé / Saint-Denis / Saint-Paul. */
+                <div className="mt-2 border-t border-line-2 pt-2 text-[10px] text-txt-dim">
+                  Pièce du débat PADD non retrouvée lors de la recherche du {fmtDateNum(cons.debat_recherche_le)} — pas de sursis servi.
                 </div>
               ) : (
                 <div className="mt-2 border-t border-line-2 pt-2 text-[10px] text-txt-dim">

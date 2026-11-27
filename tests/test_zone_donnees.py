@@ -124,7 +124,8 @@ def test_lot8_zone_demain_logements_et_au():
     _LON, _LAT = 55.65, -20.96
     zone = {"type": "Polygon", "coordinates": [[[_LON - 0.02, _LAT - 0.02], [_LON + 0.02, _LAT - 0.02],
             [_LON + 0.02, _LAT + 0.02], [_LON - 0.02, _LAT + 0.02], [_LON - 0.02, _LAT - 0.02]]]}
-    wkt_au = f"POLYGON(({_LON-0.001} {_LAT-0.001},{_LON+0.001} {_LAT-0.001},{_LON+0.001} {_LAT+0.001},{_LON-0.001} {_LAT+0.001},{_LON-0.001} {_LAT-0.001}))"
+    # Le secteur AU englobe la zone : seule sa partie intérieure est comptée.
+    wkt_au = "POLYGON((55.60 -21.01,55.70 -21.01,55.70 -20.91,55.60 -20.91,55.60 -21.01))"
     with session_scope() as s:
         s.execute(text(
             "INSERT INTO sitadel_permits (permit_id, type, date, commune, geom, raw) VALUES "
@@ -134,11 +135,16 @@ def test_lot8_zone_demain_logements_et_au():
         s.execute(text(
             "INSERT INTO spatial_layers (kind, subtype, name, geom) VALUES "
             "('plu_gpu_zone','AUc','AU test', ST_GeomFromText(:w,4326))"), {"w": wkt_au})
+        s.execute(text(
+            "INSERT INTO sitadel_permits (permit_id, type, date, commune, geom, raw) "
+            "SELECT 'ZDTEST02', type, date, commune, geom, jsonb_build_object('nb_lgt', 20, 'etat', '4') "
+            "FROM sitadel_permits WHERE permit_id='ZDTEST01'"))
+        aire_ha = round(Z._aire_zone(s, zone) / 10000)
         d = Z.zone_demain(s, zone)
-        s.execute(text("DELETE FROM sitadel_permits WHERE permit_id='ZDTEST01'"))
+        s.execute(text("DELETE FROM sitadel_permits WHERE permit_id IN ('ZDTEST01', 'ZDTEST02')"))
         s.execute(text("DELETE FROM spatial_layers WHERE name='AU test'"))
-    assert d["logements_autorises_36m"] == 12 and d["permis_36m"] == 1
-    assert d["au_zones_n"] == 1 and d["au_zones_ha"] >= 0
+    assert d["logements_autorises_36m"] == 12 and d["permis_36m"] == 2
+    assert d["au_zones_n"] == 1 and d["au_zones_ha"] == aire_ha
 
 
 def test_lot7_contraintes_plu_tableau_zones():

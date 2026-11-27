@@ -105,25 +105,22 @@ def test_simulplu_zones_liste_les_au(db_session):
 
 
 # ── M137-Q — fusion « Procédure & changement » : le radar liste les communes en procédure ────────
-
-def test_communes_en_procedure_actives_seulement():
-    """Le radar (point de calcul unique) ne remonte QUE les procédures actives servies : SOURCE,
-    révision/élaboration, non dormantes. Chacune porte son type et sa date."""
-    from labuse import veille_plu as V
-    items = V.communes_en_procedure()
-    insees = {it["insee"] for it in items}
-    assert insees == {"97409", "97413", "97423"}       # Saint-André, Saint-Leu, Trois-Bassins
-    assert "97417" not in insees                        # Saint-Philippe = prescrite_dormante → exclue
-    for it in items:
-        assert it["type"] and it["date_acte"] and it["etat"]
+# NB (OUTIL-COMMUNES-FIX-9 LOT D) — l'invariant PUR « quelles communes le radar remonte » a été
+# DÉPLACÉ dans tests/test_veille_plu.py : il ne dépend d'AUCUNE base et le marqueur `db` de ce module
+# (pytestmark l.21) le cachait du hook pre-push (`-m "not db"`). Ici on ne garde que le contrat DB.
 
 
 def test_simulplu_procedures_ne_leve_pas_sans_table_contexte(db_session):
     """L'endpoint ne 500 JAMAIS quand la table de contexte n'est pas matérialisée (base de test nue,
     même contrat data-gap que M136) : `to_regclass` garde, on retombe sur le nom registre. Le radar
-    liste bien les 3 procédures actives, chacune avec son type et son état."""
+    remonte TOUTES les révisions générales actives servies (SOURCE, prescrites, non dormantes),
+    chacune avec son type et son état."""
     out = moteurs.simulplu_procedures(db=db_session)    # ne lève pas malgré commune_conso_enaf absente
-    assert {c["insee"] for c in out["communes"]} == {"97409", "97413", "97423"}
+    insees = {c["insee"] for c in out["communes"]}
+    # Les 8 révisions générales SOURCE prescrites (non dormantes) sont toutes remontées…
+    assert {"97404", "97406", "97409", "97411", "97413", "97414", "97415", "97423"} <= insees
+    # …et RIEN d'inactif : ni dormante, ni clôturée, ni « aucune ».
+    assert "97417" not in insees and not ({"97418", "97420"} & insees)
     tb = next(c for c in out["communes"] if c["insee"] == "97423")
     assert tb["commune"] == tb["commune_radar"] == "Trois-Bassins"   # repli nom registre (table absente)
     assert tb["type"] and tb["etat"]

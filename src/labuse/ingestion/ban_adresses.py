@@ -195,25 +195,32 @@ def _index_inverse(session: Session) -> dict[str, int]:
         # partageant le même bâtiment (seuil 15 m² des deux côtés : évite les débords de toit).
         # Résilience : la passe est sautée si ses sources manquent (base partielle, tests).
         sources_ok = conn.execute(text(
-            "SELECT to_regclass('parcel_residuel_bati') IS NOT NULL"
-            " AND to_regclass('spatial_layers') IS NOT NULL")).scalar()
+            "SELECT to_regclass('spatial_layers') IS NOT NULL")).scalar()
         if not sources_ok:
             out["inv_bati_partage"] = 0
             return
+        # Le résiduel issu du scoring peut dater d'une BD TOPO antérieure. Mesurer
+        # l'union des empreintes actuelles uniquement pour les cibles à cheval.
         out["inv_bati_partage"] = conn.execute(text(
-            f"""INSERT INTO "{staging}" (id_ban, idu, source)
-               SELECT DISTINCT ap.id_ban, s.idu, 'bati_partage'
-               FROM (SELECT p.idu, p.geom_2975 FROM parcel_residuel_bati rb
-                     JOIN parcels p ON p.idu = rb.idu
-                     WHERE rb.emprise_batie_m2 >= 20
-                       AND NOT EXISTS (SELECT 1 FROM "{staging}" x WHERE x.idu = rb.idu)) s
-               JOIN spatial_layers b ON b.kind = 'batiment'
-                 AND ST_Intersects(b.geom_2975, s.geom_2975)
-                 AND ST_Area(ST_Intersection(b.geom_2975, s.geom_2975)) > 15
-               JOIN parcels p2 ON p2.idu <> s.idu
-                 AND ST_Intersects(b.geom_2975, p2.geom_2975)
-                 AND ST_Area(ST_Intersection(b.geom_2975, p2.geom_2975)) > 15
-               JOIN "{staging}" ap ON ap.idu = p2.idu
+            f"""WITH partages AS MATERIALIZED (
+                   SELECT DISTINCT ap.id_ban,p.idu
+                   FROM parcels p JOIN spatial_layers b
+                     ON b.kind='batiment' AND ST_Intersects(b.geom_2975,p.geom_2975)
+                   JOIN parcels voisine ON voisine.idu<>p.idu
+                     AND ST_Intersects(b.geom_2975,voisine.geom_2975)
+                   JOIN "{staging}" ap ON ap.idu=voisine.idu
+                   WHERE NOT EXISTS(SELECT FROM "{staging}" direct WHERE direct.idu=p.idu)
+                     AND ST_Area(ST_Intersection(b.geom_2975,p.geom_2975))>15
+                     AND ST_Area(ST_Intersection(b.geom_2975,voisine.geom_2975))>15
+               ), eligibles AS MATERIALIZED (
+                   SELECT p.idu FROM (SELECT DISTINCT idu FROM partages) c
+                   JOIN parcels p USING(idu)
+                   WHERE (SELECT ST_Area(ST_Union(ST_Intersection(b.geom_2975,p.geom_2975)))
+                          FROM spatial_layers b WHERE b.kind='batiment'
+                          AND ST_Intersects(b.geom_2975,p.geom_2975))>=20
+               )
+               INSERT INTO "{staging}" (id_ban,idu,source)
+               SELECT l.id_ban,l.idu,'bati_partage' FROM partages l JOIN eligibles e USING(idu)
                ON CONFLICT DO NOTHING""")).rowcount
 
     remplacer_servie(
@@ -221,6 +228,37 @@ def _index_inverse(session: Session) -> dict[str, int]:
         like_including="ALL", autoriser_vide=True, couverture_974_min=0, delta_max_pct=1.0e9,
         alerter=alerte_injection("adresse_parcelles", "BAN — index inverse adresse↔parcelle"))
     return out
+
+
+def _actualiser_adresses_affichees(session: Session) -> None:
+    """Garde la meilleure adresse des listes cohérente avec celle de la fiche."""
+    if not session.scalar(text(
+        "SELECT to_regclass(format('%I.parcel_adresse',current_schema())) IS NOT NULL"
+    )):
+        return
+    session.execute(text("DROP TABLE IF EXISTS pg_temp.ban_affichage_attendu"))
+    session.execute(text(r"""
+        CREATE TEMP TABLE ban_affichage_attendu ON COMMIT DROP AS
+        SELECT DISTINCT ON (ap.idu) ap.idu,trim(concat_ws(' ',a.numero,a.rep,a.voie)) AS ban_voie,
+               a.code_postal AS ban_cp,a.commune AS ban_commune
+        FROM adresse_parcelles ap JOIN adresses a USING(id_ban)
+        ORDER BY ap.idu,(ap.source='principal') DESC,(a.numero IS NULL),
+                 nullif(regexp_replace(a.numero,'\D','','g'),'')::int NULLS LAST,a.id_ban
+    """))
+    session.execute(text("CREATE UNIQUE INDEX ON ban_affichage_attendu(idu)"))
+    session.execute(text("""
+        DELETE FROM parcel_adresse p WHERE NOT EXISTS
+            (SELECT FROM ban_affichage_attendu a WHERE a.idu=p.idu)
+    """))
+    session.execute(text("""
+        INSERT INTO parcel_adresse (idu,ban_voie,ban_cp,ban_commune)
+        SELECT a.idu,a.ban_voie,a.ban_cp,a.ban_commune
+        FROM ban_affichage_attendu a LEFT JOIN parcel_adresse p ON p.idu=a.idu
+        WHERE p.idu IS NULL OR (p.ban_voie,p.ban_cp,p.ban_commune)
+              IS DISTINCT FROM (a.ban_voie,a.ban_cp,a.ban_commune)
+        ON CONFLICT (idu) DO UPDATE SET ban_voie=excluded.ban_voie,
+               ban_cp=excluded.ban_cp,ban_commune=excluded.ban_commune
+    """))
 
 
 def ingest_ban(session: Session, csv_path: Path | str, *, allow_shrink: bool = False,
@@ -278,6 +316,7 @@ def ingest_ban(session: Session, csv_path: Path | str, *, allow_shrink: bool = F
 
     stats = _rattacher(session)
     stats.update(_index_inverse(session))
+    _actualiser_adresses_affichees(session)
     session.execute(text("ANALYZE adresses"))
     session.execute(text("ANALYZE adresse_parcelles"))
     liees = int(session.execute(text(

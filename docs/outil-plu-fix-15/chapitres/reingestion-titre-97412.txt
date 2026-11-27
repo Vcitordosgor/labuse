@@ -1,0 +1,6 @@
+  ✓ purge 97412 : 177 extrait(s) supprimé(s)
+  ✓ 97412 97412_Reglement_20251210.pdf : 177 extraits article · 1 douteux · PAGINATION AMBIGUË
+  ✓ 97412 Saint-Joseph : 1 document(s), 177 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 177 extraits · 21 communes en base
+REINGEST_DONE

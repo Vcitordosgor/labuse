@@ -154,11 +154,22 @@ def test_ao5_comparer_signale_ignores_tronques_doublons(client):
 
 
 @pytest.mark.db
-def test_ao6_etude_zone_refuse_rayon_invalide(client):
+@pytest.mark.parametrize("url", ["/outils/etude-zone", "/outils/etude-zone/entreprises"])
+def test_ao6_etude_zone_refuse_rayon_invalide(client, url):
     """A-O6 — rayon hors {0,5 ; 1 ; 2 ; 5} km refusé (422), pas remplacé en silence."""
-    r = client.post("/outils/etude-zone", json={"lon": 55.5, "lat": -21.0, "rayon_km": 999})
+    r = client.post(url, json={"lon": 55.5, "lat": -21.0, "rayon_km": 999})
     assert r.status_code == 422
     assert r.json()["detail"]["erreur"] == "rayon_invalide"
+
+
+@pytest.mark.db
+@pytest.mark.parametrize("url", ["/outils/etude-zone", "/outils/etude-zone/entreprises"])
+def test_zone_refuse_parcelle_disparue(client, monkeypatch, url):
+    from labuse import cadastre_disparue
+    monkeypatch.setattr(cadastre_disparue, "info_disparue",
+                        lambda db, idu: {"idu": idu, "disparue_le": "2026-09-01", "remplacee_par": []})
+    r = client.post(url, json={"idu": "97416000EI1048", "rayon_km": 1})
+    assert r.status_code == 422 and r.json()["detail"]["erreur"] == "parcelle_disparue"
 
 
 @pytest.mark.db

@@ -1,3 +1,4 @@
+import { modParcelleTitulaires } from '../../lib/api'
 import { useContraintesParcelle } from '../../lib/contraintesParcelle'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
@@ -6,7 +7,7 @@ import { Badge } from '../ui/Badge'
 import { Chevron } from '../ui/Chevron'
 import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, docDossierUrl, getDossierStatut, getFaisabilite, getFiche, getGabarit, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, docDossierUrl, getDossierStatut, getFaisabilite, getFiche, getGabarit, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, messageChargement, patchPipeline, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
 // DOCS-FIX-1 (P3/P4) — ouverture propre des documents de la fiche (fetch + blob + attente + erreur FR
 // au toast), le MÊME comportement que la page Docs et que le Bilan. Plus de lien <a> qui ouvre un
 // onglet blanc puis du JSON sur erreur. P11 — URLs par les builders encodés (docDossierUrl…), plus de littéral.
@@ -40,7 +41,7 @@ import { IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroPastilles, RateLimit
 // IMPLANTATION-2 (LOT C) — la fiche ne REND plus le panneau de calcul FaisabiliteTab : elle offre un
 // bouton « Étude de faisabilité → » vers l'outil (M22). Le composant reste RÉ-EXPORTÉ (ci-dessous)
 // pour CalculetteFonciere et les tests de non-régression du panneau, mais n'est plus monté ici.
-import { TransformationBlock, BilanTab, TaxeAmenagementBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
+import { libellePotentielNonChiffre, TransformationBlock, BilanTab, TaxeAmenagementBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
 import { BatiBlock, FiliationBlock } from './leBien'
 // KELFONCIER-FIX-2 (Partie B) — les formes de la maquette v3 (Verdict · Tuiles · BarreEmpilée…).
 import { Verdict, Tuiles, type Tuile, BarreEmpilee, type Part, Lignes, Ligne, Pastilles, type Pastille, OutilsSection, type OutilSection, InfoI, Repli } from './formes'
@@ -408,12 +409,39 @@ function ProjetButton({ idu }: { idu: string }) {
 // EBC/ER avec leur contexte). Plus aucun lecteur → fonction retirée.
 
 
+/** SCAN-FIX-1 (bloquant 1, fiche) — ligne DISCRÈTE « + N autres titulaires » dans le tiroir Identité.
+ *  Le fichier DGFiP porte souvent plusieurs titulaires par parcelle (gestionnaire, bailleur à
+ *  construction, usufruitier…) que le titulaire principal masque ; on le DIT sans encombrer, détail
+ *  (nom · droit) derrière le « i ». Endpoint dédié à l'écran (n'alimente aucun export). Rien si 0. */
+function AutresTitulaires({ idu }: { idu: string }) {
+  const q = useQuery({ queryKey: ['parcelle-titulaires', idu], queryFn: () => modParcelleTitulaires(idu) })
+  const n = q.data?.n_autres ?? 0
+  if (n <= 0) return null
+  const liste = q.data!.titulaires
+  return (
+    <Lignes>
+      <Ligne label="Autres titulaires" valeur={<>
+        + {n} titulaire{n > 1 ? 's' : ''} (droits)
+        <InfoI aria="Détail des autres titulaires de la parcelle" tip={
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span>Autres titulaires au fichier DGFiP (hors titulaire principal) :</span>
+            {liste.map((t, i) => (
+              <span key={i}>• {t.denomination ?? '—'} — {t.droit_label ?? t.droit_code ?? 'droit inconnu'}
+                {t.siren ? ` (${t.siren_reel ? `SIREN ${t.siren}` : `${t.siren}, identifiant fiscal`})` : ''}</span>
+            ))}
+          </div>
+        } />
+      </>} />
+    </Lignes>
+  )
+}
+
 /** M11 · SURFACE C — onglet FAISABILITÉ : le résultat, le calcul TRACÉ étape par étape (déterministe,
  *  exact, sourcé), l'explication IA À LA DEMANDE (violet premium, ancrée sur les steps). M60 P1a : la
  *  calculette interactive DÉMÉNAGE dans l'outil « Calculette foncière » (moteur unique) ; la fiche garde
  *  le bilan en LECTURE (capacité, gabarit, SDP) + une PORTE pré-remplie (rendue au pied du tiroir). */
 export function Fiche({ idu }: { idu: string }) {
-  const select = useApp((s) => s.select)
+  const fermerFiche = useApp((s) => s.fermerFicheParcelle)
   const focusParcelle = useApp((s) => s.focusParcelle)   // CHASSE-NAV-FIX-1 (N-2/C-obs1) — ouvrir une parcelle = recentrer la carte + fiche
   // M55-L point 5 — verdict à la demande : mémoire par parcelle pour la session (store).
   const verdictRevele = useApp((s) => !!s.verdictRevele[idu])
@@ -453,18 +481,8 @@ export function Fiche({ idu }: { idu: string }) {
   const setPluVueF = useApp((s) => s.setPluVue)            // M137-P — porte directe vers une vue de l'outil PLU
   const setCalcPrefill = useApp((s) => s.setCalcPrefill)   // FICHE-RANGEMENT-2 Lot 1 — porte Calculette (§11)
   const modBlock = moduleFiche[idu]
-  const sourceLine = useApp((s) => s.sourceLine)
   // EXPORTS-2 lot 8 — `calculette` ne pilote plus le PDF/Argumentaire (retirés) ; le Financier lit
   // le questionnaire persisté. La calculette de la fiche reste (store), sans sélecteur ici.
-  // Échap ferme la fiche — sauf si le drawer source est ouvert (il consomme Échap en premier)
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !useApp.getState().sourceLine && !useApp.getState().tool) select(null)
-    }
-    window.addEventListener('keydown', h)
-    return () => window.removeEventListener('keydown', h)
-  }, [select])
-  void sourceLine
   // M55-O phase 2.1c : `setTab` retiré (0-caller après retrait de goDrawer) — `tab` reste figé à
   // 'synthese' (le seul contenu), gardé pour le garde de rendu.
   const [tab] = useState<'synthese' | Onglet | 'bilan' | 'faisabilite' | 'pourquoi'>('synthese')
@@ -611,7 +629,7 @@ export function Fiche({ idu }: { idu: string }) {
       <aside className="fiche-v6 apparition absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line shadow-2xl">
         <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3">
           <div className="text-sm font-medium">{iduComplet(idu)}{f.commune ? ` · ${f.commune}` : ''}</div>
-          <button type="button" onClick={() => select(null)} aria-label="Fermer la fiche" className="text-sm">✕</button>
+          <button type="button" onClick={fermerFiche} aria-label="Fermer la fiche" className="text-sm">✕</button>
         </div>
         <div className="space-y-4 p-5 text-sm">
           <div className="border border-st-ecartee/40 bg-st-ecartee/15 px-4 py-3 text-st-ecartee">
@@ -740,17 +758,8 @@ export function Fiche({ idu }: { idu: string }) {
   // ce qui corrige les libellés-collision (cf. CHANGEMENTS.csv). `null` (famille inconnue) ≠ non
   // constructible : on ne barre pas une parcelle dont la zone n'est pas publiée.
   const nonConstructible = f?.reglement_plu?.constructible_neuf === false
-  const motifSdpAbsente = f?.surface_incertaine ? 'surface incertaine'
-    : f?.potentiel_transformation?.niveau === 'ppr_partiel' ? 'à étudier hors zone rouge'
-    : 'capacité non chiffrée'
-  const tuileSdp = {
-    v: reglesSdp == null ? '—' : `${fmtInt(reglesSdp)} m²`,
-    s: reglesSdp == null ? motifSdpAbsente : reglesSdp === 0 ? 'pas de potentiel résiduel'
-      : bati ? 'bâti conservé' : 'terrain libre',
-    vide: reglesSdp == null,
-    i: f?.surface_incertaine ? f.surface_incertaine_libelle ?? 'Surface du terrain incertaine.'
-      : f?.potentiel_transformation?.libelle ?? 'Surface de plancher restant à bâtir en conservant les bâtiments existants.',
-  }
+  const libelleNonChiffre = reglesSdp == null && !nonConstructible && !f?.au_ouverture?.bloquant
+    ? libellePotentielNonChiffre(f?.potentiel_a_batir) : null
   // CHIRURGICAL-FIX-1 (LOT A / LOT H pt 10) — le VERDICT servi (potentiel_a_batir) prime sur la seule
   // famille de zone : une parcelle en zone U mais non retenue pour une AUTRE raison (habitat interdit,
   // zone rouge) ne doit PAS afficher « PLU · constructible » dans la tuile Zone — le libellé
@@ -945,7 +954,7 @@ export function Fiche({ idu }: { idu: string }) {
                 </button>
               </Tip>
               <Tip side="bottom" tip="Fermer" garder>
-                <button className="hbtn" onClick={() => select(null)} aria-label="Fermer la fiche">
+                <button className="hbtn" onClick={fermerFiche} aria-label="Fermer la fiche">
                   <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                 </button>
               </Tip>
@@ -1060,7 +1069,14 @@ export function Fiche({ idu }: { idu: string }) {
             { l: 'Pièges et risques', v: nbContraintes == null ? '—' : nf(nbContraintes),
               s: nbContraintes == null ? etatContraintes : nbContraintes > 1 ? 'contraintes relevées' : 'contrainte relevée',
               vide: nbContraintes == null, i: 'Chaque catégorie de contrainte relevée sur la parcelle est comptée une fois, comme dans l’outil Pièges et risques.' },
-            { l: 'SDP restante', ...tuileSdp },
+            // CONTENANCE-1 (garde-fou) : surface incertaine → aucune capacité affichée.
+            f.surface_incertaine
+              ? { l: 'SDP restante', v: '—', s: 'surface incertaine', vide: true,
+                  i: 'Capacité non calculée : la surface du terrain est indéterminée (le plan et le cadastre ne concordent pas).' } as Tuile
+              : { l: 'SDP restante', v: reglesSdp != null ? `${fmtInt(reglesSdp)} m²` : '—',
+              s: reglesSdp != null && reglesSdp > 0 ? (bati ? 'bâti conservé' : 'terrain libre') : (f.potentiel_transformation?.niveau === 'ppr_partiel' ? 'à étudier hors zone rouge' : libelleNonChiffre ? 'non chiffrée' : nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
+              vide: !(reglesSdp != null && reglesSdp > 0),
+              i: libelleNonChiffre || 'Surface de plancher constructible qui reste à bâtir EN GARDANT les bâtiments existants (le bâti existant est déjà déduit) — ce n’est pas du terrain libre. Pour la capacité après démolition, voir l’outil Faisabilité (« terrain libéré »). « — » : zone non constructible ou plus de potentiel.' },
           ]
           return (
             <div className="stats" data-bandeau-chiffres>
@@ -1171,7 +1187,7 @@ export function Fiche({ idu }: { idu: string }) {
           // La fiche lit toujours le run servi via getFiche(idu) = `/parcels/{idu}?source=${SOURCE}`,
           // mais ce détail serveur n'est jamais montré côté client.
           <AnalyseLabuseCard analyse={f.analyse_labuse!} zone={zoneFamille}
-            onClasserPar={() => { setVerdictGlobal(true); select(null) }}
+            onClasserPar={() => { setVerdictGlobal(true); fermerFiche() }}
             onComprendre={() => setComprendreOuvert(true)} />
         )}
         {/* ECRANS-NOV-1 §1 — « Comprendre l'analyse » : même panneau que l'écran d'analyse, en modale. */}
@@ -1403,7 +1419,7 @@ export function Fiche({ idu }: { idu: string }) {
               title="Cette parcelle n'est pas dans le périmètre analysé."
               hint="Sélectionnez une parcelle sur la carte pour afficher sa fiche."
               action={
-                <button onClick={() => select(null)} className="min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Fermer</button>
+                <button onClick={fermerFiche} className="min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Fermer</button>
               } />
           </div>
         ) : (
@@ -1411,9 +1427,9 @@ export function Fiche({ idu }: { idu: string }) {
             {/* Item 3 (UX V1) : wording client — plus jamais « relancer labuse api » face à un
                 utilisateur. Le détail technique reste lisible, en ligne discrète (hint). */}
             <ErrorState
-              message="Connexion au serveur impossible — vérifiez votre réseau ou réessayez."
+              message={messageChargement(error, "Connexion au serveur impossible — vérifiez votre réseau ou réessayez.")}
               retry={() => refetch()}
-              hint={error instanceof Error && error.message
+              hint={!(error instanceof ApiError && error.status === 503) && error instanceof Error && error.message
                 ? <span className="break-all font-mono text-[10px] text-txt-dim">détail : {error.message}</span>
                 : undefined} />
           </div>
@@ -1466,6 +1482,10 @@ export function Fiche({ idu }: { idu: string }) {
           // Taxe foncière → §7 Fiscalité (TFPB part communale, REI DGFiP) — désormais en Tuile (Lot I).
           const tfpb = f.fiscalite?.tfpb_commune_pct
           // SDP restante → §10 Potentiel (potentiel résiduel autorisé par le PLU).
+          const tuileSdp = { v: reglesSdp != null ? `${fmtInt(reglesSdp)} m²` : '—',
+            s: reglesSdp != null && reglesSdp > 0 ? (bati ? 'bâti conservé' : 'terrain libre') : (f.potentiel_transformation?.niveau === 'ppr_partiel' ? 'à étudier hors zone rouge' : libelleNonChiffre ? 'non chiffrée' : nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
+            vide: !(reglesSdp != null && reglesSdp > 0),
+            i: libelleNonChiffre || 'Surface de plancher constructible qui reste à bâtir EN GARDANT les bâtiments existants (le bâti existant est déjà déduit) — ce n’est pas du terrain libre. Pour la capacité après démolition, voir l’outil Faisabilité (« terrain libéré »). « — » : zone non constructible ou plus de potentiel.' }
           // ChiffreDissous — présente une ex-tuile d'en-tête comme un fait de section (label · valeur ·
           // sous-titre · « i » source), grammaire FactRow. Reporté verbatim des 6 tuiles (RECETTE-8 W11).
           const ChiffreDissous = ({ l, t }: { l: string; t: { v: string; s?: string; vide?: boolean; i: string } }) => (
@@ -1584,6 +1604,11 @@ export function Fiche({ idu }: { idu: string }) {
                           {pm.groupe_label && <Ligne label="Groupe" valeur={pm.groupe_label} />}
                         </Lignes>
                       )}
+                      {/* SCAN-FIX-1 (bloquant 1, fiche) — ligne DISCRÈTE « + N autres titulaires » (le fichier
+                          DGFiP porte souvent plusieurs titulaires par parcelle : gestionnaire, bailleur à
+                          construction, usufruitier… que le titulaire principal affiché ci-dessus masque). Le
+                          détail (nom · droit) est derrière le « i ». Écran seulement (endpoint dédié). */}
+                      <AutresTitulaires idu={idu} />
                       {proc && (
                         <FactNote>{proc.libelle} (Sourcé {proc.etats.map((e) => e.source).filter((s, i, a) => a.indexOf(s) === i).join(' / ')}) — {proc.note}</FactNote>
                       )}
@@ -1810,8 +1835,7 @@ export function Fiche({ idu }: { idu: string }) {
                     </div>
                   )
                 })()}
-                {/* FICHE-FIX-4 (Lot F) — PLU en une Ligne : « approuvé le JJ/MM/AAAA » + badge document
-                    (opposable / procédure). Le détail (fait foi, procédure en cours, action) derrière le « i ». */}
+                {/* Le libellé du document conserve la précision de la couverture. */}
                 {f.plu_fraicheur?.libelle && (() => {
                   const pf = f.plu_fraicheur!
                   const paras = [pf.fait_foi ? `✓ ${pf.fait_foi}` : null,
@@ -1820,7 +1844,7 @@ export function Fiche({ idu }: { idu: string }) {
                   return (
                     <div data-plu-fraicheur={pf.statut}><Lignes>
                       <Ligne label={<>PLU{paras.length > 0 ? <InfoI tip={<div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{paras.map((s, i) => <span key={i}>{s}</span>)}</div>} aria="Sur le document PLU" /> : null}</>}
-                        valeur={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{pf.horizon ? `approuvé le ${fmtDateNum(pf.horizon)}` : (pf.document_servi || 'document')}{pf.statut === 'a_jour' && <Badge ton="vert">document</Badge>}</span>} />
+                        valeur={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{pf.document_servi || 'document'}{pf.statut === 'a_jour' && <Badge ton="vert">document</Badge>}</span>} />
                     </Lignes></div>
                   )
                 })()}
@@ -1837,6 +1861,18 @@ export function Fiche({ idu }: { idu: string }) {
                           Sursis à statuer — {f.radar_procedure.sursis.texte}
                           <span className="block text-txt-dim">{f.radar_procedure.sursis.base_legale}</span>
                         </span>
+                      ) : f.radar_procedure.synthese?.debat_padd_tenu && f.radar_procedure.synthese?.sursis_autorise ? (
+                        /* OUTIL-COMMUNES-FIX-14 LOT 5 — débat tenu ET autorisation expresse de surseoir
+                           (conseil) : les deux faits ensemble, sans conclure à un sursis sur la parcelle
+                           (aucune décision individuelle connue). Saint-Louis : délib. 29/10/2024, art. 2. */
+                        <span className="block text-[10px] text-txt-dim">Débat PADD tenu le {fmtDateNum(f.radar_procedure.synthese.debat_padd_tenu)}. Le conseil a autorisé le maire à surseoir à statuer (délibération du {f.radar_procedure.synthese.sursis_autorise.date_fr ?? fmtDateNum(f.radar_procedure.synthese.sursis_autorise.date)}, {f.radar_procedure.synthese.sursis_autorise.article ?? 'art. 2'}) — aucune décision de sursis connue pour cette parcelle.</span>
+                      ) : f.radar_procedure.synthese?.debat_padd_tenu ? (
+                        /* OUTIL-COMMUNES-FIX-12 LOT 2 — fait daté « débat PADD tenu le … » SÉPARÉ du sursis :
+                           on consigne la tenue du débat sans conclure qu'un sursis s'applique à la parcelle. */
+                        <span className="block text-[10px] text-txt-dim">Débat PADD tenu le {fmtDateNum(f.radar_procedure.synthese.debat_padd_tenu)} — sursis à statuer non armé (décision discrétionnaire du maire, non constatée).</span>
+                      ) : f.radar_procedure.synthese?.debat_recherche_le ? (
+                        /* OUTIL-COMMUNES-FIX-14 LOT 6 — recherche infructueuse DATÉE (Étang-Salé/Saint-Denis/Saint-Paul). */
+                        <span className="block text-[10px] text-txt-dim">Pièce du débat PADD non retrouvée lors de la recherche du {fmtDateNum(f.radar_procedure.synthese.debat_recherche_le)} — pas de sursis servi.</span>
                       ) : (
                         <span className="block text-[10px] text-txt-dim">Sursis à statuer : non servi (débat PADD non constaté à ce jour).</span>
                       )}
@@ -1915,7 +1951,10 @@ export function Fiche({ idu }: { idu: string }) {
                   { label: 'Annuaire PLU', principal: true, data: 'annuaire',
                     onClick: () => { setPluPrefillF({ insee: idu.slice(0, 5), zone: reglesZone ?? null }); setModule('plu') } },
                   { label: 'Vérif procédure', data: 'verif-procedure',
-                    onClick: () => { setPluVueF('procedure'); setModule('plu') } },
+                    // OUTIL-COMMUNES-FIX-14 LOT 1 — setModule('plu') efface selectedIdu : on confie l'IDU
+                    // au prefill PLU (qui survit au changement d'outil) pour que VerifProcedure l'amorce
+                    // sans ressaisie (constat ASTRA-11 n°1 : l'outil redemandait une parcelle, 8/8).
+                    onClick: () => { setPluPrefillF({ insee: idu.slice(0, 5), zone: reglesZone ?? null, idu }); setPluVueF('procedure'); setModule('plu') } },
                 ]} />
                 {/* RTAA DOM (§4) — rappel réglementaire de conception, servi par le bilan (b.rtaa). */}
                 <RtaaFromBilan idu={idu} />
@@ -2135,7 +2174,7 @@ export function Fiche({ idu }: { idu: string }) {
                 marge H) + capacité constructible (SHAB vendable, calcul tracé). Lecture ; la simulation
                 interactive (charge foncière, outils) vit en §11. */}
             <RefDrawer id="potentiel" order={ordreSection('potentiel')} icon={IC.potentiel} name="Potentiel"
-              context={fo?.niveaux ? `${fo.niveaux} · calcul tracé` : 'calcul tracé'}
+              context={libelleNonChiffre ? 'surface non chiffrée' : fo?.niveaux ? `${fo.niveaux} · calcul tracé` : 'calcul tracé'}
               value={reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² SDP` : undefined}>
               <div className="flex flex-col gap-3">
                 {/* KELFONCIER-FIX-2 (Lot J) — maquette v3 : Verdict en tête (rouge quand la construction
@@ -2184,10 +2223,10 @@ export function Fiche({ idu }: { idu: string }) {
                   return (
                     <>
                       <Verdict ton={inconstructible ? 'rouge' : (reglesSdp != null && reglesSdp > 0 ? 'vert' : 'ambre')}
-                        reponse={inconstructible
+                        reponse={libelleNonChiffre ?? (inconstructible
                           ? `Construction neuve non autorisée${reglesZone ? ` en ${reglesZone}` : ''}`
-                          : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP constructible restante${bati ? ' · bâti conservé' : ''}` : sdpNulle ? 'Pas de SDP restante exploitable' : f.potentiel_transformation?.libelle ?? motifSdpAbsente)}
-                        contexte={!inconstructible && fo?.niveaux ? `capacité ${fo.niveaux}` : undefined} />
+                          : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP constructible restante${bati ? ' · bâti conservé' : ''}` : 'Pas de SDP restante exploitable'))}
+                        contexte={!inconstructible && !libelleNonChiffre && fo?.niveaux ? `capacité ${fo.niveaux}` : undefined} />
                       <ChiffreDissous l="SDP restante" t={tuileSdp} />
                       {/* FICHE-ORFEVRERIE-1 (Lot B, pt 16) — « Prix de sortie retenu » : une LIGNE du
                           Potentiel (ex-verdict de « Simulation »), base du bilan de charge foncière. */}
@@ -2211,12 +2250,12 @@ export function Fiche({ idu }: { idu: string }) {
                               tip={`Les droits sont servis à 0 par prudence : la parcelle touche une zone rouge PPR. ${fmtInt(horsRouge.hors_rouge_m2)} m² restent hors de cette zone. Surface brute, reculs non appliqués, accès et unité du terrain à vérifier. Ce n'est pas un certificat de constructibilité.`} /></Badge>
                         </div>
                       )}
-                      {sdpNulle && pourquoi && <p className="text-[11.5px] leading-snug text-txt-mut" data-potentiel-pourquoi>{pourquoi}</p>}
+                      {sdpNulle && !libelleNonChiffre && pourquoi && <p className="text-[11.5px] leading-snug text-txt-mut" data-potentiel-pourquoi>{pourquoi}</p>}
                       {faisa.data?.delaisse && <div data-delaisse><Vigilance title={faisa.data.delaisse.libelle} /></div>}
                       {/* RETOURS-18 (pt 14) — les quatre portes du Projet en UNE colonne, toutes vert-contour (6-projet.png). */}
                       <OutilsSection outils={outils} colonne />
                       {sdpNulle
-                        ? <Repli label="Étudier quand même">{panneau}</Repli>
+                        ? <Repli label={libelleNonChiffre ? "Détails de l’étude" : "Étudier quand même"}>{panneau}</Repli>
                         : panneau}
                       {/* FICHE-ORFEVRERIE-1 (Lot B, pt 16) — la SIMULATION (charge foncière + réhabilitation
                           Mode B) est FONDUE dans le Potentiel : plus une 11e section, un sous-groupe ici. */}

@@ -1,3 +1,4 @@
+import { CotesProjet, type ProjetDessine } from './Implantation'
 // GABARIT-3D-1 (pilote, étape 2 ter) — VISIONNEUSE Three.js, à la demande, réservée aux admins.
 //
 // Cible : docs/design/maquettes/nov-2026/16-ecran-cible-astra.png. En-tête (adresse·commune·réf) ;
@@ -14,11 +15,13 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { Line2 } from 'three/examples/jsm/lines/Line2.js'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
-import { getGabaritScene, gabCoupeSvgUrl, gabPlanSvgUrl, gabOrthoUrl, type GabScene, type GabMesh, type GabPoly } from '../../lib/api'
+import { getGabaritScene, gabCoupeSvgUrl, gabCoupesPdfUrl, gabPlanSvgUrl, gabOrthoUrl, type GabScene, type GabMesh, type GabPoly } from '../../lib/api'
 import { Squelette } from '../Loading'
+import { fmtInt } from '../../lib/format'
+import { EmpriseProjet } from './EmpriseProjet'
 
 function webglOK(): boolean {
-  try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')) } catch { return false }
+  try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2')) } catch { return false }
 }
 // repère : local (x=est, y=nord, z=alt) → Three (x, alt, -nord). MÊME transformation partout.
 function inRing(x: number, y: number, r: number[][]): boolean {
@@ -66,16 +69,29 @@ function terrainMesh(f: GabMesh, parcelle: GabPoly[]) {
 
 // ZONE d'implantation = MASQUE PAR PIXEL : polygone+trous peints sur un canvas, plaqué sur le terrain par
 // coordonnées monde (bords francs, transition ~1 px, aucun halo). Remplace la couleur par sommet.
-function zoneOverlay(terrain: THREE.Mesh, zone: GabPoly[], cadre: number[]): THREE.Mesh | null {
-  if (!zone.length || cadre.length !== 4) return null
+function zoneOverlay(terrain: THREE.Mesh, scene: GabScene, cadre: number[]): THREE.Mesh | null {
+  if (cadre.length !== 4) return null
   const [minx, miny, maxx, maxy] = cadre, W = maxx - minx, H = maxy - miny, S = 1024
   const cv = document.createElement('canvas'); cv.width = cv.height = S
   const ctx = cv.getContext('2d'); if (!ctx) return null
-  ctx.fillStyle = '#2f9e6a'; ctx.beginPath()
-  for (const poly of zone) for (const ring of [poly.ext, ...(poly.trous || [])]) {
-    ring.forEach(([x, y], i) => { const u = ((x - minx) / W) * S, v = (1 - (y - miny) / H) * S; i ? ctx.lineTo(u, v) : ctx.moveTo(u, v) }); ctx.closePath()
+  const layers: [GabPoly[], string][] = [
+    [scene.reculs, '#e0a44a'], [scene.zone_implantation, '#2f9e6a'], [scene.exclusions, '#e8491d'],
+  ]
+  for (const [polys, color] of layers) {
+    ctx.fillStyle = color
+    for (const poly of polys || []) {
+      ctx.beginPath()
+      for (const ring of [poly.ext, ...(poly.trous || [])]) {
+        ring.forEach(([x, y], i) => {
+          const u = ((x - minx) / W) * S, v = (1 - (y - miny) / H) * S
+          if (i === 0) ctx.moveTo(u, v)
+          else ctx.lineTo(u, v)
+        })
+        ctx.closePath()
+      }
+      ctx.fill('evenodd')
+    }
   }
-  ctx.fill('evenodd')                                              // trous respectés
   const tex = new THREE.CanvasTexture(cv); tex.minFilter = THREE.LinearFilter
   const geo = (terrain.geometry as THREE.BufferGeometry).clone()
   const p = geo.getAttribute('position'), uv = new Float32Array(p.count * 2)
@@ -152,13 +168,14 @@ function batiVolume(b: GabScene['batiments'][number], elev: (x: number, y: numbe
       grp.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x5a6066 })))   // arêtes nettement visibles
     } else {
       // A4 : sans pied/hauteur → CONTOUR posé sur les faces valides (jamais altitude arbitraire)
-      grp.add(drapeLine([...poly.ext], elev, 0xaab0b6, 1.4, res))
+      for (const ring of [poly.ext, ...(poly.trous || [])]) grp.add(drapeLine(ring, elev, 0xaab0b6, 1.4, res, false, true))
     }
   }
   return grp
 }
 
-function Vue3D({ scene, axeSel, markerApi, onCote }: {
+function Vue3D({ scene, axeSel, markerApi, onCote, projet }: {
+  projet: ProjetDessine | null
   scene: GabScene; axeSel: 'A' | 'B' | null
   markerApi: React.MutableRefObject<((f: number | null) => void) | null>
   onCote: (c: { hi: number; lo: number; cur: number | null; cap: number }) => void
@@ -189,7 +206,9 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     if (!el || !faces || !faces.vertices.length) return
     const W = el.clientWidth || el.parentElement?.clientWidth || 800
     const H = el.clientHeight || el.parentElement?.clientHeight || 500
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'low-power' })
+    let renderer: THREE.WebGLRenderer
+    try { renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'low-power' }) }
+    catch { setPerdu(true); return }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.setSize(W, H)
     el.appendChild(renderer.domElement)
     const res = new THREE.Vector2(W * renderer.getPixelRatio(), H * renderer.getPixelRatio())
@@ -202,14 +221,22 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     const { mesh, box } = terrainMesh(faces, scene.contour_cadastral)
     sc.add(mesh)
     const elev = makeElev(mesh)                                   // raycast du maillage affiché (suit les faces)
-    const zo = zoneOverlay(mesh, scene.zone_implantation, scene.terrain?.cadre || []); if (zo) sc.add(zo)   // masque par pixel
+    const zo = zoneOverlay(mesh, scene, scene.terrain?.cadre || []); if (zo) sc.add(zo)   // masque par pixel
     const cn = contours(faces); const cnGroup = new THREE.Group(); cnGroup.add(cn.master); cnGroup.add(cn.minor); sc.add(cnGroup)
     toggleCn.current = () => { cnGroup.visible = !cnGroup.visible }
     // CONTOUR cadastral : POINTILLÉ discret derrière (depthTest off, tout le périmètre) + PLEIN blanc
     // dessus (depthTest on) → plein où VISIBLE, pointillé où le relief le CACHE.
-    for (const poly of scene.contour_cadastral) {
-      sc.add(drapeLine(poly.ext, elev, 0xcfd6dd, 1.4, res, true, true, false, 0.5, false, 2))   // caché (pointillé)
-      sc.add(drapeLine(poly.ext, elev, 0xffffff, 3.2, res, false, true, true, 1, true, 4))       // visible (plein)
+    for (const poly of scene.contour_cadastral) for (const ring of [poly.ext, ...(poly.trous || [])]) {
+      sc.add(drapeLine(ring, elev, 0xcfd6dd, 1.4, res, true, true, false, 0.5, false, 2))   // caché (pointillé)
+      sc.add(drapeLine(ring, elev, 0xffffff, 3.2, res, false, true, true, 1, true, 4))       // visible (plein)
+    }
+    if (projet) {
+      const local = ([x,y]: number[]) => [x-scene.origine_2975[0], y-scene.origine_2975[1]]
+      sc.add(drapeLine([...projet.pts, projet.pts[0]].map(local), elev, 0x82afff, 3, res))
+      for (const c of projet.bilan.cotes) sc.add(drapeLine([c.a,c.b].map(local), elev, 0xffbd67, 1.6, res, true))
+    }
+    for (const poly of projet ? [] : scene.exemple_emprise ?? []) for (const ring of [poly.ext, ...poly.trous]) {
+      sc.add(drapeLine(ring, elev, 0x61e8ad, 1.8, res, true, true, true, 0.95, true, 3))
     }
     axisObjs.current = {}
     for (const [lab, a] of Object.entries(scene.axes_plan || {})) {
@@ -279,7 +306,7 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     if (c3d?.haut && c3d?.bas) {
       hi = c3d.haut[2]; hiP.set(c3d.haut[0], c3d.haut[2], -c3d.haut[1])
       lo = c3d.bas[2]; loP.set(c3d.bas[0], c3d.bas[2], -c3d.bas[1])
-    } else {
+    } else if (!('cotes_3d' in (scene.terrain || {}))) {
       const empBati = (scene.batiments || []).flatMap((b) => (b.empreinte || []) as GabPoly[])
       for (const p of faces.vertices) if (inPolys(p[0], p[1], scene.contour_cadastral) && !inPolys(p[0], p[1], empBati)) {
         if (p[2] > hi) { hi = p[2]; hiP.set(p[0], p[2], -p[1]) }
@@ -357,6 +384,11 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       guide.appendChild(line); guide.appendChild(ring); return { line, ring }
     }
     const gHi = mkGuide(), gLo = mkGuide()
+    const cotesDisponibles = Number.isFinite(hi) && Number.isFinite(lo)
+    if (!cotesDisponibles) {
+      lHi.hidden = lLo.hidden = true
+      guide.style.display = 'none'
+    }
     const _segHitsBox = (a: [number, number], b: [number, number], x0: number, y0: number, x1: number, y1: number) => {
       const inside = (px: number, py: number) => px >= x0 && px <= x1 && py >= y0 && py <= y1
       if (inside(a[0], a[1]) || inside(b[0], b[1])) return true
@@ -584,7 +616,11 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       if (stop) return
       controls.update(); renderer.render(sc, cam)
       if (!first) first = performance.now()
-      const coteSegs = _contourSegsDraped(), cotePolys = _batiPolysPx(), coteQuad = _cadreQuadPx(); proj(hiP, lHi, gHi, coteSegs, cotePolys, coteQuad); proj(loP, lLo, gLo, coteSegs, cotePolys, coteQuad)
+      if (cotesDisponibles) {
+        const segments = _contourSegsDraped(), batiments = _batiPolysPx(), cadre = _cadreQuadPx()
+        proj(hiP, lHi, gHi, segments, batiments, cadre)
+        proj(loP, lLo, gLo, segments, batiments, cadre)
+      }
       // lettres de l'axe : 1ʳᵉ posée au 1ᵉʳ point visible côté p0, 2ᵉ au dernier point visible côté p1
       if (axEnd.on) { const n = axEnd.pts.length - 1; poseLettre(lAx0, 0, n); poseLettre(lAx1, n, 0) }
       const az = controls.getAzimuthalAngle(); nd.setAttribute('transform', `rotate(${(-az * 180 / Math.PI).toFixed(1)} 17 17)`)
@@ -608,7 +644,7 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       renderer.dispose(); renderer.forceContextLoss(); if (renderer.domElement.parentElement === el) el.removeChild(renderer.domElement)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scene])
+  }, [scene, projet])
 
   return (
     <div className="relative h-full w-full">
@@ -636,9 +672,8 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
   )
 }
 
-const LEG = [['#ffffff', 'Limite cadastrale'], ['#2f9e6a', 'Zone d\'implantation'], ['#cdd3d8', 'Bâti · BD TOPO'], ['#e0a44a', 'Axe de la coupe']] as const
 
-export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => void }) {
+export function GabaritViewer3D({ idu, onClose, projet = null }: { projet?: ProjetDessine | null; idu: string; onClose: () => void }) {
   const q = useQuery({ queryKey: ['gabarit-scene', idu], queryFn: () => getGabaritScene(idu), retry: false })
   const scene = q.data
   const [webgl] = useState(webglOK)
@@ -698,7 +733,7 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
   const acqMin = scene?.meta?.acquisition_min ? String(scene.meta.acquisition_min) : null
   const acqN = Number(scene?.meta?.acquisition_n ?? 1)
   const acqProd = scene?.meta?.acquisition_produit ? String(scene.meta.acquisition_produit) : ''
-  const acqTxt = acqN > 1 && acqMin && acqMin !== acq ? `acquisitions du ${fmtD(acqMin)} au ${acqFr}` : `acquisition ${acqFr}`
+  const acqTxt = acq === '—' ? '' : acqN > 1 && acqMin && acqMin !== acq ? `acquisitions du ${fmtD(acqMin)} au ${acqFr}` : `acquisition ${acqFr}`
   // titre : adresse si connue, sinon « Parcelle <section> <numéro> » (plus de doublon identifiant/identifiant).
   const refCadastrale = (() => { const t = idu.slice(8); const num = t.slice(-4); const sec = t.slice(0, -4); return sec ? `Parcelle ${sec} ${num}` : `Parcelle ${idu}` })()
   // LOT 2 — le pied annonce CE QUI EST RÉELLEMENT SERVI : maille lue dans la donnée (0,5 m LiDAR HD, ou
@@ -740,7 +775,7 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
   }
 
   return createPortal(
-    <div data-gab3d-overlay className="fixed inset-0 z-[60] flex flex-col bg-[#0b0d10] text-txt">
+    <div data-gab3d-overlay className="fixed inset-0 z-[60] flex flex-col overflow-y-auto bg-[#0b0d10] text-txt">
       {/* en-tête (B6) : adresse · commune · référence cadastrale + sélecteur */}
       <div className="flex items-center justify-between border-b border-line px-4 py-2">
         <div>
@@ -759,15 +794,15 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
       {q.isLoading && <div className="p-6"><Squelette lignes={6} /></div>}
       {q.isError && <div className="p-6 text-[13px] text-coral">Scène indisponible.</div>}
       {scene && (
-        <div className="flex min-h-0 flex-1 flex-col">
-          <div className="flex min-h-0 flex-[3]">
+        <div className="flex flex-col md:min-h-0 md:flex-1">
+          <div className="flex min-w-0 flex-col md:min-h-0 md:flex-[3] md:flex-row">
             {/* 3D en haut à gauche */}
-            <div className="relative min-h-0 flex-[1.6] border-r border-line">
+            <div className="relative h-[42dvh] min-h-0 min-w-0 overflow-hidden md:h-auto md:flex-[1.6] border-r border-line">
               {webgl && dispo
-                ? <Vue3D scene={scene} axeSel={axeSel} markerApi={markerApi} onCote={setCote} />
+                ? <Vue3D projet={projet} scene={scene} axeSel={axeSel} markerApi={markerApi} onCote={setCote} />
                 : <div data-gab3d-fallback className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-[12px] text-txt-mut">
-                    <p>{webgl ? 'Terrain non couvert ici.' : 'WebGL indisponible — repli sur le plan et les coupes.'}</p>
-                    <img src={gabPlanSvgUrl(idu, 'sombre', sid)} alt="Plan-clé" className="max-w-[380px]" />
+                    <p>{webgl ? (scene.message || 'Relief indisponible sur cette parcelle.') : 'WebGL indisponible — repli sur le plan et les coupes.'}</p>
+                    <img src={gabPlanSvgUrl(idu, 'sombre', sid)} alt="Plan-clé" className="max-w-full md:max-w-[380px]" />
                   </div>}
               {dispo && cote.cur != null && <div className="pointer-events-none absolute left-3 bottom-8 text-[10px] text-txt-dim">{cote.cur.toFixed(1).replace('.', ',')} m</div>}
             </div>
@@ -776,13 +811,28 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
                 les titres ne rétrécissent pas (shrink-0) → jamais coupés par le panneau de la coupe. */}
             {/* finition : le plan-clé REMPLIT la hauteur disponible (créneau `flex-1`, SVG à son format → texte
                 ≥ 11 px, plus de vide dessous) ; la légende reste sur UNE colonne (4 entrées courtes tiennent). */}
-            <div ref={panelRef} className="flex w-[320px] min-h-0 shrink-0 flex-col gap-1.5 bg-[#0f1216] p-2">
-              <div className="shrink-0 text-[11px] text-txt-mut">Plan-clé <span className="text-txt-ghost">— nord en haut</span></div>
+            <div ref={panelRef} className="flex h-56 w-full md:h-auto md:w-[320px] min-h-0 shrink-0 flex-col gap-1.5 bg-[#0f1216] p-2">
+              <div className="flex shrink-0 flex-wrap items-baseline justify-between gap-x-2 text-[11px] text-txt-mut">
+                <span>Plan-clé <span className="text-txt-ghost">— nord en haut</span></span>
+                {scene.regles?.zoneImplantationM2 != null && <strong data-gab3d-surface>
+                  Surface disponible · {fmtInt(scene.regles.zoneImplantationM2)} m²
+                </strong>}
+              </div>
+              {projet && <CotesProjet projet={projet} />}
+              {scene.regles && <EmpriseProjet regles={scene.regles} />}
               <div ref={planSlot} className="min-h-0 flex-1">
                 <img data-gab3d-plan src={gabPlanSvgUrl(idu, 'sombre', sid, 210, planH)} alt="Plan-clé" className="h-full w-full rounded border border-line object-contain" />
               </div>
               <div data-gab3d-legende className={`grid shrink-0 gap-y-0.5 text-[11px] text-txt-mut ${legCols === 2 ? 'grid-cols-2 gap-x-2' : 'grid-cols-1'}`}>
-                {LEG.map(([c, lab]) => (
+                {[
+                  ['#ffffff', 'Limite cadastrale'],
+                  ...(scene.zone_implantation.length ? [['#2f9e6a', "Zone d'implantation"]] : []),
+                  ...(projet ? [['#82afff','Mon implantation'], ['#ffbd67','Cotes du projet']] : scene.exemple_emprise?.length ? [['#61e8ad', 'Exemple au sol · pointillé 3D']] : []),
+                  ...(scene.batiments.length ? [['#cdd3d8', 'Bâti · BD TOPO']] : []),
+                  ...(axeSel ? [['#e0a44a', 'Axe de la coupe']] : []),
+                  ...(scene.reculs?.length ? [['#e0a44a', 'Bandes de recul']] : []),
+                  ...(scene.exclusions?.length ? [['#e8491d', 'Exclusions']] : []),
+                ].map(([c, lab]) => (
                   <div key={lab} className="flex items-center gap-1.5 whitespace-nowrap"><span className="inline-block h-2 w-3.5 shrink-0 rounded-sm" style={{ background: c }} />{lab}</div>
                 ))}
               </div>
@@ -793,7 +843,9 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
             <div className="flex items-center justify-between gap-2 border-b border-line/60 px-3 py-1">
               <div data-gab3d-coupe-titre className="truncate text-[12px] font-semibold text-txt">{coupeTitre}</div>
               <div className="flex shrink-0 items-center gap-3">
-                <span data-gab3d-coupe-datum className="hidden text-[11px] text-txt-dim lg:inline">Altitudes en m · IGN 1989 · H = V</span>
+                <span data-gab3d-coupe-datum className="hidden text-[11px] text-txt-dim lg:inline">Altitudes en m · IGN 1989 · maille {mailleFr} · H = V</span>
+                {axeSel && sid && <a href={gabCoupesPdfUrl(idu, sid)} download
+                  className="rounded border border-line px-2 py-1 text-[11px] text-txt-mut hover:text-txt">PDF des coupes</a>}
                 {axeSel && <button data-gab3d-agrandir onClick={() => setAgrandi(true)}
                   className="rounded border border-line bg-black/50 px-2 py-1 text-[11px] text-txt-mut hover:text-txt">⤢ Agrandir la coupe</button>}
               </div>
@@ -806,9 +858,9 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
                 : <p className="text-[12px] text-txt-mut">Aucune coupe disponible.</p>}
             </div>
           </div>
-          <p data-gab3d-pied title={acqProd ? `Date d'acquisition lue dans : ${acqProd}` : undefined}
+          <p data-gab3d-pied title={acqTxt && acqProd ? `Date d'acquisition lue dans : ${acqProd}` : undefined}
              className="border-t border-line px-3 py-1.5 text-[10px] text-txt-dim">
-            MNT LiDAR HD IGN · {relief3dAllege ? <>coupe à {mailleFr} · relief 3D allégé à {maille3dFr}</> : <>maille de {mailleFr}</>} · {acqTxt}{acqProd ? ` · ${acqProd}` : ''}{solRepli ? <span className="text-amber"> · {solMsg}</span> : ''} · cotes indicatives · courbes tous les mètres, trait fort tous les 5 m · H = V.
+            {scene.etat.fond_disponible ? <>{solRepli ? acqProd || 'Fond altimétrique local' : 'MNT LiDAR HD IGN'} · couverture du terrain {Math.round(scene.etat.terrain_couverture * 100)} % · {relief3dAllege ? <>coupe à {mailleFr} · relief 3D allégé à {maille3dFr}</> : <>maille de {mailleFr}</>}{acqTxt && ` · ${acqTxt}`}{acqProd && !solRepli ? ` · ${acqProd}` : ''}{solRepli ? <span className="text-amber"> · {solMsg}</span> : ''} · cotes indicatives · courbes tous les mètres, trait fort tous les 5 m · H = V.</> : 'Aucun modèle de terrain disponible pour mesurer les altitudes.'}
           </p>
         </div>
       )}

@@ -48,7 +48,7 @@ def _query(selector: str, bbox: tuple[float, float, float, float]) -> str:
             f"node{selector}({b});way{selector}({b}););out center;")
 
 
-def _points(data: dict):
+def _points(data: dict, *, identifiants: bool = False):
     """Éléments Overpass → (lon, lat, nom). node : lat/lon ; way : center."""
     for el in (data or {}).get("elements") or []:
         if el.get("type") == "node":
@@ -59,50 +59,59 @@ def _points(data: dict):
         if lon is None or lat is None:
             continue
         nom = (el.get("tags") or {}).get("name")
-        yield float(lon), float(lat), nom
+        point = (float(lon), float(lat), nom)
+        if identifiants:
+            attrs = {"osm_type": el["type"], "osm_id": el["id"]} if el.get("id") is not None else {}
+            yield (*point, attrs)
+        else:
+            yield point
+
+
+def _remplacer_poi(session: Session, commune: str, bbox, categories: dict, *, affichage: bool) -> dict:
+    sid = session.execute(text("SELECT id FROM data_sources WHERE name='OpenStreetMap / Overpass'")).scalar()
+    lots = {}
+    for cat, selecteur in categories.items():
+        data = _overpass(_query(selecteur, bbox))
+        if not isinstance(data.get("elements"), list) or data.get("remark"):
+            raise ValueError(f"Réponse Overpass incomplète pour {commune} ({cat})")
+        lots[cat] = list(_points(data, identifiants=True))
+    params = {"commune": commune, "categories": list(categories)}
+    session.execute(text("SELECT pg_advisory_xact_lock(hashtext(:cle), :groupe)"),
+                    {"cle": "amenites/" + commune, "groupe": int(affichage)})
+    filtre = "kind='amenite' AND commune=:commune AND subtype=ANY(:categories)"
+    session.execute(text(f"DELETE FROM spatial_layers WHERE {filtre}"), params)
+    for cat, points in lots.items():
+        for lon, lat, nom, identite in points:
+            attrs = {"categorie": cat, "name": nom, **identite}
+            if affichage:
+                attrs["affichage_seul"] = True
+            _insert_layer(session, "amenite", cat, nom, {"type": "Point", "coordinates": [lon, lat]},
+                          sid, commune, None, attrs)
+    if session.execute(text("SELECT to_regclass('tuyau_subdivise') IS NOT NULL")).scalar_one():
+        session.execute(text(f"DELETE FROM tuyau_subdivise WHERE {filtre}"), params)
+        session.execute(text(f"""INSERT INTO tuyau_subdivise(kind,subtype,name,commune,attrs,data_source_id,geom_2975)
+            SELECT kind,subtype,name,commune,attrs,data_source_id,geom_2975 FROM spatial_layers
+            WHERE {filtre}"""), params)
+        if session.execute(text("SELECT to_regclass('mvt_meta') IS NOT NULL")).scalar_one():
+            session.execute(text("""INSERT INTO mvt_meta(key,value,updated_at)
+                VALUES('tuyau_rev',to_char(clock_timestamp(),'YYYYMMDDHH24MISSUS'),now())
+                ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at"""))
+    session.flush()
+    return {cat: len(points) for cat, points in lots.items()}
 
 
 def ingest_poi_commune(session: Session, commune: str,
                        bbox: tuple[float, float, float, float]) -> dict:
-    """Ingère les POI OSM des 4 catégories pour une commune → spatial_layers kind='amenite'.
-    Idempotent (purge kind='amenite' de la commune avant réinsertion). ⚠ APPELS RÉSEAU (Overpass)."""
-    sid = session.execute(
-        text("SELECT id FROM data_sources WHERE name='OpenStreetMap / Overpass'")).scalar()
-    session.execute(text("DELETE FROM spatial_layers WHERE commune=:c AND kind='amenite'"), {"c": commune})
-    counts: dict[str, int] = {}
-    for cat, sel in CATEGORIES.items():
-        data = _overpass(_query(sel, bbox))
-        n = 0
-        for lon, lat, nom in _points(data):
-            _insert_layer(session, "amenite", cat, nom, {"type": "Point", "coordinates": [lon, lat]},
-                          sid, commune, None, {"categorie": cat, "name": nom})
-            n += 1
-        counts[cat] = n
+    """Remplace les quatre catégories de proximité d'une commune et les points correspondants de la carte."""
+    counts = _remplacer_poi(session, commune, bbox, CATEGORIES, affichage=False)
     session.execute(text("UPDATE data_sources SET last_sync_at=now() WHERE name='OpenStreetMap / Overpass'"))
-    session.flush()
     return counts
 
 
 def ingest_poi_affichage(session: Session, commune: str,
                          bbox: tuple[float, float, float, float]) -> dict:
-    """Les 3 catégories d'AFFICHAGE (mairie/police/sport) pour une commune. Idempotent sur CES
-    subtypes uniquement — les 4 catégories du signal distance ne sont ni purgées ni re-tirées."""
-    sid = session.execute(
-        text("SELECT id FROM data_sources WHERE name='OpenStreetMap / Overpass'")).scalar()
-    session.execute(text(
-        "DELETE FROM spatial_layers WHERE commune=:c AND kind='amenite' AND subtype = ANY(:sub)"),
-        {"c": commune, "sub": list(CATEGORIES_AFFICHAGE)})
-    counts: dict[str, int] = {}
-    for cat, sel in CATEGORIES_AFFICHAGE.items():
-        data = _overpass(_query(sel, bbox))
-        n = 0
-        for lon, lat, nom in _points(data):
-            _insert_layer(session, "amenite", cat, nom, {"type": "Point", "coordinates": [lon, lat]},
-                          sid, commune, None, {"categorie": cat, "name": nom, "affichage_seul": True})
-            n += 1
-        counts[cat] = n
-    session.flush()
-    return counts
+    """Remplace les six catégories d’affichage d'une commune dans la source et sur la carte."""
+    return _remplacer_poi(session, commune, bbox, CATEGORIES_AFFICHAGE, affichage=True)
 
 
 def compute_amenites_commune(session: Session, commune: str) -> int:

@@ -1,0 +1,29 @@
+OUTIL-COMMUNES-FIX-13 LOT 4 — mesure des 500 du contexte commune (app.py:2957)
+Méthode : scripts/communes_fix13_500.py — LECTURE SEULE (appelle la fonction productrice
+_compute_commune_contexte, jamais l'endpoint → aucune écriture dans commune_contexte_cache).
+Condition « à froid + contention » reproduite de façon déterministe : statement_timeout court
+(300 ms) qui fait expirer la requête du TABLEAU des communes (_communes_data, ST_Extent sur les
+434 582 parcelles), pendant qu'une charge de lecture tourne en fond. 50 appels sur les 24 communes.
+
+AVANT (HEAD f154afaff, sans correctif) :
+    500 (appel qui lève)         : 50 / 50
+    servi (payload retourné)     : 0
+    → la requête classement (2957) expire, avorte la transaction, cascade InFailedSqlTransaction,
+      l'endpoint 500 (QueryCanceled). La requête qui expire fait tomber toutes les suivantes.
+
+APRÈS (correctif LOT 4) :
+    500 (appel qui lève)         : 0 / 50
+    servi (payload retourné)     : 50 / 50
+    dont classement indisponible : 50 (dégradé HONNÊTEMENT — jamais un faux zéro)
+    → chaque producteur est isolé (_contexte_bloc) : l'expiration du tableau fait un ROLLBACK PROPRE
+      et rend classement=None ; les blocs suivants (mairie, foncier, risques, plu_statut…) sont
+      préservés. L'endpoint sert un payload daté, jamais un 500.
+
+Chemin heureux (timeout par défaut 60 s, Saint-André) : 10,7 s, classement présent
+(« 18 parcelles brûlantes ou chaudes »), foncier/mairie présents, plu_statut.debat_padd_tenu=2023-04-19.
+
+Ask 2 (« le tableau ne doit plus être recalculé à chaque appel s'il peut être lu d'un résultat déjà
+calculé ») : _communes_data est mémoïsé 5 min (lu une fois, p.ex. à l'ouverture du sélecteur /communes,
+puis réutilisé) ; le payload entier est caché par commune (commune_contexte_cache). L'endpoint, sur clé
+de fraîcheur périmée, TENTE le rafraîchissement mais, s'il expire, ROLLBACK propre et SERT LE RÉSULTAT
+DÉJÀ CALCULÉ (daté par computed_at) au lieu de recalculer-et-500 à chaque appel.

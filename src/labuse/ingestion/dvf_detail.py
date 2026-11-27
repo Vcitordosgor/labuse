@@ -63,6 +63,45 @@ def _carrez(row: dict) -> float | None:
     return round(tot, 2) if seen else None
 
 
+def ajouter_details(agg: dict, lignes: list[dict], idus: set[str], token: str) -> None:
+    """Agrège les dispositions Etalab d’une période pour les parcelles cadastrales présentes."""
+    for row in lignes:
+        idm, idp = row.get("id_mutation"), row.get("id_parcelle")
+        if not idm or not idp or idp not in idus:
+            continue
+        adresse = " ".join(x for x in (
+            (row.get("adresse_numero") or "").strip(), (row.get("adresse_suffixe") or "").strip(),
+            (row.get("adresse_nom_voie") or "").strip()) if x) or None
+        pieces, lots, carrez = _int(row.get("nombre_pieces_principales")), _int(row.get("nombre_lots")), _carrez(row)
+        d = agg.setdefault((idm, idp), {
+            "adresse": None, "cp": None, "pieces": None, "carrez": None,
+            "lots": None, "anc": None, "mil": f"géo-DVF Etalab {token}"})
+        if adresse and not d["adresse"]:
+            d["adresse"] = adresse
+            d["cp"] = (row.get("code_postal") or "").strip() or None
+        if pieces is not None:
+            d["pieces"] = max(d["pieces"] or 0, pieces)
+        if carrez is not None:
+            d["carrez"] = max(d["carrez"] or 0.0, carrez)
+        if lots is not None:
+            d["lots"] = max(d["lots"] or 0, lots)
+        if (anc := (row.get("ancien_id_parcelle") or "").strip()):
+            d["anc"] = anc
+
+
+def ecrire_details(session: Session, agg: dict, *, temporaire: bool = False) -> list[dict]:
+    table = "pg_temp.dvf_nouveaux_details" if temporaire else TABLE
+    rows = [{"idm": idm, "idp": idp, "adr": d["adresse"], "cp": d["cp"], "pc": d["pieces"],
+             "cz": d["carrez"], "lo": d["lots"], "anc": d["anc"], "mil": d["mil"]}
+            for (idm, idp), d in agg.items()]
+    for i in range(0, len(rows), 5000):
+        session.execute(text(
+            f"INSERT INTO {table} (id_mutation, id_parcelle, adresse, code_postal, nombre_pieces, "
+            " surface_carrez_m2, nombre_lots, ancien_id_parcelle, source_millesime) "
+            "VALUES (:idm, :idp, :adr, :cp, :pc, :cz, :lo, :anc, :mil)"), rows[i:i + 5000])
+    return rows
+
+
 def build_dvf_detail(session: Session, dep: str = "974", log=lambda *_: None,
                      http_get=None) -> dict:
     """Remplit `dvf_mutation_detail` depuis géo-DVF 974, FORMAT ETALAB ACTUEL (FRAICHEUR-FIX-1) :
@@ -75,38 +114,9 @@ def build_dvf_detail(session: Session, dep: str = "974", log=lambda *_: None,
     # agrégat par (id_mutation, id_parcelle)
     agg: dict[tuple[str, str], dict] = {}
     for res in ressources:
-        y = res.token
-        for row in dvf_etalab.lignes_974(res, http_get=http_get):
-                idm, idp = row.get("id_mutation"), row.get("id_parcelle")
-                if not idm or not idp or idp not in idus:
-                    continue
-                adresse = " ".join(x for x in (
-                    (row.get("adresse_numero") or "").strip(), (row.get("adresse_suffixe") or "").strip(),
-                    (row.get("adresse_nom_voie") or "").strip()) if x) or None
-                pieces, lots, carrez = _int(row.get("nombre_pieces_principales")), _int(row.get("nombre_lots")), _carrez(row)
-                d = agg.setdefault((idm, idp), {
-                    "adresse": None, "cp": None, "pieces": None, "carrez": None,
-                    "lots": None, "anc": None, "mil": f"géo-DVF Etalab {y}"})
-                if adresse and not d["adresse"]:
-                    d["adresse"] = adresse
-                    d["cp"] = (row.get("code_postal") or "").strip() or None
-                if pieces is not None:
-                    d["pieces"] = max(d["pieces"] or 0, pieces)
-                if carrez is not None:
-                    d["carrez"] = max(d["carrez"] or 0.0, carrez)
-                if lots is not None:
-                    d["lots"] = max(d["lots"] or 0, lots)
-                if (anc := (row.get("ancien_id_parcelle") or "").strip()):
-                    d["anc"] = anc
+        ajouter_details(agg, dvf_etalab.lignes_974(res, http_get=http_get), idus, res.token)
     session.execute(text(f"TRUNCATE {TABLE}"))
-    rows = [{"idm": idm, "idp": idp, "adr": d["adresse"], "cp": d["cp"], "pc": d["pieces"],
-             "cz": d["carrez"], "lo": d["lots"], "anc": d["anc"], "mil": d["mil"]}
-            for (idm, idp), d in agg.items()]
-    for i in range(0, len(rows), 5000):
-        session.execute(text(
-            f"INSERT INTO {TABLE} (id_mutation, id_parcelle, adresse, code_postal, nombre_pieces, "
-            " surface_carrez_m2, nombre_lots, ancien_id_parcelle, source_millesime) "
-            "VALUES (:idm, :idp, :adr, :cp, :pc, :cz, :lo, :anc, :mil)"), rows[i:i + 5000])
+    rows = ecrire_details(session, agg)
     session.execute(text("UPDATE data_sources SET last_sync_at = now() WHERE name = 'DVF / valeurs foncières'"))
     session.flush()
     n = session.execute(text(f"SELECT count(*) FROM {TABLE}")).scalar()

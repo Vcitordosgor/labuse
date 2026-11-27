@@ -64,11 +64,14 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--insee", default=None)
+    ap.add_argument("--data-only", action="store_true",
+                    help="Réingérer dans le schéma existant, sans préparer la table ni le dictionnaire FTS.")
     args = ap.parse_args()
 
     mil = yaml.safe_load((ROOT / "config" / "plu_millesimes.yaml").read_text())["communes"]
     now = _dt.datetime.now(_dt.timezone.utc).isoformat()
     s = session_factory()()
+    s.info["plu_data_only"] = args.data_only or args.dry_run
     plu_ingest.ensure_ddl(s)
     s.commit()
 
@@ -86,13 +89,16 @@ def main() -> int:
         idurba = c["idurba"]
         # PDF à extraire : d'abord le document actif s'il est sur disque, sinon le règlement de la commune.
         cand = PDFDIR / (document or "")
-        if not cand.exists():
+        if not cand.is_file():
+            if args.data_only:
+                raise ValueError(f"PDF attendu absent : {document}")
             alt = sorted(PDFDIR.glob(f"{insee}_[Rr]eglement_*.pdf"))
             if not alt:
                 ecarts.append(f"{insee} : aucun PDF sur disque"); continue
             cand = alt[-1]                                   # le plus récent (La Possession → 20251217)
         # Garde-fou idurba GPU vs config (identifiant, pas nom de fichier).
         src_url = None
+        pack = None
         try:
             pack = _active_pack(insee)
             if pack:
@@ -101,7 +107,11 @@ def main() -> int:
                     ecarts.append(f"{insee} : idurba GPU {pack['idurba']} ≠ config {idurba} — NON servi")
                     continue
         except Exception as e:  # noqa: BLE001
+            if args.data_only:
+                raise RuntimeError(f"{insee} : dépôt GPU inaccessible") from e
             ecarts.append(f"{insee} : GPU injoignable ({e}) — pack non résolu, repli manifest")
+        if args.data_only and (not src_url or not pack or pack["statut"] != "EN_VIGUEUR"):
+            raise RuntimeError(f"{insee} : dépôt en vigueur non confirmé")
         if not src_url:
             src_url = f"https://www.geoportail-urbanisme.gouv.fr/ (pack {idurba})"
         if args.dry_run:
@@ -115,8 +125,9 @@ def main() -> int:
             source_url=src_url, pdf_url=pdf_url, fetched_at=now, commit=True, log=print)
         total += r["extraits"]; done.append(insee)
 
-    n = s.execute(text("SELECT count(DISTINCT insee) FROM plu_reglement_extrait")).scalar()
-    print(f"\n=== {len(done)} communes traitées · {total} extraits · {n} communes en base")
+    if not args.dry_run:
+        n = s.execute(text("SELECT count(DISTINCT insee) FROM plu_reglement_extrait")).scalar()
+        print(f"\n=== {len(done)} communes traitées · {total} extraits · {n} communes en base")
     if ecarts:
         print("ÉCARTS / garde-fou :")
         for x in ecarts:

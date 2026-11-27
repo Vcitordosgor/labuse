@@ -13,11 +13,14 @@ serait lui aussi un faux RAS, on n'en déclare aucune.
 from __future__ import annotations
 
 import logging
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from ..config import load_yaml_config
 from ..millesime_source import libelle_date_source as _date_source  # RETOUCHES-1 point 7 (repli nommé)
 
 log = logging.getLogger("labuse.servitudes")
@@ -133,37 +136,21 @@ ETAT_CLAIR = "aucune_intersection"
 ETAT_INCONNU = "couverture_inconnue"
 ETAT_INDISPONIBLE = "lecture_indisponible"
 
-# Détection « famille déclenchée » par sous-chaîne dans (categorie + effet) des contraintes remontées.
-_FAMILLES_VERIFIEES: list[tuple[str, tuple[str, ...]]] = [
-    ("Sols pollués", ("information sur les sols", "SIS", "CASIAS", "site industriel")),
-    ("Bruit", ("sonore des voies", "exposition au bruit")),
-    ("Assainissement", ("Assainissement non collectif", "ANC")),
-    ("ICPE", ("Installation classée", "ICPE")),
-    ("Monuments et sites", ("Monument historique", "Site classé", "ZPPAUP", "AVAP", "patrimoniale")),
-    ("ER / EBC", ("Espace boisé classé", "EBC", "Emplacement réservé")),
-    ("Préemption", ("préemption", "DPU")),
-    ("Eau et zones humides", ("Zone humide", "domaine public fluvial", "trait de côte", "50 pas", "Captage", "Halage")),
-    ("Espaces naturels", ("Espace naturel", "ZNIEFF", "Parc national", "Réserve naturelle", "compensatoire")),
-    ("Risques naturels", ("risque naturel", "PPR", "inondation", "mouvement")),
-]
-
-# Famille → couches (`spatial_layers.kind`) qui la PORTENT. La couverture d'une famille est DÉMONTRÉE
-# quand au moins une de ces couches est ingérée pour la commune de la parcelle (cf. `couverture_familles`).
-# Les couches sans `commune` renseignée en base (dpf, zone_humide, cinquante_pas, znieff,
-# mesures_compensatoires) ne PROUVENT pas de couverture par commune : la famille reste « inconnue » si
-# aucune de ses autres couches (trait_de_cote, sup…) n'est présente pour la commune. Jamais un faux CLAIR.
-_FAMILLE_KINDS: dict[str, tuple[str, ...]] = {
-    "Sols pollués": ("sol_pollue",),
-    "Bruit": ("bruit_route", "peb"),
-    "Assainissement": ("zonage_assainissement",),
-    "ICPE": ("icpe", "sup"),
-    "Monuments et sites": ("abf", "sup"),
-    "ER / EBC": ("plu_gpu_prescription", "plu_gpu_zone"),
-    "Préemption": ("dpu",),
-    "Eau et zones humides": ("trait_de_cote", "dpf", "zone_humide", "cinquante_pas"),
-    "Espaces naturels": ("ens", "znieff", "mesures_compensatoires", "sup"),
-    "Risques naturels": ("ppr", "georisque_alea"),
+# Une entrée par couche réellement interrogée. CASIAS et SIS ont le même kind
+# mais documentent des inventaires différents.
+_CONTROLES = {
+    **_KINDS,
+    "bruit_route": "Bruit routier", "peb": "Bruit aéroportuaire",
+    "dpu": "Préemption", "ppr": "Zonage PPR", "georisque_alea": "Aléas naturels",
+    "sol_pollue:casias": "Anciens sites industriels (CASIAS)",
+    "sol_pollue:sis": "Secteurs d’information sur les sols (SIS)",
+    "sol_pollue:instruction": "Sites pollués en instruction",
 }
+_CONTROLES.pop("sol_pollue")
+
+
+def _controle(kind: str, subtype: str | None) -> str:
+    return f"{kind}:{subtype}" if kind == "sol_pollue" else kind
 
 
 def etats_familles(items: list[dict], couvertes: set[str] | None = None,
@@ -175,12 +162,12 @@ def etats_familles(items: list[dict], couvertes: set[str] | None = None,
     inconnu. Sans preuve de couverture (`couvertes` vide), une famille muette est « Couverture inconnue »."""
     couvertes = couvertes or set()
     indispo = set(indisponibles)
-    blob = " · ".join(f"{i.get('categorie', '')} {i.get('effet', '')}" for i in items).lower()
+    detectes = {i.get("controle") for i in items}
     out: list[dict] = []
-    for fam, needles in _FAMILLES_VERIFIEES:
+    for cle, fam in _CONTROLES.items():
         if fam in indispo:
             etat = ETAT_INDISPONIBLE
-        elif any(n.lower() in blob for n in needles):
+        elif cle in detectes:
             etat = ETAT_CONTRAINTE
         elif fam in couvertes:
             etat = ETAT_CLAIR
@@ -191,32 +178,20 @@ def etats_familles(items: list[dict], couvertes: set[str] | None = None,
 
 
 def couverture_familles(db: Session, commune: str | None) -> set[str]:
-    """Familles dont AU MOINS UNE couche source est ingérée POUR LA COMMUNE de la parcelle — preuve de
-    couverture d'après les métadonnées de la source (`spatial_layers.commune`, renseigné à l'ingestion).
-
-    L'EMPREINTE kind → communes couvertes est lue une fois PAR SESSION (db.info, comme `aleas_parcelle`)
-    puis mémorisée : la fiche n'y revient pas. Le rapprochement est INSENSIBLE À LA CASSE (casefold) :
-    certaines couches stockent la commune en capitales (`bruit_route` → « SAINT-DENIS ») là où `parcels`
-    la porte en casse de titre (« Saint-Denis ») — un `=` strict déclarerait à tort « couverture inconnue ».
-    Commune inconnue / erreur → ensemble vide (tout « inconnu », jamais un faux CLAIR)."""
+    """Couches inventoriées pour la commune, indépendamment de leurs voisines."""
     if not commune:
         return set()
-    cle = commune.strip().casefold()
-    fp: dict[str, set[str]] | None = db.info.get("_sl_footprint")
-    if fp is None:
-        tous_kinds = sorted({k for ks in _FAMILLE_KINDS.values() for k in ks})
-        try:
-            fp = {}
-            for kind, com in db.execute(text(
-                "SELECT DISTINCT kind, commune FROM spatial_layers "
-                "WHERE kind = ANY(:k) AND commune IS NOT NULL"), {"k": tous_kinds}).all():
-                fp.setdefault(kind, set()).add((com or "").strip().casefold())
-        except Exception:  # noqa: BLE001 — jamais une 500 pour un calcul de couverture
-            db.rollback()
-            return set()
-        db.info["_sl_footprint"] = fp
-    presents = {kind for kind, comms in fp.items() if cle in comms}
-    return {fam for fam, kinds in _FAMILLE_KINDS.items() if any(k in presents for k in kinds)}
+    try:
+        with db.begin_nested():
+            rows = db.execute(text("""
+                SELECT DISTINCT kind, CASE WHEN kind = 'sol_pollue' THEN subtype END AS subtype
+                FROM spatial_layers WHERE lower(commune) = lower(:commune) AND kind = ANY(:kinds)
+            """), {"commune": commune, "kinds": [*_KINDS, "ppr", "georisque_alea"]}).all()
+    except SQLAlchemyError:
+        log.warning("Couverture des sources indisponible pour %s", commune, exc_info=True)
+        return set()
+    return {_CONTROLES[key] for kind, subtype in rows
+            if (key := _controle(kind, subtype)) in _CONTROLES}
 
 
 def familles_verifiees(items: list[dict], couvertes: set[str] | None = None) -> list[str]:
@@ -300,7 +275,7 @@ AVERTISSEMENT = ("Lecture des couches déjà ingérées — sourcée et datée. 
 # (`ppr`, `georisque_alea`) avec le % de la parcelle touché (ST_Union), la source DEAL et le millésime.
 # Miroir des seuils/libellés de la cascade `risques` (RisquesLayer + arbitrage M73), mais 100 % lecture.
 _CAT_RISQUE = "Risque naturel (PPR / aléa)"
-_NIVEAU_RANK = {"faible": 1, "moyen": 3, "modere": 3, "modéré": 3, "eleve": 4, "élevé": 4,
+_NIVEAU_RANK = {"negligeable": 0, "tres_eleve": 6, "faible": 1, "moyen": 3, "modere": 3, "modéré": 3, "eleve": 4, "élevé": 4,
                 "fort": 5, "tres_fort": 6, "très fort": 6}
 
 
@@ -339,7 +314,15 @@ def _clean_risque(detail: str) -> str:
         return detail
 
 
-def _ppr_ligne(couleur: str, risques: str, pct: int) -> dict:
+def _part_affichee(pct: float) -> str:
+    if 0 < pct < 1:
+        return "moins de 1"
+    if 99 < pct < 100:
+        return "plus de 99"
+    return str(round(pct))
+
+
+def _ppr_ligne(couleur: str, risques: str, pct: float, *, entiere: bool | None = None) -> dict:
     """Ligne d'affichage d'une zone PPR à partir de sa couleur (`labuse_ppr_couleur` : rouge/bleu/autre),
     du risque et du % de la parcelle touché. PUR (pas de DB) → testable.
 
@@ -348,35 +331,42 @@ def _ppr_ligne(couleur: str, risques: str, pct: int) -> dict:
     (la part non classée est retranchée de l'assiette, comme le rouge — cf. ppr.est_interdit) RESTE, mais
     elle est DITE comme une hypothèse, pas assénée comme un fait. Le rouge RÉGLEMENTAIRE (INTERDICTION)
     garde « partie INCONSTRUCTIBLE » (fait opposable, C. env. L562-1)."""
+    total = pct == 100 if entiere is None else entiere
+    part = _part_affichee(pct)
+    if total:
+        part = "100"
+    elif pct >= 100:
+        part = "plus de 99"
     if couleur == "bleu":
-        lib = (f"PPR {risques} — zone bleue sur {pct} % de la parcelle : constructible SOUS "
+        lib = (f"PPR {risques} — zone bleue sur {part} % de la parcelle : constructible SOUS "
                f"PRESCRIPTIONS, à confirmer au règlement du PPR.")
-        return {"nature": "PPR — zone bleue", "niveau": "bleu", "libelle": lib, "redhibitoire": False}
+        return {"nature": "PPR — zone bleue", "niveau": "bleu", "statut": "prescription", "libelle": lib, "redhibitoire": False}
     if couleur == "autre":
-        lib = (f"Zonage PPR non classé, à vérifier — zone au code PPR non reconnu sur {pct} % de la "
+        lib = (f"Zonage PPR non classé, à vérifier — zone au code PPR non reconnu sur {part} % de la "
                f"parcelle (risque : {risques}). Par prudence, le calcul la retranche de l'assiette "
                f"constructible (hypothèse) ; classement à confirmer au règlement du PPR / en mairie.")
-        return {"nature": "PPR — zonage non classé", "niveau": "autre", "libelle": lib, "redhibitoire": True}
+        return {"nature": "PPR — zonage non classé", "niveau": "autre", "statut": "a_verifier", "libelle": lib, "redhibitoire": True}
     # rouge RÉGLEMENTAIRE (INTERDICTION)
     hors = max(0, 100 - pct)
     # OUTILS-LOT-4 bis (pt 2) — 100 % rouge : « parcelle ENTIÈREMENT INCONSTRUCTIBLE » (il n'y a pas de
     # « partie » constructible) ; en dessous de 100 %, « partie INCONSTRUCTIBLE » (inchangé).
-    inconstructible = "parcelle entièrement INCONSTRUCTIBLE" if pct >= 100 else "partie INCONSTRUCTIBLE"
+    inconstructible = "parcelle entièrement INCONSTRUCTIBLE" if total else "partie INCONSTRUCTIBLE"
     # OUTILS-LOT-4 bis (pt 3) — trait d'union INSÉCABLE (U+2011) dans le numéro d'article : « L562‑1 »
     # ne se coupe jamais en « L562- / 1 » en fin de ligne.
-    lib = (f"PPR {risques} — zone rouge sur {pct} % de la parcelle : {inconstructible} "
+    lib = (f"PPR {risques} — zone rouge sur {part} % de la parcelle : {inconstructible} "
            f"(interdiction, C. env. L562‑1), quelle que soit la surface.")
     # OUTILS-LOT-4 (pt 4) — quand TOUTE la parcelle est en zone rouge (pct = 100 → hors = 0), on ne
     # colle pas « Partie hors zone rouge (0 %) : constructible » : il n'y a pas de partie hors rouge.
-    if hors > 0:
+    if not total:
         # EXPORTS-FIX-3 LOT 3 (#3) — ne pas DIRE « constructible » : la partie hors zone rouge reste
         # SOUMISE AUX RÈGLES DE SA ZONE — en zone A/N, elle n'est pas constructible pour autant (le PPR
         # retire une interdiction, il n'ajoute pas un droit à bâtir). Faute : BI0351 (zone N) laissait
         # entendre que les 69 % hors rouge étaient constructibles.
-        lib += (f" Partie hors zone rouge ({hors} %) : soumise aux règles d'urbanisme de sa zone "
+        lib += (f" Partie hors zone rouge ({_part_affichee(hors) if hors > 0 else 'moins de 1'} %) : soumise aux règles d'urbanisme de sa zone "
                 f"(le PPR n'y ajoute pas de droit à bâtir ; en zone A/N elle reste non constructible), "
                 f"à confirmer au règlement du PPR et au PLU.")
-    return {"nature": "PPR — zone rouge", "niveau": "rouge", "libelle": lib, "redhibitoire": True}
+    return {"nature": "PPR — zone rouge", "niveau": "rouge", "statut": "rouge_total" if total else "rouge_partiel",
+            "libelle": lib, "redhibitoire": True}
 
 
 def _table_aleas(db: Session) -> str:
@@ -400,7 +390,7 @@ def _table_aleas(db: Session) -> str:
         return "spatial_layers"
 
 
-def aleas_parcelle(db: Session, idu: str) -> list[dict]:
+def aleas_parcelle(db: Session, idu: str, *, carte: bool = False) -> list[dict]:
     """PIEGES-RISQUES-2 (Lot B/C) — PPR zoné (rouge/bleu) + aléas par niveau, EN DIRECT, avec le % de la
     parcelle touché. Point de vérité partagé : `contraintes_parcelle` en fait des lignes plates (outil)
     et la fiche §Pièges & risques en fait son bloc « aléas ». L'assiette SUP PM1 du PPR reste servie à
@@ -410,10 +400,18 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
     (_aleas_block §risques + contraintes_parcelle §pièges) → le second appel resservait les mêmes 1,75 s.
     Portée = la session de LA requête (jamais partagé, jamais périmé)."""
     memo = db.info.setdefault("_aleas_parcelle_memo", {})
-    if idu in memo:
-        return memo[idu]
+    if (idu, carte) in memo:
+        return memo[idu, carte]
     srctable = _table_aleas(db)
     out: list[dict] = []
+    intersection = "ST_Union(ST_Intersection(sl.geom_2975, p.g))"
+    carte_sql = (f"ST_AsGeoJSON(ST_Transform({intersection},4326),9)::json AS geometry,"
+                 " array_remove(array_agg(DISTINCT sl.attrs->>'urlreg'),NULL) AS urls,"
+                 if carte else "")
+    plans_sql = ("""array_agg(DISTINCT concat_ws('|', sl.attrs->>'code_insee',
+                      sl.attrs->>'document', sl.attrs->>'approbation'))
+                      FILTER (WHERE ST_Area(ST_Intersection(sl.geom_2975,p.g)) > 0) AS plans,"""
+                 if carte else "")
     # ── PPR zoné — CLASSIFICATION UNIQUE PPR-UNIQUE-1 (`labuse_ppr_couleur`) ───────────────────────
     # TROIS groupes DISTINCTS (OUTILS-P0-1 #2) : rouge (INTERDICTION), bleu (PRESCRIPTION), autre (code
     # non reconnu — p.ex. le `subtype='i'` de Saint-Philippe). L'« autre » n'est PLUS fondu dans le
@@ -423,22 +421,32 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
     for r in db.execute(text(
         f"""WITH p AS (SELECT geom_2975 g, ST_Area(geom_2975) a FROM parcels WHERE idu = :idu)
            SELECT labuse_ppr_couleur(sl.subtype, sl.attrs) AS couleur,
+                  ST_Covers({intersection}, (SELECT g FROM p)) AS entiere,
                   string_agg(DISTINCT sl.attrs->>'risque', ', ') AS risques,
-                  round((100 * ST_Area(ST_Union(ST_Intersection(sl.geom_2975, p.g))) / NULLIF(min(p.a), 0))::numeric)::int AS pct,
+                  100 * ST_Area({intersection}) / NULLIF(min(p.a), 0) AS pct,
+                  {carte_sql} {plans_sql}
                   max(ds.name) AS source,
                   max(ds.source_millesime) AS source_millesime, max(ds.source_horizon_at) AS source_horizon_at,
                   max(COALESCE(ds.last_sync_at, ds.updated_at)::date)::text AS ingere_le
            FROM {srctable} sl CROSS JOIN p LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
-           WHERE sl.kind = 'ppr' AND sl.geom_2975 IS NOT NULL AND ST_Intersects(sl.geom_2975, p.g)
+           WHERE sl.kind = 'ppr' AND labuse_ppr_couleur(sl.subtype,sl.attrs) IS NOT NULL
+             AND sl.geom_2975 IS NOT NULL AND ST_Intersects(sl.geom_2975, p.g)
            GROUP BY labuse_ppr_couleur(sl.subtype, sl.attrs) ORDER BY 1 DESC"""), {"idu": idu}).mappings().all():
-        pct = r["pct"] or 0
-        if pct <= 0:   # intersection au bord (aire arrondie à 0 %) → bruit, pas une contrainte
+        pct = max(0.0, min(100.0, r["pct"] or 0))
+        if pct <= 0:   # contact de bord, sans surface commune
             continue
         # RETOUCHES-1 point 7 — libellé daté nommé selon sa provenance : « millésime <X> » si publié
         # en amont (source_millesime), sinon « au JJ/MM/AAAA » (repli d'ingestion, DOCS-1 : jamais « ingéré le »).
         mill = _date_source(r["source_millesime"], source_horizon_at=r["source_horizon_at"], ingere_le=r["ingere_le"])
-        lig = _ppr_ligne(r["couleur"], _risque_fr(r["risques"]), pct)
+        lig = _ppr_ligne(r["couleur"], _risque_fr(r["risques"]), pct, entiere=r["entiere"])
+        actions = {}
+        if carte:
+            catalogue = load_yaml_config("reglements_ppr")
+            urls = [*(r["urls"] or []), *(catalogue.get(plan) for plan in r["plans"] or [])]
+            actions = {"geometry": r["geometry"], "urls": _documents(urls)}
         out.append({"nature": lig["nature"], "niveau": lig["niveau"], "part_pct": pct,
+                    "statut": lig["statut"],
+                    **actions,
                     "libelle": _clean_risque(lig["libelle"]), "redhibitoire": lig["redhibitoire"],
                     "source": r["source"] or "DEAL Réunion", "millesime": mill})
     # ── Aléas Géorisques : TOUS les niveaux par type, chacun avec sa part (PPR-UNIQUE-1, A-007/D-033 :
@@ -461,8 +469,12 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
                           WHERE z.kind='ppr' AND z.geom_2975 IS NOT NULL
                             AND labuse_ppr_couleur(z.subtype, z.attrs)='bleu'
                             AND ST_Intersects(z.geom_2975, p.g))
-           SELECT COALESCE(sl.attrs->>'type', sl.subtype) AS type, lower(sl.attrs->>'niveau') AS niveau,
-                  round((100 * ST_Area(ST_Union(ST_Intersection(sl.geom_2975, p.g))) / NULLIF(min(p.a), 0))::numeric)::int AS pct,
+           SELECT COALESCE(sl.attrs->>'type', sl.subtype) AS type, CASE WHEN sl.attrs->>'classe' IN ('negligeable','tres_fort','eleve','tres_eleve')
+                       THEN sl.attrs->>'classe' ELSE lower(sl.attrs->>'niveau') END AS niveau,
+                  array_remove(array_agg(DISTINCT NULLIF(sl.attrs->>'document','')),NULL) AS documents,
+                  array_remove(array_agg(DISTINCT NULLIF(sl.attrs->>'date_pac','')),NULL) AS dates_pac,
+                  100 * ST_Area({intersection}) / NULLIF(min(p.a), 0) AS pct,
+                  {carte_sql}
                   round((100 * ST_Area(ST_Union(ST_Intersection(ST_Intersection(sl.geom_2975, p.g), (SELECT gr FROM rouge)))) / NULLIF(min(p.a), 0))::numeric)::int AS pct_rouge,
                   round((100 * ST_Area(ST_Union(ST_Intersection(ST_Intersection(sl.geom_2975, p.g), (SELECT gb FROM bleue)))) / NULLIF(min(p.a), 0))::numeric)::int AS pct_bleue,
                   max(ds.name) AS source,
@@ -470,7 +482,7 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
                   max(COALESCE(ds.last_sync_at, ds.updated_at)::date)::text AS ingere_le
            FROM {srctable} sl CROSS JOIN p LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
            WHERE sl.kind = 'georisque_alea' AND sl.geom_2975 IS NOT NULL AND ST_Intersects(sl.geom_2975, p.g)
-           GROUP BY COALESCE(sl.attrs->>'type', sl.subtype), lower(sl.attrs->>'niveau')"""),
+           GROUP BY 1, 2"""),
             {"idu": idu}).mappings().all():
         if (a["pct"] or 0) <= 0:   # intersection au bord → bruit
             continue
@@ -478,25 +490,45 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
         aleas_par_type.setdefault(typ, []).append(dict(a))
     for typ, niveaux in aleas_par_type.items():
         niveaux.sort(key=lambda a: _NIVEAU_RANK.get(a["niveau"] or "moyen", 3), reverse=True)
-        total = sum(a["pct"] or 0 for a in niveaux)
+        total = sum(a["pct"] or 0 for a in niveaux if a["niveau"] != "negligeable")
         for a in niveaux:
             niveau = a["niveau"] or "moyen"
-            pct = a["pct"] or 0
+            pct = max(0.0, min(100.0, a["pct"] or 0))
             mill = _date_source(a["source_millesime"], source_horizon_at=a["source_horizon_at"], ingere_le=a["ingere_le"])
             # exposition cumulée du type notée sur la ligne du niveau le plus fort (≥ 2 niveaux).
-            cumul = f" — exposition totale au risque {typ} : ~{min(total, 100)} % de la parcelle" \
-                if (a is niveaux[0] and len(niveaux) > 1) else ""
-            out.append({"nature": f"Aléa {typ}", "niveau": niveau, "part_pct": pct,
+            cumul = f" — exposition totale au risque {typ} : {_part_affichee(min(total, 100))} % de la parcelle" \
+                if (a is niveaux[0] and len(niveaux) > 1 and total > 0) else ""
+            documents = " / ".join(sorted(a.get("documents") or []))
+            dates = ", ".join(sorted(a.get("dates_pac") or []))
+            provenance = "Carte d’aléa" + (f" (document {documents})" if documents else "")
+            if dates:
+                provenance += f" · porter à connaissance du {dates}"
+            out.append({"nature": f"Aléa {typ}", "provenance_alea": provenance, "niveau": niveau, "part_pct": pct,
                         # CAPACITE-1 (E3) — recouvrement MESURÉ de ce niveau avec la zone rouge/bleue du PPR.
+                        **({"geometry": a["geometry"], "urls": a["urls"]} if carte else {}),
                         "part_rouge_pct": a.get("pct_rouge"), "part_bleue_pct": a.get("pct_bleue"),
-                        "libelle": _clean_risque(f"Aléa {typ} — niveau {niveau} sur ~{pct} % de la parcelle{cumul}."),
+                        "libelle": _clean_risque(f"Aléa {typ} — niveau {niveau} sur {_part_affichee(pct)} % de la parcelle{cumul}. {provenance}."),
                         "redhibitoire": False,
                         "source": a["source"] or "DEAL Réunion / Géorisques", "millesime": mill})
-    memo[idu] = out
+    memo[idu, carte] = out
     return out
 
 
-def contraintes_parcelle(db: Session, idu: str) -> list[dict]:
+def _documents(urls) -> list[str]:
+    documents = set()
+    for url in urls:
+        if not isinstance(url, str):
+            continue
+        try:
+            parsed = urlsplit(url.strip())
+            if parsed.scheme in ("http", "https") and parsed.hostname:
+                documents.add(url.strip())
+        except ValueError:
+            continue
+    return sorted(documents)
+
+
+def contraintes_parcelle(db: Session, idu: str, *, carte: bool = False) -> list[dict]:
     """PIEGES-RISQUES-2 (Lot A) — FONCTION PARTAGÉE, point de vérité unique des contraintes dormantes
     d'UNE parcelle, lues EN DIRECT dans `spatial_layers`. Utilisée par les trois surfaces :
     l'endpoint « une parcelle » (`servitudes_invisibles`), l'outil « un lot » (`/modules/duediligence`,
@@ -504,9 +536,11 @@ def contraintes_parcelle(db: Session, idu: str) -> list[dict]:
     (assainissement → ANC seul ; prescriptions GPU → pièges fonciers seuls), mêmes libellés (`_detail`),
     même millésime par contrainte. Retourne `[{categorie, effet, source, date}]` trié par catégorie
     (`[]` si aucune). Ne vérifie PAS l'existence de la parcelle — l'appelant s'en charge."""
+    geometrie = ("ST_AsGeoJSON(ST_Transform(ST_Intersection(sl.geom_2975, p.geom_2975),4326),9)::json AS geometry,"
+                 if carte else "")
     rows = db.execute(text(
-        """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
-           SELECT sl.kind, sl.subtype, sl.name, sl.attrs,
+        f"""WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
+           SELECT sl.kind, sl.subtype, sl.name, sl.attrs, {geometrie}
                   ds.name AS source, ds.source_millesime, ds.source_horizon_at,
                   COALESCE(ds.last_sync_at, ds.updated_at)::date AS date_source
            FROM spatial_layers sl LEFT JOIN data_sources ds ON ds.id = sl.data_source_id, p
@@ -518,11 +552,42 @@ def contraintes_parcelle(db: Session, idu: str) -> list[dict]:
     # `pm1` (« enveloppe des zonages PPR », périmètre sans couleur) : servi en plus, le même PPR
     # comptait deux fois (SUP + zonage). On lit les aléas D'ABORD ; si le PPR zoné est servi, on masque
     # la ligne SUP `pm1` redondante (les autres SUP — ac*/el10/pm2/pm3 — restent des contraintes réelles).
-    aleas = aleas_parcelle(db, idu)
+    aleas = aleas_parcelle(db, idu, carte=carte)
     ppr_zonal = any((a.get("nature") or "").startswith("PPR") for a in aleas)
 
     # dédup (kind, detail) — une SUP répétée (enveloppes gen1/gen2) = une ligne
-    seen, items = set(), []
+    cache_plu: dict[str, list[str]] = {}
+
+    def reglements_plu(idurba: str | None) -> list[str]:
+        if not idurba:
+            return []
+        if idurba not in cache_plu:
+            # Le catalogue documentaire est optionnel sur les bases partielles.
+            if not db.scalar(text("SELECT to_regclass('plu_reglement_extrait')")):
+                return []
+            colonne_pdf = db.scalar(text("""
+                SELECT EXISTS (SELECT 1 FROM pg_attribute
+                    WHERE attrelid=to_regclass('plu_reglement_extrait') AND attname='pdf_url' AND NOT attisdropped)
+            """))
+            champ = "pdf_url" if colonne_pdf else "NULL::text"
+            pieces = db.execute(text(f"""
+                SELECT DISTINCT document, {champ} AS pdf, source_url
+                FROM plu_reglement_extrait
+                WHERE insee = :insee AND lower(idurba) = lower(:doc) AND document ILIKE '%reglement%'
+            """), {"insee": idu[:5], "doc": idurba})
+            urls = []
+            for document, pdf, source in pieces:
+                if not pdf:
+                    if source and urlsplit(source).path.lower().endswith(".pdf"):
+                        pdf = source
+                    else:
+                        catalogue = load_yaml_config("reglements_plu_par_document")
+                        pdf = catalogue.get(f"{idurba.lower()}|{document}")
+                urls.append(pdf)
+            cache_plu[idurba] = _documents(urls)
+        return cache_plu[idurba]
+
+    seen, items = {}, []
     for r in rows:
         if r["kind"] == "sup" and (r["subtype"] or "").lower() == "pm1" and ppr_zonal:
             continue
@@ -536,24 +601,38 @@ def contraintes_parcelle(db: Session, idu: str) -> list[dict]:
             continue
         detail = _detail(r["kind"], r["subtype"], r["name"], r["attrs"])
         key = (r["kind"], detail)
+        attrs = r["attrs"] or {}
+        urls = _documents([attrs.get("urlreg"), attrs.get("arrete_pdf")])
+        if carte and r["kind"] == "plu_gpu_prescription":
+            urls = sorted(set(urls + reglements_plu(attrs.get("idurba"))))
         if key in seen:
+            if carte:
+                seen[key]["geometries"].append(r["geometry"])
+                seen[key]["reglements"] = sorted(set(seen[key]["reglements"]) | set(urls))
             continue
-        seen.add(key)
         # RETOUCHES-1 point 7 — libellé daté nommé : « millésime <X> » si publié en amont
         # (data_sources.source_millesime), sinon « au JJ/MM/AAAA » (repli d'ingestion, DOCS-1 : jamais « ingéré le »).
         mill = _date_source(r["source_millesime"], source_horizon_at=r["source_horizon_at"],
                             ingere_le=r["date_source"])
         items.append({"categorie": _KINDS.get(r["kind"], r["kind"]), "effet": detail,
-                      "source": r["source"] or "spatial_layers", "date": mill})
+                      "source": r["source"] or "spatial_layers", "date": mill,
+                      "controle": _controle(r["kind"], r["subtype"]),
+                      **({"geometries": [r["geometry"]], "reglements": urls} if carte else {})})
+        seen[key] = items[-1]
+
     # PIEGES-RISQUES-2 (Lot B) — RISQUE GRADUÉ (PPR zoné rouge/bleu + aléas par niveau) ajouté aux DEUX
     # modes : la même donnée que la couche carte et que la fiche §Pièges & risques (le mode parcelle ne
     # voyait le PPR que par l'assiette SUP, sans le zonage ni le niveau).
     for al in aleas:
+        if al.get("niveau") == "negligeable":
+            continue
         # PPR-UNIQUE-1 (D-035) — le drapeau `redhibitoire` atteint l'écran (zone rouge = interdiction,
         # puce rouge/tri en tête côté blocB) au lieu d'une note grise indistincte.
         items.append({"categorie": _CAT_RISQUE, "effet": al["libelle"],
                       "source": al["source"], "date": al["millesime"],
-                      "redhibitoire": bool(al.get("redhibitoire"))})
+                      "controle": "ppr" if al.get("statut") else "georisque_alea",
+                      "statut": al.get("statut"), "redhibitoire": bool(al.get("redhibitoire")),
+                      **({"geometries": [al["geometry"]], "reglements": _documents(al["urls"] or [])} if carte else {})})
     # KELFONCIER-FIX-1 (Lot A) — une zone AU FERMÉE (ou au statut d'ouverture non déterminé) est une
     # contrainte foncière DORMANTE : la parcelle n'est pas constructible tant que le PLU n'a pas ouvert la
     # zone. Ajoutée au crible partagé → visible en mode « une parcelle », en mode « un lot » (N/M) ET en
@@ -571,6 +650,17 @@ def contraintes_parcelle(db: Session, idu: str) -> list[dict]:
                           f"Zone AU{zl} au statut d'ouverture NON DÉTERMINÉ — constructibilité à confirmer "
                           "auprès de la commune (phasage 2AU → 1AU)."),
                 "source": "LABUSE — moteur d'ouverture AU (règlement PLU calibré)", "date": None})
+            if carte:
+                zones = db.execute(text("""
+                    SELECT sl.attrs->>'idurba' AS doc,
+                           ST_AsGeoJSON(ST_Transform(ST_Intersection(sl.geom_2975,p.geom_2975),4326),9)::json AS geometry
+                    FROM parcels p JOIN spatial_layers sl ON ST_Intersects(sl.geom_2975,p.geom_2975)
+                    WHERE p.idu=:idu AND sl.kind='plu_gpu_zone' AND upper(sl.attrs->>'libelle')=upper(:zone)
+                """), {"idu": idu, "zone": au["zone_lib"]}).mappings().all()
+                items[-1].update(geometries=[z["geometry"] for z in zones],
+                                 reglements=sorted({url for z in zones for url in reglements_plu(z["doc"])}))
+                if not zones:
+                    items[-1]["portee"] = "parcelle"
     items.sort(key=lambda x: x["categorie"])
     return items
 
@@ -596,7 +686,7 @@ def servitudes_invisibles(idu: str, db: Session = Depends(get_db)) -> dict:
     exists = db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).first()
     if not exists:
         raise HTTPException(404, "Parcelle inconnue")
-    items = contraintes_parcelle(db, idu)
+    items = contraintes_parcelle(db, idu, carte=True)
     commune = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
     # RETOURS-27 (pt 2) — PROCÉDURE PLU EN COURS : lue du radar PLU (labuse.veille_plu, MÊME point de
     # calcul que l'outil « Vérif procédure »), par commune. Si une procédure lourde est ACTIVE (SOURCE,

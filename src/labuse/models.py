@@ -1149,6 +1149,9 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ICI, une seule fois → plus de dérive possible. Seul `backfill` du geom_2975 diffère (paramétré)."""
     ensure_parcel_eval_status_dropped(engine)    # M46 (Lot C) : rail legacy status SUPPRIMÉ (à froid)
     ensure_sitadel_depot(engine)                 # M38 : date de dépôt Sitadel (DR_DEPOT)
+    from .faisabilite.viabilisation_build import schema_via_permits_geo
+    with engine.begin() as db:
+        schema_via_permits_geo(db)
     ensure_parcel_contenance(engine)             # CONTENANCE-1 : surface cadastrale (Etalab)
     ensure_geom_2975(engine, backfill=geom_backfill)       # pose labuse_set_geom_2975 + ses triggers
     ensure_sql_functions(engine)                           # POSTDEPLOY-1027 (P1) : zone_famille + borne LiDAR
@@ -1271,6 +1274,7 @@ PPR_COULEUR_FN = (
     "CREATE OR REPLACE FUNCTION labuse_ppr_couleur(subtype text, attrs jsonb) RETURNS text "
     "LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$ "
     "SELECT CASE "
+    "WHEN upper(trim(coalesce($2->>'suptype',''))) = 'PM1' THEN NULL::text "
     "WHEN upper(coalesce($1,'')) = 'INTERDICTION' THEN 'rouge' "
     "WHEN upper(coalesce($1,'')) = 'PRESCRIPTION' THEN 'bleu' "
     "WHEN coalesce($2->>'code_degre','') ~ '^[rb]?R' THEN 'rouge' "
@@ -1737,9 +1741,13 @@ def ensure_bilan_params(engine) -> None:
             "AND secteur IN ('Saint-Gilles','La Saline','Plateau Caillou','La Plaine-Bois de Nèfles','Le Guillaume')"))
         # Décision Vic 28/07/2026 : une valeur ESTIMÉE non confirmée reste placeholder (visible
         # aux bandeaux) — aligne l'existant, idempotent.
+        # OUTIL-COMMUNES-FIX-9 LOT B — NULL-SAFE : `provenance` est nullable ; sur une ligne à
+        # provenance NULL (ex. sonde `_probe`), `(provenance = 'estimee')` vaut NULL et violait le
+        # NOT NULL de `is_placeholder` → le heal avortait → /readyz 503 (diagnostic LOT A). On force
+        # un booléen via `IS TRUE` : provenance NULL ⇒ is_placeholder=false (jamais NULL).
         c.execute(_t(
-            "UPDATE bilan_params SET is_placeholder = (provenance = 'estimee') "
-            "WHERE is_placeholder IS DISTINCT FROM (provenance = 'estimee')"))
+            "UPDATE bilan_params SET is_placeholder = ((provenance = 'estimee') IS TRUE) "
+            "WHERE is_placeholder IS DISTINCT FROM ((provenance = 'estimee') IS TRUE)"))
         # Décision Vic 28/07/2026 (mandat calibration estimées §3) — purge des paramètres MORTS :
         # `ratio_vendable` (doublon inactif de `coef_rendement` YAML) et `bonus_vue_mer_pct`
         # (jamais au registre) n'étaient lus par AUCUN moteur ; leurs curseurs laissaient croire

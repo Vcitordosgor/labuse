@@ -1,0 +1,28 @@
+473c6a98a 97405 1AU hauteur X [('ARTICLE 1AUZ.10', 104, 104), ('ARTICLE 1AUZ.11', 104, 106), ('ARTICLE 1AU.13', 97, 99), ('ARTICLE 1AUZ.13', 107, 109)]
+473c6a98a 97405 1AUz hauteur X [('ARTICLE 1AU.10', 94, 95), ('ARTICLE 1AU.11', 95, 96), ('ARTICLE 1AU.13', 97, 99), ('ARTICLE 1AUZ.13', 107, 109)]
+473c6a98a 97418 UC1 hauteur X [('Article U9', 35, 37), ('Article U8', 34, 35), ('Article U5', 32, 33), ('Article U13', 38, 44)]
+473c6a98a 97418 UEm hauteur X [('Article U9', 22, 24), ('Article U4', 18, 19), ('Article U5', 19, 20), ('Article U13', 38, 44)]
+200 97405 1AU hauteur cartes zonées 3 communes 5 chapitre 88 98
+200 97405 1AU implantation cartes zonées 5 communes 5 chapitre 88 98
+200 97405 1AU stationnement cartes zonées 3 communes 1 chapitre 88 98
+200 97405 1AUa hauteur cartes zonées 3 communes 5 chapitre 88 98
+200 97405 1AUa implantation cartes zonées 5 communes 5 chapitre 88 98
+200 97405 1AUa stationnement cartes zonées 3 communes 1 chapitre 88 98
+200 97405 1AUz hauteur cartes zonées 3 communes 5 chapitre 99 108
+200 97405 1AUz implantation cartes zonées 5 communes 5 chapitre 99 108
+200 97405 1AUz stationnement cartes zonées 3 communes 1 chapitre 99 108
+200 97418 UC1 hauteur cartes zonées 4 communes 1 chapitre 16 28
+200 97418 UC1 implantation cartes zonées 8 communes 2 chapitre 16 28
+200 97418 UC1 stationnement cartes zonées 4 communes 2 chapitre 16 28
+200 97418 UEm hauteur cartes zonées 3 communes 1 chapitre 29 40
+200 97418 UEm implantation cartes zonées 9 communes 2 chapitre 29 40
+200 97418 UEm stationnement cartes zonées 5 communes 2 chapitre 29 40
+200 97418 1AUep hauteur Article U8 34 35 https://data.geopf.fr/annexes/gpu/documents/DU_97418/3fe3fd7e85c27ce210c60b6058cabd0d/97418_reglement_20251126.pdf#page=34
+200 97412 1AU3a hauteur ARTICLE U3 10 50 52 https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=50
+200 97412 1AUto hauteur ARTICLE AUindicée 10 110 110 https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=110
+200 97412 1AUtok hauteur ARTICLE AUindicée 10 110 110 https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=110
+200 97412 U1 implantation ARTICLE U1 6 18 18 https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=18
+200 97412 N hauteur ARTICLE N 10 132 133 https://data.geopf.fr/annexes/gpu/documents/DU_97412/ce1a1274209313eeaf6c85f947d03a13/97412_Reglement_20251210.pdf#page=132
+200 97407 1AUmut stationnement Article 1AUindicée 12 151 154 https://data.geopf.fr/annexes/gpu/documents/DU_97407/8cdd92497a52e883eddd7330b3836873/97407_reglement_20241209.pdf#page=151
+200 97407 1AUmut hauteur Article 1AUindicée 8 146 146 https://data.geopf.fr/annexes/gpu/documents/DU_97407/8cdd92497a52e883eddd7330b3836873/97407_reglement_20241209.pdf#page=146
+200 97407 Ua stationnement Article Ua 12 29 31 https://data.geopf.fr/annexes/gpu/documents/DU_97407/8cdd92497a52e883eddd7330b3836873/97407_reglement_20241209.pdf#page=29

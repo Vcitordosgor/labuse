@@ -1,9 +1,10 @@
-import { useQuery, useIsFetching } from '@tanstack/react-query'
+import { surfacesPermis, adressePermis } from '../../lib/permisAffichage'
+import { useQuery, useQueryClient, useIsFetching } from '@tanstack/react-query'
 import * as maplibregl from 'maplibre-gl'   // MAPLIBRE-1 Lot B — v6 ESM : plus d'export par défaut
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { reglerWorkerMaplibre } from './maplibreWorker'   // MAPLIBRE-1 Lot B — worker Vite (dev + build)
 import { useEffect, useRef, useState } from 'react'
-import { getBatiments, getCommunes, getFiche, getFiltreIdus, getParcelGeojson, getParcelsGeojson, getTilesMeta, modPermisFiche, parcelAt } from '../../lib/api'
+import { getBatiments, getCommunes, getFiche, getFiltreIdus, getParcelGeojson, getParcelsGeojson, getSources, getSourcesCouverture, getTilesMeta, modPermisFiche, parcelAt } from '../../lib/api'
 import { ALL_TIER_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { MAP_THEME } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
@@ -67,7 +68,7 @@ function _ancrePermis(m: maplibregl.Map, lngLat: maplibregl.LngLatLike, centre: 
 
 let _permisPopup: maplibregl.Popup | null = null
 export function fermerBullePermis() { try { _permisPopup?.remove() } catch { /* noop */ } _permisPopup = null }
-export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplibregl.LngLatLike, centre = false) {
+export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplibregl.LngLatLike, centre = false, nature?: string) {
   fermerBullePermis()   // une seule bulle permis à la fois
   const select = useApp.getState().select
   const box = document.createElement('div'); box.style.cssText = POPUP_BOX_CSS
@@ -90,9 +91,10 @@ export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplib
   const pied = document.createElement('div'); pied.style.cssText = 'flex:none'
   const load = document.createElement('div'); load.textContent = 'Chargement de la fiche…'; load.style.cssText = 'color:#c9d2cc;font-size:12px;margin-top:9px'
   corps.appendChild(load); box.appendChild(corps); box.appendChild(pied)
-  const popup = new maplibregl.Popup({ offset: 12, anchor: _ancrePermis(m, lngLat, centre), className: 'labuse-popup', maxWidth: '320px', closeButton: true, closeOnClick: true })
+  const popup = new maplibregl.Popup({ offset: 12, anchor: _ancrePermis(m, lngLat, centre), className: 'labuse-popup labuse-popup-permis', maxWidth: '320px', closeButton: true, closeOnClick: true })
     .setLngLat(lngLat).setDOMContent(box).addTo(m)
   _permisPopup = popup
+  useApp.getState().setPermisOuvert({ id: pid, nature })
   popup.on('close', () => { if (_permisPopup === popup) _permisPopup = null; try { useApp.getState().setPermisOuvert(null) } catch { /* noop */ } })
   const ligne = (lab: string, val: string) => {
     if (!val) return
@@ -101,8 +103,28 @@ export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplib
     const v = document.createElement('span'); v.textContent = val; v.style.cssText = 'text-align:right;color:#e9edeb'
     d.appendChild(c); d.appendChild(v); corps.appendChild(d)
   }
-  modPermisFiche(pid).then((f: Record<string, any>) => {
+  modPermisFiche(pid, nature).then((f: Record<string, any>) => {
+    if (_permisPopup !== popup) return
     load.remove()
+    if (f.choix) {
+      titre.textContent = 'Choisir une autorisation'
+      sub.textContent = pid
+      for (const acte of f.choix) {
+        const bouton = document.createElement('button')
+        bouton.type = 'button'
+        bouton.className = 'block w-full border-b border-line py-2 text-left text-mint'
+        bouton.textContent = [acte.nature, fmtDateNum(acte.date), ...acte.parcelles].join(' · ')
+        bouton.onclick = () => ouvrirBullePermis(m, pid, lngLat, true, acte.nature)
+        corps.appendChild(bouton)
+      }
+      return
+    }
+    if (centre && f.geom?.coordinates) {
+      popup.setLngLat(f.geom.coordinates)
+      m.easeTo({ center: f.geom.coordinates, zoom: Math.max(m.getZoom(), 17), duration: 600 })
+    }
+    useApp.getState().setPermisOuvert({ id: pid, nature: f.nature })
+
     const fmtD = (s: unknown) => { const r = fmtDateNum(s == null ? null : String(s)); return r === '—' ? '' : r }
     titre.textContent = String(f.nature_libelle ?? f.nature ?? 'Permis')
     sub.textContent = [f.permit_id ? String(f.permit_id) : pid, f.commune ? String(f.commune) : ''].filter(Boolean).join(' · ')
@@ -118,22 +140,27 @@ export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplib
     ligne('Pétitionnaire', String(f.porteur ?? f.porteur_note ?? ''))
     if (f.porteur_siren) ligne('SIREN', String(f.porteur_siren))
     ligne('Logements créés', f.nb_lots != null ? String(f.nb_lots) : '')   // OUTIL-PERMIS-FIX-1 (LOT 4)
-    ligne('Surface habitable', f.surface_hab_m2 != null ? `${f.surface_hab_m2} m²` : '')
+    for (const s of surfacesPermis(f)) ligne(s.label, s.valeur)
+    ligne('Adresse des travaux', adressePermis(f.adresse))
+    if (!f.geom) ligne('Position', 'Non géocodé')
+    else if (f.geoloc_note) ligne('Position', String(f.geoloc_note))
     ligne('Autorisé le', fmtD(f.date_autorisation))
     const parcs = Array.isArray(f.parcelles) ? (f.parcelles as string[]) : []
-    if (parcs.length) ligne('Parcelle(s)', parcs.map((p) => (p.length >= 14 ? `${p.slice(8, 10)} ${p.slice(10)}` : p)).join(', '))
-    const idu0 = parcs[0] ?? null
-    // PIED FIXE (hors du corps défilant) : séparateur + bouton « Voir la parcelle » + source. Toujours
-    // visible, même si le détail au-dessus défile. (MINI-CORRECTIONS-2 pt 17, 2ᵉ passe.)
     pied.style.cssText = 'flex:none;border-top:1px solid #232a26;margin-top:9px;padding-top:9px'
-    if (idu0 && idu0.length === 14) {
-      const bp = document.createElement('button'); bp.textContent = 'Voir la parcelle →'
-      bp.style.cssText = 'width:100%;color:#4ADE80;background:none;border:1px solid rgba(74,222,128,.35);border-radius:8px;cursor:pointer;font:12px system-ui;padding:7px 10px'
-      bp.addEventListener('click', () => { select(String(idu0)); popup.remove() }); pied.appendChild(bp)
+    const liens = parcs.length === 1 ? pied : corps
+    for (const idu of parcs) {
+      const bp = document.createElement('button')
+      bp.type = 'button'
+      bp.textContent = `Voir la parcelle ${idu.slice(8, 10)} ${idu.slice(10)} →`
+      bp.className = 'block w-full text-left text-mint py-1.5'
+      bp.addEventListener('click', () => { select(idu); popup.remove() })
+      liens.appendChild(bp)
     }
-    const srcEl = document.createElement('div'); srcEl.textContent = 'Source : Sitadel (SDES)'
+    const srcEl = document.createElement('div'); srcEl.textContent = String(f.source ?? 'Sitadel')
     srcEl.style.cssText = 'margin-top:9px;color:#6b756f;font-size:10px'; pied.appendChild(srcEl)
-  }).catch(() => { load.textContent = 'Fiche permis indisponible — réessayez.' })
+  }).catch((err) => {
+    load.textContent = err?.status === 404 ? 'Permis introuvable dans le fonds intégré.' : 'Fiche permis indisponible — réessayez.'
+  })
   return popup
 }
 
@@ -413,6 +440,7 @@ interface Measure {
   pts: LngLat[]
   alti: { pt: LngLat; z: number } | null
   // RETOURS-11 C8 — forme VALIDÉE (par Entrée) : la mesure est figée, le prochain clic repart à zéro.
+  altitudeStatus?: 'loading' | 'unavailable'
   done?: boolean
 }
 
@@ -425,13 +453,18 @@ interface Measure {
 //    mint qui montre l'orientation courante (direction « haut » de la carte) ; l'inclinaison est rendue
 //    par l'aplatissement vertical du disque (vue de dessus = rond, vue rasante = ellipse) ;
 //  · GLISSER dans la sphère fait tourner la caméra autour de la parcelle : gauche/droite = rotation,
-//    haut/bas = inclinaison (bornée vue de dessus 0° → vue rasante 80°), pivot = le centre de la carte
+//    haut/bas = inclinaison (bornée vue de dessus 0° → vue rasante 70°), pivot = le centre de la carte
 //    (la parcelle, sur laquelle le Gabarit centre déjà) ;
 //  · CLIC sur N/E/S/O place la caméra de ce côté (ce cardinal devient le « haut ») ;
-//  · ◎ « Recentrer » (sous la sphère) rétablit la vue de départ (délègue au Gabarit via `recentrer3d`).
+//  · ◎ « Recentrer » (sous la sphère) rétablit la vue de départ de la parcelle sélectionnée ou ciblée.
 //  La sphère SUIT la vue (aiguille + aplatissement se mettent à jour, y compris sur Ctrl + glisser, qui
 //  reste actif sur la carte).
-function Controle3D({ map }: { map: React.RefObject<maplibregl.Map | null> }) {
+function Controle3D({ map, pivot, onNavigate, onRecenter }: {
+  map: React.RefObject<maplibregl.Map | null>
+  pivot?: LngLat
+  onNavigate: () => void
+  onRecenter?: () => void
+}) {
   const [bearing, setBearing] = useState(0)
   const [pitch, setPitch] = useState(45)
   const drag = useRef<{ x: number; y: number; b: number; p: number } | null>(null)
@@ -442,29 +475,57 @@ function Controle3D({ map }: { map: React.RefObject<maplibregl.Map | null> }) {
     upd(); m.on('rotate', upd); m.on('pitch', upd); m.on('move', upd)
     return () => { m.off('rotate', upd); m.off('pitch', upd); m.off('move', upd) }
   }, [map])
-  const clampP = (p: number) => Math.max(0, Math.min(80, p))
+  const orienter = (angle: { bearing?: number; pitch?: number }, duration: number) => {
+    const m = map.current
+    if (!m) return
+    onNavigate()
+    if (angle.pitch != null) angle.pitch = Math.max(m.getMinPitch(), Math.min(m.getMaxPitch(), angle.pitch))
+    const point = pivot && m.project(pivot)
+    const canvas = m.getContainer()
+    const visible = point && point.x >= 0 && point.x <= canvas.clientWidth && point.y >= 0 && point.y <= canvas.clientHeight
+    m.easeTo({ ...angle, around: visible ? pivot : undefined, duration })
+  }
   const down = (e: React.PointerEvent) => {
     const m = map.current; if (!m) return
+    if (!e.isPrimary || e.button !== 0) return
+    onNavigate()
+    m.stop()
     e.preventDefault(); e.stopPropagation()
     try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) } catch { /* */ }
     drag.current = { x: e.clientX, y: e.clientY, b: m.getBearing(), p: m.getPitch() }
   }
   const move = (e: React.PointerEvent) => {
-    const m = map.current, d = drag.current; if (!m || !d) return
-    m.jumpTo({ bearing: d.b + (e.clientX - d.x) * 0.7, pitch: clampP(d.p + (e.clientY - d.y) * 0.5) })
+    const m = map.current, d = drag.current; if (!m || !d || !e.isPrimary) return
+    orienter({ bearing: d.b + (e.clientX - d.x) * 0.7, pitch: d.p + (e.clientY - d.y) * 0.5 }, 0)
   }
   const up = (e: React.PointerEvent) => {
+    if (!e.isPrimary) return
     try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* */ }
     drag.current = null
   }
-  const vers = (b: number) => { const m = map.current; if (m) m.easeTo({ bearing: b, duration: 350 }) }
+  const vers = (b: number) => orienter({ bearing: b }, 350)
+  const clavier = (e: React.KeyboardEvent) => {
+    const m = map.current
+    if (!m || e.target !== e.currentTarget) return
+    switch (e.key) {
+      case 'ArrowLeft': orienter({ bearing: m.getBearing() - 15 }, 0); break
+      case 'ArrowRight': orienter({ bearing: m.getBearing() + 15 }, 0); break
+      case 'ArrowUp': orienter({ pitch: m.getPitch() + 5 }, 0); break
+      case 'ArrowDown': orienter({ pitch: m.getPitch() - 5 }, 0); break
+      default: return
+    }
+    e.preventDefault()
+    e.stopPropagation()
+  }
   const stopP = (e: React.PointerEvent) => e.stopPropagation()
   const tilt = Math.max(0.2, Math.cos((pitch * Math.PI) / 180))   // 1 (dessus) → 0,2 (rasant)
   const card = 'absolute z-10 flex h-4 w-4 items-center justify-center rounded font-mono text-[9px] leading-none text-txt-mut transition-colors duration-quick hover:text-mint focus-visible:text-mint focus-visible:outline-none'
   const btn = 'flex h-7 w-7 items-center justify-center rounded-md border border-line-2 bg-bg-2 text-[15px] leading-none text-txt transition-colors duration-quick hover:border-mint hover:text-mint focus-visible:border-mint focus-visible:text-mint focus-visible:outline-none'
   return (
     <div data-controle-3d className="absolute bottom-4 left-4 z-20 flex flex-col items-center gap-2">
-      <div data-c3d-sphere title="Glisser pour tourner / incliner la vue"
+      <div data-c3d-sphere role="group" tabIndex={0} onKeyDown={clavier}
+        aria-label="Orientation 3D. Flèches gauche et droite pour tourner, haut et bas pour incliner."
+        title="Glisser ou utiliser les flèches pour tourner et incliner la vue"
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
         className="relative h-20 w-20 cursor-grab touch-none select-none overflow-hidden rounded-full border border-line-2 bg-bg-2/90 shadow-elev-1 backdrop-blur-sm active:cursor-grabbing"
         style={{ background: 'radial-gradient(circle at 50% 38%, rgba(255,255,255,0.06), rgba(0,0,0,0.18))' }}>
@@ -473,18 +534,20 @@ function Controle3D({ map }: { map: React.RefObject<maplibregl.Map | null> }) {
           <span className="absolute inset-2.5 rounded-full border border-line-2/50" />
           <span className="absolute left-1/2 top-2.5 bottom-2.5 w-px -translate-x-1/2 bg-line-2/40" />
           <span className="absolute top-1/2 left-2.5 right-2.5 h-px -translate-y-1/2 bg-line-2/40" />
-          <span className="absolute left-1/2 top-1/2 h-7 w-[3px] -translate-x-1/2 -translate-y-full rounded-full bg-gradient-to-t from-mint/10 to-mint"
-            style={{ transformOrigin: 'bottom center', transform: `rotate(${bearing}deg)` }} />
+          <span className="absolute left-1/2 top-1/2 h-7 w-[3px] rounded-full bg-gradient-to-t from-mint/10 to-mint"
+            style={{ transformOrigin: 'bottom center', transform: `translate(-50%, -100%) rotate(${bearing}deg)` }} />
         </div>
         {/* cardinaux FIXES, cliquables — placent la caméra de ce côté */}
-        <button data-c3d-n onPointerDown={stopP} onClick={() => vers(0)} title="Vue depuis le nord" className={`${card} left-1/2 top-0.5 -translate-x-1/2 font-bold text-mint`}>N</button>
-        <button data-c3d-e onPointerDown={stopP} onClick={() => vers(90)} title="Vue depuis l'est" className={`${card} right-0.5 top-1/2 -translate-y-1/2`}>E</button>
-        <button data-c3d-s onPointerDown={stopP} onClick={() => vers(180)} title="Vue depuis le sud" className={`${card} bottom-0.5 left-1/2 -translate-x-1/2`}>S</button>
-        <button data-c3d-o onPointerDown={stopP} onClick={() => vers(270)} title="Vue depuis l'ouest" className={`${card} left-0.5 top-1/2 -translate-y-1/2`}>O</button>
+        <button data-c3d-n onPointerDown={stopP} onClick={() => vers(0)} title="Placer le nord en haut de la carte" aria-label="Placer le nord en haut de la carte" className={`${card} left-1/2 top-0.5 -translate-x-1/2 font-bold text-mint`}>N</button>
+        <button data-c3d-e onPointerDown={stopP} onClick={() => vers(90)} title="Placer l'est en haut de la carte" aria-label="Placer l'est en haut de la carte" className={`${card} right-0.5 top-1/2 -translate-y-1/2`}>E</button>
+        <button data-c3d-s onPointerDown={stopP} onClick={() => vers(180)} title="Placer le sud en haut de la carte" aria-label="Placer le sud en haut de la carte" className={`${card} bottom-0.5 left-1/2 -translate-x-1/2`}>S</button>
+        <button data-c3d-o onPointerDown={stopP} onClick={() => vers(270)} title="Placer l'ouest en haut de la carte" aria-label="Placer l'ouest en haut de la carte" className={`${card} left-0.5 top-1/2 -translate-y-1/2`}>O</button>
         {/* moyeu central */}
         <span className="pointer-events-none absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-txt-mut" />
       </div>
-      <button data-c3d-recentrer className={btn} title="Recentrer sur la parcelle" aria-label="Recentrer sur la parcelle" onClick={() => useApp.getState().recentrer3d()}>◎</button>
+      <button data-c3d-recentrer className={btn + ' disabled:cursor-default disabled:opacity-40'} disabled={!onRecenter}
+        title={onRecenter ? 'Recentrer sur la parcelle' : 'Choisissez une parcelle pour recentrer la vue'}
+        aria-label="Recentrer sur la parcelle" onClick={onRecenter}>◎</button>
     </div>
   )
 }
@@ -525,6 +588,7 @@ const getPaletteToast = (total?: number) =>
   + ' ; la liste reste exacte.'
 
 export function MapView() {
+  const queryClient = useQueryClient()
   const { data: tuyauPlan } = useTuyauPlan()   // RETOURS-25 (pt 8) — légende des couches empilée avec la Légende
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<maplibregl.Map | null>(null)
@@ -546,13 +610,24 @@ export function MapView() {
   // CORRECTIFS-1 C1 — la 3D échoue parfois (WebGL, tuile de relief/DEM, timeout) : on loggue le motif
   // et on l'AFFICHE (« 3D indisponible : … ») au lieu d'un écran vide. null = pas d'erreur 3D.
   const [erreur3d, setErreur3d] = useState<string | null>(null)
+  const cancelTerrainFraming = useRef<((keepPendingTilt?: boolean) => boolean) | null>(null)
+  const cancelParcelFraming = useRef<(() => void) | null>(null)
+  useEffect(() => () => cancelParcelFraming.current?.(), [terrain3d, selectedIdu, focusIdu, focusNonce, module])
+  const zoomTarget = useRef<number | null>(null)
+  const manualNavigationScope = useRef<{ commune: string | null; nonce: number } | null>(null)
+  const manualParcelNavigation = useRef(false)
+  const navigationRevision = useRef(0)
+  useEffect(() => {
+    manualParcelNavigation.current = false
+  }, [selectedIdu, focusIdu, focusNonce])
   const terrain3dCleanup = useRef<(() => void) | null>(null)
   const measureRef = useRef(measure)
   measureRef.current = measure
   const labelMarker = useRef<maplibregl.Marker | null>(null)
   // RECETTE-PROD-1 (6b) — dernier centroïde de la parcelle sélectionnée (celui qui a servi au vol 2D),
   // pour RECENTRER correctement en entrant en 3D (sinon le pitch la pousse « vers la droite »).
-  const selCentroidRef = useRef<[number, number] | null>(null)
+  const [parcelCamera, setParcelCamera] = useState<{ idu: string; center: LngLat; zoom: number } | null>(null)
+  const cibleCamera = parcelCamera?.idu === (selectedIdu ?? focusIdu) ? parcelCamera : null
   const [tilesLoading, setTilesLoading] = useState(false)   // P5 : chargement des tuiles
   // COUCHES-2 point 2 — ÉTAT DE CHARGEMENT D'UNE COUCHE : quand on allume un overlay, sa requête
   // (queryKey ['layer', …]) est en vol ; sans témoin l'écran restait MUET jusqu'à l'arrivée des
@@ -711,6 +786,22 @@ export function MapView() {
       maxZoom: 19,
     })
     map.current = m
+    // Les gestes natifs émettent originalEvent. Les animations de l’application
+    // émettent aussi movestart, mais doivent pouvoir aller au bout de leur cadrage.
+    const navigationManuelle = (input: Event) => {
+      const state = useApp.getState()
+      manualNavigationScope.current = { commune: state.commune, nonce: state.fitCommuneNonce }
+      manualParcelNavigation.current = true
+      navigationRevision.current++
+      zoomTarget.current = null
+      cancelParcelFraming.current?.()
+      const panOrWheel = input instanceof WheelEvent ||
+        (input instanceof MouseEvent && !input.ctrlKey && input.buttons === 1)
+      cancelTerrainFraming.current?.(panOrWheel)
+    }
+    m.on('movestart', (e) => { if (e.originalEvent) navigationManuelle(e.originalEvent) })
+    // La molette peut prolonger une animation sans nouveau movestart natif.
+    m.on('wheel', (e) => { if (m.scrollZoom.isEnabled()) navigationManuelle(e.originalEvent) })
     // NU5-FIX-1 (F10) — MapLibre nomme sa région « Map » (anglais, générique) dans une app française :
     // on pose un nom accessible explicite en français sur le conteneur ET le canvas.
     try {
@@ -764,9 +855,9 @@ export function MapView() {
       // ajoutées après). Opacité pilotée par applyBasemapStyle (0 hors ortho → aucun effet ailleurs).
       m.addLayer({ id: 'ortho-veil', type: 'background',
         paint: { 'background-color': '#20242A', 'background-opacity': 0 } })
-      // MNT (relief 3D) — terrarium AWS (libre)
-      m.addSource('dem', { type: 'raster-dem', encoding: 'terrarium', tileSize: 256, maxzoom: 13,
-        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'] })
+      m.addSource('dem', { type: 'raster-dem', encoding: 'terrarium', tileSize: 512, minzoom: 8, maxzoom: 19,
+        bounds: [55.20, -21.40, 55.86, -20.85], attribution: 'Terrain © IGN',
+        tiles: [`${window.location.origin}/map/tiles/relief/{z}/{x}/{y}.png`] })
 
       m.addSource('parcels', { type: 'geojson', data: EMPTY_FC as never, promoteId: 'idu' })
       // RECETTE-6 (A3) — source du bâti 3D (empreinte + hauteur), remplie par BBOX quand le 3D est actif.
@@ -980,6 +1071,15 @@ export function MapView() {
         paint: { 'line-color': '#4ADE80', 'line-width': 1.8, 'line-dasharray': [2, 1.6] } })
       // ÉTUDE DE ZONE Z3/Z4 — l'isochrone (zone atteignable) : remplissage discret + liseré de marque,
       // SOUS les points (le point d'origine et les concurrents restent au-dessus). kind='zone-iso'.
+      m.addLayer({ id: 'alerte-risque-surface', type: 'fill', source: 'module-extra',
+        filter: ['all', ['==', ['get', 'kind'], 'alerte-risque'], ['==', ['geometry-type'], 'Polygon']],
+        paint: { 'fill-color': '#fbbf24', 'fill-opacity': 0.48 } })
+      m.addLayer({ id: 'alerte-risque-ligne', type: 'line', source: 'module-extra',
+        filter: ['all', ['==', ['get', 'kind'], 'alerte-risque'], ['!=', ['geometry-type'], 'Point']],
+        paint: { 'line-color': '#f59e0b', 'line-width': 3 } })
+      m.addLayer({ id: 'alerte-risque-point', type: 'circle', source: 'module-extra',
+        filter: ['all', ['==', ['get', 'kind'], 'alerte-risque'], ['==', ['geometry-type'], 'Point']],
+        paint: { 'circle-color': '#fbbf24', 'circle-radius': 6, 'circle-stroke-width': 1 } })
       m.addLayer({ id: 'module-zone-fill', type: 'fill', source: 'module-extra',
         filter: ['==', ['get', 'kind'], 'zone-iso'],
         paint: { 'fill-color': '#4ADE80', 'fill-opacity': 0.08 } })
@@ -1145,8 +1245,7 @@ export function MapView() {
         } else if (pid) {
           // RETOURS-23 (suite, pt 1) — clic sur un point permis → bulle sur la carte (ancre auto, jamais
           // coupée) AU POINT CLIQUÉ (`centre=false`). La ligne correspondante de la liste est surlignée.
-          useApp.getState().setPermisOuvert?.(String(pid))
-          ouvrirBullePermis(m, String(pid), (e as maplibregl.MapLayerMouseEvent).lngLat)
+          ouvrirBullePermis(m, String(pid), (e as maplibregl.MapLayerMouseEvent).lngLat, false, props?.nature)
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         }
         else if (props?.idu) { select(String(props.idu)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }  // LOT8b : clic piscine → fiche parcelle
@@ -1167,80 +1266,87 @@ export function MapView() {
       m.addLayer({ id: 'zone-fill', type: 'fill', source: 'zone', paint: { 'fill-color': '#5CE6A1', 'fill-opacity': 0.06 } })
       m.addLayer({ id: 'zone-line', type: 'line', source: 'zone', paint: { 'line-color': '#5CE6A1', 'line-width': 1.6, 'line-dasharray': [3, 2] } })
 
-      for (const layerId of ['parcels-fill', 'ile-fill']) {
-        m.on('click', layerId, (e) => {
-          if (toolRef.current) return // un outil actif consomme le clic
-          if ((e as maplibregl.MapLayerMouseEvent).defaultPrevented) return // M55-A : clic équipement déjà traité
-          const f = (e as maplibregl.MapLayerMouseEvent).features?.[0]
-          if (!f) return
-          // G1 (M12) : une feature sans `idu` (clic hors-parcelle, tuile en cours de chargement,
-          // trame promues-only) ne doit JAMAIS ouvrir une fiche « undefined » qui échoue en faux
-          // « serveur injoignable ». On abandonne silencieusement — le clic universel plus bas
-          // (parcelAt) prendra le relais si un point→parcelle est résoluble.
-          const rawIdu = f.properties?.idu
-          if (rawIdu == null || rawIdu === '' || rawIdu === 'undefined') return
-          const idu = String(rawIdu)
-          const st = useApp.getState()
-          if (st.module === 'assemblage' || st.module === 'programme') {  // M16 / M22 Étude : le clic compose l'assiette
-            st.setMsel(st.msel.includes(idu) ? st.msel.filter((x) => x !== idu) : [...st.msel, idu])
-            return
-          }
-          if (st.comparePicking) {                       // M82 : le clic ajoute à la comparaison (max 3)
-            st.addToCompare(idu)
-            return
-          }
-          // RECETTE-OUTILS-2 (R1) — l'outil « risques » rendu est O5Servitudes (UNE parcelle, via
-          // EntreeParcelle) : il adopte le clic carte par `selectedIdu` comme Taxe/Gabarit. L'ancienne
-          // dérivation vers `carteOutilIdu` (prévue pour le lot M10, NON câblé) cassait le clic carte
-          // (rien ne consommait le signal) → retirée. Le clic suit donc la voie normale `select(idu)`.
-          // M6.1 : couche zonage active → la zone PLU précise s'affiche AUSSI au clic
-          // (popup éphémère, même gabarit que les équipements) — la fiche s'ouvre normalement
-          if (st.layers.zonage_parcelle) {
-            const lib = f.properties?.zone_lib && f.properties.zone_lib !== 'null' ? String(f.properties.zone_lib) : null
-            const fam = f.properties?.zone_fam ? String(f.properties.zone_fam) : null
-            if (lib || fam) {
-              // MAPLIBRE-1 Lot A — bulle PLU en DOM pur (lib/fam viennent de la tuile = donnée) : plus
-              // aucun texte de donnée via setHTML. Rendu identique (mêmes styles inline, même structure).
-              const box = document.createElement('div')
-              box.style.cssText = 'background:#0F1A14;border:1px solid #2E6B4F;color:#ECF5EF;font:12px Inter,sans-serif;padding:6px 10px;border-radius:8px'
-              box.appendChild(document.createTextNode(`Zone ${lib ?? fam}`))
-              const sub = document.createElement('div'); sub.style.cssText = 'color:#8FA69A;font-size:10px'
-              sub.textContent = `zonage PLU (GPU)${fam && lib ? ` · famille ${fam}` : ''}`
-              box.appendChild(sub)
-              new maplibregl.Popup({ closeButton: false, className: 'labuse-popup' })
-                .setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat)
-                .setDOMContent(box)
-                .addTo(m)
-            }
-          }
-          select(idu)
-        })
+      const parcelLayers = ['parcels-fill', 'ile-fill']
+      for (const layerId of parcelLayers) {
         m.on('mouseenter', layerId, () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
         m.on('mouseleave', layerId, () => { m.getCanvas().style.cursor = toolRef.current ? 'crosshair' : '' })
       }
-      // C7 (décision Vic) : CLIC UNIVERSEL — si aucune feature parcelle vectorielle sous le
-      // curseur (trame raster/limites, zoom promues-only…), le serveur résout point→parcelle.
-      m.on('click', (e) => {
-        if (toolRef.current) return
-        if (e.defaultPrevented) return // M55-A : un équipement a capté ce clic (bulle affichée)
-        const hits = m.queryRenderedFeatures(e.point, { layers: ['parcels-fill', 'ile-fill'].filter((l) => !!m.getLayer(l)) })
-        if (hits.length > 0) return   // le handler de calque a déjà ouvert la fiche
-        parcelAt(e.lngLat.lng, e.lngLat.lat).then((r) => {
-          if (!r.idu) return
-          // RECETTE-OUTILS-2 (R1) — voie normale pour risques aussi (O5Servitudes adopte selectedIdu).
-          select(r.idu)
-        }).catch(() => undefined)
+      m.on('click', async (e) => {
+        // Tout nouveau clic invalide une résolution antérieure, même si une couche
+        // interactive ou un outil consomme ce clic sans interroger le serveur.
+        const revision = ++navigationRevision.current
+        if (toolRef.current || e.defaultPrevented) return
+        const f = m.queryRenderedFeatures(e.point, { layers: parcelLayers }).find((feature) => {
+          const idu = feature.properties?.idu
+          return typeof idu === 'string' && idu.trim() !== '' && idu !== 'undefined'
+        })
+        let idu = f?.properties?.idu as string | undefined
+        if (!idu) {
+          const before = useApp.getState()
+          try {
+            const r = await parcelAt(e.lngLat.lng, e.lngLat.lat)
+            const now = useApp.getState()
+            if (revision !== navigationRevision.current || map.current !== m ||
+                now.selectedIdu !== before.selectedIdu || now.focusNonce !== before.focusNonce ||
+                now.fitCommuneNonce !== before.fitCommuneNonce || now.module !== before.module ||
+                now.tool !== before.tool || now.comparePicking !== before.comparePicking) return
+            // L’adresse peut utiliser la parcelle la plus proche. Sur la carte,
+            // un clic sur une route ou en mer ne désigne pas cette voisine.
+            if (!r.idu || r.distance_m !== 0) return
+            idu = r.idu
+          } catch { return }
+        }
+        const st = useApp.getState()
+        if (st.module === 'assemblage' || st.module === 'programme') {  // M16 / M22 Étude : le clic compose l'assiette
+          st.setMsel(st.msel.includes(idu) ? st.msel.filter((x) => x !== idu) : [...st.msel, idu])
+          return
+        }
+        if (st.comparePicking) {                       // M82 : le clic ajoute à la comparaison (max 3)
+          st.addToCompare(idu)
+          return
+        }
+        // RECETTE-OUTILS-2 (R1) — l'outil « risques » rendu est O5Servitudes (UNE parcelle, via
+        // EntreeParcelle) : il adopte le clic carte par `selectedIdu` comme Taxe/Gabarit. L'ancienne
+        // dérivation vers `carteOutilIdu` (prévue pour le lot M10, NON câblé) cassait le clic carte
+        // (rien ne consommait le signal) → retirée. Le clic suit donc la voie normale `select(idu)`.
+        // M6.1 : couche zonage active → la zone PLU précise s'affiche AUSSI au clic
+        // (popup éphémère, même gabarit que les équipements) — la fiche s'ouvre normalement
+        if (st.layers.zonage_parcelle) {
+          const lib = f?.properties?.zone_lib && f.properties.zone_lib !== 'null' ? String(f.properties.zone_lib) : null
+          const fam = f?.properties?.zone_fam ? String(f.properties.zone_fam) : null
+          if (lib || fam) {
+            // MAPLIBRE-1 Lot A — bulle PLU en DOM pur (lib/fam viennent de la tuile = donnée) : plus
+            // aucun texte de donnée via setHTML. Rendu identique (mêmes styles inline, même structure).
+            const box = document.createElement('div')
+            box.style.cssText = 'background:#0F1A14;border:1px solid #2E6B4F;color:#ECF5EF;font:12px Inter,sans-serif;padding:6px 10px;border-radius:8px'
+            box.appendChild(document.createTextNode(`Zone ${lib ?? fam}`))
+            const sub = document.createElement('div'); sub.style.cssText = 'color:#8FA69A;font-size:10px'
+            sub.textContent = `zonage PLU (GPU)${fam && lib ? ` · famille ${fam}` : ''}`
+            box.appendChild(sub)
+            new maplibregl.Popup({ closeButton: false, className: 'labuse-popup' })
+              .setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat)
+              .setDOMContent(box)
+              .addTo(m)
+          }
+        }
+        select(idu)
       })
 
       // P5 (dernière passe) : indicateur de chargement des TUILES (île MVT + fonds) — la carte
       // ne semble jamais figée pendant le fetch. `idle` = tout rendu, plus rien en attente.
       m.on('dataloading', () => setTilesLoading(true))
       m.on('idle', () => setTilesLoading(false))
+      // Préparer la page Sources une fois les premières tuiles rendues.
+      m.once('idle', () => {
+        void queryClient.prefetchQuery({ queryKey: ['sources'], queryFn: getSources, staleTime: 5 * 60_000 })
+        void queryClient.prefetchQuery({ queryKey: ['sources-couverture'], queryFn: getSourcesCouverture, staleTime: 5 * 60_000 })
+      })
 
       ready.current = true
       setMapReady(true)
       ;(window as unknown as Record<string, unknown>).__labuse_map = m // hook QA (ping sémantique)
       m.fire('labuse:ready' as never)
+      window.dispatchEvent(new Event('labuse:map-ready'))
     })
     return () => { m.remove(); map.current = null; ready.current = false }
     // FIX-CARTE C1 : montage UNIQUE — la carte se crée une fois (le `if (map.current) return` garde).
@@ -1332,26 +1438,34 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
-    // RECETTE-6 (A3) — le bouton 3D allume le RELIEF (setTerrain) ET le BÂTI extrudé (batiments-3d),
-    // ensemble : l'extrusion part du sol du MNT (jamais d'un plan). Le bâti se charge par BBOX au zoom
-    // rapproché (≥ 15, où l'extrusion est visible), rafraîchi au déplacement ; borné à la vue courante.
-    const BATI_MINZOOM = 15
+    let revision = 0
     const chargerBati = () => {
-      // RETOURS-13 P4 — le bâti extrudé n'apparaît QUE si le chip « Bâtiments » est actif (batiVisible).
-      // Chip off en 3D → relief seul (aucune extrusion) ; le relief (setTerrain) reste allumé plus bas.
-      if (!terrain3d || !batiVisible || m.getZoom() < BATI_MINZOOM) {
-        if (m.getLayer('batiments-3d')) m.setLayoutProperty('batiments-3d', 'visibility', 'none')
+      const demande = ++revision
+      if (!terrain3d || module === 'gabarit' || !batiVisible || m.getZoom() < 15) {
+        m.setLayoutProperty('batiments-3d', 'visibility', 'none')
         return
       }
       const b = m.getBounds()
-      const bbox: [number, number, number, number] = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]
-      getBatiments(bbox).then((fc) => {
-        const src = m.getSource('batiments') as maplibregl.GeoJSONSource | undefined
-        if (src && terrain3d && batiVisible) {
-          src.setData(fc as never)
-          m.setLayoutProperty('batiments-3d', 'visibility', 'visible')
-        }
-      }).catch(() => { /* le bâti 3D ne casse jamais la carte */ })
+      getBatiments([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]).then((fc) => {
+        if (demande !== revision) return
+        const src = m.getSource('batiments') as maplibregl.GeoJSONSource
+        src.setData(fc as never)
+        m.setLayoutProperty('batiments-3d', 'visibility', 'visible')
+      }).catch(() => {
+        if (demande === revision) m.setLayoutProperty('batiments-3d', 'visibility', 'none')
+      })
+    }
+    chargerBati()
+    if (terrain3d && batiVisible && module !== 'gabarit') m.on('moveend', chargerBati)
+    return () => { revision++; m.off('moveend', chargerBati) }
+  }, [terrain3d, batiVisible, module, mapReady])
+
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    if (terrain3d && module === 'gabarit') {
+      setErreur3d(null)
+      return
     }
     if (terrain3d) {
       // CORRECTIFS-1 C1 — instrumentation : WebGL absent OU setTerrain qui lève → on loggue et on
@@ -1363,6 +1477,14 @@ export function MapView() {
       // RESTAURE dans l'inclinaison (easeTo) ET plusieurs fois tant que le DEM se pose (jusqu'à ~1,8 s) :
       // seul le PITCH change. `restaurerCam` ne touche ni pitch ni bearing (inclinaison préservée).
       const camAvant = { center: m.getCenter(), zoom: m.getZoom() }
+      // Attendre les altitudes avant d'incliner la caméra au-dessus d'une parcelle en pente.
+      let inclinaisonEnAttente = m.getPitch() < 20
+      const inclinerSurSol = () => {
+        if (m.isMoving() || !m.getTerrain() || !m.isSourceLoaded('dem')) return
+        m.off('render', inclinerSurSol)
+        inclinaisonEnAttente = false
+        m.easeTo({ pitch: 55, duration: 600 })
+      }
       // `restaurerCam` remet le ZOOM/CENTRE d'avant via setZoom/setCenter (qui PRÉSERVENT le pitch et le
       // bearing — contrairement à jumpTo, qui couperait l'inclinaison en cours). Donc l'inclinaison monte
       // normalement, et seul le zoom dérivé par le DEM est corrigé.
@@ -1375,9 +1497,7 @@ export function MapView() {
       }
       // le DEM se pose de façon asynchrone → on ré-affirme le zoom APRÈS l'inclinaison (easeTo 800 ms) et
       // quelques fois ensuite (jamais pendant, pour ne pas figer le pitch) + au premier `idle`.
-      m.once('idle', restaurerCam)
-      const relances = [900, 1300, 1800].map((d) => window.setTimeout(restaurerCam, d))
-      const cleanRelances = () => relances.forEach((id) => window.clearTimeout(id))
+
       const gl = (m.painter && (m.painter as unknown as { context?: { gl?: unknown } }).context?.gl) ?? null
       if (!gl) {
         console.error('[LABUSE 3D] contexte WebGL indisponible')
@@ -1385,20 +1505,19 @@ export function MapView() {
         useApp.getState().setTerrain3d(false)
         return
       }
-      // RECETTE-OUTILS-2 (R13) — le Gabarit affiche son volume sur un TERRAIN SUPPOSÉ PLAT (pas de
-      // relief DEM). Motif : une parcelle en pente/altitude (Saint-Paul U6b « 36 Rue des Jacarandas »,
-      // ~760 m) flottait HORS CHAMP une fois le relief posé — à pitch 45 son élévation projetait le
-      // centroïde ~300 px AU-DESSUS du canvas (« écran noir très zoomé à côté », point 32 non tenu). En
-      // plan plat, le centroïde se projette au centre EXACT de l'écran (vérifié : project→525/422 sur un
-      // canvas 1050×844) et le cadrage du Gabarit (fitBounds pitch 45) tient partout. Le bâti et
-      // l'enveloppe restent extrudés à leurs hauteurs réelles → c'est bien une vue 3D, et c'est la
-      // légende même du document (« Volume indicatif — terrain supposé plat »). Pas de DEM → pas d'écoute
-      // ni de garde-fou de chargement de relief.
-      const gabaritFlat = useApp.getState().module === 'gabarit'
-      if (gabaritFlat) {
-        try { m.setTerrain(null) } catch { /* noop */ }
-        terrain3dCleanup.current = () => { cleanRelances(); m.off('idle', restaurerCam) }
-      } else {
+      m.once('idle', restaurerCam)
+      const relances = [900, 1300, 1800].map((d) => window.setTimeout(restaurerCam, d))
+      const stopFraming = (keepPendingTilt = false) => {
+        relances.forEach((id) => window.clearTimeout(id))
+        m.off('idle', restaurerCam)
+        if (keepPendingTilt && inclinaisonEnAttente) return true
+        m.off('render', inclinerSurSol)
+        const enAttente = inclinaisonEnAttente
+        inclinaisonEnAttente = false
+        return enAttente
+      }
+      cancelTerrainFraming.current = stopFraming
+      {
         // Écoute les erreurs de la source de relief (tuiles DEM terrarium) tant que la 3D est active.
         const onErr = (e: { sourceId?: string; error?: { message?: string } }) => {
           if (e?.sourceId === 'dem' || /terrain|dem|elevation/i.test(String(e?.error?.message || ''))) {
@@ -1407,16 +1526,24 @@ export function MapView() {
           }
         }
         m.on('error', onErr as never)
+        let tuileRecue = false
+        const onDem = (e: maplibregl.MapSourceDataEvent) => {
+          if (e.sourceId === 'dem' && e.tile?.dem) {
+            tuileRecue = true
+            setErreur3d(null)
+          }
+        }
+        m.on('sourcedata', onDem)
         // Garde-fou timeout : si le relief n'est pas posé en 8 s (tuiles bloquées), on le dit.
         const t3d = window.setTimeout(() => {
-          if (useApp.getState().terrain3d && !m.getTerrain()) {
+          if (useApp.getState().terrain3d && !tuileRecue) {
             console.error('[LABUSE 3D] relief non chargé après 8 s (timeout tuiles DEM)')
             setErreur3d('relief trop lent à charger (délai dépassé)')
           }
         }, 8000)
-        terrain3dCleanup.current = () => { m.off('error', onErr); window.clearTimeout(t3d); cleanRelances(); m.off('idle', restaurerCam) }
+        terrain3dCleanup.current = () => { stopFraming(); cancelTerrainFraming.current = null; m.off('sourcedata', onDem); m.off('error', onErr); window.clearTimeout(t3d) }
         try {
-          m.setTerrain({ source: 'dem', exaggeration: 1.35 })
+          m.setTerrain({ source: 'dem', exaggeration: 1 })
         } catch (e) {
           console.error('[LABUSE 3D] setTerrain a échoué', e)
           setErreur3d('moteur de relief indisponible')
@@ -1429,19 +1556,8 @@ export function MapView() {
       // parcelle (easeTo center=centroïde, RECETTE-PROD-1 6b) déplaçait la vue à l'entrée en 3D : on le
       // RETIRE. Seul le pitch s'incline (pour révéler le relief) quand la vue est encore à plat — le
       // centre et le zoom ne bougent pas. Le Gabarit garde son propre cadrage (fitBounds) → on n'y touche pas.
-      if (useApp.getState().module === 'gabarit') {
-        // RECETTE-OUTILS-2 (R13) — le cadrage 3D du Gabarit est piloté par SON `fitBounds` (pitch 55,
-        // bearing 0 sur l'emprise de la parcelle). Un seul propriétaire de caméra = le fitBounds du
-        // Gabarit ; MapView ne fait que poser le relief.
-      } else if (m.getPitch() < 20) {
-        // RETOURS-19 (pt 3) — l'inclinaison VERROUILLE le zoom/centre d'avant (le `setTerrain` les
-        // avait fait dériver) : seul le pitch monte, le zoom et le centre restent IDENTIQUES.
-        m.easeTo({ pitch: 55, center: camAvant.center, zoom: camAvant.zoom, duration: 800 })
-      } else {
-        restaurerCam()   // déjà incliné (ex. « Relief → Bâtiments ») : on ré-affirme zoom/centre sans retoucher le pitch
-      }
-      chargerBati()
-      m.on('moveend', chargerBati)
+      if (m.getPitch() < 20) m.on('render', inclinerSurSol)
+      else restaurerCam()
       // RECETTE-OUTILS-3 (S11) — la boussole native (R14) est REMPLACÉE par le bloc de contrôle 3D
       // `Controle3D` (overlay React, coin de carte, visible seulement en 3D) : ↺/↻ 45°, curseur
       // d'inclinaison, « Recentrer ». Plus de NavigationControl à monter/démonter ici.
@@ -1453,8 +1569,8 @@ export function MapView() {
       setErreur3d(null)
       terrain3dCleanup.current?.(); terrain3dCleanup.current = null
     }
-    return () => { m.off('moveend', chargerBati); terrain3dCleanup.current?.(); terrain3dCleanup.current = null }
-  }, [terrain3d, batiVisible])
+    return () => { terrain3dCleanup.current?.(); terrain3dCleanup.current = null }
+  }, [terrain3d, module, mapReady])
 
   // ───────────────────────── couches / filtres / mode ─────────────────────────
   useEffect(() => {
@@ -1726,8 +1842,15 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
+    // Une réponse /communes tardive ne doit pas annuler un zoom manuel.
+    if (manualNavigationScope.current?.commune === commune && manualNavigationScope.current.nonce === fitCommuneNonce) return
+    manualNavigationScope.current = null
     const pad = fitPadding(m.getContainer().clientWidth, m.getContainer().clientHeight)
-    if (ile) { m.fitBounds(ileBounds(communes.data), { padding: pad, duration: 900 }); return }
+    if (ile) {
+      const pitch = m.getTerrain() ? Math.min(m.getPitch() || 45, 45) : 0
+      m.fitBounds(ileBounds(communes.data), { padding: pad, duration: 900, pitch, bearing: 0 })
+      return
+    }
     const info = communes.data?.find((c) => c.commune === commune)
     if (info?.bbox) m.fitBounds(info.bbox as [number, number, number, number], { padding: pad, duration: 900 })
     // COMMUNE-FIX-1 (B5) — `fitCommuneNonce` déclenche un refit même si `commune` n'a pas changé (bouton
@@ -1746,9 +1869,21 @@ export function MapView() {
     // FICHE-FIX-5 (Lot A) — désélection : on VIDE la source de sélection (plus de liseré fantôme).
     const selSrc = () => m.getSource('selection') as (maplibregl.GeoJSONSource | undefined)
     // PING SYSTÉMATIQUE : toute sélection/focus (liste, module, CRM, notification, outil) recentre + pulse
-    if (!cible) { selCentroidRef.current = null; selSrc()?.setData({ type: 'FeatureCollection', features: [] }); return }
+    // Masquer immédiatement le contour précédent pendant la lecture du nouveau.
+    for (const layer of ['selection-line', 'selection-halo']) {
+      m.setFilter(layer, ['==', ['get', 'idu'], cible ?? ''])
+    }
+    if (!cible) { setParcelCamera(null); selSrc()?.setData({ type: 'FeatureCollection', features: [] }); return }
     const feat = geo.data?.features.find((f) => (f.properties as { idu?: string }).idu === cible)
     let cancelled = false
+    let volEnCours = false
+    const finVol = (event: maplibregl.MapEventType['moveend'] & { volParcelle?: string }) => {
+      if (event.volParcelle === cible) volEnCours = false
+    }
+    const cibleActive = () => {
+      const st = useApp.getState()
+      return !cancelled && st.focusNonce === focusNonce && (st.selectedIdu ?? st.focusIdu) === cible
+    }
     // RETOURS-13 R27/R32 — ZOOM FRANC (Vic : « le zoom est un peu timide ») : la parcelle doit se
     // lire COMME LA PARCELLE, pas comme un point dans un quartier. Cible selon la SURFACE : grande
     // parcelle (> 1 ha) → 16,5 ; moyenne (> 2 500 m²) → 17 ; standard → 18. Primitive PARTAGÉE
@@ -1761,9 +1896,20 @@ export function MapView() {
     // Le focus sans fiche (focusIdu seul) ne décale pas.
     const panelOffset: [number, number] = selectedIdu ? [-200, 0] : [0, 0]
     const centroidReady = (c: [number, number] | null, surface?: number | null) => {
-      if (!c || cancelled) return
-      selCentroidRef.current = c   // RECETTE-PROD-1 (6b) — mémorisé pour le recentrage en 3D
-      m.flyTo({ center: c, zoom: Math.max(m.getZoom(), zoomCible(surface)), offset: panelOffset, duration: 800 })
+      if (!c || !cibleActive()) return
+      setParcelCamera({ idu: cible, center: c, zoom: zoomCible(surface) })
+      if (manualParcelNavigation.current) return
+      const st = useApp.getState()
+      manualNavigationScope.current = { commune: st.commune, nonce: st.fitCommuneNonce }
+      if (selectedIdu && selectedIdu === focusIdu && m.getTerrain() && st.module !== 'gabarit') {
+        cancelTerrainFraming.current?.()
+        cadrerSurRelief(m, c, zoomCible(surface), m.getBearing(), panelOffset, cible)
+        return
+      }
+      m.stop()
+      volEnCours = true
+      m.on('moveend', finVol)
+      m.flyTo({ center: c, zoom: Math.max(m.getZoom(), zoomCible(surface)), offset: panelOffset, duration: 800 }, { volParcelle: cible })
     }
     // FICHE-FIX-5 (Lot A) — on charge la GÉOMÉTRIE de la parcelle (une seule requête, cache react-
     // query côté outils) : elle alimente la source `selection` (liseré garanti) ET donne le centroïde
@@ -1771,8 +1917,8 @@ export function MapView() {
     const surfaceHint = feat ? ((feat.properties as { surface_terrain_m2?: number; surface_m2?: number }).surface_terrain_m2
                                  ?? (feat.properties as { surface_m2?: number }).surface_m2) : undefined
     getParcelGeojson(cible).then((fc) => {
-      if (cancelled) return
-      selSrc()?.setData({ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: fc.geometry as GeoJSON.Geometry, properties: {} }] })
+      if (!cibleActive()) return
+      selSrc()?.setData({ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: fc.geometry as GeoJSON.Geometry, properties: { idu: cible } }] })
       if (m.getLayer('selection-halo')) m.moveLayer('selection-halo')   // au-dessus de tout (tuyau inclus)
       if (m.getLayer('selection-line')) m.moveLayer('selection-line')
       centroidReady(fc.centroid, surfaceHint)
@@ -1809,7 +1955,13 @@ export function MapView() {
       raf = requestAnimationFrame(pulse)
     }
     raf = requestAnimationFrame(pulse)
-    return () => { cancelAnimationFrame(raf); cancelled = true }
+    return () => {
+      cancelAnimationFrame(raf)
+      cancelled = true
+      m.off('moveend', finVol)
+      if (volEnCours && map.current === m) m.stop()
+      if (map.current?.getLayer(pingId)) map.current.setPaintProperty(pingId, 'line-opacity', 0)
+    }
   }, [selectedIdu, focusIdu, focusNonce, geo.data, mapReady])
 
   // module actif → surlignage + géométries propres (les DEUX jeux de calques)
@@ -1861,7 +2013,7 @@ export function MapView() {
       }
       for (const feat of fc.features) scan(feat.geometry?.coordinates)
       if (seen && maxX >= minX && maxY >= minY) {
-        m.fitBounds([[minX, minY], [maxX, maxY]], { padding: 48, maxZoom: 15.5, duration: 800 })
+        m.fitBounds([[minX, minY], [maxX, maxY]], { padding: 48, maxZoom: useApp.getState().module === 'risques' ? 19 : 15.5, duration: 800 })
       }
     }
   }, [moduleMap, mapReady])
@@ -1895,6 +2047,12 @@ export function MapView() {
   }, [zone, mapReady])
 
   // ───────────────────────── outils de mesure ─────────────────────────
+  const readout = tool === 'distance' && measure.pts.length >= 2 ? fmtDistance(pathLength(measure.pts))
+    : tool === 'surface' && measure.pts.length >= 3 ? fmtArea(polygonArea(measure.pts))
+    : tool === 'alti' && measure.alti ? `${measure.alti.z.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m NGR`
+    : tool === 'profil' && measure.pts.length >= 2 ? fmtDistance(pathLength(measure.pts))   // RETOURS-13 P6
+    : null
+
   // rendu du geojson de mesure
   useEffect(() => {
     const m = map.current
@@ -1904,23 +2062,20 @@ export function MapView() {
       const t = toolRef.current
       if ((t === 'surface' || t === 'zone') && measure.pts.length >= 3) {
         feats.push({ type: 'Feature', geometry: { type: 'Polygon', coordinates: [[...measure.pts, measure.pts[0]]] },
-          properties: { label: t === 'surface' ? fmtArea(polygonArea(measure.pts)) : '' } })
+          properties: { label: t === 'surface' ? readout : '' } })
       } else {
         feats.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: measure.pts },
-          properties: { label: t === 'distance' ? fmtDistance(pathLength(measure.pts)) : '' } })
+          properties: { label: t === 'distance' ? readout : '' } })
       }
     }
     if (measure.alti) {
       feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: measure.alti.pt },
-        properties: { label: `${measure.alti.z.toFixed(0)} m` } })
+        properties: { label: readout } })
     }
     ;(m.getSource('measure') as maplibregl.GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: feats } as never)
 
     // étiquette de mesure = marker HTML (pas de glyphes carte → pas de dépendance CORS)
-    const t = toolRef.current
-    const text = t === 'distance' && measure.pts.length >= 2 ? fmtDistance(pathLength(measure.pts))
-      : t === 'surface' && measure.pts.length >= 3 ? fmtArea(polygonArea(measure.pts))
-      : measure.alti ? `${measure.alti.z.toFixed(0)} m` : null
+    const text = tool === 'profil' ? null : readout
     const at = measure.alti?.pt ?? measure.pts[measure.pts.length - 1]
     labelMarker.current?.remove()
     labelMarker.current = null
@@ -1930,7 +2085,7 @@ export function MapView() {
       el.style.cssText = 'background:#0F1A14;border:1px solid #5CE6A1;color:#5CE6A1;font:600 11px "JetBrains Mono",monospace;padding:2px 7px;border-radius:9999px;transform:translateY(-14px);white-space:nowrap'
       labelMarker.current = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(at).addTo(m)
     }
-  }, [measure])
+  }, [measure, readout, tool, mapReady])
 
   // interactions outil (clic / double-clic / Échap)
   useEffect(() => {
@@ -1941,15 +2096,25 @@ export function MapView() {
     else m.doubleClickZoom.enable()
     if (!tool) return
 
+    let altitudeRequest: AbortController | undefined
     const onClick = async (e: maplibregl.MapMouseEvent) => {
       const p: LngLat = [e.lngLat.lng, e.lngLat.lat]
       if (tool === 'alti') {
+        altitudeRequest?.abort()
+        const request = new AbortController()
+        altitudeRequest = request
+        setMeasure({ pts: [p], alti: null, altitudeStatus: 'loading' })
         try {
-          const r = await fetch(`https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json?lon=${p[0]}&lat=${p[1]}&resource=ign_rge_alti_wld`)
-          const d = await r.json()
-          const z = d?.elevations?.[0]?.z
-          if (typeof z === 'number') setMeasure((s) => ({ ...s, alti: { pt: p, z } }))
-        } catch { /* réseau : silencieux, le point reste sans étiquette */ }
+          const r = await fetch(`https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json?lon=${p[0]}&lat=${p[1]}&resource=ign_rge_alti_wld`, {
+            signal: AbortSignal.any([request.signal, AbortSignal.timeout(15000)]),
+          })
+          if (!r.ok) throw new Error()
+          const z = (await r.json())?.elevations?.[0]?.z
+          if (!Number.isFinite(z) || z <= -1000) throw new Error()
+          if (!request.signal.aborted) setMeasure({ pts: [], alti: { pt: p, z } })
+        } catch {
+          if (!request.signal.aborted) setMeasure({ pts: [p], alti: null, altitudeStatus: 'unavailable' })
+        }
         return
       }
       // ZONE-RECETTE LOT E : on IGNORE un sommet dupliqué (les deux clics d'un double-clic tombent au
@@ -1993,8 +2158,8 @@ export function MapView() {
     m.on('click', onClick)
     m.on('dblclick', onDbl)
     window.addEventListener('keydown', onKey)
-    return () => { m.off('click', onClick); m.off('dblclick', onDbl); window.removeEventListener('keydown', onKey) }
-  }, [tool, setTool, setZone, setProfilLigne])
+    return () => { altitudeRequest?.abort(); m.off('click', onClick); m.off('dblclick', onDbl); window.removeEventListener('keydown', onKey) }
+  }, [tool, setTool, setZone, setProfilLigne, mapReady])
 
   // changer d'outil = repartir propre
   useEffect(() => {
@@ -2002,11 +2167,66 @@ export function MapView() {
     if (!tool) { labelMarker.current?.remove(); labelMarker.current = null }
   }, [tool])
 
-  const readout = tool === 'distance' && measure.pts.length >= 2 ? fmtDistance(pathLength(measure.pts))
-    : tool === 'surface' && measure.pts.length >= 3 ? fmtArea(polygonArea(measure.pts))
-    : tool === 'alti' && measure.alti ? `${measure.alti.z.toFixed(1)} m NGR`
-    : tool === 'profil' && measure.pts.length >= 2 ? fmtDistance(pathLength(measure.pts))   // RETOURS-13 P6
-    : null
+
+
+  function recentrerParcelle3D() {
+    const m = map.current
+    if (!m || !cibleCamera) return
+    cancelTerrainFraming.current?.()
+    cancelParcelFraming.current?.()
+    if (module === 'gabarit') {
+      useApp.getState().recentrer3d()
+      return
+    }
+    cadrerSurRelief(m, cibleCamera.center, cibleCamera.zoom, 0, selectedIdu ? [-200, 0] : [0, 0], cibleCamera.idu)
+  }
+
+  function cadrerSurRelief(m: maplibregl.Map, center: LngLat, zoom: number, bearing: number, offset: [number, number], idu: string) {
+    cancelParcelFraming.current?.()
+    // Acquérir le terrain à destination avant de calculer l'inclinaison et le
+    // décalage de la fiche. Une altitude de départ éloignée fausse la projection.
+    m.jumpTo({ center, zoom, bearing, pitch: 0 })
+    let animation = false
+    const terminer = () => {
+      m.off('render', cadrer)
+      m.off('movestart', annuler)
+      m.off('moveend', finAnimation)
+      if (cancelParcelFraming.current === annuler) cancelParcelFraming.current = null
+    }
+    const annuler = () => {
+      terminer()
+      if (animation && map.current === m) m.stop()
+    }
+    const finAnimation = (event: maplibregl.MapEventType['moveend'] & { cadrageRelief?: string }) => {
+      if (event.cadrageRelief === idu) terminer()
+    }
+    const cadrer = () => {
+      if (!m.getTerrain() || !m.isSourceLoaded('dem')) return
+      const elevation = m.queryTerrainElevation(center)
+      if (elevation == null) return
+      m.off('render', cadrer)
+      m.off('movestart', annuler)
+      m.jumpTo({ center, zoom, elevation, pitch: 0, bearing })
+      animation = true
+      m.on('moveend', finAnimation)
+      m.easeTo({ center, zoom, bearing, pitch: 45, offset, duration: 350 }, { cadrageRelief: idu })
+    }
+    cancelParcelFraming.current = annuler
+    m.on('movestart', annuler)
+    m.on('render', cadrer)
+  }
+
+  function zoomParNiveau(delta: number) {
+    const m = map.current
+    if (!m) return
+    const demarrageRelief = cancelTerrainFraming.current?.()
+    manualNavigationScope.current = { commune, nonce: fitCommuneNonce }
+    const cible = Math.min(m.getMaxZoom(), Math.max(m.getMinZoom(), (zoomTarget.current ?? m.getZoom()) + delta))
+    m.stop()
+    zoomTarget.current = cible
+    m.once('moveend', () => { zoomTarget.current = null })
+    m.easeTo({ zoom: cible, duration: 280, pitch: demarrageRelief ? 55 : m.getPitch() })
+  }
 
   // FIX-FONDS B2/B3 — attribution EXACTE du fond actif : celle de BASEMAP_SOURCES (par fond ET par
   // millésime d'ortho), plus le binaire codé en dur. En Sombre et en Clair (aucune tuile de fond
@@ -2034,7 +2254,7 @@ export function MapView() {
       {/* M65 P5 : gap entre les deux boutons réduit au prorata (8→6 px). */}
       <div className="absolute left-4 top-4 flex flex-col gap-1.5">
         {(['+', '−'] as const).map((s) => (
-          <BoutonCarte key={s} onClick={() => map.current?.[s === '+' ? 'zoomIn' : 'zoomOut']()}
+          <BoutonCarte key={s} onClick={() => zoomParNiveau(s === '+' ? 1 : -1)}
             title={s === '+' ? 'Zoomer' : 'Dézoomer'}>
             {s}
           </BoutonCarte>
@@ -2045,7 +2265,10 @@ export function MapView() {
             si on est déjà en mode île mais zoomé à la main). Le déplacement reste la navigation
             maplibre native (cliquer-glisser, molette, double-clic, flèches clavier) — pas de joystick. */}
         <BoutonCarte title="Vue de l'île"
-          onClick={() => { const st = useApp.getState(); st.setCommune(null); st.setContexteCommune(null); st.select(null); st.refitCommune() }}>
+          onClick={() => {
+            cancelTerrainFraming.current?.()
+            useApp.getState().revenirVueIle()
+          }}>
           <svg viewBox="0 0 20 20" className="h-[17px] w-[17px]" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 7V4.5A1.5 1.5 0 0 1 4.5 3H7 M13 3h2.5A1.5 1.5 0 0 1 17 4.5V7 M17 13v2.5a1.5 1.5 0 0 1-1.5 1.5H13 M7 17H4.5A1.5 1.5 0 0 1 3 15.5V13" />
             <circle cx="10" cy="10" r="2.4" />
@@ -2053,7 +2276,9 @@ export function MapView() {
         </BoutonCarte>
       </div>
       {/* RECETTE-OUTILS-3 (S11) — bloc de contrôle 3D (↺/↻ · inclinaison · recentrer), seulement en 3D. */}
-      {terrain3d && <Controle3D map={map} />}
+      {terrain3d && <Controle3D map={map} pivot={cibleCamera?.center}
+        onNavigate={() => { cancelTerrainFraming.current?.(); cancelParcelFraming.current?.() }}
+        onRecenter={cibleCamera ? recentrerParcelle3D : undefined} />}
       <MapToolbar />
       {/* RETOURS-25 (pt 8) — UN SEUL conteneur de légendes en bas à droite : la légende des COUCHES
           (TuyauLegend) et la légende de PEINTURE (Legend : verdict/zonage) EMPILÉES (flex-col, gap), au
@@ -2110,7 +2335,9 @@ export function MapView() {
       )}
       {tool && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-mint bg-surface-2 px-4 py-1.5 text-xs text-mint shadow-elev-2">
-          {readout ?? (tool === 'alti' ? 'Cliquez un point pour lire l’altitude'
+          {readout ?? (measure.altitudeStatus === 'loading' ? 'Lecture de l’altitude…'
+            : measure.altitudeStatus === 'unavailable' ? 'Altitude indisponible à ce point · Cliquez pour réessayer'
+            : tool === 'alti' ? 'Cliquez un point pour lire l’altitude'
             : tool === 'profil' ? 'Tracez une ligne · Entrée pour le profil · Échap pour annuler'   // RETOURS-13 P6
             /* RETOURS-11 C8 (03/09) — libellé exact : Entrée valide, Échap annule (le double-clic ne valide plus). */
             : 'Cliquez pour placer les points · Entrée pour valider · Échap pour annuler')}

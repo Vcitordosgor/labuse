@@ -219,7 +219,6 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   const [page, setPage] = useState(0)
   const [sousFiltre, setSousFiltre] = useState<Cadrage | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [totalProp, setTotalProp] = useState(0)
 
   const sfKey = JSON.stringify(sousFiltre ?? {})
   const projetQ = useQuery({ queryKey: ['projet', pid], queryFn: () => getProjet(pid), enabled: pid > 0 })
@@ -266,22 +265,27 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
 
   const etat = etatQ.data
   const projet = projetQ.data
-  // `analyse` (bandeau + chips) n'est servi qu'à la page 0 : on le mémorise pour qu'il reste en paginant.
-  const [analyse, setAnalyse] = useState<ParcoursEtat['analyse'] | null>(null)
-  useEffect(() => { if (etat?.analyse) setAnalyse(etat.analyse) }, [etat?.analyse])
-  // RETOURS-3 R8 — le RESTANT à trier par tier (chips) est servi à la page 0 : on le mémorise comme `analyse`.
-  const [restant, setRestant] = useState<ParcoursEtat['restant'] | null>(null)
-  useEffect(() => { if (etat?.restant) setRestant(etat.restant) }, [etat?.restant])
   // RETOURS-3 R10 — le bandeau d'analyse est REPLIÉ par défaut (une ligne) ; « Voir pourquoi » déplie
   // le contenu complet (phrase gravée entière, signaux, valeurs, run). Fond vert et formulation inchangés.
   const [analyseOuvert, setAnalyseOuvert] = useState(false)
-  useEffect(() => { if (etat?.total_retenues != null) setTotalProp(etat.counts.proposee) }, [etat?.total_retenues, etat?.counts?.proposee])
+  // La première page reste observée pendant le tri sur les pages suivantes.
+  // Une décision invalide aussi son total et ajuste la dernière page accessible.
+  const premierePage = useQuery({
+    queryKey: ['parcours', pid, 0, navTier, sfKey], enabled: pid > 0 && page > 0,
+    queryFn: () => getParcoursEtat(pid, 0, PAGE, navTier, sousFiltre),
+  })
+  const analyse = premierePage.data?.analyse
+  const restant = premierePage.data?.restant
+  const totalProp = premierePage.data?.counts.proposee ?? 0
   const deZero = Boolean((projet?.cadrage as Record<string, unknown> | undefined)?.__de_zero__)
   const ouvrirCarte = () => { const s = useApp.getState(); s.setOpenProjet(null); s.setView('cartes') }
 
   const c = etat?.counts ?? { proposee: 0, retenue: 0, ecartee: 0, a_analyser: 0 }
   const vivier = analyse?.total ?? (c.proposee + c.retenue + c.ecartee + (c.a_analyser ?? 0))
   const pages = Math.max(1, Math.ceil(totalProp / PAGE))
+  useEffect(() => {
+    if (premierePage.data && page >= pages) setPage(pages - 1)
+  }, [premierePage.data, page, pages])
   // recherche client sur la page chargée (adresse / IDU) — la pagination porte le vivier complet.
   const proposeesVues = etat?.proposees ?? []
   const cadrageEffectif = sousFiltre ?? (projet?.cadrage ?? {})
@@ -427,7 +431,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                   {col.key === 'ecartee' && <span className="ml-auto text-[10px] text-txt-dim">réversible</span>}
                 </div>
 
-                {isProp && (
+                {isProp && !deZero && (
                   <>
                     {/* barre : chips classement · recherche · Filtrer */}
                     <div className="flex shrink-0 items-center gap-1.5 border-b border-line-2 px-3.5 py-2">
@@ -438,7 +442,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                         // RETOURS-3 R8 — les chips comptent ce qui reste À TRIER (retenues/écartées en sortent),
                         // cohérent avec le compteur « à trier » du haut. Tous = total à trier ; À suivre
                         // = restant tête classée (priorite + a_suivre servis). Le bandeau garde le total du cadrage.
-                        const n = v === 'chaude' ? (restant ? restant.priorite + restant.a_suivre : undefined) : totalProp
+                        const n = v === 'chaude' ? (restant ? restant.priorite + restant.a_suivre : undefined) : (restant?.total ?? totalProp)
                         return (
                           <button key={v || 'tous'} data-kanban-nav-tier={v || 'tous'} onClick={() => setNavTier(v || null)}
                             className={`flex items-center gap-1.5 rounded-ctl border px-2.5 py-0.5 text-[11px] transition-colors duration-quick ${on ? 'border-mint/45 bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>

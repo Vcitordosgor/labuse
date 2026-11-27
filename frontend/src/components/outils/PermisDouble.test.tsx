@@ -2,6 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
+import { ouvrirBullePermis } from '../map/MapView'
+vi.mock('../map/MapView', async (importOriginal) => ({
+  ...await importOriginal<typeof import('../map/MapView')>(),
+  ouvrirBullePermis: vi.fn(),
+}))
 import { M03 } from './ModulePanel'
 
 // Mandat PERMIS (OUTILS-2 O2-1) — segment [En cours N | Point mort N | Tous] (compteurs réels),
@@ -33,6 +38,7 @@ function mockFetch() {
     const u = String(url)
     if (u.includes('etats=true')) return { ok: true, json: async () => ETATS }   // partition (5 compteurs)
     if (u.includes('/modules/promesses')) return { ok: true, json: async () => ({ total: 412, ...PROMESSES }) }
+    if (u.includes('/modules/permis-communes')) return { ok: true, json: async () => ['Saint-Denis', 'Sainte-Marie'] }
     if (u.includes('/modules/permis')) return { ok: true, json: async () => RADAR }
     if (u.includes('/communes')) return { ok: true, json: async () => [] }   // RETOURS-18 — bloc Affiner rend CommunePermisSelect
     return { ok: true, json: async () => ({}) }
@@ -91,6 +97,21 @@ describe('PERMIS — double entrée + densité', () => {
     expect(etats.every((e) => e && e.length > 0)).toBe(true)   // chaque ligne porte son état (= couleur du point)
     // le type PC est dans le libellé de chaque ligne (toujours visible)
     expect(container.textContent).toContain('PC')
+  })
+
+  it('transmet au détail le type de la ligne sélectionnée', async () => {
+    const centre = [55.4, -20.9]
+    const map = { getCenter: () => centre }
+    vi.stubGlobal('__labuse_map', map)
+    try {
+      renderM03()
+      ouvrirListe()
+      await waitFor(() => expect(document.querySelectorAll('[data-permis-row]').length).toBe(2))
+      fireEvent.click(document.querySelector('[data-permis-row]')!)
+      expect(ouvrirBullePermis).toHaveBeenCalledWith(map, 'PC1', centre, true, 'PC')
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 
   it('survol d\'une ligne allume le point (permitHover), sortie l\'éteint', async () => {

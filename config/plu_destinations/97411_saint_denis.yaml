@@ -875,10 +875,13 @@ zones:
           statut: valide
         voie:
           formule: 'Voies d’une emprise de 12 m ou plus : les constructions seront implantées soit à l’alignement, soit à 4 m minimum de l''alignement. Voies d’une emprise de moins de 12 m : les constructions seront implantées à 4 m minimum de l''alignement. Voies d’une emprise de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l''alignement.'
-          min_m: 3
+          # ETUDE-AUDIT-FIX-1 LOT 4 (défaut 5) — recul par DÉFAUT = 4 m (cas « voie < 12 m », couvrant la
+          # voirie urbaine courante). Les 3 m sont l'EXCEPTION réservée aux voies < 3,50 m ; la largeur de voie
+          # n'étant pas connue du moteur, on applique 4 m (l'exception reste listée dans `exceptions`).
+          min_m: 4
           article: Article Ui.6
           page_pdf: 54
-          citation: 'Voies d’une emprise de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l''alignement.'
+          citation: 'Voies d’une emprise de moins de 12 m : les constructions seront implantées à 4 m minimum de l''alignement (3 m seulement pour une voie de moins de 3,50 m).'
           statut: valide
           exceptions:
           - texte: 'Voies d''une emprise de moins de 12 m : les constructions seront implantées à 4 m minimum de l''alignement. Voies d''une emprise de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l''alignement.'
@@ -2013,6 +2016,16 @@ zones:
     sous_destinations: {}
   AUj:
     regles:
+      # OUTIL-ASSEMBLAGE-FIX-4 (LOT 4) — même clause de mixité « 30 logements collectif → 15 % sociaux
+      # et/ou intermédiaires » que les 6 zones U, vérifiée au PDF 97411 : Article AUj.2, p. 91.
+      mixite:
+        seuil_logements: 30
+        quota_pct: 15
+        portee: zone
+        article: Article AUj.2
+        page_pdf: 91
+        citation: les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+        statut: valide
       hauteur:
         faitage:
           m: 13.0
@@ -2102,6 +2115,15 @@ zones:
         citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent un minimum de15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   AUm:
     regles:
+      # OUTIL-ASSEMBLAGE-FIX-4 (LOT 4) — clause de mixité identique, vérifiée au PDF 97411 : Article AUm.2, p. 97.
+      mixite:
+        seuil_logements: 30
+        quota_pct: 15
+        portee: zone
+        article: Article AUm.2
+        page_pdf: 97
+        citation: les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+        statut: valide
       hauteur:
         faitage:
           m: 10.0
@@ -2214,6 +2236,15 @@ zones:
         citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   AUh:
     regles:
+      # OUTIL-ASSEMBLAGE-FIX-4 (LOT 4) — clause de mixité identique, vérifiée au PDF 97411 : Article AUh.2, p. 101.
+      mixite:
+        seuil_logements: 30
+        quota_pct: 15
+        portee: zone
+        article: Article AUh.2
+        page_pdf: 101
+        citation: les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.
+        statut: valide
       hauteur:
         faitage:
           m: 7.0

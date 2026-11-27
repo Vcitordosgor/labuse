@@ -9,46 +9,78 @@ meta:
   millesime: '2019-02-28'
   pages_total: 145
   lu_le: '2026-09-03'
-  edition: Règlement OFFICIEL du site mairie (pièce n°3, « Approuvé le 28 février 2019 » en page de garde = idurba 97409_20190228 servi par l'app). Le GPU ne sert PLUS aucun document pour 97409 (dépublication constatée sur pièces le 03/09 — API et WFS vides ; la note M40 « présent au GPU » du catalogue n'est plus vraie). Révision en cours NON approuvée → le PLU 2019 fait foi.
-  structure: 'Ancien format : zones U avec clause « sont admises toutes les occupations non citées à l''article 1.2 » (silence = autorisé) sauf UT fermée ; AU indicée = renvoi ÉCRIT vers la zone U d''indice (p. 90), 1AUcr chapitre propre ; A/N fermées (silence = interdit). Couverture : zones/secteurs énumérés PAR LE RÈGLEMENT (la liste des codes du zonage servi n''était pas consultable — DB indisponible) ; rapprochement au zonage à faire.'
+  edition: PLU approuvé le 28 février 2019. La modification n° 1 du 22 septembre 2023 porte sur les règles de la
+    zone UA, le linéaire commercial et les emplacements réservés du centre-ville.
+  structure: 'Ancien format : zones U avec clause « sont admises toutes les occupations non citées à l''article
+    1.2 » (silence = autorisé) sauf UT fermée ; AU indicée = renvoi ÉCRIT vers la zone U d''indice (p. 90), 1AUcr
+    chapitre propre ; A/N fermées (silence = interdit). Couverture : zones/secteurs énumérés PAR LE RÈGLEMENT (la
+    liste des codes du zonage servi n''était pas consultable — DB indisponible) ; rapprochement au zonage à faire.'
+  note_locale: En UA et UA1, le règlement à consulter est la modification municipale du 22 septembre 2023.
+  documents_par_zone:
+    ua:
+      document: Affaire-12-Annexe1.pdf
+      url: https://www.saint-andre.re/wp-content/uploads/2023/10/Affaire-12-Annexe1.pdf
+      millesime: '2023-09-22'
+      lu_le: '2026-11-26'
+      edition: Modification n° 1 approuvée le 22 septembre 2023. En UA et UA1, l’emprise est limitée à 60 %. La
+        hauteur dépend aussi des bâtiments voisins. Les reculs sur rue, les exceptions et le stationnement se vérifient
+        dans le règlement municipal.
+      note_locale: Modification n° 1 approuvée le 22 septembre 2023. En UA et UA1, l’emprise est limitée à 60 %.
+        La hauteur dépend aussi des bâtiments voisins. Les reculs sur rue, les exceptions et le stationnement se
+        vérifient dans le règlement municipal.
+      deliberation: https://www.saint-andre.re/conseil-municipal-du-22-septembre-2023/
+    ua1:
+      document: Affaire-12-Annexe1.pdf
+      url: https://www.saint-andre.re/wp-content/uploads/2023/10/Affaire-12-Annexe1.pdf
+      millesime: '2023-09-22'
+      lu_le: '2026-11-26'
+      edition: Modification n° 1 approuvée le 22 septembre 2023. En UA et UA1, l’emprise est limitée à 60 %. La
+        hauteur dépend aussi des bâtiments voisins. Les reculs sur rue, les exceptions et le stationnement se vérifient
+        dans le règlement municipal.
+      note_locale: Modification n° 1 approuvée le 22 septembre 2023. En UA et UA1, l’emprise est limitée à 60 %.
+        La hauteur dépend aussi des bâtiments voisins. Les reculs sur rue, les exceptions et le stationnement se
+        vérifient dans le règlement municipal.
+      deliberation: https://www.saint-andre.re/conseil-municipal-du-22-septembre-2023/
 zones:
   UA:
     regles:
       hauteur:
         egout:
-          m: 14.0
-          article: UA 10
-          page_pdf: 17
-          citation: 'La hauteur maximale des constructions est fixee a : - 14 metres a l''egout du toit ou au sommet de l''acrotere,'
-          statut: valide
+          m: 14
+          article: UA 10.2
+          page_pdf: 12
+          citation: 14 mètres à l’égout du toit ou au sommet de l’acrotère,
+          statut: propose
+          raison: Les plafonds dépendent des bâtiments voisins et de la mitoyenneté (p. 11). Les exceptions figurent
+            p. 12. Hors UA1, une règle particulière vise les projets d’au moins 4 000 m².
         faitage:
-          m: 17.0
-          article: UA 10
-          page_pdf: 17
-          citation: '- 17 metres au faitage.'
-          statut: valide
+          m: 17
+          article: UA 10.2
+          page_pdf: 12
+          citation: 17 mètres au faîtage.
+          statut: propose
+          raison: Les plafonds dépendent des bâtiments voisins et de la mitoyenneté (p. 11). Les exceptions figurent
+            p. 12. Hors UA1, une règle particulière vise les projets d’au moins 4 000 m².
       retraits:
         entre_constructions:
-          forme: conditionnelle
-          avec_ouvertures_m: 8
+          forme: relative
+          fraction_hauteur: 0.5
+          base_hauteur: cumulee
+          min_m: 3.0
           article: UA 8
-          page_pdf: 16
-          citation: Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces principales d’habitations soit de 8 mètres.
+          page_pdf: 11
+          citation: Deux bâtiments non contigus, implantés sur une même propriété, devront respecter entre eux une
+            distance au moins égale à la moitié de la hauteur cumulée des deux constructions mesurées à l’égout
+            du toit ou au sommet de l’acrotère avec un minimum de 3m.
           statut: valide
         voie:
-          min_m: 4.0
-          max_m: 4.0
-          note_fix2: 'MOTEUR-VERITE-FIX-2 LOT C : la règle est une POSITION DE FAÇADE (≤ 4 m de
-            la voie, 7 m de l''axe des RD) non modélisée — le min 0 du LOT 4 étendait l''assiette
-            jusqu''à la voie sans tester la façade. Min prudent 4 m restauré (capacité ≤ main) ;
-            alignement possible : capacité supérieure possible, à vérifier.'
-          note_calibrage: 'MOTEUR-VERITE-FIX-1 LOT 4 (V5) : « ne doit pas etre implantee au-dela »
-            = recul MAXIMUM (4 m), pas un minimum — l''alignement est permis, la facade principale
-            doit rester dans la bande 0-4 m depuis la voie. L''ancien min_m 4 insetait a tort.'
-          article: UA 6
-          page_pdf: 15
-          citation: Toutefois, la facade principale de la construction ne doit pas etre implantee au-dela d'une marge de recul de 4 metres parallele a la limite de la voie ou de l'emprise publique.
-          statut: valide
+          article: UA 6.2 et 6.3
+          page_pdf: 9
+          citation: Les rez-de-chaussée à destination de logement devront présenter un retrait de 4m minimum de
+            l’alignement.
+          statut: propose
+          raison: L’alignement, les rez-de-chaussée et les reculs de 7, 11, 11,5 ou 12 mètres dépendent du type
+            et du côté de la voie. Vérifier les voies et les exceptions de l’article UA 6.3.
         limites_separatives:
           implantation_fond:
             mode: limite_sous_conditions
@@ -65,104 +97,219 @@ zones:
             page_pdf: 15
             citation: 'Les constructions doivent être implantées sur au moins une limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.'
           min_m: 3.0
-          article: UA 7
+          article: UA 7.2
+          page_pdf: 10
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point de la
+            façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.
+          statut: valide
+          implantation_fond:
+            mode: retrait_obligatoire
+            article: UA 7.3 et 7.4
+            page_pdf: 10
+            citation: L’implantation en limite de fond de propriété est interdite.
+            statut: propose
+            raison: Les exceptions de l’article 7.4 comprennent les terrains d’une largeur sur voie de moins de
+              12 mètres. Le recul chiffré est rédigé en référence à la limite latérale.
+          implantation_laterales:
+            mode: limite_imposee
+            article: UA 7.2 et 7.4
+            page_pdf: 10
+            citation: Lorsque sur une seule unité foncière contigüe, il existe un bâtiment implanté en mitoyenneté,
+              la nouvelle construction doit être implantée sur cette limite séparative latérale.
+            statut: propose
+            raison: La limite à retenir dépend des bâtiments mitoyens et des exceptions de l’article 7.4.
+      stationnement:
+        par_logement:
+          places: null
+          article: UA 12.2
           page_pdf: 15
-          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point de la facade au point le plus proche de la limite laterale, doit etre au moins egale a 3 metres.
+          citation: 'Logement locatif aidé
+
+            Dans le périmètre de 400m autour de la gare routière : 0,8 place de stationnement par logement
+
+            Hors du périmètre de 400m autour de la gare routière : 1 place de stationnement par logement
+
+            Autres logements < 50 m² : 1 place de stationnement par logement
+
+            Autres logements > 50 m² : 1,5 place de stationnement par logement'
+          statut: propose
+          raison: La distance à la gare routière et la surface par logement sont nécessaires. La ligne « 50 m² »
+            ne précise pas le cas d’égalité.
+      pleine_terre:
+        pct:
+          pct: 20.0
+          article: UA 13.1
+          page_pdf: 16
+          citation: Avoir au minimum 40% de la superficie totale de l’unité foncière non-bâti, traité en espace
+            libre, dont 20% en pleine terre, 10% perméable et 10% imperméable.
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: UA 9
+          page_pdf: 11
+          citation: L’emprise au sol des constructions ne pourra excéder 60% maximum de la superficie totale de
+            l’unité foncière.
+          statut: valide
+    silence: autorise
+    silence_src: 'Art. UA 2.2, p.6 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
+      UA 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste fermée
+      d''interdictions à l''art. UA 1.2 (p.5).'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UA 1.2
+        page_pdf: 5
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: interdit
+        article: UA 1.2
+        page_pdf: 5
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+        note: Seul l'entrepôt à destination EXCLUSIVE est interdit (mot « exclusive » au texte) ; l'entrepôt accessoire
+          d'une activité autorisée n'est pas visé.
+      exploitation_agricole:
+        statut: interdit
+        article: UA 1.2
+        page_pdf: 5
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UA 1.2
+        page_pdf: 5
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+    notes:
+    - 'Art. UA 1.2 al.3 (p.5) : règle LOCALISÉE (pas de zone) — en rez-de-chaussée le long des « linéaires de commerce
+      et services » repérés aux plans de zonage, interdiction des destinations autres que « les commerces, les services
+      et les constructions et installations nécessaires aux services publics ou d''intérêt collectif ».'
+    - 'Art. UA 2.2 al.1 (p.6) : « constructions à destination d''activités » admises à condition de ne pas entraîner
+      « ni incommodité et ni aggravation des risques » — terme « activités » générique, non mappable à des sous-destinations
+      précises → non écrit par sous-destination.'
+  UA1:
+    regles:
+      retraits:
+        limites_separatives:
+          min_m: 3.0
+          article: UA 7.2
+          page_pdf: 10
+          citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point de la
+            façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.
+          statut: valide
+          implantation_fond:
+            mode: retrait_obligatoire
+            article: UA 7.3 et 7.4
+            page_pdf: 10
+            citation: L’implantation en limite de fond de propriété est interdite.
+            statut: propose
+            raison: Les exceptions de l’article 7.4 comprennent les terrains d’une largeur sur voie de moins de
+              12 mètres. Le recul chiffré est rédigé en référence à la limite latérale.
+          implantation_laterales:
+            mode: limite_imposee
+            article: UA 7.2 et 7.4
+            page_pdf: 10
+            citation: Lorsque sur une seule unité foncière contigüe, il existe un bâtiment implanté en mitoyenneté,
+              la nouvelle construction doit être implantée sur cette limite séparative latérale.
+            statut: propose
+            raison: La limite à retenir dépend des bâtiments mitoyens et des exceptions de l’article 7.4.
+        entre_constructions:
+          forme: relative
+          fraction_hauteur: 0.5
+          base_hauteur: cumulee
+          min_m: 3.0
+          article: UA 8
+          page_pdf: 11
+          citation: Deux bâtiments non contigus, implantés sur une même propriété, devront respecter entre eux une
+            distance au moins égale à la moitié de la hauteur cumulée des deux constructions mesurées à l’égout
+            du toit ou au sommet de l’acrotère avec un minimum de 3m.
+          statut: valide
+        voie:
+          article: UA 6.2 et 6.3
+          page_pdf: 9
+          citation: Les rez-de-chaussée à destination de logement devront présenter un retrait de 4m minimum de
+            l’alignement.
+          statut: propose
+          raison: L’alignement, les rez-de-chaussée et les reculs de 7, 11, 11,5 ou 12 mètres dépendent du type
+            et du côté de la voie. Vérifier les voies et les exceptions de l’article UA 6.3.
+      hauteur:
+        egout:
+          m: 11
+          article: UA 10.2
+          page_pdf: 12
+          citation: 11 mètres à l’égout du toit ou au sommet de l’acrotère,
+          statut: propose
+          raison: Les plafonds dépendent des bâtiments voisins et de la mitoyenneté (p. 11). Les exceptions figurent
+            p. 12.
+        faitage:
+          m: 14
+          article: UA 10.2
+          page_pdf: 12
+          citation: 14 mètres au faîtage.
+          statut: propose
+          raison: Les plafonds dépendent des bâtiments voisins et de la mitoyenneté (p. 11). Les exceptions figurent
+            p. 12.
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: UA 9
+          page_pdf: 11
+          citation: L’emprise au sol des constructions ne pourra excéder 60% maximum de la superficie totale de
+            l’unité foncière.
           statut: valide
       stationnement:
         par_logement:
           places: null
           article: UA 12.2
-          page_pdf: 20
-          citation: 1 place de stationnement minimum par logement locatifs finances par un pret aide de l'Etat ; 1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ; 1 place de stationnement minimum par logement situe a moins de 500m d'une gare routiere ; 1,5 places de stationnement minimum par logement d'une surface de plancher superieure ou egale a 50m2, arrondi a l'entier inferieur.
+          page_pdf: 15
+          citation: 'Logement locatif aidé
+
+            Dans le périmètre de 400m autour de la gare routière : 0,8 place de stationnement par logement
+
+            Hors du périmètre de 400m autour de la gare routière : 1 place de stationnement par logement
+
+            Autres logements < 50 m² : 1 place de stationnement par logement
+
+            Autres logements > 50 m² : 1,5 place de stationnement par logement'
           statut: propose
-          raison: stationnement non chiffrable ("1 place min par logement (locatif aide, <50m2, ou <500m d'une gare routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)")
+          raison: La distance à la gare routière et la surface par logement sont nécessaires. La ligne « 50 m² »
+            ne précise pas le cas d’égalité.
       pleine_terre:
         pct:
           pct: 20.0
           article: UA 13.1
-          page_pdf: 21
-          citation: Au minimum 20% de la superficie totale de l'unite fonciere doit etre traite en espace libre dont au moins la moitie en espace permeable.
+          page_pdf: 16
+          citation: Avoir au minimum 40% de la superficie totale de l’unité foncière non-bâti, traité en espace
+            libre, dont 20% en pleine terre, 10% perméable et 10% imperméable.
           statut: valide
     silence: autorise
-    silence_src: 'Art. UA 2.2, p.12 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article UA 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste fermée d''interdictions à l''art. UA 1.2 (p.11).'
+    silence_src: 'Secteur de la zone UA (chapeau p.5 : « Il existe un secteur UA1 couvrant le quartier ancien autour
+      de l''avenue Bourbon »). Les articles UA 1.2 (p.5) et UA 2.2 (p.6) s''appliquent sans distinction de secteur
+      : même structure liste fermée + « Sont admises toutes les occupations et utilisations du sol non citées à
+      l''article UA 1.2 ».'
     sous_destinations:
       industrie:
         statut: interdit
         article: UA 1.2
-        page_pdf: 11
-        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive d'entrepôt. »
+        page_pdf: 5
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
       entrepot:
         statut: interdit
         article: UA 1.2
-        page_pdf: 11
-        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive d'entrepôt. »
-        note: Seul l'entrepôt à destination EXCLUSIVE est interdit (mot « exclusive » au texte) ; l'entrepôt accessoire d'une activité autorisée n'est pas visé.
-      exploitation_agricole:
-        statut: interdit
-        article: UA 1.2
-        page_pdf: 11
-        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
-      exploitation_forestiere:
-        statut: interdit
-        article: UA 1.2
-        page_pdf: 11
-        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
-    notes:
-    - 'Art. UA 1.2 al.3 (p.11) : règle LOCALISÉE (pas de zone) — en rez-de-chaussée le long des « linéaires de commerce et services » repérés aux plans de zonage, interdiction des destinations autres que « les commerces, les services et les constructions et installations nécessaires aux services publics ou d''intérêt collectif ».'
-    - 'Art. UA 2.2 al.1 (p.12) : « constructions à destination d''activités » admises à condition de ne pas entraîner « ni incommodité et ni aggravation des risques » — terme « activités » générique, non mappable à des sous-destinations précises → non écrit par sous-destination.'
-  UA1:
-    regles:
-      retraits:
-        limites_separatives:
-          implantation_fond:
-            mode: retrait_obligatoire
-            statut: valide
-            article: 'UA 7.3'
-            page_pdf: 16
-            citation: 'L''implantation en limite de fond de terrain est possible, sauf en secteur UA1, si la nouvelle construction ne s''implante que sur une seule limite séparative latérale. [...] En cas de retrait, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
-          implantation_laterales:
-            mode: limite_imposee
-            statut: valide
-            article: 'UA 7.2'
-            page_pdf: 15
-            citation: 'Les constructions doivent être implantées sur au moins une limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.'
-      hauteur:
-        egout:
-          m: 11.0
-          article: UA 10
-          page_pdf: 17
-          citation: 'En secteur UA1, la hauteur maximale des constructions est fixee a : - 11 metres a l''egout du toit ou au sommet de l''acrotere,'
-          statut: valide
-        faitage:
-          m: 14.0
-          article: UA 10
-          page_pdf: 17
-          citation: 'En secteur UA1, la hauteur maximale des constructions est fixee a : ... - 14 metres au faitage.'
-          statut: valide
-    silence: autorise
-    silence_src: 'Secteur de la zone UA (chapeau p.11 : « Il existe un secteur UA1 couvrant le quartier ancien autour de l''avenue Bourbon »). Les articles UA 1.2 (p.11) et UA 2.2 (p.12) s''appliquent sans distinction de secteur : même structure liste fermée + « Sont admises toutes les occupations et utilisations du sol non citées à l''article UA 1.2 ».'
-    sous_destinations:
-      industrie:
-        statut: interdit
-        article: UA 1.2
-        page_pdf: 11
-        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive d'entrepôt. »
-      entrepot:
-        statut: interdit
-        article: UA 1.2
-        page_pdf: 11
-        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive d'entrepôt. »
+        page_pdf: 5
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
         note: Seul l'entrepôt à destination EXCLUSIVE est interdit.
       exploitation_agricole:
         statut: interdit
         article: UA 1.2
-        page_pdf: 11
+        page_pdf: 5
         citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
       exploitation_forestiere:
         statut: interdit
         article: UA 1.2
-        page_pdf: 11
+        page_pdf: 5
         citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
     notes:
     - Le secteur UA1 ne diffère de UA qu'aux articles UA 7.3 (implantation en fond de terrain, p.16), UA 10.2 (hauteurs 11/14 m, p.17) et UA 11.2 (toitures-terrasses ≤ 40 %, p.18) — aucune règle de destination propre.
@@ -173,7 +320,8 @@ zones:
           m: 12.0
           article: UB 10
           page_pdf: 29
-          citation: 'La hauteur maximale des constructions est fixee a : - 12 metres a l''egout du toit ou au sommet de l''acrotere,'
+          citation: 'La hauteur maximale des constructions est fixee a : - 12 metres a l''egout du toit ou au sommet
+            de l''acrotere,'
           statut: valide
         faitage:
           m: 14.0
@@ -187,56 +335,73 @@ zones:
           avec_ouvertures_m: 8
           article: UB 8
           page_pdf: 28
-          citation: Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces principales d’habitations soit de 8 mètres.
+          citation: Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de
+            deux pièces principales d’habitations soit de 8 mètres.
           statut: valide
         voie:
           min_m: 6.0
           max_m: 6.0
-          note_fix2: 'MOTEUR-VERITE-FIX-2 LOT C : la règle est une POSITION DE FAÇADE (≤ 6 m de
-            la voie, 7 m de l''axe des RD) non modélisée — le min 0 du LOT 4 étendait l''assiette
-            jusqu''à la voie sans tester la façade. Min prudent 6 m restauré (capacité ≤ main) ;
-            alignement possible : capacité supérieure possible, à vérifier.'
-          note_calibrage: 'MOTEUR-VERITE-FIX-1 LOT 4 (V5) : « ne doit pas etre implantee au-dela »
-            = recul MAXIMUM (6 m), pas un minimum — l''alignement est permis, la facade principale
-            doit rester dans la bande 0-6 m depuis la voie. L''ancien min_m 6 insetait a tort.'
+          note_fix2: 'MOTEUR-VERITE-FIX-2 LOT C : la règle est une POSITION DE FAÇADE (≤ 6 m de la voie, 7 m de
+            l''axe des RD) non modélisée — le min 0 du LOT 4 étendait l''assiette jusqu''à la voie sans tester la
+            façade. Min prudent 6 m restauré (capacité ≤ main) ; alignement possible : capacité supérieure possible,
+            à vérifier.'
+          note_calibrage: 'MOTEUR-VERITE-FIX-1 LOT 4 (V5) : « ne doit pas etre implantee au-dela » = recul MAXIMUM
+            (6 m), pas un minimum — l''alignement est permis, la facade principale doit rester dans la bande 0-6
+            m depuis la voie. L''ancien min_m 6 insetait a tort.'
           article: UB 6
           page_pdf: 27
-          citation: Toutefois, la facade principale de la construction ne doit pas etre implantee au-dela d'une marge de recul de 6 metres parallele a la limite de la voie ou de l'emprise publique.
+          citation: Toutefois, la facade principale de la construction ne doit pas etre implantee au-dela d'une
+            marge de recul de 6 metres parallele a la limite de la voie ou de l'emprise publique.
           statut: valide
         limites_separatives:
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
-            article: 'UB 7.3'
+            article: UB 7.3
             page_pdf: 28
-            citation: 'L''implantation en limite de fond de terrain est possible, si la nouvelle construction ne s''implante que sur une seule limite séparative latérale. Dans ce cas, la nouvelle construction n''excèdera pas 4 mètres de hauteur au droit de cette limite séparative et ce sur une bande de 3 mètres de profondeur. En cas de retrait, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
-            condition_texte: 'L''implantation en limite de fond de terrain est possible, si la nouvelle construction ne s''implante que sur une seule limite séparative latérale. Dans ce cas, la nouvelle construction n''excèdera pas 4 mètres de hauteur au droit de cette limite séparative et ce sur une bande de 3 mètres de profondeur.'
-            condition_modelable: 'une_seule_limite+hauteur_bande:4 m sur bande de 3 m'
+            citation: L'implantation en limite de fond de terrain est possible, si la nouvelle construction ne s'implante
+              que sur une seule limite séparative latérale. Dans ce cas, la nouvelle construction n'excèdera pas
+              4 mètres de hauteur au droit de cette limite séparative et ce sur une bande de 3 mètres de profondeur.
+              En cas de retrait, la distance mesurée horizontalement de tout point de la façade de la construction
+              au point le plus proche de la limite séparative, est de 3 mètres minimum.
+            condition_texte: L'implantation en limite de fond de terrain est possible, si la nouvelle construction
+              ne s'implante que sur une seule limite séparative latérale. Dans ce cas, la nouvelle construction
+              n'excèdera pas 4 mètres de hauteur au droit de cette limite séparative et ce sur une bande de 3 mètres
+              de profondeur.
+            condition_modelable: une_seule_limite+hauteur_bande:4 m sur bande de 3 m
           implantation_laterales:
             mode: limite_ou_retrait
             statut: valide
-            article: 'UB 7.2'
+            article: UB 7.2
             page_pdf: 27
-            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
+            citation: Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou
+              en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point
+              de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.
           min_m: 3.0
           article: UB 7
           page_pdf: 27
-          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point de la facade au point le plus proche de la limite laterale, doit etre au moins egale 3 metres.
+          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point de la
+            facade au point le plus proche de la limite laterale, doit etre au moins egale 3 metres.
           statut: valide
       stationnement:
         par_logement:
           places: null
           article: UB 12.2
           page_pdf: 31
-          citation: 1 place de stationnement minimum par logement locatifs finances par un pret aide de l'Etat ; 1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ; 1 place de stationnement minimum par logement situe a moins de 500m d'une gare routiere ; 1,5 places de stationnement minimum par logement d'une surface de plancher superieure ou egale a 50m2, arrondi a l'entier inferieur.
+          citation: 1 place de stationnement minimum par logement locatifs finances par un pret aide de l'Etat ;
+            1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ; 1 place
+            de stationnement minimum par logement situe a moins de 500m d'une gare routiere ; 1,5 places de stationnement
+            minimum par logement d'une surface de plancher superieure ou egale a 50m2, arrondi a l'entier inferieur.
           statut: propose
-          raison: stationnement non chiffrable ("1 place min par logement (locatif aide, <50m2, ou <500m d'une gare routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)")
+          raison: stationnement non chiffrable ("1 place min par logement (locatif aide, <50m2, ou <500m d'une gare
+            routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)")
       pleine_terre:
         pct:
           pct: 30.0
           article: UB 13.1
           page_pdf: 32
-          citation: Au minimum 30% de la superficie totale de l'unite fonciere doit etre traite en espace libre dont au moins la moitie en espace permeable.
+          citation: Au minimum 30% de la superficie totale de l'unite fonciere doit etre traite en espace libre
+            dont au moins la moitie en espace permeable.
           statut: valide
       mixite:
         seuil_m2: 2000
@@ -294,7 +459,8 @@ zones:
           m: 9.0
           article: UC 10
           page_pdf: 40
-          citation: 'La hauteur maximale des constructions est fixee a : - 9 metres a l''egout du toit ou au sommet de l''acrotere,'
+          citation: 'La hauteur maximale des constructions est fixee a : - 9 metres a l''egout du toit ou au sommet
+            de l''acrotere,'
           statut: valide
         faitage:
           m: 12.0
@@ -308,34 +474,40 @@ zones:
           avec_ouvertures_m: 8
           article: UC 8
           page_pdf: 39
-          citation: Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces principales d’habitations soit de 8 mètres.
+          citation: Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de
+            deux pièces principales d’habitations soit de 8 mètres.
           statut: valide
         voie:
           min_m: 4.0
           article: UC 6
           page_pdf: 38
-          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee horizontalement de tout point de la facade au point le plus proche de la voie, au moins egale a 4 metres.
+          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee horizontalement
+            de tout point de la facade au point le plus proche de la voie, au moins egale a 4 metres.
           statut: valide
         limites_separatives:
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
-            article: 'UC 7.3'
+            article: UC 7.3
             page_pdf: 39
-            citation: 'L''implantation d''une construction en limite de fond de propriété est interdite.'
-            condition_texte: 'retrait de fond non chiffré au règlement, valeur des latérales appliquée, à vérifier'
+            citation: L'implantation d'une construction en limite de fond de propriété est interdite.
+            condition_texte: retrait de fond non chiffré au règlement, valeur des latérales appliquée, à vérifier
           implantation_laterales:
             mode: limite_sous_conditions
             statut: valide
-            article: 'UC 7.2'
+            article: UC 7.2
             page_pdf: 39
-            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.'
-            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale.'
-            condition_modelable: 'une_seule_limite'
+            citation: Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale.
+              En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade
+              au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.
+            condition_texte: Les constructions peuvent être implantées en retrait ou sur une seule limite séparative
+              latérale.
+            condition_modelable: une_seule_limite
           min_m: 3.0
           article: UC 7
           page_pdf: 39
-          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point de la facade au point le plus proche de la limite laterale, doit etre au moins egale a 3 metres.
+          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point de la
+            facade au point le plus proche de la limite laterale, doit etre au moins egale a 3 metres.
           statut: valide
       stationnement:
         par_logement:
@@ -348,9 +520,11 @@ zones:
 
             1 place de stationnement minimum par logement situé à moins de 500m d''une gare routière
 
-            1,5 places de stationnement minimum par logement d''une surface de plancher supérieure ou égale à 50m², arrondi à l''entier inférieur.'
+            1,5 places de stationnement minimum par logement d''une surface de plancher supérieure ou égale à 50m²,
+            arrondi à l''entier inférieur.'
           statut: propose
-          raison: stationnement non chiffrable ("1 place min par logement (locatif aide, <50m2, ou <500m d'une gare routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)")
+          raison: stationnement non chiffrable ("1 place min par logement (locatif aide, <50m2, ou <500m d'une gare
+            routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)")
         par_typologie:
           base: surface_plancher
           arrondi: inferieur
@@ -382,8 +556,17 @@ zones:
           pct: 40.0
           article: UC 13.1
           page_pdf: 43
-          citation: Au minimum 40% de la superficie totale de l'unite fonciere doit etre traite en espace libre dont au moins la moitie en espace permeable.
+          citation: Au minimum 40% de la superficie totale de l'unite fonciere doit etre traite en espace libre
+            dont au moins la moitie en espace permeable.
           statut: valide
+      espaces_libres:
+        pct: 40.0
+        part_permeable_fraction: 0.5
+        article: UC 13.1
+        page_pdf: 43
+        citation: Au minimum 40% de la superficie totale de l'unite fonciere doit etre traite en espace libre dont
+          au moins la moitie en espace permeable.
+        statut: valide
       mixite:
         seuil_m2: 2000
         seuil_type: surface_plancher
@@ -438,7 +621,8 @@ zones:
           m: 6.0
           article: UD 10
           page_pdf: 51
-          citation: 'La hauteur maximale des constructions est fixee a : - 6 metres a l''egout du toit ou au sommet de l''acrotere,'
+          citation: 'La hauteur maximale des constructions est fixee a : - 6 metres a l''egout du toit ou au sommet
+            de l''acrotere,'
           statut: valide
         faitage:
           m: 10.0
@@ -452,49 +636,60 @@ zones:
           avec_ouvertures_m: 8
           article: UD 8
           page_pdf: 50
-          citation: Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces principales d’habitations soit de 8 mètres.
+          citation: Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de
+            deux pièces principales d’habitations soit de 8 mètres.
           statut: valide
         voie:
           min_m: 6.0
           article: UD 6
           page_pdf: 49
-          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee horizontalement de tout point de la facade au point le plus proche de la voie, au moins egale a 6 metres.
+          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee horizontalement
+            de tout point de la facade au point le plus proche de la voie, au moins egale a 6 metres.
           statut: valide
         limites_separatives:
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
-            article: 'UD 7.3'
+            article: UD 7.3
             page_pdf: 50
-            citation: 'L''implantation d''une construction en limite de fond de propriété est interdite.'
-            condition_texte: 'retrait de fond non chiffré au règlement, valeur des latérales appliquée, à vérifier'
+            citation: L'implantation d'une construction en limite de fond de propriété est interdite.
+            condition_texte: retrait de fond non chiffré au règlement, valeur des latérales appliquée, à vérifier
           implantation_laterales:
             mode: limite_sous_conditions
             statut: valide
-            article: 'UD 7.2'
+            article: UD 7.2
             page_pdf: 50
-            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
-            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale.'
-            condition_modelable: 'une_seule_limite'
+            citation: Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale.
+              En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade
+              au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.
+            condition_texte: Les constructions peuvent être implantées en retrait ou sur une seule limite séparative
+              latérale.
+            condition_modelable: une_seule_limite
           min_m: 3.0
           article: UD 7
           page_pdf: 50
-          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point de la facade au point le plus proche de la limite laterale, doit etre au moins egale 3 metres.
+          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point de la
+            facade au point le plus proche de la limite laterale, doit etre au moins egale 3 metres.
           statut: valide
       stationnement:
         par_logement:
           places: null
           article: UD 12.2
           page_pdf: 53
-          citation: 1 place de stationnement minimum par logement locatifs finances par un pret aide de l'Etat ; 1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ; 1 place de stationnement minimum par logement situe a moins de 500m d'une gare routiere ; 1,5 places de stationnement minimum par logement d'une surface de plancher superieure ou egale a 50m2, arrondi a l'entier inferieur.
+          citation: 1 place de stationnement minimum par logement locatifs finances par un pret aide de l'Etat ;
+            1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ; 1 place
+            de stationnement minimum par logement situe a moins de 500m d'une gare routiere ; 1,5 places de stationnement
+            minimum par logement d'une surface de plancher superieure ou egale a 50m2, arrondi a l'entier inferieur.
           statut: propose
-          raison: stationnement non chiffrable ("1 place min par logement (locatif aide, <50m2, ou <500m d'une gare routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)")
+          raison: stationnement non chiffrable ("1 place min par logement (locatif aide, <50m2, ou <500m d'une gare
+            routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)")
       pleine_terre:
         pct:
           pct: 50.0
           article: UD 13.1
           page_pdf: 54
-          citation: Au minimum 50% de la superficie totale de l'unite fonciere doit etre traite en espace libre dont au moins la moitie en espace permeable.
+          citation: Au minimum 50% de la superficie totale de l'unite fonciere doit etre traite en espace libre
+            dont au moins la moitie en espace permeable.
           statut: valide
       mixite:
         seuil_m2: 2000
@@ -574,40 +769,56 @@ zones:
           min_m: 3.0
           article: UE 8
           page_pdf: 62
-          citation: L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 3 mètres.
+          citation: L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition
+            que la distance séparant deux bâtiments soit au moins égale à 3 mètres.
           statut: valide
         voie:
           min_m: 6.0
           article: UE 6
           page_pdf: 61
-          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee horizontalement de tout point de la facade au point le plus proche de la voie, au moins egale a 6 metres.
+          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee horizontalement
+            de tout point de la facade au point le plus proche de la voie, au moins egale a 6 metres.
           statut: valide
         limites_separatives:
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
-            article: 'UE 7.3'
+            article: UE 7.3
             page_pdf: 62
-            citation: 'Les constructions doivent être implantées en retrait des limites de fond de propriété avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 4 mètres.'
+            citation: Les constructions doivent être implantées en retrait des limites de fond de propriété avec
+              une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite,
+              au moins égale à 4 mètres.
           implantation_laterales:
             mode: limite_sous_conditions
             statut: valide
-            article: 'UE 7.2'
+            article: UE 7.2
             page_pdf: 61
-            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres.'
-            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat.'
-            condition_modelable: 'une_seule_limite+non'
+            citation: Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les
+              constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une
+              limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination
+              principale d'habitat. En cas de retrait de la construction, la distance comptée horizontalement de
+              tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à
+              4 mètres.
+            condition_texte: Les constructions peuvent être implantées en retrait ou sur une seule limite latérale.
+              Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond
+              à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination
+              principale d'habitat.
+            condition_modelable: une_seule_limite+non
           min_m: 4.0
           article: UE 7
           page_pdf: 61
-          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point de la facade au point le plus proche de la limite laterale, doit etre au moins egale a 4 metres.
+          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point de la
+            facade au point le plus proche de la limite laterale, doit etre au moins egale a 4 metres.
           statut: valide
       stationnement:
         par_logement:
           places: null
           article: UE 12.2
           page_pdf: 65
-          citation: '1. Pour les constructions a destination de commerces et bureaux : ... 2. Pour les constructions a destination d''activites artisanales ou industrielles : ... 3. Pour les constructions a usage d''entrepot sans activite commerciale : 1 place de stationnement minimum pour 2 emplois. 4. Pour les constructions et installations d''interet collectif : ...'
+          citation: '1. Pour les constructions a destination de commerces et bureaux : ... 2. Pour les constructions
+            a destination d''activites artisanales ou industrielles : ... 3. Pour les constructions a usage d''entrepot
+            sans activite commerciale : 1 place de stationnement minimum pour 2 emplois. 4. Pour les constructions
+            et installations d''interet collectif : ...'
           statut: propose
           raison: stationnement non chiffrable ("Non reglemente pour l'habitation (normes UE 12.2 = commerces/bureaux, artisanat/industrie, entrepots, equipements ; pas de norme logement)")
       pleine_terre:
@@ -615,7 +826,8 @@ zones:
           pct: 20.0
           article: UE 13.1
           page_pdf: 66
-          citation: Au minimum 20% de la superficie totale de l'unite fonciere doit etre traite en espace libre dont au moins la moitie en espace permeable.
+          citation: Au minimum 20% de la superficie totale de l'unite fonciere doit etre traite en espace libre
+            dont au moins la moitie en espace permeable.
           statut: valide
     silence: autorise
     silence_src: 'Art. UE 2.2, p.58 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article UE 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste fermée d''interdictions à l''art. UE 1.2 (p.57).'
@@ -724,40 +936,54 @@ zones:
           min_m: 3.0
           article: US 8
           page_pdf: 73
-          citation: L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 3 mètres.
+          citation: L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition
+            que la distance séparant deux bâtiments soit au moins égale à 3 mètres.
           statut: valide
         voie:
           min_m: 3.0
           article: US 6
           page_pdf: 71
-          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee horizontalement de tout point de la facade au point le plus proche de la voie, au moins egale a 3 metres.
+          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee horizontalement
+            de tout point de la facade au point le plus proche de la voie, au moins egale a 3 metres.
           statut: valide
         limites_separatives:
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
-            article: 'US 7.3'
+            article: US 7.3
             page_pdf: 72
-            citation: 'Les constructions doivent être implantées en retrait des limites de fond de propriété avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 4 mètres.'
+            citation: Les constructions doivent être implantées en retrait des limites de fond de propriété avec
+              une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite,
+              au moins égale à 4 mètres.
           implantation_laterales:
             mode: limite_sous_conditions
             statut: valide
-            article: 'US 7.2'
+            article: US 7.2
             page_pdf: 72
-            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.'
-            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat.'
-            condition_modelable: 'une_seule_limite+non'
+            citation: Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les
+              constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une
+              limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination
+              principale d'habitat. En cas de retrait de la construction, la distance comptée horizontalement de
+              tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à
+              3 mètres.
+            condition_texte: Les constructions peuvent être implantées en retrait ou sur une seule limite latérale.
+              Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond
+              à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination
+              principale d'habitat.
+            condition_modelable: une_seule_limite+non
           min_m: 3.0
           article: US 7
           page_pdf: 72
-          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point de la facade au point le plus proche de la limite laterale, doit etre au moins egale a 3 metres.
+          citation: En cas de retrait de la construction, la distance comptee horizontalement de tout point de la
+            facade au point le plus proche de la limite laterale, doit etre au moins egale a 3 metres.
           statut: valide
       stationnement:
         par_logement:
           places: null
           article: US 12.2
           page_pdf: 76
-          citation: '1. Pour les constructions a destination d''habitation autorisees dans la zone : 1 place de stationnement minimum par logement.'
+          citation: '1. Pour les constructions a destination d''habitation autorisees dans la zone : 1 place de
+            stationnement minimum par logement.'
           statut: propose
           raison: stationnement non chiffrable ('1 place min par logement')
       pleine_terre:
@@ -765,7 +991,8 @@ zones:
           pct: 30.0
           article: US 13.1
           page_pdf: 77
-          citation: Au minimum 30% de la superficie totale de l'unite fonciere doit etre traite en espace libre dont au moins la moitie en espace permeable.
+          citation: Au minimum 30% de la superficie totale de l'unite fonciere doit etre traite en espace libre
+            dont au moins la moitie en espace permeable.
           statut: valide
     silence: autorise
     silence_src: 'Art. US 2.2, p.69 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article US 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste fermée d''interdictions à l''art. US 1.2 (p.68).'
@@ -809,7 +1036,8 @@ zones:
           m: 9.0
           article: UT 10
           page_pdf: 84
-          citation: 'La hauteur maximale des constructions est fixee a : - 9 metres a l''egout du toit ou au sommet de l''acrotere,'
+          citation: 'La hauteur maximale des constructions est fixee a : - 9 metres a l''egout du toit ou au sommet
+            de l''acrotere,'
           statut: valide
         faitage:
           m: 12.0
@@ -823,38 +1051,46 @@ zones:
           min_m: 3.0
           article: UT 8
           page_pdf: 83
-          citation: L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 3 mètres.
+          citation: L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition
+            que la distance séparant deux bâtiments soit au moins égale à 3 mètres.
           statut: valide
         voie:
           min_m: 6.0
           article: UT 6
           page_pdf: 82
-          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee horizontalement de tout point de la facade au point le plus proche de la voie, au moins egale a 6 metres.
+          citation: Les constructions doivent etre implantees en recul de la voie, avec une distance comptee horizontalement
+            de tout point de la facade au point le plus proche de la voie, au moins egale a 6 metres.
           statut: valide
         limites_separatives:
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
-            article: 'UT 7.2'
+            article: UT 7.2
             page_pdf: 83
-            citation: 'Les constructions doivent être implantées en retrait des limites latérales et des limites de fond de propriété. Le retrait de la construction compté horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 4 mètres.'
+            citation: Les constructions doivent être implantées en retrait des limites latérales et des limites
+              de fond de propriété. Le retrait de la construction compté horizontalement de tout point de la façade
+              de la construction au point le plus proche de la limite séparative, doit être au minimum de 4 mètres.
           implantation_laterales:
             mode: retrait_obligatoire
             statut: valide
-            article: 'UT 7.2'
+            article: UT 7.2
             page_pdf: 83
-            citation: 'Les constructions doivent être implantées en retrait des limites latérales et des limites de fond de propriété. Le retrait de la construction compté horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 4 mètres.'
+            citation: Les constructions doivent être implantées en retrait des limites latérales et des limites
+              de fond de propriété. Le retrait de la construction compté horizontalement de tout point de la façade
+              de la construction au point le plus proche de la limite séparative, doit être au minimum de 4 mètres.
           min_m: 4.0
           article: UT 7
           page_pdf: 83
-          citation: Les constructions doivent etre implantees en retrait des limites laterales et des limites de fond de propriete. Le retrait ... doit etre au minimum de 4 metres.
+          citation: Les constructions doivent etre implantees en retrait des limites laterales et des limites de
+            fond de propriete. Le retrait ... doit etre au minimum de 4 metres.
           statut: valide
       stationnement:
         par_logement:
           places: null
           article: UT 12.2
           page_pdf: 85
-          citation: '1. Pour les constructions a destination d''habitation autorisees dans la zone : 1 place de stationnement minimum par logement.'
+          citation: '1. Pour les constructions a destination d''habitation autorisees dans la zone : 1 place de
+            stationnement minimum par logement.'
           statut: propose
           raison: stationnement non chiffrable ('1 place min par logement')
       pleine_terre:
@@ -862,7 +1098,8 @@ zones:
           pct: 50.0
           article: UT 13.1
           page_pdf: 86
-          citation: Au minimum 50% de la superficie totale de l'unite fonciere doit etre traite en espace vert et permeable comprenant des plantations et devant recevoir un traitement paysager.
+          citation: Au minimum 50% de la superficie totale de l'unite fonciere doit etre traite en espace vert et
+            permeable comprenant des plantations et devant recevoir un traitement paysager.
           statut: valide
     silence: interdit
     silence_src: 'Art. UT 1.2, p.79 : « Sont interdits toutes les constructions, ouvrages et travaux à l''exception de ceux visés à l''article UT 2.2. » — seules les occupations listées à l''art. UT 2.2 (p.80) sont admises.'
@@ -964,17 +1201,27 @@ zones:
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
-            article: 'AUindicée 7 (renvoi p.91) → UE 7.3'
+            article: AUindicée 7 (renvoi p.91) → UE 7.3
             page_pdf: 62
-            citation: 'Les constructions doivent être implantées en retrait des limites de fond de propriété avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 4 mètres.'
+            citation: Les constructions doivent être implantées en retrait des limites de fond de propriété avec
+              une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite,
+              au moins égale à 4 mètres.
           implantation_laterales:
             mode: limite_sous_conditions
             statut: valide
-            article: 'AUindicée 7 (renvoi p.91) → UE 7.2'
+            article: AUindicée 7 (renvoi p.91) → UE 7.2
             page_pdf: 61
-            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres.'
-            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat.'
-            condition_modelable: 'une_seule_limite+non'
+            citation: Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les
+              constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une
+              limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination
+              principale d'habitat. En cas de retrait de la construction, la distance comptée horizontalement de
+              tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à
+              4 mètres.
+            condition_texte: Les constructions peuvent être implantées en retrait ou sur une seule limite latérale.
+              Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond
+              à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination
+              principale d'habitat.
+            condition_modelable: une_seule_limite+non
     renvoi: UE
     renvoi_src: 'p. 89 + art. AUindicée 1.2, p. 90 : « Se reporter au règlement de la zone U indiquée en indice » (indice e → zone UE — cible résolue par la règle écrite de renvoi)'
     note: 'Code nommé p. 89 : « L''ouverture de la zone 2AUe ne pourra intervenir qu''une fois l''aménagement de l''ensemble des zones 1AUe entrepris. » Conditions communes AUindicée 2.2 (infrastructures, OAP), p. 90.'
@@ -985,17 +1232,26 @@ zones:
           implantation_fond:
             mode: limite_sous_conditions
             statut: valide
-            article: 'AUindicée 7 (renvoi p.91) → UB 7.3'
+            article: AUindicée 7 (renvoi p.91) → UB 7.3
             page_pdf: 28
-            citation: 'L''implantation en limite de fond de terrain est possible, si la nouvelle construction ne s''implante que sur une seule limite séparative latérale. Dans ce cas, la nouvelle construction n''excèdera pas 4 mètres de hauteur au droit de cette limite séparative et ce sur une bande de 3 mètres de profondeur. En cas de retrait, la distance mesurée horizontalement de tout point de la façade de la construction au point le plus proche de la limite séparative, est de 3 mètres minimum.'
-            condition_texte: 'L''implantation en limite de fond de terrain est possible, si la nouvelle construction ne s''implante que sur une seule limite séparative latérale. Dans ce cas, la nouvelle construction n''excèdera pas 4 mètres de hauteur au droit de cette limite séparative et ce sur une bande de 3 mètres de profondeur.'
-            condition_modelable: 'une_seule_limite+hauteur_bande:4 m sur bande de 3 m'
+            citation: L'implantation en limite de fond de terrain est possible, si la nouvelle construction ne s'implante
+              que sur une seule limite séparative latérale. Dans ce cas, la nouvelle construction n'excèdera pas
+              4 mètres de hauteur au droit de cette limite séparative et ce sur une bande de 3 mètres de profondeur.
+              En cas de retrait, la distance mesurée horizontalement de tout point de la façade de la construction
+              au point le plus proche de la limite séparative, est de 3 mètres minimum.
+            condition_texte: L'implantation en limite de fond de terrain est possible, si la nouvelle construction
+              ne s'implante que sur une seule limite séparative latérale. Dans ce cas, la nouvelle construction
+              n'excèdera pas 4 mètres de hauteur au droit de cette limite séparative et ce sur une bande de 3 mètres
+              de profondeur.
+            condition_modelable: une_seule_limite+hauteur_bande:4 m sur bande de 3 m
           implantation_laterales:
             mode: limite_ou_retrait
             statut: valide
-            article: 'AUindicée 7 (renvoi p.91) → UB 7.2'
+            article: AUindicée 7 (renvoi p.91) → UB 7.2
             page_pdf: 27
-            citation: 'Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.'
+            citation: Les constructions peuvent être implantées sur les deux limites latérales, sur une seule ou
+              en retrait. En cas de retrait de la construction, la distance comptée horizontalement de tout point
+              de la façade au point le plus proche de la limite latérale, doit être au moins égale 3 mètres.
     renvoi: UB
     renvoi_src: 'p. 89 + art. AUindicée 1.2, p. 90 : « Se reporter au règlement de la zone U indiquée en indice » (indice b → zone UB — cible résolue par la règle écrite de renvoi)'
     note: 'Ouverture à l''urbanisation conditionnée : « une fois l''aménagement de l''ensemble des zones 1AUindicée et 1AUcr entrepris et à l''existence d''une offre de transport en commun d''une capacité correspondant aux besoins des futurs habitants ou devant être mise en place à mesure de la réalisation de l''opération » (art. AUindicée 2.2 (3), p. 90). Densités AUb applicables (2.2 (4-5), p. 90). Exception réseaux : « dans les zones 2AUb et 2AUc, toute construction ou installation nouvelle doit être raccordée au réseau collectif public d''assainissement » (art. AUindicée 4, p. 91).'
@@ -1006,17 +1262,20 @@ zones:
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
-            article: 'AUindicée 7 (renvoi p.91) → UC 7.3'
+            article: AUindicée 7 (renvoi p.91) → UC 7.3
             page_pdf: 39
-            citation: 'L''implantation d''une construction en limite de fond de propriété est interdite.'
+            citation: L'implantation d'une construction en limite de fond de propriété est interdite.
           implantation_laterales:
             mode: limite_sous_conditions
             statut: valide
-            article: 'AUindicée 7 (renvoi p.91) → UC 7.2'
+            article: AUindicée 7 (renvoi p.91) → UC 7.2
             page_pdf: 39
-            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.'
-            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale.'
-            condition_modelable: 'une_seule_limite'
+            citation: Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale.
+              En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade
+              au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.
+            condition_texte: Les constructions peuvent être implantées en retrait ou sur une seule limite séparative
+              latérale.
+            condition_modelable: une_seule_limite
     renvoi: UC
     renvoi_src: 'p. 89 + art. AUindicée 1.2, p. 90 : « Se reporter au règlement de la zone U indiquée en indice » (indice c → zone UC — cible résolue par la règle écrite de renvoi)'
     note: Ouverture conditionnée à l'aménagement des 1AUindicée et 1AUcr + offre de transport en commun (art. AUindicée 2.2 (3), p. 90). Densités AUc applicables (2.2 (4-5), p. 90). Raccordement obligatoire au réseau collectif public d'assainissement (art. AUindicée 4, p. 91).
@@ -1027,17 +1286,27 @@ zones:
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
-            article: 'AUindicée 7 (renvoi p.91) → UE 7.3'
+            article: AUindicée 7 (renvoi p.91) → UE 7.3
             page_pdf: 62
-            citation: 'Les constructions doivent être implantées en retrait des limites de fond de propriété avec une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite, au moins égale à 4 mètres.'
+            citation: Les constructions doivent être implantées en retrait des limites de fond de propriété avec
+              une distance, comptée horizontalement de tout point de la façade au point le plus proche de la limite,
+              au moins égale à 4 mètres.
           implantation_laterales:
             mode: limite_sous_conditions
             statut: valide
-            article: 'AUindicée 7 (renvoi p.91) → UE 7.2'
+            article: AUindicée 7 (renvoi p.91) → UE 7.2
             page_pdf: 61
-            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 4 mètres.'
-            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination principale d''habitat.'
-            condition_modelable: 'une_seule_limite+non'
+            citation: Les constructions peuvent être implantées en retrait ou sur une seule limite latérale. Les
+              constructions doivent être implantées en retrait dès lors que la limite séparative correspond à une
+              limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination
+              principale d'habitat. En cas de retrait de la construction, la distance comptée horizontalement de
+              tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à
+              4 mètres.
+            condition_texte: Les constructions peuvent être implantées en retrait ou sur une seule limite latérale.
+              Les constructions doivent être implantées en retrait dès lors que la limite séparative correspond
+              à une limite avec un terrain situé en zone urbaine - UA, UB, UC, UD – ou une zone à urbaniser à destination
+              principale d'habitat.
+            condition_modelable: une_seule_limite+non
     renvoi: UE
     renvoi_src: 'p. 89 + art. AUindicée 1.2, p. 90 : « Se reporter au règlement de la zone U indiquée en indice » (indice e → zone UE — cible résolue par la règle écrite de renvoi)'
     note: 'Caractère (p. 89) : « la zone 2AUe qui est située, comme le prévoit le SAR/SMVM, en continuité d''un Territoire Rural Habité et hors des zones préférentielles d''urbanisation ». Double condition d''ouverture : « une fois l''aménagement de l''ensemble des zones 1AUe entrepris » (2.2 (3), p. 90) ET « une fois les travaux de réduction des risques d''inondation réalisés et le Plan de Prévention des Risques modifié ou révisé » (art. AUindicée 2.2 (6), p. 90).'
@@ -1048,17 +1317,20 @@ zones:
           implantation_fond:
             mode: retrait_obligatoire
             statut: valide
-            article: '1AUcr 7.3'
+            article: 1AUcr 7.3
             page_pdf: 98
-            citation: 'L''implantation d''une construction en limite de fond de propriété est interdite.'
+            citation: L'implantation d'une construction en limite de fond de propriété est interdite.
           implantation_laterales:
             mode: limite_sous_conditions
             statut: valide
-            article: '1AUcr 7.2'
+            article: 1AUcr 7.2
             page_pdf: 98
-            citation: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale. En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.'
-            condition_texte: 'Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale.'
-            condition_modelable: 'une_seule_limite'
+            citation: Les constructions peuvent être implantées en retrait ou sur une seule limite séparative latérale.
+              En cas de retrait de la construction, la distance comptée horizontalement de tout point de la façade
+              au point le plus proche de la limite latérale, doit être au moins égale à 3 mètres.
+            condition_texte: Les constructions peuvent être implantées en retrait ou sur une seule limite séparative
+              latérale.
+            condition_modelable: une_seule_limite
         entre_constructions:
           forme: silence
           absent: true

@@ -1,0 +1,55 @@
+FFFFFFFFFF                                                               [100%]
+=================================== FAILURES ===================================
+E   KeyError: 'nature'
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde_absences.py:20: KeyError: 'nature'
+E   KeyError: 'nature'
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde_absences.py:20: KeyError: 'nature'
+E   KeyError: 'nature'
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde_absences.py:20: KeyError: 'nature'
+E   KeyError: 'nature'
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde_absences.py:20: KeyError: 'nature'
+E   KeyError: 'nature'
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde_absences.py:20: KeyError: 'nature'
+E   TypeError: 'NoneType' object is not subscriptable
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde_absences.py:30: TypeError: 'NoneType' object is not subscriptable
+E   StopIteration
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde_absences.py:35: StopIteration
+E   AssertionError: assert not True
+     +  where True = <function _is_title_only at 0x147ea3c40>({'texte_verbatim': 'Article AUx.12 . Aires de stationnement\nNon réglementé.'})
+     +    where <function _is_title_only at 0x147ea3c40> = <module 'mesure' from '/Users/openclaw/Desktop/labuse-plu-fix/scripts/plu_fix14_mesure.py'>._is_title_only
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde_absences.py:47: AssertionError: assert not True
+E   AssertionError: assert 'A' == 'D'
+      
+      - D
+      + A
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde_absences.py:58: AssertionError: assert 'A' == 'D'
+E   AssertionError: assert 'A' == 'I'
+      
+      - I
+      + A
+/Users/openclaw/Desktop/labuse-plu-fix/tests/test_plu_solde_absences.py:58: AssertionError: assert 'A' == 'I'
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_plu_solde_absences.py::test_absence_documentee_et_fiche_du_secteur[A-None]
+FAILED tests/test_plu_solde_absences.py::test_absence_documentee_et_fiche_du_secteur[N-None]
+FAILED tests/test_plu_solde_absences.py::test_absence_documentee_et_fiche_du_secteur[Ns36-78]
+FAILED tests/test_plu_solde_absences.py::test_absence_documentee_et_fiche_du_secteur[Nta53-86]
+FAILED tests/test_plu_solde_absences.py::test_absence_documentee_et_fiche_du_secteur[Nta54-87]
+FAILED tests/test_plu_solde_absences.py::test_possession_up_rattachement_incertain
+FAILED tests/test_plu_solde_absences.py::test_article_12_des_trois_bassins_rend_les_deux_renvois
+FAILED tests/test_plu_solde_absences.py::test_mesure_distingue_non_reglemente_et_titre_seul
+FAILED tests/test_plu_solde_absences.py::test_mesure_refuse_une_absence_sans_preuve[97410-Ns36-stationnement-D]
+FAILED tests/test_plu_solde_absences.py::test_mesure_refuse_une_absence_sans_preuve[97408-Up-hauteur-I]
+10 failed, 5 warnings in 20.45s

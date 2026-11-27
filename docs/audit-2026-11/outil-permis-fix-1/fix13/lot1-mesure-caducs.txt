@@ -1,0 +1,33 @@
+Base : labuse (lecture seule) · réf 2026-11-25
+
+SERVI (ancien) : 4836 · NOUVELLE règle : 4440
+SORTENT du signal : 404 · ENTRENT : 8
+
+— SORTENT par commune —
+  Saint-Paul             49
+  Saint-Denis            39
+  Saint-Joseph           36
+  Saint-Pierre           36
+  Saint-Benoît           31
+  Le Tampon              31
+  Sainte-Marie           23
+  Saint-André            18
+  Saint-Louis            15
+  Le Port                14
+  La Possession          13
+  Saint-Leu              12
+  Sainte-Suzanne         11
+  Petite-Île             11
+  Entre-Deux             11
+  Les Avirons            9
+  Sainte-Rose            8
+  La Plaine-des-Palmistes 8
+  Les Trois-Bassins      7
+  Saint-Philippe         6
+  Cilaos                 5
+  Salazie                4
+  Bras-Panon             4
+  L'Étang-Salé           3
+
+— SORTENT par année d'autorisation —
+  2022 : 404

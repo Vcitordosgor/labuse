@@ -1,0 +1,35 @@
+97402 97402_PLU_20260428 6596a3a75c9ac3ccdb8c00ae075665cb7993c288431bc903404b75aa87e57284
+97403 97403_PLU_20240924 91b7c6ede148f82ec1ea9b1c4b7d1ec1b17a0609618abc5bbe4142f5d1cbe1c9
+97404 97404_PLU_20250917 0b05392e5e88009026bbfc112a9d189a51094c59e4099a97d5006f135487c7ca
+97410 97410_PLU_20200206 9bb929c6669754f0121e0d3af9c6e87258f31e84c096aee12b2c70af2657d6e3
+97414 97414_PLU_20251218 1535c13eb24b13a95dcbfc92682fe80a5ae4cd31b46181b4f0380a655a7f8175
+  ✓ purge 97402 : 153 extrait(s) supprimé(s)
+  ✓ 97402 97402_reglement_20260428.pdf : 145 extraits article
+  ✓ 97402 Bras-Panon : 1 document(s), 145 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 145 extraits · 21 communes en base
+REINGEST_DONE
+  ✓ purge 97403 : 66 extrait(s) supprimé(s)
+  ✓ 97403 97403_reglement_20240924.pdf : 61 extraits article
+  ✓ 97403 Entre-Deux : 1 document(s), 61 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 61 extraits · 21 communes en base
+REINGEST_DONE
+  ✓ purge 97404 : 43 extrait(s) supprimé(s)
+  ✓ 97404 97404_reglement_20250917.pdf : 135 extraits article · 1 douteux
+  ✓ 97404 L'Étang-Salé : 1 document(s), 135 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 135 extraits · 21 communes en base
+REINGEST_DONE
+  ✓ purge 97410 : 84 extrait(s) supprimé(s)
+  ✓ 97410 97410_reglement_20200206.pdf : 76 extraits article · PAGINATION AMBIGUË
+  ✓ 97410 Saint-Benoît : 1 document(s), 76 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 76 extraits · 21 communes en base
+REINGEST_DONE
+  ✓ purge 97414 : 179 extrait(s) supprimé(s)
+  ✓ 97414 97414_reglement_20251218.pdf : 170 extraits article
+  ✓ 97414 Saint-Louis : 1 document(s), 170 extrait(s) (1 transaction)
+
+=== 1 communes traitées · 170 extraits · 21 communes en base
+REINGEST_DONE

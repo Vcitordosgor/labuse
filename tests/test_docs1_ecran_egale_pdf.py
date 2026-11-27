@@ -70,6 +70,9 @@ def test_gabarit_ecran_egale_pdf_et_verrou():
             pytest.skip("témoin gabarit incomplet aujourd'hui (données évoluées)")
         res = builder.construire_gabarit(s, GABARIT_SERVIE)
     _no_fuite(f"{GABARIT_SERVIE}/gabarit", res)              # VERROU
+    if (gr.raccordement.get("multizone") or {}).get("servie_sur"):
+        portion = int(gr.surfaceParcelleM2 + 0.5)
+        assert f"~{portion} m²" in gr.surfaceNote and gr.surfaceNote in res.html
     nums = _printed(res.html)                                 # ÉCRAN (endpoint) = PDF
     if gr.zoneImplantationM2 is not None:
         assert round(gr.zoneImplantationM2) in nums, "zone d'implantation absente du PDF"

@@ -216,3 +216,27 @@ def test_idempotent(db_session):
         "SELECT bloc_key, sdp_residuelle_m2 FROM parcel_blocs ORDER BY bloc_key")).all()
     assert s1 == s2 and empreinte1 == empreinte2
     assert db_session.execute(text("SELECT count(*) FROM parcel_blocs")).scalar() == 1
+
+
+def test_residuel_inconnu_zero_et_partiel(db_session):
+    from labuse.api import modules
+
+    connus = {}
+    for i, valeurs in enumerate(((None, None), (0, 0), (None, 250))):
+        for j, (geom, valeur) in enumerate(zip((_A, _B), valeurs)):
+            idu = f"BLOC{i}{j}"
+            pid = _p(db_session, idu, geom, 600, commune=f"Commune{j}")
+            _pm(db_session, idu, f"SIREN{i}")
+            if valeur is not None:
+                connus[pid] = valeur
+    _served_residuel(db_session, connus)
+    blocs.build_blocs(db_session)
+    filtres = dict(commune="Commune1", surface_min=1200, n_min=2, inclure_publics=False,
+                   offset=0, limit=3, db=db_session)
+    items = modules.blocs_liste(sdp_min=0, **filtres)["items"]
+    assert [(r["sdp_residuelle_m2"], r["sdp_couverture"]) for r in items] == [(250, 1), (0, 2), (None, 0)]
+    for item in items:
+        detail = modules.bloc_detail(item["bloc_id"], db=db_session)
+        assert detail["sdp_residuelle_m2"] == item["sdp_residuelle_m2"]
+        assert detail["communes"] == ["Commune0", "Commune1"]
+    assert modules.blocs_liste(sdp_min=250, **filtres)["total"] == 1

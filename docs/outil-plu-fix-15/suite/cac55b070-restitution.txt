@@ -1,0 +1,12 @@
+
+ RUN  v4.1.10 /Users/openclaw/Desktop/labuse-plu-fix/.local/fix15-suite/archive-cac55b070-l5rw3zfe/frontend
+
+ ✓ src/components/outils/PluRestitutionFix15.test.tsx > affiche la provenance dans chacune des cartes concernées 221ms
+ ✓ src/components/outils/PluRestitutionFix15.test.tsx > qualifie la date de modification en couverture 53ms
+ ✓ src/components/outils/PluRestitutionFix15.test.tsx > ouvre la page du vote des Zattes depuis l’avertissement 224ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  09:44:43
+   Duration  4.55s (transform 316ms, setup 482ms, import 375ms, tests 500ms, environment 2.14s)
+

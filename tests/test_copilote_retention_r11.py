@@ -33,19 +33,22 @@ def test_supprimer_retire_une_conversation_et_cloisonne(db_session, engine):
     touche JAMAIS celle d'un autre compte (cloison lot 6)."""
     historique.ensure_tables(engine)
     db = db_session
-    a = db.execute(text("INSERT INTO copilote_conversations (compte_id, titre) "
-                        "VALUES (101, 'à moi') RETURNING id")).scalar()
-    b = db.execute(text("INSERT INTO copilote_conversations (compte_id, titre) "
-                        "VALUES (202, 'à un autre') RETURNING id")).scalar()
+    compte_a, compte_b = db.execute(text(
+        "INSERT INTO comptes (nom, plan) VALUES ('Test A', 'pro'), ('Test B', 'pro') RETURNING id"
+    )).scalars().all()
+    insert_conversation = text("INSERT INTO copilote_conversations (compte_id, titre) "
+                               "VALUES (:c, :t) RETURNING id")
+    a = db.execute(insert_conversation, {"c": compte_a, "t": "à moi"}).scalar_one()
+    b = db.execute(insert_conversation, {"c": compte_b, "t": "à un autre"}).scalar_one()
     for cid in (a, b):
         db.execute(text("INSERT INTO copilote_messages (conversation_id, role, texte) "
                         "VALUES (:i, 'client', 'x')"), {"i": cid})
     db.commit()
-    # cloison : le compte 101 ne supprime PAS la conversation du compte 202.
-    assert historique.supprimer(db, compte_id=101, conversation_id=b) is False
+    # La suppression respecte la cloison entre les deux comptes.
+    assert historique.supprimer(db, compte_id=compte_a, conversation_id=b) is False
     assert db.execute(text("SELECT count(*) FROM copilote_conversations WHERE id = :i"), {"i": b}).scalar() == 1
-    # le compte 101 supprime la SIENNE → True, et ses messages tombent par CASCADE.
-    assert historique.supprimer(db, compte_id=101, conversation_id=a) is True
+    # Le titulaire supprime sa conversation → True, et ses messages tombent par CASCADE.
+    assert historique.supprimer(db, compte_id=compte_a, conversation_id=a) is True
     assert db.execute(text("SELECT count(*) FROM copilote_conversations WHERE id = :i"), {"i": a}).scalar() == 0
     assert db.execute(text("SELECT count(*) FROM copilote_messages WHERE conversation_id = :i"), {"i": a}).scalar() == 0
     db.execute(text("DELETE FROM copilote_conversations WHERE id = :i"), {"i": b}); db.commit()

@@ -1,0 +1,60 @@
+bras 97402000AH0248 Art. UA 12.2 · p.22
+· logement aidé : une place au maximum par logement
+· foyers et résidences sociales : une place au maximum pour 3 logements ou 3 chambres []
+
+entre 97403000AP0027 Art. U12 · p.27
+· prêt aidé : une place au maximum par logement
+· Logement locatif aidé : 1 place visiteur par tranche de 10 logements
+· Autres logements : 1 place visiteur par tranche de 5 logements ou 5 lots []
+
+marie 97418000AC0220 Art. U13 - 13.2 · p.26
+· prêt aidé : une place au maximum par logement
+· hébergement (1 pour 3)
+· À moins de 500 m d’une gare routière ou d’une station de transport public guidé ou de transport collectif en site propre, si la qualité de la desserte le permet : logement locatif financé par un prêt aidé de l’État, 0,5 place par logement. Logement privé, 1 place par logement. []
+
+etang 97404000AX0154 AU 3.2
+zone AU
+L'Étang-Salé
+
+règle de la zone mère
+
+Au
+
+AU 3.2 – CONDITIONS DE DESSERTE DES TERRAINS PAR LES RESEAUX
+
+
+3.2.1 - Alimentation en eau potable et sécurité incendie
+Toute construction ou installation nouvelle doit être reliée au réseau public d’alimentation en eau
+potable.
+Les canalisations, ou tout autre moyen …
+
+Règlement · lot GPU du 17/09/2025 · p. 84, 85 (article p. 84-85)
+Lire l’article entier ▾
+règlement PDF ↗ (p. 84) [
+  'https://data.geopf.fr/annexes/gpu/documents/DU_97404/7058f72863540b49692dd4e3c37085f8/97404_reglement_20250917.pdf#page=84'
+]
+
+benoit-au 97410000BM0318 Explication non opposable · p. 30
+
+Cette règle vise à imposer un nombre de places de stationnement minimum en
+fonction des typologies de logements, afin de tenir compte de l’évolution des
+besoins des ménages en fonction de leur composition.
+
+Dans l’hyper centre, le stationnement des commerces, services, bureaux, des
+hébergements hôteliers, touristiques ainsi que des restaurants n’est pas
+réglementé car le PLU souhaite laisser une plus grande liberté aux porteurs de
+projets qui souhaitent s’y installer. Cette règle répond au souhait de la
+collectivité de redynamiser le commerce le long de ses rues et de leur redonner
+de l’attractivité. []
+
+benoit-a 97410000AB0106 Le chapitre de la zone A ne comporte pas d’article propre au stationnement. Vérifier aussi les annexes du secteur.
+
+Chapitre du règlement · pp. 32–39 [
+  'https://data.geopf.fr/annexes/gpu/documents/DU_97410/77260522306e0350ed054b54d35a35fa/97410_reglement_20200206.pdf#page=32'
+]
+
+benoit-n 97410000CN0025 Le chapitre de la zone N ne comporte pas d’article propre au stationnement. Vérifier aussi les annexes du secteur.
+
+Chapitre du règlement · pp. 40–48 [
+  'https://data.geopf.fr/annexes/gpu/documents/DU_97410/77260522306e0350ed054b54d35a35fa/97410_reglement_20200206.pdf#page=40'
+]
